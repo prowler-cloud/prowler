@@ -23,7 +23,7 @@ export function TriggerSheet({
   return (
     <Sheet>
       <SheetTrigger>{triggerComponent}</SheetTrigger>
-      <SheetContent className="max-w-[95vw] pt-10 md:max-w-[55vw]">
+      <SheetContent className="max-w-[95vw] pt-10 md:max-w-[45vw]">
         <SheetHeader>
           <SheetTitle className="sr-only">{title}</SheetTitle>
           <SheetDescription className="sr-only">{description}</SheetDescription>

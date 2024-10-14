@@ -21,15 +21,23 @@ const statusColorMap: Record<
   cancelled: "danger",
 };
 
-export const StatusBadge = ({ status }: { status: Status }) => {
+export const StatusBadge = ({
+  status,
+  size = "sm",
+  ...props
+}: {
+  status: Status;
+  size?: "sm" | "md" | "lg";
+}) => {
   const color = statusColorMap[status as keyof typeof statusColorMap];
 
   return (
     <Chip
       className="gap-1 border-none capitalize text-default-600"
-      size="sm"
+      size={size}
       variant="flat"
       color={color}
+      {...props}
     >
       {status}
     </Chip>

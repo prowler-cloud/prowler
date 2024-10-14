@@ -42,37 +42,22 @@ export const ColumnGetScansSchedule: ColumnDef<ScanProps>[] = [
     },
   },
   {
-    accessorKey: "started_at",
+    accessorKey: "scheduled_at",
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
-        title={"Started at"}
-        param="started_at"
+        title={"Scheduled at"}
+        param="scheduled_at"
       />
     ),
     cell: ({ row }) => {
       const {
-        attributes: { started_at },
+        attributes: { scheduled_at },
       } = getScanData(row);
-      return <DateWithTime dateTime={started_at} />;
+      return <DateWithTime dateTime={scheduled_at} />;
     },
   },
-  {
-    accessorKey: "lastScan",
-    header: ({ column }) => (
-      <DataTableColumnHeader
-        column={column}
-        title={"Completed At"}
-        param="completed_at"
-      />
-    ),
-    cell: ({ row }) => {
-      const {
-        attributes: { completed_at },
-      } = getScanData(row);
-      return <DateWithTime dateTime={completed_at} />;
-    },
-  },
+
   {
     id: "moreInfo",
     header: "Details",

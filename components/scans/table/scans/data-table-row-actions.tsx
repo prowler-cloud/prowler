@@ -31,7 +31,6 @@ export function DataTableRowActions<ScanProps>({
   row,
 }: DataTableRowActionsProps<ScanProps>) {
   const [isEditOpen, setIsEditOpen] = useState(false);
-  // const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const scanId = (row.original as { id: string }).id;
   const scanName = (row.original as any).attributes?.name;
   return (
@@ -48,16 +47,6 @@ export function DataTableRowActions<ScanProps>({
           setIsOpen={setIsEditOpen}
         />
       </CustomAlertModal>
-
-      {/* <CustomAlertModal
-        isOpen={isDeleteOpen}
-        onOpenChange={setIsDeleteOpen}
-        title="Are you absolutely sure?"
-        description="This action cannot be undone. This will permanently delete your scan."
-      > */}
-      {/* <p>Hello</p> */}
-      {/* <DeleteForm providerId={providerId} setIsOpen={setIsDeleteOpen} /> */}
-      {/* </CustomAlertModal> */}
 
       <div className="relative flex items-center justify-end gap-2">
         <Dropdown className="shadow-xl" placement="bottom">
@@ -83,23 +72,6 @@ export function DataTableRowActions<ScanProps>({
                 Edit Scan
               </DropdownItem>
             </DropdownSection>
-            {/* <DropdownSection title="Danger zone">
-              <DropdownItem
-                key="delete"
-                className="text-danger"
-                color="danger"
-                description="Delete the scan permanently"
-                textValue="Delete Scan"
-                startContent={
-                  <DeleteDocumentBulkIcon
-                    className={clsx(iconClasses, "!text-danger")}
-                  />
-                }
-                onClick={() => setIsDeleteOpen(true)}
-              >
-                Delete Scan
-              </DropdownItem>
-            </DropdownSection> */}
           </DropdownMenu>
         </Dropdown>
       </div>
