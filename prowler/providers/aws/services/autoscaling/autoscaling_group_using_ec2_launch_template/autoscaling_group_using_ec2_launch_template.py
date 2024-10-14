@@ -4,7 +4,7 @@ from prowler.providers.aws.services.autoscaling.autoscaling_client import (
 )
 
 
-class autoscaling_group_launch_template(Check):
+class autoscaling_group_using_ec2_launch_template(Check):
     def execute(self):
         findings = []
         for group in autoscaling_client.groups:
@@ -15,16 +15,14 @@ class autoscaling_group_launch_template(Check):
             report.resource_tags = group.tags
             report.status = "PASS"
             report.status_extended = (
-                f"Autoscaling group {group.name} is using a launch template."
+                f"Autoscaling group {group.name} is using an EC2 launch template."
             )
             if (
                 not group.launch_template
                 and not group.mixed_instances_policy_launch_template
             ):
                 report.status = "FAIL"
-                report.status_extended = (
-                    f"Autoscaling group {group.name} is not using a launch template."
-                )
+                report.status_extended = f"Autoscaling group {group.name} is not using an EC2 launch template."
 
             findings.append(report)
 

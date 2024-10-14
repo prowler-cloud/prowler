@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "autoscaling_group_launch_template",
+  "CheckID": "autoscaling_group_using_ec2_launch_template",
   "CheckTitle": "Check if Amazon EC2 Auto Scaling groups use EC2 launch templates.",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices"

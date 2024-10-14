@@ -67,7 +67,9 @@ class AutoScaling(AWSService):
                                 launch_template=group.get("LaunchTemplate", {}),
                                 mixed_instances_policy_launch_template=group.get(
                                     "MixedInstancesPolicy", {}
-                                ).get("LaunchTemplate", {}),
+                                )
+                                .get("LaunchTemplate", {})
+                                .get("LaunchTemplateSpecification", {}),
                                 health_check_type=group.get("HealthCheckType", ""),
                                 load_balancers=group.get("LoadBalancerNames", []),
                                 target_groups=group.get("TargetGroupARNs", []),

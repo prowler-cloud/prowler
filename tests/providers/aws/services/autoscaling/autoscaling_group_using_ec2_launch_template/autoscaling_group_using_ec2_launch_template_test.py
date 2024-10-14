@@ -6,7 +6,7 @@ from moto import mock_aws
 from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
 
 
-class Test_autoscaling_group_launch_template:
+class Test_autoscaling_group_using_ec2_launch_template:
     @mock_aws
     def test_no_autoscaling(self):
         autoscaling_client = client("autoscaling", region_name=AWS_REGION_US_EAST_1)
@@ -22,15 +22,15 @@ class Test_autoscaling_group_launch_template:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.autoscaling.autoscaling_group_launch_template.autoscaling_group_launch_template.autoscaling_client",
+            "prowler.providers.aws.services.autoscaling.autoscaling_group_using_ec2_launch_template.autoscaling_group_using_ec2_launch_template.autoscaling_client",
             new=AutoScaling(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.autoscaling.autoscaling_group_launch_template.autoscaling_group_launch_template import (
-                autoscaling_group_launch_template,
+            from prowler.providers.aws.services.autoscaling.autoscaling_group_using_ec2_launch_template.autoscaling_group_using_ec2_launch_template import (
+                autoscaling_group_using_ec2_launch_template,
             )
 
-            check = autoscaling_group_launch_template()
+            check = autoscaling_group_using_ec2_launch_template()
             result = check.execute()
 
             assert len(result) == 0
@@ -73,22 +73,22 @@ class Test_autoscaling_group_launch_template:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.autoscaling.autoscaling_group_launch_template.autoscaling_group_launch_template.autoscaling_client",
+            "prowler.providers.aws.services.autoscaling.autoscaling_group_using_ec2_launch_template.autoscaling_group_using_ec2_launch_template.autoscaling_client",
             new=AutoScaling(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.autoscaling.autoscaling_group_launch_template.autoscaling_group_launch_template import (
-                autoscaling_group_launch_template,
+            from prowler.providers.aws.services.autoscaling.autoscaling_group_using_ec2_launch_template.autoscaling_group_using_ec2_launch_template import (
+                autoscaling_group_using_ec2_launch_template,
             )
 
-            check = autoscaling_group_launch_template()
+            check = autoscaling_group_using_ec2_launch_template()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Autoscaling group {autoscaling_group_name} is using a launch template."
+                == f"Autoscaling group {autoscaling_group_name} is using an EC2 launch template."
             )
             assert result[0].resource_id == autoscaling_group_name
             assert result[0].resource_arn == autoscaling_group_arn
@@ -146,22 +146,22 @@ class Test_autoscaling_group_launch_template:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.autoscaling.autoscaling_group_launch_template.autoscaling_group_launch_template.autoscaling_client",
+            "prowler.providers.aws.services.autoscaling.autoscaling_group_using_ec2_launch_template.autoscaling_group_using_ec2_launch_template.autoscaling_client",
             new=AutoScaling(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.autoscaling.autoscaling_group_launch_template.autoscaling_group_launch_template import (
-                autoscaling_group_launch_template,
+            from prowler.providers.aws.services.autoscaling.autoscaling_group_using_ec2_launch_template.autoscaling_group_using_ec2_launch_template import (
+                autoscaling_group_using_ec2_launch_template,
             )
 
-            check = autoscaling_group_launch_template()
+            check = autoscaling_group_using_ec2_launch_template()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Autoscaling group {autoscaling_group_name} is using a launch template."
+                == f"Autoscaling group {autoscaling_group_name} is using an EC2 launch template."
             )
             assert result[0].resource_id == autoscaling_group_name
             assert result[0].resource_tags == []
@@ -201,22 +201,22 @@ class Test_autoscaling_group_launch_template:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.autoscaling.autoscaling_group_launch_template.autoscaling_group_launch_template.autoscaling_client",
+            "prowler.providers.aws.services.autoscaling.autoscaling_group_using_ec2_launch_template.autoscaling_group_using_ec2_launch_template.autoscaling_client",
             new=AutoScaling(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.autoscaling.autoscaling_group_launch_template.autoscaling_group_launch_template import (
-                autoscaling_group_launch_template,
+            from prowler.providers.aws.services.autoscaling.autoscaling_group_using_ec2_launch_template.autoscaling_group_using_ec2_launch_template import (
+                autoscaling_group_using_ec2_launch_template,
             )
 
-            check = autoscaling_group_launch_template()
+            check = autoscaling_group_using_ec2_launch_template()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Autoscaling group {autoscaling_group_name} is not using a launch template."
+                == f"Autoscaling group {autoscaling_group_name} is not using an EC2 launch template."
             )
             assert result[0].resource_id == autoscaling_group_name
             assert result[0].resource_tags == []
