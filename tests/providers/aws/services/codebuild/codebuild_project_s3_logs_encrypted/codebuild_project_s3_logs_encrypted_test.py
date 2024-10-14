@@ -132,7 +132,7 @@ class Test_codebuild_project_s3_logs_encrypted:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"CodeBuild project {project_name} has S3 logs stored in test-bucket are encrypted."
+                == f"CodeBuild project {project_name} has encrypted S3 logs stored in test-bucket."
             )
             assert result[0].resource_id == project_name
             assert result[0].resource_arn == project_arn
@@ -195,7 +195,7 @@ class Test_codebuild_project_s3_logs_encrypted:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"CodeBuild project {project_name} has S3 logs stored in test-bucket are not encrypted."
+                == f"CodeBuild project {project_name} does not have encrypted S3 logs stored in test-bucket."
             )
             assert result[0].resource_id == project_name
             assert result[0].resource_arn == project_arn

@@ -13,11 +13,10 @@ class codebuild_project_s3_logs_encrypted(Check):
                 report.region = project.region
                 report.resource_tags = project.tags
                 report.status = "PASS"
-                report.status_extended = f"CodeBuild project {project.name} has S3 logs stored in {project.s3_logs.bucket_location} are encrypted."
-
+                report.status_extended = f"CodeBuild project {project.name} has encrypted S3 logs stored in {project.s3_logs.bucket_location}."
                 if not project.s3_logs.encrypted:
                     report.status = "FAIL"
-                    report.status_extended = f"CodeBuild project {project.name} has S3 logs stored in {project.s3_logs.bucket_location} are not encrypted."
+                    report.status_extended = f"CodeBuild project {project.name} does not have encrypted S3 logs stored in {project.s3_logs.bucket_location}."
 
                 findings.append(report)
 
