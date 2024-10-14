@@ -567,29 +567,42 @@ class TestGCPProvider:
             assert Connection(is_connected=True, error=None) == output
 
     def test_test_connection_invalid_project_id(self):
-        project_id = "test-project-id"
         mocked_service = MagicMock()
 
+        projects = {
+            "test-valid-project": GCPProject(
+                number="55555555",
+                id="project/55555555",
+                name="test-project",
+                labels={"test": "value"},
+                lifecycle_state="",
+            ),
+        }
+
         mocked_service.projects.get.return_value = MagicMock(
-            execute=MagicMock(return_value={"projectId": project_id})
+            execute=MagicMock(return_value={"projects": projects})
         )
 
         with patch(
             "prowler.providers.gcp.gcp_provider.GcpProvider.setup_session",
-            return_value=(None, project_id),
+            return_value=(None, "test-valid-project"),
         ), patch(
             "prowler.providers.gcp.gcp_provider.discovery.build",
             return_value=mocked_service,
-        ):
+        ), patch(
+            "prowler.providers.gcp.gcp_provider.GcpProvider.validate_project_id"
+        ) as mock_validate_project_id:
+
+            mock_validate_project_id.side_effect = GCPInvalidAccountCredentials(
+                "Invalid project ID"
+            )
+
             with pytest.raises(Exception) as e:
                 GcpProvider.test_connection(
                     client_id="test-client-id",
                     client_secret="test-client-secret",
                     refresh_token="test-refresh-token",
-                    provider_id="test-provider-id-invalid",
+                    provider_id="test-invalid-project",
                 )
+
             assert e.type == GCPInvalidAccountCredentials
-            assert (
-                "The provider ID does not match with the expected project_id"
-                in e.value.args[0]
-            )

@@ -327,7 +327,6 @@ class GcpProvider(Provider):
             session, project_id = GcpProvider.setup_session(
                 credentials_file, service_account, gcp_credentials
             )
-
             if provider_id and project_id != provider_id:
                 # Logic to check if the provider ID matches the project ID
                 GcpProvider.validate_project_id(
@@ -552,7 +551,7 @@ class GcpProvider(Provider):
         }
 
     @staticmethod
-    def validate_project_id(provider_id: str, credentials: str = None) -> bool:
+    def validate_project_id(provider_id: str, credentials: str = None) -> None:
         """
         Validate the provider ID given the credentials, checking if the provider ID matches with the expected project_id using the method get_projects
 
@@ -561,18 +560,23 @@ class GcpProvider(Provider):
             credentials: str
 
         Returns:
-            bool
+            None
 
         Raises:
             GCPInvalidAccountCredentials if the provider ID does not match with the expected project_id
         """
 
-        available_projects = GcpProvider.get_projects(credentials=credentials)
+        available_projects = list(
+            GcpProvider.get_projects(credentials=credentials).keys()
+        )
 
-        if provider_id not in available_projects:
+        if len(available_projects) == 0:
+            raise GCPNoAccesibleProjectsError(
+                file=__file__,
+                message="No Project IDs can be accessed via Google Credentials.",
+            )
+        elif provider_id not in available_projects:
             raise GCPInvalidAccountCredentials(
                 file=__file__,
                 message="The provider ID does not match with the expected project_id.",
             )
-        else:
-            return True
