@@ -30,6 +30,53 @@ class Test_codebuild_project_s3_logs_encrypted:
             assert len(result) == 0
 
     @mock_aws
+    def test_project_no_s3_logs_enabled(self):
+        codebuild_client = client("codebuild", region_name=AWS_REGION_EU_WEST_1)
+
+        project_name = "test-project-no-logs"
+
+        codebuild_client.create_project(
+            name=project_name,
+            source={
+                "type": "S3",
+                "location": "test-bucket",
+            },
+            artifacts={
+                "type": "NO_ARTIFACTS",
+            },
+            environment={
+                "type": "LINUX_CONTAINER",
+                "image": "aws/codebuild/standard:4.0",
+                "computeType": "BUILD_GENERAL1_SMALL",
+                "environmentVariables": [],
+            },
+            serviceRole="arn:aws:iam::123456789012:role/service-role/codebuild-role",
+            tags=[
+                {"key": "Name", "value": "test"},
+            ],
+        )["project"]["arn"]
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+
+        from prowler.providers.aws.services.codebuild.codebuild_service import Codebuild
+
+        with patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), patch(
+            "prowler.providers.aws.services.codebuild.codebuild_project_s3_logs_encrypted.codebuild_project_s3_logs_encrypted.codebuild_client",
+            new=Codebuild(aws_provider),
+        ):
+            from prowler.providers.aws.services.codebuild.codebuild_project_s3_logs_encrypted.codebuild_project_s3_logs_encrypted import (
+                codebuild_project_s3_logs_encrypted,
+            )
+
+            check = codebuild_project_s3_logs_encrypted()
+            result = check.execute()
+
+            assert len(result) == 0
+
+    @mock_aws
     def test_project_logs_encrypted(self):
         codebuild_client = client("codebuild", region_name=AWS_REGION_EU_WEST_1)
 
