@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
-  "CheckID": "opensearch_service_domains_fault_tolerant",
-  "CheckTitle": "Ensure Elasticsearch/Opensearch domains are fault-tolerant.",
+  "CheckID": "opensearch_service_domains_fault_tolerant_data_nodes",
+  "CheckTitle": "Ensure Elasticsearch/Opensearch domains have fault-tolerant data nodes.",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices"
   ],
