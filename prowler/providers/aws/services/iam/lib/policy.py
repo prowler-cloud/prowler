@@ -300,6 +300,8 @@ def is_condition_block_restrictive(
             "aws:sourcevpce",
             "aws:sourceorgid",
             "aws:sourceorgpaths",
+            "aws:userid",
+            "aws:username",
             "s3:resourceaccount",
             "lambda:eventsourcetoken",  # For Alexa Home functions, a token that the invoker must supply.
         ],
@@ -316,6 +318,8 @@ def is_condition_block_restrictive(
             "aws:sourcevpce",
             "aws:sourceorgid",
             "aws:sourceorgpaths",
+            "aws:userid",
+            "aws:username",
             "s3:resourceaccount",
             "lambda:eventsourcetoken",
         ],
