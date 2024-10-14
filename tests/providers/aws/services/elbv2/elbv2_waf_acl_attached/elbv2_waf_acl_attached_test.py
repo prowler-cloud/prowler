@@ -39,7 +39,7 @@ class Test_elbv2_waf_acl_attached:
     @mock_aws
     def test_elb_no_balancers(self):
         from prowler.providers.aws.services.elbv2.elbv2_service import ELBv2
-        from prowler.providers.aws.services.waf.waf_service import WAF
+        from prowler.providers.aws.services.waf.waf_service import WAFRegional
         from prowler.providers.aws.services.wafv2.wafv2_service import WAFv2
 
         with mock.patch(
@@ -58,8 +58,8 @@ class Test_elbv2_waf_acl_attached:
                 set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
             ),
         ), mock.patch(
-            "prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.waf_client",
-            new=WAF(
+            "prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.wafregional_client",
+            new=WAFRegional(
                 set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
             ),
         ):
@@ -112,7 +112,7 @@ class Test_elbv2_waf_acl_attached:
         )["LoadBalancers"][0]
 
         from prowler.providers.aws.services.elbv2.elbv2_service import ELBv2
-        from prowler.providers.aws.services.waf.waf_service import WAF
+        from prowler.providers.aws.services.waf.waf_service import WAFRegional
         from prowler.providers.aws.services.wafv2.wafv2_service import WAFv2
 
         with mock.patch(
@@ -131,8 +131,8 @@ class Test_elbv2_waf_acl_attached:
                 set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
             ),
         ), mock.patch(
-            "prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.waf_client",
-            new=WAF(
+            "prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.wafregional_client",
+            new=WAFRegional(
                 set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
             ),
         ):
@@ -194,7 +194,7 @@ class Test_elbv2_waf_acl_attached:
         wafv2.associate_web_acl(WebACLArn=waf["ARN"], ResourceArn=lb["LoadBalancerArn"])
 
         from prowler.providers.aws.services.elbv2.elbv2_service import ELBv2
-        from prowler.providers.aws.services.waf.waf_service import WAF
+        from prowler.providers.aws.services.waf.waf_service import WAFRegional
         from prowler.providers.aws.services.wafv2.wafv2_service import WAFv2
 
         with mock.patch(
@@ -214,8 +214,8 @@ class Test_elbv2_waf_acl_attached:
             ),
         ) as service_client:
             with mock.patch(
-                "prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.waf_client",
-                new=WAF(
+                "prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.wafregional_client",
+                new=WAFRegional(
                     set_mocked_aws_provider(
                         [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
                     )
