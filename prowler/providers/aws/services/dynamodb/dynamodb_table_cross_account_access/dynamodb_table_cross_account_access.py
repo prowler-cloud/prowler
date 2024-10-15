@@ -1,6 +1,6 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.dynamodb.dynamodb_client import dynamodb_client
-from prowler.providers.aws.services.iam.lib.policy import is_policy_public
+from prowler.providers.aws.services.iam.lib.policy import is_policy_cross_account
 
 
 class dynamodb_table_cross_account_access(Check):
@@ -18,7 +18,7 @@ class dynamodb_table_cross_account_access(Check):
             )
             if table.policy:
                 report.status_extended = f"DynamoDB table {table.name} has a resource-based policy but is not cross account."
-                if is_policy_public(
+                if is_policy_cross_account(
                     table.policy,
                     dynamodb_client.audited_account,
                 ):

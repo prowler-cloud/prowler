@@ -40,7 +40,8 @@ def is_policy_cross_account(policy: dict, audited_account: str) -> bool:
                         or "*" == statement["Principal"]["AWS"]
                     ):
                         return True
-    return False
+    
+    return is_policy_public(policy, audited_account, is_cross_account_allowed=False)
 
 
 def check_full_service_access(service: str, policy: dict) -> bool:
@@ -151,7 +152,7 @@ def is_condition_restricting_from_private_ip(condition_statement: dict) -> bool:
 def is_policy_public(
     policy: dict,
     source_account: str = "",
-    is_cross_account_allowed=False,
+    is_cross_account_allowed=True,
     not_allowed_actions: list = [],
 ) -> bool:
     """
@@ -160,7 +161,7 @@ def is_policy_public(
     Args:
         policy (dict): The AWS policy to check
         source_account (str): The account to check if the access is restricted to it, default: ""
-        is_cross_account_allowed (bool): If the policy can allow cross-account access, default: False
+        is_cross_account_allowed (bool): If the policy can allow cross-account access, default: True
         not_allowed_actions (list): List of actions that are not allowed, default: []. If not_allowed_actions is empty, the function will not consider the actions in the policy.
     Returns:
         bool: True if the policy allows public access, False otherwise

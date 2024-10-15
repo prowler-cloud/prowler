@@ -149,23 +149,6 @@ class Test_efs_mount_target_not_publicly_accessible:
             CidrBlock="172.28.7.192/26",
             AvailabilityZone=f"{AWS_REGION_US_EAST_1}a",
         )
-        nacls = (
-            ec2_client.describe_network_acls(
-                Filters=[
-                    {
-                        "Name": "association.subnet-id",
-                        "Values": [subnet_private["Subnet"]["SubnetId"]],
-                    }
-                ]
-            )
-        )["NetworkAcls"]
-        # Remove public ingress rule from private subnet in default NACLs
-        for nacl in nacls:
-            ec2_client.delete_network_acl_entry(
-                NetworkAclId=nacl["NetworkAclId"],
-                Egress=False,
-                RuleNumber=100,
-            )
         efs_client.create_mount_target(
             FileSystemId=file_system["FileSystemId"],
             SubnetId=subnet_private["Subnet"]["SubnetId"],

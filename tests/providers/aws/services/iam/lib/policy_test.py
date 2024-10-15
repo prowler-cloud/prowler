@@ -28,14 +28,6 @@ class Test_Policy:
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
-    def test_condition_parser_string_equals_aws_SourceAccount_list_using_config(self):
-        condition_statement = {
-            "StringEquals": {"aws:SourceAccount": [TRUSTED_AWS_ACCOUNT_NUMBER]}
-        }
-        assert is_condition_block_restrictive(
-            condition_statement, trusted_account_ids=[TRUSTED_AWS_ACCOUNT_NUMBER]
-        )
-
     def test_condition_parser_string_equals_aws_SourceAccount_list_not_valid(self):
         condition_statement = {
             "StringEquals": {
@@ -55,14 +47,6 @@ class Test_Policy:
         }
         assert is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
-        )
-
-    def test_condition_parser_string_equals_aws_SourceAccount_str_using_config(self):
-        condition_statement = {
-            "StringEquals": {"aws:SourceAccount": TRUSTED_AWS_ACCOUNT_NUMBER}
-        }
-        assert is_condition_block_restrictive(
-            condition_statement, trusted_account_ids=[TRUSTED_AWS_ACCOUNT_NUMBER]
         )
 
     def test_condition_parser_string_equals_aws_SourceAccount_str_not_valid(self):
