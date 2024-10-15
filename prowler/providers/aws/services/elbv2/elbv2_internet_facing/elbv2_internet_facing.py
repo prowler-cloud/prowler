@@ -16,7 +16,7 @@ class elbv2_internet_facing(Check):
             report.status = "PASS"
             report.status_extended = f"ELBv2 ALB {lb.name} is not internet facing."
             if lb.scheme == "internet-facing":
-                report.status_extended = f"ELBv2 ALB {lb.name} has an internet facing scheme in {lb.dns} but is not public."
+                report.status_extended = f"ELBv2 ALB {lb.name} has an internet facing scheme with domain {lb.dns} but is not public."
                 for sg_id in getattr(lb, "security_groups", []):
                     sg_arn = f"arn:{elbv2_client.audited_partition}:ec2:{lb.region}:{elbv2_client.audited_account}:security-group/{sg_id}"
                     if sg_arn in ec2_client.security_groups:
@@ -27,7 +27,7 @@ class elbv2_internet_facing(Check):
                                 ingress_rule, "tcp", any_address=True
                             ):
                                 report.status = "FAIL"
-                                report.status_extended = f"ELBv2 ALB {lb.name} is internet facing in {lb.dns} due to a public security group {sg_id}."
+                                report.status_extended = f"ELBv2 ALB {lb.name} is internet facing with domain {lb.dns} due to their security group {sg_id} is public."
 
             findings.append(report)
 

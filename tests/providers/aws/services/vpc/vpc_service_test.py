@@ -459,7 +459,6 @@ class Test_VPC_Service:
                 assert vpc.subnets[0].id == subnet_id
                 assert vpc.subnets[0].vpc_id == vpc_id
                 assert vpc.subnets[0].availability_zone == f"{AWS_REGION_US_EAST_1}a"
-                assert vpc.subnets[0].public
                 assert vpc.subnets[0].region == AWS_REGION_US_EAST_1
 
     # Test VPC Describe VPN Connections

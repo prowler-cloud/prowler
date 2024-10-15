@@ -369,34 +369,6 @@ class VPC(AWSService):
                                         public = True
                                     if "NatGatewayId" in route:
                                         nat_gateway = True
-                            if not public:
-                                # Check if the subnet has any public NACL associated
-                                nacls = (
-                                    regional_client_for_subnet.describe_network_acls(
-                                        Filters=[
-                                            {
-                                                "Name": "association.subnet-id",
-                                                "Values": [subnet["SubnetId"]],
-                                            }
-                                        ]
-                                    )
-                                )
-                                has_ingress = False
-                                has_egress = False
-                                for nacl in nacls.get("NetworkAcls", []):
-                                    for acl_entry in nacl.get("Entries", []):
-                                        if acl_entry.get("RuleAction") == "allow" and (
-                                            acl_entry.get("CidrBlock") == "0.0.0.0/0"
-                                            or acl_entry.get("Ipv6CidrBlock") == "::/0"
-                                        ):
-                                            if acl_entry.get("Egress"):
-                                                has_egress = True
-                                            else:
-                                                has_ingress = True
-                                        if has_egress and has_ingress:
-                                            public = True
-                                            break
-
                             subnet_name = ""
                             for tag in subnet.get("Tags", []):
                                 if tag["Key"] == "Name":
@@ -421,8 +393,6 @@ class VPC(AWSService):
                             for vpc in self.vpcs.values():
                                 if vpc.id == subnet["VpcId"]:
                                     vpc.subnets.append(object)
-                                    if object.public:
-                                        vpc.public = True
                         except Exception as error:
                             logger.error(
                                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -484,7 +454,6 @@ class VPCs(BaseModel):
     name: str
     default: bool
     in_use: bool = False
-    public: bool = False
     cidr_block: str
     flow_log: bool = False
     region: str
