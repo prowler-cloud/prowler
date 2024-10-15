@@ -314,3 +314,29 @@ class TestS3:
 
     def test_generate_subfolder_name_by_extension_json_ocsf(self):
         assert S3.generate_subfolder_name_by_extension(".ocsf.json") == "json-ocsf"
+
+    @mock_aws
+    def test_test_connection_S3(self):
+        current_session = boto3.session.Session(
+            region_name=AWS_REGION_US_EAST_1
+        ).client("s3")
+        current_session.create_bucket(Bucket=S3_BUCKET_NAME)
+        s3 = S3.test_connection(
+            session=current_session,
+            bucket_name=S3_BUCKET_NAME,
+        )
+        assert s3 is not None
+        assert s3
+
+    @mock_aws
+    def test_test_connection_S3_bucket_invalid(self):
+        current_session = boto3.session.Session(
+            region_name=AWS_REGION_US_EAST_1
+        ).client("s3")
+        current_session.create_bucket(Bucket=S3_BUCKET_NAME)
+        s3 = S3.test_connection(
+            session=current_session,
+            bucket_name="invalid-bucket",
+        )
+        assert s3 is not None
+        assert not s3

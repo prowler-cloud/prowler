@@ -1,3 +1,4 @@
+import tempfile
 from os import path
 from tempfile import NamedTemporaryFile
 
@@ -148,11 +149,29 @@ class S3:
             )
         return uploaded_objects
 
-    # The problem of this method is that s3:ListAllMyBuckets is required to list the buckets
     @staticmethod
-    def test_connection(self) -> bool:
+    def test_connection(session, bucket_name: str) -> bool:
+        """
+        Test the connection to the S3 bucket.
+
+        Parameters:
+        - session: An instance of the `Session` class representing the AWS session.
+        - bucket_name: A string representing the name of the S3 bucket.
+
+        Returns:
+        - A boolean indicating whether the connection to the S3 bucket was successful.
+        """
         try:
-            self._session.list_buckets()
+            # Set a Temp file to upload
+            with tempfile.TemporaryFile() as temp_file:
+                temp_file.write(b"Test Prowler Connection")
+                temp_file.seek(0)
+                session.upload_fileobj(
+                    temp_file, bucket_name, "test-prowler-connection.txt"
+                )
+
+            # Try to delete the file
+            session.delete_object(Bucket=bucket_name, Key="test-prowler-connection.txt")
             return True
         except Exception as error:
             logger.error(
