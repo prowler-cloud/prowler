@@ -32,11 +32,11 @@ class wafv2_cloudwatch_metrics_enabled(Check):
 
                 if report.status == "FAIL":
                     if rules_metrics_disabled and rule_groups_metrics_disabled:
-                        report.status_extended = f"AWS WAFv2 Web ACL {web_acl.id} does not have CloudWatch Metrics enabled in all rule groups and rules. Non compliant resources are: Rules: {", ".join(rules_metrics_disabled)}. Rule Groups: {", ".join(rule_groups_metrics_disabled)}."
+                        report.status_extended = f"AWS WAFv2 Web ACL {web_acl.id} does not have CloudWatch Metrics enabled in all rule groups and rules. Non compliant resources are: Rules: {', '.join(rules_metrics_disabled)}. Rule Groups: {', '.join(rule_groups_metrics_disabled)}."
                     elif rules_metrics_disabled:
-                        report.status_extended = f"AWS WAFv2 Web ACL {web_acl.id} does not have CloudWatch Metrics enabled in all rule groups and rules. Non compliant resources are: Rules: {", ".join(rules_metrics_disabled)}."
+                        report.status_extended = f"AWS WAFv2 Web ACL {web_acl.id} does not have CloudWatch Metrics enabled in all rule groups and rules. Non compliant resources are: Rules: {', '.join(rules_metrics_disabled)}."
                     elif rule_groups_metrics_disabled:
-                        report.status_extended = f"AWS WAFv2 Web ACL {web_acl.id} does not have CloudWatch Metrics enabled in all rule groups and rules. Non compliant resources are: Rule Groups: {", ".join(rule_groups_metrics_disabled)}."
+                        report.status_extended = f"AWS WAFv2 Web ACL {web_acl.id} does not have CloudWatch Metrics enabled in all rule groups and rules. Non compliant resources are: Rule Groups: {', '.join(rule_groups_metrics_disabled)}."
 
                 findings.append(report)
 
