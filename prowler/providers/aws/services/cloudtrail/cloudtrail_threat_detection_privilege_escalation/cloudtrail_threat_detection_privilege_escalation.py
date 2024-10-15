@@ -10,7 +10,7 @@ class cloudtrail_threat_detection_privilege_escalation(Check):
     def execute(self):
         findings = []
         threshold = cloudtrail_client.audit_config.get(
-            "threat_detection_privilege_escalation_threshold", 0.1
+            "threat_detection_privilege_escalation_threshold", 0.2
         )
         threat_detection_minutes = cloudtrail_client.audit_config.get(
             "threat_detection_privilege_escalation_minutes", 1440
@@ -41,21 +41,24 @@ class cloudtrail_threat_detection_privilege_escalation(Check):
                 ):
                     event_log = json.loads(event_log["CloudTrailEvent"])
                     if (
-                        event_log["userIdentity"]["arn"],
-                        event_log["userIdentity"]["type"],
-                    ) not in potential_privilege_escalation:
+                        "arn" in event_log["userIdentity"]
+                    ):  # Ignore event logs without ARN since they are AWS services
+                        if (
+                            event_log["userIdentity"]["arn"],
+                            event_log["userIdentity"]["type"],
+                        ) not in potential_privilege_escalation:
+                            potential_privilege_escalation[
+                                (
+                                    event_log["userIdentity"]["arn"],
+                                    event_log["userIdentity"]["type"],
+                                )
+                            ] = set()
                         potential_privilege_escalation[
                             (
                                 event_log["userIdentity"]["arn"],
                                 event_log["userIdentity"]["type"],
                             )
-                        ] = set()
-                    potential_privilege_escalation[
-                        (
-                            event_log["userIdentity"]["arn"],
-                            event_log["userIdentity"]["type"],
-                        )
-                    ].add(event_name)
+                        ].add(event_name)
         for aws_identity, actions in potential_privilege_escalation.items():
             identity_threshold = round(
                 len(actions) / len(privilege_escalation_actions), 2

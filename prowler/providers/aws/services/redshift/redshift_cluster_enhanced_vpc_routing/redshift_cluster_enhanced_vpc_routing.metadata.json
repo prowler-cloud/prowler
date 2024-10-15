@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "redshift_cluster_enhanced_vpc_routing",
+  "CheckTitle": "Check if Redshift clusters are using enhanced VPC routing.",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "redshift",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:redshift:region:account-id:cluster/cluster-name",
+  "Severity": "medium",
+  "ResourceType": "AwsRedshiftCluster",
+  "Description": "This control checks whether an Amazon Redshift cluster has EnhancedVpcRouting enabled. Enhanced VPC routing forces all COPY and UNLOAD traffic between the cluster and data repositories to go through your VPC, allowing you to use VPC security features such as security groups and network access control lists.",
+  "Risk": "Without enhanced VPC routing, network traffic between the Redshift cluster and data repositories might bypass VPC-level security controls, increasing the risk of unauthorized access or data exfiltration.",
+  "RelatedUrl": "https://docs.aws.amazon.com/redshift/latest/mgmt/enhanced-vpc-enabling-cluster.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws redshift modify-cluster --cluster-identifier <cluster-id> --enhanced-vpc-routing",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/redshift-controls.html#redshift-7",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable enhanced VPC routing for your Redshift clusters to enforce network traffic through your VPC and apply additional security controls.",
+      "Url": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Redshift/enable-enhanced-vpc-routing.html"
+    }
+  },
+  "Categories": [
+    "trustboundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
