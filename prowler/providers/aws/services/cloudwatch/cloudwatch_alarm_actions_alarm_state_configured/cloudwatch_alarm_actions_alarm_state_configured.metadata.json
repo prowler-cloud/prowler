@@ -15,7 +15,7 @@
   "RelatedUrl": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/AlarmThatSendsEmail.html#alarms-and-actions",
   "Remediation": {
     "Code": {
-      "CLI": "aws cloudwatch put-metric-alarm --alarm-name <alarm-name> --alarm-actions <sns-topic-arn>",
+      "CLI": "aws cloudwatch put-metric-alarm --alarm-name <alarm-name> --alarm-actions <action-arn>",
       "NativeIaC": "",
       "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudwatch-controls.html#cloudwatch-15",
       "Terraform": ""
