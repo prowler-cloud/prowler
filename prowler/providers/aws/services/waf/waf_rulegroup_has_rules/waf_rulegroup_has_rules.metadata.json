@@ -17,7 +17,7 @@
     "Code": {
       "CLI": "aws waf-regional update-rule-group --rule-group-id <rule-group-id> --changes <changes>",
       "NativeIaC": "",
-      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/waf-controls.html#waf-13",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/waf-controls.html#waf-3",
       "Terraform": ""
     },
     "Recommendation": {

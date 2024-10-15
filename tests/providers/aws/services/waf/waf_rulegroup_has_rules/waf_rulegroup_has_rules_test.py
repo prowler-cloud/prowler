@@ -10,7 +10,7 @@ from tests.providers.aws.utils import (
     set_mocked_aws_provider,
 )
 
-RULE_GROUP_ID = "test-rule-group-id"
+RULE_GROUP_ID = "test-rulegroup-id"
 
 # Original botocore _make_api_call function
 orig = botocore.client.BaseClient._make_api_call
@@ -119,7 +119,7 @@ class Test_waf_rulegroup_has_rules:
                 assert result[0].resource_id == RULE_GROUP_ID
                 assert (
                     result[0].resource_arn
-                    == f"arn:aws:waf-regional:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:rule-group/{RULE_GROUP_ID}"
+                    == f"arn:aws:waf-regional:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:rulegroup/{RULE_GROUP_ID}"
                 )
                 assert result[0].region == AWS_REGION_US_EAST_1
 
@@ -158,6 +158,6 @@ class Test_waf_rulegroup_has_rules:
                 assert result[0].resource_id == RULE_GROUP_ID
                 assert (
                     result[0].resource_arn
-                    == f"arn:aws:waf-regional:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:rule-group/{RULE_GROUP_ID}"
+                    == f"arn:aws:waf-regional:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:rulegroup/{RULE_GROUP_ID}"
                 )
                 assert result[0].region == AWS_REGION_US_EAST_1

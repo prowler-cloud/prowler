@@ -159,7 +159,7 @@ class WAFRegional(AWSService):
         logger.info("WAFRegional - Listing Regional Rule Groups...")
         try:
             for rule_group in regional_client.list_rule_groups().get("RuleGroups", []):
-                arn = f"arn:aws:waf-regional:{regional_client.region}:{self.audited_account}:rule-group/{rule_group['RuleGroupId']}"
+                arn = f"arn:aws:waf-regional:{regional_client.region}:{self.audited_account}:rulegroup/{rule_group['RuleGroupId']}"
                 self.rule_groups[arn] = RuleGroup(
                     arn=arn,
                     region=regional_client.region,
@@ -221,7 +221,7 @@ class RuleGroup(BaseModel):
     id: str
     region: str
     name: str
-    rules: list[Rule] = []
+    rules: list[ACLRule] = []
     tags: Optional[list] = []
 
 
