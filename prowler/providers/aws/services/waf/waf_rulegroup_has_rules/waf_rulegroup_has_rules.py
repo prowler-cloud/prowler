@@ -2,7 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.waf.wafregional_client import wafregional_client
 
 
-class waf_rule_has_conditions(Check):
+class waf_rulegroup_has_rules(Check):
     def execute(self):
         findings = []
         for rule_group in wafregional_client.rule_groups.values():

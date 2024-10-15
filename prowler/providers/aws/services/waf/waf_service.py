@@ -182,7 +182,7 @@ class WAFRegional(AWSService):
                 .list_activated_rules_in_rule_group(RuleGroupId=rule_group.id)
                 .get("ActivatedRules", [])
             ):
-                rule_group.rules.append(Rule(id=rule.get("RuleId", "")))
+                rule_group.rules.append(ACLRule(id=rule.get("RuleId", "")))
 
         except Exception as error:
             logger.error(
