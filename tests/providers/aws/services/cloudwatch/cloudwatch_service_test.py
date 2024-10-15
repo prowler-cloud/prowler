@@ -134,6 +134,7 @@ class Test_CloudWatch_Service:
         assert cloudwatch.metric_alarms[0].tags == [
             {"Key": "key-1", "Value": "value-1"}
         ]
+        assert cloudwatch.metric_alarms[0].alarm_actions == ["arn:alarm"]
         assert cloudwatch.metric_alarms[0].actions_enabled
 
     # Test Logs Filters

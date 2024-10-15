@@ -9,7 +9,6 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################## CloudWatch
 class CloudWatch(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
@@ -43,7 +42,8 @@ class CloudWatch(AWSService):
                                 metric=metric_name,
                                 name_space=namespace,
                                 region=regional_client.region,
-                                actions_enabled=alarm["ActionsEnabled"],
+                                alarm_actions=alarm.get("AlarmActions", []),
+                                actions_enabled=alarm.get("ActionsEnabled", False),
                             )
                         )
         except ClientError as error:
@@ -77,7 +77,6 @@ class CloudWatch(AWSService):
             )
 
 
-################## CloudWatch Logs
 class Logs(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
@@ -248,7 +247,8 @@ class MetricAlarm(BaseModel):
     name_space: Optional[str]
     region: str
     tags: Optional[list] = []
-    actions_enabled: bool = False
+    alarm_actions: list
+    actions_enabled: bool
 
 
 class LogGroup(BaseModel):
