@@ -66,6 +66,16 @@ class AutoScaling(AWSService):
                             self.audit_resources,
                         )
                     ):
+                        instance_types = []
+                        az_instance_types = {}
+                        for instance in group.get("Instances", []):
+                            az = instance["AvailabilityZone"]
+                            instance_type = instance["InstanceType"]
+                            instance_types.append(instance_type)
+                            if az not in az_instance_types:
+                                az_instance_types[az] = set()
+                            az_instance_types[az].add(instance_type)
+
                         self.groups.append(
                             Group(
                                 arn=group.get("AutoScalingGroupARN"),
@@ -73,6 +83,8 @@ class AutoScaling(AWSService):
                                 region=regional_client.region,
                                 availability_zones=group.get("AvailabilityZones"),
                                 tags=group.get("Tags"),
+                                instance_types=instance_types,
+                                az_instance_types=az_instance_types,
                                 launch_template=group.get("LaunchTemplate", {}),
                                 mixed_instances_policy_launch_template=group.get(
                                     "MixedInstancesPolicy", {}
@@ -154,6 +166,8 @@ class Group(BaseModel):
     region: str
     availability_zones: list
     tags: list = []
+    instance_types: list = []
+    az_instance_types: dict = {}
     launch_template: dict = {}
     mixed_instances_policy_launch_template: dict = {}
     health_check_type: str
