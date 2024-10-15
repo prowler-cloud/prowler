@@ -27,22 +27,22 @@ class FSx(AWSService):
                         is_resource_filtered(file_system_arn, self.audit_resources)
                     ):
                         type = file_system["FileSystemType"]
-                        copy_tags_to_backups_aux = False
-                        copy_tags_to_volumes_aux = False
+                        copy_tags_to_backups_aux = None
+                        copy_tags_to_volumes_aux = None
                         if type == "LUSTRE":
                             copy_tags_to_backups_aux = file_system.get(
-                                "LustreConfiguration", {"CopyTagsToBackups": False}
+                                "LustreConfiguration", {}
                             ).get("CopyTagsToBackups", False)
                         elif type == "WINDOWS":
                             copy_tags_to_backups_aux = file_system.get(
-                                "WindowsConfiguration", {"CopyTagsToBackups": False}
+                                "WindowsConfiguration", {}
                             ).get("CopyTagsToBackups", False)
                         elif type == "OPENZFS":
                             copy_tags_to_backups_aux = file_system.get(
-                                "OpenZFSConfiguration", {"CopyTagsToBackups": False}
+                                "OpenZFSConfiguration", {}
                             ).get("CopyTagsToBackups", False)
                             copy_tags_to_volumes_aux = file_system.get(
-                                "OpenZFSConfiguration", {"CopyTagsToVolumes": False}
+                                "OpenZFSConfiguration", {}
                             ).get("CopyTagsToVolumes", False)
 
                         self.file_systems[file_system_arn] = FileSystem(
@@ -65,6 +65,6 @@ class FileSystem(BaseModel):
     arn: str
     region: str
     type: str
-    copy_tags_to_backups: bool
-    copy_tags_to_volumes: bool
+    copy_tags_to_backups: Optional[bool]
+    copy_tags_to_volumes: Optional[bool]
     tags: Optional[list] = []
