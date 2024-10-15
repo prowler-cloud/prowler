@@ -2,7 +2,13 @@ from unittest.mock import patch
 
 import botocore
 
-from prowler.providers.aws.services.waf.waf_service import WAF, Rule, WAFRegional
+from prowler.providers.aws.services.waf.waf_service import (
+    WAF,
+    ACLRule,
+    Predicate,
+    Rule,
+    WAFRegional,
+)
 from tests.providers.aws.utils import AWS_REGION_EU_WEST_1, set_mocked_aws_provider
 
 # Mocking WAF Calls
@@ -35,6 +41,29 @@ def mock_make_api_call(self, operation_name, kwarg):
                         "RuleId": "my-rule-group-id",
                         "Type": "GROUP",
                     },
+                ],
+            }
+        }
+    if operation_name == "ListRules":
+        return {
+            "Rules": [
+                {
+                    "RuleId": "my-rule-id",
+                    "Name": "my-rule",
+                },
+            ]
+        }
+    if operation_name == "GetRule":
+        return {
+            "Rule": {
+                "RuleId": "my-rule-id",
+                "Name": "my-rule",
+                "Predicates": [
+                    {
+                        "Negated": False,
+                        "Type": "IPMatch",
+                        "DataId": "my-data-id",
+                    }
                 ],
             }
         }
@@ -144,3 +173,38 @@ class Test_WAF_Service:
         assert waf.web_acls[waf_arn].id == "my-web-acl-id"
         assert waf.web_acls[waf_arn].rules == [Rule(id="my-rule-id")]
         assert waf.web_acls[waf_arn].rule_groups == [Rule(id="my-rule-group-id")]
+
+    # Test WAFRegional List Rules
+    def test_list_rules(self):
+        # WAF client for this test class
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        waf = WAFRegional(aws_provider)
+        waf_arn = "arn:aws:waf-regional:eu-west-1:123456789012:webacl/my-web-acl-id"
+        assert waf.web_acls[waf_arn].name == "my-web-acl"
+        assert waf.web_acls[waf_arn].region == AWS_REGION_EU_WEST_1
+        assert waf.web_acls[waf_arn].id == "my-web-acl-id"
+        assert waf.web_acls[waf_arn].rules == [ACLRule(id="my-rule-id")]
+        assert waf.web_acls[waf_arn].rule_groups == [ACLRule(id="my-rule-group-id")]
+        assert waf.rules
+
+    # Test WAFRegional Get Rule
+    def test_get_rule(self):
+        # WAF client for this test class
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        waf = WAFRegional(aws_provider)
+        waf_arn = "arn:aws:waf-regional:eu-west-1:123456789012:webacl/my-web-acl-id"
+        assert waf.web_acls[waf_arn].name == "my-web-acl"
+        assert waf.web_acls[waf_arn].region == AWS_REGION_EU_WEST_1
+        assert waf.web_acls[waf_arn].id == "my-web-acl-id"
+        assert waf.web_acls[waf_arn].rules == [ACLRule(id="my-rule-id")]
+        assert waf.web_acls[waf_arn].rule_groups == [ACLRule(id="my-rule-group-id")]
+        rule_arn = "arn:aws:waf-regional:eu-west-1:123456789012:rule/my-rule-id"
+        assert waf.rules == {
+            rule_arn: Rule(
+                arn=rule_arn,
+                id="my-rule-id",
+                name="my-rule",
+                region=AWS_REGION_EU_WEST_1,
+                predicates=[Predicate(negated=False, data_id="my-data-id")],
+            )
+        }
