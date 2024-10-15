@@ -116,6 +116,7 @@ class Test_CloudWatch_Service:
             Threshold=2,
             Unit="Seconds",
             Tags=[{"Key": "key-1", "Value": "value-1"}],
+            ActionsEnabled=True,
         )
         aws_provider = set_mocked_aws_provider(
             expected_checks=["cloudwatch_log_group_no_secrets_in_logs"]
@@ -133,6 +134,7 @@ class Test_CloudWatch_Service:
         assert cloudwatch.metric_alarms[0].tags == [
             {"Key": "key-1", "Value": "value-1"}
         ]
+        assert cloudwatch.metric_alarms[0].actions_enabled
 
     # Test Logs Filters
     @mock_aws
