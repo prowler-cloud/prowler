@@ -70,22 +70,40 @@ class Test_AutoScaling_Service:
             InstanceType="t1.micro",
             KeyName="the_keys",
             SecurityGroups=["default", "default2"],
+            MetadataOptions={
+                "HttpTokens": "required",
+                "HttpPutResponseHopLimit": 123,
+                "HttpEndpoint": "enabled",
+            },
         )
         # AutoScaling client for this test class
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         autoscaling = AutoScaling(aws_provider)
         assert len(autoscaling.launch_configurations) == 2
-        assert autoscaling.launch_configurations[0].name == "tester1"
+        launch_configurations = autoscaling.launch_configurations
+        arn_tester1 = next(
+            arn
+            for arn, config in launch_configurations.items()
+            if config.name == "tester1"
+        )
+        arn_tester2 = next(
+            arn
+            for arn, config in launch_configurations.items()
+            if config.name == "tester2"
+        )
+        assert arn_tester1 in launch_configurations
         assert (
-            b64decode(autoscaling.launch_configurations[0].user_data).decode(
+            b64decode(launch_configurations[arn_tester1].user_data).decode(
                 encoding_format_utf_8
             )
             == "DB_PASSWORD=foobar123"
         )
-        assert autoscaling.launch_configurations[0].image_id == "ami-12c6146b"
-        assert autoscaling.launch_configurations[0].public_ip
-        assert autoscaling.launch_configurations[1].image_id == "ami-12c6146b"
-        assert autoscaling.launch_configurations[1].name == "tester2"
+        assert launch_configurations[arn_tester1].image_id == "ami-12c6146b"
+        assert launch_configurations[arn_tester1].public_ip
+        assert arn_tester2 in launch_configurations
+        assert launch_configurations[arn_tester2].image_id == "ami-12c6146b"
+        assert launch_configurations[arn_tester2].http_tokens == "required"
+        assert launch_configurations[arn_tester2].http_endpoint == "enabled"
 
     # Test Describe Auto Scaling Groups
     @mock_aws
@@ -168,41 +186,103 @@ class Test_AutoScaling_Service:
             TargetGroupARNs=[target_group["TargetGroups"][0]["TargetGroupArn"]],
         )
 
+        autoscaling_client.create_launch_configuration(
+            LaunchConfigurationName="test",
+            ImageId="ami-12c6146b",
+            InstanceType="t1.micro",
+            KeyName="the_keys",
+            SecurityGroups=["default", "default2"],
+            UserData="DB_PASSWORD=foobar123",
+            AssociatePublicIpAddress=True,
+        )
+
+        autoscaling_client.create_auto_scaling_group(
+            AutoScalingGroupName="my-autoscaling-group-3",
+            LaunchConfigurationName="test",
+            MinSize=0,
+            MaxSize=0,
+            DesiredCapacity=0,
+            AvailabilityZones=["us-east-1a", "us-east-1b"],
+            Tags=[],
+        )
+
         # AutoScaling client for this test class
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         autoscaling = AutoScaling(aws_provider)
-        assert len(autoscaling.groups) == 2
-        assert (
-            autoscaling.groups[0].arn
-            == autoscaling_client.describe_auto_scaling_groups(
-                AutoScalingGroupNames=["my-autoscaling-group"]
-            )["AutoScalingGroups"][0]["AutoScalingGroupARN"]
-        )
-        assert autoscaling.groups[0].name == "my-autoscaling-group"
-        assert autoscaling.groups[0].region == AWS_REGION_US_EAST_1
-        assert autoscaling.groups[0].availability_zones == ["us-east-1a", "us-east-1b"]
-        assert autoscaling.groups[0].tags == [
-            {
-                "Key": "tag_test",
-                "PropagateAtLaunch": False,
-                "ResourceId": "my-autoscaling-group",
-                "ResourceType": "auto-scaling-group",
-                "Value": "value_test",
-            }
-        ]
-        assert autoscaling.groups[0].launch_template["LaunchTemplateName"] == "test"
-        assert (
-            autoscaling.groups[1].mixed_instances_policy_launch_template[
-                "LaunchTemplateName"
-            ]
-            == "test"
-        )
-        assert autoscaling.groups[1].health_check_type == "ELB"
-        assert autoscaling.groups[1].load_balancers == ["my-load-balancer"]
-        assert autoscaling.groups[1].target_groups == [
-            target_group["TargetGroups"][0]["TargetGroupArn"]
-        ]
-        assert autoscaling.groups[0].launch_configuration_name == "test"
+        assert len(autoscaling.groups) == 3
+        for group in autoscaling.groups:
+            if group.name == "my-autoscaling-group":
+                assert (
+                    group.arn
+                    == autoscaling_client.describe_auto_scaling_groups(
+                        AutoScalingGroupNames=["my-autoscaling-group"]
+                    )["AutoScalingGroups"][0]["AutoScalingGroupARN"]
+                )
+                assert group.name == "my-autoscaling-group"
+                assert group.region == AWS_REGION_US_EAST_1
+                assert group.availability_zones == ["us-east-1a", "us-east-1b"]
+                assert group.tags == [
+                    {
+                        "Key": "tag_test",
+                        "PropagateAtLaunch": False,
+                        "ResourceId": "my-autoscaling-group",
+                        "ResourceType": "auto-scaling-group",
+                        "Value": "value_test",
+                    }
+                ]
+                assert group.launch_template["LaunchTemplateName"] == "test"
+                assert not group.mixed_instances_policy_launch_template
+                assert group.health_check_type == "EC2"
+                assert not group.load_balancers
+                assert not group.target_groups
+                assert not group.launch_configuration_name
+            elif group.name == "my-autoscaling-group-2":
+                assert (
+                    group.arn
+                    == autoscaling_client.describe_auto_scaling_groups(
+                        AutoScalingGroupNames=["my-autoscaling-group-2"]
+                    )["AutoScalingGroups"][0]["AutoScalingGroupARN"]
+                )
+                assert group.name == "my-autoscaling-group-2"
+                assert group.region == AWS_REGION_US_EAST_1
+                assert group.availability_zones == ["us-east-1a", "us-east-1b"]
+                assert group.tags == [
+                    {
+                        "Key": "tag_test",
+                        "PropagateAtLaunch": False,
+                        "ResourceId": "my-autoscaling-group-2",
+                        "ResourceType": "auto-scaling-group",
+                        "Value": "value_test",
+                    }
+                ]
+                assert not group.launch_template
+                assert (
+                    group.mixed_instances_policy_launch_template["LaunchTemplateName"]
+                    == "test"
+                )
+                assert group.health_check_type == "ELB"
+                assert group.load_balancers == ["my-load-balancer"]
+                assert group.target_groups == [
+                    target_group["TargetGroups"][0]["TargetGroupArn"]
+                ]
+                assert not group.launch_configuration_name
+            elif group.name == "my-autoscaling-group-3":
+                assert (
+                    group.arn
+                    == autoscaling_client.describe_auto_scaling_groups(
+                        AutoScalingGroupNames=["my-autoscaling-group-3"]
+                    )["AutoScalingGroups"][0]["AutoScalingGroupARN"]
+                )
+                assert group.name == "my-autoscaling-group-3"
+                assert group.region == AWS_REGION_US_EAST_1
+                assert group.availability_zones == ["us-east-1a", "us-east-1b"]
+                assert not group.tags
+                assert not group.launch_template
+                assert not group.mixed_instances_policy_launch_template
+                assert group.health_check_type == "EC2"
+                assert not group.load_balancers
+                assert not group.target_groups
+                assert group.launch_configuration_name == "test"
 
     # Test Application AutoScaling Describe Scalable Targets
     @mock_aws
