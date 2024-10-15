@@ -110,6 +110,7 @@ class Test_Redshift_Service:
             Tags=[
                 {"Key": "test", "Value": "test"},
             ],
+            EnhancedVpcRouting=True,
             ClusterParameterGroupName="default.redshift-1.0",
         )
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
@@ -133,6 +134,7 @@ class Test_Redshift_Service:
         assert redshift.clusters[0].parameter_group_name == "default.redshift-1.0"
         assert redshift.clusters[0].encrypted
         assert redshift.clusters[0].master_username == "user"
+        assert redshift.clusters[0].enhanced_vpc_routing
         assert redshift.clusters[0].database_name == "test"
 
     @mock_aws

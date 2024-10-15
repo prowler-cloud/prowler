@@ -306,7 +306,7 @@ class Test_opensearch_service_domains_not_publicly_accessible:
 
     def test_domain_inside_vpc(self):
         opensearch_client = mock.MagicMock
-        opensearch_client.opensearch_domains = []
+        opensearch_client.opensearch_domains = {}
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_WEST_2])
 
@@ -324,13 +324,12 @@ class Test_opensearch_service_domains_not_publicly_accessible:
                 opensearch_service_domains_not_publicly_accessible,
             )
 
-            opensearch_client.opensearch_domains.append(
-                OpenSearchDomain(
-                    name=domain_name,
-                    region=AWS_REGION_US_WEST_2,
-                    arn=f"arn:aws:es:{AWS_REGION_US_WEST_2}:{AWS_ACCOUNT_NUMBER}:domain/{domain_name}",
-                    vpc_id="vpc-123456",
-                )
+            domain_arn = f"arn:aws:es:{AWS_REGION_US_WEST_2}:{AWS_ACCOUNT_NUMBER}:domain/{domain_name}"
+            opensearch_client.opensearch_domains[domain_arn] = OpenSearchDomain(
+                name=domain_name,
+                region=AWS_REGION_US_WEST_2,
+                arn=domain_arn,
+                vpc_id="vpc-123456",
             )
 
             check = opensearch_service_domains_not_publicly_accessible()

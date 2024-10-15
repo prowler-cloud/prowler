@@ -9,7 +9,7 @@ class AutoScaling(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
-        self.launch_configurations = []
+        self.launch_configurations = {}
         self.__threading_call__(self._describe_launch_configurations)
         self.groups = []
         self.__threading_call__(self._describe_auto_scaling_groups)
@@ -28,14 +28,23 @@ class AutoScaling(AWSService):
                             self.audit_resources,
                         )
                     ):
-                        self.launch_configurations.append(
-                            LaunchConfiguration(
-                                arn=configuration["LaunchConfigurationARN"],
-                                name=configuration["LaunchConfigurationName"],
-                                user_data=configuration["UserData"],
-                                image_id=configuration["ImageId"],
-                                region=regional_client.region,
-                            )
+                        arn = configuration["LaunchConfigurationARN"]
+
+                        self.launch_configurations[arn] = LaunchConfiguration(
+                            arn=arn,
+                            name=configuration["LaunchConfigurationName"],
+                            user_data=configuration["UserData"],
+                            image_id=configuration["ImageId"],
+                            region=regional_client.region,
+                            http_tokens=configuration.get("MetadataOptions", {}).get(
+                                "HttpTokens", ""
+                            ),
+                            http_endpoint=configuration.get("MetadataOptions", {}).get(
+                                "HttpEndpoint", ""
+                            ),
+                            public_ip=configuration.get(
+                                "AssociatePublicIpAddress", False
+                            ),
                         )
 
         except Exception as error:
@@ -64,6 +73,18 @@ class AutoScaling(AWSService):
                                 region=regional_client.region,
                                 availability_zones=group.get("AvailabilityZones"),
                                 tags=group.get("Tags"),
+                                launch_template=group.get("LaunchTemplate", {}),
+                                mixed_instances_policy_launch_template=group.get(
+                                    "MixedInstancesPolicy", {}
+                                )
+                                .get("LaunchTemplate", {})
+                                .get("LaunchTemplateSpecification", {}),
+                                health_check_type=group.get("HealthCheckType", ""),
+                                load_balancers=group.get("LoadBalancerNames", []),
+                                target_groups=group.get("TargetGroupARNs", []),
+                                launch_configuration_name=group.get(
+                                    "LaunchConfigurationName", ""
+                                ),
                             )
                         )
 
@@ -122,6 +143,9 @@ class LaunchConfiguration(BaseModel):
     user_data: str
     image_id: str
     region: str
+    http_tokens: str
+    http_endpoint: str
+    public_ip: bool
 
 
 class Group(BaseModel):
@@ -130,6 +154,12 @@ class Group(BaseModel):
     region: str
     availability_zones: list
     tags: list = []
+    launch_template: dict = {}
+    mixed_instances_policy_launch_template: dict = {}
+    health_check_type: str
+    load_balancers: list = []
+    target_groups: list = []
+    launch_configuration_name: str
 
 
 class ScalableTarget(BaseModel):
