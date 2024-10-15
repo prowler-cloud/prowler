@@ -4,7 +4,7 @@ from prowler.providers.aws.services.autoscaling.autoscaling_client import (
 )
 
 
-class autoscaling_group_multiple_instances_types_in_multiaz(Check):
+class autoscaling_group_multiple_instances_types(Check):
     def execute(self):
         findings = []
         for group in autoscaling_client.groups:

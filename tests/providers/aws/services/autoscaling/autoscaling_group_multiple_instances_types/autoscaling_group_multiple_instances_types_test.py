@@ -59,7 +59,7 @@ def mock_make_api_call_single_az(self, operation_name, kwarg):
     return make_api_call(self, operation_name, kwarg)
 
 
-class Test_autoscaling_group_multiple_instances_types_in_multiaz:
+class Test_autoscaling_group_multiple_instances_types:
     @mock_aws
     def test_no_autoscaling(self):
         autoscaling_client = client("autoscaling", region_name=AWS_REGION_US_EAST_1)
@@ -75,15 +75,15 @@ class Test_autoscaling_group_multiple_instances_types_in_multiaz:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.autoscaling.autoscaling_group_multiple_instances_types_in_multiaz.autoscaling_group_multiple_instances_types_in_multiaz.autoscaling_client",
+            "prowler.providers.aws.services.autoscaling.autoscaling_group_multiple_instances_types.autoscaling_group_multiple_instances_types.autoscaling_client",
             new=AutoScaling(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.autoscaling.autoscaling_group_multiple_instances_types_in_multiaz.autoscaling_group_multiple_instances_types_in_multiaz import (
-                autoscaling_group_multiple_instances_types_in_multiaz,
+            from prowler.providers.aws.services.autoscaling.autoscaling_group_multiple_instances_types.autoscaling_group_multiple_instances_types import (
+                autoscaling_group_multiple_instances_types,
             )
 
-            check = autoscaling_group_multiple_instances_types_in_multiaz()
+            check = autoscaling_group_multiple_instances_types()
             result = check.execute()
 
             assert len(result) == 0
@@ -122,15 +122,15 @@ class Test_autoscaling_group_multiple_instances_types_in_multiaz:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.autoscaling.autoscaling_group_multiple_instances_types_in_multiaz.autoscaling_group_multiple_instances_types_in_multiaz.autoscaling_client",
+            "prowler.providers.aws.services.autoscaling.autoscaling_group_multiple_instances_types.autoscaling_group_multiple_instances_types.autoscaling_client",
             new=AutoScaling(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.autoscaling.autoscaling_group_multiple_instances_types_in_multiaz.autoscaling_group_multiple_instances_types_in_multiaz import (
-                autoscaling_group_multiple_instances_types_in_multiaz,
+            from prowler.providers.aws.services.autoscaling.autoscaling_group_multiple_instances_types.autoscaling_group_multiple_instances_types import (
+                autoscaling_group_multiple_instances_types,
             )
 
-            check = autoscaling_group_multiple_instances_types_in_multiaz()
+            check = autoscaling_group_multiple_instances_types()
             result = check.execute()
 
             assert len(result) == 1
@@ -178,15 +178,15 @@ class Test_autoscaling_group_multiple_instances_types_in_multiaz:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.autoscaling.autoscaling_group_multiple_instances_types_in_multiaz.autoscaling_group_multiple_instances_types_in_multiaz.autoscaling_client",
+            "prowler.providers.aws.services.autoscaling.autoscaling_group_multiple_instances_types.autoscaling_group_multiple_instances_types.autoscaling_client",
             new=AutoScaling(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.autoscaling.autoscaling_group_multiple_instances_types_in_multiaz.autoscaling_group_multiple_instances_types_in_multiaz import (
-                autoscaling_group_multiple_instances_types_in_multiaz,
+            from prowler.providers.aws.services.autoscaling.autoscaling_group_multiple_instances_types.autoscaling_group_multiple_instances_types import (
+                autoscaling_group_multiple_instances_types,
             )
 
-            check = autoscaling_group_multiple_instances_types_in_multiaz()
+            check = autoscaling_group_multiple_instances_types()
             result = check.execute()
 
             assert len(result) == 1
@@ -236,15 +236,15 @@ class Test_autoscaling_group_multiple_instances_types_in_multiaz:
                 "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=aws_provider,
             ), mock.patch(
-                "prowler.providers.aws.services.autoscaling.autoscaling_group_multiple_instances_types_in_multiaz.autoscaling_group_multiple_instances_types_in_multiaz.autoscaling_client",
+                "prowler.providers.aws.services.autoscaling.autoscaling_group_multiple_instances_types.autoscaling_group_multiple_instances_types.autoscaling_client",
                 new=AutoScaling(aws_provider),
             ):
                 # Test Check
-                from prowler.providers.aws.services.autoscaling.autoscaling_group_multiple_instances_types_in_multiaz.autoscaling_group_multiple_instances_types_in_multiaz import (
-                    autoscaling_group_multiple_instances_types_in_multiaz,
+                from prowler.providers.aws.services.autoscaling.autoscaling_group_multiple_instances_types.autoscaling_group_multiple_instances_types import (
+                    autoscaling_group_multiple_instances_types,
                 )
 
-                check = autoscaling_group_multiple_instances_types_in_multiaz()
+                check = autoscaling_group_multiple_instances_types()
                 result = check.execute()
 
                 assert len(result) == 1
@@ -296,15 +296,15 @@ class Test_autoscaling_group_multiple_instances_types_in_multiaz:
                 "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=aws_provider,
             ), mock.patch(
-                "prowler.providers.aws.services.autoscaling.autoscaling_group_multiple_instances_types_in_multiaz.autoscaling_group_multiple_instances_types_in_multiaz.autoscaling_client",
+                "prowler.providers.aws.services.autoscaling.autoscaling_group_multiple_instances_types.autoscaling_group_multiple_instances_types.autoscaling_client",
                 new=AutoScaling(aws_provider),
             ):
                 # Test Check
-                from prowler.providers.aws.services.autoscaling.autoscaling_group_multiple_instances_types_in_multiaz.autoscaling_group_multiple_instances_types_in_multiaz import (
-                    autoscaling_group_multiple_instances_types_in_multiaz,
+                from prowler.providers.aws.services.autoscaling.autoscaling_group_multiple_instances_types.autoscaling_group_multiple_instances_types import (
+                    autoscaling_group_multiple_instances_types,
                 )
 
-                check = autoscaling_group_multiple_instances_types_in_multiaz()
+                check = autoscaling_group_multiple_instances_types()
                 result = check.execute()
 
                 assert len(result) == 1

@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "autoscaling_group_multiple_instances_types_in_multiaz",
+  "CheckID": "autoscaling_group_multiple_instances_types",
   "CheckTitle": "EC2 Auto Scaling Group should use multiple instance types in multiple Availability Zones.",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices"
@@ -10,7 +10,7 @@
   "ResourceIdTemplate": "arn:partition:autoscaling:region:account-id:autoScalingGroupName/resource-name",
   "Severity": "medium",
   "ResourceType": "AwsAutoScalingAutoScalingGroup",
-  "Description": "This control checks whether an Amazon EC2 Auto Scaling group uses multiple instance types. The control fails if the Auto Scaling group has only one instance type defined.",
+  "Description": "This control checks whether an Amazon EC2 Auto Scaling group uses multiple instance types in all the Availability Zones, meaning that there should be multiple Availability Zones with multiple instances on each one. The control fails if the Auto Scaling group has only one instance type defined.",
   "Risk": "Using only one instance type in an Auto Scaling group reduces the flexibility to launch new instances when there is insufficient capacity for that specific type, potentially affecting the availability of the application.",
   "RelatedUrl": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-mixed-instances-groups.html",
   "Remediation": {
