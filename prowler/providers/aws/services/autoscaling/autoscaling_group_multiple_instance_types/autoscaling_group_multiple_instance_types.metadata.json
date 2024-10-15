@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "autoscaling_group_multiple_instances_types",
+  "CheckID": "autoscaling_group_multiple_instance_types",
   "CheckTitle": "EC2 Auto Scaling Group should use multiple instance types in multiple Availability Zones.",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices"
