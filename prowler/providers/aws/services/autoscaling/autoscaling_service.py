@@ -9,7 +9,7 @@ class AutoScaling(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
-        self.launch_configurations = []
+        self.launch_configurations = {}
         self.__threading_call__(self._describe_launch_configurations)
         self.groups = []
         self.__threading_call__(self._describe_auto_scaling_groups)
@@ -28,17 +28,23 @@ class AutoScaling(AWSService):
                             self.audit_resources,
                         )
                     ):
-                        self.launch_configurations.append(
-                            LaunchConfiguration(
-                                arn=configuration["LaunchConfigurationARN"],
-                                name=configuration["LaunchConfigurationName"],
-                                user_data=configuration["UserData"],
-                                image_id=configuration["ImageId"],
-                                region=regional_client.region,
-                                public_ip=configuration.get(
-                                    "AssociatePublicIpAddress", False
-                                ),
-                            )
+                        arn = configuration["LaunchConfigurationARN"]
+
+                        self.launch_configurations[arn] = LaunchConfiguration(
+                            arn=arn,
+                            name=configuration["LaunchConfigurationName"],
+                            user_data=configuration["UserData"],
+                            image_id=configuration["ImageId"],
+                            region=regional_client.region,
+                            http_tokens=configuration.get("MetadataOptions", {}).get(
+                                "HttpTokens", ""
+                            ),
+                            http_endpoint=configuration.get("MetadataOptions", {}).get(
+                                "HttpEndpoint", ""
+                            ),
+                            public_ip=configuration.get(
+                                "AssociatePublicIpAddress", False
+                            ),
                         )
 
         except Exception as error:
@@ -137,6 +143,8 @@ class LaunchConfiguration(BaseModel):
     user_data: str
     image_id: str
     region: str
+    http_tokens: str
+    http_endpoint: str
     public_ip: bool
 
 

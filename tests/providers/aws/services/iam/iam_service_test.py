@@ -33,9 +33,7 @@ ASSUME_ROLE_POLICY_DOCUMENT = {
 
 SECURITY_AUDIT_POLICY_ARN = "arn:aws:iam::aws:policy/SecurityAudit"
 READ_ONLY_ACCESS_POLICY_ARN = "arn:aws:iam::aws:policy/ReadOnlyAccess"
-SUPPORT_SERVICE_ROLE_POLICY_ARN = (
-    "arn:aws:iam::aws:policy/aws-service-role/AWSSupportServiceRolePolicy"
-)
+SUPPORT_SERVICE_ROLE_POLICY_ARN = "arn:aws:iam::aws:policy/AWSSupportAccess"
 ADMINISTRATOR_ACCESS_POLICY_ARN = "arn:aws:iam::aws:policy/AdministratorAccess"
 
 # Mocking Access Analyzer Calls
