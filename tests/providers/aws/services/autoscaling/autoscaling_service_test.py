@@ -124,7 +124,7 @@ class Test_AutoScaling_Service:
 
     # Test Describe Auto Scaling Groups
     @mock_aws
-    def test_describe_auto_scaling_groups(self):
+    def test_describe_auto_scaling_groups_with_attached_instances(self):
         with mock.patch(
             "botocore.client.BaseClient._make_api_call", new=mock_make_api_call
         ):
