@@ -2,10 +2,10 @@ from unittest.mock import patch
 
 import botocore
 
-from prowler.providers.aws.services.waf.waf_service import WAF, WAFRegional
+from prowler.providers.aws.services.waf.waf_service import WAF, Rule, WAFRegional
 from tests.providers.aws.utils import AWS_REGION_EU_WEST_1, set_mocked_aws_provider
 
-# Mocking WAF-Regional Calls
+# Mocking WAF Calls
 make_api_call = botocore.client.BaseClient._make_api_call
 
 
@@ -23,7 +23,21 @@ def mock_make_api_call(self, operation_name, kwarg):
                 "alb-arn",
             ]
         }
-
+    if operation_name == "GetWebACL":
+        return {
+            "WebACL": {
+                "Rules": [
+                    {
+                        "RuleId": "my-rule-id",
+                        "Type": "REGULAR",
+                    },
+                    {
+                        "RuleId": "my-rule-group-id",
+                        "Type": "GROUP",
+                    },
+                ],
+            }
+        }
     return make_api_call(self, operation_name, kwarg)
 
 
@@ -43,7 +57,6 @@ def mock_generate_regional_clients(provider, service):
     new=mock_generate_regional_clients,
 )
 class Test_WAF_Service:
-
     # Test WAF Service
     def test_service(self):
         # WAF client for this test class
@@ -119,3 +132,15 @@ class Test_WAF_Service:
         assert waf.web_acls[waf_arn].name == "my-web-acl"
         assert waf.web_acls[waf_arn].region == AWS_REGION_EU_WEST_1
         assert waf.web_acls[waf_arn].id == "my-web-acl-id"
+
+    # Test WAFRegional Get Web ACL
+    def test_get_web_acl(self):
+        # WAF client for this test class
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        waf = WAFRegional(aws_provider)
+        waf_arn = "arn:aws:waf-regional:eu-west-1:123456789012:webacl/my-web-acl-id"
+        assert waf.web_acls[waf_arn].name == "my-web-acl"
+        assert waf.web_acls[waf_arn].region == AWS_REGION_EU_WEST_1
+        assert waf.web_acls[waf_arn].id == "my-web-acl-id"
+        assert waf.web_acls[waf_arn].rules == [Rule(id="my-rule-id")]
+        assert waf.web_acls[waf_arn].rule_groups == [Rule(id="my-rule-group-id")]

@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -61,7 +63,7 @@ class WAFRegional(AWSService):
         self.__threading_call__(self._get_web_acl, self.web_acls.values())
 
     def _list_web_acls(self, regional_client):
-        logger.info("WAF - Listing Regional Web ACLs...")
+        logger.info("WAFRegional - Listing Regional Web ACLs...")
         try:
             for waf in regional_client.list_web_acls()["WebACLs"]:
                 if not self.audit_resources or (
@@ -81,7 +83,7 @@ class WAFRegional(AWSService):
             )
 
     def _list_resources_for_web_acl(self, regional_client):
-        logger.info("WAF - Describing resources...")
+        logger.info("WAFRegional - Describing resources...")
         try:
             for acl in self.web_acls.values():
                 if acl.region == regional_client.region:
@@ -96,21 +98,25 @@ class WAFRegional(AWSService):
             )
 
     def _get_web_acl(self, acl):
-        logger.info(f"WAF - Getting Web ACL {acl.name}...")
+        logger.info(f"WAFRegional - Getting Web ACL {acl.name}...")
         try:
             get_web_acl = self.regional_clients[acl.region].get_web_acl(WebACLId=acl.id)
             for rule in get_web_acl.get("WebACL", {}).get("Rules", []):
-                rule_id = rule.get("RuleGroupId", "")
+                rule_id = rule.get("RuleId", "")
                 if rule.get("Type", "") == "GROUP":
                     acl.rule_groups.append(Rule(id=rule_id))
                 else:
                     acl.rules.append(Rule(id=rule_id))
-                logger.info(f"Rule: {rule['Name']} - Priority: {rule['Priority']}")
-        except KeyError:
-            logger.error(f"Web ACL {acl.name} not found in {acl.region}.")
+
+        except Exception as error:
+            logger.error(
+                f"{acl.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
 
 class Rule(BaseModel):
+    """Rule Model for WAF and WAFRegional"""
+
     id: str
 
 
@@ -124,3 +130,4 @@ class WebAcl(BaseModel):
     region: str
     rules: list[Rule] = []
     rule_groups: list[Rule] = []
+    tags: Optional[list] = []
