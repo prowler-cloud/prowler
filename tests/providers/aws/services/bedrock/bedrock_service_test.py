@@ -1,3 +1,6 @@
+from unittest import mock
+
+import botocore
 from boto3 import client
 from moto import mock_aws
 
@@ -8,6 +11,52 @@ from tests.providers.aws.utils import (
     AWS_REGION_US_EAST_1,
     set_mocked_aws_provider,
 )
+
+make_api_call = botocore.client.BaseClient._make_api_call
+
+GUARDRAIL_ARN = (
+    f"arn:aws:bedrock:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:guardrail/test-id"
+)
+
+
+def mock_make_api_call(self, operation_name, kwarg):
+    if operation_name == "ListGuardrails":
+        return {
+            "guardrails": [
+                {
+                    "id": "test-id",
+                    "arn": GUARDRAIL_ARN,
+                    "status": "READY",
+                    "name": "test",
+                }
+            ]
+        }
+    elif operation_name == "GetGuardrail":
+        return {
+            "name": "test",
+            "guardrailId": "test-id",
+            "guardrailArn": GUARDRAIL_ARN,
+            "status": "READY",
+            "contentPolicy": {
+                "filters": [
+                    {
+                        "type": "PROMPT_ATTACK",
+                        "inputStrength": "HIGH",
+                        "outputStrength": "NONE",
+                    },
+                ]
+            },
+            "sensitiveInformationPolicy": True,
+            "blockedInputMessaging": "Sorry, the model cannot answer this question.",
+            "blockedOutputsMessaging": "Sorry, the model cannot answer this question.",
+        }
+    elif operation_name == "ListTagsForResource":
+        return {
+            "tags": [
+                {"Key": "Name", "Value": "test"},
+            ]
+        }
+    return make_api_call(self, operation_name, kwarg)
 
 
 class Test_Bedrock_Service:
@@ -77,3 +126,31 @@ class Test_Bedrock_Service:
             == "testconfigbucket"
         )
         assert not bedrock.logging_configurations[AWS_REGION_US_EAST_1].enabled
+
+    @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
+    @mock_aws
+    def test_list_guardrails(self):
+        aws_provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_US_EAST_1])
+        bedrock = Bedrock(aws_provider)
+        assert len(bedrock.guardrails) == 1
+        assert GUARDRAIL_ARN in bedrock.guardrails
+        assert bedrock.guardrails[GUARDRAIL_ARN].id == "test-id"
+        assert bedrock.guardrails[GUARDRAIL_ARN].name == "test"
+        assert bedrock.guardrails[GUARDRAIL_ARN].region == AWS_REGION_US_EAST_1
+
+    @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
+    @mock_aws
+    def test_get_guardrail(self):
+        aws_provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_US_EAST_1])
+        bedrock = Bedrock(aws_provider)
+        assert bedrock.guardrails[GUARDRAIL_ARN].sensitive_information_filter
+        assert bedrock.guardrails[GUARDRAIL_ARN].prompt_attack_filter_strength == "HIGH"
+
+    @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
+    @mock_aws
+    def test_list_tags_for_resource(self):
+        aws_provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_US_EAST_1])
+        bedrock = Bedrock(aws_provider)
+        assert bedrock.guardrails[GUARDRAIL_ARN].tags == [
+            {"Key": "Name", "Value": "test"}
+        ]
