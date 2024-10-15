@@ -12,11 +12,14 @@ class codebuild_project_logging_enabled(Check):
             report.region = project.region
             report.resource_tags = project.tags
             report.status = "PASS"
-            report.status_extended = (
-                f"CodeBuild project {project.name} has logging enabled."
-            )
 
-            if not project.cloudwatch_logs.enabled and not project.s3_logs.enabled:
+            if project.cloudwatch_logs.enabled and project.s3_logs.enabled:
+                report.status_extended = f"CodeBuild project {project.name} has enabled CloudWartch logs in log group {project.cloudwatch_logs.group_name} and S3 logs in bucket {project.s3_logs.bucket_location}."
+            elif project.cloudwatch_logs.enabled:
+                report.status_extended = f"CodeBuild project {project.name} has CloudWatch logging enabled in log group {project.cloudwatch_logs.group_name}."
+            elif project.s3_logs.enabled:
+                report.status_extended = f"CodeBuild project {project.name} has S3 logging enabled in bucket {project.s3_logs.bucket_location}."
+            else:
                 report.status = "FAIL"
                 report.status_extended = (
                     f"CodeBuild project {project.name} does not have logging enabled."
