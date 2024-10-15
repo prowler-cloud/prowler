@@ -66,7 +66,7 @@ def mock_make_api_call_non_compliant_rule(self, operation_name, kwarg):
 class Test_waf_rule_has_conditions:
     @mock_aws
     def test_no_rules(self):
-        from prowler.providers.aws.services.waf.waf_service import WAF
+        from prowler.providers.aws.services.waf.waf_service import WAFRegional
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
@@ -75,8 +75,8 @@ class Test_waf_rule_has_conditions:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.waf.waf_rule_has_conditions.waf_rule_has_conditions.waf_client",
-                new=WAF(aws_provider),
+                "prowler.providers.aws.services.waf.waf_rule_has_conditions.waf_rule_has_conditions.wafregional_client",
+                new=WAFRegional(aws_provider),
             ):
                 # Test Check
                 from prowler.providers.aws.services.waf.waf_rule_has_conditions.waf_rule_has_conditions import (
@@ -94,7 +94,7 @@ class Test_waf_rule_has_conditions:
     )
     @mock_aws
     def test_waf_rules_with_condition(self):
-        from prowler.providers.aws.services.waf.waf_service import WAF
+        from prowler.providers.aws.services.waf.waf_service import WAFRegional
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
@@ -103,8 +103,8 @@ class Test_waf_rule_has_conditions:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.waf.waf_rule_has_conditions.waf_rule_has_conditions.waf_client",
-                new=WAF(aws_provider),
+                "prowler.providers.aws.services.waf.waf_rule_has_conditions.waf_rule_has_conditions.wafregional_client",
+                new=WAFRegional(aws_provider),
             ):
                 # Test Check
                 from prowler.providers.aws.services.waf.waf_rule_has_conditions.waf_rule_has_conditions import (
@@ -118,7 +118,7 @@ class Test_waf_rule_has_conditions:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == f"AWS WAF Classic Regional Rule {RULE_ID} has at least one condition."
+                    == f"AWS WAFRegional Classic Regional Rule {RULE_ID} has at least one condition."
                 )
                 assert result[0].resource_id == RULE_ID
                 assert (
@@ -133,7 +133,7 @@ class Test_waf_rule_has_conditions:
     )
     @mock_aws
     def test_waf_rules_without_condition(self):
-        from prowler.providers.aws.services.waf.waf_service import WAF
+        from prowler.providers.aws.services.waf.waf_service import WAFRegional
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
@@ -142,8 +142,8 @@ class Test_waf_rule_has_conditions:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.waf.waf_rule_has_conditions.waf_rule_has_conditions.waf_client",
-                new=WAF(aws_provider),
+                "prowler.providers.aws.services.waf.waf_rule_has_conditions.waf_rule_has_conditions.wafregional_client",
+                new=WAFRegional(aws_provider),
             ):
                 # Test Check
                 from prowler.providers.aws.services.waf.waf_rule_has_conditions.waf_rule_has_conditions import (
@@ -157,7 +157,7 @@ class Test_waf_rule_has_conditions:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"AWS WAF Classic Regional Rule {RULE_ID} does not have any conditions."
+                    == f"AWS WAFRegional Classic Regional Rule {RULE_ID} does not have any conditions."
                 )
                 assert result[0].resource_id == RULE_ID
                 assert (

@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -103,14 +105,16 @@ class WAFRegional(AWSService):
         try:
             get_web_acl = self.regional_clients[acl.region].get_web_acl(WebACLId=acl.id)
             for rule in get_web_acl.get("WebACL", {}).get("Rules", []):
-                rule_id = rule.get("RuleGroupId", "")
+                rule_id = rule.get("RuleId", "")
                 if rule.get("Type", "") == "GROUP":
-                    acl.rule_groups.append(Rule(id=rule_id))
+                    acl.rule_groups.append(ACLRule(id=rule_id))
                 else:
-                    acl.rules.append(Rule(id=rule_id))
-                logger.info(f"Rule: {rule['Name']} - Priority: {rule['Priority']}")
-        except KeyError:
-            logger.error(f"Web ACL {acl.name} not found in {acl.region}.")
+                    acl.rules.append(ACLRule(id=rule_id))
+
+        except Exception as error:
+            logger.error(
+                f"{acl.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
     def _list_rules(self, regional_client):
         logger.info("WAFRegional - Listing Regional Rules...")
@@ -148,12 +152,19 @@ class Predicate(BaseModel):
     data_id: str
 
 
+class ACLRule(BaseModel):
+    id: str
+
+
 class Rule(BaseModel):
+    """Rule Model for WAF and WAFRegional"""
+
     arn: str
     id: str
     region: str
     name: str
-    predicates: list[str] = []
+    predicates: list[Predicate] = []
+    tags: Optional[list] = []
 
 
 class WebAcl(BaseModel):
@@ -166,3 +177,4 @@ class WebAcl(BaseModel):
     region: str
     rules: list[Rule] = []
     rule_groups: list[Rule] = []
+    tags: Optional[list] = []

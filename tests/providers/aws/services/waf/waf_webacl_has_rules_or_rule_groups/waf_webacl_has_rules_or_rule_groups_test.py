@@ -18,6 +18,8 @@ orig = botocore.client.BaseClient._make_api_call
 
 # Mocked botocore _make_api_call function
 def mock_make_api_call(self, operation_name, kwarg):
+    if operation_name == "ListRules":
+        return {}
     if operation_name == "GetChangeToken":
         return {"ChangeToken": "my-change-token"}
     if operation_name == "ListWebACLs":
@@ -37,6 +39,14 @@ def mock_make_api_call(self, operation_name, kwarg):
 
 
 def mock_make_api_call_only_rules(self, operation_name, kwarg):
+    if operation_name == "ListRules":
+        return {}
+    if operation_name == "ListResourcesForWebACL":
+        return {
+            "ResourceArns": [
+                "alb-arn",
+            ]
+        }
     if operation_name == "GetChangeToken":
         return {"ChangeToken": "my-change-token"}
     if operation_name == "ListWebACLs":
@@ -61,6 +71,8 @@ def mock_make_api_call_only_rules(self, operation_name, kwarg):
 
 
 def mock_make_api_call_only_rule_groups(self, operation_name, kwarg):
+    if operation_name == "ListRules":
+        return {}
     if operation_name == "GetChangeToken":
         return {"ChangeToken": "my-change-token"}
     if operation_name == "ListWebACLs":
@@ -85,6 +97,8 @@ def mock_make_api_call_only_rule_groups(self, operation_name, kwarg):
 
 
 def mock_make_api_call_both(self, operation_name, kwarg):
+    if operation_name == "ListRules":
+        return {}
     if operation_name == "GetChangeToken":
         return {"ChangeToken": "my-change-token"}
     if operation_name == "ListWebACLs":
@@ -115,7 +129,7 @@ def mock_make_api_call_both(self, operation_name, kwarg):
 class Test_waf_webacl_has_rules_or_rule_groups:
     @mock_aws
     def test_no_waf(self):
-        from prowler.providers.aws.services.waf.waf_service import WAF
+        from prowler.providers.aws.services.waf.waf_service import WAFRegional
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
@@ -124,8 +138,8 @@ class Test_waf_webacl_has_rules_or_rule_groups:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.waf.waf_webacl_has_rules_or_rule_groups.waf_webacl_has_rules_or_rule_groups.waf_client",
-                new=WAF(aws_provider),
+                "prowler.providers.aws.services.waf.waf_webacl_has_rules_or_rule_groups.waf_webacl_has_rules_or_rule_groups.wafregional_client",
+                new=WAFRegional(aws_provider),
             ):
                 # Test Check
                 from prowler.providers.aws.services.waf.waf_webacl_has_rules_or_rule_groups.waf_webacl_has_rules_or_rule_groups import (
@@ -140,7 +154,7 @@ class Test_waf_webacl_has_rules_or_rule_groups:
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     @mock_aws
     def test_waf_no_rules_and_no_rule_group(self):
-        from prowler.providers.aws.services.waf.waf_service import WAF
+        from prowler.providers.aws.services.waf.waf_service import WAFRegional
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
@@ -149,8 +163,8 @@ class Test_waf_webacl_has_rules_or_rule_groups:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.waf.waf_webacl_has_rules_or_rule_groups.waf_webacl_has_rules_or_rule_groups.waf_client",
-                new=WAF(aws_provider),
+                "prowler.providers.aws.services.waf.waf_webacl_has_rules_or_rule_groups.waf_webacl_has_rules_or_rule_groups.wafregional_client",
+                new=WAFRegional(aws_provider),
             ):
                 # Test Check
                 from prowler.providers.aws.services.waf.waf_webacl_has_rules_or_rule_groups.waf_webacl_has_rules_or_rule_groups import (
@@ -164,7 +178,7 @@ class Test_waf_webacl_has_rules_or_rule_groups:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"AWS WAFv2 Web ACL {WEB_ACL_ID} does not have any rules or rule groups."
+                    == f"AWS WAFRegional Web ACL {WEB_ACL_ID} does not have any rules or rule groups."
                 )
                 assert result[0].resource_id == WEB_ACL_ID
                 assert (
@@ -178,7 +192,7 @@ class Test_waf_webacl_has_rules_or_rule_groups:
     )
     @mock_aws
     def test_waf_rules_and_no_rule_group(self):
-        from prowler.providers.aws.services.waf.waf_service import WAF
+        from prowler.providers.aws.services.waf.waf_service import WAFRegional
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
@@ -187,8 +201,8 @@ class Test_waf_webacl_has_rules_or_rule_groups:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.waf.waf_webacl_has_rules_or_rule_groups.waf_webacl_has_rules_or_rule_groups.waf_client",
-                new=WAF(aws_provider),
+                "prowler.providers.aws.services.waf.waf_webacl_has_rules_or_rule_groups.waf_webacl_has_rules_or_rule_groups.wafregional_client",
+                new=WAFRegional(aws_provider),
             ):
                 # Test Check
                 from prowler.providers.aws.services.waf.waf_webacl_has_rules_or_rule_groups.waf_webacl_has_rules_or_rule_groups import (
@@ -202,7 +216,7 @@ class Test_waf_webacl_has_rules_or_rule_groups:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == f"AWS WAFv2 Web ACL {WEB_ACL_ID} has at least one rule or rule group."
+                    == f"AWS WAFRegional Web ACL {WEB_ACL_ID} has at least one rule or rule group."
                 )
                 assert result[0].resource_id == WEB_ACL_ID
                 assert (
@@ -217,7 +231,7 @@ class Test_waf_webacl_has_rules_or_rule_groups:
     )
     @mock_aws
     def test_waf_no_rules_and_rule_group(self):
-        from prowler.providers.aws.services.waf.waf_service import WAF
+        from prowler.providers.aws.services.waf.waf_service import WAFRegional
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
@@ -226,8 +240,8 @@ class Test_waf_webacl_has_rules_or_rule_groups:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.waf.waf_webacl_has_rules_or_rule_groups.waf_webacl_has_rules_or_rule_groups.waf_client",
-                new=WAF(aws_provider),
+                "prowler.providers.aws.services.waf.waf_webacl_has_rules_or_rule_groups.waf_webacl_has_rules_or_rule_groups.wafregional_client",
+                new=WAFRegional(aws_provider),
             ):
                 # Test Check
                 from prowler.providers.aws.services.waf.waf_webacl_has_rules_or_rule_groups.waf_webacl_has_rules_or_rule_groups import (
@@ -241,7 +255,7 @@ class Test_waf_webacl_has_rules_or_rule_groups:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == f"AWS WAFv2 Web ACL {WEB_ACL_ID} has at least one rule or rule group."
+                    == f"AWS WAFRegional Web ACL {WEB_ACL_ID} has at least one rule or rule group."
                 )
                 assert result[0].resource_id == WEB_ACL_ID
                 assert (
@@ -253,7 +267,7 @@ class Test_waf_webacl_has_rules_or_rule_groups:
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call_both)
     @mock_aws
     def test_waf_rules_and_rule_group(self):
-        from prowler.providers.aws.services.waf.waf_service import WAF
+        from prowler.providers.aws.services.waf.waf_service import WAFRegional
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
@@ -262,8 +276,8 @@ class Test_waf_webacl_has_rules_or_rule_groups:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.waf.waf_webacl_has_rules_or_rule_groups.waf_webacl_has_rules_or_rule_groups.waf_client",
-                new=WAF(aws_provider),
+                "prowler.providers.aws.services.waf.waf_webacl_has_rules_or_rule_groups.waf_webacl_has_rules_or_rule_groups.wafregional_client",
+                new=WAFRegional(aws_provider),
             ):
                 # Test Check
                 from prowler.providers.aws.services.waf.waf_webacl_has_rules_or_rule_groups.waf_webacl_has_rules_or_rule_groups import (
@@ -277,7 +291,7 @@ class Test_waf_webacl_has_rules_or_rule_groups:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == f"AWS WAFv2 Web ACL {WEB_ACL_ID} has at least one rule or rule group."
+                    == f"AWS WAFRegional Web ACL {WEB_ACL_ID} has at least one rule or rule group."
                 )
                 assert result[0].resource_id == WEB_ACL_ID
                 assert (

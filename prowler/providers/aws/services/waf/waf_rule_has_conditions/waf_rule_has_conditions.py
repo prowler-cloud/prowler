@@ -1,24 +1,22 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
-from prowler.providers.aws.services.waf.waf_client import waf_client
+from prowler.providers.aws.services.waf.wafregional_client import wafregional_client
 
 
 class waf_rule_has_conditions(Check):
     def execute(self):
         findings = []
-        for rule in waf_client.rules.values():
+        for rule in wafregional_client.rules.values():
             report = Check_Report_AWS(self.metadata())
             report.region = rule.region
             report.resource_id = rule.id
             report.resource_arn = rule.arn
-            # report.resource_tags = rule.tags
+            report.resource_tags = rule.tags
             report.status = "FAIL"
-            report.status_extended = (
-                f"AWS WAF Classic Regional Rule {rule.id} does not have any conditions."
-            )
+            report.status_extended = f"AWS WAFRegional Classic Regional Rule {rule.id} does not have any conditions."
 
             if rule.predicates:
                 report.status = "PASS"
-                report.status_extended = f"AWS WAF Classic Regional Rule {rule.id} has at least one condition."
+                report.status_extended = f"AWS WAFRegional Classic Regional Rule {rule.id} has at least one condition."
 
             findings.append(report)
 
