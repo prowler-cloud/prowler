@@ -40,7 +40,7 @@ def is_policy_cross_account(policy: dict, audited_account: str) -> bool:
                         or "*" == statement["Principal"]["AWS"]
                     ):
                         return True
-    
+
     return is_policy_public(policy, audited_account, is_cross_account_allowed=False)
 
 
