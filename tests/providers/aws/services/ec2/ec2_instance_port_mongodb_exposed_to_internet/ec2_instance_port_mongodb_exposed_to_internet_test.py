@@ -220,23 +220,6 @@ class Test_ec2_instance_port_mongodb_exposed_to_internet:
         subnet_id = ec2_client.create_subnet(VpcId=vpc_id, CidrBlock="10.0.0.0/16")[
             "Subnet"
         ]["SubnetId"]
-        nacls = (
-            ec2_client.describe_network_acls(
-                Filters=[
-                    {
-                        "Name": "association.subnet-id",
-                        "Values": [subnet_id],
-                    }
-                ]
-            )
-        )["NetworkAcls"]
-        # Remove public ingress rule from private subnet in default NACLs
-        for nacl in nacls:
-            ec2_client.delete_network_acl_entry(
-                NetworkAclId=nacl["NetworkAclId"],
-                Egress=False,
-                RuleNumber=100,
-            )
         instance = ec2_resource.create_instances(
             ImageId="ami-12345678",
             MinCount=1,
