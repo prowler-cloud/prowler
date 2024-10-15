@@ -8,8 +8,8 @@
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
   "ResourceType": "AwsCodeBuildProject",
-  "Description": "From a security perspective, logging is an important feature to enable for future forensics efforts in the case of any security incidents. Correlating anomalies in CodeBuild projects with threat detections can increase confidence in the accuracy of those threat detections.",
-  "Risk": "Without logging enabled, it may be difficult to identify and investigate security incidents related to CodeBuild projects.",
+  "Description": "Ensure that CodeBuild projects have S3 or CloudWatch logging enabled.",
+  "Risk": "Without logging, tracking and investigating security incidents in CodeBuild projects becomes challenging, reducing confidence in threat detections.",
   "RelatedUrl": "https://docs.aws.amazon.com/codebuild/latest/userguide/change-project.html#change-project-console-logs",
   "Remediation": {
     "Code": {

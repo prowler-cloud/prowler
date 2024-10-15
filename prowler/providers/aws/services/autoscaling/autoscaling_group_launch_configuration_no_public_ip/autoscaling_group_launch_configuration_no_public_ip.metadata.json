@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "autoscaling_group_launch_configuration_no_public_ip",
+  "CheckTitle": "Check if Amazon EC2 instances launched using Auto Scaling group launch configurations have Public IP addresses.",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "autoscaling",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:autoscaling:region:account-id:launchConfiguration/launchConfigurationName",
+  "Severity": "high",
+  "ResourceType": "AwsAutoScalingLaunchConfiguration",
+  "Description": "This control checks whether an Auto Scaling group's associated launch configuration assigns a public IP address to the group's instances. The control fails if the associated launch configuration assigns a public IP address.",
+  "Risk": "Assigning a public IP address to EC2 instances can expose them directly to the internet, increasing the risk of unauthorized access and potential security breaches.",
+  "RelatedUrl": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/create-auto-scaling-groups-launch-configuration.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws autoscaling create-launch-configuration --launch-configuration-name <new-launch-config> --associate-public-ip-address false",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/autoscaling-controls.html#autoscaling-5",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Create a new launch configuration without a public IP address and update your Auto Scaling groups to use the new configuration.",
+      "Url": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/change-launch-config.html"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
