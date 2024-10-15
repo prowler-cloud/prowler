@@ -26,6 +26,9 @@ class Test_codebuild_project_source_repo_url_no_sensitive_credentials:
         with mock.patch(
             "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
             codebuild_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.codebuild.codebuild_project_source_repo_url_no_sensitive_credentials.codebuild_project_source_repo_url_no_sensitive_credentials.codebuild_client",
+            codebuild_client,
         ):
             from prowler.providers.aws.services.codebuild.codebuild_project_source_repo_url_no_sensitive_credentials.codebuild_project_source_repo_url_no_sensitive_credentials import (
                 codebuild_project_source_repo_url_no_sensitive_credentials,
@@ -66,6 +69,9 @@ class Test_codebuild_project_source_repo_url_no_sensitive_credentials:
         }
         with mock.patch(
             "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
+            codebuild_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.codebuild.codebuild_project_source_repo_url_no_sensitive_credentials.codebuild_project_source_repo_url_no_sensitive_credentials.codebuild_client",
             codebuild_client,
         ):
             from prowler.providers.aws.services.codebuild.codebuild_project_source_repo_url_no_sensitive_credentials.codebuild_project_source_repo_url_no_sensitive_credentials import (
@@ -108,6 +114,9 @@ class Test_codebuild_project_source_repo_url_no_sensitive_credentials:
         with mock.patch(
             "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
             codebuild_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.codebuild.codebuild_project_source_repo_url_no_sensitive_credentials.codebuild_project_source_repo_url_no_sensitive_credentials.codebuild_client",
+            codebuild_client,
         ):
             from prowler.providers.aws.services.codebuild.codebuild_project_source_repo_url_no_sensitive_credentials.codebuild_project_source_repo_url_no_sensitive_credentials import (
                 codebuild_project_source_repo_url_no_sensitive_credentials,
@@ -148,6 +157,9 @@ class Test_codebuild_project_source_repo_url_no_sensitive_credentials:
         }
         with mock.patch(
             "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
+            codebuild_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.codebuild.codebuild_project_source_repo_url_no_sensitive_credentials.codebuild_project_source_repo_url_no_sensitive_credentials.codebuild_client",
             codebuild_client,
         ):
             from prowler.providers.aws.services.codebuild.codebuild_project_source_repo_url_no_sensitive_credentials.codebuild_project_source_repo_url_no_sensitive_credentials import (

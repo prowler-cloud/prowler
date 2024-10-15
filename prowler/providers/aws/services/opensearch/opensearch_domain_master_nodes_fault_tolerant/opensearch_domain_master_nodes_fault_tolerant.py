@@ -7,7 +7,7 @@ from prowler.providers.aws.services.opensearch.opensearch_client import (
 class opensearch_domain_master_nodes_fault_tolerant(Check):
     def execute(self):
         findings = []
-        for domain in opensearch_client.opensearch_domains:
+        for domain in opensearch_client.opensearch_domains.values():
             if getattr(domain, "dedicated_master_enabled", False):
                 report = Check_Report_AWS(self.metadata())
                 report.resource_id = domain.name
