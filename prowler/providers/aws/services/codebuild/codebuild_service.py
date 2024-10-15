@@ -163,7 +163,11 @@ class Codebuild(AWSService):
                 s3_destination = export_config.get("s3Destination", {})
                 report_group.export_config = ExportConfig(
                     type=export_config.get("exportConfigType", "NO_EXPORT"),
-                    bucket_location=f"s3://{s3_destination.get('bucket', '')}/{s3_destination.get('path', '')}",
+                    bucket_location=(
+                        f"s3://{s3_destination.get('bucket', '')}/{s3_destination.get('path', '')}"
+                        if s3_destination.get("bucket", "")
+                        else ""
+                    ),
                     encryption_key=s3_destination.get("encryptionKey", ""),
                     encrypted=(not s3_destination.get("encryptionDisabled", True)),
                 )

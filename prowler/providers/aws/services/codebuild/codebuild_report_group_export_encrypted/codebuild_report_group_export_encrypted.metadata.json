@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AwsCodeBuildProject",
+  "ResourceType": "Other",
   "Description": "Ensure that CodeBuild report group exports are encrypted at rest.",
   "Risk": "If CodeBuild report group exports are not encrypted, sensitive data could be exposed to unauthorized access.",
   "RelatedUrl": "https://docs.aws.amazon.com/codebuild/latest/userguide/report-group-export-settings.html",

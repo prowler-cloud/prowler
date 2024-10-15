@@ -166,7 +166,7 @@ class Test_codebuild_report_group_export_encrypted:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "CodeBuild report group test-report-group-not-encrypted exports are not encrypted."
+                == "CodeBuild report group test-report-group-not-encrypted exports are not encrypted at s3://test-bucket/test-path."
             )
             assert result[0].resource_id == "test-report-group-not-encrypted"
             assert (
