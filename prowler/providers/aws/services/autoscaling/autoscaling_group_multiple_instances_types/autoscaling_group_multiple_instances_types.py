@@ -14,15 +14,27 @@ class autoscaling_group_multiple_instances_types(Check):
             report.resource_arn = group.arn
             report.resource_tags = group.tags
             report.status = "FAIL"
-            report.status_extended = (
-                f"Autoscaling group {group.name} has one or less instance types."
-            )
-            if len(group.instance_types) > 1:
-                if len(group.availability_zones) > 1:
-                    report.status = "PASS"
-                    report.status_extended = f"Autoscaling group {group.name} has multiple instance types in multiple availability zones."
-                else:
-                    report.status_extended = f"Autoscaling group {group.name} has multiple instance type in single availability zone."
+            report.status_extended = f"Autoscaling group {group.name} does not have multiple instance types in each Availability Zone."
+
+            failing_azs = []
+
+            for az, types in group.az_instance_types.items():
+                if len(types) < 2:
+                    failing_azs.append(az)
+
+            if (
+                not failing_azs
+                and len(group.availability_zones) > 1
+                and len(group.az_instance_types) > 1
+            ):
+                report.status = "PASS"
+                report.status_extended = f"Autoscaling group {group.name} has multiple instance types in each of its Availability Zones."
+            else:
+                if failing_azs:
+                    azs_str = ", ".join(failing_azs)
+                    report.status_extended = f"Autoscaling group {group.name} has only one or no instance type in Availability Zone(s): {azs_str}."
+                if len(group.availability_zones) <= 1 and not failing_azs:
+                    report.status_extended = f"Autoscaling group {group.name} is not distributed across multiple Availability Zones."
 
             findings.append(report)
 

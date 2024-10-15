@@ -40,10 +40,22 @@ def mock_make_api_call(self, operation_name, kwarg):
                         {
                             "InstanceId": "i-0b9f1f3a0e1e3e0f4",
                             "InstanceType": "t2.micro",
+                            "AvailabilityZone": "us-east-1a",
                         },
                         {
                             "InstanceId": "i-0b9f1f3a0e1e3e0f5",
                             "InstanceType": "t3.large",
+                            "AvailabilityZone": "us-east-1a",
+                        },
+                        {
+                            "InstanceId": "i-0b9f1f3a0e1e3e0f6",
+                            "InstanceType": "t2.micro",
+                            "AvailabilityZone": "us-east-1b",
+                        },
+                        {
+                            "InstanceId": "i-0b9f1f3a0e1e3e0f7",
+                            "InstanceType": "t3.large",
+                            "AvailabilityZone": "us-east-1b",
                         },
                     ],
                 }
@@ -193,7 +205,16 @@ class Test_AutoScaling_Service:
                     "Value": "value_test",
                 }
             ]
-            assert autoscaling.groups[0].instance_types == ["t2.micro", "t3.large"]
+            assert autoscaling.groups[0].instance_types == [
+                "t2.micro",
+                "t3.large",
+                "t2.micro",
+                "t3.large",
+            ]
+            assert autoscaling.groups[0].az_instance_types == {
+                "us-east-1a": {"t2.micro", "t3.large"},
+                "us-east-1b": {"t2.micro", "t3.large"},
+            }
 
     # Test Describe Auto Scaling Groups
     @mock_aws
