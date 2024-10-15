@@ -175,7 +175,7 @@ class Test_redshift_cluster_public_access:
                 assert result[0].resource_id == CLUSTER_ID
                 assert result[0].resource_arn == CLUSTER_ARN
 
-    def test_cluster_is_in_public_vpc(self):
+    def test_cluster_is_in_public_subnet(self):
         redshift_client = mock.MagicMock
         redshift_client.clusters = []
         redshift_client.clusters.append(
@@ -185,11 +185,12 @@ class Test_redshift_cluster_public_access:
                 region=AWS_REGION_EU_WEST_1,
                 public_access=True,
                 vpc_id="vpc-123456",
+                subnets=["subnet-123456"],
                 endpoint_address="192.192.192.192",
             )
         )
         vpc_client = mock.MagicMock
-        vpc_client.vpcs = {"vpc-123456": mock.MagicMock(public=True)}
+        vpc_client.subnets = {"subnet-123456": mock.MagicMock(public=True)}
         ec2_client = mock.MagicMock
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
@@ -216,7 +217,7 @@ class Test_redshift_cluster_public_access:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == f"Redshift Cluster {CLUSTER_ID} has the endpoint 192.192.192.192 set as publicly accessible in the public VPC vpc-123456 but is not publicly exposed."
+                    == f"Redshift Cluster {CLUSTER_ID} has the endpoint 192.192.192.192 set as publicly accessible in a public subnet but is not publicly exposed."
                 )
                 assert result[0].resource_id == CLUSTER_ID
                 assert result[0].resource_arn == CLUSTER_ARN
@@ -235,10 +236,11 @@ class Test_redshift_cluster_public_access:
                 public_access=True,
                 vpc_security_groups=["sg-123456"],
                 endpoint_address="192.192.192.192",
+                subnets=["subnet-123456"],
             )
         )
         vpc_client = mock.MagicMock
-        vpc_client.vpcs = {"vpc-123456": mock.MagicMock(public=True)}
+        vpc_client.subnets = {"subnet-123456": mock.MagicMock(public=True)}
         ec2_client = mock.MagicMock
         ec2_client.security_groups = {
             f"arn:aws:ec2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:security-group/sg-123456": mock.MagicMock(
@@ -279,7 +281,7 @@ class Test_redshift_cluster_public_access:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"Redshift Cluster {CLUSTER_ID} has the endpoint 192.192.192.192 set as publicly accessible and it is exposed to the Internet by security group (sg-123456) in public VPC vpc-123456."
+                    == f"Redshift Cluster {CLUSTER_ID} has the endpoint 192.192.192.192 set as publicly accessible and it is exposed to the Internet by security group (sg-123456) in a public subnet."
                 )
                 assert result[0].resource_id == CLUSTER_ID
                 assert result[0].resource_arn == CLUSTER_ARN

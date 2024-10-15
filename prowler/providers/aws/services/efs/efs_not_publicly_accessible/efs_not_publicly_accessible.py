@@ -17,7 +17,7 @@ class efs_not_publicly_accessible(Check):
             if not fs.policy:
                 report.status = "FAIL"
                 report.status_extended = f"EFS {fs.id} doesn't have any policy which means it grants full access to any client within the VPC."
-            elif is_policy_public(fs.policy) and any(
+            elif is_policy_public(fs.policy, efs_client.audited_account) and any(
                 statement.get("Condition", {})
                 .get("Bool", {})
                 .get("elasticfilesystem:AccessedViaMountTarget", "false")

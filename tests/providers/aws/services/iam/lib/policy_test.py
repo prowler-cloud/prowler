@@ -1519,7 +1519,9 @@ class Test_Policy:
             ]
         }
         assert is_policy_public(
-            policy_allow_wildcard_principal, not_allowed_actions=["s3:*"]
+            policy_allow_wildcard_principal,
+            AWS_ACCOUNT_NUMBER,
+            not_allowed_actions=["s3:*"],
         )
 
     def test_policy_allows_public_access_with_aws_wildcard_principal(self):
@@ -1534,7 +1536,9 @@ class Test_Policy:
             ]
         }
         assert is_policy_public(
-            policy_allow_aws_wildcard_principal, not_allowed_actions=["s3:*"]
+            policy_allow_aws_wildcard_principal,
+            AWS_ACCOUNT_NUMBER,
+            not_allowed_actions=["s3:*"],
         )
 
     def test_policy_does_not_allow_public_access_with_specific_aws_principal(self):
@@ -1548,7 +1552,9 @@ class Test_Policy:
                 }
             ]
         }
-        assert not is_policy_public(policy_allow_specific_aws_principal)
+        assert not is_policy_public(
+            policy_allow_specific_aws_principal, AWS_ACCOUNT_NUMBER
+        )
 
     def test_policy_does_not_allow_public_access_with_condition(self):
         policy_allow_aws_wildcard_principal_with_condition = {
@@ -1562,7 +1568,9 @@ class Test_Policy:
                 }
             ]
         }
-        assert not is_policy_public(policy_allow_aws_wildcard_principal_with_condition)
+        assert not is_policy_public(
+            policy_allow_aws_wildcard_principal_with_condition, AWS_ACCOUNT_NUMBER
+        )
 
     def test_policy_allows_full_service_access_with_wildcard_action_and_resource(self):
         policy_allow_wildcard_action_and_resource = {
@@ -1746,7 +1754,9 @@ class Test_Policy:
             ]
         }
         assert is_policy_public(
-            policy, not_allowed_actions=["elasticfilesystem:ClientMount"]
+            policy,
+            AWS_ACCOUNT_NUMBER,
+            not_allowed_actions=["elasticfilesystem:ClientMount"],
         )
 
     def test_is_policy_public_with_principal_dict(self):
@@ -1761,7 +1771,9 @@ class Test_Policy:
             ]
         }
         assert is_policy_public(
-            policy, not_allowed_actions=["elasticfilesystem:ClientMount"]
+            policy,
+            AWS_ACCOUNT_NUMBER,
+            not_allowed_actions=["elasticfilesystem:ClientMount"],
         )
 
     def test_is_policy_public_with_secure_conditions_and_allowed_conditions(
@@ -1781,7 +1793,7 @@ class Test_Policy:
                 }
             ]
         }
-        assert not is_policy_public(policy)
+        assert not is_policy_public(policy, AWS_ACCOUNT_NUMBER)
 
     def test_is_policy_public_with_secure_conditions_and_allowed_conditions_nested(
         self,
@@ -1803,7 +1815,7 @@ class Test_Policy:
                 }
             ]
         }
-        assert not is_policy_public(policy)
+        assert not is_policy_public(policy, AWS_ACCOUNT_NUMBER)
 
     def test_is_policy_public_with_secure_conditions_and_allowed_conditions_nested_dict(
         self,
@@ -1827,7 +1839,7 @@ class Test_Policy:
                 }
             ]
         }
-        assert not is_policy_public(policy)
+        assert not is_policy_public(policy, AWS_ACCOUNT_NUMBER)
 
     def test_is_policy_public_with_secure_conditions_and_allowed_conditions_nested_dict_key(
         self,
@@ -1851,7 +1863,7 @@ class Test_Policy:
                 }
             ]
         }
-        assert not is_policy_public(policy)
+        assert not is_policy_public(policy, AWS_ACCOUNT_NUMBER)
 
     def test_is_policy_public_with_action_wildcard(
         self,
@@ -1866,7 +1878,7 @@ class Test_Policy:
                 }
             ]
         }
-        assert is_policy_public(policy)
+        assert is_policy_public(policy, AWS_ACCOUNT_NUMBER)
 
     def test_is_policy_public_allowing_all_actions(
         self,
@@ -1881,7 +1893,7 @@ class Test_Policy:
                 }
             ]
         }
-        assert is_policy_public(policy)
+        assert is_policy_public(policy, AWS_ACCOUNT_NUMBER)
 
     def test_is_policy_public_allowing_other_account(self):
         policy = {
@@ -1894,7 +1906,7 @@ class Test_Policy:
                 }
             ]
         }
-        assert not is_policy_public(policy)
+        assert not is_policy_public(policy, AWS_ACCOUNT_NUMBER)
 
     def test_is_policy_public_secrets_manager(
         self,
@@ -1910,7 +1922,7 @@ class Test_Policy:
                 }
             ]
         }
-        assert not is_policy_public(policy)
+        assert not is_policy_public(policy, AWS_ACCOUNT_NUMBER)
 
     def test_is_policy_public_alexa_condition(
         self,
@@ -1927,7 +1939,7 @@ class Test_Policy:
                 }
             ]
         }
-        assert not is_policy_public(policy)
+        assert not is_policy_public(policy, AWS_ACCOUNT_NUMBER)
 
     def test_is_policy_private_org_s3_bucket(
         self,
@@ -1944,7 +1956,7 @@ class Test_Policy:
                 }
             ]
         }
-        assert not is_policy_public(policy)
+        assert not is_policy_public(policy, AWS_ACCOUNT_NUMBER)
 
     def test_is_policy_public_ip(
         self,
@@ -1961,7 +1973,7 @@ class Test_Policy:
                 }
             ],
         }
-        assert is_policy_public(policy)
+        assert is_policy_public(policy, AWS_ACCOUNT_NUMBER)
 
     def test_check_admin_access(self):
         policy = {

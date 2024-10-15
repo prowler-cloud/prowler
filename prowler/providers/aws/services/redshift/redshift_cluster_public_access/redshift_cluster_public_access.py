@@ -21,13 +21,12 @@ class redshift_cluster_public_access(Check):
             # 1. Check if Redshift Cluster is publicly accessible
             if cluster.endpoint_address and cluster.public_access:
                 report.status_extended = f"Redshift Cluster {cluster.id} has the endpoint {cluster.endpoint_address} set as publicly accessible but is not publicly exposed."
-                # 2. Check if Redshift Cluster is in a public VPC
-                if (
-                    cluster.vpc_id
-                    and cluster.vpc_id in vpc_client.vpcs
-                    and vpc_client.vpcs[cluster.vpc_id].public
+                # 2. Check if Redshift Cluster is in a public subnet
+                if any(
+                    subnet in vpc_client.subnets and vpc_client.subnets[subnet].public
+                    for subnet in cluster.subnets
                 ):
-                    report.status_extended = f"Redshift Cluster {cluster.id} has the endpoint {cluster.endpoint_address} set as publicly accessible in the public VPC {cluster.vpc_id} but is not publicly exposed."
+                    report.status_extended = f"Redshift Cluster {cluster.id} has the endpoint {cluster.endpoint_address} set as publicly accessible in a public subnet but is not publicly exposed."
                     # 3. Check if any Redshift Cluster Security Group is publicly open
                     for sg_id in getattr(cluster, "vpc_security_groups", []):
                         sg_arn = f"arn:{redshift_client.audited_partition}:ec2:{cluster.region}:{redshift_client.audited_account}:security-group/{sg_id}"
@@ -39,7 +38,7 @@ class redshift_cluster_public_access(Check):
                                     ingress_rule, "tcp", any_address=True
                                 ):
                                     report.status = "FAIL"
-                                    report.status_extended = f"Redshift Cluster {cluster.id} has the endpoint {cluster.endpoint_address} set as publicly accessible and it is exposed to the Internet by security group ({sg_id}) in public VPC {cluster.vpc_id}."
+                                    report.status_extended = f"Redshift Cluster {cluster.id} has the endpoint {cluster.endpoint_address} set as publicly accessible and it is exposed to the Internet by security group ({sg_id}) in a public subnet."
                                     break
                         if report.status == "FAIL":
                             break

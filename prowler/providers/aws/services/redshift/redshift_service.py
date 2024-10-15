@@ -16,6 +16,7 @@ class Redshift(AWSService):
         self.__threading_call__(self._describe_logging_status, self.clusters)
         self.__threading_call__(self._describe_cluster_snapshots, self.clusters)
         self.__threading_call__(self._describe_cluster_parameters, self.clusters)
+        self.__threading_call__(self._describe_cluster_subnets, self.clusters)
 
     def _describe_clusters(self, regional_client):
         logger.info("Redshift - Describing Clusters...")
@@ -54,8 +55,29 @@ class Redshift(AWSService):
                             parameter_group_name=cluster.get(
                                 "ClusterParameterGroups", [{}]
                             )[0].get("ParameterGroupName", ""),
+                            subnet_group=cluster.get("ClusterSubnetGroupName", ""),
                         )
                         self.clusters.append(cluster_to_append)
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _describe_cluster_subnets(self, cluster):
+        logger.info("Redshift - Describing Cluster Subnets...")
+        try:
+            regional_client = self.regional_clients[cluster.region]
+            if cluster.subnet_group:
+                subnet_group_details = regional_client.describe_cluster_subnet_groups(
+                    ClusterSubnetGroupName=cluster.subnet_group
+                )
+                subnets = [
+                    subnet["SubnetIdentifier"]
+                    for subnet in subnet_group_details["ClusterSubnetGroups"][0][
+                        "Subnets"
+                    ]
+                ]
+                cluster.subnets = subnets
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -133,3 +155,5 @@ class Cluster(BaseModel):
     enhanced_vpc_routing: bool = False
     parameter_group_name: str = None
     require_ssl: bool = False
+    subnet_group: str = None
+    subnets: list[str] = []

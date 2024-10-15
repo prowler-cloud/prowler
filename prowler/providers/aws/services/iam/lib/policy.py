@@ -1,4 +1,3 @@
-import inspect
 from ipaddress import ip_address, ip_network
 
 from prowler.lib.logger import logger
@@ -151,6 +150,7 @@ def is_condition_restricting_from_private_ip(condition_statement: dict) -> bool:
 # TODO: Add logic for deny statements
 def is_policy_public(
     policy: dict,
+    source_account: str = "",
     is_cross_account_allowed=False,
     not_allowed_actions: list = [],
 ) -> bool:
@@ -159,20 +159,13 @@ def is_policy_public(
     If the policy gives access to an AWS service principal is considered public if the policy is not pair with conditions since it can be invoked by AWS services in other accounts.
     Args:
         policy (dict): The AWS policy to check
+        source_account (str): The account to check if the access is restricted to it, default: ""
         is_cross_account_allowed (bool): If the policy can allow cross-account access, default: False
         not_allowed_actions (list): List of actions that are not allowed, default: []. If not_allowed_actions is empty, the function will not consider the actions in the policy.
     Returns:
         bool: True if the policy allows public access, False otherwise
     """
     is_public = False
-    source_account = ""
-    trusted_account_ids = []
-    # Get service client from the check to get the trusted account IDs and source account
-    for var_name, value in inspect.stack()[1].frame.f_globals.items():
-        if "_client" in var_name:
-            trusted_account_ids = value.audit_config.get("trusted_account_ids", [])
-            source_account = value.audited_account
-            break
     for statement in policy.get("Statement", []):
         # Only check allow statements
         if statement["Effect"] == "Allow":
@@ -240,7 +233,6 @@ def is_policy_public(
                         statement.get("Condition", {}),
                         source_account,
                         is_cross_account_allowed,
-                        trusted_account_ids,
                     )
                     and not is_condition_block_restrictive_organization(
                         statement.get("Condition", {})
@@ -258,7 +250,6 @@ def is_condition_block_restrictive(
     condition_statement: dict,
     source_account: str = "",
     is_cross_account_allowed=False,
-    trusted_account_ids: list = [],
 ):
     """
     is_condition_block_restrictive parses the IAM Condition policy block and, by default, returns True if the source_account passed as argument is within, False if not.
@@ -274,8 +265,6 @@ def is_condition_block_restrictive(
         }
 
         source_account: str with a 12-digit AWS Account number, e.g.: 111122223333, default: ""
-
-        trusted_account_ids: list with a list of trusted AWS Account numbers, e.g.: ["111122223333"], default: []
 
         is_cross_account_allowed: bool to allow cross-account access, e.g.: True, default: False
 
@@ -345,7 +334,7 @@ def is_condition_block_restrictive(
                         # if cross account is not allowed check for each condition block looking for accounts
                         # different than default
                         if not is_cross_account_allowed:
-                            # if there is an arn/account without the source account or trusted accounts -> we do not consider it safe
+                            # if there is an arn/account without the source account -> we do not consider it safe
                             # here by default we assume is true and look for false entries
                             for item in condition_statement[condition_operator][value]:
                                 if (
@@ -353,12 +342,8 @@ def is_condition_block_restrictive(
                                     and "aws:sourcevpce" != value
                                 ):
                                     if source_account not in item:
-                                        if not any(
-                                            trusted_account_id in item
-                                            for trusted_account_id in trusted_account_ids
-                                        ):
-                                            is_condition_key_restrictive = False
-                                            break
+                                        is_condition_key_restrictive = False
+                                        break
 
                         if is_condition_key_restrictive:
                             is_condition_valid = True
@@ -377,10 +362,6 @@ def is_condition_block_restrictive(
                                 if (
                                     source_account
                                     in condition_statement[condition_operator][value]
-                                ) or any(
-                                    trusted_account_id
-                                    in condition_statement[condition_operator][value]
-                                    for trusted_account_id in trusted_account_ids
                                 ):
                                     is_condition_valid = True
 
