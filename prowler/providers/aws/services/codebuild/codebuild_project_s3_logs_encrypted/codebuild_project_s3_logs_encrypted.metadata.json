@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "codebuild_project_s3_logs_encrypted",
-  "CheckTitle": "CodeBuild Project S3 Logs Encrypted",
+  "CheckTitle": "Ensure S3 Logs for CodeBuild Projects are encrypted at rest.",
   "CheckType": [
     "Effects/Data Exposure"
   ],
@@ -10,7 +10,7 @@
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "low",
   "ResourceType": "AwsCodeBuildProject",
-  "Description": "Encryption of data at rest is a recommended best practice to add a layer of access management around your data. Encrypting the logs at rest reduces the risk that a user not authenticated by AWS will access the data stored on disk. It adds another set of access controls to limit the ability of unauthorized users to access the data.",
+  "Description": "Ensure that the S3 logs for CodeBuild projects are encrypted at rest.",
   "Risk": "If the logs are not encrypted, sensitive information could be exposed to unauthorized users.",
   "RelatedUrl": "https://docs.aws.amazon.com/codebuild/latest/userguide/change-project.html#change-project-console-logs",
   "Remediation": {
