@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "codebuild_report_group_export_encrypted",
+  "CheckTitle": "CodeBuild report group exports are encrypted at rest",
+  "CheckType": [],
+  "ServiceName": "codebuild",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "medium",
+  "ResourceType": "Other",
+  "Description": "Ensure that CodeBuild report group exports are encrypted at rest.",
+  "Risk": "If CodeBuild report group exports are not encrypted, sensitive data could be exposed to unauthorized access.",
+  "RelatedUrl": "https://docs.aws.amazon.com/codebuild/latest/userguide/report-group-export-settings.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws codebuild update-report-group --arn <report-group-arn> --export-config \"exportConfigType=S3, s3Destination={bucket=, encryptionDisabled=true}\"",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/codebuild-controls.html#codebuild-7",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure CodeBuild report group exports to use encryption at rest. This can be done by specifying a KMS key ID when creating or updating the report group.",
+      "Url": "https://docs.aws.amazon.com/codebuild/latest/userguide/report-group-export-settings.html"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -7,7 +7,7 @@ from prowler.providers.aws.services.opensearch.opensearch_client import (
 class opensearch_service_domains_https_communications_enforced(Check):
     def execute(self):
         findings = []
-        for domain in opensearch_client.opensearch_domains:
+        for domain in opensearch_client.opensearch_domains.values():
             report = Check_Report_AWS(self.metadata())
             report.region = domain.region
             report.resource_id = domain.name

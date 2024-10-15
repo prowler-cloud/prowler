@@ -43,6 +43,7 @@ class CloudWatch(AWSService):
                                 name_space=namespace,
                                 region=regional_client.region,
                                 alarm_actions=alarm.get("AlarmActions", []),
+                                actions_enabled=alarm.get("ActionsEnabled", False)
                             )
                         )
         except ClientError as error:
@@ -247,6 +248,7 @@ class MetricAlarm(BaseModel):
     region: str
     tags: Optional[list] = []
     alarm_actions: list
+    actions_enabled: bool
 
 
 class LogGroup(BaseModel):
