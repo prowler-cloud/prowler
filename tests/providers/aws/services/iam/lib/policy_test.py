@@ -4,7 +4,6 @@ from prowler.providers.aws.services.iam.lib.policy import (
     is_condition_block_restrictive,
     is_condition_block_restrictive_organization,
     is_condition_restricting_from_private_ip,
-    is_policy_cross_account,
     is_policy_public,
 )
 from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER
@@ -1455,8 +1454,10 @@ class Test_Policy:
                 }
             ]
         }
-        assert is_policy_cross_account(
-            policy_allow_root_and_wildcard_principal, AWS_ACCOUNT_NUMBER
+        assert is_policy_public(
+            policy_allow_root_and_wildcard_principal,
+            AWS_ACCOUNT_NUMBER,
+            is_cross_account_allowed=False,
         )
 
     def test_policy_does_not_allow_cross_account_access_with_specific_root_principal(
@@ -1472,8 +1473,10 @@ class Test_Policy:
                 }
             ]
         }
-        assert not is_policy_cross_account(
-            policy_allow_specific_root_principal, AWS_ACCOUNT_NUMBER
+        assert not is_policy_public(
+            policy_allow_specific_root_principal,
+            AWS_ACCOUNT_NUMBER,
+            is_cross_account_allowed=False,
         )
 
     def test_policy_does_not_allow_cross_account_access_with_deny_effect(self):
@@ -1487,8 +1490,10 @@ class Test_Policy:
                 }
             ]
         }
-        assert not is_policy_cross_account(
-            policy_deny_specific_root_principal, AWS_ACCOUNT_NUMBER
+        assert not is_policy_public(
+            policy_deny_specific_root_principal,
+            AWS_ACCOUNT_NUMBER,
+            is_cross_account_allowed=False,
         )
 
     def test_policy_allows_public_access_with_wildcard_principal(self):

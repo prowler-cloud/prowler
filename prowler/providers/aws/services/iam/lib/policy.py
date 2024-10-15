@@ -4,46 +4,6 @@ from prowler.lib.logger import logger
 from prowler.providers.aws.aws_provider import read_aws_regions_file
 
 
-def is_policy_cross_account(policy: dict, audited_account: str) -> bool:
-    """
-    is_policy_cross_account checks if the policy allows cross-account access.
-    Args:
-        policy (dict): The policy to check.
-        audited_account (str): The account to check if it has access.
-    Returns:
-        bool: True if the policy allows cross-account access, False otherwise.
-    """
-    if policy and "Statement" in policy:
-        if isinstance(policy["Statement"], list):
-            for statement in policy["Statement"]:
-                if statement["Effect"] == "Allow" and "AWS" in statement["Principal"]:
-                    if isinstance(statement["Principal"]["AWS"], list):
-                        for aws_account in statement["Principal"]["AWS"]:
-                            if audited_account not in aws_account or "*" == aws_account:
-                                return True
-                    else:
-                        if (
-                            audited_account not in statement["Principal"]["AWS"]
-                            or "*" == statement["Principal"]["AWS"]
-                        ):
-                            return True
-        else:
-            statement = policy["Statement"]
-            if statement["Effect"] == "Allow" and "AWS" in statement["Principal"]:
-                if isinstance(statement["Principal"]["AWS"], list):
-                    for aws_account in statement["Principal"]["AWS"]:
-                        if audited_account not in aws_account or "*" == aws_account:
-                            return True
-                else:
-                    if (
-                        audited_account not in statement["Principal"]["AWS"]
-                        or "*" == statement["Principal"]["AWS"]
-                    ):
-                        return True
-
-    return is_policy_public(policy, audited_account, is_cross_account_allowed=False)
-
-
 def check_full_service_access(service: str, policy: dict) -> bool:
     """
     check_full_service_access checks if the policy allows full access to a service.
@@ -167,83 +127,99 @@ def is_policy_public(
         bool: True if the policy allows public access, False otherwise
     """
     is_public = False
-    for statement in policy.get("Statement", []):
-        # Only check allow statements
-        if statement["Effect"] == "Allow":
-            principal = statement.get("Principal", "")
-            if (
-                "*" in principal
-                or "arn:aws:iam::*:root" in principal
-                or (
-                    isinstance(principal, dict)
-                    and (
-                        "*" in principal.get("AWS", "")
-                        or "arn:aws:iam::*:root" in principal.get("AWS", "")
-                        or (
-                            isinstance(principal.get("AWS"), list)
-                            and (
-                                "*" in principal["AWS"]
-                                or "arn:aws:iam::*:root" in principal["AWS"]
-                            )
-                        )
-                        or "*" in principal.get("CanonicalUser", "")
-                        or "arn:aws:iam::*:root" in principal.get("CanonicalUser", "")
-                        or (  # Check if function can be invoked by other AWS services
-                            (
-                                ".amazonaws.com" in principal.get("Service", "")
-                                or ".amazon.com" in principal.get("Service", "")
-                                or "*" in principal.get("Service", "")
-                            )
-                        )
-                        and "secretsmanager.amazonaws.com"
-                        not in principal.get(
-                            "Service", ""
-                        )  # AWS ensures that resources called by SecretsManager are executed in the same AWS account
-                    )
-                )
-            ) and (
-                not not_allowed_actions  # If not_allowed_actions is empty, the function will not consider the actions in the policy
-                or (
-                    statement.get(
-                        "Action"
-                    )  # If the statement has no action, it is not public
-                    and (
-                        (
-                            (
-                                isinstance(statement.get("Action", ""), list)
-                                and "*" in statement["Action"]
+    if policy:
+        for statement in policy.get("Statement", []):
+            # Only check allow statements
+            if statement["Effect"] == "Allow":
+                principal = statement.get("Principal", "")
+                if (
+                    "*" in principal
+                    or "arn:aws:iam::*:root" in principal
+                    or (
+                        isinstance(principal, dict)
+                        and (
+                            "*" in principal.get("AWS", "")
+                            or "arn:aws:iam::*:root" in principal.get("AWS", "")
+                            or (
+                                isinstance(principal.get("AWS"), str)
+                                and source_account
+                                and not is_cross_account_allowed
+                                and source_account not in principal.get("AWS", "")
                             )
                             or (
-                                isinstance(statement.get("Action", ""), str)
-                                and statement.get("Action", "") == "*"
+                                isinstance(principal.get("AWS"), list)
+                                and (
+                                    "*" in principal["AWS"]
+                                    or "arn:aws:iam::*:root" in principal["AWS"]
+                                    or (
+                                        source_account
+                                        and not is_cross_account_allowed
+                                        and not any(
+                                            source_account in principal_aws
+                                            for principal_aws in principal["AWS"]
+                                        )
+                                    )
+                                )
                             )
-                        )
-                        or (
-                            isinstance(statement.get("Action", ""), list)
-                            and any(
-                                action in not_allowed_actions
-                                for action in statement["Action"]
+                            or "*" in principal.get("CanonicalUser", "")
+                            or "arn:aws:iam::*:root"
+                            in principal.get("CanonicalUser", "")
+                            or (  # Check if function can be invoked by other AWS services
+                                (
+                                    ".amazonaws.com" in principal.get("Service", "")
+                                    or ".amazon.com" in principal.get("Service", "")
+                                    or "*" in principal.get("Service", "")
+                                )
                             )
+                            and "secretsmanager.amazonaws.com"
+                            not in principal.get(
+                                "Service", ""
+                            )  # AWS ensures that resources called by SecretsManager are executed in the same AWS account
                         )
-                        or (statement.get("Action", "") in not_allowed_actions)
                     )
-                )
-            ):
-                is_public = (
-                    not is_condition_block_restrictive(
-                        statement.get("Condition", {}),
-                        source_account,
-                        is_cross_account_allowed,
+                ) and (
+                    not not_allowed_actions  # If not_allowed_actions is empty, the function will not consider the actions in the policy
+                    or (
+                        statement.get(
+                            "Action"
+                        )  # If the statement has no action, it is not public
+                        and (
+                            (
+                                (
+                                    isinstance(statement.get("Action", ""), list)
+                                    and "*" in statement["Action"]
+                                )
+                                or (
+                                    isinstance(statement.get("Action", ""), str)
+                                    and statement.get("Action", "") == "*"
+                                )
+                            )
+                            or (
+                                isinstance(statement.get("Action", ""), list)
+                                and any(
+                                    action in not_allowed_actions
+                                    for action in statement["Action"]
+                                )
+                            )
+                            or (statement.get("Action", "") in not_allowed_actions)
+                        )
                     )
-                    and not is_condition_block_restrictive_organization(
-                        statement.get("Condition", {})
+                ):
+                    is_public = not statement.get("Condition", {}) or (
+                        not is_condition_block_restrictive(
+                            statement.get("Condition", {}),
+                            source_account,
+                            is_cross_account_allowed,
+                        )
+                        and not is_condition_block_restrictive_organization(
+                            statement.get("Condition", {})
+                        )
+                        and not is_condition_restricting_from_private_ip(
+                            statement.get("Condition", {})
+                        )
                     )
-                    and not is_condition_restricting_from_private_ip(
-                        statement.get("Condition", {})
-                    )
-                )
-                if is_public:
-                    break
+                    if is_public:
+                        break
     return is_public
 
 
