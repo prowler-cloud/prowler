@@ -32,6 +32,7 @@ class WAF(AWSService):
                         albs=[],
                         region=regional_client.region,
                     )
+
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -59,11 +60,16 @@ class WAFRegional(AWSService):
         super().__init__("waf-regional", provider)
         self.web_acls = {}
         self.rules = {}
+        self.rule_groups = {}
         self.__threading_call__(self._list_web_acls)
         self.__threading_call__(self._list_resources_for_web_acl)
         self.__threading_call__(self._get_web_acl, self.web_acls.values())
         self.__threading_call__(self._list_rules)
         self.__threading_call__(self._get_rule, self.rules.values())
+        self.__threading_call__(self._list_rule_groups)
+        self.__threading_call__(
+            self._list_activated_rules_in_rule_group, self.rule_groups.values()
+        )
 
     def _list_web_acls(self, regional_client):
         logger.info("WAFRegional - Listing Regional Web ACLs...")
@@ -80,6 +86,7 @@ class WAFRegional(AWSService):
                         albs=[],
                         region=regional_client.region,
                     )
+
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -123,10 +130,11 @@ class WAFRegional(AWSService):
                 arn = f"arn:aws:waf-regional:{regional_client.region}:{self.audited_account}:rule/{rule['RuleId']}"
                 self.rules[arn] = Rule(
                     arn=arn,
-                    id=rule.get("RuleId", ""),
                     region=regional_client.region,
+                    id=rule.get("RuleId", ""),
                     name=rule.get("Name", ""),
                 )
+
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -143,16 +151,55 @@ class WAFRegional(AWSService):
                         data_id=predicate.get("DataId", ""),
                     )
                 )
+
         except KeyError:
             logger.error(f"Rule {rule.name} not found in {rule.region}.")
 
+    def _list_rule_groups(self, regional_client):
+        logger.info("WAFRegional - Listing Regional Rule Groups...")
+        try:
+            for rule_group in regional_client.list_rule_groups().get("RuleGroups", []):
+                arn = f"arn:aws:waf-regional:{regional_client.region}:{self.audited_account}:rule-group/{rule_group['RuleGroupId']}"
+                self.rule_groups[arn] = RuleGroup(
+                    arn=arn,
+                    region=regional_client.region,
+                    id=rule_group.get("RuleGroupId", ""),
+                    name=rule_group.get("Name", ""),
+                )
+
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _list_activated_rules_in_rule_group(self, rule_group):
+        logger.info(
+            f"WAFRegional - Listing activated rules in Rule Group {rule_group.name}..."
+        )
+        try:
+            for rule in (
+                self.regional_clients[rule_group.region]
+                .list_activated_rules_in_rule_group(RuleGroupId=rule_group.id)
+                .get("ActivatedRules", [])
+            ):
+                rule_group.rules.append(Rule(id=rule.get("RuleId", "")))
+
+        except Exception as error:
+            logger.error(
+                f"{rule_group.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class Predicate(BaseModel):
+    """Predicate Model for WAF and WAFRegional"""
+
     negated: bool
     data_id: str
 
 
 class ACLRule(BaseModel):
+    """ACL Rule Model for WAF and WAFRegional"""
+
     id: str
 
 
@@ -164,6 +211,17 @@ class Rule(BaseModel):
     region: str
     name: str
     predicates: list[Predicate] = []
+    tags: Optional[list] = []
+
+
+class RuleGroup(BaseModel):
+    """RuleGroup Model for WAF and WAFRegional"""
+
+    arn: str
+    id: str
+    region: str
+    name: str
+    rules: list[Rule] = []
     tags: Optional[list] = []
 
 
