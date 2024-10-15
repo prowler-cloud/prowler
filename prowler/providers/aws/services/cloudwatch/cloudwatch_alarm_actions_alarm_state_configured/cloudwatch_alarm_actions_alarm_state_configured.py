@@ -4,7 +4,7 @@ from prowler.providers.aws.services.cloudwatch.cloudwatch_client import (
 )
 
 
-class cloudwatch_alarm_actions_configured(Check):
+class cloudwatch_alarm_actions_alarm_state_configured(Check):
     def execute(self):
         findings = []
         for metric_alarm in cloudwatch_client.metric_alarms:

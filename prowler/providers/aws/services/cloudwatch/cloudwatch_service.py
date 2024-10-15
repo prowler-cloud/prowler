@@ -42,7 +42,7 @@ class CloudWatch(AWSService):
                                 metric=metric_name,
                                 name_space=namespace,
                                 region=regional_client.region,
-                                alarm_actions=alarm["AlarmActions"],
+                                alarm_actions=alarm.get("AlarmActions", []),
                             )
                         )
         except ClientError as error:

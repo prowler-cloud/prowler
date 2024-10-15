@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "cloudwatch_alarm_actions_configured",
+  "CheckID": "cloudwatch_alarm_actions_alarm_state_configured",
   "CheckTitle": "Check if CloudWatch alarms have specified actions configured for the ALARM state.",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices"

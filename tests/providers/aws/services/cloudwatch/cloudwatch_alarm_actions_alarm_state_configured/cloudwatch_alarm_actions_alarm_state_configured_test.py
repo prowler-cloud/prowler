@@ -6,7 +6,7 @@ from moto import mock_aws
 from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
 
 
-class Test_cloudwatch_alarm_actions_configured:
+class Test_cloudwatch_alarm_actions_alarm_state_configured:
     @mock_aws
     def test_no_cloudwatch_alarms(self):
         cloudwatch_client = client("cloudwatch", region_name=AWS_REGION_US_EAST_1)
@@ -22,15 +22,15 @@ class Test_cloudwatch_alarm_actions_configured:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_alarm_actions_configured.cloudwatch_alarm_actions_configured.cloudwatch_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_alarm_actions_alarm_state_configured.cloudwatch_alarm_actions_alarm_state_configured.cloudwatch_client",
             new=CloudWatch(aws_provider),
         ):
 
-            from prowler.providers.aws.services.cloudwatch.cloudwatch_alarm_actions_configured.cloudwatch_alarm_actions_configured import (
-                cloudwatch_alarm_actions_configured,
+            from prowler.providers.aws.services.cloudwatch.cloudwatch_alarm_actions_alarm_state_configured.cloudwatch_alarm_actions_alarm_state_configured import (
+                cloudwatch_alarm_actions_alarm_state_configured,
             )
 
-            check = cloudwatch_alarm_actions_configured()
+            check = cloudwatch_alarm_actions_alarm_state_configured()
             result = check.execute()
 
             assert len(result) == 0
@@ -57,15 +57,15 @@ class Test_cloudwatch_alarm_actions_configured:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_alarm_actions_configured.cloudwatch_alarm_actions_configured.cloudwatch_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_alarm_actions_alarm_state_configured.cloudwatch_alarm_actions_alarm_state_configured.cloudwatch_client",
             new=CloudWatch(aws_provider),
         ):
 
-            from prowler.providers.aws.services.cloudwatch.cloudwatch_alarm_actions_configured.cloudwatch_alarm_actions_configured import (
-                cloudwatch_alarm_actions_configured,
+            from prowler.providers.aws.services.cloudwatch.cloudwatch_alarm_actions_alarm_state_configured.cloudwatch_alarm_actions_alarm_state_configured import (
+                cloudwatch_alarm_actions_alarm_state_configured,
             )
 
-            check = cloudwatch_alarm_actions_configured()
+            check = cloudwatch_alarm_actions_alarm_state_configured()
             result = check.execute()
 
             assert len(result) == 1
@@ -104,15 +104,15 @@ class Test_cloudwatch_alarm_actions_configured:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_alarm_actions_configured.cloudwatch_alarm_actions_configured.cloudwatch_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_alarm_actions_alarm_state_configured.cloudwatch_alarm_actions_alarm_state_configured.cloudwatch_client",
             new=CloudWatch(aws_provider),
         ):
 
-            from prowler.providers.aws.services.cloudwatch.cloudwatch_alarm_actions_configured.cloudwatch_alarm_actions_configured import (
-                cloudwatch_alarm_actions_configured,
+            from prowler.providers.aws.services.cloudwatch.cloudwatch_alarm_actions_alarm_state_configured.cloudwatch_alarm_actions_alarm_state_configured import (
+                cloudwatch_alarm_actions_alarm_state_configured,
             )
 
-            check = cloudwatch_alarm_actions_configured()
+            check = cloudwatch_alarm_actions_alarm_state_configured()
             result = check.execute()
 
             assert len(result) == 1
