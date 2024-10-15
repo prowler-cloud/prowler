@@ -82,7 +82,7 @@ class Logs(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.log_group_arn_template = f"arn:{self.audited_partition}:logs:{self.region}:{self.audited_account}:log-group"
-        self.log_groups = []
+        self.log_groups = {}
         self.__threading_call__(self._describe_log_groups)
         self.metric_filters = []
         self.__threading_call__(self._describe_metric_filters)
@@ -95,7 +95,9 @@ class Logs(AWSService):
                     1000  # The threshold for number of events to return per log group.
                 )
                 self.__threading_call__(self._get_log_events)
-            self.__threading_call__(self._list_tags_for_resource, self.log_groups)
+            self.__threading_call__(
+                self._list_tags_for_resource, self.log_groups.values()
+            )
 
     def _describe_metric_filters(self, regional_client):
         logger.info("CloudWatch Logs - Describing metric filters...")
@@ -113,7 +115,7 @@ class Logs(AWSService):
                             self.metric_filters = []
 
                         log_group = None
-                        for lg in self.log_groups:
+                        for lg in self.log_groups.values():
                             if lg.name == filter["logGroupName"]:
                                 log_group = lg
                                 break
@@ -162,16 +164,14 @@ class Logs(AWSService):
                             never_expire = True
                             retention_days = 9999
                         if self.log_groups is None:
-                            self.log_groups = []
-                        self.log_groups.append(
-                            LogGroup(
-                                arn=log_group["arn"],
-                                name=log_group["logGroupName"],
-                                retention_days=retention_days,
-                                never_expire=never_expire,
-                                kms_id=kms,
-                                region=regional_client.region,
-                            )
+                            self.log_groups = {}
+                        self.log_groups[log_group["arn"]] = LogGroup(
+                            arn=log_group["arn"],
+                            name=log_group["logGroupName"],
+                            retention_days=retention_days,
+                            never_expire=never_expire,
+                            kms_id=kms,
+                            region=regional_client.region,
                         )
         except ClientError as error:
             if error.response["Error"]["Code"] == "AccessDeniedException":
@@ -192,7 +192,7 @@ class Logs(AWSService):
     def _get_log_events(self, regional_client):
         regional_log_groups = [
             log_group
-            for log_group in self.log_groups
+            for log_group in self.log_groups.values()
             if log_group.region == regional_client.region
         ]
         total_log_groups = len(regional_log_groups)
