@@ -63,7 +63,7 @@ def mock_make_api_call_non_compliant_rule(self, operation_name, kwarg):
     return orig(self, operation_name, kwarg)
 
 
-class Test_waf_rule_has_conditions:
+class Test_waf_regional_rule_with_conditions:
     @mock_aws
     def test_no_rules(self):
         from prowler.providers.aws.services.waf.waf_service import WAFRegional
@@ -75,15 +75,15 @@ class Test_waf_rule_has_conditions:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.waf.waf_rule_has_conditions.waf_rule_has_conditions.wafregional_client",
+                "prowler.providers.aws.services.waf.waf_regional_rule_with_conditions.waf_regional_rule_with_conditions.wafregional_client",
                 new=WAFRegional(aws_provider),
             ):
                 # Test Check
-                from prowler.providers.aws.services.waf.waf_rule_has_conditions.waf_rule_has_conditions import (
-                    waf_rule_has_conditions,
+                from prowler.providers.aws.services.waf.waf_regional_rule_with_conditions.waf_regional_rule_with_conditions import (
+                    waf_regional_rule_with_conditions,
                 )
 
-                check = waf_rule_has_conditions()
+                check = waf_regional_rule_with_conditions()
                 result = check.execute()
 
                 assert len(result) == 0
@@ -103,15 +103,15 @@ class Test_waf_rule_has_conditions:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.waf.waf_rule_has_conditions.waf_rule_has_conditions.wafregional_client",
+                "prowler.providers.aws.services.waf.waf_regional_rule_with_conditions.waf_regional_rule_with_conditions.wafregional_client",
                 new=WAFRegional(aws_provider),
             ):
                 # Test Check
-                from prowler.providers.aws.services.waf.waf_rule_has_conditions.waf_rule_has_conditions import (
-                    waf_rule_has_conditions,
+                from prowler.providers.aws.services.waf.waf_regional_rule_with_conditions.waf_regional_rule_with_conditions import (
+                    waf_regional_rule_with_conditions,
                 )
 
-                check = waf_rule_has_conditions()
+                check = waf_regional_rule_with_conditions()
                 result = check.execute()
 
                 assert len(result) == 1
@@ -142,15 +142,15 @@ class Test_waf_rule_has_conditions:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.waf.waf_rule_has_conditions.waf_rule_has_conditions.wafregional_client",
+                "prowler.providers.aws.services.waf.waf_regional_rule_with_conditions.waf_regional_rule_with_conditions.wafregional_client",
                 new=WAFRegional(aws_provider),
             ):
                 # Test Check
-                from prowler.providers.aws.services.waf.waf_rule_has_conditions.waf_rule_has_conditions import (
-                    waf_rule_has_conditions,
+                from prowler.providers.aws.services.waf.waf_regional_rule_with_conditions.waf_regional_rule_with_conditions import (
+                    waf_regional_rule_with_conditions,
                 )
 
-                check = waf_rule_has_conditions()
+                check = waf_regional_rule_with_conditions()
                 result = check.execute()
 
                 assert len(result) == 1
