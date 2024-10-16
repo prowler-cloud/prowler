@@ -64,3 +64,39 @@ class Test_MQ_Service:
         assert mq.brokers[broker_arn].name == "my-broker"
         assert mq.brokers[broker_arn].region == AWS_REGION_EU_WEST_1
         assert mq.brokers[broker_arn].id == broker["BrokerId"]
+
+    # Test MQ Describe Broker
+    @mock_aws
+    def test_describe_broker(self):
+        # Generate MQ client
+        mq_client = client("mq", region_name=AWS_REGION_EU_WEST_1)
+        broker = mq_client.create_broker(
+            AutoMinorVersionUpgrade=True,
+            BrokerName="my-broker",
+            DeploymentMode="SINGLE_INSTANCE",
+            EngineType="ActiveMQ",
+            EngineVersion="5.15.0",
+            HostInstanceType="mq.t2.micro",
+            PubliclyAccessible=True,
+            Users=[
+                {
+                    "ConsoleAccess": False,
+                    "Groups": [],
+                    "Password": "password",
+                    "Username": "user",
+                }
+            ],
+        )
+        broker_arn = broker["BrokerArn"]
+        broker["BrokerId"]
+
+        # MQ Client for this test class
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        mq = MQ(aws_provider)
+
+        assert len(mq.brokers) == 1
+        assert mq.brokers[broker_arn].arn == broker_arn
+        assert mq.brokers[broker_arn].name == "my-broker"
+        assert mq.brokers[broker_arn].region == AWS_REGION_EU_WEST_1
+        assert mq.brokers[broker_arn].id == broker["BrokerId"]
+        assert mq.brokers[broker_arn].auto_minor_version_upgrade
