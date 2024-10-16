@@ -32,6 +32,7 @@ class WAF(AWSService):
                         albs=[],
                         region=regional_client.region,
                     )
+
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
