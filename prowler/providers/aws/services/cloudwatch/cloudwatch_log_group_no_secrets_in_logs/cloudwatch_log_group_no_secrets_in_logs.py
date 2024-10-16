@@ -15,7 +15,7 @@ class cloudwatch_log_group_no_secrets_in_logs(Check):
             secrets_ignore_patterns = logs_client.audit_config.get(
                 "secrets_ignore_patterns", []
             )
-            for log_group in logs_client.log_groups:
+            for log_group in logs_client.log_groups.values():
                 report = Check_Report_AWS(self.metadata())
                 report.status = "PASS"
                 report.status_extended = (

@@ -1867,6 +1867,39 @@ class Test_Policy:
         }
         assert is_policy_public(policy)
 
+    def test__is_policy_public_secrets_manager(
+        self,
+    ):
+        policy = {
+            "Statement": [
+                {
+                    "Sid": "test",
+                    "Effect": "Allow",
+                    "Principal": {"Service": "secretsmanager.amazonaws.com"},
+                    "Action": "lambda:GetFunction",
+                    "Resource": "*",
+                }
+            ]
+        }
+        assert not is_policy_public(policy)
+
+    def test__is_policy_public_alexa_condition(
+        self,
+    ):
+        policy = {
+            "Statement": [
+                {
+                    "Sid": "test",
+                    "Effect": "Allow",
+                    "Principal": {"Service": "alexa-connectedhome.amazon.com"},
+                    "Action": "lambda:GetFunction",
+                    "Resource": "*",
+                    "Condition": {"StringEquals": {"lambda:EventSourceToken": "test"}},
+                }
+            ]
+        }
+        assert not is_policy_public(policy)
+
     def test_check_admin_access(self):
         policy = {
             "Version": "2012-10-17",

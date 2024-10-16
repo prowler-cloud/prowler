@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "cloudwatch_alarm_actions_enabled",
+  "CheckTitle": "Check if CloudWatch alarms have actions enabled",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "cloudwatch",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:cloudwatch:region:account-id:alarm/alarm-name",
+  "Severity": "high",
+  "ResourceType": "AwsCloudWatchAlarm",
+  "Description": "Alarm actions automatically alert you when a monitored metric is outside the defined threshold. If the alarm action is deactivated, no actions are run when the alarm changes state, and you won't be alerted to changes in monitored metrics. We recommend activating CloudWatch alarm actions to help you quickly respond to security and operational issues.",
+  "Risk": "Without active alarm actions, you may not be alerted to security or operational issues, potentially leading to delayed responses and increased risk.",
+  "RelatedUrl": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/AlarmThatSendsEmail.html#alarms-and-actions",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws cloudwatch enable-alarm-actions --alarm-names <alarm-name>",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudwatch-controls.html#cloudwatch-17",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure that all CloudWatch alarms have at least one action configured. This can include sending notifications to SNS topics, invoking Lambda functions, or triggering other AWS services.",
+      "Url": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudWatch/cloudwatch-alarm-action-activated.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

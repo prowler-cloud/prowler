@@ -45,7 +45,10 @@ class ProwlerException(Exception):
 
     def __str__(self):
         """Overriding the __str__ method"""
-        return f"{self.__class__.__name__}[{self.code}]: {self.message} - {self.original_exception}"
+        default_str = f"{self.__class__.__name__}[{self.code}]: {self.message}"
+        if self.original_exception:
+            default_str += f" - {self.original_exception}"
+        return default_str
 
 
 class UnexpectedError(ProwlerException):
