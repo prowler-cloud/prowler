@@ -188,7 +188,7 @@ class TestScan:
 
         assert scan.provider == mock_provider
         # Check that the checks to execute are sorted and without duplicates
-        assert scan.checks_to_execute == {
+        assert scan.checks_to_execute == [
             "accessanalyzer_enabled",
             "accessanalyzer_enabled_without_findings",
             "account_maintain_current_contact_details",
@@ -247,7 +247,7 @@ class TestScan:
             "cognito_user_pool_waf_acl_attached",
             "config_recorder_all_regions_enabled",
             "workspaces_vpc_2private_1public_subnets_nat",
-        }
+        ]
         assert scan.service_checks_to_execute == get_service_checks_to_execute(
             checks_to_execute
         )
@@ -272,7 +272,7 @@ class TestScan:
         mock_recover_checks_from_provider.assert_called_once_with("aws")
 
         assert scan.provider == mock_provider
-        assert scan.checks_to_execute == {"accessanalyzer_enabled"}
+        assert scan.checks_to_execute == ["accessanalyzer_enabled"]
         assert scan.service_checks_to_execute == get_service_checks_to_execute(
             ["accessanalyzer_enabled"]
         )
