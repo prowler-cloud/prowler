@@ -114,7 +114,7 @@ class Test_waf_rulegroup_has_rules:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == f"AWS WAFRegional Classic Regional RuleGroup {RULE_GROUP_ID} has at least one rule."
+                    == f"AWS WAF Regional Classic Regional RuleGroup {RULE_GROUP_ID} has at least one rule."
                 )
                 assert result[0].resource_id == RULE_GROUP_ID
                 assert (
@@ -153,7 +153,7 @@ class Test_waf_rulegroup_has_rules:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"AWS WAFRegional Classic Regional RuleGroup {RULE_GROUP_ID} does not have any rules."
+                    == f"AWS WAF Regional Classic Regional RuleGroup {RULE_GROUP_ID} does not have any rules."
                 )
                 assert result[0].resource_id == RULE_GROUP_ID
                 assert (

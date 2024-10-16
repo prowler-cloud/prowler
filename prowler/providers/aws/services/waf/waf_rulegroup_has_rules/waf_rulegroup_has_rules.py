@@ -12,11 +12,15 @@ class waf_rulegroup_has_rules(Check):
             report.resource_arn = rule_group.arn
             report.resource_tags = rule_group.tags
             report.status = "FAIL"
-            report.status_extended = f"AWS WAFRegional Classic Regional RuleGroup {rule_group.id} does not have any rules."
+            report.status_extended = (
+                f"AWS WAF Regional Rule Group {rule_group.id} does not have any rules."
+            )
 
             if rule_group.rules:
                 report.status = "PASS"
-                report.status_extended = f"AWS WAFRegional Classic Regional RuleGroup {rule_group.id} has at least one rule."
+                report.status_extended = (
+                    f"AWS WAF Regional Rule Group {rule_group.id} is not empty."
+                )
 
             findings.append(report)
 

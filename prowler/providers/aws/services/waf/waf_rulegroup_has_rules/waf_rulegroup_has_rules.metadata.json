@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "waf_rulegroup_has_rules",
+  "CheckID": "waf_regional_rulegroup_not_empty",
   "CheckTitle": "Check if AWS WAF Classic Regional rule group has at least one rule.",
   "CheckType": [
     "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53 Controls"
@@ -15,7 +15,7 @@
   "RelatedUrl": "https://docs.aws.amazon.com/waf/latest/developerguide/waf-rule-groups.html",
   "Remediation": {
     "Code": {
-      "CLI": "aws waf-regional update-rule-group --rule-group-id <rule-group-id> --changes <changes>",
+      "CLI": "aws waf-regional update-rule-group --rule-group-id <rule-group-id> --updates Action=INSERT,ActivatedRule={Priority=1,RuleId=<rule-id>,Action={Type=BLOCK}} --change-token <change-token> --region <region>",
       "NativeIaC": "",
       "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/waf-controls.html#waf-3",
       "Terraform": ""
