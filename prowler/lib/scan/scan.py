@@ -1,10 +1,15 @@
 import datetime
 from typing import Generator
 
+from prowler.config.config import valid_severities
 from prowler.lib.check.check import execute, import_check, update_audit_metadata
-from prowler.lib.check.utils import recover_checks_from_provider
+from prowler.lib.check.checks_loader import load_checks_to_execute
+from prowler.lib.check.compliance import update_checks_metadata_with_compliance
+from prowler.lib.check.compliance_models import Compliance
+from prowler.lib.check.models import CheckMetadata
 from prowler.lib.logger import logger
 from prowler.lib.outputs.finding import Finding
+from prowler.lib.scan.exceptions.exceptions import ScanInvalidSeverityError
 from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.provider import Provider
 
@@ -15,29 +20,62 @@ class Scan:
     _number_of_checks_to_execute: int = 0
     _number_of_checks_completed: int = 0
     # TODO the str should be a set of Check objects
-    _checks_to_execute: list[str]
+    _checks_to_execute: set[str]
     _service_checks_to_execute: dict[str, set[str]]
     _service_checks_completed: dict[str, set[str]]
     _progress: float = 0.0
     _findings: list = []
     _duration: int = 0
 
-    def __init__(self, provider: Provider, checks_to_execute: list[str] = None):
+    def __init__(
+        self,
+        provider: Provider,
+        checks: list[str] = None,
+        services: list[str] = None,
+        compliances: list[str] = None,
+        categories: set[str] = [],
+        severity: list[str] = None,
+    ):
         """
         Scan is the class that executes the checks and yields the progress and the findings.
 
         Params:
             provider: Provider -> The provider to scan
-            checks_to_execute: list[str] -> The checks to execute
+            checks: list[str] -> The checks to execute
+            services: list[str] -> The services to scan
+            compliances: list[str] -> The compliances to check
+            categories: set[str] -> The categories to check
+            severity: list[str] -> The severity of the checks
         """
         self._provider = provider
-        # Remove duplicated checks and sort them
-        self._checks_to_execute = (
-            sorted(list(set(checks_to_execute)))
-            if checks_to_execute
-            else sorted(
-                [check[0] for check in recover_checks_from_provider(provider.type)]
+
+        # Load bulk compliance frameworks
+        bulk_compliance_frameworks = Compliance.get_bulk(provider.type)
+
+        # Get bulk checks metadata for the provider
+        bulk_checks_metadata = CheckMetadata.get_bulk(provider.type)
+        # Complete checks metadata with the compliance framework specification
+        bulk_checks_metadata = update_checks_metadata_with_compliance(
+            bulk_compliance_frameworks, bulk_checks_metadata
+        )
+
+        # Validate severity
+        if severity and not set(severity).issubset(valid_severities):
+            raise ScanInvalidSeverityError(
+                f"Invalid severity: {severity}. Valid severities are: {valid_severities}"
             )
+
+        # Load checks to execute
+        self._checks_to_execute = load_checks_to_execute(
+            bulk_checks_metadata=bulk_checks_metadata,
+            bulk_compliance_frameworks=bulk_compliance_frameworks,
+            check_list=checks,
+            service_list=services,
+            compliance_frameworks=compliances,
+            categories=categories,
+            severities=severity,
+            provider=provider.type,
+            checks_file=None,
         )
 
         # TODO This should be done depending on the scan args (future feature)
