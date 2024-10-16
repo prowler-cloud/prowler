@@ -74,7 +74,7 @@ class WAFRegional(AWSService):
         logger.info("WAFRegional - Listing Regional Rules...")
         try:
             for rule in regional_client.list_rules().get("Rules", []):
-                arn = f"arn:aws:waf-regional:{regional_client.region}:{self.audited_account}:rule/{rule['RuleId']}"
+                arn = f"arn:{self.audited_partition}:waf-regional:{regional_client.region}:{self.audited_account}:rule/{rule['RuleId']}"
                 self.rules[arn] = Rule(
                     arn=arn,
                     id=rule.get("RuleId", ""),
@@ -105,7 +105,7 @@ class WAFRegional(AWSService):
         logger.info("WAFRegional - Listing Regional Rule Groups...")
         try:
             for rule_group in regional_client.list_rule_groups().get("RuleGroups", []):
-                arn = f"arn:aws:waf-regional:{regional_client.region}:{self.audited_account}:rulegroup/{rule_group['RuleGroupId']}"
+                arn = f"arn:{self.audited_partition}:waf-regional:{regional_client.region}:{self.audited_account}:rulegroup/{rule_group['RuleGroupId']}"
                 self.rule_groups[arn] = RuleGroup(
                     arn=arn,
                     region=regional_client.region,
@@ -128,7 +128,7 @@ class WAFRegional(AWSService):
                 .list_activated_rules_in_rule_group(RuleGroupId=rule_group.id)
                 .get("ActivatedRules", [])
             ):
-                rule_arn = f"arn:aws:waf-regional:{rule_group.region}:{self.audited_account}:rule/{rule.get('RuleId', '')}"
+                rule_arn = f"arn:{self.audited_partition}:waf-regional:{rule_group.region}:{self.audited_account}:rule/{rule.get('RuleId', '')}"
                 rule_group.rules.append(self.rules[rule_arn])
 
         except Exception as error:
