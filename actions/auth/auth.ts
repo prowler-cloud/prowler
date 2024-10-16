@@ -61,7 +61,6 @@ export const createNewUser = async (
       type: "User",
       attributes: {
         name: formData.name,
-        company_name: formData.company,
         email: formData.email,
         password: formData.password,
       },
