@@ -27,21 +27,23 @@ class WAFv2(AWSService):
         logger.info("WAFv2 - Listing Global Web ACLs...")
         if "us-east-1" in self.regional_clients:
             try:
-                    regional_client = self.regional_clients["us-east-1"]
-                    for wafv2 in regional_client.list_web_acls(Scope="CLOUDFRONT")["WebACLs"]:
-                        if not self.audit_resources or (
-                            is_resource_filtered(wafv2["ARN"], self.audit_resources)
-                        ):
-                            arn = wafv2["ARN"]
-                            self.web_acls[arn] = WebAclv2(
-                                arn=arn,
-                                name=wafv2["Name"],
-                                id=wafv2["Id"],
-                                albs=[],
-                                user_pools=[],
-                                scope=Scope.CLOUDFRONT,
-                                region="us-east-1",
-                            )
+                regional_client = self.regional_clients["us-east-1"]
+                for wafv2 in regional_client.list_web_acls(Scope="CLOUDFRONT")[
+                    "WebACLs"
+                ]:
+                    if not self.audit_resources or (
+                        is_resource_filtered(wafv2["ARN"], self.audit_resources)
+                    ):
+                        arn = wafv2["ARN"]
+                        self.web_acls[arn] = WebAclv2(
+                            arn=arn,
+                            name=wafv2["Name"],
+                            id=wafv2["Id"],
+                            albs=[],
+                            user_pools=[],
+                            scope=Scope.CLOUDFRONT,
+                            region="us-east-1",
+                        )
             except Exception as error:
                 logger.error(
                     f"us-east-1 -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -132,11 +134,16 @@ class WAFv2(AWSService):
                 rules = get_web_acl.get("WebACL", {}).get("Rules", [])
                 for rule in rules:
                     new_rule = Rule(
-                        name=rule.get("Name", ""), cloudwatch_metrics_enabled=rule.get("VisibilityConfig", {}).get(
-                        "CloudWatchMetricsEnabled", False
+                        name=rule.get("Name", ""),
+                        cloudwatch_metrics_enabled=rule.get("VisibilityConfig", {}).get(
+                            "CloudWatchMetricsEnabled", False
+                        ),
                     )
-                    )
-                    if rule.get("Statement",{}).get("RuleGroupReferenceStatement",{}).get("ARN"):
+                    if (
+                        rule.get("Statement", {})
+                        .get("RuleGroupReferenceStatement", {})
+                        .get("ARN")
+                    ):
                         acl.rule_groups.append(new_rule)
                     else:
                         acl.rules.append(new_rule)
