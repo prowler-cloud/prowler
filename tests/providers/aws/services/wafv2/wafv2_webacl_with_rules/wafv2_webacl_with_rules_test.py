@@ -9,7 +9,7 @@ waf_name = "waf-example"
 waf_arn = f"arn:aws:wafv2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:regional/webacl/{waf_name}/{waf_id}"
 
 
-class Test_wafv2_webacl_has_rules_or_rule_groups:
+class Test_wafv2_webacl_with_rules:
     def test_no_web_acls(self):
         wafv2_client = mock.MagicMock
         wafv2_client.web_acls = {}
@@ -20,11 +20,11 @@ class Test_wafv2_webacl_has_rules_or_rule_groups:
             "prowler.providers.aws.services.wafv2.wafv2_client.wafv2_client",
             new=wafv2_client,
         ):
-            from prowler.providers.aws.services.wafv2.wafv2_webacl_has_rules_or_rule_groups.wafv2_webacl_has_rules_or_rule_groups import (
-                wafv2_webacl_has_rules_or_rule_groups,
+            from prowler.providers.aws.services.wafv2.wafv2_webacl_with_rules.wafv2_webacl_with_rules import (
+                wafv2_webacl_with_rules,
             )
 
-            check = wafv2_webacl_has_rules_or_rule_groups()
+            check = wafv2_webacl_with_rules()
             result = check.execute()
             assert len(result) == 0
 
@@ -51,17 +51,17 @@ class Test_wafv2_webacl_has_rules_or_rule_groups:
             "prowler.providers.aws.services.wafv2.wafv2_client.wafv2_client",
             new=wafv2_client,
         ):
-            from prowler.providers.aws.services.wafv2.wafv2_webacl_has_rules_or_rule_groups.wafv2_webacl_has_rules_or_rule_groups import (
-                wafv2_webacl_has_rules_or_rule_groups,
+            from prowler.providers.aws.services.wafv2.wafv2_webacl_with_rules.wafv2_webacl_with_rules import (
+                wafv2_webacl_with_rules,
             )
 
-            check = wafv2_webacl_has_rules_or_rule_groups()
+            check = wafv2_webacl_with_rules()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"AWS WAFv2 Web ACL {waf_id} does have rules or rule groups attached."
+                == f"AWS WAFv2 Web ACL {waf_name} does have rules or rule groups attached."
             )
             assert result[0].resource_id == waf_id
             assert result[0].resource_arn == waf_arn
@@ -91,17 +91,17 @@ class Test_wafv2_webacl_has_rules_or_rule_groups:
             "prowler.providers.aws.services.wafv2.wafv2_client.wafv2_client",
             new=wafv2_client,
         ):
-            from prowler.providers.aws.services.wafv2.wafv2_webacl_has_rules_or_rule_groups.wafv2_webacl_has_rules_or_rule_groups import (
-                wafv2_webacl_has_rules_or_rule_groups,
+            from prowler.providers.aws.services.wafv2.wafv2_webacl_with_rules.wafv2_webacl_with_rules import (
+                wafv2_webacl_with_rules,
             )
 
-            check = wafv2_webacl_has_rules_or_rule_groups()
+            check = wafv2_webacl_with_rules()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"AWS WAFv2 Web ACL {waf_id} does have rules or rule groups attached."
+                == f"AWS WAFv2 Web ACL {waf_name} does have rules or rule groups attached."
             )
             assert result[0].resource_id == waf_id
             assert result[0].resource_arn == waf_arn
@@ -131,17 +131,17 @@ class Test_wafv2_webacl_has_rules_or_rule_groups:
             "prowler.providers.aws.services.wafv2.wafv2_client.wafv2_client",
             new=wafv2_client,
         ):
-            from prowler.providers.aws.services.wafv2.wafv2_webacl_has_rules_or_rule_groups.wafv2_webacl_has_rules_or_rule_groups import (
-                wafv2_webacl_has_rules_or_rule_groups,
+            from prowler.providers.aws.services.wafv2.wafv2_webacl_with_rules.wafv2_webacl_with_rules import (
+                wafv2_webacl_with_rules,
             )
 
-            check = wafv2_webacl_has_rules_or_rule_groups()
+            check = wafv2_webacl_with_rules()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"AWS WAFv2 Web ACL {waf_id} does not have any rules or rule groups attached."
+                == f"AWS WAFv2 Web ACL {waf_name} does not have any rules or rule groups attached."
             )
             assert result[0].resource_id == waf_id
             assert result[0].resource_arn == waf_arn
