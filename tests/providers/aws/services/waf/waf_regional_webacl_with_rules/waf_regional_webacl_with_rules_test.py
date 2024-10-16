@@ -37,6 +37,36 @@ def mock_make_api_call(self, operation_name, kwarg):
 
 
 def mock_make_api_call_only_rules(self, operation_name, kwarg):
+    unused_operations = [
+        "ListResourcesForWebACL",
+        "ListRuleGroups",
+        "ListActivatedRulesInRuleGroup",
+    ]
+    if operation_name in unused_operations:
+        return {}
+    if operation_name == "ListRules":
+        return {
+            "Rules": [
+                {
+                    "RuleId": "my-rule-id",
+                    "Name": "my-rule",
+                },
+            ]
+        }
+    if operation_name == "GetRule":
+        return {
+            "Rule": {
+                "RuleId": "my-rule-id",
+                "Name": "my-rule",
+                "Predicates": [
+                    {
+                        "Negated": False,
+                        "Type": "IPMatch",
+                        "DataId": "my-data-id",
+                    }
+                ],
+            }
+        }
     if operation_name == "GetChangeToken":
         return {"ChangeToken": "my-change-token"}
     if operation_name == "ListWebACLs":
@@ -61,6 +91,24 @@ def mock_make_api_call_only_rules(self, operation_name, kwarg):
 
 
 def mock_make_api_call_only_rule_groups(self, operation_name, kwarg):
+    unused_operations = [
+        "ListResourcesForWebACL",
+        "ListRules",
+        "GetRule",
+    ]
+    if operation_name in unused_operations:
+        return {}
+    if operation_name == "ListRuleGroups":
+        return {
+            "RuleGroups": [
+                {
+                    "RuleGroupId": "my-rule-group-id",
+                    "Name": "my-rule-group",
+                },
+            ]
+        }
+    if operation_name == "ListActivatedRulesInRuleGroup":
+        return {}
     if operation_name == "GetChangeToken":
         return {"ChangeToken": "my-change-token"}
     if operation_name == "ListWebACLs":
@@ -74,7 +122,7 @@ def mock_make_api_call_only_rule_groups(self, operation_name, kwarg):
             "WebACL": {
                 "Rules": [
                     {
-                        "RuleId": "my-rulegroup-id",
+                        "RuleId": "my-rule-group-id",
                         "Type": "GROUP",
                     }
                 ],
@@ -85,6 +133,51 @@ def mock_make_api_call_only_rule_groups(self, operation_name, kwarg):
 
 
 def mock_make_api_call_both(self, operation_name, kwarg):
+    unused_operations = [
+        "ListResourcesForWebACL",
+    ]
+    if operation_name in unused_operations:
+        return {}
+    if operation_name == "ListRules":
+        return {
+            "Rules": [
+                {
+                    "RuleId": "my-rule-id",
+                    "Name": "my-rule",
+                },
+            ]
+        }
+    if operation_name == "GetRule":
+        return {
+            "Rule": {
+                "RuleId": "my-rule-id",
+                "Name": "my-rule",
+                "Predicates": [
+                    {
+                        "Negated": False,
+                        "Type": "IPMatch",
+                        "DataId": "my-data-id",
+                    }
+                ],
+            }
+        }
+    if operation_name == "ListRuleGroups":
+        return {
+            "RuleGroups": [
+                {
+                    "RuleGroupId": "my-rule-group-id",
+                    "Name": "my-rule-group",
+                },
+            ]
+        }
+    if operation_name == "ListActivatedRulesInRuleGroup":
+        return {
+            "ActivatedRules": [
+                {
+                    "RuleId": "my-rule-id",
+                },
+            ]
+        }
     if operation_name == "GetChangeToken":
         return {"ChangeToken": "my-change-token"}
     if operation_name == "ListWebACLs":
@@ -102,7 +195,7 @@ def mock_make_api_call_both(self, operation_name, kwarg):
                         "Type": "BLOCK",
                     },
                     {
-                        "RuleId": "my-rulegroup-id",
+                        "RuleId": "my-rule-group-id",
                         "Type": "GROUP",
                     },
                 ],
