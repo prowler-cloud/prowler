@@ -128,18 +128,6 @@ class Scan:
             checks_file=None,
         )
 
-        # TODO This should be done depending on the scan args (future feature)
-        # Discard threat detection checks
-        if "cloudtrail_threat_detection_enumeration" in self._checks_to_execute:
-            self._checks_to_execute.remove("cloudtrail_threat_detection_enumeration")
-        if (
-            "cloudtrail_threat_detection_privilege_escalation"
-            in self._checks_to_execute
-        ):
-            self._checks_to_execute.remove(
-                "cloudtrail_threat_detection_privilege_escalation"
-            )
-
         self._number_of_checks_to_execute = len(self._checks_to_execute)
 
         service_checks_to_execute = get_service_checks_to_execute(
