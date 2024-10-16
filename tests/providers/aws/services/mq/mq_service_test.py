@@ -1,7 +1,7 @@
 from boto3 import client
 from moto import mock_aws
 
-from prowler.providers.aws.services.mq.mq_service import MQ
+from prowler.providers.aws.services.mq.mq_service import MQ, DeploymentMode, EngineType
 from tests.providers.aws.utils import AWS_REGION_EU_WEST_1, set_mocked_aws_provider
 
 
@@ -99,4 +99,5 @@ class Test_MQ_Service:
         assert mq.brokers[broker_arn].name == "my-broker"
         assert mq.brokers[broker_arn].region == AWS_REGION_EU_WEST_1
         assert mq.brokers[broker_arn].id == broker["BrokerId"]
-        assert mq.brokers[broker_arn].engine_type == "ActiveMQ"
+        assert mq.brokers[broker_arn].engine_type == EngineType.ACTIVEMQ
+        assert mq.brokers[broker_arn].deployment_mode == DeploymentMode.SINGLE_INSTANCE

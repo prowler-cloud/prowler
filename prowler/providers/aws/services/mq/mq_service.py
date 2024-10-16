@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -13,6 +14,7 @@ class MQ(AWSService):
         super().__init__("mq", provider)
         self.brokers = {}
         self.__threading_call__(self._list_brokers)
+        self.__threading_call__(self._describe_broker, self.brokers.values())
 
     def _list_brokers(self, regional_client):
         logger.info("MQ - Listing brokers...")
@@ -74,3 +76,4 @@ class Broker(BaseModel):
     region: str
     engine_type: EngineType = EngineType.ACTIVEMQ
     deployment_mode: DeploymentMode = DeploymentMode.SINGLE_INSTANCE
+    tags: Optional[list] = []
