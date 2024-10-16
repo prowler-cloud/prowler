@@ -13,13 +13,13 @@ class waf_regional_rule_with_conditions(Check):
             report.resource_tags = rule.tags
             report.status = "FAIL"
             report.status_extended = (
-                f"AWS WAF Regional Rule {rule.id} does not have any conditions."
+                f"AWS WAF Regional Rule {rule.name} does not have any conditions."
             )
 
             if rule.predicates:
                 report.status = "PASS"
                 report.status_extended = (
-                    f"AWS WAF Regional Rule {rule.id} has at least one condition."
+                    f"AWS WAF Regional Rule {rule.name} has at least one condition."
                 )
 
             findings.append(report)
