@@ -6,7 +6,7 @@ from moto import mock_aws
 from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
 
 
-class Test_wafv2_cloudwatch_metrics_enabled:
+class Test_wafv2_webacl_rule_logging_enabled:
     @mock_aws
     def test_no_web_acls(self):
         from prowler.providers.aws.services.wafv2.wafv2_service import WAFv2
@@ -17,15 +17,15 @@ class Test_wafv2_cloudwatch_metrics_enabled:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.wafv2.wafv2_cloudwatch_metrics_enabled.wafv2_cloudwatch_metrics_enabled.wafv2_client",
+            "prowler.providers.aws.services.wafv2.wafv2_webacl_rule_logging_enabled.wafv2_webacl_rule_logging_enabled.wafv2_client",
             new=WAFv2(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.wafv2.wafv2_cloudwatch_metrics_enabled.wafv2_cloudwatch_metrics_enabled import (
-                wafv2_cloudwatch_metrics_enabled,
+            from prowler.providers.aws.services.wafv2.wafv2_webacl_rule_logging_enabled.wafv2_webacl_rule_logging_enabled import (
+                wafv2_webacl_rule_logging_enabled,
             )
 
-            check = wafv2_cloudwatch_metrics_enabled()
+            check = wafv2_webacl_rule_logging_enabled()
             result = check.execute()
 
             assert len(result) == 0
@@ -51,15 +51,15 @@ class Test_wafv2_cloudwatch_metrics_enabled:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.wafv2.wafv2_cloudwatch_metrics_enabled.wafv2_cloudwatch_metrics_enabled.wafv2_client",
+            "prowler.providers.aws.services.wafv2.wafv2_webacl_rule_logging_enabled.wafv2_webacl_rule_logging_enabled.wafv2_client",
             new=WAFv2(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.wafv2.wafv2_cloudwatch_metrics_enabled.wafv2_cloudwatch_metrics_enabled import (
-                wafv2_cloudwatch_metrics_enabled,
+            from prowler.providers.aws.services.wafv2.wafv2_webacl_rule_logging_enabled.wafv2_webacl_rule_logging_enabled import (
+                wafv2_webacl_rule_logging_enabled,
             )
 
-            check = wafv2_cloudwatch_metrics_enabled()
+            check = wafv2_webacl_rule_logging_enabled()
             result = check.execute()
 
             assert len(result) == 0
@@ -98,6 +98,7 @@ class Test_wafv2_cloudwatch_metrics_enabled:
             Tags=[{"Key": "Name", "Value": "web-acl-test"}],
         )["Summary"]
         waf_id = waf["Id"]
+        waf_name = waf["Name"]
 
         from prowler.providers.aws.services.wafv2.wafv2_service import WAFv2
 
@@ -107,22 +108,22 @@ class Test_wafv2_cloudwatch_metrics_enabled:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.wafv2.wafv2_cloudwatch_metrics_enabled.wafv2_cloudwatch_metrics_enabled.wafv2_client",
+            "prowler.providers.aws.services.wafv2.wafv2_webacl_rule_logging_enabled.wafv2_webacl_rule_logging_enabled.wafv2_client",
             new=WAFv2(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.wafv2.wafv2_cloudwatch_metrics_enabled.wafv2_cloudwatch_metrics_enabled import (
-                wafv2_cloudwatch_metrics_enabled,
+            from prowler.providers.aws.services.wafv2.wafv2_webacl_rule_logging_enabled.wafv2_webacl_rule_logging_enabled import (
+                wafv2_webacl_rule_logging_enabled,
             )
 
-            check = wafv2_cloudwatch_metrics_enabled()
+            check = wafv2_webacl_rule_logging_enabled()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"AWS WAFv2 Web ACL {waf_id} does have CloudWatch Metrics enabled in all rule groups and rules."
+                == f"AWS WAFv2 Web ACL {waf_name} does have CloudWatch Metrics enabled in all its rules."
             )
             assert result[0].resource_id == waf_id
             assert result[0].resource_arn == waf["ARN"]
@@ -163,6 +164,7 @@ class Test_wafv2_cloudwatch_metrics_enabled:
             Tags=[{"Key": "Name", "Value": "web-acl-test"}],
         )["Summary"]
         waf_id = waf["Id"]
+        waf_name = waf["Name"]
 
         from prowler.providers.aws.services.wafv2.wafv2_service import WAFv2
 
@@ -172,22 +174,22 @@ class Test_wafv2_cloudwatch_metrics_enabled:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.wafv2.wafv2_cloudwatch_metrics_enabled.wafv2_cloudwatch_metrics_enabled.wafv2_client",
+            "prowler.providers.aws.services.wafv2.wafv2_webacl_rule_logging_enabled.wafv2_webacl_rule_logging_enabled.wafv2_client",
             new=WAFv2(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.wafv2.wafv2_cloudwatch_metrics_enabled.wafv2_cloudwatch_metrics_enabled import (
-                wafv2_cloudwatch_metrics_enabled,
+            from prowler.providers.aws.services.wafv2.wafv2_webacl_rule_logging_enabled.wafv2_webacl_rule_logging_enabled import (
+                wafv2_webacl_rule_logging_enabled,
             )
 
-            check = wafv2_cloudwatch_metrics_enabled()
+            check = wafv2_webacl_rule_logging_enabled()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"AWS WAFv2 Web ACL {waf_id} does not have CloudWatch Metrics enabled in all rule groups and rules. Non compliant resources are: Rules: rule-off."
+                == f"AWS WAFv2 Web ACL {waf_name} does not have CloudWatch Metrics enabled in rules: rule-off."
             )
             assert result[0].resource_id == waf_id
             assert result[0].resource_arn == waf["ARN"]
@@ -225,6 +227,7 @@ class Test_wafv2_cloudwatch_metrics_enabled:
             ],
         )["Summary"]
         waf_id = waf["Id"]
+        waf_name = waf["Name"]
 
         from prowler.providers.aws.services.wafv2.wafv2_service import WAFv2
 
@@ -234,22 +237,22 @@ class Test_wafv2_cloudwatch_metrics_enabled:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.wafv2.wafv2_cloudwatch_metrics_enabled.wafv2_cloudwatch_metrics_enabled.wafv2_client",
+            "prowler.providers.aws.services.wafv2.wafv2_webacl_rule_logging_enabled.wafv2_webacl_rule_logging_enabled.wafv2_client",
             new=WAFv2(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.wafv2.wafv2_cloudwatch_metrics_enabled.wafv2_cloudwatch_metrics_enabled import (
-                wafv2_cloudwatch_metrics_enabled,
+            from prowler.providers.aws.services.wafv2.wafv2_webacl_rule_logging_enabled.wafv2_webacl_rule_logging_enabled import (
+                wafv2_webacl_rule_logging_enabled,
             )
 
-            check = wafv2_cloudwatch_metrics_enabled()
+            check = wafv2_webacl_rule_logging_enabled()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"AWS WAFv2 Web ACL {waf_id} does have CloudWatch Metrics enabled in all rule groups and rules."
+                == f"AWS WAFv2 Web ACL {waf_name} does have CloudWatch Metrics enabled in all its rules."
             )
             assert result[0].resource_id == waf_id
             assert result[0].resource_arn == waf["ARN"]
@@ -287,6 +290,7 @@ class Test_wafv2_cloudwatch_metrics_enabled:
             ],
         )["Summary"]
         waf_id = waf["Id"]
+        waf_name = waf["Name"]
 
         from prowler.providers.aws.services.wafv2.wafv2_service import WAFv2
 
@@ -296,22 +300,22 @@ class Test_wafv2_cloudwatch_metrics_enabled:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.wafv2.wafv2_cloudwatch_metrics_enabled.wafv2_cloudwatch_metrics_enabled.wafv2_client",
+            "prowler.providers.aws.services.wafv2.wafv2_webacl_rule_logging_enabled.wafv2_webacl_rule_logging_enabled.wafv2_client",
             new=WAFv2(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.wafv2.wafv2_cloudwatch_metrics_enabled.wafv2_cloudwatch_metrics_enabled import (
-                wafv2_cloudwatch_metrics_enabled,
+            from prowler.providers.aws.services.wafv2.wafv2_webacl_rule_logging_enabled.wafv2_webacl_rule_logging_enabled import (
+                wafv2_webacl_rule_logging_enabled,
             )
 
-            check = wafv2_cloudwatch_metrics_enabled()
+            check = wafv2_webacl_rule_logging_enabled()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"AWS WAFv2 Web ACL {waf_id} does not have CloudWatch Metrics enabled in all rule groups and rules. Non compliant resources are: Rule Groups: rule-group-off."
+                == f"AWS WAFv2 Web ACL {waf_name} does not have CloudWatch Metrics enabled in rule groups: rule-group-off."
             )
             assert result[0].resource_id == waf_id
             assert result[0].resource_arn == waf["ARN"]
