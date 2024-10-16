@@ -25,6 +25,14 @@ class KubernetesBaseException(ProwlerException):
             "message": "An error occurred in the Kubernetes provider.",
             "remediation": "Check the provider code and configuration to identify the issue. For more information on troubleshooting Kubernetes providers, refer to the Kubernetes documentation: https://kubernetes.io/docs/reference/",
         },
+        (1936, "KubernetesError"): {
+            "message": "An error occurred in the Kubernetes provider.",
+            "remediation": "Check the provider code and configuration to identify the issue. For more information on troubleshooting Kubernetes providers, refer to the Kubernetes documentation: https://kubernetes.io/docs/reference/",
+        },
+        (1936, "KubernetesInvalidKubeConfigFileError"): {
+            "message": "The provided kube-config is invalid.",
+            "remediation": "Review the kube-config and the attached error to get more details. Please, refer to the Kubernetes config documentation: https://kubernetes.io/docs/reference/config-api/kubeconfig.v1/#Config",
+        },
     }
 
     def __init__(
@@ -70,3 +78,8 @@ class KubernetesAPIError(KubernetesBaseException):
 class KubernetesTimeoutError(KubernetesBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(1934, file, original_exception, message)
+
+
+class KubernetesInvalidKubeConfigFileError(KubernetesBaseException):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(1936, file, original_exception, message)
