@@ -2,14 +2,20 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 
-import { DateWithTime, SnippetId } from "@/components/ui/entities";
+import { DateWithTime } from "@/components/ui/entities";
 import { DataTableColumnHeader, StatusBadge } from "@/components/ui/table";
 import { FindingsProps } from "@/types";
 
 import { DataTableRowActions } from "./data-table-row-actions";
 
 const getFindingsData = (row: { original: FindingsProps }) => {
+  console.log(row.original);
+
   return row.original;
+};
+
+const getFindingsMetadata = (row: { original: FindingsProps }) => {
+  return row.original.attributes.check_metadata.metadata;
 };
 
 export const ColumnFindings: ColumnDef<FindingsProps>[] = [
@@ -18,29 +24,43 @@ export const ColumnFindings: ColumnDef<FindingsProps>[] = [
   //   cell: ({ row }) => <p className="text-medium">{row.index + 1}</p>,
   // },
   {
-    accessorKey: "account",
+    accessorKey: "check",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={"Status"} param="status" />
+      <DataTableColumnHeader column={column} title={"Check"} param="check" />
     ),
     cell: ({ row }) => {
-      const {
-        attributes: { status },
-      } = getFindingsData(row);
-      return <p>{status}</p>;
+      const { CheckTitle } = getFindingsMetadata(row);
+      return <p className="max-w-96 truncate text-medium">{CheckTitle}</p>;
     },
   },
-  {
-    accessorKey: "uid",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={"Id"} param="uid" />
-    ),
-    cell: ({ row }) => {
-      const {
-        attributes: { uid },
-      } = getFindingsData(row);
-      return <SnippetId className="h-7 max-w-48" entityId={uid} />;
-    },
-  },
+  // {
+  //   accessorKey: "uid",
+  //   header: ({ column }) => (
+  //     <DataTableColumnHeader column={column} title={"Id"} param="uid" />
+  //   ),
+  //   cell: ({ row }) => {
+  //     const {
+  //       attributes: { uid },
+  //     } = getFindingsData(row);
+  //     return <SnippetId className="h-7 max-w-48" entityId={uid} />;
+  //   },
+  // },
+  // {
+  //   accessorKey: "severity",
+  //   header: ({ column }) => (
+  //     <DataTableColumnHeader
+  //       column={column}
+  //       title={"Severity"}
+  //       param="severity"
+  //     />
+  //   ),
+  //   cell: ({ row }) => {
+  //     const {
+  //       attributes: { severity },
+  //     } = getFindingsData(row);
+  //     return <StatusBadge status={severity} />;
+  //   },
+  // },
   {
     accessorKey: "status",
     header: "Scan Status",
@@ -50,19 +70,17 @@ export const ColumnFindings: ColumnDef<FindingsProps>[] = [
     },
   },
   {
-    accessorKey: "lastScan",
+    accessorKey: "service",
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
-        title={"Last Scan"}
-        param="updated_at"
+        title={"Service"}
+        param="service"
       />
     ),
     cell: ({ row }) => {
-      const {
-        attributes: { updated_at },
-      } = getFindingsData(row);
-      return <DateWithTime dateTime={updated_at} />;
+      const { ServiceName } = getFindingsMetadata(row);
+      return <p className="max-w-96 truncate text-medium">{ServiceName}</p>;
     },
   },
   {

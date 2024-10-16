@@ -17,9 +17,7 @@ export const getFindings = async ({
   if (isNaN(Number(page)) || page < 1) redirect("/findings");
 
   const keyServer = process.env.API_BASE_URL;
-  const url = new URL(
-    `${keyServer}/findings?filter[inserted_at__gte]=2024-01-01`,
-  );
+  const url = new URL(`${keyServer}/findings`);
 
   if (page) url.searchParams.append("page[number]", page.toString());
   if (query) url.searchParams.append("filter[search]", query);
@@ -33,14 +31,15 @@ export const getFindings = async ({
   });
 
   try {
-    const providers = await fetch(url.toString(), {
+    const findings = await fetch(url.toString(), {
       headers: {
         Accept: "application/vnd.api+json",
         Authorization: `Bearer ${session?.accessToken}`,
       },
     });
-    const data = await providers.json();
+    const data = await findings.json();
     const parsedData = parseStringify(data);
+    console.log(parsedData.data);
     revalidatePath("/findings");
     return parsedData;
   } catch (error) {
