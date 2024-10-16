@@ -133,7 +133,7 @@ class Test_opensearch_service_domains_not_publicly_accessible:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Opensearch domain {domain_name} does not allow anonymous access."
+                == f"Opensearch domain {domain_name} is not publicly accessible."
             )
             assert result[0].resource_id == domain_name
             assert result[0].resource_arn == domain_arn
@@ -174,7 +174,7 @@ class Test_opensearch_service_domains_not_publicly_accessible:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Opensearch domain {domain_name} policy allows access (Principal: '*')."
+                == f"Opensearch domain {domain_name} is publicly accessible via access policy."
             )
             assert result[0].resource_id == domain_name
             assert result[0].resource_arn == domain_arn
@@ -215,7 +215,7 @@ class Test_opensearch_service_domains_not_publicly_accessible:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Opensearch domain {domain_name} policy allows access (Principal: '*')."
+                == f"Opensearch domain {domain_name} is publicly accessible via access policy."
             )
             assert result[0].resource_id == domain_name
             assert result[0].resource_arn == domain_arn
@@ -256,7 +256,7 @@ class Test_opensearch_service_domains_not_publicly_accessible:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Opensearch domain {domain_name} policy allows access (Principal: '*') and network *."
+                == f"Opensearch domain {domain_name} is publicly accessible via access policy."
             )
             assert result[0].resource_id == domain_name
             assert result[0].resource_arn == domain_arn
@@ -297,12 +297,13 @@ class Test_opensearch_service_domains_not_publicly_accessible:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Opensearch domain {domain_name} policy allows access (Principal: '*') and network 0.0.0.0/0."
+                == f"Opensearch domain {domain_name} is publicly accessible via access policy."
             )
             assert result[0].resource_id == domain_name
             assert result[0].resource_arn == domain_arn
             assert result[0].region == AWS_REGION_US_WEST_2
             assert result[0].resource_tags == []
+<<<<<<< HEAD
 
     def test_domain_inside_vpc(self):
         opensearch_client = mock.MagicMock
@@ -348,3 +349,5 @@ class Test_opensearch_service_domains_not_publicly_accessible:
             )
             assert result[0].region == AWS_REGION_US_WEST_2
             assert result[0].resource_tags == []
+=======
+>>>>>>> 6e3c008a8 (chore(aws): improve logic for determining if resources are publicly accessible (#5195))

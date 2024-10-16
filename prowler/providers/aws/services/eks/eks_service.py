@@ -107,6 +107,6 @@ class EKSCluster(BaseModel):
     security_group_id: str = None
     endpoint_public_access: bool = None
     endpoint_private_access: bool = None
-    public_access_cidrs: list[str] = None
+    public_access_cidrs: list[str] = []
     encryptionConfig: bool = None
     tags: Optional[list] = []
