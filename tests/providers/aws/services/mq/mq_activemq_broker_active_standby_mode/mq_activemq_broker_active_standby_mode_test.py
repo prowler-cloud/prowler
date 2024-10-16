@@ -62,6 +62,7 @@ class Test_mq_activemq_broker_active_standby_mode:
     @mock_aws
     def test_activemq_broker_active_standby_mode_enabled(self):
         mq_client = client("mq", region_name=AWS_REGION_US_EAST_1)
+        broker_name = "test-broker"
         broker_id = mq_client.create_broker(
             BrokerName="test-broker",
             EngineType="ACTIVEMQ",
@@ -102,7 +103,7 @@ class Test_mq_activemq_broker_active_standby_mode:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == f"MQ Broker {broker_id} does have active/standby deployment mode enabled."
+                    == f"MQ Broker {broker_name} does have active/standby deployment mode enabled."
                 )
                 assert result[0].resource_id == broker_id
                 assert (
@@ -114,8 +115,9 @@ class Test_mq_activemq_broker_active_standby_mode:
     @mock_aws
     def test_activemq_broker_active_standby_mode_disabled(self):
         mq_client = client("mq", region_name=AWS_REGION_US_EAST_1)
+        broker_name = "test-broker"
         broker_id = mq_client.create_broker(
-            BrokerName="test-broker",
+            BrokerName=broker_name,
             EngineType="ACTIVEMQ",
             EngineVersion="5.15.0",
             HostInstanceType="mq.t2.micro",
@@ -154,7 +156,7 @@ class Test_mq_activemq_broker_active_standby_mode:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"MQ Broker {broker_id} does not have active/standby deployment mode enabled."
+                    == f"MQ Broker {broker_name} does not have active/standby deployment mode enabled."
                 )
                 assert result[0].resource_id == broker_id
                 assert (

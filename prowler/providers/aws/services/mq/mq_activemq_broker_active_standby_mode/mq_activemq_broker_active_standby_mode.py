@@ -13,12 +13,12 @@ class mq_activemq_broker_active_standby_mode(Check):
             report.resource_arn = broker.arn
             report.resource_tags = broker.tags
             report.status = "FAIL"
-            report.status_extended = f"MQ Broker {broker.id} does not have active/standby deployment mode enabled."
+            report.status_extended = f"MQ Broker {broker.name} does not have active/standby deployment mode enabled."
 
             if broker.engine_type == EngineType.ACTIVEMQ:
                 if broker.deployment_mode == DeploymentMode.ACTIVE_STANDBY_MULTI_AZ:
                     report.status = "PASS"
-                    report.status_extended = f"MQ Broker {broker.id} does have active/standby deployment mode enabled."
+                    report.status_extended = f"MQ Broker {broker.name} does have active/standby deployment mode enabled."
 
                 findings.append(report)
 
