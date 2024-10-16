@@ -1,7 +1,6 @@
 import datetime
 from typing import Generator
 
-from prowler.config.config import valid_severities
 from prowler.lib.check.check import (
     execute,
     import_check,
@@ -13,7 +12,7 @@ from prowler.lib.check.compliance import update_checks_metadata_with_compliance
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.check.models import CheckMetadata
 from prowler.lib.logger import logger
-from prowler.lib.outputs.finding import Finding
+from prowler.lib.outputs.finding import Finding, Severity
 from prowler.lib.scan.exceptions.exceptions import (
     ScanInvalidCategoryError,
     ScanInvalidCheckError,
@@ -117,7 +116,9 @@ class Scan:
         # Validate severity
         if severities:
             for severity in severities:
-                if severity not in valid_severities:
+                try:
+                    Severity(severity)
+                except ValueError:
                     raise ScanInvalidSeverityError(
                         f"Invalid severity provided: {severity}."
                     )
