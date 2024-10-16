@@ -98,7 +98,7 @@ class AzureBaseException(ProwlerException):
             "remediation": "Check the tenant ID and client ID and ensure they belong to the provided client secret.",
         },
         (1937, "AzureInvalidAccountCredentialsError"): {
-            "message": "The provided provider_id does not math with the valid subscriptions",
+            "message": "The provided provider_id does not match with the available subscriptions",
             "remediation": "Check the provider_id and ensure it is a valid subscription for the given credentials.",
         },
     }
