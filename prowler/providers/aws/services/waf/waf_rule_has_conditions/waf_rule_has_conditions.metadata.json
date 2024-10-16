@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "waf_rule_has_conditions",
+  "CheckID": "waf_regional_rule_with_conditions",
   "CheckTitle": "AWS WAF Classic Regional Rules Should Have at Least One Condition.",
   "CheckType": [
     "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53 Controls"
@@ -15,7 +15,7 @@
   "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/waf-regional-rule-not-empty.html",
   "Remediation": {
     "Code": {
-      "CLI": "aws waf-regional update-rule --rule-id <rule-id> --change-token <change-token> --updates <updates>",
+      "CLI": "aws waf-regional update-rule --rule-id <your-rule-id> --change-token <your-change-token> --updates '[{\"Action\":\"INSERT\",\"Predicate\":{\"Negated\":false,\"Type\":\"IPMatch\",\"DataId\":\"<your-ipset-id>\"}}]' --region <your-region>",
       "NativeIaC": "",
       "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/waf-controls.html#waf-2",
       "Terraform": ""

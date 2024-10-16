@@ -118,7 +118,7 @@ class Test_waf_rule_has_conditions:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == f"AWS WAFRegional Classic Regional Rule {RULE_ID} has at least one condition."
+                    == f"AWS WAF Regional Rule {RULE_ID} has at least one condition."
                 )
                 assert result[0].resource_id == RULE_ID
                 assert (
@@ -157,7 +157,7 @@ class Test_waf_rule_has_conditions:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"AWS WAFRegional Classic Regional Rule {RULE_ID} does not have any conditions."
+                    == f"AWS WAF Regional Rule {RULE_ID} does not have any conditions."
                 )
                 assert result[0].resource_id == RULE_ID
                 assert (
