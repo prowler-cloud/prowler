@@ -2,12 +2,14 @@ from os import path, remove
 from pathlib import Path
 
 import boto3
+import pytest
 from moto import mock_aws
 
 from prowler.lib.outputs.compliance.iso27001.iso27001_aws import AWSISO27001
 from prowler.lib.outputs.csv.csv import CSV
 from prowler.lib.outputs.html.html import HTML
 from prowler.lib.outputs.ocsf.ocsf import OCSF
+from prowler.providers.aws.lib.s3.exceptions.exceptions import S3TestConnectionError
 from prowler.providers.aws.lib.s3.s3 import S3
 from tests.lib.outputs.compliance.fixtures import ISO27001_2013_AWS
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
@@ -334,9 +336,8 @@ class TestS3:
             region_name=AWS_REGION_US_EAST_1
         ).client("s3")
         current_session.create_bucket(Bucket=S3_BUCKET_NAME)
-        s3 = S3.test_connection(
-            session=current_session,
-            bucket_name="invalid-bucket",
-        )
-        assert s3 is not None
-        assert not s3
+        with pytest.raises(S3TestConnectionError):
+            S3.test_connection(
+                session=current_session,
+                bucket_name="invalid_bucket",
+            )
