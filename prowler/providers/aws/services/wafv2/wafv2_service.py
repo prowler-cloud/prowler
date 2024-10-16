@@ -142,7 +142,7 @@ class WAFv2(AWSService):
                     if (
                         rule.get("Statement", {})
                         .get("RuleGroupReferenceStatement", {})
-                        .get("ARN"
+                        .get("ARN")
                     ):
                         acl.rule_groups.append(new_rule)
                     else:
