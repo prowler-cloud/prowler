@@ -162,11 +162,12 @@ class WAFRegional(AWSService):
         try:
             get_web_acl = self.regional_clients[acl.region].get_web_acl(WebACLId=acl.id)
             for rule in get_web_acl.get("WebACL", {}).get("Rules", []):
+                rule_id = rule.get("RuleId", "")
                 if rule.get("Type", "") == "GROUP":
-                    rule_group_arn = f"arn:aws:waf-regional:{acl.region}:{self.audited_account}:rulegroup/{rule.get("RuleId", "")}"
+                    rule_group_arn = f"arn:aws:waf-regional:{acl.region}:{self.audited_account}:rulegroup/{rule_id}"
                     acl.rule_groups.append(self.rule_groups[rule_group_arn])
                 else:
-                    rule_arn = f"arn:aws:waf-regional:{acl.region}:{self.audited_account}:rule/{rule.get("RuleId", "")}"
+                    rule_arn = f"arn:aws:waf-regional:{acl.region}:{self.audited_account}:rule/{rule_id}"
                     acl.rules.append(self.rules[rule_arn])
 
         except Exception as error:
