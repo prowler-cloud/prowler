@@ -10,7 +10,7 @@ class cloudtrail_threat_detection_privilege_escalation(Check):
     def execute(self):
         findings = []
         threshold = cloudtrail_client.audit_config.get(
-            "threat_detection_privilege_escalation_threshold", 0.1
+            "threat_detection_privilege_escalation_threshold", 0.2
         )
         threat_detection_minutes = cloudtrail_client.audit_config.get(
             "threat_detection_privilege_escalation_minutes", 1440
