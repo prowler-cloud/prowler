@@ -57,6 +57,13 @@ class Scan:
             compliances: list[str] -> The compliances to check
             categories: set[str] -> The categories to check
             severities: list[str] -> The severities of the checks
+
+        Raises:
+            ScanInvalidCheckError: If the check does not exist in the provider or is from another provider.
+            ScanInvalidServiceError: If the service does not exist in the provider.
+            ScanInvalidComplianceFrameworkError: If the compliance framework does not exist in the provider.
+            ScanInvalidCategoryError: If the category does not exist in the provider.
+            ScanInvalidSeverityError: If the severity does not exist in the provider.
         """
         self._provider = provider
 
