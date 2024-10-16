@@ -12,11 +12,11 @@ class waf_regional_webacl_with_rules(Check):
             report.resource_arn = acl.arn
             report.resource_tags = acl.tags
             report.status = "FAIL"
-            report.status_extended = f"AWS WAF Regional Web ACL {acl.id} does not have any rules or rule groups."
+            report.status_extended = f"AWS WAF Regional Web ACL {acl.name} does not have any rules or rule groups."
 
             if acl.rules or acl.rule_groups:
                 report.status = "PASS"
-                report.status_extended = f"AWS WAF Regional Web ACL {acl.id} has at least one rule or rule group."
+                report.status_extended = f"AWS WAF Regional Web ACL {acl.name} has at least one rule or rule group."
 
             findings.append(report)
 

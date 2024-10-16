@@ -11,6 +11,7 @@ from tests.providers.aws.utils import (
 )
 
 WEB_ACL_ID = "test-web-acl-id"
+WEB_ACL_NAME = "test-web-acl-name"
 
 # Original botocore _make_api_call function
 orig = botocore.client.BaseClient._make_api_call
@@ -23,7 +24,7 @@ def mock_make_api_call(self, operation_name, kwarg):
     if operation_name == "ListWebACLs":
         return {
             "WebACLs": [
-                {"WebACLId": WEB_ACL_ID, "Name": "my-web-acl"},
+                {"WebACLId": WEB_ACL_ID, "Name": WEB_ACL_NAME},
             ]
         }
     if operation_name == "GetWebACL":
@@ -72,7 +73,7 @@ def mock_make_api_call_only_rules(self, operation_name, kwarg):
     if operation_name == "ListWebACLs":
         return {
             "WebACLs": [
-                {"WebACLId": WEB_ACL_ID, "Name": "my-web-acl"},
+                {"WebACLId": WEB_ACL_ID, "Name": WEB_ACL_NAME},
             ]
         }
     if operation_name == "GetWebACL":
@@ -114,7 +115,7 @@ def mock_make_api_call_only_rule_groups(self, operation_name, kwarg):
     if operation_name == "ListWebACLs":
         return {
             "WebACLs": [
-                {"WebACLId": WEB_ACL_ID, "Name": "my-web-acl"},
+                {"WebACLId": WEB_ACL_ID, "Name": WEB_ACL_NAME},
             ]
         }
     if operation_name == "GetWebACL":
@@ -183,7 +184,7 @@ def mock_make_api_call_both(self, operation_name, kwarg):
     if operation_name == "ListWebACLs":
         return {
             "WebACLs": [
-                {"WebACLId": WEB_ACL_ID, "Name": "my-web-acl"},
+                {"WebACLId": WEB_ACL_ID, "Name": WEB_ACL_NAME},
             ]
         }
     if operation_name == "GetWebACL":
@@ -257,7 +258,7 @@ class Test_waf_regional_webacl_with_rules:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"AWS WAF Regional Web ACL {WEB_ACL_ID} does not have any rules or rule groups."
+                    == f"AWS WAF Regional Web ACL {WEB_ACL_NAME} does not have any rules or rule groups."
                 )
                 assert result[0].resource_id == WEB_ACL_ID
                 assert (
@@ -295,7 +296,7 @@ class Test_waf_regional_webacl_with_rules:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == f"AWS WAF Regional Web ACL {WEB_ACL_ID} has at least one rule or rule group."
+                    == f"AWS WAF Regional Web ACL {WEB_ACL_NAME} has at least one rule or rule group."
                 )
                 assert result[0].resource_id == WEB_ACL_ID
                 assert (
@@ -334,7 +335,7 @@ class Test_waf_regional_webacl_with_rules:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == f"AWS WAF Regional Web ACL {WEB_ACL_ID} has at least one rule or rule group."
+                    == f"AWS WAF Regional Web ACL {WEB_ACL_NAME} has at least one rule or rule group."
                 )
                 assert result[0].resource_id == WEB_ACL_ID
                 assert (
@@ -370,7 +371,7 @@ class Test_waf_regional_webacl_with_rules:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == f"AWS WAF Regional Web ACL {WEB_ACL_ID} has at least one rule or rule group."
+                    == f"AWS WAF Regional Web ACL {WEB_ACL_NAME} has at least one rule or rule group."
                 )
                 assert result[0].resource_id == WEB_ACL_ID
                 assert (

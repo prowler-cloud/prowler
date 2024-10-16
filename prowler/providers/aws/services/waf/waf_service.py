@@ -182,7 +182,7 @@ class WAFRegional(AWSService):
                 if acl.region == regional_client.region:
                     for resource in regional_client.list_resources_for_web_acl(
                         WebACLId=acl.id, ResourceType="APPLICATION_LOAD_BALANCER"
-                    )["ResourceArns"]:
+                    ).get("ResourceArns", []):
                         acl.albs.append(resource)
 
         except Exception as error:
