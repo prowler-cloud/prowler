@@ -16,7 +16,7 @@ class ProwlerException(Exception):
 
         Args:
             code (int): The error code.
-            source (str): The source name., this can be the provider name, scan class, service, etc.
+            source (str): The source name. This can be the provider name, module name, service name, etc.
             file (str): The file name.
             original_exception (Exception): The original exception.
             error_info (dict): The error information.

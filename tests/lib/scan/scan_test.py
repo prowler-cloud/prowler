@@ -5,7 +5,13 @@ from unittest import mock
 import pytest
 from mock import MagicMock, patch
 
-from prowler.lib.scan.exceptions.exceptions import ScanInvalidSeverityError
+from prowler.lib.scan.exceptions.exceptions import (
+    ScanInvalidCategoryError,
+    ScanInvalidCheckError,
+    ScanInvalidComplianceFrameworkError,
+    ScanInvalidServiceError,
+    ScanInvalidSeverityError,
+)
 from prowler.lib.scan.scan import Scan, get_service_checks_to_execute
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 from tests.providers.aws.utils import set_mocked_aws_provider
@@ -261,6 +267,9 @@ class TestScan:
         mock_provider.type = "aws"
 
         scan = Scan(mock_provider, checks=checks_to_execute)
+        mock_list_modules.assert_called_once_with("aws", None)
+        mock_load_check_metadata.assert_called_once()
+        mock_recover_checks_from_provider.assert_called_once_with("aws")
 
         assert scan.provider == mock_provider
         assert scan.checks_to_execute == {"accessanalyzer_enabled"}
@@ -287,6 +296,7 @@ class TestScan:
         mock_check_instance.Provider = "aws"
         mock_check_instance.CheckID = "accessanalyzer_enabled"
         mock_check_instance.CheckTitle = "Check if IAM Access Analyzer is enabled"
+        mock_check_instance.Categories = []
 
         mock_import_module.return_value = MagicMock(
             accessanalyzer_enabled=mock_check_class
@@ -297,6 +307,8 @@ class TestScan:
         mock_global_provider.type = "aws"
 
         scan = Scan(mock_global_provider, checks=checks_to_execute)
+        mock_load_check_metadata.assert_called_once()
+        mock_recover_checks_from_provider.assert_called_once_with("aws")
         results = list(scan.scan(custom_checks_metadata))
 
         assert mock_generate_output.call_count == 1 * len(mock_execute.side_effect())
@@ -316,12 +328,51 @@ class TestScan:
 
     def test_init_invalid_severity(
         mock_provider,
-        mock_list_modules,
-        mock_recover_checks_from_provider,
-        mock_load_check_metadata,
     ):
         checks_to_execute = set()
         mock_provider.type = "aws"
 
         with pytest.raises(ScanInvalidSeverityError):
-            Scan(mock_provider, checks=checks_to_execute, severity=["invalid"])
+            Scan(mock_provider, checks=checks_to_execute, severities=["invalid"])
+
+    def test_init_invalid_check(
+        mock_provider,
+    ):
+        checks_to_execute = ["invalid_check"]
+        mock_provider.type = "aws"
+
+        with pytest.raises(ScanInvalidCheckError):
+            Scan(mock_provider, checks=checks_to_execute)
+
+    def test_init_invalid_service(
+        mock_provider,
+    ):
+        checks_to_execute = set()
+        mock_provider.type = "aws"
+
+        with pytest.raises(ScanInvalidServiceError):
+            Scan(mock_provider, checks=checks_to_execute, services=["invalid_service"])
+
+    def test_init_invalid_compliance_framework(
+        mock_provider,
+    ):
+        checks_to_execute = set()
+        mock_provider.type = "aws"
+
+        with pytest.raises(ScanInvalidComplianceFrameworkError):
+            Scan(
+                mock_provider,
+                checks=checks_to_execute,
+                compliances=["invalid_framework"],
+            )
+
+    def test_init_invalid_category(
+        mock_provider,
+    ):
+        checks_to_execute = set()
+        mock_provider.type = "aws"
+
+        with pytest.raises(ScanInvalidCategoryError):
+            Scan(
+                mock_provider, checks=checks_to_execute, categories=["invalid_category"]
+            )

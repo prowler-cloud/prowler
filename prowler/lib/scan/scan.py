@@ -2,14 +2,25 @@ import datetime
 from typing import Generator
 
 from prowler.config.config import valid_severities
-from prowler.lib.check.check import execute, import_check, update_audit_metadata
+from prowler.lib.check.check import (
+    execute,
+    import_check,
+    list_services,
+    update_audit_metadata,
+)
 from prowler.lib.check.checks_loader import load_checks_to_execute
 from prowler.lib.check.compliance import update_checks_metadata_with_compliance
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.check.models import CheckMetadata
 from prowler.lib.logger import logger
 from prowler.lib.outputs.finding import Finding
-from prowler.lib.scan.exceptions.exceptions import ScanInvalidSeverityError
+from prowler.lib.scan.exceptions.exceptions import (
+    ScanInvalidCategoryError,
+    ScanInvalidCheckError,
+    ScanInvalidComplianceFrameworkError,
+    ScanInvalidServiceError,
+    ScanInvalidSeverityError,
+)
 from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.provider import Provider
 
@@ -34,7 +45,7 @@ class Scan:
         services: list[str] = None,
         compliances: list[str] = None,
         categories: set[str] = [],
-        severity: list[str] = None,
+        severities: list[str] = None,
     ):
         """
         Scan is the class that executes the checks and yields the progress and the findings.
@@ -45,7 +56,7 @@ class Scan:
             services: list[str] -> The services to scan
             compliances: list[str] -> The compliances to check
             categories: set[str] -> The categories to check
-            severity: list[str] -> The severity of the checks
+            severities: list[str] -> The severities of the checks
         """
         self._provider = provider
 
@@ -59,11 +70,50 @@ class Scan:
             bulk_compliance_frameworks, bulk_checks_metadata
         )
 
+        # Create a list of valid categories
+        valid_categories = set()
+        for check, metadata in bulk_checks_metadata.items():
+            for category in metadata.Categories:
+                if category not in valid_categories:
+                    valid_categories.add(category)
+
+        # Validate checks
+        if checks:
+            for check in checks:
+                if check not in bulk_checks_metadata.keys():
+                    raise ScanInvalidCheckError(f"Invalid check provided: {check}.")
+
+        # Validate services
+        if services:
+            for service in services:
+                if service not in list_services(provider.type):
+                    raise ScanInvalidServiceError(
+                        f"Invalid service provided: {service}."
+                    )
+
+        # Validate compliances
+        if compliances:
+            for compliance in compliances:
+                if compliance not in bulk_compliance_frameworks.keys():
+                    raise ScanInvalidComplianceFrameworkError(
+                        f"Invalid compliance provided: {compliance}."
+                    )
+
+        # Validate categories
+        if categories:
+            for category in categories:
+                if category not in valid_categories:
+                    raise ScanInvalidCategoryError(
+                        f"Invalid category provided: {category}."
+                    )
+
         # Validate severity
-        if severity and not set(severity).issubset(valid_severities):
-            raise ScanInvalidSeverityError(
-                f"Invalid severity: {severity}. Valid severities are: {valid_severities}"
-            )
+        if severities:
+            for severity in severities:
+                if severity not in valid_severities:
+                    raise ScanInvalidSeverityError(
+                        f"Invalid severity provided: {severity}."
+                    )
 
         # Load checks to execute
         self._checks_to_execute = load_checks_to_execute(
@@ -73,7 +123,7 @@ class Scan:
             service_list=services,
             compliance_frameworks=compliances,
             categories=categories,
-            severities=severity,
+            severities=severities,
             provider=provider.type,
             checks_file=None,
         )
