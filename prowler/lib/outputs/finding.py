@@ -5,7 +5,7 @@ from typing import Optional, Union
 from pydantic import BaseModel
 
 from prowler.config.config import prowler_version
-from prowler.lib.check.models import Check_Report
+from prowler.lib.check.models import Check_Report, CheckMetadata
 from prowler.lib.logger import logger
 from prowler.lib.outputs.common import (
     fill_common_finding_data,
@@ -21,14 +21,6 @@ class Status(str, Enum):
     MANUAL = "MANUAL"
 
 
-class Severity(str, Enum):
-    critical = "critical"
-    high = "high"
-    medium = "medium"
-    low = "low"
-    informational = "informational"
-
-
 class Finding(BaseModel):
     """
     Represents the output model for a finding across different providers.
@@ -41,28 +33,17 @@ class Finding(BaseModel):
     auth_method: str
     timestamp: Union[int, datetime]
     account_uid: str
-    # Optional since it depends on permissions
     account_name: Optional[str]
-    # Optional since it depends on permissions
     account_email: Optional[str]
-    # Optional since it depends on permissions
     account_organization_uid: Optional[str]
-    # Optional since it depends on permissions
     account_organization_name: Optional[str]
-    # Optional since it depends on permissions
+    metadata: CheckMetadata
     account_tags: dict = {}
+    # TODO: review, just `uid`
     finding_uid: str
-    provider: str
-    check_id: str
-    check_title: str
-    check_type: str
     status: Status
     status_extended: str
     muted: bool = False
-    service_name: str
-    subservice_name: str
-    severity: Severity
-    resource_type: str
     resource_uid: str
     resource_name: str
     resource_details: str
@@ -70,20 +51,8 @@ class Finding(BaseModel):
     # Only present for AWS and Azure
     partition: Optional[str]
     region: str
-    description: str
-    risk: str
-    related_url: str
-    remediation_recommendation_text: str
-    remediation_recommendation_url: str
-    remediation_code_nativeiac: str
-    remediation_code_terraform: str
-    remediation_code_cli: str
-    remediation_code_other: str
+    # TODO(pepe): review
     compliance: dict
-    categories: str
-    depends_on: str
-    related_to: str
-    notes: str
     prowler_version: str = prowler_version
 
     @classmethod
@@ -173,7 +142,7 @@ class Finding(BaseModel):
                         check_output.project_id
                     ].organization.id
                     # TODO: for now is None since we don't retrieve that data
-                    output_data["account_organization"] = provider.projects[
+                    output_data["account_organization_name"] = provider.projects[
                         check_output.project_id
                     ].organization.display_name
 
