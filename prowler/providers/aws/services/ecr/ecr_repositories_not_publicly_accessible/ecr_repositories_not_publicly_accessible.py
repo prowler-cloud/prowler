@@ -18,7 +18,7 @@ class ecr_repositories_not_publicly_accessible(Check):
                     f"Repository {repository.name} is not publicly accessible."
                 )
                 if repository.policy:
-                    if is_policy_public(repository.policy):
+                    if is_policy_public(repository.policy, ecr_client.audited_account):
                         report.status = "FAIL"
                         report.status_extended = (
                             f"Repository {repository.name} is publicly accessible."

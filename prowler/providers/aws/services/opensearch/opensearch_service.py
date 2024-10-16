@@ -8,7 +8,6 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################################ OpenSearch
 class OpenSearchService(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
@@ -43,6 +42,7 @@ class OpenSearchService(AWSService):
     def _describe_domain_config(self, regional_clients):
         logger.info("OpenSearch - describing domain configurations...")
         try:
+<<<<<<< HEAD
             for domain in self.opensearch_domains:
                 regional_client = regional_clients[domain.region]
                 describe_domain = regional_client.describe_domain_config(
@@ -74,6 +74,53 @@ class OpenSearchService(AWSService):
                     )
                     continue
 
+=======
+            regional_client = self.regional_clients[domain.region]
+            describe_domain = regional_client.describe_domain(DomainName=domain.name)
+            domain.arn = describe_domain["DomainStatus"]["ARN"]
+            if "vpc" in describe_domain["DomainStatus"].get("Endpoints", {}):
+                domain.vpc_endpoints = [
+                    vpc for vpc in describe_domain["DomainStatus"]["Endpoints"].values()
+                ]
+            domain.vpc_id = (
+                describe_domain["DomainStatus"].get("VPCOptions", {}).get("VPCId", "")
+            )
+            domain.cognito_options = describe_domain["DomainStatus"][
+                "CognitoOptions"
+            ].get("Enabled", False)
+            domain.encryption_at_rest = describe_domain["DomainStatus"][
+                "EncryptionAtRestOptions"
+            ].get("Enabled", False)
+            domain.node_to_node_encryption = describe_domain["DomainStatus"][
+                "NodeToNodeEncryptionOptions"
+            ].get("Enabled", False)
+            domain.enforce_https = describe_domain["DomainStatus"][
+                "DomainEndpointOptions"
+            ].get("EnforceHTTPS", False)
+            domain.internal_user_database = describe_domain["DomainStatus"][
+                "AdvancedSecurityOptions"
+            ].get("InternalUserDatabaseEnabled", False)
+            domain.saml_enabled = (
+                describe_domain["DomainStatus"]["AdvancedSecurityOptions"]
+                .get("SAMLOptions", {})
+                .get("Enabled", False)
+            )
+            domain.update_available = (
+                describe_domain["DomainStatus"]
+                .get("ServiceSoftwareOptions", {"UpdateAvailable": False})
+                .get("UpdateAvailable", False)
+            )
+            domain.version = describe_domain["DomainStatus"].get("EngineVersion", None)
+            domain.advanced_settings_enabled = describe_domain["DomainStatus"][
+                "AdvancedSecurityOptions"
+            ].get("Enabled", False)
+            domain.instance_count = describe_domain["DomainStatus"][
+                "ClusterConfig"
+            ].get("InstanceCount", None)
+            domain.zone_awareness_enabled = describe_domain["DomainStatus"][
+                "ClusterConfig"
+            ].get("ZoneAwarenessEnabled", False)
+>>>>>>> 6e3c008a8 (chore(aws): improve logic for determining if resources are publicly accessible (#5195))
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -158,9 +205,9 @@ class PublishingLoggingOption(BaseModel):
 class OpenSearchDomain(BaseModel):
     name: str
     region: str
-    arn: str = None
+    arn: str
     logging: list[PublishingLoggingOption] = []
-    vpc_endpoints: list[str] = None
+    vpc_endpoints: list[str] = []
     vpc_id: str = None
     access_policy: dict = None
     cognito_options: bool = None
