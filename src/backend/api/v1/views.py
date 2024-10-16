@@ -729,9 +729,7 @@ class ResourceViewSet(BaseRLSViewSet):
     list=extend_schema(
         tags=["Finding"],
         summary="List all findings",
-        description="Retrieve a list of all findings with options for filtering by various criteria. "
-        "If no `scan` or `inserted_at` filter is provided, a default filter will be applied that will "
-        "return all findings for the current day.",
+        description="Retrieve a list of all findings with options for filtering by various criteria.",
     ),
     retrieve=extend_schema(
         tags=["Finding"],
@@ -746,10 +744,7 @@ class FindingViewSet(BaseRLSViewSet):
     serializer_class = FindingSerializer
     http_method_names = ["get"]
     filterset_class = FindingFilter
-    # Default sort order will put failed findings first
-    # and then by severity
-    # and then by most recently inserted via the id field
-    ordering = ["status", "severity", "-id"]
+    ordering = ["-id"]
     ordering_fields = [
         "id",
         "status",

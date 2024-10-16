@@ -318,26 +318,6 @@ class FindingFilter(FilterSet):
             },
         }
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        data = self.data
-        if not data or (
-            not data.get("scan")
-            and not data.get("scan__in")
-            and not data.get("inserted_at")
-            and not data.get("inserted_at.date")
-            and not data.get("inserted_at__gte")
-            and not data.get("inserted_at__lte")
-        ):
-            self.add_default_filter()
-
-    def add_default_filter(self):
-        utc_now = datetime.now(timezone.utc)
-        start = uuid7_start(datetime_to_uuid7(utc_now))
-
-        self.queryset = self.queryset.filter(id__gte=start)
-
     #  Convert filter values to UUIDv7 values for use with partitioning
 
     def filter_scan_id(self, queryset, name, value):

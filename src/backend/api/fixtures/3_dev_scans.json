@@ -15,10 +15,10 @@
           "accessanalyzer_enabled"
         ]
       },
-      "inserted_at": "2024-09-01T17:24:27.050Z",
-      "started_at": "2024-09-01T17:24:27.050Z",
-      "updated_at": "2024-09-01T17:24:27.050Z",
-      "completed_at": "2024-09-01T17:24:37.050Z"
+      "inserted_at": "2024-09-01T17:25:27.050Z",
+      "started_at": "2024-09-01T17:25:27.050Z",
+      "updated_at": "2024-09-01T17:25:27.050Z",
+      "completed_at": "2024-09-01T17:25:32.050Z"
     }
   },
   {
@@ -59,10 +59,10 @@
           "cloudsql_instance_automated_backups"
         ]
       },
-      "inserted_at": "2024-09-02T19:24:27.050Z",
-      "started_at": "2024-09-02T19:24:27.050Z",
-      "updated_at": "2024-09-02T19:24:27.050Z",
-      "completed_at": "2024-09-01T17:24:37.050Z"
+      "inserted_at": "2024-09-02T19:26:27.050Z",
+      "started_at": "2024-09-02T19:26:27.050Z",
+      "updated_at": "2024-09-02T19:26:27.050Z",
+      "completed_at": "2024-09-01T17:26:37.050Z"
     }
   },
   {
@@ -81,10 +81,10 @@
           "accessanalyzer_enabled"
         ]
       },
-      "inserted_at": "2024-09-02T19:24:27.050Z",
-      "started_at": "2024-09-02T19:24:27.050Z",
-      "updated_at": "2024-09-02T19:24:27.050Z",
-      "completed_at": "2024-09-01T17:24:37.050Z"
+      "inserted_at": "2024-09-02T19:27:27.050Z",
+      "started_at": "2024-09-02T19:27:27.050Z",
+      "updated_at": "2024-09-02T19:27:27.050Z",
+      "completed_at": "2024-09-01T17:27:37.050Z"
     }
   },
   {
@@ -121,9 +121,9 @@
           "cloudformation_stack_outputs_find_secrets"
         ]
       },
-      "scheduled_at": "2030-08-02T19:20:27.050Z",
-      "inserted_at": "2024-09-02T19:24:27.050Z",
-      "updated_at": "2024-09-02T19:24:27.050Z"
+      "scheduled_at": "2030-08-02T19:31:27.050Z",
+      "inserted_at": "2024-09-02T19:38:27.050Z",
+      "updated_at": "2024-09-02T19:38:27.050Z"
     }
   },
   {
@@ -141,9 +141,9 @@
           "iam_audit_logs_enabled"
         ]
       },
-      "scheduled_at": "2030-07-02T19:20:27.050Z",
-      "inserted_at": "2024-09-02T19:24:27.050Z",
-      "updated_at": "2024-09-02T19:24:27.050Z"
+      "scheduled_at": "2030-07-02T19:30:27.050Z",
+      "inserted_at": "2024-09-02T19:29:27.050Z",
+      "updated_at": "2024-09-02T19:29:27.050Z"
     }
   },
   {
@@ -161,9 +161,9 @@
           "defender_additional_email_configured_with_a_security_contact"
         ]
       },
-      "scheduled_at": "2030-08-05T19:20:27.050Z",
-      "inserted_at": "2024-09-02T19:24:27.050Z",
-      "updated_at": "2024-09-02T19:24:27.050Z"
+      "scheduled_at": "2030-08-05T19:32:27.050Z",
+      "inserted_at": "2024-09-02T19:29:27.050Z",
+      "updated_at": "2024-09-02T19:29:27.050Z"
     }
   }
 ]
