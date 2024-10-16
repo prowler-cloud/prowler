@@ -84,7 +84,7 @@ class AwsProvider(Provider):
         profile: str = None,
         regions: set = set(),
         organizations_role_arn: str = None,
-        scan_unused_services: bool = None,
+        scan_unused_services: bool = False,
         resource_tags: list[str] = [],
         resource_arn: list[str] = [],
         audit_config: dict = {},
@@ -106,7 +106,7 @@ class AwsProvider(Provider):
             - profile: The name of the AWS CLI profile to use.
             - regions: A set of regions to audit.
             - organizations_role_arn: The ARN of the AWS Organizations IAM role to assume.
-            - scan_unused_services: A boolean indicating whether to scan unused services.
+            - scan_unused_services: A boolean indicating whether to scan unused services. False by default.
             - resource_tags: A list of tags to filter the resources to audit.
             - resource_arn: A list of ARNs of the resources to audit.
             - audit_config: The audit configuration.
@@ -122,6 +122,7 @@ class AwsProvider(Provider):
             - ArgumentTypeError: If the input role session name is invalid.
 
         """
+
         logger.info("Initializing AWS provider ...")
 
         ######## AWS Session

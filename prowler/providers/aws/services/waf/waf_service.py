@@ -24,7 +24,7 @@ class WAF(AWSService):
                 if not self.audit_resources or (
                     is_resource_filtered(waf["WebACLId"], self.audit_resources)
                 ):
-                    arn = f"arn:aws:waf:{regional_client.region}:{self.audited_account}:webacl/{waf['WebACLId']}"
+                    arn = f"arn:{self.audited_partition}:waf:{regional_client.region}:{self.audited_account}:webacl/{waf['WebACLId']}"
                     self.web_acls[arn] = WebAcl(
                         arn=arn,
                         name=waf["Name"],
@@ -74,7 +74,7 @@ class WAFRegional(AWSService):
         logger.info("WAFRegional - Listing Regional Rules...")
         try:
             for rule in regional_client.list_rules().get("Rules", []):
-                arn = f"arn:aws:waf-regional:{regional_client.region}:{self.audited_account}:rule/{rule['RuleId']}"
+                arn = f"arn:{self.audited_partition}:waf-regional:{regional_client.region}:{self.audited_account}:rule/{rule['RuleId']}"
                 self.rules[arn] = Rule(
                     arn=arn,
                     id=rule.get("RuleId", ""),
@@ -105,7 +105,7 @@ class WAFRegional(AWSService):
         logger.info("WAFRegional - Listing Regional Rule Groups...")
         try:
             for rule_group in regional_client.list_rule_groups().get("RuleGroups", []):
-                arn = f"arn:aws:waf-regional:{regional_client.region}:{self.audited_account}:rulegroup/{rule_group['RuleGroupId']}"
+                arn = f"arn:{self.audited_partition}:waf-regional:{regional_client.region}:{self.audited_account}:rulegroup/{rule_group['RuleGroupId']}"
                 self.rule_groups[arn] = RuleGroup(
                     arn=arn,
                     region=regional_client.region,
@@ -128,7 +128,7 @@ class WAFRegional(AWSService):
                 .list_activated_rules_in_rule_group(RuleGroupId=rule_group.id)
                 .get("ActivatedRules", [])
             ):
-                rule_arn = f"arn:aws:waf-regional:{rule_group.region}:{self.audited_account}:rule/{rule.get('RuleId', '')}"
+                rule_arn = f"arn:{self.audited_partition}:waf-regional:{rule_group.region}:{self.audited_account}:rule/{rule.get('RuleId', '')}"
                 rule_group.rules.append(self.rules[rule_arn])
 
         except Exception as error:
@@ -143,7 +143,7 @@ class WAFRegional(AWSService):
                 if not self.audit_resources or (
                     is_resource_filtered(waf["WebACLId"], self.audit_resources)
                 ):
-                    arn = f"arn:aws:waf-regional:{regional_client.region}:{self.audited_account}:webacl/{waf['WebACLId']}"
+                    arn = f"arn:{self.audited_partition}:waf-regional:{regional_client.region}:{self.audited_account}:webacl/{waf['WebACLId']}"
                     self.web_acls[arn] = WebAcl(
                         arn=arn,
                         name=waf["Name"],
@@ -164,10 +164,10 @@ class WAFRegional(AWSService):
             for rule in get_web_acl.get("WebACL", {}).get("Rules", []):
                 rule_id = rule.get("RuleId", "")
                 if rule.get("Type", "") == "GROUP":
-                    rule_group_arn = f"arn:aws:waf-regional:{acl.region}:{self.audited_account}:rulegroup/{rule_id}"
+                    rule_group_arn = f"arn:{self.audited_partition}:waf-regional:{acl.region}:{self.audited_account}:rulegroup/{rule_id}"
                     acl.rule_groups.append(self.rule_groups[rule_group_arn])
                 else:
-                    rule_arn = f"arn:aws:waf-regional:{acl.region}:{self.audited_account}:rule/{rule_id}"
+                    rule_arn = f"arn:{self.audited_partition}:waf-regional:{acl.region}:{self.audited_account}:rule/{rule_id}"
                     acl.rules.append(self.rules[rule_arn])
 
         except Exception as error:
@@ -182,7 +182,7 @@ class WAFRegional(AWSService):
                 if acl.region == regional_client.region:
                     for resource in regional_client.list_resources_for_web_acl(
                         WebACLId=acl.id, ResourceType="APPLICATION_LOAD_BALANCER"
-                    )["ResourceArns"]:
+                    ).get("ResourceArns", []):
                         acl.albs.append(resource)
 
         except Exception as error:
