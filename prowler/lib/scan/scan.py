@@ -31,7 +31,7 @@ class Scan:
     _number_of_checks_to_execute: int = 0
     _number_of_checks_completed: int = 0
     # TODO the str should be a set of Check objects
-    _checks_to_execute: set[str]
+    _checks_to_execute: list[str]
     _service_checks_to_execute: dict[str, set[str]]
     _service_checks_completed: dict[str, set[str]]
     _progress: float = 0.0
@@ -123,16 +123,18 @@ class Scan:
                     )
 
         # Load checks to execute
-        self._checks_to_execute = load_checks_to_execute(
-            bulk_checks_metadata=bulk_checks_metadata,
-            bulk_compliance_frameworks=bulk_compliance_frameworks,
-            check_list=checks,
-            service_list=services,
-            compliance_frameworks=compliances,
-            categories=categories,
-            severities=severities,
-            provider=provider.type,
-            checks_file=None,
+        self._checks_to_execute = sorted(
+            load_checks_to_execute(
+                bulk_checks_metadata=bulk_checks_metadata,
+                bulk_compliance_frameworks=bulk_compliance_frameworks,
+                check_list=checks,
+                service_list=services,
+                compliance_frameworks=compliances,
+                categories=categories,
+                severities=severities,
+                provider=provider.type,
+                checks_file=None,
+            )
         )
 
         self._number_of_checks_to_execute = len(self._checks_to_execute)
@@ -146,7 +148,7 @@ class Scan:
         self._service_checks_completed = service_checks_completed
 
     @property
-    def checks_to_execute(self) -> set[str]:
+    def checks_to_execute(self) -> list[str]:
         return self._checks_to_execute
 
     @property
