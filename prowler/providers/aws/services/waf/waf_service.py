@@ -24,7 +24,7 @@ class WAF(AWSService):
                 if not self.audit_resources or (
                     is_resource_filtered(waf["WebACLId"], self.audit_resources)
                 ):
-                    arn = f"arn:aws:waf:{regional_client.region}:{self.audited_account}:webacl/{waf['WebACLId']}"
+                    arn = f"arn:{self.audited_partition}:waf:{regional_client.region}:{self.audited_account}:webacl/{waf['WebACLId']}"
                     self.web_acls[arn] = WebAcl(
                         arn=arn,
                         name=waf["Name"],
@@ -143,7 +143,7 @@ class WAFRegional(AWSService):
                 if not self.audit_resources or (
                     is_resource_filtered(waf["WebACLId"], self.audit_resources)
                 ):
-                    arn = f"arn:aws:waf-regional:{regional_client.region}:{self.audited_account}:webacl/{waf['WebACLId']}"
+                    arn = f"arn:{self.audited_partition}:waf-regional:{regional_client.region}:{self.audited_account}:webacl/{waf['WebACLId']}"
                     self.web_acls[arn] = WebAcl(
                         arn=arn,
                         name=waf["Name"],
@@ -164,10 +164,10 @@ class WAFRegional(AWSService):
             for rule in get_web_acl.get("WebACL", {}).get("Rules", []):
                 rule_id = rule.get("RuleId", "")
                 if rule.get("Type", "") == "GROUP":
-                    rule_group_arn = f"arn:aws:waf-regional:{acl.region}:{self.audited_account}:rulegroup/{rule_id}"
+                    rule_group_arn = f"arn:{self.audited_partition}:waf-regional:{acl.region}:{self.audited_account}:rulegroup/{rule_id}"
                     acl.rule_groups.append(self.rule_groups[rule_group_arn])
                 else:
-                    rule_arn = f"arn:aws:waf-regional:{acl.region}:{self.audited_account}:rule/{rule_id}"
+                    rule_arn = f"arn:{self.audited_partition}:waf-regional:{acl.region}:{self.audited_account}:rule/{rule_id}"
                     acl.rules.append(self.rules[rule_arn])
 
         except Exception as error:
