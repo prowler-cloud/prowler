@@ -58,7 +58,7 @@ class TestKubernetesProvider:
                 arguments.kubeconfig_file,
                 arguments.context,
                 arguments.namespace,
-                config_file=default_config_file_path,
+                config_path=default_config_file_path,
                 fixer_config=fixer_config,
             )
             assert isinstance(kubernetes_provider.session, KubernetesSession)

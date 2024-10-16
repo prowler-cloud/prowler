@@ -52,7 +52,7 @@ class TestAzureProvider:
                 tenant_id,
                 azure_region,
                 subscription_id,
-                config_file=default_config_file_path,
+                config_path=default_config_file_path,
                 fixer_config=fixer_config,
             )
 

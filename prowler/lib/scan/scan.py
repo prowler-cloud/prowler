@@ -21,7 +21,7 @@ class Scan:
     _progress: float = 0.0
     _findings: list = []
     _duration: int = 0
-      
+
     def __init__(self, provider: Provider, checks_to_execute: list[str] = None):
         """
         Scan is the class that executes the checks and yields the progress and the findings.
@@ -29,7 +29,6 @@ class Scan:
         Params:
             provider: Provider -> The provider to scan
             checks_to_execute: list[str] -> The checks to execute
-            mutelist_file: str -> The mutelist file (default: None)
         """
         self._provider = provider
         # Remove duplicated checks and sort them

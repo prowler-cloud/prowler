@@ -584,7 +584,7 @@ aws:
         config_file_input.close()
         config_file_input = config_file_input.name
         aws_provider = AwsProvider(
-            config_file=config_file_input,
+            config_path=config_file_input,
         )
 
         os.remove(config_file_input)

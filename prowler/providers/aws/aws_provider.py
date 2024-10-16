@@ -90,9 +90,11 @@ class AwsProvider(Provider):
         scan_unused_services: bool = None,
         resource_tags: list[str] = [],
         resource_arn: list[str] = [],
-        config_file: str = None,
+        config_path: str = None,
+        config_content: dict = None,
         fixer_config: dict = {},
         mutelist_path: str = None,
+        mutelist_content: dict = None,
     ):
         """
         Initializes the AWS provider.
@@ -110,9 +112,11 @@ class AwsProvider(Provider):
             - scan_unused_services: A boolean indicating whether to scan unused services.
             - resource_tags: A list of tags to filter the resources to audit.
             - resource_arn: A list of ARNs of the resources to audit.
-            - config_file: The path to the configuration file.
+            - config_path: The path to the configuration file.
+            - config_content: The content of the configuration file.
             - fixer_config: The fixer configuration.
             - mutelist_path: The path to the mutelist file.
+            - mutelist_content: The content of the mutelist file.
 
         Raises:
             - ArgumentTypeError: If the input MFA ARN is invalid.
@@ -272,22 +276,33 @@ class AwsProvider(Provider):
         self._scan_unused_services = scan_unused_services
 
         # Audit Config
-        if not config_file:
-            config_file = default_config_file_path
+        print(config_content)
+        print(config_path)
+        if config_content:
+            self._audit_config = config_content
+        else:
+            if not config_path:
+                config_path = default_config_file_path
+            self._audit_config = load_and_validate_config_file(self._type, config_path)
 
-        self._audit_config = load_and_validate_config_file(self._type, config_file)
         # Fixer Config
         self._fixer_config = fixer_config
 
         # Mutelist
-        if not mutelist_path:
-            mutelist_path = get_default_mute_file_path(self.type)
-
-        self._mutelist = AWSMutelist(
-            mutelist_path=mutelist_path,
-            session=self._session.current_session,
-            aws_account_id=self._identity.account,
-        )
+        if mutelist_content:
+            self._mutelist = AWSMutelist(
+                mutelist_content=mutelist_content,
+                session=self._session.current_session,
+                aws_account_id=self._identity.account,
+            )
+        else:
+            if not mutelist_path:
+                mutelist_path = get_default_mute_file_path(self.type)
+            self._mutelist = AWSMutelist(
+                mutelist_path=mutelist_path,
+                session=self._session.current_session,
+                aws_account_id=self._identity.account,
+            )
 
         Provider.set_global_provider(self)
 

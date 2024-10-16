@@ -48,9 +48,11 @@ class GcpProvider(Provider):
         credentials_file: str = None,
         impersonate_service_account: str = None,
         list_project_ids: bool = False,
-        config_file: str = None,
+        config_path: str = None,
+        config_content: dict = None,
         fixer_config: dict = {},
         mutelist_path: str = None,
+        mutelist_content: dict = None,
     ):
         """
         GCP Provider constructor
@@ -61,8 +63,11 @@ class GcpProvider(Provider):
             credentials_file: str
             impersonate_service_account: str
             list_project_ids: bool
-            audit_config: dict
+            config_path: str
+            config_content: dict
             fixer_config: dict
+            mutelist_path: str
+            mutelist_content: dict
         """
         logger.info("Instantiating GCP Provider ...")
         self._impersonated_service_account = impersonate_service_account
@@ -132,19 +137,27 @@ class GcpProvider(Provider):
 
         # TODO: move this to the providers, pending for AWS, GCP, AZURE and K8s
         # Audit Config
-        if not config_file:
-            config_file = default_config_file_path
-
-        self._audit_config = load_and_validate_config_file(self._type, config_file)
+        if config_content:
+            self._audit_config = config_content
+        else:
+            if not config_path:
+                config_path = default_config_file_path
+            self._audit_config = load_and_validate_config_file(self._type, config_path)
 
         # Fixer Config
         self._fixer_config = fixer_config
 
-        # Set default mutelist path if none is set
-        if not mutelist_path:
-            mutelist_path = get_default_mute_file_path(self.type)
-
-        self._mutelist = GCPMutelist(mutelist_path)
+        # Mutelist
+        if mutelist_content:
+            self._mutelist = GCPMutelist(
+                mutelist_content=mutelist_content,
+            )
+        else:
+            if not mutelist_path:
+                mutelist_path = get_default_mute_file_path(self.type)
+            self._mutelist = GCPMutelist(
+                mutelist_path=mutelist_path,
+            )
 
         Provider.set_global_provider(self)
 

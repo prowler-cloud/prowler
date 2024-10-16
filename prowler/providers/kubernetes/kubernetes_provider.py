@@ -44,9 +44,11 @@ class KubernetesProvider(Provider):
         kubeconfig_file: str = None,
         context: str = None,
         namespace: list = None,
-        config_file: str = None,
+        config_path: str = None,
+        config_content: dict = {},
         fixer_config: dict = {},
         mutelist_path: str = None,
+        mutelist_content: dict = {},
     ):
         """
         Initializes the KubernetesProvider instance.
@@ -54,8 +56,11 @@ class KubernetesProvider(Provider):
             kubeconfig_file (str): Path to the kubeconfig file.
             context (str): Context name.
             namespace (list): List of namespaces.
-            audit_config (dict): Audit configuration.
+            config_content (dict): Audit configuration.
+            config_path (str): Path to the configuration file.
             fixer_config (dict): Fixer configuration.
+            mutelist_path (str): Path to the mutelist file.
+            mutelist_content (dict): Mutelist content.
         """
 
         logger.info("Instantiating Kubernetes Provider ...")
@@ -79,19 +84,27 @@ class KubernetesProvider(Provider):
         )
 
         # Audit Config
-        if not config_file:
-            config_file = default_config_file_path
-
-        self._audit_config = load_and_validate_config_file(self._type, config_file)
+        if config_content:
+            self._audit_config = config_content
+        else:
+            if not config_path:
+                config_path = default_config_file_path
+            self._audit_config = load_and_validate_config_file(self._type, config_path)
 
         # Fixer Config
         self._fixer_config = fixer_config
 
         # Mutelist
-        if not mutelist_path:
-            mutelist_path = get_default_mute_file_path(self.type)
-
-        self._mutelist = KubernetesMutelist(mutelist_path)
+        if mutelist_content:
+            self._mutelist = KubernetesMutelist(
+                mutelist_content=mutelist_content,
+            )
+        else:
+            if not mutelist_path:
+                mutelist_path = get_default_mute_file_path(self.type)
+            self._mutelist = KubernetesMutelist(
+                mutelist_path=mutelist_path,
+            )
 
         Provider.set_global_provider(self)
 

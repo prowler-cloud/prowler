@@ -93,9 +93,11 @@ class AzureProvider(Provider):
         tenant_id: str = None,
         region: str = "AzureCloud",
         subscription_ids: list = [],
-        config_file: str = None,
+        config_path: str = None,
+        config_content: dict = None,
         fixer_config: dict = {},
         mutelist_path: str = None,
+        mutelist_content: dict = None,
     ):
         """
         Initializes the Azure provider.
@@ -108,9 +110,11 @@ class AzureProvider(Provider):
             tenant_id (str): The Azure Active Directory tenant ID.
             region (str): The Azure region.
             subscription_ids (list): List of subscription IDs.
-            config_file (str): The path to the configuration file.
+            config_path (str): The path to the configuration file.
+            config_content (dict): The configuration content.
             fixer_config (dict): The fixer configuration.
             mutelist_path (str): The path to the mutelist file.
+            mutelist_content (dict): The mutelist content.
 
         Returns:
             None
@@ -156,19 +160,27 @@ class AzureProvider(Provider):
         self._locations = self.get_locations(self.session)
 
         # Audit Config
-        if not config_file:
-            config_file = default_config_file_path
-
-        self._audit_config = load_and_validate_config_file(self.type, config_file)
+        if config_content:
+            self._audit_config = config_content
+        else:
+            if not config_path:
+                config_path = default_config_file_path
+            self._audit_config = load_and_validate_config_file(self._type, config_path)
 
         # Fixer Config
         self._fixer_config = fixer_config
 
         # Mutelist
-        if not mutelist_path:
-            mutelist_path = get_default_mute_file_path(self.type)
-
-        self._mutelist = AzureMutelist(mutelist_path)
+        if mutelist_content:
+            self._mutelist = AzureMutelist(
+                mutelist_content=mutelist_content,
+            )
+        else:
+            if not mutelist_path:
+                mutelist_path = get_default_mute_file_path(self.type)
+            self._mutelist = AzureMutelist(
+                mutelist_path=mutelist_path,
+            )
 
         Provider.set_global_provider(self)
 

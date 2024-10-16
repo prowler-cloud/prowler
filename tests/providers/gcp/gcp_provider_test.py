@@ -60,7 +60,7 @@ class TestGCPProvider:
                 credentials_file,
                 impersonate_service_account,
                 list_project_id,
-                config_file=default_config_file_path,
+                config_path=default_config_file_path,
                 fixer_config=fixer_config,
             )
             assert gcp_provider.session is None
