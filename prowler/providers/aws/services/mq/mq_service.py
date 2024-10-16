@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -54,3 +56,4 @@ class Broker(BaseModel):
     id: str
     region: str
     auto_minor_version_upgrade: bool = False
+    tags: Optional[list] = []

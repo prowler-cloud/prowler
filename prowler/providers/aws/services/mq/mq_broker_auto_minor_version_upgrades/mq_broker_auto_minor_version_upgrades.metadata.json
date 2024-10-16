@@ -7,7 +7,7 @@
   ],
   "ServiceName": "mq",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:mq:region:account-id:broker:broker-name:broker-id",
+  "ResourceIdTemplate": "arn:aws:mq:region:account-id:broker:broker-id",
   "Severity": "low",
   "ResourceType": "AwsAmazonMQBroker",
   "Description": "Ensure that automatic minor version upgrades are enabled on Amazon MQ brokers.",
