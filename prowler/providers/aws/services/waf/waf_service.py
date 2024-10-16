@@ -58,70 +58,18 @@ class WAFRegional(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
         super().__init__("waf-regional", provider)
-        self.web_acls = {}
         self.rules = {}
         self.rule_groups = {}
-        self.__threading_call__(self._list_web_acls)
-        self.__threading_call__(self._list_resources_for_web_acl)
-        self.__threading_call__(self._get_web_acl, self.web_acls.values())
+        self.web_acls = {}
         self.__threading_call__(self._list_rules)
         self.__threading_call__(self._get_rule, self.rules.values())
         self.__threading_call__(self._list_rule_groups)
         self.__threading_call__(
             self._list_activated_rules_in_rule_group, self.rule_groups.values()
         )
-
-    def _list_web_acls(self, regional_client):
-        logger.info("WAFRegional - Listing Regional Web ACLs...")
-        try:
-            for waf in regional_client.list_web_acls()["WebACLs"]:
-                if not self.audit_resources or (
-                    is_resource_filtered(waf["WebACLId"], self.audit_resources)
-                ):
-                    arn = f"arn:aws:waf-regional:{regional_client.region}:{self.audited_account}:webacl/{waf['WebACLId']}"
-                    self.web_acls[arn] = WebAcl(
-                        arn=arn,
-                        name=waf["Name"],
-                        id=waf["WebACLId"],
-                        albs=[],
-                        region=regional_client.region,
-                    )
-
-        except Exception as error:
-            logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-
-    def _list_resources_for_web_acl(self, regional_client):
-        logger.info("WAFRegional - Describing resources...")
-        try:
-            for acl in self.web_acls.values():
-                if acl.region == regional_client.region:
-                    for resource in regional_client.list_resources_for_web_acl(
-                        WebACLId=acl.id, ResourceType="APPLICATION_LOAD_BALANCER"
-                    )["ResourceArns"]:
-                        acl.albs.append(resource)
-
-        except Exception as error:
-            logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-
-    def _get_web_acl(self, acl):
-        logger.info(f"WAFRegional - Getting Web ACL {acl.name}...")
-        try:
-            get_web_acl = self.regional_clients[acl.region].get_web_acl(WebACLId=acl.id)
-            for rule in get_web_acl.get("WebACL", {}).get("Rules", []):
-                rule_id = rule.get("RuleId", "")
-                if rule.get("Type", "") == "GROUP":
-                    acl.rule_groups.append(ACLRule(id=rule_id))
-                else:
-                    acl.rules.append(ACLRule(id=rule_id))
-
-        except Exception as error:
-            logger.error(
-                f"{acl.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+        self.__threading_call__(self._list_web_acls)
+        self.__threading_call__(self._get_web_acl, self.web_acls.values())
+        self.__threading_call__(self._list_resources_for_web_acl)
 
     def _list_rules(self, regional_client):
         logger.info("WAFRegional - Listing Regional Rules...")
@@ -148,6 +96,7 @@ class WAFRegional(AWSService):
                 rule.predicates.append(
                     Predicate(
                         negated=predicate.get("Negated", False),
+                        type=predicate.get("Type", "IPMatch"),
                         data_id=predicate.get("DataId", ""),
                     )
                 )
@@ -182,25 +131,75 @@ class WAFRegional(AWSService):
                 .list_activated_rules_in_rule_group(RuleGroupId=rule_group.id)
                 .get("ActivatedRules", [])
             ):
-                rule_group.rules.append(ACLRule(id=rule.get("RuleId", "")))
+                rule_arn = f"arn:aws:waf-regional:{rule_group.region}:{self.audited_account}:rule/{rule.get('RuleId', '')}"
+                rule_group.rules.append(self.rules[rule_arn])
 
         except Exception as error:
             logger.error(
                 f"{rule_group.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _list_web_acls(self, regional_client):
+        logger.info("WAFRegional - Listing Regional Web ACLs...")
+        try:
+            for waf in regional_client.list_web_acls()["WebACLs"]:
+                if not self.audit_resources or (
+                    is_resource_filtered(waf["WebACLId"], self.audit_resources)
+                ):
+                    arn = f"arn:aws:waf-regional:{regional_client.region}:{self.audited_account}:webacl/{waf['WebACLId']}"
+                    self.web_acls[arn] = WebAcl(
+                        arn=arn,
+                        name=waf["Name"],
+                        id=waf["WebACLId"],
+                        albs=[],
+                        region=regional_client.region,
+                    )
+
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _get_web_acl(self, acl):
+        logger.info(f"WAFRegional - Getting Web ACL {acl.name}...")
+        try:
+            get_web_acl = self.regional_clients[acl.region].get_web_acl(WebACLId=acl.id)
+            for rule in get_web_acl.get("WebACL", {}).get("Rules", []):
+                rule_id = rule.get("RuleId", "")
+                if rule.get("Type", "") == "GROUP":
+                    rule_group_arn = f"arn:aws:waf-regional:{acl.region}:{self.audited_account}:rulegroup/{rule_id}"
+                    acl.rule_groups.append(self.rule_groups[rule_group_arn])
+                else:
+                    rule_arn = f"arn:aws:waf-regional:{acl.region}:{self.audited_account}:rule/{rule_id}"
+                    acl.rules.append(self.rules[rule_arn])
+
+        except Exception as error:
+            logger.error(
+                f"{acl.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _list_resources_for_web_acl(self, regional_client):
+        logger.info("WAFRegional - Describing resources...")
+        try:
+            for acl in self.web_acls.values():
+                if acl.region == regional_client.region:
+                    for resource in regional_client.list_resources_for_web_acl(
+                        WebACLId=acl.id, ResourceType="APPLICATION_LOAD_BALANCER"
+                    )["ResourceArns"]:
+                        acl.albs.append(resource)
+
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class Predicate(BaseModel):
-    """Predicate Model for WAF and WAFRegional"""
+    """Conditions for WAF and WAFRegional Rules"""
 
     negated: bool
+    type: str
     data_id: str
-
-
-class ACLRule(BaseModel):
-    """ACL Rule Model for WAF and WAFRegional"""
-
-    id: str
 
 
 class Rule(BaseModel):
@@ -221,7 +220,7 @@ class RuleGroup(BaseModel):
     id: str
     region: str
     name: str
-    rules: list[ACLRule] = []
+    rules: list[Rule] = []
     tags: Optional[list] = []
 
 
@@ -234,5 +233,5 @@ class WebAcl(BaseModel):
     albs: list[str]
     region: str
     rules: list[Rule] = []
-    rule_groups: list[Rule] = []
+    rule_groups: list[RuleGroup] = []
     tags: Optional[list] = []

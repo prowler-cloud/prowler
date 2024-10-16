@@ -11,6 +11,7 @@ from tests.providers.aws.utils import (
 )
 
 RULE_GROUP_ID = "test-rulegroup-id"
+RULE_ID = "my-rule-id"
 
 # Original botocore _make_api_call function
 orig = botocore.client.BaseClient._make_api_call
@@ -18,9 +19,32 @@ orig = botocore.client.BaseClient._make_api_call
 
 # Mocked botocore _make_api_call function
 def mock_make_api_call_compliant_rule_group(self, operation_name, kwarg):
-    unused_operations = ["ListRules", "GetRule", "ListWebACLs", "GetRule"]
+    unused_operations = ["ListWebACLs", "GetRule"]
     if operation_name in unused_operations:
         return {}
+    if operation_name == "ListRules":
+        return {
+            "Rules": [
+                {
+                    "RuleId": RULE_ID,
+                    "Name": "my-rule",
+                },
+            ]
+        }
+    if operation_name == "GetRule":
+        return {
+            "Rule": {
+                "RuleId": RULE_ID,
+                "Name": "my-rule",
+                "Predicates": [
+                    {
+                        "Negated": False,
+                        "Type": "IPMatch",
+                        "DataId": "my-data-id",
+                    }
+                ],
+            }
+        }
     if operation_name == "ListRuleGroups":
         return {
             "RuleGroups": [
@@ -34,7 +58,7 @@ def mock_make_api_call_compliant_rule_group(self, operation_name, kwarg):
         return {
             "ActivatedRules": [
                 {
-                    "RuleId": RULE_GROUP_ID,
+                    "RuleId": RULE_ID,
                 },
             ]
         }
@@ -59,7 +83,7 @@ def mock_make_api_call_non_compliant_rule_group(self, operation_name, kwarg):
     return orig(self, operation_name, kwarg)
 
 
-class Test_waf_rulegroup_has_rules:
+class Test_waf_regional_rulegroup_not_empty:
     @mock_aws
     def test_no_rule_groups(self):
         from prowler.providers.aws.services.waf.waf_service import WAFRegional
@@ -71,15 +95,15 @@ class Test_waf_rulegroup_has_rules:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.waf.waf_rulegroup_has_rules.waf_rulegroup_has_rules.wafregional_client",
+                "prowler.providers.aws.services.waf.waf_regional_rulegroup_not_empty.waf_regional_rulegroup_not_empty.wafregional_client",
                 new=WAFRegional(aws_provider),
             ):
                 # Test Check
-                from prowler.providers.aws.services.waf.waf_rulegroup_has_rules.waf_rulegroup_has_rules import (
-                    waf_rulegroup_has_rules,
+                from prowler.providers.aws.services.waf.waf_regional_rulegroup_not_empty.waf_regional_rulegroup_not_empty import (
+                    waf_regional_rulegroup_not_empty,
                 )
 
-                check = waf_rulegroup_has_rules()
+                check = waf_regional_rulegroup_not_empty()
                 result = check.execute()
 
                 assert len(result) == 0
@@ -99,22 +123,22 @@ class Test_waf_rulegroup_has_rules:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.waf.waf_rulegroup_has_rules.waf_rulegroup_has_rules.wafregional_client",
+                "prowler.providers.aws.services.waf.waf_regional_rulegroup_not_empty.waf_regional_rulegroup_not_empty.wafregional_client",
                 new=WAFRegional(aws_provider),
             ):
                 # Test Check
-                from prowler.providers.aws.services.waf.waf_rulegroup_has_rules.waf_rulegroup_has_rules import (
-                    waf_rulegroup_has_rules,
+                from prowler.providers.aws.services.waf.waf_regional_rulegroup_not_empty.waf_regional_rulegroup_not_empty import (
+                    waf_regional_rulegroup_not_empty,
                 )
 
-                check = waf_rulegroup_has_rules()
+                check = waf_regional_rulegroup_not_empty()
                 result = check.execute()
 
                 assert len(result) == 1
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == f"AWS WAF Regional Classic Regional RuleGroup {RULE_GROUP_ID} has at least one rule."
+                    == f"AWS WAF Regional Rule Group {RULE_GROUP_ID} is not empty."
                 )
                 assert result[0].resource_id == RULE_GROUP_ID
                 assert (
@@ -138,22 +162,22 @@ class Test_waf_rulegroup_has_rules:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.waf.waf_rulegroup_has_rules.waf_rulegroup_has_rules.wafregional_client",
+                "prowler.providers.aws.services.waf.waf_regional_rulegroup_not_empty.waf_regional_rulegroup_not_empty.wafregional_client",
                 new=WAFRegional(aws_provider),
             ):
                 # Test Check
-                from prowler.providers.aws.services.waf.waf_rulegroup_has_rules.waf_rulegroup_has_rules import (
-                    waf_rulegroup_has_rules,
+                from prowler.providers.aws.services.waf.waf_regional_rulegroup_not_empty.waf_regional_rulegroup_not_empty import (
+                    waf_regional_rulegroup_not_empty,
                 )
 
-                check = waf_rulegroup_has_rules()
+                check = waf_regional_rulegroup_not_empty()
                 result = check.execute()
 
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"AWS WAF Regional Classic Regional RuleGroup {RULE_GROUP_ID} does not have any rules."
+                    == f"AWS WAF Regional Rule Group {RULE_GROUP_ID} does not have any rules."
                 )
                 assert result[0].resource_id == RULE_GROUP_ID
                 assert (
