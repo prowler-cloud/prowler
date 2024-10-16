@@ -12,11 +12,11 @@ class mq_broker_auto_minor_version_upgrades(Check):
             report.resource_arn = broker.arn
             report.resource_tags = broker.tags
             report.status = "PASS"
-            report.status_extended = f"MQ Broker {broker.id} does have automated minor version upgrades enabled."
+            report.status_extended = f"MQ Broker {broker.name} does have automated minor version upgrades enabled."
 
             if not broker.auto_minor_version_upgrade:
                 report.status = "FAIL"
-                report.status_extended = f"MQ Broker {broker.id} does not have automated minor version upgrades enabled."
+                report.status_extended = f"MQ Broker {broker.name} does not have automated minor version upgrades enabled."
 
             findings.append(report)
 

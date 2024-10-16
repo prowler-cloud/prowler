@@ -38,8 +38,9 @@ class Test_mq_broker_auto_minor_version_upgrades:
     @mock_aws
     def test_broker_auto_minor_version_upgrades_enabled(self):
         mq_client = client("mq", region_name=AWS_REGION_US_EAST_1)
+        broker_name = "test-broker"
         broker_id = mq_client.create_broker(
-            BrokerName="test-broker",
+            BrokerName=broker_name,
             EngineType="ACTIVEMQ",
             EngineVersion="5.15.0",
             HostInstanceType="mq.t2.micro",
@@ -78,7 +79,7 @@ class Test_mq_broker_auto_minor_version_upgrades:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == f"MQ Broker {broker_id} does have automated minor version upgrades enabled."
+                    == f"MQ Broker {broker_name} does have automated minor version upgrades enabled."
                 )
                 assert result[0].resource_id == broker_id
                 assert (
@@ -90,8 +91,9 @@ class Test_mq_broker_auto_minor_version_upgrades:
     @mock_aws
     def test_broker_auto_minor_version_upgrades_disabled(self):
         mq_client = client("mq", region_name=AWS_REGION_US_EAST_1)
+        broker_name = "test-broker"
         broker_id = mq_client.create_broker(
-            BrokerName="test-broker",
+            BrokerName=broker_name,
             EngineType="ACTIVEMQ",
             EngineVersion="5.15.0",
             HostInstanceType="mq.t2.micro",
@@ -130,7 +132,7 @@ class Test_mq_broker_auto_minor_version_upgrades:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"MQ Broker {broker_id} does not have automated minor version upgrades enabled."
+                    == f"MQ Broker {broker_name} does not have automated minor version upgrades enabled."
                 )
                 assert result[0].resource_id == broker_id
                 assert (
