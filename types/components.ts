@@ -107,33 +107,76 @@ export interface ScanProps {
   };
 }
 
-export interface FindingProps {
+export interface FindingsProps {
+  type: "Findings";
   id: string;
   attributes: {
-    CheckTitle: string;
-    severity: "critical" | "high" | "medium" | "low";
-    status: "fail" | "success" | "muted";
-    region: string;
-    service: string;
-    account: string;
+    uid: string;
+    delta: "new" | "changed" | null;
+    status: "PASS" | "FAIL" | "MANUAL" | "MUTED";
+    status_extended: string;
+    severity: "informational" | "low" | "medium" | "high" | "critical";
+    check_id: string;
+    check_metadata: {
+      check_id: string;
+      metadata: {
+        Risk: string;
+        Notes: string;
+        CheckID: string;
+        Provider: string;
+        Severity: "informational" | "low" | "medium" | "high" | "critical";
+        CheckType: string[];
+        DependsOn: string[];
+        RelatedTo: string[];
+        Categories: string[];
+        CheckTitle: string;
+        RelatedUrl: string;
+        Description: string;
+        Remediation: {
+          Code: {
+            CLI: string;
+            Other: string;
+            NativeIaC: string;
+            Terraform: string;
+          };
+          Recommendation: {
+            Url: string;
+            Text: string;
+          };
+        };
+        ServiceName: string;
+        ResourceType: string;
+        SubServiceName: string;
+        ResourceIdTemplate: string;
+      };
+    };
+    raw_result: {
+      impact: string;
+      status: "PASS" | "FAIL" | "MANUAL" | "MUTED";
+      severity: "informational" | "low" | "medium" | "high" | "critical";
+    };
+    inserted_at: string;
+    updated_at: string;
   };
-  card: {
-    resourceId: string;
-    resourceLink: string;
-    resourceARN: string;
-    checkId: string;
-    checkLink: string;
-    type: string[];
-    scanTime: string;
-    findingId: string;
-    findingLink: string;
-    details: string;
-    riskLink: string;
-    riskDetails: string;
-    recommendationLink: string;
-    recommendationDetails: string;
-    referenceInformation: string;
-    referenceLink: string;
+  relationships: {
+    scan: {
+      data: {
+        type: "Scan";
+        id: string;
+      };
+    };
+    resources: {
+      data: {
+        type: "Resource";
+        id: string;
+      }[];
+      meta: {
+        count: number;
+      };
+    };
+  };
+  links: {
+    self: string;
   };
 }
 
