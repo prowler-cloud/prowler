@@ -29,6 +29,18 @@ class GCPBaseException(ProwlerException):
             "message": "Error testing connection to GCP",
             "remediation": "Check the connection and ensure it is properly set up.",
         },
+        (1931, "GCPLoadCredentialsFromDictError"): {
+            "message": "Error loading credentials from dictionary",
+            "remediation": "Check the credentials and ensure they are properly set up. client_id, client_secret and refresh_token are required.",
+        },
+        (1932, "GCPStaticCredentialsError"): {
+            "message": "Error loading static credentials",
+            "remediation": "Check the credentials and ensure they are properly set up. client_id, client_secret and refresh_token are required.",
+        },
+        (1933, "GCPInvalidAccountCredentials"): {
+            "message": "Provider does not match with the expected project_id",
+            "remediation": "Check the provider and ensure it matches the expected project_id.",
+        },
     }
 
     def __init__(self, code, file=None, original_exception=None, message=None):
@@ -38,11 +50,18 @@ class GCPBaseException(ProwlerException):
             error_info["message"] = message
         super().__init__(
             code=code,
-            provider=provider,
+            source=provider,
             file=file,
             original_exception=original_exception,
             error_info=error_info,
         )
+
+
+class GCPCredentialsError(GCPBaseException):
+    """Base class for GCP credentials errors."""
+
+    def __init__(self, code, file=None, original_exception=None, message=None):
+        super().__init__(code, file, original_exception, message)
 
 
 class GCPCloudResourceManagerAPINotUsedError(GCPBaseException):
@@ -59,21 +78,21 @@ class GCPHTTPError(GCPBaseException):
         )
 
 
-class GCPNoAccesibleProjectsError(GCPBaseException):
+class GCPNoAccesibleProjectsError(GCPCredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             1927, file=file, original_exception=original_exception, message=message
         )
 
 
-class GCPSetUpSessionError(GCPBaseException):
+class GCPSetUpSessionError(GCPCredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             1928, file=file, original_exception=original_exception, message=message
         )
 
 
-class GCPGetProjectError(GCPBaseException):
+class GCPGetProjectError(GCPCredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             1929, file=file, original_exception=original_exception, message=message
@@ -84,4 +103,25 @@ class GCPTestConnectionError(GCPBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             1930, file=file, original_exception=original_exception, message=message
+        )
+
+
+class GCPLoadCredentialsFromDictError(GCPCredentialsError):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1931, file=file, original_exception=original_exception, message=message
+        )
+
+
+class GCPStaticCredentialsError(GCPCredentialsError):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1932, file=file, original_exception=original_exception, message=message
+        )
+
+
+class GCPInvalidAccountCredentials(GCPBaseException):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1933, file=file, original_exception=original_exception, message=message
         )

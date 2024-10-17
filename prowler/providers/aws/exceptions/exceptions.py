@@ -57,6 +57,22 @@ class AWSBaseException(ProwlerException):
             "message": "AWS assume role error",
             "remediation": "Check the AWS assume role configuration and ensure it is properly set up, please visit https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/aws/role-assumption/ and https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_terms-and-concepts.html#iam-term-role-session-name",
         },
+        (1915, "AWSAccessKeyIDInvalid"): {
+            "message": "AWS Access Key ID or Session Token is invalid",
+            "remediation": "Check your AWS Access Key ID or Session Token and ensure it is valid.",
+        },
+        (1916, "AWSSecretAccessKeyInvalid"): {
+            "message": "AWS Secret Access Key is invalid",
+            "remediation": "Check your AWS Secret Access Key and signing method and ensure it is valid.",
+        },
+        (1917, "AWSInvalidAccountCredentials"): {
+            "message": "The provided AWS credentials belong to a different account",
+            "remediation": "Check the provided AWS credentials and review if belong to the account you want to use.",
+        },
+        (1918, "AWSSessionTokenExpired"): {
+            "message": "The provided AWS Session Token is expired",
+            "remediation": "Get a new AWS Session Token and configure it for the provider.",
+        },
     }
 
     def __init__(self, code, file=None, original_exception=None, message=None):
@@ -65,7 +81,7 @@ class AWSBaseException(ProwlerException):
             error_info["message"] = message
         super().__init__(
             code,
-            provider="AWS",
+            source="AWS",
             file=file,
             original_exception=original_exception,
             error_info=error_info,
@@ -174,4 +190,32 @@ class AWSAssumeRoleError(AWSBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             1914, file=file, original_exception=original_exception, message=message
+        )
+
+
+class AWSAccessKeyIDInvalid(AWSCredentialsError):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1915, file=file, original_exception=original_exception, message=message
+        )
+
+
+class AWSSecretAccessKeyInvalid(AWSCredentialsError):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1916, file=file, original_exception=original_exception, message=message
+        )
+
+
+class AWSInvalidAccountCredentials(AWSCredentialsError):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1917, file=file, original_exception=original_exception, message=message
+        )
+
+
+class AWSSessionTokenExpired(AWSCredentialsError):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1918, file=file, original_exception=original_exception, message=message
         )

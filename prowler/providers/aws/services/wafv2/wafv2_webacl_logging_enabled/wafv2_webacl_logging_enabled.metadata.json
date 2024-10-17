@@ -16,9 +16,9 @@
   "Remediation": {
     "Code": {
       "CLI": "aws wafv2 update-web-acl-logging-configuration --scope REGIONAL --web-acl-arn arn:partition:wafv2:region:account-id:webacl/webacl-id --logging-configuration '{\"LogDestinationConfigs\": [\"arn:partition:logs:region:account-id:log-group:log-group-name\"]}'",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/WAF/enable-web-acls-logging.html",
-      "Terraform": "https://docs.prowler.com/checks/aws/logging-policies/bc_aws_logging_33#terraform"
+      "NativeIaC": "https://docs.prowler.com/checks/aws/logging-policies/bc_aws_logging_33#terraform",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/waf-controls.html#waf-11",
+      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/WAF/enable-web-acls-logging.html"
     },
     "Recommendation": {
       "Text": "Enable AWS WAFv2 logging for your Web ACLs to monitor and analyze traffic patterns effectively.",

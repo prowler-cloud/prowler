@@ -246,10 +246,11 @@ class Test_rds_instance_protected_by_backup_plan:
 
     def test_rds_instance_with_backup_plan_via_instance_wildcard(self):
         instance = mock.MagicMock()
+        instance.audited_partition = "aws"
 
         from prowler.providers.aws.services.rds.rds_service import DBInstance
 
-        arn = "arn:aws:dynamodb:*:*:instance:*"
+        arn = "arn:aws:rds:*:*:instance:*"
         instance.db_instances = {
             f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:db:db-master-1": DBInstance(
                 id="db-master-1",

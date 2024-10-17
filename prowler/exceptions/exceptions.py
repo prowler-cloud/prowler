@@ -9,14 +9,14 @@ class ProwlerException(Exception):
     }
 
     def __init__(
-        self, code, provider=None, file=None, original_exception=None, error_info=None
+        self, code, source=None, file=None, original_exception=None, error_info=None
     ):
         """
         Initialize the ProwlerException class.
 
         Args:
             code (int): The error code.
-            provider (str): The provider name.
+            source (str): The source name. This can be the provider name, module name, service name, etc.
             file (str): The file name.
             original_exception (Exception): The original exception.
             error_info (dict): The error information.
@@ -28,7 +28,7 @@ class ProwlerException(Exception):
             >>> [1901] Unexpected error occurred. - Exception: Error occurred.
         """
         self.code = code
-        self.provider = provider
+        self.source = source
         self.file = file
         if error_info is None:
             error_info = self.ERROR_CODES.get((code, self.__class__.__name__))
@@ -45,9 +45,12 @@ class ProwlerException(Exception):
 
     def __str__(self):
         """Overriding the __str__ method"""
-        return f"{self.__class__.__name__}[{self.code}]: {self.message} - {self.original_exception}"
+        default_str = f"{self.__class__.__name__}[{self.code}]: {self.message}"
+        if self.original_exception:
+            default_str += f" - {self.original_exception}"
+        return default_str
 
 
 class UnexpectedError(ProwlerException):
-    def __init__(self, provider, file, original_exception=None):
-        super().__init__(1901, provider, file, original_exception)
+    def __init__(self, source, file, original_exception=None):
+        super().__init__(1901, source, file, original_exception)

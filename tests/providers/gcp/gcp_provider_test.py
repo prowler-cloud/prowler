@@ -2,6 +2,7 @@ from argparse import Namespace
 from datetime import datetime
 from os import environ
 
+import pytest
 from freezegun import freeze_time
 from mock import MagicMock, patch
 
@@ -9,6 +10,11 @@ from prowler.config.config import (
     default_config_file_path,
     default_fixer_config_file_path,
     load_and_validate_config_file,
+)
+from prowler.providers.common.models import Connection
+from prowler.providers.gcp.exceptions.exceptions import (
+    GCPInvalidAccountCredentials,
+    GCPTestConnectionError,
 )
 from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.gcp.models import GCPIdentityInfo, GCPProject
@@ -24,6 +30,9 @@ class TestGCPProvider:
         fixer_config = load_and_validate_config_file(
             "gcp", default_fixer_config_file_path
         )
+        client_id = "test-client-id"
+        client_secret = "test-client-secret"
+        refresh_token = "test-refresh-token"
 
         projects = {
             "test-project": GCPProject(
@@ -62,6 +71,9 @@ class TestGCPProvider:
                 list_project_id,
                 config_path=default_config_file_path,
                 fixer_config=fixer_config,
+                client_id=client_id,
+                client_secret=client_secret,
+                refresh_token=refresh_token,
             )
             assert gcp_provider.session is None
             assert gcp_provider.project_ids == ["test-project"]
@@ -126,6 +138,9 @@ class TestGCPProvider:
                 arguments.list_project_id,
                 arguments.config_file,
                 arguments.fixer_config,
+                client_id="test-client-id",
+                client_secret="test-client-secret",
+                refresh_token="test-refresh-token",
             )
 
             input_project = "sys-*"
@@ -198,6 +213,9 @@ class TestGCPProvider:
                 arguments.list_project_id,
                 arguments.config_file,
                 arguments.fixer_config,
+                client_id=None,
+                client_secret=None,
+                refresh_token=None,
             )
             assert environ["GOOGLE_APPLICATION_CREDENTIALS"] == "test_credentials_file"
             assert gcp_provider.session is not None
@@ -257,6 +275,9 @@ class TestGCPProvider:
                 arguments.list_project_id,
                 arguments.config_file,
                 arguments.fixer_config,
+                client_id=None,
+                client_secret=None,
+                refresh_token=None,
             )
             assert environ["GOOGLE_APPLICATION_CREDENTIALS"] == "test_credentials_file"
             assert gcp_provider.session is not None
@@ -324,6 +345,9 @@ class TestGCPProvider:
                 arguments.list_project_id,
                 arguments.config_file,
                 arguments.fixer_config,
+                client_id=None,
+                client_secret=None,
+                refresh_token=None,
             )
             gcp_provider.print_credentials()
             captured = capsys.readouterr()
@@ -390,6 +414,9 @@ class TestGCPProvider:
                 arguments.list_project_id,
                 arguments.config_file,
                 arguments.fixer_config,
+                client_id=None,
+                client_secret=None,
+                refresh_token=None,
             )
             gcp_provider.print_credentials()
             captured = capsys.readouterr()
@@ -464,6 +491,9 @@ class TestGCPProvider:
                 arguments.list_project_id,
                 arguments.config_file,
                 arguments.fixer_config,
+                client_id=None,
+                client_secret=None,
+                refresh_token=None,
             )
             gcp_provider.print_credentials()
             captured = capsys.readouterr()
@@ -478,3 +508,100 @@ class TestGCPProvider:
                 "Excluded GCP Project IDs:" in captured.out
                 and "test-excluded-project" in captured.out
             )
+
+    def test_init_only_client_id(self):
+        with pytest.raises(Exception) as e:
+            GcpProvider(client_id="test-client-id")
+        assert "client_secret and refresh_token are required" in e.value.args[0]
+
+    def test_validate_static_arguments(self):
+        output = GcpProvider.validate_static_arguments(
+            client_id="test-client-id",
+            client_secret="test-client-secret",
+            refresh_token="test-refresh-token",
+        )
+
+        assert output == {
+            "client_id": "test-client-id",
+            "client_secret": "test-client-secret",
+            "refresh_token": "test-refresh-token",
+            "type": "authorized_user",
+        }
+
+    def test_test_connection_with_exception(self):
+        with patch(
+            "prowler.providers.gcp.gcp_provider.GcpProvider.setup_session",
+            side_effect=Exception("Test exception"),
+        ):
+            with pytest.raises(Exception) as e:
+                GcpProvider.test_connection(
+                    client_id="test-client-id",
+                    client_secret="test-client-secret",
+                    refresh_token="test-refresh-token",
+                )
+            assert e.type == GCPTestConnectionError
+            assert "Test exception" in e.value.args[0]
+
+    def test_test_connection_valid_project_id(self):
+        project_id = "test-project-id"
+        mocked_service = MagicMock()
+
+        mocked_service.projects.get.return_value = MagicMock(
+            execute=MagicMock(return_value={"projectId": project_id})
+        )
+
+        with patch(
+            "prowler.providers.gcp.gcp_provider.GcpProvider.setup_session",
+            return_value=(None, project_id),
+        ), patch(
+            "prowler.providers.gcp.gcp_provider.discovery.build",
+            return_value=mocked_service,
+        ):
+            output = GcpProvider.test_connection(
+                client_id="test-client-id",
+                client_secret="test-client-secret",
+                refresh_token="test-refresh-token",
+                provider_id=project_id,
+            )
+            assert Connection(is_connected=True, error=None) == output
+
+    def test_test_connection_invalid_project_id(self):
+        mocked_service = MagicMock()
+
+        projects = {
+            "test-valid-project": GCPProject(
+                number="55555555",
+                id="project/55555555",
+                name="test-project",
+                labels={"test": "value"},
+                lifecycle_state="",
+            ),
+        }
+
+        mocked_service.projects.get.return_value = MagicMock(
+            execute=MagicMock(return_value={"projects": projects})
+        )
+
+        with patch(
+            "prowler.providers.gcp.gcp_provider.GcpProvider.setup_session",
+            return_value=(None, "test-valid-project"),
+        ), patch(
+            "prowler.providers.gcp.gcp_provider.discovery.build",
+            return_value=mocked_service,
+        ), patch(
+            "prowler.providers.gcp.gcp_provider.GcpProvider.validate_project_id"
+        ) as mock_validate_project_id:
+
+            mock_validate_project_id.side_effect = GCPInvalidAccountCredentials(
+                "Invalid project ID"
+            )
+
+            with pytest.raises(Exception) as e:
+                GcpProvider.test_connection(
+                    client_id="test-client-id",
+                    client_secret="test-client-secret",
+                    refresh_token="test-refresh-token",
+                    provider_id="test-invalid-project",
+                )
+
+            assert e.type == GCPInvalidAccountCredentials

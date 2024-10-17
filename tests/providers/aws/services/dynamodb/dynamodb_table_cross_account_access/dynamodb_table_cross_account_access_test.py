@@ -124,6 +124,7 @@ class Test_dynamodb_table_cross_account_access:
         from prowler.providers.aws.services.dynamodb.dynamodb_service import Table
 
         dynamodb_client.audited_account = AWS_ACCOUNT_NUMBER
+        dynamodb_client.audit_config = {}
         arn = test_table_arn
         dynamodb_client.tables = {
             arn: Table(
@@ -161,6 +162,7 @@ class Test_dynamodb_table_cross_account_access:
         from prowler.providers.aws.services.dynamodb.dynamodb_service import Table
 
         dynamodb_client.audited_account = AWS_ACCOUNT_NUMBER
+        dynamodb_client.audit_config = {}
         arn = test_table_arn
         dynamodb_client.tables = {
             arn: Table(
@@ -198,6 +200,7 @@ class Test_dynamodb_table_cross_account_access:
         from prowler.providers.aws.services.dynamodb.dynamodb_service import Table
 
         dynamodb_client.audited_account = AWS_ACCOUNT_NUMBER
+        dynamodb_client.audit_config = {}
         arn = test_table_arn
         dynamodb_client.tables = {
             arn: Table(
@@ -237,6 +240,7 @@ class Test_dynamodb_table_cross_account_access:
         from prowler.providers.aws.services.dynamodb.dynamodb_service import Table
 
         dynamodb_client.audited_account = AWS_ACCOUNT_NUMBER
+        dynamodb_client.audit_config = {}
         arn = test_table_arn
         dynamodb_client.tables = {
             arn: Table(
@@ -276,6 +280,7 @@ class Test_dynamodb_table_cross_account_access:
         from prowler.providers.aws.services.dynamodb.dynamodb_service import Table
 
         dynamodb_client.audited_account = AWS_ACCOUNT_NUMBER
+        dynamodb_client.audit_config = {}
         arn = test_table_arn
         dynamodb_client.tables = {
             arn: Table(
@@ -314,6 +319,7 @@ class Test_dynamodb_table_cross_account_access:
         from prowler.providers.aws.services.dynamodb.dynamodb_service import Table
 
         dynamodb_client.audited_account = AWS_ACCOUNT_NUMBER
+        dynamodb_client.audit_config = {}
         arn = test_table_arn
         dynamodb_client.tables = {
             arn: Table(
@@ -352,6 +358,7 @@ class Test_dynamodb_table_cross_account_access:
         from prowler.providers.aws.services.dynamodb.dynamodb_service import Table
 
         dynamodb_client.audited_account = AWS_ACCOUNT_NUMBER
+        dynamodb_client.audit_config = {}
         arn = test_table_arn
         dynamodb_client.tables = {
             arn: Table(

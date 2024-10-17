@@ -1,4 +1,5 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.providers.aws.services.iam.lib.policy import is_policy_public
 from prowler.providers.aws.services.opensearch.opensearch_client import (
     opensearch_client,
 )
@@ -7,7 +8,7 @@ from prowler.providers.aws.services.opensearch.opensearch_client import (
 class opensearch_service_domains_not_publicly_accessible(Check):
     def execute(self):
         findings = []
-        for domain in opensearch_client.opensearch_domains:
+        for domain in opensearch_client.opensearch_domains.values():
             report = Check_Report_AWS(self.metadata())
             report.region = domain.region
             report.resource_id = domain.name
@@ -15,43 +16,16 @@ class opensearch_service_domains_not_publicly_accessible(Check):
             report.resource_tags = domain.tags
             report.status = "PASS"
             report.status_extended = (
-                f"Opensearch domain {domain.name} does not allow anonymous access."
+                f"Opensearch domain {domain.name} is not publicly accessible."
             )
 
             if domain.vpc_id:
                 report.status_extended = f"Opensearch domain {domain.name} is in a VPC, then it is not publicly accessible."
-            elif domain.access_policy:
-                for statement in domain.access_policy["Statement"]:
-                    # look for open policies
-                    if (
-                        statement["Effect"] == "Allow"
-                        and (
-                            "AWS" in statement["Principal"]
-                            and "*" in statement["Principal"]["AWS"]
-                        )
-                        or (statement["Principal"] == "*")
-                    ):
-                        if "Condition" not in statement:
-                            report.status = "FAIL"
-                            report.status_extended = f"Opensearch domain {domain.name} policy allows access (Principal: '*')."
-                            break
-                        else:
-                            if (
-                                "IpAddress" in statement["Condition"]
-                                and "aws:SourceIp"
-                                in statement["Condition"]["IpAddress"]
-                            ):
-                                for ip in statement["Condition"]["IpAddress"][
-                                    "aws:SourceIp"
-                                ]:
-                                    if ip == "*":
-                                        report.status = "FAIL"
-                                        report.status_extended = f"Opensearch domain {domain.name} policy allows access (Principal: '*') and network *."
-                                        break
-                                    elif ip == "0.0.0.0/0":
-                                        report.status = "FAIL"
-                                        report.status_extended = f"Opensearch domain {domain.name} policy allows access (Principal: '*') and network 0.0.0.0/0."
-                                        break
+            elif domain.access_policy and is_policy_public(
+                domain.access_policy, opensearch_client.audited_account
+            ):
+                report.status = "FAIL"
+                report.status_extended = f"Opensearch domain {domain.name} is publicly accessible via access policy."
 
             findings.append(report)
 

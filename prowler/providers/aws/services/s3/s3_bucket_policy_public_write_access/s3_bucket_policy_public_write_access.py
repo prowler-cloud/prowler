@@ -40,6 +40,7 @@ class s3_bucket_policy_public_write_access(Check):
                 report.status_extended = f"S3 Bucket {bucket.name} does not allow public write access in the bucket policy."
                 if is_policy_public(
                     bucket.policy,
+                    s3_client.audited_account,
                     not_allowed_actions=[
                         "s3:PutObject",
                         "s3:DeleteObject",

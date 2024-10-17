@@ -11,7 +11,7 @@ DAYS_TO_EXPIRE_THRESHOLD = 7
 class Test_acm_certificates_expiration_check:
     def test_no_acm_certificates(self):
         acm_client = mock.MagicMock
-        acm_client.certificates = []
+        acm_client.certificates = {}
 
         with mock.patch(
             "prowler.providers.aws.services.acm.acm_service.ACM",
@@ -37,19 +37,18 @@ class Test_acm_certificates_expiration_check:
         in_use = True
 
         acm_client = mock.MagicMock
-        acm_client.certificates = [
-            Certificate(
-                arn=certificate_arn,
-                id=certificate_id,
-                name=certificate_name,
-                type=certificate_type,
-                key_algorithm=certificate_key_algorithm,
-                expiration_days=expiration_days,
-                in_use=in_use,
-                transparency_logging=True,
-                region=AWS_REGION,
-            )
-        ]
+        acm_client.certificates = {}
+        acm_client.certificates[certificate_arn] = Certificate(
+            arn=certificate_arn,
+            id=certificate_id,
+            name=certificate_name,
+            type=certificate_type,
+            key_algorithm=certificate_key_algorithm,
+            expiration_days=expiration_days,
+            in_use=in_use,
+            transparency_logging=True,
+            region=AWS_REGION,
+        )
 
         acm_client.audit_config = {"days_to_expire_threshold": 7}
 
@@ -87,19 +86,18 @@ class Test_acm_certificates_expiration_check:
         in_use = True
 
         acm_client = mock.MagicMock
-        acm_client.certificates = [
-            Certificate(
-                arn=certificate_arn,
-                id=certificate_id,
-                name=certificate_name,
-                type=certificate_type,
-                key_algorithm=certificate_key_algorithm,
-                expiration_days=expiration_days,
-                in_use=in_use,
-                transparency_logging=True,
-                region=AWS_REGION,
-            )
-        ]
+        acm_client.certificates = {}
+        acm_client.certificates[certificate_arn] = Certificate(
+            arn=certificate_arn,
+            id=certificate_id,
+            name=certificate_name,
+            type=certificate_type,
+            key_algorithm=certificate_key_algorithm,
+            expiration_days=expiration_days,
+            in_use=in_use,
+            transparency_logging=True,
+            region=AWS_REGION,
+        )
 
         acm_client.audit_config = {"days_to_expire_threshold": 7}
 
@@ -136,19 +134,18 @@ class Test_acm_certificates_expiration_check:
         in_use = True
 
         acm_client = mock.MagicMock
-        acm_client.certificates = [
-            Certificate(
-                arn=certificate_arn,
-                id=certificate_id,
-                name=certificate_name,
-                type=certificate_type,
-                key_algorithm=certificate_key_algorithm,
-                expiration_days=expiration_days,
-                in_use=in_use,
-                transparency_logging=True,
-                region=AWS_REGION,
-            )
-        ]
+        acm_client.certificates = {}
+        acm_client.certificates[certificate_arn] = Certificate(
+            arn=certificate_arn,
+            id=certificate_id,
+            name=certificate_name,
+            type=certificate_type,
+            key_algorithm=certificate_key_algorithm,
+            expiration_days=expiration_days,
+            in_use=in_use,
+            transparency_logging=True,
+            region=AWS_REGION,
+        )
 
         acm_client.audit_config = {"days_to_expire_threshold": 7}
 
@@ -184,19 +181,18 @@ class Test_acm_certificates_expiration_check:
         in_use = False
 
         acm_client = mock.MagicMock
-        acm_client.certificates = [
-            Certificate(
-                arn=certificate_arn,
-                id=certificate_id,
-                name=certificate_name,
-                type=certificate_type,
-                key_algorithm=certificate_key_algorithm,
-                expiration_days=expiration_days,
-                in_use=in_use,
-                transparency_logging=True,
-                region=AWS_REGION,
-            )
-        ]
+        acm_client.certificates = {}
+        acm_client.certificates[certificate_arn] = Certificate(
+            arn=certificate_arn,
+            id=certificate_id,
+            name=certificate_name,
+            type=certificate_type,
+            key_algorithm=certificate_key_algorithm,
+            expiration_days=expiration_days,
+            in_use=in_use,
+            transparency_logging=True,
+            region=AWS_REGION,
+        )
 
         acm_client.audit_config = {"days_to_expire_threshold": 7}
 
@@ -225,19 +221,18 @@ class Test_acm_certificates_expiration_check:
         in_use = False
 
         acm_client = mock.MagicMock
-        acm_client.certificates = [
-            Certificate(
-                arn=certificate_arn,
-                id=certificate_id,
-                name=certificate_name,
-                type=certificate_type,
-                key_algorithm=certificate_key_algorithm,
-                expiration_days=expiration_days,
-                in_use=in_use,
-                transparency_logging=True,
-                region=AWS_REGION,
-            )
-        ]
+        acm_client.certificates = {}
+        acm_client.certificates[certificate_arn] = Certificate(
+            arn=certificate_arn,
+            id=certificate_id,
+            name=certificate_name,
+            type=certificate_type,
+            key_algorithm=certificate_key_algorithm,
+            expiration_days=expiration_days,
+            in_use=in_use,
+            transparency_logging=True,
+            region=AWS_REGION,
+        )
 
         acm_client.audit_config = {"days_to_expire_threshold": 7}
 
