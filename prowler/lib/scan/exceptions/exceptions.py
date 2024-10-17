@@ -25,6 +25,10 @@ class ScanBaseException(ProwlerException):
             "message": "Invalid category provided.",
             "remediation": "Please provide a valid category name.",
         },
+        (2005, "ScanInvalidStatusError"): {
+            "message": "Invalid status provided.",
+            "remediation": "Please provide a valid status: FAIL, PASS, MANUAL.",
+        },
     }
 
     def __init__(self, code, file=None, original_exception=None, message=None):
@@ -73,4 +77,11 @@ class ScanInvalidCategoryError(ScanBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             2004, file=file, original_exception=original_exception, message=message
+        )
+
+
+class ScanInvalidStatusError(ScanBaseException):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            2005, file=file, original_exception=original_exception, message=message
         )

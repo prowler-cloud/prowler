@@ -12,13 +12,14 @@ from prowler.lib.check.compliance import update_checks_metadata_with_compliance
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.check.models import CheckMetadata
 from prowler.lib.logger import logger
-from prowler.lib.outputs.finding import Finding, Severity
+from prowler.lib.outputs.finding import Finding, Severity, Status
 from prowler.lib.scan.exceptions.exceptions import (
     ScanInvalidCategoryError,
     ScanInvalidCheckError,
     ScanInvalidComplianceFrameworkError,
     ScanInvalidServiceError,
     ScanInvalidSeverityError,
+    ScanInvalidStatusError,
 )
 from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.provider import Provider
@@ -36,6 +37,7 @@ class Scan:
     _progress: float = 0.0
     _findings: list = []
     _duration: int = 0
+    _status: list[str] = []
 
     def __init__(
         self,
@@ -47,6 +49,7 @@ class Scan:
         severities: list[str] = None,
         excluded_checks: list[str] = None,
         excluded_services: list[str] = None,
+        status: list[str] = None,
     ):
         """
         Scan is the class that executes the checks and yields the progress and the findings.
@@ -60,6 +63,7 @@ class Scan:
             severities: list[str] -> The severities of the checks
             excluded_checks: list[str] -> The checks to exclude
             excluded_services: list[str] -> The services to exclude
+            status: list[str] -> The status of the checks
 
         Raises:
             ScanInvalidCheckError: If the check does not exist in the provider or is from another provider.
@@ -69,6 +73,16 @@ class Scan:
             ScanInvalidSeverityError: If the severity does not exist in the provider.
         """
         self._provider = provider
+
+        # Validate the status
+        if status:
+            try:
+                for s in status:
+                    Status(s)
+                    if s not in self._status:
+                        self._status.append(s)
+            except ValueError:
+                raise ScanInvalidStatusError(f"Invalid status provided: {s}.")
 
         # Load bulk compliance frameworks
         bulk_compliance_frameworks = Compliance.get_bulk(provider.type)
@@ -202,6 +216,10 @@ class Scan:
     def findings(self) -> list:
         return self._findings
 
+    @property
+    def status(self) -> list[str]:
+        return self._status
+
     def scan(
         self,
         custom_checks_metadata: dict = {},
@@ -257,6 +275,14 @@ class Scan:
                         custom_checks_metadata,
                         output_options=None,
                     )
+
+                    # Filter the findings by the status
+                    print("Estatus")
+                    print(self._status)
+                    if self._status:
+                        for finding in check_findings:
+                            if finding.status not in self._status:
+                                check_findings.remove(finding)
 
                     # Store findings
                     self._findings.extend(check_findings)
