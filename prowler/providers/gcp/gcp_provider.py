@@ -340,12 +340,16 @@ class GcpProvider(Provider):
 
         # Errors from setup_session
         except GCPLoadCredentialsFromDictError as load_credentials_error:
-            logger.critical(str(load_credentials_error))
+            logger.critical(
+                f"{load_credentials_error.__class__.__name__}[{load_credentials_error.__traceback__.tb_lineno}]: {load_credentials_error}"
+            )
             if raise_on_exception:
                 raise load_credentials_error
             return Connection(error=load_credentials_error)
         except GCPSetUpSessionError as setup_session_error:
-            logger.critical(str(setup_session_error))
+            logger.critical(
+                f"{setup_session_error.__class__.__name__}[{setup_session_error.__traceback__.tb_lineno}]: {setup_session_error}"
+            )
             if raise_on_exception:
                 raise setup_session_error
             return Connection(error=setup_session_error)
@@ -367,7 +371,9 @@ class GcpProvider(Provider):
             return Connection(error=http_error)
         # Exceptions from validating Provider ID
         except GCPInvalidAccountCredentials as not_valid_provider_id_error:
-            logger.critical(str(not_valid_provider_id_error))
+            logger.critical(
+                f"{not_valid_provider_id_error.__class__.__name__}[{not_valid_provider_id_error.__traceback__.tb_lineno}]: {not_valid_provider_id_error}"
+            )
             if raise_on_exception:
                 raise not_valid_provider_id_error
             return Connection(error=not_valid_provider_id_error)
