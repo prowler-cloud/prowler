@@ -1,7 +1,10 @@
 from dataclasses import dataclass
 
 from azure.mgmt.containerregistry import ContainerRegistryManagementClient
-from azure.mgmt.containerregistry.models import NetworkRuleSet
+from azure.mgmt.containerregistry.models import (
+    NetworkRuleSet,
+    PrivateEndpointConnection,
+)
 
 from prowler.lib.logger import logger
 from prowler.providers.azure.azure_provider import AzureProvider
@@ -45,6 +48,9 @@ class ContainerRegistry(AzureService):
                                 ),
                                 monitor_diagnostic_settings=self._get_registry_monitor_settings(
                                     registry.name, resource_group, subscription
+                                ),
+                                private_endpoint_connections=getattr(
+                                    registry, "private_endpoint_connections", []
                                 ),
                             )
                         },
@@ -90,4 +96,6 @@ class ContainerRegistryInfo:
     public_network_access: str
     admin_user_enabled: bool
     network_rule_set: NetworkRuleSet
+    monitor_diagnostic_settings: list[DiagnosticSetting]
+    private_endpoint_connections: list[PrivateEndpointConnection]
     monitor_diagnostic_settings: list[DiagnosticSetting]
