@@ -43,7 +43,7 @@ class Scan:
         checks: list[str] = None,
         services: list[str] = None,
         compliances: list[str] = None,
-        categories: set[str] = [],
+        categories: list[str] = None,
         severities: list[str] = None,
     ):
         """
@@ -54,7 +54,7 @@ class Scan:
             checks: list[str] -> The checks to execute
             services: list[str] -> The services to scan
             compliances: list[str] -> The compliances to check
-            categories: set[str] -> The categories to check
+            categories: list[str] -> The categories of the checks
             severities: list[str] -> The severities of the checks
 
         Raises:
