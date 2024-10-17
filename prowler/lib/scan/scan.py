@@ -80,6 +80,8 @@ class Scan:
             try:
                 for s in status:
                     Status(s)
+                    if not self._status:
+                        self._status = []
                     if s not in self._status:
                         self._status.append(s)
             except ValueError:
