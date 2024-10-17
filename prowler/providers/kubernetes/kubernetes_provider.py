@@ -52,6 +52,7 @@ class KubernetesProvider(Provider):
         fixer_config: dict = {},
         mutelist_path: str = None,
         mutelist_content: dict = {},
+        kubeconfig_content: dict = None,
     ):
         """
         Initializes the KubernetesProvider instance.
