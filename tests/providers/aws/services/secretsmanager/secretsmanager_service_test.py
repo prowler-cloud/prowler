@@ -1,6 +1,7 @@
 import io
 import zipfile
 from datetime import datetime, timezone
+from freezegun import freeze_time
 from unittest.mock import patch
 
 from boto3 import client, resource
@@ -51,6 +52,7 @@ class Test_SecretsManager_Service:
         secretsmanager = SecretsManager(aws_provider)
         assert secretsmanager.service == "secretsmanager"
 
+    @freeze_time("2023-04-09")
     @mock_aws
     def test_list_secrets(self):
         secretsmanager_client = client(
@@ -137,6 +139,9 @@ class Test_SecretsManager_Service:
         assert secretsmanager.secrets[
             secret_arn
         ].last_accessed_date == datetime.min.replace(tzinfo=timezone.utc)
+        assert secretsmanager.secrets[
+            secret_arn
+        ].last_rotated_date.date() == datetime(2023, 4, 9).date()
         assert secretsmanager.secrets[secret_arn].tags == [
             {"Key": "test", "Value": "test"},
         ]
