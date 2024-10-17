@@ -311,6 +311,7 @@ config_aws = {
     "elbv2_min_azs": 2,
     "secrets_ignore_patterns": [],
     "max_days_secret_unused": 90,
+    "max_days_secret_unrotated": 90,
 }
 
 config_azure = {
