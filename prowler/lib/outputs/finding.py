@@ -55,6 +55,10 @@ class Finding(BaseModel):
     compliance: dict
     prowler_version: str = prowler_version
 
+    @property
+    def provider(self) -> str:
+        return self.metadata.Provider
+
     def get_metadata(self) -> dict:
         """
         Retrieves the metadata of the object and returns it as a dictionary with all keys in lowercase.

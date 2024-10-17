@@ -53,10 +53,12 @@ class OCSF(Output):
             for finding in findings:
                 finding_activity = ActivityID.Create
                 cloud_account_type = self.get_account_type_id_by_provider(
-                    finding.provider
+                    finding.metadata.Provider
                 )
                 finding_severity = getattr(
-                    SeverityID, finding.severity.capitalize(), SeverityID.Unknown
+                    SeverityID,
+                    finding.metadata.Severity.capitalize(),
+                    SeverityID.Unknown,
                 )
                 finding_status = self.get_finding_status_id(finding.muted)
 
@@ -67,26 +69,26 @@ class OCSF(Output):
                     finding_info=FindingInformation(
                         created_time_dt=finding.timestamp,
                         created_time=int(finding.timestamp.timestamp()),
-                        desc=finding.description,
-                        title=finding.check_title,
+                        desc=finding.metadata.Description,
+                        title=finding.metadata.CheckTitle,
                         uid=finding.finding_uid,
                         name=finding.resource_name,
                         product_uid="prowler",
-                        types=[finding.check_type],
+                        types=finding.metadata.CheckType,
                     ),
                     time_dt=finding.timestamp,
                     time=int(finding.timestamp.timestamp()),
                     remediation=Remediation(
-                        desc=finding.remediation_recommendation_text,
+                        desc=finding.metadata.Remediation.Recommendation.Text,
                         references=list(
                             filter(
                                 None,
                                 [
-                                    finding.remediation_code_nativeiac,
-                                    finding.remediation_code_terraform,
-                                    finding.remediation_code_cli,
-                                    finding.remediation_code_other,
-                                    finding.remediation_recommendation_url,
+                                    finding.metadata.Remediation.Code.NativeIaC,
+                                    finding.metadata.Remediation.Code.Terraform,
+                                    finding.metadata.Remediation.Code.CLI,
+                                    finding.metadata.Remediation.Code.Other,
+                                    finding.metadata.Remediation.Recommendation.Url,
                                 ],
                             )
                         ),
@@ -97,36 +99,36 @@ class OCSF(Output):
                     status=finding_status.name,
                     status_code=finding.status,
                     status_detail=finding.status_extended,
-                    risk_details=finding.risk,
+                    risk_details=finding.metadata.Risk,
                     resources=(
                         [
                             ResourceDetails(
                                 labels=unroll_dict_to_list(finding.resource_tags),
                                 name=finding.resource_name,
                                 uid=finding.resource_uid,
-                                group=Group(name=finding.service_name),
-                                type=finding.resource_type,
+                                group=Group(name=finding.metadata.ServiceName),
+                                type=finding.metadata.ResourceType,
                                 # TODO: this should be included only if using the Cloud profile
                                 cloud_partition=finding.partition,
                                 region=finding.region,
                                 data={"details": finding.resource_details},
                             )
                         ]
-                        if finding.provider != "kubernetes"
+                        if finding.metadata.Provider != "kubernetes"
                         else [
                             ResourceDetails(
                                 labels=unroll_dict_to_list(finding.resource_tags),
                                 name=finding.resource_name,
                                 uid=finding.resource_uid,
-                                group=Group(name=finding.service_name),
-                                type=finding.resource_type,
+                                group=Group(name=finding.metadata.ServiceName),
+                                type=finding.metadata.ResourceType,
                                 data={"details": finding.resource_details},
                                 namespace=finding.region.replace("namespace: ", ""),
                             )
                         ]
                     ),
                     metadata=Metadata(
-                        event_code=finding.check_id,
+                        event_code=finding.metadata.CheckID,
                         product=Product(
                             uid="prowler",
                             name="Prowler",
@@ -135,7 +137,7 @@ class OCSF(Output):
                         ),
                         profiles=(
                             ["cloud", "datetime"]
-                            if finding.provider != "kubernetes"
+                            if finding.metadata.Provider != "kubernetes"
                             else ["container", "datetime"]
                         ),
                         tenant_uid=finding.account_organization_uid,
@@ -143,11 +145,11 @@ class OCSF(Output):
                     type_uid=DetectionFindingTypeID.Create,
                     type_name=f"Detection Finding: {DetectionFindingTypeID.Create.name}",
                     unmapped={
-                        "related_url": finding.related_url,
-                        "categories": finding.categories,
-                        "depends_on": finding.depends_on,
-                        "related_to": finding.related_to,
-                        "notes": finding.notes,
+                        "related_url": finding.metadata.RelatedUrl,
+                        "categories": finding.metadata.Categories,
+                        "depends_on": finding.metadata.DependsOn,
+                        "related_to": finding.metadata.RelatedTo,
+                        "notes": finding.metadata.Notes,
                         "compliance": finding.compliance,
                     },
                 )
