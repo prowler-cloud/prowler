@@ -15,7 +15,7 @@
   "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/fsx-lustre-copy-tags-to-backups.html",
   "Remediation": {
     "Code": {
-      "CLI": "aws fsx update-file-system --file-system-id <file-system-id> filesystemtypeconfiguration <copy-tags-to-backups: true>",
+      "CLI": "aws fsx update-file-system --file-system-id <file-system-id> --open-zfs-configuration CopyTagsToBackups=true",
       "NativeIaC": "",
       "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/fsx-controls.html#fsx-2",
       "Terraform": ""
