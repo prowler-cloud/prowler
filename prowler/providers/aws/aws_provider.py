@@ -38,6 +38,7 @@ from prowler.providers.aws.exceptions.exceptions import (
     AWSNoCredentialsError,
     AWSProfileNotFoundError,
     AWSSecretAccessKeyInvalid,
+    AWSSessionTokenExpired,
     AWSSetUpSessionError,
 )
 from prowler.providers.aws.lib.arn.arn import parse_iam_credentials_arn
@@ -982,6 +983,11 @@ class AwsProvider(Provider):
                     original_exception=client_error,
                     file=pathlib.Path(__file__).name,
                 )
+            elif client_error.response["Error"]["Code"] == "ExpiredToken":
+                raise AWSSessionTokenExpired(
+                    original_exception=client_error,
+                    file=pathlib.Path(__file__).name,
+                )
             else:
                 raise AWSClientError(
                     original_exception=client_error,
@@ -1200,6 +1206,12 @@ class AwsProvider(Provider):
             if raise_on_exception:
                 raise invalid_account_credentials_error
             return Connection(error=invalid_account_credentials_error)
+
+        except AWSSessionTokenExpired as session_token_expired:
+            logger.error(str(session_token_expired))
+            if raise_on_exception:
+                raise session_token_expired
+            return Connection(error=session_token_expired)
 
         except Exception as error:
             logger.critical(

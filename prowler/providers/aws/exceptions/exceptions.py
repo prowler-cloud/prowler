@@ -69,6 +69,10 @@ class AWSBaseException(ProwlerException):
             "message": "The provided AWS credentials belong to a different account",
             "remediation": "Check the provided AWS credentials and review if belong to the account you want to use.",
         },
+        (1918, "AWSSessionTokenExpired"): {
+            "message": "The provided AWS Session Token is expired",
+            "remediation": "Get a new AWS Session Token and configure it for the provider.",
+        },
     }
 
     def __init__(self, code, file=None, original_exception=None, message=None):
@@ -207,4 +211,11 @@ class AWSInvalidAccountCredentials(AWSCredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             1917, file=file, original_exception=original_exception, message=message
+        )
+
+
+class AWSSessionTokenExpired(AWSCredentialsError):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1918, file=file, original_exception=original_exception, message=message
         )
