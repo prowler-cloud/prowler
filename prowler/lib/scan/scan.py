@@ -43,12 +43,10 @@ class Scan:
         checks: list[str] = None,
         services: list[str] = None,
         compliances: list[str] = None,
-        categories: set[str] = [],
+        categories: list[str] = None,
         severities: list[str] = None,
         excluded_checks: list[str] = None,
         excluded_services: list[str] = None,
-        categories: list[str] = None,
-        severities: list[str] = None,
     ):
         """
         Scan is the class that executes the checks and yields the progress and the findings.
@@ -58,12 +56,10 @@ class Scan:
             checks: list[str] -> The checks to execute
             services: list[str] -> The services to scan
             compliances: list[str] -> The compliances to check
-            categories: set[str] -> The categories to check
+            categories: list[str] -> The categories of the checks
             severities: list[str] -> The severities of the checks
             excluded_checks: list[str] -> The checks to exclude
             excluded_services: list[str] -> The services to exclude
-            categories: list[str] -> The categories of the checks
-            severities: list[str] -> The severities of the checks
 
         Raises:
             ScanInvalidCheckError: If the check does not exist in the provider or is from another provider.
