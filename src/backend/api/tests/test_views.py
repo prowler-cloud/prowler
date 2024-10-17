@@ -1711,6 +1711,35 @@ class TestResourceViewSet:
         assert len(response.json()["data"]) == len(resources_fixture)
 
     @pytest.mark.parametrize(
+        "include_values, expected_resources",
+        [
+            ("provider", ["Provider"]),
+            ("findings", ["Finding"]),
+            ("provider,findings", ["Provider", "Finding"]),
+        ],
+    )
+    def test_resources_list_include(
+        self,
+        include_values,
+        expected_resources,
+        authenticated_client,
+        resources_fixture,
+        findings_fixture,
+    ):
+        response = authenticated_client.get(
+            reverse("resource-list"), {"include": include_values}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == len(resources_fixture)
+        assert "included" in response.json()
+
+        included_data = response.json()["included"]
+        for expected_type in expected_resources:
+            assert any(
+                d.get("type") == expected_type for d in included_data
+            ), f"Expected type '{expected_type}' not found in included data"
+
+    @pytest.mark.parametrize(
         "filter_name, filter_value, expected_count",
         (
             [
@@ -1866,6 +1895,30 @@ class TestFindingViewSet:
             response.json()["data"][0]["attributes"]["status"]
             == findings_fixture[0].status
         )
+
+    @pytest.mark.parametrize(
+        "include_values, expected_resources",
+        [
+            ("resources", ["Resource"]),
+            ("scan", ["Scan"]),
+            ("resources.provider,scan", ["Resource", "Scan", "Provider"]),
+        ],
+    )
+    def test_findings_list_include(
+        self, include_values, expected_resources, authenticated_client, findings_fixture
+    ):
+        response = authenticated_client.get(
+            reverse("finding-list"), {"include": include_values}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == len(findings_fixture)
+        assert "included" in response.json()
+
+        included_data = response.json()["included"]
+        for expected_type in expected_resources:
+            assert any(
+                d.get("type") == expected_type for d in included_data
+            ), f"Expected type '{expected_type}' not found in included data"
 
     @pytest.mark.parametrize(
         "filter_name, filter_value, expected_count",

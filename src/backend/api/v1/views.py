@@ -3,6 +3,7 @@ from django.conf import settings as django_settings
 from django.contrib.postgres.search import SearchQuery
 from django.db import transaction
 from django.db.models import F, Q
+from django.db.models import Prefetch
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_control
@@ -22,6 +23,7 @@ from rest_framework.generics import get_object_or_404, GenericAPIView
 from rest_framework_json_api.views import Response
 from rest_framework_simplejwt.exceptions import InvalidToken
 from rest_framework_simplejwt.exceptions import TokenError
+
 from api.base_views import BaseTenantViewset, BaseRLSViewSet, BaseViewSet
 from api.filters import (
     ProviderFilter,
@@ -742,6 +744,13 @@ class ResourceViewSet(BaseRLSViewSet):
 class FindingViewSet(BaseRLSViewSet):
     queryset = Finding.objects.all()
     serializer_class = FindingSerializer
+    prefetch_for_includes = {
+        "__all__": [],
+        "resources": [
+            Prefetch("resources", queryset=Resource.objects.select_related("findings"))
+        ],
+        "scan": [Prefetch("scan", queryset=Scan.objects.select_related("findings"))],
+    }
     http_method_names = ["get"]
     filterset_class = FindingFilter
     ordering = ["-id"]
@@ -760,8 +769,6 @@ class FindingViewSet(BaseRLSViewSet):
         return datetime_to_uuid7(inserted_at)
 
     def get_queryset(self):
-        # TODO: require scan_id filter, or if none provided, inject today
-
         queryset = Finding.objects.all()
         search_value = self.request.query_params.get("filter[search]", None)
 
