@@ -12,6 +12,8 @@
         "codebuild:BatchGet*",
         "codebuild:ListReportGroups",
         "cognito-idp:GetUserPoolMfaConfig",
+        "datasync:Describe*",
+        "datasync:List*",
         "dlm:Get*",
         "drs:Describe*",
         "ds:Get*",
