@@ -217,10 +217,6 @@ class Scan:
     def findings(self) -> list:
         return self._findings
 
-    @property
-    def status(self) -> list[str]:
-        return self._status
-
     def scan(
         self,
         custom_checks_metadata: dict = {},
@@ -278,8 +274,6 @@ class Scan:
                     )
 
                     # Filter the findings by the status
-                    print("Estatus")
-                    print(self._status)
                     if self._status:
                         for finding in check_findings:
                             if finding.status not in self._status:
