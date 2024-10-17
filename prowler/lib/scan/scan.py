@@ -45,6 +45,8 @@ class Scan:
         compliances: list[str] = None,
         categories: set[str] = [],
         severities: list[str] = None,
+        excluded_checks: list[str] = None,
+        excluded_services: list[str] = None,
     ):
         """
         Scan is the class that executes the checks and yields the progress and the findings.
@@ -137,6 +139,26 @@ class Scan:
                 checks_file=None,
             )
         )
+
+        # Exclude checks
+        if excluded_checks:
+            for check in excluded_checks:
+                if check in self._checks_to_execute:
+                    self._checks_to_execute.remove(check)
+                else:
+                    raise ScanInvalidCheckError(
+                        f"Invalid check provided: {check}. Check does not exist in the provider."
+                    )
+
+        # Exclude services
+        if excluded_services:
+            for check in self._checks_to_execute:
+                if get_service_name_from_check_name(check) in excluded_services:
+                    self._checks_to_execute.remove(check)
+                else:
+                    raise ScanInvalidServiceError(
+                        f"Invalid service provided: {check}. Service does not exist in the provider."
+                    )
 
         self._number_of_checks_to_execute = len(self._checks_to_execute)
 
