@@ -19,10 +19,10 @@ class DataSync(AWSService):
         """
 
         super().__init__(__class__.__name__, provider)
-        self.tasks = []
+        self.tasks = {}
         self.__threading_call__(self._list_tasks)
-        self.__threading_call__(self._describe_tasks, self.tasks)
-        self.__threading_call__(self._list_task_tags, self.tasks)
+        self.__threading_call__(self._describe_tasks, self.tasks.values())
+        self.__threading_call__(self._list_task_tags, self.tasks.values())
 
     def _list_tasks(self, regional_client):
         """List DataSync tasks in the given region.
@@ -41,13 +41,11 @@ class DataSync(AWSService):
                     if not self.audit_resources or (
                         is_resource_filtered(task_arn, self.audit_resources)
                     ):
-                        self.tasks.append(
-                            DataSyncTask(
-                                id=task_id,
-                                arn=task_arn,
-                                name=task.get("Name"),
-                                region=regional_client.region,
-                            )
+                        self.tasks[task_arn] = DataSyncTask(
+                            id=task_id,
+                            arn=task_arn,
+                            name=task.get("Name"),
+                            region=regional_client.region,
                         )
         except Exception as error:
             logger.error(

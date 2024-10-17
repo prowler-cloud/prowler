@@ -15,7 +15,7 @@ class Test_datasync_task_logging_enabled:
 
         # Create a DataSync client with no tasks
         datasync_client = DataSync(mocked_aws_provider)
-        datasync_client.tasks = []
+        datasync_client.tasks = {}
 
         with patch(
             "prowler.providers.aws.services.datasync.datasync_task_logging_enabled.datasync_task_logging_enabled.datasync_client",
@@ -53,7 +53,7 @@ class Test_datasync_task_logging_enabled:
 
         # Create a DataSync client with the task
         datasync_client = DataSync(mocked_aws_provider)
-        datasync_client.tasks = [task]
+        datasync_client.tasks[TASK_ARN] = task
 
         with patch(
             "prowler.providers.aws.services.datasync.datasync_task_logging_enabled.datasync_task_logging_enabled.datasync_client",
@@ -72,7 +72,7 @@ class Test_datasync_task_logging_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"DataSync task {TASK_ID} does not have logging enabled."
+                == f"DataSync task {task.name} does not have logging enabled."
             )
             assert result[0].resource_id == TASK_ID
             assert result[0].resource_arn == TASK_ARN
@@ -100,7 +100,7 @@ class Test_datasync_task_logging_enabled:
 
         # Create a DataSync client with the task
         datasync_client = DataSync(mocked_aws_provider)
-        datasync_client.tasks = [task]
+        datasync_client.tasks[TASK_ARN] = task
 
         with patch(
             "prowler.providers.aws.services.datasync.datasync_task_logging_enabled.datasync_task_logging_enabled.datasync_client",
@@ -119,7 +119,7 @@ class Test_datasync_task_logging_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"DataSync task {TASK_ID} has logging enabled."
+                == f"DataSync task {task.name} has logging enabled."
             )
             assert result[0].resource_id == TASK_ID
             assert result[0].resource_arn == TASK_ARN

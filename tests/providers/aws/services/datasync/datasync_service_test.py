@@ -131,7 +131,7 @@ class Test_DataSync_Service:
 
         task_arn = "arn:aws:datasync:eu-west-1:123456789012:task/task-12345678901234567"
         found_task = None
-        for task in datasync.tasks:
+        for task in datasync.tasks.values():
             if task.arn == task_arn:
                 found_task = task
                 break
@@ -150,7 +150,7 @@ class Test_DataSync_Service:
         mock_client.get_paginator.side_effect = Exception("Generic error in ListTasks")
 
         datasync = DataSync(aws_provider)
-        assert len(datasync.tasks) == 0
+        assert len(datasync.tasks.values()) == 0
 
     # Test describing DataSync tasks with various exceptions
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
@@ -159,10 +159,10 @@ class Test_DataSync_Service:
         datasync = DataSync(aws_provider)
 
         # Check all tasks were processed despite exceptions
-        assert len(datasync.tasks) == 4
+        assert len(datasync.tasks.values()) == 4
 
         # Verify each task type
-        tasks_by_name = {task.name: task for task in datasync.tasks}
+        tasks_by_name = {task.name: task for task in datasync.tasks.values()}
 
         # Normal task
         assert "test_task" in tasks_by_name
@@ -186,7 +186,7 @@ class Test_DataSync_Service:
         aws_provider = set_mocked_aws_provider()
         datasync = DataSync(aws_provider)
 
-        tasks_by_name = {task.name: task for task in datasync.tasks}
+        tasks_by_name = {task.name: task for task in datasync.tasks.values()}
         assert tasks_by_name["test_task"].tags == [
             {"Key": "Name", "Value": "test_task"}
         ]
