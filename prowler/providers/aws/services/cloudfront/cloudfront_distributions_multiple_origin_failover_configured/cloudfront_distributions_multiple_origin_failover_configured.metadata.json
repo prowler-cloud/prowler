@@ -11,7 +11,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:cloudfront:region:account-id:distribution/resource-id",
   "Severity": "low",
-  "ResourceType": "AWSCloudFrontDistribution",
+  "ResourceType": "AwsCloudFrontDistribution",
   "Description": "Check if CloudFront distributions have origin failover enabled.",
   "Risk": "Without origin failover, if the primary origin becomes unavailable, your CloudFront distribution may experience downtime, leading to potential service interruptions and a poor user experience.",
   "RelatedUrl": "https://docs.aws.amazon.com/cloudfront/latest/APIReference/API_OriginGroup.html",

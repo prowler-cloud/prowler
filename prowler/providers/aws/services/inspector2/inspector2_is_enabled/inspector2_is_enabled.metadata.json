@@ -12,7 +12,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:inspector2:region:account-id/detector-id",
   "Severity": "medium",
-  "ResourceType": "AwsAccount",
+  "ResourceType": "Other",
   "Description": "Ensure that the new version of Amazon Inspector is enabled in order to help you improve the security and compliance of your AWS cloud environment. Amazon Inspector 2 is a vulnerability management solution that continually scans scans your Amazon EC2 instances, ECR container images, and Lambda functions to identify software vulnerabilities and instances of unintended network exposure.",
   "Risk": "Without using AWS Inspector, you may not be aware of all the security vulnerabilities in your AWS resources, which could lead to unauthorized access, data breaches, or other security incidents.",
   "RelatedUrl": "https://docs.aws.amazon.com/inspector/latest/user/findings-understanding.html",
