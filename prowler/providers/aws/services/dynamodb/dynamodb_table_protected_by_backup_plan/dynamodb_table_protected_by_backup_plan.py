@@ -19,7 +19,8 @@ class dynamodb_table_protected_by_backup_plan(Check):
 
             if (
                 table_arn in backup_client.protected_resources
-                or "arn:aws:dynamodb:*:*:table/*" in backup_client.protected_resources
+                or f"arn:{dynamodb_client.audited_partition}:dynamodb:*:*:table/*"
+                in backup_client.protected_resources
                 or "*" in backup_client.protected_resources
             ):
                 report.status = "PASS"

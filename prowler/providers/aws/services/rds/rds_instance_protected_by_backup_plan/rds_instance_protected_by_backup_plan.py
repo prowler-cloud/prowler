@@ -19,7 +19,7 @@ class rds_instance_protected_by_backup_plan(Check):
 
             if (
                 db_instance_arn in backup_client.protected_resources
-                or "arn:aws:dynamodb:*:*:instance:*"
+                or f"arn:{rds_client.audited_partition}:rds:*:*:instance:*"
                 in backup_client.protected_resources
                 or "*" in backup_client.protected_resources
             ):
