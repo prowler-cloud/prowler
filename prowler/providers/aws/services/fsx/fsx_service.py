@@ -32,18 +32,18 @@ class FSx(AWSService):
                         if type == "LUSTRE":
                             copy_tags_to_backups_aux = file_system.get(
                                 "LustreConfiguration", {}
-                            ).get("CopyTagsToBackups")
+                            ).get("CopyTagsToBackups", False)
                         elif type == "WINDOWS":
                             copy_tags_to_backups_aux = file_system.get(
                                 "WindowsConfiguration", {}
-                            ).get("CopyTagsToBackups")
+                            ).get("CopyTagsToBackups", False)
                         elif type == "OPENZFS":
                             copy_tags_to_backups_aux = file_system.get(
                                 "OpenZFSConfiguration", {}
-                            ).get("CopyTagsToBackups")
+                            ).get("CopyTagsToBackups", False)
                             copy_tags_to_volumes_aux = file_system.get(
                                 "OpenZFSConfiguration", {}
-                            ).get("CopyTagsToVolumes")
+                            ).get("CopyTagsToVolumes", False)
 
                         self.file_systems[file_system_arn] = FileSystem(
                             id=file_system["FileSystemId"],
