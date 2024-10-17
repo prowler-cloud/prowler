@@ -10,7 +10,11 @@ from google.oauth2.credentials import Credentials
 from googleapiclient import discovery
 from googleapiclient.errors import HttpError
 
-from prowler.config.config import get_default_mute_file_path
+from prowler.config.config import (
+    default_config_file_path,
+    get_default_mute_file_path,
+    load_and_validate_config_file,
+)
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import print_boxes
 from prowler.providers.common.models import Audit_Metadata, Connection
@@ -48,8 +52,11 @@ class GcpProvider(Provider):
         credentials_file: str = None,
         impersonate_service_account: str = None,
         list_project_ids: bool = False,
-        audit_config: dict = {},
+        config_path: str = None,
+        config_content: dict = None,
         fixer_config: dict = {},
+        mutelist_path: str = None,
+        mutelist_content: dict = None,
         client_id: str = None,
         client_secret: str = None,
         refresh_token: str = None,
@@ -63,8 +70,11 @@ class GcpProvider(Provider):
             credentials_file: str
             impersonate_service_account: str
             list_project_ids: bool
-            audit_config: dict
+            config_path: str
+            config_content: dict
             fixer_config: dict
+            mutelist_path: str
+            mutelist_content: dict
             client_id: str
             client_secret: str
             refresh_token: str
@@ -143,8 +153,27 @@ class GcpProvider(Provider):
 
         # TODO: move this to the providers, pending for AWS, GCP, AZURE and K8s
         # Audit Config
-        self._audit_config = audit_config
+        if config_content:
+            self._audit_config = config_content
+        else:
+            if not config_path:
+                config_path = default_config_file_path
+            self._audit_config = load_and_validate_config_file(self._type, config_path)
+
+        # Fixer Config
         self._fixer_config = fixer_config
+
+        # Mutelist
+        if mutelist_content:
+            self._mutelist = GCPMutelist(
+                mutelist_content=mutelist_content,
+            )
+        else:
+            if not mutelist_path:
+                mutelist_path = get_default_mute_file_path(self.type)
+            self._mutelist = GCPMutelist(
+                mutelist_path=mutelist_path,
+            )
 
         Provider.set_global_provider(self)
 
@@ -194,17 +223,6 @@ class GcpProvider(Provider):
         mutelist method returns the provider's mutelist.
         """
         return self._mutelist
-
-    @mutelist.setter
-    def mutelist(self, mutelist_path):
-        """
-        mutelist.setter sets the provider's mutelist.
-        """
-        # Set default mutelist path if none is set
-        if not mutelist_path:
-            mutelist_path = get_default_mute_file_path(self.type)
-
-        self._mutelist = GCPMutelist(mutelist_path)
 
     @property
     def get_output_mapping(self):
