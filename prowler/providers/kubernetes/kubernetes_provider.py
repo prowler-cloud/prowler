@@ -262,6 +262,13 @@ class KubernetesProvider(Provider):
             else:
                 client.CoreV1Api().list_namespace(timeout_seconds=2, _request_timeout=2)
             return Connection(is_connected=True)
+        except KubernetesInvalidKubeConfigFileError as invalid_kubeconfig_error:
+            logger.critical(
+                f"KubernetesInvalidKubeConfigFileError[{invalid_kubeconfig_error.__traceback__.tb_lineno}]: {invalid_kubeconfig_error}"
+            )
+            if raise_on_exception:
+                raise invalid_kubeconfig_error
+            return Connection(error=invalid_kubeconfig_error)
         except KubernetesInvalidProviderIdError as invalid_provider_id_error:
             logger.critical(
                 f"KubernetesInvalidProviderIdError[{invalid_provider_id_error.__traceback__.tb_lineno}]: {invalid_provider_id_error}"
