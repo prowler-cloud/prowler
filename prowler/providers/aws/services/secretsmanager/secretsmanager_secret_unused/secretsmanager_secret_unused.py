@@ -31,7 +31,7 @@ class secretsmanager_secret_unused(Check):
                         f"Secret {secret.name} has never been accessed."
                     )
                 else:
-                    report.status_extended = f"Secret {secret.name} has not been accessed since {secret.last_accessed_date}, you should review if it is still needed."
+                    report.status_extended = f"Secret {secret.name} has not been accessed since {secret.last_accessed_date.strftime('%B %d, %Y')}, you should review if it is still needed."
 
             findings.append(report)
 
