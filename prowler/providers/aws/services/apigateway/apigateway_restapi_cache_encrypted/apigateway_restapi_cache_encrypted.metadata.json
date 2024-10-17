@@ -15,7 +15,7 @@
   "RelatedUrl": "https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-caching.html#enable-api-gateway-caching",
   "Remediation": {
     "Code": {
-      "CLI": "aws apigateway update-stage --rest-api-id <restapi-id> --stage-name <stage-name> --patch-operations op=replace,path=/cacheClusterEnabled,value=true op=replace,path=/cacheClusterSize,value=1.6 op=replace,path=/cacheClusterSettings/encryptCache,value=true",
+      "CLI": "aws apigateway update-stage --rest-api-id <restapi-id> --stage-name <stage-name> --patch-operations op=replace,path=/<resourcePath>/<httpMethod>/caching/enabled,value=true op=replace,path=/<resourcePath>/<httpMethod>/caching/dataEncrypted,value=true",
       "NativeIaC": "",
       "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/apigateway-controls.html#apigateway-5",
       "Terraform": ""
