@@ -21,8 +21,8 @@ class DataSync(AWSService):
         super().__init__(__class__.__name__, provider)
         self.tasks = []
         self.__threading_call__(self._list_tasks)
-        self._describe_tasks()
-        self._list_task_tags()
+        self.__threading_call__(self._describe_tasks, self.tasks)
+        self.__threading_call__(self._list_task_tags, self.tasks)
 
     def _list_tasks(self, regional_client):
         """List DataSync tasks in the given region.
@@ -54,57 +54,55 @@ class DataSync(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _describe_tasks(self):
+    def _describe_tasks(self, task):
         """Describe each DataSync task and update task details."""
 
         logger.info("DataSync - Describing tasks...")
-        for task in self.tasks:
-            try:
-                regional_client = self.regional_clients[task.region]
-                response = regional_client.describe_task(TaskArn=task.arn)
-                task.status = response.get("Status")
-                task.options = response.get("Options")
-                task.source_location_arn = response.get("SourceLocationArn")
-                task.destination_location_arn = response.get("DestinationLocationArn")
-                task.excludes = response.get("Excludes")
-                task.schedule = response.get("Schedule")
-                task.cloud_watch_log_group_arn = response.get("CloudWatchLogGroupArn")
-            except ClientError as error:
-                if error.response["Error"]["Code"] == "ResourceNotFoundException":
-                    logger.warning(
-                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
-                else:
-                    logger.error(
-                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
-            except Exception as error:
+        try:
+            regional_client = self.regional_clients[task.region]
+            response = regional_client.describe_task(TaskArn=task.arn)
+            task.status = response.get("Status")
+            task.options = response.get("Options")
+            task.source_location_arn = response.get("SourceLocationArn")
+            task.destination_location_arn = response.get("DestinationLocationArn")
+            task.excludes = response.get("Excludes")
+            task.schedule = response.get("Schedule")
+            task.cloudwatch_log_group_arn = response.get("CloudWatchLogGroupArn")
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "ResourceNotFoundException":
+                logger.warning(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
                 logger.error(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
-    def _list_task_tags(self):
+    def _list_task_tags(self, task):
         """List tags for each DataSync task."""
 
         logger.info("DataSync - Listing task tags...")
-        for task in self.tasks:
-            try:
-                regional_client = self.regional_clients[task.region]
-                response = regional_client.list_tags_for_resource(ResourceArn=task.arn)
-                task.tags = response.get("Tags", [])
-            except ClientError as error:
-                if error.response["Error"]["Code"] == "ResourceNotFoundException":
-                    logger.warning(
-                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
-                else:
-                    logger.error(
-                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
-            except Exception as error:
+        try:
+            regional_client = self.regional_clients[task.region]
+            response = regional_client.list_tags_for_resource(ResourceArn=task.arn)
+            task.tags = response.get("Tags", [])
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "ResourceNotFoundException":
+                logger.warning(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
                 logger.error(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
 
 class DataSyncTask(BaseModel):
@@ -118,5 +116,5 @@ class DataSyncTask(BaseModel):
     destination_location_arn: Optional[str] = None
     excludes: Optional[List] = None
     schedule: Optional[Dict] = None
-    cloud_watch_log_group_arn: Optional[str] = None
+    cloudwatch_log_group_arn: Optional[str] = None
     tags: List[Dict] = Field(default_factory=list)

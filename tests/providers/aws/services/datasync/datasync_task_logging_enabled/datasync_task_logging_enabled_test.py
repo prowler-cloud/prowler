@@ -1,4 +1,3 @@
-from unittest import TestCase
 from unittest.mock import patch
 
 from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
@@ -7,7 +6,7 @@ TASK_ID = "task-12345"
 TASK_ARN = f"arn:aws:datasync:{AWS_REGION_US_EAST_1}:123456789012:task/{TASK_ID}"
 
 
-class Test_datasync_tasks_logging_enabled(TestCase):
+class Test_datasync_task_logging_enabled:
     def test_no_tasks(self):
         from prowler.providers.aws.services.datasync.datasync_service import DataSync
 
@@ -19,19 +18,19 @@ class Test_datasync_tasks_logging_enabled(TestCase):
         datasync_client.tasks = []
 
         with patch(
-            "prowler.providers.aws.services.datasync.datasync_tasks_logging_enabled.datasync_tasks_logging_enabled.datasync_client",
+            "prowler.providers.aws.services.datasync.datasync_task_logging_enabled.datasync_task_logging_enabled.datasync_client",
             new=datasync_client,
         ), patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=mocked_aws_provider,
         ):
-            from prowler.providers.aws.services.datasync.datasync_tasks_logging_enabled.datasync_tasks_logging_enabled import (
-                datasync_tasks_logging_enabled,
+            from prowler.providers.aws.services.datasync.datasync_task_logging_enabled.datasync_task_logging_enabled import (
+                datasync_task_logging_enabled,
             )
 
-            check = datasync_tasks_logging_enabled()
+            check = datasync_task_logging_enabled()
             result = check.execute()
-            self.assertEqual(len(result), 0)
+            assert len(result) == 0
 
     def test_task_without_logging(self):
         from prowler.providers.aws.services.datasync.datasync_service import (
@@ -48,7 +47,7 @@ class Test_datasync_tasks_logging_enabled(TestCase):
             arn=TASK_ARN,
             name="TestTask",
             region=AWS_REGION_US_EAST_1,
-            cloud_watch_log_group_arn=None,  # Logging not enabled
+            cloudwatch_log_group_arn=None,  # Logging not enabled
             tags=[],
         )
 
@@ -57,28 +56,28 @@ class Test_datasync_tasks_logging_enabled(TestCase):
         datasync_client.tasks = [task]
 
         with patch(
-            "prowler.providers.aws.services.datasync.datasync_tasks_logging_enabled.datasync_tasks_logging_enabled.datasync_client",
+            "prowler.providers.aws.services.datasync.datasync_task_logging_enabled.datasync_task_logging_enabled.datasync_client",
             new=datasync_client,
         ), patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=mocked_aws_provider,
         ):
-            from prowler.providers.aws.services.datasync.datasync_tasks_logging_enabled.datasync_tasks_logging_enabled import (
-                datasync_tasks_logging_enabled,
+            from prowler.providers.aws.services.datasync.datasync_task_logging_enabled.datasync_task_logging_enabled import (
+                datasync_task_logging_enabled,
             )
 
-            check = datasync_tasks_logging_enabled()
+            check = datasync_task_logging_enabled()
             result = check.execute()
-            self.assertEqual(len(result), 1)
-            self.assertEqual(result[0].status, "FAIL")
-            self.assertEqual(
-                result[0].status_extended,
-                f"DataSync task {TASK_ID} does not have logging enabled.",
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == f"DataSync task {TASK_ID} does not have logging enabled."
             )
-            self.assertEqual(result[0].resource_id, TASK_ID)
-            self.assertEqual(result[0].resource_arn, TASK_ARN)
-            self.assertEqual(result[0].region, AWS_REGION_US_EAST_1)
-            self.assertEqual(result[0].resource_tags, [])
+            assert result[0].resource_id == TASK_ID
+            assert result[0].resource_arn == TASK_ARN
+            assert result[0].region == AWS_REGION_US_EAST_1
+            assert result[0].resource_tags == []
 
     def test_task_with_logging(self):
         from prowler.providers.aws.services.datasync.datasync_service import (
@@ -95,7 +94,7 @@ class Test_datasync_tasks_logging_enabled(TestCase):
             arn=TASK_ARN,
             name="TestTask",
             region=AWS_REGION_US_EAST_1,
-            cloud_watch_log_group_arn=f"arn:aws:logs:{AWS_REGION_US_EAST_1}:123456789012:log-group:datasync-log-group",
+            cloudwatch_log_group_arn=f"arn:aws:logs:{AWS_REGION_US_EAST_1}:123456789012:log-group:datasync-log-group",
             tags=[],
         )
 
@@ -104,25 +103,25 @@ class Test_datasync_tasks_logging_enabled(TestCase):
         datasync_client.tasks = [task]
 
         with patch(
-            "prowler.providers.aws.services.datasync.datasync_tasks_logging_enabled.datasync_tasks_logging_enabled.datasync_client",
+            "prowler.providers.aws.services.datasync.datasync_task_logging_enabled.datasync_task_logging_enabled.datasync_client",
             new=datasync_client,
         ), patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=mocked_aws_provider,
         ):
-            from prowler.providers.aws.services.datasync.datasync_tasks_logging_enabled.datasync_tasks_logging_enabled import (
-                datasync_tasks_logging_enabled,
+            from prowler.providers.aws.services.datasync.datasync_task_logging_enabled.datasync_task_logging_enabled import (
+                datasync_task_logging_enabled,
             )
 
-            check = datasync_tasks_logging_enabled()
+            check = datasync_task_logging_enabled()
             result = check.execute()
-            self.assertEqual(len(result), 1)
-            self.assertEqual(result[0].status, "PASS")
-            self.assertEqual(
-                result[0].status_extended,
-                f"DataSync task {TASK_ID} has logging enabled.",
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"DataSync task {TASK_ID} has logging enabled."
             )
-            self.assertEqual(result[0].resource_id, TASK_ID)
-            self.assertEqual(result[0].resource_arn, TASK_ARN)
-            self.assertEqual(result[0].region, AWS_REGION_US_EAST_1)
-            self.assertEqual(result[0].resource_tags, [])
+            assert result[0].resource_id == TASK_ID
+            assert result[0].resource_arn == TASK_ARN
+            assert result[0].region == AWS_REGION_US_EAST_1
+            assert result[0].resource_tags == []

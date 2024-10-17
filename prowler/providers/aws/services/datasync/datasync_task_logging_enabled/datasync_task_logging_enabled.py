@@ -4,7 +4,7 @@ from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.datasync.datasync_client import datasync_client
 
 
-class datasync_tasks_logging_enabled(Check):
+class datasync_task_logging_enabled(Check):
     """Check if AWS DataSync tasks have logging enabled.
 
     This class verifies whether each AWS DataSync task has logging enabled by checking
@@ -30,7 +30,7 @@ class datasync_tasks_logging_enabled(Check):
             report.status = "PASS"
             report.status_extended = f"DataSync task {task.id} has logging enabled."
 
-            if not task.cloud_watch_log_group_arn:
+            if not task.cloudwatch_log_group_arn:
                 report.status = "FAIL"
                 report.status_extended = (
                     f"DataSync task {task.id} does not have logging enabled."

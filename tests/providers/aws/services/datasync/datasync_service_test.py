@@ -1,4 +1,3 @@
-import unittest
 from unittest.mock import MagicMock, patch
 
 import botocore
@@ -104,25 +103,25 @@ def mock_generate_regional_clients(provider, service):
     "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
     new=mock_generate_regional_clients,
 )
-class Test_DataSync_Service(unittest.TestCase):
+class Test_DataSync_Service:
     # Test DataSync Service initialization
     def test_service(self):
         aws_provider = set_mocked_aws_provider()
         datasync = DataSync(aws_provider)
-        self.assertEqual(datasync.service, "datasync")
+        assert datasync.service == "datasync"
 
     # Test DataSync clients creation
     def test_client(self):
         aws_provider = set_mocked_aws_provider()
         datasync = DataSync(aws_provider)
         for reg_client in datasync.regional_clients.values():
-            self.assertEqual(reg_client.__class__.__name__, "DataSync")
+            assert reg_client.__class__.__name__ == "DataSync"
 
     # Test DataSync session
     def test__get_session__(self):
         aws_provider = set_mocked_aws_provider()
         datasync = DataSync(aws_provider)
-        self.assertEqual(datasync.session.__class__.__name__, "Session")
+        assert datasync.session.__class__.__name__ == "Session"
 
     # Test listing DataSync tasks
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
@@ -137,9 +136,9 @@ class Test_DataSync_Service(unittest.TestCase):
                 found_task = task
                 break
 
-        self.assertIsNotNone(found_task)
-        self.assertEqual(found_task.name, "test_task")
-        self.assertEqual(found_task.region, AWS_REGION_EU_WEST_1)
+        assert found_task
+        assert found_task.name == "test_task"
+        assert found_task.region == AWS_REGION_EU_WEST_1
 
     # Test generic exception in list_tasks
     def test_list_tasks_generic_exception(self):
@@ -151,7 +150,7 @@ class Test_DataSync_Service(unittest.TestCase):
         mock_client.get_paginator.side_effect = Exception("Generic error in ListTasks")
 
         datasync = DataSync(aws_provider)
-        self.assertEqual(len(datasync.tasks), 0)
+        assert len(datasync.tasks) == 0
 
     # Test describing DataSync tasks with various exceptions
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
@@ -160,26 +159,26 @@ class Test_DataSync_Service(unittest.TestCase):
         datasync = DataSync(aws_provider)
 
         # Check all tasks were processed despite exceptions
-        self.assertEqual(len(datasync.tasks), 4)
+        assert len(datasync.tasks) == 4
 
         # Verify each task type
         tasks_by_name = {task.name: task for task in datasync.tasks}
 
         # Normal task
-        self.assertIn("test_task", tasks_by_name)
-        self.assertEqual(tasks_by_name["test_task"].status, "AVAILABLE")
+        assert "test_task" in tasks_by_name
+        assert tasks_by_name["test_task"].status == "AVAILABLE"
 
         # ResourceNotFoundException task
-        self.assertIn("not_found_task", tasks_by_name)
-        self.assertIsNone(tasks_by_name["not_found_task"].status)
+        assert "not_found_task" in tasks_by_name
+        assert not tasks_by_name["not_found_task"].status
 
         # ClientError task
-        self.assertIn("client_error_task", tasks_by_name)
-        self.assertIsNone(tasks_by_name["client_error_task"].status)
+        assert "client_error_task" in tasks_by_name
+        assert not tasks_by_name["client_error_task"].status
 
         # Generic error task
-        self.assertIn("generic_error_task", tasks_by_name)
-        self.assertIsNone(tasks_by_name["generic_error_task"].status)
+        assert "generic_error_task" in tasks_by_name
+        assert not tasks_by_name["generic_error_task"].status
 
     # Test listing task tags with various exceptions
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
@@ -188,11 +187,11 @@ class Test_DataSync_Service(unittest.TestCase):
         datasync = DataSync(aws_provider)
 
         tasks_by_name = {task.name: task for task in datasync.tasks}
-        self.assertEqual(
-            tasks_by_name["test_task"].tags, [{"Key": "Name", "Value": "test_task"}]
-        )
+        assert tasks_by_name["test_task"].tags == [
+            {"Key": "Name", "Value": "test_task"}
+        ]
 
         # Tasks with exceptions should have empty tag lists
-        self.assertEqual(tasks_by_name["not_found_task"].tags, [])
-        self.assertEqual(tasks_by_name["client_error_task"].tags, [])
-        self.assertEqual(tasks_by_name["generic_error_task"].tags, [])
+        assert tasks_by_name["not_found_task"].tags == []
+        assert tasks_by_name["client_error_task"].tags == []
+        assert tasks_by_name["generic_error_task"].tags == []

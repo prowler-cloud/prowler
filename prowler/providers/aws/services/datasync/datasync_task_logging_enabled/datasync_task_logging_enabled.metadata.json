@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "datasync_tasks_logging_enabled",
+  "CheckID": "datasync_task_logging_enabled",
   "CheckTitle": "DataSync tasks should have logging enabled",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices"
