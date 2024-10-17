@@ -49,7 +49,7 @@ def generate_finding_output(
         account_organization_uid="test-organization-id",
         account_organization_name="test-organization",
         account_tags={"test-tag": "test-value"},
-        finding_uid="test-unique-finding",
+        uid="test-unique-finding",
         status=status,
         status_extended=status_extended,
         muted=muted,

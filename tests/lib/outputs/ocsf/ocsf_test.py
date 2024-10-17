@@ -53,7 +53,7 @@ class TestOCSF:
         assert output_data.finding_info.created_time_dt == findings[0].timestamp
         assert output_data.finding_info.desc == findings[0].metadata.Description
         assert output_data.finding_info.title == findings[0].metadata.CheckTitle
-        assert output_data.finding_info.uid == findings[0].finding_uid
+        assert output_data.finding_info.uid == findings[0].uid
         assert output_data.finding_info.product_uid == "prowler"
         assert output_data.finding_info.types == ["test-type"]
         assert output_data.time == int(findings[0].timestamp.timestamp())
@@ -265,7 +265,7 @@ class TestOCSF:
         assert finding_information.created_time_dt == finding_output.timestamp
         assert finding_information.desc == finding_output.metadata.Description
         assert finding_information.title == finding_output.metadata.CheckTitle
-        assert finding_information.uid == finding_output.finding_uid
+        assert finding_information.uid == finding_output.uid
         assert finding_information.product_uid == "prowler"
 
         # Event time

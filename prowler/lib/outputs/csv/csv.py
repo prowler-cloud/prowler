@@ -32,7 +32,7 @@ class CSV(Output):
                 finding_dict["ACCOUNT_TAGS"] = unroll_dict(
                     finding.account_tags, separator=":"
                 )
-                finding_dict["FINDING_UID"] = finding.finding_uid
+                finding_dict["FINDING_UID"] = finding.uid
                 finding_dict["PROVIDER"] = finding.metadata.Provider
                 finding_dict["CHECK_ID"] = finding.metadata.CheckID
                 finding_dict["CHECK_TITLE"] = finding.metadata.CheckTitle

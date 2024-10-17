@@ -39,8 +39,7 @@ class Finding(BaseModel):
     account_organization_name: Optional[str]
     metadata: CheckMetadata
     account_tags: dict = {}
-    # TODO: review, just `uid`
-    finding_uid: str
+    uid: str
     status: Status
     status_extended: str
     muted: bool = False
@@ -51,7 +50,6 @@ class Finding(BaseModel):
     # Only present for AWS and Azure
     partition: Optional[str]
     region: str
-    # TODO(pepe): review
     compliance: dict
     prowler_version: str = prowler_version
 
@@ -176,7 +174,7 @@ class Finding(BaseModel):
             # check_output Unique ID
             # TODO: move this to a function
             # TODO: in Azure, GCP and K8s there are fidings without resource_name
-            output_data["finding_uid"] = (
+            output_data["uid"] = (
                 f"prowler-{provider.type}-{check_output.check_metadata.CheckID}-{output_data['account_uid']}-"
                 f"{output_data['region']}-{output_data['resource_name']}"
             )
