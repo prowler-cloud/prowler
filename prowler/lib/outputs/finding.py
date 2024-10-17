@@ -59,6 +59,10 @@ class Finding(BaseModel):
     def provider(self) -> str:
         return self.metadata.Provider
 
+    @property
+    def check_id(self) -> str:
+        return self.metadata.CheckID
+
     def get_metadata(self) -> dict:
         """
         Retrieves the metadata of the object and returns it as a dictionary with all keys in lowercase.
