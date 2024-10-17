@@ -12,6 +12,7 @@ from prowler.lib.outputs.common import (
     get_provider_data_mapping,
 )
 from prowler.lib.outputs.compliance.compliance import get_check_compliance
+from prowler.lib.utils.utils import dict_to_lowercase
 from prowler.providers.common.provider import Provider
 
 
@@ -68,7 +69,7 @@ class Finding(BaseModel):
             dict: A dictionary containing the metadata with keys converted to lowercase.
         """
 
-        return {k.lower(): v for k, v in self.metadata.dict().items()}
+        return dict_to_lowercase(self.metadata.dict())
 
     @classmethod
     def generate_output(
