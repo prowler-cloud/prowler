@@ -36,7 +36,6 @@ class Scan:
     _progress: float = 0.0
     _findings: list = []
     _duration: int = 0
-    _status: list[str] = []
 
     def __init__(
         self,
@@ -48,7 +47,6 @@ class Scan:
         severities: list[str] = None,
         excluded_checks: list[str] = None,
         excluded_services: list[str] = None,
-        status: list[str] = None,
     ):
         """
         Scan is the class that executes the checks and yields the progress and the findings.
