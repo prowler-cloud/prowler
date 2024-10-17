@@ -147,7 +147,7 @@ class Test_secretsmanager_secret_unused:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Secret test-100-days-secret has not been accessed since 2023-01-01 00:00:00+00:00, you should review if it is still needed."
+                == "Secret test-100-days-secret has not been accessed since January 01, 2023, you should review if it is still needed."
             )
             assert result[0].resource_id == "test-100-days-secret"
             assert (
@@ -190,7 +190,7 @@ class Test_secretsmanager_secret_unused:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Secret test-secret has been accessed recently, last accessed on 2023-04-09 00:00:00+00:00."
+                == "Secret test-secret has been accessed recently, last accessed on April 09, 2023."
             )
             assert result[0].resource_id == "test-secret"
             assert result[0].resource_arn == (
