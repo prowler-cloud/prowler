@@ -55,6 +55,15 @@ class Finding(BaseModel):
     compliance: dict
     prowler_version: str = prowler_version
 
+    def get_metadata(self) -> dict:
+        """
+        Retrieves the metadata of the object and returns it as a dictionary with all keys in lowercase.
+        Returns:
+            dict: A dictionary containing the metadata with keys converted to lowercase.
+        """
+
+        return {k.lower(): v for k, v in self.metadata.dict().items()}
+
     @classmethod
     def generate_output(
         cls, provider: Provider, check_output: Check_Report, output_options

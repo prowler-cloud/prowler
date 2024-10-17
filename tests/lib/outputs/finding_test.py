@@ -9,6 +9,7 @@ from prowler.lib.check.models import (
     Severity,
 )
 from prowler.lib.outputs.finding import Finding, Status
+from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 
 
 def mock_check_metadata(provider):
@@ -423,3 +424,10 @@ class TestFinding:
         assert finding_output.metadata.RelatedTo == ["check1", "check2"]
         assert finding_output.metadata.Notes == "mock_notes"
         assert finding_output.metadata.Compliance == []
+
+    def test_get_metadata(self):
+        metadata = generate_finding_output().get_metadata()
+
+        assert metadata is not None
+        assert isinstance(metadata, dict)
+        assert all(k.islower() for k in metadata.keys())
