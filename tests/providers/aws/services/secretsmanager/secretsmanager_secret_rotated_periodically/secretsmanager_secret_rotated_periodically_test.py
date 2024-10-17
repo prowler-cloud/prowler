@@ -18,6 +18,9 @@ def mock_make_api_call_secret_rotated_recently(self, operation_name, kwarg):
                 {
                     "ARN": "arn:aws:secretsmanager:eu-west-1:123456789012:secret:test-secret",
                     "Name": "test-secret",
+                    "LastAccessedDate": datetime(
+                        2023, 1, 1, 0, 0, 0, tzinfo=timezone.utc
+                    ),
                     "LastRotatedDate": datetime(
                         2023, 4, 9, 0, 0, 0, tzinfo=timezone.utc
                     ),
@@ -36,6 +39,9 @@ def mock_make_api_call_secret_not_rotated_for_99_days(self, operation_name, kwar
                 {
                     "ARN": "arn:aws:secretsmanager:eu-west-1:123456789012:secret:test-secret",
                     "Name": "test-secret",
+                    "LastAccessedDate": datetime(
+                        2023, 1, 1, 0, 0, 0, tzinfo=timezone.utc
+                    ),
                     "LastRotatedDate": datetime(
                         2023, 1, 1, 0, 0, 0, tzinfo=timezone.utc
                     ),

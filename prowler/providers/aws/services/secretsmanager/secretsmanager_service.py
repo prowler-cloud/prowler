@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Dict, List, Optional
 
-from pydantic import BaseModel, Dict, Field, List
+from pydantic import BaseModel, Field
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -40,6 +40,10 @@ class SecretsManager(AWSService):
                             arn=secret["ARN"],
                             name=secret["Name"],
                             region=regional_client.region,
+                            rotation_enabled=secret.get("RotationEnabled", False),
+                            last_rotated_date=secret.get(
+                                "LastRotatedDate", datetime.min
+                            ).replace(tzinfo=timezone.utc),
                             last_accessed_date=secret.get(
                                 "LastAccessedDate", datetime.min
                             ).replace(tzinfo=timezone.utc),
