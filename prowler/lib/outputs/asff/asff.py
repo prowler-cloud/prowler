@@ -72,23 +72,23 @@ class ASFF(Output):
                     AWSSecurityFindingFormat(
                         # The following line cannot be changed because it is the format we use to generate unique findings for AWS Security Hub
                         # If changed some findings could be lost because the unique identifier will be different
-                        Id=f"prowler-{finding.check_id}-{finding.account_uid}-{finding.region}-{hash_sha512(finding.resource_uid)}",
+                        Id=f"prowler-{finding.metadata.CheckID}-{finding.account_uid}-{finding.region}-{hash_sha512(finding.resource_uid)}",
                         ProductArn=f"arn:{finding.partition}:securityhub:{finding.region}::product/prowler/prowler",
                         ProductFields=ProductFields(
                             ProwlerResourceName=finding.resource_uid,
                         ),
-                        GeneratorId="prowler-" + finding.check_id,
+                        GeneratorId="prowler-" + finding.metadata.CheckID,
                         AwsAccountId=finding.account_uid,
                         Types=(
-                            finding.check_type.split(",")
-                            if finding.check_type
+                            finding.metadata.CheckType
+                            if finding.metadata.CheckType
                             else ["Software and Configuration Checks"]
                         ),
                         FirstObservedAt=timestamp,
                         UpdatedAt=timestamp,
                         CreatedAt=timestamp,
-                        Severity=Severity(Label=finding.severity.value),
-                        Title=finding.check_title,
+                        Severity=Severity(Label=finding.metadata.Severity.value),
+                        Title=finding.metadata.CheckTitle,
                         Description=(
                             (finding.status_extended[:1000] + "...")
                             if len(finding.status_extended) > 1000
@@ -97,7 +97,7 @@ class ASFF(Output):
                         Resources=[
                             Resource(
                                 Id=finding.resource_uid,
-                                Type=finding.resource_type,
+                                Type=finding.metadata.ResourceType,
                                 Partition=finding.partition,
                                 Region=finding.region,
                                 Tags=finding.resource_tags,
@@ -110,8 +110,8 @@ class ASFF(Output):
                         ),
                         Remediation=Remediation(
                             Recommendation=Recommendation(
-                                Text=finding.remediation_recommendation_text,
-                                Url=finding.remediation_recommendation_url,
+                                Text=finding.metadata.Remediation.Recommendation.Text,
+                                Url=finding.metadata.Remediation.Recommendation.Url,
                             )
                         ),
                     )

@@ -51,15 +51,16 @@ class TestOCSF:
             findings[0].timestamp.timestamp()
         )
         assert output_data.finding_info.created_time_dt == findings[0].timestamp
-        assert output_data.finding_info.desc == findings[0].description
-        assert output_data.finding_info.title == findings[0].check_title
-        assert output_data.finding_info.uid == findings[0].finding_uid
+        assert output_data.finding_info.desc == findings[0].metadata.Description
+        assert output_data.finding_info.title == findings[0].metadata.CheckTitle
+        assert output_data.finding_info.uid == findings[0].uid
         assert output_data.finding_info.product_uid == "prowler"
         assert output_data.finding_info.types == ["test-type"]
         assert output_data.time == int(findings[0].timestamp.timestamp())
         assert output_data.time_dt == findings[0].timestamp
         assert (
-            output_data.remediation.desc == findings[0].remediation_recommendation_text
+            output_data.remediation.desc
+            == findings[0].metadata.Remediation.Recommendation.Text
         )
         assert output_data.remediation.references == []
         assert output_data.severity_id == SeverityID.Low
@@ -68,11 +69,11 @@ class TestOCSF:
         assert output_data.status == StatusID.New.name
         assert output_data.status_code == findings[0].status
         assert output_data.status_detail == findings[0].status_extended
-        assert output_data.risk_details == findings[0].risk
+        assert output_data.risk_details == findings[0].metadata.Risk
         assert output_data.resources[0].labels == ["Name:test", "Environment:dev"]
         assert output_data.resources[0].name == findings[0].resource_name
         assert output_data.resources[0].uid == findings[0].resource_uid
-        assert output_data.resources[0].type == findings[0].resource_type
+        assert output_data.resources[0].type == findings[0].metadata.ResourceType
         assert output_data.resources[0].cloud_partition == findings[0].partition
         assert output_data.resources[0].region == findings[0].region
         assert output_data.resources[0].data == {
@@ -80,7 +81,7 @@ class TestOCSF:
         }
         assert output_data.metadata.profiles == ["cloud", "datetime"]
         assert output_data.metadata.tenant_uid == "test-organization-id"
-        assert output_data.metadata.event_code == findings[0].check_id
+        assert output_data.metadata.event_code == findings[0].metadata.CheckID
         assert output_data.metadata.product.name == "Prowler"
         assert output_data.metadata.product.vendor_name == "Prowler"
         assert output_data.metadata.product.uid == "prowler"
@@ -91,11 +92,11 @@ class TestOCSF:
             == f"Detection Finding: {DetectionFindingTypeID.Create.name}"
         )
         assert output_data.unmapped == {
-            "related_url": findings[0].related_url,
-            "categories": findings[0].categories,
-            "depends_on": findings[0].depends_on,
-            "related_to": findings[0].related_to,
-            "notes": findings[0].notes,
+            "related_url": findings[0].metadata.RelatedUrl,
+            "categories": findings[0].metadata.Categories,
+            "depends_on": findings[0].metadata.DependsOn,
+            "related_to": findings[0].metadata.RelatedTo,
+            "notes": findings[0].metadata.Notes,
             "compliance": findings[0].compliance,
         }
 
@@ -169,9 +170,9 @@ class TestOCSF:
                 "status_id": 1,
                 "unmapped": {
                     "related_url": "test-url",
-                    "categories": "test-category",
-                    "depends_on": "test-dependency",
-                    "related_to": "test-related-to",
+                    "categories": ["test-category"],
+                    "depends_on": ["test-dependency"],
+                    "related_to": ["test-related-to"],
                     "notes": "test-notes",
                     "compliance": {"test-compliance": "test-compliance"},
                 },
@@ -262,9 +263,9 @@ class TestOCSF:
             finding_output.timestamp.timestamp()
         )
         assert finding_information.created_time_dt == finding_output.timestamp
-        assert finding_information.desc == finding_output.description
-        assert finding_information.title == finding_output.check_title
-        assert finding_information.uid == finding_output.finding_uid
+        assert finding_information.desc == finding_output.metadata.Description
+        assert finding_information.title == finding_output.metadata.CheckTitle
+        assert finding_information.uid == finding_output.uid
         assert finding_information.product_uid == "prowler"
 
         # Event time
@@ -274,7 +275,9 @@ class TestOCSF:
         # Remediation
         remediation = finding_ocsf.remediation
         assert isinstance(remediation, Remediation)
-        assert remediation.desc == finding_output.remediation_recommendation_text
+        assert (
+            remediation.desc == finding_output.metadata.Remediation.Recommendation.Text
+        )
         assert remediation.references == []
 
         # Severity
@@ -288,15 +291,15 @@ class TestOCSF:
         assert finding_ocsf.status_detail == finding_output.status_extended
 
         # Risk
-        assert finding_ocsf.risk_details == finding_output.risk
+        assert finding_ocsf.risk_details == finding_output.metadata.Risk
 
         # Unmapped Data
         assert finding_ocsf.unmapped == {
-            "related_url": finding_output.related_url,
-            "categories": finding_output.categories,
-            "depends_on": finding_output.depends_on,
-            "related_to": finding_output.related_to,
-            "notes": finding_output.notes,
+            "related_url": finding_output.metadata.RelatedUrl,
+            "categories": finding_output.metadata.Categories,
+            "depends_on": finding_output.metadata.DependsOn,
+            "related_to": finding_output.metadata.RelatedTo,
+            "notes": finding_output.metadata.Notes,
             "compliance": finding_output.compliance,
         }
 
@@ -309,19 +312,19 @@ class TestOCSF:
         assert resource_details[0].labels == ["Name:test", "Environment:dev"]
         assert resource_details[0].name == finding_output.resource_name
         assert resource_details[0].uid == finding_output.resource_uid
-        assert resource_details[0].type == finding_output.resource_type
+        assert resource_details[0].type == finding_output.metadata.ResourceType
         assert resource_details[0].cloud_partition == finding_output.partition
         assert resource_details[0].region == finding_output.region
         assert resource_details[0].data == {"details": finding_output.resource_details}
 
         resource_details_group = resource_details[0].group
         assert isinstance(resource_details_group, Group)
-        assert resource_details_group.name == finding_output.service_name
+        assert resource_details_group.name == finding_output.metadata.ServiceName
 
         # Metadata
         metadata = finding_ocsf.metadata
         assert isinstance(metadata, Metadata)
-        assert metadata.event_code == finding_output.check_id
+        assert metadata.event_code == finding_output.metadata.CheckID
 
         metadata_product = metadata.product
         assert isinstance(metadata_product, Product)
