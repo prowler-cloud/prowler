@@ -293,8 +293,6 @@ class AwsProvider(Provider):
         self._scan_unused_services = scan_unused_services
 
         # Audit Config
-        print(config_content)
-        print(config_path)
         if config_content:
             self._audit_config = config_content
         else:
