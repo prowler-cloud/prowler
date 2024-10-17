@@ -55,6 +55,7 @@ nav:
       - Dashboard: tutorials/dashboard.md
       - Fixer (remediations): tutorials/fixer.md
       - Quick Inventory: tutorials/quick-inventory.md
+      - Scan Inventory: tutorials/scan-inventory.md
       - Slack Integration: tutorials/integrations.md
       - Configuration File: tutorials/configuration_file.md
       - Logging: tutorials/logging.md
