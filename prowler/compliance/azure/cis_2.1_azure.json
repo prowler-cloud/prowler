@@ -3043,9 +3043,7 @@
     {
       "Id": "9.4",
       "Description": "Ensure that Register with Entra ID is enabled on App Service",
-      "Checks": [
-        ""
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "9. AppService",
@@ -3175,9 +3173,7 @@
     {
       "Id": "9.10",
       "Description": "Ensure Azure Key Vaults are Used to Store Secrets",
-      "Checks": [
-        ""
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "9. AppService",
