@@ -85,6 +85,25 @@ def mock_make_api_call(self, operation_name, kwarg):
             "CreationDate": datetime(2015, 1, 1),
             "CreatorRequestId": "request-id-1",
         }
+    if operation_name == "ListRecoveryPointsByBackupVault":
+        return {
+            "RecoveryPoints": [
+                {
+                    "RecoveryPointArn": "arn:aws:backup:eu-west-1:123456789012:recovery-point:1",
+                    "BackupVaultName": "Test Vault",
+                    "BackupVaultArn": "arn:aws:backup:eu-west-1:123456789012:backup-vault:Test Vault",
+                    "BackupVaultRegion": "eu-west-1",
+                    "CreationDate": datetime(2015, 1, 1),
+                    "Status": "COMPLETED",
+                    "EncryptionKeyArn": "",
+                    "ResourceArn": "arn:aws:dynamodb:eu-west-1:123456789012:table/MyDynamoDBTable",
+                    "ResourceType": "DynamoDB",
+                    "BackupPlanId": "ID-TestBackupPlan",
+                    "VersionId": "test_version_id",
+                    "IsEncrypted": True,
+                }
+            ]
+        }
     return make_api_call(self, operation_name, kwarg)
 
 
@@ -253,3 +272,23 @@ class TestBackupService:
         assert len(backup.backup_plans) == 1
         assert len(backup.backup_plans[0].tags) == 1
         assert backup.backup_plans[0].tags[0]["TestKey"] == "TestValue"
+
+    # Test Backup List Recovery Points
+    @mock_aws
+    @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
+    @patch(
+        "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
+        new=mock_generate_regional_clients,
+    )
+    def test_list_recovery_points(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        backup = Backup(aws_provider)
+        assert len(backup.recovery_points) == 1
+        assert (
+            backup.recovery_points[0].arn
+            == "arn:aws:backup:eu-west-1:123456789012:recovery-point:1"
+        )
+        assert backup.recovery_points[0].backup_vault_name == "Test Vault"
+        assert backup.recovery_points[0].backup_vault_region == "eu-west-1"
+        assert backup.recovery_points[0].tags == []
+        assert backup.recovery_points[0].encrypted is True
