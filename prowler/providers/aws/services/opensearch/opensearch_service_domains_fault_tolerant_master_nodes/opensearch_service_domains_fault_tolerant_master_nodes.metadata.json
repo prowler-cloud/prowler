@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "opensearch_domain_master_nodes_fault_tolerant",
+  "CheckID": "opensearch_service_domains_fault_tolerant_master_nodes",
   "CheckTitle": "OpenSearch Service Domain should have at least three dedicated master nodes",
   "CheckType": [],
   "ServiceName": "opensearch",

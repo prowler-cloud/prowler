@@ -4,7 +4,7 @@ from prowler.providers.aws.services.opensearch.opensearch_client import (
 )
 
 
-class opensearch_domain_master_nodes_fault_tolerant(Check):
+class opensearch_service_domains_fault_tolerant_master_nodes(Check):
     def execute(self):
         findings = []
         for domain in opensearch_client.opensearch_domains.values():

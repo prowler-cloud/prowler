@@ -8,7 +8,7 @@ from tests.providers.aws.utils import AWS_REGION_EU_WEST_1, set_mocked_aws_provi
 domain_name = "test-domain"
 
 
-class Test_opensearch_domain_master_nodes_fault_tolerant:
+class Test_opensearch_service_domains_fault_tolerant_master_nodes:
     @mock_aws
     def test_no_domains(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
@@ -21,14 +21,14 @@ class Test_opensearch_domain_master_nodes_fault_tolerant:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.opensearch.opensearch_domain_master_nodes_fault_tolerant.opensearch_domain_master_nodes_fault_tolerant.opensearch_client",
+            "prowler.providers.aws.services.opensearch.opensearch_service_domains_fault_tolerant_master_nodes.opensearch_service_domains_fault_tolerant_master_nodes.opensearch_client",
             new=OpenSearchService(aws_provider),
         ):
-            from prowler.providers.aws.services.opensearch.opensearch_domain_master_nodes_fault_tolerant.opensearch_domain_master_nodes_fault_tolerant import (
-                opensearch_domain_master_nodes_fault_tolerant,
+            from prowler.providers.aws.services.opensearch.opensearch_service_domains_fault_tolerant_master_nodes.opensearch_service_domains_fault_tolerant_master_nodes import (
+                opensearch_service_domains_fault_tolerant_master_nodes,
             )
 
-            check = opensearch_domain_master_nodes_fault_tolerant()
+            check = opensearch_service_domains_fault_tolerant_master_nodes()
             result = check.execute()
             assert len(result) == 0
 
@@ -52,14 +52,14 @@ class Test_opensearch_domain_master_nodes_fault_tolerant:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.opensearch.opensearch_domain_master_nodes_fault_tolerant.opensearch_domain_master_nodes_fault_tolerant.opensearch_client",
+            "prowler.providers.aws.services.opensearch.opensearch_service_domains_fault_tolerant_master_nodes.opensearch_service_domains_fault_tolerant_master_nodes.opensearch_client",
             new=OpenSearchService(aws_provider),
         ):
-            from prowler.providers.aws.services.opensearch.opensearch_domain_master_nodes_fault_tolerant.opensearch_domain_master_nodes_fault_tolerant import (
-                opensearch_domain_master_nodes_fault_tolerant,
+            from prowler.providers.aws.services.opensearch.opensearch_service_domains_fault_tolerant_master_nodes.opensearch_service_domains_fault_tolerant_master_nodes import (
+                opensearch_service_domains_fault_tolerant_master_nodes,
             )
 
-            check = opensearch_domain_master_nodes_fault_tolerant()
+            check = opensearch_service_domains_fault_tolerant_master_nodes()
             result = check.execute()
             assert len(result) == 0
 
@@ -88,14 +88,14 @@ class Test_opensearch_domain_master_nodes_fault_tolerant:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.opensearch.opensearch_domain_master_nodes_fault_tolerant.opensearch_domain_master_nodes_fault_tolerant.opensearch_client",
+            "prowler.providers.aws.services.opensearch.opensearch_service_domains_fault_tolerant_master_nodes.opensearch_service_domains_fault_tolerant_master_nodes.opensearch_client",
             new=OpenSearchService(aws_provider),
         ):
-            from prowler.providers.aws.services.opensearch.opensearch_domain_master_nodes_fault_tolerant.opensearch_domain_master_nodes_fault_tolerant import (
-                opensearch_domain_master_nodes_fault_tolerant,
+            from prowler.providers.aws.services.opensearch.opensearch_service_domains_fault_tolerant_master_nodes.opensearch_service_domains_fault_tolerant_master_nodes import (
+                opensearch_service_domains_fault_tolerant_master_nodes,
             )
 
-            check = opensearch_domain_master_nodes_fault_tolerant()
+            check = opensearch_service_domains_fault_tolerant_master_nodes()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -131,14 +131,14 @@ class Test_opensearch_domain_master_nodes_fault_tolerant:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.opensearch.opensearch_domain_master_nodes_fault_tolerant.opensearch_domain_master_nodes_fault_tolerant.opensearch_client",
+            "prowler.providers.aws.services.opensearch.opensearch_service_domains_fault_tolerant_master_nodes.opensearch_service_domains_fault_tolerant_master_nodes.opensearch_client",
             new=OpenSearchService(aws_provider),
         ):
-            from prowler.providers.aws.services.opensearch.opensearch_domain_master_nodes_fault_tolerant.opensearch_domain_master_nodes_fault_tolerant import (
-                opensearch_domain_master_nodes_fault_tolerant,
+            from prowler.providers.aws.services.opensearch.opensearch_service_domains_fault_tolerant_master_nodes.opensearch_service_domains_fault_tolerant_master_nodes import (
+                opensearch_service_domains_fault_tolerant_master_nodes,
             )
 
-            check = opensearch_domain_master_nodes_fault_tolerant()
+            check = opensearch_service_domains_fault_tolerant_master_nodes()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
