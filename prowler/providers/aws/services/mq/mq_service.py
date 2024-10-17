@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Dict, List, Optional
 
 from pydantic import BaseModel
 
@@ -42,6 +42,7 @@ class MQ(AWSService):
             broker.auto_minor_version_upgrade = describe_broker.get(
                 "AutoMinorVersionUpgrade", False
             )
+            broker.tags = [describe_broker.get("Tags", {})]
         except Exception as error:
             logger.error(
                 f"{broker.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -56,4 +57,4 @@ class Broker(BaseModel):
     id: str
     region: str
     auto_minor_version_upgrade: bool = False
-    tags: Optional[list] = []
+    tags: Optional[List[Dict[str, str]]]
