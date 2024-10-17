@@ -3,7 +3,7 @@ import re
 import sys
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from enum import StrEnum
+from enum import Enum
 
 from pydantic import BaseModel, ValidationError, validator
 
@@ -54,7 +54,7 @@ class Remediation(BaseModel):
     Recommendation: Recommendation
 
 
-class Severity(StrEnum):
+class Severity(str, Enum):
     critical = "critical"
     high = "high"
     medium = "medium"
