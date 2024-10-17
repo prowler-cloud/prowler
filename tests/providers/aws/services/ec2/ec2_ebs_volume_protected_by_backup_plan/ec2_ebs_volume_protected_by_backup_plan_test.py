@@ -210,6 +210,7 @@ class Test_ec2_ebs_volume_protected_by_backup_plan:
         ec2_client = mock.MagicMock()
         from prowler.providers.aws.services.ec2.ec2_service import Volume
 
+        ec2_client.audited_partition = "aws"
         ec2_client.volumes = [
             Volume(
                 id="volume-tester",

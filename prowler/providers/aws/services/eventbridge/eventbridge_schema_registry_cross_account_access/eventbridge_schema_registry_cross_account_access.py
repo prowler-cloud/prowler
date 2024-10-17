@@ -1,6 +1,6 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.eventbridge.schema_client import schema_client
-from prowler.providers.aws.services.iam.lib.policy import is_policy_cross_account
+from prowler.providers.aws.services.iam.lib.policy import is_policy_public
 
 
 class eventbridge_schema_registry_cross_account_access(Check):
@@ -14,7 +14,11 @@ class eventbridge_schema_registry_cross_account_access(Check):
             report.region = registry.region
             report.status = "PASS"
             report.status_extended = f"EventBridge schema registry {registry.name} does not allow cross-account access."
-            if is_policy_cross_account(registry.policy, schema_client.audited_account):
+            if is_policy_public(
+                registry.policy,
+                schema_client.audited_account,
+                is_cross_account_allowed=False,
+            ):
                 report.status = "FAIL"
                 report.status_extended = f"EventBridge schema registry {registry.name} allows cross-account access."
 

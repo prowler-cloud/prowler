@@ -18,7 +18,8 @@ class ec2_ebs_volume_protected_by_backup_plan(Check):
             )
             if (
                 volume.arn in backup_client.protected_resources
-                or "arn:aws:ec2:*:*:volume/*" in backup_client.protected_resources
+                or f"arn:{ec2_client.audited_partition}:ec2:*:*:volume/*"
+                in backup_client.protected_resources
                 or "*" in backup_client.protected_resources
             ):
                 report.status = "PASS"

@@ -109,37 +109,7 @@ class TestKubernetesProvider:
             client.V1Namespace(metadata=client.V1ObjectMeta(name="namespace-1")),
         ]
 
-        kubeconfig_content = {
-            "apiVersion": "v1",
-            "clusters": [
-                {
-                    "cluster": {
-                        "server": "https://kubernetes.example.com",
-                    },
-                    "name": "example-cluster",
-                }
-            ],
-            "contexts": [
-                {
-                    "context": {
-                        "cluster": "example-cluster",
-                        "user": "example-user",
-                    },
-                    "name": "example-context",
-                }
-            ],
-            "current-context": "example-context",
-            "kind": "Config",
-            "preferences": {},
-            "users": [
-                {
-                    "name": "example-user",
-                    "user": {
-                        "token": "EXAMPLE_TOKEN",
-                    },
-                }
-            ],
-        }
+        kubeconfig_content = '{"apiVersion": "v1", "clusters": [{"cluster": {"server": "https://kubernetes.example.com"}, "name": "example-cluster"}], "contexts": [{"context": {"cluster": "example-cluster", "user": "example-user"}, "name": "example-context"}], "current-context": "example-context", "kind": "Config", "preferences": {}, "users": [{"name": "example-user", "user": {"token": "EXAMPLE_TOKEN"}}]}'
 
         connection = KubernetesProvider.test_connection(
             kubeconfig_file=None,
@@ -178,7 +148,7 @@ class TestKubernetesProvider:
 
         connection = KubernetesProvider.test_connection(
             kubeconfig_file="dummy_kubeconfig_path",
-            kubeconfig_content={},
+            kubeconfig_content="",
             provider_id="test-context",
             raise_on_exception=False,
         )
@@ -216,7 +186,7 @@ class TestKubernetesProvider:
 
         connection = KubernetesProvider.test_connection(
             kubeconfig_file="",
-            kubeconfig_content={},
+            kubeconfig_content="",
             namespace="test-namespace",
             provider_id="test-context",
             raise_on_exception=False,
@@ -324,37 +294,7 @@ class TestKubernetesProvider:
             client.V1Namespace(metadata=client.V1ObjectMeta(name="namespace-1")),
         ]
 
-        kubeconfig_content = {
-            "apiVersion": "v1",
-            "clusters": [
-                {
-                    "cluster": {
-                        "server": "https://kubernetes.example.com",
-                    },
-                    "name": "example-cluster",
-                }
-            ],
-            "contexts": [
-                {
-                    "context": {
-                        "cluster": "example-cluster",
-                        "user": "example-user",
-                    },
-                    "name": "example-context",
-                }
-            ],
-            "current-context": "example-context",
-            "kind": "Config",
-            "preferences": {},
-            "users": [
-                {
-                    "name": "example-user",
-                    "user": {
-                        "token": "EXAMPLE_TOKEN",
-                    },
-                }
-            ],
-        }
+        kubeconfig_content = '{"apiVersion": "v1", "clusters": [{"cluster": {"server": "https://kubernetes.example.com"}, "name": "example-cluster"}], "contexts": [{"context": {"cluster": "example-cluster", "user": "example-user"}, "name": "example-context"}], "current-context": "example-context", "kind": "Config", "preferences": {}, "users": [{"name": "example-user", "user": {"token": "EXAMPLE_TOKEN"}}]}'
 
         connection = KubernetesProvider.test_connection(
             kubeconfig_file=None,

@@ -49,6 +49,58 @@ class AzureBaseException(ProwlerException):
             "message": "Error in HTTP response from Azure",
             "remediation": "",
         },
+        (1925, "AzureCredentialsUnavailableError"): {
+            "message": "Error trying to configure Azure credentials because they are unavailable",
+            "remediation": "Check the dictionary and ensure it is properly set up for Azure credentials. TENANT_ID, CLIENT_ID and CLIENT_SECRET are required.",
+        },
+        (1926, "AzureGetTokenIdentityError"): {
+            "message": "Error trying to get token from Azure Identity",
+            "remediation": "Check the Azure Identity and ensure it is properly set up.",
+        },
+        (1927, "AzureNotTenantIdButClientIdAndClienSecret"): {
+            "message": "The provided credentials are not a tenant ID but a client ID and client secret",
+            "remediation": "Tenant Id, Client Id and Client Secret are required for Azure credentials. Make sure you are using the correct credentials.",
+        },
+        (1928, "AzureClientAuthenticationError"): {
+            "message": "Error in client authentication",
+            "remediation": "Check the client authentication and ensure it is properly set up.",
+        },
+        (1929, "AzureSetUpSessionError"): {
+            "message": "Error setting up session",
+            "remediation": "Check the session setup and ensure it is properly set up.",
+        },
+        (1930, "AzureNotValidTenantIdError"): {
+            "message": "The provided tenant ID is not valid",
+            "remediation": "Check the tenant ID and ensure it is a valid ID.",
+        },
+        (1931, "AzureNotValidClientIdError"): {
+            "message": "The provided client ID is not valid",
+            "remediation": "Check the client ID and ensure it is a valid ID.",
+        },
+        (1932, "AzureNotValidClientSecretError"): {
+            "message": "The provided client secret is not valid",
+            "remediation": "Check the client secret and ensure it is a valid secret.",
+        },
+        (1933, "AzureConfigCredentialsError"): {
+            "message": "Error in configuration of Azure credentials",
+            "remediation": "Check the configuration of Azure credentials and ensure it is properly set up.",
+        },
+        (1934, "AzureClientIdAndClientSecretNotBelongingToTenantIdError"): {
+            "message": "The provided client ID and client secret do not belong to the provided tenant ID",
+            "remediation": "Check the client ID and client secret and ensure they belong to the provided tenant ID.",
+        },
+        (1935, "AzureTenantIdAndClientSecretNotBelongingToClientIdError"): {
+            "message": "The provided tenant ID and client secret do not belong to the provided client ID",
+            "remediation": "Check the tenant ID and client secret and ensure they belong to the provided client ID.",
+        },
+        (1936, "AzureTenantIdAndClientIdNotBelongingToClientSecretError"): {
+            "message": "The provided tenant ID and client ID do not belong to the provided client secret",
+            "remediation": "Check the tenant ID and client ID and ensure they belong to the provided client secret.",
+        },
+        (1937, "AzureInvalidAccountCredentialsError"): {
+            "message": "The provided provider_id does not match with the available subscriptions",
+            "remediation": "Check the provider_id and ensure it is a valid subscription for the given credentials.",
+        },
     }
 
     def __init__(self, code, file=None, original_exception=None, message=None):
@@ -146,4 +198,95 @@ class AzureHTTPResponseError(AzureBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             1924, file=file, original_exception=original_exception, message=message
+        )
+
+
+class AzureCredentialsUnavailableError(AzureCredentialsError):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1925, file=file, original_exception=original_exception, message=message
+        )
+
+
+class AzureGetTokenIdentityError(AzureBaseException):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1926, file=file, original_exception=original_exception, message=message
+        )
+
+
+class AzureNotTenantIdButClientIdAndClienSecret(AzureCredentialsError):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1927, file=file, original_exception=original_exception, message=message
+        )
+
+
+class AzureClientAuthenticationError(AzureCredentialsError):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1928, file=file, original_exception=original_exception, message=message
+        )
+
+
+class AzureSetUpSessionError(AzureCredentialsError):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1929, file=file, original_exception=original_exception, message=message
+        )
+
+
+class AzureNotValidTenantIdError(AzureCredentialsError):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1930, file=file, original_exception=original_exception, message=message
+        )
+
+
+class AzureNotValidClientIdError(AzureCredentialsError):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1931, file=file, original_exception=original_exception, message=message
+        )
+
+
+class AzureNotValidClientSecretError(AzureCredentialsError):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1932, file=file, original_exception=original_exception, message=message
+        )
+
+
+class AzureConfigCredentialsError(AzureCredentialsError):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1933, file=file, original_exception=original_exception, message=message
+        )
+
+
+class AzureClientIdAndClientSecretNotBelongingToTenantIdError(AzureCredentialsError):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1934, file=file, original_exception=original_exception, message=message
+        )
+
+
+class AzureTenantIdAndClientSecretNotBelongingToClientIdError(AzureCredentialsError):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1935, file=file, original_exception=original_exception, message=message
+        )
+
+
+class AzureTenantIdAndClientIdNotBelongingToClientSecretError(AzureCredentialsError):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1936, file=file, original_exception=original_exception, message=message
+        )
+
+
+class AzureInvalidAccountCredentialsError(AzureBaseException):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1937, file=file, original_exception=original_exception, message=message
         )

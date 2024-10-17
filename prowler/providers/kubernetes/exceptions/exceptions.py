@@ -29,6 +29,10 @@ class KubernetesBaseException(ProwlerException):
             "message": "The provider ID is invalid.",
             "remediation": "Check the provider ID and ensure it is correctly formatted. Refer to the Kubernetes documentation for guidance on provider IDs: https://kubernetes.io/docs/reference/access-authn-authz/rbac/",
         },
+        (1937, "KubernetesInvalidKubeConfigFileError"): {
+            "message": "The provided kube-config is invalid.",
+            "remediation": "Review the kube-config and the attached error to get more details. Please, refer to the Kubernetes config documentation: https://kubernetes.io/docs/reference/config-api/kubeconfig.v1/#Config",
+        },
     }
 
     def __init__(
@@ -79,3 +83,8 @@ class KubernetesTimeoutError(KubernetesBaseException):
 class KubernetesInvalidProviderIdError(KubernetesBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(1936, file, original_exception, message)
+
+
+class KubernetesInvalidKubeConfigFileError(KubernetesBaseException):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(1937, file, original_exception, message)

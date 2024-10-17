@@ -90,7 +90,7 @@ class Test_efs_mount_target_not_publicly_accessible:
         route_table = ec2_client.create_route_table(VpcId=vpc["Vpc"]["VpcId"])
         ec2_client.create_route(
             RouteTableId=route_table["RouteTable"]["RouteTableId"],
-            DestinationCidrBlock="0.0.0.0/0",  # Ruta predeterminada para todo el tráfico
+            DestinationCidrBlock="0.0.0.0/0",
             GatewayId=igw["InternetGateway"]["InternetGatewayId"],
         )
         ec2_client.associate_route_table(
