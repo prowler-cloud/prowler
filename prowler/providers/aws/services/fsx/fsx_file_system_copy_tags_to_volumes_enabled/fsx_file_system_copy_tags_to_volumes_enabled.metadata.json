@@ -15,7 +15,7 @@
   "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/fsx-openzfs-copy-tags-enabled.html",
   "Remediation": {
     "Code": {
-      "CLI": "aws fsx update-file-system --file-system-id <file-system-id> --copy-tags-to-volumes --copy-tags-to-volumes",
+      "CLI": "aws fsx update-file-system --file-system-id <file-system-id> --open-zfs-configuration CopyTagsToVolumes=true",
       "NativeIaC": "",
       "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/fsx-controls.html#fsx-1",
       "Terraform": ""
