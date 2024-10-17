@@ -82,6 +82,7 @@ class OpenSearchService(AWSService):
             regional_client = self.regional_clients[domain.region]
             describe_domain = regional_client.describe_domain(DomainName=domain.name)
             domain.arn = describe_domain["DomainStatus"]["ARN"]
+
             if "vpc" in describe_domain["DomainStatus"].get("Endpoints", {}):
                 domain.vpc_endpoints = [
                     vpc for vpc in describe_domain["DomainStatus"]["Endpoints"].values()
@@ -111,19 +112,24 @@ class OpenSearchService(AWSService):
             )
             domain.update_available = (
                 describe_domain["DomainStatus"]
-                .get("ServiceSoftwareOptions", {"UpdateAvailable": False})
+                .get("ServiceSoftwareOptions", {})
                 .get("UpdateAvailable", False)
             )
             domain.version = describe_domain["DomainStatus"].get("EngineVersion", None)
             domain.advanced_settings_enabled = describe_domain["DomainStatus"][
                 "AdvancedSecurityOptions"
             ].get("Enabled", False)
-            domain.instance_count = describe_domain["DomainStatus"][
-                "ClusterConfig"
-            ].get("InstanceCount", None)
-            domain.zone_awareness_enabled = describe_domain["DomainStatus"][
-                "ClusterConfig"
-            ].get("ZoneAwarenessEnabled", False)
+            cluster_config = describe_domain["DomainStatus"].get("ClusterConfig", {})
+            domain.instance_count = cluster_config.get("InstanceCount", None)
+            domain.zone_awareness_enabled = cluster_config.get(
+                "ZoneAwarenessEnabled", False
+            )
+            domain.dedicated_master_enabled = cluster_config.get(
+                "DedicatedMasterEnabled", False
+            )
+            domain.dedicated_master_count = cluster_config.get(
+                "DedicatedMasterCount", 0
+            )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -168,3 +174,6 @@ class OpenSearchDomain(BaseModel):
     zone_awareness_enabled: Optional[bool]
     tags: Optional[list] = []
     advanced_settings_enabled: bool = None
+    dedicated_master_enabled: Optional[bool]
+    dedicated_master_count: Optional[int]
+    tags: Optional[list] = []
