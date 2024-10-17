@@ -3,7 +3,7 @@ from prowler.providers.aws.services.acm.acm_client import acm_client
 from prowler.providers.aws.services.elb.elb_client import elb_client
 
 
-class elb_ssl_https_listeners_use_acm_certificates(Check):
+class elb_ssl_listeners_use_acm_certificate(Check):
     def execute(self):
         findings = []
         secure_protocols = ["SSL", "HTTPS"]

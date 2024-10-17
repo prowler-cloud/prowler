@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "elb_ssl_https_listeners_use_acm_certificates",
+  "CheckID": "elb_ssl_listeners_use_acm_certificate",
   "CheckTitle": "Check if Classic Load Balancers with SSL/HTTPS listeners use a certificate provided by AWS Certificate Manager (ACM).",
   "CheckType": [
     "Software and Configuration Checks/Vulnerabilities/NIST 800-53 Controls (USA)"
