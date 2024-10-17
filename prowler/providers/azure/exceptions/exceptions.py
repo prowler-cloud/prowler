@@ -97,6 +97,10 @@ class AzureBaseException(ProwlerException):
             "message": "The provided tenant ID and client ID do not belong to the provided client secret",
             "remediation": "Check the tenant ID and client ID and ensure they belong to the provided client secret.",
         },
+        (1937, "AzureInvalidAccountCredentialsError"): {
+            "message": "The provided provider_id does not match with the available subscriptions",
+            "remediation": "Check the provider_id and ensure it is a valid subscription for the given credentials.",
+        },
     }
 
     def __init__(self, code, file=None, original_exception=None, message=None):
@@ -106,7 +110,7 @@ class AzureBaseException(ProwlerException):
             error_info["message"] = message
         super().__init__(
             code=code,
-            provider=provider,
+            source=provider,
             file=file,
             original_exception=original_exception,
             error_info=error_info,
@@ -278,4 +282,11 @@ class AzureTenantIdAndClientIdNotBelongingToClientSecretError(AzureCredentialsEr
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             1936, file=file, original_exception=original_exception, message=message
+        )
+
+
+class AzureInvalidAccountCredentialsError(AzureBaseException):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1937, file=file, original_exception=original_exception, message=message
         )

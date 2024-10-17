@@ -10,7 +10,7 @@ AWS_ACCOUNT_NUMBER = "123456789012"
 class Test_acm_certificates_with_secure_key_algorithms:
     def test_no_acm_certificates(self):
         acm_client = mock.MagicMock
-        acm_client.certificates = []
+        acm_client.certificates = {}
 
         with mock.patch(
             "prowler.providers.aws.services.acm.acm_service.ACM",
@@ -34,19 +34,18 @@ class Test_acm_certificates_with_secure_key_algorithms:
         certificate_key_algorithm = "RSA-2048"
 
         acm_client = mock.MagicMock
-        acm_client.certificates = [
-            Certificate(
-                arn=certificate_arn,
-                id=certificate_id,
-                name=certificate_name,
-                type=certificate_type,
-                key_algorithm=certificate_key_algorithm,
-                expiration_days=365,
-                transparency_logging=True,
-                in_use=True,
-                region=AWS_REGION,
-            )
-        ]
+        acm_client.certificates = {}
+        acm_client.certificates[certificate_arn] = Certificate(
+            arn=certificate_arn,
+            id=certificate_id,
+            name=certificate_name,
+            type=certificate_type,
+            key_algorithm=certificate_key_algorithm,
+            expiration_days=365,
+            transparency_logging=True,
+            in_use=True,
+            region=AWS_REGION,
+        )
 
         acm_client.audit_config = {"insecure_algorithm": ["RSA-1024"]}
 
@@ -81,19 +80,18 @@ class Test_acm_certificates_with_secure_key_algorithms:
         certificate_key_algorithm = "RSA-1024"
 
         acm_client = mock.MagicMock
-        acm_client.certificates = [
-            Certificate(
-                arn=certificate_arn,
-                id=certificate_id,
-                name=certificate_name,
-                type=certificate_type,
-                key_algorithm=certificate_key_algorithm,
-                expiration_days=365,
-                transparency_logging=False,
-                in_use=True,
-                region=AWS_REGION,
-            )
-        ]
+        acm_client.certificates = {}
+        acm_client.certificates[certificate_arn] = Certificate(
+            arn=certificate_arn,
+            id=certificate_id,
+            name=certificate_name,
+            type=certificate_type,
+            key_algorithm=certificate_key_algorithm,
+            expiration_days=365,
+            transparency_logging=False,
+            in_use=True,
+            region=AWS_REGION,
+        )
 
         acm_client.audit_config = {"insecure_algorithm": ["RSA-1024"]}
 
