@@ -32,6 +32,7 @@ from prowler.providers.azure.exceptions.exceptions import (
     AzureGetTokenIdentityError,
     AzureHTTPResponseError,
     AzureInteractiveBrowserCredentialError,
+    AzureInvalidAccountCredentialsError,
     AzureNoAuthenticationMethodError,
     AzureNoSubscriptionsError,
     AzureNotTenantIdButClientIdAndClienSecret,
@@ -539,6 +540,7 @@ class AzureProvider(Provider):
         raise_on_exception=True,
         client_id=None,
         client_secret=None,
+        provider_id=None,
     ) -> Connection:
         """Test connection to Azure subscription.
 
@@ -554,6 +556,7 @@ class AzureProvider(Provider):
             raise_on_exception (bool): Flag indicating whether to raise an exception if the connection fails.
             client_id (str): The Azure client ID.
             client_secret (str): The Azure client secret.
+            provider_id (str): The provider ID, in this case it's the Azure subscription ID.
 
         Returns:
             bool: True if the connection is successful, False otherwise.
@@ -610,10 +613,20 @@ class AzureProvider(Provider):
             # Create a SubscriptionClient
             subscription_client = SubscriptionClient(credentials)
 
-            # Get info from the first subscription
-            subscription = next(subscription_client.subscriptions.list())
+            # Get info from the subscriptions
+            available_subscriptions = []
+            for subscription in subscription_client.subscriptions.list():
+                available_subscriptions.append(subscription)
 
-            logger.info(f"Connected to Azure subscription: {subscription.display_name}")
+            if provider_id and provider_id not in [
+                sub.subscription_id for sub in available_subscriptions
+            ]:
+                raise AzureInvalidAccountCredentialsError(
+                    file=os.path.basename(__file__),
+                    message="The provided credentials are not valid for the specified Azure subscription.",
+                )
+
+            logger.info("Azure provider: Connection to Azure subscription successful")
 
             return Connection(is_connected=True)
         # Exceptions from validate_arguments
@@ -697,6 +710,12 @@ class AzureProvider(Provider):
             if raise_on_exception:
                 raise client_secret_error
             return Connection(error=client_secret_error)
+        # Exceptions from provider_id validation
+        except AzureInvalidAccountCredentialsError as invalid_credentials_error:
+            logger.error(str(invalid_credentials_error))
+            if raise_on_exception:
+                raise invalid_credentials_error
+            return Connection(error=invalid_credentials_error)
         # Exceptions from SubscriptionClient
         except HttpResponseError as http_response_error:
             logger.error(

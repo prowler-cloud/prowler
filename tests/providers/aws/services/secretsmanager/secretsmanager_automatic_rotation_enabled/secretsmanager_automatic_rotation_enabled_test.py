@@ -38,7 +38,6 @@ class Test_secretsmanager_automatic_rotation_enabled:
                 name=secret_name,
                 rotation_enabled=False,
                 last_accessed_date=datetime.min,
-                last_rotated_date=datetime.min,
             )
         }
         with mock.patch(
@@ -77,7 +76,6 @@ class Test_secretsmanager_automatic_rotation_enabled:
                 name=secret_name,
                 rotation_enabled=True,
                 last_accessed_date=datetime.min,
-                last_rotated_date=datetime.min,
             )
         }
         with mock.patch(
