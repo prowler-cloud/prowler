@@ -1,10 +1,10 @@
 import io
 import zipfile
 from datetime import datetime, timezone
-from freezegun import freeze_time
 from unittest.mock import patch
 
 from boto3 import client, resource
+from freezegun import freeze_time
 from moto import mock_aws
 
 from prowler.providers.aws.services.secretsmanager.secretsmanager_service import (
@@ -128,7 +128,6 @@ class Test_SecretsManager_Service:
         # Set partition for the service
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         secretsmanager = SecretsManager(aws_provider)
-
         assert len(secretsmanager.secrets) == 1
         assert secretsmanager.secrets
         assert secretsmanager.secrets[secret_arn]
@@ -139,9 +138,10 @@ class Test_SecretsManager_Service:
         assert secretsmanager.secrets[
             secret_arn
         ].last_accessed_date == datetime.min.replace(tzinfo=timezone.utc)
-        assert secretsmanager.secrets[
-            secret_arn
-        ].last_rotated_date.date() == datetime(2023, 4, 9).date()
+        assert (
+            secretsmanager.secrets[secret_arn].last_rotated_date.date()
+            == datetime(2023, 4, 9).date()
+        )
         assert secretsmanager.secrets[secret_arn].tags == [
             {"Key": "test", "Value": "test"},
         ]
