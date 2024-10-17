@@ -22,7 +22,7 @@ class FSx(AWSService):
             )
             for page in describe_file_system_paginator.paginate():
                 for file_system in page["FileSystems"]:
-                    file_system_arn = f"arn:aws:fsx:{regional_client.region}:{self.audited_account}:file-system/{file_system['FileSystemId']}"
+                    file_system_arn = f"arn:{self.audited_partition}:fsx:{regional_client.region}:{self.audited_account}:file-system/{file_system['FileSystemId']}"
                     if not self.audit_resources or (
                         is_resource_filtered(file_system_arn, self.audit_resources)
                     ):

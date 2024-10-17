@@ -8,7 +8,6 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################################ OpenSearch
 class OpenSearchService(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
@@ -83,19 +82,13 @@ class OpenSearchService(AWSService):
             regional_client = self.regional_clients[domain.region]
             describe_domain = regional_client.describe_domain(DomainName=domain.name)
             domain.arn = describe_domain["DomainStatus"]["ARN"]
-            domain.vpc_endpoints = None
-            if "Endpoints" in describe_domain["DomainStatus"]:
-                if "vpc" in describe_domain["DomainStatus"]["Endpoints"]:
-                    domain.vpc_endpoints = [
-                        vpc
-                        for vpc in describe_domain["DomainStatus"]["Endpoints"].values()
-                    ]
-
-            domain.vpc_id = None
-            if "VPCOptions" in describe_domain["DomainStatus"]:
-                domain.vpc_id = describe_domain["DomainStatus"]["VPCOptions"].get(
-                    "VPCId", None
-                )
+            if "vpc" in describe_domain["DomainStatus"].get("Endpoints", {}):
+                domain.vpc_endpoints = [
+                    vpc for vpc in describe_domain["DomainStatus"]["Endpoints"].values()
+                ]
+            domain.vpc_id = (
+                describe_domain["DomainStatus"].get("VPCOptions", {}).get("VPCId", "")
+            )
             domain.cognito_options = describe_domain["DomainStatus"][
                 "CognitoOptions"
             ].get("Enabled", False)
@@ -158,9 +151,9 @@ class PublishingLoggingOption(BaseModel):
 class OpenSearchDomain(BaseModel):
     name: str
     region: str
-    arn: str = None
+    arn: str
     logging: list[PublishingLoggingOption] = []
-    vpc_endpoints: list[str] = None
+    vpc_endpoints: list[str] = []
     vpc_id: str = None
     access_policy: dict = None
     cognito_options: bool = None

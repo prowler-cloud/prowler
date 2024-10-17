@@ -15,12 +15,12 @@ class wafv2_webacl_logging_enabled(Check):
             if web_acl.logging_enabled:
                 report.status = "PASS"
                 report.status_extended = (
-                    f"AWS WAFv2 Web ACL {web_acl.id} has logging enabled."
+                    f"AWS WAFv2 Web ACL {web_acl.name} has logging enabled."
                 )
             else:
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"AWS WAFv2 Web ACL {web_acl.id} does not have logging enabled."
+                    f"AWS WAFv2 Web ACL {web_acl.name} does not have logging enabled."
                 )
 
             findings.append(report)

@@ -33,35 +33,35 @@ def mock_make_api_call(self, operation_name, kwarg):
 
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 class Test_RDS_Service:
-    # Test Dynamo Service
+    # Test RDS Service
     @mock_aws
     def test_service(self):
-        # Dynamo client for this test class
+        # RDS client for this test class
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         rds = RDS(aws_provider)
         assert rds.service == "rds"
 
-    # Test Dynamo Client
+    # Test RDS Client
     @mock_aws
     def test_client(self):
-        # Dynamo client for this test class
+        # RDS client for this test class
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         rds = RDS(aws_provider)
         for regional_client in rds.regional_clients.values():
             assert regional_client.__class__.__name__ == "RDS"
 
-    # Test Dynamo Session
+    # Test RDS Session
     @mock_aws
     def test__get_session__(self):
-        # Dynamo client for this test class
+        # RDS client for this test class
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         rds = RDS(aws_provider)
         assert rds.session.__class__.__name__ == "Session"
 
-    # Test Dynamo Session
+    # Test RDS Session
     @mock_aws
     def test_audited_account(self):
-        # Dynamo client for this test class
+        # RDS client for this test class
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         rds = RDS(aws_provider)
         assert rds.audited_account == AWS_ACCOUNT_NUMBER
@@ -120,6 +120,7 @@ class Test_RDS_Service:
             {"Key": "test", "Value": "test"},
         ]
         assert "test" in db_instance.parameter_groups
+        assert db_instance.subnet_ids == []
         assert db_instance.copy_tags_to_snapshot
         assert db_instance.port == 5432
 
