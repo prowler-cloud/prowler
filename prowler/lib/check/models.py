@@ -130,15 +130,6 @@ class CheckMetadata(BaseModel):
     def severity_to_lower(severity):
         return severity.lower()
 
-    # TODO(pepe): Review
-    # @validator("Severity")
-    # def valid_severity(severity):
-    #     if severity not in valid_severities:
-    #         raise ValueError(
-    #             f"Invalid severity: {severity}. Severity must be one of {', '.join(valid_severities)}"
-    #         )
-    #     return severity
-
     @staticmethod
     def get_bulk(provider: str) -> dict[str, "CheckMetadata"]:
         """
