@@ -61,7 +61,15 @@ class Test_opensearch_service_domains_fault_tolerant_master_nodes:
 
             check = opensearch_service_domains_fault_tolerant_master_nodes()
             result = check.execute()
-            assert len(result) == 0
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == f"Opensearch domain {domain_name} has dedicated master nodes disabled."
+            )
+            assert result[0].resource_id == domain_name
+            assert result[0].region == AWS_REGION_EU_WEST_1
+            assert result[0].resource_tags == []
 
     @mock_aws
     def test_domain_with_one_master_node(self):
