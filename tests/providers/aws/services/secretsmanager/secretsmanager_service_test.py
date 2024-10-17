@@ -1,5 +1,6 @@
 import io
 import zipfile
+from datetime import datetime, timezone
 from unittest.mock import patch
 
 from boto3 import client, resource
@@ -133,6 +134,9 @@ class Test_SecretsManager_Service:
         assert secretsmanager.secrets[secret_arn].arn == secret_arn
         assert secretsmanager.secrets[secret_arn].region == AWS_REGION_EU_WEST_1
         assert secretsmanager.secrets[secret_arn].rotation_enabled is True
+        assert secretsmanager.secrets[
+            secret_arn
+        ].last_accessed_date == datetime.min.replace(tzinfo=timezone.utc)
         assert secretsmanager.secrets[secret_arn].tags == [
             {"Key": "test", "Value": "test"},
         ]

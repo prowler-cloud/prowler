@@ -359,6 +359,11 @@ aws:
   # Patterns to ignore in the secrets checks
   secrets_ignore_patterns: []
 
+  # AWS Secrets Manager Configuration
+  # aws.secretsmanager_secret_unused
+  # Maximum number of days a secret can be unused
+  max_days_secret_unused: 90
+
 # Azure Configuration
 azure:
   # Azure Network Configuration
