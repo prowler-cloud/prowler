@@ -1,3 +1,4 @@
+import tempfile
 from os import path
 from tempfile import NamedTemporaryFile
 
@@ -5,6 +6,8 @@ from boto3 import Session
 
 from prowler.lib.logger import logger
 from prowler.lib.outputs.output import Output
+from prowler.providers.aws.lib.s3.exceptions.exceptions import S3TestConnectionError
+from prowler.providers.common.models import Connection
 
 
 class S3:
@@ -147,3 +150,38 @@ class S3:
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
             )
         return uploaded_objects
+
+    @staticmethod
+    def test_connection(
+        session, bucket_name: str, raise_on_exception: bool = True
+    ) -> Connection:
+        """
+        Test the connection to the S3 bucket.
+
+        Parameters:
+        - session: An instance of the `Session` class representing the AWS session.
+        - bucket_name: A string representing the name of the S3 bucket.
+        - raise_on_exception: A boolean indicating whether to raise an exception if the connection test fails.
+
+        Returns:
+        - A boolean indicating whether the connection to the S3 bucket was successful.
+
+        Raises:
+        - Exception: An exception indicating that the connection test failed.
+        """
+        try:
+            # Set a Temp file to upload
+            with tempfile.TemporaryFile() as temp_file:
+                temp_file.write(b"Test Prowler Connection")
+                temp_file.seek(0)
+                session.upload_fileobj(
+                    temp_file, bucket_name, "test-prowler-connection.txt"
+                )
+
+            # Try to delete the file
+            session.delete_object(Bucket=bucket_name, Key="test-prowler-connection.txt")
+            return True
+        except Exception as error:
+            if raise_on_exception:
+                raise S3TestConnectionError(original_exception=error)
+            return False
