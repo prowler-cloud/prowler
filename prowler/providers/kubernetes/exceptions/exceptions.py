@@ -44,7 +44,7 @@ class KubernetesBaseException(ProwlerException):
             error_info["message"] = message
         super().__init__(
             code=code,
-            provider=provider,
+            source=provider,
             file=file,
             original_exception=original_exception,
             error_info=error_info,

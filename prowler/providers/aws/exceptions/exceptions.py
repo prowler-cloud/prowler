@@ -77,7 +77,7 @@ class AWSBaseException(ProwlerException):
             error_info["message"] = message
         super().__init__(
             code,
-            provider="AWS",
+            source="AWS",
             file=file,
             original_exception=original_exception,
             error_info=error_info,
