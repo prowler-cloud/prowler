@@ -1,3 +1,6 @@
+from enum import Enum
+from typing import Optional
+
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -11,6 +14,7 @@ class MQ(AWSService):
         super().__init__("mq", provider)
         self.brokers = {}
         self.__threading_call__(self._list_brokers)
+        self.__threading_call__(self._describe_broker, self.brokers.values())
 
     def _list_brokers(self, regional_client):
         logger.info("MQ - Listing brokers...")
@@ -31,6 +35,37 @@ class MQ(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _describe_broker(self, broker):
+        try:
+            describe_broker = self.regional_clients[broker.region].describe_broker(
+                BrokerId=broker.id
+            )
+            broker.engine_type = EngineType(
+                describe_broker.get("EngineType", "ACTIVEMQ")
+            )
+            broker.deployment_mode = DeploymentMode(
+                describe_broker.get("DeploymentMode", "SINGLE_INSTANCE")
+            )
+        except Exception as error:
+            logger.error(
+                f"{broker.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+
+class DeploymentMode(Enum):
+    """Possible Deployment Modes for MQ"""
+
+    SINGLE_INSTANCE = "SINGLE_INSTANCE"
+    ACTIVE_STANDBY_MULTI_AZ = "ACTIVE_STANDBY_MULTI_AZ"
+    CLUSTER_MULTI_AZ = "CLUSTER_MULTI_AZ"
+
+
+class EngineType(Enum):
+    """Possible Engine Types for MQ"""
+
+    ACTIVEMQ = "ACTIVEMQ"
+    RABBITMQ = "RAABBITMQ"
+
 
 class Broker(BaseModel):
     """Broker model for MQ"""
@@ -39,3 +74,6 @@ class Broker(BaseModel):
     name: str
     id: str
     region: str
+    engine_type: EngineType = EngineType.ACTIVEMQ
+    deployment_mode: DeploymentMode = DeploymentMode.SINGLE_INSTANCE
+    tags: Optional[list] = []
