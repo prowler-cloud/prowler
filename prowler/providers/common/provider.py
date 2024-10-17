@@ -6,6 +6,7 @@ from argparse import Namespace
 from importlib import import_module
 from typing import Any, Optional
 
+from prowler.config.config import load_and_validate_config_file
 from prowler.lib.logger import logger
 from prowler.lib.mutelist.mutelist import Mutelist
 
@@ -163,6 +164,10 @@ class Provider(ABC):
                 import_module(provider_class_path), provider_class_name
             )
 
+            fixer_config = load_and_validate_config_file(
+                arguments.provider, arguments.fixer_config
+            )
+
             if not isinstance(Provider._global, provider_class):
                 if "aws" in provider_class_name.lower():
                     provider_class(
@@ -179,8 +184,8 @@ class Provider(ABC):
                         arguments.resource_tag,
                         arguments.resource_arn,
                         arguments.config_file,
-                        arguments.fixer_config,
                         arguments.mutelist_file,
+                        fixer_config=fixer_config,
                     )
                 elif "azure" in provider_class_name.lower():
                     provider_class(
@@ -192,8 +197,8 @@ class Provider(ABC):
                         arguments.azure_region,
                         arguments.subscription_id,
                         arguments.config_file,
-                        arguments.fixer_config,
                         arguments.mutelist_file,
+                        fixer_config=fixer_config,
                     )
                 elif "gcp" in provider_class_name.lower():
                     provider_class(
@@ -203,8 +208,8 @@ class Provider(ABC):
                         arguments.impersonate_service_account,
                         arguments.list_project_id,
                         arguments.config_file,
-                        arguments.fixer_config,
                         arguments.mutelist_file,
+                        fixer_config=fixer_config,
                     )
                 elif "kubernetes" in provider_class_name.lower():
                     provider_class(
@@ -212,8 +217,8 @@ class Provider(ABC):
                         arguments.context,
                         arguments.namespace,
                         arguments.config_file,
-                        arguments.fixer_config,
                         arguments.mutelist_file,
+                        fixer_config=fixer_config,
                     )
 
         except TypeError as error:
