@@ -37,7 +37,7 @@ class Scan:
     _progress: float = 0.0
     _findings: list = []
     _duration: int = 0
-    _status: list[str] = []
+    _status: list[str] = None
 
     def __init__(
         self,
@@ -71,6 +71,7 @@ class Scan:
             ScanInvalidComplianceFrameworkError: If the compliance framework does not exist in the provider.
             ScanInvalidCategoryError: If the category does not exist in the provider.
             ScanInvalidSeverityError: If the severity does not exist in the provider.
+            ScanInvalidStatusError: If the status does not exist in the provider.
         """
         self._provider = provider
 
