@@ -18,7 +18,7 @@ class eventbridge_bus_exposed(Check):
             report.resource_arn = bus.arn
             report.resource_tags = bus.tags
             report.region = bus.region
-            if is_policy_public(bus.policy):
+            if is_policy_public(bus.policy, eventbridge_client.audited_account):
                 report.status = "FAIL"
                 report.status_extended = (
                     f"EventBridge event bus {bus.name} is exposed to everyone."

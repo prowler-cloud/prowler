@@ -2,7 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.eventbridge.eventbridge_client import (
     eventbridge_client,
 )
-from prowler.providers.aws.services.iam.lib.policy import is_policy_cross_account
+from prowler.providers.aws.services.iam.lib.policy import is_policy_public
 
 
 class eventbridge_bus_cross_account_access(Check):
@@ -18,7 +18,11 @@ class eventbridge_bus_cross_account_access(Check):
             report.status_extended = (
                 f"EventBridge event bus {bus.name} does not allow cross-account access."
             )
-            if is_policy_cross_account(bus.policy, eventbridge_client.audited_account):
+            if is_policy_public(
+                bus.policy,
+                eventbridge_client.audited_account,
+                is_cross_account_allowed=False,
+            ):
                 report.status = "FAIL"
                 report.status_extended = (
                     f"EventBridge event bus {bus.name} allows cross-account access."

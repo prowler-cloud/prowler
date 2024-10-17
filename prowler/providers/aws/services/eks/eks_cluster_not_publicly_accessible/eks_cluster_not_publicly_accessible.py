@@ -2,7 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.eks.eks_client import eks_client
 
 
-class eks_control_plane_endpoint_access_restricted(Check):
+class eks_cluster_not_publicly_accessible(Check):
     def execute(self):
         findings = []
         for cluster in eks_client.clusters:
@@ -13,14 +13,16 @@ class eks_control_plane_endpoint_access_restricted(Check):
             report.resource_tags = cluster.tags
             report.status = "PASS"
             report.status_extended = (
-                f"Cluster endpoint access is private for EKS cluster {cluster.name}."
+                f"EKS cluster {cluster.name} is not publicly accessible."
             )
-            if cluster.endpoint_public_access:
-                if "0.0.0.0/0" in cluster.public_access_cidrs:
-                    report.status = "FAIL"
-                    report.status_extended = f"Cluster control plane access is not restricted for EKS cluster {cluster.name}."
-                else:
-                    report.status_extended = f"Cluster control plane access is restricted for EKS cluster {cluster.name}."
+            if (
+                cluster.endpoint_public_access
+                and "0.0.0.0/0" in cluster.public_access_cidrs
+            ):
+                report.status = "FAIL"
+                report.status_extended = (
+                    f"EKS cluster {cluster.name} is publicly accessible."
+                )
             findings.append(report)
 
         return findings

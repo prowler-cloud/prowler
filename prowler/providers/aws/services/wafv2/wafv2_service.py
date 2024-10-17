@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Optional
 
 from botocore.exceptions import ClientError
@@ -13,14 +14,42 @@ class WAFv2(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.web_acls = {}
-        self.__threading_call__(self._list_web_acls)
+        self._list_web_acls_global()
+        self.__threading_call__(self._list_web_acls_regional)
+        self.__threading_call__(self._get_web_acl, self.web_acls.values())
         self.__threading_call__(
             self._list_resources_for_web_acl, self.web_acls.values()
         )
         self.__threading_call__(self._get_logging_configuration, self.web_acls.values())
         self.__threading_call__(self._list_tags, self.web_acls.values())
 
-    def _list_web_acls(self, regional_client):
+    def _list_web_acls_global(self):
+        logger.info("WAFv2 - Listing Global Web ACLs...")
+        if "us-east-1" in self.regional_clients:
+            try:
+                regional_client = self.regional_clients["us-east-1"]
+                for wafv2 in regional_client.list_web_acls(Scope="CLOUDFRONT")[
+                    "WebACLs"
+                ]:
+                    if not self.audit_resources or (
+                        is_resource_filtered(wafv2["ARN"], self.audit_resources)
+                    ):
+                        arn = wafv2["ARN"]
+                        self.web_acls[arn] = WebAclv2(
+                            arn=arn,
+                            name=wafv2["Name"],
+                            id=wafv2["Id"],
+                            albs=[],
+                            user_pools=[],
+                            scope=Scope.CLOUDFRONT,
+                            region="us-east-1",
+                        )
+            except Exception as error:
+                logger.error(
+                    f"us-east-1 -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
+    def _list_web_acls_regional(self, regional_client):
         logger.info("WAFv2 - Listing Regional Web ACLs...")
         try:
             for wafv2 in regional_client.list_web_acls(Scope="REGIONAL")["WebACLs"]:
@@ -34,6 +63,7 @@ class WAFv2(AWSService):
                         id=wafv2["Id"],
                         albs=[],
                         user_pools=[],
+                        scope=Scope.REGIONAL,
                         region=regional_client.region,
                     )
         except Exception as error:
@@ -68,23 +98,60 @@ class WAFv2(AWSService):
     def _list_resources_for_web_acl(self, acl):
         logger.info("WAFv2 - Describing resources...")
         try:
-            for resource in self.regional_clients[
-                acl.region
-            ].list_resources_for_web_acl(
-                WebACLArn=acl.arn, ResourceType="APPLICATION_LOAD_BALANCER"
-            )[
-                "ResourceArns"
-            ]:
-                acl.albs.append(resource)
+            if acl.scope == Scope.REGIONAL:
+                for resource in self.regional_clients[
+                    acl.region
+                ].list_resources_for_web_acl(
+                    WebACLArn=acl.arn, ResourceType="APPLICATION_LOAD_BALANCER"
+                )[
+                    "ResourceArns"
+                ]:
+                    acl.albs.append(resource)
 
-            for resource in self.regional_clients[
-                acl.region
-            ].list_resources_for_web_acl(
-                WebACLArn=acl.arn, ResourceType="COGNITO_USER_POOL"
-            )[
-                "ResourceArns"
-            ]:
-                acl.user_pools.append(resource)
+                for resource in self.regional_clients[
+                    acl.region
+                ].list_resources_for_web_acl(
+                    WebACLArn=acl.arn, ResourceType="COGNITO_USER_POOL"
+                )[
+                    "ResourceArns"
+                ]:
+                    acl.user_pools.append(resource)
+
+        except Exception as error:
+            logger.error(
+                f"{acl.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _get_web_acl(self, acl: str):
+        logger.info("WAFv2 - Getting Web ACL...")
+        try:
+            scope = acl.scope.value
+            get_web_acl = self.regional_clients[acl.region].get_web_acl(
+                Name=acl.name, Scope=scope, Id=acl.id
+            )
+
+            try:
+                rules = get_web_acl.get("WebACL", {}).get("Rules", [])
+                for rule in rules:
+                    new_rule = Rule(
+                        name=rule.get("Name", ""),
+                        cloudwatch_metrics_enabled=rule.get("VisibilityConfig", {}).get(
+                            "CloudWatchMetricsEnabled", False
+                        ),
+                    )
+                    if (
+                        rule.get("Statement", {})
+                        .get("RuleGroupReferenceStatement", {})
+                        .get("ARN")
+                    ):
+                        acl.rule_groups.append(new_rule)
+                    else:
+                        acl.rules.append(new_rule)
+
+            except Exception as error:
+                logger.error(
+                    f"{acl.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
         except Exception as error:
             logger.error(
@@ -106,7 +173,30 @@ class WAFv2(AWSService):
             )
 
 
+class Scope(Enum):
+    """Enumeration for the scope of the Web ACL."""
+
+    REGIONAL = "REGIONAL"
+    CLOUDFRONT = "CLOUDFRONT"
+
+
+class Rule(BaseModel):
+    """Model representing a rule for the Web ACL."""
+
+    name: str
+    cloudwatch_metrics_enabled: bool = False
+
+
+class FirewallManagerRuleGroup(BaseModel):
+    """Model representing a rule group for the Web ACL."""
+
+    name: str
+    cloudwatch_metrics_enabled: bool = False
+
+
 class WebAclv2(BaseModel):
+    """Model representing a Web ACL for WAFv2."""
+
     arn: str
     name: str
     id: str
@@ -115,3 +205,6 @@ class WebAclv2(BaseModel):
     region: str
     logging_enabled: bool = False
     tags: Optional[list]
+    scope: Scope = Scope.REGIONAL
+    rules: list[Rule] = []
+    rule_groups: list[Rule] = []
