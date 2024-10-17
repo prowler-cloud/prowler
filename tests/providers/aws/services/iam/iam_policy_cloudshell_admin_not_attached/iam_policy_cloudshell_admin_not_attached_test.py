@@ -12,7 +12,7 @@ from tests.providers.aws.utils import (
 )
 
 
-class Test_iam_cloudshell_admin_policy_not_attached:
+class Test_iam_policy_cloudshell_admin_not_attached:
     @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
     def test_access_denied(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
@@ -22,16 +22,16 @@ class Test_iam_cloudshell_admin_policy_not_attached:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.iam.iam_cloudshell_admin_policy_not_attached.iam_cloudshell_admin_policy_not_attached.iam_client",
+            "prowler.providers.aws.services.iam.iam_policy_cloudshell_admin_not_attached.iam_policy_cloudshell_admin_not_attached.iam_client",
             new=IAM(aws_provider),
         ) as service_client:
-            from prowler.providers.aws.services.iam.iam_cloudshell_admin_policy_not_attached.iam_cloudshell_admin_policy_not_attached import (
-                iam_cloudshell_admin_policy_not_attached,
+            from prowler.providers.aws.services.iam.iam_policy_cloudshell_admin_not_attached.iam_policy_cloudshell_admin_not_attached import (
+                iam_policy_cloudshell_admin_not_attached,
             )
 
             service_client.entities_attached_to_cloudshell_policy = None
 
-            check = iam_cloudshell_admin_policy_not_attached()
+            check = iam_policy_cloudshell_admin_not_attached()
             result = check.execute()
             assert len(result) == 0
 
@@ -58,15 +58,15 @@ class Test_iam_cloudshell_admin_policy_not_attached:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.iam.iam_cloudshell_admin_policy_not_attached.iam_cloudshell_admin_policy_not_attached.iam_client",
+                "prowler.providers.aws.services.iam.iam_policy_cloudshell_admin_not_attached.iam_policy_cloudshell_admin_not_attached.iam_client",
                 new=IAM(aws_provider),
             ):
                 # Test Check
-                from prowler.providers.aws.services.iam.iam_cloudshell_admin_policy_not_attached.iam_cloudshell_admin_policy_not_attached import (
-                    iam_cloudshell_admin_policy_not_attached,
+                from prowler.providers.aws.services.iam.iam_policy_cloudshell_admin_not_attached.iam_policy_cloudshell_admin_not_attached import (
+                    iam_policy_cloudshell_admin_not_attached,
                 )
 
-                check = iam_cloudshell_admin_policy_not_attached()
+                check = iam_policy_cloudshell_admin_not_attached()
                 result = check.execute()
                 assert result[0].status == "PASS"
                 assert (
@@ -103,15 +103,15 @@ class Test_iam_cloudshell_admin_policy_not_attached:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.iam.iam_cloudshell_admin_policy_not_attached.iam_cloudshell_admin_policy_not_attached.iam_client",
+                "prowler.providers.aws.services.iam.iam_policy_cloudshell_admin_not_attached.iam_policy_cloudshell_admin_not_attached.iam_client",
                 new=IAM(aws_provider),
             ):
                 # Test Check
-                from prowler.providers.aws.services.iam.iam_cloudshell_admin_policy_not_attached.iam_cloudshell_admin_policy_not_attached import (
-                    iam_cloudshell_admin_policy_not_attached,
+                from prowler.providers.aws.services.iam.iam_policy_cloudshell_admin_not_attached.iam_policy_cloudshell_admin_not_attached import (
+                    iam_policy_cloudshell_admin_not_attached,
                 )
 
-                check = iam_cloudshell_admin_policy_not_attached()
+                check = iam_policy_cloudshell_admin_not_attached()
                 result = check.execute()
                 assert result[0].status == "FAIL"
                 assert (
@@ -144,15 +144,15 @@ class Test_iam_cloudshell_admin_policy_not_attached:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.iam.iam_cloudshell_admin_policy_not_attached.iam_cloudshell_admin_policy_not_attached.iam_client",
+                "prowler.providers.aws.services.iam.iam_policy_cloudshell_admin_not_attached.iam_policy_cloudshell_admin_not_attached.iam_client",
                 new=IAM(aws_provider),
             ):
                 # Test Check
-                from prowler.providers.aws.services.iam.iam_cloudshell_admin_policy_not_attached.iam_cloudshell_admin_policy_not_attached import (
-                    iam_cloudshell_admin_policy_not_attached,
+                from prowler.providers.aws.services.iam.iam_policy_cloudshell_admin_not_attached.iam_policy_cloudshell_admin_not_attached import (
+                    iam_policy_cloudshell_admin_not_attached,
                 )
 
-                check = iam_cloudshell_admin_policy_not_attached()
+                check = iam_policy_cloudshell_admin_not_attached()
                 result = check.execute()
                 assert result[0].status == "FAIL"
                 assert (
@@ -185,15 +185,15 @@ class Test_iam_cloudshell_admin_policy_not_attached:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.iam.iam_cloudshell_admin_policy_not_attached.iam_cloudshell_admin_policy_not_attached.iam_client",
+                "prowler.providers.aws.services.iam.iam_policy_cloudshell_admin_not_attached.iam_policy_cloudshell_admin_not_attached.iam_client",
                 new=IAM(aws_provider),
             ):
                 # Test Check
-                from prowler.providers.aws.services.iam.iam_cloudshell_admin_policy_not_attached.iam_cloudshell_admin_policy_not_attached import (
-                    iam_cloudshell_admin_policy_not_attached,
+                from prowler.providers.aws.services.iam.iam_policy_cloudshell_admin_not_attached.iam_policy_cloudshell_admin_not_attached import (
+                    iam_policy_cloudshell_admin_not_attached,
                 )
 
-                check = iam_cloudshell_admin_policy_not_attached()
+                check = iam_policy_cloudshell_admin_not_attached()
                 result = check.execute()
                 assert result[0].status == "FAIL"
                 assert (
@@ -246,15 +246,15 @@ class Test_iam_cloudshell_admin_policy_not_attached:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.iam.iam_cloudshell_admin_policy_not_attached.iam_cloudshell_admin_policy_not_attached.iam_client",
+                "prowler.providers.aws.services.iam.iam_policy_cloudshell_admin_not_attached.iam_policy_cloudshell_admin_not_attached.iam_client",
                 new=IAM(aws_provider),
             ):
                 # Test Check
-                from prowler.providers.aws.services.iam.iam_cloudshell_admin_policy_not_attached.iam_cloudshell_admin_policy_not_attached import (
-                    iam_cloudshell_admin_policy_not_attached,
+                from prowler.providers.aws.services.iam.iam_policy_cloudshell_admin_not_attached.iam_policy_cloudshell_admin_not_attached import (
+                    iam_policy_cloudshell_admin_not_attached,
                 )
 
-                check = iam_cloudshell_admin_policy_not_attached()
+                check = iam_policy_cloudshell_admin_not_attached()
                 result = check.execute()
                 assert result[0].status == "FAIL"
                 assert (

@@ -2,7 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.iam.iam_client import iam_client
 
 
-class iam_cloudshell_admin_policy_not_attached(Check):
+class iam_policy_cloudshell_admin_not_attached(Check):
     def execute(self) -> Check_Report_AWS:
         findings = []
         if iam_client.entities_attached_to_cloudshell_policy is not None:

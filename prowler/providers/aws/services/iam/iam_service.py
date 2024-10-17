@@ -696,34 +696,24 @@ class IAM(AWSService):
         try:
             entities = []
 
-            response = self.client.list_entities_for_policy(PolicyArn=policy_arn)
-
-            entities.extend(user["UserName"] for user in response.get("PolicyUsers"))
-            entities.extend(
-                group["GroupName"] for group in response.get("PolicyGroups")
-            )
-            entities.extend(role["RoleName"] for role in response.get("PolicyRoles"))
-
-            while response.get("IsTruncated"):
-                response = self.client.list_entities_for_policy(
-                    PolicyArn=policy_arn, Marker=response["Marker"]
+            paginator = self.client.get_paginator("list_entities_for_policy")
+            for response in paginator.paginate(PolicyArn=policy_arn):
+                entities.extend(
+                    user["UserName"] for user in response.get("PolicyUsers", [])
                 )
                 entities.extend(
-                    user["UserName"] for user in response.get("PolicyUsers")
+                    group["GroupName"] for group in response.get("PolicyGroups", [])
                 )
                 entities.extend(
-                    group["GroupName"] for group in response.get("PolicyGroups")
+                    role["RoleName"] for role in response.get("PolicyRoles", [])
                 )
-                entities.extend(
-                    role["RoleName"] for role in response.get("PolicyRoles")
-                )
-
             return entities
         except ClientError as error:
             if error.response["Error"]["Code"] == "AccessDenied":
                 logger.error(
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
+                entities = None
             else:
                 logger.error(
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

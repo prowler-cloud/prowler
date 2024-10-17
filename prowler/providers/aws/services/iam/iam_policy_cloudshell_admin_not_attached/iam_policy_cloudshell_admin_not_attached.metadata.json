@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "iam_cloudshell_admin_policy_not_attached",
+  "CheckID": "iam_policy_cloudshell_admin_not_attached",
   "CheckTitle": "Check if IAM identities (users,groups,roles) have the AWSCloudShellFullAccess policy attached.",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices/CIS AWS Foundations Benchmark"
