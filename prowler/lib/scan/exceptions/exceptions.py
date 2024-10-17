@@ -1,31 +1,32 @@
 from prowler.exceptions.exceptions import ProwlerException
 
 
+# Exceptions codes from 5000 to 5999 are reserved for Azure exceptions
 class ScanBaseException(ProwlerException):
     """Base class for Scan errors."""
 
     SCAN_ERROR_CODES = {
-        (2000, "ScanInvalidSeverityError"): {
+        (5000, "ScanInvalidSeverityError"): {
             "message": "Invalid severity level provided.",
             "remediation": "Please provide a valid severity level. Valid severities are: critical, high, medium, low, informational.",
         },
-        (2001, "ScanInvalidCheckError"): {
+        (5001, "ScanInvalidCheckError"): {
             "message": "Invalid check provided.",
             "remediation": "Please provide a valid check name.",
         },
-        (2002, "ScanInvalidServiceError"): {
+        (5002, "ScanInvalidServiceError"): {
             "message": "Invalid service provided.",
             "remediation": "Please provide a valid service name.",
         },
-        (2003, "ScanInvalidComplianceFrameworkError"): {
+        (5003, "ScanInvalidComplianceFrameworkError"): {
             "message": "Invalid compliance framework provided.",
             "remediation": "Please provide a valid compliance framework name for the chosen provider.",
         },
-        (2004, "ScanInvalidCategoryError"): {
+        (5004, "ScanInvalidCategoryError"): {
             "message": "Invalid category provided.",
             "remediation": "Please provide a valid category name.",
         },
-        (2005, "ScanInvalidStatusError"): {
+        (5005, "ScanInvalidStatusError"): {
             "message": "Invalid status provided.",
             "remediation": "Please provide a valid status: FAIL, PASS, MANUAL.",
         },
@@ -48,40 +49,40 @@ class ScanBaseException(ProwlerException):
 class ScanInvalidSeverityError(ScanBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            2000, file=file, original_exception=original_exception, message=message
+            5000, file=file, original_exception=original_exception, message=message
         )
 
 
 class ScanInvalidCheckError(ScanBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            2001, file=file, original_exception=original_exception, message=message
+            5001, file=file, original_exception=original_exception, message=message
         )
 
 
 class ScanInvalidServiceError(ScanBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            2002, file=file, original_exception=original_exception, message=message
+            5002, file=file, original_exception=original_exception, message=message
         )
 
 
 class ScanInvalidComplianceFrameworkError(ScanBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            2003, file=file, original_exception=original_exception, message=message
+            5003, file=file, original_exception=original_exception, message=message
         )
 
 
 class ScanInvalidCategoryError(ScanBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            2004, file=file, original_exception=original_exception, message=message
+            5004, file=file, original_exception=original_exception, message=message
         )
 
 
 class ScanInvalidStatusError(ScanBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            2005, file=file, original_exception=original_exception, message=message
+            5005, file=file, original_exception=original_exception, message=message
         )

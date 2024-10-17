@@ -631,88 +631,120 @@ class AzureProvider(Provider):
             return Connection(is_connected=True)
         # Exceptions from validate_arguments
         except AzureNoAuthenticationMethodError as no_auth_method_error:
-            logger.error(str(no_auth_method_error))
+            logger.error(
+                f"{no_auth_method_error.__class__.__name__}[{no_auth_method_error.__traceback__.tb_lineno}]: {no_auth_method_error}"
+            )
             if raise_on_exception:
                 raise no_auth_method_error
             return Connection(error=no_auth_method_error)
         except AzureBrowserAuthNoTenantIDError as browser_no_tenant_error:
-            logger.error(str(browser_no_tenant_error))
+            logger.error(
+                f"{browser_no_tenant_error.__class__.__name__}[{browser_no_tenant_error.__traceback__.tb_lineno}]: {browser_no_tenant_error}"
+            )
             if raise_on_exception:
                 raise browser_no_tenant_error
             return Connection(error=browser_no_tenant_error)
         except AzureTenantIDNoBrowserAuthError as tenant_no_browser_error:
-            logger.error(str(tenant_no_browser_error))
+            logger.error(
+                f"{tenant_no_browser_error.__class__.__name__}[{tenant_no_browser_error.__traceback__.tb_lineno}]: {tenant_no_browser_error}"
+            )
         # Exceptions from setup_region_config
         except AzureArgumentTypeValidationError as type_validation_error:
-            logger.error(str(type_validation_error))
+            logger.error(
+                f"{type_validation_error.__class__.__name__}[{type_validation_error.__traceback__.tb_lineno}]: {type_validation_error}"
+            )
             if raise_on_exception:
                 raise type_validation_error
             return Connection(error=type_validation_error)
         except AzureSetUpRegionConfigError as region_config_error:
-            logger.error(str(region_config_error))
+            logger.error(
+                f"{region_config_error.__class__.__name__}[{region_config_error.__traceback__.tb_lineno}]: {region_config_error}"
+            )
             if raise_on_exception:
                 raise region_config_error
             return Connection(error=region_config_error)
         # Exceptions from setup_session
         except AzureEnvironmentVariableError as environment_credentials_error:
-            logger.error(str(environment_credentials_error))
+            logger.error(
+                f"{environment_credentials_error.__class__.__name__}[{environment_credentials_error.__traceback__.tb_lineno}]: {environment_credentials_error}"
+            )
             if raise_on_exception:
                 raise environment_credentials_error
             return Connection(error=environment_credentials_error)
         except AzureDefaultAzureCredentialError as default_credentials_error:
-            logger.error(str(default_credentials_error))
+            logger.error(
+                f"{default_credentials_error.__class__.__name__}[{default_credentials_error.__traceback__.tb_lineno}]: {default_credentials_error}"
+            )
             if raise_on_exception:
                 raise default_credentials_error
             return Connection(error=default_credentials_error)
         except AzureInteractiveBrowserCredentialError as interactive_browser_error:
-            logger.error(str(interactive_browser_error))
+            logger.error(
+                f"{interactive_browser_error.__class__.__name__}[{interactive_browser_error.__traceback__.tb_lineno}]: {interactive_browser_error}"
+            )
             if raise_on_exception:
                 raise interactive_browser_error
             return Connection(error=interactive_browser_error)
         except AzureConfigCredentialsError as config_credentials_error:
-            logger.error(str(config_credentials_error))
+            logger.error(
+                f"{config_credentials_error.__class__.__name__}[{config_credentials_error.__traceback__.tb_lineno}]: {config_credentials_error}"
+            )
             if raise_on_exception:
                 raise config_credentials_error
             return Connection(error=config_credentials_error)
         except AzureClientAuthenticationError as client_auth_error:
-            logger.error(str(client_auth_error))
+            logger.error(
+                f"{client_auth_error.__class__.__name__}[{client_auth_error.__traceback__.tb_lineno}]: {client_auth_error}"
+            )
             if raise_on_exception:
                 raise client_auth_error
             return Connection(error=client_auth_error)
         except AzureCredentialsUnavailableError as credential_unavailable_error:
-            logger.error(str(credential_unavailable_error))
+            logger.error(
+                f"{credential_unavailable_error.__class__.__name__}[{credential_unavailable_error.__traceback__.tb_lineno}]: {credential_unavailable_error}"
+            )
             if raise_on_exception:
                 raise credential_unavailable_error
             return Connection(error=credential_unavailable_error)
         except AzureDefaultAzureCredentialError as default_credentials_error:
-            logger.error(str(default_credentials_error))
+            logger.error(
+                f"{default_credentials_error.__class__.__name__}[{default_credentials_error.__traceback__.tb_lineno}]: {default_credentials_error}"
+            )
             if raise_on_exception:
                 raise default_credentials_error
             return Connection(error=default_credentials_error)
         except (
             AzureClientIdAndClientSecretNotBelongingToTenantIdError
         ) as tenant_id_error:
-            logger.error(str(tenant_id_error))
+            logger.error(
+                f"{tenant_id_error.__class__.__name__}[{tenant_id_error.__traceback__.tb_lineno}]: {tenant_id_error}"
+            )
             if raise_on_exception:
                 raise tenant_id_error
             return Connection(error=tenant_id_error)
         except (
             AzureTenantIdAndClientSecretNotBelongingToClientIdError
         ) as client_id_error:
-            logger.error(str(client_id_error))
+            logger.error(
+                f"{client_id_error.__class__.__name__}[{client_id_error.__traceback__.tb_lineno}]: {client_id_error}"
+            )
             if raise_on_exception:
                 raise client_id_error
             return Connection(error=client_id_error)
         except (
             AzureTenantIdAndClientIdNotBelongingToClientSecretError
         ) as client_secret_error:
-            logger.error(str(client_secret_error))
+            logger.error(
+                f"{client_secret_error.__class__.__name__}[{client_secret_error.__traceback__.tb_lineno}]: {client_secret_error}"
+            )
             if raise_on_exception:
                 raise client_secret_error
             return Connection(error=client_secret_error)
         # Exceptions from provider_id validation
         except AzureInvalidAccountCredentialsError as invalid_credentials_error:
-            logger.error(str(invalid_credentials_error))
+            logger.error(
+                f"{invalid_credentials_error.__class__.__name__}[{invalid_credentials_error.__traceback__.tb_lineno}]: {invalid_credentials_error}"
+            )
             if raise_on_exception:
                 raise invalid_credentials_error
             return Connection(error=invalid_credentials_error)
@@ -998,19 +1030,25 @@ class AzureProvider(Provider):
                 "client_secret": client_secret,
             }
         except AzureNotValidTenantIdError as tenant_id_error:
-            logger.error(str(tenant_id_error))
+            logger.error(
+                f"{tenant_id_error.__class__.__name__}[{tenant_id_error.__traceback__.tb_lineno}]: {tenant_id_error}"
+            )
             raise AzureClientIdAndClientSecretNotBelongingToTenantIdError(
                 file=os.path.basename(__file__),
                 message="The provided Azure Client ID and Client Secret do not belong to the specified Tenant ID.",
             )
         except AzureNotValidClientIdError as client_id_error:
-            logger.error(str(client_id_error))
+            logger.error(
+                f"{client_id_error.__class__.__name__}[{client_id_error.__traceback__.tb_lineno}]: {client_id_error}"
+            )
             raise AzureTenantIdAndClientSecretNotBelongingToClientIdError(
                 file=os.path.basename(__file__),
                 message="The provided Azure Tenant ID and Client Secret do not belong to the specified Client ID.",
             )
         except AzureNotValidClientSecretError as client_secret_error:
-            logger.error(str(client_secret_error))
+            logger.error(
+                f"{client_secret_error.__class__.__name__}[{client_secret_error.__traceback__.tb_lineno}]: {client_secret_error}"
+            )
             raise AzureTenantIdAndClientIdNotBelongingToClientSecretError(
                 file=os.path.basename(__file__),
                 message="The provided Azure Tenant ID and Client ID do not belong to the specified Client Secret.",
