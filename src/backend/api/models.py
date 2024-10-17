@@ -69,7 +69,7 @@ class StateChoices(models.TextChoices):
 class User(AbstractBaseUser):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     name = models.CharField(max_length=150, validators=[MinLengthValidator(3)])
-    email = models.EmailField(max_length=254, unique=True)
+    email = models.EmailField(max_length=254, unique=True, help_text="Case insensitive")
     company_name = models.CharField(max_length=150, blank=True)
     is_active = models.BooleanField(default=True)
     date_joined = models.DateTimeField(auto_now_add=True, editable=False)
@@ -81,6 +81,11 @@ class User(AbstractBaseUser):
 
     def is_member_of_tenant(self, tenant_id):
         return self.memberships.filter(tenant_id=tenant_id).exists()
+
+    def save(self, *args, **kwargs):
+        if self.email:
+            self.email = self.email.strip().lower()
+        super().save(*args, **kwargs)
 
     class Meta:
         db_table = "users"

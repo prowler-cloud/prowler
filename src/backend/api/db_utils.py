@@ -58,6 +58,9 @@ class CustomUserManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
+    def get_by_natural_key(self, email):
+        return self.get(email__iexact=email)
+
 
 def enum_to_choices(enum_class):
     """

@@ -177,6 +177,12 @@ class UserCreateSerializer(BaseWriteSerializer):
         validate_password(value, user=user)
         return value
 
+    def validate_email(self, value):
+        normalized_email = value.strip().lower()
+        if User.objects.filter(email__iexact=normalized_email).exists():
+            raise ValidationError("User with this email already exists.")
+        return value
+
     def create(self, validated_data):
         password = validated_data.pop("password")
         user = User(**validated_data)

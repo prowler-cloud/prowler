@@ -156,7 +156,12 @@ class Migration(migrations.Migration):
                         blank=True, null=True, verbose_name="last login"
                     ),
                 ),
-                ("email", models.EmailField(max_length=254, unique=True)),
+                (
+                    "email",
+                    models.EmailField(
+                        max_length=254, unique=True, help_text="Case insensitive"
+                    ),
+                ),
                 ("company_name", models.CharField(max_length=150, blank=True)),
                 ("is_active", models.BooleanField(default=True)),
                 ("date_joined", models.DateTimeField(auto_now_add=True)),

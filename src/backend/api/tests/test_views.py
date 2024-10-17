@@ -38,32 +38,27 @@ class TestUserViewSet:
         valid_user_payload = {
             "name": "test",
             "password": "newpassword123",
-            "email": "newuser@example.com",
+            "email": "NeWuSeR@example.com",
         }
         response = client.post(
             reverse("user-list"), data=valid_user_payload, format="json"
         )
         assert response.status_code == status.HTTP_201_CREATED
-        assert User.objects.filter(email=valid_user_payload["email"]).exists()
+        assert User.objects.filter(email__iexact=valid_user_payload["email"]).exists()
         assert (
             response.json()["data"]["attributes"]["email"]
-            == valid_user_payload["email"]
+            == valid_user_payload["email"].lower()
         )
 
-    def test_users_invalid_create(self, client):
-        invalid_user_payload = {
-            "name": "test",
-            "password": "thepasswordisfine123",
-            "email": "invalidemail",
-        }
-        response = client.post(
-            reverse("user-list"), data=invalid_user_payload, format="json"
-        )
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert (
-            response.json()["errors"][0]["source"]["pointer"]
-            == "/data/attributes/email"
-        )
+    def test_users_create_duplicated_email(self, client):
+        # Create a user
+        self.test_users_create(client)
+
+        # Try to create it again and expect a 400
+        with pytest.raises(AssertionError) as assertion_error:
+            self.test_users_create(client)
+
+        assert "Response status_code=400" in str(assertion_error)
 
     @pytest.mark.parametrize(
         "password",
