@@ -3,10 +3,10 @@ import re
 import sys
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from enum import Enum
 
 from pydantic import BaseModel, ValidationError, validator
 
-from prowler.config.config import valid_severities
 from prowler.lib.check.utils import recover_checks_from_provider
 from prowler.lib.logger import logger
 
@@ -54,6 +54,14 @@ class Remediation(BaseModel):
     Recommendation: Recommendation
 
 
+class Severity(str, Enum):
+    critical = "critical"
+    high = "high"
+    medium = "medium"
+    low = "low"
+    informational = "informational"
+
+
 class CheckMetadata(BaseModel):
     """
     Model representing the metadata of a check.
@@ -93,7 +101,7 @@ class CheckMetadata(BaseModel):
     ServiceName: str
     SubServiceName: str
     ResourceIdTemplate: str
-    Severity: str
+    Severity: Severity
     ResourceType: str
     Description: str
     Risk: str
@@ -121,14 +129,6 @@ class CheckMetadata(BaseModel):
     @validator("Severity", pre=True, always=True)
     def severity_to_lower(severity):
         return severity.lower()
-
-    @validator("Severity")
-    def valid_severity(severity):
-        if severity not in valid_severities:
-            raise ValueError(
-                f"Invalid severity: {severity}. Severity must be one of {', '.join(valid_severities)}"
-            )
-        return severity
 
     @staticmethod
     def get_bulk(provider: str) -> dict[str, "CheckMetadata"]:

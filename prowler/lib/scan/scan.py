@@ -10,9 +10,9 @@ from prowler.lib.check.check import (
 from prowler.lib.check.checks_loader import load_checks_to_execute
 from prowler.lib.check.compliance import update_checks_metadata_with_compliance
 from prowler.lib.check.compliance_models import Compliance
-from prowler.lib.check.models import CheckMetadata
+from prowler.lib.check.models import CheckMetadata, Severity
 from prowler.lib.logger import logger
-from prowler.lib.outputs.finding import Finding, Severity, Status
+from prowler.lib.outputs.finding import Finding, Status
 from prowler.lib.scan.exceptions.exceptions import (
     ScanInvalidCategoryError,
     ScanInvalidCheckError,
