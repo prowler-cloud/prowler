@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "apigateway_restapi_cache_encrypted",
+  "CheckTitle": "Check if API Gateway REST API cache data is encrypted at rest.",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "apigateway",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:apigateway:region:account-id:/restapis/restapi-id/stages/stage-name",
+  "Severity": "medium",
+  "ResourceType": "AwsApiGatewayStage",
+  "Description": "This control checks whether all methods in API Gateway REST API stages that have cache enabled are encrypted. The control fails if any method in an API Gateway REST API stage is configured to cache and the cache is not encrypted.",
+  "Risk": "Without encryption, cached data in API Gateway REST APIs may be vulnerable to unauthorized access, potentially exposing sensitive information to users not authenticated to AWS.",
+  "RelatedUrl": "https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-caching.html#enable-api-gateway-caching",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws apigateway update-stage --rest-api-id <restapi-id> --stage-name <stage-name> --patch-operations op=replace,path=/<resourcePath>/<httpMethod>/caching/enabled,value=true op=replace,path=/<resourcePath>/<httpMethod>/caching/dataEncrypted,value=true",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/apigateway-controls.html#apigateway-5",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure that API Gateway REST API cache data is encrypted at rest by enabling the 'Encrypt cache data' setting in the API Gateway stage configuration.",
+      "Url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-caching.html#enable-api-gateway-caching"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
