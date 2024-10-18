@@ -1,3 +1,3 @@
 [submodule "prowler/lib/detect-secrets"]
 	path = prowler/lib/detect-secrets
-	url = https://github.com/Yelp/detect-secrets
+	url = https://github.com/prowler-cloud/detect-secrets
