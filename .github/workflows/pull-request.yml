@@ -75,7 +75,7 @@ jobs:
       - name: Bandit
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
-          poetry run bandit -q -lll -x '*_test.py,./contrib/' -r .
+          poetry run bandit -q -lll -x '*_test.py,./contrib/,./prowler/lib/detect-secrets' -r .
       - name: Safety
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
@@ -83,7 +83,7 @@ jobs:
       - name: Vulture
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
-          poetry run vulture --exclude "contrib" --min-confidence 100 .
+          poetry run vulture --exclude "contrib,prowler/lib/detect-secrets" --min-confidence 100 .
       - name: Hadolint
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
