@@ -58,7 +58,7 @@ class AzureBaseException(ProwlerException):
             "message": "Error trying to get token from Azure Identity",
             "remediation": "Check the Azure Identity and ensure it is properly set up.",
         },
-        (2013, "AzureNotTenantIdButClientIdAndClienSecret"): {
+        (2013, "AzureNotTenantIdButClientIdAndClienSecretError"): {
             "message": "The provided credentials are not a tenant ID but a client ID and client secret",
             "remediation": "Tenant Id, Client Id and Client Secret are required for Azure credentials. Make sure you are using the correct credentials.",
         },
@@ -216,7 +216,7 @@ class AzureGetTokenIdentityError(AzureBaseException):
         )
 
 
-class AzureNotTenantIdButClientIdAndClienSecret(AzureCredentialsError):
+class AzureNotTenantIdButClientIdAndClienSecretError(AzureCredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             2013, file=file, original_exception=original_exception, message=message

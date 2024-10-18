@@ -28,8 +28,8 @@ from prowler.providers.aws.config import (
 )
 from prowler.providers.aws.exceptions.exceptions import (
     AWSArgumentTypeValidationError,
-    AWSIAMRoleARNInvalidResourceType,
-    AWSInvalidAccountCredentials,
+    AWSIAMRoleARNInvalidResourceTypeError,
+    AWSInvalidAccountCredentialsError,
     AWSNoCredentialsError,
 )
 from prowler.providers.aws.lib.arn.models import ARN
@@ -1351,10 +1351,10 @@ aws:
         role_name = "test-role"
         role_arn = f"arn:{AWS_COMMERCIAL_PARTITION}:iam::{AWS_ACCOUNT_NUMBER}:not-role/{role_name}"
 
-        with raises(AWSIAMRoleARNInvalidResourceType) as exception:
+        with raises(AWSIAMRoleARNInvalidResourceTypeError) as exception:
             AwsProvider.test_connection(role_arn=role_arn)
 
-        assert exception.type == AWSIAMRoleARNInvalidResourceType
+        assert exception.type == AWSIAMRoleARNInvalidResourceTypeError
         assert (
             exception.value.args[0]
             == "[1010] AWS IAM Role ARN resource type is invalid"
@@ -1429,10 +1429,10 @@ aws:
             "provider_id": "111122223333",
         }
 
-        with raises(AWSInvalidAccountCredentials) as exception:
+        with raises(AWSInvalidAccountCredentialsError) as exception:
             AwsProvider.test_connection(**session_credentials)
 
-        assert exception.type == AWSInvalidAccountCredentials
+        assert exception.type == AWSInvalidAccountCredentialsError
         assert (
             exception.value.args[0]
             == "[1015] The provided AWS credentials belong to a different account"
@@ -1456,7 +1456,7 @@ aws:
 
         assert isinstance(connection, Connection)
         assert not connection.is_connected
-        assert isinstance(connection.error, AWSInvalidAccountCredentials)
+        assert isinstance(connection.error, AWSInvalidAccountCredentialsError)
         assert (
             connection.error.message
             == "The provided AWS credentials belong to a different account"

@@ -26,31 +26,31 @@ class AWSBaseException(ProwlerException):
             "message": "AWS session setup error",
             "remediation": "Check the AWS session setup and ensure it is properly configured, please visit https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html and check if the provided profile has the necessary permissions.",
         },
-        (1005, "AWSIAMRoleARNRegionNotEmtpy"): {
+        (1005, "AWSIAMRoleARNRegionNotEmtpyError"): {
             "message": "AWS IAM Role ARN region is not empty",
             "remediation": "Check the AWS IAM Role ARN region and ensure it is empty, visit https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_identifiers.html#identifiers-arns for more information.",
         },
-        (1006, "AWSIAMRoleARNPartitionEmpty"): {
+        (1006, "AWSIAMRoleARNPartitionEmptyError"): {
             "message": "AWS IAM Role ARN partition is empty",
             "remediation": "Check the AWS IAM Role ARN partition and ensure it is not empty, visit https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_identifiers.html#identifiers-arns for more information.",
         },
-        (1007, "AWSIAMRoleARNMissingFields"): {
+        (1007, "AWSIAMRoleARNMissingFieldsError"): {
             "message": "AWS IAM Role ARN missing fields",
             "remediation": "Check the AWS IAM Role ARN and ensure all required fields are present, visit https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_identifiers.html#identifiers-arns for more information.",
         },
-        (1008, "AWSIAMRoleARNServiceNotIAMnorSTS"): {
+        (1008, "AWSIAMRoleARNServiceNotIAMnorSTSError"): {
             "message": "AWS IAM Role ARN service is not IAM nor STS",
             "remediation": "Check the AWS IAM Role ARN service and ensure it is either IAM or STS, visit https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_identifiers.html#identifiers-arns for more information.",
         },
-        (1009, "AWSIAMRoleARNInvalidAccountID"): {
+        (1009, "AWSIAMRoleARNInvalidAccountIDError"): {
             "message": "AWS IAM Role ARN account ID is invalid",
             "remediation": "Check the AWS IAM Role ARN account ID and ensure it is a valid 12-digit number, visit https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_identifiers.html#identifiers-arns for more information.",
         },
-        (1010, "AWSIAMRoleARNInvalidResourceType"): {
+        (1010, "AWSIAMRoleARNInvalidResourceTypeError"): {
             "message": "AWS IAM Role ARN resource type is invalid",
             "remediation": "Check the AWS IAM Role ARN resource type and ensure it is valid, resources types are: role, user, assumed-role, root, federated-user, visit https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_identifiers.html#identifiers-arns for more information.",
         },
-        (1011, "AWSIAMRoleARNEmptyResource"): {
+        (1011, "AWSIAMRoleARNEmptyResourceError"): {
             "message": "AWS IAM Role ARN resource is empty",
             "remediation": "Check the AWS IAM Role ARN resource and ensure it is not empty, visit https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_identifiers.html#identifiers-arns for more information.",
         },
@@ -58,19 +58,19 @@ class AWSBaseException(ProwlerException):
             "message": "AWS assume role error",
             "remediation": "Check the AWS assume role configuration and ensure it is properly set up, please visit https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/aws/role-assumption/ and https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_terms-and-concepts.html#iam-term-role-session-name",
         },
-        (1013, "AWSAccessKeyIDInvalid"): {
+        (1013, "AWSAccessKeyIDInvalidError"): {
             "message": "AWS Access Key ID or Session Token is invalid",
             "remediation": "Check your AWS Access Key ID or Session Token and ensure it is valid.",
         },
-        (1014, "AWSSecretAccessKeyInvalid"): {
+        (1014, "AWSSecretAccessKeyInvalidError"): {
             "message": "AWS Secret Access Key is invalid",
             "remediation": "Check your AWS Secret Access Key and signing method and ensure it is valid.",
         },
-        (1015, "AWSInvalidAccountCredentials"): {
+        (1015, "AWSInvalidAccountCredentialsError"): {
             "message": "The provided AWS credentials belong to a different account",
             "remediation": "Check the provided AWS credentials and review if belong to the account you want to use.",
         },
-        (1016, "AWSSessionTokenExpired"): {
+        (1016, "AWSSessionTokenExpiredError"): {
             "message": "The provided AWS Session Token is expired",
             "remediation": "Get a new AWS Session Token and configure it for the provider.",
         },
@@ -138,49 +138,49 @@ class AWSRoleArnError(AWSBaseException):
         super().__init__(code, file, original_exception, message)
 
 
-class AWSIAMRoleARNRegionNotEmtpy(AWSRoleArnError):
+class AWSIAMRoleARNRegionNotEmtpyError(AWSRoleArnError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             1005, file=file, original_exception=original_exception, message=message
         )
 
 
-class AWSIAMRoleARNPartitionEmpty(AWSRoleArnError):
+class AWSIAMRoleARNPartitionEmptyError(AWSRoleArnError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             1006, file=file, original_exception=original_exception, message=message
         )
 
 
-class AWSIAMRoleARNMissingFields(AWSRoleArnError):
+class AWSIAMRoleARNMissingFieldsError(AWSRoleArnError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             1007, file=file, original_exception=original_exception, message=message
         )
 
 
-class AWSIAMRoleARNServiceNotIAMnorSTS(AWSRoleArnError):
+class AWSIAMRoleARNServiceNotIAMnorSTSError(AWSRoleArnError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             1008, file=file, original_exception=original_exception, message=message
         )
 
 
-class AWSIAMRoleARNInvalidAccountID(AWSRoleArnError):
+class AWSIAMRoleARNInvalidAccountIDError(AWSRoleArnError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             1009, file=file, original_exception=original_exception, message=message
         )
 
 
-class AWSIAMRoleARNInvalidResourceType(AWSRoleArnError):
+class AWSIAMRoleARNInvalidResourceTypeError(AWSRoleArnError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             1010, file=file, original_exception=original_exception, message=message
         )
 
 
-class AWSIAMRoleARNEmptyResource(AWSRoleArnError):
+class AWSIAMRoleARNEmptyResourceError(AWSRoleArnError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             1011, file=file, original_exception=original_exception, message=message
@@ -194,28 +194,28 @@ class AWSAssumeRoleError(AWSBaseException):
         )
 
 
-class AWSAccessKeyIDInvalid(AWSCredentialsError):
+class AWSAccessKeyIDInvalidError(AWSCredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             1013, file=file, original_exception=original_exception, message=message
         )
 
 
-class AWSSecretAccessKeyInvalid(AWSCredentialsError):
+class AWSSecretAccessKeyInvalidError(AWSCredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             1014, file=file, original_exception=original_exception, message=message
         )
 
 
-class AWSInvalidAccountCredentials(AWSCredentialsError):
+class AWSInvalidAccountCredentialsError(AWSCredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             1015, file=file, original_exception=original_exception, message=message
         )
 
 
-class AWSSessionTokenExpired(AWSCredentialsError):
+class AWSSessionTokenExpiredError(AWSCredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             1016, file=file, original_exception=original_exception, message=message

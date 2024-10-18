@@ -35,7 +35,7 @@ from prowler.providers.azure.exceptions.exceptions import (
     AzureInvalidAccountCredentialsError,
     AzureNoAuthenticationMethodError,
     AzureNoSubscriptionsError,
-    AzureNotTenantIdButClientIdAndClienSecret,
+    AzureNotTenantIdButClientIdAndClienSecretError,
     AzureNotValidClientIdError,
     AzureNotValidClientSecretError,
     AzureNotValidTenantIdError,
@@ -320,7 +320,7 @@ class AzureProvider(Provider):
                 )
         else:
             if not tenant_id:
-                raise AzureNotTenantIdButClientIdAndClienSecret(
+                raise AzureNotTenantIdButClientIdAndClienSecretError(
                     file=os.path.basename(__file__),
                     message="Tenant Id is required for Azure static credentials. Make sure you are using the correct credentials.",
                 )

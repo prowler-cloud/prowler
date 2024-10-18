@@ -24,21 +24,21 @@ from prowler.providers.aws.config import (
     ROLE_SESSION_NAME,
 )
 from prowler.providers.aws.exceptions.exceptions import (
-    AWSAccessKeyIDInvalid,
+    AWSAccessKeyIDInvalidError,
     AWSArgumentTypeValidationError,
     AWSAssumeRoleError,
     AWSClientError,
-    AWSIAMRoleARNEmptyResource,
-    AWSIAMRoleARNInvalidAccountID,
-    AWSIAMRoleARNInvalidResourceType,
-    AWSIAMRoleARNPartitionEmpty,
-    AWSIAMRoleARNRegionNotEmtpy,
-    AWSIAMRoleARNServiceNotIAMnorSTS,
-    AWSInvalidAccountCredentials,
+    AWSIAMRoleARNEmptyResourceError,
+    AWSIAMRoleARNInvalidAccountIDError,
+    AWSIAMRoleARNInvalidResourceTypeError,
+    AWSIAMRoleARNPartitionEmptyError,
+    AWSIAMRoleARNRegionNotEmtpyError,
+    AWSIAMRoleARNServiceNotIAMnorSTSError,
+    AWSInvalidAccountCredentialsError,
     AWSNoCredentialsError,
     AWSProfileNotFoundError,
-    AWSSecretAccessKeyInvalid,
-    AWSSessionTokenExpired,
+    AWSSecretAccessKeyInvalidError,
+    AWSSessionTokenExpiredError,
     AWSSetUpSessionError,
 )
 from prowler.providers.aws.lib.arn.arn import parse_iam_credentials_arn
@@ -974,17 +974,17 @@ class AwsProvider(Provider):
                 f"{client_error.__class__.__name__}[{client_error.__traceback__.tb_lineno}]: {client_error}"
             )
             if client_error.response["Error"]["Code"] == "InvalidClientTokenId":
-                raise AWSAccessKeyIDInvalid(
+                raise AWSAccessKeyIDInvalidError(
                     original_exception=client_error,
                     file=pathlib.Path(__file__).name,
                 )
             elif client_error.response["Error"]["Code"] == "SignatureDoesNotMatch":
-                raise AWSSecretAccessKeyInvalid(
+                raise AWSSecretAccessKeyInvalidError(
                     original_exception=client_error,
                     file=pathlib.Path(__file__).name,
                 )
             elif client_error.response["Error"]["Code"] == "ExpiredToken":
-                raise AWSSessionTokenExpired(
+                raise AWSSessionTokenExpiredError(
                     original_exception=client_error,
                     file=pathlib.Path(__file__).name,
                 )
@@ -1097,7 +1097,9 @@ class AwsProvider(Provider):
             caller_identity = AwsProvider.validate_credentials(session, aws_region)
             # Do an extra validation if the AWS account ID is provided
             if provider_id and caller_identity.account != provider_id:
-                raise AWSInvalidAccountCredentials(file=pathlib.Path(__file__).name)
+                raise AWSInvalidAccountCredentialsError(
+                    file=pathlib.Path(__file__).name
+                )
 
             return Connection(
                 is_connected=True,
@@ -1119,7 +1121,7 @@ class AwsProvider(Provider):
                 raise validation_error
             return Connection(error=validation_error)
 
-        except AWSIAMRoleARNRegionNotEmtpy as arn_region_not_empty_error:
+        except AWSIAMRoleARNRegionNotEmtpyError as arn_region_not_empty_error:
             logger.error(
                 f"{arn_region_not_empty_error.__class__.__name__}[{arn_region_not_empty_error.__traceback__.tb_lineno}]: {arn_region_not_empty_error}"
             )
@@ -1127,7 +1129,7 @@ class AwsProvider(Provider):
                 raise arn_region_not_empty_error
             return Connection(error=arn_region_not_empty_error)
 
-        except AWSIAMRoleARNPartitionEmpty as arn_partition_empty_error:
+        except AWSIAMRoleARNPartitionEmptyError as arn_partition_empty_error:
             logger.error(
                 f"{arn_partition_empty_error.__class__.__name__}[{arn_partition_empty_error.__traceback__.tb_lineno}]: {arn_partition_empty_error}"
             )
@@ -1135,7 +1137,7 @@ class AwsProvider(Provider):
                 raise arn_partition_empty_error
             return Connection(error=arn_partition_empty_error)
 
-        except AWSIAMRoleARNServiceNotIAMnorSTS as arn_service_not_iam_sts_error:
+        except AWSIAMRoleARNServiceNotIAMnorSTSError as arn_service_not_iam_sts_error:
             logger.error(
                 f"{arn_service_not_iam_sts_error.__class__.__name__}[{arn_service_not_iam_sts_error.__traceback__.tb_lineno}]: {arn_service_not_iam_sts_error}"
             )
@@ -1143,7 +1145,7 @@ class AwsProvider(Provider):
                 raise arn_service_not_iam_sts_error
             return Connection(error=arn_service_not_iam_sts_error)
 
-        except AWSIAMRoleARNInvalidAccountID as arn_invalid_account_id_error:
+        except AWSIAMRoleARNInvalidAccountIDError as arn_invalid_account_id_error:
             logger.error(
                 f"{arn_invalid_account_id_error.__class__.__name__}[{arn_invalid_account_id_error.__traceback__.tb_lineno}]: {arn_invalid_account_id_error}"
             )
@@ -1151,7 +1153,7 @@ class AwsProvider(Provider):
                 raise arn_invalid_account_id_error
             return Connection(error=arn_invalid_account_id_error)
 
-        except AWSIAMRoleARNInvalidResourceType as arn_invalid_resource_type_error:
+        except AWSIAMRoleARNInvalidResourceTypeError as arn_invalid_resource_type_error:
             logger.error(
                 f"{arn_invalid_resource_type_error.__class__.__name__}[{arn_invalid_resource_type_error.__traceback__.tb_lineno}]: {arn_invalid_resource_type_error}"
             )
@@ -1159,7 +1161,7 @@ class AwsProvider(Provider):
                 raise arn_invalid_resource_type_error
             return Connection(error=arn_invalid_resource_type_error)
 
-        except AWSIAMRoleARNEmptyResource as arn_empty_resource_error:
+        except AWSIAMRoleARNEmptyResourceError as arn_empty_resource_error:
             logger.error(
                 f"{arn_empty_resource_error.__class__.__name__}[{arn_empty_resource_error.__traceback__.tb_lineno}]: {arn_empty_resource_error}"
             )
@@ -1207,7 +1209,7 @@ class AwsProvider(Provider):
                 ) from no_credentials_error
             return Connection(error=no_credentials_error)
 
-        except AWSAccessKeyIDInvalid as access_key_id_invalid_error:
+        except AWSAccessKeyIDInvalidError as access_key_id_invalid_error:
             logger.error(
                 f"{access_key_id_invalid_error.__class__.__name__}[{access_key_id_invalid_error.__traceback__.tb_lineno}]: {access_key_id_invalid_error}"
             )
@@ -1215,7 +1217,7 @@ class AwsProvider(Provider):
                 raise access_key_id_invalid_error
             return Connection(error=access_key_id_invalid_error)
 
-        except AWSSecretAccessKeyInvalid as secret_access_key_invalid_error:
+        except AWSSecretAccessKeyInvalidError as secret_access_key_invalid_error:
             logger.error(
                 f"{secret_access_key_invalid_error.__class__.__name__}[{secret_access_key_invalid_error.__traceback__.tb_lineno}]: {secret_access_key_invalid_error}"
             )
@@ -1223,7 +1225,7 @@ class AwsProvider(Provider):
                 raise secret_access_key_invalid_error
             return Connection(error=secret_access_key_invalid_error)
 
-        except AWSInvalidAccountCredentials as invalid_account_credentials_error:
+        except AWSInvalidAccountCredentialsError as invalid_account_credentials_error:
             logger.error(
                 f"{invalid_account_credentials_error.__class__.__name__}[{invalid_account_credentials_error.__traceback__.tb_lineno}]: {invalid_account_credentials_error}"
             )
@@ -1231,7 +1233,7 @@ class AwsProvider(Provider):
                 raise invalid_account_credentials_error
             return Connection(error=invalid_account_credentials_error)
 
-        except AWSSessionTokenExpired as session_token_expired:
+        except AWSSessionTokenExpiredError as session_token_expired:
             logger.error(
                 f"{session_token_expired.__class__.__name__}[{session_token_expired.__traceback__.tb_lineno}]: {session_token_expired}"
             )
