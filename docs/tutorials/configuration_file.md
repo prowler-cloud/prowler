@@ -58,6 +58,7 @@ The following list includes all the AWS checks with configurable variables that 
 | `securityhub_enabled`                                         | `mute_non_default_regions`                       | Boolean         |
 | `secretsmanager_secret_unused`                                | `max_days_secret_unused`                         | Integer         |
 | `ssm_document_secrets`                                        | `secrets_ignore_patterns`                        | List of Strings |
+| `stepfunctions_statemachine_logging_enabled`                  | `statemachines_log_level`                        | String          |
 | `trustedadvisor_premium_support_plan_subscribed`              | `verify_premium_support_plans`                   | Boolean         |
 | `vpc_endpoint_connections_trust_boundaries`                   | `trusted_account_ids`                            | List of Strings |
 | `vpc_endpoint_services_allowed_principals_trust_boundaries`   | `trusted_account_ids`                            | List of Strings |
