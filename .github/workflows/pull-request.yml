@@ -43,11 +43,10 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: "poetry"
-      - name: Check for detect-secrets directory
-        run: pwd
       - name: Install dependencies
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
+          cd ..
           poetry install
           poetry run pip list
           VERSION=$(curl --silent "https://api.github.com/repos/hadolint/hadolint/releases/latest" | \
@@ -55,7 +54,6 @@ jobs:
             sed -E 's/.*"v([^"]+)".*/\1/' \
             ) && curl -L -o /tmp/hadolint "https://github.com/hadolint/hadolint/releases/download/v${VERSION}/hadolint-Linux-x86_64" \
             && chmod +x /tmp/hadolint
-        working-directory: "p"
       - name: Poetry check
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
