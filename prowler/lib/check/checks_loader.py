@@ -1,8 +1,7 @@
 from colorama import Fore, Style
 
-from prowler.config.config import valid_severities
 from prowler.lib.check.check import parse_checks_from_file
-from prowler.lib.check.models import CheckMetadata
+from prowler.lib.check.models import CheckMetadata, Severity
 from prowler.lib.logger import logger
 
 
