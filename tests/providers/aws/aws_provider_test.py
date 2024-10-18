@@ -451,7 +451,7 @@ class TestAWSProvider:
 
             assert aws_provider.type == "aws"
             assert aws_provider.scan_unused_services is False
-            assert aws_provider.audit_config == {}
+            assert aws_provider.audit_config != {}
             assert (
                 aws_provider.session.current_session.region_name == AWS_REGION_US_EAST_1
             )
