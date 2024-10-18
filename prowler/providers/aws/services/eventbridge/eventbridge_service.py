@@ -69,9 +69,9 @@ class EventBridge(AWSService):
                         name=endpoint.get("Name", ""),
                         arn=endpoint_arn,
                         region=regional_client.region,
-                        replication_state=endpoint.get(
-                            "ReplicationConfig", {}
-                        ).get("State", "DISABLED"),
+                        replication_state=endpoint.get("ReplicationConfig", {}).get(
+                            "State", "DISABLED"
+                        ),
                     )
         except Exception as error:
             logger.error(
