@@ -1,6 +1,6 @@
-from typing import Optional
+from typing import Dict, List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -16,7 +16,12 @@ class WAF(AWSService):
         self.web_acls = {}
         self._list_rules()
         self.__threading_call__(self._get_rule, self.rules.values())
-        self.__threading_call__(self._list_web_acls)
+        self._list_rule_groups()
+        self.__threading_call__(
+            self._list_activated_rules_in_rule_group, self.rule_groups.values()
+        )
+        self._list_web_acls()
+        self.__threading_call__(self._get_web_acl, self.web_acls.values())
         self.__threading_call__(
             self._list_resources_for_web_acl, self.web_acls.values()
         )
@@ -74,11 +79,9 @@ class WAF(AWSService):
     def _list_activated_rules_in_rule_group(self, rule_group):
         logger.info(f"WAF - Listing activated rules in Rule Group {rule_group.name}...")
         try:
-            for rule in (
-                self.regional_clients[rule_group.region]
-                .list_activated_rules_in_rule_group(RuleGroupId=rule_group.id)
-                .get("ActivatedRules", [])
-            ):
+            for rule in self.client.list_activated_rules_in_rule_group(
+                RuleGroupId=rule_group.id
+            ).get("ActivatedRules", []):
                 rule_arn = f"arn:{self.audited_partition}:waf:{self.audited_account}:rule/{rule.get('RuleId', '')}"
                 rule_group.rules.append(self.rules[rule_arn])
 
@@ -109,7 +112,7 @@ class WAF(AWSService):
             )
 
     def _get_web_acl(self, acl):
-        logger.info(f"WAF - Getting Globall Web ACL {acl.name}...")
+        logger.info(f"WAF - Getting Global Web ACL {acl.name}...")
         try:
             get_web_acl = self.client.get_web_acl(WebACLId=acl.id)
             for rule in get_web_acl.get("WebACL", {}).get("Rules", []):
@@ -118,7 +121,7 @@ class WAF(AWSService):
                     rule_group_arn = f"arn:{self.audited_partition}:waf:{self.audited_account}:rulegroup/{rule_id}"
                     acl.rule_groups.append(self.rule_groups[rule_group_arn])
                 else:
-                    rule_arn = f"arn:{self.audited_partition}:waf::{self.audited_account}:rule/{rule_id}"
+                    rule_arn = f"arn:{self.audited_partition}:waf:{self.audited_account}:rule/{rule_id}"
                     acl.rules.append(self.rules[rule_arn])
 
         except Exception as error:
@@ -127,7 +130,7 @@ class WAF(AWSService):
             )
 
     def _list_resources_for_web_acl(self):
-        logger.info("WAFRegional - Describing resources...")
+        logger.info("WAF Global - Describing resources...")
         try:
             for acl in self.web_acls.values():
                 if acl.region == "us-east-1":
@@ -295,8 +298,8 @@ class Rule(BaseModel):
     id: str
     region: str
     name: str
-    predicates: list[Predicate] = []
-    tags: Optional[list] = []
+    predicates: Optional[List[Predicate]] = Field(default_factory=list)
+    tags: Optional[List[Dict[str, str]]] = Field(default_factory=list)
 
 
 class RuleGroup(BaseModel):
@@ -306,8 +309,8 @@ class RuleGroup(BaseModel):
     id: str
     region: str
     name: str
-    rules: list[Rule] = []
-    tags: Optional[list] = []
+    rules: List[Rule] = Field(default_factory=list)
+    tags: Optional[List[Dict[str, str]]] = Field(default_factory=list)
 
 
 class WebAcl(BaseModel):
@@ -316,8 +319,8 @@ class WebAcl(BaseModel):
     arn: str
     name: str
     id: str
-    albs: list[str]
+    albs: List[str] = Field(default_factory=list)
     region: str
-    rules: list[Rule] = []
-    rule_groups: list[RuleGroup] = []
-    tags: Optional[list] = []
+    rules: List[Rule] = Field(default_factory=list)
+    rule_groups: List[RuleGroup] = Field(default_factory=list)
+    tags: Optional[List[Dict[str, str]]] = Field(default_factory=list)
