@@ -23,7 +23,7 @@ def load_checks_to_execute(
         # Local subsets
         checks_to_execute = set()
         check_aliases = {}
-        check_severities = {key: [] for key in valid_severities}
+        check_severities = {severity.value: [] for severity in Severity}
         check_categories = {}
 
         # First, loop over the bulk_checks_metadata to extract the needed subsets
