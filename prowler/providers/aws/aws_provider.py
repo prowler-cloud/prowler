@@ -13,7 +13,12 @@ from colorama import Fore, Style
 from pytz import utc
 from tzlocal import get_localzone
 
-from prowler.config.config import aws_services_json_file, get_default_mute_file_path
+from prowler.config.config import (
+    aws_services_json_file,
+    default_config_file_path,
+    get_default_mute_file_path,
+    load_and_validate_config_file,
+)
 from prowler.lib.check.utils import list_modules, recover_checks_from_service
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import open_file, parse_json_file, print_boxes
@@ -71,6 +76,7 @@ class AwsProvider(Provider):
     _audit_config: dict
     _scan_unused_services: bool = False
     _enabled_regions: set = set()
+    _mutelist: AWSMutelist
     # TODO: this is not optional, enforce for all providers
     audit_metadata: Audit_Metadata
 
@@ -88,8 +94,11 @@ class AwsProvider(Provider):
         scan_unused_services: bool = False,
         resource_tags: list[str] = [],
         resource_arn: list[str] = [],
-        audit_config: dict = {},
+        config_path: str = None,
+        config_content: dict = None,
         fixer_config: dict = {},
+        mutelist_path: str = None,
+        mutelist_content: dict = None,
         aws_access_key_id: str = None,
         aws_secret_access_key: str = None,
         aws_session_token: Optional[str] = None,
@@ -110,8 +119,11 @@ class AwsProvider(Provider):
             - scan_unused_services: A boolean indicating whether to scan unused services. False by default.
             - resource_tags: A list of tags to filter the resources to audit.
             - resource_arn: A list of ARNs of the resources to audit.
-            - audit_config: The audit configuration.
+            - config_path: The path to the configuration file.
+            - config_content: The content of the configuration file.
             - fixer_config: The fixer configuration.
+            - mutelist_path: The path to the mutelist file.
+            - mutelist_content: The content of the mutelist file.
             - aws_access_key_id: The AWS access key ID.
             - aws_secret_access_key: The AWS secret access key.
             - aws_session_token: The AWS session token, optional.
@@ -281,9 +293,31 @@ class AwsProvider(Provider):
         self._scan_unused_services = scan_unused_services
 
         # Audit Config
-        self._audit_config = audit_config
+        if config_content:
+            self._audit_config = config_content
+        else:
+            if not config_path:
+                config_path = default_config_file_path
+            self._audit_config = load_and_validate_config_file(self._type, config_path)
+
         # Fixer Config
         self._fixer_config = fixer_config
+
+        # Mutelist
+        if mutelist_content:
+            self._mutelist = AWSMutelist(
+                mutelist_content=mutelist_content,
+                session=self._session.current_session,
+                aws_account_id=self._identity.account,
+            )
+        else:
+            if not mutelist_path:
+                mutelist_path = get_default_mute_file_path(self.type)
+            self._mutelist = AWSMutelist(
+                mutelist_path=mutelist_path,
+                session=self._session.current_session,
+                aws_account_id=self._identity.account,
+            )
 
         Provider.set_global_provider(self)
 
@@ -325,23 +359,6 @@ class AwsProvider(Provider):
         mutelist method returns the provider's mutelist.
         """
         return self._mutelist
-
-    # TODO: this is going to be called from another place soon, since the provider
-    # shouldn't hold the mutelist
-    @mutelist.setter
-    def mutelist(self, mutelist_path):
-        """
-        mutelist.setter sets the provider's mutelist.
-        """
-        # Set default mutelist path if none is set
-        if not mutelist_path:
-            mutelist_path = get_default_mute_file_path(self.type)
-
-        self._mutelist = AWSMutelist(
-            mutelist_path=mutelist_path,
-            session=self._session.current_session,
-            aws_account_id=self._identity.account,
-        )
 
     @property
     def get_output_mapping(self):

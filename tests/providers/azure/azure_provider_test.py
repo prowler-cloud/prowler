@@ -35,7 +35,6 @@ class TestAzureProvider:
         client_id = None
         client_secret = None
 
-        audit_config = load_and_validate_config_file("azure", default_config_file_path)
         fixer_config = load_and_validate_config_file(
             "azure", default_fixer_config_file_path
         )
@@ -56,7 +55,7 @@ class TestAzureProvider:
                 tenant_id,
                 azure_region,
                 subscription_id,
-                audit_config=audit_config,
+                config_path=default_config_file_path,
                 fixer_config=fixer_config,
                 client_id=client_id,
                 client_secret=client_secret,

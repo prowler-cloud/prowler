@@ -15,7 +15,6 @@ from moto import mock_aws
 from pytest import raises
 from tzlocal import get_localzone
 
-from prowler.config.config import load_and_validate_config_file
 from prowler.providers.aws.aws_provider import (
     AwsProvider,
     get_aws_available_regions,
@@ -258,7 +257,7 @@ class TestAWSProvider:
 
         assert aws_provider.type == "aws"
         assert aws_provider.scan_unused_services is True
-        assert aws_provider.audit_config == {}
+        assert aws_provider.audit_config
         assert aws_provider.session.current_session.region_name == AWS_REGION_US_EAST_1
 
     @mock_aws
@@ -452,7 +451,7 @@ class TestAWSProvider:
 
             assert aws_provider.type == "aws"
             assert aws_provider.scan_unused_services is False
-            assert aws_provider.audit_config == {}
+            assert aws_provider.audit_config != {}
             assert (
                 aws_provider.session.current_session.region_name == AWS_REGION_US_EAST_1
             )
@@ -651,9 +650,8 @@ aws:
         config_file_input.write(bytes(config, encoding="raw_unicode_escape"))
         config_file_input.close()
         config_file_input = config_file_input.name
-        audit_config = load_and_validate_config_file("aws", config_file_input)
         aws_provider = AwsProvider(
-            audit_config=audit_config,
+            config_path=config_file_input,
         )
 
         os.remove(config_file_input)
@@ -688,9 +686,7 @@ aws:
         with open(mutelist_file.name, "w") as mutelist_file:
             mutelist_file.write(json.dumps(mutelist, indent=4))
 
-        aws_provider = AwsProvider()
-
-        aws_provider.mutelist = mutelist_file.name
+        aws_provider = AwsProvider(mutelist_path=mutelist_file.name)
 
         os.remove(mutelist_file.name)
 
@@ -700,13 +696,12 @@ aws:
 
     @mock_aws
     def test_aws_provider_mutelist_none(self):
-        aws_provider = AwsProvider()
 
         with patch(
             "prowler.providers.aws.aws_provider.get_default_mute_file_path",
             return_value=None,
         ):
-            aws_provider.mutelist = None
+            aws_provider = AwsProvider(mutelist_path=None)
 
         assert isinstance(aws_provider.mutelist, AWSMutelist)
         assert aws_provider.mutelist.mutelist == {}
@@ -754,9 +749,8 @@ aws:
             )
         )
 
-        aws_provider = AwsProvider()
+        aws_provider = AwsProvider(mutelist_path=mutelist_bucket_object_uri)
 
-        aws_provider.mutelist = mutelist_bucket_object_uri
         os.remove(mutelist_file.name)
 
         assert isinstance(aws_provider.mutelist, AWSMutelist)
@@ -794,7 +788,7 @@ aws:
             "prowler.providers.aws.lib.mutelist.mutelist.AWSMutelist.get_mutelist_file_from_lambda",
             return_value=mutelist["Mutelist"],
         ):
-            aws_provider.mutelist = lambda_mutelist_path
+            aws_provider = AwsProvider(mutelist_path=lambda_mutelist_path)
 
         assert isinstance(aws_provider.mutelist, AWSMutelist)
         assert aws_provider.mutelist.mutelist == mutelist["Mutelist"]
@@ -831,7 +825,7 @@ aws:
             "prowler.providers.aws.lib.mutelist.mutelist.AWSMutelist.get_mutelist_file_from_dynamodb",
             return_value=mutelist["Mutelist"],
         ):
-            aws_provider.mutelist = dynamodb_mutelist_path
+            aws_provider = AwsProvider(mutelist_path=dynamodb_mutelist_path)
 
         assert isinstance(aws_provider.mutelist, AWSMutelist)
         assert aws_provider.mutelist.mutelist == mutelist["Mutelist"]
