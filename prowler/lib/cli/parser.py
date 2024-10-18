@@ -10,9 +10,9 @@ from prowler.config.config import (
     default_config_file_path,
     default_fixer_config_file_path,
     default_output_directory,
-    finding_statuses,
 )
 from prowler.lib.check.models import Severity
+from prowler.lib.outputs.finding import Status
 from prowler.providers.common.arguments import (
     init_providers_parser,
     validate_provider_arguments,
@@ -138,8 +138,8 @@ Detailed documentation at https://docs.prowler.com
         common_outputs_parser.add_argument(
             "--status",
             nargs="+",
-            help=f"Filter by the status of the findings {finding_statuses}",
-            choices=finding_statuses,
+            help=f"Filter by the status of the findings {[status.value for status in Status]}",
+            choices=[status.value for status in Status],
         )
         common_outputs_parser.add_argument(
             "--output-formats",
