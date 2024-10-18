@@ -98,4 +98,3 @@ class ContainerRegistryInfo:
     network_rule_set: NetworkRuleSet
     monitor_diagnostic_settings: list[DiagnosticSetting]
     private_endpoint_connections: list[PrivateEndpointConnection]
-    monitor_diagnostic_settings: list[DiagnosticSetting]
