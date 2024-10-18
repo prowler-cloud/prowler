@@ -1,7 +1,7 @@
 from prowler.exceptions.exceptions import ProwlerException
 
 
-# Exceptions codes from 4000 to 4999 are reserved for Azure exceptions
+# Exceptions codes from 4000 to 4999 are reserved for Kubernetes exceptions
 class KubernetesBaseException(ProwlerException):
     """Base class for Kubernetes errors."""
 

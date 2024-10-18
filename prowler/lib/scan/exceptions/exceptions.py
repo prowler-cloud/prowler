@@ -1,7 +1,7 @@
 from prowler.exceptions.exceptions import ProwlerException
 
 
-# Exceptions codes from 5000 to 5999 are reserved for Azure exceptions
+# Exceptions codes from 5000 to 5999 are reserved for Scan exceptions
 class ScanBaseException(ProwlerException):
     """Base class for Scan errors."""
 

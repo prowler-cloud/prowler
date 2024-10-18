@@ -1,7 +1,7 @@
 from prowler.exceptions.exceptions import ProwlerException
 
 
-# Exceptions codes from 3000 to 3999 are reserved for Azure exceptions
+# Exceptions codes from 3000 to 3999 are reserved for GCP exceptions
 class GCPBaseException(ProwlerException):
     """Base class for GCP Errors."""
 
