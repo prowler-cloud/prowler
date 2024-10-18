@@ -62,7 +62,7 @@ jobs:
       - name: Lint with flake8
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
-          poetry run flake8 . --ignore=E266,W503,E203,E501,W605,E128 --exclude contrib
+          poetry run flake8 . --ignore=E266,W503,E203,E501,W605,E128 --exclude contrib prowler/lib/detect-secrets
       - name: Checking format with black
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
