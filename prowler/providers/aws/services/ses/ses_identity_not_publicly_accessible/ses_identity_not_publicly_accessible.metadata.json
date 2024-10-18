@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
-  "CheckID": "ses_identities_not_publicly_accessible",
-  "CheckTitle": "Check if SES identities (domains or email addresses) have public policies",
+  "CheckID": "ses_identity_not_publicly_accessible",
+  "CheckTitle": "Ensure that SES identities are not publicly accessible",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices"
   ],
@@ -10,19 +10,19 @@
   "ResourceIdTemplate": "arn:aws:ses:region:account-id:identity/<IDENTITY-NAME>",
   "Severity": "high",
   "ResourceType": "AwsSesIdentity",
-  "Description": "Check if SES identities (domains or email addresses) have public resource policies.",
+  "Description": "This control checks whether SES identities are not publicly accessible via resource policies.",
   "Risk": "Publicly accessible SES identities can allow unauthorized email sending or receiving, leading to potential abuse or phishing attacks.",
-  "RelatedUrl": "https://docs.aws.amazon.com/ses/latest/dg/ses-identity-policies.html",
+  "RelatedUrl": "https://docs.aws.amazon.com/ses/latest/dg/identity-authorization-policies.html",
   "Remediation": {
     "Code": {
-      "CLI": "aws ses get-identity-policies --identity <IDENTITY-NAME>",
+      "CLI": "aws ses delete-email-identity-policy --identity <IDENTITY-NAME> --policy-name <POLICY-NAME>",
       "NativeIaC": "",
-      "Other": "https://docs.aws.amazon.com/ses/latest/dg/ses-identity-policies.html",
+      "Other": "",
       "Terraform": ""
     },
     "Recommendation": {
       "Text": "Review and restrict SES identity policies to prevent public access. Ensure policies follow the Principle of Least Privilege.",
-      "Url": "https://docs.aws.amazon.com/ses/latest/dg/ses-identity-policies.html"
+      "Url": "https://docs.aws.amazon.com/ses/latest/dg/policy-anatomy.html"
     }
   },
   "Categories": [

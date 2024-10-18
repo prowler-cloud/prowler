@@ -18,7 +18,10 @@ class glue_data_catalogs_metadata_encryption_enabled(Check):
                 report.status_extended = (
                     "Glue data catalog settings have metadata encryption disabled."
                 )
-                if data_catalog.encryption_settings.mode == "SSE-KMS":
+                if (
+                    data_catalog.encryption_settings
+                    and data_catalog.encryption_settings.mode == "SSE-KMS"
+                ):
                     report.status = "PASS"
                     report.status_extended = f"Glue data catalog settings have metadata encryption enabled with KMS key {data_catalog.encryption_settings.kms_id}."
                 findings.append(report)

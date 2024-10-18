@@ -8,7 +8,6 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################################ SQS
 class SES(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
@@ -24,7 +23,7 @@ class SES(AWSService):
         try:
             response = regional_client.list_email_identities()
             for email_identity in response["EmailIdentities"]:
-                identity_arn = f"arn:{self.audited_partition}:ses:{regional_client.region}:{self.audited_account}:identity/{email_identity["IdentityName"]}"
+                identity_arn = f"arn:{self.audited_partition}:ses:{regional_client.region}:{self.audited_account}:identity/{email_identity['IdentityName']}"
                 if not self.audit_resources or (
                     is_resource_filtered(identity_arn, self.audit_resources)
                 ):
@@ -47,7 +46,7 @@ class SES(AWSService):
                 identity_attributes = regional_client.get_email_identity(
                     EmailIdentity=identity.name
                 )
-                for policy_name, content in identity_attributes["Policies"].items():
+                for _, content in identity_attributes["Policies"].items():
                     identity.policy = loads(content)
                 identity.tags = identity_attributes["Tags"]
 

@@ -19,7 +19,10 @@ class glue_data_catalogs_connection_passwords_encryption_enabled(Check):
                 report.status_extended = (
                     "Glue data catalog connection password is not encrypted."
                 )
-                if data_catalog.encryption_settings.password_encryption:
+                if (
+                    data_catalog.encryption_settings
+                    and data_catalog.encryption_settings.password_encryption
+                ):
                     report.status = "PASS"
                     report.status_extended = f"Glue data catalog connection password is encrypted with KMS key {data_catalog.encryption_settings.password_kms_id}."
                 findings.append(report)

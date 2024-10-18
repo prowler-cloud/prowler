@@ -64,14 +64,14 @@ class Test_ses_identities_not_publicly_accessible:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.ses.ses_identities_not_publicly_accessible.ses_identities_not_publicly_accessible.ses_client",
+            "prowler.providers.aws.services.ses.ses_identity_not_publicly_accessible.ses_identity_not_publicly_accessible.ses_client",
             new=SES(aws_provider),
         ):
-            from prowler.providers.aws.services.ses.ses_identities_not_publicly_accessible.ses_identities_not_publicly_accessible import (
-                ses_identities_not_publicly_accessible,
+            from prowler.providers.aws.services.ses.ses_identity_not_publicly_accessible.ses_identity_not_publicly_accessible import (
+                ses_identity_not_publicly_accessible,
             )
 
-            check = ses_identities_not_publicly_accessible()
+            check = ses_identity_not_publicly_accessible()
             result = check.execute()
             assert len(result) == 0
 
@@ -85,20 +85,20 @@ class Test_ses_identities_not_publicly_accessible:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.ses.ses_identities_not_publicly_accessible.ses_identities_not_publicly_accessible.ses_client",
+            "prowler.providers.aws.services.ses.ses_identity_not_publicly_accessible.ses_identity_not_publicly_accessible.ses_client",
             new=SES(aws_provider),
         ):
-            from prowler.providers.aws.services.ses.ses_identities_not_publicly_accessible.ses_identities_not_publicly_accessible import (
-                ses_identities_not_publicly_accessible,
+            from prowler.providers.aws.services.ses.ses_identity_not_publicly_accessible.ses_identity_not_publicly_accessible import (
+                ses_identity_not_publicly_accessible,
             )
 
-            check = ses_identities_not_publicly_accessible()
+            check = ses_identity_not_publicly_accessible()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "SES identity test-email-identity-not-public does not have a public policy."
+                == "SES identity test-email-identity-not-public is not publicly accessible."
             )
             assert result[0].resource_id == "test-email-identity-not-public"
             assert (
@@ -118,20 +118,20 @@ class Test_ses_identities_not_publicly_accessible:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.ses.ses_identities_not_publicly_accessible.ses_identities_not_publicly_accessible.ses_client",
+            "prowler.providers.aws.services.ses.ses_identity_not_publicly_accessible.ses_identity_not_publicly_accessible.ses_client",
             new=SES(aws_provider),
         ):
-            from prowler.providers.aws.services.ses.ses_identities_not_publicly_accessible.ses_identities_not_publicly_accessible import (
-                ses_identities_not_publicly_accessible,
+            from prowler.providers.aws.services.ses.ses_identity_not_publicly_accessible.ses_identity_not_publicly_accessible import (
+                ses_identity_not_publicly_accessible,
             )
 
-            check = ses_identities_not_publicly_accessible()
+            check = ses_identity_not_publicly_accessible()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "SES identity test-email-identity-public has a public policy."
+                == "SES identity test-email-identity-public is publicly accessible due to its resource policy."
             )
             assert result[0].resource_id == "test-email-identity-public"
             assert (

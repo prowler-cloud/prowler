@@ -51,7 +51,7 @@ def mock_make_api_call_v2(self, operation_name, kwarg):
         }
     elif operation_name == "GetResourcePolicy":
         return {
-            "PolicyInJson": '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":"*","Action":"secretsmanager:GetSecretValue","Resource":"*"}]}',
+            "PolicyInJson": '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":"*","Action":"glue:*","Resource":"*"}]}',
         }
     return make_api_call(self, operation_name, kwarg)
 
@@ -103,7 +103,7 @@ class Test_glue_data_catalogs_not_publicly_accessible:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Glue Data Catalog in region {AWS_REGION_EU_WEST_1} does not have a public policy."
+                == "Glue Data Catalog is not publicly accessible."
             )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert (
@@ -136,7 +136,7 @@ class Test_glue_data_catalogs_not_publicly_accessible:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Glue Data Catalog in region {AWS_REGION_EU_WEST_1} has a public policy."
+                == "Glue Data Catalog is publicly accessible due to its resource policy."
             )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert (

@@ -14,10 +14,14 @@ class glue_data_catalogs_not_publicly_accessible(Check):
                 data_catalog.region
             )
             report.status = "PASS"
-            report.status_extended = f"Glue Data Catalog in region {data_catalog.region} does not have a public policy."
-            if is_policy_public(data_catalog.policy, glue_client.audited_account):
+            report.status_extended = "Glue Data Catalog is not publicly accessible."
+            if is_policy_public(
+                data_catalog.policy,
+                glue_client.audited_account,
+                is_cross_account_allowed=False,
+            ):
                 report.status = "FAIL"
-                report.status_extended = f"Glue Data Catalog in region {data_catalog.region} has a public policy."
+                report.status_extended = "Glue Data Catalog is publicly accessible due to its resource policy."
 
             findings.append(report)
 

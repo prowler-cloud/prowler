@@ -16,13 +16,15 @@ class secretsmanager_not_publicly_accessible(Check):
             report.resource_tags = secret.tags
             report.status = "PASS"
             report.status_extended = (
-                f"SecretsManager secret {secret.name} does not have a public policy."
+                f"SecretsManager secret {secret.name} is not publicly accessible."
             )
-            if is_policy_public(secret.policy, secretsmanager_client.audited_account):
+            if is_policy_public(
+                secret.policy,
+                secretsmanager_client.audited_account,
+                is_cross_account_allowed=False,
+            ):
                 report.status = "FAIL"
-                report.status_extended = (
-                    f"SecretsManager secret {secret.name} has a public policy."
-                )
+                report.status_extended = f"SecretsManager secret {secret.name} is publicly accessible due to its resource policy."
 
             findings.append(report)
 

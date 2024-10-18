@@ -69,7 +69,7 @@ class Test_secretsmanager_not_publicly_accessible:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"SecretsManager secret {secret['Name']} does not have a public policy."
+                == f"SecretsManager secret {secret['Name']} is not publicly accessible."
             )
 
     @mock_aws
@@ -109,5 +109,5 @@ class Test_secretsmanager_not_publicly_accessible:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"SecretsManager secret {secret['Name']} has a public policy."
+                == f"SecretsManager secret {secret['Name']} is publicly accessible due to its resource policy."
             )
