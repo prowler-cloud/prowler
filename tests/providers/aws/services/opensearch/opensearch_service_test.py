@@ -2,7 +2,6 @@ from json import dumps
 from unittest.mock import patch
 
 import botocore
-from boto3 import client
 from moto import mock_aws
 
 from prowler.providers.aws.services.opensearch.opensearch_service import (
@@ -58,6 +57,43 @@ def mock_make_api_call(self, operation_name, kwarg):
                 },
             }
         }
+    if operation_name == "DescribeDomain":
+        return {
+            "DomainStatus": {
+                "ARN": domain_arn,
+                "Endpoints": {
+                    "vpc": "vpc-endpoint-h2dsd34efgyghrtguk5gt6j2foh4.eu-west-1.es.amazonaws.com"
+                },
+                "EngineVersion": "opensearch-version1",
+                "VPCOptions": {
+                    "VPCId": "test-vpc-id",
+                },
+                "ClusterConfig": {
+                    "DedicatedMasterEnabled": True,
+                    "DedicatedMasterCount": 1,
+                    "DedicatedMasterType": "m3.medium.search",
+                    "InstanceCount": 1,
+                    "ZoneAwarenessEnabled": True,
+                },
+                "CognitoOptions": {"Enabled": True},
+                "EncryptionAtRestOptions": {"Enabled": True},
+                "NodeToNodeEncryptionOptions": {"Enabled": True},
+                "AdvancedOptions": {"string": "string"},
+                "LogPublishingOptions": {
+                    "string": {
+                        "CloudWatchLogsLogGroupArn": "string",
+                        "Enabled": True | False,
+                    }
+                },
+                "ServiceSoftwareOptions": {"UpdateAvailable": True},
+                "DomainEndpointOptions": {"EnforceHTTPS": True},
+                "AdvancedSecurityOptions": {
+                    "Enabled": True,
+                    "InternalUserDatabaseEnabled": True,
+                    "SAMLOptions": {"Enabled": True},
+                },
+            }
+        }
     if operation_name == "ListTags":
         return {
             "TagList": [
@@ -80,7 +116,7 @@ def mock_generate_regional_clients(provider, service):
     "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
     new=mock_generate_regional_clients,
 )
-class Test_OpenSearchService_Service:
+class TestOpenSearchServiceService:
     # Test OpenSearchService Service
     def test_service(self):
         aws_provider = set_mocked_aws_provider([])
@@ -132,53 +168,31 @@ class Test_OpenSearchService_Service:
     # Test OpenSearchService describe domain
     @mock_aws
     def test_describe_domain(self):
-        opensearch_client = client("opensearch", region_name=AWS_REGION_EU_WEST_1)
-        domain = opensearch_client.create_domain(
-            DomainName=test_domain_name,
-            EncryptionAtRestOptions={"Enabled": True},
-            ClusterConfig={"InstanceCount": 1, "ZoneAwarenessEnabled": True},
-            NodeToNodeEncryptionOptions={"Enabled": True},
-            AdvancedSecurityOptions={
-                "Enabled": True,
-                "InternalUserDatabaseEnabled": True,
-                "SAMLOptions": {"Enabled": True},
-            },
-            CognitoOptions={"Enabled": True},
-            VPCOptions={
-                "SubnetIds": ["test-subnet-id"],
-                "SecurityGroupIds": ["test-security-group-id"],
-            },
-            DomainEndpointOptions={"EnforceHTTPS": True},
-            AccessPolicies=policy_json,
-            EngineVersion="opensearch-version1",
-            TagList=[
-                {"Key": "test", "Value": "test"},
-            ],
-        )
         aws_provider = set_mocked_aws_provider([])
         opensearch = OpenSearchService(aws_provider)
-        domain_arn = domain["DomainStatus"]["ARN"]
         assert len(opensearch.opensearch_domains) == 1
         assert opensearch.opensearch_domains[domain_arn].name == test_domain_name
         assert opensearch.opensearch_domains[domain_arn].region == AWS_REGION_EU_WEST_1
         assert opensearch.opensearch_domains[domain_arn].arn == domain_arn
         assert opensearch.opensearch_domains[domain_arn].access_policy
         assert opensearch.opensearch_domains[domain_arn].vpc_endpoints == [
-            "test.eu-west-1.es.amazonaws.com"
+            "vpc-endpoint-h2dsd34efgyghrtguk5gt6j2foh4.eu-west-1.es.amazonaws.com"
         ]
-        assert not opensearch.opensearch_domains[domain_arn].vpc_id
+        assert opensearch.opensearch_domains[domain_arn].vpc_id == "test-vpc-id"
         assert opensearch.opensearch_domains[domain_arn].cognito_options
         assert opensearch.opensearch_domains[domain_arn].encryption_at_rest
         assert opensearch.opensearch_domains[domain_arn].node_to_node_encryption
         assert opensearch.opensearch_domains[domain_arn].enforce_https
         assert opensearch.opensearch_domains[domain_arn].internal_user_database
         assert opensearch.opensearch_domains[domain_arn].saml_enabled
-        assert not opensearch.opensearch_domains[domain_arn].update_available
+        assert opensearch.opensearch_domains[domain_arn].update_available
         assert (
             opensearch.opensearch_domains[domain_arn].version == "opensearch-version1"
         )
         assert opensearch.opensearch_domains[domain_arn].instance_count == 1
         assert opensearch.opensearch_domains[domain_arn].zone_awareness_enabled
+        assert opensearch.opensearch_domains[domain_arn].dedicated_master_enabled
+        assert opensearch.opensearch_domains[domain_arn].dedicated_master_count == 1
         assert opensearch.opensearch_domains[domain_arn].tags == [
             {"Key": "test", "Value": "test"},
         ]

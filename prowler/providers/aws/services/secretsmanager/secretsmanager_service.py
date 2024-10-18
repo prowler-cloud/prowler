@@ -1,4 +1,5 @@
 import json
+from datetime import datetime, timezone
 from typing import Optional
 
 from pydantic import BaseModel
@@ -8,7 +9,6 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################## SecretsManager
 class SecretsManager(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
@@ -31,6 +31,9 @@ class SecretsManager(AWSService):
                             arn=secret["ARN"],
                             name=secret["Name"],
                             region=regional_client.region,
+                            last_accessed_date=secret.get(
+                                "LastAccessedDate", datetime.min
+                            ).replace(tzinfo=timezone.utc),
                             tags=secret.get("Tags"),
                         )
                         if "RotationEnabled" in secret:
@@ -66,4 +69,5 @@ class Secret(BaseModel):
     region: str
     policy: Optional[dict] = None
     rotation_enabled: bool = False
+    last_accessed_date: datetime
     tags: Optional[list] = []

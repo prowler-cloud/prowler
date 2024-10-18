@@ -31,6 +31,9 @@ class bedrock_model_invocation_logs_encryption_enabled(Check):
                     if (
                         log_group_arn in logs_client.log_groups
                         and not logs_client.log_groups[log_group_arn].kms_id
+                    ) or (
+                        log_group_arn + ":*" in logs_client.log_groups
+                        and not logs_client.log_groups[log_group_arn + ":*"].kms_id
                     ):
                         cloudwatch_encryption = False
                 if not s3_encryption and not cloudwatch_encryption:

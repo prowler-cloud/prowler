@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "opensearch_service_domains_fault_tolerant_master_nodes",
+  "CheckTitle": "OpenSearch Service Domain should have at least three dedicated master nodes",
+  "CheckType": [],
+  "ServiceName": "opensearch",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:es:region:account-id:domain/resource-id",
+  "Severity": "medium",
+  "ResourceType": "AwsOpenSearchServiceDomain",
+  "Description": "OpenSearch Service uses dedicated master nodes to increase cluster stability. A minimum of three dedicated master nodes is recommended to ensure high availability.",
+  "Risk": "If a master node fails, the cluster may become unavailable.",
+  "RelatedUrl": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/managedomains-dedicatedmasternodes.html#dedicatedmasternodes-number",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws es update-elasticsearch-domain-config --region <region> --domain-name <name> --elasticsearch-cluster-config DedicatedMasterEnabled=true,DedicatedMasterType='<instance_type>',DedicatedMasterCount=3",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/opensearch-controls.html#opensearch-11",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure that your OpenSearch Service domain has at least three dedicated master nodes",
+      "Url": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/managedomains-dedicatedmasternodes.html#dedicatedmasternodes-number"
+    }
+  },
+  "Categories": [
+    "redundancy"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
