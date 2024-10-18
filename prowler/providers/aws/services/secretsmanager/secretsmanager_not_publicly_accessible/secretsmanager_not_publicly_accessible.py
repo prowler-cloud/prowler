@@ -21,7 +21,6 @@ class secretsmanager_not_publicly_accessible(Check):
             if is_policy_public(
                 secret.policy,
                 secretsmanager_client.audited_account,
-                is_cross_account_allowed=False,
             ):
                 report.status = "FAIL"
                 report.status_extended = f"SecretsManager secret {secret.name} is publicly accessible due to its resource policy."

@@ -256,6 +256,15 @@ class Glue(AWSService):
                 data_catalog.region
             ].get_resource_policy()
             data_catalog.policy = json.loads(data_catalog_policy["PolicyInJson"])
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "EntityNotFoundException":
+                logger.warning(
+                    f"{data_catalog.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{data_catalog.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
         except Exception as error:
             logger.error(
                 f"{data_catalog.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

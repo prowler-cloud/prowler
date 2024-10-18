@@ -54,7 +54,8 @@ class SecretsManager(AWSService):
             secret_policy = self.regional_clients[secret.region].get_resource_policy(
                 SecretId=secret.arn
             )
-            secret.policy = json.loads(secret_policy["ResourcePolicy"])
+            if secret_policy.get("ResourcePolicy"):
+                secret.policy = json.loads(secret_policy["ResourcePolicy"])
         except Exception as error:
             logger.error(
                 f"{self.region} --"
