@@ -145,19 +145,6 @@ class Scan:
                     )
 
         # Load checks to execute
-        print(
-            load_checks_to_execute(
-                bulk_checks_metadata=bulk_checks_metadata,
-                bulk_compliance_frameworks=bulk_compliance_frameworks,
-                check_list=checks,
-                service_list=services,
-                compliance_frameworks=compliances,
-                categories=categories,
-                severities=severities,
-                provider=provider.type,
-                checks_file=None,
-            )
-        )
         self._checks_to_execute = sorted(
             load_checks_to_execute(
                 bulk_checks_metadata=bulk_checks_metadata,

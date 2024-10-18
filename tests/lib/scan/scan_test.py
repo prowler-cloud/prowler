@@ -271,12 +271,14 @@ class TestScan:
         mock_provider,
         mock_recover_checks_from_provider,
         mock_load_check_metadata,
+        mock_load_checks_to_execute,
     ):
         checks_to_execute = set()
         mock_provider.type = "aws"
 
         scan = Scan(mock_provider, checks=checks_to_execute)
         mock_load_check_metadata.assert_called_once()
+        mock_load_checks_to_execute.assert_called_once()
         mock_recover_checks_from_provider.assert_called_once_with("aws")
 
         assert scan.provider == mock_provider
