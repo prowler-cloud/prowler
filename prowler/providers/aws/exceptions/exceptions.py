@@ -66,7 +66,7 @@ class AWSBaseException(ProwlerException):
             "message": "AWS Secret Access Key is invalid",
             "remediation": "Check your AWS Secret Access Key and signing method and ensure it is valid.",
         },
-        (1015, "AWSInvalidAccountCredentialsError"): {
+        (1015, "AWSInvalidProviderIdError"): {
             "message": "The provided AWS credentials belong to a different account",
             "remediation": "Check the provided AWS credentials and review if belong to the account you want to use.",
         },

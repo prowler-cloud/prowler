@@ -38,7 +38,7 @@ class GCPBaseException(ProwlerException):
             "message": "Error loading static credentials",
             "remediation": "Check the credentials and ensure they are properly set up. client_id, client_secret and refresh_token are required.",
         },
-        (3008, "GCPInvalidAccountCredentialsError"): {
+        (3008, "GCPInvalidProviderIdError"): {
             "message": "Provider does not match with the expected project_id",
             "remediation": "Check the provider and ensure it matches the expected project_id.",
         },
