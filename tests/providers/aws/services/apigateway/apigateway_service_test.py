@@ -141,11 +141,17 @@ class Test_APIGateway_Service:
                     "path": "/*/*/logging/loglevel",
                     "value": "INFO",
                 },
+                {
+                    "op": "replace",
+                    "path": "/tracingEnabled",
+                    "value": "true",
+                },
             ],
         )
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         apigateway = APIGateway(aws_provider)
         assert apigateway.rest_apis[0].stages[0].logging is True
+        assert apigateway.rest_apis[0].stages[0].tracing_enabled is True
 
     # Test APIGateway _get_resources
     @mock_aws
