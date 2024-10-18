@@ -19,7 +19,7 @@ class S3BaseException(ProwlerException):
             error_info["message"] = message
         super().__init__(
             code=code,
-            provider=module,
+            source=module,
             file=file,
             original_exception=original_exception,
             error_info=error_info,
