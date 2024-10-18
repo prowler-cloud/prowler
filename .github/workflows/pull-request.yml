@@ -26,7 +26,7 @@ jobs:
         id: are-non-ignored-files-changed
         uses: tj-actions/changed-files@v45
         with:
-          fetch_additional_submodule_history: true 
+          fetch_additional_submodule_history: true
           files: ./**
           files_ignore: |
             .github/**
@@ -67,7 +67,7 @@ jobs:
       - name: Checking format with black
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
-          poetry run black --check .
+          poetry run black --check . --exclude=contrib,prowler/lib/detect-secrets
       - name: Lint with pylint
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
