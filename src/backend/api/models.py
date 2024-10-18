@@ -11,7 +11,7 @@ from django.core.validators import MinLengthValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django_celery_results.models import TaskResult
-from prowler.lib.outputs.finding import Severity
+from prowler.lib.check.models import Severity
 from psqlextra.models import PostgresPartitionedModel
 from psqlextra.types import PostgresPartitioningMethod
 from uuid6 import uuid7

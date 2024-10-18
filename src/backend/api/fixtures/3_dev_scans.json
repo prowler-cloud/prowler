@@ -165,5 +165,54 @@
       "inserted_at": "2024-09-02T19:29:27.050Z",
       "updated_at": "2024-09-02T19:29:27.050Z"
     }
+  },
+  {
+    "model": "api.scan",
+    "pk": "01929f3b-ed2e-7623-ad63-7c37cd37828f",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "name": "real scan 1",
+      "provider": "15fce1fa-ecaa-433f-a9dc-62553f3a2555",
+      "trigger": "manual",
+      "state": "completed",
+      "unique_resource_count": 19,
+      "progress": 100,
+      "scanner_args": {
+        "checks_to_execute": [
+          "accessanalyzer_enabled"
+        ]
+      },
+      "duration": 7,
+      "scheduled_at": null,
+      "inserted_at": "2024-10-18T10:45:57.678Z",
+      "updated_at": "2024-10-18T10:46:05.127Z",
+      "started_at": "2024-10-18T10:45:57.909Z",
+      "completed_at": "2024-10-18T10:46:05.127Z"
+    }
+  },
+  {
+    "model": "api.scan",
+    "pk": "01929f57-c0ee-7553-be0b-cbde006fb6f7",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "name": "real scan 2",
+      "provider": "15fce1fa-ecaa-433f-a9dc-62553f3a2555",
+      "trigger": "manual",
+      "state": "completed",
+      "unique_resource_count": 20,
+      "progress": 100,
+      "scanner_args": {
+        "checks_to_execute": [
+          "accessanalyzer_enabled",
+          "account_security_contact_information_is_registered"
+        ]
+      },
+      "duration": 4,
+      "scheduled_at": null,
+      "inserted_at": "2024-10-18T11:16:21.358Z",
+      "updated_at": "2024-10-18T11:16:26.060Z",
+      "started_at": "2024-10-18T11:16:21.593Z",
+      "completed_at": "2024-10-18T11:16:26.060Z"
+    }
   }
 ]

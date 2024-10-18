@@ -1,4 +1,3 @@
-import json
 import time
 from datetime import datetime, timezone
 
@@ -62,8 +61,8 @@ def _store_finding(
         Finding: The newly created or updated Finding instance.
 
     """
-    finding_uid = finding.finding_uid
-    status = FindingStatus[finding.status.value] if finding.status is not None else None
+    finding_uid = finding.uid
+    status = FindingStatus[finding.status]
     with tenant_transaction(tenant_id):
         most_recent_finding = (
             Finding.objects.filter(uid=finding_uid)
@@ -78,11 +77,12 @@ def _store_finding(
             tenant_id=tenant_id,
             uid=finding_uid,
             delta=delta,
+            check_metadata=finding.get_metadata(),
             status=status,
             status_extended=finding.status_extended,
-            severity=finding.severity.value,
-            impact=finding.severity.value,
-            raw_result=json.loads(finding.json()),
+            severity=finding.severity,
+            impact=finding.severity,
+            raw_result=finding.raw,
             check_id=finding.check_id,
             scan=scan_instance,
         )
@@ -172,9 +172,7 @@ def perform_prowler_scan(
                 )
                 provider_instance.save()
 
-        prowler_scan = ProwlerScan(
-            provider=prowler_provider, checks_to_execute=checks_to_execute
-        )
+        prowler_scan = ProwlerScan(provider=prowler_provider, checks=checks_to_execute)
         for progress, findings in prowler_scan.scan():
             for finding in findings:
                 resource_instance, resource_uid_tuple = _store_resources(

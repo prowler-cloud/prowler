@@ -180,7 +180,7 @@ class UserCreateSerializer(BaseWriteSerializer):
     def validate_email(self, value):
         normalized_email = value.strip().lower()
         if User.objects.filter(email__iexact=normalized_email).exists():
-            raise ValidationError("User with this email already exists.")
+            raise ValidationError("User with this email already exists.", code="unique")
         return value
 
     def create(self, validated_data):

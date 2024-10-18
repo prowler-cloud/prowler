@@ -5,7 +5,8 @@ from django.conf import settings
 from django.db import connections as django_connections, connection as django_connection
 from django.urls import reverse
 from django_celery_results.models import TaskResult
-from prowler.lib.outputs.finding import Severity, Status
+from prowler.lib.check.models import Severity
+from prowler.lib.outputs.finding import Status
 from rest_framework import status
 from rest_framework.test import APIClient
 

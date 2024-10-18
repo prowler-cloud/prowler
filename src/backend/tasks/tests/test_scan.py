@@ -1,4 +1,3 @@
-import json
 from unittest.mock import patch, MagicMock
 
 import pytest
@@ -34,16 +33,17 @@ class TestPerformScan:
         checks_to_execute = ["check1", "check2"]
 
         finding = MagicMock()
-        finding.finding_uid = "this_is_a_test_finding_id"
-        finding.status = StatusChoices.PASS
+        finding.uid = "this_is_a_test_finding_id"
+        finding.status = "PASS"
         finding.status_extended = "test status extended"
         finding.severity = Severity.medium
         finding.check_id = "check1"
-        finding.json.return_value = '{"key": "value"}'
+        finding.get_metadata.return_value = '{"key": "value"}'
         finding.resource_uid = "resource_uid"
         finding.region = "region"
         finding.service_name = "service_name"
         finding.resource_type = "resource_type"
+        finding.raw = {}
         mock_prowler_scan.return_value.scan.return_value = [(100, [finding])]
 
         perform_prowler_scan(tenant_id, scan_id, provider_id, checks_to_execute)
@@ -60,12 +60,12 @@ class TestPerformScan:
         assert scan.started_at is not None
         assert scan.unique_resource_count == 1
         assert scan.progress == 100
-        assert scan_finding.uid == finding.finding_uid
+        assert scan_finding.uid == finding.uid
         assert scan_finding.status == finding.status
         assert scan_finding.status_extended == finding.status_extended
         assert scan_finding.severity == finding.severity
         assert scan_finding.check_id == finding.check_id
-        assert scan_finding.raw_result == json.loads(finding.json())
+        assert scan_finding.raw_result == finding.raw
 
         assert scan_resource.tenant == tenant
         assert scan_resource.uid == finding.resource_uid
