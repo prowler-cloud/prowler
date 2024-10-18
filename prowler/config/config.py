@@ -22,7 +22,6 @@ orange_color = "\033[38;5;208m"
 banner_color = "\033[1;92m"
 
 finding_statuses = ["PASS", "FAIL", "MANUAL"]
-valid_severities = ["critical", "high", "medium", "low", "informational"]
 
 # Compliance
 actual_directory = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
