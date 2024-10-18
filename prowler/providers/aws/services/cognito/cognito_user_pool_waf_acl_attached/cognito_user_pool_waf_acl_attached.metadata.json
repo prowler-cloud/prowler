@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:cognito-idp:region:account:userpool/userpool-id",
   "Severity": "medium",
-  "ResourceType": "AwsCognitoUserPool",
+  "ResourceType": "Other",
   "Description": "Web ACLs are used to control access to your content. You can use a Web ACL to control who can access your content. You can also use a Web ACL to block requests based on IP address, HTTP headers, HTTP body, URI, or URI query string parameters. You can associate a Web ACL with a Cognito User Pool to control access to your content.",
   "Risk": "If a Web ACL is not associated with a Cognito User Pool, then the content is not protected by the Web ACL. This could lead to unauthorized access to your content.",
   "RelatedUrl": "https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-waf.html",
