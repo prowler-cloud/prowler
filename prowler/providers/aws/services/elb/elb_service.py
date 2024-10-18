@@ -36,6 +36,9 @@ class ELB(AWSService):
                                 Listener(
                                     protocol=listener["Listener"]["Protocol"],
                                     policies=listener["PolicyNames"],
+                                    certificate_arn=listener["Listener"][
+                                        "SSLCertificateId"
+                                    ],
                                 )
                             )
 
@@ -70,7 +73,7 @@ class ELB(AWSService):
 
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{load_balancer.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def _describe_tags(self, load_balancer):
@@ -86,12 +89,13 @@ class ELB(AWSService):
 
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{load_balancer.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
 
 class Listener(BaseModel):
     protocol: str
+    certificate_arn: str
     policies: list[str]
 
 
