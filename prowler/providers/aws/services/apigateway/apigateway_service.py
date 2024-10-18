@@ -114,6 +114,10 @@ class APIGateway(AWSService):
                         waf = None
                         logging = False
                         client_certificate = False
+                        tracing_enabled = False
+                        if "tracingEnabled" in stage:
+                            if stage["tracingEnabled"]:
+                                tracing_enabled = True
                         if "webAclArn" in stage:
                             waf = stage["webAclArn"]
                         if "methodSettings" in stage:
@@ -130,6 +134,7 @@ class APIGateway(AWSService):
                                 client_certificate=client_certificate,
                                 waf=waf,
                                 tags=[stage.get("tags")],
+                                tracing_enabled=tracing_enabled,
                             )
                         )
                 except ClientError as error:
@@ -213,6 +218,7 @@ class Stage(BaseModel):
     client_certificate: bool
     waf: Optional[str]
     tags: Optional[list] = []
+    tracing_enabled: Optional[bool]
 
 
 class PathResourceMethods(BaseModel):
