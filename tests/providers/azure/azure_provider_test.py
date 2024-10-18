@@ -158,7 +158,7 @@ class TestAzureProvider:
             assert exception.type == AzureBrowserAuthNoTenantIDError
             assert (
                 exception.value.args[0]
-                == "[1918] Azure Tenant ID (--tenant-id) is required for browser authentication mode"
+                == "[2004] Azure Tenant ID (--tenant-id) is required for browser authentication mode"
             )
 
     def test_azure_provider_not_browser_auth_but_tenant_id(self):
@@ -197,7 +197,7 @@ class TestAzureProvider:
             assert exception.type == AzureTenantIDNoBrowserAuthError
             assert (
                 exception.value.args[0]
-                == "[1919] Azure Tenant ID (--tenant-id) is required for browser authentication mode"
+                == "[2005] Azure Tenant ID (--tenant-id) is required for browser authentication mode"
             )
 
     def test_test_connection_browser_auth(self):
@@ -390,7 +390,7 @@ class TestAzureProvider:
         assert exception.type == AzureHTTPResponseError
         assert (
             exception.value.args[0]
-            == f"[1924] Error in HTTP response from Azure - Authentication failed: Unable to get authority configuration for https://login.microsoftonline.com/{tenant_id}. Authority would typically be in a format of https://login.microsoftonline.com/your_tenant or https://tenant_name.ciamlogin.com or https://tenant_name.b2clogin.com/tenant.onmicrosoft.com/policy.  Also please double check your tenant name or GUID is correct."
+            == f"[2010] Error in HTTP response from Azure - Authentication failed: Unable to get authority configuration for https://login.microsoftonline.com/{tenant_id}. Authority would typically be in a format of https://login.microsoftonline.com/your_tenant or https://tenant_name.ciamlogin.com or https://tenant_name.b2clogin.com/tenant.onmicrosoft.com/policy.  Also please double check your tenant name or GUID is correct."
         )
 
     def test_test_connection_without_any_method(self):
@@ -399,7 +399,7 @@ class TestAzureProvider:
 
         assert exception.type == AzureNoAuthenticationMethodError
         assert (
-            "[1917] Azure provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth | --managed-identity-auth]"
+            "[2003] Azure provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth | --managed-identity-auth]"
             in exception.value.args[0]
         )
 
@@ -424,7 +424,7 @@ class TestAzureProvider:
             assert exception.type == AzureHTTPResponseError
             assert (
                 exception.value.args[0]
-                == "[1924] Error in HTTP response from Azure - Simulated HttpResponseError"
+                == "[2010] Error in HTTP response from Azure - Simulated HttpResponseError"
             )
 
     def test_test_connection_with_exception(self):

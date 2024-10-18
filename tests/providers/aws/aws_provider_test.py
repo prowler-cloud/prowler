@@ -1265,7 +1265,7 @@ aws:
                 )  # No profile to avoid ProfileNotFound error
 
             assert exception.type == AWSNoCredentialsError
-            assert "AWSNoCredentialsError[1904]: No AWS credentials found" in str(
+            assert "AWSNoCredentialsError[1002]: No AWS credentials found" in str(
                 exception.value
             )
 
@@ -1307,7 +1307,7 @@ aws:
         assert exception.type == AWSArgumentTypeValidationError
         assert (
             exception.value.args[0]
-            == "[1905] Session Duration must be between 900 and 43200 seconds."
+            == "[1003] Session Duration must be between 900 and 43200 seconds."
         )
 
     @mock_aws
@@ -1327,7 +1327,7 @@ aws:
         assert isinstance(connection.error, AWSArgumentTypeValidationError)
         assert (
             connection.error.args[0]
-            == "[1905] Session Duration must be between 900 and 43200 seconds."
+            == "[1003] Session Duration must be between 900 and 43200 seconds."
         )
 
     @mock_aws
@@ -1343,7 +1343,7 @@ aws:
         assert exception.type == AWSArgumentTypeValidationError
         assert (
             exception.value.args[0]
-            == "[1905] Role Session Name must be between 2 and 64 characters and may contain alphanumeric characters, periods, hyphens, and underscores."
+            == "[1003] Role Session Name must be between 2 and 64 characters and may contain alphanumeric characters, periods, hyphens, and underscores."
         )
 
     @mock_aws
@@ -1357,7 +1357,7 @@ aws:
         assert exception.type == AWSIAMRoleARNInvalidResourceType
         assert (
             exception.value.args[0]
-            == "[1912] AWS IAM Role ARN resource type is invalid"
+            == "[1010] AWS IAM Role ARN resource type is invalid"
         )
 
     @mock_aws
@@ -1435,7 +1435,7 @@ aws:
         assert exception.type == AWSInvalidAccountCredentials
         assert (
             exception.value.args[0]
-            == "[1917] The provided AWS credentials belong to a different account"
+            == "[1015] The provided AWS credentials belong to a different account"
         )
 
     @mock_aws
@@ -1461,7 +1461,7 @@ aws:
             connection.error.message
             == "The provided AWS credentials belong to a different account"
         )
-        assert connection.error.code == 1917
+        assert connection.error.code == 1015
 
     @mock_aws
     def test_create_sts_session(self):
