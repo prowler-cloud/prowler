@@ -67,7 +67,7 @@ jobs:
       - name: Checking format with black
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
-          poetry run black --check . --exclude=contrib,prowler/lib/detect-secrets
+          poetry run black --check .
       - name: Lint with pylint
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
