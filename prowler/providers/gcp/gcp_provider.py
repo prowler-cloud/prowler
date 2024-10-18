@@ -1,6 +1,7 @@
 import os
 import re
 import sys
+from typing import Optional
 
 from colorama import Fore, Style
 from google.auth import default, impersonated_credentials, load_credentials_from_dict
@@ -18,6 +19,7 @@ from prowler.providers.gcp.exceptions.exceptions import (
     GCPCloudResourceManagerAPINotUsedError,
     GCPGetProjectError,
     GCPHTTPError,
+    GCPInvalidProviderIdError,
     GCPLoadCredentialsFromDictError,
     GCPNoAccesibleProjectsError,
     GCPSetUpSessionError,
@@ -83,7 +85,7 @@ class GcpProvider(Provider):
         self._project_ids = []
         self._projects = {}
         self._excluded_project_ids = []
-        accessible_projects = self.get_projects()
+        accessible_projects = self.get_projects(self._session)
         if not accessible_projects:
             logger.critical("No Project IDs can be accessed via Google Credentials.")
             raise GCPNoAccesibleProjectsError(
@@ -296,6 +298,7 @@ class GcpProvider(Provider):
         client_id: str = None,
         client_secret: str = None,
         refresh_token: str = None,
+        provider_id: Optional[str] = None,
     ) -> Connection:
         """
         Test the connection to GCP with the provided credentials file or service account to impersonate.
@@ -305,6 +308,11 @@ class GcpProvider(Provider):
         Args:
             credentials_file: str
             service_account: str
+            raise_on_exception: bool
+            client_id: str
+            client_secret: str
+            refresh_token: str
+            provider_id: Optional[str] -> The provider ID, for GCP it is the project ID
         Returns:
             Connection object with is_connected set to True if the connection is successful, or error set to the exception if the connection fails
         """
@@ -316,9 +324,15 @@ class GcpProvider(Provider):
                     client_id, client_secret, refresh_token
                 )
 
-            session, _ = GcpProvider.setup_session(
+            session, project_id = GcpProvider.setup_session(
                 credentials_file, service_account, gcp_credentials
             )
+            if provider_id and project_id != provider_id:
+                # Logic to check if the provider ID matches the project ID
+                GcpProvider.validate_project_id(
+                    provider_id=provider_id, credentials=session
+                )
+
             service = discovery.build("cloudresourcemanager", "v1", credentials=session)
             request = service.projects().list()
             request.execute()
@@ -326,12 +340,16 @@ class GcpProvider(Provider):
 
         # Errors from setup_session
         except GCPLoadCredentialsFromDictError as load_credentials_error:
-            logger.critical(str(load_credentials_error))
+            logger.critical(
+                f"{load_credentials_error.__class__.__name__}[{load_credentials_error.__traceback__.tb_lineno}]: {load_credentials_error}"
+            )
             if raise_on_exception:
                 raise load_credentials_error
             return Connection(error=load_credentials_error)
         except GCPSetUpSessionError as setup_session_error:
-            logger.critical(str(setup_session_error))
+            logger.critical(
+                f"{setup_session_error.__class__.__name__}[{setup_session_error.__traceback__.tb_lineno}]: {setup_session_error}"
+            )
             if raise_on_exception:
                 raise setup_session_error
             return Connection(error=setup_session_error)
@@ -351,6 +369,14 @@ class GcpProvider(Provider):
             if raise_on_exception:
                 raise http_error
             return Connection(error=http_error)
+        # Exceptions from validating Provider ID
+        except GCPInvalidProviderIdError as not_valid_provider_id_error:
+            logger.critical(
+                f"{not_valid_provider_id_error.__class__.__name__}[{not_valid_provider_id_error.__traceback__.tb_lineno}]: {not_valid_provider_id_error}"
+            )
+            if raise_on_exception:
+                raise not_valid_provider_id_error
+            return Connection(error=not_valid_provider_id_error)
         except Exception as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -383,12 +409,13 @@ class GcpProvider(Provider):
         )
         print_boxes(report_lines, report_title)
 
-    def get_projects(self) -> dict[str, GCPProject]:
+    @staticmethod
+    def get_projects(credentials) -> dict[str, GCPProject]:
         try:
             projects = {}
 
             service = discovery.build(
-                "cloudresourcemanager", "v1", credentials=self.session
+                "cloudresourcemanager", "v1", credentials=credentials
             )
 
             request = service.projects().list()
@@ -528,3 +555,34 @@ class GcpProvider(Provider):
             "refresh_token": refresh_token,
             "type": "authorized_user",
         }
+
+    @staticmethod
+    def validate_project_id(provider_id: str, credentials: str = None) -> None:
+        """
+        Validate the provider ID given the credentials, checking if the provider ID matches with the expected project_id using the method get_projects
+
+        Args:
+            provider_id: str
+            credentials: str
+
+        Returns:
+            None
+
+        Raises:
+            GCPInvalidProviderIdError if the provider ID does not match with the expected project_id
+        """
+
+        available_projects = list(
+            GcpProvider.get_projects(credentials=credentials).keys()
+        )
+
+        if len(available_projects) == 0:
+            raise GCPNoAccesibleProjectsError(
+                file=__file__,
+                message="No Project IDs can be accessed via Google Credentials.",
+            )
+        elif provider_id not in available_projects:
+            raise GCPInvalidProviderIdError(
+                file=__file__,
+                message="The provider ID does not match with the expected project_id.",
+            )

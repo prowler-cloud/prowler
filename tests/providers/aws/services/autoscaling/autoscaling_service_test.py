@@ -1,5 +1,7 @@
 from base64 import b64decode
 
+import botocore
+import mock
 from boto3 import client
 from moto import mock_aws
 
@@ -13,6 +15,53 @@ from tests.providers.aws.utils import (
     AWS_REGION_US_EAST_1,
     set_mocked_aws_provider,
 )
+
+make_api_call = botocore.client.BaseClient._make_api_call
+
+
+def mock_make_api_call(self, operation_name, kwarg):
+    if operation_name == "DescribeAutoScalingGroups":
+        return {
+            "AutoScalingGroups": [
+                {
+                    "AutoScalingGroupName": "my-autoscaling-group",
+                    "AutoScalingGroupARN": "arn:aws:autoscaling:us-east-1:123456789012:autoScalingGroup:uuid:autoScalingGroupName/my-autoscaling-group",
+                    "AvailabilityZones": ["us-east-1a", "us-east-1b"],
+                    "Tags": [
+                        {
+                            "Key": "tag_test",
+                            "PropagateAtLaunch": False,
+                            "ResourceId": "my-autoscaling-group",
+                            "ResourceType": "auto-scaling-group",
+                            "Value": "value_test",
+                        }
+                    ],
+                    "Instances": [
+                        {
+                            "InstanceId": "i-0b9f1f3a0e1e3e0f4",
+                            "InstanceType": "t2.micro",
+                            "AvailabilityZone": "us-east-1a",
+                        },
+                        {
+                            "InstanceId": "i-0b9f1f3a0e1e3e0f5",
+                            "InstanceType": "t3.large",
+                            "AvailabilityZone": "us-east-1a",
+                        },
+                        {
+                            "InstanceId": "i-0b9f1f3a0e1e3e0f6",
+                            "InstanceType": "t2.micro",
+                            "AvailabilityZone": "us-east-1b",
+                        },
+                        {
+                            "InstanceId": "i-0b9f1f3a0e1e3e0f7",
+                            "InstanceType": "t3.large",
+                            "AvailabilityZone": "us-east-1b",
+                        },
+                    ],
+                }
+            ]
+        }
+    return make_api_call(self, operation_name, kwarg)
 
 
 class Test_AutoScaling_Service:
@@ -104,6 +153,68 @@ class Test_AutoScaling_Service:
         assert launch_configurations[arn_tester2].image_id == "ami-12c6146b"
         assert launch_configurations[arn_tester2].http_tokens == "required"
         assert launch_configurations[arn_tester2].http_endpoint == "enabled"
+
+    # Test Describe Auto Scaling Groups With Botocore
+    @mock_aws
+    def test_describe_auto_scaling_groups_with_attached_instances(self):
+        with mock.patch(
+            "botocore.client.BaseClient._make_api_call", new=mock_make_api_call
+        ):
+            # Generate AutoScaling Client
+            autoscaling_client = client("autoscaling", region_name=AWS_REGION_US_EAST_1)
+            autoscaling_client.create_launch_configuration(
+                LaunchConfigurationName="test",
+                ImageId="ami-12c6146b",
+                InstanceType="t1.micro",
+                KeyName="the_keys",
+                SecurityGroups=["default", "default2"],
+            )
+            autoscaling_client.create_auto_scaling_group(
+                AutoScalingGroupName="my-autoscaling-group",
+                LaunchConfigurationName="test",
+                MinSize=0,
+                MaxSize=0,
+                DesiredCapacity=0,
+                AvailabilityZones=["us-east-1a", "us-east-1b"],
+                Tags=[
+                    {
+                        "Key": "tag_test",
+                        "Value": "value_test",
+                    },
+                ],
+            )
+
+            # AutoScaling client for this test class
+            aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+            autoscaling = AutoScaling(aws_provider)
+            assert len(autoscaling.groups) == 1
+            # create_auto_scaling_group doesn't return the ARN, can't check it
+            # assert autoscaling.groups[0].arn ==
+            assert autoscaling.groups[0].name == "my-autoscaling-group"
+            assert autoscaling.groups[0].region == AWS_REGION_US_EAST_1
+            assert autoscaling.groups[0].availability_zones == [
+                "us-east-1a",
+                "us-east-1b",
+            ]
+            assert autoscaling.groups[0].tags == [
+                {
+                    "Key": "tag_test",
+                    "PropagateAtLaunch": False,
+                    "ResourceId": "my-autoscaling-group",
+                    "ResourceType": "auto-scaling-group",
+                    "Value": "value_test",
+                }
+            ]
+            assert autoscaling.groups[0].instance_types == [
+                "t2.micro",
+                "t3.large",
+                "t2.micro",
+                "t3.large",
+            ]
+            assert autoscaling.groups[0].az_instance_types == {
+                "us-east-1a": {"t2.micro", "t3.large"},
+                "us-east-1b": {"t2.micro", "t3.large"},
+            }
 
     # Test Describe Auto Scaling Groups
     @mock_aws

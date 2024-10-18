@@ -3,6 +3,7 @@ from typing import Optional
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
@@ -48,12 +49,15 @@ class Bedrock(AWSService):
         logger.info("Bedrock - Listing Guardrails...")
         try:
             for guardrail in regional_client.list_guardrails().get("guardrails", []):
-                self.guardrails[guardrail["arn"]] = Guardrail(
-                    id=guardrail["id"],
-                    name=guardrail["name"],
-                    arn=guardrail["arn"],
-                    region=regional_client.region,
-                )
+                if not self.audit_resources or (
+                    is_resource_filtered(guardrail["arn"], self.audit_resources)
+                ):
+                    self.guardrails[guardrail["arn"]] = Guardrail(
+                        id=guardrail["id"],
+                        name=guardrail["name"],
+                        arn=guardrail["arn"],
+                        region=regional_client.region,
+                    )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

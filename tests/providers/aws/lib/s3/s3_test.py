@@ -40,9 +40,9 @@ FINDING = generate_finding_output(
     remediation_code_other="other-code",
     remediation_code_cli="cli-code",
     compliance={"compliance_key": "compliance_value"},
-    categories="category1,category2",
-    depends_on="dependency",
-    related_to="related finding",
+    categories=["categorya", "categoryb"],
+    depends_on=["dependency"],
+    related_to=["related"],
     notes="Notes about the finding",
 )
 

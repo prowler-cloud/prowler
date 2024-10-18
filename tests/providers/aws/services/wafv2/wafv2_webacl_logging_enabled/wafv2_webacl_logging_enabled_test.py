@@ -60,7 +60,7 @@ class Test_wafv2_webacl_logging_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"AWS WAFv2 Web ACL {waf_id} has logging enabled."
+                == f"AWS WAFv2 Web ACL {waf_name} has logging enabled."
             )
             assert result[0].resource_id == waf_id
             assert result[0].resource_arn == waf_arn
@@ -100,7 +100,7 @@ class Test_wafv2_webacl_logging_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"AWS WAFv2 Web ACL {waf_id} does not have logging enabled."
+                == f"AWS WAFv2 Web ACL {waf_name} does not have logging enabled."
             )
             assert result[0].resource_id == waf_id
             assert result[0].resource_arn == waf_arn
