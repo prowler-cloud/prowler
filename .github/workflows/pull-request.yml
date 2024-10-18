@@ -32,8 +32,6 @@ jobs:
             permissions/**
             mkdocs.yml
             .backportrc.json
-      - name: Check for detect-secrets directory
-        run: ls -la prowler/lib/detect-secrets
       - name: Install poetry
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
