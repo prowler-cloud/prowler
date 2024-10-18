@@ -89,9 +89,9 @@ class Finding(BaseModel):
         return self.metadata.ServiceName
 
     @property
-    def raw_result(self) -> dict:
+    def raw(self) -> dict:
         """
-        Returns the raw result(dict) of the finding without any post-processing.
+        Returns the raw (dict) finding without any post-processing.
         """
         return {}
 

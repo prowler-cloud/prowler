@@ -177,7 +177,7 @@ class TestFinding:
         assert finding_output.status == Status.PASS.value
         assert finding_output.resource_type == ""
         assert finding_output.service_name == "mock_service_name"
-        assert finding_output.raw_result == {}
+        assert finding_output.raw == {}
 
     @patch(
         "prowler.lib.outputs.finding.get_provider_data_mapping",
