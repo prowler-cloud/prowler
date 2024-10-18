@@ -1,14 +1,7 @@
 from colorama import Fore, Style
 
-from prowler.lib.check.check import (
-    parse_checks_from_compliance_framework,
-    parse_checks_from_file,
-)
-from prowler.lib.check.models import Severity
-from prowler.lib.check.utils import (
-    recover_checks_from_provider,
-    recover_checks_from_service,
-)
+from prowler.lib.check.check import parse_checks_from_file
+from prowler.lib.check.models import CheckMetadata, Severity
 from prowler.lib.logger import logger
 
 
@@ -29,7 +22,6 @@ def load_checks_to_execute(
         # Local subsets
         checks_to_execute = set()
         check_aliases = {}
-        check_severities = {severity.value: [] for severity in Severity}
         check_categories = {}
 
         # First, loop over the bulk_checks_metadata to extract the needed subsets
@@ -40,10 +32,6 @@ def load_checks_to_execute(
                     if alias not in check_aliases:
                         check_aliases[alias] = []
                     check_aliases[alias].append(check)
-
-                # Severities
-                if metadata.Severity:
-                    check_severities[metadata.Severity].append(check)
 
                 # Categories
                 for category in metadata.Categories:
@@ -63,46 +51,60 @@ def load_checks_to_execute(
         # Handle if there are some severities passed using --severity
         elif severities:
             for severity in severities:
-                checks_to_execute.update(check_severities[severity])
+                try:
+                    Severity(severity)
+                    checks_to_execute.update(
+                        CheckMetadata.list_by_severity(
+                            bulk_checks_metadata=bulk_checks_metadata, severity=severity
+                        )
+                    )
+                except ValueError:
+                    logger.error(
+                        "Invalid severity level provided. Valid severities are: critical, high, medium, low, informational."
+                    )
 
             if service_list:
-                checks_to_execute = (
-                    recover_checks_from_service(service_list, provider)
-                    & checks_to_execute
-                )
-
+                for service in service_list:
+                    checks_to_execute = (
+                        set(
+                            CheckMetadata.list_by_service(bulk_checks_metadata, service)
+                        )
+                        & checks_to_execute
+                    )
         # Handle if there are checks passed using -C/--checks-file
         elif checks_file:
             checks_to_execute = parse_checks_from_file(checks_file, provider)
 
         # Handle if there are services passed using -s/--services
         elif service_list:
-            checks_to_execute = recover_checks_from_service(service_list, provider)
+            for service in service_list:
+                checks_to_execute.update(
+                    CheckMetadata.list_by_service(bulk_checks_metadata, service)
+                )
 
         # Handle if there are compliance frameworks passed using --compliance
         elif compliance_frameworks:
-            checks_to_execute = parse_checks_from_compliance_framework(
-                compliance_frameworks, bulk_compliance_frameworks
-            )
+            for compliance_framework in compliance_frameworks:
+                checks_to_execute.update(
+                    CheckMetadata.list_by_compliance_framework(
+                        bulk_compliance_frameworks, compliance_framework
+                    )
+                )
 
         # Handle if there are categories passed using --categories
         elif categories:
             for category in categories:
-                checks_to_execute.update(check_categories[category])
+                checks_to_execute.update(
+                    CheckMetadata.list_by_category(bulk_checks_metadata, category)
+                )
 
         # If there are no checks passed as argument
         else:
-            # Get all check modules to run with the specific provider
-            checks = recover_checks_from_provider(provider)
-
-            for check_info in checks:
-                # Recover check name from import path (last part)
-                # Format: "providers.{provider}.services.{service}.{check_name}.{check_name}"
-                check_name = check_info[0]
+            # get all checks
+            for check_name in CheckMetadata.list(bulk_checks_metadata, provider):
                 checks_to_execute.add(check_name)
-
         # Only execute threat detection checks if threat-detection category is set
-        if categories != [] and "threat-detection" not in categories:
+        if categories and categories != [] and "threat-detection" not in categories:
             for threat_detection_check in check_categories.get("threat-detection", []):
                 checks_to_execute.discard(threat_detection_check)
 
