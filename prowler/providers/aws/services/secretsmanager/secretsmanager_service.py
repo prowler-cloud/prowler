@@ -1,3 +1,4 @@
+import json
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -14,6 +15,7 @@ class SecretsManager(AWSService):
         super().__init__(__class__.__name__, provider)
         self.secrets = {}
         self.__threading_call__(self._list_secrets)
+        self.__threading_call__(self._get_resource_policy, self.secrets.values())
 
     def _list_secrets(self, regional_client):
         logger.info("SecretsManager - Listing Secrets...")
@@ -46,11 +48,27 @@ class SecretsManager(AWSService):
                 f" {error}"
             )
 
+    def _get_resource_policy(self, secret):
+        logger.info("SecretsManager - Getting Resource Policy...")
+        try:
+            secret_policy = self.regional_clients[secret.region].get_resource_policy(
+                SecretId=secret.arn
+            )
+            if secret_policy.get("ResourcePolicy"):
+                secret.policy = json.loads(secret_policy["ResourcePolicy"])
+        except Exception as error:
+            logger.error(
+                f"{self.region} --"
+                f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
+                f" {error}"
+            )
+
 
 class Secret(BaseModel):
     arn: str
     name: str
     region: str
+    policy: Optional[dict] = None
     rotation_enabled: bool = False
     last_accessed_date: datetime
     tags: Optional[list] = []
