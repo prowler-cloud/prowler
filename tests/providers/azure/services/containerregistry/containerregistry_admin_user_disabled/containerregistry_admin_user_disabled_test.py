@@ -59,6 +59,7 @@ class TestContainerRegistryAdminUserDisabled:
                         admin_user_enabled=True,
                         network_rule_set=None,
                         monitor_diagnostic_settings=[],
+                        private_endpoint_connections=[],
                     )
                 }
             }
@@ -115,6 +116,7 @@ class TestContainerRegistryAdminUserDisabled:
                         admin_user_enabled=False,
                         network_rule_set=None,
                         monitor_diagnostic_settings=[],
+                        private_endpoint_connections=[],
                     )
                 }
             }
