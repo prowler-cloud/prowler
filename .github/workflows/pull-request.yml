@@ -26,6 +26,7 @@ jobs:
         id: are-non-ignored-files-changed
         uses: tj-actions/changed-files@v45
         with:
+          fetch_additional_submodule_history: true 
           files: ./**
           files_ignore: |
             .github/**
@@ -62,7 +63,7 @@ jobs:
       - name: Lint with flake8
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
-          poetry run flake8 . --ignore=E266,W503,E203,E501,W605,E128 --exclude contrib prowler/lib/detect-secrets
+          poetry run flake8 . --ignore=E266,W503,E203,E501,W605,E128 --exclude=contrib,prowler/lib/detect-secrets
       - name: Checking format with black
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
