@@ -1,14 +1,8 @@
 from colorama import Fore, Style
 
 from prowler.config.config import valid_severities
-from prowler.lib.check.check import (
-    parse_checks_from_compliance_framework,
-    parse_checks_from_file,
-)
-from prowler.lib.check.utils import (
-    recover_checks_from_provider,
-    recover_checks_from_service,
-)
+from prowler.lib.check.check import parse_checks_from_file
+from prowler.lib.check.models import CheckMetadata
 from prowler.lib.logger import logger
 
 
@@ -63,13 +57,18 @@ def load_checks_to_execute(
         # Handle if there are some severities passed using --severity
         elif severities:
             for severity in severities:
-                checks_to_execute.update(check_severities[severity])
+                checks_to_execute.add(
+                    CheckMetadata.list_by_severity(
+                        bulk_checks_metadata=bulk_checks_metadata, severity=severity
+                    )
+                )
 
             if service_list:
-                checks_to_execute = (
-                    recover_checks_from_service(service_list, provider)
-                    & checks_to_execute
-                )
+                for service in service_list:
+                    checks_to_execute = (
+                        CheckMetadata.list_by_service(bulk_checks_metadata, service)
+                        & checks_to_execute
+                    )
 
         # Handle if there are checks passed using -C/--checks-file
         elif checks_file:
@@ -77,28 +76,31 @@ def load_checks_to_execute(
 
         # Handle if there are services passed using -s/--services
         elif service_list:
-            checks_to_execute = recover_checks_from_service(service_list, provider)
+            for service in service_list:
+                checks_to_execute = CheckMetadata.list_by_service(
+                    bulk_checks_metadata, service
+                )
 
         # Handle if there are compliance frameworks passed using --compliance
         elif compliance_frameworks:
-            checks_to_execute = parse_checks_from_compliance_framework(
-                compliance_frameworks, bulk_compliance_frameworks
-            )
+            for compliance_framework in compliance_frameworks:
+                checks_to_execute.add(
+                    CheckMetadata.list_by_compliance_framework(
+                        bulk_compliance_frameworks, compliance_framework
+                    )
+                )
 
         # Handle if there are categories passed using --categories
         elif categories:
             for category in categories:
-                checks_to_execute.update(check_categories[category])
+                checks_to_execute.update(
+                    CheckMetadata.list_by_category(bulk_checks_metadata, category)
+                )
 
         # If there are no checks passed as argument
         else:
             # Get all check modules to run with the specific provider
-            checks = recover_checks_from_provider(provider)
-
-            for check_info in checks:
-                # Recover check name from import path (last part)
-                # Format: "providers.{provider}.services.{service}.{check_name}.{check_name}"
-                check_name = check_info[0]
+            for check_name in CheckMetadata.list(bulk_checks_metadata, provider):
                 checks_to_execute.add(check_name)
 
         # Only execute threat detection checks if threat-detection category is set

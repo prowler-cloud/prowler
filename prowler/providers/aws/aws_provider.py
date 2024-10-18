@@ -19,7 +19,8 @@ from prowler.config.config import (
     get_default_mute_file_path,
     load_and_validate_config_file,
 )
-from prowler.lib.check.utils import list_modules, recover_checks_from_service
+from prowler.lib.check.models import CheckMetadata
+from prowler.lib.check.utils import list_modules
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import open_file, parse_json_file, print_boxes
 from prowler.providers.aws.config import (
@@ -728,7 +729,13 @@ class AwsProvider(Provider):
                     else:
                         sub_service_list.add(service)
             # TODO: this should be split in several function
-            checks = recover_checks_from_service(service_list, self.type)
+            checks = []
+            for service in service_list:
+                checks.append(
+                    CheckMetadata.list_by_service(
+                        CheckMetadata.get_bulk(self._type), service
+                    )
+                )
 
             # Filter only checks with audited subservices
             for check in checks:
