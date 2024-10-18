@@ -2,7 +2,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional, Union
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from prowler.config.config import prowler_version
 from prowler.lib.check.models import Check_Report, CheckMetadata
@@ -34,10 +34,10 @@ class Finding(BaseModel):
     auth_method: str
     timestamp: Union[int, datetime]
     account_uid: str
-    account_name: Optional[str]
-    account_email: Optional[str]
-    account_organization_uid: Optional[str]
-    account_organization_name: Optional[str]
+    account_name: Optional[str] = None
+    account_email: Optional[str] = None
+    account_organization_uid: Optional[str] = None
+    account_organization_name: Optional[str] = None
     metadata: CheckMetadata
     account_tags: dict = {}
     uid: str
@@ -47,24 +47,53 @@ class Finding(BaseModel):
     resource_uid: str
     resource_name: str
     resource_details: str
-    resource_tags: dict = {}
-    # Only present for AWS and Azure
-    partition: Optional[str]
+    resource_tags: dict = Field(default_factory=dict)
+    partition: Optional[str] = None
     region: str
     compliance: dict
     prowler_version: str = prowler_version
 
     @property
     def provider(self) -> str:
+        """
+        Returns the provider from the finding check's metadata.
+        """
         return self.metadata.Provider
 
     @property
     def check_id(self) -> str:
+        """
+        Returns the ID from the finding check's metadata.
+        """
         return self.metadata.CheckID
 
     @property
     def severity(self) -> str:
+        """
+        Returns the severity from the finding check's metadata.
+        """
         return self.metadata.Severity
+
+    @property
+    def resource_type(self) -> str:
+        """
+        Returns the resource type from the finding check's metadata.
+        """
+        return self.metadata.ResourceType
+
+    @property
+    def service_name(self) -> str:
+        """
+        Returns the service name from the finding check's metadata.
+        """
+        return self.metadata.ServiceName
+
+    @property
+    def raw_result(self) -> dict:
+        """
+        Returns the raw result(dict) of the finding without any post-processing.
+        """
+        return {}
 
     def get_metadata(self) -> dict:
         """
