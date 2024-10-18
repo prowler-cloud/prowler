@@ -121,6 +121,15 @@ def mock_load_check_metadata():
         yield mock_load
 
 
+@pytest.fixture
+def mock_load_checks_to_execute():
+    with mock.patch(
+        "prowler.lib.check.models.CheckMetadata.list", autospec=True
+    ) as mock_load:
+        mock_load.return_value = {"accessanalyzer_enabled"}
+        yield mock_load
+
+
 class TestScan:
     def test_init(mock_provider):
         checks_to_execute = {
@@ -260,7 +269,6 @@ class TestScan:
 
     def test_init_with_no_checks(
         mock_provider,
-        mock_list_modules,
         mock_recover_checks_from_provider,
         mock_load_check_metadata,
     ):
@@ -268,7 +276,6 @@ class TestScan:
         mock_provider.type = "aws"
 
         scan = Scan(mock_provider, checks=checks_to_execute)
-        mock_list_modules.assert_called_once_with("aws", None)
         mock_load_check_metadata.assert_called_once()
         mock_recover_checks_from_provider.assert_called_once_with("aws")
 

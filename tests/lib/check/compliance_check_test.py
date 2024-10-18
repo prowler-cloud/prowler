@@ -10,92 +10,91 @@ from prowler.lib.check.compliance_models import (
 )
 from prowler.lib.check.models import CheckMetadata
 
-
-class TestCompliance:
-
-    def get_custom_framework(self):
-        return {
-            "framework1_aws": Compliance(
-                Framework="Framework1",
-                Provider="aws",
-                Version="1.0",
-                Description="Framework 1 Description",
-                Requirements=[
-                    Compliance_Requirement(
-                        Id="1.1.1",
-                        Description="description",
-                        Attributes=[
-                            CIS_Requirement_Attribute(
-                                Section="1. Identity",
-                                Profile=CIS_Requirement_Attribute_Profile("Level 1"),
-                                AssessmentStatus=CIS_Requirement_Attribute_AssessmentStatus(
-                                    "Manual"
-                                ),
-                                Description="Description",
-                                RationaleStatement="Rationale",
-                                ImpactStatement="Impact",
-                                RemediationProcedure="Remediation",
-                                AuditProcedure="Audit",
-                                AdditionalInformation="Additional",
-                                References="References",
-                            )
-                        ],
-                        Checks=["check1", "check2"],
-                    ),
-                    # Manual requirement
-                    Compliance_Requirement(
-                        Id="1.1.2",
-                        Description="description",
-                        Attributes=[
-                            CIS_Requirement_Attribute(
-                                Section="1. Identity",
-                                Profile=CIS_Requirement_Attribute_Profile("Level 1"),
-                                AssessmentStatus=CIS_Requirement_Attribute_AssessmentStatus(
-                                    "Manual"
-                                ),
-                                Description="Description",
-                                RationaleStatement="Rationale",
-                                ImpactStatement="Impact",
-                                RemediationProcedure="Remediation",
-                                AuditProcedure="Audit",
-                                AdditionalInformation="Additional",
-                                References="References",
-                            )
-                        ],
-                        Checks=[],
-                    ),
-                ],
-            ),
-            "framework1_azure": Compliance(
-                Framework="Framework1",
-                Provider="azure",
-                Version="1.0",
-                Description="Framework 2 Description",
-                Requirements=[
-                    Compliance_Requirement(
-                        Id="1.1.1",
-                        Description="description",
-                        Attributes=[
-                            CIS_Requirement_Attribute(
-                                Section="1. Identity",
-                                Profile=CIS_Requirement_Attribute_Profile("Level 1"),
-                                AssessmentStatus=CIS_Requirement_Attribute_AssessmentStatus(
-                                    "Manual"
-                                ),
-                                Description="Description",
-                                RationaleStatement="Rationale",
-                                ImpactStatement="Impact",
-                                RemediationProcedure="Remediation",
-                                AuditProcedure="Audit",
-                                AdditionalInformation="Additional",
-                                References="References",
-                            )
-                        ],
-                        Checks=[],
+custom_compliance_metadata = {
+    "framework1_aws": Compliance(
+        Framework="Framework1",
+        Provider="aws",
+        Version="1.0",
+        Description="Framework 1 Description",
+        Requirements=[
+            Compliance_Requirement(
+                Id="1.1.1",
+                Description="description",
+                Attributes=[
+                    CIS_Requirement_Attribute(
+                        Section="1. Identity",
+                        Profile=CIS_Requirement_Attribute_Profile("Level 1"),
+                        AssessmentStatus=CIS_Requirement_Attribute_AssessmentStatus(
+                            "Manual"
+                        ),
+                        Description="Description",
+                        RationaleStatement="Rationale",
+                        ImpactStatement="Impact",
+                        RemediationProcedure="Remediation",
+                        AuditProcedure="Audit",
+                        AdditionalInformation="Additional",
+                        References="References",
                     )
                 ],
+                Checks=["check1", "check2"],
             ),
-        }
+            # Manual requirement
+            Compliance_Requirement(
+                Id="1.1.2",
+                Description="description",
+                Attributes=[
+                    CIS_Requirement_Attribute(
+                        Section="1. Identity",
+                        Profile=CIS_Requirement_Attribute_Profile("Level 1"),
+                        AssessmentStatus=CIS_Requirement_Attribute_AssessmentStatus(
+                            "Manual"
+                        ),
+                        Description="Description",
+                        RationaleStatement="Rationale",
+                        ImpactStatement="Impact",
+                        RemediationProcedure="Remediation",
+                        AuditProcedure="Audit",
+                        AdditionalInformation="Additional",
+                        References="References",
+                    )
+                ],
+                Checks=[],
+            ),
+        ],
+    ),
+    "framework1_azure": Compliance(
+        Framework="Framework1",
+        Provider="azure",
+        Version="1.0",
+        Description="Framework 2 Description",
+        Requirements=[
+            Compliance_Requirement(
+                Id="1.1.1",
+                Description="description",
+                Attributes=[
+                    CIS_Requirement_Attribute(
+                        Section="1. Identity",
+                        Profile=CIS_Requirement_Attribute_Profile("Level 1"),
+                        AssessmentStatus=CIS_Requirement_Attribute_AssessmentStatus(
+                            "Manual"
+                        ),
+                        Description="Description",
+                        RationaleStatement="Rationale",
+                        ImpactStatement="Impact",
+                        RemediationProcedure="Remediation",
+                        AuditProcedure="Audit",
+                        AdditionalInformation="Additional",
+                        References="References",
+                    )
+                ],
+                Checks=[],
+            )
+        ],
+    ),
+}
+
+
+class TestCompliance:
 
     def get_custom_check_metadata(self):
         return {
@@ -158,7 +157,7 @@ class TestCompliance:
         }
 
     def test_update_checks_metadata(self):
-        bulk_compliance_frameworks = self.get_custom_framework()
+        bulk_compliance_frameworks = custom_compliance_metadata
         bulk_checks_metadata = self.get_custom_check_metadata()
 
         updated_metadata = update_checks_metadata_with_compliance(
@@ -195,7 +194,7 @@ class TestCompliance:
         assert check1_attribute.References == "References"
 
     def test_list_no_provider(self):
-        bulk_compliance_frameworks = self.get_custom_framework()
+        bulk_compliance_frameworks = custom_compliance_metadata
 
         list_compliance = Compliance.list(bulk_compliance_frameworks)
 
@@ -204,7 +203,7 @@ class TestCompliance:
         assert list_compliance[1] == "framework1_azure"
 
     def test_list_with_provider_aws(self):
-        bulk_compliance_frameworks = self.get_custom_framework()
+        bulk_compliance_frameworks = custom_compliance_metadata
 
         list_compliance = Compliance.list(bulk_compliance_frameworks, provider="aws")
 
@@ -212,7 +211,7 @@ class TestCompliance:
         assert list_compliance[0] == "framework1_aws"
 
     def test_list_with_provider_azure(self):
-        bulk_compliance_frameworks = self.get_custom_framework()
+        bulk_compliance_frameworks = custom_compliance_metadata
 
         list_compliance = Compliance.list(bulk_compliance_frameworks, provider="azure")
 
@@ -220,7 +219,7 @@ class TestCompliance:
         assert list_compliance[0] == "framework1_azure"
 
     def test_get_compliance_frameworks(self):
-        bulk_compliance_frameworks = self.get_custom_framework()
+        bulk_compliance_frameworks = custom_compliance_metadata
 
         compliance_framework = Compliance.get(
             bulk_compliance_frameworks, compliance_framework_name="framework1_aws"
@@ -243,7 +242,7 @@ class TestCompliance:
         assert len(compliance_framework.Requirements) == 1
 
     def test_get_non_existent_framework(self):
-        bulk_compliance_frameworks = self.get_custom_framework()
+        bulk_compliance_frameworks = custom_compliance_metadata
 
         compliance_framework = Compliance.get(
             bulk_compliance_frameworks, compliance_framework_name="non_existent"
@@ -252,14 +251,14 @@ class TestCompliance:
         assert compliance_framework is None
 
     def test_list_compliance_requirements_no_compliance(self):
-        bulk_compliance_frameworks = self.get_custom_framework()
+        bulk_compliance_frameworks = custom_compliance_metadata
 
         list_requirements = Compliance.list_requirements(bulk_compliance_frameworks)
 
         assert len(list_requirements) == 0
 
     def test_list_compliance_requirements_with_compliance(self):
-        bulk_compliance_frameworks = self.get_custom_framework()
+        bulk_compliance_frameworks = custom_compliance_metadata
 
         list_requirements = Compliance.list_requirements(
             bulk_compliance_frameworks, compliance_framework="framework1_aws"
@@ -277,7 +276,7 @@ class TestCompliance:
         assert list_requirements[0] == "1.1.1"
 
     def test_get_compliance_requirement(self):
-        bulk_compliance_frameworks = self.get_custom_framework()
+        bulk_compliance_frameworks = custom_compliance_metadata
 
         compliance_requirement = Compliance.get_requirement(
             bulk_compliance_frameworks,
@@ -310,7 +309,7 @@ class TestCompliance:
         assert len(compliance_requirement.Attributes) == 1
 
     def test_get_compliance_requirement_not_found(self):
-        bulk_compliance_frameworks = self.get_custom_framework()
+        bulk_compliance_frameworks = custom_compliance_metadata
 
         compliance_requirement = Compliance.get_requirement(
             bulk_compliance_frameworks,
