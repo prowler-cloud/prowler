@@ -55,3 +55,6 @@ coverage*
 
 # Node
 node_modules
+
+# Detect-secrets submodule
+prowler/lib/detect-secrets
