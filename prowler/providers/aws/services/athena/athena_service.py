@@ -109,10 +109,15 @@ class Athena(AWSService):
         logger.info("Athena - Listing Tags...")
         try:
             for workgroup in self.workgroups.values():
-                regional_client = self.regional_clients[workgroup.region]
-                workgroup.tags = regional_client.list_tags_for_resource(
-                    ResourceARN=workgroup.arn
-                ).get("Tags", [])
+                try:
+                    regional_client = self.regional_clients[workgroup.region]
+                    workgroup.tags = regional_client.list_tags_for_resource(
+                        ResourceARN=workgroup.arn
+                    ).get("Tags", [])
+                except Exception as error:
+                    logger.error(
+                        f"{workgroup.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
