@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "glue_data_catalogs_not_publicly_accessible",
+  "CheckTitle": "Check if Glue Data Catalogs have public policies",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "glue",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:glue:region:account-id:catalog",
+  "Severity": "high",
+  "ResourceType": "AwsGlueDataCatalog",
+  "Description": "Check if Glue Data Catalogs have public resource policies .",
+  "Risk": "Publicly accessible Glue Data Catalogs can expose sensitive data schema and metadata, leading to potential security risks.",
+  "RelatedUrl": "https://docs.aws.amazon.com/glue/latest/dg/glue-manage-resource-policies.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws glue get-resource-policy --catalog-id <CATALOG-ID>",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/glue/latest/dg/glue-manage-resource-policies.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Review Glue Data Catalog policies and ensure they are not publicly accessible. Implement the Principle of Least Privilege.",
+      "Url": "https://docs.aws.amazon.com/glue/latest/dg/glue-manage-resource-policies.html"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

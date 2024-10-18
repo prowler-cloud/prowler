@@ -1,3 +1,4 @@
+import json
 from typing import Optional
 
 from botocore.exceptions import ClientError
@@ -17,8 +18,9 @@ class Glue(AWSService):
         self.__threading_call__(self._list_tags, self.connections)
         self.tables = []
         self.__threading_call__(self._search_tables)
-        self.catalog_encryption_settings = []
-        self.__threading_call__(self._get_data_catalog_encryption_settings)
+        self.data_catalogs = {}
+        self.__threading_call__(self._get_data_catalogs)
+        self.__threading_call__(self._get_resource_policy, self.data_catalogs.values())
         self.dev_endpoints = []
         self.__threading_call__(self._get_dev_endpoints)
         self.__threading_call__(self._list_tags, self.dev_endpoints)
@@ -181,8 +183,8 @@ class Glue(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _get_data_catalog_encryption_settings(self, regional_client):
-        logger.info("Glue - Catalog Encryption Settings...")
+    def _get_data_catalogs(self, regional_client):
+        logger.info("Glue - Catalog ...")
         try:
             settings = regional_client.get_data_catalog_encryption_settings()[
                 "DataCatalogEncryptionSettings"
@@ -191,19 +193,20 @@ class Glue(AWSService):
             for table in self.tables:
                 if table.region == regional_client.region:
                     tables_in_region = True
-            self.catalog_encryption_settings.append(
-                CatalogEncryptionSetting(
-                    mode=settings["EncryptionAtRest"]["CatalogEncryptionMode"],
-                    kms_id=settings["EncryptionAtRest"].get("SseAwsKmsKeyId"),
-                    password_encryption=settings["ConnectionPasswordEncryption"][
-                        "ReturnConnectionPasswordEncrypted"
-                    ],
-                    password_kms_id=settings["ConnectionPasswordEncryption"].get(
-                        "AwsKmsKeyId"
-                    ),
-                    region=regional_client.region,
-                    tables=tables_in_region,
-                )
+            catalog_encryption_settings = CatalogEncryptionSetting(
+                mode=settings["EncryptionAtRest"]["CatalogEncryptionMode"],
+                kms_id=settings["EncryptionAtRest"].get("SseAwsKmsKeyId"),
+                password_encryption=settings["ConnectionPasswordEncryption"][
+                    "ReturnConnectionPasswordEncrypted"
+                ],
+                password_kms_id=settings["ConnectionPasswordEncryption"].get(
+                    "AwsKmsKeyId"
+                ),
+            )
+            self.data_catalogs[regional_client.region] = DataCatalog(
+                tables=tables_in_region,
+                region=regional_client.region,
+                encryption_settings=catalog_encryption_settings,
             )
         except Exception as error:
             logger.error(
@@ -246,6 +249,18 @@ class Glue(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _get_resource_policy(self, data_catalog):
+        logger.info("Glue - Getting Resource Policy...")
+        try:
+            data_catalog_policy = self.regional_clients[
+                data_catalog.region
+            ].get_resource_policy()
+            data_catalog.policy = json.loads(data_catalog_policy["PolicyInJson"])
+        except Exception as error:
+            logger.error(
+                f"{data_catalog.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class Connection(BaseModel):
     name: str
@@ -269,8 +284,6 @@ class CatalogEncryptionSetting(BaseModel):
     kms_id: Optional[str]
     password_encryption: bool
     password_kms_id: Optional[str]
-    tables: bool
-    region: str
 
 
 class DevEndpoint(BaseModel):
@@ -308,3 +321,10 @@ class MLTransform(BaseModel):
     user_data_encryption: str
     region: str
     tags: Optional[list]
+
+
+class DataCatalog(BaseModel):
+    tables: bool
+    region: str
+    encryption_settings: Optional[CatalogEncryptionSetting]
+    policy: Optional[dict]
