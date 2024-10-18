@@ -39,6 +39,7 @@
         "securityhub:GetFindings",
         "ssm:GetDocument",
         "ssm-incidents:List*",
+        "states:ListTagsForResource",
         "support:Describe*",
         "tag:GetTagKeys",
         "wellarchitected:List*"
