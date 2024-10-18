@@ -20,6 +20,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: true
       - name: Test if changes are in not ignored paths
         id: are-non-ignored-files-changed
         uses: tj-actions/changed-files@v45
