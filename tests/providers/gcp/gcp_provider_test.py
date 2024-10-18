@@ -13,7 +13,7 @@ from prowler.config.config import (
 )
 from prowler.providers.common.models import Connection
 from prowler.providers.gcp.exceptions.exceptions import (
-    GCPInvalidAccountCredentials,
+    GCPInvalidProviderIdError,
     GCPTestConnectionError,
 )
 from prowler.providers.gcp.gcp_provider import GcpProvider
@@ -593,7 +593,7 @@ class TestGCPProvider:
             "prowler.providers.gcp.gcp_provider.GcpProvider.validate_project_id"
         ) as mock_validate_project_id:
 
-            mock_validate_project_id.side_effect = GCPInvalidAccountCredentials(
+            mock_validate_project_id.side_effect = GCPInvalidProviderIdError(
                 "Invalid project ID"
             )
 
@@ -605,4 +605,4 @@ class TestGCPProvider:
                     provider_id="test-invalid-project",
                 )
 
-            assert e.type == GCPInvalidAccountCredentials
+            assert e.type == GCPInvalidProviderIdError

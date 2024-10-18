@@ -19,7 +19,7 @@ from prowler.providers.gcp.exceptions.exceptions import (
     GCPCloudResourceManagerAPINotUsedError,
     GCPGetProjectError,
     GCPHTTPError,
-    GCPInvalidAccountCredentials,
+    GCPInvalidProviderIdError,
     GCPLoadCredentialsFromDictError,
     GCPNoAccesibleProjectsError,
     GCPSetUpSessionError,
@@ -340,12 +340,16 @@ class GcpProvider(Provider):
 
         # Errors from setup_session
         except GCPLoadCredentialsFromDictError as load_credentials_error:
-            logger.critical(str(load_credentials_error))
+            logger.critical(
+                f"{load_credentials_error.__class__.__name__}[{load_credentials_error.__traceback__.tb_lineno}]: {load_credentials_error}"
+            )
             if raise_on_exception:
                 raise load_credentials_error
             return Connection(error=load_credentials_error)
         except GCPSetUpSessionError as setup_session_error:
-            logger.critical(str(setup_session_error))
+            logger.critical(
+                f"{setup_session_error.__class__.__name__}[{setup_session_error.__traceback__.tb_lineno}]: {setup_session_error}"
+            )
             if raise_on_exception:
                 raise setup_session_error
             return Connection(error=setup_session_error)
@@ -366,8 +370,10 @@ class GcpProvider(Provider):
                 raise http_error
             return Connection(error=http_error)
         # Exceptions from validating Provider ID
-        except GCPInvalidAccountCredentials as not_valid_provider_id_error:
-            logger.critical(str(not_valid_provider_id_error))
+        except GCPInvalidProviderIdError as not_valid_provider_id_error:
+            logger.critical(
+                f"{not_valid_provider_id_error.__class__.__name__}[{not_valid_provider_id_error.__traceback__.tb_lineno}]: {not_valid_provider_id_error}"
+            )
             if raise_on_exception:
                 raise not_valid_provider_id_error
             return Connection(error=not_valid_provider_id_error)
@@ -563,7 +569,7 @@ class GcpProvider(Provider):
             None
 
         Raises:
-            GCPInvalidAccountCredentials if the provider ID does not match with the expected project_id
+            GCPInvalidProviderIdError if the provider ID does not match with the expected project_id
         """
 
         available_projects = list(
@@ -576,7 +582,7 @@ class GcpProvider(Provider):
                 message="No Project IDs can be accessed via Google Credentials.",
             )
         elif provider_id not in available_projects:
-            raise GCPInvalidAccountCredentials(
+            raise GCPInvalidProviderIdError(
                 file=__file__,
                 message="The provider ID does not match with the expected project_id.",
             )
