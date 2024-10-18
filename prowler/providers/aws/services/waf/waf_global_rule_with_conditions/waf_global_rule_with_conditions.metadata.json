@@ -7,7 +7,7 @@
   ],
   "ServiceName": "waf",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:waf:region:account-id:rule/rule-id",
+  "ResourceIdTemplate": "arn:aws:waf:account-id:rule/rule-id",
   "Severity": "medium",
   "ResourceType": "AwsWafRule",
   "Description": "Ensure that every AWS WAF Classic Global Rule contains at least one condition.",
