@@ -44,7 +44,7 @@ class WAF(AWSService):
             )
 
     def _get_rule(self, rule):
-        logger.info(f"WAF - Getting Rule {rule.name}...")
+        logger.info(f"WAF - Getting Global Rule {rule.name}...")
         try:
             get_rule = self.client.get_rule(RuleId=rule.id)
             for predicate in get_rule.get("Rule", {}).get("Predicates", []):
@@ -77,7 +77,9 @@ class WAF(AWSService):
             )
 
     def _list_activated_rules_in_rule_group(self, rule_group):
-        logger.info(f"WAF - Listing activated rules in Rule Group {rule_group.name}...")
+        logger.info(
+            f"WAF - Listing activated rules in Global Rule Group {rule_group.name}..."
+        )
         try:
             for rule in self.client.list_activated_rules_in_rule_group(
                 RuleGroupId=rule_group.id
