@@ -29,7 +29,7 @@ from prowler.providers.aws.config import (
 from prowler.providers.aws.exceptions.exceptions import (
     AWSArgumentTypeValidationError,
     AWSIAMRoleARNInvalidResourceTypeError,
-    AWSInvalidAccountCredentialsError,
+    AWSInvalidProviderIdError,
     AWSNoCredentialsError,
 )
 from prowler.providers.aws.lib.arn.models import ARN
@@ -1429,10 +1429,10 @@ aws:
             "provider_id": "111122223333",
         }
 
-        with raises(AWSInvalidAccountCredentialsError) as exception:
+        with raises(AWSInvalidProviderIdError) as exception:
             AwsProvider.test_connection(**session_credentials)
 
-        assert exception.type == AWSInvalidAccountCredentialsError
+        assert exception.type == AWSInvalidProviderIdError
         assert (
             exception.value.args[0]
             == "[1015] The provided AWS credentials belong to a different account"
@@ -1456,7 +1456,7 @@ aws:
 
         assert isinstance(connection, Connection)
         assert not connection.is_connected
-        assert isinstance(connection.error, AWSInvalidAccountCredentialsError)
+        assert isinstance(connection.error, AWSInvalidProviderIdError)
         assert (
             connection.error.message
             == "The provided AWS credentials belong to a different account"

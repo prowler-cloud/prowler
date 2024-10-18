@@ -32,7 +32,7 @@ from prowler.providers.azure.exceptions.exceptions import (
     AzureGetTokenIdentityError,
     AzureHTTPResponseError,
     AzureInteractiveBrowserCredentialError,
-    AzureInvalidAccountCredentialsError,
+    AzureInvalidProviderIdError,
     AzureNoAuthenticationMethodError,
     AzureNoSubscriptionsError,
     AzureNotTenantIdButClientIdAndClienSecretError,
@@ -621,7 +621,7 @@ class AzureProvider(Provider):
             if provider_id and provider_id not in [
                 sub.subscription_id for sub in available_subscriptions
             ]:
-                raise AzureInvalidAccountCredentialsError(
+                raise AzureInvalidProviderIdError(
                     file=os.path.basename(__file__),
                     message="The provided credentials are not valid for the specified Azure subscription.",
                 )
@@ -741,7 +741,7 @@ class AzureProvider(Provider):
                 raise client_secret_error
             return Connection(error=client_secret_error)
         # Exceptions from provider_id validation
-        except AzureInvalidAccountCredentialsError as invalid_credentials_error:
+        except AzureInvalidProviderIdError as invalid_credentials_error:
             logger.error(
                 f"{invalid_credentials_error.__class__.__name__}[{invalid_credentials_error.__traceback__.tb_lineno}]: {invalid_credentials_error}"
             )

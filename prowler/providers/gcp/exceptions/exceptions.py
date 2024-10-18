@@ -121,7 +121,7 @@ class GCPStaticCredentialsError(GCPCredentialsError):
         )
 
 
-class GCPInvalidAccountCredentialsError(GCPBaseException):
+class GCPInvalidProviderIdError(GCPBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             3008, file=file, original_exception=original_exception, message=message

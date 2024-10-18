@@ -15,7 +15,7 @@ from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.azure.exceptions.exceptions import (
     AzureBrowserAuthNoTenantIDError,
     AzureHTTPResponseError,
-    AzureInvalidAccountCredentialsError,
+    AzureInvalidProviderIdError,
     AzureNoAuthenticationMethodError,
     AzureTenantIDNoBrowserAuthError,
 )
@@ -370,9 +370,7 @@ class TestAzureProvider:
             )
 
             assert test_connection.error is not None
-            assert isinstance(
-                test_connection.error, AzureInvalidAccountCredentialsError
-            )
+            assert isinstance(test_connection.error, AzureInvalidProviderIdError)
             assert (
                 "The provided credentials are not valid for the specified Azure subscription."
                 in test_connection.error.args[0]

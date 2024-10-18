@@ -208,7 +208,7 @@ class AWSSecretAccessKeyInvalidError(AWSCredentialsError):
         )
 
 
-class AWSInvalidAccountCredentialsError(AWSCredentialsError):
+class AWSInvalidProviderIdError(AWSCredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             1015, file=file, original_exception=original_exception, message=message

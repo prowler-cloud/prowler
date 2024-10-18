@@ -286,7 +286,7 @@ class AzureTenantIdAndClientIdNotBelongingToClientSecretError(AzureCredentialsEr
         )
 
 
-class AzureInvalidAccountCredentialsError(AzureBaseException):
+class AzureInvalidProviderIdError(AzureBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             2023, file=file, original_exception=original_exception, message=message

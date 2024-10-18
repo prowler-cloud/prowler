@@ -34,7 +34,7 @@ from prowler.providers.aws.exceptions.exceptions import (
     AWSIAMRoleARNPartitionEmptyError,
     AWSIAMRoleARNRegionNotEmtpyError,
     AWSIAMRoleARNServiceNotIAMnorSTSError,
-    AWSInvalidAccountCredentialsError,
+    AWSInvalidProviderIdError,
     AWSNoCredentialsError,
     AWSProfileNotFoundError,
     AWSSecretAccessKeyInvalidError,
@@ -1097,9 +1097,7 @@ class AwsProvider(Provider):
             caller_identity = AwsProvider.validate_credentials(session, aws_region)
             # Do an extra validation if the AWS account ID is provided
             if provider_id and caller_identity.account != provider_id:
-                raise AWSInvalidAccountCredentialsError(
-                    file=pathlib.Path(__file__).name
-                )
+                raise AWSInvalidProviderIdError(file=pathlib.Path(__file__).name)
 
             return Connection(
                 is_connected=True,
@@ -1225,7 +1223,7 @@ class AwsProvider(Provider):
                 raise secret_access_key_invalid_error
             return Connection(error=secret_access_key_invalid_error)
 
-        except AWSInvalidAccountCredentialsError as invalid_account_credentials_error:
+        except AWSInvalidProviderIdError as invalid_account_credentials_error:
             logger.error(
                 f"{invalid_account_credentials_error.__class__.__name__}[{invalid_account_credentials_error.__traceback__.tb_lineno}]: {invalid_account_credentials_error}"
             )
