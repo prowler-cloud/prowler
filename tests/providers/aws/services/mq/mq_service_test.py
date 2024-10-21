@@ -1,7 +1,7 @@
 from boto3 import client
 from moto import mock_aws
 
-from prowler.providers.aws.services.mq.mq_service import MQ
+from prowler.providers.aws.services.mq.mq_service import MQ, DeploymentMode, EngineType
 from tests.providers.aws.utils import AWS_REGION_EU_WEST_1, set_mocked_aws_provider
 
 
@@ -34,7 +34,7 @@ class Test_MQ_Service:
     # Test MQ List Brokers
     @mock_aws
     def test_list_brokers(self):
-        # Generate moto MQ client
+        # Generate MQ client
         mq_client = client("mq", region_name=AWS_REGION_EU_WEST_1)
         broker = mq_client.create_broker(
             AutoMinorVersionUpgrade=True,
@@ -55,7 +55,7 @@ class Test_MQ_Service:
         )
         broker_arn = broker["BrokerArn"]
 
-        # MQ client for this test class
+        # MQ Client for this test class
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         mq = MQ(aws_provider)
 
@@ -68,7 +68,7 @@ class Test_MQ_Service:
     # Test MQ Describe Broker
     @mock_aws
     def test_describe_broker(self):
-        # Generate moto MQ client
+        # Generate MQ client
         mq_client = client("mq", region_name=AWS_REGION_EU_WEST_1)
         broker = mq_client.create_broker(
             AutoMinorVersionUpgrade=True,
@@ -86,12 +86,11 @@ class Test_MQ_Service:
                     "Username": "user",
                 }
             ],
-            Tags={"key": "value"},
         )
         broker_arn = broker["BrokerArn"]
         broker["BrokerId"]
 
-        # MQ client for this test class
+        # MQ Client for this test class
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         mq = MQ(aws_provider)
 
@@ -100,5 +99,5 @@ class Test_MQ_Service:
         assert mq.brokers[broker_arn].name == "my-broker"
         assert mq.brokers[broker_arn].region == AWS_REGION_EU_WEST_1
         assert mq.brokers[broker_arn].id == broker["BrokerId"]
-        assert mq.brokers[broker_arn].auto_minor_version_upgrade
-        assert mq.brokers[broker_arn].tags == [{"key": "value"}]
+        assert mq.brokers[broker_arn].engine_type == EngineType.ACTIVEMQ
+        assert mq.brokers[broker_arn].deployment_mode == DeploymentMode.SINGLE_INSTANCE

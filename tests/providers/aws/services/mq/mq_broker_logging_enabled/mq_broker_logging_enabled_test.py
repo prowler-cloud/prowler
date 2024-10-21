@@ -35,6 +35,47 @@ class Test_mq_broker_logging_enabled:
             assert len(result) == 0
 
     @mock_aws
+    def test_no_activemq_brokers(self):
+        from prowler.providers.aws.services.mq.mq_service import MQ
+
+        mq_client = client("mq", region_name=AWS_REGION_US_EAST_1)
+        mq_client.create_broker(
+            BrokerName="test-broker",
+            EngineType="RABBITMQ",
+            EngineVersion="5.15.0",
+            HostInstanceType="mq.t2.micro",
+            Users=[
+                {
+                    "Username": "admin",
+                    "Password": "admin",
+                },
+            ],
+            DeploymentMode="ACTIVE_STANDBY_MULTI_AZ",
+            PubliclyAccessible=False,
+            AutoMinorVersionUpgrade=True,
+        )["BrokerId"]
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.mq.mq_broker_logging_enabled.mq_broker_logging_enabled.mq_client",
+                new=MQ(aws_provider),
+            ):
+                # Test Check
+                from prowler.providers.aws.services.mq.mq_broker_logging_enabled.mq_broker_logging_enabled import (
+                    mq_broker_logging_enabled,
+                )
+
+                check = mq_broker_logging_enabled()
+                result = check.execute()
+
+                assert len(result) == 0
+
+    @mock_aws
     def test_broker_logging_enabled(self):
         mq_client = client("mq", region_name=AWS_REGION_US_EAST_1)
         broker_name = "test-broker"

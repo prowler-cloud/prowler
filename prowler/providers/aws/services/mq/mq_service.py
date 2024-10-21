@@ -1,4 +1,5 @@
-from typing import Dict, List, Optional
+from enum import Enum
+from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -45,11 +46,31 @@ class MQ(AWSService):
             broker.logging_enabled = describe_broker.get("Logs", {}).get(
                 "General", False
             )
-            broker.tags = [describe_broker.get("Tags", {})]
+            broker.engine_type = EngineType(
+                describe_broker.get("EngineType", "ACTIVEMQ")
+            )
+            broker.deployment_mode = DeploymentMode(
+                describe_broker.get("DeploymentMode", "SINGLE_INSTANCE")
+            )
         except Exception as error:
             logger.error(
                 f"{broker.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
+
+class DeploymentMode(Enum):
+    """Possible Deployment Modes for MQ"""
+
+    SINGLE_INSTANCE = "SINGLE_INSTANCE"
+    ACTIVE_STANDBY_MULTI_AZ = "ACTIVE_STANDBY_MULTI_AZ"
+    CLUSTER_MULTI_AZ = "CLUSTER_MULTI_AZ"
+
+
+class EngineType(Enum):
+    """Possible Engine Types for MQ"""
+
+    ACTIVEMQ = "ACTIVEMQ"
+    RABBITMQ = "RABBITMQ"
 
 
 class Broker(BaseModel):
@@ -61,4 +82,6 @@ class Broker(BaseModel):
     region: str
     auto_minor_version_upgrade: bool = Field(default=False)
     logging_enabled: bool = Field(default=False)
-    tags: Optional[List[Dict[str, str]]]
+    engine_type: EngineType = EngineType.ACTIVEMQ
+    deployment_mode: DeploymentMode = DeploymentMode.SINGLE_INSTANCE
+    tags: Optional[list] = []
