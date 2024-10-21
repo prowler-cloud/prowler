@@ -200,7 +200,7 @@ class Finding(BaseModel):
 
             elif provider.type == "gcp":
                 output_data["auth_method"] = (
-                    f"Principal: {get_nested_attribute(provider, "identity.profile")}"
+                    f"Principal: {get_nested_attribute(provider, 'identity.profile')}"
                 )
                 output_data["account_uid"] = provider.projects[
                     check_output.project_id
