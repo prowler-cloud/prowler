@@ -36,7 +36,10 @@ custom_compliance_metadata = {
                         References="References",
                     )
                 ],
-                Checks=["check1", "check2"],
+                Checks=[
+                    "accessanalyzer_enabled",
+                    "iam_user_mfa_enabled_console_access",
+                ],
             ),
             # Manual requirement
             Compliance_Requirement(
@@ -98,9 +101,9 @@ class TestCompliance:
 
     def get_custom_check_metadata(self):
         return {
-            "check1": CheckMetadata(
+            "accessanalyzer_enabled": CheckMetadata(
                 Provider="aws",
-                CheckID="check1",
+                CheckID="accessanalyzer_enabled",
                 CheckTitle="Check 1",
                 CheckType=["type1"],
                 ServiceName="service1",
@@ -126,9 +129,9 @@ class TestCompliance:
                 Notes="notes1",
                 Compliance=[],
             ),
-            "check2": CheckMetadata(
+            "iam_user_mfa_enabled_console_access": CheckMetadata(
                 Provider="aws",
-                CheckID="check2",
+                CheckID="iam_user_mfa_enabled_console_access",
                 CheckTitle="Check 2",
                 CheckType=["type2"],
                 ServiceName="service2",
@@ -164,34 +167,42 @@ class TestCompliance:
             bulk_compliance_frameworks, bulk_checks_metadata
         )
 
-        assert "check1" in updated_metadata
-        assert "check2" in updated_metadata
+        assert "accessanalyzer_enabled" in updated_metadata
+        assert "iam_user_mfa_enabled_console_access" in updated_metadata
 
-        check1_compliance = updated_metadata["check1"].Compliance[0]
+        accessanalyzer_enabled_compliance = updated_metadata[
+            "accessanalyzer_enabled"
+        ].Compliance[0]
 
-        assert len(updated_metadata["check1"].Compliance) == 1
-        assert check1_compliance.Framework == "Framework1"
-        assert check1_compliance.Provider == "aws"
-        assert check1_compliance.Version == "1.0"
-        assert check1_compliance.Description == "Framework 1 Description"
-        assert len(check1_compliance.Requirements) == 1
+        assert len(updated_metadata["accessanalyzer_enabled"].Compliance) == 1
+        assert accessanalyzer_enabled_compliance.Framework == "Framework1"
+        assert accessanalyzer_enabled_compliance.Provider == "aws"
+        assert accessanalyzer_enabled_compliance.Version == "1.0"
+        assert (
+            accessanalyzer_enabled_compliance.Description == "Framework 1 Description"
+        )
+        assert len(accessanalyzer_enabled_compliance.Requirements) == 1
 
-        check1_requirement = check1_compliance.Requirements[0]
-        assert check1_requirement.Id == "1.1.1"
-        assert check1_requirement.Description == "description"
-        assert len(check1_requirement.Attributes) == 1
+        accessanalyzer_enabled_requirement = (
+            accessanalyzer_enabled_compliance.Requirements[0]
+        )
+        assert accessanalyzer_enabled_requirement.Id == "1.1.1"
+        assert accessanalyzer_enabled_requirement.Description == "description"
+        assert len(accessanalyzer_enabled_requirement.Attributes) == 1
 
-        check1_attribute = check1_requirement.Attributes[0]
-        assert check1_attribute.Section == "1. Identity"
-        assert check1_attribute.Profile == "Level 1"
-        assert check1_attribute.AssessmentStatus == "Manual"
-        assert check1_attribute.Description == "Description"
-        assert check1_attribute.RationaleStatement == "Rationale"
-        assert check1_attribute.ImpactStatement == "Impact"
-        assert check1_attribute.RemediationProcedure == "Remediation"
-        assert check1_attribute.AuditProcedure == "Audit"
-        assert check1_attribute.AdditionalInformation == "Additional"
-        assert check1_attribute.References == "References"
+        accessanalyzer_enabled_attribute = (
+            accessanalyzer_enabled_requirement.Attributes[0]
+        )
+        assert accessanalyzer_enabled_attribute.Section == "1. Identity"
+        assert accessanalyzer_enabled_attribute.Profile == "Level 1"
+        assert accessanalyzer_enabled_attribute.AssessmentStatus == "Manual"
+        assert accessanalyzer_enabled_attribute.Description == "Description"
+        assert accessanalyzer_enabled_attribute.RationaleStatement == "Rationale"
+        assert accessanalyzer_enabled_attribute.ImpactStatement == "Impact"
+        assert accessanalyzer_enabled_attribute.RemediationProcedure == "Remediation"
+        assert accessanalyzer_enabled_attribute.AuditProcedure == "Audit"
+        assert accessanalyzer_enabled_attribute.AdditionalInformation == "Additional"
+        assert accessanalyzer_enabled_attribute.References == "References"
 
     def test_list_no_provider(self):
         bulk_compliance_frameworks = custom_compliance_metadata

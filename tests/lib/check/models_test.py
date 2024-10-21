@@ -208,15 +208,32 @@ class TestCheckMetada:
         # Assertions
         assert result == []
 
-    def test_list_by_compliance(self):
+    @mock.patch("prowler.lib.check.models.load_check_metadata")
+    @mock.patch("prowler.lib.check.models.recover_checks_from_provider")
+    def test_list_by_compliance(self, mock_recover_checks, mock_load_metadata):
+        # Mock the return value of recover_checks_from_provider
+        mock_recover_checks.return_value = [
+            ("accessanalyzer_enabled", "/path/to/accessanalyzer_enabled")
+        ]
+
+        # Mock the return value of load_check_metadata
+        mock_load_metadata.return_value = mock_metadata
+
+        bulk_metadata = CheckMetadata.get_bulk(provider="aws")
         bulk_compliance_frameworks = custom_compliance_metadata
+
+        mock_load_metadata.return_value = mock_metadata
+
+        bulk_metadata = CheckMetadata.get_bulk(provider="aws")
+
         result = CheckMetadata.list(
+            bulk_checks_metadata=bulk_metadata,
             bulk_compliance_frameworks=bulk_compliance_frameworks,
             compliance_framework="framework1_aws",
         )
 
         # Assertions
-        assert result == {"check1", "check2"}
+        assert result == ["accessanalyzer_enabled"]
 
     def test_list_by_compliance_empty(self):
         bulk_compliance_frameworks = custom_compliance_metadata
@@ -226,4 +243,15 @@ class TestCheckMetada:
         )
 
         # Assertions
-        assert result == set()
+        assert result == []
+
+    @mock.patch("prowler.lib.check.models.load_check_metadata")
+    @mock.patch("prowler.lib.check.models.recover_checks_from_provider")
+    def test_list_only_check_metadata(self, mock_recover_checks, mock_load_metadata):
+        # Mock the return value of load_check_metadata
+        mock_load_metadata.return_value = mock_metadata
+
+        bulk_metadata = CheckMetadata.get_bulk(provider="aws")
+
+        result = CheckMetadata.list(bulk_checks_metadata=bulk_metadata)
+        assert result == []

@@ -9,7 +9,7 @@ from typing import List
 
 from pydantic import BaseModel, ValidationError, validator
 
-from prowler.config.config import available_providers
+from prowler.config.config import Provider
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.check.utils import recover_checks_from_provider
 from prowler.lib.logger import logger
@@ -187,39 +187,63 @@ class CheckMetadata(BaseModel):
         Returns:
             list: A list of checks.
         """
+        checks = []
+        checks_from_provider = []
+        checks_from_severity = []
+        checks_from_category = []
+        checks_from_service = []
         # If the bulk checks metadata is not provided, get it
         if not bulk_checks_metadata:
+            bulk_checks_metadata = {}
+            available_providers = [p.value for p in Provider]
             for provider in available_providers:
                 bulk_checks_metadata.update(CheckMetadata.get_bulk(provider))
-
+        checks_from_compliance_framework = []
         if provider:
-            checks = [
+            checks_from_provider = [
                 check_name
                 for check_name, check_metadata in bulk_checks_metadata.items()
                 if check_metadata.Provider == provider
             ]
-        elif severity:
-            checks = CheckMetadata.list_by_severity(
+        if severity:
+            checks_from_severity = CheckMetadata.list_by_severity(
                 bulk_checks_metadata=bulk_checks_metadata, severity=severity
             )
-        elif category:
-            checks = CheckMetadata.list_by_category(
+        if category:
+            checks_from_category = CheckMetadata.list_by_category(
                 bulk_checks_metadata=bulk_checks_metadata, category=category
             )
-        elif service:
-            checks = CheckMetadata.list_by_service(
+        if service:
+            checks_from_service = CheckMetadata.list_by_service(
                 bulk_checks_metadata=bulk_checks_metadata, service=service
             )
-        elif compliance_framework:
+        if compliance_framework:
             # Loaded here, as it is not always needed
             if not bulk_compliance_frameworks:
-                bulk_compliance_frameworks = Compliance.get_bulk(provider=provider)
-            checks = CheckMetadata.list_by_compliance_framework(
-                bulk_compliance_frameworks=bulk_compliance_frameworks,
-                compliance_framework=compliance_framework,
+                bulk_compliance_frameworks = {}
+                available_providers = [p.value for p in Provider]
+                for provider in available_providers:
+                    bulk_compliance_frameworks = Compliance.get_bulk(provider=provider)
+            checks_from_compliance_framework = list(
+                CheckMetadata.list_by_compliance_framework(
+                    bulk_compliance_frameworks=bulk_compliance_frameworks,
+                    compliance_framework=compliance_framework,
+                )
             )
-        else:
-            checks = list(bulk_checks_metadata.keys())
+
+        # Get all the checks:
+        checks = list(bulk_checks_metadata.keys())
+        # Get the intersection of the checks
+        if len(checks_from_provider) > 0 or provider:
+            checks = list(set(checks) & set(checks_from_provider))
+        if len(checks_from_severity) > 0 or severity:
+            checks = list(set(checks) & set(checks_from_severity))
+        if len(checks_from_category) > 0 or category:
+            checks = list(set(checks) & set(checks_from_category))
+        if len(checks_from_service) > 0 or service:
+            checks = list(set(checks) & set(checks_from_service))
+        if len(checks_from_compliance_framework) > 0 or compliance_framework:
+            checks = list(set(checks) & set(checks_from_compliance_framework))
 
         return checks
 
