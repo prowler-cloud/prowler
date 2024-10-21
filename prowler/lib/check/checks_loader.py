@@ -1,14 +1,7 @@
 from colorama import Fore, Style
 
-from prowler.lib.check.check import (
-    parse_checks_from_compliance_framework,
-    parse_checks_from_file,
-)
-from prowler.lib.check.models import Severity
-from prowler.lib.check.utils import (
-    recover_checks_from_provider,
-    recover_checks_from_service,
-)
+from prowler.lib.check.check import parse_checks_from_file
+from prowler.lib.check.models import CheckMetadata, Severity
 from prowler.lib.logger import logger
 
 
@@ -29,8 +22,8 @@ def load_checks_to_execute(
         # Local subsets
         checks_to_execute = set()
         check_aliases = {}
-        check_severities = {severity.value: [] for severity in Severity}
         check_categories = {}
+        check_severities = {severity.value: [] for severity in Severity}
 
         # First, loop over the bulk_checks_metadata to extract the needed subsets
         for check, metadata in bulk_checks_metadata.items():
@@ -66,24 +59,39 @@ def load_checks_to_execute(
                 checks_to_execute.update(check_severities[severity])
 
             if service_list:
-                checks_to_execute = (
-                    recover_checks_from_service(service_list, provider)
-                    & checks_to_execute
-                )
-
+                for service in service_list:
+                    checks_to_execute = (
+                        set(
+                            CheckMetadata.list(
+                                bulk_checks_metadata=bulk_checks_metadata,
+                                service=service,
+                            )
+                        )
+                        & checks_to_execute
+                    )
         # Handle if there are checks passed using -C/--checks-file
         elif checks_file:
             checks_to_execute = parse_checks_from_file(checks_file, provider)
 
         # Handle if there are services passed using -s/--services
         elif service_list:
-            checks_to_execute = recover_checks_from_service(service_list, provider)
+            for service in service_list:
+                checks_to_execute.update(
+                    CheckMetadata.list(
+                        bulk_checks_metadata=bulk_checks_metadata,
+                        service=service,
+                    )
+                )
 
         # Handle if there are compliance frameworks passed using --compliance
         elif compliance_frameworks:
-            checks_to_execute = parse_checks_from_compliance_framework(
-                compliance_frameworks, bulk_compliance_frameworks
-            )
+            for compliance_framework in compliance_frameworks:
+                checks_to_execute.update(
+                    CheckMetadata.list(
+                        bulk_checks_metadata=bulk_compliance_frameworks,
+                        compliance_framework=compliance_framework,
+                    )
+                )
 
         # Handle if there are categories passed using --categories
         elif categories:
@@ -92,17 +100,13 @@ def load_checks_to_execute(
 
         # If there are no checks passed as argument
         else:
-            # Get all check modules to run with the specific provider
-            checks = recover_checks_from_provider(provider)
-
-            for check_info in checks:
-                # Recover check name from import path (last part)
-                # Format: "providers.{provider}.services.{service}.{check_name}.{check_name}"
-                check_name = check_info[0]
+            # get all checks
+            for check_name in CheckMetadata.list(
+                bulk_checks_metadata=bulk_checks_metadata
+            ):
                 checks_to_execute.add(check_name)
-
         # Only execute threat detection checks if threat-detection category is set
-        if categories != [] and "threat-detection" not in categories:
+        if categories and categories != [] and "threat-detection" not in categories:
             for threat_detection_check in check_categories.get("threat-detection", []):
                 checks_to_execute.discard(threat_detection_check)
 

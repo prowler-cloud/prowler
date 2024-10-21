@@ -1,4 +1,3 @@
-import functools
 import importlib
 import json
 import os
@@ -291,32 +290,6 @@ def print_checks(
 
     message = plural_string if checks_num > 1 else singular_string
     print(message)
-
-
-# Parse checks from compliance frameworks specification
-def parse_checks_from_compliance_framework(
-    compliance_frameworks: list, bulk_compliance_frameworks: dict
-) -> list:
-    """parse_checks_from_compliance_framework returns a set of checks from the given compliance_frameworks"""
-    checks_to_execute = set()
-    try:
-        for framework in compliance_frameworks:
-            # compliance_framework_json["Requirements"][*]["Checks"]
-            compliance_framework_checks_list = [
-                requirement.Checks
-                for requirement in bulk_compliance_frameworks[framework].Requirements
-            ]
-            # Reduce nested list into a list
-            # Pythonic functional magic
-            compliance_framework_checks = functools.reduce(
-                lambda x, y: x + y, compliance_framework_checks_list
-            )
-            # Then union this list of checks with the initial one
-            checks_to_execute = checks_to_execute.union(compliance_framework_checks)
-    except Exception as e:
-        logger.error(f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}] -- {e}")
-
-    return checks_to_execute
 
 
 # Import an input check using its path
