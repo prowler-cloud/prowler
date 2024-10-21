@@ -96,12 +96,7 @@ def load_checks_to_execute(
         # Handle if there are categories passed using --categories
         elif categories:
             for category in categories:
-                checks_to_execute.update(
-                    CheckMetadata.list(
-                        bulk_checks_metadata=bulk_checks_metadata,
-                        category=category,
-                    )
-                )
+                checks_to_execute.update(check_categories[category])
 
         # If there are no checks passed as argument
         else:
