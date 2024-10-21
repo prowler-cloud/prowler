@@ -169,6 +169,12 @@ export interface FindingProps {
         count: number;
       };
     };
+    provider: {
+      data: {
+        type: "Provider";
+        id: string;
+      };
+    };
   };
   links: {
     self: string;
