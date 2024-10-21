@@ -143,7 +143,7 @@ class Test_waf_global_rulegroup_not_empty:
                 assert result[0].resource_id == RULE_GROUP_ID
                 assert (
                     result[0].resource_arn
-                    == f"arn:aws:waf:{AWS_ACCOUNT_NUMBER}:rulegroup/{RULE_GROUP_ID}"
+                    == f"arn:aws:waf:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:rulegroup/{RULE_GROUP_ID}"
                 )
                 assert result[0].region == AWS_REGION_US_EAST_1
 
@@ -182,6 +182,6 @@ class Test_waf_global_rulegroup_not_empty:
                 assert result[0].resource_id == RULE_GROUP_ID
                 assert (
                     result[0].resource_arn
-                    == f"arn:aws:waf:{AWS_ACCOUNT_NUMBER}:rulegroup/{RULE_GROUP_ID}"
+                    == f"arn:aws:waf:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:rulegroup/{RULE_GROUP_ID}"
                 )
                 assert result[0].region == AWS_REGION_US_EAST_1
