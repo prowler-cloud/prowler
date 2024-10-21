@@ -105,9 +105,7 @@ class TestCheckMetada:
 
         bulk_metadata = CheckMetadata.get_bulk(provider="aws")
 
-        result = CheckMetadata.list_by_severity(
-            bulk_checks_metadata=bulk_metadata, severity="high"
-        )
+        result = CheckMetadata.list(bulk_checks_metadata=bulk_metadata, severity="high")
 
         # Assertions
         assert result == ["accessanalyzer_enabled"]
@@ -125,9 +123,7 @@ class TestCheckMetada:
 
         bulk_metadata = CheckMetadata.get_bulk(provider="aws")
 
-        result = CheckMetadata.list_by_severity(
-            bulk_checks_metadata=bulk_metadata, severity="low"
-        )
+        result = CheckMetadata.list(bulk_checks_metadata=bulk_metadata, severity="low")
 
         # Assertions
         assert result == []
@@ -145,7 +141,7 @@ class TestCheckMetada:
 
         bulk_metadata = CheckMetadata.get_bulk(provider="aws")
 
-        result = CheckMetadata.list_by_category(
+        result = CheckMetadata.list(
             bulk_checks_metadata=bulk_metadata, category="categoryone"
         )
 
@@ -165,7 +161,7 @@ class TestCheckMetada:
 
         bulk_metadata = CheckMetadata.get_bulk(provider="aws")
 
-        result = CheckMetadata.list_by_category(
+        result = CheckMetadata.list(
             bulk_checks_metadata=bulk_metadata, category="categorytwo"
         )
 
@@ -185,7 +181,7 @@ class TestCheckMetada:
 
         bulk_metadata = CheckMetadata.get_bulk(provider="aws")
 
-        result = CheckMetadata.list_by_service(
+        result = CheckMetadata.list(
             bulk_checks_metadata=bulk_metadata, service="service1"
         )
 
@@ -205,7 +201,7 @@ class TestCheckMetada:
 
         bulk_metadata = CheckMetadata.get_bulk(provider="aws")
 
-        result = CheckMetadata.list_by_service(
+        result = CheckMetadata.list(
             bulk_checks_metadata=bulk_metadata, service="service2"
         )
 
@@ -214,7 +210,7 @@ class TestCheckMetada:
 
     def test_list_by_compliance(self):
         bulk_compliance_frameworks = custom_compliance_metadata
-        result = CheckMetadata.list_by_compliance_framework(
+        result = CheckMetadata.list(
             bulk_compliance_frameworks=bulk_compliance_frameworks,
             compliance_framework="framework1_aws",
         )
@@ -224,7 +220,7 @@ class TestCheckMetada:
 
     def test_list_by_compliance_empty(self):
         bulk_compliance_frameworks = custom_compliance_metadata
-        result = CheckMetadata.list_by_compliance_framework(
+        result = CheckMetadata.list(
             bulk_compliance_frameworks=bulk_compliance_frameworks,
             compliance_framework="framework1_azure",
         )

@@ -54,7 +54,7 @@ def load_checks_to_execute(
                 try:
                     Severity(severity)
                     checks_to_execute.update(
-                        CheckMetadata.list_by_severity(
+                        CheckMetadata.list(
                             bulk_checks_metadata=bulk_checks_metadata, severity=severity
                         )
                     )
@@ -67,7 +67,10 @@ def load_checks_to_execute(
                 for service in service_list:
                     checks_to_execute = (
                         set(
-                            CheckMetadata.list_by_service(bulk_checks_metadata, service)
+                            CheckMetadata.list(
+                                bulk_checks_metadata=bulk_checks_metadata,
+                                service=service,
+                            )
                         )
                         & checks_to_execute
                     )
@@ -79,15 +82,18 @@ def load_checks_to_execute(
         elif service_list:
             for service in service_list:
                 checks_to_execute.update(
-                    CheckMetadata.list_by_service(bulk_checks_metadata, service)
+                    CheckMetadata.list(
+                        bulk_checks_metadata=bulk_checks_metadata, service=service
+                    )
                 )
 
         # Handle if there are compliance frameworks passed using --compliance
         elif compliance_frameworks:
             for compliance_framework in compliance_frameworks:
                 checks_to_execute.update(
-                    CheckMetadata.list_by_compliance_framework(
-                        bulk_compliance_frameworks, compliance_framework
+                    CheckMetadata.list(
+                        bulk_checks_metadata=bulk_compliance_frameworks,
+                        compliance_framework=compliance_framework,
                     )
                 )
 
@@ -95,7 +101,9 @@ def load_checks_to_execute(
         elif categories:
             for category in categories:
                 checks_to_execute.update(
-                    CheckMetadata.list_by_category(bulk_checks_metadata, category)
+                    CheckMetadata.list(
+                        bulk_checks_metadata=bulk_checks_metadata, category=category
+                    )
                 )
 
         # If there are no checks passed as argument

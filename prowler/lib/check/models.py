@@ -160,13 +160,26 @@ class CheckMetadata(BaseModel):
         return bulk_check_metadata
 
     @staticmethod
-    def list(bulk_checks_metadata: dict, provider: str = None) -> list:
+    def list(
+        bulk_checks_metadata: dict = None,
+        bulk_compliance_frameworks: dict = None,
+        provider: str = None,
+        severity: str = None,
+        category: str = None,
+        service: str = None,
+        compliance_framework: str = None,
+    ) -> list:
         """
         Returns a list of checks from the bulk checks metadata.
 
         Args:
             bulk_checks_metadata (dict): The bulk checks metadata.
+            bulk_compliance_frameworks (dict): The bulk compliance frameworks.
             provider (str): The provider of the checks.
+            severity (str): The severity of the checks.
+            category (str): The category of the checks.
+            service (str): The service of the checks.
+            compliance_framework (str): The compliance framework of the checks.
 
         Returns:
             list: A list of checks.
@@ -178,6 +191,23 @@ class CheckMetadata(BaseModel):
                 for check_name, check_metadata in bulk_checks_metadata.items()
                 if check_metadata.Provider == provider
             ]
+        elif severity:
+            checks = CheckMetadata.list_by_severity(
+                bulk_checks_metadata=bulk_checks_metadata, severity=severity
+            )
+        elif category:
+            checks = CheckMetadata.list_by_category(
+                bulk_checks_metadata=bulk_checks_metadata, category=category
+            )
+        elif service:
+            checks = CheckMetadata.list_by_service(
+                bulk_checks_metadata=bulk_checks_metadata, service=service
+            )
+        elif compliance_framework:
+            checks = CheckMetadata.list_by_compliance_framework(
+                bulk_compliance_frameworks=bulk_compliance_frameworks,
+                compliance_framework=compliance_framework,
+            )
         else:
             checks = [check_name for check_name in bulk_checks_metadata.keys()]
 
