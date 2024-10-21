@@ -22,9 +22,6 @@ class WAF(AWSService):
         )
         self._list_web_acls()
         self.__threading_call__(self._get_web_acl, self.web_acls.values())
-        self.__threading_call__(
-            self._list_resources_for_web_acl, self.web_acls.values()
-        )
 
     def _list_rules(self):
         logger.info("WAF - Listing Global Rules...")
@@ -127,19 +124,6 @@ class WAF(AWSService):
                 else:
                     rule_arn = f"arn:{self.audited_partition}:waf:{self.region}:{self.audited_account}:rule/{rule_id}"
                     acl.rules.append(self.rules[rule_arn])
-
-        except Exception as error:
-            logger.error(
-                f"{acl.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-
-    def _list_resources_for_web_acl(self, acl):
-        logger.info("WAF Global - Describing resources...")
-        try:
-            for resource in self.client.list_resources_for_web_acl(
-                WebACLId=acl.id, ResourceType="APPLICATION_LOAD_BALANCER"
-            ).get("ResourceArns", []):
-                acl.albs.append(resource)
 
         except Exception as error:
             logger.error(

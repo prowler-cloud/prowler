@@ -219,7 +219,6 @@ class Test_WAF_Service:
         waf = WAF(aws_provider)
         waf_arn = f"arn:aws:waf:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:webacl/my-web-acl-id"
         assert len(waf.web_acls) == 1
-        print(waf.web_acls.keys())
         assert waf.web_acls[waf_arn].name == "my-web-acl"
         assert waf.web_acls[waf_arn].region == AWS_REGION_US_EAST_1
         assert waf.web_acls[waf_arn].id == "my-web-acl-id"
