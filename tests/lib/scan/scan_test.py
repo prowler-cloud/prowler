@@ -11,6 +11,7 @@ from prowler.lib.scan.exceptions.exceptions import (
     ScanInvalidComplianceFrameworkError,
     ScanInvalidServiceError,
     ScanInvalidSeverityError,
+    ScanInvalidStatusError,
 )
 from prowler.lib.scan.scan import Scan, get_service_checks_to_execute
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
@@ -34,9 +35,9 @@ finding = generate_finding_output(
     remediation_code_other="other-code",
     remediation_code_cli="cli-code",
     compliance={"compliance_key": "compliance_value"},
-    categories="category1,category2",
-    depends_on="dependency",
-    related_to="related finding",
+    categories=["categorya", "categoryb"],
+    depends_on=["dependency"],
+    related_to=["related"],
     notes="Notes about the finding",
 )
 
@@ -376,3 +377,41 @@ class TestScan:
             Scan(
                 mock_provider, checks=checks_to_execute, categories=["invalid_category"]
             )
+
+    def test_init_invalid_status(
+        mock_provider,
+    ):
+        checks_to_execute = set()
+        mock_provider.type = "aws"
+
+        with pytest.raises(ScanInvalidStatusError):
+            Scan(mock_provider, checks=checks_to_execute, status=["invalid_status"])
+
+    @patch("importlib.import_module")
+    def test_scan_filter_status(
+        mock_import_module,
+        mock_global_provider,
+        mock_recover_checks_from_provider,
+        mock_load_check_metadata,
+    ):
+        mock_check_class = MagicMock()
+        mock_check_instance = mock_check_class.return_value
+        mock_check_instance.Provider = "aws"
+        mock_check_instance.CheckID = "accessanalyzer_enabled"
+        mock_check_instance.CheckTitle = "Check if IAM Access Analyzer is enabled"
+        mock_check_instance.Categories = []
+
+        mock_import_module.return_value = MagicMock(
+            accessanalyzer_enabled=mock_check_class
+        )
+
+        checks_to_execute = {"accessanalyzer_enabled"}
+        custom_checks_metadata = {}
+        mock_global_provider.type = "aws"
+
+        scan = Scan(mock_global_provider, checks=checks_to_execute, status=["FAIL"])
+        mock_load_check_metadata.assert_called_once()
+        mock_recover_checks_from_provider.assert_called_once_with("aws")
+        results = list(scan.scan(custom_checks_metadata))
+
+        assert results[0] == (100.0, [])

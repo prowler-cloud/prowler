@@ -2,16 +2,17 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional, Union
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from prowler.config.config import prowler_version
-from prowler.lib.check.models import Check_Report
+from prowler.lib.check.models import Check_Report, CheckMetadata
 from prowler.lib.logger import logger
 from prowler.lib.outputs.common import (
     fill_common_finding_data,
     get_provider_data_mapping,
 )
 from prowler.lib.outputs.compliance.compliance import get_check_compliance
+from prowler.lib.utils.utils import dict_to_lowercase
 from prowler.providers.common.provider import Provider
 
 
@@ -19,14 +20,6 @@ class Status(str, Enum):
     PASS = "PASS"
     FAIL = "FAIL"
     MANUAL = "MANUAL"
-
-
-class Severity(str, Enum):
-    critical = "critical"
-    high = "high"
-    medium = "medium"
-    low = "low"
-    informational = "informational"
 
 
 class Finding(BaseModel):
@@ -41,50 +34,75 @@ class Finding(BaseModel):
     auth_method: str
     timestamp: Union[int, datetime]
     account_uid: str
-    # Optional since it depends on permissions
-    account_name: Optional[str]
-    # Optional since it depends on permissions
-    account_email: Optional[str]
-    # Optional since it depends on permissions
-    account_organization_uid: Optional[str]
-    # Optional since it depends on permissions
-    account_organization_name: Optional[str]
-    # Optional since it depends on permissions
+    account_name: Optional[str] = None
+    account_email: Optional[str] = None
+    account_organization_uid: Optional[str] = None
+    account_organization_name: Optional[str] = None
+    metadata: CheckMetadata
     account_tags: dict = {}
-    finding_uid: str
-    provider: str
-    check_id: str
-    check_title: str
-    check_type: str
+    uid: str
     status: Status
     status_extended: str
     muted: bool = False
-    service_name: str
-    subservice_name: str
-    severity: Severity
-    resource_type: str
     resource_uid: str
     resource_name: str
     resource_details: str
-    resource_tags: dict = {}
-    # Only present for AWS and Azure
-    partition: Optional[str]
+    resource_tags: dict = Field(default_factory=dict)
+    partition: Optional[str] = None
     region: str
-    description: str
-    risk: str
-    related_url: str
-    remediation_recommendation_text: str
-    remediation_recommendation_url: str
-    remediation_code_nativeiac: str
-    remediation_code_terraform: str
-    remediation_code_cli: str
-    remediation_code_other: str
     compliance: dict
-    categories: str
-    depends_on: str
-    related_to: str
-    notes: str
     prowler_version: str = prowler_version
+
+    @property
+    def provider(self) -> str:
+        """
+        Returns the provider from the finding check's metadata.
+        """
+        return self.metadata.Provider
+
+    @property
+    def check_id(self) -> str:
+        """
+        Returns the ID from the finding check's metadata.
+        """
+        return self.metadata.CheckID
+
+    @property
+    def severity(self) -> str:
+        """
+        Returns the severity from the finding check's metadata.
+        """
+        return self.metadata.Severity
+
+    @property
+    def resource_type(self) -> str:
+        """
+        Returns the resource type from the finding check's metadata.
+        """
+        return self.metadata.ResourceType
+
+    @property
+    def service_name(self) -> str:
+        """
+        Returns the service name from the finding check's metadata.
+        """
+        return self.metadata.ServiceName
+
+    @property
+    def raw(self) -> dict:
+        """
+        Returns the raw (dict) finding without any post-processing.
+        """
+        return {}
+
+    def get_metadata(self) -> dict:
+        """
+        Retrieves the metadata of the object and returns it as a dictionary with all keys in lowercase.
+        Returns:
+            dict: A dictionary containing the metadata with keys converted to lowercase.
+        """
+
+        return dict_to_lowercase(self.metadata.dict())
 
     @classmethod
     def generate_output(
@@ -173,7 +191,7 @@ class Finding(BaseModel):
                         check_output.project_id
                     ].organization.id
                     # TODO: for now is None since we don't retrieve that data
-                    output_data["account_organization"] = provider.projects[
+                    output_data["account_organization_name"] = provider.projects[
                         check_output.project_id
                     ].organization.display_name
 
@@ -190,7 +208,7 @@ class Finding(BaseModel):
             # check_output Unique ID
             # TODO: move this to a function
             # TODO: in Azure, GCP and K8s there are fidings without resource_name
-            output_data["finding_uid"] = (
+            output_data["uid"] = (
                 f"prowler-{provider.type}-{check_output.check_metadata.CheckID}-{output_data['account_uid']}-"
                 f"{output_data['region']}-{output_data['resource_name']}"
             )

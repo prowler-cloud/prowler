@@ -118,11 +118,18 @@ class APIGateway(AWSService):
                         if "tracingEnabled" in stage:
                             if stage["tracingEnabled"]:
                                 tracing_enabled = True
+                        cache_enabled = False
+                        cache_data_encrypted = False
                         if "webAclArn" in stage:
                             waf = stage["webAclArn"]
                         if "methodSettings" in stage:
-                            if stage["methodSettings"]:
-                                logging = True
+                            for settings in stage["methodSettings"].values():
+                                if settings.get("loggingLevel"):
+                                    logging = True
+                                if settings.get("cachingEnabled"):
+                                    cache_enabled = True
+                                    if settings.get("cacheDataEncrypted"):
+                                        cache_data_encrypted = True
                         if "clientCertificateId" in stage:
                             client_certificate = True
                         arn = f"arn:{self.audited_partition}:apigateway:{regional_client.region}::/restapis/{rest_api.id}/stages/{stage['stageName']}"
@@ -135,6 +142,8 @@ class APIGateway(AWSService):
                                 waf=waf,
                                 tags=[stage.get("tags")],
                                 tracing_enabled=tracing_enabled,
+                                cache_enabled=cache_enabled,
+                                cache_data_encrypted=cache_data_encrypted,
                             )
                         )
                 except ClientError as error:
@@ -219,6 +228,8 @@ class Stage(BaseModel):
     waf: Optional[str]
     tags: Optional[list] = []
     tracing_enabled: Optional[bool]
+    cache_enabled: Optional[bool]
+    cache_data_encrypted: Optional[bool]
 
 
 class PathResourceMethods(BaseModel):

@@ -8,6 +8,7 @@ from moto import mock_aws
 from prowler.config.config import (
     default_config_file_path,
     default_fixer_config_file_path,
+    get_default_mute_file_path,
 )
 from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.common.models import Audit_Metadata
@@ -99,6 +100,7 @@ def set_mocked_aws_provider(
     profile_region: str = None,
     audit_config: dict = {},
     fixer_config: dict = {},
+    mutelist: dict = None,
     scan_unused_services: bool = True,
     audit_session: session.Session = session.Session(
         profile_name=None,
@@ -144,6 +146,7 @@ def set_mocked_aws_provider(
     provider._audit_resources = []
     provider._audit_config = audit_config
     provider._fixer_config = fixer_config
+    provider._mutelist = mutelist
     provider.audit_metadata = Audit_Metadata(
         services_scanned=0,
         expected_checks=expected_checks,
@@ -168,6 +171,7 @@ def set_default_provider_arguments(
     arguments.send_sh_only_fails = False
     arguments.config_file = default_config_file_path
     arguments.fixer_config = default_fixer_config_file_path
+    arguments.mutelist_file = get_default_mute_file_path("aws")
 
     return arguments
 

@@ -3,7 +3,7 @@ import sys
 import yaml
 from jsonschema import validate
 
-from prowler.config.config import valid_severities
+from prowler.lib.check.models import Severity
 from prowler.lib.logger import logger
 
 custom_checks_metadata_schema = {
@@ -17,7 +17,7 @@ custom_checks_metadata_schema = {
                     "properties": {
                         "Severity": {
                             "type": "string",
-                            "enum": valid_severities,
+                            "enum": [severity.value for severity in Severity],
                         },
                         "CheckTitle": {
                             "type": "string",

@@ -39,16 +39,16 @@ class HTML(Output):
                     f"""
                         <tr class="{row_class}">
                             <td>{finding_status}</td>
-                            <td>{finding.severity.value}</td>
-                            <td>{finding.service_name}</td>
+                            <td>{finding.metadata.Severity.value}</td>
+                            <td>{finding.metadata.ServiceName}</td>
                             <td>{finding.region.lower()}</td>
-                            <td>{finding.check_id.replace("_", "<wbr />_")}</td>
-                            <td>{finding.check_title}</td>
+                            <td>{finding.metadata.CheckID.replace("_", "<wbr />_")}</td>
+                            <td>{finding.metadata.CheckTitle}</td>
                             <td>{finding.resource_uid.replace("<", "&lt;").replace(">", "&gt;").replace("_", "<wbr />_")}</td>
                             <td>{parse_html_string(unroll_dict(finding.resource_tags))}</td>
                             <td>{finding.status_extended.replace("<", "&lt;").replace(">", "&gt;").replace("_", "<wbr />_")}</td>
-                            <td><p class="show-read-more">{html.escape(finding.risk)}</p></td>
-                            <td><p class="show-read-more">{html.escape(finding.remediation_recommendation_text)}</p> <a class="read-more" href="{finding.remediation_recommendation_url}"><i class="fas fa-external-link-alt"></i></a></td>
+                            <td><p class="show-read-more">{html.escape(finding.metadata.Risk)}</p></td>
+                            <td><p class="show-read-more">{html.escape(finding.metadata.Remediation.Recommendation.Text)}</p> <a class="read-more" href="{finding.metadata.Remediation.Recommendation.Url}"><i class="fas fa-external-link-alt"></i></a></td>
                             <td><p class="show-read-more">{parse_html_string(unroll_dict(finding.compliance, separator=": "))}</p></td>
                         </tr>
                         """

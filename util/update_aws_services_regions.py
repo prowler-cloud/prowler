@@ -62,6 +62,8 @@ regions_by_service["services"]["wafv2"] = regions_by_service["services"]["waf"]
 regions_by_service["services"]["wellarchitected"] = regions_by_service["services"][
     "wellarchitectedtool"
 ]
+# sesv2 --> ses
+regions_by_service["services"]["sesv2"] = regions_by_service["services"]["ses"]
 
 # Write to file
 parsed_matrix_regions_aws = f"{os.path.dirname(os.path.realpath(__name__))}/prowler/providers/aws/aws_regions_by_service.json"

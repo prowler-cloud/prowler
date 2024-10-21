@@ -13,10 +13,12 @@ class ACM(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
-        self.certificates = []
+        self.certificates = {}
         self.__threading_call__(self._list_certificates)
-        self._describe_certificates()
-        self._list_tags_for_certificate()
+        self.__threading_call__(self._describe_certificates, self.certificates.values())
+        self.__threading_call__(
+            self._list_tags_for_certificate, self.certificates.values()
+        )
 
     def _list_certificates(self, regional_client):
         logger.info("ACM - Listing Certificates...")
@@ -54,54 +56,50 @@ class ACM(AWSService):
                             ).days
                         else:
                             certificate_expiration_time = 0
-                        self.certificates.append(
-                            Certificate(
-                                arn=certificate["CertificateArn"],
-                                name=certificate["DomainName"],
-                                id=certificate["CertificateArn"].split("/")[-1],
-                                type=certificate["Type"],
-                                key_algorithm=certificate["KeyAlgorithm"],
-                                expiration_days=certificate_expiration_time,
-                                in_use=certificate.get("InUse", False),
-                                transparency_logging=False,
-                                region=regional_client.region,
-                            )
+                        self.certificates[certificate["CertificateArn"]] = Certificate(
+                            arn=certificate["CertificateArn"],
+                            name=certificate["DomainName"],
+                            id=certificate["CertificateArn"].split("/")[-1],
+                            type=certificate["Type"],
+                            key_algorithm=certificate["KeyAlgorithm"],
+                            expiration_days=certificate_expiration_time,
+                            in_use=certificate.get("InUse", False),
+                            transparency_logging=False,
+                            region=regional_client.region,
                         )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _describe_certificates(self):
+    def _describe_certificates(self, certificate):
         logger.info("ACM - Describing Certificates...")
         try:
-            for certificate in self.certificates:
-                regional_client = self.regional_clients[certificate.region]
-                response = regional_client.describe_certificate(
-                    CertificateArn=certificate.arn
-                )["Certificate"]
-                if (
-                    response["Options"]["CertificateTransparencyLoggingPreference"]
-                    == "ENABLED"
-                ):
-                    certificate.transparency_logging = True
+            regional_client = self.regional_clients[certificate.region]
+            response = regional_client.describe_certificate(
+                CertificateArn=certificate.arn
+            )["Certificate"]
+            if (
+                response["Options"]["CertificateTransparencyLoggingPreference"]
+                == "ENABLED"
+            ):
+                certificate.transparency_logging = True
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{certificate.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _list_tags_for_certificate(self):
+    def _list_tags_for_certificate(self, certificate):
         logger.info("ACM - List Tags...")
         try:
-            for certificate in self.certificates:
-                regional_client = self.regional_clients[certificate.region]
-                response = regional_client.list_tags_for_certificate(
-                    CertificateArn=certificate.arn
-                )["Tags"]
-                certificate.tags = response
+            regional_client = self.regional_clients[certificate.region]
+            response = regional_client.list_tags_for_certificate(
+                CertificateArn=certificate.arn
+            )["Tags"]
+            certificate.tags = response
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{certificate.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
 

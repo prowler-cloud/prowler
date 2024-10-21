@@ -30,11 +30,11 @@ class defender_ensure_iot_hub_defender_is_on(Check):
                 report.subscription = subscription_name
                 report.resource_name = iot_security_solution_name
                 report.resource_id = iot_security_solution.resource_id
-                report.status_extended = f"The security solution {iot_security_solution_name} is enabled in susbscription {subscription_name}."
+                report.status_extended = f"The security solution {iot_security_solution_name} is enabled in subscription {subscription_name}."
 
                 if iot_security_solution.status != "Enabled":
                     report.status = "FAIL"
-                    report.status_extended = f"The security solution {iot_security_solution_name} is disabled in susbscription {subscription_name}"
+                    report.status_extended = f"The security solution {iot_security_solution_name} is disabled in subscription {subscription_name}"
 
                 findings.append(report)
 

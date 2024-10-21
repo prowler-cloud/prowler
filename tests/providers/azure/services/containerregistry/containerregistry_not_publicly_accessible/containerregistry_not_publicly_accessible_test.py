@@ -60,6 +60,7 @@ class Test_containerregistry_not_publicly_accessible:
                         public_network_access="Enabled",
                         admin_user_enabled=True,
                         network_rule_set=NetworkRuleSet(default_action="Allow"),
+                        private_endpoint_connections=[],
                         monitor_diagnostic_settings=[
                             {
                                 "id": "id1/id1",
@@ -133,6 +134,7 @@ class Test_containerregistry_not_publicly_accessible:
                         public_network_access="Enabled",
                         admin_user_enabled=False,
                         network_rule_set=NetworkRuleSet(default_action="Deny"),
+                        private_endpoint_connections=[],
                         monitor_diagnostic_settings=[
                             {
                                 "id": "id1/id1",
