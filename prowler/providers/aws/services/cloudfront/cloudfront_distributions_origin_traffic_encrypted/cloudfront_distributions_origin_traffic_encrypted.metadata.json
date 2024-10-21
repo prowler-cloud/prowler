@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:cloudfront:region:account-id:distribution/resource-id",
   "Severity": "medium",
-  "ResourceType": "AWSCloudFrontDistribution",
+  "ResourceType": "AwsCloudFrontDistribution",
   "Description": "Check if CloudFront distributions encrypt traffic to custom origins.",
   "Risk": "Allowing unencrypted HTTP traffic between CloudFront and custom origins can expose data to potential eavesdropping and manipulation, compromising data security and integrity.",
   "RelatedUrl": "https://docs.aws.amazon.com/whitepapers/latest/secure-content-delivery-amazon-cloudfront/custom-origin-with-cloudfront.html",
