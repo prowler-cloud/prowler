@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "waf_global_rulegroup_not_empty",
+  "CheckTitle": "Check if AWS WAF Classic Global rule group has at least one rule.",
+  "CheckType": [
+    "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53 Controls"
+  ],
+  "ServiceName": "waf",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:waf::account-id:rulegroup/rule-group-name/rule-group-id",
+  "Severity": "medium",
+  "ResourceType": "AwsWafRuleGroup",
+  "Description": "Ensure that every AWS WAF Classic Global rule group contains at least one rule.",
+  "Risk": "A WAF Classic Global rule group without any rules allows all incoming traffic to bypass inspection, increasing the risk of unauthorized access and potential attacks on resources.",
+  "RelatedUrl": "https://docs.aws.amazon.com/waf/latest/developerguide/waf-rule-groups.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws waf update-rule-group --rule-group-id <rule-group-id> --updates Action=INSERT,ActivatedRule={Priority=1,RuleId=<rule-id>,Action={Type=BLOCK}} --change-token <change-token> --region <region>",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/waf-controls.html#waf-7",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure that every AWS WAF Classic Global rule group contains at least one rule to enforce traffic inspection and defined actions such as allow, block, or count.",
+      "Url": "https://docs.aws.amazon.com/waf/latest/developerguide/classic-rule-group-editing.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
