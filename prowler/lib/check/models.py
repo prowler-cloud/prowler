@@ -216,8 +216,6 @@ class CheckMetadata(BaseModel):
                 bulk_compliance_frameworks=bulk_compliance_frameworks,
                 compliance_framework=compliance_framework,
             )
-        else:
-            checks = [check_name for check_name in bulk_checks_metadata.keys()]
 
         return checks
 

@@ -63,6 +63,7 @@ def load_checks_to_execute(
                     checks_to_execute = (
                         set(
                             CheckMetadata.list(
+                                provider=provider,
                                 bulk_checks_metadata=bulk_checks_metadata,
                                 service=service,
                             )
@@ -78,7 +79,9 @@ def load_checks_to_execute(
             for service in service_list:
                 checks_to_execute.update(
                     CheckMetadata.list(
-                        bulk_checks_metadata=bulk_checks_metadata, service=service
+                        provider=provider,
+                        bulk_checks_metadata=bulk_checks_metadata,
+                        service=service,
                     )
                 )
 
@@ -87,6 +90,7 @@ def load_checks_to_execute(
             for compliance_framework in compliance_frameworks:
                 checks_to_execute.update(
                     CheckMetadata.list(
+                        provider=provider,
                         bulk_checks_metadata=bulk_compliance_frameworks,
                         compliance_framework=compliance_framework,
                     )
@@ -97,14 +101,18 @@ def load_checks_to_execute(
             for category in categories:
                 checks_to_execute.update(
                     CheckMetadata.list(
-                        bulk_checks_metadata=bulk_checks_metadata, category=category
+                        provider=provider,
+                        bulk_checks_metadata=bulk_checks_metadata,
+                        category=category,
                     )
                 )
 
         # If there are no checks passed as argument
         else:
             # get all checks
-            for check_name in CheckMetadata.list(bulk_checks_metadata, provider):
+            for check_name in CheckMetadata.list(
+                bulk_checks_metadata=bulk_checks_metadata, provider=provider
+            ):
                 checks_to_execute.add(check_name)
         # Only execute threat detection checks if threat-detection category is set
         if categories and categories != [] and "threat-detection" not in categories:
