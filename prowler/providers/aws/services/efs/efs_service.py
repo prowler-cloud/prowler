@@ -39,6 +39,8 @@ class EFS(AWSService):
                             id=efs_id,
                             arn=efs_arn,
                             region=regional_client.region,
+                            availability_zone_id=efs.get("AvailabilityZoneId", "False"),
+                            number_of_mount_targets=efs["NumberOfMountTargets"],
                             encrypted=efs["Encrypted"],
                             tags=efs.get("Tags"),
                         )
@@ -166,6 +168,8 @@ class FileSystem(BaseModel):
     policy: Optional[dict] = {}
     backup_policy: Optional[str] = "DISABLED"
     encrypted: bool
+    availability_zone_id: Optional[str]
+    number_of_mount_targets: int
     mount_targets: list[MountTarget] = []
     access_points: list[AccessPoint] = []
     tags: Optional[list] = []

@@ -37,6 +37,8 @@ def mock_make_api_call(self, operation_name, kwarg):
                     "FileSystemId": FILE_SYSTEM_ID,
                     "Encrypted": True,
                     "Tags": [{"Key": "test", "Value": "test"}],
+                    "AvailabilityZoneId": "az-12345",
+                    "NumberOfMountTargets": 123,
                     "BackupPolicy": {"Status": "ENABLED"},
                     "Policy": json.dumps(FILESYSTEM_POLICY),
                 }
@@ -108,6 +110,8 @@ class Test_EFS:
         assert len(efs.filesystems) == 1
         assert efs.filesystems[efs_arn].id == FILE_SYSTEM_ID
         assert efs.filesystems[efs_arn].encrypted
+        assert efs.filesystems[efs_arn].availability_zone_id == "az-12345"
+        assert efs.filesystems[efs_arn].number_of_mount_targets == 123
         assert efs.filesystems[efs_arn].tags == [
             {"Key": "test", "Value": "test"},
         ]
