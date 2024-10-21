@@ -1,0 +1,30 @@
+{
+    "Provider": "aws",
+    "CheckID": "redshift_cluster_configuration_check",
+    "CheckTitle": "Check if Redshift Clusters are Encrypted with KMS and Have Audit Logging Enabled",
+    "CheckType": [],
+    "ServiceName": "redshift",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "arn:aws:redshift:region:account-id:cluster:cluster-name",
+    "Severity": "high",
+    "ResourceType": "AwsRedshiftCluster",
+    "Description": "Ensure that Redshift clusters are encrypted with KMS and have audit logging enabled.",
+    "Risk": "Clusters not encrypted with KMS could be vulnerable to data breaches and unauthorized access.",
+    "RelatedUrl": "https://docs.aws.amazon.com/redshift/latest/mgmt/working-with-db-encryption.html",
+    "Remediation": {
+        "Code": {
+            "CLI": "https://awscli.amazonaws.com/v2/documentation/api/latest/reference/redshift/modify-cluster.html",
+            "NativeIaC": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-redshift-cluster.html",
+            "Other": "https://docs.aws.amazon.com/redshift/latest/mgmt/working-with-db-encryption.html",
+            "Terraform": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/redshift_cluster"
+        },
+        "Recommendation": {
+            "Text": "Ensure all Redshift clusters are encrypted using KMS and have audit logging enabled to protect data at rest and to monitor cluster activities.",
+            "Url": "https://docs.aws.amazon.com/redshift/latest/mgmt/working-with-db-encryption.html"
+        }
+    },
+    "Categories": [],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+}

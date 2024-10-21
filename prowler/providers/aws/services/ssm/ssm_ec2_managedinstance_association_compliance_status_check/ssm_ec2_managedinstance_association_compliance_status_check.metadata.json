@@ -1,0 +1,37 @@
+{
+    "Provider": "aws",
+    "CheckID": "ssm_ec2_managedinstance_association_compliance_status_check",
+    "CheckTitle": "Ensure EC2 Managed Instances have compliant association statuses",
+    "CheckType": [
+      "Configuration",
+      "Compliance"
+    ],
+    "ServiceName": "ssm",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "arn:aws:ssm:{region}:{account}:managed-instance/{instance_id}",
+    "Severity": "high",
+    "ResourceType": "AwsSSMManagedInstance",
+    "Description": "This check ensures that all EC2 Managed Instances have compliant association statuses.",
+    "Risk": "Non-compliant managed instances may not be in the desired state and could lead to security or operational issues.",
+    "RelatedUrl": "",
+    "Remediation": {
+      "Code": {
+        "CLI": "https://docs.aws.amazon.com/cli/latest/reference/ssm/describe-instance-information.html",
+        "NativeIaC": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ssm-association.html",
+        "Other": "",
+        "Terraform": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ssm_association"
+      },
+      "Recommendation": {
+        "Text": "Ensure that your EC2 managed instances have compliant association statuses.",
+        "Url": "https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-state-assoc.html"
+      }
+    },
+    "Categories": [
+      "Configuration",
+      "Compliance"
+    ],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+  }
+  

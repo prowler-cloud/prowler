@@ -1,0 +1,31 @@
+{
+    "Provider": "aws",
+    "CheckID": "ec2_ebs_optimized_instance",
+    "CheckTitle": "Ensure all EC2 instances are EBS-optimized",
+    "CheckType": [],
+    "ServiceName": "ec2",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "arn:aws:ec2:{region}:{account}:instance/{instance_id}",
+    "Severity": "medium",
+    "ResourceType": "AwsEC2Instance",
+    "Description": "This check ensures that all EC2 instances are EBS-optimized.",
+    "Risk": "Non-EBS-optimized instances may experience degraded performance when using EBS volumes.",
+    "RelatedUrl": "",
+    "Remediation": {
+      "Code": {
+        "CLI": "https://docs.aws.amazon.com/cli/latest/reference/ec2/modify-instance-attribute.html",
+        "NativeIaC": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-instance.html",
+        "Other": "",
+        "Terraform": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/instance"
+      },
+      "Recommendation": {
+        "Text": "Ensure that your EC2 instances are EBS-optimized to improve performance.",
+        "Url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSOptimized.html"
+      }
+    },
+    "Categories": [],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+  }
+  

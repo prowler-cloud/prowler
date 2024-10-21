@@ -1,0 +1,32 @@
+{
+    "Provider": "aws",
+    "CheckID": "sagemaker_notebook_instance_kms_key_configured",
+    "CheckTitle": "Checks if SageMaker notebook instances have a KMS key configured. The rule is NON_COMPLIANT if a SageMaker notebook instance does not have a KMS key configured.",
+    "CheckType": [
+        "Configuration changes"
+    ],
+    "ServiceName": "sagemaker",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "arn:partition:sagemaker:region:account-id:notebook-instance/notebook-instance-name",
+    "Severity": "medium",
+    "ResourceType": "AwsSageMakerNotebookInstance",
+    "Description": "Checks if SageMaker notebook instances have a KMS key configured. The rule is NON_COMPLIANT if a SageMaker notebook instance does not have a KMS key configured.",
+    "Risk": "If SageMaker notebook instances do not have a KMS key configured, the data at rest is not encrypted using customer-managed keys, increasing the risk of unauthorized access.",
+    "RelatedUrl": "",
+    "Remediation": {
+        "Code": {
+            "CLI": "https://docs.aws.amazon.com/cli/latest/reference/sagemaker/update-notebook-instance.html",
+            "NativeIaC": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-sagemaker-notebookinstance.html",
+            "Other": "",
+            "Terraform": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sagemaker_notebook_instance"
+        },
+        "Recommendation": {
+            "Text": "Ensure that SageMaker notebook instances have a KMS key configured.",
+            "Url": "https://docs.aws.amazon.com/sagemaker/latest/dg/API_CreateNotebookInstance.html"
+        }
+    },
+    "Categories": [],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+}

@@ -1,0 +1,34 @@
+{
+    "Provider": "aws",
+    "CheckID": "s3_bucket_public_write_prohibited",
+    "CheckTitle": "Ensure that Amazon S3 buckets do not allow public write access.",
+    "CheckType": [
+      "Data Protection"
+    ],
+    "ServiceName": "s3",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "arn:partition:s3:::bucket_name",
+    "Severity": "critical",
+    "ResourceType": "AwsS3Bucket",
+    "Description": "Ensure that Amazon S3 buckets do not allow public write access.",
+    "Risk": "Misconfigured permissions could inadvertently allow unauthorized users to upload malicious or unwanted data, compromising security and data integrity",
+    "RelatedUrl": "",
+    "Remediation": {
+      "Code": {
+        "CLI": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html",
+        "NativeIaC": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-s3-bucket-publicaccessblockconfiguration.html",
+        "Other": "",
+        "Terraform": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_public_access_block"
+      },
+      "Recommendation": {
+        "Text": "To prevent unauthorized public write access, configure S3 bucket policies and ACLs to block public write permissions. Enable the 'Block Public Access' settings for the bucket to ensure no public policies or ACLs can grant write access. Apply these settings at the account level to enforce them across all buckets in all regions.",
+        "Url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html"
+      }
+    },
+    "Categories": [
+      "internet-exposed"
+    ],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+  }

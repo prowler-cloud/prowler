@@ -1,0 +1,36 @@
+{
+    "Provider": "aws",
+    "CheckID": "apigateway_ssl_enabled",
+    "CheckTitle": "Check if API Gateway stage uses an SSL certificate.",
+    "CheckAliases": [
+      
+    ],
+    "CheckType": [
+      "Security"
+    ],
+    "ServiceName": "apigateway",
+    "SubServiceName": "rest_api",
+    "ResourceIdTemplate": "arn:aws:apigateway:<region>::/restapis/<api-id>/stages/<stage-name>",
+    "Severity": "medium",
+    "ResourceType": "AwsApiGatewayStage",
+    "Description": "Checks if a REST API stage uses an SSL certificate. The rule is NON_COMPLIANT if the REST API stage does not have an associated SSL certificate.",
+    "Risk": "If the REST API stage does not have an associated SSL certificate, it may not be secure, and data transmission might be exposed to potential threats.",
+    "RelatedUrl": "",
+    "Remediation": {
+      "Code": {
+        "CLI": "",
+        "NativeIaC": "",
+        "Other": "",
+        "Terraform": ""
+      },
+      "Recommendation": {
+        "Text": "Ensure that your API Gateway stage is configured to use an SSL certificate to secure data transmission.",
+        "Url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/getting-started-client-side-ssl-authentication.html"
+      }
+    },
+    "Categories": [],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+  }
+  

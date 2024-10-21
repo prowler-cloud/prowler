@@ -1,0 +1,35 @@
+{
+    "Provider": "aws",
+    "CheckID": "ecs_task_definition_user_for_host_mode_check",
+    "CheckTitle": "Ensure ECS Task Definitions using host mode specify a user",
+    "CheckType": [
+      "Configuration"
+    ],
+    "ServiceName": "ecs",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "arn:aws:ecs:{region}:{account}:task-definition/{family}",
+    "Severity": "medium",
+    "ResourceType": "AwsEcsTaskDefinition",
+    "Description": "This check ensures that ECS task definitions using host mode specify a user.",
+    "Risk": "ECS tasks running in host mode without specifying a user can lead to security risks.",
+    "RelatedUrl": "",
+    "Remediation": {
+      "Code": {
+        "CLI": "https://docs.aws.amazon.com/cli/latest/reference/ecs/register-task-definition.html",
+        "NativeIaC": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ecs-taskdefinition.html",
+        "Other": "",
+        "Terraform": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_task_definition"
+      },
+      "Recommendation": {
+        "Text": "Ensure that your ECS task definitions using host mode specify a user.",
+        "Url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters.html#task_definition_container_definitions"
+      }
+    },
+    "Categories": [
+      "Configuration"
+    ],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+  }
+  

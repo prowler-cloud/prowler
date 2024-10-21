@@ -1,0 +1,36 @@
+{
+    "Provider": "aws",
+    "CheckID": "apigateway_cache_enabled_and_encrypted",
+    "CheckTitle": "Check if API Gateway stages have cache enabled and encrypted.",
+    "CheckAliases": [
+      
+    ],
+    "CheckType": [
+      "Infrastructure Security"
+    ],
+    "ServiceName": "apigateway",
+    "SubServiceName": "rest_api",
+    "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+    "Severity": "medium",
+    "ResourceType": "AwsApiGatewayStage",
+    "Description": "Checks if all methods in Amazon API Gateway stages have cache enabled and cache encrypted.",
+    "Risk": "If caching is not enabled and encrypted, API responses may be slower and sensitive data may be exposed.",
+    "RelatedUrl": "",
+    "Remediation": {
+      "Code": {
+        "CLI": "",
+        "NativeIaC": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-apigateway-stage.html",
+        "Other": "",
+        "Terraform": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/api_gateway_stage"
+      },
+      "Recommendation": {
+        "Text": "Ensure that caching is enabled and encrypted for all methods in your API Gateway stages.",
+        "Url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-caching.html"
+      }
+    },
+    "Categories": [],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+  }
+  

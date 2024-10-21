@@ -1,0 +1,30 @@
+{
+    "Provider": "aws",
+    "CheckID": "redshift_cluster_public_access_check",
+    "CheckTitle": "Check if Redshift Clusters have Public Access Enabled",
+    "CheckType": [],
+    "ServiceName": "redshift",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "arn:aws:redshift:region:account-id:cluster:cluster-name",
+    "Severity": "high",
+    "ResourceType": "AwsRedshiftCluster",
+    "Description": "Ensure that Redshift clusters do not have public access enabled.",
+    "Risk": "Clusters with public access enabled could be vulnerable to unauthorized access.",
+    "RelatedUrl": "https://docs.aws.amazon.com/redshift/latest/mgmt/working-with-clusters.html",
+    "Remediation": {
+        "Code": {
+            "CLI": "https://awscli.amazonaws.com/v2/documentation/api/latest/reference/redshift/modify-cluster.html",
+            "NativeIaC": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-redshift-cluster.html",
+            "Other": "https://docs.aws.amazon.com/redshift/latest/mgmt/working-with-clusters.html",
+            "Terraform": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/redshift_cluster"
+        },
+        "Recommendation": {
+            "Text": "Ensure that Redshift clusters do not have public access enabled to enhance security.",
+            "Url": "https://docs.aws.amazon.com/redshift/latest/mgmt/working-with-clusters.html"
+        }
+    },
+    "Categories": [],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+}

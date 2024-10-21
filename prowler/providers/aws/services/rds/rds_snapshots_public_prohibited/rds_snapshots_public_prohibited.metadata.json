@@ -1,0 +1,30 @@
+{
+    "Provider": "aws",
+    "CheckID": "rds_snapshots_public_prohibited",
+    "CheckTitle": "Ensure RDS snapshots are not publicly accessible",
+    "CheckType": [],
+    "ServiceName": "rds",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "arn:aws:rds:region:account-id:snapshot/snapshot-id",
+    "Severity": "high",
+    "ResourceType": "AwsRdsSnapshot",
+    "Description": "This check ensures that RDS snapshots are not publicly accessible.",
+    "Risk": "Publicly accessible RDS snapshots can be accessed by unauthorized users, leading to potential data breaches.",
+    "RelatedUrl": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_ShareSnapshot.html",
+    "Remediation": {
+        "Code": {
+            "CLI": "https://awscli.amazonaws.com/v2/documentation/api/latest/reference/rds/modify-db-snapshot-attribute.html",
+            "NativeIaC": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-rds-dbsnapshot.html",
+            "Other": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_ShareSnapshot.html",
+            "Terraform": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/db_snapshot"
+        },
+        "Recommendation": {
+            "Text": "Ensure that RDS snapshots are not publicly accessible to protect data from unauthorized access.",
+            "Url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_ShareSnapshot.html"
+        }
+    },
+    "Categories": [],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+}

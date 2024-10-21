@@ -1,0 +1,36 @@
+{
+    "Provider": "aws",
+    "CheckID": "vpc_sg_open_to_authorized_ports",
+    "CheckTitle": "Checks if security groups allowing unrestricted incoming traffic ('0.0.0.0/0' or '::/0') only allow inbound TCP or UDP connections on authorized ports.",
+    "CheckAliases": [
+      "VPC_SG_OPEN_ONLY_TO_AUTHORIZED_PORTS"
+    ],
+    "CheckType": [
+      "Data Security"
+    ],
+    "ServiceName": "vpc",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "AWS::EC2::SecurityGroup",
+    "Severity": "medium",
+    "ResourceType": "AesVpc",
+    "Description": "Checks if security groups allowing unrestricted incoming traffic ('0.0.0.0/0' or '::/0') only allow inbound TCP or UDP connections on authorized ports. The rule is NON_COMPLIANT if such security groups do not have ports specified in the rule parameters.",
+    "Risk": "High (not acceptable risk)",
+    "RelatedUrl": "",
+    "Remediation": {
+      "Code": {
+        "CLI": "",
+        "NativeIaC": "",
+        "Other": "",
+        "Terraform": ""
+      },
+      "Recommendation": {
+        "Text": "Exposing TCP ports 22 (SSH) and 3389 (RDP) to the Internet can increase opportunities for malicious activities such as hacking, Man-In-The-Middle attacks (MITM), and brute-force attacks, therefore it is strongly recommended to configure your Network Access Control Lists (NACLs) to limit inbound traffic on remote server administration ports 22 and 3389 to known and trusted IP addresses only.",
+        "Url": "https://docs.aws.amazon.com/config/latest/developerguide/vpc-sg-open-only-to-authorized-ports.html"
+      }
+    },
+    "Categories": [],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+  }
+  

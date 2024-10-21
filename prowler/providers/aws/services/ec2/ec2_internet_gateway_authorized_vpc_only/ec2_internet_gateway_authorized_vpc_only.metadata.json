@@ -1,0 +1,35 @@
+{
+    "Provider": "aws",
+    "CheckID": "ec2_internet_gateway_authorized_vpc_only",
+    "CheckTitle": "Ensure Internet Gateways are attached only to authorized VPCs",
+    "CheckType": [
+      "Security"
+    ],
+    "ServiceName": "ec2",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "arn:aws:ec2:{region}:{account}:internet-gateway/{resource_id}",
+    "Severity": "high",
+    "ResourceType": "AwsEc2InternetGateway",
+    "Description": "This check ensures that Internet Gateways are attached only to authorized VPCs.",
+    "Risk": "Unauthorized VPCs with Internet Gateways can pose a security risk.",
+    "RelatedUrl": "",
+    "Remediation": {
+      "Code": {
+        "CLI": "https://docs.aws.amazon.com/cli/latest/reference/ec2/attach-internet-gateway.html",
+        "NativeIaC": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-internetgateway.html",
+        "Other": "",
+        "Terraform": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/internet_gateway"
+      },
+      "Recommendation": {
+        "Text": "Ensure that your Internet Gateways are attached only to authorized VPCs.",
+        "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Internet_Gateway.html"
+      }
+    },
+    "Categories": [
+      "Security"
+    ],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+  }
+  

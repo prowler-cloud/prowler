@@ -1,0 +1,33 @@
+{
+    "Provider": "aws",
+    "CheckID": "iam_root_access_key_check",
+    "CheckTitle": "Ensure IAM root account does not have access keys",
+    "CheckType": [],
+    "ServiceName": "iam",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "arn:aws:iam:::root",
+    "Severity": "high",
+    "ResourceType": "AwsIamUser",
+    "Description": "This check verifies that the IAM root account does not have access keys enabled. Access keys for the root account pose a high security risk and should be avoided.",
+    "Risk": "Root account access keys pose a high security risk. They should be avoided and MFA should be enabled for the root account.",
+    "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/iam-root-access-key-check.html",
+    "Remediation": {
+      "Code": {
+        "CLI": "",
+        "NativeIaC": "",
+        "Other": "",
+        "Terraform": ""
+      },
+      "Recommendation": {
+        "Text": "Remove access keys for the root account and enable MFA.",
+        "Url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_root-user.html#id_root-user_manage_add-key"
+      }
+    },
+    "Categories": [
+      "security"
+    ],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+  }
+  

@@ -1,0 +1,34 @@
+{
+    "Provider": "aws",
+    "CheckID": "redshift_require_tls_ssl",
+    "CheckTitle": "Checks if Redshift clusters require TLS/SSL for connections",
+    "CheckType": [
+      "Security",
+      "Compliance"
+    ],
+    "ServiceName": "redshift",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "arn:aws:redshift:{region}:{account_id}:cluster/{cluster_identifier}",
+    "Severity": "high",
+    "ResourceType": "AwsRedshiftCluster",
+    "Description": "This check ensures that Redshift clusters require TLS/SSL for connections.",
+    "Risk": "Not requiring TLS/SSL for connections can expose data in transit to interception and tampering.",
+    "RelatedUrl": "",
+    "Remediation": {
+      "Code": {
+        "CLI": "https://docs.aws.amazon.com/cli/latest/reference/redshift/modify-cluster-parameter-group.html",
+        "Other":"",
+        "NativeIaC": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-redshift-clusterparametergroup.html",
+        "Terraform": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/redshift_parameter_group"
+      },
+      "Recommendation": {
+        "Text": "Ensure that Redshift clusters require TLS/SSL for connections.",
+        "Url": "https://docs.aws.amazon.com/redshift/latest/mgmt/connecting-ssl-support.html"
+      }
+    },
+    "Categories": [],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+  }
+  

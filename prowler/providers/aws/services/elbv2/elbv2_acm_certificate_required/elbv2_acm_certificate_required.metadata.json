@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "elbv2_acm_certificate_required",
+  "CheckTitle": "Check if ALB and NLB listeners are using certificates from ACM.",
+  "CheckType": [
+    "Security"
+  ],
+  "ServiceName": "elbv2",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "medium",
+  "ResourceType": "AWS::ElasticLoadBalancingV2::LoadBalancer",
+  "Description": "Checks if Application Load Balancers and Network Load Balancers have listeners that are configured to use certificates from AWS Certificate Manager (ACM). The rule is NON_COMPLIANT if at least 1 load balancer has at least 1 listener that is configured without a certificate from ACM or is configured with a certificate different from an ACM certificate.",
+  "Risk": "Listeners without ACM certificates may be using insecure or untrusted certificates.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/acm/latest/userguide/acm-services.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure that your ALB and NLB listeners are configured to use certificates from ACM.",
+      "Url": "https://docs.aws.amazon.com/acm/latest/userguide/acm-services.html"
+    }
+  },
+  "Categories": [
+    "security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

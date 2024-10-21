@@ -1,0 +1,30 @@
+{
+    "Provider": "aws",
+    "CheckID": "ec2_restricted_common_ports",
+    "CheckTitle": "Check if common ports are restricted",
+    "CheckType": [],
+    "ServiceName": "ec2",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "arn:partition:ec2:region:account-id:security-group/security-group-id",
+    "Severity": "high",
+    "ResourceType": "AwsSecurityGroup",
+    "Description": "Checks if common ports (22, 80, 443) are restricted in security groups.",
+    "Risk": "Unrestricted access to common ports can lead to unauthorized access and potential security breaches.",
+    "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/restricted-common-ports.html",
+    "Remediation": {
+        "Code": {
+            "CLI": "",
+            "Other": "",
+            "NativeIaC": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-security-group-ingress.html",
+            "Terraform": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule"
+        },
+        "Recommendation": {
+            "Text": "Ensure that common ports (22, 80, 443) are not accessible from 0.0.0.0/0 or ::/0.",
+            "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+        }
+    },
+    "Categories": [],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+}

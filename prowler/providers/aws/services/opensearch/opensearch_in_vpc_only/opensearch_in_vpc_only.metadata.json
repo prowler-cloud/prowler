@@ -1,0 +1,31 @@
+{
+    "Provider": "aws",
+    "CheckID": "opensearch_in_vpc_only",
+    "CheckTitle": "Ensure that OpenSearch domains are within a VPC",
+    "CheckType": ["config"],
+    "ServiceName": "opensearch",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "arn:aws:es:region:account-id:domain/domain-name",
+    "Severity": "high",
+    "ResourceType": "AwsOpenSearchDomain",
+    "Description": "Ensure that OpenSearch domains are within a VPC to enhance security.",
+    "Risk": "OpenSearch domains that are not within a VPC can be accessed publicly, posing a security risk.",
+    "RelatedUrl": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/vpc.html",
+    "Remediation": {
+      "Code": {
+        "CLI": "https://awscli.amazonaws.com/v2/documentation/api/latest/reference/opensearch/create-domain.html",
+        "NativeIaC": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-opensearchservice-domain.html",
+        "Other": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/vpc.html",
+        "Terraform": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/opensearch_domain"
+      },
+      "Recommendation": {
+        "Text": "Ensure all OpenSearch domains are created within a VPC.",
+        "Url": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/vpc.html"
+      }
+    },
+    "Categories": ["security", "network"],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": "This check verifies if the OpenSearch domains are within a VPC by checking the VPC ID."
+  }
+  
