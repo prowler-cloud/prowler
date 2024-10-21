@@ -145,7 +145,7 @@ class Test_acm_certificates_with_secure_key_algorithms:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"ACM Certificate {certificate_id} for {certificate["Certificate"]["DomainName"]} uses a secure key algorithm ({certificate["Certificate"]["KeyAlgorithm"]})."
+                == f"ACM Certificate {certificate_id} for {certificate['Certificate']['DomainName']} uses a secure key algorithm ({certificate['Certificate']['KeyAlgorithm']})."
             )
             assert result[0].resource_id == certificate_id
             assert result[0].resource_arn == certificate_arn

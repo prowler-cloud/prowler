@@ -259,7 +259,7 @@ class Test_acm_certificates_expiration_check:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"ACM Certificate {certificate_id} for {certificate["Certificate"]["DomainName"]} expires in {expiration_days} days."
+                == f"ACM Certificate {certificate_id} for {certificate['Certificate']['DomainName']} expires in {expiration_days} days."
             )
             assert result[0].resource_id == certificate_id
             assert result[0].resource_arn == certificate_arn
