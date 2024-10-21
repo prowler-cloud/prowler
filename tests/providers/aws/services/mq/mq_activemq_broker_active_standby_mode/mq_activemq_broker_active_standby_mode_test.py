@@ -39,6 +39,23 @@ class Test_mq_activemq_broker_active_standby_mode:
     def test_no_activemq_brokers(self):
         from prowler.providers.aws.services.mq.mq_service import MQ
 
+        mq_client = client("mq", region_name=AWS_REGION_US_EAST_1)
+        mq_client.create_broker(
+            BrokerName="test-broker",
+            EngineType="RABBITMQ",
+            EngineVersion="5.15.0",
+            HostInstanceType="mq.t2.micro",
+            Users=[
+                {
+                    "Username": "admin",
+                    "Password": "admin",
+                },
+            ],
+            DeploymentMode="ACTIVE_STANDBY_MULTI_AZ",
+            PubliclyAccessible=False,
+            AutoMinorVersionUpgrade=True,
+        )["BrokerId"]
+
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(

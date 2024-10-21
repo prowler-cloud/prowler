@@ -64,7 +64,7 @@ class EngineType(Enum):
     """Possible Engine Types for MQ"""
 
     ACTIVEMQ = "ACTIVEMQ"
-    RABBITMQ = "RAABBITMQ"
+    RABBITMQ = "RABBITMQ"
 
 
 class Broker(BaseModel):
