@@ -44,7 +44,6 @@ class Provider(ABC):
     Methods:
         print_credentials(): Displays the provider's credentials used for auditing in the command-line interface.
         setup_session(): Sets up the session for the provider.
-        get_output_mapping(): Returns the output mapping between the provider and the generic model.
         validate_arguments(): Validates the arguments for the provider.
         get_checks_to_execute_by_audit_resources(): Returns a set of checks based on the input resources to scan.
 
@@ -126,15 +125,6 @@ class Provider(ABC):
     def output_options(self, value: str) -> Any:
         """
         output_options.setter sets the provider's audit output configuration.
-
-        This method needs to be created in each provider.
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def get_output_mapping(self) -> dict:
-        """
-        get_output_mapping returns the output mapping between the provider and the generic model.
 
         This method needs to be created in each provider.
         """
