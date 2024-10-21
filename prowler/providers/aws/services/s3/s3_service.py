@@ -470,6 +470,7 @@ class S3Control(AWSService):
         super().__init__(__class__.__name__, provider)
         self.account_public_access_block = self._get_public_access_block()
         self.access_points = {}
+        self.multi_region_access_points = {}
         self.__threading_call__(self._list_access_points)
         self.__threading_call__(self._get_access_point, self.access_points.values())
 
@@ -510,6 +511,50 @@ class S3Control(AWSService):
                     name=ap["Name"],
                     bucket=ap["Bucket"],
                     region=regional_client.region,
+                )
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "NoSuchMultiRegionAccessPoint":
+                logger.warning(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _list_multi_region_access_points(self):
+        logger.info("S3 - Listing account multi region access points...")
+        try:
+            list_multi_region_access_points = self.regional_clients[
+                "us-west-2"
+            ].list_multi_region_access_points(AccountId=self.audited_account)[
+                "MultiRegionAccessPointDetails"
+            ]
+            for mr_access_point in list_multi_region_access_points:
+                mr_ap_arn = f"arn:{self.audited_partition}:s3:{"us-west-2"}:{self.audited_account}:accesspoint:{mr_access_point['Name']}"
+                self.multi_region_access_points[mr_ap_arn] = AccessPoint(
+                    account_id=self.audited_account,
+                    name=mr_access_point["Name"],
+                    bucket=mr_access_point["Bucket"],
+                    region=self.regional_clients["us-west-2"].region,
+                    public_access_block=PublicAccessBlock(
+                        block_public_acls=mr_access_point.get(
+                            "PublicAccessBlockConfiguration", {}
+                        ).get("BlockPublicAcls", False),
+                        ignore_public_acls=mr_access_point.get(
+                            "PublicAccessBlockConfiguration", {}
+                        ).get("IgnorePublicAcls", False),
+                        block_public_policy=mr_access_point.get(
+                            "PublicAccessBlockConfiguration", {}
+                        ).get("BlockPublicPolicy", False),
+                        restrict_public_buckets=mr_access_point.get(
+                            "PublicAccessBlockConfiguration", {}
+                        ).get("RestrictPublicBuckets", False),
+                    ),
                 )
         except ClientError as error:
             if error.response["Error"]["Code"] == "NoSuchMultiRegionAccessPoint":
