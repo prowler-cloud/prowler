@@ -186,6 +186,9 @@ class CheckMetadata(BaseModel):
         Returns:
             list: A list of checks.
         """
+        # If the bulk checks metadata is not provided, get it
+        if not bulk_checks_metadata:
+            bulk_checks_metadata = CheckMetadata.get_bulk(provider=provider)
 
         if provider:
             checks = [
@@ -206,6 +209,7 @@ class CheckMetadata(BaseModel):
                 bulk_checks_metadata=bulk_checks_metadata, service=service
             )
         elif compliance_framework:
+            # Loaded here, as it is not always needed
             if not bulk_compliance_frameworks:
                 bulk_compliance_frameworks = Compliance.get_bulk(provider=provider)
             checks = CheckMetadata.list_by_compliance_framework(
@@ -213,8 +217,6 @@ class CheckMetadata(BaseModel):
                 compliance_framework=compliance_framework,
             )
         else:
-            if not bulk_checks_metadata:
-                bulk_checks_metadata = CheckMetadata.get_bulk(provider=provider)
             checks = [check_name for check_name in bulk_checks_metadata.keys()]
 
         return checks
