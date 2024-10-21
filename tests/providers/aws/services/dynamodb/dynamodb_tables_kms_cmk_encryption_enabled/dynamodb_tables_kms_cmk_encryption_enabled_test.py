@@ -77,7 +77,7 @@ class Test_dynamodb_tables_kms_cmk_encryption_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "DynamoDB table test1 is using KMS encryption enabled with key custom-kms-key."
+                == "DynamoDB table test1 has KMS encryption enabled with key custom-kms-key."
             )
             assert result[0].resource_id == table["TableName"]
             assert result[0].resource_arn == table["TableArn"]
