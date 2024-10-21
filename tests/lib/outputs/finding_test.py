@@ -137,6 +137,15 @@ class TestFinding:
         assert finding_output.metadata.Notes == "mock_notes"
         assert finding_output.metadata.Compliance == []
 
+        # Properties
+        assert finding_output.provider == "aws"
+        assert finding_output.check_id == "mock_check_id"
+        assert finding_output.severity == Severity.high.value
+        assert finding_output.status == Status.PASS.value
+        assert finding_output.resource_type == ""
+        assert finding_output.service_name == "mock_service_name"
+        assert finding_output.raw == {}
+
     @patch(
         "prowler.lib.outputs.finding.get_check_compliance",
         new=mock_get_check_compliance,

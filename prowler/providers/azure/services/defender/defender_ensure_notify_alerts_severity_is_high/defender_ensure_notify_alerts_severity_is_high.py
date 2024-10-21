@@ -16,11 +16,11 @@ class defender_ensure_notify_alerts_severity_is_high(Check):
                 report.subscription = subscription_name
                 report.resource_name = contact_name
                 report.resource_id = contact_info.resource_id
-                report.status_extended = f"Notifiy alerts are enabled for severity high in susbscription {subscription_name}."
+                report.status_extended = f"Notifiy alerts are enabled for severity high in subscription {subscription_name}."
 
                 if contact_info.alert_notifications_minimal_severity != "High":
                     report.status = "FAIL"
-                    report.status_extended = f"Notifiy alerts are not enabled for severity high in susbscription {subscription_name}."
+                    report.status_extended = f"Notifiy alerts are not enabled for severity high in subscription {subscription_name}."
 
                 findings.append(report)
 
