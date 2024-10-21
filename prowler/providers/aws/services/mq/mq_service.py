@@ -1,7 +1,7 @@
 from enum import Enum
-from typing import Optional
+from typing import Dict, List
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -40,6 +40,9 @@ class MQ(AWSService):
             describe_broker = self.regional_clients[broker.region].describe_broker(
                 BrokerId=broker.id
             )
+            broker.auto_minor_version_upgrade = describe_broker.get(
+                "AutoMinorVersionUpgrade", False
+            )
             broker.engine_type = EngineType(
                 describe_broker.get("EngineType", "ACTIVEMQ")
             )
@@ -64,7 +67,7 @@ class EngineType(Enum):
     """Possible Engine Types for MQ"""
 
     ACTIVEMQ = "ACTIVEMQ"
-    RABBITMQ = "RAABBITMQ"
+    RABBITMQ = "RABBITMQ"
 
 
 class Broker(BaseModel):
@@ -74,6 +77,7 @@ class Broker(BaseModel):
     name: str
     id: str
     region: str
+    auto_minor_version_upgrade: bool = False
     engine_type: EngineType = EngineType.ACTIVEMQ
     deployment_mode: DeploymentMode = DeploymentMode.SINGLE_INSTANCE
-    tags: Optional[list] = []
+    tags: List[Dict[str, str]] = Field(default_factory=list)
