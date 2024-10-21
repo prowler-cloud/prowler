@@ -1,6 +1,6 @@
 from typing import Dict, List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -42,6 +42,9 @@ class MQ(AWSService):
             broker.auto_minor_version_upgrade = describe_broker.get(
                 "AutoMinorVersionUpgrade", False
             )
+            broker.logging_enabled = describe_broker.get("Logs", {}).get(
+                "General", False
+            )
             broker.tags = [describe_broker.get("Tags", {})]
         except Exception as error:
             logger.error(
@@ -56,5 +59,6 @@ class Broker(BaseModel):
     name: str
     id: str
     region: str
-    auto_minor_version_upgrade: bool = False
+    auto_minor_version_upgrade: bool = Field(default=False)
+    logging_enabled: bool = Field(default=False)
     tags: Optional[List[Dict[str, str]]]
