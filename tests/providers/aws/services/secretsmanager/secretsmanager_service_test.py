@@ -140,3 +140,34 @@ class Test_SecretsManager_Service:
         assert secretsmanager.secrets[secret_arn].tags == [
             {"Key": "test", "Value": "test"},
         ]
+
+    @mock_aws
+    def test_get_resource_policy(self):
+        secretsmanager_client = client(
+            "secretsmanager", region_name=AWS_REGION_EU_WEST_1
+        )
+        secret = secretsmanager_client.create_secret(
+            Name="test-secret-policy",
+        )
+        secretsmanager_client.put_resource_policy(
+            SecretId=secret["ARN"],
+            ResourcePolicy='{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":"*","Action":"secretsmanager:GetSecretValue","Resource":"*"}]}',
+        )
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        secretsmanager = SecretsManager(aws_provider)
+
+        assert len(secretsmanager.secrets) == 1
+        assert secretsmanager.secrets[secret["ARN"]].name == "test-secret-policy"
+        assert secretsmanager.secrets[secret["ARN"]].arn == secret["ARN"]
+        assert secretsmanager.secrets[secret["ARN"]].region == AWS_REGION_EU_WEST_1
+        assert secretsmanager.secrets[secret["ARN"]].policy == {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": "*",
+                    "Action": "secretsmanager:GetSecretValue",
+                    "Resource": "*",
+                }
+            ],
+        }

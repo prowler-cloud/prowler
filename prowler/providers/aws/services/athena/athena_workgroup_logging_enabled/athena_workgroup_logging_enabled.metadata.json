@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "athena_workgroup_logging_enabled",
+  "CheckTitle": "Ensure that logging is enabled for Amazon Athena workgroups to capture query activity.",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Logging"
+  ],
+  "ServiceName": "athena",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:athena:region:account-id:workgroup/resource-id",
+  "Severity": "medium",
+  "ResourceType": "AwsAthenaWorkGroup",
+  "Description": "Enabling logging for a workgroup provides valuable insights into query activity, including user actions, query execution details, and potential security events.",
+  "Risk": "Without logging enabled, it can be difficult to track and investigate potential security incidents or unauthorized access to Athena data. This can lead to data breaches, compliance violations, and increased security risks.",
+  "RelatedUrl": "https://docs.aws.amazon.com/athena/latest/ug/security-logging-monitoring.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/athena-controls.html#athena-4",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable logging for your Athena workgroups to capture query activity and enhance security monitoring. Configure the output location for logs in a secure S3 bucket and ensure appropriate encryption is applied.",
+      "Url": "https://docs.aws.amazon.com/athena/latest/ug/athena-cloudwatch-metrics-enable.html"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
