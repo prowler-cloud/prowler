@@ -1,0 +1,32 @@
+{
+    "Provider": "aws",
+    "CheckID": "iam_user_no_policies_check",
+    "CheckTitle": "Checks if IAM users have no policies directly attached. The rule is NON_COMPLIANT if an IAM user has any policies attached directly.",
+    "CheckType": [
+        "Security"
+    ],
+    "ServiceName": "iam",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "arn:partition:iam::account-id:user/user-name",
+    "Severity": "high",
+    "ResourceType": "AwsIamUser",
+    "Description": "Checks if IAM users have no policies directly attached. The rule is NON_COMPLIANT if an IAM user has any policies attached directly.",
+    "Risk": "IAM users with directly attached policies can lead to security risks due to potential mismanagement of permissions. Policies should be attached to groups instead of directly to users to adhere to the principle of least privilege and simplify management.",
+    "RelatedUrl": "",
+    "Remediation": {
+        "Code": {
+            "CLI": "https://docs.aws.amazon.com/cli/latest/reference/iam/detach-user-policy.html",
+            "NativeIaC": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-iam-user.html",
+            "Other": "",
+            "Terraform": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_user_policy_attachment"
+        },
+        "Recommendation": {
+            "Text": "Ensure that IAM users do not have policies directly attached",
+            "Url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_managed-vs-inline.html"
+        }
+    },
+    "Categories": [],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+}

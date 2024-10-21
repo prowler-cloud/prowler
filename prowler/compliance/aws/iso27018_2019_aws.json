@@ -1,0 +1,189 @@
+{
+    "Framework": "ISO27018",
+    "Version": "2019",
+    "Provider": "AWS",
+    "Description": "ISO IEC 27018 2019 is an international standard that provides guidelines for protecting personal data in the cloud. It builds on the ISO IEC 27002 standard by adding specific controls and guidelines for public cloud service providers acting as data processors. This standard helps cloud service providers comply with applicable regulations, such as the General Data Protection Regulation (GDPR), and ensure the privacy and security of personal data in the cloud.",
+    "Requirements": [
+        {
+            "Id": "A.5",
+            "Description": "Ensure that the AWS account's information security policies are applied and maintained. This includes continuous monitoring, access controls, logging, and updating contact information.",
+            "Name": "Information Security Policies",
+            "Attributes": [
+                {
+                    "Category": "A.5 Information Security Policies",
+                    "Objetive_ID": "A.5",
+                    "Objetive_Name": "Information Security Policies",
+                    "Check_Summary": "This control ensures that the organization has implemented and maintains effective information security policies. It includes continuous monitoring of AWS resources, enforcing IAM policies, logging API calls, and keeping security contact information up-to-date."
+                }
+            ],
+            "Checks": [
+                "config_recorder_all_regions_enabled",
+                "iam_policy_attached_only_to_group_or_roles",
+                "iam_no_custom_policy_permissive_role_assumption",
+                "cloudtrail_enabled",
+                "cloudtrail_multi_region_enabled",
+                "account_maintain_current_contact_details",
+                "account_security_contact_information_is_registered",
+                "iam_user_mfa_enabled",
+                "iam_password_policy_minimum_length_14",
+                "iam_password_policy_uppercase",
+                "iam_password_policy_lowercase",
+                "iam_password_policy_number",
+                "iam_password_policy_symbol",
+                "iam_password_policy_reuse_24",
+                "iam_password_policy_expires_passwords_within_90_days_or_less"
+            ]
+        },
+        {
+            "Id": "A.6",
+            "Description": "Ensure the organization of information security by maintaining up-to-date contact details and security contact information within the AWS account.",
+            "Name": "Organization of Information Security",
+            "Attributes": [
+                {
+                    "Category": "A.6 Organization of Information Security",
+                    "Objetive_ID": "A.6",
+                    "Objetive_Name": "Organization of Information Security",
+                    "Check_Summary": "This control ensures that the organization maintains up-to-date contact details and registers security contact information to enable prompt communication and notification of security issues."
+                }
+            ],
+            "Checks": [
+                "account_maintain_current_contact_details",
+                "account_security_contact_information_is_registered"
+            ]
+        },
+        {
+            "Id": "A.7",
+            "Description": "Ensure the security of human resources by implementing and enforcing strong IAM password policies within the AWS environment.",
+            "Name": "Human Resource Security",
+            "Attributes": [
+                {
+                    "Category": "A.7 Human Resource Security",
+                    "Objetive_ID": "A.7",
+                    "Objetive_Name": "Human Resource Security",
+                    "Check_Summary": "This control ensures the implementation and enforcement of strong IAM password policies, including minimum length, complexity requirements (uppercase, lowercase, numbers, symbols), prevention of password reuse, and regular password expiration."
+                }
+            ],
+            "Checks": [
+                "iam_password_policy_minimum_length_14",
+                "iam_password_policy_uppercase",
+                "iam_password_policy_lowercase",
+                "iam_password_policy_number",
+                "iam_password_policy_symbol",
+                "iam_password_policy_reuse_24",
+                "iam_password_policy_expires_passwords_within_90_days_or_less"
+            ]
+        },
+        {
+            "Id": "A.9",
+            "Description": "Ensure proper access control by enabling IAM Access Analyzer and verifying that it is functioning without any findings.",
+            "Name": "Access Control",
+            "Attributes": [
+                {
+                    "Category": "A.9 Access Control",
+                    "Objetive_ID": "A.9",
+                    "Objetive_Name": "Access Control",
+                    "Check_Summary": "This control ensures proper access control by requiring IAM Access Analyzer to be enabled and functioning without any findings within the AWS account."
+                }
+            ],
+            "Checks": [
+                "accessanalyzer_enabled",
+                "accessanalyzer_enabled_without_findings"
+            ]
+        },
+        {
+            "Id": "A.10",
+            "Description": "Ensure the proper management and application of cryptographic controls, including monitoring ACM certificate expiration, enabling transparency logs, ensuring KMS CMK rotation, and enforcing KMS encryption for S3 buckets.",
+            "Name": "Cryptography",
+            "Attributes": [
+                {
+                    "Category": "A.10 Cryptography",
+                    "Objetive_ID": "A.10",
+                    "Objetive_Name": "Cryptography",
+                    "Check_Summary": "This control ensures the proper management and application of cryptographic controls by monitoring the expiration of ACM certificates, enabling transparency logs, ensuring the rotation of customer-managed keys (CMKs), and enforcing KMS encryption for S3 buckets within the AWS account."
+                }
+            ],
+            "Checks": [
+                "acm_certificates_expiration_check",
+                "acm_certificates_transparency_logs_enabled",
+                "kms_cmk_rotation_enabled",
+                "s3_bucket_kms_encryption"
+            ]
+        },
+        {
+            "Id": "A.12",
+            "Description": "Ensure that the management of the organization\u2019s information processing facilities and information systems is secure and well-controlled. This includes monitoring, logging, backup, and maintaining systems and networks securely.",
+            "Name": "Operations Security",
+            "Attributes": [
+                {
+                    "Category": "A.12 Operations Security",
+                    "Objetive_ID": "A.12",
+                    "Objetive_Name": "Operations Security",
+                    "Check_Summary": "This control ensures secure and well-controlled management of the organization\u2019s information processing facilities and systems by monitoring, logging, backup, and maintaining systems and networks securely."
+                }
+            ],
+            "Checks": [
+                "cloudtrail_enabled",
+                "cloudtrail_cloudwatch_logging_enabled",
+                "cloudtrail_multi_region_enabled",
+                "backup_plan_min_frequency_and_min_retention_check",
+                "cloudwatch_log_metric_filter_unauthorized_api_calls",
+                "cloudwatch_log_metric_filter_security_group_changes",
+                "cloudwatch_log_metric_filter_root_usage",
+                "cloudtrail_log_group_no_secrets_in_logs"
+            ]
+        },
+        {
+            "Id": "A.13",
+            "Description": "Ensure that the organization protects information in transit from interception, tampering, and eavesdropping. This includes using encryption and secure protocols for data transmission.",
+            "Name": "Communications Security",
+            "Attributes": [
+                {
+                    "Category": "A.13 Communications Security",
+                    "Objetive_ID": "A.13",
+                    "Objetive_Name": "Communications Security",
+                    "Check_Summary": "This control ensures that the organization uses encryption and secure protocols to protect information in transit from interception, tampering, and eavesdropping."
+                }
+            ],
+            "Checks": [
+                "apigateway_ssl_enabled",
+                "cloudfront_distributions_https_enabled",
+                "rds_instance_transport_encrypted",
+                "eks_cluster_network_policy_enabled"
+            ]
+        },
+        {
+            "Id": "A.15",
+            "Description": "Ensure that the organization manages its suppliers appropriately and that suppliers adhere to the same information security practices. This includes ensuring suppliers' compliance with security requirements and monitoring their performance.",
+            "Name": "Supplier Relationships",
+            "Attributes": [
+                {
+                    "Category": "A.15 Supplier Relationships",
+                    "Objetive_ID": "A.15",
+                    "Objetive_Name": "Supplier Relationships",
+                    "Check_Summary": "This control ensures that the organization manages its suppliers appropriately and that suppliers adhere to the same information security practices."
+                }
+            ],
+            "Checks": [
+                "config_recorder_all_regions_enabled"
+            ]
+        },
+        {
+            "Id": "A.18",
+            "Description": "Ensure that the organization adheres to relevant laws, regulations, contractual obligations, and standards related to information security.",
+            "Name": "Compliance",
+            "Attributes": [
+                {
+                    "Category": "A.18 Compliance",
+                    "Objetive_ID": "A.18",
+                    "Objetive_Name": "Compliance",
+                    "Check_Summary": "This control ensures that the organization complies with relevant laws, regulations, contractual obligations, and standards."
+                }
+            ],
+            "Checks": [
+                "iam_avoid_root_usage",
+                "iam_rotate_access_key_90_days",
+                "iam_no_root_access_key"
+            ]
+        }
+    ]
+}

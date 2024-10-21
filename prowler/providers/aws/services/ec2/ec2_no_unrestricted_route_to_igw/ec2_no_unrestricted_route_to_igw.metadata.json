@@ -1,0 +1,34 @@
+{
+    "Provider": "aws",
+    "CheckID": "ec2_no_unrestricted_route_to_igw",
+    "CheckTitle": "Ensure no unrestricted routes to the Internet Gateway",
+    "CheckType": [
+      "Security",
+      "Best Practices"
+    ],
+    "ServiceName": "ec2",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "arn:aws:ec2:{region}:{account}:route-table/{route_table_id}",
+    "Severity": "high",
+    "ResourceType": "AwsRouteTable",
+    "Description": "This check ensures that there are no unrestricted routes to the Internet Gateway in the route tables.",
+    "Risk": "Unrestricted routes to the Internet Gateway can expose your VPC resources to the public Internet, leading to potential security risks.",
+    "RelatedUrl": "",
+    "Remediation": {
+      "Code": {
+        "CLI": "https://docs.aws.amazon.com/cli/latest/reference/ec2/replace-route.html",
+        "NativeIaC": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-route.html",
+        "Other": "",
+        "Terraform": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route"
+      },
+      "Recommendation": {
+        "Text": "Ensure that your route tables do not have routes that allow unrestricted access to the Internet Gateway.",
+        "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Security.html#VPC_Security_Overview"
+      }
+    },
+    "Categories": [],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+  }
+  

@@ -1,0 +1,30 @@
+{
+    "Provider": "aws",
+    "CheckID": "vpc_default_security_group_closed",
+    "CheckTitle": "Check if the default security group in each VPC is closed",
+    "CheckType": [],
+    "ServiceName": "ec2",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "arn:aws:ec2:region:account-id:security-group/security-group-id",
+    "Severity": "high",
+    "ResourceType": "AwsEc2SecurityGroup",
+    "Description": "Ensure that the default security group in each VPC does not allow inbound or outbound traffic.",
+    "Risk": "Default security groups that allow traffic can be a security risk.",
+    "RelatedUrl": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html",
+    "Remediation": {
+        "Code": {
+            "CLI": "https://awscli.amazonaws.com/v2/documentation/api/latest/reference/ec2/revoke-security-group-ingress.html",
+            "NativeIaC": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-security-group.html",
+            "Other": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html",
+            "Terraform": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule"
+        },
+        "Recommendation": {
+            "Text": "Ensure that the default security group in each VPC does not allow inbound or outbound traffic.",
+            "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+        }
+    },
+    "Categories": [],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+}

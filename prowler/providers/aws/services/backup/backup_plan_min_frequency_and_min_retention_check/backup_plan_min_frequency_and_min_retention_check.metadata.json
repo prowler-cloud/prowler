@@ -1,0 +1,33 @@
+{
+    "Provider": "aws",
+    "CheckID": "backup_plan_min_frequency_and_min_retention_check",
+    "CheckTitle": "Check if backup plans have rules that satisfy the required frequency and retention period",
+    "CheckType": [
+      "Software and Configuration Checks"
+    ],
+    "ServiceName": "backup",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "arn:aws:backup:region:account-id:backup-plan/backup-plan-id",
+    "Severity": "high",
+    "ResourceType": "Backup Plan",
+    "Description": "Ensure that backup plans have rules that meet the required frequency and retention period for recovery points.",
+    "Risk": "Backup plans not meeting the required frequency and retention period can lead to inadequate data protection and recovery capabilities, resulting in potential data loss.",
+    "RelatedUrl": "",
+    "Remediation": {
+      "Code": {
+        "CLI": "aws backup update-backup-plan --backup-plan-id <backup-plan-id> --backup-plan <backup-plan-json>",
+        "NativeIaC": "",
+        "Other": "",
+        "Terraform": ""
+      },
+      "Recommendation": {
+        "Text": "Ensure that your backup plans include rules that create recovery points at the required frequency and retain them for the specified period. Regularly review and update your backup plans to align with your data protection requirements.",
+        "Url": "https://docs.aws.amazon.com/aws-backup/latest/devguide/creating-backup-plan.html"
+      }
+    },
+    "Categories": [],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": "Regularly audit your backup plans to ensure compliance with your organization's data protection policies regarding backup frequency and retention periods."
+  }
+  

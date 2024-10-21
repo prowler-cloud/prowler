@@ -1,0 +1,267 @@
+{
+    "Framework": "ISO27001",
+    "Version": "2022",
+    "Provider": "AWS",
+    "Description": "ISO (the International Organization for Standardization) and IEC (the International Electrotechnical Commission) form the specialized system for worldwide standardization.",
+    "Requirements": [
+        {
+            "Id": "A.5",
+            "Description": "Management direction for information security",
+            "Name": "Information Security Policies",
+            "Attributes": [
+                {
+                    "Category": "A.5 Information Security Policies",
+                    "Objective_ID": "A.5",
+                    "Objective_Name": "Information Security Policies",
+                    "Check_Summary": "Ensure information security policies are in place and reviewed regularly."
+                }
+            ],
+            "Checks": [
+                "securityhub_enabled",
+                "wellarchitected_workload_no_high_or_medium_risks"
+            ]
+        },
+        {
+            "Id": "A.6",
+            "Description": "Ensure that the AWS account's contact information is current and registered.",
+            "Name": "Organization of Information Security",
+            "Attributes": [
+                {
+                    "Category": "A.6 Organization of Information Security",
+                    "Objetive_ID": "A.6",
+                    "Objetive_Name": "Organization of Information Security",
+                    "Check_Summary": "Ensure current contact details and security contact information is registered for the AWS account."
+                }
+            ],
+            "Checks": [
+                "account_maintain_current_contact_details",
+                "account_security_contact_information_is_registered"
+            ]
+        },
+        {
+            "Id": "A.7",
+            "Description": "Ensure the security of AWS user accounts by enforcing strong password policies.",
+            "Name": "Human Resource Security",
+            "Attributes": [
+                {
+                    "Category": "A.7 Human Resource Security",
+                    "Objetive_ID": "A.7",
+                    "Objetive_Name": "Human Resource Security",
+                    "Check_Summary": "Enforce password policies that require strong passwords, periodic rotation, and prevent reuse."
+                }
+            ],
+            "Checks": [
+                "iam_password_policy_minimum_length_14",
+                "iam_password_policy_uppercase",
+                "iam_password_policy_lowercase",
+                "iam_password_policy_number",
+                "iam_password_policy_symbol",
+                "iam_password_policy_reuse_24",
+                "iam_password_policy_expires_passwords_within_90_days_or_less"
+            ]
+        },
+        {
+            "Id": "A.8",
+            "Description": "Ensure that the AWS account's contact information is current and registered.",
+            "Name": "Asset Management",
+            "Attributes": [
+                {
+                    "Category": "A.8 Asset Management",
+                    "Objetive_ID": "A.8",
+                    "Objetive_Name": "Asset Management",
+                    "Check_Summary": "Ensure current contact details and security contact information is registered for the AWS account."
+                }
+            ],
+            "Checks": [
+                "account_maintain_current_contact_details",
+                "account_security_contact_information_is_registered"
+            ]
+        },
+        {
+            "Id": "A.9",
+            "Description": "Ensure that access to AWS resources is controlled and monitored.",
+            "Name": "Access Control",
+            "Attributes": [
+                {
+                    "Category": "A.9 Access Control",
+                    "Objetive_ID": "A.9",
+                    "Objetive_Name": "Access Control",
+                    "Check_Summary": "Ensure IAM Access Analyzer is enabled and no findings are reported."
+                }
+            ],
+            "Checks": [
+                "accessanalyzer_enabled",
+                "accessanalyzer_enabled_without_findings"
+            ]
+        },
+        {
+            "Id": "A.10",
+            "Description": "Ensure encryption mechanisms are in place to protect AWS resources.",
+            "Name": "Cryptography",
+            "Attributes": [
+                {
+                    "Category": "A.10 Cryptography",
+                    "Objetive_ID": "A.10",
+                    "Objetive_Name": "Cryptography",
+                    "Check_Summary": "Ensure ACM certificates are valid, transparency logs are enabled, KMS key rotation is enabled, and S3 bucket KMS encryption is in place."
+                }
+            ],
+            "Checks": [
+                "acm_certificates_expiration_check",
+                "acm_certificates_transparency_logs_enabled",
+                "kms_cmk_rotation_enabled",
+                "s3_bucket_kms_encryption"
+            ]
+        },
+        {
+            "Id": "A.11",
+            "Description": "Ensure physical and environmental security measures are in place to protect AWS resources.",
+            "Name": "Physical and Environmental Security",
+            "Attributes": [
+                {
+                    "Category": "A.11 Physical and Environmental Security",
+                    "Objective_ID": "A.11",
+                    "Objective_Name": "Physical and Environmental Security",
+                    "Check_Summary": "Ensure physical access to AWS resources is controlled and monitored."
+                }
+            ],
+            "Checks": [
+                "vpc_default_security_group_closed",
+                "vpc_flow_logs_enabled"
+            ]
+        },
+        {
+            "Id": "A.12",
+            "Description": "Ensure operational security measures are in place to protect AWS resources.",
+            "Name": "Operations Security",
+            "Attributes": [
+                {
+                    "Category": "A.12 Operations Security",
+                    "Objetive_ID": "A.12",
+                    "Objetive_Name": "Operations Security",
+                    "Check_Summary": "Ensure CloudTrail is enabled, integrated with CloudWatch Logs, multi-region, backup plans are in place, and various CloudWatch log metric filters are configured."
+                }
+            ],
+            "Checks": [
+                "cloudtrail_enabled",
+                "cloudtrail_cloudwatch_logging_enabled",
+                "cloudtrail_multi_region_enabled",
+                "backup_plan_min_frequency_and_min_retention_check",
+                "cloudwatch_log_metric_filter_unauthorized_api_calls",
+                "cloudwatch_log_metric_filter_security_group_changes",
+                "cloudwatch_log_metric_filter_root_usage",
+                "cloudtrail_log_group_no_secrets_in_logs"
+            ]
+        },
+        {
+            "Id": "A.13",
+            "Description": "Ensure secure communication channels are used for AWS resources.",
+            "Name": "Communications Security",
+            "Attributes": [
+                {
+                    "Category": "A.13 Communications Security",
+                    "Objetive_ID": "A.13",
+                    "Objetive_Name": "Communications Security",
+                    "Check_Summary": "Ensure SSL is enabled for API Gateway, CloudFront distributions use HTTPS, RDS instance transport is encrypted, and EKS cluster network policies are enforced."
+                }
+            ],
+            "Checks": [
+                "apigateway_ssl_enabled",
+                "cloudfront_distributions_https_enabled",
+                "rds_instance_transport_encrypted",
+                "eks_cluster_network_policy_enabled"
+            ]
+        },
+        {
+            "Id": "A.14",
+            "Description": "Ensure system acquisition, development and maintenance measures are in place to protect AWS resources.",
+            "Name": "System Acquisition, Development and Maintenance",
+            "Attributes": [
+                {
+                    "Category": "A.14 System Acquisition, Development and Maintenance",
+                    "Objective_ID": "A.14",
+                    "Objective_Name": "System Acquisition, Development and Maintenance",
+                    "Check_Summary": "Ensure software development lifecycle includes security requirements, and vulnerabilities are managed."
+                }
+            ],
+            "Checks": [
+                "codebuild_project_artifact_encryption",
+                "codebuild_project_envvar_awscred_check",
+                "codebuild_project_logging_enabled",
+                "codebuild_project_older_90_days",
+                "codebuild_project_source_repo_url_check",
+                "codebuild_project_user_controlled_buildspec"
+            ]
+        },
+        {
+            "Id": "A.15",
+            "Description": "Ensure supplier relationships are managed and monitored.",
+            "Name": "Supplier Relationships",
+            "Attributes": [
+                {
+                    "Category": "A.15 Supplier Relationships",
+                    "Objetive_ID": "A.15",
+                    "Objetive_Name": "Supplier Relationships",
+                    "Check_Summary": "Ensure AWS Config is enabled in all regions."
+                }
+            ],
+            "Checks": [
+                "config_recorder_all_regions_enabled"
+            ]
+        },
+        {
+            "Id": "A.16",
+            "Description": "Ensure effective incident management processes are in place for AWS resources.",
+            "Name": "Incident Management",
+            "Attributes": [
+                {
+                    "Category": "A.16 Incident Management",
+                    "Objetive_ID": "A.16",
+                    "Objetive_Name": "Incident Management",
+                    "Check_Summary": "Ensure GuardDuty is enabled and there are no high severity findings."
+                }
+            ],
+            "Checks": [
+                "guardduty_is_enabled",
+                "guardduty_no_high_severity_findings"
+            ]
+        },
+        {
+            "Id": "A.17",
+            "Description": "Ensure information security aspects are included in business continuity management.",
+            "Name": "Information Security Aspects of Business Continuity Management",
+            "Attributes": [
+                {
+                    "Category": "A.17 Information Security Aspects of Business Continuity Management",
+                    "Objective_ID": "A.17",
+                    "Objective_Name": "Information Security Aspects of Business Continuity Management",
+                    "Check_Summary": "Ensure backup and disaster recovery mechanisms are in place and regularly tested."
+                }
+            ],
+            "Checks": [
+                "backup_plan_min_frequency_and_min_retention_check",
+                "backup_recovery_point_manual_deletion_disabled",
+                "rds_instance_backup_enabled",
+                "rds_snapshots_encrypted"
+            ]
+        },
+        {
+            "Id": "A.18",
+            "Description": "Ensure compliance with security policies and regulatory requirements for AWS resources.",
+            "Name": "Compliance",
+            "Attributes": [
+                {
+                    "Category": "A.18 Compliance",
+                    "Objetive_ID": "A.18",
+                    "Objetive_Name": "Compliance",
+                    "Check_Summary": "Ensure root account usage is avoided, access keys are rotated every 90 days, and no root access keys exist."
+                }
+            ],
+            "Checks": [
+                "iam_avoid_root_usage",
+                "iam_rotate_access_key_90_days",
+                "iam_no_root_access_key"
+            ]
+        }
+    ]
+}

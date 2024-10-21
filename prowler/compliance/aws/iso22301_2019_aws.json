@@ -1,0 +1,61 @@
+{
+    "Framework": "ISO22301",
+    "Version": "2019",
+    "Provider": "AWS",
+    "Description": "ISO (the International Organization for Standardization) and IEC (the International Electrotechnical Commission) form the specialized system for worldwide standardization.",
+    "Requirements": [
+        {
+            "Id": "c.5",
+            "Description": "Ensure that the organization establishes and maintains business continuity policies to manage disruptive incidents effectively.",
+            "Name": "Business Continuity Policies",
+            "Attributes": [
+                {
+                    "Category": "c.5 Business Continuity Policies",
+                    "Objetive_ID": "c.5",
+                    "Objetive_Name": "Business Continuity Policies",
+                    "Check_Summary": "Implement policies and procedures to ensure the organization can continue its critical operations during and after a disruptive incident."
+                }
+            ],
+            "Checks": [
+                "backup_plan_min_frequency_and_min_retention_check",
+                "backup_recovery_point_manual_deletion_disabled",
+                "cloudtrail_enabled",
+                "cloudtrail_multi_region_enabled"
+            ]
+        },
+        {
+            "Id": "c.8.2",
+            "Description": "Ensure that the organization conducts a business impact analysis and risk assessment to identify critical business functions, assess the impact of disruptions, and develop appropriate risk mitigation strategies.",
+            "Name": "Business Impact Analysis and Risk Assessment",
+            "Attributes": [
+                {
+                    "Category": "c.8.2 Business Impact Analysis and Risk Assessment",
+                    "Objetive_ID": "c.8.2",
+                    "Objetive_Name": "Business Impact Analysis and Risk Assessment",
+                    "Check_Summary": "Implement checks and procedures to identify and assess the impact of potential disruptions on critical business functions, and ensure that appropriate backup plans are in place."
+                }
+            ],
+            "Checks": [
+                "backup_plan_min_frequency_and_min_retention_check",
+                "backup_plans_exist"
+            ]
+        },
+        {
+            "Id": "c.8.3",
+            "Description": "Ensure that the organization develops and implements strategies to ensure the continuity of critical business functions during and after a disruption.",
+            "Name": "Business Continuity Strategy",
+            "Attributes": [
+                {
+                    "Category": "c.8.3 Business Continuity Strategy",
+                    "Objetive_ID": "c.8.3",
+                    "Objetive_Name": "Business Continuity Strategy",
+                    "Check_Summary": "Implement checks and strategies to ensure the continuity of critical business functions, including enabling CloudTrail for logging and ensuring RDS instances have backups enabled."
+                }
+            ],
+            "Checks": [
+                "cloudtrail_enabled",
+                "rds_instance_backup_enabled"
+            ]
+        }
+    ]
+}
