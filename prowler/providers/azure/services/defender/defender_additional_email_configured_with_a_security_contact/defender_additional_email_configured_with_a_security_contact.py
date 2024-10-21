@@ -18,7 +18,7 @@ class defender_additional_email_configured_with_a_security_contact(Check):
                 report.subscription = subscription_name
                 report.resource_name = contact_name
                 report.resource_id = contact_info.resource_id
-                report.status_extended = f"There is another correct email configured for susbscription {subscription_name}."
+                report.status_extended = f"There is another correct email configured for subscription {subscription_name}."
 
                 emails = contact_info.emails.split(";")
 
@@ -29,7 +29,7 @@ class defender_additional_email_configured_with_a_security_contact(Check):
                         break
                 else:
                     report.status = "FAIL"
-                    report.status_extended = f"There is not another correct email configured for susbscription {subscription_name}."
+                    report.status_extended = f"There is not another correct email configured for subscription {subscription_name}."
 
                 findings.append(report)
 

@@ -222,6 +222,7 @@ class Test_dynamodb_table_protected_by_backup_plan:
         dynamodb_client = mock.MagicMock()
         from prowler.providers.aws.services.dynamodb.dynamodb_service import Table
 
+        dynamodb_client.audited_partition = "aws"
         dynamodb_client.tables = {
             f"arn:aws:dynamodb:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:table/test1": Table(
                 name="test1",

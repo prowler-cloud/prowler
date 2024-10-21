@@ -101,6 +101,10 @@ class Test_ELBv2_Service:
             ]
             == subnet2.id
         )
+        assert (
+            elbv2.loadbalancersv2[lb["LoadBalancerArn"]].security_groups[0]
+            == security_group.id
+        )
 
     # Test ELBv2 Describe Listeners
     @mock_aws

@@ -16,11 +16,14 @@ class autoscaling_find_secrets_ec2_launch_configuration(Check):
         secrets_ignore_patterns = autoscaling_client.audit_config.get(
             "secrets_ignore_patterns", []
         )
-        for configuration in autoscaling_client.launch_configurations:
+        for (
+            configuration_arn,
+            configuration,
+        ) in autoscaling_client.launch_configurations.items():
             report = Check_Report_AWS(self.metadata())
             report.region = configuration.region
             report.resource_id = configuration.name
-            report.resource_arn = configuration.arn
+            report.resource_arn = configuration_arn
 
             if configuration.user_data:
                 user_data = b64decode(configuration.user_data)

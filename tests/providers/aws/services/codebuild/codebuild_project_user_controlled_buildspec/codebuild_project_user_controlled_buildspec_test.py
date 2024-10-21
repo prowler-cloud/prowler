@@ -25,6 +25,9 @@ class Test_codebuild_project_user_controlled_buildspec:
         with mock.patch(
             "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
             codebuild_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.codebuild.codebuild_project_user_controlled_buildspec.codebuild_project_user_controlled_buildspec.codebuild_client",
+            codebuild_client,
         ):
             from prowler.providers.aws.services.codebuild.codebuild_project_user_controlled_buildspec.codebuild_project_user_controlled_buildspec import (
                 codebuild_project_user_controlled_buildspec,
@@ -62,6 +65,9 @@ class Test_codebuild_project_user_controlled_buildspec:
         with mock.patch(
             "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
             codebuild_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.codebuild.codebuild_project_user_controlled_buildspec.codebuild_project_user_controlled_buildspec.codebuild_client",
+            codebuild_client,
         ):
             from prowler.providers.aws.services.codebuild.codebuild_project_user_controlled_buildspec.codebuild_project_user_controlled_buildspec import (
                 codebuild_project_user_controlled_buildspec,
@@ -98,6 +104,9 @@ class Test_codebuild_project_user_controlled_buildspec:
         with mock.patch(
             "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
             codebuild_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.codebuild.codebuild_project_user_controlled_buildspec.codebuild_project_user_controlled_buildspec.codebuild_client",
+            codebuild_client,
         ):
             from prowler.providers.aws.services.codebuild.codebuild_project_user_controlled_buildspec.codebuild_project_user_controlled_buildspec import (
                 codebuild_project_user_controlled_buildspec,
@@ -132,6 +141,9 @@ class Test_codebuild_project_user_controlled_buildspec:
         }
         with mock.patch(
             "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
+            codebuild_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.codebuild.codebuild_project_user_controlled_buildspec.codebuild_project_user_controlled_buildspec.codebuild_client",
             codebuild_client,
         ):
             from prowler.providers.aws.services.codebuild.codebuild_project_user_controlled_buildspec.codebuild_project_user_controlled_buildspec import (
