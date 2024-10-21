@@ -146,6 +146,7 @@ class Test_APIGateway_Service:
                     "path": "/tracingEnabled",
                     "value": "true",
                 },
+                {
                     "op": "replace",
                     "path": "/*/*/caching/enabled",
                     "value": "true",
