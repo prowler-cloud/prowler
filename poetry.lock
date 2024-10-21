@@ -323,17 +323,17 @@ typing-extensions = ">=4.0.0"
 
 [[package]]
 name = "azure-keyvault-keys"
-version = "4.9.0"
+version = "4.10.0"
 description = "Microsoft Azure Key Vault Keys Client Library for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "azure-keyvault-keys-4.9.0.tar.gz", hash = "sha256:08632dcd6ece28657204e9a256ad64369fe2b0e385ed43349f932f007d89f774"},
-    {file = "azure_keyvault_keys-4.9.0-py3-none-any.whl", hash = "sha256:05eff85600f2f288a38e5c818ff77c5121840d327e66188cfa7ad333defb545b"},
+    {file = "azure_keyvault_keys-4.10.0-py3-none-any.whl", hash = "sha256:210227e0061f641a79755f0e0bcbcf27bbfb4df630a933c43a99a29962283d0d"},
+    {file = "azure_keyvault_keys-4.10.0.tar.gz", hash = "sha256:511206ae90aec1726a4d6ff5a92d754bd0c0f1e8751891368d30fb70b62955f1"},
 ]
 
 [package.dependencies]
-azure-core = ">=1.29.5,<2.0.0"
+azure-core = ">=1.31.0"
 cryptography = ">=2.1.4"
 isodate = ">=0.6.1"
 typing-extensions = ">=4.0.1"
@@ -4565,4 +4565,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "a56751b020021667d7ee73840f65ba710dead89b8cd12443e27e17767ea5c97b"
+content-hash = "cf873005f9226d8fa12b2999f4a56530178c113c6fb66864306c0f1599ceb8f8"
