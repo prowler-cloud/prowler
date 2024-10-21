@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "guardduty_s3_protection_enabled",
+  "CheckTitle": "Check if GuardDuty S3 Protection is enabled.",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "guardduty",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:guardduty:<region>:<account-id>:detector/<detector-id>",
+  "Severity": "high",
+  "ResourceType": "AwsGuardDutyDetector",
+  "Description": "This control checks whether GuardDuty S3 Protection is enabled in the account.",
+  "Risk": "Without GuardDuty S3 Protection enabled, your S3 buckets are not monitored for potential security risks at the object level, which may lead to undetected malicious activities and data breaches.",
+  "RelatedUrl": "https://docs.aws.amazon.com/guardduty/latest/ug/s3_detection.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws guardduty update-detector --detector-id <detector-id> --data-sources S3Logs={Enable=true}}'",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/guardduty-controls.html#guardduty-10",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable GuardDuty S3 Protection to monitor object-level API operations in your S3 buckets.",
+      "Url": "https://docs.aws.amazon.com/guardduty/latest/ug/s3_detection.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

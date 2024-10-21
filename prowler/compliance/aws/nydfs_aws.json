@@ -1,0 +1,3461 @@
+{
+    "Framework": "NYDFS",
+    "Version": "2023",
+    "Provider": "AWS",
+    "Description": "23 NYCRR 500",
+    "Requirements": [
+        {
+            "Id": "500.00",
+            "Name": "Introductory Provisions",
+            "Description": "The New York State Department of Financial Services (DFS) mandates that all regulated entities adopt robust cybersecurity programs to protect against growing threats from cybercriminals. These regulations require companies to assess their specific risks, ensure the safety and soundness of their systems, protect customer information, and have senior management responsible for compliance, including filing annual certifications.",
+            "Attributes": [
+                {
+                    "ItemId": "500.00",
+                    "Section": "Introduction for 23 NYCRR 500",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.1.a",
+            "Name": "Affiliate Definition",
+            "Description": "Affiliate means any person that controls, is controlled by, or is under common control with another person. For purposes of this subdivision, control means the possession, direct or indirect, of the power to direct or cause the direction of the management and policies of a person, whether through the ownership of stock of such person or otherwise.",
+            "Attributes": [
+                {
+                    "ItemId": "500.1.a",
+                    "Section": "Definitions",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.1.b",
+            "Name": "Authorized User Definition",
+            "Description": "An Authorized User refers to any employee, contractor, agent, or other person involved in the business operations of a covered entity who is permitted to access and use the entity's information systems and data.",
+            "Attributes": [
+                {
+                    "ItemId": "500.1.b",
+                    "Section": "Definitions",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.1.c",
+            "Name": "CISO Definition",
+            "Description": "The Chief Information Security Officer (CISO), or CISO, is a qualified individual tasked with supervising and executing a covered entity's cybersecurity program and ensuring compliance with its cybersecurity policy.",
+            "Attributes": [
+                {
+                    "ItemId": "500.1.c",
+                    "Section": "Definitions",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.1.d",
+            "Name": "Class A Company Definition",
+            "Description": "A Class A company refers to a covered entity that has generated at least $20,000,000 in gross annual revenue in each of the last two fiscal years from all business operations, including those of its affiliates. Additionally, it must meet one of the following criteria: (1) have over 2,000 employees averaged over the last two fiscal years, including employees of both the covered entity and all of its affiliates regardless of location; or (2) have over $1,000,000,000 in gross annual revenue in each of the last two fiscal years from all business operations of the covered entity and all of its affiliates regardless of location. When calculating the number of employees and gross annual revenue, affiliates are considered only if they share information systems, cybersecurity resources, or all or any part of a cybersecurity program with the covered entity.",
+            "Attributes": [
+                {
+                    "ItemId": "500.1.d",
+                    "Section": "Definitions",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.1.e",
+            "Name": "Covered Entity Definition",
+            "Description": "A Covered Entity refers to any individual or organization operating under or mandated to operate under a license, registration, charter, certificate, permit, accreditation, or similar authorization pursuant to the Banking Law, the Insurance Law, or the Financial Services Law. This definition applies irrespective of whether the covered entity is additionally regulated by other governmental bodies.",
+            "Attributes": [
+                {
+                    "ItemId": "500.1.e",
+                    "Section": "Definitions",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.1.f",
+            "Name": "Cybersecurity Event Definition",
+            "Description": "A Cybersecurity Event encompasses any act or attempt, whether successful or unsuccessful, to gain unauthorized access to, disrupt, or misuse an information system or the information stored within it.",
+            "Attributes": [
+                {
+                    "ItemId": "500.1.f",
+                    "Section": "Definitions",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.1.g",
+            "Name": "Cybersecurity Incident Definition",
+            "Description": "A Cybersecurity Incident refers to a cybersecurity event that occurs at the covered entity, its affiliates, or a third-party service provider under the following circumstances: (1) It impacts the covered entity and necessitates notification to any government body, self-regulatory agency, or supervisory body; (2) It has a reasonable likelihood of significantly harming any material aspect of the covered entity's normal operations; or (3) It results in the deployment of ransomware within a material part of the covered entity\u00e2\u20ac\u2122s information systems.",
+            "Attributes": [
+                {
+                    "ItemId": "500.1.g",
+                    "Section": "Definitions",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.1.h",
+            "Name": "Independent audit Definition",
+            "Description": "Independent audit Independent audit means an audit conducted by internal or external auditors free to make decisions not influenced by the covered entity being audited or by its owners, managers or employees",
+            "Attributes": [
+                {
+                    "ItemId": "500.1.h",
+                    "Section": "Definitions",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.1.i",
+            "Name": "Information System Definition",
+            "Description": "An Information System refers to a distinct set of electronic information resources structured for the collection, processing, maintenance, utilization, sharing, distribution, or disposal of electronic information. This also includes specialized systems such as industrial/process controls systems, telephone switching and private branch exchange systems, and environmental control systems.",
+            "Attributes": [
+                {
+                    "ItemId": "500.1.i",
+                    "Section": "Definitions",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.1.j",
+            "Name": "Multi-factor Authentication Definition",
+            "Description": "Multi-factor authentication refers to authentication achieved by verifying at least two of the following types of authentication factors: (1) knowledge factors, such as a password; (2) possession factors, such as a token; or (3) inherence factors, such as a biometric characteristic.",
+            "Attributes": [
+                {
+                    "ItemId": "500.1.j",
+                    "Section": "Definitions",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.1.k",
+            "Name": "Nonpublic Information Definition",
+            "Description": "Nonpublic information encompasses all electronic information not publicly available and includes the following categories: (1) Business-related information of a covered entity, tampering with or unauthorized access to which would cause a material adverse impact on the business, operations, or security of the covered entity; (2) Personal information, such as name, social security number, driver's license number, account numbers, passwords, or biometric records, that can identify an individual; (3) Health-related information created by or derived from a healthcare provider or individual, covering physical, mental, or behavioral health conditions, healthcare provision, or payment for healthcare services, excluding age or gender.",
+            "Attributes": [
+                {
+                    "ItemId": "500.1.k",
+                    "Section": "Definitions",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.1.l",
+            "Name": "Penetration Testing Definition",
+            "Description": "Penetration testing involves testing the security of information systems by attempting to circumvent or defeat the security features of an information system. This is achieved by authorizing attempted penetration of databases or controls from outside or inside the covered entity\u00e2\u20ac\u2122s information systems.",
+            "Attributes": [
+                {
+                    "ItemId": "500.1.l",
+                    "Section": "Definitions",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.1.m",
+            "Name": "Person Definition",
+            "Description": "Person refers to any individual or entity, encompassing but not limited to partnerships, corporations, branches, agencies, or associations.",
+            "Attributes": [
+                {
+                    "ItemId": "500.1.m",
+                    "Section": "Definitions",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.1.n",
+            "Name": "Privileged Account Definition",
+            "Description": "A privileged account refers to any authorized user account or service account capable of executing security-relevant functions beyond the scope of ordinary user accounts. These functions include, but are not limited to, the ability to add, modify, or delete other accounts, as well as making configuration changes to information systems.",
+            "Attributes": [
+                {
+                    "ItemId": "500.1.n",
+                    "Section": "Definitions",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.1.o",
+            "Name": "Publicly Available Information Definition",
+            "Description": "Publicly available information encompasses any information that a covered entity reasonably believes is lawfully accessible to the general public. This includes information sourced from Federal, State, or local government records, widely distributed media, or disclosures mandated by Federal, State, or local law. A covered entity's reasonable belief in the lawfulness of public availability requires confirmation that the information falls within the public domain type and confirmation that no individual has directed to restrict its accessibility.",
+            "Attributes": [
+                {
+                    "ItemId": "500.1.o",
+                    "Section": "Definitions",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.1.p",
+            "Name": "Risk Assessment Definition",
+            "Description": "Risk assessment encompasses the process of identifying, estimating, and prioritizing cybersecurity risks to organizational operations (including mission, functions, image, and reputation), organizational assets, individuals, customers, consumers, other organizations, and critical infrastructure resulting from the operation of an information system. Risk assessments integrate threat and vulnerability analyses and consider mitigations provided by security controls planned or already in place.",
+            "Attributes": [
+                {
+                    "ItemId": "500.1.p",
+                    "Section": "Definitions",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.1.q",
+            "Name": "Senior Governing Body Definition",
+            "Description": "The senior governing body refers to the board of directors (or an appropriate committee thereof), or an equivalent governing body, or if neither of those entities exist, the senior officer or officers of a covered entity responsible for the covered entity\u00e2\u20ac\u2122s cybersecurity program. In cases where a cybersecurity program or a part of it is adopted from an affiliate under section 500.2(d) of this Part, the senior governing body may be that of the affiliate.",
+            "Attributes": [
+                {
+                    "ItemId": "500.1.q",
+                    "Section": "Definitions",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.1.r",
+            "Name": "Senior Officer(s) Definition",
+            "Description": "Senior officer(s) refers to the senior individual or individuals (acting collectively or as a committee) responsible for the management, operations, security, information systems, compliance, and/or risk of a covered entity, including a branch or agency of a foreign banking organization subject to this Part.",
+            "Attributes": [
+                {
+                    "ItemId": "500.1.r",
+                    "Section": "Definitions",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.1.s",
+            "Name": "Third-party Service Provider(s) Definition",
+            "Description": "Third-party service provider(s) refers to a person that: (1) is not an affiliate of the covered entity; (2) is not a governmental entity; (3) provides services to the covered entity; and (4) maintains, processes, or otherwise is permitted access to nonpublic information through its provision of services to the covered entity.",
+            "Attributes": [
+                {
+                    "ItemId": "500.1.s",
+                    "Section": "Definitions",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.2.a",
+            "Description": "Maintain a cybersecurity program. CIA triad",
+            "Name": "Cybersecurity",
+            "Attributes": [
+                {
+                    "ItemId": "500.2.a",
+                    "Section": "Definitions",
+                    "Service": "AWS",
+                    "Type": "Automated"
+                }
+            ],
+            "Checks": [
+                "acm_certificates_expiration_check",
+                "acm_certificates_transparency_logs_enabled",
+                "apigatewayv2_api_access_logging_enabled",
+                "apigateway_restapi_public",
+                "cloudtrail_kms_encryption_enabled",
+                "cloudtrail_cloudwatch_logging_enabled",
+                "efs_encryption_at_rest_enabled",
+                "kms_key_not_publicly_accessible",
+                "opensearch_service_domains_encryption_at_rest_enabled",
+                "cloudtrail_s3_dataevents_write_enabled",
+                "cloudtrail_s3_dataevents_read_enabled",
+                "elb_insecure_ssl_ciphers",
+                "ec2_ebs_volume_encryption",
+                "rds_instance_storage_encrypted",
+                "redshift_cluster_audit_logging",
+                "elasticache_cluster_uses_public_subnet",
+                "s3_bucket_default_encryption",
+                "ec2_ebs_default_encryption",
+                "s3_bucket_object_lock",
+                "s3_bucket_secure_transport_policy",
+                "sagemaker_training_jobs_volume_and_output_encryption_enabled",
+                "sagemaker_notebook_instance_encryption_enabled",
+                "sns_topics_kms_encryption_at_rest_enabled",
+                "elbv2_desync_mitigation_mode",
+                "elb_ssl_listeners",
+                "cloudtrail_log_file_validation_enabled",
+                "elbv2_deletion_protection",
+                "rds_instance_multi_az",
+                "rds_instance_deletion_protection",
+                "backup_vaults_encrypted",
+                "dynamodb_tables_kms_cmk_encryption_enabled",
+                "ec2_instance_detailed_monitoring_enabled",
+                "s3_bucket_public_access",
+                "s3_bucket_public_list_acl",
+                "s3_bucket_kms_encryption",
+                "ssm_documents_set_as_public",
+                "autoscaling_find_secrets_ec2_launch_configuration",
+                "apigateway_cache_enabled_and_encrypted",
+                "apigateway_ssl_enabled",
+                "opensearch_node_to_node_encryption",
+                "autoscaling_launch_config_public_ip_disabled",
+                "sagemaker_notebook_instance_kms_key_configured",
+                "codebuild_project_artifact_encryption",
+                "rds_snapshots_encrypted",
+                "redshift_require_tls_ssl",
+                "elbv2_alb_http_to_https_redirection_check",
+                "opensearch_service_domains_encryption_at_rest_enabled",
+                "redshift_cluster_configuration_check",
+                "kinesis_stream_encrypted_at_rest",
+                "dynamodb_table_autoscaling_enabled",
+                "vpc_vpn_connection_tunnels_up",
+                "elb_cross_zone_load_balancing_enabled",
+                "elasticbeanstalk_environment_enhanced_health_reporting"
+            ]
+        },
+        {
+            "Id": "500.2.b.1",
+            "Name": "Risk Identification and Assessment",
+            "Description": "The covered entity must identify and assess both internal and external cybersecurity risks that pose threats to the security or integrity of nonpublic information stored on its information systems.",
+            "Attributes": [
+                {
+                    "ItemId": "500.2.b.1",
+                    "Section": "Requirements",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.2.b.2",
+            "Description": "The covered entity must utilize defensive infrastructure and implement policies and procedures to safeguard its information systems and protect nonpublic information stored on those systems from unauthorized access, use, or other malicious acts",
+            "Name": "Defensive Infrastructure and Policy Implementation",
+            "Attributes": [
+                {
+                    "ItemId": "500.2.b.2",
+                    "Section": "Definitions",
+                    "Service": "AWS",
+                    "Type": "Automated"
+                }
+            ],
+            "Checks": [
+                "iam_password_policy_expires_passwords_within_90_days_or_less",
+                "iam_password_policy_lowercase",
+                "iam_password_policy_minimum_length_14",
+                "iam_password_policy_number",
+                "iam_password_policy_reuse_24",
+                "iam_password_policy_symbol",
+                "iam_password_policy_uppercase",
+                "iam_aws_attached_policy_no_administrative_privileges",
+                "iam_policy_attached_only_to_group_or_roles",
+                "iam_administrator_access_with_mfa",
+                "iam_no_custom_policy_permissive_role_assumption",
+                "iam_user_mfa_enabled_console_access",
+                "iam_root_hardware_mfa_enabled",
+                "iam_root_mfa_enabled",
+                "s3_bucket_public_access",
+                "ec2_instance_account_imdsv2_enabled",
+                "iam_inline_policy_no_administrative_privileges",
+                "rds_snapshots_public_access",
+                "ec2_instance_public_ip",
+                "opensearch_service_domains_not_publicly_accessible",
+                "emr_cluster_account_public_block_enabled",
+                "ec2_instance_port_ssh_exposed_to_internet",
+                "ec2_instances_in_vpc",
+                "awslambda_function_not_publicly_accessible",
+                "rds_instance_no_public_access",
+                "ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21",
+                "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
+                "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389",
+                "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_mysql_3306",
+                "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_telnet_23",
+                "s3_bucket_public_access",
+                "s3_bucket_public_list_acl",
+                "s3_bucket_public_write_acl",
+                "apigateway_restapi_waf_acl_attached",
+                "s3_account_level_public_access_blocks",
+                "redshift_cluster_configuration_check",
+                "vpc_default_security_group_closed",
+                "rds_snapshots_public_prohibited",
+                "emr_kerberos_enabled",
+                "awslambda_function_inside_vpc",
+                "iam_user_no_policies_check",
+                "iam_group_has_users_check",
+                "elbv2_alb_waf_enabled",
+                "sagemaker_notebook_no_direct_internet_access",
+                "dms_instance_no_public_access",
+                "ssm_document_not_public",
+                "s3_bucket_public_write_prohibited",
+                "ec2_no_unrestricted_route_to_igw",
+                "ec2_internet_gateway_authorized_vpc_only",
+                "ec2_ebs_in_backup_plan"
+            ]
+        },
+        {
+            "Id": "500.2.b.3",
+            "Name": "Cybersecurity Event Detection",
+            "Description": "The covered entity must implement measures to detect cybersecurity events effectively.",
+            "Attributes": [
+                {
+                    "ItemId": "500.2.b.3",
+                    "Section": "Definitions",
+                    "Service": "AWS",
+                    "Type": "Automated"
+                }
+            ],
+            "Checks": [
+                "opensearch_service_domains_cloudwatch_logging_enabled",
+                "guardduty_centrally_managed",
+                "securityhub_enabled",
+                "apigateway_restapi_logging_enabled",
+                "apigatewayv2_api_access_logging_enabled",
+                "cloudtrail_cloudwatch_logging_enabled",
+                "redshift_cluster_audit_logging",
+                "ec2_instance_detailed_monitoring_enabled",
+                "opensearch_service_domains_cloudwatch_logging_enabled",
+                "rds_instance_enhanced_monitoring_enabled",
+                "cloudtrail_logs_s3_bucket_access_logging_enabled",
+                "elb_logging_enabled",
+                "elbv2_logging_enabled",
+                "cloudtrail_multi_region_enabled",
+                "s3_bucket_server_access_logging_enabled",
+                "opensearch_service_domains_cloudwatch_logging_enabled",
+                "opensearch_service_domains_audit_logging_enabled",
+                "vpc_flow_logs_enabled",
+                "rds_instance_integration_cloudwatch_logs",
+                "wafv2_webacl_logging_enabled",
+                "codebuild_project_logging_enabled",
+                "ssm_ec2_managedinstance_association_compliance_status_check",
+                "cloudtrail_enabled"
+            ]
+        },
+        {
+            "Id": "500.2.b.4",
+            "Name": "Cybersecurity Event Response",
+            "Description": "The covered entity must have procedures in place to respond promptly to identified or detected cybersecurity events to minimize their impact.",
+            "Attributes": [
+                {
+                    "ItemId": "500.2.b.4",
+                    "Section": "Requirements",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.2.b.5",
+            "Name": "Cybersecurity Event Recovery",
+            "Description": "The covered entity must establish procedures for recovering from cybersecurity events and restoring normal operations and services.",
+            "Attributes": [
+                {
+                    "ItemId": "500.2.b.5",
+                    "Section": "Definitions",
+                    "Service": "AWS",
+                    "Type": "Automated"
+                }
+            ],
+            "Checks": [
+                "rds_instance_backup_enabled",
+                "redshift_cluster_automated_snapshot",
+                "dynamodb_tables_pitr_enabled",
+                "s3_bucket_object_versioning",
+                "efs_have_backup_enabled",
+                "rds_instance_backup_enabled",
+                "s3_bucket_replication_enabled",
+                "elasticache_redis_cluster_backup_enabled",
+                "ec2_ebs_optimized_instance",
+                "ec2_ebs_in_backup_plan",
+                "dynamodb_table_protected_by_backup_plan",
+                "backup_plan_min_frequency_and_min_retention_check",
+                "backup_recovery_point_manual_deletion_disabled"
+            ]
+        },
+        {
+            "Id": "500.2.b.6",
+            "Name": "Regulatory Reporting Obligations",
+            "Description": "The covered entity must fulfill all applicable regulatory reporting obligations related to cybersecurity events.",
+            "Attributes": [
+                {
+                    "ItemId": "500.2.b.6",
+                    "Section": "Requirements",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.2.c",
+            "Name": "Independent Audits for Class A Companies",
+            "Description": "Each Class A company is required to design and conduct independent audits of its cybersecurity program based on its risk assessment.",
+            "Attributes": [
+                {
+                    "ItemId": "500.2.c",
+                    "Section": "Requirements",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.2.d",
+            "Name": "Adoption of Affiliate's Cybersecurity Program",
+            "Description": "A covered entity may fulfill the requirement(s) of this Part by adopting the relevant and applicable provisions of a cybersecurity program maintained by an affiliate, provided that such provisions satisfy the requirements of this Part, as applicable to the covered entity.",
+            "Attributes": [
+                {
+                    "ItemId": "500.2.d",
+                    "Section": "Requirements",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.2.e",
+            "Name": "Availability of Cybersecurity Program Documentation",
+            "Description": "All documentation and information relevant to the covered entity\u00e2\u20ac\u2122s cybersecurity program, including the relevant and applicable provisions of a cybersecurity program maintained by an affiliate and adopted by the covered entity, shall be made available to the superintendent upon request.",
+            "Attributes": [
+                {
+                    "ItemId": "500.2.e",
+                    "Section": "Requirements",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.16",
+            "Name": "Incident Response and Business Continuity Management",
+            "Description": "Each covered entity must establish and maintain an incident response, business continuity, and disaster recovery (BCDR) plan. This includes creating comprehensive plans for addressing various cybersecurity events, identifying essential documents and personnel, ensuring timely communication and recovery procedures, conducting regular training and testing, and maintaining secure backups.",
+            "Attributes": [
+                {
+                    "ItemId": "500.16",
+                    "Section": "BCDR Overview",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.16.a",
+            "Name": "Operational Resilience",
+            "Description": "Each covered entity must establish written plans as part of its cybersecurity program, including proactive measures to investigate and mitigate cybersecurity events, and ensure operational resilience through incident response, business continuity, and disaster recovery plans.",
+            "Attributes": [
+                {
+                    "ItemId": "500.16.a",
+                    "Section": "Proactive Measures",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.16.a.1",
+            "Name": "Incident Plan",
+            "Description": "Incident response plans must be designed to enable prompt response to and recovery from cybersecurity events affecting the confidentiality, integrity, or availability of the covered entity\u00e2\u20ac\u2122s information systems or business operations. These plans should address various types of cybersecurity events, including disruptive incidents like ransomware.",
+            "Attributes": [
+                {
+                    "ItemId": "500.16.a.1",
+                    "Section": "Cybersecurity Events",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.16.a.1.i",
+            "Name": "Response Goals",
+            "Description": "The goals of the incident response plan.",
+            "Attributes": [
+                {
+                    "ItemId": "500.16.a.1.i",
+                    "Section": "Incident Goals",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.16.a.1.ii",
+            "Name": "Internal Processes",
+            "Description": "The internal processes for responding to a cybersecurity event.",
+            "Attributes": [
+                {
+                    "ItemId": "500.16.a.1.ii",
+                    "Section": "Response Procedures",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.16.a.1.iii",
+            "Name": "Roles Definition",
+            "Description": "The definition of clear roles, responsibilities, and levels of decision-making authority.",
+            "Attributes": [
+                {
+                    "ItemId": "500.16.a.1.iii",
+                    "Section": "Decision Authority",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.16.a.1.iv",
+            "Name": "Communication Sharing",
+            "Description": "External and internal communications and information sharing.",
+            "Attributes": [
+                {
+                    "ItemId": "500.16.a.1.iv",
+                    "Section": "Information Sharing",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.16.a.1.v",
+            "Name": "Remediation Requirements",
+            "Description": "Identification of requirements for the remediation of any identified weaknesses in information systems and associated controls.",
+            "Attributes": [
+                {
+                    "ItemId": "500.16.a.1.v",
+                    "Section": "System Weaknesses",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.16.a.1.vi",
+            "Name": "Event Documentation",
+            "Description": "Documentation and reporting regarding cybersecurity events and related incident response activities.",
+            "Attributes": [
+                {
+                    "ItemId": "500.16.a.1.vi",
+                    "Section": "Incident Reporting",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.16.a.1.vii",
+            "Name": "Backup Recovery",
+            "Description": "Recovery from backups.",
+            "Attributes": [
+                {
+                    "ItemId": "500.16.a.1.vii",
+                    "Section": "Data Recovery",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.16.a.1.viii",
+            "Name": "Root Cause",
+            "Description": "Preparation of root cause analysis that describes how and why the event occurred, what business impact it had, and what will be done to prevent reoccurrence.",
+            "Attributes": [
+                {
+                    "ItemId": "500.16.a.1.viii",
+                    "Section": "Cause Analysis",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.16.a.1.ix",
+            "Name": "Plan Updates",
+            "Description": "Updating of incident response plans as necessary.",
+            "Attributes": [
+                {
+                    "ItemId": "500.16.a.1.ix",
+                    "Section": "Response Updates",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.16.a.2",
+            "Name": "BCDR Plan",
+            "Description": "Business continuity and disaster recovery (BCDR) plans must be designed to ensure the availability and functionality of the covered entity\u00e2\u20ac\u2122s information systems and services, and to protect personnel, assets, and nonpublic information during a cybersecurity-related disruption.",
+            "Attributes": [
+                {
+                    "ItemId": "500.16.a.2",
+                    "Section": "Disaster Recovery",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.16.a.2.i",
+            "Name": "Essential Documents",
+            "Description": "Identify documents, data, facilities, infrastructure, services, personnel, and competencies essential to the continued operations of the covered entity\u00e2\u20ac\u2122s business.",
+            "Attributes": [
+                {
+                    "ItemId": "500.16.a.2.i",
+                    "Section": "Operational Continuity",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.16.a.2.ii",
+            "Name": "Supervisory Roles",
+            "Description": "Identify the supervisory personnel responsible for implementing each aspect of the BCDR plan.",
+            "Attributes": [
+                {
+                    "ItemId": "500.16.a.2.ii",
+                    "Section": "BCDR Implementation",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.16.a.2.iii",
+            "Name": "Communication Plan",
+            "Description": "Include a plan to communicate with essential persons in the event of a cybersecurity-related disruption to the operations of the covered entity, including employees, counterparties, regulatory authorities, third-party service providers, disaster recovery specialists, the senior governing body, and any other persons essential to the recovery of documentation and data and the resumption of operations.",
+            "Attributes": [
+                {
+                    "ItemId": "500.16.a.2.iii",
+                    "Section": "Disruption Communication",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.16.a.2.iv",
+            "Name": "Recovery Procedures",
+            "Description": "Include procedures for the timely recovery of critical data and information systems and to resume operations as soon as reasonably possible following a cybersecurity-related disruption to normal business activities.",
+            "Attributes": [
+                {
+                    "ItemId": "500.16.a.2.iv",
+                    "Section": "Timely Recovery",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.16.a.2.v",
+            "Name": "Backup Procedures",
+            "Description": "Include procedures for backing up or copying, with sufficient frequency, information essential to the operations of the covered entity and storing such information offsite.",
+            "Attributes": [
+                {
+                    "ItemId": "500.16.a.2.v",
+                    "Section": "Data Backup",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.16.a.2.vi",
+            "Name": "Third-Party Identification",
+            "Description": "Identify third parties that are necessary to the continued operations of the covered entity\u00e2\u20ac\u2122s information systems.",
+            "Attributes": [
+                {
+                    "ItemId": "500.16.a.2.vi",
+                    "Section": "Third-Party Roles",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.16.b",
+            "Name": "Plan Distribution",
+            "Description": "Each covered entity shall ensure that current copies of the plans or relevant portions therein are distributed or are otherwise accessible, including during a cybersecurity event, to all employees necessary to implement such plans.",
+            "Attributes": [
+                {
+                    "ItemId": "500.16.b",
+                    "Section": "Plan Accessibility",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.16.c",
+            "Name": "Training Implementation",
+            "Description": "Each covered entity shall provide relevant training to all employees responsible for implementing the plans regarding their roles and responsibilities.",
+            "Attributes": [
+                {
+                    "ItemId": "500.16.c",
+                    "Section": "Employee Training",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.16.d",
+            "Name": "Plan Testing",
+            "Description": "Each covered entity shall periodically, but at a minimum annually, test its:",
+            "Attributes": [
+                {
+                    "ItemId": "500.16.d",
+                    "Section": "Annual Testing",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.16.d.1",
+            "Name": "Incident Plan Test",
+            "Description": "Incident response and BCDR plans with all staff and management critical to the response, and shall revise the plan as necessary.",
+            "Attributes": [
+                {
+                    "ItemId": "500.16.d.1",
+                    "Section": "Plan Revision",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.16.d.2",
+            "Name": "Data Restoration",
+            "Description": "Ability to restore its critical data and information systems from backups.",
+            "Attributes": [
+                {
+                    "ItemId": "500.16.d.2",
+                    "Section": "Critical Restoration",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.16.e",
+            "Name": "Backup Protection",
+            "Description": "Each covered entity shall maintain backups necessary to restore material operations. The backups shall be adequately protected from unauthorized alterations or destruction.",
+            "Attributes": [
+                {
+                    "ItemId": "500.16.e",
+                    "Section": "Data Protection",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.17",
+            "Name": "Cybersecurity Incident Reporting",
+            "Description": "Covered entities must notify the superintendent of cybersecurity incidents, provide ongoing updates, submit annual compliance certifications, maintain records supporting these certifications, and report extortion payments.",
+            "Attributes": [
+                {
+                    "ItemId": "500.17",
+                    "Section": "Incident Reporting Overview",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.17.a",
+            "Name": "Incident Notice",
+            "Description": "Notice of cybersecurity incident.",
+            "Attributes": [
+                {
+                    "ItemId": "500.17.a",
+                    "Section": "Incident Reporting",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.17.a.1",
+            "Name": "Superintendent Notification",
+            "Description": "Covered entities must notify the superintendent electronically via the department's website within 72 hours of determining a cybersecurity incident has occurred at the entity, its affiliates, or a third-party service provider.",
+            "Attributes": [
+                {
+                    "ItemId": "500.17.a.1",
+                    "Section": "Incident Notification",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.17.a.2",
+            "Name": "Information Update",
+            "Description": "Covered entities must promptly provide the superintendent with any requested information regarding the incident and continuously update with material changes or newly available information.",
+            "Attributes": [
+                {
+                    "ItemId": "500.17.a.2",
+                    "Section": "Incident Updates",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.17.b",
+            "Name": "Compliance Notice",
+            "Description": "Notice of compliance.",
+            "Attributes": [
+                {
+                    "ItemId": "500.17.b",
+                    "Section": "Compliance Reporting",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.17.b.1",
+            "Name": "Annual Submission",
+            "Description": "Annually each covered entity shall submit to the superintendent electronically by April 15.",
+            "Attributes": [
+                {
+                    "ItemId": "500.17.b.1",
+                    "Section": "Annual Reporting",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.17.b.1.i",
+            "Name": "Written Certification",
+            "Description": "A written certification that the covered entity materially complied with the requirements set forth in this Part during the prior calendar year, based on data and documentation sufficient to accurately determine and demonstrate such compliance, including documentation of officers, employees, representatives, outside vendors, and other individuals or entities, as well as other documentation, whether in the form of reports, certifications, schedules, or otherwise.",
+            "Attributes": [
+                {
+                    "ItemId": "500.17.b.1.i",
+                    "Section": "Material Compliance",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.17.b.1.ii",
+            "Name": "Written Acknowledgment",
+            "Description": "A written acknowledgment that for the prior calendar year, the covered entity did not materially comply with all the requirements of this Part, identifies all sections of this Part that the entity has not materially complied with and describes the nature and extent of such noncompliance, and provides a remediation timeline or confirmation that remediation has been completed.",
+            "Attributes": [
+                {
+                    "ItemId": "500.17.b.1.ii",
+                    "Section": "Noncompliance Acknowledgment",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.17.b.2",
+            "Name": "Certification Submission",
+            "Description": "Such certification or acknowledgment shall be submitted electronically in the form set forth on the department\u00e2\u20ac\u2122s website and shall be signed by the covered entity\u00e2\u20ac\u2122s highest-ranking executive and its CISO. If the covered entity does not have a CISO, the certification or acknowledgment shall be signed by the highest-ranking executive and by the senior officer responsible for the cybersecurity program of the covered entity.",
+            "Attributes": [
+                {
+                    "ItemId": "500.17.b.2",
+                    "Section": "Submission Requirements",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.17.b.3",
+            "Name": "Record Maintenance",
+            "Description": "Each covered entity shall maintain for examination and inspection by the department upon request all records, schedules, and other documentation and data supporting the certification or acknowledgment for a period of five years, including the identification of all areas, systems, and processes that require or required material improvement, updating or redesign, all remedial efforts undertaken to address such areas, systems, and processes, and remediation plans and timelines for their implementation.",
+            "Attributes": [
+                {
+                    "ItemId": "500.17.b.3",
+                    "Section": "Documentation Retention",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.17.c",
+            "Name": "Extortion Payment Notice",
+            "Description": "Notice and explanation of extortion payment. Each covered entity, in the event of an extortion payment made in connection with a cybersecurity event involving the covered entity, shall provide the superintendent electronically, in the form set forth on the department\u00e2\u20ac\u2122s website, with the following:",
+            "Attributes": [
+                {
+                    "ItemId": "500.17.c",
+                    "Section": "Extortion Reporting",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.17.c.1",
+            "Name": "24-Hour Notice",
+            "Description": "Within 24 hours of the extortion payment, notice of the payment.",
+            "Attributes": [
+                {
+                    "ItemId": "500.17.c.1",
+                    "Section": "Payment Notice",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.17.c.2",
+            "Name": "30-Day Explanation",
+            "Description": "Within 30 days of the extortion payment, a written description of the reasons payment was necessary, a description of alternatives to payment considered, all diligence performed to find alternatives to payment and all diligence performed to ensure compliance with applicable rules and regulations including those of the Office of Foreign Assets Control.",
+            "Attributes": [
+                {
+                    "ItemId": "500.17.c.2",
+                    "Section": "Payment Explanation",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.18",
+            "Name": "Confidentiality",
+            "Description": "Information provided by a covered entity pursuant to this Part is subject to exemptions from disclosure under the Banking Law, Insurance Law, Financial Services Law, Public Officers Law, or any other applicable State or Federal law.",
+            "Attributes": [
+                {
+                    "ItemId": "500.18",
+                    "Section": "Data Protection",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.19",
+            "Name": "Cubersecurity Exemptions",
+            "Description": "Exemptions",
+            "Attributes": [
+                {
+                    "ItemId": "500.19",
+                    "Section": "Data Protection",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.19.a",
+            "Name": "Limited Exemption",
+            "Description": "Each covered entity with: (1) fewer than 20 employees and independent contractors of the covered entity and its affiliates; (2) less than $7,500,000 in gross annual revenue in each of the last three fiscal years from all business operations of the covered entity and the business operations in this State of the covered entity\u00e2\u20ac\u2122s affiliates; or (3) less than $15,000,000 in year-end total assets, calculated in accordance with generally accepted accounting principles, including assets of all affiliates, shall be exempt from the requirements of sections 500.4, 500.5, 500.6, 500.8, 500.10, 500.14(a)(1), (a)(2), and (b), 500.15 and 500.16 of this Part.",
+            "Attributes": [
+                {
+                    "ItemId": "500.19.a",
+                    "Section": "Exemption Criteria",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.19.b",
+            "Name": "Program Exemption",
+            "Description": "An employee, agent, wholly owned subsidiary, representative or designee of a covered entity, who is itself a covered entity, is exempt from this Part and need not develop its own cybersecurity program to the extent that the employee, agent, wholly owned subsidiary, representative or designee is covered by the cybersecurity program of the covered entity.",
+            "Attributes": [
+                {
+                    "ItemId": "500.19.b",
+                    "Section": "Cybersecurity Coverage",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.19.c",
+            "Name": "System Exemption",
+            "Description": "A covered entity that does not directly or indirectly operate, maintain, utilize, or control any information systems, and that does not, and is not required to, directly or indirectly control, own, access, generate, receive or possess nonpublic information shall be exempt from the requirements of sections 500.2, 500.3, 500.4, 500.5, 500.6, 500.7, 500.8, 500.10, 500.12, 500.14, 500.15 and 500.16 of this Part.",
+            "Attributes": [
+                {
+                    "ItemId": "500.19.c",
+                    "Section": "Nonpublic Information",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.19.d",
+            "Name": "Insurance Law Exemption",
+            "Description": "A covered entity under article 70 of the Insurance Law that does not and is not required to directly or indirectly control, own, access, generate, receive or possess nonpublic information other than information relating to its corporate parent company (or affiliates) shall be exempt from the requirements of sections 500.2, 500.3, 500.4, 500.5, 500.6, 500.7, 500.8, 500.10, 500.12, 500.14, 500.15 and 500.16 of this Part.",
+            "Attributes": [
+                {
+                    "ItemId": "500.19.d",
+                    "Section": "Insurance Exemption",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.19.e",
+            "Name": "Insurance Broker Exemption",
+            "Description": "An individual insurance broker subject to Insurance Law section 2104 who qualifies for the exemption pursuant to subdivision 500.19(c) of this Part and has not, for any compensation, commission or other thing of value, acted or aided in any manner in soliciting, negotiating or selling any policy or contract or in placing risks or taking out insurance on behalf of another person for at least one year shall be exempt from the requirements of this Part, provided such individuals do not otherwise qualify as a covered entity for purposes of this Part.",
+            "Attributes": [
+                {
+                    "ItemId": "500.19.e",
+                    "Section": "Broker Exemption",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.19.f",
+            "Name": "Notice of Exemption",
+            "Description": "A covered entity that qualifies for any of the above exemptions pursuant to this section shall file electronically a Notice of Exemption in the form set forth on the department\u00e2\u20ac\u2122s website within 30 days of the determination that the covered entity is exempt.",
+            "Attributes": [
+                {
+                    "ItemId": "500.19.f",
+                    "Section": "Exemption Notice",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.19.g",
+            "Name": "Specific Person Exemption",
+            "Description": "The following persons are exempt from the requirements of this Part, provided such persons do not otherwise qualify as a covered entity for purposes of this Part: persons subject to Insurance Law section 1110; persons subject to Insurance Law section 5904; any accredited reinsurer, certified reinsurer or reciprocal jurisdiction reinsurer that has been so recognized pursuant to 11 NYCRR Part 125; individual insurance agents who are placed in inactive status under Insurance Law section 2103; and individual licensees placed in inactive status under Banking Law section 599-i.",
+            "Attributes": [
+                {
+                    "ItemId": "500.19.g",
+                    "Section": "Person Exemption",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.19.h",
+            "Name": "Exemption Cessation",
+            "Description": "In the event that a covered entity ceases to qualify for an exemption, such covered entity shall have 180 days from the date that it ceases to so qualify to comply with all applicable requirements of this Part.",
+            "Attributes": [
+                {
+                    "ItemId": "500.19.h",
+                    "Section": "Qualification Change",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.20",
+            "Name": "Enforcement",
+            "Description": "Enforcement of this regulation will be carried out by the superintendent, including penalties for violations, consideration of various factors in assessing penalties, and ensuring compliance with cybersecurity standards.",
+            "Attributes": [
+                {
+                    "ItemId": "500.20",
+                    "Section": "Regulation Enforcement",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.20.a",
+            "Name": "Superintendent Authority",
+            "Description": "This regulation will be enforced by the superintendent pursuant to applicable laws.",
+            "Attributes": [
+                {
+                    "ItemId": "500.20.a",
+                    "Section": "Regulation Enforcement",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.20.b",
+            "Name": "Violation Criteria",
+            "Description": "A single prohibited act or failure to meet an obligation required by this Part constitutes a violation.",
+            "Attributes": [
+                {
+                    "ItemId": "500.20.b",
+                    "Section": "Violation Definition",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.20.b.1",
+            "Name": "Unauthorized Access",
+            "Description": "Failure to prevent unauthorized access due to noncompliance.",
+            "Attributes": [
+                {
+                    "ItemId": "500.20.b.1",
+                    "Section": "Access Control",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.20.b.2",
+            "Name": "24-Hour Violation",
+            "Description": "Material failure to comply for any 24-hour period.",
+            "Attributes": [
+                {
+                    "ItemId": "500.20.b.2",
+                    "Section": "Compliance Failure",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.20.c",
+            "Name": "Penalty Assessment",
+            "Description": "When assessing penalties for violations, the superintendent will consider various factors.",
+            "Attributes": [
+                {
+                    "ItemId": "500.20.c",
+                    "Section": "Penalty Factors",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.20.c.1",
+            "Name": "Cooperation Level",
+            "Description": "Extent of cooperation with the superintendent in the investigation.",
+            "Attributes": [
+                {
+                    "ItemId": "500.20.c.1",
+                    "Section": "Investigation Cooperation",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.20.c.2",
+            "Name": "Good Faith Effort",
+            "Description": "The good faith of the entity.",
+            "Attributes": [
+                {
+                    "ItemId": "500.20.c.2",
+                    "Section": "Entity Good Faith",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.20.c.3",
+            "Name": "Violation Intent",
+            "Description": "Whether the violations resulted from unintentional or inadvertent conduct, recklessness, or deliberate actions.",
+            "Attributes": [
+                {
+                    "ItemId": "500.20.c.3",
+                    "Section": "Violation Intent",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.20.c.4",
+            "Name": "Remedial Actions",
+            "Description": "Whether the violation was a result of failure to remedy previous examination matters requiring attention or failing to adhere to any disciplinary letter, letter of instructions, or similar.",
+            "Attributes": [
+                {
+                    "ItemId": "500.20.c.4",
+                    "Section": "Remedial Compliance",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.20.c.5",
+            "Name": "Violation History",
+            "Description": "Any history of prior violations.",
+            "Attributes": [
+                {
+                    "ItemId": "500.20.c.5",
+                    "Section": "Violation Record",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.20.c.6",
+            "Name": "Violation Pattern",
+            "Description": "Whether the violation involved an isolated incident, repeat violations, systemic violations, or a pattern of violations.",
+            "Attributes": [
+                {
+                    "ItemId": "500.20.c.6",
+                    "Section": "Violation Incidents",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.20.c.7",
+            "Name": "False Information",
+            "Description": "Whether the covered entity provided false or misleading information.",
+            "Attributes": [
+                {
+                    "ItemId": "500.20.c.7",
+                    "Section": "Misleading Information",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.20.c.8",
+            "Name": "Harm Extent",
+            "Description": "The extent of harm to consumers.",
+            "Attributes": [
+                {
+                    "ItemId": "500.20.c.8",
+                    "Section": "Consumer Harm",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.20.c.9",
+            "Name": "Timely Disclosures",
+            "Description": "Whether required, accurate, and timely disclosures were made to affected consumers.",
+            "Attributes": [
+                {
+                    "ItemId": "500.20.c.9",
+                    "Section": "Disclosure Accuracy",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.20.c.10",
+            "Name": "Violation Gravity",
+            "Description": "The gravity of the violations.",
+            "Attributes": [
+                {
+                    "ItemId": "500.20.c.10",
+                    "Section": "Violation Severity",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.20.c.11",
+            "Name": "Violation Count",
+            "Description": "The number of violations and the length of time over which they occurred.",
+            "Attributes": [
+                {
+                    "ItemId": "500.20.c.11",
+                    "Section": "Violation Frequency",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.20.c.12",
+            "Name": "Governing Body Participation",
+            "Description": "The extent, if any, to which the senior governing body participated therein.",
+            "Attributes": [
+                {
+                    "ItemId": "500.20.c.12",
+                    "Section": "Governing Body",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.20.c.13",
+            "Name": "Other Penalties",
+            "Description": "Any penalty or sanction imposed by any other regulatory agency.",
+            "Attributes": [
+                {
+                    "ItemId": "500.20.c.13",
+                    "Section": "Regulatory Penalties",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.20.c.14",
+            "Name": "Financial Resources",
+            "Description": "The financial resources, net worth, and annual business volume of the covered entity and its affiliates.",
+            "Attributes": [
+                {
+                    "ItemId": "500.20.c.14",
+                    "Section": "Financial Capacity",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.20.c.15",
+            "Name": "Policy Consistency",
+            "Description": "The extent to which the relevant policies and procedures of the company are consistent with nationally recognized cybersecurity frameworks, such as NIST.",
+            "Attributes": [
+                {
+                    "ItemId": "500.20.c.15",
+                    "Section": "Cybersecurity Policies",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.20.c.16",
+            "Name": "Public Interest",
+            "Description": "Such other matters as justice and the public interest require.",
+            "Attributes": [
+                {
+                    "ItemId": "500.20.c.16",
+                    "Section": "Public Justice",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.21.a",
+            "Name": "Effective Date",
+            "Description": "This Part will be effective March 1, 2017. Covered entities will be required to annually prepare and submit to the superintendent a certification of compliance with New York State Department of Financial Services Cybersecurity Regulations under section 500.17(b) of this Part commencing February 15, 2018.",
+            "Attributes": [
+                {
+                    "ItemId": "500.21.a",
+                    "Section": "Effective Date",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.21.b",
+            "Name": "Amendment Date",
+            "Description": "The second amendment to this Part shall become effective November 1, 2023.",
+            "Attributes": [
+                {
+                    "ItemId": "500.21.b",
+                    "Section": "Amendment Date",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.22",
+            "Name": "Transitional Periods",
+            "Description": "Covered entities have specific transitional periods ranging from 30 days to two years to comply with various sections of this Part, including new requirements from amendments effective on specific dates.",
+            "Attributes": [
+                {
+                    "ItemId": "500.22",
+                    "Section": "Compliance Timelines",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.22.a",
+            "Name": "Transitional Period",
+            "Description": "Covered entities have 180 days from the effective date of this Part to meet the compliance requirements, unless otherwise specified.",
+            "Attributes": [
+                {
+                    "ItemId": "500.22.a",
+                    "Section": "Initial Compliance",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.22.b",
+            "Name": "Additional Transitional Periods",
+            "Description": "Covered entities have extended transitional periods: one year to comply with specific sections, eighteen months for others, and two years for additional requirements.",
+            "Attributes": [
+                {
+                    "ItemId": "500.22.b",
+                    "Section": "Extended Compliance",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.22.c",
+            "Name": "Second Amendment Compliance",
+            "Description": "Entities have 180 days from the second amendment's effective date to meet the new requirements, unless specified otherwise.",
+            "Attributes": [
+                {
+                    "ItemId": "500.22.c",
+                    "Section": "Amendment Compliance",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.22.d",
+            "Name": "Different Transitional Periods",
+            "Description": "Entities have 30 days, one year, 18 months, or two years from the second amendment's effective date to comply with various new requirements.",
+            "Attributes": [
+                {
+                    "ItemId": "500.22.d",
+                    "Section": "Staggered Compliance",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.22.e",
+            "Name": "New Requirements Effective Date",
+            "Description": "New requirements in sections 500.19(e)\u00e2\u20ac\u201c(h), 500.20, 500.21, 500.22, and 500.24 will be effective from November 1, 2023.",
+            "Attributes": [
+                {
+                    "ItemId": "500.22.e",
+                    "Section": "Effective Date",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.23",
+            "Name": "Severability",
+            "Description": "If a court finds any provision of this Part or its application to any person or situation invalid, the rest of the provisions will remain effective and applicable to other persons or situations.",
+            "Attributes": [
+                {
+                    "ItemId": "500.23",
+                    "Section": "Provision Validity",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.24",
+            "Name": "Electronic Filing Exemption",
+            "Description": "Covered entities can request an exemption from electronic filing requirements by submitting a detailed written request to the superintendent at least 30 days before the filing date. The request must include specific information and justification for the exemption. Upon approval, the filer must comply with the superintendent\u00e2\u20ac\u2122s instructions for future filings.",
+            "Attributes": [
+                {
+                    "ItemId": "500.24",
+                    "Section": "Exemption Process",
+                    "Service": "AWS"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.24.a",
+            "Name": "Electronic Filing Exemption Request",
+            "Description": "A filer required to make an electronic filing or submission may request an exemption by submitting a written request to the superintendent at least 30 days before the intended filing or submission date.",
+            "Attributes": [
+                {
+                    "ItemId": "500.24.a",
+                    "Section": "Exemption Request",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.24.b",
+            "Name": "Exemption Request Requirements",
+            "Description": "The request must include the filer's license number, specific filing details, reasons for the exemption, and whether it applies to future filings.",
+            "Attributes": [
+                {
+                    "ItemId": "500.24.b",
+                    "Section": "Request Details",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.24.b.1",
+            "Name": "Filer Information",
+            "Description": "Set forth the filer\u00e2\u20ac\u2122s DFS license number, NAIC number, Nationwide Multistate Licensing System number, or institution number.",
+            "Attributes": [
+                {
+                    "ItemId": "500.24.b.1",
+                    "Section": "Filer Details",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.24.b.2",
+            "Name": "Specific Filing Details",
+            "Description": "Identify the specific filing or submission for which the filer is applying for the exemption.",
+            "Attributes": [
+                {
+                    "ItemId": "500.24.b.2",
+                    "Section": "Filing Identification",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.24.b.3",
+            "Name": "Exemption Basis",
+            "Description": "Specify whether the exemption request is due to undue hardship, impracticality, or good cause, with a detailed explanation.",
+            "Attributes": [
+                {
+                    "ItemId": "500.24.b.3",
+                    "Section": "Reason for Exemption",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.24.b.4",
+            "Name": "Future Filings",
+            "Description": "Specify whether the exemption request extends to future filings or submissions, in addition to the specific filing or submission identified.",
+            "Attributes": [
+                {
+                    "ItemId": "500.24.b.4",
+                    "Section": "Future Exemptions",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.24.c",
+            "Name": "Additional Information",
+            "Description": "The filer requesting an exemption shall submit any additional information necessary for the superintendent to evaluate the request upon the superintendent\u00e2\u20ac\u2122s request.",
+            "Attributes": [
+                {
+                    "ItemId": "500.24.c",
+                    "Section": "Information Submission",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.24.d",
+            "Name": "Exemption Determination",
+            "Description": "The filer will be exempt from the electronic filing requirement upon the superintendent\u00e2\u20ac\u2122s written determination, specifying the basis and applicable filings.",
+            "Attributes": [
+                {
+                    "ItemId": "500.24.d",
+                    "Section": "Exemption Decision",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.24.e",
+            "Name": "Filing Submission Form",
+            "Description": "If the superintendent approves an exemption request, the filer shall make a filing or submission in an acceptable form and manner.",
+            "Attributes": [
+                {
+                    "ItemId": "500.24.e",
+                    "Section": "Submission Form",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.03",
+            "Name": "Cybersecurity Policy",
+            "Description": "Requires covered entities to adopt a written cybersecurity policy setting forth the policies and procedures for protecting information systems and nonpublic information.",
+            "Attributes": [
+                {
+                    "ItemId": "500.03",
+                    "Section": "Definitions",
+                    "Service": "AWS",
+                    "Type": "Automated"
+                }
+            ],
+            "Checks": [
+                "acm_certificates_expiration_check",
+                "acm_certificates_transparency_logs_enabled",
+                "apigatewayv2_api_access_logging_enabled",
+                "apigateway_restapi_public",
+                "apigateway_restapi_waf_acl_attached",
+                "cloudtrail_multi_region_enabled",
+                "cloudtrail_cloudwatch_logging_enabled",
+                "cloudtrail_kms_encryption_enabled",
+                "kms_key_not_publicly_accessible",
+                "cloudtrail_logs_s3_bucket_is_not_publicly_accessible",
+                "cloudtrail_s3_dataevents_write_enabled",
+                "cloudtrail_s3_dataevents_read_enabled",
+                "efs_encryption_at_rest_enabled",
+                "elasticache_cluster_uses_public_subnet",
+                "elb_insecure_ssl_ciphers",
+                "ec2_ebs_default_encryption",
+                "rds_instance_storage_encrypted",
+                "redshift_cluster_audit_logging",
+                "redshift_cluster_public_access",
+                "s3_bucket_default_encryption",
+                "rds_instance_storage_encrypted",
+                "rds_instance_multi_az",
+                "vpc_flow_logs_enabled",
+                "dynamodb_accelerator_cluster_encryption_enabled",
+                "ec2_instance_detailed_monitoring_enabled",
+                "s3_account_level_public_access_blocks",
+                "ssm_document_secrets",
+                "opensearch_service_domains_encryption_at_rest_enabled",
+                "opensearch_service_domains_node_to_node_encryption_enabled",
+                "iam_administrator_access_with_mfa",
+                "iam_root_mfa_enabled",
+                "s3_bucket_policy_public_write_access",
+                "ec2_instance_account_imdsv2_enabled",
+                "iam_inline_policy_no_administrative_privileges",
+                "ec2_ebs_public_snapshot",
+                "ec2_instance_public_ip",
+                "emr_cluster_account_public_block_enabled",
+                "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
+                "awslambda_function_not_publicly_accessible",
+                "rds_instance_no_public_access",
+                "rds_snapshots_public_access",
+                "redshift_cluster_public_access",
+                "s3_bucket_public_access",
+                "s3_bucket_policy_public_write_access",
+                "sagemaker_notebook_instance_without_direct_internet_access_configured",
+                "elbv2_waf_acl_attached",
+                "apigateway_restapi_waf_acl_attached",
+                "s3_account_level_public_access_blocks",
+                "ssm_documents_set_as_public",
+                "opensearch_service_domains_not_publicly_accessible",
+                "opensearch_service_domains_cloudwatch_logging_enabled",
+                "guardduty_is_enabled",
+                "securityhub_enabled",
+                "rds_instance_enhanced_monitoring_enabled",
+                "cloudtrail_s3_dataevents_read_enabled",
+                "elb_logging_enabled",
+                "s3_bucket_server_access_logging_enabled",
+                "opensearch_service_domains_audit_logging_enabled",
+                "vpc_flow_logs_enabled",
+                "rds_instance_integration_cloudwatch_logs",
+                "wafv2_webacl_logging_enabled",
+                "rds_instance_backup_enabled",
+                "dynamodb_tables_pitr_enabled",
+                "apigateway_restapi_logging_enabled"
+            ]
+        },
+        {
+            "Id": "500.3.a",
+            "Name": "Information Security",
+            "Description": "Each covered entity shall implement and maintain policies and procedures for information security, approved at least annually by a senior officer or the covered entity\u00e2\u20ac\u2122s senior governing body. These policies and procedures shall be based on the covered entity\u00e2\u20ac\u2122s risk assessment and address the protection of its information systems and nonpublic information stored on those information systems.",
+            "Attributes": [
+                {
+                    "ItemId": "500.3.a",
+                    "Section": "Requirements",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.3.b",
+            "Name": "Data Governance, Classification, and Retention",
+            "Description": "Each covered entity shall establish and maintain policies and procedures for data governance, classification, and retention, which must be approved at least annually by a senior officer or the covered entity\u00e2\u20ac\u2122s senior governing body. These policies and procedures should be based on the covered entity\u00e2\u20ac\u2122s risk assessment and should address the governance, classification, and retention of nonpublic information stored on its information systems.",
+            "Attributes": [
+                {
+                    "ItemId": "500.3.b",
+                    "Section": "Requirements",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.3.c",
+            "Name": "Asset Inventory, Device Management, and End-of-Life Management",
+            "Description": "Each covered entity must establish and maintain policies and procedures for asset inventory, device management, and end-of-life management. These policies and procedures should be approved at least annually by a senior officer or the covered entity\u00e2\u20ac\u2122s senior governing body. They should be based on the covered entity\u00e2\u20ac\u2122s risk assessment and should address the inventory, management, and disposal of assets and devices used in storing or accessing nonpublic information.",
+            "Attributes": [
+                {
+                    "ItemId": "500.3.c",
+                    "Section": "Requirements",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.3.d",
+            "Name": "Access Controls, Including Remote Access and Identity Management",
+            "Description": "Each covered entity must establish and maintain policies and procedures for access controls, including remote access and identity management. These policies and procedures should be approved at least annually by a senior officer or the covered entity\u00e2\u20ac\u2122s senior governing body. They should be based on the covered entity\u00e2\u20ac\u2122s risk assessment and should address the management of user access to systems, remote access procedures, and identity management practices.",
+            "Attributes": [
+                {
+                    "ItemId": "500.3.d",
+                    "Section": "Requirements",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.3.e",
+            "Name": "Business Continuity and Disaster Recovery Planning and Resources",
+            "Description": "Each covered entity must develop and maintain policies and procedures for business continuity and disaster recovery planning and resources. These policies and procedures should be approved at least annually by a senior officer or the covered entity\u00e2\u20ac\u2122s senior governing body. They should be based on the covered entity\u00e2\u20ac\u2122s risk assessment and should address strategies for maintaining essential business functions during and after a disaster or other disruptive event.",
+            "Attributes": [
+                {
+                    "ItemId": "500.3.e",
+                    "Section": "Requirements",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.3.f",
+            "Name": "Systems Operations and Availability Concerns",
+            "Description": "Each covered entity must establish and maintain policies and procedures to address systems operations and availability concerns. These policies and procedures should ensure the continuous operation of information systems and the availability of nonpublic information stored on those systems. They should be designed to mitigate risks related to system failures, disruptions, or downtime, and to restore operations as quickly as possible in the event of an incident.",
+            "Attributes": [
+                {
+                    "ItemId": "500.3.f",
+                    "Section": "Requirements",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.3.g",
+            "Name": "Systems and Network Security and Monitoring",
+            "Description": "Covered entities must establish and maintain policies and procedures addressing systems and network security and monitoring. These policies and procedures should ensure the security of information systems and networks, including the monitoring of network traffic and system activities for suspicious or unauthorized behavior.",
+            "Attributes": [
+                {
+                    "ItemId": "500.3.g",
+                    "Section": "Requirements",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.3.h",
+            "Name": "Security Awareness and Training",
+            "Description": "Covered entities are required to establish and maintain policies and procedures for security awareness and training. These policies and procedures should include measures to educate employees about cybersecurity risks, best practices, and the proper handling of nonpublic information.",
+            "Attributes": [
+                {
+                    "ItemId": "500.3.h",
+                    "Section": "Requirements",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.3.i",
+            "Name": "Systems and Application Security, Development, and Quality Assurance",
+            "Description": "Covered entities must implement and maintain policies and procedures to address systems and application security, development, and quality assurance. These policies and procedures should ensure the secure design, development, and testing of systems and applications to protect nonpublic information.",
+            "Attributes": [
+                {
+                    "ItemId": "500.3.i",
+                    "Section": "Requirements",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.3.j",
+            "Name": "Physical Security and Environmental Controls",
+            "Description": "Covered entities are required to establish and maintain policies and procedures to address physical security and environmental controls. These policies and procedures should ensure the protection of physical assets, facilities, and environmental conditions to prevent unauthorized access, damage, or loss of nonpublic information.",
+            "Attributes": [
+                {
+                    "ItemId": "500.3.j",
+                    "Section": "Requirements",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.3.k",
+            "Name": "Customer Data Privacy",
+            "Description": "Covered entities are required to establish and maintain policies and procedures to ensure the privacy and confidentiality of customer data. These policies and procedures should address the collection, use, storage, and sharing of customer data in compliance with relevant laws and regulations.",
+            "Attributes": [
+                {
+                    "ItemId": "500.3.k",
+                    "Section": "Requirements",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.3.l",
+            "Name": "Vendor and Third-Party Service Provider Management",
+            "Description": "Covered entities must establish and maintain policies and procedures for the management of vendors and third-party service providers. This includes assessing the security practices of vendors and ensuring they comply with cybersecurity requirements.",
+            "Attributes": [
+                {
+                    "ItemId": "500.3.l",
+                    "Section": "Requirements",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.3.m",
+            "Name": "Risk Assessment",
+            "Description": "Covered entities must conduct regular risk assessments to identify, evaluate, and prioritize cybersecurity risks to their information systems and nonpublic information. These assessments should incorporate analyses of threats and vulnerabilities and consider mitigations provided by security controls.",
+            "Attributes": [
+                {
+                    "ItemId": "500.3.m",
+                    "Section": "Requirements",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.3.n",
+            "Name": "Incident Response and Notification",
+            "Description": "Covered entities must establish and maintain effective incident response and notification procedures to promptly respond to and mitigate cybersecurity incidents. This includes identifying, containing, eradicating, and recovering from incidents, as well as notifying appropriate parties as required.",
+            "Attributes": [
+                {
+                    "ItemId": "500.3.n",
+                    "Section": "Requirements",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.3.o",
+            "Name": "Vulnerability Management",
+            "Description": "Covered entities must establish and maintain effective vulnerability management processes to identify, assess, prioritize, and remediate security vulnerabilities in their information systems. This includes regularly scanning for vulnerabilities, assessing their impact, and applying appropriate patches and fixes to mitigate risks.",
+            "Attributes": [
+                {
+                    "ItemId": "500.3.o",
+                    "Section": "Requirements",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.4",
+            "Name": "Cybersecurity Governance",
+            "Description": "Covered entities must establish and maintain effective cybersecurity governance frameworks to ensure the alignment of cybersecurity strategies with business objectives and regulatory requirements. This includes defining roles and responsibilities, establishing oversight mechanisms, and implementing processes for monitoring and evaluating the effectiveness of cybersecurity controls.",
+            "Attributes": [
+                {
+                    "ItemId": "04",
+                    "Section": "Governance",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.4.a",
+            "Name": "Chief Information Security Officer (CISO)",
+            "Description": "Each covered entity must designate a Chief Information Security Officer (CISO). The CISO may be employed by the covered entity, one of its affiliates, or a third-party service provider.",
+            "Attributes": [
+                {
+                    "ItemId": "500.4.a",
+                    "Section": "CISO",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.4.a.1",
+            "Name": "Retain Responsibility for Compliance",
+            "Description": "The Chief Information Security Officer (CISO) must retain responsibility for compliance with this Part.",
+            "Attributes": [
+                {
+                    "ItemId": "500.4.a.1",
+                    "Section": "Compliance",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.4.a.2",
+            "Name": "Designate Personnel for Third-Party Oversight",
+            "Description": "The covered entity must designate a senior member of its personnel responsible for the direction and oversight of third-party service providers.",
+            "Attributes": [
+                {
+                    "ItemId": "500.4.a.2",
+                    "Section": "Compliance",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.4.a.3",
+            "Name": "Requirement for Third-Party Cybersecurity Program",
+            "Description": "The covered entity must require the third-party service provider or affiliate to maintain a cybersecurity program that protects the covered entity in accordance with the requirements outlined in this Part.",
+            "Attributes": [
+                {
+                    "ItemId": "500.4.a.3",
+                    "Section": "Cybersecurity",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.4.b",
+            "Name": "Annual Report by CISO",
+            "Description": "The Chief Information Security Officer (CISO) of each covered entity is required to submit a written report annually to the senior governing body. This report should detail the covered entity\u00e2\u20ac\u2122s cybersecurity program, including relevant information to the extent applicable.",
+            "Attributes": [
+                {
+                    "ItemId": "500.4.b",
+                    "Section": "Cybersecurity Governance",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.4.b.1",
+            "Name": "Confidentiality, Integrity, and Security",
+            "Description": "The CISO's annual report should address the assurance of confidentiality for nonpublic information and the maintenance of integrity and security within the covered entity\u00e2\u20ac\u2122s information systems.",
+            "Attributes": [
+                {
+                    "ItemId": "500.4.b.1",
+                    "Section": "Cybersecurity Governance",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.4.b.2",
+            "Name": "Cybersecurity Policies and Procedures",
+            "Description": "The CISO's annual report should cover the effectiveness and adherence to the covered entity\u00e2\u20ac\u2122s cybersecurity policies and procedures.",
+            "Attributes": [
+                {
+                    "ItemId": "500.4.b.2",
+                    "Section": "Cybersecurity Governance",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.4.b.3",
+            "Name": "Material Cybersecurity Risks",
+            "Description": "The CISO's annual report should address material cybersecurity risks faced by the covered entity.",
+            "Attributes": [
+                {
+                    "ItemId": "500.4.b.3",
+                    "Section": "Cybersecurity Governance",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.4.b.4",
+            "Name": "Overall Effectiveness Assessment",
+            "Description": "The CISO's annual report should evaluate the overall effectiveness of the covered entity\u00e2\u20ac\u2122s cybersecurity program.",
+            "Attributes": [
+                {
+                    "ItemId": "500.4.b.4",
+                    "Section": "Cybersecurity Governance",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.4.b.5",
+            "Name": "Material Cybersecurity Events Reporting",
+            "Description": "The CISO's annual report should include an analysis of material cybersecurity events involving the covered entity during the reporting period.",
+            "Attributes": [
+                {
+                    "ItemId": "500.4.b.5",
+                    "Section": "Cybersecurity Governance",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.4.b.6",
+            "Name": "Remediation Plans for Material Inadequacies",
+            "Description": "The CISO's annual report should outline plans for remediating material inadequacies identified in the covered entity's cybersecurity program.",
+            "Attributes": [
+                {
+                    "ItemId": "500.4.b.6",
+                    "Section": "Cybersecurity Governance",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.4.c",
+            "Name": "Timely Reporting of Material Cybersecurity Issues",
+            "Description": "The Chief Information Security Officer (CISO) is responsible for promptly reporting material cybersecurity issues, including significant cybersecurity events and notable changes to the covered entity\u00e2\u20ac\u2122s cybersecurity program, to the senior governing body or senior officer(s).",
+            "Attributes": [
+                {
+                    "ItemId": "500.4.c",
+                    "Section": "Cybersecurity Governance",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.4.d",
+            "Name": "Oversight of Cybersecurity Risk Management by Senior Governing Body",
+            "Description": "The senior governing body of the covered entity is responsible for exercising oversight of the covered entity\u00e2\u20ac\u2122s cybersecurity risk management.",
+            "Attributes": [
+                {
+                    "ItemId": "500.4.d",
+                    "Section": "Cybersecurity Governance",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.4.d.1",
+            "Name": "Sufficient Understanding of Cybersecurity Matters for Oversight",
+            "Description": "The senior governing body of the covered entity should have sufficient understanding of cybersecurity-related matters to effectively exercise oversight, which may involve the use of advisors.",
+            "Attributes": [
+                {
+                    "ItemId": "500.4.d.1",
+                    "Section": "Cybersecurity Governance",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.4.d.2",
+            "Name": "Requirement for Executive Management to Develop, Implement, and Maintain Cybersecurity Program",
+            "Description": "The senior governing body of the covered entity should require the covered entity\u00e2\u20ac\u2122s executive management or its designees to develop, implement, and maintain the covered entity\u00e2\u20ac\u2122s cybersecurity program.",
+            "Attributes": [
+                {
+                    "ItemId": "500.4.d.2",
+                    "Section": "Cybersecurity Governance",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.4.d.3",
+            "Name": "Regular Review of Management Reports on Cybersecurity Matters",
+            "Description": "The senior governing body of the covered entity should regularly receive and review management reports about cybersecurity matters.",
+            "Attributes": [
+                {
+                    "ItemId": "500.4.d.3",
+                    "Section": "Cybersecurity Governance",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.4.d.4",
+            "Name": "Confirmation of Resource Allocation for Cybersecurity Program",
+            "Description": "The senior governing body should confirm that the covered entity's management has allocated sufficient resources to implement and maintain an effective cybersecurity program.",
+            "Attributes": [
+                {
+                    "ItemId": "500.4.d.4",
+                    "Section": "Cybersecurity Governance",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.5",
+            "Name": "Vulnerability Management",
+            "Description": "Each covered entity shall, in accordance with its risk assessment, develop and implement written policies and procedures for vulnerability management that are designed to assess and maintain the effectiveness of its cybersecurity program. These policies and procedures shall be designed to ensure that covered entities:",
+            "Attributes": [
+                {
+                    "ItemId": "500.5",
+                    "Section": "Vulnerability Management",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.5.a",
+            "Name": "Vulnerability Scans",
+            "Description": "Conduct, at a minimum, vulnerability scans.",
+            "Attributes": [
+                {
+                    "ItemId": "500.5.a",
+                    "Section": "Vulnerability Management",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.5.a.1",
+            "Name": "Penetration Testing",
+            "Description": "Conduct penetration testing of their information systems from both inside and outside the information systems\u00e2\u20ac\u2122 boundaries by a qualified internal or external party at least annually.",
+            "Attributes": [
+                {
+                    "ItemId": "500.5.a.1",
+                    "Section": "Vulnerability Management",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.5.a.2",
+            "Name": "Automated Scans and Manual Review",
+            "Description": "Conduct automated scans of information systems, and a manual review of systems not covered by such scans, for the purpose of discovering, analyzing, and reporting vulnerabilities at a frequency determined by the risk assessment, and promptly after any material system changes.",
+            "Attributes": [
+                {
+                    "ItemId": "500.5.a.2",
+                    "Section": "Vulnerability Management",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.5.b",
+            "Name": "Prompt Notification of New Security Vulnerabilities",
+            "Description": "Ensure that covered entities are promptly informed of new security vulnerabilities by having a monitoring process in place.",
+            "Attributes": [
+                {
+                    "ItemId": "500.5.b",
+                    "Section": "Vulnerability Management",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.5.c",
+            "Name": "Remediate vulnerabilities",
+            "Description": "Timely remediate vulnerabilities, giving priority to vulnerabilities based on the risk they pose to the coveredentity",
+            "Attributes": [
+                {
+                    "ItemId": "500.5.c",
+                    "Section": "Vulnerability Management",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.6",
+            "Name": "Audit Trail",
+            "Description": "Implement an audit trail that is designed to reconstruct material financial transactions and to detect and respond to cybersecurity events that have a reasonable likelihood of materially harming any material part of the normal operations of the covered entity.",
+            "Attributes": [
+                {
+                    "ItemId": "500.6",
+                    "Section": "Audit Trail",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.6.a",
+            "Name": "Secure Maintenance of Systems",
+            "Description": "Each covered entity shall securely maintain systems that, to the extent applicable and based on its risk assessment, are designed to reconstruct material financial transactions and to detect and respond to cybersecurity events.",
+            "Attributes": [
+                {
+                    "ItemId": "500.6.a",
+                    "Section": "Definitions",
+                    "Service": "AWS",
+                    "Type": "Automated"
+                }
+            ],
+            "Checks": [
+                "apigateway_restapi_logging_enabled",
+                "apigatewayv2_api_access_logging_enabled",
+                "cloudtrail_cloudwatch_logging_enabled",
+                "cloudtrail_logs_s3_bucket_access_logging_enabled",
+                "elb_logging_enabled",
+                "cloudtrail_multi_region_enabled",
+                "cloudtrail_logs_s3_bucket_access_logging_enabled",
+                "cloudtrail_cloudwatch_logging_enabled",
+                "vpc_flow_logs_enabled",
+                "rds_instance_enhanced_monitoring_enabled",
+                "redshift_cluster_audit_logging",
+                "wafv2_webacl_logging_enabled",
+                "opensearch_service_domains_audit_logging_enabled",
+                "opensearch_service_domains_cloudwatch_logging_enabled",
+                "cloudtrail_enabled"
+            ]
+        },
+        {
+            "Id": "500.6.a.1",
+            "Name": "Reconstruction of Financial Transactions",
+            "Description": "Systems maintained by covered entities shall be designed to reconstruct material financial transactions sufficient to support normal operations and obligations of the covered entity.",
+            "Attributes": [
+                {
+                    "ItemId": "500.6.a.1",
+                    "Section": "Audit Trail",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.6.a.2",
+            "Name": "Audit Trails for Cybersecurity Event Detection and Response",
+            "Description": "Covered entities shall include audit trails designed to detect and respond to cybersecurity events that have a reasonable likelihood of materially harming any material part of the normal operations of the covered entity.",
+            "Attributes": [
+                {
+                    "ItemId": "500.6.a.2",
+                    "Section": "Audit Trail",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.6.b",
+            "Name": "Retention Period for Audit Trail Records",
+            "Description": "Each covered entity shall maintain records required by paragraph (a)(1) of this section for not fewer than five years and shall maintain records required by paragraph (a)(2) of this section for not fewer than three years.",
+            "Attributes": [
+                {
+                    "ItemId": "500.6.b",
+                    "Section": "Definitions",
+                    "Service": "AWS",
+                    "Type": "Automated"
+                }
+            ],
+            "Checks": [
+                "cloudwatch_log_group_retention_policy_specific_days_enabled"
+            ]
+        },
+        {
+            "Id": "500.7",
+            "Name": "Access Privileges and Management",
+            "Description": "This section outlines requirements related to access privileges and management to ensure the security of the covered entity's systems and data.",
+            "Attributes": [
+                {
+                    "ItemId": "500.7",
+                    "Section": "Definitions",
+                    "Service": "AWS",
+                    "Type": "Automated"
+                }
+            ],
+            "Checks": [
+                "iam_rotate_access_key_90_days",
+                "s3_account_level_public_access_blocks",
+                "ssm_documents_set_as_public",
+                "vpc_subnet_no_public_ip_by_default",
+                "iam_user_accesskey_unused",
+                "secretsmanager_automatic_rotation_enabled",
+                "iam_password_policy_expires_passwords_within_90_days_or_less",
+                "iam_password_policy_lowercase",
+                "iam_password_policy_minimum_length_14",
+                "iam_password_policy_number",
+                "iam_password_policy_reuse_24",
+                "iam_password_policy_symbol",
+                "iam_password_policy_uppercase",
+                "iam_aws_attached_policy_no_administrative_privileges",
+                "iam_no_root_access_key",
+                "s3_bucket_public_access",
+                "ec2_ebs_snapshot_account_block_public_access",
+                "ec2_ami_public",
+                "emr_cluster_master_nodes_no_public_ip",
+                "rds_instance_no_public_access",
+                "s3_bucket_public_write_acl",
+                "opensearch_in_vpc_only",
+                "awslambda_function_inside_vpc",
+                "awslambda_function_not_publicly_accessible",
+                "rds_snapshots_public_prohibited",
+                "iam_user_no_policies_check",
+                "iam_no_inline_policy_check",
+                "iam_user_group_membership_check",
+                "secretsmanager_scheduled_rotation_success_check",
+                "sagemaker_notebook_no_direct_internet_access",
+                "codebuild_project_envvar_awscred_check",
+                "dms_instance_no_public_access",
+                "codebuild_project_source_repo_url_check",
+                "ec2_no_unrestricted_route_to_igw",
+                "ec2_internet_gateway_authorized_vpc_only",
+                "iam_group_has_users_check",
+                "ec2_instance_no_public_ip",
+                "ec2_instances_in_vpc"
+            ]
+        },
+        {
+            "Id": "500.7.a",
+            "Name": "Access Privileges",
+            "Description": "As part of its cybersecurity program, based on the covered entity\u00e2\u20ac\u2122s risk assessment, each covered entity shall establish and maintain access privileges to ensure appropriate levels of access to its systems and data.",
+            "Attributes": [
+                {
+                    "ItemId": "500.7.a",
+                    "Section": "Access Privileges",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.7.a.1",
+            "Name": "Limit User Access Privileges",
+            "Description": "Limit user access privileges to information systems that provide access to nonpublic information to only those necessary to perform the user\u00e2\u20ac\u2122s job.",
+            "Attributes": [
+                {
+                    "ItemId": "500.7.a.1",
+                    "Section": "Access Privileges",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.7.a.2",
+            "Name": "Limit Privileged Accounts and Access Functions",
+            "Description": "Limit the number of privileged accounts and limit the access functions of privileged accounts to only those necessary to perform the user\u00e2\u20ac\u2122s job.",
+            "Attributes": [
+                {
+                    "ItemId": "500.7.a.2",
+                    "Section": "Access Privileges",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.7.a.3",
+            "Name": "Limit Use of Privileged Accounts",
+            "Description": "Limit the use of privileged accounts to only when performing functions requiring the use of such access.",
+            "Attributes": [
+                {
+                    "ItemId": "500.7.a.3",
+                    "Section": "Access Privileges",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.7.a.4",
+            "Name": "Periodic Review of User Access Privileges",
+            "Description": "Periodically, but at a minimum annually, review all user access privileges and remove or disable accounts and access that are no longer necessary.",
+            "Attributes": [
+                {
+                    "ItemId": "500.7.a.4",
+                    "Section": "Access Privileges",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.7.a.5",
+            "Name": "Secure Configuration of Remote Control Protocols",
+            "Description": "Disable or securely configure all protocols that permit remote control of devices.",
+            "Attributes": [
+                {
+                    "ItemId": "500.7.a.5",
+                    "Section": "Access Privileges",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.7.a.6",
+            "Name": "Prompt Termination of Access Following Departures",
+            "Description": "Promptly terminate access following departures.",
+            "Attributes": [
+                {
+                    "ItemId": "500.7.a.6",
+                    "Section": "Access Privileges",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.7.b",
+            "Name": "Password Policy Implementation",
+            "Description": "Implement a written password policy that meets industry standards.",
+            "Attributes": [
+                {
+                    "ItemId": "500.7.b",
+                    "Section": "Password policy",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.7.c",
+            "Name": "Monitoring Privileged Access Activity",
+            "Description": "Implement monitoring of privileged access activity.",
+            "Attributes": [
+                {
+                    "ItemId": "500.7.c",
+                    "Section": "Monitoring",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.7.c.1",
+            "Name": "Implementation of Privileged Access Management Solution",
+            "Description": "Implement a privileged access management solution.",
+            "Attributes": [
+                {
+                    "ItemId": "500.7.c.1",
+                    "Section": "Access Management",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.7.c.2",
+            "Name": "Automated Blocking of Commonly Used Passwords",
+            "Description": "Implement an automated method of blocking commonly used passwords for all accounts on information systems owned or controlled by the company. If blocking commonly used passwords is determined to be infeasible, the CISO may approve, in writing at least annually, the use of reasonably equivalent or more secure compensating controls.",
+            "Attributes": [
+                {
+                    "ItemId": "500.7.c.2",
+                    "Section": "Automation",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.8",
+            "Name": "Application Security",
+            "Description": "Implement measures to ensure the security of applications used within the organization's infrastructure.",
+            "Attributes": [
+                {
+                    "ItemId": "500.8",
+                    "Section": "Security",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.8.a",
+            "Name": "Application Security - Secure Development Practices",
+            "Description": "Establish written procedures, guidelines, and standards to ensure the use of secure development practices for both in-house developed and externally acquired applications used within the organization's technology environment.",
+            "Attributes": [
+                {
+                    "ItemId": "500.8.a",
+                    "Section": "Security",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.8.b",
+            "Name": "Application Security - Review of Secure Development Practices",
+            "Description": "Ensure that all procedures, guidelines, and standards related to secure development practices for applications are reviewed, assessed, and updated as necessary by the Chief Information Security Officer (CISO) or a qualified designee at least once a year.",
+            "Attributes": [
+                {
+                    "ItemId": "500.8.b",
+                    "Section": "Security",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.9",
+            "Name": "Risk Assessment",
+            "Description": "Conduct risk assessments to identify, analyze, and evaluate cybersecurity risks to the covered entity's information systems, and develop appropriate risk management strategies.",
+            "Attributes": [
+                {
+                    "ItemId": "500.9",
+                    "Section": "Assessment",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.9.a",
+            "Name": "Periodic Risk Assessment",
+            "Description": "Conduct a periodic risk assessment of the covered entity\u00e2\u20ac\u2122s information systems to inform the design of the cybersecurity program as required by this Part. Review and update the risk assessment as reasonably necessary, but at a minimum annually, and whenever a change in the business or technology causes a material change to the covered entity\u00e2\u20ac\u2122s cyber risk. Allow for revision of controls to respond to technological developments and evolving threats.",
+            "Attributes": [
+                {
+                    "ItemId": "500.9.a",
+                    "Section": "Assessment",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.9.b",
+            "Name": "Risk Assessment Policies and Procedures",
+            "Description": "Conduct the risk assessment in accordance with written policies and procedures and document the process. The policies and procedures shall include:",
+            "Attributes": [
+                {
+                    "ItemId": "500.9.b",
+                    "Section": "Assessment",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.9.b.1",
+            "Name": "Criteria for Risk Evaluation and Categorization",
+            "Description": "Establish criteria for the evaluation and categorization of identified cybersecurity risks or threats facing the covered entity.",
+            "Attributes": [
+                {
+                    "ItemId": "500.9.b.1",
+                    "Section": "Evaluation",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.9.b.2",
+            "Name": "Criteria for System Assessment",
+            "Description": "Establish criteria for the assessment of the confidentiality, integrity, security, and availability of the covered entity\u00e2\u20ac\u2122s information systems and nonpublic information. This includes evaluating the adequacy of existing controls in the context of identified risks.",
+            "Attributes": [
+                {
+                    "ItemId": "500.9.b.2",
+                    "Section": "Risk Assessment",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.9.b.3",
+            "Name": "Mitigation of Identified Risks",
+            "Description": "Establish mitigation and acceptance strategies for identified risks based on the risk assessment and how the cybersecurity program will address the risks.",
+            "Attributes": [
+                {
+                    "ItemId": "500.9.b.3",
+                    "Section": "Risk Mitigation",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.10",
+            "Name": "Cybersecurity Personnel and Intelligence",
+            "Description": "Incorporate qualified cybersecurity personnel who understand the scope of risk assessment and countermeasures.",
+            "Attributes": [
+                {
+                    "ItemId": "500.10",
+                    "Section": "CyberSecurity Personnel",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.10.a",
+            "Name": "Cybersecurity Intelligence",
+            "Description": "An addition to the requirements in section 500.4(a)",
+            "Attributes": [
+                {
+                    "ItemId": "500.10.a",
+                    "Section": "CyberSecurity Intelligence",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.10.a.1",
+            "Name": "Qualified Cybersecurity Personnel",
+            "Description": "Employ qualified cybersecurity personnel from the covered entity, its affiliate, or a third-party provider to manage cybersecurity risks and oversee core functions as specified in section 500.2(b)(1)\u00e2\u20ac\u201c(6).",
+            "Attributes": [
+                {
+                    "ItemId": "500.10.a.1",
+                    "Section": "Cybersecurity Management",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.10.a.2",
+            "Name": "Training of Cybersecurity Personnel",
+            "Description": "Ensure cybersecurity personnel receive updates and training to adequately address relevant cybersecurity risks.",
+            "Attributes": [
+                {
+                    "ItemId": "500.10.a.2",
+                    "Section": "Cybersecurity Personnel Training",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.10.a.3",
+            "Name": "Knowledge Maintenance",
+            "Description": "Ensure that key cybersecurity personnel actively stay informed about evolving cybersecurity threats and countermeasures.",
+            "Attributes": [
+                {
+                    "ItemId": "500.10.a.3",
+                    "Section": "Threat Awareness",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.10.b",
+            "Name": "Third-Party Assistance",
+            "Description": "A covered entity may opt to engage an affiliate or qualified third-party service provider to help meet the requirements of this Part, in accordance with sections 500.4 and 500.11.",
+            "Attributes": [
+                {
+                    "ItemId": "500.10.b",
+                    "Section": "Compliance Assistance",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.11",
+            "Name": "Third-party Service Provider Security Policy",
+            "Description": "Mandation of covered entities to implement comprehensive cybersecurity policies and procedures for third-party service providers.",
+            "Attributes": [
+                {
+                    "ItemId": "500.11",
+                    "Section": "Third-Party Security",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.11.a",
+            "Name": "Security Policies",
+            "Description": "Each covered entity must implement written policies and procedures designed to ensure the security of information systems and nonpublic information accessible to or held by third-party service providers.",
+            "Attributes": [
+                {
+                    "ItemId": "500.11.a",
+                    "Section": "Policy Implementation",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.11.a.1",
+            "Name": "Security Policies",
+            "Description": "Identification and risk assessment of third-party service providers.",
+            "Attributes": [
+                {
+                    "ItemId": "500.11.a.1",
+                    "Section": "Policy Implementation",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.11.a.2",
+            "Name": "Compliance Standards",
+            "Description": "Minimum cybersecurity standards that third-party service providers must meet to conduct business with the covered entity.",
+            "Attributes": [
+                {
+                    "ItemId": "500.11.a.2",
+                    "Section": "Provider Criteria",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.11.a.3",
+            "Name": "Cyber Evaluation",
+            "Description": "Due diligence procedures for assessing the adequacy of cybersecurity practices of third-party service providers.",
+            "Attributes": [
+                {
+                    "ItemId": "500.11.a.3",
+                    "Section": "Evaluation Procedures",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.11.a.4",
+            "Name": "Cyber Evaluation",
+            "Description": "Regular evaluation of third-party service providers based on their risk level and the ongoing adequacy of their cybersecurity practices.",
+            "Attributes": [
+                {
+                    "ItemId": "500.11.a.4",
+                    "Section": "Risk Assessment",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.11.b",
+            "Name": "Due Diligence",
+            "Description": "These policies and procedures shall incorporate relevant guidelines for due diligence and/or contractual protections concerning third-party service providers.",
+            "Attributes": [
+                {
+                    "ItemId": "500.11.b",
+                    "Section": "Policy Requirements",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.11.b.1",
+            "Name": "Access Controls",
+            "Description": "The third-party service provider\u00e2\u20ac\u2122s policies and procedures for access controls, including their use of multi-factor authentication as mandated by section 500.12 of this Part, to restrict access to relevant information systems and nonpublic information.",
+            "Attributes": [
+                {
+                    "ItemId": "500.11.b.1",
+                    "Section": "Information Security",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.11.b.2",
+            "Name": "Encryption Policies",
+            "Description": "The third-party service provider's policies and procedures for using encryption, as required by section 500.15 of this Part, to protect nonpublic information both in transit and at rest.",
+            "Attributes": [
+                {
+                    "ItemId": "500.11.b.2",
+                    "Section": "Data Protection",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.11.b.3",
+            "Name": "Impact Alert",
+            "Description": "Notification to the covered entity in case of a cybersecurity event that directly affects the covered entity\u00e2\u20ac\u2122s information systems or nonpublic information held by the third-party service provider.",
+            "Attributes": [
+                {
+                    "ItemId": "500.11.b.3",
+                    "Section": "Cybersecurity Incident",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.11.b.4",
+            "Name": "Cybersecurity Compliance",
+            "Description": "Assurances regarding the third-party service provider\u00e2\u20ac\u2122s cybersecurity policies for protecting the covered entity\u00e2\u20ac\u2122s information systems and nonpublic information.",
+            "Attributes": [
+                {
+                    "ItemId": "500.11.b.4",
+                    "Section": "Security Assurances",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.12",
+            "Name": "Multi-factor Authentication",
+            "Description": "Mandating the use of multi-factor authentication for accessing information systems, third-party applications, and privileged accounts, with exceptions allowed under specific conditions",
+            "Attributes": [
+                {
+                    "ItemId": "500.12",
+                    "Section": "Definitions",
+                    "Service": "AWS",
+                    "Type": "Automated"
+                }
+            ],
+            "Checks": [
+                "iam_user_mfa_enabled_console_access",
+                "iam_root_hardware_mfa_enabled",
+                "iam_root_mfa_enabled"
+            ]
+        },
+        {
+            "Id": "500.12.a",
+            "Name": "System Access",
+            "Description": "Multi-factor authentication must be used by anyone accessing a covered entity's information systems, except when the entity qualifies for a limited exemption under section 500.19(a)",
+            "Attributes": [
+                {
+                    "ItemId": "500.12.a",
+                    "Section": "Security Protocols",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.12.a.1",
+            "Name": "System Access",
+            "Description": "Remote access to the covered entity\u00e2\u20ac\u2122s information systems.",
+            "Attributes": [
+                {
+                    "ItemId": "500.12.a.1",
+                    "Section": "Authentication Requirement",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.12.a.2",
+            "Name": "Third-Party Access",
+            "Description": "Remote access to third-party applications, including cloud-based ones, where nonpublic information is accessible.",
+            "Attributes": [
+                {
+                    "ItemId": "500.12.a.2",
+                    "Section": "Data Accessibility",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.12.a.3",
+            "Name": "Privileged Accounts",
+            "Description": "All privileged accounts except service accounts that do not allow interactive login.",
+            "Attributes": [
+                {
+                    "ItemId": "500.12.a.3",
+                    "Section": "Access Restrictions",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.12.b",
+            "Name": "CISO Approval",
+            "Description": "If the covered entity has a CISO, the CISO can approve in writing the use of equally or more secure compensating controls. These controls must be reviewed periodically, at least annually.",
+            "Attributes": [
+                {
+                    "ItemId": "500.12.b",
+                    "Section": "Periodic Review",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.13",
+            "Name": "Asset Inventory",
+            "Description": "requires covered entities to implement and maintain accurate asset inventories and establish procedures for secure data disposal.",
+            "Attributes": [
+                {
+                    "ItemId": "500.13",
+                    "Section": "Data Tracking",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.13.a.1",
+            "Name": "Asset Tracking",
+            "Description": "Covered entities must implement a method to track key information for each asset, including the owner, location, classification or sensitivity, support expiration date, and recovery time objectives (this covers sections 500.13.a.1.i to 500.13.a.1.v).",
+            "Attributes": [
+                {
+                    "ItemId": "500.13.a.1",
+                    "Section": "Classification Sensitivity",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.13.a.2",
+            "Name": "Inventory Frequency",
+            "Description": "The frequency required to update and validate the covered entity\u00e2\u20ac\u2122s asset inventory.",
+            "Attributes": [
+                {
+                    "ItemId": "500.13.a.2",
+                    "Section": "Update Validation",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.13.b",
+            "Name": "Secure Disposal",
+            "Description": "As part of its cybersecurity program, each covered entity shall include policies and procedures for the secure disposal on a periodic basis of any nonpublic information identified in section 500.1(k)(2)\u00e2\u20ac\u201c(3) of this Part that is no longer necessary for business operations or for other legitimate business purposes of the covered entity, except where such information is otherwise required to be retained by law or regulation, or where targeted disposal is not reasonably feasible due to the manner in which the information is maintained.",
+            "Attributes": [
+                {
+                    "ItemId": "500.13.b",
+                    "Section": "Periodic Disposal",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.14",
+            "Name": "Monitoring Training",
+            "Description": "As part of its cybersecurity program, each covered entity shall implement risk-based policies, procedures, and controls designed to monitor the activity of authorized users and detect unauthorized access or tampering with nonpublic information, and implement controls to protect against malicious code, including monitoring and filtering web traffic and email to block malicious content.",
+            "Attributes": [
+                {
+                    "ItemId": "500.14",
+                    "Section": "Risk Controls",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.14.a",
+            "Name": "Cybersecurity Program",
+            "Description": "As part of its cybersecurity program, each covered entity shall do the following",
+            "Attributes": [
+                {
+                    "ItemId": "500.14.a",
+                    "Section": "Definitions",
+                    "Service": "AWS",
+                    "Type": "Automated"
+                }
+            ],
+            "Checks": [
+                "cloudwatch_changes_to_network_acls_alarm_configured",
+                "cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled",
+                "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
+                "cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk",
+                "cloudwatch_log_metric_filter_for_s3_bucket_policy_changes",
+                "cloudwatch_log_metric_filter_policy_changes",
+                "cloudwatch_log_metric_filter_root_usage",
+                "cloudwatch_log_metric_filter_security_group_changes",
+                "cloudwatch_log_metric_filter_sign_in_without_mfa",
+                "cloudwatch_log_metric_filter_unauthorized_api_calls",
+                "apigateway_restapi_logging_enabled",
+                "apigatewayv2_api_access_logging_enabled",
+                "cloudtrail_cloudwatch_logging_enabled",
+                "cloudtrail_logs_s3_bucket_access_logging_enabled",
+                "elb_logging_enabled",
+                "cloudtrail_multi_region_enabled",
+                "vpc_flow_logs_enabled",
+                "redshift_cluster_audit_logging",
+                "wafv2_webacl_logging_enabled",
+                "guardduty_centrally_managed",
+                "securityhub_enabled",
+                "opensearch_service_domains_audit_logging_enabled",
+                "opensearch_service_domains_cloudwatch_logging_enabled",
+                "s3_bucket_logging_enabled",
+                "iam_root_access_key_check",
+                "codebuild_project_logging_enabled",
+                "cloudwatch_log_group_retention_policy_specific_days_enabled",
+                "cloudtrail_enabled"
+            ]
+        },
+        {
+            "Id": "500.14.a.1",
+            "Name": "Risk Policies",
+            "Description": "Implement risk-based policies, procedures, and controls designed to monitor the activity of authorized users and detect unauthorized access or use of, or tampering with, nonpublic information by such authorized users;",
+            "Attributes": [
+                {
+                    "ItemId": "500.14.a.1",
+                    "Section": "User Monitoring",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.14.a.2",
+            "Name": "Malicious Protection",
+            "Description": "Implement risk-based controls designed to protect against malicious code, including those that monitor and filter web traffic and electronic mail to block malicious content.",
+            "Attributes": [
+                {
+                    "ItemId": "500.14.a.2",
+                    "Section": "Content Filtering",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.14.a.3",
+            "Name": "Awareness Training",
+            "Description": "Provide periodic, but at a minimum annual, cybersecurity awareness training that includes social engineering for all personnel that is updated to reflect risks identified by the covered entity in its risk assessment.",
+            "Attributes": [
+                {
+                    "ItemId": "500.14.a.3",
+                    "Section": "Training Updates",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.14.b",
+            "Name": "Compensating Controls",
+            "Description": "Each class A company shall implement the following, unless the CISO has approved in writing the use of reasonably equivalent or more secure compensating controls.",
+            "Attributes": [
+                {
+                    "ItemId": "500.14.b",
+                    "Section": "Secure Approval",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.14.b.1",
+            "Name": "Endpoint Monitoring",
+            "Description": "Implement an endpoint detection and response solution to monitor unusual activities, including lateral movement.",
+            "Attributes": [
+                {
+                    "ItemId": "500.14.b.1",
+                    "Section": "Activity Monitoring",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.14.b.2",
+            "Name": "Centralized Logging",
+            "Description": "Implement a solution that centralizes logging and security event alerting.",
+            "Attributes": [
+                {
+                    "ItemId": "500.14.b.2",
+                    "Section": "Event Alerting",
+                    "Service": "AWS",
+                    "Type": "Manual"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.15",
+            "Name": "Data Encryption",
+            "Description": "Each covered entity must implement a written policy requiring industry-standard encryption to protect nonpublic information in transit over external networks and at rest. If encryption at rest is not feasible, alternative compensating controls approved by the CISO must be used, and the effectiveness of these controls must be reviewed annually.",
+            "Attributes": [
+                {
+                    "ItemId": "500.15",
+                    "Section": "Encryption Policy",
+                    "Service": "AWS"
+                }
+            ],
+            "Checks": []
+        },
+        {
+            "Id": "500.15.a",
+            "Name": "Encryption Standards",
+            "Description": "Each covered entity must implement a written policy requiring industry-standard encryption to protect nonpublic information held or transmitted, both in transit over external networks and at rest.",
+            "Attributes": [
+                {
+                    "ItemId": "500.15.a",
+                    "Section": "Data Protection",
+                    "Service": "AWS",
+                    "Type": "Automated"
+                }
+            ],
+            "Checks": [
+                "opensearch_service_domains_encryption_at_rest_enabled",
+                "opensearch_service_domains_node_to_node_encryption_enabled",
+                "acm_certificates_expiration_check",
+                "elb_insecure_ssl_ciphers",
+                "elbv2_insecure_ssl_ciphers",
+                "cloudtrail_kms_encryption_enabled",
+                "cloudwatch_log_group_kms_encryption_enabled",
+                "efs_encryption_at_rest_enabled",
+                "opensearch_service_domains_encryption_at_rest_enabled",
+                "ec2_ebs_default_encryption",
+                "rds_instance_storage_encrypted",
+                "s3_bucket_default_encryption",
+                "sns_topics_kms_encryption_at_rest_enabled",
+                "ec2_ebs_default_encryption",
+                "opensearch_service_domains_node_to_node_encryption_enabled",
+                "elb_ssl_listeners",
+                "dynamodb_tables_kms_cmk_encryption_enabled",
+                "s3_bucket_default_encryption",
+                "backup_vaults_encrypted",
+                "redshift_cluster_kms_enabled",
+                "elbv2_acm_certificate_required",
+                "secretsmanager_using_cmk",
+                "rds_snapshots_encrypted",
+                "apigateway_cache_enabled_and_encrypted",
+                "apigateway_ssl_enabled",
+                "elbv2_alb_http_drop_invalid_header_enabled",
+                "s3_bucket_ssl_requests_only",
+                "sagemaker_notebook_instance_kms_key_configured",
+                "sagemaker_endpoint_configuration_kms_key_configured",
+                "codebuild_project_artifact_encryption",
+                "redshift_require_tls_ssl",
+                "kinesis_stream_encrypted_at_rest"
+            ]
+        },
+        {
+            "Id": "500.15.b",
+            "Name": "Alternative Controls",
+            "Description": "If a covered entity finds that encrypting nonpublic information at rest is infeasible, it may use effective alternative compensating controls, approved in writing by the CISO. The feasibility of encryption and the effectiveness of these controls must be reviewed annually by the CISO.",
+            "Attributes": [
+                {
+                    "ItemId": "500.15.b",
+                    "Section": "Control Feasibility",
+                    "Service": "AWS",
+                    "Type": "Automated"
+                }
+            ],
+            "Checks": [
+                "elb_ssl_listeners"
+            ]
+        }
+    ]
+}

@@ -1,0 +1,32 @@
+{
+    "Provider": "aws",
+    "CheckID": "sagemaker_notebook_no_direct_internet_access",
+    "CheckTitle": "Checks if SageMaker notebook instances have direct internet access disabled. The rule is NON_COMPLIANT if a SageMaker notebook instance has direct internet access enabled.",
+    "CheckType": [
+        "Configuration changes"
+    ],
+    "ServiceName": "sagemaker",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "arn:partition:sagemaker:region:account-id:notebook-instance/notebook-instance-name",
+    "Severity": "medium",
+    "ResourceType": "AwsSageMakerNotebookInstance",
+    "Description": "Checks if SageMaker notebook instances have direct internet access disabled. The rule is NON_COMPLIANT if a SageMaker notebook instance has direct internet access enabled.",
+    "Risk": "If SageMaker notebook instances have direct internet access enabled, it increases the risk of data exfiltration and unauthorized access.",
+    "RelatedUrl": "",
+    "Remediation": {
+        "Code": {
+            "CLI": "https://docs.aws.amazon.com/cli/latest/reference/sagemaker/update-notebook-instance.html",
+            "NativeIaC": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-sagemaker-notebookinstance.html",
+            "Other": "",
+            "Terraform": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sagemaker_notebook_instance"
+        },
+        "Recommendation": {
+            "Text": "Ensure that SageMaker notebook instances have direct internet access disabled.",
+            "Url": "https://docs.aws.amazon.com/sagemaker/latest/dg/nbi-direct-internet-access.html"
+        }
+    },
+    "Categories": [],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+}

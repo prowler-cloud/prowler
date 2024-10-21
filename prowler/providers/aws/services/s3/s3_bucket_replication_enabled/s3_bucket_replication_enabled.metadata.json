@@ -1,0 +1,32 @@
+{
+    "Provider": "aws",
+    "CheckID": "s3_bucket_replication_enabled",
+    "CheckTitle": "Checks if S3 buckets have replication rules enabled. The rule is NON_COMPLIANT if an S3 bucket does not have a replication rule or has a replication rule that is not enabled.",
+    "CheckType": [
+      "Configuration changes"
+    ],
+    "ServiceName": "s3",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "arn:partition:s3:::bucket_name",
+    "Severity": "medium",
+    "ResourceType": "AwsS3Bucket",
+    "Description": "Checks if S3 buckets have replication rules enabled. The rule is NON_COMPLIANT if an S3 bucket does not have a replication rule or has a replication rule that is not enabled.",
+    "Risk": "Enabling S3 bucket replication enhances data durability and availability but increases costs, complexity, and security risks, necessitating robust management and monitoring practices.",
+    "RelatedUrl": "",
+    "Remediation": {
+      "Code": {
+        "CLI": "https://docs.aws.amazon.com/cli/latest/reference/s3api/put-bucket-replication.html",
+        "NativeIaC": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-s3-bucket.html#cfn-s3-bucket-replicationconfiguration",
+        "Other": "",
+        "Terraform": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_replication_configuration"
+      },
+      "Recommendation": {
+        "Text": "Ensure that S3 buckets have replication rules enabled",
+        "Url": "https://docs.aws.amazon.com/config/latest/developerguide/s3-bucket-replication-enabled.html"
+      }
+    },
+    "Categories": [],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+  }

@@ -1,0 +1,212 @@
+{
+    "Framework": "ISO27701",
+    "Version": "2019",
+    "Provider": "AWS",
+    "Description": "ISO/IEC 27701:2019 is an international standard that provides guidelines for establishing, implementing, maintaining, and continuously improving a Privacy Information Management System (PIMS). This standard is an extension to ISO/IEC 27001 and ISO/IEC 27002 for privacy management within the context of an organization's information security management system (ISMS).",
+    "Requirements": [
+        {
+            "Id": "A.5",
+            "Description": "Establish a set of policies that provide management direction and support for information security and privacy management in accordance with business requirements and relevant laws and regulations.",
+            "Name": "Information Security Policies",
+            "Attributes": [
+                {
+                    "Category": "A.5 Information Security Policies",
+                    "Objetive_ID": "A.5",
+                    "Objetive_Name": "Information Security Policies",
+                    "Check_Summary": "Ensure that the organization has established information security and privacy policies that are aligned with business requirements and legal obligations."
+                }
+            ],
+            "Checks": [
+                "config_recorder_all_regions_enabled",
+                "security_policies_reviewed_annually",
+                "security_policy_communication",
+                "policy_compliance_monitoring"
+            ]
+        },
+        {
+            "Id": "A.6",
+            "Description": "Ensure that the organization has established a framework for managing information security and privacy, including the maintenance of current contact details and security contact information.",
+            "Name": "Organization of Information Security",
+            "Attributes": [
+                {
+                    "Category": "A.6 Organization of Information Security",
+                    "Objetive_ID": "A.6",
+                    "Objetive_Name": "Organization of Information Security",
+                    "Check_Summary": "Ensure that current contact details and security contact information are maintained and regularly updated."
+                }
+            ],
+            "Checks": [
+                "account_maintain_current_contact_details",
+                "account_security_contact_information_is_registered"
+            ]
+        },
+        {
+            "Id": "A.7",
+            "Description": "Ensure that human resource security measures are in place to manage information security risks related to employees and contractors. This includes establishing and enforcing password policies to protect sensitive information.",
+            "Name": "Human Resource Security",
+            "Attributes": [
+                {
+                    "Category": "A.7 Human Resource Security",
+                    "Objetive_ID": "A.7",
+                    "Objetive_Name": "Human Resource Security",
+                    "Check_Summary": "Ensure that robust password policies are implemented and enforced to protect sensitive information and maintain compliance with security standards."
+                }
+            ],
+            "Checks": [
+                "iam_password_policy_minimum_length_14",
+                "iam_password_policy_uppercase",
+                "iam_password_policy_lowercase",
+                "iam_password_policy_number",
+                "iam_password_policy_symbol",
+                "iam_password_policy_reuse_24",
+                "iam_password_policy_expires_passwords_within_90_days_or_less"
+            ]
+        },
+        {
+            "Id": "A.8",
+            "Description": "Ensure that assets associated with information and information processing facilities are identified and appropriately managed throughout their lifecycle. This includes maintaining current contact details and registering security contact information.",
+            "Name": "Asset Management",
+            "Attributes": [
+                {
+                    "Category": "A.8 Asset Management",
+                    "Objetive_ID": "A.8",
+                    "Objetive_Name": "Asset Management",
+                    "Check_Summary": "Ensure that assets are properly identified, managed, and protected, and that contact and security information is up-to-date."
+                }
+            ],
+            "Checks": [
+                "account_maintain_current_contact_details",
+                "account_security_contact_information_is_registered"
+            ]
+        },
+        {
+            "Id": "A.9",
+            "Description": "Ensure that access to information and information processing facilities is controlled and restricted based on business and security requirements. This includes enabling access analysis tools and ensuring no critical findings are present.",
+            "Name": "Access Control",
+            "Attributes": [
+                {
+                    "Category": "A.9 Access Control",
+                    "Objetive_ID": "A.9",
+                    "Objetive_Name": "Access Control",
+                    "Check_Summary": "Ensure that access control mechanisms are in place and functioning correctly to restrict access to information and processing facilities based on business needs and security requirements."
+                }
+            ],
+            "Checks": [
+                "accessanalyzer_enabled",
+                "accessanalyzer_enabled_without_findings"
+            ]
+        },
+        {
+            "Id": "A.10",
+            "Description": "Ensure that cryptographic controls are implemented to protect the confidentiality, integrity, and authenticity of information. This includes managing encryption keys, ensuring certificate validity, and enabling transparency logs.",
+            "Name": "Cryptography",
+            "Attributes": [
+                {
+                    "Category": "A.10 Cryptography",
+                    "Objetive_ID": "A.10",
+                    "Objetive_Name": "Cryptography",
+                    "Check_Summary": "Ensure that cryptographic measures are in place and effectively managed to protect sensitive information and maintain data integrity."
+                }
+            ],
+            "Checks": [
+                "acm_certificates_expiration_check",
+                "acm_certificates_transparency_logs_enabled",
+                "kms_cmk_rotation_enabled",
+                "s3_bucket_kms_encryption"
+            ]
+        },
+        {
+            "Id": "A.12",
+            "Description": "Ensure that information processing facilities are managed securely and effectively. This includes managing and controlling operations to ensure the integrity and availability of information systems.",
+            "Name": "Operations Security",
+            "Attributes": [
+                {
+                    "Category": "A.12 Operations Security",
+                    "Objetive_ID": "A.12",
+                    "Objetive_Name": "Operations Security",
+                    "Check_Summary": "Ensure secure and effective management of information processing facilities, including monitoring, logging, backup, and control of operations."
+                }
+            ],
+            "Checks": [
+                "cloudtrail_enabled",
+                "cloudtrail_cloudwatch_logging_enabled",
+                "cloudtrail_multi_region_enabled",
+                "backup_plan_min_frequency_and_min_retention_check",
+                "cloudwatch_log_metric_filter_unauthorized_api_calls",
+                "cloudwatch_log_metric_filter_security_group_changes",
+                "cloudwatch_log_metric_filter_root_usage",
+                "cloudtrail_log_group_no_secrets_in_logs"
+            ]
+        },
+        {
+            "Id": "A.13",
+            "Description": "Ensure the protection of information in networks and its supporting information processing facilities, including measures to maintain the confidentiality, integrity, and availability of information transmitted over communication networks.",
+            "Name": "Communications Security",
+            "Attributes": [
+                {
+                    "Category": "A.13 Communications Security",
+                    "Objetive_ID": "A.13",
+                    "Objetive_Name": "Communications Security",
+                    "Check_Summary": "Ensure secure communication across networks and protect data in transit using encryption and other security measures."
+                }
+            ],
+            "Checks": [
+                "apigateway_ssl_enabled",
+                "cloudfront_distributions_https_enabled",
+                "rds_instance_transport_encrypted",
+                "eks_cluster_network_policy_enabled"
+            ]
+        },
+        {
+            "Id": "A.15",
+            "Description": "Ensure the protection of the organization's information that is accessible to or processed by external suppliers.",
+            "Name": "Supplier Relationships",
+            "Attributes": [
+                {
+                    "Category": "A.15 Supplier Relationships",
+                    "Objetive_ID": "A.15",
+                    "Objetive_Name": "Supplier Relationships",
+                    "Check_Summary": "Ensure that suppliers comply with the organization's information security policies and procedures and that security measures are in place for information accessible to or processed by suppliers."
+                }
+            ],
+            "Checks": [
+                "config_recorder_all_regions_enabled"
+            ]
+        },
+        {
+            "Id": "A.16",
+            "Description": "Ensure the implementation of processes to manage information security incidents, including detection, reporting, assessment, response, and learning from incidents.",
+            "Name": "Incident Management",
+            "Attributes": [
+                {
+                    "Category": "A.16 Incident Management",
+                    "Objetive_ID": "A.16",
+                    "Objetive_Name": "Incident Management",
+                    "Check_Summary": "Implement mechanisms to detect, report, and manage information security incidents effectively to minimize the impact on the organization and ensure continuous improvement."
+                }
+            ],
+            "Checks": [
+                "guardduty_is_enabled",
+                "guardduty_no_high_severity_findings"
+            ]
+        },
+        {
+            "Id": "A.18",
+            "Description": "Ensure compliance with organizational, regulatory, and contractual requirements for information security and data privacy.",
+            "Name": "Compliance",
+            "Attributes": [
+                {
+                    "Category": "A.18 Compliance",
+                    "Objetive_ID": "A.18",
+                    "Objetive_Name": "Compliance",
+                    "Check_Summary": "Implement mechanisms to ensure compliance with relevant laws, regulations, and contractual obligations related to information security and data privacy."
+                }
+            ],
+            "Checks": [
+                "iam_avoid_root_usage",
+                "iam_rotate_access_key_90_days",
+                "iam_no_root_access_key"
+            ]
+        }
+    ]
+}

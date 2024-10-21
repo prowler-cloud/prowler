@@ -1,0 +1,36 @@
+{
+  "Provider": "aws",
+  "CheckID": "cloudfront_distributions_multiple_origin_failover_configured",
+  "CheckTitle": "Check if CloudFront distributions have origin failover enabled.",
+  "CheckType": [
+    "Software and Configuration Checks",
+    "Industry and Regulatory Standards",
+    "NIST 800-53 Controls"
+  ],
+  "ServiceName": "cloudfront",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:cloudfront:region:account-id:distribution/resource-id",
+  "Severity": "low",
+  "ResourceType": "AWSCloudFrontDistribution",
+  "Description": "Check if CloudFront distributions have origin failover enabled.",
+  "Risk": "Without origin failover, if the primary origin becomes unavailable, your CloudFront distribution may experience downtime, leading to potential service interruptions and a poor user experience.",
+  "RelatedUrl": "https://docs.aws.amazon.com/cloudfront/latest/APIReference/API_OriginGroup.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudfront-controls.html#cloudfront-4",
+      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/origin-failover-enabled.html"
+    },
+    "Recommendation": {
+      "Text": "Configure origin failover in your CloudFront distribution by setting up an origin group with at least two origins to enhance availability and ensure traffic is redirected if the primary origin fails.",
+      "Url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/high_availability_origin_failover.html#concept_origin_groups.creating"
+    }
+  },
+  "Categories": [
+    "redundancy"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -1,0 +1,35 @@
+{
+    "Provider": "aws",
+    "CheckID": "backup_recovery_point_manual_deletion_disabled",
+    "CheckTitle": "Check if backup vault has a policy to prevent deletion of recovery points",
+    "CheckType": [
+      "Software and Configuration Checks",
+      "Industry and Regulatory Standards",
+      "Custom Checks"
+    ],
+    "ServiceName": "backup",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "arn:aws:backup:region:account-id:backup-vault/vault-name",
+    "Severity": "high",
+    "ResourceType": "Backup Vault",
+    "Description": "Ensure that backup vaults have resource-based policies preventing deletion of recovery points.",
+    "Risk": "Backup vaults without such policies are at risk of accidental or malicious deletion of recovery points, leading to potential data loss.",
+    "RelatedUrl": "",
+    "Remediation": {
+      "Code": {
+        "CLI": "aws backup put-backup-vault-access-policy --backup-vault-name <vault-name> --policy <policy-json>",
+        "NativeIaC": "",
+        "Other": "",
+        "Terraform": ""
+      },
+      "Recommendation": {
+        "Text": "Attach a resource-based policy to your backup vaults that includes a 'Deny' statement to prevent deletion of recovery points. Regularly review and update the policies to ensure they meet your data protection requirements.",
+        "Url": "https://docs.aws.amazon.com/aws-backup/latest/devguide/access-control-backup-policies.html"
+      }
+    },
+    "Categories": [],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": "Regularly audit your backup vault policies to ensure they include the necessary permissions to prevent deletion of recovery points."
+  }
+  

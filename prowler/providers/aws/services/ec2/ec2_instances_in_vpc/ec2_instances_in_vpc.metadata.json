@@ -1,0 +1,34 @@
+{
+    "Provider": "aws",
+    "CheckID": "ec2_instances_in_vpc",
+    "CheckTitle": "Checks if your EC2 instances belong to a virtual private cloud",
+    "CheckType": [
+      "Infrastructure Security"
+    ],
+    "ServiceName": "ec2",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+    "Severity": "medium",
+    "ResourceType": "AwsEc2Instance",
+    "Description": "Checks if your EC2 instances belong to a virtual private cloud",
+    "Risk": "Potential exposure to security threats and unauthorized access due to the lack of network isolation and control mechanisms.​",
+    "RelatedUrl": "",
+
+    "Remediation": {
+      "Code": {
+        "CLI": "aws ec2 run-instances --image-id ami-0abcdef1234567890 --count 1 --instance-type t2.micro --subnet-id <subnet_id>",
+        "NativeIaC": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-instance.html",
+        "Other": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-vpc.html",
+        "Terraform": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/instance"
+      },
+      "Recommendation": {
+        "Text": "To ensure security and compliance, always launch EC2 instances within a VPC. Utilize VPC features such as subnets, security groups, and network ACLs to control access to instances. This practice helps to isolate instances from the public internet and provides better control over inbound and outbound traffic.",
+        "Url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-vpc.html"
+      }
+    },
+    "Categories": [],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+  }
+  

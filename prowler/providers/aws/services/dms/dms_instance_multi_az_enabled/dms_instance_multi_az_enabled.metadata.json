@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "dms_instance_multi_az_enabled",
+  "CheckTitle": "Ensure DMS instances have multi az enabled.",
+  "CheckType": [],
+  "ServiceName": "dms",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:rdmsds:region:account-id:rep",
+  "Severity": "medium",
+  "ResourceType": "AwsDmsReplicationInstance",
+  "Description": "Ensure DMS instances have multi az enabled.",
+  "Risk": "Ensure that your Amazon Database Migration Service (DMS) replication instances are using Multi-AZ deployment configurations to provide High Availability (HA) through automatic failover to standby replicas in the event of a failure such as an Availability Zone (AZ) outage, an internal hardware or network outage, a software failure or in case of a planned maintenance session.",
+  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DMS/multi-az.html#",
+  "Remediation": {
+    "Code": {
+      "CLI": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DMS/multi-az.html#",
+      "NativeIaC": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DMS/multi-az.html#",
+      "Other": "",
+      "Terraform": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DMS/multi-az.html#"
+    },
+    "Recommendation": {
+      "Text": "Enable multi az for all DMS replication instances.",
+      "Url": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DMS/multi-az.html#"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

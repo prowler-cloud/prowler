@@ -1,0 +1,30 @@
+{
+    "Provider": "aws",
+    "CheckID": "emr_kerberos_enabled",
+    "CheckTitle": "Ensure Kerberos is enabled on EMR clusters",
+    "CheckType": [],
+    "ServiceName": "emr",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "arn:aws:elasticmapreduce:region:account-id:cluster/cluster-id",
+    "Severity": "high",
+    "ResourceType": "AwsEmrCluster",
+    "Description": "This check ensures that Kerberos is enabled on EMR clusters.",
+    "Risk": "Without Kerberos enabled, EMR clusters might be vulnerable to unauthorized access and data breaches.",
+    "RelatedUrl": "https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-kerberos.html",
+    "Remediation": {
+        "Code": {
+            "CLI": "https://awscli.amazonaws.com/v2/documentation/api/latest/reference/emr/create-security-configuration.html",
+            "NativeIaC": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-emr-securityconfiguration.html",
+            "Other": "https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-kerberos.html",
+            "Terraform": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/emr_security_configuration"
+        },
+        "Recommendation": {
+            "Text": "Ensure Kerberos is enabled on EMR clusters to enhance security.",
+            "Url": "https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-kerberos.html"
+        }
+    },
+    "Categories": [],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+}

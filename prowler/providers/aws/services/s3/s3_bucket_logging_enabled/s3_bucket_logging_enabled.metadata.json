@@ -1,0 +1,30 @@
+{
+    "Provider": "aws",
+    "CheckID": "s3_bucket_logging_enabled",
+    "CheckTitle": "Ensure S3 buckets have logging enabled",
+    "CheckType": ["compliance", "security"],
+    "ServiceName": "s3",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "arn:aws:s3:::bucket-name",
+    "Severity": "high",
+    "ResourceType": "AwsS3Bucket",
+    "Description": "This check ensures that S3 buckets have logging enabled.",
+    "Risk": "Without logging, it's difficult to track access and identify potential security incidents.",
+    "RelatedUrl": "https://docs.aws.amazon.com/AmazonS3/latest/dev/ServerLogs.html",
+    "Remediation": {
+        "Code": {
+            "CLI": "https://awscli.amazonaws.com/v2/documentation/api/latest/reference/s3api/put-bucket-logging.html",
+            "NativeIaC": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-s3-bucket-loggingconfiguration.html",
+            "Other": "https://docs.aws.amazon.com/AmazonS3/latest/dev/ServerLogs.html",
+            "Terraform": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket#logging"
+        },
+        "Recommendation": {
+            "Text": "Ensure all S3 buckets have logging enabled to monitor access and identify potential security issues.",
+            "Url": "https://docs.aws.amazon.com/AmazonS3/latest/dev/ServerLogs.html"
+        }
+    },
+    "Categories": ["logging", "monitoring"],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+}

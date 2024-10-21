@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "guardduty_rds_protection_enabled",
+  "CheckTitle": "Check if GuardDuty RDS Protection is enabled.",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "guardduty",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:guardduty:<region>:<account-id>:detector/<detector-id>",
+  "Severity": "high",
+  "ResourceType": "AwsGuardDutyDetector",
+  "Description": "Check if GuardDuty RDS Protection is enabled to ensure monitoring and threat detection for RDS activity.",
+  "Risk": "Without GuardDuty RDS Protection enabled, suspicious login activities to your databases may go undetected, increasing the risk of unauthorized access, data breaches, or compromised database security.",
+  "RelatedUrl": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/guard-duty-rds-protection.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws guardduty update-detector --detector-id <detector-id> --features Name=RDS_LOGIN_EVENTS,Status=ENABLED",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/guardduty-controls.html#guardduty-9",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable GuardDuty RDS Protection to continuously monitor and detect anomalous login behaviors on your Aurora databases, helping to identify and respond to potential access threats without impacting database performance.",
+      "Url": "https://docs.aws.amazon.com/guardduty/latest/ug/rds-protection.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

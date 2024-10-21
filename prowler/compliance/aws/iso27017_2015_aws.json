@@ -1,0 +1,192 @@
+{
+    "Framework": "ISO27017",
+    "Version": "2015",
+    "Provider": "AWS",
+    "Description": "ISO IEC 27017 2015 is an international standard that provides guidelines for information security controls applicable to the provision and use of cloud services. It builds upon the ISO IEC 27002 standard by providing additional cloud-specific implementation guidance. AWS aligns its cloud services with ISO IEC 27017 2015 to help customers implement effective cloud security controls and manage information security risks in cloud environments. The standard addresses key aspects of cloud security, including shared responsibility models, cloud service agreements, asset management, access control, and incident management, ensuring that both cloud service providers and cloud service customers can achieve a high level of information security.",
+    "Requirements": [
+        {
+            "Id": "A.5",
+            "Description": "Ensure that information security policies are in place and enforced across all regions. This includes enabling AWS Config recorder in all regions to track and manage configuration changes and maintain security compliance.",
+            "Name": "Information Security Policies",
+            "Attributes": [
+                {
+                    "Category": "A.5 Information Security Policies",
+                    "Objetive_ID": "A.5",
+                    "Objetive_Name": "Information Security Policies",
+                    "Check_Summary": "This control ensures that the organization has implemented necessary information security policies and that these policies are enforced across all regions. By enabling AWS Config recorder in all regions, organizations can track and manage configuration changes to maintain security compliance."
+                }
+            ],
+            "Checks": [
+                "config_recorder_all_regions_enabled"
+            ]
+        },
+        {
+            "Id": "A.6",
+            "Description": "Ensure that the organization of information security is well-structured and maintained. This includes maintaining current contact details for accounts and ensuring security contact information is registered.",
+            "Name": "Organization of Information Security",
+            "Attributes": [
+                {
+                    "Category": "A.6 Organization of Information Security",
+                    "Objetive_ID": "A.6",
+                    "Objetive_Name": "Organization of Information Security",
+                    "Check_Summary": "This control ensures that the organization has a well-defined structure for managing information security. It includes maintaining up-to-date contact details for accounts and registering security contact information to ensure effective communication and response during security incidents."
+                }
+            ],
+            "Checks": [
+                "account_maintain_current_contact_details",
+                "account_security_contact_information_is_registered"
+            ]
+        },
+        {
+            "Id": "A.7",
+            "Description": "Ensure that human resource security measures are in place to manage risks related to employees and contractors. This includes implementing strong password policies to protect access to AWS accounts.",
+            "Name": "Human Resource Security",
+            "Attributes": [
+                {
+                    "Category": "A.7 Human Resource Security",
+                    "Objetive_ID": "A.7",
+                    "Objetive_Name": "Human Resource Security",
+                    "Check_Summary": "This control ensures that the organization has implemented necessary human resource security measures. It includes enforcing strong password policies such as minimum length, use of uppercase and lowercase letters, numbers, symbols, preventing password reuse, and ensuring passwords expire within 90 days or less to protect access to AWS accounts."
+                }
+            ],
+            "Checks": [
+                "iam_password_policy_minimum_length_14",
+                "iam_password_policy_uppercase",
+                "iam_password_policy_lowercase",
+                "iam_password_policy_number",
+                "iam_password_policy_symbol",
+                "iam_password_policy_reuse_24",
+                "iam_password_policy_expires_passwords_within_90_days_or_less"
+            ]
+        },
+        {
+            "Id": "A.9",
+            "Description": "Ensure that access control measures are in place to manage and restrict access to AWS resources. This includes enabling IAM Access Analyzer to monitor and analyze permissions and ensuring it operates without findings.",
+            "Name": "Access Control",
+            "Attributes": [
+                {
+                    "Category": "A.9 Access Control",
+                    "Objetive_ID": "A.9",
+                    "Objetive_Name": "Access Control",
+                    "Check_Summary": "This control ensures that the organization has implemented necessary access control measures. It includes enabling IAM Access Analyzer to continuously monitor and analyze resource permissions, ensuring that access is appropriately restricted and there are no unresolved findings indicating excessive permissions or potential risks."
+                }
+            ],
+            "Checks": [
+                "accessanalyzer_enabled",
+                "accessanalyzer_enabled_without_findings"
+            ]
+        },
+        {
+            "Id": "A.10",
+            "Description": "Ensure that cryptographic controls are implemented to protect data in transit and at rest. This includes checking the expiration of ACM certificates, enabling certificate transparency logs, ensuring KMS CMKs are rotated, and enabling KMS encryption for S3 buckets.",
+            "Name": "Cryptography",
+            "Attributes": [
+                {
+                    "Category": "A.10 Cryptography",
+                    "Objetive_ID": "A.10",
+                    "Objetive_Name": "Cryptography",
+                    "Check_Summary": "This control ensures that the organization has implemented necessary cryptographic controls. It includes checking the expiration of ACM certificates to ensure they are valid, enabling certificate transparency logs to provide visibility and accountability, ensuring that KMS Customer Managed Keys (CMKs) are rotated regularly to maintain their security, and enabling KMS encryption for S3 buckets to protect data at rest."
+                }
+            ],
+            "Checks": [
+                "acm_certificates_expiration_check",
+                "acm_certificates_transparency_logs_enabled",
+                "kms_cmk_rotation_enabled",
+                "s3_bucket_kms_encryption"
+            ]
+        },
+        {
+            "Id": "A.12",
+            "Description": "Ensure that operations security measures are in place to protect and manage AWS resources. This includes enabling AWS CloudTrail, configuring CloudWatch logging, setting up backup plans, and implementing CloudWatch log metric filters for monitoring unauthorized API calls, security group changes, and root account usage.",
+            "Name": "Operations Security",
+            "Attributes": [
+                {
+                    "Category": "A.12 Operations Security",
+                    "Objetive_ID": "A.12",
+                    "Objetive_Name": "Operations Security",
+                    "Check_Summary": "This control ensures that the organization has implemented necessary operations security measures. It includes enabling AWS CloudTrail to capture API activity, integrating CloudTrail with CloudWatch Logs for real-time monitoring, enabling CloudTrail in multiple regions, ensuring backup plans meet minimum frequency and retention requirements, and configuring CloudWatch log metric filters to monitor unauthorized API calls, security group changes, and root account usage."
+                }
+            ],
+            "Checks": [
+                "cloudtrail_enabled",
+                "cloudtrail_cloudwatch_logging_enabled",
+                "cloudtrail_multi_region_enabled",
+                "backup_plan_min_frequency_and_min_retention_check",
+                "cloudwatch_log_metric_filter_unauthorized_api_calls",
+                "cloudwatch_log_metric_filter_security_group_changes",
+                "cloudwatch_log_metric_filter_root_usage",
+                "cloudtrail_log_group_no_secrets_in_logs"
+            ]
+        },
+        {
+            "Id": "A.13",
+            "Description": "Ensure that communications security measures are in place to protect data in transit. This includes enabling SSL for API Gateway, enforcing HTTPS for CloudFront distributions, encrypting RDS instance transport, and enabling network policies for EKS clusters.",
+            "Name": "Communications Security",
+            "Attributes": [
+                {
+                    "Category": "A.13 Communications Security",
+                    "Objetive_ID": "A.13",
+                    "Objetive_Name": "Communications Security",
+                    "Check_Summary": "This control ensures that the organization has implemented necessary communications security measures. It includes enabling SSL for API Gateway stages to secure API endpoints, enforcing HTTPS for CloudFront distributions to protect data in transit, ensuring RDS instance transport encryption to secure database connections, and enabling network policies for EKS clusters to control communication between pods."
+                }
+            ],
+            "Checks": [
+                "apigateway_ssl_enabled",
+                "cloudfront_distributions_https_enabled",
+                "rds_instance_transport_encrypted",
+                "eks_cluster_network_policy_enabled"
+            ]
+        },
+        {
+            "Id": "A.15",
+            "Description": "Ensure that supplier relationships are managed and monitored. This includes enabling AWS Config recorders in all regions to track configuration changes and ensure compliance across all AWS accounts.",
+            "Name": "Supplier Relationships",
+            "Attributes": [
+                {
+                    "Category": "A.15 Supplier Relationships",
+                    "Objetive_ID": "A.15",
+                    "Objetive_Name": "Supplier Relationships",
+                    "Check_Summary": "This control ensures that the organization has implemented necessary measures to manage and monitor supplier relationships. It includes enabling AWS Config recorders in all regions to continuously track configuration changes, assess compliance, and ensure that suppliers adhere to security policies and contractual obligations."
+                }
+            ],
+            "Checks": [
+                "config_recorder_all_regions_enabled"
+            ]
+        },
+        {
+            "Id": "A.16",
+            "Description": "Ensure that incident management measures are in place to detect, respond to, and manage security incidents. This includes enabling Amazon GuardDuty and ensuring there are no high severity findings.",
+            "Name": "Incident Management",
+            "Attributes": [
+                {
+                    "Category": "A.16 Incident Management",
+                    "Objetive_ID": "A.16",
+                    "Objetive_Name": "Incident Management",
+                    "Check_Summary": "This control ensures that the organization has implemented necessary measures for incident management. It includes enabling Amazon GuardDuty to detect threats and continuously monitor for malicious activity and ensuring that there are no high severity findings in GuardDuty to mitigate risks and manage security incidents effectively."
+                }
+            ],
+            "Checks": [
+                "guardduty_is_enabled",
+                "guardduty_no_high_severity_findings"
+            ]
+        },
+        {
+            "Id": "A.18",
+            "Description": "Ensure that compliance measures are in place to meet legal, regulatory, and contractual obligations. This includes avoiding the use of the root account, rotating access keys every 90 days, and ensuring no root access keys exist.",
+            "Name": "Compliance",
+            "Attributes": [
+                {
+                    "Category": "A.18 Compliance",
+                    "Objetive_ID": "A.18",
+                    "Objetive_Name": "Compliance",
+                    "Check_Summary": "This control ensures that the organization has implemented necessary compliance measures. It includes avoiding the use of the AWS root account to reduce security risks, rotating access keys every 90 days to maintain security hygiene, and ensuring that no root access keys exist to prevent unauthorized access and comply with security best practices."
+                }
+            ],
+            "Checks": [
+                "iam_avoid_root_usage",
+                "iam_rotate_access_key_90_days",
+                "iam_no_root_access_key"
+            ]
+        }
+    ]
+}

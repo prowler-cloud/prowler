@@ -1,0 +1,36 @@
+{
+    "Provider": "aws",
+    "CheckID": "opensearch_node_to_node_encryption",
+    "CheckTitle": "Check if OpenSearch Service (previously called Elasticsearch) nodes are encrypted end to end.",
+    "CheckAliases": [
+      "opensearch_node_to_node_encryption_check"
+    ],
+    "CheckType": [
+      "Data Security"
+    ],
+    "ServiceName": "opensearch",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "AWS::OpenSearch::Domain",
+    "Severity": "high",
+    "ResourceType": "AwsOpensearchDomain",
+    "Description": "Check if OpenSearch Service (previously called Elasticsearch) nodes are encrypted end to end. The rule is NON_COMPLIANT if the node-to-node encryption is not enabled on the domain.  ",
+    "Risk": "High (not acceptable risk)",
+    "RelatedUrl": "",
+    "Remediation": {
+      "Code": {
+        "CLI": "",
+        "NativeIaC": "",
+        "Other": "",
+        "Terraform": ""
+      },
+      "Recommendation": {
+        "Text": "enforce in-transit encryption in order to protect your OpenSearch data from unauthorized access and fulfill compliance requirements for data encryption within your organization",
+        "Url": "https://docs.aws.amazon.com/config/latest/developerguide/opensearch-node-to-node-encryption-check.html"
+      }
+    },
+    "Categories": [],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+  }
+  

@@ -1,0 +1,35 @@
+{
+    "Provider": "aws",
+    "CheckID": "elbv2_alb_http_drop_invalid_header_enabled",
+    "CheckTitle": "Check if ALB has 'routing.http.drop_invalid_header_fields.enabled' set to true.",
+    "CheckType": [
+      "Security"
+    ],
+    "ServiceName": "elbv2",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+    "Severity": "medium",
+    "ResourceType": "AWS::ElasticLoadBalancingV2::LoadBalancer",
+    "Description": "Checks if Application Load Balancers have 'routing.http.drop_invalid_header_fields.enabled' set to true. The rule is NON_COMPLIANT if this attribute is not set to true.",
+    "Risk": "Without dropping invalid header fields, the load balancer could pass malformed headers to applications, potentially causing security risks.",
+    "RelatedUrl": "",
+    "Remediation": {
+      "Code": {
+        "CLI": "",
+        "NativeIaC": "",
+        "Other": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/application-load-balancers.html#invalid-header-fields",
+        "Terraform": ""
+      },
+      "Recommendation": {
+        "Text": "Ensure that your ALB has 'routing.http.drop_invalid_header_fields.enabled' set to true.",
+        "Url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/application-load-balancers.html#invalid-header-fields"
+      }
+    },
+    "Categories": [
+      "security"
+    ],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+  }
+  

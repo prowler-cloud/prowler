@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "rds_cluster_deletion_protection",
+  "CheckTitle": "Check if RDS clusters have deletion protection enabled.",
+  "CheckType": [],
+  "ServiceName": "rds",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-cluster",
+  "Severity": "low",
+  "ResourceType": "AwsRdsDbCluster",
+  "Description": "Check if RDS clusters have deletion protection enabled.",
+  "Risk": "You can only delete clusters that do not have deletion protection enabled.",
+  "RelatedUrl": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_DeleteInstance.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws rds modify-db-cluster --db-cluster-identifier <db_cluster_id> --deletion-protection --apply-immediately",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-7",
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/ensure-that-rds-clusters-and-instances-have-deletion-protection-enabled#terraform"
+    },
+    "Recommendation": {
+      "Text": "Enable deletion protection using the AWS Management Console for production DB clusters.",
+      "Url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_DeleteInstance.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

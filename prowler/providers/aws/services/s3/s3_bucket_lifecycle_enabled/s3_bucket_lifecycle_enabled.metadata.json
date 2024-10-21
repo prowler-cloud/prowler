@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "s3_bucket_lifecycle_enabled",
+  "CheckTitle": "Check if S3 buckets have a Lifecycle configuration enabled",
+  "CheckType": [
+    "AWS Foundational Security Best Practices"
+  ],
+  "ServiceName": "s3",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:s3:::bucket_name",
+  "Severity": "low",
+  "ResourceType": "AwsS3Bucket",
+  "Description": "Check if S3 buckets have Lifecycle configuration enabled.",
+  "Risk": "The risks of not having lifecycle management enabled for S3 buckets include higher storage costs, unmanaged data retention, and potential non-compliance with data policies.",
+  "RelatedUrl": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lifecycle-mgmt.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/s3-controls.html#s3-13",
+      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/S3/lifecycle-configuration.html"
+    },
+    "Recommendation": {
+      "Text": "Enable lifecycle policies on your S3 buckets to automatically manage the transition and expiration of data.",
+      "Url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/how-to-set-lifecycle-configuration-intro.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

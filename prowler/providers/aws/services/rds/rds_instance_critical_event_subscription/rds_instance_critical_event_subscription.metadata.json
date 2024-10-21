@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "rds_instance_critical_event_subscription",
+  "CheckTitle": "Check if RDS Instances events are subscribed.",
+  "CheckType": [
+    "Software and Configuration Checks, AWS Security Best Practices"
+  ],
+  "ServiceName": "rds",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-instance",
+  "Severity": "low",
+  "ResourceType": "AwsRdsEventSubscription",
+  "Description": "Ensure that Amazon RDS event notification subscriptions are enabled for database database events, particularly maintenance, configuration change and failure.",
+  "Risk": "Without event subscriptions for critical events, such as maintenance, configuration changes and failures, you may not be aware of issues affecting your RDS instances, leading to downtime or security vulnerabilities.",
+  "RelatedUrl": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Events.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws rds create-event-subscription --source-type db-instance --event-categories 'failure' 'maintenance' 'configuration change' --sns-topic-arn <sns-topic-arn>",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-20",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "To subscribe to RDS instance event notifications, see Subscribing to Amazon RDS event notification in the Amazon RDS User Guide.",
+      "Url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Events.Subscribing.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

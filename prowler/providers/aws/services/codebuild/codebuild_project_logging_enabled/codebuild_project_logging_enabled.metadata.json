@@ -1,0 +1,31 @@
+{
+    "Provider": "aws",
+    "CheckID": "codebuild_project_logging_enabled",
+    "CheckTitle": "Checks if AWS CodeBuild projects have logging enabled",
+    "CheckType": [],
+    "ServiceName": "codebuild",
+    "SubServiceName": "project",
+    "ResourceIdTemplate": "arn:aws:codebuild:{region}:{account_id}:project/{project_name}",
+    "Severity": "medium",
+    "ResourceType": "AwsCodeBuildProject",
+    "Description": "This check ensures that AWS CodeBuild projects have logging enabled.",
+    "Risk": "Projects without logging enabled may not have sufficient visibility into build processes and potential issues.",
+    "RelatedUrl": "",
+    "Remediation": {
+      "Code": {
+        "CLI": "https://docs.aws.amazon.com/cli/latest/reference/codebuild/update-project.html",
+        "Other": "",
+        "NativeIaC": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-codebuild-project.html",
+        "Terraform": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/codebuild_project"
+      },
+      "Recommendation": {
+        "Text": "Ensure that AWS CodeBuild projects have logging enabled.",
+        "Url": "https://docs.aws.amazon.com/codebuild/latest/userguide/sample-build-project.html#sample-build-project-enable-cloudwatch-logs"
+      }
+    },
+    "Categories": [],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+  }
+  
