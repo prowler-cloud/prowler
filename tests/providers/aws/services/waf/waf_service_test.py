@@ -88,16 +88,20 @@ def mock_make_api_call(self, operation_name, kwarg):
                 },
             ]
         }
+    if operation_name == "GetLoggingConfiguration":
+        return {
+            "LoggingConfiguration": {
+                "ResourceArn": "arn:aws:waf:123456789012:webacl/my-web-acl-id",
+                "LogDestinationConfigs": [
+                    "arn:aws:firehose:us-east-1:123456789012:deliverystream/my-firehose"
+                ],
+                "RedactedFields": [],
+                "ManagedByFirewallManager": False,
+            }
+        }
+    if operation_name == "GetChangeToken":
+        return {"ChangeToken": "my-change-token"}
     return make_api_call(self, operation_name, kwarg)
-
-
-# Mock generate_regional_clients()
-def mock_generate_regional_clients(provider, service):
-    regional_client = provider._session.current_session.client(
-        service, region_name=AWS_REGION_EU_WEST_1
-    )
-    regional_client.region = AWS_REGION_EU_WEST_1
-    return {AWS_REGION_EU_WEST_1: regional_client}
 
 
 # Patch every AWS call using Boto3 and generate_regional_clients to have 1 client
@@ -223,6 +227,19 @@ class Test_WAF_Service:
         assert waf.web_acls[waf_arn].rules
         assert waf.web_acls[waf_arn].rule_groups
 
+    # Test WAF Global Get Logging Configuration
+    def test_get_logging_configuration(self):
+        # WAF client for this test class
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        waf = WAF(aws_provider)
+        waf_arn = "arn:aws:waf:123456789012:webacl/my-web-acl-id"
+        assert waf.web_acls[waf_arn].name == "my-web-acl"
+        assert waf.web_acls[waf_arn].region == AWS_REGION_US_EAST_1
+        assert waf.web_acls[waf_arn].id == "my-web-acl-id"
+        assert waf.web_acls[waf_arn].rules
+        assert waf.web_acls[waf_arn].rule_groups
+        assert waf.web_acls[waf_arn].logging_enabled
+
     # Test WAF Global Get Web ACL
     def test_get_web_acl(self):
         # WAF client for this test class
@@ -232,6 +249,7 @@ class Test_WAF_Service:
         assert waf.web_acls[waf_arn].name == "my-web-acl"
         assert waf.web_acls[waf_arn].region == AWS_REGION_US_EAST_1
         assert waf.web_acls[waf_arn].id == "my-web-acl-id"
+        assert waf.web_acls[waf_arn].logging_enabled
         assert waf.web_acls[waf_arn].rules == [
             Rule(
                 arn="arn:aws:waf:123456789012:rule/my-rule-id",

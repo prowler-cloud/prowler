@@ -76,10 +76,10 @@ def mock_make_api_call_logging_disabled(self, operation_name, kwarg):
     return orig(self, operation_name, kwarg)
 
 
-class Test_waf_regional_webacl_with_rules:
+class Test_waf_global_webacl_logging_enabled:
     @mock_aws
     def test_no_waf(self):
-        from prowler.providers.aws.services.waf.waf_service import WAFRegional
+        from prowler.providers.aws.services.waf.waf_service import WAF
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
@@ -88,15 +88,15 @@ class Test_waf_regional_webacl_with_rules:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.waf.waf_regional_webacl_with_rules.waf_regional_webacl_with_rules.waf_client",
-                new=WAFRegional(aws_provider),
+                "prowler.providers.aws.services.waf.waf_global_webacl_logging_enabled.waf_global_webacl_logging_enabled.waf_client",
+                new=WAF(aws_provider),
             ):
                 # Test Check
-                from prowler.providers.aws.services.waf.waf_regional_webacl_with_rules.waf_regional_webacl_with_rules import (
-                    waf_regional_webacl_with_rules,
+                from prowler.providers.aws.services.waf.waf_global_webacl_logging_enabled.waf_global_webacl_logging_enabled import (
+                    waf_global_webacl_logging_enabled,
                 )
 
-                check = waf_regional_webacl_with_rules()
+                check = waf_global_webacl_logging_enabled()
                 result = check.execute()
 
                 assert len(result) == 0
@@ -106,8 +106,8 @@ class Test_waf_regional_webacl_with_rules:
         new=mock_make_api_call_logging_disabled,
     )
     @mock_aws
-    def test_waf_no_rules_and_no_rule_group(self):
-        from prowler.providers.aws.services.waf.waf_service import WAFRegional
+    def test_waf_webacl_logging_disabled(self):
+        from prowler.providers.aws.services.waf.waf_service import WAF
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
@@ -116,22 +116,61 @@ class Test_waf_regional_webacl_with_rules:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.waf.waf_regional_webacl_with_rules.waf_regional_webacl_with_rules.waf_client",
-                new=WAFRegional(aws_provider),
+                "prowler.providers.aws.services.waf.waf_global_webacl_logging_enabled.waf_global_webacl_logging_enabled.waf_client",
+                new=WAF(aws_provider),
             ):
                 # Test Check
-                from prowler.providers.aws.services.waf.waf_regional_webacl_with_rules.waf_regional_webacl_with_rules import (
-                    waf_regional_webacl_with_rules,
+                from prowler.providers.aws.services.waf.waf_global_webacl_logging_enabled.waf_global_webacl_logging_enabled import (
+                    waf_global_webacl_logging_enabled,
                 )
 
-                check = waf_regional_webacl_with_rules()
+                check = waf_global_webacl_logging_enabled()
                 result = check.execute()
 
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"AWS WAF Global Web ACL {WEB_ACL_NAME} does not have any rules or rule groups."
+                    == f"AWS WAF Global Web ACL {WEB_ACL_NAME} does not have logging enabled."
+                )
+                assert result[0].resource_id == WEB_ACL_ID
+                assert (
+                    result[0].resource_arn
+                    == f"arn:aws:waf:{AWS_ACCOUNT_NUMBER}:webacl/{WEB_ACL_ID}"
+                )
+                assert result[0].region == AWS_REGION_US_EAST_1
+
+    @patch(
+        "botocore.client.BaseClient._make_api_call",
+        new=mock_make_api_call_logging_enabled,
+    )
+    @mock_aws
+    def test_waf_webacl_logging_enabled(self):
+        from prowler.providers.aws.services.waf.waf_service import WAF
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.waf.waf_global_webacl_logging_enabled.waf_global_webacl_logging_enabled.waf_client",
+                new=WAF(aws_provider),
+            ):
+                # Test Check
+                from prowler.providers.aws.services.waf.waf_global_webacl_logging_enabled.waf_global_webacl_logging_enabled import (
+                    waf_global_webacl_logging_enabled,
+                )
+
+                check = waf_global_webacl_logging_enabled()
+                result = check.execute()
+
+                assert len(result) == 1
+                assert result[0].status == "PASS"
+                assert (
+                    result[0].status_extended
+                    == f"AWS WAF Global Web ACL {WEB_ACL_NAME} does have logging enabled."
                 )
                 assert result[0].resource_id == WEB_ACL_ID
                 assert (

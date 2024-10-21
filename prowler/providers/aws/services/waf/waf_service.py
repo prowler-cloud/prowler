@@ -22,6 +22,7 @@ class WAF(AWSService):
         )
         self._list_web_acls()
         self.__threading_call__(self._get_web_acl, self.web_acls.values())
+        self.__threading_call__(self._get_logging_configuration, self.web_acls.values())
         self.__threading_call__(
             self._list_resources_for_web_acl, self.web_acls.values()
         )
@@ -125,6 +126,23 @@ class WAF(AWSService):
                 else:
                     rule_arn = f"arn:{self.audited_partition}:waf:{self.audited_account}:rule/{rule_id}"
                     acl.rules.append(self.rules[rule_arn])
+
+        except Exception as error:
+            logger.error(
+                f"{acl.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _get_logging_configuration(self, acl):
+        logger.info(f"WAF - Getting Global Web ACL {acl.name} logging configuration...")
+        try:
+            get_logging_configuration = self.client.get_logging_configuration(
+                ResourceArn=acl.arn
+            )
+            acl.logging_enabled = bool(
+                get_logging_configuration.get("LoggingConfiguration", {}).get(
+                    "LogDestinationConfigs", []
+                )
+            )
 
         except Exception as error:
             logger.error(
@@ -325,4 +343,5 @@ class WebAcl(BaseModel):
     region: str
     rules: List[Rule] = Field(default_factory=list)
     rule_groups: List[RuleGroup] = Field(default_factory=list)
+    logging_enabled: bool = Field(default=False)
     tags: Optional[List[Dict[str, str]]] = Field(default_factory=list)
