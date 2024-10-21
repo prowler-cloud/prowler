@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "cloudwatch_log_group_no_critical_pii_in_logs",
-  "CheckTitle": "Check if critical PII exists in CloudWatch logs.",
+  "CheckTitle": "Check if secrets exists in CloudWatch logs.",
   "CheckType": [
     "Protect",
     "Secure development"
@@ -11,8 +11,8 @@
   "ResourceIdTemplate": "arn:partition:cloudwatch:region:account-id:log-group/resource-id",
   "Severity": "medium",
   "ResourceType": "Other",
-  "Description": "Check if critical Personally Identifiable Information (PII) exists in CloudWatch logs.",
-  "Risk": "Storing critical PII in CloudWatch logs could expose sensitive personal data, leading to privacy violations or unauthorized access to systems. This could also violate compliance with privacy regulations.",
+  "Description": "Check if secrets exists in CloudWatch logs",
+  "Risk": "Storing sensitive data in CloudWatch logs could allow an attacker with read-only access to escalate their privileges or gain unauthorised access to systems.",
   "RelatedUrl": "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html",
   "Remediation": {
     "Code": {
@@ -22,7 +22,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "It is recommended that critical PII is not logged to CloudWatch logs. Sensitive data should either be excluded or masked using a protection policy.",
+      "Text": "It is recommended that sensitive information is not logged to CloudWatch logs. Alternatively, sensitive data may be masked using a protection policy",
       "Url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/mask-sensitive-log-data.html"
     }
   },
