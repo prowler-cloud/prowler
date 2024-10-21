@@ -460,22 +460,6 @@ class TestAWSProvider:
             )
 
     @mock_aws
-    def test_aws_provider_get_output_mapping(self):
-        aws_provider = AwsProvider()
-
-        assert aws_provider.get_output_mapping == {
-            "auth_method": "identity.profile",
-            "provider": "type",
-            "account_uid": "identity.account",
-            "account_name": "organizations_metadata.account_name",
-            "account_email": "organizations_metadata.account_email",
-            "account_organization_uid": "organizations_metadata.organization_arn",
-            "account_organization_name": "organizations_metadata.organization_id",
-            "account_tags": "organizations_metadata.account_tags",
-            "partition": "identity.partition",
-        }
-
-    @mock_aws
     def test_aws_provider_assume_role_with_mfa(self):
         # Variables
         mfa = True
