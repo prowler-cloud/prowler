@@ -56,7 +56,7 @@ class Test_FSx_Service:
             StorageCapacity=1200,
             LustreConfiguration={"CopyTagsToBackups": True},
             Tags=[{"Key": "Name", "Value": "Test"}],
-            SubnetIds=["subnet-12345678"],
+            SubnetIds=["subnet-12345678", "subnet-12345670"],
         )
         arn = f"arn:aws:fsx:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:file-system/{file_system['FileSystem']['FileSystemId']}"
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
@@ -67,3 +67,4 @@ class Test_FSx_Service:
         assert fsx.file_systems[arn].copy_tags_to_backups
         assert fsx.file_systems[arn].region == AWS_REGION_US_EAST_1
         assert fsx.file_systems[arn].tags == [{"Key": "Name", "Value": "Test"}]
+        assert fsx.file_systems[arn].subnet_id == file_system["FileSystem"]["SubnetIds"]
