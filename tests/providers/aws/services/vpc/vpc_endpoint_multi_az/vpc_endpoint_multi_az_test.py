@@ -82,10 +82,6 @@ class Test_vpc_endpoint_for_multi_az:
                 check = vpc_endpoint_multi_az()
                 result = check.execute()
 
-                # Moto does not return vpc_endpoint_id with the create endpoint response.
-                # Moto Issue: https://github.com/getmoto/moto/issues/8245
-                vpc_endpoint_id = result[0].resource_id
-
                 assert len(result) == 1
                 assert result[0].region == AWS_REGION_US_EAST_1
                 assert result[0].status == "FAIL"
@@ -95,7 +91,7 @@ class Test_vpc_endpoint_for_multi_az:
                 )
                 assert (
                     result[0].resource_arn
-                    == f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:123456789012:vpc-endpoint/{vpc_endpoint_id}"
+                    == f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:123456789012:vpc-endpoint/{vpc_endpoint['VpcEndpointId']}"
                 )
 
     @mock_aws
@@ -157,10 +153,6 @@ class Test_vpc_endpoint_for_multi_az:
                 check = vpc_endpoint_multi_az()
                 result = check.execute()
 
-                # Moto does not return vpc_endpoint_id with the create endpoint response.
-                # Moto Issue: https://github.com/getmoto/moto/issues/8245
-                vpc_endpoint_id = result[0].resource_id
-
                 assert len(result) == 1
                 assert result[0].region == AWS_REGION_US_EAST_1
                 assert result[0].status == "PASS"
@@ -170,5 +162,5 @@ class Test_vpc_endpoint_for_multi_az:
                 )
                 assert (
                     result[0].resource_arn
-                    == f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:123456789012:vpc-endpoint/{vpc_endpoint_id}"
+                    == f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:123456789012:vpc-endpoint/{vpc_endpoint['VpcEndpointId']}"
                 )
