@@ -107,7 +107,7 @@ export interface ScanProps {
   };
 }
 
-export interface FindingsProps {
+export interface FindingProps {
   type: "Findings";
   id: string;
   attributes: {
@@ -118,43 +118,38 @@ export interface FindingsProps {
     severity: "informational" | "low" | "medium" | "high" | "critical";
     check_id: string;
     check_metadata: {
-      check_id: string;
-      metadata: {
-        Risk: string;
-        Notes: string;
-        CheckID: string;
-        Provider: string;
-        Severity: "informational" | "low" | "medium" | "high" | "critical";
-        CheckType: string[];
-        DependsOn: string[];
-        RelatedTo: string[];
-        Categories: string[];
-        CheckTitle: string;
-        RelatedUrl: string;
-        Description: string;
-        Remediation: {
-          Code: {
-            CLI: string;
-            Other: string;
-            NativeIaC: string;
-            Terraform: string;
-          };
-          Recommendation: {
-            Url: string;
-            Text: string;
-          };
-        };
-        ServiceName: string;
-        ResourceType: string;
-        SubServiceName: string;
-        ResourceIdTemplate: string;
-      };
-    };
-    raw_result: {
-      impact: string;
-      status: "PASS" | "FAIL" | "MANUAL" | "MUTED";
+      risk: string;
+      notes: string;
+      checkid: string;
+      provider: string;
       severity: "informational" | "low" | "medium" | "high" | "critical";
+      checktype: string[];
+      dependson: string[];
+      relatedto: string[];
+      categories: string[];
+      checktitle: string;
+      compliance: string | null;
+      relatedurl: string;
+      description: string;
+      remediation: {
+        code: {
+          cli: string;
+          other: string;
+          nativeiac: string;
+          terraform: string;
+        };
+        recommendation: {
+          url: string;
+          text: string;
+        };
+      };
+      servicename: string;
+      checkaliases: string[];
+      resourcetype: string;
+      subservicename: string;
+      resourceidtemplate: string;
     };
+    raw_result: object | null;
     inserted_at: string;
     updated_at: string;
   };

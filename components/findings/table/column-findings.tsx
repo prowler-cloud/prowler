@@ -4,21 +4,20 @@ import { ColumnDef } from "@tanstack/react-table";
 
 import { DateWithTime } from "@/components/ui/entities";
 import { DataTableColumnHeader, StatusBadge } from "@/components/ui/table";
-import { FindingsProps } from "@/types";
+import { FindingProps } from "@/types";
 
 import { DataTableRowActions } from "./data-table-row-actions";
 
-const getFindingsData = (row: { original: FindingsProps }) => {
+const getFindingsData = (row: { original: FindingProps }) => {
   console.log(row.original);
-
   return row.original;
 };
 
-const getFindingsMetadata = (row: { original: FindingsProps }) => {
-  return row.original.attributes.check_metadata.metadata;
+const getFindingsMetadata = (row: { original: FindingProps }) => {
+  return row.original.attributes.check_metadata;
 };
 
-export const ColumnFindings: ColumnDef<FindingsProps>[] = [
+export const ColumnFindings: ColumnDef<FindingProps>[] = [
   // {
   //   header: " ",
   //   cell: ({ row }) => <p className="text-medium">{row.index + 1}</p>,
@@ -29,8 +28,8 @@ export const ColumnFindings: ColumnDef<FindingsProps>[] = [
       <DataTableColumnHeader column={column} title={"Check"} param="check" />
     ),
     cell: ({ row }) => {
-      const { CheckTitle } = getFindingsMetadata(row);
-      return <p className="max-w-96 truncate text-medium">{CheckTitle}</p>;
+      const { checktitle } = getFindingsMetadata(row);
+      return <p className="max-w-96 truncate text-medium">{checktitle}</p>;
     },
   },
   // {
@@ -79,8 +78,8 @@ export const ColumnFindings: ColumnDef<FindingsProps>[] = [
       />
     ),
     cell: ({ row }) => {
-      const { ServiceName } = getFindingsMetadata(row);
-      return <p className="max-w-96 truncate text-medium">{ServiceName}</p>;
+      const { servicename } = getFindingsMetadata(row);
+      return <p className="max-w-96 truncate text-medium">{servicename}</p>;
     },
   },
   {
