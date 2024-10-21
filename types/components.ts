@@ -108,7 +108,7 @@ export interface ScanProps {
 }
 
 export interface FindingProps {
-  type: "Findings";
+  type: "Finding";
   id: string;
   attributes: {
     uid: string;
@@ -160,19 +160,68 @@ export interface FindingProps {
         id: string;
       };
     };
-    resources: {
+    resource: {
       data: {
         type: "Resource";
         id: string;
-      }[];
-      meta: {
-        count: number;
+      };
+      attributes: {
+        uid: string;
+        name: string;
+        region: string;
+        service: string;
+        tags: Record<string, string>;
+        type: string;
+        inserted_at: string;
+        updated_at: string;
+      };
+      relationships: {
+        provider: {
+          data: {
+            type: "Provider";
+            id: string;
+          };
+        };
+        findings: {
+          meta: {
+            count: number;
+          };
+          data: {
+            type: "Finding";
+            id: string;
+          }[];
+        };
+      };
+      links: {
+        self: string;
       };
     };
     provider: {
       data: {
         type: "Provider";
         id: string;
+      };
+      attributes: {
+        provider: string;
+        uid: string;
+        alias: string;
+        connection: {
+          connected: boolean;
+          last_checked_at: string;
+        };
+        inserted_at: string;
+        updated_at: string;
+      };
+      relationships: {
+        secret: {
+          data: {
+            type: "ProviderSecret";
+            id: string;
+          };
+        };
+      };
+      links: {
+        self: string;
       };
     };
   };

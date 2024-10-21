@@ -3,18 +3,55 @@
 import { ColumnDef } from "@tanstack/react-table";
 
 import { DateWithTime } from "@/components/ui/entities";
-import { DataTableColumnHeader, StatusBadge } from "@/components/ui/table";
+import {
+  DataTableColumnHeader,
+  SeverityBadge,
+  StatusBadge,
+} from "@/components/ui/table";
 import { FindingProps } from "@/types";
 
 import { DataTableRowActions } from "./data-table-row-actions";
 
 const getFindingsData = (row: { original: FindingProps }) => {
-  console.log(row.original);
+  // console.log(row.original);
   return row.original;
 };
 
 const getFindingsMetadata = (row: { original: FindingProps }) => {
   return row.original.attributes.check_metadata;
+};
+
+const getResourceData = (
+  row: { original: FindingProps },
+  field: keyof FindingProps["relationships"]["resource"]["attributes"],
+) => {
+  return (
+    // eslint-disable-next-line security/detect-object-injection
+    row.original.relationships?.resource?.attributes?.[field] ||
+    `No ${field} found in resource`
+  );
+};
+
+const getProviderData = (
+  row: { original: FindingProps },
+  field: keyof FindingProps["relationships"]["provider"]["attributes"],
+) => {
+  return (
+    // eslint-disable-next-line security/detect-object-injection
+    row.original.relationships?.provider?.attributes?.[field] ||
+    `No ${field} found in provider`
+  );
+};
+
+const getScanData = (
+  row: { original: FindingProps },
+  field: keyof FindingProps["relationships"]["scan"]["attributes"],
+) => {
+  return (
+    // eslint-disable-next-line security/detect-object-injection
+    row.original.relationships?.scan?.attributes?.[field] ||
+    `No ${field} found in scan`
+  );
 };
 
 export const ColumnFindings: ColumnDef<FindingProps>[] = [
@@ -32,6 +69,20 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
       return <p className="max-w-96 truncate text-medium">{checktitle}</p>;
     },
   },
+  {
+    accessorKey: "region",
+    header: "Region",
+    cell: ({ row }) => {
+      const region = getResourceData(row, "region");
+
+      return (
+        <>
+          <div>{region}</div>
+        </>
+      );
+    },
+  },
+
   // {
   //   accessorKey: "uid",
   //   header: ({ column }) => (
@@ -45,27 +96,40 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
   //   },
   // },
   // {
-  //   accessorKey: "severity",
-  //   header: ({ column }) => (
-  //     <DataTableColumnHeader
-  //       column={column}
-  //       title={"Severity"}
-  //       param="severity"
-  //     />
-  //   ),
+  //   accessorKey: "provider",
+  //   header: "Provider Alias",
   //   cell: ({ row }) => {
   //     const {
-  //       attributes: { severity },
-  //     } = getFindingsData(row);
-  //     return <StatusBadge status={severity} />;
+  //       attributes: { alias },
+  //     } = getProviderData(row, "alias");
+  //     return <p className="max-w-96 truncate text-medium">{alias}</p>;
   //   },
   // },
   {
+    accessorKey: "severity",
+    header: ({ column }) => (
+      <DataTableColumnHeader
+        column={column}
+        title={"Severity"}
+        param="severity"
+      />
+    ),
+    cell: ({ row }) => {
+      const {
+        attributes: { severity },
+      } = getFindingsData(row);
+      return <SeverityBadge severity={severity} />;
+    },
+  },
+  {
     accessorKey: "status",
     header: "Scan Status",
-    cell: () => {
+    cell: ({ row }) => {
+      const {
+        attributes: { status },
+      } = getFindingsData(row);
       // Temporarily overwriting the value until the API is functional.
-      return <StatusBadge status={"completed"} />;
+      return <StatusBadge status={status} />;
     },
   },
   {

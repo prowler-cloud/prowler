@@ -14,10 +14,11 @@ export const getFindings = async ({
 }) => {
   const session = await auth();
 
-  if (isNaN(Number(page)) || page < 1) redirect("/findings");
+  if (isNaN(Number(page)) || page < 1)
+    redirect("findings?include=resources.provider,scan");
 
   const keyServer = process.env.API_BASE_URL;
-  const url = new URL(`${keyServer}/findings`);
+  const url = new URL(`${keyServer}/findings?include=resources.provider,scan`);
 
   if (page) url.searchParams.append("page[number]", page.toString());
   if (query) url.searchParams.append("filter[search]", query);
@@ -39,7 +40,6 @@ export const getFindings = async ({
     });
     const data = await findings.json();
     const parsedData = parseStringify(data);
-    console.log(parsedData.data);
     revalidatePath("/findings");
     return parsedData;
   } catch (error) {

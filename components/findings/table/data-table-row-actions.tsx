@@ -23,15 +23,15 @@ import { VerticalDotsIcon } from "@/components/icons";
 // import { EditForm } from "../forms";
 // import { DeleteForm } from "../forms/delete-form";
 
-interface DataTableRowActionsProps<FindingsProps> {
-  row: Row<FindingsProps>;
+interface DataTableRowActionsProps<FindingProps> {
+  row: Row<FindingProps>;
 }
 const iconClasses =
   "text-2xl text-default-500 pointer-events-none flex-shrink-0";
 
-export function DataTableRowActions<FindingsProps>({
+export function DataTableRowActions<FindingProps>({
   row,
-}: DataTableRowActionsProps<FindingsProps>) {
+}: DataTableRowActionsProps<FindingProps>) {
   // const [isEditOpen, setIsEditOpen] = useState(false);
   // const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   // const providerId = (row.original as { id: string }).id;
@@ -80,7 +80,7 @@ export function DataTableRowActions<FindingsProps>({
                 startContent={<EditDocumentBulkIcon className={iconClasses} />}
                 // onClick={() => setIsEditOpen(true)}
               >
-                Edit Provider
+                Edit Finding
               </DropdownItem>
             </DropdownSection>
             <DropdownSection title="Danger zone">
@@ -97,7 +97,7 @@ export function DataTableRowActions<FindingsProps>({
                 }
                 // onClick={() => setIsDeleteOpen(true)}
               >
-                Delete Provider
+                Delete Finding
               </DropdownItem>
             </DropdownSection>
           </DropdownMenu>
