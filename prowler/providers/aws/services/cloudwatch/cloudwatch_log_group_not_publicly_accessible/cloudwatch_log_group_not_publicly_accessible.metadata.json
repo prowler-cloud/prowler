@@ -5,7 +5,7 @@
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices"
   ],
-  "ServiceName": "ses",
+  "ServiceName": "cloudwatch",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:ses:region:account-id:identity/<IDENTITY-NAME>",
   "Severity": "high",
