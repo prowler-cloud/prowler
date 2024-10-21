@@ -14,8 +14,49 @@ class iam_policy_cloudshell_admin_not_attached(Check):
             report.status_extended = (
                 "AWS CloudShellFullAccess policy is not attached to any IAM entity."
             )
-            if iam_client.entities_attached_to_cloudshell_policy:
+            if (
+                iam_client.entities_attached_to_cloudshell_policy["Users"]
+                or iam_client.entities_attached_to_cloudshell_policy["Groups"]
+                or iam_client.entities_attached_to_cloudshell_policy["Roles"]
+            ):
                 report.status = "FAIL"
-                report.status_extended = f"AWS CloudShellFullAccess policy attached to IAM entities: {', '.join(iam_client.entities_attached_to_cloudshell_policy)}."
+                if (
+                    len(iam_client.entities_attached_to_cloudshell_policy["Users"]) > 0
+                    and len(iam_client.entities_attached_to_cloudshell_policy["Groups"])
+                    > 0
+                    and len(iam_client.entities_attached_to_cloudshell_policy["Roles"])
+                    > 0
+                ):
+                    report.status_extended = f"AWS CloudShellFullAccess policy attached to IAM Users: {', '.join(iam_client.entities_attached_to_cloudshell_policy['Users'])}, Groups {', '.join(iam_client.entities_attached_to_cloudshell_policy['Groups'])}, Roles {', '.join(iam_client.entities_attached_to_cloudshell_policy['Roles'])}."
+                elif (
+                    len(iam_client.entities_attached_to_cloudshell_policy["Users"]) > 0
+                    and len(iam_client.entities_attached_to_cloudshell_policy["Groups"])
+                    > 0
+                ):
+                    report.status_extended = f"AWS CloudShellFullAccess policy attached to IAM Users: {', '.join(iam_client.entities_attached_to_cloudshell_policy['Users'])}, Groups {', '.join(iam_client.entities_attached_to_cloudshell_policy['Groups'])}."
+                elif (
+                    len(iam_client.entities_attached_to_cloudshell_policy["Users"]) > 0
+                    and len(iam_client.entities_attached_to_cloudshell_policy["Roles"])
+                    > 0
+                ):
+                    report.status_extended = f"AWS CloudShellFullAccess policy attached to IAM Users: {', '.join(iam_client.entities_attached_to_cloudshell_policy['Users'])}, Roles {', '.join(iam_client.entities_attached_to_cloudshell_policy['Roles'])}."
+                elif (
+                    len(iam_client.entities_attached_to_cloudshell_policy["Groups"]) > 0
+                    and len(iam_client.entities_attached_to_cloudshell_policy["Roles"])
+                    > 0
+                ):
+                    report.status_extended = f"AWS CloudShellFullAccess policy attached to IAM Groups: {', '.join(iam_client.entities_attached_to_cloudshell_policy['Groups'])}, Roles {', '.join(iam_client.entities_attached_to_cloudshell_policy['Roles'])}."
+                elif (
+                    len(iam_client.entities_attached_to_cloudshell_policy["Users"]) > 0
+                ):
+                    report.status_extended = f"AWS CloudShellFullAccess policy attached to IAM Users: {', '.join(iam_client.entities_attached_to_cloudshell_policy['Users'])}."
+                elif (
+                    len(iam_client.entities_attached_to_cloudshell_policy["Groups"]) > 0
+                ):
+                    report.status_extended = f"AWS CloudShellFullAccess policy attached to IAM Groups: {', '.join(iam_client.entities_attached_to_cloudshell_policy['Groups'])}."
+                elif (
+                    len(iam_client.entities_attached_to_cloudshell_policy["Roles"]) > 0
+                ):
+                    report.status_extended = f"AWS CloudShellFullAccess policy attached to IAM Roles: {', '.join(iam_client.entities_attached_to_cloudshell_policy['Roles'])}."
             findings.append(report)
         return findings

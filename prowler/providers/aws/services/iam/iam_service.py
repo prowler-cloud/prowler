@@ -694,17 +694,21 @@ class IAM(AWSService):
     def _list_entities_for_policy(self, policy_arn):
         logger.info("IAM - List Entities Role For Policy...")
         try:
-            entities = []
+            entities = {
+                "Users": [],
+                "Groups": [],
+                "Roles": [],
+            }
 
             paginator = self.client.get_paginator("list_entities_for_policy")
             for response in paginator.paginate(PolicyArn=policy_arn):
-                entities.extend(
+                entities["Users"].extend(
                     user["UserName"] for user in response.get("PolicyUsers", [])
                 )
-                entities.extend(
+                entities["Groups"].extend(
                     group["GroupName"] for group in response.get("PolicyGroups", [])
                 )
-                entities.extend(
+                entities["Roles"].extend(
                     role["RoleName"] for role in response.get("PolicyRoles", [])
                 )
             return entities

@@ -1020,8 +1020,6 @@ nTTxU4a7x1naFxzYXK1iQ1vMARKMjDb19QEJIEJKZlDK4uS7yMlf1nFS
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         iam = IAM(aws_provider)
         assert len(iam.entities_attached_to_cloudshell_policy) == 3
-        assert iam.entities_attached_to_cloudshell_policy == [
-            user_name,
-            group_name,
-            role_name,
-        ]
+        assert iam.entities_attached_to_cloudshell_policy["Users"] == [user_name]
+        assert iam.entities_attached_to_cloudshell_policy["Groups"] == [group_name]
+        assert iam.entities_attached_to_cloudshell_policy["Roles"] == [role_name]
