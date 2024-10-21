@@ -143,6 +143,11 @@ class Test_APIGateway_Service:
                 },
                 {
                     "op": "replace",
+                    "path": "/tracingEnabled",
+                    "value": "true",
+                },
+                {
+                    "op": "replace",
                     "path": "/*/*/caching/enabled",
                     "value": "true",
                 },
@@ -156,6 +161,7 @@ class Test_APIGateway_Service:
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         apigateway = APIGateway(aws_provider)
         assert apigateway.rest_apis[0].stages[0].logging is True
+        assert apigateway.rest_apis[0].stages[0].tracing_enabled is True
         assert apigateway.rest_apis[0].stages[0].cache_enabled is True
         assert apigateway.rest_apis[0].stages[0].cache_data_encrypted is False
 

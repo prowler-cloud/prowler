@@ -114,6 +114,10 @@ class APIGateway(AWSService):
                         waf = None
                         logging = False
                         client_certificate = False
+                        tracing_enabled = False
+                        if "tracingEnabled" in stage:
+                            if stage["tracingEnabled"]:
+                                tracing_enabled = True
                         cache_enabled = False
                         cache_data_encrypted = False
                         if "webAclArn" in stage:
@@ -137,6 +141,7 @@ class APIGateway(AWSService):
                                 client_certificate=client_certificate,
                                 waf=waf,
                                 tags=[stage.get("tags")],
+                                tracing_enabled=tracing_enabled,
                                 cache_enabled=cache_enabled,
                                 cache_data_encrypted=cache_data_encrypted,
                             )
@@ -222,6 +227,7 @@ class Stage(BaseModel):
     client_certificate: bool
     waf: Optional[str]
     tags: Optional[list] = []
+    tracing_enabled: Optional[bool]
     cache_enabled: Optional[bool]
     cache_data_encrypted: Optional[bool]
 
