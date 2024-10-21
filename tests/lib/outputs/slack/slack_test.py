@@ -2,6 +2,7 @@ from unittest import mock
 
 from prowler.config.config import aws_logo, azure_logo, gcp_logo
 from prowler.lib.outputs.slack.slack import Slack
+from prowler.providers.common.models import Connection
 from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, set_mocked_aws_provider
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
@@ -486,3 +487,48 @@ class TestSlackIntegration:
             args = "--slack"
             response = slack.send(stats, args)
             assert response == mocked_slack_response
+
+    def test_test_connection(self):
+        mocked_auth_response = {"ok": True}
+        mocked_public_channel_response = {
+            "ok": True,
+            "channels": [
+                {"id": "C12345678", "name": "public-channel", "is_member": True},
+            ],
+        }
+        mocked_private_channel_response = {
+            "ok": True,
+            "channels": [
+                {"id": "C87654321", "name": "private-channel", "is_member": True},
+            ],
+        }
+
+        mocked_web_client = mock.MagicMock()
+        mocked_web_client.auth_test = mock.Mock(return_value=mocked_auth_response)
+
+        def mock_conversations_list(types, **kwargs):
+            if types == "public_channel":
+                return mocked_public_channel_response
+            elif types == "private_channel":
+                return mocked_private_channel_response
+            else:
+                return {"ok": True, "channels": []}  # Default for non-existing channels
+
+        mocked_web_client.conversations_list = mock.Mock(
+            side_effect=mock_conversations_list
+        )
+
+        with mock.patch(
+            "prowler.lib.outputs.slack.slack.WebClient", return_value=mocked_web_client
+        ):
+            assert Slack.test_connection(
+                token=SLACK_TOKEN, channel="public-channel"
+            ) == Connection(is_connected=True)
+            assert Slack.test_connection(
+                token=SLACK_TOKEN, channel="private-channel"
+            ) == Connection(is_connected=True)
+            assert Slack.test_connection(
+                token=SLACK_TOKEN,
+                channel="non-existing-channel",
+                raise_on_exception=False,
+            ) == Connection(is_connected=False)
