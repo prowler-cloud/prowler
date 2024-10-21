@@ -159,7 +159,7 @@ class Finding(BaseModel):
 
                 # TODO: probably Organization UID is without the account id
                 output_data["auth_method"] = (
-                    f"profile: {get_nested_attribute(provider, "identity.profile")}"
+                    f"profile: {get_nested_attribute(provider, 'identity.profile')}"
                 )
                 output_data["resource_name"] = check_output.resource_id
                 output_data["resource_uid"] = check_output.resource_arn
