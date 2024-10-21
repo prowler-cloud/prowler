@@ -259,7 +259,7 @@ class Test_iam_policy_cloudshell_admin_not_attached:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"AWS CloudShellFullAccess policy attached to IAM Users: {user_name}, Groups {group_name}, Roles {role_name}."
+                    == f"AWS CloudShellFullAccess policy attached to IAM Users: {user_name}, Groups: {group_name}, Roles: {role_name}."
                 )
                 assert result[0].resource_id == AWS_ACCOUNT_NUMBER
                 assert (
