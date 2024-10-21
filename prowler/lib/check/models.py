@@ -163,9 +163,9 @@ class CheckMetadata(BaseModel):
 
     @staticmethod
     def list(
+        provider: str,
         bulk_checks_metadata: dict = None,
         bulk_compliance_frameworks: dict = None,
-        provider: str = None,
         severity: str = None,
         category: str = None,
         service: str = None,
@@ -175,9 +175,9 @@ class CheckMetadata(BaseModel):
         Returns a list of checks from the bulk checks metadata.
 
         Args:
+            provider (str): The provider of the checks.
             bulk_checks_metadata (dict): The bulk checks metadata.
             bulk_compliance_frameworks (dict): The bulk compliance frameworks.
-            provider (str): The provider of the checks.
             severity (str): The severity of the checks.
             category (str): The category of the checks.
             service (str): The service of the checks.
