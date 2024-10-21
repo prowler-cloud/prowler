@@ -5,9 +5,11 @@ import sys
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
+from typing import List
 
 from pydantic import BaseModel, ValidationError, validator
 
+from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.check.utils import recover_checks_from_provider
 from prowler.lib.logger import logger
 
@@ -168,7 +170,7 @@ class CheckMetadata(BaseModel):
         category: str = None,
         service: str = None,
         compliance_framework: str = None,
-    ) -> list:
+    ) -> List["CheckMetadata"]:
         """
         Returns a list of checks from the bulk checks metadata.
 
@@ -204,11 +206,15 @@ class CheckMetadata(BaseModel):
                 bulk_checks_metadata=bulk_checks_metadata, service=service
             )
         elif compliance_framework:
+            if not bulk_compliance_frameworks:
+                bulk_compliance_frameworks = Compliance.get_bulk(provider="aws")
             checks = CheckMetadata.list_by_compliance_framework(
                 bulk_compliance_frameworks=bulk_compliance_frameworks,
                 compliance_framework=compliance_framework,
             )
         else:
+            if not bulk_checks_metadata:
+                bulk_checks_metadata = CheckMetadata.get_bulk(provider="aws")
             checks = [check_name for check_name in bulk_checks_metadata.keys()]
 
         return checks

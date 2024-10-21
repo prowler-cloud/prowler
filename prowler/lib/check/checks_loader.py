@@ -23,6 +23,7 @@ def load_checks_to_execute(
         checks_to_execute = set()
         check_aliases = {}
         check_categories = {}
+        check_severities = {severity.value: [] for severity in Severity}
 
         # First, loop over the bulk_checks_metadata to extract the needed subsets
         for check, metadata in bulk_checks_metadata.items():
@@ -32,6 +33,10 @@ def load_checks_to_execute(
                     if alias not in check_aliases:
                         check_aliases[alias] = []
                     check_aliases[alias].append(check)
+
+                # Severities
+                if metadata.Severity:
+                    check_severities[metadata.Severity].append(check)
 
                 # Categories
                 for category in metadata.Categories:
@@ -51,17 +56,7 @@ def load_checks_to_execute(
         # Handle if there are some severities passed using --severity
         elif severities:
             for severity in severities:
-                try:
-                    Severity(severity)
-                    checks_to_execute.update(
-                        CheckMetadata.list(
-                            bulk_checks_metadata=bulk_checks_metadata, severity=severity
-                        )
-                    )
-                except ValueError:
-                    logger.error(
-                        "Invalid severity level provided. Valid severities are: critical, high, medium, low, informational."
-                    )
+                checks_to_execute.update(check_severities[severity])
 
             if service_list:
                 for service in service_list:
