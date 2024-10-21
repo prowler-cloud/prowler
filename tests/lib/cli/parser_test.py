@@ -979,6 +979,12 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.quick_inventory
 
+    def test_aws_parser_scan_inventory_long(self):
+        argument = "--scan-inventory"
+        command = [prowler_command, argument]
+        parsed = self.parser.parse(command)
+        assert parsed.scan_inventory
+
     def test_aws_parser_output_bucket_short(self):
         argument = "-B"
         bucket = "test-bucket"
