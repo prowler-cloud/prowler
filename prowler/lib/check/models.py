@@ -9,6 +9,7 @@ from typing import List
 
 from pydantic import BaseModel, ValidationError, validator
 
+from prowler.config.config import available_providers
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.check.utils import recover_checks_from_provider
 from prowler.lib.logger import logger
@@ -163,9 +164,9 @@ class CheckMetadata(BaseModel):
 
     @staticmethod
     def list(
-        provider: str,
         bulk_checks_metadata: dict = None,
         bulk_compliance_frameworks: dict = None,
+        provider: str = None,
         severity: str = None,
         category: str = None,
         service: str = None,
@@ -188,7 +189,8 @@ class CheckMetadata(BaseModel):
         """
         # If the bulk checks metadata is not provided, get it
         if not bulk_checks_metadata:
-            bulk_checks_metadata = CheckMetadata.get_bulk(provider=provider)
+            for provider in available_providers:
+                bulk_checks_metadata.update(CheckMetadata.get_bulk(provider))
 
         if provider:
             checks = [
@@ -216,6 +218,8 @@ class CheckMetadata(BaseModel):
                 bulk_compliance_frameworks=bulk_compliance_frameworks,
                 compliance_framework=compliance_framework,
             )
+        else:
+            checks = list(bulk_checks_metadata.keys())
 
         return checks
 

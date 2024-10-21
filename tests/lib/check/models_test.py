@@ -69,7 +69,7 @@ class TestCheckMetada:
 
         bulk_metadata = CheckMetadata.get_bulk(provider="aws")
 
-        result = CheckMetadata.list(bulk_checks_metadata=bulk_metadata, provider="aws")
+        result = CheckMetadata.list(bulk_checks_metadata=bulk_metadata)
 
         # Assertions
         assert result == ["accessanalyzer_enabled"]
@@ -87,7 +87,7 @@ class TestCheckMetada:
 
         bulk_metadata = CheckMetadata.get_bulk(provider="aws")
 
-        result = CheckMetadata.list(bulk_checks_metadata=bulk_metadata, provider="aws")
+        result = CheckMetadata.list(bulk_checks_metadata=bulk_metadata)
 
         # Assertions
         assert result == ["accessanalyzer_enabled"]
@@ -105,9 +105,7 @@ class TestCheckMetada:
 
         bulk_metadata = CheckMetadata.get_bulk(provider="aws")
 
-        result = CheckMetadata.list(
-            provider="aws", bulk_checks_metadata=bulk_metadata, severity="high"
-        )
+        result = CheckMetadata.list(bulk_checks_metadata=bulk_metadata, severity="high")
 
         # Assertions
         assert result == ["accessanalyzer_enabled"]
@@ -125,9 +123,7 @@ class TestCheckMetada:
 
         bulk_metadata = CheckMetadata.get_bulk(provider="aws")
 
-        result = CheckMetadata.list(
-            provider="aws", bulk_checks_metadata=bulk_metadata, severity="low"
-        )
+        result = CheckMetadata.list(bulk_checks_metadata=bulk_metadata, severity="low")
 
         # Assertions
         assert result == []
@@ -146,7 +142,7 @@ class TestCheckMetada:
         bulk_metadata = CheckMetadata.get_bulk(provider="aws")
 
         result = CheckMetadata.list(
-            provider="aws", bulk_checks_metadata=bulk_metadata, category="categoryone"
+            bulk_checks_metadata=bulk_metadata, category="categoryone"
         )
 
         # Assertions
@@ -166,7 +162,7 @@ class TestCheckMetada:
         bulk_metadata = CheckMetadata.get_bulk(provider="aws")
 
         result = CheckMetadata.list(
-            bulk_checks_metadata=bulk_metadata, category="categorytwo", provider="aws"
+            bulk_checks_metadata=bulk_metadata, category="categorytwo"
         )
 
         # Assertions
@@ -186,7 +182,7 @@ class TestCheckMetada:
         bulk_metadata = CheckMetadata.get_bulk(provider="aws")
 
         result = CheckMetadata.list(
-            bulk_checks_metadata=bulk_metadata, service="service1", provider="aws"
+            bulk_checks_metadata=bulk_metadata, service="service1"
         )
 
         # Assertions
@@ -206,7 +202,7 @@ class TestCheckMetada:
         bulk_metadata = CheckMetadata.get_bulk(provider="aws")
 
         result = CheckMetadata.list(
-            bulk_checks_metadata=bulk_metadata, service="service2", provider="aws"
+            bulk_checks_metadata=bulk_metadata, service="service2"
         )
 
         # Assertions
@@ -217,7 +213,6 @@ class TestCheckMetada:
         result = CheckMetadata.list(
             bulk_compliance_frameworks=bulk_compliance_frameworks,
             compliance_framework="framework1_aws",
-            provider="aws",
         )
 
         # Assertions
@@ -228,7 +223,6 @@ class TestCheckMetada:
         result = CheckMetadata.list(
             bulk_compliance_frameworks=bulk_compliance_frameworks,
             compliance_framework="framework1_azure",
-            provider="aws",
         )
 
         # Assertions
