@@ -136,6 +136,7 @@ class Test_ELB_Service:
         assert elb.loadbalancers[elb_arn].access_logs
         assert elb.loadbalancers[elb_arn].cross_zone_load_balancing
         assert elb.loadbalancers[elb_arn].connection_draining
+        assert elb.loadbalancers[elb_arn].desync_mitigation_mode is None
 
     # Test ELB Describe Tags
     @mock_aws
