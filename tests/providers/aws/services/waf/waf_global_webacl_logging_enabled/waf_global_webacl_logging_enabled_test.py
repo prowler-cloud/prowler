@@ -36,7 +36,7 @@ def mock_make_api_call_logging_enabled(self, operation_name, kwarg):
     if operation_name == "GetLoggingConfiguration":
         return {
             "LoggingConfiguration": {
-                "ResourceArn": f"arn:aws:waf:{AWS_ACCOUNT_NUMBER}:webacl/{WEB_ACL_ID}",
+                "ResourceArn": f"arn:aws:waf:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:webacl/{WEB_ACL_ID}",
                 "LogDestinationConfigs": [
                     "arn:aws:firehose:us-east-1:123456789012:deliverystream/my-firehose"
                 ],
@@ -66,7 +66,7 @@ def mock_make_api_call_logging_disabled(self, operation_name, kwarg):
     if operation_name == "GetLoggingConfiguration":
         return {
             "LoggingConfiguration": {
-                "ResourceArn": f"arn:aws:waf:{AWS_ACCOUNT_NUMBER}:webacl/{WEB_ACL_ID}",
+                "ResourceArn": f"arn:aws:waf:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:webacl/{WEB_ACL_ID}",
                 "LogDestinationConfigs": [],
                 "RedactedFields": [],
                 "ManagedByFirewallManager": False,
@@ -136,7 +136,7 @@ class Test_waf_global_webacl_logging_enabled:
                 assert result[0].resource_id == WEB_ACL_ID
                 assert (
                     result[0].resource_arn
-                    == f"arn:aws:waf:{AWS_ACCOUNT_NUMBER}:webacl/{WEB_ACL_ID}"
+                    == f"arn:aws:waf:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:webacl/{WEB_ACL_ID}"
                 )
                 assert result[0].region == AWS_REGION_US_EAST_1
 
@@ -175,6 +175,6 @@ class Test_waf_global_webacl_logging_enabled:
                 assert result[0].resource_id == WEB_ACL_ID
                 assert (
                     result[0].resource_arn
-                    == f"arn:aws:waf:{AWS_ACCOUNT_NUMBER}:webacl/{WEB_ACL_ID}"
+                    == f"arn:aws:waf:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:webacl/{WEB_ACL_ID}"
                 )
                 assert result[0].region == AWS_REGION_US_EAST_1
