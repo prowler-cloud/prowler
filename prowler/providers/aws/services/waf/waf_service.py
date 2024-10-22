@@ -14,15 +14,21 @@ class WAF(AWSService):
         self.rules = {}
         self.rule_groups = {}
         self.web_acls = {}
-        self._list_rules()
-        self.__threading_call__(self._get_rule, self.rules.values())
-        self._list_rule_groups()
-        self.__threading_call__(
-            self._list_activated_rules_in_rule_group, self.rule_groups.values()
-        )
-        self._list_web_acls()
-        self.__threading_call__(self._get_web_acl, self.web_acls.values())
-        self.__threading_call__(self._get_logging_configuration, self.web_acls.values())
+        if self.audited_partition == "aws":
+            # AWS WAF is available globally for CloudFront distributions, but you must use the Region US East (N. Virginia) to create your web ACL and any resources used in the web ACL, such as rule groups, IP sets, and regex pattern sets.
+            self.region = "us-east-1"
+            self.client = self.session.client(self.service, self.region)
+            self._list_rules()
+            self.__threading_call__(self._get_rule, self.rules.values())
+            self._list_rule_groups()
+            self.__threading_call__(
+                self._list_activated_rules_in_rule_group, self.rule_groups.values()
+            )
+            self._list_web_acls()
+            self.__threading_call__(self._get_web_acl, self.web_acls.values())
+            self.__threading_call__(
+                self._get_logging_configuration, self.web_acls.values()
+            )
 
     def _list_rules(self):
         logger.info("WAF - Listing Global Rules...")
