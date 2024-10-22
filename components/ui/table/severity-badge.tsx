@@ -4,7 +4,7 @@ import React from "react";
 
 import { AlertIcon } from "@/components/icons";
 
-type Severity = "critical" | "high" | "medium" | "low";
+type Severity = "informational" | "low" | "medium" | "high" | "critical";
 
 const severityIconMap = {
   critical: <AlertIcon size={14} className="mr-1" />,

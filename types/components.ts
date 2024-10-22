@@ -108,32 +108,145 @@ export interface ScanProps {
 }
 
 export interface FindingProps {
+  type: "Finding";
   id: string;
   attributes: {
-    CheckTitle: string;
-    severity: "critical" | "high" | "medium" | "low";
-    status: "fail" | "success" | "muted";
-    region: string;
-    service: string;
-    account: string;
+    uid: string;
+    delta: "new" | "changed" | null;
+    status: "PASS" | "FAIL" | "MANUAL" | "MUTED";
+    status_extended: string;
+    severity: "informational" | "low" | "medium" | "high" | "critical";
+    check_id: string;
+    check_metadata: {
+      risk: string;
+      notes: string;
+      checkid: string;
+      provider: string;
+      severity: "informational" | "low" | "medium" | "high" | "critical";
+      checktype: string[];
+      dependson: string[];
+      relatedto: string[];
+      categories: string[];
+      checktitle: string;
+      compliance: string | null;
+      relatedurl: string;
+      description: string;
+      remediation: {
+        code: {
+          cli: string;
+          other: string;
+          nativeiac: string;
+          terraform: string;
+        };
+        recommendation: {
+          url: string;
+          text: string;
+        };
+      };
+      servicename: string;
+      checkaliases: string[];
+      resourcetype: string;
+      subservicename: string;
+      resourceidtemplate: string;
+    };
+    raw_result: object | null;
+    inserted_at: string;
+    updated_at: string;
   };
-  card: {
-    resourceId: string;
-    resourceLink: string;
-    resourceARN: string;
-    checkId: string;
-    checkLink: string;
-    type: string[];
-    scanTime: string;
-    findingId: string;
-    findingLink: string;
-    details: string;
-    riskLink: string;
-    riskDetails: string;
-    recommendationLink: string;
-    recommendationDetails: string;
-    referenceInformation: string;
-    referenceLink: string;
+  relationships: {
+    resources: {
+      data: {
+        type: "Resource";
+        id: string;
+      }[];
+    };
+    scan: {
+      data: {
+        type: "Scan";
+        id: string;
+      };
+      attributes: {
+        name: string;
+        trigger: string;
+        state: string;
+        unique_resource_count: number;
+        progress: number;
+        scanner_args: {
+          checks_to_execute: string[];
+        };
+        duration: number;
+        started_at: string;
+        completed_at: string;
+        scheduled_at: string | null;
+      };
+    };
+    resource: {
+      data: {
+        type: "Resource";
+        id: string;
+      }[];
+      attributes: {
+        uid: string;
+        name: string;
+        region: string;
+        service: string;
+        tags: Record<string, string>;
+        type: string;
+        inserted_at: string;
+        updated_at: string;
+      };
+      relationships: {
+        provider: {
+          data: {
+            type: "Provider";
+            id: string;
+          };
+        };
+        findings: {
+          meta: {
+            count: number;
+          };
+          data: {
+            type: "Finding";
+            id: string;
+          }[];
+        };
+      };
+      links: {
+        self: string;
+      };
+    };
+    provider: {
+      data: {
+        type: "Provider";
+        id: string;
+      };
+      attributes: {
+        provider: string;
+        uid: string;
+        alias: string;
+        connection: {
+          connected: boolean;
+          last_checked_at: string;
+        };
+        inserted_at: string;
+        updated_at: string;
+      };
+      relationships: {
+        secret: {
+          data: {
+            type: "ProviderSecret";
+            id: string;
+          };
+        };
+      };
+      links: {
+        self: string;
+      };
+    };
+  };
+  links: {
+    self: string;
   };
 }
 

@@ -1,5 +1,17 @@
 import { MetaDataProps } from "@/types";
 
+// Helper function to create dictionaries by type
+export const createDict = (
+  type: string,
+  data: any,
+  includedField: string = "included",
+) =>
+  Object.fromEntries(
+    data[includedField]
+      .filter((item: { type: string }) => item.type === type)
+      .map((item: { id: string }) => [item.id, item]),
+  );
+
 export const parseStringify = (value: any) => JSON.parse(JSON.stringify(value));
 
 export const convertFileToUrl = (file: File) => URL.createObjectURL(file);

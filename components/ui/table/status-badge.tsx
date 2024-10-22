@@ -1,7 +1,7 @@
 import { Chip } from "@nextui-org/react";
 import React from "react";
 
-type Status =
+export type Status =
   | "available"
   | "scheduled"
   | "executing"

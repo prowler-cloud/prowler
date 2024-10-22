@@ -27,3 +27,22 @@ export const filterScans = [
   },
   // Add more filter categories as needed
 ];
+
+export const filterFindings = [
+  {
+    key: "severity",
+    labelCheckboxGroup: "Severity",
+    values: ["informational", "low", "medium", "high", "critical"],
+  },
+  {
+    key: "status",
+    labelCheckboxGroup: "Status",
+    values: ["PASS", "FAIL", "MANUAL", "MUTED"],
+  },
+  {
+    key: "delta",
+    labelCheckboxGroup: "Delta",
+    values: ["new", "changed"],
+  },
+  // Add more filter categories as needed
+];
