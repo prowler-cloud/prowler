@@ -70,6 +70,10 @@ class ELB(AWSService):
             load_balancer.connection_draining = attributes.get(
                 "ConnectionDraining", {}
             ).get("Enabled", False)
+            additional_attributes = attributes.get("AdditionalAttributes", [])
+            for attribute in additional_attributes:
+                if attribute["Key"] == "elb.http.desyncmitigationmode":
+                    load_balancer.desync_mitigation_mode = attribute["Value"]
 
         except Exception as error:
             logger.error(
@@ -109,4 +113,5 @@ class LoadBalancer(BaseModel):
     cross_zone_load_balancing: Optional[bool]
     availability_zones: set[str]
     connection_draining: Optional[bool]
+    desync_mitigation_mode: Optional[str]
     tags: Optional[list] = []
