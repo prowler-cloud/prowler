@@ -2128,13 +2128,13 @@ files = [
 
 [[package]]
 name = "microsoft-kiota-abstractions"
-version = "1.4.6"
+version = "1.5.0"
 description = "Core abstractions for kiota generated libraries in Python"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "microsoft_kiota_abstractions-1.4.6-py3-none-any.whl", hash = "sha256:000a1e6e08c0c0ee58832ee87a7416aa17277248fae52ae3e8e41045bc293553"},
-    {file = "microsoft_kiota_abstractions-1.4.6.tar.gz", hash = "sha256:5b213c91181d20abffbdc0f437c13a1240db106c978c0939b51ada88717b876e"},
+    {file = "microsoft_kiota_abstractions-1.5.0-py3-none-any.whl", hash = "sha256:baf886f7077ed4add22f1e8ee30f7a40a375481e5514bc1440db10020181e38e"},
+    {file = "microsoft_kiota_abstractions-1.5.0.tar.gz", hash = "sha256:7a6e3ec446b194b8d455e0e094aa00fd8e4cd25cbd3d30d9d02c54797c4dbefa"},
 ]
 
 [package.dependencies]
@@ -4565,4 +4565,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "a4036c974d46d8c185e63b30084029f167da04eddfee6fbf0146840cbd95463b"
+content-hash = "4ad765210d32eb291a5ea7444751996f147d3eea85ba83be87864b14f8ffc07c"
