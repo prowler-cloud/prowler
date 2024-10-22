@@ -21,10 +21,12 @@ class VPC(AWSService):
         self.vpc_peering_connections = []
         self.vpc_endpoints = []
         self.vpc_endpoint_services = []
+        self.security_groups = []
         self.__threading_call__(self._describe_vpcs)
         self.__threading_call__(self._describe_vpc_peering_connections)
         self.__threading_call__(self._describe_vpc_endpoints)
         self.__threading_call__(self._describe_vpc_endpoint_services)
+        self.__threading_call__(self._describe_security_groups)
         self._describe_flow_logs()
         self._describe_peering_route_tables()
         self._describe_vpc_endpoint_service_permissions()
@@ -33,6 +35,34 @@ class VPC(AWSService):
         self._describe_network_interfaces()
         self.vpn_connections = {}
         self.__threading_call__(self._describe_vpn_connections)
+
+    def _describe_security_groups(self, regional_client):
+        logger.info("VPC - Describing security groups...")
+        try:
+            describe_security_groups_paginator = regional_client.get_paginator("describe_security_groups")
+            for page in describe_security_groups_paginator.paginate():
+                for sg in page["SecurityGroups"]:
+                    arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:security-group/{sg['GroupId']}"
+                    if not self.audit_resources or (
+                        is_resource_filtered(arn, self.audit_resources)
+                    ):
+                        self.security_groups.append(
+                            SecurityGroup(
+                                id=sg["GroupId"],
+                                arn=arn,
+                                name=sg["GroupName"],
+                                vpc_id=sg.get("VpcId", "N/A"),
+                                region=regional_client.region,
+                                ingress_rules=sg.get("IpPermissions", []),
+                                egress_rules=sg.get("IpPermissionsEgress", []),
+                                is_default=(sg["GroupName"] == "default"),
+                                tags=sg.get("Tags", [])
+                            )
+                        )
+        except ClientError as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
     def _describe_vpcs(self, regional_client):
         logger.info("VPC - Describing VPCs...")
@@ -431,6 +461,16 @@ class VPC(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+class SecurityGroup(BaseModel):
+    id: str
+    arn: str
+    name: str
+    vpc_id: str
+    region: str
+    ingress_rules: list
+    egress_rules: list
+    is_default: bool
+    tags: Optional[list] = []
 
 class VpcSubnet(BaseModel):
     arn: str

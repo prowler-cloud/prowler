@@ -11,8 +11,8 @@
             "Attributes": [
                 {
                     "Category": "A.5 Information Security Policies",
-                    "Objetive_ID": "A.5",
-                    "Objetive_Name": "Information Security Policies",
+                    "Objective_ID": "A.5",
+                    "Objective_Name": "Information Security Policies",
                     "Check_Summary": "Ensure that the organization has established information security and privacy policies that are aligned with business requirements and legal obligations."
                 }
             ],
@@ -30,8 +30,8 @@
             "Attributes": [
                 {
                     "Category": "A.6 Organization of Information Security",
-                    "Objetive_ID": "A.6",
-                    "Objetive_Name": "Organization of Information Security",
+                    "Objective_ID": "A.6",
+                    "Objective_Name": "Organization of Information Security",
                     "Check_Summary": "Ensure that current contact details and security contact information are maintained and regularly updated."
                 }
             ],
@@ -47,8 +47,8 @@
             "Attributes": [
                 {
                     "Category": "A.7 Human Resource Security",
-                    "Objetive_ID": "A.7",
-                    "Objetive_Name": "Human Resource Security",
+                    "Objective_ID": "A.7",
+                    "Objective_Name": "Human Resource Security",
                     "Check_Summary": "Ensure that robust password policies are implemented and enforced to protect sensitive information and maintain compliance with security standards."
                 }
             ],
@@ -69,8 +69,8 @@
             "Attributes": [
                 {
                     "Category": "A.8 Asset Management",
-                    "Objetive_ID": "A.8",
-                    "Objetive_Name": "Asset Management",
+                    "Objective_ID": "A.8",
+                    "Objective_Name": "Asset Management",
                     "Check_Summary": "Ensure that assets are properly identified, managed, and protected, and that contact and security information is up-to-date."
                 }
             ],
@@ -86,8 +86,8 @@
             "Attributes": [
                 {
                     "Category": "A.9 Access Control",
-                    "Objetive_ID": "A.9",
-                    "Objetive_Name": "Access Control",
+                    "Objective_ID": "A.9",
+                    "Objective_Name": "Access Control",
                     "Check_Summary": "Ensure that access control mechanisms are in place and functioning correctly to restrict access to information and processing facilities based on business needs and security requirements."
                 }
             ],
@@ -103,8 +103,8 @@
             "Attributes": [
                 {
                     "Category": "A.10 Cryptography",
-                    "Objetive_ID": "A.10",
-                    "Objetive_Name": "Cryptography",
+                    "Objective_ID": "A.10",
+                    "Objective_Name": "Cryptography",
                     "Check_Summary": "Ensure that cryptographic measures are in place and effectively managed to protect sensitive information and maintain data integrity."
                 }
             ],
@@ -122,8 +122,8 @@
             "Attributes": [
                 {
                     "Category": "A.12 Operations Security",
-                    "Objetive_ID": "A.12",
-                    "Objetive_Name": "Operations Security",
+                    "Objective_ID": "A.12",
+                    "Objective_Name": "Operations Security",
                     "Check_Summary": "Ensure secure and effective management of information processing facilities, including monitoring, logging, backup, and control of operations."
                 }
             ],
@@ -145,8 +145,8 @@
             "Attributes": [
                 {
                     "Category": "A.13 Communications Security",
-                    "Objetive_ID": "A.13",
-                    "Objetive_Name": "Communications Security",
+                    "Objective_ID": "A.13",
+                    "Objective_Name": "Communications Security",
                     "Check_Summary": "Ensure secure communication across networks and protect data in transit using encryption and other security measures."
                 }
             ],
@@ -164,8 +164,8 @@
             "Attributes": [
                 {
                     "Category": "A.15 Supplier Relationships",
-                    "Objetive_ID": "A.15",
-                    "Objetive_Name": "Supplier Relationships",
+                    "Objective_ID": "A.15",
+                    "Objective_Name": "Supplier Relationships",
                     "Check_Summary": "Ensure that suppliers comply with the organization's information security policies and procedures and that security measures are in place for information accessible to or processed by suppliers."
                 }
             ],
@@ -180,8 +180,8 @@
             "Attributes": [
                 {
                     "Category": "A.16 Incident Management",
-                    "Objetive_ID": "A.16",
-                    "Objetive_Name": "Incident Management",
+                    "Objective_ID": "A.16",
+                    "Objective_Name": "Incident Management",
                     "Check_Summary": "Implement mechanisms to detect, report, and manage information security incidents effectively to minimize the impact on the organization and ensure continuous improvement."
                 }
             ],
@@ -197,8 +197,8 @@
             "Attributes": [
                 {
                     "Category": "A.18 Compliance",
-                    "Objetive_ID": "A.18",
-                    "Objetive_Name": "Compliance",
+                    "Objective_ID": "A.18",
+                    "Objective_Name": "Compliance",
                     "Check_Summary": "Implement mechanisms to ensure compliance with relevant laws, regulations, and contractual obligations related to information security and data privacy."
                 }
             ],

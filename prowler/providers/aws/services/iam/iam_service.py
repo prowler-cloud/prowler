@@ -57,6 +57,7 @@ class IAM(AWSService):
             f"arn:{self.audited_partition}:iam:{self.region}:{self.audited_account}:mfa"
         )
         self.users = self._get_users()
+        self.__assign_user_groups__()
         self.roles = self._get_roles()
         self.account_summary = self._get_account_summary()
         self.virtual_mfa_devices = self._list_virtual_mfa_devices()
@@ -68,9 +69,7 @@ class IAM(AWSService):
         self._list_attached_role_policies()
         self._list_mfa_devices()
         self.password_policy = self._get_password_policy()
-        support_policy_arn = (
-            f"arn:{self.audited_partition}:iam::aws:policy/AWSSupportAccess"
-        )
+        support_policy_arn = f"arn:{self.audited_partition}:iam::aws:policy/aws-service-role/AWSSupportServiceRolePolicy"
         self.entities_role_attached_to_support_policy = (
             self._list_entities_role_for_policy(support_policy_arn)
         )
@@ -919,6 +918,44 @@ class IAM(AWSService):
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+    
+    def __check_root_access_keys__(self):
+        logger.info("IAM - Checking Root Access Keys...")
+        try:
+            credential_report = self._get_credential_report()  # Fetch the report properly
+            for user in credential_report:
+                if user["user"] == "<root_account>":
+                    access_key_1_active = user["access_key_1_active"]
+                    access_key_2_active = user["access_key_2_active"]
+                    return access_key_1_active == "true" or access_key_2_active == "true"
+        except Exception as error:
+            logger.error(f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}")
+        return False
+    
+    def __assign_user_groups__(self):
+        logger.info("IAM - Assigning users to groups...")
+        for user in self.users:
+            try:
+                # Fetch groups for each user using the AWS API
+                user_groups = self.client.list_groups_for_user(UserName=user.name)
+                # Assign the fetched groups to the user's 'groups' attribute
+                user.groups = [group['GroupName'] for group in user_groups['Groups']]
+                logger.info(f"User {user.name} groups: {user.groups}")
+            except ClientError as error:
+                logger.error(f"Error fetching groups for user {user.name}: {error}")
+                user.groups = []
+
+    
+    def _get_user_groups(self, user_obj):
+        """Fetches and assigns group memberships for the given user."""
+        try:
+            user_groups = self.client.list_groups_for_user(UserName=user_obj.name)
+            user_obj.groups = [group['GroupName'] for group in user_groups['Groups']]
+            logger.info(f"User {user_obj.name} is in groups: {user_obj.groups}")
+        except ClientError as error:
+            logger.error(f"Error fetching groups for user {user_obj.name}: {error}")
+            user_obj.groups = []  # If error, set groups to an empty list
+
 
 
 class MFADevice(BaseModel):
@@ -935,6 +972,10 @@ class User(BaseModel):
     attached_policies: list[dict] = []
     inline_policies: list[str] = []
     tags: Optional[list]
+    groups: list[str] = []
+    mfa_devices: list[MFADevice] = []
+    attached_policies: list[dict] = []
+    inline_policies: list[str] = [] 
 
 
 class Role(BaseModel):

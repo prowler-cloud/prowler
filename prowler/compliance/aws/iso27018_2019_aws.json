@@ -11,8 +11,8 @@
             "Attributes": [
                 {
                     "Category": "A.5 Information Security Policies",
-                    "Objetive_ID": "A.5",
-                    "Objetive_Name": "Information Security Policies",
+                    "Objective_ID": "A.5",
+                    "Objective_Name": "Information Security Policies",
                     "Check_Summary": "This control ensures that the organization has implemented and maintains effective information security policies. It includes continuous monitoring of AWS resources, enforcing IAM policies, logging API calls, and keeping security contact information up-to-date."
                 }
             ],
@@ -41,8 +41,8 @@
             "Attributes": [
                 {
                     "Category": "A.6 Organization of Information Security",
-                    "Objetive_ID": "A.6",
-                    "Objetive_Name": "Organization of Information Security",
+                    "Objective_ID": "A.6",
+                    "Objective_Name": "Organization of Information Security",
                     "Check_Summary": "This control ensures that the organization maintains up-to-date contact details and registers security contact information to enable prompt communication and notification of security issues."
                 }
             ],
@@ -58,8 +58,8 @@
             "Attributes": [
                 {
                     "Category": "A.7 Human Resource Security",
-                    "Objetive_ID": "A.7",
-                    "Objetive_Name": "Human Resource Security",
+                    "Objective_ID": "A.7",
+                    "Objective_Name": "Human Resource Security",
                     "Check_Summary": "This control ensures the implementation and enforcement of strong IAM password policies, including minimum length, complexity requirements (uppercase, lowercase, numbers, symbols), prevention of password reuse, and regular password expiration."
                 }
             ],
@@ -80,8 +80,8 @@
             "Attributes": [
                 {
                     "Category": "A.9 Access Control",
-                    "Objetive_ID": "A.9",
-                    "Objetive_Name": "Access Control",
+                    "Objective_ID": "A.9",
+                    "Objective_Name": "Access Control",
                     "Check_Summary": "This control ensures proper access control by requiring IAM Access Analyzer to be enabled and functioning without any findings within the AWS account."
                 }
             ],
@@ -97,8 +97,8 @@
             "Attributes": [
                 {
                     "Category": "A.10 Cryptography",
-                    "Objetive_ID": "A.10",
-                    "Objetive_Name": "Cryptography",
+                    "Objective_ID": "A.10",
+                    "Objective_Name": "Cryptography",
                     "Check_Summary": "This control ensures the proper management and application of cryptographic controls by monitoring the expiration of ACM certificates, enabling transparency logs, ensuring the rotation of customer-managed keys (CMKs), and enforcing KMS encryption for S3 buckets within the AWS account."
                 }
             ],
@@ -116,8 +116,8 @@
             "Attributes": [
                 {
                     "Category": "A.12 Operations Security",
-                    "Objetive_ID": "A.12",
-                    "Objetive_Name": "Operations Security",
+                    "Objective_ID": "A.12",
+                    "Objective_Name": "Operations Security",
                     "Check_Summary": "This control ensures secure and well-controlled management of the organization\u2019s information processing facilities and systems by monitoring, logging, backup, and maintaining systems and networks securely."
                 }
             ],
@@ -139,8 +139,8 @@
             "Attributes": [
                 {
                     "Category": "A.13 Communications Security",
-                    "Objetive_ID": "A.13",
-                    "Objetive_Name": "Communications Security",
+                    "Objective_ID": "A.13",
+                    "Objective_Name": "Communications Security",
                     "Check_Summary": "This control ensures that the organization uses encryption and secure protocols to protect information in transit from interception, tampering, and eavesdropping."
                 }
             ],
@@ -158,8 +158,8 @@
             "Attributes": [
                 {
                     "Category": "A.15 Supplier Relationships",
-                    "Objetive_ID": "A.15",
-                    "Objetive_Name": "Supplier Relationships",
+                    "Objective_ID": "A.15",
+                    "Objective_Name": "Supplier Relationships",
                     "Check_Summary": "This control ensures that the organization manages its suppliers appropriately and that suppliers adhere to the same information security practices."
                 }
             ],
@@ -174,8 +174,8 @@
             "Attributes": [
                 {
                     "Category": "A.18 Compliance",
-                    "Objetive_ID": "A.18",
-                    "Objetive_Name": "Compliance",
+                    "Objective_ID": "A.18",
+                    "Objective_Name": "Compliance",
                     "Check_Summary": "This control ensures that the organization complies with relevant laws, regulations, contractual obligations, and standards."
                 }
             ],

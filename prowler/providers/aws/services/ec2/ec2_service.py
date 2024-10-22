@@ -1,6 +1,6 @@
 from datetime import datetime
 from ipaddress import IPv4Address, IPv6Address, ip_address
-from typing import Optional, Union
+from typing import Optional, Union, List
 
 from botocore.client import ClientError
 from pydantic import BaseModel
@@ -54,6 +54,75 @@ class EC2(AWSService):
         self.__threading_call__(self._describe_vpn_endpoints)
         self.transit_gateways = {}
         self.__threading_call__(self._describe_transit_gateways)
+        self.vpcs = []
+        self.internet_gateways = []
+        self.__threading_call__(self._describe_vpcs)
+        self.__threading_call__(self._describe_internet_gateways)
+        self.route_tables = []
+        self.__threading_call__(self._describe_route_tables)
+
+    def _describe_vpcs(self, regional_client):
+        try:
+            describe_vpcs_paginator = regional_client.get_paginator("describe_vpcs")
+            for page in describe_vpcs_paginator.paginate():
+                for vpc in page["Vpcs"]:
+                    arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:vpc/{vpc['VpcId']}"
+                    if not self.audit_resources or (is_resource_filtered(arn, self.audit_resources)):
+                        self.vpcs.append(
+                            VPC(
+                                id=vpc["VpcId"],
+                                arn=arn,
+                                region=regional_client.region,
+                                tags=vpc.get("Tags", [])
+                            )
+                        )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+    
+    def _describe_internet_gateways(self, regional_client):
+        try:
+            describe_igws_paginator = regional_client.get_paginator("describe_internet_gateways")
+            for page in describe_igws_paginator.paginate():
+                for igw in page["InternetGateways"]:
+                    arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:internet-gateway/{igw['InternetGatewayId']}"
+                    if not self.audit_resources or (is_resource_filtered(arn, self.audit_resources)):
+                        attachments = [attachment["VpcId"] for attachment in igw.get("Attachments", [])]
+                        self.internet_gateways.append(
+                            InternetGateway(
+                                id=igw["InternetGatewayId"],
+                                arn=arn,
+                                region=regional_client.region,
+                                attachments=attachments,
+                                tags=igw.get("Tags", [])
+                            )
+                        )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+    
+    def _describe_route_tables(self, regional_client):
+        try:
+            describe_route_tables_paginator = regional_client.get_paginator("describe_route_tables")
+            for page in describe_route_tables_paginator.paginate():
+                for route_table in page["RouteTables"]:
+                    arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:route-table/{route_table['RouteTableId']}"
+                    if not self.audit_resources or (is_resource_filtered(arn, self.audit_resources)):
+                        self.route_tables.append(
+                            RouteTable(
+                                id=route_table["RouteTableId"],
+                                arn=arn,
+                                region=regional_client.region,
+                                routes=[Route(**route) for route in route_table.get("Routes", [])],
+                                tags=route_table.get("Tags", [])
+                            )
+                        )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
     def _get_volume_arn_template(self, region):
         return (
@@ -636,7 +705,29 @@ class EC2(AWSService):
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+class Route(BaseModel):
+    destination_cidr_block: Optional[str]
+    gateway_id: Optional[str]
 
+class RouteTable(BaseModel):
+    id: str
+    arn: str
+    region: str
+    routes: List[Route] = []
+    tags: Optional[List[dict]] = []
+
+class VPC(BaseModel):
+    id: str
+    arn: str
+    region: str
+    tags: Optional[list] = []
+
+class InternetGateway(BaseModel):
+    id: str
+    arn: str
+    region: str
+    attachments: list[str] = []
+    tags: Optional[list] = []
 
 class Instance(BaseModel):
     id: str

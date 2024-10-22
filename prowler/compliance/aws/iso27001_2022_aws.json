@@ -11,8 +11,8 @@
             "Attributes": [
                 {
                     "Category": "A.5 Information Security Policies",
-                    "Objective_ID": "A.5",
-                    "Objective_Name": "Information Security Policies",
+                    "Objetive_ID": "A.5",
+                    "Objetive_Name": "Information Security Policies",
                     "Check_Summary": "Ensure information security policies are in place and reviewed regularly."
                 }
             ],
@@ -120,8 +120,8 @@
             "Attributes": [
                 {
                     "Category": "A.11 Physical and Environmental Security",
-                    "Objective_ID": "A.11",
-                    "Objective_Name": "Physical and Environmental Security",
+                    "Objetive_ID": "A.11",
+                    "Objetive_Name": "Physical and Environmental Security",
                     "Check_Summary": "Ensure physical access to AWS resources is controlled and monitored."
                 }
             ],
@@ -179,8 +179,8 @@
             "Attributes": [
                 {
                     "Category": "A.14 System Acquisition, Development and Maintenance",
-                    "Objective_ID": "A.14",
-                    "Objective_Name": "System Acquisition, Development and Maintenance",
+                    "Objetive_ID": "A.14",
+                    "Objetive_Name": "System Acquisition, Development and Maintenance",
                     "Check_Summary": "Ensure software development lifecycle includes security requirements, and vulnerabilities are managed."
                 }
             ],
@@ -233,8 +233,8 @@
             "Attributes": [
                 {
                     "Category": "A.17 Information Security Aspects of Business Continuity Management",
-                    "Objective_ID": "A.17",
-                    "Objective_Name": "Information Security Aspects of Business Continuity Management",
+                    "Objetive_ID": "A.17",
+                    "Objetive_Name": "Information Security Aspects of Business Continuity Management",
                     "Check_Summary": "Ensure backup and disaster recovery mechanisms are in place and regularly tested."
                 }
             ],

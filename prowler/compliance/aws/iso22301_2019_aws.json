@@ -11,8 +11,8 @@
             "Attributes": [
                 {
                     "Category": "c.5 Business Continuity Policies",
-                    "Objetive_ID": "c.5",
-                    "Objetive_Name": "Business Continuity Policies",
+                    "Objective_ID": "c.5",
+                    "Objective_Name": "Business Continuity Policies",
                     "Check_Summary": "Implement policies and procedures to ensure the organization can continue its critical operations during and after a disruptive incident."
                 }
             ],
@@ -30,8 +30,8 @@
             "Attributes": [
                 {
                     "Category": "c.8.2 Business Impact Analysis and Risk Assessment",
-                    "Objetive_ID": "c.8.2",
-                    "Objetive_Name": "Business Impact Analysis and Risk Assessment",
+                    "Objective_ID": "c.8.2",
+                    "Objective_Name": "Business Impact Analysis and Risk Assessment",
                     "Check_Summary": "Implement checks and procedures to identify and assess the impact of potential disruptions on critical business functions, and ensure that appropriate backup plans are in place."
                 }
             ],
@@ -47,8 +47,8 @@
             "Attributes": [
                 {
                     "Category": "c.8.3 Business Continuity Strategy",
-                    "Objetive_ID": "c.8.3",
-                    "Objetive_Name": "Business Continuity Strategy",
+                    "Objective_ID": "c.8.3",
+                    "Objective_Name": "Business Continuity Strategy",
                     "Check_Summary": "Implement checks and strategies to ensure the continuity of critical business functions, including enabling CloudTrail for logging and ensuring RDS instances have backups enabled."
                 }
             ],

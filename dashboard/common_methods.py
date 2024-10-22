@@ -1257,6 +1257,318 @@ def get_section_containers_rbi(data, section_1):
 
     return html.Div(direct_internal_items, className="compliance-data-layout")
 
+def safe_version_tuple(version):
+    # Remove any leading/trailing whitespace and commas
+    version = re.sub(r"[a-zA-Z]", "", version).strip()
+    version = re.sub(r"[,\s]+", ".", version)  # Replace commas and multiple spaces with a dot
+
+    if version == "" or version in ["-", "_", " "]:
+        return version
+    else:
+        delimiter = None
+        if "." in version:
+            delimiter = "."
+        elif "-" in version:
+            delimiter = "-"
+        elif "_" in version:
+            delimiter = "_"
+
+        # Clean up all the strings that end with . or - or _
+        version = version.rstrip(".-_")
+
+        if delimiter:
+            try:
+                return tuple(
+                    int(segment) for segment in version.split(delimiter) if segment.isdigit()
+                )
+            except ValueError:
+                # Handle invalid segments gracefully
+                return version
+        else:
+            return version
+
+def get_section_container_update_iso(data, section_1, section_2):
+    # Ensure the missing columns are handled properly
+    if "REQUIREMENTS_ATTRIBUTES_OBJECTIVE_ID" not in data.columns or "REQUIREMENTS_ATTRIBUTES_OBJECTIVE_NAME" not in data.columns:
+        # Handle the missing column case by filling with placeholder values
+        data["REQUIREMENTS_ATTRIBUTES_OBJECTIVE_ID"] = "Unknown ID"
+        data["REQUIREMENTS_ATTRIBUTES_OBJECTIVE_NAME"] = "Unknown Name"
+
+    data["STATUS"] = data["STATUS"].apply(map_status_to_icon)
+
+    data.sort_values(
+        by=section_1,
+        key=lambda x: x.map(safe_version_tuple),
+        inplace=True,
+    )
+    data.sort_values(
+        by=section_2,
+        key=lambda x: x.map(safe_version_tuple),
+        inplace=True,
+    )
+    findings_counts_objetive_id = (
+        data.groupby([section_2, "STATUS"]).size().unstack(fill_value=0)
+    )
+    findings_counts_category = (
+        data.groupby([section_1, "STATUS"]).size().unstack(fill_value=0)
+    )
+
+    section_containers = []
+
+    for category in data[section_1].unique():
+        success_category = (
+            findings_counts_category.loc[category, pass_emoji]
+            if pass_emoji in findings_counts_category.columns
+            else 0
+        )
+        failed_category = (
+            findings_counts_category.loc[category, fail_emoji]
+            if fail_emoji in findings_counts_category.columns
+            else 0
+        )
+
+        fig_category = go.Figure(
+            data=[
+                go.Bar(
+                    name="Failed",
+                    x=[failed_category],
+                    y=[""],
+                    orientation="h",
+                    marker=dict(color="#e77676"),
+                    width=[0.8],
+                ),
+                go.Bar(
+                    name="Success",
+                    x=[success_category],
+                    y=[""],
+                    orientation="h",
+                    marker=dict(color="#45cc6e"),
+                    width=[0.8],
+                ),
+            ]
+        )
+
+        fig_category.update_layout(
+            barmode="stack",
+            margin=dict(l=10, r=10, t=10, b=10),
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            showlegend=False,
+            width=350,
+            height=30,
+            xaxis=dict(showticklabels=False, showgrid=False, zeroline=False),
+            yaxis=dict(showticklabels=False, showgrid=False, zeroline=False),
+            annotations=[
+                dict(
+                    x=success_category + failed_category,
+                    y=0,
+                    xref="x",
+                    yref="y",
+                    text=str(success_category),
+                    showarrow=False,
+                    font=dict(color="#45cc6e", size=14),
+                    xanchor="left",
+                    yanchor="middle",
+                ),
+                dict(
+                    x=0,
+                    y=0,
+                    xref="x",
+                    yref="y",
+                    text=str(failed_category),
+                    showarrow=False,
+                    font=dict(color="#e77676", size=14),
+                    xanchor="right",
+                    yanchor="middle",
+                ),
+            ],
+        )
+
+        fig_category.add_annotation(
+            x=50,
+            y=0,
+            text="",
+            showarrow=False,
+            align="center",
+            xanchor="center",
+            yanchor="middle",
+            textangle=0,
+        )
+
+        fig_category.add_annotation(
+            x=failed_category,
+            y=0.3,
+            text="|",
+            showarrow=False,
+            align="center",
+            xanchor="center",
+            yanchor="middle",
+            textangle=0,
+            font=dict(size=20),
+        )
+
+        graph_category = dcc.Graph(
+            figure=fig_category, config={"staticPlot": True}, className="info-bar"
+        )
+
+        graph_div = html.Div(graph_category, className="graph-section")
+
+        direct_internal_items = []
+        for objetive_id in data[data[section_1] == category][section_2].unique():
+            specific_data = data[
+                (data[section_1] == category) & (data[section_2] == objetive_id)
+            ]
+            success_objetive_id = (
+                findings_counts_objetive_id.loc[objetive_id, pass_emoji]
+                if pass_emoji in findings_counts_objetive_id.columns
+                else 0
+            )
+            failed_objetive_id = (
+                findings_counts_objetive_id.loc[objetive_id, fail_emoji]
+                if fail_emoji in findings_counts_objetive_id.columns
+                else 0
+            )
+
+            # Create the DataTable for req_id
+            data_table = dash_table.DataTable(
+                data=specific_data.to_dict("records"),
+                columns=[
+                    {"name": i, "id": i}
+                    for i in ["CHECKID", "STATUS", "REGION", "ACCOUNTID", "RESOURCEID"]
+                ],
+                style_table={"overflowX": "auto"},
+                style_as_list_view=True,
+                style_cell={"textAlign": "left", "padding": "5px"},
+            )
+            # Create the graph for req_id
+            fig_objetive_id = go.Figure(
+                data=[
+                    go.Bar(
+                        name="Failed",
+                        x=[failed_objetive_id],
+                        y=[""],
+                        orientation="h",
+                        marker=dict(color="#e77676"),
+                    ),
+                    go.Bar(
+                        name="Success",
+                        x=[success_objetive_id],
+                        y=[""],
+                        orientation="h",
+                        marker=dict(color="#45cc6e"),
+                    ),
+                ]
+            )
+
+            fig_objetive_id.update_layout(
+                barmode="stack",
+                margin=dict(l=10, r=10, t=10, b=10),
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(0,0,0,0)",
+                showlegend=False,
+                width=350,
+                height=30,
+                xaxis=dict(showticklabels=False, showgrid=False, zeroline=False),
+                yaxis=dict(showticklabels=False, showgrid=False, zeroline=False),
+                annotations=[
+                    dict(
+                        x=success_objetive_id + failed_objetive_id,
+                        y=0,
+                        xref="x",
+                        yref="y",
+                        text=str(success_objetive_id),
+                        showarrow=False,
+                        font=dict(color="#45cc6e", size=14),
+                        xanchor="left",
+                        yanchor="middle",
+                    ),
+                    dict(
+                        x=0,
+                        y=0,
+                        xref="x",
+                        yref="y",
+                        text=str(failed_objetive_id),
+                        showarrow=False,
+                        font=dict(color="#e77676", size=14),
+                        xanchor="right",
+                        yanchor="middle",
+                    ),
+                ],
+            )
+
+            fig_objetive_id.add_annotation(
+                x=50,
+                y=0,
+                text="",
+                showarrow=False,
+                align="center",
+                xanchor="center",
+                yanchor="middle",
+                textangle=0,
+            )
+
+            fig_objetive_id.add_annotation(
+                x=failed_objetive_id,
+                y=0.3,
+                text="|",
+                showarrow=False,
+                align="center",
+                xanchor="center",
+                yanchor="middle",
+                textangle=0,
+                font=dict(size=20),
+            )
+
+            graph_objetive_id = dcc.Graph(
+                figure=fig_objetive_id,
+                config={"staticPlot": True},
+                className="info-bar-child",
+            )
+
+            graph_div_objetive_id = html.Div(
+                graph_objetive_id, className="graph-section-req"
+            )
+
+            title_internal = f"{objetive_id} - {specific_data['REQUIREMENTS_ATTRIBUTES_OBJECTIVE_NAME'].iloc[0]}"
+            # Cut the title if it's too long
+            title_internal = (
+                title_internal[:130] + " ..."
+                if len(title_internal) > 130
+                else title_internal
+            )
+
+            internal_accordion_item = dbc.AccordionItem(
+                title=title_internal,
+                children=[html.Div([data_table], className="inner-accordion-content")],
+            )
+
+            internal_objetive_id_container = html.Div(
+                [
+                    graph_div_objetive_id,
+                    dbc.Accordion(
+                        [internal_accordion_item], start_collapsed=True, flush=True
+                    ),
+                ],
+                className="accordion-inner--child",
+            )
+
+            direct_internal_items.append(internal_objetive_id_container)
+
+        accordion_item = dbc.AccordionItem(
+            title=f"{category}", children=direct_internal_items
+        )
+        objetive_id_container = html.Div(
+            [
+                graph_div,
+                dbc.Accordion([accordion_item], start_collapsed=True, flush=True),
+            ],
+            className="accordion-inner",
+        )
+
+        section_containers.append(objetive_id_container)
+
+    return html.Div(section_containers, className="compliance-data-layout")
+
 
 def get_section_container_iso(data, section_1, section_2):
     data["STATUS"] = data["STATUS"].apply(map_status_to_icon)

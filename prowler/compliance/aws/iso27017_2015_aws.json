@@ -11,8 +11,8 @@
             "Attributes": [
                 {
                     "Category": "A.5 Information Security Policies",
-                    "Objetive_ID": "A.5",
-                    "Objetive_Name": "Information Security Policies",
+                    "Objective_ID": "A.5",
+                    "Objective_Name": "Information Security Policies",
                     "Check_Summary": "This control ensures that the organization has implemented necessary information security policies and that these policies are enforced across all regions. By enabling AWS Config recorder in all regions, organizations can track and manage configuration changes to maintain security compliance."
                 }
             ],
@@ -27,8 +27,8 @@
             "Attributes": [
                 {
                     "Category": "A.6 Organization of Information Security",
-                    "Objetive_ID": "A.6",
-                    "Objetive_Name": "Organization of Information Security",
+                    "Objective_ID": "A.6",
+                    "Objective_Name": "Organization of Information Security",
                     "Check_Summary": "This control ensures that the organization has a well-defined structure for managing information security. It includes maintaining up-to-date contact details for accounts and registering security contact information to ensure effective communication and response during security incidents."
                 }
             ],
@@ -44,8 +44,8 @@
             "Attributes": [
                 {
                     "Category": "A.7 Human Resource Security",
-                    "Objetive_ID": "A.7",
-                    "Objetive_Name": "Human Resource Security",
+                    "Objective_ID": "A.7",
+                    "Objective_Name": "Human Resource Security",
                     "Check_Summary": "This control ensures that the organization has implemented necessary human resource security measures. It includes enforcing strong password policies such as minimum length, use of uppercase and lowercase letters, numbers, symbols, preventing password reuse, and ensuring passwords expire within 90 days or less to protect access to AWS accounts."
                 }
             ],
@@ -66,8 +66,8 @@
             "Attributes": [
                 {
                     "Category": "A.9 Access Control",
-                    "Objetive_ID": "A.9",
-                    "Objetive_Name": "Access Control",
+                    "Objective_ID": "A.9",
+                    "Objective_Name": "Access Control",
                     "Check_Summary": "This control ensures that the organization has implemented necessary access control measures. It includes enabling IAM Access Analyzer to continuously monitor and analyze resource permissions, ensuring that access is appropriately restricted and there are no unresolved findings indicating excessive permissions or potential risks."
                 }
             ],
@@ -83,8 +83,8 @@
             "Attributes": [
                 {
                     "Category": "A.10 Cryptography",
-                    "Objetive_ID": "A.10",
-                    "Objetive_Name": "Cryptography",
+                    "Objective_ID": "A.10",
+                    "Objective_Name": "Cryptography",
                     "Check_Summary": "This control ensures that the organization has implemented necessary cryptographic controls. It includes checking the expiration of ACM certificates to ensure they are valid, enabling certificate transparency logs to provide visibility and accountability, ensuring that KMS Customer Managed Keys (CMKs) are rotated regularly to maintain their security, and enabling KMS encryption for S3 buckets to protect data at rest."
                 }
             ],
@@ -102,8 +102,8 @@
             "Attributes": [
                 {
                     "Category": "A.12 Operations Security",
-                    "Objetive_ID": "A.12",
-                    "Objetive_Name": "Operations Security",
+                    "Objective_ID": "A.12",
+                    "Objective_Name": "Operations Security",
                     "Check_Summary": "This control ensures that the organization has implemented necessary operations security measures. It includes enabling AWS CloudTrail to capture API activity, integrating CloudTrail with CloudWatch Logs for real-time monitoring, enabling CloudTrail in multiple regions, ensuring backup plans meet minimum frequency and retention requirements, and configuring CloudWatch log metric filters to monitor unauthorized API calls, security group changes, and root account usage."
                 }
             ],
@@ -125,8 +125,8 @@
             "Attributes": [
                 {
                     "Category": "A.13 Communications Security",
-                    "Objetive_ID": "A.13",
-                    "Objetive_Name": "Communications Security",
+                    "Objective_ID": "A.13",
+                    "Objective_Name": "Communications Security",
                     "Check_Summary": "This control ensures that the organization has implemented necessary communications security measures. It includes enabling SSL for API Gateway stages to secure API endpoints, enforcing HTTPS for CloudFront distributions to protect data in transit, ensuring RDS instance transport encryption to secure database connections, and enabling network policies for EKS clusters to control communication between pods."
                 }
             ],
@@ -144,8 +144,8 @@
             "Attributes": [
                 {
                     "Category": "A.15 Supplier Relationships",
-                    "Objetive_ID": "A.15",
-                    "Objetive_Name": "Supplier Relationships",
+                    "Objective_ID": "A.15",
+                    "Objective_Name": "Supplier Relationships",
                     "Check_Summary": "This control ensures that the organization has implemented necessary measures to manage and monitor supplier relationships. It includes enabling AWS Config recorders in all regions to continuously track configuration changes, assess compliance, and ensure that suppliers adhere to security policies and contractual obligations."
                 }
             ],
@@ -160,8 +160,8 @@
             "Attributes": [
                 {
                     "Category": "A.16 Incident Management",
-                    "Objetive_ID": "A.16",
-                    "Objetive_Name": "Incident Management",
+                    "Objective_ID": "A.16",
+                    "Objective_Name": "Incident Management",
                     "Check_Summary": "This control ensures that the organization has implemented necessary measures for incident management. It includes enabling Amazon GuardDuty to detect threats and continuously monitor for malicious activity and ensuring that there are no high severity findings in GuardDuty to mitigate risks and manage security incidents effectively."
                 }
             ],
@@ -177,8 +177,8 @@
             "Attributes": [
                 {
                     "Category": "A.18 Compliance",
-                    "Objetive_ID": "A.18",
-                    "Objetive_Name": "Compliance",
+                    "Objective_ID": "A.18",
+                    "Objective_Name": "Compliance",
                     "Check_Summary": "This control ensures that the organization has implemented necessary compliance measures. It includes avoiding the use of the AWS root account to reduce security risks, rotating access keys every 90 days to maintain security hygiene, and ensuring that no root access keys exist to prevent unauthorized access and comply with security best practices."
                 }
             ],
