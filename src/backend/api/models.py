@@ -488,7 +488,7 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
-    uid = models.CharField(max_length=150)
+    uid = models.CharField(max_length=300)
     delta = FindingDeltaEnumField(
         choices=DeltaChoices.choices,
         blank=True,

@@ -898,7 +898,7 @@ class Migration(migrations.Migration):
                 ),
                 ("inserted_at", models.DateTimeField(auto_now_add=True)),
                 ("updated_at", models.DateTimeField(auto_now=True)),
-                ("uid", models.CharField(max_length=150)),
+                ("uid", models.CharField(max_length=300)),
                 (
                     "delta",
                     api.db_utils.FindingDeltaEnumField(
