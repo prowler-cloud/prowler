@@ -5,7 +5,7 @@
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices"
   ],
-  "ServiceName": "elasticloadbalancing",
+  "ServiceName": "elb",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:elasticloadbalancing:{region}:{account-id}:loadbalancer/{load-balancer-name}",
   "Severity": "medium",
