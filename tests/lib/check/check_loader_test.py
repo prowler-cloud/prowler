@@ -263,7 +263,7 @@ class TestCheckLoader:
         categories = None
 
         with patch(
-            "prowler.lib.check.checks_loader.CheckMetadata.list_by_compliance_framework",
+            "prowler.lib.check.checks_loader.CheckMetadata.list",
             return_value={S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME},
         ):
             assert {S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME} == load_checks_to_execute(
