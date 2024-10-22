@@ -151,7 +151,7 @@ class Test_elb_desync_mitigation_mode:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "ELB CLB my-lb-monitor does not have defensive or strictest desync mitigation mode."
+                == "ELB my-lb-monitor has desync mitigation mode set to monitor, not to strictest or defensive."
             )
             assert result[0].resource_id == "my-lb-monitor"
             assert (
@@ -206,7 +206,7 @@ class Test_elb_desync_mitigation_mode:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "ELB CLB my-lb-defensive has desync mitigation mode set to defensive."
+                == "ELB my-lb-defensive has desync mitigation mode set to defensive."
             )
             assert result[0].resource_id == "my-lb-defensive"
             assert (
@@ -261,7 +261,7 @@ class Test_elb_desync_mitigation_mode:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "ELB CLB my-lb-strictest has desync mitigation mode set to strictest."
+                == "ELB my-lb-strictest has desync mitigation mode set to strictest."
             )
             assert result[0].resource_id == "my-lb-strictest"
             assert (

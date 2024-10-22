@@ -11,18 +11,15 @@ class elb_desync_mitigation_mode(Check):
             report.resource_id = lb.name
             report.resource_arn = lb_arn
             report.resource_tags = lb.tags
-            report.status = "FAIL"
-            report.status_extended = f"ELB CLB {lb.name} does not have defensive or strictest desync mitigation mode."
-            if lb.desync_mitigation_mode == "defensive":
+            if (
+                lb.desync_mitigation_mode == "defensive"
+                or lb.desync_mitigation_mode == "strictest"
+            ):
                 report.status = "PASS"
-                report.status_extended = (
-                    f"ELB CLB {lb.name} has desync mitigation mode set to defensive."
-                )
-            elif lb.desync_mitigation_mode == "strictest":
-                report.status = "PASS"
-                report.status_extended = (
-                    f"ELB CLB {lb.name} has desync mitigation mode set to strictest."
-                )
+                report.status_extended = f"ELB {lb.name} has desync mitigation mode set to {lb.desync_mitigation_mode}."
+            else:
+                report.status = "FAIL"
+                report.status_extended = f"ELB {lb.name} has desync mitigation mode set to {lb.desync_mitigation_mode}, not to strictest or defensive."
 
             findings.append(report)
 

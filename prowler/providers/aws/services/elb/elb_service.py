@@ -36,9 +36,9 @@ class ELB(AWSService):
                                 Listener(
                                     protocol=listener["Listener"]["Protocol"],
                                     policies=listener["PolicyNames"],
-                                    certificate_arn=listener["Listener"][
-                                        "SSLCertificateId"
-                                    ],
+                                    certificate_arn=listener["Listener"].get(
+                                        "SSLCertificateId", ""
+                                    ),
                                 )
                             )
 
