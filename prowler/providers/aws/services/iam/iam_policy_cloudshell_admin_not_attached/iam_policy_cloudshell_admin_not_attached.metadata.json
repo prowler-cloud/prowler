@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "iam_policy_cloudshell_admin_not_attached",
+  "CheckTitle": "Check if IAM identities (users,groups,roles) have the AWSCloudShellFullAccess policy attached.",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/CIS AWS Foundations Benchmark"
+  ],
+  "ServiceName": "iam",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:iam::{account-id}:{resource-type}/{resource-id}",
+  "Severity": "medium",
+  "ResourceType": "AwsIamPolicy",
+  "Description": "This control checks whether an IAM identity (user, role, or group) has the AWS managed policy AWSCloudShellFullAccess attached. The control fails if an IAM identity has the AWSCloudShellFullAccess policy attached.",
+  "Risk": "Attaching the AWSCloudShellFullAccess policy to IAM identities grants broad permissions, including internet access and file transfer capabilities, which can lead to security risks such as data exfiltration. The principle of least privilege should be followed to avoid excessive permissions.",
+  "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/iam-policy-blacklisted-check.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws iam detach-user/role/group-policy --user/role/group-name <user/role/group-name> --policy-arn arn:aws:iam::aws:policy/AWSCloudShellFullAccess",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/iam-controls.html#iam-27",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Detach the AWSCloudShellFullAccess policy from the IAM identity to restrict excessive permissions and adhere to the principle of least privilege.",
+      "Url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_manage-attach-detach.html"
+    }
+  },
+  "Categories": [
+    "trustboundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

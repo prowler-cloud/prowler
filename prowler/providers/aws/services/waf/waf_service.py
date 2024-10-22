@@ -22,25 +22,22 @@ class WAF(AWSService):
         )
         self._list_web_acls()
         self.__threading_call__(self._get_web_acl, self.web_acls.values())
-        self.__threading_call__(
-            self._list_resources_for_web_acl, self.web_acls.values()
-        )
 
     def _list_rules(self):
         logger.info("WAF - Listing Global Rules...")
         try:
             for rule in self.client.list_rules().get("Rules", []):
-                arn = f"arn:{self.audited_partition}:waf:{self.audited_account}:rule/{rule['RuleId']}"
+                arn = f"arn:{self.audited_partition}:waf:{self.region}:{self.audited_account}:rule/{rule['RuleId']}"
                 self.rules[arn] = Rule(
                     arn=arn,
                     id=rule.get("RuleId", ""),
-                    region="us-east-1",
+                    region=self.region,
                     name=rule.get("Name", ""),
                 )
 
         except Exception as error:
             logger.error(
-                f"us-east-1 -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def _get_rule(self, rule):
@@ -56,24 +53,26 @@ class WAF(AWSService):
                     )
                 )
 
-        except KeyError:
-            logger.error(f"Rule {rule.name} not found in {rule.region}.")
+        except Exception as error:
+            logger.error(
+                f"{rule.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
     def _list_rule_groups(self):
         logger.info("WAF - Listing Global Rule Groups...")
         try:
             for rule_group in self.client.list_rule_groups().get("RuleGroups", []):
-                arn = f"arn:{self.audited_partition}:waf:{self.audited_account}:rulegroup/{rule_group['RuleGroupId']}"
+                arn = f"arn:{self.audited_partition}:waf:{self.region}:{self.audited_account}:rulegroup/{rule_group['RuleGroupId']}"
                 self.rule_groups[arn] = RuleGroup(
                     arn=arn,
-                    region="us-east-1",
+                    region=self.region,
                     id=rule_group.get("RuleGroupId", ""),
                     name=rule_group.get("Name", ""),
                 )
 
         except Exception as error:
             logger.error(
-                f"us-east-1 -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def _list_activated_rules_in_rule_group(self, rule_group):
@@ -84,7 +83,7 @@ class WAF(AWSService):
             for rule in self.client.list_activated_rules_in_rule_group(
                 RuleGroupId=rule_group.id
             ).get("ActivatedRules", []):
-                rule_arn = f"arn:{self.audited_partition}:waf:{self.audited_account}:rule/{rule.get('RuleId', '')}"
+                rule_arn = f"arn:{self.audited_partition}:waf:{self.region}:{self.audited_account}:rule/{rule.get('RuleId', '')}"
                 rule_group.rules.append(self.rules[rule_arn])
 
         except Exception as error:
@@ -99,18 +98,18 @@ class WAF(AWSService):
                 if not self.audit_resources or (
                     is_resource_filtered(waf["WebACLId"], self.audit_resources)
                 ):
-                    arn = f"arn:{self.audited_partition}:waf:{self.audited_account}:webacl/{waf['WebACLId']}"
+                    arn = f"arn:{self.audited_partition}:waf:{self.region}:{self.audited_account}:webacl/{waf['WebACLId']}"
                     self.web_acls[arn] = WebAcl(
                         arn=arn,
                         name=waf["Name"],
                         id=waf["WebACLId"],
                         albs=[],
-                        region="us-east-1",
+                        region=self.region,
                     )
 
         except Exception as error:
             logger.error(
-                f"us-east-1 -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def _get_web_acl(self, acl):
@@ -120,30 +119,15 @@ class WAF(AWSService):
             for rule in get_web_acl.get("WebACL", {}).get("Rules", []):
                 rule_id = rule.get("RuleId", "")
                 if rule.get("Type", "") == "GROUP":
-                    rule_group_arn = f"arn:{self.audited_partition}:waf:{self.audited_account}:rulegroup/{rule_id}"
+                    rule_group_arn = f"arn:{self.audited_partition}:waf:{self.region}:{self.audited_account}:rulegroup/{rule_id}"
                     acl.rule_groups.append(self.rule_groups[rule_group_arn])
                 else:
-                    rule_arn = f"arn:{self.audited_partition}:waf:{self.audited_account}:rule/{rule_id}"
+                    rule_arn = f"arn:{self.audited_partition}:waf:{self.region}:{self.audited_account}:rule/{rule_id}"
                     acl.rules.append(self.rules[rule_arn])
 
         except Exception as error:
             logger.error(
                 f"{acl.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-
-    def _list_resources_for_web_acl(self):
-        logger.info("WAF Global - Describing resources...")
-        try:
-            for acl in self.web_acls.values():
-                if acl.region == "us-east-1":
-                    for resource in self.client.list_resources_for_web_acl(
-                        WebACLId=acl.id, ResourceType="APPLICATION_LOAD_BALANCER"
-                    ).get("ResourceArns", []):
-                        acl.albs.append(resource)
-
-        except Exception as error:
-            logger.error(
-                f"us-east-1 -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
 
@@ -192,8 +176,10 @@ class WAFRegional(AWSService):
                         data_id=predicate.get("DataId", ""),
                     )
                 )
-        except KeyError:
-            logger.error(f"Rule {rule.name} not found in {rule.region}.")
+        except Exception as error:
+            logger.error(
+                f"{rule.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
     def _list_rule_groups(self, regional_client):
         logger.info("WAFRegional - Listing Regional Rule Groups...")
