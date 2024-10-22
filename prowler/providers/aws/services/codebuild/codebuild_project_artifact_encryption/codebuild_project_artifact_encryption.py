@@ -1,6 +1,7 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.codebuild.codebuild_client import codebuild_client
 
+
 class codebuild_project_artifact_encryption(Check):
     def execute(self):
         findings = []

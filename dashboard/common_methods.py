@@ -1257,6 +1257,7 @@ def get_section_containers_rbi(data, section_1):
 
     return html.Div(direct_internal_items, className="compliance-data-layout")
 
+
 def safe_version_tuple(version):
     # Remove any leading/trailing whitespace and commas
     version = re.sub(r"[a-zA-Z]", "", version).strip()
@@ -1286,6 +1287,7 @@ def safe_version_tuple(version):
                 return version
         else:
             return version
+
 
 def get_section_container_update_iso(data, section_1, section_2):
     # Ensure the missing columns are handled properly

@@ -1,6 +1,7 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.sagemaker.sagemaker_client import sagemaker_client
 
+
 class sagemaker_endpoint_configuration_kms_key_configured(Check):
     def execute(self):
         findings = []

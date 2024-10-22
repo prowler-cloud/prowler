@@ -1,12 +1,13 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 
+
 class ec2_ebs_optimized_instance(Check):
     def execute(self):
         findings = []
 
         # Iterate through EC2 instances
-        for instance in ec2_client.instances:            
+        for instance in ec2_client.instances:
             if instance.state != 'running':
                 continue
 

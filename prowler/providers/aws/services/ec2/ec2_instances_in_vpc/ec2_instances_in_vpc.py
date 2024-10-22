@@ -1,6 +1,7 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 
+
 class ec2_instances_in_vpc(Check):
     def execute(self):
         findings = []

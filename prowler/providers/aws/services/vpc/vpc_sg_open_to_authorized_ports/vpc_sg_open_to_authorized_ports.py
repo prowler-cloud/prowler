@@ -2,6 +2,7 @@ from typing import List
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.vpc.vpc_client import vpc_client
 
+
 class vpc_sg_open_to_authorized_ports(Check):
     authorized_ports: List[int] = [22, 80, 443]  # Define your authorized ports here
 
@@ -28,7 +29,7 @@ class vpc_sg_open_to_authorized_ports(Check):
                         report.resource_id = sg.id
                         report.resource_arn = sg.arn
                         findings.append(report)
-            
+
             if not unauthorized_ports_found:
                 report = Check_Report_AWS(self.metadata())
                 report.region = sg.region

@@ -1,6 +1,7 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.vpc.vpc_client import vpc_client
 
+
 class vpc_default_security_group_closed(Check):
     def execute(self):
         findings = []

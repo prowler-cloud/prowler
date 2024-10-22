@@ -1,6 +1,7 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ssm.ssm_client import ssm_client
 
+
 class ssm_ec2_managedinstance_association_compliance_status_check(Check):
     def execute(self):
         findings = []

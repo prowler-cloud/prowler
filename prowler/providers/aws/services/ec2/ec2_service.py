@@ -80,7 +80,7 @@ class EC2(AWSService):
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-    
+
     def _describe_internet_gateways(self, regional_client):
         try:
             describe_igws_paginator = regional_client.get_paginator("describe_internet_gateways")
@@ -102,7 +102,7 @@ class EC2(AWSService):
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-    
+
     def _describe_route_tables(self, regional_client):
         try:
             describe_route_tables_paginator = regional_client.get_paginator("describe_route_tables")
@@ -705,9 +705,12 @@ class EC2(AWSService):
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
+
 class Route(BaseModel):
     destination_cidr_block: Optional[str]
     gateway_id: Optional[str]
+
 
 class RouteTable(BaseModel):
     id: str
@@ -716,11 +719,13 @@ class RouteTable(BaseModel):
     routes: List[Route] = []
     tags: Optional[List[dict]] = []
 
+
 class VPC(BaseModel):
     id: str
     arn: str
     region: str
     tags: Optional[list] = []
+
 
 class InternetGateway(BaseModel):
     id: str
@@ -728,6 +733,7 @@ class InternetGateway(BaseModel):
     region: str
     attachments: list[str] = []
     tags: Optional[list] = []
+
 
 class Instance(BaseModel):
     id: str

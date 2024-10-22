@@ -1,6 +1,7 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.iam.iam_client import iam_client
 
+
 class iam_user_group_membership_check(Check):
     def execute(self):
         findings = []

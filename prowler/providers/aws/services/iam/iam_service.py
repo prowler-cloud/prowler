@@ -918,7 +918,7 @@ class IAM(AWSService):
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-    
+
     def __check_root_access_keys__(self):
         logger.info("IAM - Checking Root Access Keys...")
         try:
@@ -931,7 +931,7 @@ class IAM(AWSService):
         except Exception as error:
             logger.error(f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}")
         return False
-    
+
     def __assign_user_groups__(self):
         logger.info("IAM - Assigning users to groups...")
         for user in self.users:
@@ -945,7 +945,6 @@ class IAM(AWSService):
                 logger.error(f"Error fetching groups for user {user.name}: {error}")
                 user.groups = []
 
-    
     def _get_user_groups(self, user_obj):
         """Fetches and assigns group memberships for the given user."""
         try:
@@ -955,7 +954,6 @@ class IAM(AWSService):
         except ClientError as error:
             logger.error(f"Error fetching groups for user {user_obj.name}: {error}")
             user_obj.groups = []  # If error, set groups to an empty list
-
 
 
 class MFADevice(BaseModel):
@@ -975,7 +973,7 @@ class User(BaseModel):
     groups: list[str] = []
     mfa_devices: list[MFADevice] = []
     attached_policies: list[dict] = []
-    inline_policies: list[str] = [] 
+    inline_policies: list[str] = []
 
 
 class Role(BaseModel):

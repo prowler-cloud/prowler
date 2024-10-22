@@ -1,6 +1,7 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.redshift.redshift_client import redshift_client
 
+
 class redshift_require_tls_ssl(Check):
     def execute(self):
         findings = []

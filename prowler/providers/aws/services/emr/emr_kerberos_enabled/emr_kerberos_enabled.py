@@ -1,6 +1,7 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.emr.emr_client import emr_client
 
+
 class emr_kerberos_enabled(Check):
     def execute(self):
         findings = []

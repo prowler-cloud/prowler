@@ -1,6 +1,7 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ecs.ecs_client import ecs_client
 
+
 class ecs_task_definition_user_for_host_mode_check(Check):
     def execute(self):
         findings = []

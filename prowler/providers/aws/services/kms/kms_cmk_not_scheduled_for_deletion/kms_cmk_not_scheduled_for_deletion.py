@@ -1,6 +1,7 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.kms.kms_client import kms_client
 
+
 class kms_cmk_not_scheduled_for_deletion(Check):
     def execute(self):
         findings = []
@@ -20,7 +21,7 @@ class kms_cmk_not_scheduled_for_deletion(Check):
                 else:
                     report.status = "PASS"
                     report.status_extended = f"KMS CMK {key.id} is not scheduled for deletion."
-                
+
                 findings.append(report)
-        
+
         return findings

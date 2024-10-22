@@ -1,6 +1,7 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.iam.iam_client import iam_client
 
+
 class iam_group_has_users_check(Check):
     def execute(self):
         findings = []
@@ -18,7 +19,7 @@ class iam_group_has_users_check(Check):
                 report.resource_tags = []
 
             # Determine if group has users
-            if group.users: 
+            if group.users:
                 report.status = "PASS"
                 report.status_extended = f"IAM group {group.name} has users associated with it."
             else:

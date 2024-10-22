@@ -1,6 +1,7 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.secretsmanager.secretsmanager_client import secretsmanager_client
 
+
 class secretsmanager_scheduled_rotation_success_check(Check):
     def execute(self):
         findings = []

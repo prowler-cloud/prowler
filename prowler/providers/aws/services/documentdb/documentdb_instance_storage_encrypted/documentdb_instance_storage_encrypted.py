@@ -3,6 +3,7 @@ from prowler.providers.aws.services.documentdb.documentdb_client import (
     documentdb_client,
 )
 
+
 class documentdb_instance_storage_encrypted(Check):
     def execute(self):
         findings = []

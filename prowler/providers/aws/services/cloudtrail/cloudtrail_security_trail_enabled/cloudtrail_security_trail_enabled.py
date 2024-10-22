@@ -1,6 +1,7 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.cloudtrail.cloudtrail_client import cloudtrail_client
 
+
 class cloudtrail_security_trail_enabled(Check):
     def execute(self):
         findings = []

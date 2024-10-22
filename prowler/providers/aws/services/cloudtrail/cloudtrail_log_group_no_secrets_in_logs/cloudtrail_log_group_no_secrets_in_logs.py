@@ -1,11 +1,7 @@
-from datetime import datetime, timedelta
 import json
 import boto3
 import gzip
 from io import BytesIO
-from botocore.client import ClientError
-from pydantic import BaseModel
-
 from prowler.lib.logger import logger
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (

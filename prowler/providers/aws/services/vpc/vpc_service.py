@@ -461,6 +461,7 @@ class VPC(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+
 class SecurityGroup(BaseModel):
     id: str
     arn: str
@@ -471,6 +472,7 @@ class SecurityGroup(BaseModel):
     egress_rules: list
     is_default: bool
     tags: Optional[list] = []
+
 
 class VpcSubnet(BaseModel):
     arn: str

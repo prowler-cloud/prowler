@@ -1,6 +1,7 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.elbv2.elbv2_client import elbv2_client
 
+
 class elbv2_alb_http_drop_invalid_header_enabled(Check):
     def execute(self):
         findings = []

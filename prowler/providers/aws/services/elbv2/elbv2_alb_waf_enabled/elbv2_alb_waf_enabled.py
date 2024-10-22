@@ -1,6 +1,7 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.elbv2.elbv2_client import elbv2_client
 
+
 class elbv2_alb_waf_enabled(Check):
     def execute(self):
         findings = []
@@ -22,5 +23,5 @@ class elbv2_alb_waf_enabled(Check):
                 report.status_extended = f"ALB {lb.name} does not have WAF enabled."
 
             findings.append(report)
-        
+
         return findings

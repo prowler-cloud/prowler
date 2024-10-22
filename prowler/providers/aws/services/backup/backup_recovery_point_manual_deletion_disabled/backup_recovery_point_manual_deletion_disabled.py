@@ -2,6 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.backup.backup_client import backup_client
 import json
 
+
 class backup_recovery_point_manual_deletion_disabled(Check):
     def execute(self):
         findings = []

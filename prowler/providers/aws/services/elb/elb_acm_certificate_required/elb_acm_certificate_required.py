@@ -2,11 +2,12 @@ from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.elb.elb_client import elb_client
 from prowler.lib.logger import logger  # Add logging
 
+
 class elb_acm_certificate_required(Check):
     def execute(self):
         findings = []
         logger.info("Executing elb_acm_certificate_required check")
-        
+
         for lb in elb_client.loadbalancers.values():
             report = Check_Report_AWS(self.metadata())
             report.region = lb.region
@@ -23,7 +24,7 @@ class elb_acm_certificate_required(Check):
                 report.status_extended = f"Classic Load Balancer {lb.name} does not have an ACM certificate attached."
 
             findings.append(report)
-        
+
         return findings
 
     def check_acm_certificate(self, lb):

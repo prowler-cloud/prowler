@@ -1,10 +1,11 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 
+
 class ec2_restricted_common_ports(Check):
     def execute(self):
         findings = []
-        common_ports = [22, 80, 443]        
+        common_ports = [22, 80, 443]
 
         for arn, sg in ec2_client.security_groups.items():
             report = Check_Report_AWS(self.metadata())
@@ -14,7 +15,7 @@ class ec2_restricted_common_ports(Check):
             report.resource_tags = sg.tags
 
             non_compliant_ports = []
-            
+
             for rule in sg.ingress_rules:
                 if rule.get("IpProtocol") == "tcp":
                     from_port = rule.get("FromPort")

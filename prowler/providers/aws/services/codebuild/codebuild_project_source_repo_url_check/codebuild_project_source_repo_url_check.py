@@ -2,6 +2,7 @@ import re
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.codebuild.codebuild_client import codebuild_client
 
+
 class codebuild_project_source_repo_url_check(Check):
     def execute(self):
         findings = []
@@ -30,11 +31,11 @@ class codebuild_project_source_repo_url_check(Check):
 
     def is_valid_bitbucket_repo_url(self, url):
         regex = re.compile(
-            r'^(?:http|https)://'  
-            r'(?:[^@/\n]+@)?'  
-            r'bitbucket\.org'  
-            r'(?:\:[0-9]{1,5})?' 
-            r'(?:[/?#][^\s]*)?'  
+            r'^(?:http|https)://'
+            r'(?:[^@/\n]+@)?'
+            r'bitbucket\.org'
+            r'(?:\:[0-9]{1,5})?'
+            r'(?:[/?#][^\s]*)?'
             r'$', re.IGNORECASE)
 
         return bool(re.match(regex, url))

@@ -1,6 +1,7 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.s3.s3_client import s3_client
 
+
 class s3_bucket_logging_enabled(Check):
     def execute(self):
         findings = []
