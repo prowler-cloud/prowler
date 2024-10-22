@@ -154,17 +154,37 @@ export interface FindingProps {
     updated_at: string;
   };
   relationships: {
+    resources: {
+      data: {
+        type: "Resource";
+        id: string;
+      }[];
+    };
     scan: {
       data: {
         type: "Scan";
         id: string;
+      };
+      attributes: {
+        name: string;
+        trigger: string;
+        state: string;
+        unique_resource_count: number;
+        progress: number;
+        scanner_args: {
+          checks_to_execute: string[];
+        };
+        duration: number;
+        started_at: string;
+        completed_at: string;
+        scheduled_at: string | null;
       };
     };
     resource: {
       data: {
         type: "Resource";
         id: string;
-      };
+      }[];
       attributes: {
         uid: string;
         name: string;

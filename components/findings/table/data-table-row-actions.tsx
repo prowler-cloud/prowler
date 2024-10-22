@@ -14,7 +14,6 @@ import {
   EditDocumentBulkIcon,
 } from "@nextui-org/shared-icons";
 import { Row } from "@tanstack/react-table";
-import clsx from "clsx";
 
 // import { useState } from "react";
 import { VerticalDotsIcon } from "@/components/icons";
@@ -74,30 +73,22 @@ export function DataTableRowActions<FindingProps>({
           >
             <DropdownSection title="Actions">
               <DropdownItem
-                key="edit"
-                description="Allows you to edit the provider"
-                textValue="Edit Provider"
+                key="jira"
+                description="Allows you to send the finding to Jira"
+                textValue="Send to Jira"
                 startContent={<EditDocumentBulkIcon className={iconClasses} />}
                 // onClick={() => setIsEditOpen(true)}
               >
-                Edit Finding
+                Send to Jira
               </DropdownItem>
-            </DropdownSection>
-            <DropdownSection title="Danger zone">
               <DropdownItem
-                key="delete"
-                className="text-danger"
-                color="danger"
-                description="Delete the provider permanently"
-                textValue="Delete Provider"
-                startContent={
-                  <DeleteDocumentBulkIcon
-                    className={clsx(iconClasses, "!text-danger")}
-                  />
-                }
-                // onClick={() => setIsDeleteOpen(true)}
+                key="slack"
+                description="Allows you to send the finding to Slack"
+                textValue="Send to Slack"
+                startContent={<EditDocumentBulkIcon className={iconClasses} />}
+                // onClick={() => setIsEditOpen(true)}
               >
-                Delete Finding
+                Send to Slack
               </DropdownItem>
             </DropdownSection>
           </DropdownMenu>

@@ -25,6 +25,7 @@ module.exports = {
     eqeqeq: 2,
     quotes: ["error", "double", "avoid-escape"],
     "@typescript-eslint/no-explicit-any": "off",
+    "security/detect-object-injection": "off",
     "prettier/prettier": [
       "error",
       {
