@@ -18,14 +18,14 @@ class Test_fsx_windows_file_system_multi_az:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.fsx.fsx_windows_file_system_multi_az.fsx_windows_file_system_multi_az.fsx_client",
+            "prowler.providers.aws.services.fsx.fsx_windows_file_system_multi_az_enabled.fsx_windows_file_system_multi_az_enabled.fsx_client",
             new=FSx(aws_provider),
         ):
-            from prowler.providers.aws.services.fsx.fsx_windows_file_system_multi_az.fsx_windows_file_system_multi_az import (
-                fsx_windows_file_system_multi_az,
+            from prowler.providers.aws.services.fsx.fsx_windows_file_system_multi_az_enabled.fsx_windows_file_system_multi_az_enabled import (
+                fsx_windows_file_system_multi_az_enabled,
             )
 
-            check = fsx_windows_file_system_multi_az()
+            check = fsx_windows_file_system_multi_az_enabled()
             result = check.execute()
             assert len(result) == 0
 
@@ -46,14 +46,14 @@ class Test_fsx_windows_file_system_multi_az:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.fsx.fsx_windows_file_system_multi_az.fsx_windows_file_system_multi_az.fsx_client",
+            "prowler.providers.aws.services.fsx.fsx_windows_file_system_multi_az_enabled.fsx_windows_file_system_multi_az_enabled.fsx_client",
             new=FSx(aws_provider),
         ):
-            from prowler.providers.aws.services.fsx.fsx_windows_file_system_multi_az.fsx_windows_file_system_multi_az import (
-                fsx_windows_file_system_multi_az,
+            from prowler.providers.aws.services.fsx.fsx_windows_file_system_multi_az_enabled.fsx_windows_file_system_multi_az_enabled import (
+                fsx_windows_file_system_multi_az_enabled,
             )
 
-            check = fsx_windows_file_system_multi_az()
+            check = fsx_windows_file_system_multi_az_enabled()
             result = check.execute()
             assert len(result) == 0
 
@@ -78,20 +78,20 @@ class Test_fsx_windows_file_system_multi_az:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.fsx.fsx_windows_file_system_multi_az.fsx_windows_file_system_multi_az.fsx_client",
+            "prowler.providers.aws.services.fsx.fsx_windows_file_system_multi_az_enabled.fsx_windows_file_system_multi_az_enabled.fsx_client",
             new=FSx(aws_provider),
         ):
-            from prowler.providers.aws.services.fsx.fsx_windows_file_system_multi_az.fsx_windows_file_system_multi_az import (
-                fsx_windows_file_system_multi_az,
+            from prowler.providers.aws.services.fsx.fsx_windows_file_system_multi_az_enabled.fsx_windows_file_system_multi_az_enabled import (
+                fsx_windows_file_system_multi_az_enabled,
             )
 
-            check = fsx_windows_file_system_multi_az()
+            check = fsx_windows_file_system_multi_az_enabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"FSx Windows file system {file_system['FileSystem']['FileSystemId']} is not configured for multi AZ deployment."
+                == f"FSx Windows file system {file_system['FileSystem']['FileSystemId']} is not configured for Multi-AZ deployment."
             )
             assert result[0].resource_id == file_system["FileSystem"]["FileSystemId"]
             assert (
@@ -121,20 +121,20 @@ class Test_fsx_windows_file_system_multi_az:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.fsx.fsx_windows_file_system_multi_az.fsx_windows_file_system_multi_az.fsx_client",
+            "prowler.providers.aws.services.fsx.fsx_windows_file_system_multi_az_enabled.fsx_windows_file_system_multi_az_enabled.fsx_client",
             new=FSx(aws_provider),
         ):
-            from prowler.providers.aws.services.fsx.fsx_windows_file_system_multi_az.fsx_windows_file_system_multi_az import (
-                fsx_windows_file_system_multi_az,
+            from prowler.providers.aws.services.fsx.fsx_windows_file_system_multi_az_enabled.fsx_windows_file_system_multi_az_enabled import (
+                fsx_windows_file_system_multi_az_enabled,
             )
 
-            check = fsx_windows_file_system_multi_az()
+            check = fsx_windows_file_system_multi_az_enabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"FSx Windows file system {file_system['FileSystem']['FileSystemId']} is configured for multi AZ deployment."
+                == f"FSx Windows file system {file_system['FileSystem']['FileSystemId']} is configured for Multi-AZ deployment."
             )
             assert result[0].resource_id == file_system["FileSystem"]["FileSystemId"]
             assert (

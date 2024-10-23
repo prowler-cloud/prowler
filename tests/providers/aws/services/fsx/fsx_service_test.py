@@ -67,4 +67,6 @@ class Test_FSx_Service:
         assert fsx.file_systems[arn].copy_tags_to_backups
         assert fsx.file_systems[arn].region == AWS_REGION_US_EAST_1
         assert fsx.file_systems[arn].tags == [{"Key": "Name", "Value": "Test"}]
-        assert fsx.file_systems[arn].subnet_id == file_system["FileSystem"]["SubnetIds"]
+        assert (
+            fsx.file_systems[arn].subnet_ids == file_system["FileSystem"]["SubnetIds"]
+        )
