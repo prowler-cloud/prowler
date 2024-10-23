@@ -12,7 +12,10 @@ class elbv2_alb_http_drop_invalid_header_enabled(Check):
             report.resource_id = lb.name
             report.resource_arn = lb.arn
             report.resource_tags = lb.tags
-            if lb.drop_invalid_header_fields and lb.drop_invalid_header_fields == "true":
+            if (
+                lb.drop_invalid_header_fields
+                and lb.drop_invalid_header_fields == "true"
+            ):
                 report.status = "PASS"
                 report.status_extended = f"ALB {lb.name} has 'routing.http.drop_invalid_header_fields.enabled' set to true."
             else:

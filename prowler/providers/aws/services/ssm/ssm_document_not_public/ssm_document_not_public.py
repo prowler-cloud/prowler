@@ -24,10 +24,14 @@ class ssm_document_not_public(Check):
                 # Check if 'All' is in the list of account IDs (meaning it's public)
                 if "All" in document_permissions.get("AccountIds", []):
                     report.status = "FAIL"
-                    report.status_extended = f"SSM document {document.name} is publicly accessible."
+                    report.status_extended = (
+                        f"SSM document {document.name} is publicly accessible."
+                    )
                 else:
                     report.status = "PASS"
-                    report.status_extended = f"SSM document {document.name} is not publicly accessible."
+                    report.status_extended = (
+                        f"SSM document {document.name} is not publicly accessible."
+                    )
 
             except Exception as error:
                 report.status = "FAIL"

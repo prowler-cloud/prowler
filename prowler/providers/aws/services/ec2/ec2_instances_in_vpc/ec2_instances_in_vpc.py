@@ -19,7 +19,9 @@ class ec2_instances_in_vpc(Check):
                 report.status_extended = f"EC2 instance {instance.id} is running inside VPC {instance.vpc_id}."
             else:
                 report.status = "FAIL"
-                report.status_extended = f"EC2 instance {instance.id} is not running inside a VPC."
+                report.status_extended = (
+                    f"EC2 instance {instance.id} is not running inside a VPC."
+                )
 
             findings.append(report)
 

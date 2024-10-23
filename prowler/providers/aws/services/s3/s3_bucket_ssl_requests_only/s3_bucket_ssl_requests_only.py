@@ -19,14 +19,22 @@ class s3_bucket_ssl_requests_only(Check):
             try:
                 # Fetch the bucket policy
                 bucket_policy = s3_client.client.get_bucket_policy(Bucket=bucket.name)
-                policy = json.loads(bucket_policy['Policy'])
+                policy = json.loads(bucket_policy["Policy"])
                 ssl_requests_only = False
 
                 # Check the bucket policy for the condition that enforces SSL requests
-                for statement in policy.get('Statement', []):
-                    if (statement['Effect'] == 'Deny'
-                            and 'aws:SecureTransport' in statement.get('Condition', {}).get('Bool', {})):
-                        if statement['Condition']['Bool']['aws:SecureTransport'] == 'false':
+                for statement in policy.get("Statement", []):
+                    if statement[
+                        "Effect"
+                    ] == "Deny" and "aws:SecureTransport" in statement.get(
+                        "Condition", {}
+                    ).get(
+                        "Bool", {}
+                    ):
+                        if (
+                            statement["Condition"]["Bool"]["aws:SecureTransport"]
+                            == "false"
+                        ):
                             ssl_requests_only = True
                             break
 

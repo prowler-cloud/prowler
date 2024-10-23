@@ -17,7 +17,9 @@ class s3_bucket_logging_enabled(Check):
                 report.status_extended = f"S3 bucket {bucket.name} has logging enabled."
             else:
                 report.status = "FAIL"
-                report.status_extended = f"S3 bucket {bucket.name} does not have logging enabled."
+                report.status_extended = (
+                    f"S3 bucket {bucket.name} does not have logging enabled."
+                )
 
             findings.append(report)
 

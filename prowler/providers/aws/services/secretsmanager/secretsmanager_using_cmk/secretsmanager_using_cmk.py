@@ -1,5 +1,7 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
-from prowler.providers.aws.services.secretsmanager.secretsmanager_client import secretsmanager_client
+from prowler.providers.aws.services.secretsmanager.secretsmanager_client import (
+    secretsmanager_client,
+)
 
 
 class secretsmanager_using_cmk(Check):
@@ -15,14 +17,10 @@ class secretsmanager_using_cmk(Check):
             # Check if the secret is using a customer managed key
             if secret.kms_key_id and "aws/secretsmanager" not in secret.kms_key_id:
                 report.status = "PASS"
-                report.status_extended = (
-                    f"SecretsManager secret {secret.name} is encrypted with a customer managed key {secret.kms_key_id}."
-                )
+                report.status_extended = f"SecretsManager secret {secret.name} is encrypted with a customer managed key {secret.kms_key_id}."
             else:
                 report.status = "FAIL"
-                report.status_extended = (
-                    f"SecretsManager secret {secret.name} is not encrypted with a customer managed key."
-                )
+                report.status_extended = f"SecretsManager secret {secret.name} is not encrypted with a customer managed key."
 
             findings.append(report)
 

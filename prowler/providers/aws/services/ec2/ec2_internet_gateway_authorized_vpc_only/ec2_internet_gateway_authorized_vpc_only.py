@@ -14,13 +14,17 @@ class ec2_internet_gateway_authorized_vpc_only(Check):
             report.resource_arn = igw.arn
 
             # Check if the Internet Gateway is attached to unauthorized VPCs
-            unauthorized_vpcs = [vpc for vpc in igw.attachments if vpc not in authorized_vpcs]
+            unauthorized_vpcs = [
+                vpc for vpc in igw.attachments if vpc not in authorized_vpcs
+            ]
             if unauthorized_vpcs:
                 report.status = "FAIL"
                 report.status_extended = f"Internet Gateway {igw.id} is attached to unauthorized VPCs: {', '.join(unauthorized_vpcs)}."
             else:
                 report.status = "PASS"
-                report.status_extended = f"Internet Gateway {igw.id} is attached only to authorized VPCs."
+                report.status_extended = (
+                    f"Internet Gateway {igw.id} is attached only to authorized VPCs."
+                )
 
             findings.append(report)
 

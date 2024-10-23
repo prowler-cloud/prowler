@@ -8,7 +8,7 @@ class ec2_instance_no_public_ip(Check):
 
         # Iterate through EC2 instances
         for instance in ec2_client.instances:
-            if instance.state != 'running':
+            if instance.state != "running":
                 continue  # Skip non-running instances
             report = Check_Report_AWS(self.metadata())
             report.region = instance.region
@@ -34,7 +34,9 @@ class ec2_instance_no_public_ip(Check):
 
             if not has_public_ip:
                 report.status = "PASS"
-                report.status_extended = f"EC2 instance {instance.id} does not have a public IP address."
+                report.status_extended = (
+                    f"EC2 instance {instance.id} does not have a public IP address."
+                )
 
             findings.append(report)
 

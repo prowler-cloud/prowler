@@ -1,5 +1,7 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
-from prowler.providers.aws.services.apigateway.apigateway_client import apigateway_client
+from prowler.providers.aws.services.apigateway.apigateway_client import (
+    apigateway_client,
+)
 
 
 class apigateway_cache_enabled_and_encrypted(Check):

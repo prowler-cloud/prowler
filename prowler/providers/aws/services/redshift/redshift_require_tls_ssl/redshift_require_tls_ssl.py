@@ -16,14 +16,19 @@ class redshift_require_tls_ssl(Check):
             # Check if require_ssl parameter is set to true
             require_ssl = False
             for param_group in cluster.parameter_groups:
-                parameters = redshift_client._describe_cluster_parameters(param_group["ParameterGroupName"], redshift_client.regional_clients[cluster.region])
+                parameters = redshift_client._describe_cluster_parameters(
+                    param_group["ParameterGroupName"],
+                    redshift_client.regional_clients[cluster.region],
+                )
                 if parameters.get("require_ssl", "false").lower() == "true":
                     require_ssl = True
                     break
 
             if require_ssl:
                 report.status = "PASS"
-                report.status_extended = f"Redshift cluster {cluster.id} requires TLS/SSL for connections."
+                report.status_extended = (
+                    f"Redshift cluster {cluster.id} requires TLS/SSL for connections."
+                )
             else:
                 report.status = "FAIL"
                 report.status_extended = f"Redshift cluster {cluster.id} does not require TLS/SSL for connections."

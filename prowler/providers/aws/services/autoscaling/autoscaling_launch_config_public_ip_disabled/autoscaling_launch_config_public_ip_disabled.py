@@ -1,5 +1,7 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
-from prowler.providers.aws.services.autoscaling.autoscaling_client import autoscaling_client
+from prowler.providers.aws.services.autoscaling.autoscaling_client import (
+    autoscaling_client,
+)
 
 
 class autoscaling_launch_config_public_ip_disabled(Check):

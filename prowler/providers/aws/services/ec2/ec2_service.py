@@ -67,13 +67,15 @@ class EC2(AWSService):
             for page in describe_vpcs_paginator.paginate():
                 for vpc in page["Vpcs"]:
                     arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:vpc/{vpc['VpcId']}"
-                    if not self.audit_resources or (is_resource_filtered(arn, self.audit_resources)):
+                    if not self.audit_resources or (
+                        is_resource_filtered(arn, self.audit_resources)
+                    ):
                         self.vpcs.append(
                             VPC(
                                 id=vpc["VpcId"],
                                 arn=arn,
                                 region=regional_client.region,
-                                tags=vpc.get("Tags", [])
+                                tags=vpc.get("Tags", []),
                             )
                         )
         except Exception as error:
@@ -83,19 +85,26 @@ class EC2(AWSService):
 
     def _describe_internet_gateways(self, regional_client):
         try:
-            describe_igws_paginator = regional_client.get_paginator("describe_internet_gateways")
+            describe_igws_paginator = regional_client.get_paginator(
+                "describe_internet_gateways"
+            )
             for page in describe_igws_paginator.paginate():
                 for igw in page["InternetGateways"]:
                     arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:internet-gateway/{igw['InternetGatewayId']}"
-                    if not self.audit_resources or (is_resource_filtered(arn, self.audit_resources)):
-                        attachments = [attachment["VpcId"] for attachment in igw.get("Attachments", [])]
+                    if not self.audit_resources or (
+                        is_resource_filtered(arn, self.audit_resources)
+                    ):
+                        attachments = [
+                            attachment["VpcId"]
+                            for attachment in igw.get("Attachments", [])
+                        ]
                         self.internet_gateways.append(
                             InternetGateway(
                                 id=igw["InternetGatewayId"],
                                 arn=arn,
                                 region=regional_client.region,
                                 attachments=attachments,
-                                tags=igw.get("Tags", [])
+                                tags=igw.get("Tags", []),
                             )
                         )
         except Exception as error:
@@ -105,18 +114,25 @@ class EC2(AWSService):
 
     def _describe_route_tables(self, regional_client):
         try:
-            describe_route_tables_paginator = regional_client.get_paginator("describe_route_tables")
+            describe_route_tables_paginator = regional_client.get_paginator(
+                "describe_route_tables"
+            )
             for page in describe_route_tables_paginator.paginate():
                 for route_table in page["RouteTables"]:
                     arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:route-table/{route_table['RouteTableId']}"
-                    if not self.audit_resources or (is_resource_filtered(arn, self.audit_resources)):
+                    if not self.audit_resources or (
+                        is_resource_filtered(arn, self.audit_resources)
+                    ):
                         self.route_tables.append(
                             RouteTable(
                                 id=route_table["RouteTableId"],
                                 arn=arn,
                                 region=regional_client.region,
-                                routes=[Route(**route) for route in route_table.get("Routes", [])],
-                                tags=route_table.get("Tags", [])
+                                routes=[
+                                    Route(**route)
+                                    for route in route_table.get("Routes", [])
+                                ],
+                                tags=route_table.get("Tags", []),
                             )
                         )
         except Exception as error:

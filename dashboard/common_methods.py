@@ -1261,7 +1261,9 @@ def get_section_containers_rbi(data, section_1):
 def safe_version_tuple(version):
     # Remove any leading/trailing whitespace and commas
     version = re.sub(r"[a-zA-Z]", "", version).strip()
-    version = re.sub(r"[,\s]+", ".", version)  # Replace commas and multiple spaces with a dot
+    version = re.sub(
+        r"[,\s]+", ".", version
+    )  # Replace commas and multiple spaces with a dot
 
     if version == "" or version in ["-", "_", " "]:
         return version
@@ -1280,7 +1282,9 @@ def safe_version_tuple(version):
         if delimiter:
             try:
                 return tuple(
-                    int(segment) for segment in version.split(delimiter) if segment.isdigit()
+                    int(segment)
+                    for segment in version.split(delimiter)
+                    if segment.isdigit()
                 )
             except ValueError:
                 # Handle invalid segments gracefully
@@ -1291,7 +1295,10 @@ def safe_version_tuple(version):
 
 def get_section_container_update_iso(data, section_1, section_2):
     # Ensure the missing columns are handled properly
-    if "REQUIREMENTS_ATTRIBUTES_OBJECTIVE_ID" not in data.columns or "REQUIREMENTS_ATTRIBUTES_OBJECTIVE_NAME" not in data.columns:
+    if (
+        "REQUIREMENTS_ATTRIBUTES_OBJECTIVE_ID" not in data.columns
+        or "REQUIREMENTS_ATTRIBUTES_OBJECTIVE_NAME" not in data.columns
+    ):
         # Handle the missing column case by filling with placeholder values
         data["REQUIREMENTS_ATTRIBUTES_OBJECTIVE_ID"] = "Unknown ID"
         data["REQUIREMENTS_ATTRIBUTES_OBJECTIVE_NAME"] = "Unknown Name"

@@ -17,10 +17,14 @@ class kms_cmk_not_scheduled_for_deletion(Check):
                 # Check if the key is scheduled for deletion
                 if key.state == "PendingDeletion":
                     report.status = "FAIL"
-                    report.status_extended = f"KMS CMK {key.id} is scheduled for deletion."
+                    report.status_extended = (
+                        f"KMS CMK {key.id} is scheduled for deletion."
+                    )
                 else:
                     report.status = "PASS"
-                    report.status_extended = f"KMS CMK {key.id} is not scheduled for deletion."
+                    report.status_extended = (
+                        f"KMS CMK {key.id} is not scheduled for deletion."
+                    )
 
                 findings.append(report)
 

@@ -13,12 +13,16 @@ class emr_kerberos_enabled(Check):
             report.resource_arn = cluster.arn
             report.resource_tags = cluster.tags
 
-            if hasattr(cluster, 'kerberos_enabled') and cluster.kerberos_enabled:
+            if hasattr(cluster, "kerberos_enabled") and cluster.kerberos_enabled:
                 report.status = "PASS"
-                report.status_extended = f"EMR cluster {cluster.name} has Kerberos enabled."
+                report.status_extended = (
+                    f"EMR cluster {cluster.name} has Kerberos enabled."
+                )
             else:
                 report.status = "FAIL"
-                report.status_extended = f"EMR cluster {cluster.name} does not have Kerberos enabled."
+                report.status_extended = (
+                    f"EMR cluster {cluster.name} does not have Kerberos enabled."
+                )
 
             findings.append(report)
 

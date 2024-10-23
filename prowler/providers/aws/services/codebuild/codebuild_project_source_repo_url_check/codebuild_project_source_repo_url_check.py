@@ -31,11 +31,13 @@ class codebuild_project_source_repo_url_check(Check):
 
     def is_valid_bitbucket_repo_url(self, url):
         regex = re.compile(
-            r'^(?:http|https)://'
-            r'(?:[^@/\n]+@)?'
-            r'bitbucket\.org'
-            r'(?:\:[0-9]{1,5})?'
-            r'(?:[/?#][^\s]*)?'
-            r'$', re.IGNORECASE)
+            r"^(?:http|https)://"
+            r"(?:[^@/\n]+@)?"
+            r"bitbucket\.org"
+            r"(?:\:[0-9]{1,5})?"
+            r"(?:[/?#][^\s]*)?"
+            r"$",
+            re.IGNORECASE,
+        )
 
         return bool(re.match(regex, url))

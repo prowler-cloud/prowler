@@ -18,7 +18,9 @@ class elb_acm_certificate_required(Check):
             has_acm_certificate = self.check_acm_certificate(lb)
             if has_acm_certificate:
                 report.status = "PASS"
-                report.status_extended = f"Classic Load Balancer {lb.name} has an ACM certificate attached."
+                report.status_extended = (
+                    f"Classic Load Balancer {lb.name} has an ACM certificate attached."
+                )
             else:
                 report.status = "FAIL"
                 report.status_extended = f"Classic Load Balancer {lb.name} does not have an ACM certificate attached."
@@ -30,9 +32,9 @@ class elb_acm_certificate_required(Check):
     def check_acm_certificate(self, lb):
         # Check through listeners for HTTPS and ACM certificates
         for listener in lb.listeners:
-            if listener.protocol == 'HTTPS':  # Check for HTTPS protocol
+            if listener.protocol == "HTTPS":  # Check for HTTPS protocol
                 # field for policies or SSL certificate attachment
                 for policy in listener.policies:
-                    if policy.startswith('arn:aws:acm:'):
+                    if policy.startswith("arn:aws:acm:"):
                         return True
         return False

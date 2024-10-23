@@ -16,7 +16,10 @@ class vpc_sg_open_to_authorized_ports(Check):
                     to_port = rule.get("ToPort")
                     if from_port is None or to_port is None:
                         continue
-                    if from_port not in self.authorized_ports or to_port not in self.authorized_ports:
+                    if (
+                        from_port not in self.authorized_ports
+                        or to_port not in self.authorized_ports
+                    ):
                         unauthorized_ports_found = True
                         report = Check_Report_AWS(self.metadata())
                         report.region = sg.region
@@ -35,9 +38,7 @@ class vpc_sg_open_to_authorized_ports(Check):
                 report.region = sg.region
                 report.resource_tags = sg.tags
                 report.status = "PASS"
-                report.status_extended = (
-                    f"Security Group {sg.name if sg.name else sg.id} only allows authorized ports."
-                )
+                report.status_extended = f"Security Group {sg.name if sg.name else sg.id} only allows authorized ports."
                 report.resource_id = sg.id
                 report.resource_arn = sg.arn
                 findings.append(report)

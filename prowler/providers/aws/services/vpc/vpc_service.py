@@ -39,7 +39,9 @@ class VPC(AWSService):
     def _describe_security_groups(self, regional_client):
         logger.info("VPC - Describing security groups...")
         try:
-            describe_security_groups_paginator = regional_client.get_paginator("describe_security_groups")
+            describe_security_groups_paginator = regional_client.get_paginator(
+                "describe_security_groups"
+            )
             for page in describe_security_groups_paginator.paginate():
                 for sg in page["SecurityGroups"]:
                     arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:security-group/{sg['GroupId']}"
@@ -56,7 +58,7 @@ class VPC(AWSService):
                                 ingress_rules=sg.get("IpPermissions", []),
                                 egress_rules=sg.get("IpPermissionsEgress", []),
                                 is_default=(sg["GroupName"] == "default"),
-                                tags=sg.get("Tags", [])
+                                tags=sg.get("Tags", []),
                             )
                         )
         except ClientError as error:

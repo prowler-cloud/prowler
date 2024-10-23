@@ -17,10 +17,14 @@ class rds_snapshots_public_prohibited(Check):
             # Check if the snapshot is publicly accessible
             if snapshot.public:
                 report.status = "FAIL"
-                report.status_extended = f"RDS snapshot {snapshot.id} is publicly accessible."
+                report.status_extended = (
+                    f"RDS snapshot {snapshot.id} is publicly accessible."
+                )
             else:
                 report.status = "PASS"
-                report.status_extended = f"RDS snapshot {snapshot.id} is not publicly accessible."
+                report.status_extended = (
+                    f"RDS snapshot {snapshot.id} is not publicly accessible."
+                )
 
             # Append the report to the findings list
             findings.append(report)

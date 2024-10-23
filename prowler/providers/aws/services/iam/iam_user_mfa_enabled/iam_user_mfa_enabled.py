@@ -18,7 +18,9 @@ class iam_user_mfa_enabled(Check):
                 report.status_extended = f"IAM user {user.name} has MFA enabled."
             else:
                 report.status = "FAIL"
-                report.status_extended = f"IAM user {user.name} does not have MFA enabled."
+                report.status_extended = (
+                    f"IAM user {user.name} does not have MFA enabled."
+                )
 
             findings.append(report)
 

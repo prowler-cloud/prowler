@@ -17,17 +17,25 @@ class s3_bucket_public_write_prohibited(Check):
 
             if bucket.acl_grantees:
                 for grantee in bucket.acl_grantees:
-                    if grantee.type == "Group" and grantee.URI == "http://acs.amazonaws.com/groups/global/AllUsers":
+                    if (
+                        grantee.type == "Group"
+                        and grantee.URI
+                        == "http://acs.amazonaws.com/groups/global/AllUsers"
+                    ):
                         if grantee.permission in ["WRITE", "FULL_CONTROL"]:
                             public_write_access = True
                             break
 
             if public_write_access:
                 report.status = "FAIL"
-                report.status_extended = f"S3 Bucket {bucket.name} allows public write access."
+                report.status_extended = (
+                    f"S3 Bucket {bucket.name} allows public write access."
+                )
             else:
                 report.status = "PASS"
-                report.status_extended = f"S3 Bucket {bucket.name} does not allow public write access."
+                report.status_extended = (
+                    f"S3 Bucket {bucket.name} does not allow public write access."
+                )
 
             findings.append(report)
 

@@ -17,7 +17,9 @@ class redshift_cluster_public_access_check(Check):
             # Check if public access is enabled
             if cluster.public_access:
                 report.status = "FAIL"
-                report.status_extended = f"Redshift cluster {cluster.id} has public access enabled."
+                report.status_extended = (
+                    f"Redshift cluster {cluster.id} has public access enabled."
+                )
             else:
                 report.status = "PASS"
                 report.status_extended = f"Redshift cluster {cluster.id} does not have public access enabled."

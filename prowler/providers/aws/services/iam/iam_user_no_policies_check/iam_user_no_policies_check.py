@@ -16,10 +16,14 @@ class iam_user_no_policies_check(Check):
             # Check if the user has any attached or inline policies
             if user.attached_policies or user.inline_policies:
                 report.status = "FAIL"
-                report.status_extended = f"IAM user {user.name} has policies directly attached."
+                report.status_extended = (
+                    f"IAM user {user.name} has policies directly attached."
+                )
             else:
                 report.status = "PASS"
-                report.status_extended = f"IAM user {user.name} has no policies directly attached."
+                report.status_extended = (
+                    f"IAM user {user.name} has no policies directly attached."
+                )
 
             findings.append(report)
 

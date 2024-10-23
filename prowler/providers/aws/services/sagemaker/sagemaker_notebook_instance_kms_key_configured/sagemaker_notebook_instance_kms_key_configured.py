@@ -17,7 +17,9 @@ class sagemaker_notebook_instance_kms_key_configured(Check):
             # Check if KMS key is configured
             if ni.kms_key_id:
                 report.status = "PASS"
-                report.status_extended = f"SageMaker notebook instance {ni.name} has a KMS key configured."
+                report.status_extended = (
+                    f"SageMaker notebook instance {ni.name} has a KMS key configured."
+                )
             else:
                 report.status = "FAIL"
                 report.status_extended = f"SageMaker notebook instance {ni.name} does not have a KMS key configured."

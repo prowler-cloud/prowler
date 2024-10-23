@@ -14,13 +14,19 @@ class backup_recovery_point_manual_deletion_disabled(Check):
             report.resource_arn = backup_vault.arn
 
             try:
-                policy_response = backup_client.get_backup_vault_access_policy(BackupVaultName=backup_vault.name)
-                policy = policy_response.get('Policy', '{}')
+                policy_response = backup_client.get_backup_vault_access_policy(
+                    BackupVaultName=backup_vault.name
+                )
+                policy = policy_response.get("Policy", "{}")
                 policy_doc = json.loads(policy)
 
                 deny_deletion = False
-                for statement in policy_doc.get('Statement', []):
-                    if statement.get('Effect') == 'Deny' and 'backup:DeleteRecoveryPoint' in statement.get('Action', []):
+                for statement in policy_doc.get("Statement", []):
+                    if statement.get(
+                        "Effect"
+                    ) == "Deny" and "backup:DeleteRecoveryPoint" in statement.get(
+                        "Action", []
+                    ):
                         deny_deletion = True
                         break
 

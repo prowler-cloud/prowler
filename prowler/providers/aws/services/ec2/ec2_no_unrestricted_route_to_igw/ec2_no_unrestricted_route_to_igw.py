@@ -15,7 +15,11 @@ class ec2_no_unrestricted_route_to_igw(Check):
 
             unrestricted_route = False
             for route in route_table.routes:
-                if route.gateway_id and route.gateway_id.startswith('igw-') and route.destination_cidr_block == '0.0.0.0/0':
+                if (
+                    route.gateway_id
+                    and route.gateway_id.startswith("igw-")
+                    and route.destination_cidr_block == "0.0.0.0/0"
+                ):
                     unrestricted_route = True
                     break
 

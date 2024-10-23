@@ -12,7 +12,7 @@ class iam_no_inline_policy_check(Check):
             report.region = "global"
             report.resource_id = user.name
             report.resource_arn = user.arn
-            report.resource_tags = user.tags if hasattr(user, 'tags') else []
+            report.resource_tags = user.tags if hasattr(user, "tags") else []
 
             if user.inline_policies:
                 report.status = "FAIL"
@@ -29,14 +29,16 @@ class iam_no_inline_policy_check(Check):
             report.region = "global"
             report.resource_id = group.name
             report.resource_arn = group.arn
-            report.resource_tags = group.tags if hasattr(group, 'tags') else []
+            report.resource_tags = group.tags if hasattr(group, "tags") else []
 
             if group.inline_policies:
                 report.status = "FAIL"
                 report.status_extended = f"IAM group {group.name} has inline policies."
             else:
                 report.status = "PASS"
-                report.status_extended = f"IAM group {group.name} has no inline policies."
+                report.status_extended = (
+                    f"IAM group {group.name} has no inline policies."
+                )
 
             findings.append(report)
 
@@ -46,7 +48,7 @@ class iam_no_inline_policy_check(Check):
             report.region = "global"
             report.resource_id = role.name
             report.resource_arn = role.arn
-            report.resource_tags = role.tags if hasattr(role, 'tags') else []
+            report.resource_tags = role.tags if hasattr(role, "tags") else []
 
             if role.inline_policies:
                 report.status = "FAIL"

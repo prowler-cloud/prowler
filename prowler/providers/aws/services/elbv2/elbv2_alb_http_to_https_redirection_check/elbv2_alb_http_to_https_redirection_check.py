@@ -6,13 +6,16 @@ class elbv2_alb_http_to_https_redirection_check(Check):
     def execute(self):
         findings = []
         for lb in elbv2_client.loadbalancersv2.values():
-            if lb.type == 'application':
+            if lb.type == "application":
                 for listener in lb.listeners.values():
-                    if listener.protocol == 'HTTP':
+                    if listener.protocol == "HTTP":
                         has_redirect = False
                         for rule in listener.rules:
                             for action in rule.actions:
-                                if action['Type'] == 'redirect' and action['RedirectConfig']['Protocol'] == 'HTTPS':
+                                if (
+                                    action["Type"] == "redirect"
+                                    and action["RedirectConfig"]["Protocol"] == "HTTPS"
+                                ):
                                     has_redirect = True
                                     break
                             if has_redirect:

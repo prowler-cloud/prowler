@@ -22,7 +22,9 @@ class vpc_default_security_group_closed(Check):
                     report.status_extended = f"Default security group {sg.id} in VPC {sg.vpc_id} has open rules."
                 else:
                     report.status = "PASS"
-                    report.status_extended = f"Default security group {sg.id} in VPC {sg.vpc_id} is closed."
+                    report.status_extended = (
+                        f"Default security group {sg.id} in VPC {sg.vpc_id} is closed."
+                    )
 
                 findings.append(report)
 

@@ -1,5 +1,7 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
-from prowler.providers.aws.services.opensearch.opensearch_client import opensearch_client
+from prowler.providers.aws.services.opensearch.opensearch_client import (
+    opensearch_client,
+)
 
 
 class opensearch_in_vpc_only(Check):
@@ -16,10 +18,14 @@ class opensearch_in_vpc_only(Check):
             # Check if the domain is in a VPC
             if domain.vpc_id:
                 report.status = "PASS"
-                report.status_extended = f"OpenSearch domain {domain.name} is within a VPC."
+                report.status_extended = (
+                    f"OpenSearch domain {domain.name} is within a VPC."
+                )
             else:
                 report.status = "FAIL"
-                report.status_extended = f"OpenSearch domain {domain.name} is not within a VPC."
+                report.status_extended = (
+                    f"OpenSearch domain {domain.name} is not within a VPC."
+                )
 
             findings.append(report)
 

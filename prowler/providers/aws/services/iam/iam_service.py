@@ -922,14 +922,20 @@ class IAM(AWSService):
     def __check_root_access_keys__(self):
         logger.info("IAM - Checking Root Access Keys...")
         try:
-            credential_report = self._get_credential_report()  # Fetch the report properly
+            credential_report = (
+                self._get_credential_report()
+            )  # Fetch the report properly
             for user in credential_report:
                 if user["user"] == "<root_account>":
                     access_key_1_active = user["access_key_1_active"]
                     access_key_2_active = user["access_key_2_active"]
-                    return access_key_1_active == "true" or access_key_2_active == "true"
+                    return (
+                        access_key_1_active == "true" or access_key_2_active == "true"
+                    )
         except Exception as error:
-            logger.error(f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}")
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
         return False
 
     def __assign_user_groups__(self):
@@ -939,7 +945,7 @@ class IAM(AWSService):
                 # Fetch groups for each user using the AWS API
                 user_groups = self.client.list_groups_for_user(UserName=user.name)
                 # Assign the fetched groups to the user's 'groups' attribute
-                user.groups = [group['GroupName'] for group in user_groups['Groups']]
+                user.groups = [group["GroupName"] for group in user_groups["Groups"]]
                 logger.info(f"User {user.name} groups: {user.groups}")
             except ClientError as error:
                 logger.error(f"Error fetching groups for user {user.name}: {error}")
@@ -949,7 +955,7 @@ class IAM(AWSService):
         """Fetches and assigns group memberships for the given user."""
         try:
             user_groups = self.client.list_groups_for_user(UserName=user_obj.name)
-            user_obj.groups = [group['GroupName'] for group in user_groups['Groups']]
+            user_obj.groups = [group["GroupName"] for group in user_groups["Groups"]]
             logger.info(f"User {user_obj.name} is in groups: {user_obj.groups}")
         except ClientError as error:
             logger.error(f"Error fetching groups for user {user_obj.name}: {error}")

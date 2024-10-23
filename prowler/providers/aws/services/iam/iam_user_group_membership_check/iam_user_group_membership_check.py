@@ -16,7 +16,9 @@ class iam_user_group_membership_check(Check):
             # Check if the user belongs to any group
             if user.groups:
                 report.status = "PASS"
-                report.status_extended = f"IAM user {user.name} is in one or more groups."
+                report.status_extended = (
+                    f"IAM user {user.name} is in one or more groups."
+                )
             else:
                 report.status = "FAIL"
                 report.status_extended = f"IAM user {user.name} is not in any group."

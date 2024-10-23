@@ -15,16 +15,19 @@ class backup_plan_min_frequency_and_min_retention_check(Check):
             report.region = backup_plan.region
             report.resource_arn = backup_plan.arn
             report.resource_id = backup_plan.id
-            report.resource_tags = getattr(backup_plan, 'tags', [])
+            report.resource_tags = getattr(backup_plan, "tags", [])
 
             meets_requirements = False
 
-            if hasattr(backup_plan, 'advanced_settings'):
+            if hasattr(backup_plan, "advanced_settings"):
                 for rule in backup_plan.advanced_settings:
-                    schedule_expression = rule.get('ScheduleExpression')
-                    retention_days = rule.get('Lifecycle', {}).get('DeleteAfterDays')
+                    schedule_expression = rule.get("ScheduleExpression")
+                    retention_days = rule.get("Lifecycle", {}).get("DeleteAfterDays")
 
-                    if schedule_expression == min_frequency and retention_days >= min_retention_days:
+                    if (
+                        schedule_expression == min_frequency
+                        and retention_days >= min_retention_days
+                    ):
                         meets_requirements = True
                         break
 

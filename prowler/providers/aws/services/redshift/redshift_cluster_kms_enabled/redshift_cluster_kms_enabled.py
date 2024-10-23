@@ -17,9 +17,7 @@ class redshift_cluster_kms_enabled(Check):
             # Check if the cluster is encrypted with KMS
             if cluster.encrypted and cluster.kms_key_id:
                 report.status = "PASS"
-                report.status_extended = (
-                    f"Redshift cluster {cluster.id} is encrypted with KMS key {cluster.kms_key_id}."
-                )
+                report.status_extended = f"Redshift cluster {cluster.id} is encrypted with KMS key {cluster.kms_key_id}."
             else:
                 report.status = "FAIL"
                 report.status_extended = (

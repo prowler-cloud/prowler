@@ -16,12 +16,16 @@ class s3_bucket_replication_enabled(Check):
             report.resource_arn = bucket_arn
 
             # Check if the bucket has replication rules enabled
-            if hasattr(bucket, 'replication_rules') and bucket.replication_rules:
+            if hasattr(bucket, "replication_rules") and bucket.replication_rules:
                 report.status = "PASS"
-                report.status_extended = f"S3 Bucket {bucket.name} has replication rules enabled."
+                report.status_extended = (
+                    f"S3 Bucket {bucket.name} has replication rules enabled."
+                )
             else:
                 report.status = "FAIL"
-                report.status_extended = f"S3 Bucket {bucket.name} does not have replication rules enabled."
+                report.status_extended = (
+                    f"S3 Bucket {bucket.name} does not have replication rules enabled."
+                )
 
             findings.append(report)
         return findings
