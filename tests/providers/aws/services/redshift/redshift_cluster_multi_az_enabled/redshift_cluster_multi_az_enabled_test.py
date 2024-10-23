@@ -102,7 +102,7 @@ class Test_redshift_cluster_multi_az_enabled:
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
                 assert result[0].status_extended == (
-                    f"Redshift Cluster {CLUSTER_ID} does not have multi az enabled."
+                    f"Redshift Cluster {CLUSTER_ID} does not have Multi-AZ enabled."
                 )
                 assert result[0].resource_id == CLUSTER_ID
                 assert result[0].resource_arn == CLUSTER_ARN
@@ -156,7 +156,7 @@ class Test_redshift_cluster_multi_az_enabled:
                     assert len(result) == 1
                     assert result[0].status == "PASS"
                     assert result[0].status_extended == (
-                        f"Redshift Cluster {CLUSTER_ID} has multi az enabled."
+                        f"Redshift Cluster {CLUSTER_ID} has Multi-AZ enabled."
                     )
                     assert result[0].resource_id == CLUSTER_ID
                     assert result[0].resource_arn == CLUSTER_ARN
