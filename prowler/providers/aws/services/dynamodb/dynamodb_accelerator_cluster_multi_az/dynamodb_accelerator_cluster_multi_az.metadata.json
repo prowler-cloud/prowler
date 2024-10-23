@@ -23,7 +23,9 @@
       "Url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DAX.concepts.cluster.html#DAX.concepts.regions-and-azs"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "redundancy"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
