@@ -23,7 +23,9 @@
       "Url": "https://docs.aws.amazon.com/documentdb/latest/developerguide/failover.html"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "redundancy"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

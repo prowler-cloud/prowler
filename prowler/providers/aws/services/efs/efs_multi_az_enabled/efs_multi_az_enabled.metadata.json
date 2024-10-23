@@ -23,7 +23,9 @@
       "Url": "https://docs.aws.amazon.com/efs/latest/ug/creating-using-create-fs.html#availabiltydurability"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "redundancy"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
