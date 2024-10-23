@@ -142,7 +142,7 @@ class Test_backup_recovery_point_encrypted:
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
                 assert result[0].status_extended == (
-                    "AWS Backup Recovery Point arn:aws:backup:eu-west-1:123456789012:recovery-point:1 for Test Vault backup vault is not encrypted at rest."
+                    "Backup Recovery Point arn:aws:backup:eu-west-1:123456789012:recovery-point:1 for Backup Vault Test Vault is not encrypted at rest."
                 )
                 assert result[0].resource_id == "Test Vault"
                 assert (
@@ -183,7 +183,7 @@ class Test_backup_recovery_point_encrypted:
                 assert len(result) == 1
                 assert result[0].status == "PASS"
                 assert result[0].status_extended == (
-                    "AWS Backup Recovery Point arn:aws:backup:eu-west-1:123456789012:recovery-point:1 for Test Vault backup vault is encrypted at rest."
+                    "Backup Recovery Point arn:aws:backup:eu-west-1:123456789012:recovery-point:1 for Backup Vault Test Vault is encrypted at rest."
                 )
                 assert result[0].resource_id == "Test Vault"
                 assert (

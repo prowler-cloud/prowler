@@ -15,7 +15,7 @@
   "RelatedUrl": "https://docs.aws.amazon.com/aws-backup/latest/devguide/encryption.html",
   "Remediation": {
     "Code": {
-      "CLI": "aws backup create-backup-plan --backup-plan <plan-configuration> --encryption-key <key-id>",
+      "CLI": "aws backup update-backup-vault --backup-vault-name <backup_vault_name> --encryption-key-arn <kms_key_arn>",
       "NativeIaC": "",
       "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/backup-controls.html#backup-1",
       "Terraform": ""
