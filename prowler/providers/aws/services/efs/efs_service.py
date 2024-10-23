@@ -39,7 +39,7 @@ class EFS(AWSService):
                             id=efs_id,
                             arn=efs_arn,
                             region=regional_client.region,
-                            availability_zone_id=efs.get("AvailabilityZoneId", "False"),
+                            availability_zone_id=efs.get("AvailabilityZoneId", ""),
                             number_of_mount_targets=efs["NumberOfMountTargets"],
                             encrypted=efs["Encrypted"],
                             tags=efs.get("Tags"),

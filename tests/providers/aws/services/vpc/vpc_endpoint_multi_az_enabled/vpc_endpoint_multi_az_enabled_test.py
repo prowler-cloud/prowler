@@ -18,15 +18,15 @@ class Test_vpc_endpoint_for_multi_az:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.vpc.vpc_endpoint_multi_az.vpc_endpoint_multi_az.vpc_client",
+                "prowler.providers.aws.services.vpc.vpc_endpoint_multi_az_enabled.vpc_endpoint_multi_az_enabled.vpc_client",
                 new=VPC(aws_provider),
             ):
                 # Test Check
-                from prowler.providers.aws.services.vpc.vpc_endpoint_multi_az.vpc_endpoint_multi_az import (
-                    vpc_endpoint_multi_az,
+                from prowler.providers.aws.services.vpc.vpc_endpoint_multi_az_enabled.vpc_endpoint_multi_az_enabled import (
+                    vpc_endpoint_multi_az_enabled,
                 )
 
-                check = vpc_endpoint_multi_az()
+                check = vpc_endpoint_multi_az_enabled()
                 result = check.execute()
 
                 assert len(result) == 0
@@ -71,15 +71,15 @@ class Test_vpc_endpoint_for_multi_az:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.vpc.vpc_endpoint_multi_az.vpc_endpoint_multi_az.vpc_client",
+                "prowler.providers.aws.services.vpc.vpc_endpoint_multi_az_enabled.vpc_endpoint_multi_az_enabled.vpc_client",
                 new=VPC(aws_provider),
             ):
                 # Test Check
-                from prowler.providers.aws.services.vpc.vpc_endpoint_multi_az.vpc_endpoint_multi_az import (
-                    vpc_endpoint_multi_az,
+                from prowler.providers.aws.services.vpc.vpc_endpoint_multi_az_enabled.vpc_endpoint_multi_az_enabled import (
+                    vpc_endpoint_multi_az_enabled,
                 )
 
-                check = vpc_endpoint_multi_az()
+                check = vpc_endpoint_multi_az_enabled()
                 result = check.execute()
 
                 assert len(result) == 1
@@ -87,7 +87,7 @@ class Test_vpc_endpoint_for_multi_az:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"VPC {vpc['VpcId']} has {vpc_endpoint['ServiceName']} endpoint is not configured for high availibility."
+                    == f"VPC Endpoint {vpc_endpoint['VpcEndpointId']} in VPC {vpc['VpcId']} has subnets in different AZs."
                 )
                 assert (
                     result[0].resource_arn
@@ -142,15 +142,15 @@ class Test_vpc_endpoint_for_multi_az:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.vpc.vpc_endpoint_multi_az.vpc_endpoint_multi_az.vpc_client",
+                "prowler.providers.aws.services.vpc.vpc_endpoint_multi_az_enabled.vpc_endpoint_multi_az_enabled.vpc_client",
                 new=VPC(aws_provider),
             ):
                 # Test Check
-                from prowler.providers.aws.services.vpc.vpc_endpoint_multi_az.vpc_endpoint_multi_az import (
-                    vpc_endpoint_multi_az,
+                from prowler.providers.aws.services.vpc.vpc_endpoint_multi_az_enabled.vpc_endpoint_multi_az_enabled import (
+                    vpc_endpoint_multi_az_enabled,
                 )
 
-                check = vpc_endpoint_multi_az()
+                check = vpc_endpoint_multi_az_enabled()
                 result = check.execute()
 
                 assert len(result) == 1
@@ -158,7 +158,7 @@ class Test_vpc_endpoint_for_multi_az:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == f"VPC {vpc['VpcId']} has {vpc_endpoint['ServiceName']} endpoint is configured for high availibility."
+                    == f"VPC Endpoint {vpc_endpoint['VpcEndpointId']} in VPC {vpc['VpcId']} does not have subnets in different AZs."
                 )
                 assert (
                     result[0].resource_arn

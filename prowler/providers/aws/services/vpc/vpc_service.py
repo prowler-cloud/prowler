@@ -240,7 +240,7 @@ class VPC(AWSService):
                                     service_name=endpoint["ServiceName"],
                                     state=endpoint["State"],
                                     policy_document=endpoint_policy,
-                                    subnet_id=endpoint.get("SubnetIds"),
+                                    subnet_ids=endpoint.get("SubnetIds", []),
                                     owner_id=endpoint["OwnerId"],
                                     type=endpoint["VpcEndpointType"],
                                     region=regional_client.region,
@@ -485,7 +485,7 @@ class VpcEndpoint(BaseModel):
     vpc_id: str
     service_name: str
     state: str
-    subnet_id: Optional[list] = []
+    subnet_ids: Optional[list] = []
     policy_document: Optional[dict]
     owner_id: str
     type: str

@@ -11,16 +11,16 @@ class efs_multi_az_enabled(Check):
             report.resource_id = fs.id
             report.resource_arn = fs.arn
             report.resource_tags = fs.tags
-            if fs.availability_zone_id != "False":
+            if fs.availability_zone_id:
                 report.status = "FAIL"
-                report.status_extended = f"EFS {fs.id} is a single AZ file system."
+                report.status_extended = f"EFS {fs.id} is a Single-AZ file system."
             else:
                 if fs.number_of_mount_targets <= 1:
                     report.status = "FAIL"
-                    report.status_extended = f"EFS {fs.id} is a multi AZ enabled file system but with only one mount target."
+                    report.status_extended = f"EFS {fs.id} is a Multi-AZ file system but with only one mount target."
                 else:
                     report.status = "PASS"
-                    report.status_extended = f"EFS {fs.id} is a multi AZ enabled file system with more than one mount target."
+                    report.status_extended = f"EFS {fs.id} is a Multi-AZ file system with more than one mount target."
 
             findings.append(report)
 

@@ -65,7 +65,7 @@ class Test_efs_multi_az_enabled:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"EFS {file_system['FileSystemId']} is a single AZ file system."
+                    == f"EFS {file_system['FileSystemId']} is a Single-AZ file system."
                 )
                 assert result[0].resource_id == file_system["FileSystemId"]
                 assert (
@@ -103,7 +103,7 @@ class Test_efs_multi_az_enabled:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"EFS {file_system['FileSystemId']} is a multi AZ enabled file system but with only one mount target."
+                    == f"EFS {file_system['FileSystemId']} is a Multi-AZ file system but with only one mount target."
                 )
                 assert result[0].resource_id == file_system["FileSystemId"]
                 assert (
@@ -141,7 +141,7 @@ class Test_efs_multi_az_enabled:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == f"EFS {file_system['FileSystemId']} is a multi AZ enabled file system with more than one mount target."
+                    == f"EFS {file_system['FileSystemId']} is a Multi-AZ file system with more than one mount target."
                 )
                 assert result[0].resource_id == file_system["FileSystemId"]
                 assert (

@@ -62,7 +62,7 @@ class Test_documentdb_cluster_multi_az_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"DocumentDB Cluster {DOC_DB_CLUSTER_NAME} does not have multi az enabled."
+                == f"DocumentDB Cluster {DOC_DB_CLUSTER_NAME} does not have Multi-AZ enabled."
             )
             assert result[0].region == AWS_REGION
             assert result[0].resource_id == DOC_DB_CLUSTER_NAME
@@ -99,7 +99,7 @@ class Test_documentdb_cluster_multi_az_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"DocumentDB Cluster {DOC_DB_CLUSTER_NAME} has multi az enabled."
+                == f"DocumentDB Cluster {DOC_DB_CLUSTER_NAME} has Multi-AZ enabled."
             )
             assert result[0].region == AWS_REGION
             assert result[0].resource_id == DOC_DB_CLUSTER_NAME
