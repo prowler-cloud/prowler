@@ -37,9 +37,9 @@ class TestCSV:
                 remediation_code_other="other-code",
                 remediation_code_cli="cli-code",
                 compliance={"compliance_key": "compliance_value"},
-                categories="category1,category2",
-                depends_on="dependency",
-                related_to="related finding",
+                categories=["categorya", "categoryb"],
+                depends_on=["dependency"],
+                related_to=["related"],
                 notes="Notes about the finding",
             )
         ]
@@ -48,11 +48,6 @@ class TestCSV:
         output_data = output.data[0]
         assert isinstance(output_data, dict)
         assert isinstance(output_data["TIMESTAMP"], datetime)
-        assert isinstance(output_data["ACCOUNT_TAGS"], str)
-        assert isinstance(output_data["SEVERITY"], str)
-        assert isinstance(output_data["STATUS"], str)
-        assert isinstance(output_data["MUTED"], bool)
-        assert isinstance(output_data["COMPLIANCE"], str)
 
         assert output_data["AUTH_METHOD"] == "profile: default"
         assert output_data["ACCOUNT_UID"] == AWS_ACCOUNT_NUMBER
@@ -60,17 +55,21 @@ class TestCSV:
         assert output_data["ACCOUNT_EMAIL"] == ""
         assert output_data["ACCOUNT_ORGANIZATION_UID"] == "test-organization-id"
         assert output_data["ACCOUNT_ORGANIZATION_NAME"] == "test-organization"
+        assert isinstance(output_data["ACCOUNT_TAGS"], str)
         assert output_data["ACCOUNT_TAGS"] == "test-tag:test-value"
         assert output_data["FINDING_UID"] == "test-unique-finding"
         assert output_data["PROVIDER"] == "aws"
         assert output_data["CHECK_ID"] == "test-check-id"
         assert output_data["CHECK_TITLE"] == "test-check-id"
         assert output_data["CHECK_TYPE"] == "test-type"
+        assert isinstance(output_data["STATUS"], str)
         assert output_data["STATUS"] == "PASS"
         assert output_data["STATUS_EXTENDED"] == "status-extended"
+        assert isinstance(output_data["MUTED"], bool)
         assert output_data["MUTED"] is False
         assert output_data["SERVICE_NAME"] == "test-service"
         assert output_data["SUBSERVICE_NAME"] == ""
+        assert isinstance(output_data["SEVERITY"], str)
         assert output_data["SEVERITY"] == "high"
         assert output_data["RESOURCE_TYPE"] == "test-resource"
         assert output_data["RESOURCE_UID"] == "resource-123"
@@ -93,10 +92,11 @@ class TestCSV:
         assert output_data["REMEDIATION_CODE_TERRAFORM"] == "terraform-code"
         assert output_data["REMEDIATION_CODE_CLI"] == "cli-code"
         assert output_data["REMEDIATION_CODE_OTHER"] == "other-code"
+        assert isinstance(output_data["COMPLIANCE"], str)
         assert output_data["COMPLIANCE"] == "compliance_key: compliance_value"
-        assert output_data["CATEGORIES"] == "category1,category2"
+        assert output_data["CATEGORIES"] == "categorya | categoryb"
         assert output_data["DEPENDS_ON"] == "dependency"
-        assert output_data["RELATED_TO"] == "related finding"
+        assert output_data["RELATED_TO"] == "related"
         assert output_data["NOTES"] == "Notes about the finding"
         assert output_data["PROWLER_VERSION"] == prowler_version
 

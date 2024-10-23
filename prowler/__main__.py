@@ -236,9 +236,6 @@ def prowler():
     # Sort final check list
     checks_to_execute = sorted(checks_to_execute)
 
-    # Setup Mutelist
-    global_provider.mutelist = args.mutelist_file
-
     # Setup Output Options
     if provider == "aws":
         output_options = AWSOutputOptions(

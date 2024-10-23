@@ -116,6 +116,10 @@ def mock_make_api_call(self, operation_name, kwarg):
                 "test_key": "test_value",
             },
         }
+    elif operation_name == "GetResourcePolicy":
+        return {
+            "PolicyInJson": '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":"*","Action":"secretsmanager:GetSecretValue","Resource":"*"}]}',
+        }
     return make_api_call(self, operation_name, kwarg)
 
 
@@ -201,12 +205,22 @@ class Test_Glue_Service:
     def test_get_data_catalog_encryption_settings(self):
         aws_provider = set_mocked_aws_provider()
         glue = Glue(aws_provider)
-        assert len(glue.catalog_encryption_settings) == 1
-        assert glue.catalog_encryption_settings[0].mode == "SSE-KMS"
-        assert glue.catalog_encryption_settings[0].kms_id == "kms_key"
-        assert glue.catalog_encryption_settings[0].password_encryption
-        assert glue.catalog_encryption_settings[0].password_kms_id == "password_key"
-        assert glue.catalog_encryption_settings[0].region == AWS_REGION_US_EAST_1
+        assert glue.data_catalogs[AWS_REGION_US_EAST_1].encryption_settings
+        assert (
+            glue.data_catalogs[AWS_REGION_US_EAST_1].encryption_settings.mode
+            == "SSE-KMS"
+        )
+        assert (
+            glue.data_catalogs[AWS_REGION_US_EAST_1].encryption_settings.kms_id
+            == "kms_key"
+        )
+        assert glue.data_catalogs[
+            AWS_REGION_US_EAST_1
+        ].encryption_settings.password_encryption
+        assert (
+            glue.data_catalogs[AWS_REGION_US_EAST_1].encryption_settings.password_kms_id
+            == "password_key"
+        )
 
     # Test Glue Get Dev Endpoints
     @mock_aws
@@ -265,3 +279,19 @@ class Test_Glue_Service:
 
         assert glue.dev_endpoints[0].tags == [{"test_key": "test_value"}]
         assert glue.jobs[0].tags == [{"test_key": "test_value"}]
+
+    @mock_aws
+    def test_get_resource_policy(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        glue = Glue(aws_provider)
+        assert glue.data_catalogs[AWS_REGION_US_EAST_1].policy == {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": "*",
+                    "Action": "secretsmanager:GetSecretValue",
+                    "Resource": "*",
+                }
+            ],
+        }

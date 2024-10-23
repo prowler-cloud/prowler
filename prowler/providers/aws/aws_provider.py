@@ -13,7 +13,12 @@ from colorama import Fore, Style
 from pytz import utc
 from tzlocal import get_localzone
 
-from prowler.config.config import aws_services_json_file, get_default_mute_file_path
+from prowler.config.config import (
+    aws_services_json_file,
+    default_config_file_path,
+    get_default_mute_file_path,
+    load_and_validate_config_file,
+)
 from prowler.lib.check.utils import list_modules, recover_checks_from_service
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import open_file, parse_json_file, print_boxes
@@ -24,20 +29,21 @@ from prowler.providers.aws.config import (
     ROLE_SESSION_NAME,
 )
 from prowler.providers.aws.exceptions.exceptions import (
-    AWSAccessKeyIDInvalid,
+    AWSAccessKeyIDInvalidError,
     AWSArgumentTypeValidationError,
     AWSAssumeRoleError,
     AWSClientError,
-    AWSIAMRoleARNEmptyResource,
-    AWSIAMRoleARNInvalidAccountID,
-    AWSIAMRoleARNInvalidResourceType,
-    AWSIAMRoleARNPartitionEmpty,
-    AWSIAMRoleARNRegionNotEmtpy,
-    AWSIAMRoleARNServiceNotIAMnorSTS,
-    AWSInvalidAccountCredentials,
+    AWSIAMRoleARNEmptyResourceError,
+    AWSIAMRoleARNInvalidAccountIDError,
+    AWSIAMRoleARNInvalidResourceTypeError,
+    AWSIAMRoleARNPartitionEmptyError,
+    AWSIAMRoleARNRegionNotEmtpyError,
+    AWSIAMRoleARNServiceNotIAMnorSTSError,
+    AWSInvalidProviderIdError,
     AWSNoCredentialsError,
     AWSProfileNotFoundError,
-    AWSSecretAccessKeyInvalid,
+    AWSSecretAccessKeyInvalidError,
+    AWSSessionTokenExpiredError,
     AWSSetUpSessionError,
 )
 from prowler.providers.aws.lib.arn.arn import parse_iam_credentials_arn
@@ -70,6 +76,7 @@ class AwsProvider(Provider):
     _audit_config: dict
     _scan_unused_services: bool = False
     _enabled_regions: set = set()
+    _mutelist: AWSMutelist
     # TODO: this is not optional, enforce for all providers
     audit_metadata: Audit_Metadata
 
@@ -87,8 +94,11 @@ class AwsProvider(Provider):
         scan_unused_services: bool = False,
         resource_tags: list[str] = [],
         resource_arn: list[str] = [],
-        audit_config: dict = {},
+        config_path: str = None,
+        config_content: dict = None,
         fixer_config: dict = {},
+        mutelist_path: str = None,
+        mutelist_content: dict = None,
         aws_access_key_id: str = None,
         aws_secret_access_key: str = None,
         aws_session_token: Optional[str] = None,
@@ -109,8 +119,11 @@ class AwsProvider(Provider):
             - scan_unused_services: A boolean indicating whether to scan unused services. False by default.
             - resource_tags: A list of tags to filter the resources to audit.
             - resource_arn: A list of ARNs of the resources to audit.
-            - audit_config: The audit configuration.
+            - config_path: The path to the configuration file.
+            - config_content: The content of the configuration file.
             - fixer_config: The fixer configuration.
+            - mutelist_path: The path to the mutelist file.
+            - mutelist_content: The content of the mutelist file.
             - aws_access_key_id: The AWS access key ID.
             - aws_secret_access_key: The AWS secret access key.
             - aws_session_token: The AWS session token, optional.
@@ -280,9 +293,31 @@ class AwsProvider(Provider):
         self._scan_unused_services = scan_unused_services
 
         # Audit Config
-        self._audit_config = audit_config
+        if config_content:
+            self._audit_config = config_content
+        else:
+            if not config_path:
+                config_path = default_config_file_path
+            self._audit_config = load_and_validate_config_file(self._type, config_path)
+
         # Fixer Config
         self._fixer_config = fixer_config
+
+        # Mutelist
+        if mutelist_content:
+            self._mutelist = AWSMutelist(
+                mutelist_content=mutelist_content,
+                session=self._session.current_session,
+                aws_account_id=self._identity.account,
+            )
+        else:
+            if not mutelist_path:
+                mutelist_path = get_default_mute_file_path(self.type)
+            self._mutelist = AWSMutelist(
+                mutelist_path=mutelist_path,
+                session=self._session.current_session,
+                aws_account_id=self._identity.account,
+            )
 
         Provider.set_global_provider(self)
 
@@ -324,23 +359,6 @@ class AwsProvider(Provider):
         mutelist method returns the provider's mutelist.
         """
         return self._mutelist
-
-    # TODO: this is going to be called from another place soon, since the provider
-    # shouldn't hold the mutelist
-    @mutelist.setter
-    def mutelist(self, mutelist_path):
-        """
-        mutelist.setter sets the provider's mutelist.
-        """
-        # Set default mutelist path if none is set
-        if not mutelist_path:
-            mutelist_path = get_default_mute_file_path(self.type)
-
-        self._mutelist = AWSMutelist(
-            mutelist_path=mutelist_path,
-            session=self._session.current_session,
-            aws_account_id=self._identity.account,
-        )
 
     @property
     def get_output_mapping(self):
@@ -973,12 +991,17 @@ class AwsProvider(Provider):
                 f"{client_error.__class__.__name__}[{client_error.__traceback__.tb_lineno}]: {client_error}"
             )
             if client_error.response["Error"]["Code"] == "InvalidClientTokenId":
-                raise AWSAccessKeyIDInvalid(
+                raise AWSAccessKeyIDInvalidError(
                     original_exception=client_error,
                     file=pathlib.Path(__file__).name,
                 )
             elif client_error.response["Error"]["Code"] == "SignatureDoesNotMatch":
-                raise AWSSecretAccessKeyInvalid(
+                raise AWSSecretAccessKeyInvalidError(
+                    original_exception=client_error,
+                    file=pathlib.Path(__file__).name,
+                )
+            elif client_error.response["Error"]["Code"] == "ExpiredToken":
+                raise AWSSessionTokenExpiredError(
                     original_exception=client_error,
                     file=pathlib.Path(__file__).name,
                 )
@@ -1091,62 +1114,80 @@ class AwsProvider(Provider):
             caller_identity = AwsProvider.validate_credentials(session, aws_region)
             # Do an extra validation if the AWS account ID is provided
             if provider_id and caller_identity.account != provider_id:
-                raise AWSInvalidAccountCredentials(file=pathlib.Path(__file__).name)
+                raise AWSInvalidProviderIdError(file=pathlib.Path(__file__).name)
 
             return Connection(
                 is_connected=True,
             )
 
         except AWSSetUpSessionError as setup_session_error:
-            logger.error(str(setup_session_error))
+            logger.error(
+                f"{setup_session_error.__class__.__name__}[{setup_session_error.__traceback__.tb_lineno}]: {setup_session_error}"
+            )
             if raise_on_exception:
                 raise setup_session_error
             return Connection(error=setup_session_error)
 
         except AWSArgumentTypeValidationError as validation_error:
-            logger.error(str(validation_error))
+            logger.error(
+                f"{validation_error.__class__.__name__}[{validation_error.__traceback__.tb_lineno}]: {validation_error}"
+            )
             if raise_on_exception:
                 raise validation_error
             return Connection(error=validation_error)
 
-        except AWSIAMRoleARNRegionNotEmtpy as arn_region_not_empty_error:
-            logger.error(str(arn_region_not_empty_error))
+        except AWSIAMRoleARNRegionNotEmtpyError as arn_region_not_empty_error:
+            logger.error(
+                f"{arn_region_not_empty_error.__class__.__name__}[{arn_region_not_empty_error.__traceback__.tb_lineno}]: {arn_region_not_empty_error}"
+            )
             if raise_on_exception:
                 raise arn_region_not_empty_error
             return Connection(error=arn_region_not_empty_error)
 
-        except AWSIAMRoleARNPartitionEmpty as arn_partition_empty_error:
-            logger.error(str(arn_partition_empty_error))
+        except AWSIAMRoleARNPartitionEmptyError as arn_partition_empty_error:
+            logger.error(
+                f"{arn_partition_empty_error.__class__.__name__}[{arn_partition_empty_error.__traceback__.tb_lineno}]: {arn_partition_empty_error}"
+            )
             if raise_on_exception:
                 raise arn_partition_empty_error
             return Connection(error=arn_partition_empty_error)
 
-        except AWSIAMRoleARNServiceNotIAMnorSTS as arn_service_not_iam_sts_error:
-            logger.error(str(arn_service_not_iam_sts_error))
+        except AWSIAMRoleARNServiceNotIAMnorSTSError as arn_service_not_iam_sts_error:
+            logger.error(
+                f"{arn_service_not_iam_sts_error.__class__.__name__}[{arn_service_not_iam_sts_error.__traceback__.tb_lineno}]: {arn_service_not_iam_sts_error}"
+            )
             if raise_on_exception:
                 raise arn_service_not_iam_sts_error
             return Connection(error=arn_service_not_iam_sts_error)
 
-        except AWSIAMRoleARNInvalidAccountID as arn_invalid_account_id_error:
-            logger.error(str(arn_invalid_account_id_error))
+        except AWSIAMRoleARNInvalidAccountIDError as arn_invalid_account_id_error:
+            logger.error(
+                f"{arn_invalid_account_id_error.__class__.__name__}[{arn_invalid_account_id_error.__traceback__.tb_lineno}]: {arn_invalid_account_id_error}"
+            )
             if raise_on_exception:
                 raise arn_invalid_account_id_error
             return Connection(error=arn_invalid_account_id_error)
 
-        except AWSIAMRoleARNInvalidResourceType as arn_invalid_resource_type_error:
-            logger.error(str(arn_invalid_resource_type_error))
+        except AWSIAMRoleARNInvalidResourceTypeError as arn_invalid_resource_type_error:
+            logger.error(
+                f"{arn_invalid_resource_type_error.__class__.__name__}[{arn_invalid_resource_type_error.__traceback__.tb_lineno}]: {arn_invalid_resource_type_error}"
+            )
             if raise_on_exception:
                 raise arn_invalid_resource_type_error
             return Connection(error=arn_invalid_resource_type_error)
 
-        except AWSIAMRoleARNEmptyResource as arn_empty_resource_error:
-            logger.error(str(arn_empty_resource_error))
+        except AWSIAMRoleARNEmptyResourceError as arn_empty_resource_error:
+            logger.error(
+                f"{arn_empty_resource_error.__class__.__name__}[{arn_empty_resource_error.__traceback__.tb_lineno}]: {arn_empty_resource_error}"
+            )
             if raise_on_exception:
                 raise arn_empty_resource_error
             return Connection(error=arn_empty_resource_error)
 
         except AWSAssumeRoleError as assume_role_error:
-            logger.error(str(assume_role_error))
+            logger.error(
+                f"{assume_role_error.__class__.__name__}[{assume_role_error.__traceback__.tb_lineno}]: {assume_role_error}"
+            )
             if raise_on_exception:
                 raise assume_role_error
             return Connection(error=assume_role_error)
@@ -1183,23 +1224,37 @@ class AwsProvider(Provider):
                 ) from no_credentials_error
             return Connection(error=no_credentials_error)
 
-        except AWSAccessKeyIDInvalid as access_key_id_invalid_error:
-            logger.error(str(access_key_id_invalid_error))
+        except AWSAccessKeyIDInvalidError as access_key_id_invalid_error:
+            logger.error(
+                f"{access_key_id_invalid_error.__class__.__name__}[{access_key_id_invalid_error.__traceback__.tb_lineno}]: {access_key_id_invalid_error}"
+            )
             if raise_on_exception:
                 raise access_key_id_invalid_error
             return Connection(error=access_key_id_invalid_error)
 
-        except AWSSecretAccessKeyInvalid as secret_access_key_invalid_error:
-            logger.error(str(secret_access_key_invalid_error))
+        except AWSSecretAccessKeyInvalidError as secret_access_key_invalid_error:
+            logger.error(
+                f"{secret_access_key_invalid_error.__class__.__name__}[{secret_access_key_invalid_error.__traceback__.tb_lineno}]: {secret_access_key_invalid_error}"
+            )
             if raise_on_exception:
                 raise secret_access_key_invalid_error
             return Connection(error=secret_access_key_invalid_error)
 
-        except AWSInvalidAccountCredentials as invalid_account_credentials_error:
-            logger.error(str(invalid_account_credentials_error))
+        except AWSInvalidProviderIdError as invalid_account_credentials_error:
+            logger.error(
+                f"{invalid_account_credentials_error.__class__.__name__}[{invalid_account_credentials_error.__traceback__.tb_lineno}]: {invalid_account_credentials_error}"
+            )
             if raise_on_exception:
                 raise invalid_account_credentials_error
             return Connection(error=invalid_account_credentials_error)
+
+        except AWSSessionTokenExpiredError as session_token_expired:
+            logger.error(
+                f"{session_token_expired.__class__.__name__}[{session_token_expired.__traceback__.tb_lineno}]: {session_token_expired}"
+            )
+            if raise_on_exception:
+                raise session_token_expired
+            return Connection(error=session_token_expired)
 
         except Exception as error:
             logger.critical(

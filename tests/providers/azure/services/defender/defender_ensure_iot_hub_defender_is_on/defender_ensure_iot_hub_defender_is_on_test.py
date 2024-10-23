@@ -84,7 +84,7 @@ class Test_defender_ensure_iot_hub_defender_is_on:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"The security solution iot_sec_solution is disabled in susbscription {AZURE_SUBSCRIPTION_ID}"
+                == f"The security solution iot_sec_solution is disabled in subscription {AZURE_SUBSCRIPTION_ID}"
             )
             assert result[0].resource_name == "iot_sec_solution"
             assert result[0].resource_id == resource_id
@@ -117,7 +117,7 @@ class Test_defender_ensure_iot_hub_defender_is_on:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"The security solution iot_sec_solution is enabled in susbscription {AZURE_SUBSCRIPTION_ID}."
+                == f"The security solution iot_sec_solution is enabled in subscription {AZURE_SUBSCRIPTION_ID}."
             )
             assert result[0].resource_name == "iot_sec_solution"
             assert result[0].resource_id == resource_id
@@ -155,7 +155,7 @@ class Test_defender_ensure_iot_hub_defender_is_on:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"The security solution iot_sec_solution_enabled is enabled in susbscription {AZURE_SUBSCRIPTION_ID}."
+                == f"The security solution iot_sec_solution_enabled is enabled in subscription {AZURE_SUBSCRIPTION_ID}."
             )
             assert result[0].resource_name == "iot_sec_solution_enabled"
             assert result[0].resource_id == resource_id_enabled
@@ -164,7 +164,7 @@ class Test_defender_ensure_iot_hub_defender_is_on:
             assert result[1].status == "FAIL"
             assert (
                 result[1].status_extended
-                == f"The security solution iot_sec_solution_disabled is disabled in susbscription {AZURE_SUBSCRIPTION_ID}"
+                == f"The security solution iot_sec_solution_disabled is disabled in subscription {AZURE_SUBSCRIPTION_ID}"
             )
             assert result[1].resource_name == "iot_sec_solution_disabled"
             assert result[1].resource_id == resource_id_disabled

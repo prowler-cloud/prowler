@@ -101,7 +101,7 @@ class Test_elbv2_desync_mitigation_mode:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert search(
-                "does not have desync mitigation mode set as strictest and is not dropping invalid header fields",
+                "does not have desync mitigation mode set as strictest/defensive and is not dropping invalid header fields",
                 result[0].status_extended,
             )
             assert result[0].resource_id == "my-lb"
@@ -169,7 +169,7 @@ class Test_elbv2_desync_mitigation_mode:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert search(
-                "does not have desync mitigation mode set as strictest but is dropping invalid header fields",
+                "does not have desync mitigation mode set as strictest/defensive but is dropping invalid header fields",
                 result[0].status_extended,
             )
             assert result[0].resource_id == "my-lb"

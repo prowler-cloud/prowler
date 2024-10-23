@@ -15,8 +15,10 @@ class EventBridge(AWSService):
         # Call AWSService's __init__
         super().__init__("events", provider)
         self.buses = {}
+        self.endpoints = {}
         self.__threading_call__(self._list_event_buses)
         self.__threading_call__(self._describe_event_bus)
+        self.__threading_call__(self._list_endpoints)
         self._list_tags_for_resource()
 
     def _list_event_buses(self, regional_client):
@@ -55,6 +57,27 @@ class EventBridge(AWSService):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _list_endpoints(self, regional_client):
+        logger.info("EventBridge - Listing Endpoints...")
+        try:
+            for endpoint in regional_client.list_endpoints()["Endpoints"]:
+                endpoint_arn = endpoint["Arn"]
+                if not self.audit_resources or (
+                    is_resource_filtered(endpoint_arn, self.audit_resources)
+                ):
+                    self.endpoints[endpoint_arn] = Endpoint(
+                        name=endpoint.get("Name", ""),
+                        arn=endpoint_arn,
+                        region=regional_client.region,
+                        replication_state=endpoint.get("ReplicationConfig", {}).get(
+                            "State", "DISABLED"
+                        ),
+                    )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
     def _list_tags_for_resource(self):
         logger.info("EventBridge - Listing Tags...")
         try:
@@ -90,6 +113,14 @@ class Bus(BaseModel):
     kms_key_id: Optional[str]
     policy: Optional[str]
     tags: Optional[list]
+
+
+class Endpoint(BaseModel):
+    name: str
+    arn: str
+    region: str
+    replication_state: str
+    tags: Optional[list] = []
 
 
 ################################ Schema
