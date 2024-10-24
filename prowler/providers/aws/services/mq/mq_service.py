@@ -47,7 +47,7 @@ class MQ(AWSService):
                 "General", False
             )
             broker.engine_type = EngineType(
-                describe_broker.get("EngineType", "ACTIVEMQ")
+                describe_broker.get("EngineType", "ACTIVEMQ").upper()
             )
             broker.deployment_mode = DeploymentMode(
                 describe_broker.get("DeploymentMode", "SINGLE_INSTANCE")
