@@ -42,10 +42,10 @@ class MQ(AWSService):
                 BrokerId=broker.id
             )
             broker.engine_type = EngineType(
-                describe_broker.get("EngineType", "ACTIVEMQ")
+                describe_broker.get("EngineType", "ACTIVEMQ").upper()
             )
             broker.deployment_mode = DeploymentMode(
-                describe_broker.get("DeploymentMode", "SINGLE_INSTANCE")
+                describe_broker.get("DeploymentMode", "SINGLE_INSTANCE").upper()
             )
             broker.auto_minor_version_upgrade = describe_broker.get(
                 "AutoMinorVersionUpgrade", False
