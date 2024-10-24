@@ -64,13 +64,8 @@ class TestCheckLoader:
         categories = None
 
         with patch(
-            "prowler.lib.check.checks_loader.recover_checks_from_provider",
-            return_value=[
-                (
-                    f"{S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME}",
-                    "path/to/{S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME}",
-                )
-            ],
+            "prowler.lib.check.checks_loader.CheckMetadata.list",
+            return_value={S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME},
         ):
             assert {S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME} == load_checks_to_execute(
                 bulk_checks_metatada,
@@ -145,7 +140,7 @@ class TestCheckLoader:
         categories = None
 
         with patch(
-            "prowler.lib.check.checks_loader.recover_checks_from_service",
+            "prowler.lib.check.checks_loader.CheckMetadata.list_by_service",
             return_value={S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME},
         ):
             assert {S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME} == load_checks_to_execute(
@@ -175,7 +170,10 @@ class TestCheckLoader:
         categories = None
 
         with patch(
-            "prowler.lib.check.checks_loader.recover_checks_from_service",
+            "prowler.lib.check.checks_loader.CheckMetadata.list_by_severity",
+            return_value={S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME},
+        ), patch(
+            "prowler.lib.check.checks_loader.CheckMetadata.list_by_service",
             return_value={"ec2_ami_public"},
         ):
             assert set() == load_checks_to_execute(
@@ -235,7 +233,7 @@ class TestCheckLoader:
         categories = None
 
         with patch(
-            "prowler.lib.check.checks_loader.recover_checks_from_service",
+            "prowler.lib.check.checks_loader.CheckMetadata.list_by_service",
             return_value={S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME},
         ):
             assert {S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME} == load_checks_to_execute(
@@ -265,7 +263,7 @@ class TestCheckLoader:
         categories = None
 
         with patch(
-            "prowler.lib.check.checks_loader.parse_checks_from_compliance_framework",
+            "prowler.lib.check.checks_loader.CheckMetadata.list",
             return_value={S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME},
         ):
             assert {S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME} == load_checks_to_execute(
