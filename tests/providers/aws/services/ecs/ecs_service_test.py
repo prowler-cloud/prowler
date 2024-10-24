@@ -22,6 +22,13 @@ def mock_make_api_call(self, operation_name, kwarg):
                     {
                         "name": "test-container",
                         "image": "test-image",
+                        "logConfiguration": {
+                            "logDriver": "awslogs",
+                            "options": {
+                                "mode": "non-blocking",
+                                "max-buffer-size": "25m",
+                            },
+                        },
                         "environment": [
                             {"name": "DB_PASSWORD", "value": "pass-12343"},
                         ],
@@ -163,7 +170,14 @@ class Test_ECS_Service:
         assert ecs.task_definitions[task_arn].network_mode == "host"
         assert not ecs.task_definitions[task_arn].container_definitions[0].privileged
         assert ecs.task_definitions[task_arn].container_definitions[0].user == ""
-        assert ecs.task_definitions[task_arn].container_definitions[0].log_driver == ""
+        assert (
+            ecs.task_definitions[task_arn].container_definitions[0].log_driver
+            == "awslogs"
+        )
+        assert (
+            ecs.task_definitions[task_arn].container_definitions[0].log_option
+            == "non-blocking"
+        )
         assert ecs.task_definitions[task_arn].pid_mode == "host"
         assert (
             not ecs.task_definitions[task_arn]
