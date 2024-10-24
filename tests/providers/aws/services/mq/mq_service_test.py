@@ -86,6 +86,7 @@ class Test_MQ_Service:
                     "Username": "user",
                 }
             ],
+            Tags={"key": "value"},
         )
         broker_arn = broker["BrokerArn"]
         broker["BrokerId"]
