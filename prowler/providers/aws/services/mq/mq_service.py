@@ -30,6 +30,7 @@ class MQ(AWSService):
                         id=broker["BrokerId"],
                         region=regional_client.region,
                     )
+
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -40,15 +41,17 @@ class MQ(AWSService):
             describe_broker = self.regional_clients[broker.region].describe_broker(
                 BrokerId=broker.id
             )
+            broker.engine_type = EngineType(
+                describe_broker.get("EngineType", "ACTIVEMQ").upper()
+            )
+            broker.deployment_mode = DeploymentMode(
+                describe_broker.get("DeploymentMode", "SINGLE_INSTANCE").upper()
+            )
             broker.auto_minor_version_upgrade = describe_broker.get(
                 "AutoMinorVersionUpgrade", False
             )
-            broker.engine_type = EngineType(
-                describe_broker.get("EngineType", "ACTIVEMQ")
-            )
-            broker.deployment_mode = DeploymentMode(
-                describe_broker.get("DeploymentMode", "SINGLE_INSTANCE")
-            )
+            broker.tags = [describe_broker.get("Tags", {})]
+
         except Exception as error:
             logger.error(
                 f"{broker.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -77,6 +80,8 @@ class Broker(BaseModel):
     name: str
     id: str
     region: str
+    engine_type: EngineType = EngineType.ACTIVEMQ
+    deployment_mode: DeploymentMode = DeploymentMode.SINGLE_INSTANCE
     auto_minor_version_upgrade: bool = False
     engine_type: EngineType = EngineType.ACTIVEMQ
     deployment_mode: DeploymentMode = DeploymentMode.SINGLE_INSTANCE
