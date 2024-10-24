@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:cloudfront:region:account-id:distribution/resource-id",
   "Severity": "medium",
-  "ResourceType": "AWSCloudFrontDistribution",
+  "ResourceType": "AwsCloudFrontDistribution",
   "Description": "Check if CloudFront distributions use origin access control.",
   "Risk": "Without OAC, your S3 bucket could be accessed directly, bypassing CloudFront, which could expose your content to unauthorized access. Additionally, relying on Origin Access Identity (OAI) may limit functionality and security features, making your distribution less secure and more difficult to manage.",
   "RelatedUrl": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html#migrate-from-oai-to-oac",
