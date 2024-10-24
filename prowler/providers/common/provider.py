@@ -202,6 +202,7 @@ class Provider(ABC):
                     )
                 elif "gcp" in provider_class_name.lower():
                     provider_class(
+                        arguments.organization_id,
                         arguments.project_id,
                         arguments.excluded_project_id,
                         arguments.credentials_file,
