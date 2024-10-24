@@ -1,0 +1,35 @@
+{
+    "Provider": "aws",
+    "CheckID": "cloudtrail_enabled",
+    "CheckTitle": "Check if AWS CloudTrail is enabled",
+    "CheckType": [
+      "Software and Configuration Checks",
+      "Industry and Regulatory Standards",
+      "CIS AWS Foundations Benchmark"
+    ],
+    "ServiceName": "cloudtrail",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "arn:aws:cloudtrail:region:account-id:trail/trail-name",
+    "Severity": "high",
+    "ResourceType": "CloudTrail",
+    "Description": "Ensure that AWS CloudTrail is enabled in all regions.",
+    "Risk": "Without CloudTrail, it is not possible to track API calls made in your account, which is critical for security and operational troubleshooting.",
+    "RelatedUrl": "",
+    "Remediation": {
+      "Code": {
+        "CLI": "aws cloudtrail create-trail --name <trail-name> --s3-bucket-name <bucket-name>",
+        "NativeIaC": "",
+        "Other": "",
+        "Terraform": ""
+      },
+      "Recommendation": {
+        "Text": "Enable CloudTrail in all regions to ensure all API calls are logged. Configure CloudTrail to deliver log files to an S3 bucket and monitor the logs for security and operational insights.",
+        "Url": "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-create-and-update-a-trail.html"
+      }
+    },
+    "Categories": [],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": "Enabling CloudTrail is a critical step in ensuring the security and compliance of your AWS environment."
+  }
+  

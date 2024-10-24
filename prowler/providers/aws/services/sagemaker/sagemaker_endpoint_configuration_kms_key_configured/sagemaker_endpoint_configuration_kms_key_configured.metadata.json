@@ -1,0 +1,31 @@
+{
+    "Provider": "aws",
+    "CheckID": "sagemaker_endpoint_configuration_kms_key_configured",
+    "CheckTitle": "Checks if SageMaker endpoint configurations have a KMS key configured",
+    "CheckType": [],
+    "ServiceName": "sagemaker",
+    "SubServiceName": "endpoint_configuration",
+    "ResourceIdTemplate": "arn:aws:sagemaker:{region}:{account_id}:endpoint-config/{endpoint_config_name}",
+    "Severity": "medium",
+    "ResourceType": "AwsSageMakerEndpointConfig",
+    "Description": "This check ensures that SageMaker endpoint configurations have a KMS key configured to encrypt data at rest.",
+    "Risk": "Without a KMS key configured, data at rest is not encrypted, which can lead to data breaches and non-compliance with security standards.",
+    "RelatedUrl": "",
+    "Remediation": {
+      "Code": {
+        "CLI": "https://docs.aws.amazon.com/cli/latest/reference/sagemaker/create-endpoint-config.html",
+        "Other":"", 
+        "NativeIaC": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-sagemaker-endpointconfig.html",
+        "Terraform": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sagemaker_endpoint_configuration"
+      },
+      "Recommendation": {
+        "Text": "Ensure that SageMaker endpoint configurations have a KMS key configured for encryption.",
+        "Url": "https://docs.aws.amazon.com/sagemaker/latest/dg/API_EndpointConfig.html"
+      }
+    },
+    "Categories": [],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+  }
+  

@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "elbv2_alb_http_to_https_redirection_check",
+  "CheckTitle": "Check if HTTP to HTTPS redirection is configured on all HTTP listeners of Application Load Balancers.",
+  "CheckType": [
+    "Data Protection"
+  ],
+  "ServiceName": "elbv2",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:elasticloadbalancing:region:account-id:loadbalancer/app/load-balancer-name/id",
+  "Severity": "medium",
+  "ResourceType": "AWS::ElasticLoadBalancingV2::LoadBalancer",
+  "Description": "Checks if HTTP to HTTPS redirection is configured on all HTTP listeners of Application Load Balancers. The rule is NON_COMPLIANT if one or more HTTP listeners of Application Load Balancer do not have HTTP to HTTPS redirection configured. The rule is also NON_COMPLIANT if one of more HTTP listeners have forwarding to an HTTP listener instead of redirection.",
+  "Risk": "Using HTTP without redirection to HTTPS can expose sensitive data in transit.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws elbv2 modify-listener --listener-arn <listener-arn> --default-actions '[{\"Type\": \"redirect\",\"RedirectConfig\": {\"Protocol\": \"HTTPS\",\"Port\": \"443\",\"StatusCode\": \"HTTP_301\"}}]'",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/listener-update.html",
+      "Terraform": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener#redirect"
+    },
+    "Recommendation": {
+      "Text": "Configure HTTP to HTTPS redirection for all HTTP listeners of Application Load Balancers.",
+      "Url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/listener-update.html"
+    }
+  },
+  "Categories": [
+    "security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -1,0 +1,35 @@
+{
+    "Provider": "aws",
+    "CheckID": "ec2_ebs_in_backup_plan",
+    "CheckTitle": "Ensure EBS volumes are included in backup plans",
+    "CheckType": [
+      "Backup"
+    ],
+    "ServiceName": "ec2",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "arn:aws:ec2:{region}:{account}:volume/{resource_id}",
+    "Severity": "high",
+    "ResourceType": "AwsEc2Volume",
+    "Description": "This check ensures that EBS volumes are included in backup plans.",
+    "Risk": "EBS volumes not included in backup plans may result in data loss in case of a failure.",
+    "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/ebs-in-backup-plan.html",
+    "Remediation": {
+      "Code": {
+        "CLI": "https://docs.aws.amazon.com/cli/latest/reference/backup/create-backup-plan.html",
+        "NativeIaC": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-backup-backupplan.html",
+        "Other": "",
+        "Terraform": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/backup_plan"
+      },
+      "Recommendation": {
+        "Text": "Ensure that your EBS volumes are included in backup plans.",
+        "Url": "https://docs.aws.amazon.com/aws-backup/latest/devguide/what-is-backup.html"
+      }
+    },
+    "Categories": [
+      "Backup"
+    ],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+  }
+  

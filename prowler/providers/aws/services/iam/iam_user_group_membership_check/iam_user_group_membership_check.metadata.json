@@ -1,0 +1,32 @@
+{
+    "Provider": "aws",
+    "CheckID": "iam_user_group_membership_check",
+    "CheckTitle": "Checks if IAM users are members of at least one IAM group. The rule is NON_COMPLIANT if an IAM user is not a member of any group.",
+    "CheckType": [
+        "Configuration"
+    ],
+    "ServiceName": "iam",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "arn:partition:iam::account-id:user/user-name",
+    "Severity": "medium",
+    "ResourceType": "AwsIamUser",
+    "Description": "Checks if IAM users are members of at least one IAM group. The rule is NON_COMPLIANT if an IAM user is not a member of any group.",
+    "Risk": "IAM users without group memberships might indicate improper management of user permissions, potentially leading to overly permissive or restrictive access.",
+    "RelatedUrl": "",
+    "Remediation": {
+        "Code": {
+            "CLI": "https://docs.aws.amazon.com/cli/latest/reference/iam/add-user-to-group.html",
+            "NativeIaC": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-iam-user.html",
+            "Other": "",
+            "Terraform": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_group_membership"
+        },
+        "Recommendation": {
+            "Text": "Ensure that IAM users are members of at least one IAM group",
+            "Url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_groups_manage_add-remove-users.html"
+        }
+    },
+    "Categories": [],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+}

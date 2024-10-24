@@ -1,0 +1,32 @@
+{
+    "Provider": "aws",
+    "CheckID": "elbv2_alb_waf_enabled",
+    "CheckTitle": "Checks if ALBs have WAF enabled. The rule is NON_COMPLIANT if an ALB does not have WAF enabled.",
+    "CheckType": [
+        "Configuration changes"
+    ],
+    "ServiceName": "alb",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "arn:partition:elasticloadbalancing:region:account-id:loadbalancer/app/load-balancer-id",
+    "Severity": "medium",
+    "ResourceType": "AwsApplicationLoadBalancer",
+    "Description": "Checks if ALBs have WAF enabled. The rule is NON_COMPLIANT if an ALB does not have WAF enabled.",
+    "Risk": "If ALBs do not have WAF enabled, they are more vulnerable to web-based attacks such as SQL injection and cross-site scripting (XSS).",
+    "RelatedUrl": "",
+    "Remediation": {
+        "Code": {
+            "CLI": "https://docs.aws.amazon.com/cli/latest/reference/waf-regional/associate-web-acl.html",
+            "NativeIaC": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-elasticloadbalancingv2-loadbalancer.html",
+            "Other": "",
+            "Terraform": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/wafv2_web_acl_association"
+        },
+        "Recommendation": {
+            "Text": "Ensure that ALBs have WAF enabled.",
+            "Url": "https://docs.aws.amazon.com/waf/latest/developerguide/web-acl-associating.html"
+        }
+    },
+    "Categories": [],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+}

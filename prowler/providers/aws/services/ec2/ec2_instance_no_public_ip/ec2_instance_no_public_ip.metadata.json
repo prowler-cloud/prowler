@@ -1,0 +1,34 @@
+{
+    "Provider": "aws",
+    "CheckID": "ec2_instance_no_public_ip",
+    "CheckTitle": "Checks if EC2 instances have a public IP association",
+    "CheckType": [
+      "Infrastructure Security"
+    ],
+    "ServiceName": "ec2",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+    "Severity": "medium",
+    "ResourceType": "AwsEc2Instance",
+    "Description": "Checks if EC2 instances have a public IP association",
+    "Risk": "Having a public IP address can expose EC2 instances to potential security threats, such as unauthorized access and attacks, thereby increasing vulnerability to security breaches​",
+    "RelatedUrl": "",
+
+    "Remediation": {
+      "Code": {
+        "CLI": "aws ec2 modify-instance-attribute --instance-id <instance_id> --no-associate-public-ip-address",
+        "NativeIaC": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-instance.html",
+        "Other": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-instance-addressing.html",
+        "Terraform": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/instance"
+      },
+      "Recommendation": {
+        "Text": "To enhance security and compliance, ensure EC2 instances do not have public IP addresses unless absolutely necessary. Configure EC2 instances to operate within private subnets and use NAT gateways or VPC endpoints for internet access. This setup helps mitigate exposure to potential security threats and unauthorized access.",
+        "Url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-instance-addressing.html"
+      }
+    },
+    "Categories": [],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+  }
+  

@@ -1,0 +1,35 @@
+{
+    "Provider": "aws",
+    "CheckID": "elb_acm_certificate_required",
+    "CheckTitle": "Check if ELB listeners are using certificates from ACM.",
+    "CheckType": [
+      "Security"
+    ],
+    "ServiceName": "elb",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+    "Severity": "medium",
+    "ResourceType": "AWS::ElasticLoadBalancing::LoadBalancer",
+    "Description": "Checks if Classic Load Balancers have listeners that are configured to use certificates from AWS Certificate Manager (ACM). The rule is NON_COMPLIANT if at least 1 Classic Load Balancer has at least 1 listener that is configured without a certificate from ACM or is configured with a certificate different from an ACM certificate.",
+    "Risk": "Listeners without ACM certificates may be using insecure or untrusted certificates.",
+    "RelatedUrl": "",
+    "Remediation": {
+      "Code": {
+        "CLI": "",
+        "NativeIaC": "",
+        "Other": "https://docs.aws.amazon.com/acm/latest/userguide/acm-services.html",
+        "Terraform": ""
+      },
+      "Recommendation": {
+        "Text": "Ensure that your Classic Load Balancer listeners are configured to use certificates from ACM.",
+        "Url": "https://docs.aws.amazon.com/acm/latest/userguide/acm-services.html"
+      }
+    },
+    "Categories": [
+      "security"
+    ],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+  }
+  

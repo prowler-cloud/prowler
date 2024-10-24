@@ -1,0 +1,37 @@
+{
+    "Provider": "aws",
+    "CheckID": "cloudtrail_security_trail_enabled",
+    "CheckTitle": "Check that there is at least one AWS CloudTrail trail defined with security best practices.",
+    "CheckType": [
+      "Security",
+      "Configuration"
+    ],
+    "ServiceName": "cloudtrail",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+    "Severity": "high",
+    "ResourceType": "AWS::CloudTrail::Trail",
+    "Description": "Checks that there is at least one AWS CloudTrail trail defined with security best practices. The rule is NON_COMPLIANT if no trails meet all of the criteria mentioned.",
+    "Risk": "Without a properly configured CloudTrail, you may not be able to fully track activity in your AWS environment, potentially missing important security events.",
+    "RelatedUrl": "",
+    "Remediation": {
+      "Code": {
+        "CLI": "",
+        "NativeIaC": "",
+        "Other": "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-best-practices.html",
+        "Terraform": ""
+      },
+      "Recommendation": {
+        "Text": "Ensure that at least one CloudTrail trail is configured with security best practices.",
+        "Url": "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-best-practices.html"
+      }
+    },
+    "Categories": [
+      "security",
+      "configuration"
+    ],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+  }
+  

@@ -1,0 +1,31 @@
+{
+    "Provider": "aws",
+    "CheckID": "rds_logging_enabled",
+    "CheckTitle": "Check if RDS instances have logging enabled.",
+    "CheckType": [],
+    "ServiceName": "rds",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-instance",
+    "Severity": "medium",
+    "ResourceType": "AwsRdsDbInstance",
+    "Description": "Check if respective logs of Amazon Relational Database Service (Amazon RDS) are enabled. The rule is NON_COMPLIANT if any log types are not enabled.",
+    "Risk": "Without proper logging, it is difficult to monitor, audit, or detect issues or suspicious activities in your RDS instances.",
+    "RelatedUrl": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_LogAccess.html",
+    "Remediation": {
+      "Code": {
+        "CLI": "aws rds modify-db-instance --db-instance-identifier <db_instance_id> --cloudwatch-logs-export-configuration '{\"EnableLogTypes\":[\"error\",\"general\",\"slowquery\",\"audit\"]}' --apply-immediately",
+        "NativeIaC": "",
+        "Other": "https://aws.amazon.com/premiumsupport/knowledge-center/enable-logging-rds/",
+        "Terraform": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/db_instance"
+      },
+      "Recommendation": {
+        "Text": "Ensure that appropriate logs (e.g., error, general, slowquery, audit) are enabled for your RDS instances to maintain a proper audit trail.",
+        "Url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_LogAccess.html"
+      }
+    },
+    "Categories": [],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+  }
+  

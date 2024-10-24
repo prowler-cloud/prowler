@@ -1,0 +1,283 @@
+{
+    "Framework": "CMMC",
+    "Version": "Level1",
+    "Provider": "AWS",
+    "Description": "The CMMC Level 1 framework provides a general-purpose compliance framework designed to help users create security, operational, or cost-optimization governance checks using AWS Config rules and remediation actions. These conformance packs are sample templates and do not fully ensure compliance with the CMMC standard. Users are responsible for assessing their use of AWS services to meet applicable legal and regulatory requirements.",
+    "Requirements": [
+        {
+            "Id": "AC.1.001",
+            "Name": "Limit information system access to authorized users, processes acting on behalf of authorized users, or devices (including other information systems).",
+            "Description": "The credentials are audited for authorized devices, users, and processes by ensuring IAM access keys are rotated as specified by the organizational policy. Changing the access keys on a regular schedule is a security best practice. It shortens the period an access key is active and reduces the business impact if the keys are compromised. This rule requires an access key rotation value (Config Default: 90). The actual value should reflect your organization's policies.",
+            "Attributes": [
+                {
+                    "ItemId": "AC.1.001",
+                    "Section": "ACCESS CONTROL (AC)",
+                    "Service": "aws",
+                    "Type": "automated"
+                }
+            ],
+            "Checks": [
+                "iam_rotate_access_key_90_days",
+                "dms_instance_no_public_access",
+                "ec2_ebs_snapshots_encrypted",
+                "ec2_instance_imdsv2_enabled",
+                "ec2_instance_no_public_ip",
+                "ec2_instance_profile_attached",
+                "opensearch_service_domains_cloudwatch_logging_enabled",
+                "emr_kerberos_enabled",
+                "emr_cluster_master_nodes_no_public_ip",
+                "secretsmanager_using_cmk",
+                "iam_user_group_membership_check",
+                "iam_no_inline_policy_check",
+                "iam_no_inline_policy_check",
+                "iam_password_policy_reuse_24",
+                "iam_customer_attached_policy_no_administrative_privileges",
+                "iam_customer_attached_policy_no_administrative_privileges",
+                "iam_no_root_access_key",
+                "iam_user_group_membership_check",
+                "iam_user_mfa_enabled_console_access",
+                "iam_user_group_membership_check",
+                "iam_user_two_active_access_key",
+                "ec2_restricted_common_ports",
+                "ec2_instances_in_vpc",
+                "ec2_internet_gateway_authorized_vpc_only",
+                "awslambda_function_url_public",
+                "awslambda_function_url_public",
+                "iam_user_mfa_enabled_console_access",
+                "rds_snapshots_public_prohibited",
+                "rds_snapshots_public_access",
+                "redshift_cluster_public_access",
+                "ec2_restricted_common_ports",
+                "iam_root_mfa_enabled",
+                "iam_user_mfa_enabled_console_access",
+                "s3_account_level_public_access_blocks",
+                "cloudtrail_logs_s3_bucket_is_not_publicly_accessible",
+                "cloudtrail_logs_s3_bucket_access_logging_enabled",
+                "s3_bucket_level_public_access_block",
+                "s3_bucket_public_write_prohibited",
+                "sagemaker_notebook_no_direct_internet_access",
+                "secretsmanager_automatic_rotation_enabled",
+                "secretsmanager_scheduled_rotation_success_check",
+                "ec2_instance_managed_by_ssm",
+                "vpc_default_security_group_closed",
+                "vpc_sg_open_to_authorized_ports",
+                "opensearch_service_domains_cloudwatch_logging_enabled"
+            ]
+        },
+        {
+            "Id": "AC.1.002",
+            "Name": "Limit information system access to the types of transactions and functions that authorized users are permitted to execute.",
+            "Description": "Manage access to the AWS Cloud by ensuring DMS replication instances cannot be publicly accessed. DMS replication instances can contain sensitive information and access control is required for such accounts.",
+            "Attributes": [
+                {
+                    "ItemId": "AC.1.002",
+                    "Section": "ACCESS CONTROL (AC)",
+                    "Service": "aws",
+                    "Type": "automated"
+                }
+            ],
+            "Checks": [
+                "dms_instance_no_public_access",
+                "ec2_ebs_snapshots_encrypted",
+                "ec2_instance_imdsv2_enabled",
+                "ec2_instance_no_public_ip",
+                "opensearch_service_domains_cloudwatch_logging_enabled",
+                "emr_kerberos_enabled",
+                "emr_cluster_master_nodes_no_public_ip",
+                "iam_no_inline_policy_check",
+                "iam_password_policy_reuse_24",
+                "iam_customer_attached_policy_no_administrative_privileges",
+                "iam_no_root_access_key",
+                "iam_user_group_membership_check",
+                "iam_user_mfa_enabled_console_access",
+                "iam_user_group_membership_check",
+                "ec2_restricted_common_ports",
+                "ec2_instances_in_vpc",
+                "ec2_internet_gateway_authorized_vpc_only",
+                "awslambda_function_url_public",
+                "awslambda_function_url_public",
+                "iam_user_mfa_enabled_console_access",
+                "rds_snapshots_public_prohibited",
+                "rds_snapshots_public_access",
+                "redshift_cluster_public_access",
+                "ec2_restricted_common_ports",
+                "iam_root_mfa_enabled",
+                "iam_user_mfa_enabled_console_access",
+                "s3_account_level_public_access_blocks",
+                "cloudtrail_logs_s3_bucket_is_not_publicly_accessible",
+                "cloudtrail_logs_s3_bucket_access_logging_enabled",
+                "s3_bucket_level_public_access_block",
+                "s3_bucket_public_write_prohibited",
+                "sagemaker_notebook_no_direct_internet_access",
+                "vpc_default_security_group_closed",
+                "vpc_sg_open_to_authorized_ports",
+                "opensearch_service_domains_cloudwatch_logging_enabled"
+            ]
+        },
+        {
+            "Id": "AC.1.003",
+            "Name": "Verify and control/limit connections to and use of external information systems.",
+            "Description": "Ensure AWS WAF is enabled on Elastic Load Balancers (ELB) to help protect web applications. A WAF helps to protect your web applications or APIs against common web exploits. These web exploits may affect availability, compromise security, or consume excessive resources within your environment.",
+            "Attributes": [
+                {
+                    "ItemId": "AC.1.003",
+                    "Section": "ACCESS CONTROL (AC)",
+                    "Service": "aws",
+                    "Type": "automated"
+                }
+            ],
+            "Checks": [
+                "elbv2_alb_waf_enabled",
+                "autoscaling_launch_config_public_ip_disabled",
+                "ec2_instance_no_public_ip",
+                "emr_cluster_master_nodes_no_public_ip",
+                "ec2_restricted_common_ports",
+                "ec2_internet_gateway_authorized_vpc_only",
+                "awslambda_function_url_public",
+                "ec2_no_unrestricted_route_to_igw",
+                "rds_snapshots_public_prohibited",
+                "redshift_cluster_public_access",
+                "ec2_restricted_common_ports",
+                "s3_account_level_public_access_blocks",
+                "cloudtrail_logs_s3_bucket_is_not_publicly_accessible",
+                "s3_bucket_level_public_access_block",
+                "s3_bucket_public_write_prohibited",
+                "sagemaker_notebook_no_direct_internet_access",
+                "ec2_instance_managed_by_ssm",
+                "vpc_subnet_no_public_ip_by_default",
+                "vpc_default_security_group_closed",
+                "vpc_sg_open_to_authorized_ports"
+            ]
+        },
+        {
+            "Id": "IA.1.076",
+            "Name": "Identify information system users, processes acting on behalf of users, or devices.",
+            "Description": "API Gateway logging displays detailed views of users who accessed the API and the way they accessed the API. This insight enables visibility of user activities.",
+            "Attributes": [
+                {
+                    "ItemId": "IA.1.076",
+                    "Section": "IDENTIFICATION AND AUTHENTICATION (IA)",
+                    "Service": "aws",
+                    "Type": "automated"
+                }
+            ],
+            "Checks": [
+                "apigateway_restapi_logging_enabled",
+                "cloudtrail_s3_dataevents_write_enabled",
+                "cloudtrail_cloudwatch_logging_enabled",
+                "cloudtrail_enabled",
+                "elb_logging_enabled",
+                "emr_kerberos_enabled",
+                "cloudtrail_enabled",
+                "rds_logging_enabled",
+                "s3_bucket_logging_enabled",
+                "wafv2_webacl_logging_enabled"
+            ]
+        },
+        {
+            "Id": "IA.1.077",
+            "Name": "Authenticate (or verify) the identities of those users, processes, or devices, as a prerequisite to allowing access to organizational information systems.",
+            "Description": "The access permissions and authorizations can be managed and incorporated with the principles of least privilege and separation of duties, by enabling Kerberos for Amazon EMR clusters. In Kerberos, the services and the users that need to authenticate are known as principals. The principals exist within a Kerberos realm. Within the realm, a Kerberos server is known as the key distribution center (KDC). It provides a means for the principals to authenticate. The KDC authenticates by issuing tickets for authentication. The KDC maintains a database of the principals within its realm, their passwords, and other administrative information about each principal.",
+            "Attributes": [
+                {
+                    "ItemId": "IA.1.077",
+                    "Section": "IDENTIFICATION AND AUTHENTICATION (IA)",
+                    "Service": "aws",
+                    "Type": "automated"
+                }
+            ],
+            "Checks": [
+                "emr_kerberos_enabled",
+                "iam_password_policy_reuse_24",
+                "iam_user_mfa_enabled_console_access",
+                "iam_user_mfa_enabled_console_access",
+                "iam_root_mfa_enabled",
+                "iam_user_mfa_enabled_console_access"
+            ]
+        },
+        {
+            "Id": "SC.1.175",
+            "Name": "Monitor, control, and protect organizational communications (i.e., information transmitted or received by organizational information systems) at the external boundaries and key internal boundaries of the information systems.",
+            "Description": "Ensure that your Elastic Load Balancers (ELB) are configured to drop http headers. Because sensitive data can exist, enable encryption in transit to help protect that data.",
+            "Attributes": [
+                {
+                    "ItemId": "SC.1.175",
+                    "Section": "SYSTEM AND COMMUNICATIONS PROTECTION (SC)",
+                    "Service": "aws",
+                    "Type": "automated"
+                }
+            ],
+            "Checks": [
+                "elbv2_alb_http_drop_invalid_header_enabled",
+                "elbv2_alb_http_to_https_redirection_check",
+                "elbv2_alb_waf_enabled",
+                "apigateway_restapi_waf_acl_attached",
+                "cloudwatch_changes_to_vpcs_alarm_configured",
+                "dms_instance_no_public_access",
+                "ec2_ebs_snapshots_encrypted",
+                "opensearch_service_domains_cloudwatch_logging_enabled",
+                "opensearch_node_to_node_encryption",
+                "elb_acm_certificate_required",
+                "elb_ssl_listeners",
+                "guardduty_is_enabled",
+                "ec2_restricted_common_ports",
+                "ec2_instances_in_vpc",
+                "ec2_internet_gateway_authorized_vpc_only",
+                "awslambda_function_url_public",
+                "awslambda_function_url_public",
+                "ec2_no_unrestricted_route_to_igw",
+                "rds_snapshots_public_prohibited",
+                "rds_snapshots_public_access",
+                "redshift_cluster_public_access",
+                "redshift_require_tls_ssl",
+                "ec2_restricted_common_ports",
+                "s3_account_level_public_access_blocks",
+                "cloudtrail_logs_s3_bucket_is_not_publicly_accessible",
+                "s3_bucket_level_public_access_block",
+                "s3_bucket_public_write_prohibited",
+                "s3_bucket_ssl_requests_only",
+                "sagemaker_notebook_no_direct_internet_access",
+                "securityhub_enabled",
+                "ec2_instance_managed_by_ssm",
+                "vpc_default_security_group_closed",
+                "vpc_sg_open_to_authorized_ports",
+                "opensearch_service_domains_cloudwatch_logging_enabled",
+                "opensearch_node_to_node_encryption"
+            ]
+        },
+        {
+            "Id": "SI.1.210",
+            "Name": "Identify, report, and correct information and information system flaws in a timely manner.",
+            "Description": "Amazon CloudWatch alarms alert when a metric breaches the threshold for a specified number of evaluation periods. The alarm performs one or more actions based on the value of the metric or expression relative to a threshold over a number of time periods. This rule requires a value for alarmActionRequired (Config Default: True), insufficientDataActionRequired (Config Default: True), okActionRequired (Config Default: False). The actual value should reflect the alarm actions for your environment.",
+            "Attributes": [
+                {
+                    "ItemId": "SI.1.210",
+                    "Section": "SYSTEM AND INFORMATION INTEGRITY (SI)",
+                    "Service": "aws",
+                    "Type": "automated"
+                }
+            ],
+            "Checks": [
+                "cloudwatch_changes_to_vpcs_alarm_configured",
+                "guardduty_is_enabled",
+                "securityhub_enabled"
+            ]
+        },
+        {
+            "Id": "SI.1.211",
+            "Name": "Provide protection from malicious code at appropriate locations within organizational information systems.",
+            "Description": "Amazon GuardDuty can help to monitor and detect potential cybersecurity events by using threat intelligence feeds. These include lists of malicious IPs and machine learning to identify unexpected, unauthorized, and malicious activity within your AWS Cloud environment.",
+            "Attributes": [
+                {
+                    "ItemId": "SI.1.211",
+                    "Section": "SYSTEM AND INFORMATION INTEGRITY (SI)",
+                    "Service": "aws",
+                    "Type": "automated"
+                }
+            ],
+            "Checks": [
+                "guardduty_is_enabled"
+            ]
+        }
+    ]
+}
