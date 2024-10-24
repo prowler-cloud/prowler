@@ -85,6 +85,9 @@ class AutoScaling(AWSService):
                                 tags=group.get("Tags"),
                                 instance_types=instance_types,
                                 az_instance_types=az_instance_types,
+                                capacity_rebalance=group.get(
+                                    "CapacityRebalance", False
+                                ),
                                 launch_template=group.get("LaunchTemplate", {}),
                                 mixed_instances_policy_launch_template=group.get(
                                     "MixedInstancesPolicy", {}
@@ -168,6 +171,7 @@ class Group(BaseModel):
     tags: list = []
     instance_types: list = []
     az_instance_types: dict = {}
+    capacity_rebalance: bool
     launch_template: dict = {}
     mixed_instances_policy_launch_template: dict = {}
     health_check_type: str
