@@ -22,15 +22,15 @@ class Test_mq_rabbitmq_broker_cluster_mode:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.mq.mq_rabbitmq_broker_cluster_mode.mq_rabbitmq_broker_cluster_mode.mq_client",
+                "prowler.providers.aws.services.mq.mq_broker_cluster_deployment_mode.mq_broker_cluster_deployment_mode.mq_client",
                 new=MQ(aws_provider),
             ):
                 # Test Check
-                from prowler.providers.aws.services.mq.mq_rabbitmq_broker_cluster_mode.mq_rabbitmq_broker_cluster_mode import (
-                    mq_rabbitmq_broker_cluster_mode,
+                from prowler.providers.aws.services.mq.mq_broker_cluster_deployment_mode.mq_broker_cluster_deployment_mode import (
+                    mq_broker_cluster_deployment_mode,
                 )
 
-                check = mq_rabbitmq_broker_cluster_mode()
+                check = mq_broker_cluster_deployment_mode()
                 result = check.execute()
 
                 assert len(result) == 0
@@ -63,15 +63,15 @@ class Test_mq_rabbitmq_broker_cluster_mode:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.mq.mq_rabbitmq_broker_cluster_mode.mq_rabbitmq_broker_cluster_mode.mq_client",
+                "prowler.providers.aws.services.mq.mq_broker_cluster_deployment_mode.mq_broker_cluster_deployment_mode.mq_client",
                 new=MQ(aws_provider),
             ):
                 # Test Check
-                from prowler.providers.aws.services.mq.mq_rabbitmq_broker_cluster_mode.mq_rabbitmq_broker_cluster_mode import (
-                    mq_rabbitmq_broker_cluster_mode,
+                from prowler.providers.aws.services.mq.mq_broker_cluster_deployment_mode.mq_broker_cluster_deployment_mode import (
+                    mq_broker_cluster_deployment_mode,
                 )
 
-                check = mq_rabbitmq_broker_cluster_mode()
+                check = mq_broker_cluster_deployment_mode()
                 result = check.execute()
 
                 assert len(result) == 0
@@ -105,22 +105,22 @@ class Test_mq_rabbitmq_broker_cluster_mode:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.mq.mq_rabbitmq_broker_cluster_mode.mq_rabbitmq_broker_cluster_mode.mq_client",
+                "prowler.providers.aws.services.mq.mq_broker_cluster_deployment_mode.mq_broker_cluster_deployment_mode.mq_client",
                 new=MQ(aws_provider),
             ):
                 # Test Check
-                from prowler.providers.aws.services.mq.mq_rabbitmq_broker_cluster_mode.mq_rabbitmq_broker_cluster_mode import (
-                    mq_rabbitmq_broker_cluster_mode,
+                from prowler.providers.aws.services.mq.mq_broker_cluster_deployment_mode.mq_broker_cluster_deployment_mode import (
+                    mq_broker_cluster_deployment_mode,
                 )
 
-                check = mq_rabbitmq_broker_cluster_mode()
+                check = mq_broker_cluster_deployment_mode()
                 result = check.execute()
 
                 assert len(result) == 1
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == f"MQ RabbitMQ Broker {broker_name} does have cluster deployment mode enabled."
+                    == f"MQ RabbitMQ Broker {broker_name} does have a cluster deployment mode."
                 )
                 assert result[0].resource_id == broker_id
                 assert (
@@ -158,22 +158,22 @@ class Test_mq_rabbitmq_broker_cluster_mode:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.mq.mq_rabbitmq_broker_cluster_mode.mq_rabbitmq_broker_cluster_mode.mq_client",
+                "prowler.providers.aws.services.mq.mq_broker_cluster_deployment_mode.mq_broker_cluster_deployment_mode.mq_client",
                 new=MQ(aws_provider),
             ):
                 # Test Check
-                from prowler.providers.aws.services.mq.mq_rabbitmq_broker_cluster_mode.mq_rabbitmq_broker_cluster_mode import (
-                    mq_rabbitmq_broker_cluster_mode,
+                from prowler.providers.aws.services.mq.mq_broker_cluster_deployment_mode.mq_broker_cluster_deployment_mode import (
+                    mq_broker_cluster_deployment_mode,
                 )
 
-                check = mq_rabbitmq_broker_cluster_mode()
+                check = mq_broker_cluster_deployment_mode()
                 result = check.execute()
 
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"MQ RabbitMQ Broker {broker_name} does not have cluster deployment mode enabled."
+                    == f"MQ RabbitMQ Broker {broker_name} does not have a cluster deployment mode."
                 )
                 assert result[0].resource_id == broker_id
                 assert (
