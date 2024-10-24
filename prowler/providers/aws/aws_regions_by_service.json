@@ -8473,7 +8473,10 @@
           "cn-north-1",
           "cn-northwest-1"
         ],
-        "aws-us-gov": []
+        "aws-us-gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
       }
     },
     "rekognition": {
