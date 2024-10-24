@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Dict, List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -82,6 +82,7 @@ class Broker(BaseModel):
     region: str
     engine_type: EngineType = EngineType.ACTIVEMQ
     deployment_mode: DeploymentMode = DeploymentMode.SINGLE_INSTANCE
-    tags: Optional[list] = []
     auto_minor_version_upgrade: bool = False
-    tags: Optional[List[Dict[str, str]]]
+    engine_type: EngineType = EngineType.ACTIVEMQ
+    deployment_mode: DeploymentMode = DeploymentMode.SINGLE_INSTANCE
+    tags: List[Dict[str, str]] = Field(default_factory=list)

@@ -34,7 +34,7 @@ class Test_MQ_Service:
     # Test MQ List Brokers
     @mock_aws
     def test_list_brokers(self):
-        # Generate moto MQ client
+        # Generate MQ client
         mq_client = client("mq", region_name=AWS_REGION_EU_WEST_1)
         broker = mq_client.create_broker(
             AutoMinorVersionUpgrade=True,
@@ -55,7 +55,7 @@ class Test_MQ_Service:
         )
         broker_arn = broker["BrokerArn"]
 
-        # MQ client for this test class
+        # MQ Client for this test class
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         mq = MQ(aws_provider)
 
@@ -68,6 +68,7 @@ class Test_MQ_Service:
     # Test MQ Describe Broker
     @mock_aws
     def test_describe_broker(self):
+        # Generate MQ client
         mq_client = client("mq", region_name=AWS_REGION_EU_WEST_1)
         broker = mq_client.create_broker(
             AutoMinorVersionUpgrade=True,
@@ -85,12 +86,11 @@ class Test_MQ_Service:
                     "Username": "user",
                 }
             ],
-            Tags={"key": "value"},
         )
         broker_arn = broker["BrokerArn"]
         broker["BrokerId"]
 
-        # MQ client for this test class
+        # MQ Client for this test class
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         mq = MQ(aws_provider)
 
