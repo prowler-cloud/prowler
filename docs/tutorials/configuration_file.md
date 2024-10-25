@@ -30,6 +30,8 @@ The following list includes all the AWS checks with configurable variables that 
 | `cloudtrail_threat_detection_privilege_escalation`            | `threat_detection_privilege_escalation_entropy`  | Integer         |
 | `cloudtrail_threat_detection_privilege_escalation`            | `threat_detection_privilege_escalation_minutes`  | Integer         |
 | `cloudwatch_log_group_no_secrets_in_logs`                     | `secrets_ignore_patterns`                        | List of Strings |
+| `cloudwatch_log_group_no_critical_pii_in_logs`                | `critical_pii_entities`                          | List of Strings |
+| `cloudwatch_log_group_no_critical_pii_in_logs`                | `pii_language`                                   | String          |
 | `cloudwatch_log_group_retention_policy_specific_days_enabled` | `log_group_retention_days`                       | Integer         |
 | `codebuild_project_no_secrets_in_variables`                   | `excluded_sensitive_environment_variables`       | List of Strings |
 | `codebuild_project_no_secrets_in_variables`                   | `secrets_ignore_patterns`                        | List of Strings |
