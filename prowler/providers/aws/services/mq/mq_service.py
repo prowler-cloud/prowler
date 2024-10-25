@@ -50,6 +50,12 @@ class MQ(AWSService):
             broker.auto_minor_version_upgrade = describe_broker.get(
                 "AutoMinorVersionUpgrade", False
             )
+            broker.general_logging_enabled = describe_broker.get("Logs", {}).get(
+                "General", False
+            )
+            broker.audit_logging_enabled = describe_broker.get("Logs", {}).get(
+                "Audit", False
+            )
             broker.tags = [describe_broker.get("Tags", {})]
 
         except Exception as error:
@@ -80,9 +86,9 @@ class Broker(BaseModel):
     name: str
     id: str
     region: str
-    engine_type: EngineType = EngineType.ACTIVEMQ
-    deployment_mode: DeploymentMode = DeploymentMode.SINGLE_INSTANCE
-    auto_minor_version_upgrade: bool = False
+    auto_minor_version_upgrade: bool = Field(default=False)
+    general_logging_enabled: bool = Field(default=False)
+    audit_logging_enabled: bool = Field(default=False)
     engine_type: EngineType = EngineType.ACTIVEMQ
     deployment_mode: DeploymentMode = DeploymentMode.SINGLE_INSTANCE
     tags: List[Dict[str, str]] = Field(default_factory=list)

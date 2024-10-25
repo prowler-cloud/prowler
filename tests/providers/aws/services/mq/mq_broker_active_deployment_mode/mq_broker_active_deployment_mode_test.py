@@ -120,7 +120,7 @@ class Test_mq_activemq_broker_active_standby_mode:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == f"MQ Broker {broker_name} does have an active/standby deployment mode."
+                    == f"MQ Apache ActiveMQ Broker {broker_name} does have an active/standby deployment mode."
                 )
                 assert result[0].resource_id == broker_id
                 assert (
@@ -173,7 +173,7 @@ class Test_mq_activemq_broker_active_standby_mode:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"MQ Broker {broker_name} does not have an active/standby deployment mode."
+                    == f"MQ Apache ActiveMQ Broker {broker_name} does not have an active/standby deployment mode."
                 )
                 assert result[0].resource_id == broker_id
                 assert (

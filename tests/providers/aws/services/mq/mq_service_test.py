@@ -86,10 +86,16 @@ class Test_MQ_Service:
                     "Username": "user",
                 }
             ],
-            Tags={"key": "value"},
         )
         broker_arn = broker["BrokerArn"]
         broker["BrokerId"]
+
+        mq_client.create_tags(
+            ResourceArn=broker_arn,
+            Tags={
+                "key": "value",
+            },
+        )
 
         # MQ Client for this test class
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
