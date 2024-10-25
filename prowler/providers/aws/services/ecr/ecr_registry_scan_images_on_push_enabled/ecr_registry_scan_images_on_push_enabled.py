@@ -11,7 +11,7 @@ class ecr_registry_scan_images_on_push_enabled(Check):
                 report = Check_Report_AWS(self.metadata())
                 report.region = registry.region
                 report.resource_id = registry.id
-                report.resource_arn = ecr_client.audited_account_arn
+                report.resource_arn = registry.arn
                 report.status = "FAIL"
                 report.status_extended = f"ECR registry {registry.id} has {registry.scan_type} scanning without scan on push enabled."
                 if registry.rules:

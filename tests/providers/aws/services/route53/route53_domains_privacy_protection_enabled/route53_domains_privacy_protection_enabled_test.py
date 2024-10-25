@@ -29,7 +29,10 @@ class Test_route53_domains_privacy_protection_enabled:
         domain_name = "test-domain.com"
         route53domains.domains = {
             domain_name: Domain(
-                name=domain_name, region=AWS_REGION_US_EAST_1, admin_privacy=False
+                name=domain_name,
+                arn=f"arn:aws:route53:::domain/{domain_name}",
+                region=AWS_REGION_US_EAST_1,
+                admin_privacy=False,
             )
         }
 
@@ -47,7 +50,7 @@ class Test_route53_domains_privacy_protection_enabled:
 
             assert len(result) == 1
             assert result[0].resource_id == domain_name
-            assert result[0].resource_arn == AWS_ACCOUNT_ARN
+            assert result[0].resource_arn == f"arn:aws:route53:::domain/{domain_name}"
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].status == "FAIL"
             assert (
@@ -61,7 +64,10 @@ class Test_route53_domains_privacy_protection_enabled:
         domain_name = "test-domain.com"
         route53domains.domains = {
             domain_name: Domain(
-                name=domain_name, region=AWS_REGION_US_EAST_1, admin_privacy=True
+                name=domain_name,
+                arn=f"arn:aws:route53:::domain/{domain_name}",
+                region=AWS_REGION_US_EAST_1,
+                admin_privacy=True,
             )
         }
 
@@ -79,7 +85,7 @@ class Test_route53_domains_privacy_protection_enabled:
 
             assert len(result) == 1
             assert result[0].resource_id == domain_name
-            assert result[0].resource_arn == AWS_ACCOUNT_ARN
+            assert result[0].resource_arn == f"arn:aws:route53:::domain/{domain_name}"
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].status == "PASS"
             assert (

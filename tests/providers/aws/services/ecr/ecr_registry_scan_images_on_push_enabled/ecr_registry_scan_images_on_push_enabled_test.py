@@ -44,6 +44,7 @@ class Test_ecr_registry_scan_images_on_push_enabled:
         ecr_client.registries = {}
         ecr_client.registries[AWS_REGION_EU_WEST_1] = Registry(
             id=AWS_ACCOUNT_NUMBER,
+            arn=f"arn:aws:ecr:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:registry/{AWS_ACCOUNT_NUMBER}",
             region=AWS_REGION_EU_WEST_1,
             scan_type="BASIC",
             repositories=[],
@@ -71,6 +72,7 @@ class Test_ecr_registry_scan_images_on_push_enabled:
         ecr_client.registries = {}
         ecr_client.registries[AWS_REGION_EU_WEST_1] = Registry(
             id=AWS_ACCOUNT_NUMBER,
+            arn=f"arn:aws:ecr:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:registry/{AWS_ACCOUNT_NUMBER}",
             region=AWS_REGION_EU_WEST_1,
             scan_type="BASIC",
             repositories=[
@@ -109,7 +111,10 @@ class Test_ecr_registry_scan_images_on_push_enabled:
             assert result[0].status == "PASS"
             assert search("with scan on push", result[0].status_extended)
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-            assert result[0].resource_arn == AWS_ACCOUNT_ARN
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:ecr:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:registry/{AWS_ACCOUNT_NUMBER}"
+            )
             assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_scan_on_push_enabled_with_filters(self):
@@ -118,6 +123,7 @@ class Test_ecr_registry_scan_images_on_push_enabled:
         ecr_client.registries = {}
         ecr_client.registries[AWS_REGION_EU_WEST_1] = Registry(
             id=AWS_ACCOUNT_NUMBER,
+            arn=f"arn:aws:ecr:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:registry/{AWS_ACCOUNT_NUMBER}",
             region=AWS_REGION_EU_WEST_1,
             scan_type="BASIC",
             repositories=[
@@ -159,7 +165,10 @@ class Test_ecr_registry_scan_images_on_push_enabled:
                 result[0].status_extended,
             )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-            assert result[0].resource_arn == AWS_ACCOUNT_ARN
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:ecr:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:registry/{AWS_ACCOUNT_NUMBER}"
+            )
             assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_scan_on_push_disabled(self):
@@ -168,6 +177,7 @@ class Test_ecr_registry_scan_images_on_push_enabled:
         ecr_client.registries = {}
         ecr_client.registries[AWS_REGION_EU_WEST_1] = Registry(
             id=AWS_ACCOUNT_NUMBER,
+            arn=f"arn:aws:ecr:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:registry/{AWS_ACCOUNT_NUMBER}",
             region=AWS_REGION_EU_WEST_1,
             scan_type="BASIC",
             repositories=[
@@ -201,5 +211,8 @@ class Test_ecr_registry_scan_images_on_push_enabled:
             assert result[0].status == "FAIL"
             assert search("scanning without scan on push", result[0].status_extended)
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-            assert result[0].resource_arn == AWS_ACCOUNT_ARN
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:ecr:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:registry/{AWS_ACCOUNT_NUMBER}"
+            )
             assert result[0].region == AWS_REGION_EU_WEST_1
