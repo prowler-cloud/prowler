@@ -1,5 +1,6 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.mq.mq_client import mq_client
+from prowler.providers.aws.services.mq.mq_service import EngineType
 
 
 class mq_broker_logging_enabled(Check):
@@ -21,15 +22,20 @@ class mq_broker_logging_enabled(Check):
             report.resource_arn = broker.arn
             report.resource_tags = broker.tags
             report.status = "FAIL"
-            report.status_extended = (
-                f"MQ Broker {broker.name} does not have logging enabled."
-            )
-            if broker.logging_enabled:
-                report.status = "PASS"
-                report.status_extended = (
-                    f"MQ Broker {broker.name} have logging enabled."
-                )
+            report.status_extended = f"MQ {broker.engine_type.value} Broker {broker.name} does not have logging enabled."
+            logging_enabled = False
 
-                findings.append(report)
+            if broker.engine_type == EngineType.ACTIVEMQ:
+                logging_enabled = (
+                    broker.general_logging_enabled and broker.audit_logging_enabled
+                )
+            elif broker.engine_type == EngineType.RABBITMQ:
+                logging_enabled = broker.general_logging_enabled
+
+            if logging_enabled:
+                report.status = "PASS"
+                report.status_extended = f"MQ {broker.engine_type.value} Broker {broker.name} does have logging enabled."
+
+            findings.append(report)
 
         return findings

@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Optional
+from typing import Dict, List
 
 from pydantic import BaseModel, Field
 
@@ -30,6 +30,7 @@ class MQ(AWSService):
                         id=broker["BrokerId"],
                         region=regional_client.region,
                     )
+
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -40,11 +41,20 @@ class MQ(AWSService):
             describe_broker = self.regional_clients[broker.region].describe_broker(
                 BrokerId=broker.id
             )
+            broker.engine_type = EngineType(
+                describe_broker.get("EngineType", "ACTIVEMQ").upper()
+            )
+            broker.deployment_mode = DeploymentMode(
+                describe_broker.get("DeploymentMode", "SINGLE_INSTANCE").upper()
+            )
             broker.auto_minor_version_upgrade = describe_broker.get(
                 "AutoMinorVersionUpgrade", False
             )
-            broker.logging_enabled = describe_broker.get("Logs", {}).get(
+            broker.general_logging_enabled = describe_broker.get("Logs", {}).get(
                 "General", False
+            )
+            broker.audit_logging_enabled = describe_broker.get("Logs", {}).get(
+                "Audit", False
             )
             broker.engine_type = EngineType(
                 describe_broker.get("EngineType", "ACTIVEMQ").upper()
@@ -52,6 +62,8 @@ class MQ(AWSService):
             broker.deployment_mode = DeploymentMode(
                 describe_broker.get("DeploymentMode", "SINGLE_INSTANCE")
             )
+            broker.tags = [describe_broker.get("Tags", {})]
+
         except Exception as error:
             logger.error(
                 f"{broker.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -81,7 +93,8 @@ class Broker(BaseModel):
     id: str
     region: str
     auto_minor_version_upgrade: bool = Field(default=False)
-    logging_enabled: bool = Field(default=False)
+    general_logging_enabled: bool = Field(default=False)
+    audit_logging_enabled: bool = Field(default=False)
     engine_type: EngineType = EngineType.ACTIVEMQ
     deployment_mode: DeploymentMode = DeploymentMode.SINGLE_INSTANCE
-    tags: Optional[list] = []
+    tags: List[Dict[str, str]] = Field(default_factory=list)

@@ -74,7 +74,7 @@ class Test_MQ_Service:
             AutoMinorVersionUpgrade=True,
             BrokerName="my-broker",
             DeploymentMode="SINGLE_INSTANCE",
-            EngineType="ActiveMQ",
+            EngineType="ACTIVEMQ",
             EngineVersion="5.15.0",
             HostInstanceType="mq.t2.micro",
             PubliclyAccessible=True,
@@ -90,6 +90,13 @@ class Test_MQ_Service:
         broker_arn = broker["BrokerArn"]
         broker["BrokerId"]
 
+        mq_client.create_tags(
+            ResourceArn=broker_arn,
+            Tags={
+                "key": "value",
+            },
+        )
+
         # MQ Client for this test class
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         mq = MQ(aws_provider)
@@ -101,3 +108,5 @@ class Test_MQ_Service:
         assert mq.brokers[broker_arn].id == broker["BrokerId"]
         assert mq.brokers[broker_arn].engine_type == EngineType.ACTIVEMQ
         assert mq.brokers[broker_arn].deployment_mode == DeploymentMode.SINGLE_INSTANCE
+        assert mq.brokers[broker_arn].auto_minor_version_upgrade
+        assert mq.brokers[broker_arn].tags == [{"key": "value"}]

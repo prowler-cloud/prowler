@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "documentdb_cluster_multi_az_enabled",
+  "CheckTitle": "Ensure DocumentDB Cluster have Multi-AZ enabled.",
+  "CheckType": [],
+  "ServiceName": "documentdb",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-cluster",
+  "Severity": "medium",
+  "ResourceType": "AwsRdsDbCluster",
+  "Description": "Ensure DocumentDB Cluster have Multi-AZ enabled.",
+  "Risk": "Ensure that your Amazon DocumentDB Clusters are using Multi-AZ deployment configurations to provide High Availability (HA) through automatic failover to standby replicas in the event of a failure such as an Availability Zone (AZ) outage, an internal hardware or network outage, a software failure or in case of a planned maintenance session.",
+  "RelatedUrl": "https://docs.aws.amazon.com/documentdb/latest/developerguide/failover.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable Multi-AZ for all DocumentDB Clusters.",
+      "Url": "https://docs.aws.amazon.com/documentdb/latest/developerguide/failover.html"
+    }
+  },
+  "Categories": [
+    "redundancy"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

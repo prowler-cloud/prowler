@@ -3,10 +3,7 @@
   "CheckID": "backup_vaults_encrypted",
   "CheckTitle": "Ensure that AWS Backup vaults are encrypted with AWS KMS",
   "CheckType": [
-    "Recover",
-    "Resilience",
-    "Backup",
-    "Data Protection"
+    "Software and Configuration Checks/AWS Security Best Practices"
   ],
   "ServiceName": "backup",
   "SubServiceName": "",

@@ -1192,7 +1192,6 @@
       "Checks": [
         "organizations_scp_check_deny_regions",
         "cognito_user_pool_self_registration_disabled",
-        "cloudtrail_threat_detection_privilege_escalation",
         "iam_user_administrator_access_policy",
         "iam_customer_unattached_policy_no_administrative_privileges",
         "iam_inline_policy_allows_privilege_escalation",
@@ -2654,7 +2653,6 @@
         "accessanalyzer_enabled_without_findings",
         "cloudtrail_insights_exist",
         "cloudtrail_threat_detection_enumeration",
-        "cloudtrail_threat_detection_privilege_escalation",
         "guardduty_no_high_severity_findings",
         "trustedadvisor_errors_and_warnings"
       ],
