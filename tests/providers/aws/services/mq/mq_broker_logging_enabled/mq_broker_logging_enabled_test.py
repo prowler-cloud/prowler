@@ -81,7 +81,7 @@ class Test_mq_broker_logging_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"MQ {engine_type} Broker {broker_name} does have logging enabled."
+                == f"MQ Broker {broker_name} does have logging enabled."
             )
             assert result[0].resource_id == broker_id
             assert (
@@ -137,7 +137,7 @@ class Test_mq_broker_logging_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"MQ {engine_type} Broker {broker_name} does not have logging enabled."
+                == f"MQ Broker {broker_name} does not have logging enabled."
             )
             assert result[0].resource_id == broker_id
             assert (
@@ -194,7 +194,7 @@ class Test_mq_broker_logging_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"MQ {engine_type} Broker {broker_name} does have logging enabled."
+                == f"MQ Broker {broker_name} does have logging enabled."
             )
             assert result[0].resource_id == broker_id
             assert (
@@ -251,7 +251,7 @@ class Test_mq_broker_logging_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"MQ {engine_type} Broker {broker_name} does not have logging enabled."
+                == f"MQ Broker {broker_name} does not have logging enabled."
             )
             assert result[0].resource_id == broker_id
             assert (
