@@ -1,5 +1,6 @@
 import json
 import os
+from operator import attrgetter
 
 try:
     import grp
@@ -16,7 +17,7 @@ from io import TextIOWrapper
 from ipaddress import ip_address
 from os.path import exists
 from time import mktime
-from typing import Optional
+from typing import Any, Optional
 
 from colorama import Style
 from detect_secrets import SecretsCollection
@@ -293,3 +294,23 @@ def dict_to_lowercase(d):
             v = dict_to_lowercase(v)
         new_dict[k.lower()] = v
     return new_dict
+
+
+def get_nested_attribute(obj: Any, attr: str) -> Any:
+    """
+    Get a nested attribute from an object.
+    Args:
+        obj (Any): The object to get the attribute from.
+        attr (str): The attribute to get.
+    Returns:
+        Any: The attribute value if present, otherwise "".
+    """
+    try:
+        return attrgetter(attr)(obj)
+    except AttributeError:
+        return ""
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
+        return ""

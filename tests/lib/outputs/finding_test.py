@@ -47,52 +47,11 @@ def mock_check_metadata(provider):
     )
 
 
-def mock_get_provider_data_mapping_aws(_):
-    return {
-        "auth_method": "mock_auth",
-        "provider": "aws",
-        "account_uid": "mock_account_uid",
-        "account_name": "mock_account_name",
-        "account_email": "mock_account_email",
-        "account_organization_uid": "mock_account_org_uid",
-        "account_organization_name": "mock_account_org_name",
-        "account_tags": {"tag1": "value1"},
-        "partition": "aws",
-    }
-
-
-def mock_get_provider_data_mapping_azure(_):
-    return {
-        "provider": "azure",
-        "account_organization_uid": "mock_account_org_uid",
-        "account_organization_name": "mock_account_org_name",
-        "partition": "AzureCloud",
-    }
-
-
-def mock_get_provider_data_mapping_gcp(_):
-    return {
-        "auth_method": "mock_auth",
-        "provider": "gcp",
-    }
-
-
-def mock_get_provider_data_mapping_kubernetes(_):
-    return {
-        "provider": "kubernetes",
-        "account_uid": "test_cluster",
-    }
-
-
 def mock_get_check_compliance(*_):
     return {"mock_compliance_key": "mock_compliance_value"}
 
 
 class TestFinding:
-    @patch(
-        "prowler.lib.outputs.finding.get_provider_data_mapping",
-        new=mock_get_provider_data_mapping_aws,
-    )
     @patch(
         "prowler.lib.outputs.finding.get_check_compliance",
         new=mock_get_check_compliance,
@@ -101,6 +60,14 @@ class TestFinding:
         # Mock provider
         provider = MagicMock()
         provider.type = "aws"
+        provider.identity.profile = "mock_auth"
+        provider.identity.account = "mock_account_uid"
+        provider.identity.partition = "aws"
+        provider.organizations_metadata.account_name = "mock_account_name"
+        provider.organizations_metadata.account_email = "mock_account_email"
+        provider.organizations_metadata.organization_arn = "mock_account_org_uid"
+        provider.organizations_metadata.organization_id = "mock_account_org_name"
+        provider.organizations_metadata.account_tags = {"tag1": "value1"}
 
         # Mock check result
         check_output = MagicMock()
@@ -123,7 +90,7 @@ class TestFinding:
         finding_output = Finding.generate_output(provider, check_output, output_options)
 
         # Finding
-        assert finding_output is not None
+        assert isinstance(finding_output, Finding)
         assert finding_output.auth_method == "profile: mock_auth"
         assert finding_output.resource_name == "test_resource_id"
         assert finding_output.resource_uid == "test_resource_arn"
@@ -180,10 +147,6 @@ class TestFinding:
         assert finding_output.raw == {}
 
     @patch(
-        "prowler.lib.outputs.finding.get_provider_data_mapping",
-        new=mock_get_provider_data_mapping_azure,
-    )
-    @patch(
         "prowler.lib.outputs.finding.get_check_compliance",
         new=mock_get_check_compliance,
     )
@@ -196,6 +159,9 @@ class TestFinding:
         provider.identity.subscriptions = {
             "mock_subscription_id": "mock_subscription_name"
         }
+        provider.identity.tenant_ids = ["mock_tenant_id_1", "mock_tenant_id_2"]
+        provider.identity.tenant_domain = "mock_tenant_domain"
+        provider.region_config.name = "AzureCloud"
 
         # Mock check result
         check_output = MagicMock()
@@ -220,8 +186,12 @@ class TestFinding:
         finding_output = Finding.generate_output(provider, check_output, output_options)
 
         # Finding
-        assert finding_output is not None
+        assert isinstance(finding_output, Finding)
         assert finding_output.auth_method == "mock_identity_type: mock_identity_id"
+        assert finding_output.account_organization_uid == "mock_tenant_id_1"
+        assert finding_output.account_organization_name == "mock_tenant_domain"
+        assert finding_output.account_uid == "mock_subscription_name"
+        assert finding_output.account_name == "mock_subscription_id"
         assert finding_output.resource_name == "test_resource_name"
         assert finding_output.resource_uid == "test_resource_id"
         assert finding_output.region == "us-west-1"
@@ -233,6 +203,7 @@ class TestFinding:
         assert finding_output.muted is False
         assert finding_output.resource_tags == {}
         assert finding_output.partition == "AzureCloud"
+
         assert isinstance(finding_output.timestamp, int)
 
         # Metadata
@@ -262,10 +233,6 @@ class TestFinding:
         assert finding_output.metadata.Compliance == []
 
     @patch(
-        "prowler.lib.outputs.finding.get_provider_data_mapping",
-        new=mock_get_provider_data_mapping_gcp,
-    )
-    @patch(
         "prowler.lib.outputs.finding.get_check_compliance",
         new=mock_get_check_compliance,
     )
@@ -273,9 +240,12 @@ class TestFinding:
         # Mock provider
         provider = MagicMock()
         provider.type = "gcp"
+        provider.identity.profile = "mock_auth"
+        # Organization
         organization = MagicMock()
         organization.id = "mock_organization_id"
         organization.display_name = "mock_organization_name"
+        # Project
         project = MagicMock()
         project.id = "mock_project_id"
         project.name = "mock_project_name"
@@ -304,7 +274,7 @@ class TestFinding:
         finding_output = Finding.generate_output(provider, check_output, output_options)
 
         # Finding
-        assert finding_output is not None
+        assert isinstance(finding_output, Finding)
         assert finding_output.auth_method == "Principal: mock_auth"
         assert finding_output.resource_name == "test_resource_name"
         assert finding_output.resource_uid == "test_resource_id"
@@ -352,10 +322,6 @@ class TestFinding:
         assert finding_output.metadata.Compliance == []
 
     @patch(
-        "prowler.lib.outputs.finding.get_provider_data_mapping",
-        new=mock_get_provider_data_mapping_kubernetes,
-    )
-    @patch(
         "prowler.lib.outputs.finding.get_check_compliance",
         new=mock_get_check_compliance,
     )
@@ -363,9 +329,8 @@ class TestFinding:
         # Mock provider
         provider = MagicMock()
         provider.type = "kubernetes"
-        identity = MagicMock()
-        identity.context = "In-Cluster"
-        provider.identity = identity
+        provider.identity.context = "In-Cluster"
+        provider.identity.cluster = "test_cluster"
 
         # Mock check result
         check_output = MagicMock()
@@ -387,11 +352,12 @@ class TestFinding:
         finding_output = Finding.generate_output(provider, check_output, output_options)
 
         # Finding
-        assert finding_output is not None
+        assert isinstance(finding_output, Finding)
         assert finding_output.auth_method == "in-cluster"
         assert finding_output.resource_name == "test_resource_name"
         assert finding_output.resource_uid == "test_resource_id"
         assert finding_output.region == "namespace: test_namespace"
+        assert finding_output.account_name == "context: In-Cluster"
         assert finding_output.compliance == {
             "mock_compliance_key": "mock_compliance_value"
         }
