@@ -56,12 +56,6 @@ class MQ(AWSService):
             broker.audit_logging_enabled = describe_broker.get("Logs", {}).get(
                 "Audit", False
             )
-            broker.engine_type = EngineType(
-                describe_broker.get("EngineType", "ACTIVEMQ").upper()
-            )
-            broker.deployment_mode = DeploymentMode(
-                describe_broker.get("DeploymentMode", "SINGLE_INSTANCE")
-            )
             broker.tags = [describe_broker.get("Tags", {})]
 
         except Exception as error:

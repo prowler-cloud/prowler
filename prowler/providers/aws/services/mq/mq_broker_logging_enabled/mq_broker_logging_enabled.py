@@ -22,7 +22,9 @@ class mq_broker_logging_enabled(Check):
             report.resource_arn = broker.arn
             report.resource_tags = broker.tags
             report.status = "FAIL"
-            report.status_extended = f"MQ {broker.engine_type.value} Broker {broker.name} does not have logging enabled."
+            report.status_extended = (
+                f"MQ Broker {broker.name} does not have logging enabled."
+            )
             logging_enabled = False
 
             if broker.engine_type == EngineType.ACTIVEMQ:
@@ -34,7 +36,9 @@ class mq_broker_logging_enabled(Check):
 
             if logging_enabled:
                 report.status = "PASS"
-                report.status_extended = f"MQ {broker.engine_type.value} Broker {broker.name} does have logging enabled."
+                report.status_extended = (
+                    f"MQ Broker {broker.name} does have logging enabled."
+                )
 
             findings.append(report)
 
