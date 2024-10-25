@@ -1,4 +1,7 @@
+from collections import deque
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime
+from typing import Any, Dict
 
 from prowler.lib.logger import logger
 from prowler.providers.aws.aws_provider import AwsProvider
@@ -101,3 +104,47 @@ class AWSService:
             except Exception:
                 # Handle exceptions if necessary
                 pass  # Replace 'pass' with any additional exception handling logic. Currently handled within the called function
+
+    def __to_dict__(self, seen=None) -> Dict[str, Any]:
+        if seen is None:
+            seen = set()
+
+        def convert_value(value):
+            if isinstance(value, (AwsProvider,)):
+                return {}
+            if isinstance(value, datetime):
+                return value.isoformat()  # Convert datetime to ISO 8601 string
+            elif isinstance(value, deque):
+                return [convert_value(item) for item in value]
+            elif isinstance(value, list):
+                return [convert_value(item) for item in value]
+            elif isinstance(value, tuple):
+                return tuple(convert_value(item) for item in value)
+            elif isinstance(value, dict):
+                # Ensure keys are strings and values are processed
+                return {
+                    convert_value(str(k)): convert_value(v) for k, v in value.items()
+                }
+            elif hasattr(value, "__dict__"):
+                obj_id = id(value)
+                if obj_id in seen:
+                    return None  # Avoid infinite recursion
+                seen.add(obj_id)
+                return {key: convert_value(val) for key, val in value.__dict__.items()}
+            else:
+                return value  # Handle basic types and non-serializable objects
+
+        return {
+            key: convert_value(value)
+            for key, value in self.__dict__.items()
+            if key
+            not in [
+                "audit_config",
+                "provider",
+                "session",
+                "regional_clients",
+                "client",
+                "thread_pool",
+                "fixer_config",
+            ]
+        }
