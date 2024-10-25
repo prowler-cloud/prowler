@@ -1,4 +1,4 @@
-from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.lib.check.models import Check, Check_Report_AWS, Severity
 from prowler.providers.aws.services.elasticache.elasticache_client import (
     elasticache_client,
 )
@@ -23,7 +23,7 @@ class elasticache_redis_cluster_backup_enabled(Check):
             else:
                 if repl_group.snapshot_retention > 0:
                     report.status = "FAIL"
-                    report.check_metadata.Severity = "low"
+                    report.check_metadata.Severity = Severity.low
                     report.status_extended = f"Elasticache Redis cache cluster {repl_group.id} has automated snapshot backups enabled with retention period {repl_group.snapshot_retention} days. Recommended to increase the snapshot retention period to a minimum of 7 days."
 
             findings.append(report)

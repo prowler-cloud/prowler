@@ -7,6 +7,7 @@ from prowler.providers.aws.services.ecr.ecr_service import (
     ScanningRule,
 )
 from tests.providers.aws.utils import (
+    AWS_ACCOUNT_ARN,
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     set_mocked_aws_provider,
@@ -66,6 +67,7 @@ class Test_ecr_registry_scan_images_on_push_enabled:
 
     def test_registry_scan_on_push_enabled(self):
         ecr_client = mock.MagicMock
+        ecr_client.audited_account_arn = AWS_ACCOUNT_ARN
         ecr_client.registries = {}
         ecr_client.registries[AWS_REGION_EU_WEST_1] = Registry(
             id=AWS_ACCOUNT_NUMBER,
@@ -107,10 +109,12 @@ class Test_ecr_registry_scan_images_on_push_enabled:
             assert result[0].status == "PASS"
             assert search("with scan on push", result[0].status_extended)
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert result[0].resource_arn == AWS_ACCOUNT_ARN
             assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_scan_on_push_enabled_with_filters(self):
         ecr_client = mock.MagicMock
+        ecr_client.audited_account_arn = AWS_ACCOUNT_ARN
         ecr_client.registries = {}
         ecr_client.registries[AWS_REGION_EU_WEST_1] = Registry(
             id=AWS_ACCOUNT_NUMBER,
@@ -155,10 +159,12 @@ class Test_ecr_registry_scan_images_on_push_enabled:
                 result[0].status_extended,
             )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert result[0].resource_arn == AWS_ACCOUNT_ARN
             assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_scan_on_push_disabled(self):
         ecr_client = mock.MagicMock
+        ecr_client.audited_account_arn = AWS_ACCOUNT_ARN
         ecr_client.registries = {}
         ecr_client.registries[AWS_REGION_EU_WEST_1] = Registry(
             id=AWS_ACCOUNT_NUMBER,
@@ -195,4 +201,5 @@ class Test_ecr_registry_scan_images_on_push_enabled:
             assert result[0].status == "FAIL"
             assert search("scanning without scan on push", result[0].status_extended)
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert result[0].resource_arn == AWS_ACCOUNT_ARN
             assert result[0].region == AWS_REGION_EU_WEST_1
