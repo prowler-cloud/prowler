@@ -53,7 +53,7 @@ colorama = "0.4.6"
 cryptography = "43.0.1"
 dash = "2.18.1"
 dash-bootstrap-components = "1.6.0"
-detect-secrets = {git = "https://github.com/Yelp/detect-secrets.git", rev = "master"}
+detect-secrets = "1.5.0"
 google-api-python-client = "2.147.0"
 google-auth-httplib2 = ">=0.1,<0.3"
 jsonschema = "4.23.0"
