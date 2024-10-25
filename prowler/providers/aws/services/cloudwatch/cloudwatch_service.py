@@ -1,3 +1,4 @@
+import json
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -84,6 +85,8 @@ class Logs(AWSService):
         self.log_group_arn_template = f"arn:{self.audited_partition}:logs:{self.region}:{self.audited_account}:log-group"
         self.log_groups = {}
         self.__threading_call__(self._describe_log_groups)
+        self.resource_policies = {}
+        self.__threading_call__(self._describe_resource_policies)
         self.metric_filters = []
         self.__threading_call__(self._describe_metric_filters)
         if self.log_groups:
@@ -221,6 +224,38 @@ class Logs(AWSService):
             f"CloudWatch Logs - Finished retrieving log events in {regional_client.region}..."
         )
 
+    def _describe_resource_policies(self, regional_client):
+        logger.info("CloudWatch Logs - Describing resource policies...")
+        try:
+            describe_resource_policies_paginator = regional_client.get_paginator(
+                "describe_resource_policies"
+            )
+            if regional_client.region not in self.resource_policies:
+                self.resource_policies[regional_client.region] = []
+            for page in describe_resource_policies_paginator.paginate():
+                for policy in page["resourcePolicies"]:
+                    self.resource_policies[regional_client.region].append(
+                        ResourcePolicy(
+                            name=policy["policyName"],
+                            policy=json.loads(policy["policyDocument"]),
+                            region=regional_client.region,
+                        )
+                    )
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "AccessDeniedException":
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+                self.resource_policies[regional_client.region] = None
+            else:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
     def _list_tags_for_resource(self, log_group):
         logger.info(f"CloudWatch Logs - List Tags for Log Group {log_group.name}...")
         try:
@@ -262,6 +297,12 @@ class LogGroup(BaseModel):
         {}
     )  # Log stream name as the key, array of events as the value
     tags: Optional[list] = []
+
+
+class ResourcePolicy(BaseModel):
+    name: str
+    policy: dict
+    region: str
 
 
 class MetricFilter(BaseModel):
