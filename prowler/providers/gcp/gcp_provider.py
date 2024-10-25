@@ -47,6 +47,7 @@ class GcpProvider(Provider):
 
     def __init__(
         self,
+        organization_id: str = None,
         project_ids: list = None,
         excluded_project_ids: list = None,
         credentials_file: str = None,
@@ -65,6 +66,7 @@ class GcpProvider(Provider):
         GCP Provider constructor
 
         Args:
+            organization_id: str
             project_ids: list
             excluded_project_ids: list
             credentials_file: str
@@ -95,7 +97,7 @@ class GcpProvider(Provider):
         self._project_ids = []
         self._projects = {}
         self._excluded_project_ids = []
-        accessible_projects = self.get_projects(self._session)
+        accessible_projects = self.get_projects(self._session, organization_id)
         if not accessible_projects:
             logger.critical("No Project IDs can be accessed via Google Credentials.")
             raise GCPNoAccesibleProjectsError(
@@ -428,15 +430,29 @@ class GcpProvider(Provider):
         print_boxes(report_lines, report_title)
 
     @staticmethod
-    def get_projects(credentials) -> dict[str, GCPProject]:
+    def get_projects(
+        credentials: Credentials, organization_id: str
+    ) -> dict[str, GCPProject]:
+        """
+        Get the projects accessible by the provided credentials. If an organization ID is provided, only the projects under that organization are returned.
+        Args:
+            credentials: Credentials
+            organization_id: str
+        Returns:
+            dict[str, GCPProject]
+        """
         try:
             projects = {}
 
             service = discovery.build(
                 "cloudresourcemanager", "v1", credentials=credentials
             )
-
-            request = service.projects().list()
+            if organization_id:
+                request = service.projects().list(
+                    filter=f'parent.type:"organization" parent.id:"{organization_id}"'
+                )
+            else:
+                request = service.projects().list()
 
             while request is not None:
                 response = request.execute()

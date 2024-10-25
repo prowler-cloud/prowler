@@ -18,6 +18,14 @@ def init_parser(self):
         metavar="SERVICE_ACCOUNT",
         help="Impersonate a Google Service Account",
     )
+    # Organizations
+    gcp_organization_subparser = gcp_parser.add_argument_group("Organization")
+    gcp_organization_subparser.add_argument(
+        "--organization-id",
+        nargs="?",
+        metavar="ORGANIZATION_ID",
+        help="GCP Organization ID to be scanned by Prowler",
+    )
     # Projects
     gcp_projects_subparser = gcp_parser.add_argument_group("Projects")
     gcp_projects_subparser.add_argument(
