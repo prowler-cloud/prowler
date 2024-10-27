@@ -115,8 +115,6 @@ def prowler():
 
     if args.no_color:
         colorama_init(strip=True)
-    else:
-        colorama_init(strip=False)
 
     if not args.no_banner:
         legend = args.verbose or getattr(args, "fixer", None)
