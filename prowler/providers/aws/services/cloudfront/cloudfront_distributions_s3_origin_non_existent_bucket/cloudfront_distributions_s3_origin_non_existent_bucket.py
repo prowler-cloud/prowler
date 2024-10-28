@@ -19,9 +19,10 @@ class cloudfront_distributions_s3_origin_non_existent_bucket(Check):
             non_existent_buckets = []
 
             for origin in distribution.origins:
-                bucket_name = origin.domain_name.split(".")[0]
-                if not s3_client._head_bucket(bucket_name):
-                    non_existent_buckets.append(bucket_name)
+                if origin.s3_origin_config:
+                    bucket_name = origin.domain_name.split(".")[0]
+                    if not s3_client._head_bucket(bucket_name):
+                        non_existent_buckets.append(bucket_name)
 
             if non_existent_buckets:
                 report.status = "FAIL"
