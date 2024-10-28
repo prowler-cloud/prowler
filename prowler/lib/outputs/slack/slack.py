@@ -43,6 +43,7 @@ class Slack:
                 username="Prowler",
                 icon_url=square_logo_img,
                 channel=f"#{self.channel}",
+                text="Prowler Scan Summary",
                 blocks=self.__create_message_blocks__(identity, logo, stats, args),
             )
             return response

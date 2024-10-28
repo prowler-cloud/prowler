@@ -87,7 +87,6 @@ class AzureProvider(Provider):
         fixer_config(self): Returns the fixer configuration.
         output_options(self, options: tuple): Sets the output options for the Azure provider.
         mutelist(self) -> AzureMutelist: Returns the mutelist object associated with the Azure provider.
-        get_output_mapping(self): Returns a dictionary that maps output keys to their corresponding values.
         validate_arguments(cls, az_cli_auth, sp_env_auth, browser_auth, managed_identity_auth, tenant_id): Validates the authentication arguments for the Azure provider.
         setup_region_config(cls, region): Sets up the region configuration for the Azure provider.
         print_credentials(self): Prints the Azure credentials information.
@@ -265,26 +264,6 @@ class AzureProvider(Provider):
     def mutelist(self) -> AzureMutelist:
         """Mutelist object associated with this Azure provider."""
         return self._mutelist
-
-    @property
-    def get_output_mapping(self):
-        """Dictionary that maps output keys to their corresponding values."""
-        return {
-            # identity_type: identity_id
-            # "auth_method": "identity.profile",
-            "provider": "type",
-            # "account_uid": "identity.account",
-            # TODO: store subscription_name + id pairs
-            # "account_name": "organizations_metadata.account_details_name",
-            # "account_email": "organizations_metadata.account_details_email",
-            # TODO: check the tenant_ids
-            # TODO: we have to get the account organization, the tenant is not that
-            "account_organization_uid": "identity.tenant_ids",
-            "account_organization_name": "identity.tenant_domain",
-            # TODO: pending to get the subscription tags
-            # "account_tags": "organizations_metadata.account_details_tags",
-            "partition": "region_config.name",
-        }
 
     # TODO: this should be moved to the argparse, if not we need to enforce it from the Provider
     # previously was using the AzureException
