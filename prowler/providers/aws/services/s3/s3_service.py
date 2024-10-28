@@ -543,7 +543,7 @@ class S3Control(AWSService):
                     account_id=self.audited_account,
                     name=mr_access_point["Name"],
                     bucket=mr_access_point["Bucket"],
-                    region="us-east-1",
+                    region=self.region,
                     public_access_block=PublicAccessBlock(
                         block_public_acls=mr_access_point.get(
                             "PublicAccessBlockConfiguration", {}
@@ -562,15 +562,15 @@ class S3Control(AWSService):
         except ClientError as error:
             if error.response["Error"]["Code"] == "NoSuchMultiRegionAccessPoint":
                 logger.warning(
-                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
             else:
                 logger.error(
-                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         except Exception as error:
             logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def _get_access_point(self, ap):
