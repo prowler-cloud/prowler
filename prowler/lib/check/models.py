@@ -187,24 +187,23 @@ class CheckMetadata(BaseModel):
         Returns:
             list: A list of checks.
         """
-        checks = []
-        checks_from_provider = []
-        checks_from_severity = []
-        checks_from_category = []
-        checks_from_service = []
+        checks_from_provider = {}
+        checks_from_severity = {}
+        checks_from_category = {}
+        checks_from_service = {}
+        checks_from_compliance_framework = {}
         # If the bulk checks metadata is not provided, get it
         if not bulk_checks_metadata:
             bulk_checks_metadata = {}
             available_providers = [p.value for p in Provider]
-            for provider in available_providers:
-                bulk_checks_metadata.update(CheckMetadata.get_bulk(provider))
-        checks_from_compliance_framework = []
+            for provider_name in available_providers:
+                bulk_checks_metadata.update(CheckMetadata.get_bulk(provider_name))
         if provider:
-            checks_from_provider = [
+            checks_from_provider = {
                 check_name
                 for check_name, check_metadata in bulk_checks_metadata.items()
                 if check_metadata.Provider == provider
-            ]
+            }
         if severity:
             checks_from_severity = CheckMetadata.list_by_severity(
                 bulk_checks_metadata=bulk_checks_metadata, severity=severity
@@ -224,7 +223,7 @@ class CheckMetadata(BaseModel):
                 available_providers = [p.value for p in Provider]
                 for provider in available_providers:
                     bulk_compliance_frameworks = Compliance.get_bulk(provider=provider)
-            checks_from_compliance_framework = list(
+            checks_from_compliance_framework = set(
                 CheckMetadata.list_by_compliance_framework(
                     bulk_compliance_frameworks=bulk_compliance_frameworks,
                     compliance_framework=compliance_framework,
@@ -232,20 +231,20 @@ class CheckMetadata(BaseModel):
             )
 
         # Get all the checks:
-        checks = list(bulk_checks_metadata.keys())
+        checks = set(bulk_checks_metadata.keys())
         # Get the intersection of the checks
         if len(checks_from_provider) > 0 or provider:
-            checks = list(set(checks) & set(checks_from_provider))
+            checks = list(checks & checks_from_provider)
         if len(checks_from_severity) > 0 or severity:
-            checks = list(set(checks) & set(checks_from_severity))
+            checks = list(checks & checks_from_severity)
         if len(checks_from_category) > 0 or category:
-            checks = list(set(checks) & set(checks_from_category))
+            checks = list(checks & checks_from_category)
         if len(checks_from_service) > 0 or service:
-            checks = list(set(checks) & set(checks_from_service))
+            checks = list(checks & checks_from_service)
         if len(checks_from_compliance_framework) > 0 or compliance_framework:
-            checks = list(set(checks) & set(checks_from_compliance_framework))
+            checks = list(checks & checks_from_compliance_framework)
 
-        return checks
+        return list(checks)
 
     @staticmethod
     def get(bulk_checks_metadata: dict, check_id: str) -> "CheckMetadata":
@@ -263,89 +262,89 @@ class CheckMetadata(BaseModel):
         return bulk_checks_metadata.get(check_id, None)
 
     @staticmethod
-    def list_by_severity(bulk_checks_metadata: dict, severity: str = None) -> list:
+    def list_by_severity(bulk_checks_metadata: dict, severity: str = None) -> set:
         """
-        Returns a list of checks by severity from the bulk checks metadata.
+        Returns a set of checks by severity from the bulk checks metadata.
 
         Args:
             bulk_checks_metadata (dict): The bulk checks metadata.
             severity (str): The severity.
 
         Returns:
-            list: A list of checks by severity.
+            set: A set of checks by severity.
         """
-        checks = []
+        checks = set()
 
         if severity:
-            checks = [
+            checks = {
                 check_name
                 for check_name, check_metadata in bulk_checks_metadata.items()
                 if check_metadata.Severity == severity
-            ]
+            }
 
         return checks
 
     @staticmethod
-    def list_by_category(bulk_checks_metadata: dict, category: str = None) -> list:
+    def list_by_category(bulk_checks_metadata: dict, category: str = None) -> set:
         """
-        Returns a list of checks by category from the bulk checks metadata.
+        Returns a set of checks by category from the bulk checks metadata.
 
         Args:
             bulk_checks_metadata (dict): The bulk checks metadata.
             category (str): The category.
 
         Returns:
-            list: A list of checks by category.
+            set: A set of checks by category.
         """
-        checks = []
+        checks = set()
 
         if category:
-            checks = [
+            checks = {
                 check_name
                 for check_name, check_metadata in bulk_checks_metadata.items()
                 if category in check_metadata.Categories
-            ]
+            }
 
         return checks
 
     @staticmethod
-    def list_by_service(bulk_checks_metadata: dict, service: str = None) -> list:
+    def list_by_service(bulk_checks_metadata: dict, service: str = None) -> set:
         """
-        Returns a list of checks by service from the bulk checks metadata.
+        Returns a set of checks by service from the bulk checks metadata.
 
         Args:
             bulk_checks_metadata (dict): The bulk checks metadata.
             service (str): The service.
 
         Returns:
-            list: A list of checks by service.
+            set: A set of checks by service.
         """
-        checks = []
+        checks = set()
 
         if service:
             if service == "lambda":
                 service = "awslambda"
-            checks = [
+            checks = {
                 check_name
                 for check_name, check_metadata in bulk_checks_metadata.items()
                 if check_metadata.ServiceName == service
-            ]
+            }
 
         return checks
 
     @staticmethod
     def list_by_compliance_framework(
         bulk_compliance_frameworks: dict, compliance_framework: str = None
-    ) -> list:
+    ) -> set:
         """
-        Returns a list of checks by compliance framework from the bulk compliance frameworks.
+        Returns a set of checks by compliance framework from the bulk compliance frameworks.
 
         Args:
             bulk_compliance_frameworks (dict): The bulk compliance frameworks.
             compliance_framework (str): The compliance framework.
 
         Returns:
-            list: A list of checks by compliance framework.
+            set: A set of checks by compliance framework.
         """
         checks = set()
 

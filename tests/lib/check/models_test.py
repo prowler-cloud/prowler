@@ -240,6 +240,7 @@ class TestCheckMetada:
         result = CheckMetadata.list(
             bulk_compliance_frameworks=bulk_compliance_frameworks,
             compliance_framework="framework1_azure",
+            provider=None,
         )
 
         # Assertions
