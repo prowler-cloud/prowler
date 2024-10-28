@@ -3,7 +3,19 @@ from prowler.providers.aws.services.kinesis.kinesis_client import kinesis_client
 
 
 class kinesis_stream_data_retention_period(Check):
+    """Ensure Kinesis Stream has an adequate data retention period
+
+    The retention period for Kinesis Streams should be set to a value that meets the organization's data retention policy.
+    """
+
     def execute(self):
+        """Execute Check Kinesis Stream data retention period
+
+        Iterate over all Kinesis Streams and check if the retention period is adequate.
+
+        Returns:
+            findings (list): List of findings
+        """
         findings = []
         for stream in kinesis_client.streams.values():
             report = Check_Report_AWS(self.metadata())
