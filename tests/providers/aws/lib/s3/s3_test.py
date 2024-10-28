@@ -9,7 +9,7 @@ from prowler.lib.outputs.compliance.iso27001.iso27001_aws import AWSISO27001
 from prowler.lib.outputs.csv.csv import CSV
 from prowler.lib.outputs.html.html import HTML
 from prowler.lib.outputs.ocsf.ocsf import OCSF
-from prowler.providers.aws.lib.s3.exceptions.exceptions import S3TestConnectionError
+from prowler.providers.aws.lib.s3.exceptions.exceptions import S3InvalidBucketNameError
 from prowler.providers.aws.lib.s3.s3 import S3
 from tests.lib.outputs.compliance.fixtures import ISO27001_2013_AWS
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
@@ -331,12 +331,12 @@ class TestS3:
         assert s3
 
     @mock_aws
-    def test_test_connection_S3_bucket_invalid(self):
+    def test_test_connection_S3_bucket_invalid_name(self):
         current_session = boto3.session.Session(
             region_name=AWS_REGION_US_EAST_1
         ).client("s3")
         current_session.create_bucket(Bucket=S3_BUCKET_NAME)
-        with pytest.raises(S3TestConnectionError):
+        with pytest.raises(S3InvalidBucketNameError):
             S3.test_connection(
                 session=current_session,
                 bucket_name="invalid_bucket",

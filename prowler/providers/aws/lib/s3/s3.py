@@ -1,12 +1,20 @@
+import os
 import tempfile
 from os import path
 from tempfile import NamedTemporaryFile
 
 from boto3 import Session
+from botocore import exceptions
 
 from prowler.lib.logger import logger
 from prowler.lib.outputs.output import Output
-from prowler.providers.aws.lib.s3.exceptions.exceptions import S3TestConnectionError
+from prowler.providers.aws.lib.s3.exceptions.exceptions import (
+    S3BucketAccessDeniedError,
+    S3ClientError,
+    S3IllegalLocationConstraintError,
+    S3InvalidBucketNameError,
+    S3TestConnectionError,
+)
 from prowler.providers.common.models import Connection
 
 
@@ -172,6 +180,18 @@ class S3:
         try:
             if "s3://" in bucket_name:
                 bucket_name = bucket_name.removeprefix("s3://")
+            # Check for the bucket location
+            bucket_location = session.get_bucket_location(Bucket=bucket_name)
+
+            # If the bucket location is not the same as the session region, change the session region
+            if (
+                os.environ["region"] != bucket_location["LocationConstraint"]
+                and bucket_location["LocationConstraint"] is not None
+            ):
+                session = session.client(
+                    __class__.__name__.lower(),
+                    region_name=bucket_location["LocationConstraint"],
+                )
             # Set a Temp file to upload
             with tempfile.TemporaryFile() as temp_file:
                 temp_file.write(b"Test Prowler Connection")
@@ -182,7 +202,28 @@ class S3:
 
             # Try to delete the file
             session.delete_object(Bucket=bucket_name, Key="test-prowler-connection.txt")
-            return True
+            return Connection(is_connected=True)
+
+        except exceptions.ClientError as client_error:
+            if raise_on_exception:
+                if (
+                    "specified bucket does not exist"
+                    in client_error.response["Error"]["Message"]
+                ):
+                    raise S3InvalidBucketNameError(original_exception=client_error)
+                elif (
+                    "IllegalLocationConstraintException"
+                    in client_error.response["Error"]["Message"]
+                ):
+                    raise S3IllegalLocationConstraintError(
+                        original_exception=client_error
+                    )
+                elif "AccessDeniedException" in client_error.response["Error"]["Code"]:
+                    raise S3BucketAccessDeniedError(original_exception=client_error)
+                else:
+                    raise S3ClientError(original_exception=client_error)
+            return Connection(is_connected=False, error=client_error)
+
         except Exception as error:
             if raise_on_exception:
                 raise S3TestConnectionError(original_exception=error)
