@@ -43,15 +43,15 @@ class Test_kinesis_encrypted_at_rest:
             ShardCount=1,
             StreamModeDetails={"StreamMode": "PROVISIONED"},
         )
-
+        retention_period = 400
         kinesis_client.increase_stream_retention_period(
             StreamName=stream_name,
-            RetentionPeriodHours=250,
+            RetentionPeriodHours=retention_period,
             StreamARN=f"arn:aws:kinesis:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:stream/{stream_name}",
         )
 
         kinesis_client.audit_config = mock.MagicMock()
-        kinesis_client.audit_config = {"min_kinesis_stream_retention_period": 8760}
+        kinesis_client.audit_config = {"min_kinesis_stream_retention_period": 350}
 
         from prowler.providers.aws.services.kinesis.kinesis_service import Kinesis
 
@@ -80,7 +80,7 @@ class Test_kinesis_encrypted_at_rest:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == f"Kinesis Stream {stream_name} does have an adequate data retention period."
+                    == f"Kinesis Stream {stream_name} does have an adequate data retention period ({retention_period}hrs)."
                 )
                 assert result[0].resource_id == stream_name
                 assert (
@@ -99,15 +99,15 @@ class Test_kinesis_encrypted_at_rest:
             ShardCount=1,
             StreamModeDetails={"StreamMode": "PROVISIONED"},
         )
-
+        retention_period = 200
         kinesis_client.increase_stream_retention_period(
             StreamName=stream_name,
-            RetentionPeriodHours=250,
+            RetentionPeriodHours=retention_period,
             StreamARN=f"arn:aws:kinesis:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:stream/{stream_name}",
         )
 
         kinesis_client.audit_config = mock.MagicMock()
-        kinesis_client.audit_config = {"min_kinesis_stream_retention_period": 24}
+        kinesis_client.audit_config = {"min_kinesis_stream_retention_period": 250}
 
         from prowler.providers.aws.services.kinesis.kinesis_service import Kinesis
 
@@ -136,7 +136,7 @@ class Test_kinesis_encrypted_at_rest:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"Kinesis Stream {stream_name} does not have an adequate data retention period."
+                    == f"Kinesis Stream {stream_name} does not have an adequate data retention period ({retention_period}hrs)."
                 )
                 assert result[0].resource_id == stream_name
                 assert (
