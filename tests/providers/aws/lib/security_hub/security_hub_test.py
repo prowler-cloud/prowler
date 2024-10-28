@@ -422,8 +422,8 @@ class TestSecurityHub:
             raise_on_exception=False,
         )
 
-        assert connection[0].is_connected is True
-        assert connection[0].error is None
+        assert connection.is_connected is True
+        assert connection.error is None
 
     @patch("prowler.providers.aws.lib.security_hub.security_hub.Session.client")
     def test_security_hub_test_connection_invalid_access_exception(
@@ -454,8 +454,8 @@ class TestSecurityHub:
             raise_on_exception=False,
         )
 
-        assert connection[0].is_connected is False
-        assert isinstance(connection[0].error, SecurityHubInvalidRegionError)
+        assert connection.is_connected is False
+        assert isinstance(connection.error, SecurityHubInvalidRegionError)
 
     @patch("prowler.providers.aws.lib.security_hub.security_hub.Session.client")
     def test_security_hub_test_connection_prowler_not_subscribed(
@@ -478,8 +478,8 @@ class TestSecurityHub:
             raise_on_exception=False,
         )
 
-        assert connection[0].is_connected is False
-        assert isinstance(connection[0].error, SecurityHubInvalidRegionError)
+        assert connection.is_connected is False
+        assert isinstance(connection.error, SecurityHubInvalidRegionError)
 
     @patch("prowler.providers.aws.lib.security_hub.security_hub.Session.client")
     def test_security_hub_test_connection_unexpected_exception(
@@ -499,8 +499,8 @@ class TestSecurityHub:
             raise_on_exception=False,
         )
 
-        assert connection[0].is_connected is False
-        assert isinstance(connection[0].error, SecurityHubInvalidRegionError)
+        assert connection.is_connected is False
+        assert isinstance(connection.error, SecurityHubInvalidRegionError)
 
     @patch("prowler.providers.aws.lib.security_hub.security_hub.Session.client")
     def test_security_hub_test_connection_no_regions_enabled(
@@ -519,5 +519,5 @@ class TestSecurityHub:
             raise_on_exception=False,
         )
 
-        assert connection[0].is_connected is False
-        assert isinstance(connection[0].error, SecurityHubNoEnabledRegionsError)
+        assert connection.is_connected is False
+        assert isinstance(connection.error, SecurityHubNoEnabledRegionsError)

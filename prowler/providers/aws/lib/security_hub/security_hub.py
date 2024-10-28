@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+
 from boto3 import Session
 from botocore.client import ClientError
 
@@ -14,6 +16,19 @@ from prowler.providers.common.models import Connection
 
 SECURITY_HUB_INTEGRATION_NAME = "prowler/prowler"
 SECURITY_HUB_MAX_BATCH = 100
+
+
+@dataclass
+class SecurityHubConnection(Connection):
+    """
+    Represents a Security Hub connection object.
+    Attributes:
+        enabled_regions (set): Set of regions where Security Hub is enabled.
+        disabled_regions (set): Set of regions where Security Hub is disabled.
+    """
+
+    enabled_regions: set = None
+    disabled_regions: set = None
 
 
 class SecurityHub:
@@ -303,7 +318,7 @@ class SecurityHub:
         aws_partition: str,
         regions: set = None,
         raise_on_exception: bool = True,
-    ) -> Connection:
+    ) -> SecurityHubConnection:
         """
         Test the connection to AWS Security Hub by checking if Security Hub is enabled in the provided region
         and if the Prowler integration is active.
@@ -347,19 +362,21 @@ class SecurityHub:
                     )
                     if raise_on_exception:
                         raise invalid_region_error
-                    return (
-                        Connection(is_connected=False, error=invalid_region_error),
-                        enabled_regions,
-                        disabled_regions,
+                    return SecurityHubConnection(
+                        is_connected=False,
+                        error=invalid_region_error,
+                        enabled_regions=enabled_regions,
+                        disabled_regions=disabled_regions,
                     )
                 else:
                     logger.info(
                         f"Prowler integration is enabled in regions: {list(regions)}."
                     )
-                    return (
-                        Connection(is_connected=True, error=None),
-                        enabled_regions,
-                        disabled_regions,
+                    return SecurityHubConnection(
+                        is_connected=True,
+                        error=None,
+                        enabled_regions=enabled_regions,
+                        disabled_regions=disabled_regions,
                     )
 
             if len(enabled_regions) == 0:
@@ -371,19 +388,21 @@ class SecurityHub:
                 )
                 if raise_on_exception:
                     raise no_enabled_regions_error
-                return (
-                    Connection(is_connected=False, error=no_enabled_regions_error),
-                    enabled_regions,
-                    disabled_regions,
+                return SecurityHubConnection(
+                    is_connected=False,
+                    error=no_enabled_regions_error,
+                    enabled_regions=enabled_regions,
+                    disabled_regions=disabled_regions,
                 )
             else:
                 logger.info(
                     f"Security Hub is enabled in the following regions: {', '.join(enabled_regions)}."
                 )
-                return (
-                    Connection(is_connected=True, error=None),
-                    enabled_regions,
-                    disabled_regions,
+                return SecurityHubConnection(
+                    is_connected=True,
+                    error=None,
+                    enabled_regions=enabled_regions,
+                    disabled_regions=disabled_regions,
                 )
 
         except Exception as error:
@@ -396,8 +415,9 @@ class SecurityHub:
             if raise_on_exception:
                 raise exception_error
 
-            return (
-                Connection(is_connected=False, error=exception_error),
-                enabled_regions,
-                disabled_regions,
+            return SecurityHubConnection(
+                is_connected=False,
+                error=exception_error,
+                enabled_regions=enabled_regions,
+                disabled_regions=disabled_regions,
             )
