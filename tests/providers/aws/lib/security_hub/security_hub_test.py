@@ -7,6 +7,10 @@ from botocore.client import ClientError
 from mock import patch
 
 from prowler.lib.outputs.asff.asff import ASFF
+from prowler.providers.aws.lib.security_hub.exceptions.exceptions import (
+    SecurityHubInvalidRegionError,
+    SecurityHubNoEnabledRegionsError,
+)
 from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 from tests.providers.aws.utils import (
@@ -418,8 +422,8 @@ class TestSecurityHub:
             raise_on_exception=False,
         )
 
-        assert connection.is_connected is True
-        assert connection.error is None
+        assert connection[0].is_connected is True
+        assert connection[0].error is None
 
     @patch("prowler.providers.aws.lib.security_hub.security_hub.Session.client")
     def test_security_hub_test_connection_invalid_access_exception(
@@ -450,8 +454,8 @@ class TestSecurityHub:
             raise_on_exception=False,
         )
 
-        assert connection.is_connected is False
-        assert isinstance(connection.error, ClientError)
+        assert connection[0].is_connected is False
+        assert isinstance(connection[0].error, SecurityHubInvalidRegionError)
 
     @patch("prowler.providers.aws.lib.security_hub.security_hub.Session.client")
     def test_security_hub_test_connection_prowler_not_subscribed(
@@ -474,10 +478,8 @@ class TestSecurityHub:
             raise_on_exception=False,
         )
 
-        assert connection.is_connected is False
-        assert (
-            connection.error is None
-        )  # No exception, but no Prowler integration found
+        assert connection[0].is_connected is False
+        assert isinstance(connection[0].error, SecurityHubInvalidRegionError)
 
     @patch("prowler.providers.aws.lib.security_hub.security_hub.Session.client")
     def test_security_hub_test_connection_unexpected_exception(
@@ -497,5 +499,25 @@ class TestSecurityHub:
             raise_on_exception=False,
         )
 
-        assert connection.is_connected is False
-        assert isinstance(connection.error, Exception)
+        assert connection[0].is_connected is False
+        assert isinstance(connection[0].error, SecurityHubInvalidRegionError)
+
+    @patch("prowler.providers.aws.lib.security_hub.security_hub.Session.client")
+    def test_security_hub_test_connection_no_regions_enabled(
+        self, mock_security_hub_client
+    ):
+        # Mock unexpected exception
+        mock_security_hub_client.side_effect = Exception("Unexpected error")
+
+        session_mock = session.Session(region_name=AWS_REGION_EU_WEST_1)
+
+        # Test connection failure due to an unexpected exception
+        connection = SecurityHub.test_connection(
+            session=session_mock,
+            aws_account_id=AWS_ACCOUNT_NUMBER,
+            aws_partition=AWS_COMMERCIAL_PARTITION,
+            raise_on_exception=False,
+        )
+
+        assert connection[0].is_connected is False
+        assert isinstance(connection[0].error, SecurityHubNoEnabledRegionsError)

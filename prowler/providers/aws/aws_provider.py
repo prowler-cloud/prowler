@@ -629,7 +629,9 @@ class AwsProvider(Provider):
         """
         try:
             regional_clients = {}
-            service_regions = self.get_available_aws_service_regions(service)
+            service_regions = AwsProvider.get_available_aws_service_regions(
+                service, self._identity.partition, self._identity.audited_regions
+            )
 
             # Get the regions enabled for the account and get the intersection with the service available regions
             if self._enabled_regions:
@@ -650,14 +652,15 @@ class AwsProvider(Provider):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def get_available_aws_service_regions(self, service: str) -> set:
+    @staticmethod
+    def get_available_aws_service_regions(
+        service: str, partition: str, audited_regions: set = None
+    ) -> set:
         data = read_aws_regions_file()
-        json_regions = set(
-            data["services"][service]["regions"][self._identity.partition]
-        )
-        if self._identity.audited_regions:
+        json_regions = set(data["services"][service]["regions"][partition])
+        if audited_regions:
             # Get common regions between input and json
-            regions = json_regions.intersection(self._identity.audited_regions)
+            regions = json_regions.intersection(audited_regions)
         else:  # Get all regions from json of the service and partition
             regions = json_regions
         return regions
@@ -793,7 +796,9 @@ class AwsProvider(Provider):
     def get_default_region(self, service: str) -> str:
         """get_default_region returns the default region based on the profile and audited service regions"""
         try:
-            service_regions = self.get_available_aws_service_regions(service)
+            service_regions = AwsProvider.get_available_aws_service_regions(
+                service, self._identity.partition, self._identity.audited_regions
+            )
             default_region = self.get_global_region()
             # global region of the partition when all regions are audited and there is no profile region
             if self._identity.profile_region in service_regions:

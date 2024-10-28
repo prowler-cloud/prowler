@@ -978,9 +978,9 @@ aws:
                 }
             },
         ):
-            assert aws_provider.get_available_aws_service_regions("ec2") == {
-                AWS_REGION_US_EAST_1
-            }
+            assert aws_provider.get_available_aws_service_regions(
+                "ec2", "aws", {AWS_REGION_US_EAST_1}
+            ) == {AWS_REGION_US_EAST_1}
 
     @mock_aws
     def test_get_available_aws_service_regions_with_all_regions_audited(self):
@@ -1017,7 +1017,9 @@ aws:
                 }
             },
         ):
-            assert len(aws_provider.get_available_aws_service_regions("ec2")) == 17
+            assert (
+                len(aws_provider.get_available_aws_service_regions("ec2", "aws")) == 17
+            )
 
     @mock_aws
     def test_get_tagged_resources(self):
