@@ -164,12 +164,14 @@ class S3:
         - raise_on_exception: A boolean indicating whether to raise an exception if the connection test fails.
 
         Returns:
-        - A boolean indicating whether the connection to the S3 bucket was successful.
+        - A Connection object indicating the status of the connection test.
 
         Raises:
         - Exception: An exception indicating that the connection test failed.
         """
         try:
+            if "s3://" in bucket_name:
+                bucket_name = bucket_name.removeprefix("s3://")
             # Set a Temp file to upload
             with tempfile.TemporaryFile() as temp_file:
                 temp_file.write(b"Test Prowler Connection")
