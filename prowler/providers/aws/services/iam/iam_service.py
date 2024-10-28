@@ -68,7 +68,9 @@ class IAM(AWSService):
         self._list_attached_role_policies()
         self._list_mfa_devices()
         self.password_policy = self._get_password_policy()
-        support_policy_arn = f"arn:{self.audited_partition}:iam::aws:policy/aws-service-role/AWSSupportServiceRolePolicy"
+        support_policy_arn = (
+            f"arn:{self.audited_partition}:iam::aws:policy/AWSSupportAccess"
+        )
         self.entities_role_attached_to_support_policy = (
             self._list_entities_role_for_policy(support_policy_arn)
         )
@@ -77,6 +79,12 @@ class IAM(AWSService):
         )
         self.entities_role_attached_to_securityaudit_policy = (
             self._list_entities_role_for_policy(securityaudit_policy_arn)
+        )
+        cloudshell_admin_policy_arn = (
+            f"arn:{self.audited_partition}:iam::aws:policy/AWSCloudShellFullAccess"
+        )
+        self.entities_attached_to_cloudshell_policy = self._list_entities_for_policy(
+            cloudshell_admin_policy_arn
         )
         # List both Customer (attached and unattached) and AWS Managed (only attached) policies
         self.policies = []
@@ -682,6 +690,44 @@ class IAM(AWSService):
             )
         finally:
             return roles
+
+    def _list_entities_for_policy(self, policy_arn):
+        logger.info("IAM - List Entities Role For Policy...")
+        try:
+            entities = {
+                "Users": [],
+                "Groups": [],
+                "Roles": [],
+            }
+
+            paginator = self.client.get_paginator("list_entities_for_policy")
+            for response in paginator.paginate(PolicyArn=policy_arn):
+                entities["Users"].extend(
+                    user["UserName"] for user in response.get("PolicyUsers", [])
+                )
+                entities["Groups"].extend(
+                    group["GroupName"] for group in response.get("PolicyGroups", [])
+                )
+                entities["Roles"].extend(
+                    role["RoleName"] for role in response.get("PolicyRoles", [])
+                )
+            return entities
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "AccessDenied":
+                logger.error(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+                entities = None
+            else:
+                logger.error(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+        except Exception as error:
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        finally:
+            return entities
 
     def _list_policies(self, scope):
         logger.info("IAM - List Policies...")

@@ -3,12 +3,12 @@ import re
 from argparse import ArgumentTypeError
 
 from prowler.providers.aws.exceptions.exceptions import (
-    AWSIAMRoleARNEmptyResource,
-    AWSIAMRoleARNInvalidAccountID,
-    AWSIAMRoleARNInvalidResourceType,
-    AWSIAMRoleARNPartitionEmpty,
-    AWSIAMRoleARNRegionNotEmtpy,
-    AWSIAMRoleARNServiceNotIAMnorSTS,
+    AWSIAMRoleARNEmptyResourceError,
+    AWSIAMRoleARNInvalidAccountIDError,
+    AWSIAMRoleARNInvalidResourceTypeError,
+    AWSIAMRoleARNPartitionEmptyError,
+    AWSIAMRoleARNRegionNotEmtpyError,
+    AWSIAMRoleARNServiceNotIAMnorSTSError,
 )
 from prowler.providers.aws.lib.arn.models import ARN
 
@@ -25,7 +25,7 @@ def parse_iam_credentials_arn(arn: str) -> ARN:
     arn_parsed = ARN(arn)
     # First check if region is empty (in IAM ARN's region is always empty)
     if arn_parsed.region:
-        raise AWSIAMRoleARNRegionNotEmtpy(file=os.path.basename(__file__))
+        raise AWSIAMRoleARNRegionNotEmtpyError(file=os.path.basename(__file__))
     else:
         # check if needed fields are filled:
         # - partition
@@ -34,15 +34,15 @@ def parse_iam_credentials_arn(arn: str) -> ARN:
         # - resource_type
         # - resource
         if arn_parsed.partition is None or arn_parsed.partition == "":
-            raise AWSIAMRoleARNPartitionEmpty(file=os.path.basename(__file__))
+            raise AWSIAMRoleARNPartitionEmptyError(file=os.path.basename(__file__))
         elif arn_parsed.service != "iam" and arn_parsed.service != "sts":
-            raise AWSIAMRoleARNServiceNotIAMnorSTS(file=os.path.basename(__file__))
+            raise AWSIAMRoleARNServiceNotIAMnorSTSError(file=os.path.basename(__file__))
         elif (
             arn_parsed.account_id is None
             or len(arn_parsed.account_id) != 12
             or not arn_parsed.account_id.isnumeric()
         ):
-            raise AWSIAMRoleARNInvalidAccountID(file=os.path.basename(__file__))
+            raise AWSIAMRoleARNInvalidAccountIDError(file=os.path.basename(__file__))
         elif (
             arn_parsed.resource_type != "role"
             and arn_parsed.resource_type != "user"
@@ -50,9 +50,9 @@ def parse_iam_credentials_arn(arn: str) -> ARN:
             and arn_parsed.resource_type != "root"
             and arn_parsed.resource_type != "federated-user"
         ):
-            raise AWSIAMRoleARNInvalidResourceType(file=os.path.basename(__file__))
+            raise AWSIAMRoleARNInvalidResourceTypeError(file=os.path.basename(__file__))
         elif arn_parsed.resource == "":
-            raise AWSIAMRoleARNEmptyResource(file=os.path.basename(__file__))
+            raise AWSIAMRoleARNEmptyResourceError(file=os.path.basename(__file__))
         else:
             return arn_parsed
 

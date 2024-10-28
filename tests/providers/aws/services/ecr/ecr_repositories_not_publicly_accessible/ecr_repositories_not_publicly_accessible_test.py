@@ -63,6 +63,7 @@ class Test_ecr_repositories_not_publicly_accessible:
         ecr_client.registries = {}
         ecr_client.registries[AWS_REGION_EU_WEST_1] = Registry(
             id=AWS_ACCOUNT_NUMBER,
+            arn=f"arn:aws:ecr:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:registry/{AWS_ACCOUNT_NUMBER}",
             region=AWS_REGION_EU_WEST_1,
             scan_type="BASIC",
             repositories=[],
@@ -87,8 +88,11 @@ class Test_ecr_repositories_not_publicly_accessible:
     def test_repository_not_public(self):
         ecr_client = mock.MagicMock
         ecr_client.registries = {}
+        ecr_client.audit_config = {}
+        ecr_client.audited_account = AWS_ACCOUNT_NUMBER
         ecr_client.registries[AWS_REGION_EU_WEST_1] = Registry(
             id=AWS_ACCOUNT_NUMBER,
+            arn=f"arn:aws:ecr:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:registry/{AWS_ACCOUNT_NUMBER}",
             region=AWS_REGION_EU_WEST_1,
             scan_type="BASIC",
             repositories=[
@@ -132,6 +136,7 @@ class Test_ecr_repositories_not_publicly_accessible:
         ecr_client.registries = {}
         ecr_client.registries[AWS_REGION_EU_WEST_1] = Registry(
             id=AWS_ACCOUNT_NUMBER,
+            arn=f"arn:aws:ecr:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:registry/{AWS_ACCOUNT_NUMBER}",
             region=AWS_REGION_EU_WEST_1,
             scan_type="BASIC",
             repositories=[
@@ -173,8 +178,11 @@ class Test_ecr_repositories_not_publicly_accessible:
     def test_repository_public(self):
         ecr_client = mock.MagicMock
         ecr_client.registries = {}
+        ecr_client.audit_config = {}
+        ecr_client.audited_account = AWS_ACCOUNT_NUMBER
         ecr_client.registries[AWS_REGION_EU_WEST_1] = Registry(
             id=AWS_ACCOUNT_NUMBER,
+            arn=f"arn:aws:ecr:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:registry/{AWS_ACCOUNT_NUMBER}",
             region=AWS_REGION_EU_WEST_1,
             scan_type="BASIC",
             repositories=[

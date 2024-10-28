@@ -58,6 +58,7 @@ class ECR(AWSService):
             # The default ECR registry is assumed
             self.registries[regional_client.region] = Registry(
                 id=self.registry_id,
+                arn=f"arn:{self.audited_partition}:ecr:{regional_client.region}:registry/{self.registry_id}",
                 region=regional_client.region,
                 repositories=regional_registry_repositories,
             )
@@ -389,6 +390,7 @@ class ScanningRule(BaseModel):
 
 class Registry(BaseModel):
     id: str
+    arn: str
     region: str
     repositories: list[Repository]
     scan_type: Optional[str]

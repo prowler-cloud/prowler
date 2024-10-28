@@ -195,7 +195,6 @@ class Test_DynamoDB_Service:
             {"Key": "test", "Value": "test"},
         ]
         assert dax.clusters[0].tls_encryption
-
         assert dax.clusters[1].name == "daxcluster2"
         assert dax.clusters[1].region == AWS_REGION_US_EAST_1
         assert dax.clusters[1].encryption

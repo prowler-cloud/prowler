@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "wafv2_webacl_with_rules",
+  "CheckTitle": "Check if AWS WAFv2 WebACL has at least one rule or rule group.",
+  "CheckType": [
+    "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53 Controls"
+  ],
+  "ServiceName": "wafv2",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:wafv2:region:account-id:webacl/webacl-id",
+  "Severity": "medium",
+  "ResourceType": "AwsWafv2WebAcl",
+  "Description": "Check if AWS WAFv2 WebACL has at least one rule or rule group associated with it.",
+  "Risk": "An empty AWS WAF web ACL allows all web traffic to pass without inspection or control, exposing resources to potential security threats and attacks.",
+  "RelatedUrl": "https://docs.aws.amazon.com/waf/latest/APIReference/API_Rule.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws wafv2 update-web-acl --id <web-acl-id> --scope <scope> --default-action <default-action> --rules <rules>",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/networking-policies/bc_aws_networking_64/",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/waf-controls.html#waf-10",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure that each AWS WAF web ACL contains at least one rule or rule group to effectively manage and inspect incoming HTTP(S) web requests.",
+      "Url": "https://docs.aws.amazon.com/waf/latest/developerguide/web-acl-editing.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

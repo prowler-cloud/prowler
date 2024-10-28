@@ -3,7 +3,7 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from prowler.providers.aws.exceptions.exceptions import AWSIAMRoleARNMissingFields
+from prowler.providers.aws.exceptions.exceptions import AWSIAMRoleARNMissingFieldsError
 
 
 class ARN(BaseModel):
@@ -19,7 +19,7 @@ class ARN(BaseModel):
         # Validate the ARN
         ## Check that arn starts with arn
         if not arn.startswith("arn:"):
-            raise AWSIAMRoleARNMissingFields(file=os.path.basename(__file__))
+            raise AWSIAMRoleARNMissingFieldsError(file=os.path.basename(__file__))
         ## Retrieve fields
         arn_elements = arn.split(":", 5)
         data = {

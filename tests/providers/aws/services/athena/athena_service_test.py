@@ -29,6 +29,7 @@ def mock_make_api_call(self, operation_name, kwarg):
                         },
                     },
                     "EnforceWorkGroupConfiguration": True,
+                    "PublishCloudWatchMetricsEnabled": True,
                 },
             }
         }
@@ -110,3 +111,4 @@ class Test_Athena_Service:
             == "SSE_S3"
         )
         assert athena.workgroups[workgroup_arn].enforce_workgroup_configuration is True
+        assert athena.workgroups[workgroup_arn].cloudwatch_logging

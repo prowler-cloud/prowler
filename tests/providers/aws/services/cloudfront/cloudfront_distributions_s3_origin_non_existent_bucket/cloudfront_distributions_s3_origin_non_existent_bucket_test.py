@@ -14,6 +14,10 @@ DISTRIBUTION_ARN = (
 
 
 class Test_cloudfront_s3_origin_non_existent_bucket:
+    @mock.patch(
+        "prowler.providers.aws.services.s3.s3_service.S3._head_bucket",
+        new=mock.MagicMock(return_value=False),
+    )
     def test_no_distributions(self):
         # Distributions
         cloudfront_client = mock.MagicMock
@@ -54,6 +58,7 @@ class Test_cloudfront_s3_origin_non_existent_bucket:
                         id="S3-ORIGIN",
                         origin_protocol_policy="",
                         origin_ssl_protocols=[],
+                        s3_origin_config={"OriginAccessIdentity": ""},
                     ),
                 ],
             )

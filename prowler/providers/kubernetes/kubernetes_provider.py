@@ -4,9 +4,14 @@ from colorama import Fore, Style
 from kubernetes.client.exceptions import ApiException
 from kubernetes.config.config_exception import ConfigException
 from requests.exceptions import Timeout
+from yaml import parser, safe_load
 
 from kubernetes import client, config
-from prowler.config.config import get_default_mute_file_path
+from prowler.config.config import (
+    default_config_file_path,
+    get_default_mute_file_path,
+    load_and_validate_config_file,
+)
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import print_boxes
 from prowler.providers.common.models import Audit_Metadata, Connection
@@ -15,6 +20,8 @@ from prowler.providers.kubernetes.exceptions.exceptions import (
     KubernetesAPIError,
     KubernetesCloudResourceManagerAPINotUsedError,
     KubernetesError,
+    KubernetesInvalidKubeConfigFileError,
+    KubernetesInvalidProviderIdError,
     KubernetesSetUpSessionError,
     KubernetesTimeoutError,
 )
@@ -40,21 +47,29 @@ class KubernetesProvider(Provider):
         kubeconfig_file: str = None,
         context: str = None,
         namespace: list = None,
-        audit_config: dict = {},
+        config_path: str = None,
+        config_content: dict = {},
         fixer_config: dict = {},
+        mutelist_path: str = None,
+        mutelist_content: dict = {},
+        kubeconfig_content: dict = None,
     ):
         """
         Initializes the KubernetesProvider instance.
         Args:
             kubeconfig_file (str): Path to the kubeconfig file.
+            kubeconfig_content (dict): Content of the kubeconfig file.
             context (str): Context name.
             namespace (list): List of namespaces.
-            audit_config (dict): Audit configuration.
+            config_content (dict): Audit configuration.
+            config_path (str): Path to the configuration file.
             fixer_config (dict): Fixer configuration.
+            mutelist_path (str): Path to the mutelist file.
+            mutelist_content (dict): Mutelist content.
         """
 
         logger.info("Instantiating Kubernetes Provider ...")
-        self._session = self.setup_session(kubeconfig_file, context)
+        self._session = self.setup_session(kubeconfig_file, kubeconfig_content, context)
         if not namespace:
             logger.info("Retrieving all namespaces ...")
             self._namespaces = self.get_all_namespaces()
@@ -74,9 +89,27 @@ class KubernetesProvider(Provider):
         )
 
         # Audit Config
-        self._audit_config = audit_config
+        if config_content:
+            self._audit_config = config_content
+        else:
+            if not config_path:
+                config_path = default_config_file_path
+            self._audit_config = load_and_validate_config_file(self._type, config_path)
+
         # Fixer Config
         self._fixer_config = fixer_config
+
+        # Mutelist
+        if mutelist_content:
+            self._mutelist = KubernetesMutelist(
+                mutelist_content=mutelist_content,
+            )
+        else:
+            if not mutelist_path:
+                mutelist_path = get_default_mute_file_path(self.type)
+            self._mutelist = KubernetesMutelist(
+                mutelist_path=mutelist_path,
+            )
 
         Provider.set_global_provider(self)
 
@@ -111,80 +144,101 @@ class KubernetesProvider(Provider):
         """
         return self._mutelist
 
-    @mutelist.setter
-    def mutelist(self, mutelist_path):
-        """
-        mutelist.setter sets the provider's mutelist.
-        """
-        # Set default mutelist path if none is set
-        if not mutelist_path:
-            mutelist_path = get_default_mute_file_path(self.type)
-
-        self._mutelist = KubernetesMutelist(mutelist_path)
-
-    @property
-    def get_output_mapping(self):
-        return {
-            # "in-cluster/kubeconfig"
-            # "auth_method": "identity.profile",
-            "provider": "type",
-            # cluster: <context>
-            "account_uid": "identity.cluster",
-            # "account_name": "organizations_metadata.account_details_name",
-            # "account_email": "organizations_metadata.account_details_email",
-            # "account_organization_uid": "organizations_metadata.account_details_arn",
-            # "account_organization": "organizations_metadata.account_details_org",
-            # "account_tags": "organizations_metadata.account_details_tags",
-            # "partition": "identity.partition",
-        }
-
     @staticmethod
-    def setup_session(kubeconfig_file, input_context) -> KubernetesSession:
+    def setup_session(
+        kubeconfig_file: str = None,
+        kubeconfig_content: dict = None,
+        context: str = None,
+    ) -> KubernetesSession:
         """
         Sets up the Kubernetes session.
 
         Args:
             kubeconfig_file (str): Path to the kubeconfig file.
-            input_context (str): Context name.
+            kubeconfig_content (dict): Content of the kubeconfig file.
+            context (str): Context name.
 
         Returns:
             Tuple: A tuple containing the API client and the context.
         """
         logger.info(f"Using kubeconfig file: {kubeconfig_file}")
         try:
-            config.load_kube_config(
-                config_file=(
-                    os.path.abspath(kubeconfig_file)
-                    if kubeconfig_file != "~/.kube/config"
-                    else os.path.expanduser(kubeconfig_file)
-                ),
-                context=input_context,
-            )
-        except ConfigException:
-            # If the kubeconfig file is not found, try to use the in-cluster config
-            logger.info("Using in-cluster config")
-            config.load_incluster_config()
-            context = {
-                "name": "In-Cluster",
-                "context": {
-                    "cluster": "in-cluster",  # Placeholder, as the real cluster name is not available
-                    "user": "service-account-name",  # Also a placeholder
-                },
-            }
-        else:
-            if input_context:
-                contexts = config.list_kube_config_contexts()[0]
+            if kubeconfig_content:
+                config.load_kube_config_from_dict(
+                    safe_load(kubeconfig_content), context=context
+                )
+
+            else:
+                kubeconfig_file = (
+                    kubeconfig_file if kubeconfig_file else "~/.kube/config"
+                )
+                try:
+                    config.load_kube_config(
+                        config_file=kubeconfig_file,
+                        context=context,
+                    )
+                except ConfigException:
+                    # If the kubeconfig file is not found, try to use the in-cluster config
+                    logger.info("Using in-cluster config")
+                    config.load_incluster_config()
+                    context = {
+                        "name": "In-Cluster",
+                        "context": {
+                            "cluster": "in-cluster",  # Placeholder, as the real cluster name is not available
+                            "user": "service-account-name",  # Also a placeholder
+                        },
+                    }
+                    return KubernetesSession(
+                        api_client=client.ApiClient(), context=context
+                    )
+            if context:
+                contexts = config.list_kube_config_contexts(
+                    config_file=kubeconfig_file
+                )[0]
                 for context_item in contexts:
-                    if context_item["name"] == input_context:
+                    if context_item["name"] == context:
                         context = context_item
             else:
-                context = config.list_kube_config_contexts()[1]
-        return KubernetesSession(api_client=client.ApiClient(), context=context)
+                context = config.list_kube_config_contexts(config_file=kubeconfig_file)[
+                    1
+                ]
+            return KubernetesSession(api_client=client.ApiClient(), context=context)
+
+        except parser.ParserError as parser_error:
+            logger.critical(
+                f"{parser_error.__class__.__name__}[{parser_error.__traceback__.tb_lineno}]: {parser_error}"
+            )
+            raise KubernetesInvalidKubeConfigFileError(
+                original_exception=parser_error, file=os.path.abspath(__file__)
+            )
+        except ConfigException as config_error:
+            logger.critical(
+                f"{config_error.__class__.__name__}[{config_error.__traceback__.tb_lineno}]: {config_error}"
+            )
+            if f"Expected object with name {context} in kube-config/contexts" in str(
+                config_error
+            ):
+                raise KubernetesInvalidProviderIdError(
+                    original_exception=config_error, file=os.path.abspath(__file__)
+                )
+            else:
+                raise KubernetesInvalidKubeConfigFileError(
+                    original_exception=config_error, file=os.path.abspath(__file__)
+                )
+        except Exception as error:
+            logger.critical(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            raise KubernetesSetUpSessionError(
+                original_exception=error, file=os.path.abspath(__file__)
+            )
 
     @staticmethod
     def test_connection(
         kubeconfig_file: str = "~/.kube/config",
-        input_context: str = "",
+        kubeconfig_content: dict = None,
+        namespace: str = None,
+        provider_id: str = None,
         raise_on_exception: bool = True,
     ) -> Connection:
         """
@@ -192,15 +246,47 @@ class KubernetesProvider(Provider):
 
         Args:
             kubeconfig_file (str): Path to the kubeconfig file.
-            input_context (str): Context name.
-
+            kubeconfig_content (dict): Content of the kubeconfig file.
+            namespace (str): Namespace name.
+            provider_id (str): Provider ID to use, in this case, the Kubernetes context.
+            raise_on_exception (bool): Whether to raise an exception on error.
         Returns:
             Connection: A Connection object.
         """
         try:
-            KubernetesProvider.setup_session(kubeconfig_file, input_context)
-            client.CoreV1Api().list_namespace(timeout_seconds=2, _request_timeout=2)
+            KubernetesProvider.setup_session(
+                kubeconfig_file=kubeconfig_file,
+                kubeconfig_content=kubeconfig_content,
+                context=provider_id,
+            )
+            if namespace:
+                client.CoreV1Api().list_namespaced_pod(
+                    namespace, timeout_seconds=2, _request_timeout=2
+                )
+            else:
+                client.CoreV1Api().list_namespace(timeout_seconds=2, _request_timeout=2)
             return Connection(is_connected=True)
+        except KubernetesInvalidKubeConfigFileError as invalid_kubeconfig_error:
+            logger.critical(
+                f"KubernetesInvalidKubeConfigFileError[{invalid_kubeconfig_error.__traceback__.tb_lineno}]: {invalid_kubeconfig_error}"
+            )
+            if raise_on_exception:
+                raise invalid_kubeconfig_error
+            return Connection(error=invalid_kubeconfig_error)
+        except KubernetesInvalidProviderIdError as invalid_provider_id_error:
+            logger.critical(
+                f"KubernetesInvalidProviderIdError[{invalid_provider_id_error.__traceback__.tb_lineno}]: {invalid_provider_id_error}"
+            )
+            if raise_on_exception:
+                raise invalid_provider_id_error
+            return Connection(error=invalid_provider_id_error)
+        except KubernetesSetUpSessionError as setup_session_error:
+            logger.critical(
+                f"KubernetesSetUpSessionError[{setup_session_error.__traceback__.tb_lineno}]: {setup_session_error}"
+            )
+            if raise_on_exception:
+                raise setup_session_error
+            return Connection(error=setup_session_error)
         except ApiException as api_error:
             logger.critical(
                 f"ApiException[{api_error.__traceback__.tb_lineno}]: {api_error}"

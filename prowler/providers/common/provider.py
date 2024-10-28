@@ -41,7 +41,6 @@ class Provider(ABC):
     Methods:
         print_credentials(): Displays the provider's credentials used for auditing in the command-line interface.
         setup_session(): Sets up the session for the provider.
-        get_output_mapping(): Returns the output mapping between the provider and the generic model.
         validate_arguments(): Validates the arguments for the provider.
         get_checks_to_execute_by_audit_resources(): Returns a set of checks based on the input resources to scan.
 
@@ -108,15 +107,6 @@ class Provider(ABC):
         """
         raise NotImplementedError()
 
-    @abstractmethod
-    def get_output_mapping(self) -> dict:
-        """
-        get_output_mapping returns the output mapping between the provider and the generic model.
-
-        This method needs to be created in each provider.
-        """
-        raise NotImplementedError()
-
     # TODO: uncomment this once all the providers have implemented the test_connection method
     # @abstractmethod
     def test_connection(self) -> Any:
@@ -163,9 +153,7 @@ class Provider(ABC):
             provider_class = getattr(
                 import_module(provider_class_path), provider_class_name
             )
-            audit_config = load_and_validate_config_file(
-                arguments.provider, arguments.config_file
-            )
+
             fixer_config = load_and_validate_config_file(
                 arguments.provider, arguments.fixer_config
             )
@@ -185,8 +173,9 @@ class Provider(ABC):
                         arguments.scan_unused_services,
                         arguments.resource_tag,
                         arguments.resource_arn,
-                        audit_config,
-                        fixer_config,
+                        arguments.config_file,
+                        arguments.mutelist_file,
+                        fixer_config=fixer_config,
                     )
                 elif "azure" in provider_class_name.lower():
                     provider_class(
@@ -197,8 +186,9 @@ class Provider(ABC):
                         arguments.tenant_id,
                         arguments.azure_region,
                         arguments.subscription_id,
-                        audit_config,
-                        fixer_config,
+                        arguments.config_file,
+                        arguments.mutelist_file,
+                        fixer_config=fixer_config,
                     )
                 elif "gcp" in provider_class_name.lower():
                     provider_class(
@@ -207,16 +197,18 @@ class Provider(ABC):
                         arguments.credentials_file,
                         arguments.impersonate_service_account,
                         arguments.list_project_id,
-                        audit_config,
-                        fixer_config,
+                        arguments.config_file,
+                        arguments.mutelist_file,
+                        fixer_config=fixer_config,
                     )
                 elif "kubernetes" in provider_class_name.lower():
                     provider_class(
                         arguments.kubeconfig_file,
                         arguments.context,
                         arguments.namespace,
-                        audit_config,
-                        fixer_config,
+                        arguments.config_file,
+                        arguments.mutelist_file,
+                        fixer_config=fixer_config,
                     )
 
         except TypeError as error:
