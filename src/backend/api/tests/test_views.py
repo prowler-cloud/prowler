@@ -95,6 +95,45 @@ class TestUserViewSet:
             == "/data/attributes/password"
         )
 
+    @pytest.mark.parametrize(
+        "email",
+        [
+            # Same email, validation error
+            "nonexistentemail@prowler.com",
+            # Same email with capital letters, validation error
+            "NonExistentEmail@prowler.com",
+        ],
+    )
+    def test_users_create_used_email(self, authenticated_client, email):
+        # First user created; no errors should occur
+        user_payload = {
+            "name": "test_email_validator",
+            "password": "newpassword123",
+            "email": "nonexistentemail@prowler.com",
+        }
+        response = authenticated_client.post(
+            reverse("user-list"), data=user_payload, format="json"
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+
+        user_payload = {
+            "name": "test_email_validator",
+            "password": "newpassword123",
+            "email": email,
+        }
+        response = authenticated_client.post(
+            reverse("user-list"), data=user_payload, format="json"
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert (
+            response.json()["errors"][0]["source"]["pointer"]
+            == "/data/attributes/email"
+        )
+        assert (
+            response.json()["errors"][0]["detail"]
+            == "Please check the email address and try again."
+        )
+
     def test_users_partial_update(self, authenticated_client, create_test_user):
         new_company_name = "new company test"
         payload = {

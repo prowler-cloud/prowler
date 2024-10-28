@@ -69,7 +69,12 @@ class StateChoices(models.TextChoices):
 class User(AbstractBaseUser):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     name = models.CharField(max_length=150, validators=[MinLengthValidator(3)])
-    email = models.EmailField(max_length=254, unique=True, help_text="Case insensitive")
+    email = models.EmailField(
+        max_length=254,
+        unique=True,
+        help_text="Case insensitive",
+        error_messages={"unique": "Please check the email address and try again."},
+    )
     company_name = models.CharField(max_length=150, blank=True)
     is_active = models.BooleanField(default=True)
     date_joined = models.DateTimeField(auto_now_add=True, editable=False)
