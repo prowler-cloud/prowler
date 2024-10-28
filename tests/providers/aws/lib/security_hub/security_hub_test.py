@@ -416,7 +416,7 @@ class TestSecurityHub:
         # Test successful connection
         connection = SecurityHub.test_connection(
             session=session_mock,
-            region=AWS_REGION_EU_WEST_1,
+            regions={AWS_REGION_EU_WEST_1},
             aws_account_id=AWS_ACCOUNT_NUMBER,
             aws_partition=AWS_COMMERCIAL_PARTITION,
             raise_on_exception=False,
@@ -448,7 +448,7 @@ class TestSecurityHub:
         # Test connection failure due to invalid access
         connection = SecurityHub.test_connection(
             session=session_mock,
-            region=AWS_REGION_EU_WEST_1,
+            regions={AWS_REGION_EU_WEST_1},
             aws_account_id=AWS_ACCOUNT_NUMBER,
             aws_partition=AWS_COMMERCIAL_PARTITION,
             raise_on_exception=False,
@@ -472,7 +472,7 @@ class TestSecurityHub:
         # Test connection failure due to missing Prowler subscription
         connection = SecurityHub.test_connection(
             session=session_mock,
-            region=AWS_REGION_EU_WEST_1,
+            regions={AWS_REGION_EU_WEST_1},
             aws_account_id=AWS_ACCOUNT_NUMBER,
             aws_partition=AWS_COMMERCIAL_PARTITION,
             raise_on_exception=False,
@@ -493,7 +493,7 @@ class TestSecurityHub:
         # Test connection failure due to an unexpected exception
         connection = SecurityHub.test_connection(
             session=session_mock,
-            region=AWS_REGION_EU_WEST_1,
+            regions={AWS_REGION_EU_WEST_1},
             aws_account_id=AWS_ACCOUNT_NUMBER,
             aws_partition=AWS_COMMERCIAL_PARTITION,
             raise_on_exception=False,

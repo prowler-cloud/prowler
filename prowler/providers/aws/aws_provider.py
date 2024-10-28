@@ -654,8 +654,19 @@ class AwsProvider(Provider):
 
     @staticmethod
     def get_available_aws_service_regions(
-        service: str, partition: str, audited_regions: set = None
+        service: str, partition: str = "aws", audited_regions: set = None
     ) -> set:
+        """
+        get_available_aws_service_regions returns the available regions for the given service and partition.
+
+        Arguments:
+            - service: The AWS service name.
+            - partition: The AWS partition name. Default is "aws".
+            - audited_regions: A set of regions to audit. Default is None.
+
+        Returns:
+            - A set of strings representing the available regions for the given service and partition.
+        """
         data = read_aws_regions_file()
         json_regions = set(data["services"][service]["regions"][partition])
         if audited_regions:

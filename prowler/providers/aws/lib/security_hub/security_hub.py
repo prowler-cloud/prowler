@@ -301,7 +301,7 @@ class SecurityHub:
         session: Session,
         aws_account_id: str,
         aws_partition: str,
-        region: str = None,
+        regions: set = None,
         raise_on_exception: bool = True,
     ) -> Connection:
         """
@@ -310,7 +310,7 @@ class SecurityHub:
 
         Args:
             session (Session): AWS session to use for authentication.
-            region (str): The AWS region to test Security Hub connection.
+            regions (set): Set of regions to check for Security Hub integration.
             aws_account_id (str): AWS account ID to check for Prowler integration.
             aws_partition (str): AWS partition (e.g., aws, aws-cn, aws-us-gov).
             raise_on_exception (bool): Whether to raise an exception if an error occurs.
@@ -337,13 +337,13 @@ class SecurityHub:
                 aws_partition=aws_partition,
             ).keys()
             disabled_regions = all_regions - enabled_regions
-            if region:
-                if region not in enabled_regions:
+            if regions:
+                if not any(region in enabled_regions for region in regions):
                     logger.warning(
-                        f"Prowler integration is not enabled in region {region}."
+                        f"Prowler integration is not enabled in regions: {regions - enabled_regions}."
                     )
                     invalid_region_error = SecurityHubInvalidRegionError(
-                        message="Given region has not Security Hub enabled."
+                        message="Given regions have not Security Hub enabled."
                     )
                     if raise_on_exception:
                         raise invalid_region_error
@@ -353,7 +353,9 @@ class SecurityHub:
                         disabled_regions,
                     )
                 else:
-                    logger.info(f"Prowler integration is enabled in region {region}.")
+                    logger.info(
+                        f"Prowler integration is enabled in regions: {list(regions)}."
+                    )
                     return (
                         Connection(is_connected=True, error=None),
                         enabled_regions,

@@ -627,7 +627,6 @@ def prowler():
                     global_provider.identity.audited_regions,
                 )
                 if not global_provider.identity.audited_regions
-                or not global_provider.identity.partition
                 else global_provider.identity.audited_regions
             )
 
