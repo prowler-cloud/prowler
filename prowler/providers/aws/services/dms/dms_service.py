@@ -71,6 +71,9 @@ class DMS(AWSService):
                             id=endpoint["EndpointIdentifier"],
                             region=regional_client.region,
                             ssl_mode=endpoint.get("SslMode", False),
+                            neptune_iam_auth_enabled=endpoint.get(
+                                "NeptuneSettings", {}
+                            ).get("IamAuthEnabled", False),
                         )
         except Exception as error:
             logger.error(
@@ -94,6 +97,7 @@ class Endpoint(BaseModel):
     region: str
     ssl_mode: str
     tags: Optional[list]
+    neptune_iam_auth_enabled: Optional[bool]
 
 
 class RepInstance(BaseModel):
