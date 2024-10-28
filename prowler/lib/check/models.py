@@ -5,7 +5,7 @@ import sys
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import List
+from typing import Set
 
 from pydantic import BaseModel, ValidationError, validator
 
@@ -171,9 +171,9 @@ class CheckMetadata(BaseModel):
         category: str = None,
         service: str = None,
         compliance_framework: str = None,
-    ) -> List["CheckMetadata"]:
+    ) -> Set["CheckMetadata"]:
         """
-        Returns a list of checks from the bulk checks metadata.
+        Returns a set of checks from the bulk checks metadata.
 
         Args:
             provider (str): The provider of the checks.
@@ -185,7 +185,7 @@ class CheckMetadata(BaseModel):
             compliance_framework (str): The compliance framework of the checks.
 
         Returns:
-            list: A list of checks.
+            set: A set of checks.
         """
         checks_from_provider = {}
         checks_from_severity = {}
