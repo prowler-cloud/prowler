@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "dynamodb_accelerator_cluster_multi_az",
+  "CheckTitle": "Check if DynamoDB Accelerator (DAX) clusters have nodes in multiple availability zones.",
+  "CheckType": [],
+  "ServiceName": "dynamodb",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:dax:region:account-id:cache/table-name",
+  "Severity": "medium",
+  "ResourceType": "Other",
+  "Description": "This control checks whether an Amazon DynamoDB Accelerator (DAX) cluster has nodes in multiple availability zones.",
+  "Risk": "Without DAX nodes in multiple availability zones (AZ) the nodes are at risk of interruption if an AZ disruption occurs.",
+  "RelatedUrl": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DAX.concepts.cluster.html#DAX.concepts.regions-and-azs",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Create a DAX cluster with nodes in multiple availability zones.",
+      "Url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DAX.concepts.cluster.html#DAX.concepts.regions-and-azs"
+    }
+  },
+  "Categories": [
+    "redundancy"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

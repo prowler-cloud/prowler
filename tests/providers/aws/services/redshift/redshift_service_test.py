@@ -107,6 +107,7 @@ class Test_Redshift_Service:
             MasterUserPassword="password",
             PubliclyAccessible=True,
             Encrypted=True,
+            MultiAZ=False,
             Tags=[
                 {"Key": "test", "Value": "test"},
             ],
@@ -139,6 +140,7 @@ class Test_Redshift_Service:
         ]
         assert redshift.clusters[0].parameter_group_name == "default.redshift-1.0"
         assert redshift.clusters[0].encrypted
+        assert redshift.clusters[0].multi_az is False
         assert redshift.clusters[0].master_username == "user"
         assert redshift.clusters[0].enhanced_vpc_routing
         assert redshift.clusters[0].database_name == "test"

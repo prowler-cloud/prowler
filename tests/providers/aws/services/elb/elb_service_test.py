@@ -41,7 +41,8 @@ class Test_ELB_Service:
     def test_describe_load_balancers(self):
         elb = client("elb", region_name=AWS_REGION_US_EAST_1)
         ec2 = resource("ec2", region_name=AWS_REGION_US_EAST_1)
-
+        acm = client("acm", region_name=AWS_REGION_US_EAST_1)
+        certificate = acm.request_certificate(DomainName="www.example.com")
         security_group = ec2.create_security_group(
             GroupName="sg01", Description="Test security group sg01"
         )
@@ -49,8 +50,18 @@ class Test_ELB_Service:
         dns_name = elb.create_load_balancer(
             LoadBalancerName="my-lb",
             Listeners=[
-                {"Protocol": "tcp", "LoadBalancerPort": 80, "InstancePort": 8080},
-                {"Protocol": "http", "LoadBalancerPort": 81, "InstancePort": 9000},
+                {
+                    "Protocol": "tcp",
+                    "LoadBalancerPort": 80,
+                    "InstancePort": 8080,
+                    "SSLCertificateId": certificate["CertificateArn"],
+                },
+                {
+                    "Protocol": "http",
+                    "LoadBalancerPort": 81,
+                    "InstancePort": 9000,
+                    "SSLCertificateId": certificate["CertificateArn"],
+                },
             ],
             AvailabilityZones=[AWS_REGION_US_EAST_1_AZA],
             Scheme="internal",
@@ -68,8 +79,16 @@ class Test_ELB_Service:
         assert len(elb.loadbalancers[elb_arn].listeners) == 2
         assert elb.loadbalancers[elb_arn].listeners[0].protocol == "TCP"
         assert elb.loadbalancers[elb_arn].listeners[0].policies == []
+        assert (
+            elb.loadbalancers[elb_arn].listeners[0].certificate_arn
+            == certificate["CertificateArn"]
+        )
         assert elb.loadbalancers[elb_arn].listeners[1].protocol == "HTTP"
         assert elb.loadbalancers[elb_arn].listeners[1].policies == []
+        assert (
+            elb.loadbalancers[elb_arn].listeners[0].certificate_arn
+            == certificate["CertificateArn"]
+        )
         assert len(elb.loadbalancers[elb_arn].availability_zones) == 1
         assert AWS_REGION_US_EAST_1_AZA in elb.loadbalancers[elb_arn].availability_zones
 
@@ -117,6 +136,7 @@ class Test_ELB_Service:
         assert elb.loadbalancers[elb_arn].access_logs
         assert elb.loadbalancers[elb_arn].cross_zone_load_balancing
         assert elb.loadbalancers[elb_arn].connection_draining
+        assert elb.loadbalancers[elb_arn].desync_mitigation_mode is None
 
     # Test ELB Describe Tags
     @mock_aws

@@ -185,13 +185,12 @@ class KubernetesProvider(Provider):
                 )
 
             else:
+                kubeconfig_file = (
+                    kubeconfig_file if kubeconfig_file else "~/.kube/config"
+                )
                 try:
                     config.load_kube_config(
-                        config_file=(
-                            os.path.abspath(kubeconfig_file)
-                            if kubeconfig_file != "~/.kube/config"
-                            else os.path.expanduser(kubeconfig_file)
-                        ),
+                        config_file=kubeconfig_file,
                         context=context,
                     )
                 except ConfigException:
@@ -209,12 +208,16 @@ class KubernetesProvider(Provider):
                         api_client=client.ApiClient(), context=context
                     )
             if context:
-                contexts = config.list_kube_config_contexts()[0]
+                contexts = config.list_kube_config_contexts(
+                    config_file=kubeconfig_file
+                )[0]
                 for context_item in contexts:
                     if context_item["name"] == context:
                         context = context_item
             else:
-                context = config.list_kube_config_contexts()[1]
+                context = config.list_kube_config_contexts(config_file=kubeconfig_file)[
+                    1
+                ]
             return KubernetesSession(api_client=client.ApiClient(), context=context)
 
         except parser.ParserError as parser_error:

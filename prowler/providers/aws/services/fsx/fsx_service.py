@@ -51,6 +51,7 @@ class FSx(AWSService):
                             type=file_system["FileSystemType"],
                             copy_tags_to_backups=copy_tags_to_backups_aux,
                             copy_tags_to_volumes=copy_tags_to_volumes_aux,
+                            subnet_ids=file_system.get("SubnetIds", []),
                             region=regional_client.region,
                             tags=file_system.get("Tags", []),
                         )
@@ -67,4 +68,5 @@ class FileSystem(BaseModel):
     type: str
     copy_tags_to_backups: Optional[bool]
     copy_tags_to_volumes: Optional[bool]
+    subnet_ids: Optional[list] = []
     tags: Optional[list] = []
