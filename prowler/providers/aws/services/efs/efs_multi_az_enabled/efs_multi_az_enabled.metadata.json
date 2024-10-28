@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "efs_multi_az_enabled",
+  "CheckTitle": "Check if EFS File systems are configured with Multi-AZ.",
+  "CheckType": [],
+  "ServiceName": "efs",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "medium",
+  "ResourceType": "AwsEfsFileSystem",
+  "Description": "Check if EFS File systems has Multi-AZ enabled.",
+  "Risk": "Ensure that your Amazon EFS are using Multi-AZ deployment configurations to provide High Availability (HA).",
+  "RelatedUrl": "https://docs.aws.amazon.com/efs/latest/ug/creating-using-create-fs.html#availabiltydurability",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable EFS file systems Multi-AZ with mount targets in multiple AZs.",
+      "Url": "https://docs.aws.amazon.com/efs/latest/ug/creating-using-create-fs.html#availabiltydurability"
+    }
+  },
+  "Categories": [
+    "redundancy"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

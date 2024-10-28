@@ -20,11 +20,15 @@ class Test_codebuild_project_older_90_days:
                 region="eu-west-1",
                 last_invoked_time=datetime.now(timezone.utc) - timedelta(days=100),
                 buildspec=None,
+                tags=[],
             )
         }
 
         with mock.patch(
             "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
+            codebuild_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.codebuild.codebuild_project_older_90_days.codebuild_project_older_90_days.codebuild_client",
             codebuild_client,
         ):
             from prowler.providers.aws.services.codebuild.codebuild_project_older_90_days.codebuild_project_older_90_days import (
@@ -55,11 +59,15 @@ class Test_codebuild_project_older_90_days:
                 region="eu-west-1",
                 last_invoked_time=None,
                 buildspec=None,
+                tags=[],
             )
         }
 
         with mock.patch(
             "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
+            codebuild_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.codebuild.codebuild_project_older_90_days.codebuild_project_older_90_days.codebuild_client",
             codebuild_client,
         ):
             from prowler.providers.aws.services.codebuild.codebuild_project_older_90_days.codebuild_project_older_90_days import (
@@ -88,11 +96,15 @@ class Test_codebuild_project_older_90_days:
                 region="eu-west-1",
                 last_invoked_time=datetime.now(timezone.utc) - timedelta(days=10),
                 buildspec=None,
+                tags=[],
             )
         }
 
         with mock.patch(
             "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
+            codebuild_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.codebuild.codebuild_project_older_90_days.codebuild_project_older_90_days.codebuild_client",
             codebuild_client,
         ):
             from prowler.providers.aws.services.codebuild.codebuild_project_older_90_days.codebuild_project_older_90_days import (

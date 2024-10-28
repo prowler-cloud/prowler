@@ -93,6 +93,8 @@ config_aws = {
         8080,
         8088,
     ],
+    "fargate_linux_latest_version": "1.4.0",
+    "fargate_windows_latest_version": "1.0.0",
     "trusted_account_ids": [],
     "log_group_retention_days": 365,
     "max_idle_disconnect_timeout_in_seconds": 600,
@@ -126,7 +128,7 @@ config_aws = {
     "organizations_trusted_delegated_administrators": [],
     "ecr_repository_vulnerability_minimum_severity": "MEDIUM",
     "verify_premium_support_plans": True,
-    "threat_detection_privilege_escalation_threshold": 0.1,
+    "threat_detection_privilege_escalation_threshold": 0.2,
     "threat_detection_privilege_escalation_minutes": 1440,
     "threat_detection_privilege_escalation_actions": [
         "AddPermission",
@@ -181,7 +183,7 @@ config_aws = {
         "UpdateJob",
         "UpdateLoginProfile",
     ],
-    "threat_detection_enumeration_threshold": 0.1,
+    "threat_detection_enumeration_threshold": 0.3,
     "threat_detection_enumeration_minutes": 1440,
     "threat_detection_enumeration_actions": [
         "DescribeAccessEntry",
@@ -275,6 +277,22 @@ config_aws = {
         "LookupEvents",
         "Search",
     ],
+    "threat_detection_llm_jacking_threshold": 0.4,
+    "threat_detection_llm_jacking_minutes": 1440,
+    "threat_detection_llm_jacking_actions": [
+        "PutUseCaseForModelAccess",
+        "PutFoundationModelEntitlement",
+        "PutModelInvocationLoggingConfiguration",
+        "CreateFoundationModelAgreement",
+        "InvokeModel",
+        "InvokeModelWithResponseStream",
+        "GetUseCaseForModelAccess",
+        "GetModelInvocationLoggingConfiguration",
+        "GetFoundationModelAvailability",
+        "ListFoundationModelAgreementOffers",
+        "ListFoundationModels",
+        "ListProvisionedModelThroughputs",
+    ],
     "check_rds_instance_replicas": False,
     "days_to_expire_threshold": 7,
     "insecure_key_algorithms": [
@@ -292,6 +310,7 @@ config_aws = {
     "elb_min_azs": 2,
     "elbv2_min_azs": 2,
     "secrets_ignore_patterns": [],
+    "max_days_secret_unused": 90,
 }
 
 config_azure = {
@@ -390,6 +409,8 @@ class Test_Config:
             "fedramp_low_revision_4_aws",
             "cis_2.0_gcp",
             "cis_1.8_kubernetes",
+            "kisa_isms-p_2023_aws",
+            "kisa_isms-p_2023-korean_aws",
         ]
         assert (
             get_available_compliance_frameworks().sort() == compliance_frameworks.sort()

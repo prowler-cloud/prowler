@@ -240,6 +240,7 @@ class VPC(AWSService):
                                     service_name=endpoint["ServiceName"],
                                     state=endpoint["State"],
                                     policy_document=endpoint_policy,
+                                    subnet_ids=endpoint.get("SubnetIds", []),
                                     owner_id=endpoint["OwnerId"],
                                     type=endpoint["VpcEndpointType"],
                                     region=regional_client.region,
@@ -331,6 +332,8 @@ class VPC(AWSService):
                             regional_client_for_subnet = self.regional_clients[
                                 regional_client.region
                             ]
+                            public = False
+                            nat_gateway = False
                             route_tables_for_subnet = (
                                 regional_client_for_subnet.describe_route_tables(
                                     Filters=[
@@ -353,21 +356,20 @@ class VPC(AWSService):
                                         ]
                                     )
                                 )
-                            public = False
-                            nat_gateway = False
-                            for route in route_tables_for_subnet.get("RouteTables")[
-                                0
-                            ].get("Routes"):
-                                if (
-                                    "GatewayId" in route
-                                    and "igw" in route["GatewayId"]
-                                    and route.get("DestinationCidrBlock", "")
-                                    == "0.0.0.0/0"
-                                ):
-                                    # If the route table has a default route to an internet gateway, the subnet is public
-                                    public = True
-                                if "NatGatewayId" in route:
-                                    nat_gateway = True
+                            for route_table in route_tables_for_subnet.get(
+                                "RouteTables"
+                            ):
+                                for route in route_table.get("Routes"):
+                                    if (
+                                        "GatewayId" in route
+                                        and "igw" in route["GatewayId"]
+                                        and route.get("DestinationCidrBlock", "")
+                                        == "0.0.0.0/0"
+                                    ):
+                                        # If the route table has a default route to an internet gateway, the subnet is public
+                                        public = True
+                                    if "NatGatewayId" in route:
+                                        nat_gateway = True
                             subnet_name = ""
                             for tag in subnet.get("Tags", []):
                                 if tag["Key"] == "Name":
@@ -483,6 +485,7 @@ class VpcEndpoint(BaseModel):
     vpc_id: str
     service_name: str
     state: str
+    subnet_ids: Optional[list] = []
     policy_document: Optional[dict]
     owner_id: str
     type: str

@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "networkfirewall_policy_default_action_fragmented_packets",
+  "CheckTitle": "Default action for fragmented packets is set to drop or forward.",
+  "CheckType": [
+    "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53 Controls"
+  ],
+  "ServiceName": "network-firewall",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:network-firewall::account-id:firewall/firewall-name",
+  "Severity": "medium",
+  "ResourceType": "AwsNetworkFirewallFirewall",
+  "Description": "NetorwFirewall firewall policy default action for fragmented packets is set to drop or forward.",
+  "Risk": "If the default action for fragmented packets is set to 'Pass', unintended or potentially malicious traffic may bypass filtering, exposing the network to security threats.",
+  "RelatedUrl": "https://docs.aws.amazon.com/network-firewall/latest/developerguide/stateless-default-actions.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws network-firewall update-firewall-policy --firewall-policy-arn <your-firewall-policy-arn> --stateless-default-actions aws:drop",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/networkfirewall-controls.html#networkfirewall-5",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Update the firewall policy to ensure fragmented packets are either dropped or forwarded to stateful rule groups for additional filtering, reducing the risk of unwanted traffic entering the network.",
+      "Url": "https://docs.aws.amazon.com/network-firewall/latest/developerguide/firewall-policy-updating.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -5,7 +5,7 @@ from prowler.providers.aws.services.acm.acm_client import acm_client
 class acm_certificates_transparency_logs_enabled(Check):
     def execute(self):
         findings = []
-        for certificate in acm_client.certificates:
+        for certificate in acm_client.certificates.values():
             if certificate.in_use or acm_client.provider.scan_unused_services:
                 report = Check_Report_AWS(self.metadata())
                 report.region = certificate.region

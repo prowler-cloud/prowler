@@ -11,7 +11,7 @@ class cloudwatch_log_group_retention_policy_specific_days_enabled(Check):
             "log_group_retention_days", 365
         )
         if logs_client.log_groups:
-            for log_group in logs_client.log_groups:
+            for log_group in logs_client.log_groups.values():
                 report = Check_Report_AWS(self.metadata())
                 report.region = log_group.region
                 report.resource_id = log_group.name

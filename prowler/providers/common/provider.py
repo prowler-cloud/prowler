@@ -37,7 +37,6 @@ class Provider(ABC):
         identity (property): The identity of the provider for auditing.
         session (property): The session of the provider for auditing.
         audit_config (property): The audit configuration of the provider.
-        output_options (property): The output configuration of the provider for auditing.
 
     Methods:
         print_credentials(): Displays the provider's credentials used for auditing in the command-line interface.
@@ -109,26 +108,6 @@ class Provider(ABC):
         """
         raise NotImplementedError()
 
-    @property
-    @abstractmethod
-    def output_options(self) -> str:
-        """
-        output_options method returns the provider's audit output configuration.
-
-        This method needs to be created in each provider.
-        """
-        raise NotImplementedError()
-
-    @output_options.setter
-    @abstractmethod
-    def output_options(self, value: str) -> Any:
-        """
-        output_options.setter sets the provider's audit output configuration.
-
-        This method needs to be created in each provider.
-        """
-        raise NotImplementedError()
-
     @abstractmethod
     def get_output_mapping(self) -> dict:
         """
@@ -184,9 +163,7 @@ class Provider(ABC):
             provider_class = getattr(
                 import_module(provider_class_path), provider_class_name
             )
-            audit_config = load_and_validate_config_file(
-                arguments.provider, arguments.config_file
-            )
+
             fixer_config = load_and_validate_config_file(
                 arguments.provider, arguments.fixer_config
             )
@@ -206,8 +183,9 @@ class Provider(ABC):
                         arguments.scan_unused_services,
                         arguments.resource_tag,
                         arguments.resource_arn,
-                        audit_config,
-                        fixer_config,
+                        arguments.config_file,
+                        arguments.mutelist_file,
+                        fixer_config=fixer_config,
                     )
                 elif "azure" in provider_class_name.lower():
                     provider_class(
@@ -218,8 +196,9 @@ class Provider(ABC):
                         arguments.tenant_id,
                         arguments.azure_region,
                         arguments.subscription_id,
-                        audit_config,
-                        fixer_config,
+                        arguments.config_file,
+                        arguments.mutelist_file,
+                        fixer_config=fixer_config,
                     )
                 elif "gcp" in provider_class_name.lower():
                     provider_class(
@@ -228,16 +207,18 @@ class Provider(ABC):
                         arguments.credentials_file,
                         arguments.impersonate_service_account,
                         arguments.list_project_id,
-                        audit_config,
-                        fixer_config,
+                        arguments.config_file,
+                        arguments.mutelist_file,
+                        fixer_config=fixer_config,
                     )
                 elif "kubernetes" in provider_class_name.lower():
                     provider_class(
                         arguments.kubeconfig_file,
                         arguments.context,
                         arguments.namespace,
-                        audit_config,
-                        fixer_config,
+                        arguments.config_file,
+                        arguments.mutelist_file,
+                        fixer_config=fixer_config,
                     )
 
         except TypeError as error:

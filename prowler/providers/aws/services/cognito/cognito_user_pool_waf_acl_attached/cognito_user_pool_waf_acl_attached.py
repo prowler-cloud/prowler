@@ -16,7 +16,7 @@ class cognito_user_pool_waf_acl_attached(Check):
             report.status_extended = (
                 f"Cognito User Pool {pool.name} is not associated with a WAF Web ACL."
             )
-            for acl in wafv2_client.web_acls:
+            for acl in wafv2_client.web_acls.values():
                 if pool.arn in acl.user_pools:
                     report.status = "PASS"
                     report.status_extended = f"Cognito User Pool {pool.name} is associated with the WAF Web ACL {acl.name}."

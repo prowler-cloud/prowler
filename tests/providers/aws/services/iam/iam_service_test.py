@@ -33,9 +33,7 @@ ASSUME_ROLE_POLICY_DOCUMENT = {
 
 SECURITY_AUDIT_POLICY_ARN = "arn:aws:iam::aws:policy/SecurityAudit"
 READ_ONLY_ACCESS_POLICY_ARN = "arn:aws:iam::aws:policy/ReadOnlyAccess"
-SUPPORT_SERVICE_ROLE_POLICY_ARN = (
-    "arn:aws:iam::aws:policy/aws-service-role/AWSSupportServiceRolePolicy"
-)
+SUPPORT_SERVICE_ROLE_POLICY_ARN = "arn:aws:iam::aws:policy/AWSSupportAccess"
 ADMINISTRATOR_ACCESS_POLICY_ARN = "arn:aws:iam::aws:policy/AdministratorAccess"
 
 # Mocking Access Analyzer Calls
@@ -79,7 +77,6 @@ def mock_make_api_call(self, operation_name, kwargs):
 # Patch every AWS call using Boto3
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 class Test_IAM_Service:
-
     # Test IAM Client
     @mock_aws
     def test_get_client(self):
@@ -806,16 +803,18 @@ nTTxU4a7x1naFxzYXK1iQ1vMARKMjDb19QEJIEJKZlDK4uS7yMlf1nFS
         </KeyDescriptor>
 </EntityDescriptor>"""
         saml_provider_name = "test"
-        iam_client.create_saml_provider(
+        saml_arn = iam_client.create_saml_provider(
             SAMLMetadataDocument=xml_template, Name=saml_provider_name
-        )
+        )["SAMLProviderArn"]
 
         # IAM client for this test class
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         iam = IAM(aws_provider)
 
         assert len(iam.saml_providers) == 1
-        assert iam.saml_providers[0]["Arn"].split("/")[1] == saml_provider_name
+        assert saml_arn in iam.saml_providers
+        assert iam.saml_providers[saml_arn].name == saml_provider_name
+        assert iam.saml_providers[saml_arn].arn == saml_arn
 
     # Test IAM User Inline Policy
     @mock_aws
@@ -985,3 +984,42 @@ nTTxU4a7x1naFxzYXK1iQ1vMARKMjDb19QEJIEJKZlDK4uS7yMlf1nFS
         )
 
         assert iam.user_temporary_credentials_usage[(username, user_arn)]
+
+    @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
+    def test_list_entities_attached_to_cloudshell_policy(self):
+        iam_client = client("iam")
+        user_name = "test_cloudshell_policy_user"
+        iam_client.create_user(
+            UserName=user_name,
+        )
+        iam_client.attach_user_policy(
+            UserName=user_name,
+            PolicyArn="arn:aws:iam::aws:policy/AWSCloudShellFullAccess",
+        )
+        group_name = "test_cloudshell_policy_group"
+        iam_client.create_group(
+            GroupName=group_name,
+        )
+        iam_client.attach_group_policy(
+            GroupName=group_name,
+            PolicyArn="arn:aws:iam::aws:policy/AWSCloudShellFullAccess",
+        )
+        role_name = "test_cloudshell_policy_role"
+        role_policy = {
+            "Version": "2012-10-17",
+        }
+        iam_client.create_role(
+            RoleName=role_name,
+            AssumeRolePolicyDocument=dumps(role_policy),
+        )
+        iam_client.attach_role_policy(
+            RoleName=role_name,
+            PolicyArn="arn:aws:iam::aws:policy/AWSCloudShellFullAccess",
+        )
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        iam = IAM(aws_provider)
+        assert len(iam.entities_attached_to_cloudshell_policy) == 3
+        assert iam.entities_attached_to_cloudshell_policy["Users"] == [user_name]
+        assert iam.entities_attached_to_cloudshell_policy["Groups"] == [group_name]
+        assert iam.entities_attached_to_cloudshell_policy["Roles"] == [role_name]

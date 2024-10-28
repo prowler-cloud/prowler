@@ -42,6 +42,8 @@ def mock_make_api_call(self, operation_name, kwarg):
         }
     if operation_name == "GetSubscriptionState":
         return {"SubscriptionState": "ACTIVE"}
+    if operation_name == "ListTagsForResource":
+        return {"Tags": [{"Key": "Name", "Value": "TestAccelerator"}]}
 
     return make_api_call(self, operation_name, kwarg)
 
@@ -94,3 +96,18 @@ class Test_GlobalAccelerator_Service:
             == AWS_REGION_US_WEST_2
         )
         assert globalaccelerator.accelerators[TEST_ACCELERATOR_ARN].enabled
+
+    def test_list_tags(self):
+        # GlobalAccelerator client for this test class
+        aws_provider = set_mocked_aws_provider()
+        globalaccelerator = GlobalAccelerator(aws_provider)
+
+        assert len(globalaccelerator.accelerators) == 1
+        assert (
+            globalaccelerator.accelerators[TEST_ACCELERATOR_ARN].tags[0]["Key"]
+            == "Name"
+        )
+        assert (
+            globalaccelerator.accelerators[TEST_ACCELERATOR_ARN].tags[0]["Value"]
+            == "TestAccelerator"
+        )

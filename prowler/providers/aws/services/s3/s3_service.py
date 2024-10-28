@@ -442,6 +442,27 @@ class S3(AWSService):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
+    def _head_bucket(self, bucket_name):
+        logger.info("S3 - Checking if bucket exists...")
+        try:
+            self.client.head_bucket(Bucket=bucket_name)
+            return True
+        except ClientError as error:
+            if error.response["Error"]["Message"] == "Not Found":
+                logger.warning(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+                return False
+            else:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+                return True
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class S3Control(AWSService):
     def __init__(self, provider):

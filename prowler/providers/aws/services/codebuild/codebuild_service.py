@@ -17,6 +17,11 @@ class Codebuild(AWSService):
         self.__threading_call__(self._list_builds_for_project, self.projects.values())
         self.__threading_call__(self._batch_get_builds, self.projects.values())
         self.__threading_call__(self._batch_get_projects, self.projects.values())
+        self.report_groups = {}
+        self.__threading_call__(self._list_report_groups)
+        self.__threading_call__(
+            self._batch_get_report_groups, self.report_groups.values()
+        )
 
     def _list_projects(self, regional_client):
         logger.info("Codebuild - Listing projects...")
@@ -93,6 +98,81 @@ class Codebuild(AWSService):
                 EnvironmentVariable(**var) for var in env_vars
             ]
             project.buildspec = project_info.get("source", {}).get("buildspec", "")
+            s3_logs = project_info.get("logsConfig", {}).get("s3Logs", {})
+            project.s3_logs = s3Logs(
+                enabled=(
+                    True if s3_logs.get("status", "DISABLED") == "ENABLED" else False
+                ),
+                bucket_location=s3_logs.get("location", ""),
+                encrypted=(not s3_logs.get("encryptionDisabled", False)),
+            )
+            cloudwatch_logs = project_info.get("logsConfig", {}).get(
+                "cloudWatchLogs", {}
+            )
+            project.cloudwatch_logs = CloudWatchLogs(
+                enabled=(
+                    True
+                    if cloudwatch_logs.get("status", "DISABLED") == "ENABLED"
+                    else False
+                ),
+                group_name=cloudwatch_logs.get("groupName", ""),
+                stream_name=cloudwatch_logs.get("streamName", ""),
+            )
+            project.tags = project_info.get("tags", [])
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _list_report_groups(self, regional_client):
+        logger.info("Codebuild - Listing report groups...")
+        try:
+            list_report_groups_paginator = regional_client.get_paginator(
+                "list_report_groups"
+            )
+            for page in list_report_groups_paginator.paginate():
+                for report_group_arn in page["reportGroups"]:
+                    if not self.audit_resources or (
+                        is_resource_filtered(report_group_arn, self.audit_resources)
+                    ):
+                        self.report_groups[report_group_arn] = ReportGroup(
+                            arn=report_group_arn,
+                            name=report_group_arn.split(":")[-1].split("/")[-1],
+                            region=regional_client.region,
+                        )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _batch_get_report_groups(self, report_group):
+        logger.info("Codebuild - Getting report groups...")
+        try:
+            report_group_info = self.regional_clients[
+                report_group.region
+            ].batch_get_report_groups(reportGroupArns=[report_group.arn])[
+                "reportGroups"
+            ][
+                0
+            ]
+
+            report_group.status = report_group_info.get("status", "DELETING")
+
+            export_config = report_group_info.get("exportConfig", {})
+            if export_config:
+                s3_destination = export_config.get("s3Destination", {})
+                report_group.export_config = ExportConfig(
+                    type=export_config.get("exportConfigType", "NO_EXPORT"),
+                    bucket_location=(
+                        f"s3://{s3_destination.get('bucket', '')}/{s3_destination.get('path', '')}"
+                        if s3_destination.get("bucket", "")
+                        else ""
+                    ),
+                    encryption_key=s3_destination.get("encryptionKey", ""),
+                    encrypted=(not s3_destination.get("encryptionDisabled", True)),
+                )
+
+            report_group.tags = report_group_info.get("tags", [])
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -114,6 +194,18 @@ class EnvironmentVariable(BaseModel):
     type: str
 
 
+class s3Logs(BaseModel):
+    enabled: bool
+    bucket_location: str
+    encrypted: bool
+
+
+class CloudWatchLogs(BaseModel):
+    enabled: bool
+    group_name: str
+    stream_name: str
+
+
 class Project(BaseModel):
     name: str
     arn: str
@@ -124,3 +216,22 @@ class Project(BaseModel):
     source: Optional[Source]
     secondary_sources: Optional[list[Source]] = []
     environment_variables: Optional[List[EnvironmentVariable]]
+    s3_logs: Optional[s3Logs]
+    cloudwatch_logs: Optional[CloudWatchLogs]
+    tags: Optional[list]
+
+
+class ExportConfig(BaseModel):
+    type: str
+    bucket_location: str
+    encryption_key: str
+    encrypted: bool
+
+
+class ReportGroup(BaseModel):
+    arn: str
+    name: str
+    region: str
+    status: Optional[str]
+    export_config: Optional[ExportConfig]
+    tags: Optional[list]

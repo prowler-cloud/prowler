@@ -12,7 +12,7 @@ class Test_cognito_user_pool_waf_acl_attached:
         cognito_client.user_pools = {}
         cognito_client.audited_account = AWS_ACCOUNT_NUMBER
         wafv2_client = mock.MagicMock
-        wafv2_client.web_acls = []
+        wafv2_client.web_acls = {}
         with mock.patch(
             "prowler.providers.aws.services.cognito.cognito_service.CognitoIDP",
             new=cognito_client,
@@ -53,7 +53,7 @@ class Test_cognito_user_pool_waf_acl_attached:
         }
         cognito_client.audited_account = AWS_ACCOUNT_NUMBER
         wafv2_client = mock.MagicMock
-        wafv2_client.web_acls = []
+        wafv2_client.web_acls = {}
 
         with mock.patch(
             "prowler.providers.aws.services.cognito.cognito_service.CognitoIDP",
@@ -105,8 +105,8 @@ class Test_cognito_user_pool_waf_acl_attached:
         web_acl_arn = "arn:aws:wafv2:us-east-1:123456789012:regional/webacl/abcd1234"
         web_acl_name = "abcd1234"
         web_acl_id = "abcd1234"
-        wafv2_client.web_acls = [
-            WebAclv2(
+        wafv2_client.web_acls = {
+            web_acl_arn: WebAclv2(
                 arn=web_acl_arn,
                 name=web_acl_name,
                 id=web_acl_id,
@@ -114,7 +114,7 @@ class Test_cognito_user_pool_waf_acl_attached:
                 user_pools=[user_pool_arn],
                 region="us-east-1",
             )
-        ]
+        }
 
         with mock.patch(
             "prowler.providers.aws.services.cognito.cognito_service.CognitoIDP",

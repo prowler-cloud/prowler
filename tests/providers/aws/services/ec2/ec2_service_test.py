@@ -676,6 +676,14 @@ class Test_EC2_Service:
                     KNOWN_SECRET_USER_DATA.encode(encoding_format_utf_8)
                 ).decode(encoding_format_utf_8),
             },
+            TagSpecifications=[
+                {
+                    "ResourceType": "launch-template",
+                    "Tags": [
+                        {"Key": "test", "Value": "test"},
+                    ],
+                }
+            ],
         )
 
         # EC2 client for this test class
@@ -691,6 +699,9 @@ class Test_EC2_Service:
             ec2.launch_templates[0].arn
             == f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:launch-template/{ec2.launch_templates[0].id}"
         )
+        assert ec2.launch_templates[0].tags == [
+            {"Key": "test", "Value": "test"},
+        ]
 
     # Test EC2 Describe Launch Templates
     @mock_aws

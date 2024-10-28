@@ -1,10 +1,10 @@
 from colorama import Fore, Style
 
-from prowler.config.config import valid_severities
 from prowler.lib.check.check import (
     parse_checks_from_compliance_framework,
     parse_checks_from_file,
 )
+from prowler.lib.check.models import Severity
 from prowler.lib.check.utils import (
     recover_checks_from_provider,
     recover_checks_from_service,
@@ -29,7 +29,7 @@ def load_checks_to_execute(
         # Local subsets
         checks_to_execute = set()
         check_aliases = {}
-        check_severities = {key: [] for key in valid_severities}
+        check_severities = {severity.value: [] for severity in Severity}
         check_categories = {}
 
         # First, loop over the bulk_checks_metadata to extract the needed subsets
@@ -102,7 +102,7 @@ def load_checks_to_execute(
                 checks_to_execute.add(check_name)
 
         # Only execute threat detection checks if threat-detection category is set
-        if "threat-detection" not in categories:
+        if categories != [] and "threat-detection" not in categories:
             for threat_detection_check in check_categories.get("threat-detection", []):
                 checks_to_execute.discard(threat_detection_check)
 

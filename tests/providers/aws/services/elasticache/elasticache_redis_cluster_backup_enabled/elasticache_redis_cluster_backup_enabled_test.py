@@ -71,6 +71,8 @@ class Test_elasticache_redis_cluster_backup_enabled:
             tags=REPLICATION_GROUP_TAGS,
             auto_minor_version_upgrade=not AUTO_MINOR_VERSION_UPGRADE,
             automatic_failover=AUTOMATIC_FAILOVER,
+            engine_version="6.0",
+            auth_token_enabled=False,
         )
 
         elasticache_client.audit_config = {"minimum_snapshot_retention_period": 7}
@@ -116,6 +118,8 @@ class Test_elasticache_redis_cluster_backup_enabled:
             tags=REPLICATION_GROUP_TAGS,
             auto_minor_version_upgrade=not AUTO_MINOR_VERSION_UPGRADE,
             automatic_failover=AUTOMATIC_FAILOVER,
+            engine_version="6.0",
+            auth_token_enabled=False,
         )
 
         elasticache_client.audit_config = {"minimum_snapshot_retention_period": 7}
@@ -162,6 +166,8 @@ class Test_elasticache_redis_cluster_backup_enabled:
             tags=REPLICATION_GROUP_TAGS,
             auto_minor_version_upgrade=not AUTO_MINOR_VERSION_UPGRADE,
             automatic_failover=AUTOMATIC_FAILOVER,
+            engine_version="6.0",
+            auth_token_enabled=False,
         )
 
         elasticache_client.audit_config = {"minimum_snapshot_retention_period": 1}
@@ -207,6 +213,8 @@ class Test_elasticache_redis_cluster_backup_enabled:
             tags=REPLICATION_GROUP_TAGS,
             auto_minor_version_upgrade=not AUTO_MINOR_VERSION_UPGRADE,
             automatic_failover=AUTOMATIC_FAILOVER,
+            engine_version="6.0",
+            auth_token_enabled=False,
         )
 
         elasticache_client.audit_config = {"minimum_snapshot_retention_period": 3}

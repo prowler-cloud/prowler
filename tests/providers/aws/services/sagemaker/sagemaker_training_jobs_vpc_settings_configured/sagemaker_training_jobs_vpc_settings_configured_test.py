@@ -2,7 +2,11 @@ from unittest import mock
 from uuid import uuid4
 
 from prowler.providers.aws.services.sagemaker.sagemaker_service import TrainingJob
-from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_EU_WEST_1
+from tests.providers.aws.utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_provider,
+)
 
 test_training_job = "test-training-job"
 training_job_arn = f"arn:aws:sagemaker:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:training-job/{test_training_job}"
@@ -13,8 +17,14 @@ class Test_sagemaker_training_jobs_vpc_settings_configured:
     def test_no_training_jobs(self):
         sagemaker_client = mock.MagicMock
         sagemaker_client.sagemaker_training_jobs = []
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+
         with mock.patch(
-            "prowler.providers.aws.services.sagemaker.sagemaker_service.SageMaker",
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.sagemaker.sagemaker_training_jobs_vpc_settings_configured.sagemaker_training_jobs_vpc_settings_configured.sagemaker_client",
             sagemaker_client,
         ):
             from prowler.providers.aws.services.sagemaker.sagemaker_training_jobs_vpc_settings_configured.sagemaker_training_jobs_vpc_settings_configured import (
@@ -36,8 +46,14 @@ class Test_sagemaker_training_jobs_vpc_settings_configured:
                 vpc_config_subnets=[subnet_id],
             )
         )
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+
         with mock.patch(
-            "prowler.providers.aws.services.sagemaker.sagemaker_service.SageMaker",
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.sagemaker.sagemaker_training_jobs_vpc_settings_configured.sagemaker_training_jobs_vpc_settings_configured.sagemaker_client",
             sagemaker_client,
         ):
             from prowler.providers.aws.services.sagemaker.sagemaker_training_jobs_vpc_settings_configured.sagemaker_training_jobs_vpc_settings_configured import (
@@ -65,8 +81,14 @@ class Test_sagemaker_training_jobs_vpc_settings_configured:
                 region=AWS_REGION_EU_WEST_1,
             )
         )
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+
         with mock.patch(
-            "prowler.providers.aws.services.sagemaker.sagemaker_service.SageMaker",
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.sagemaker.sagemaker_training_jobs_vpc_settings_configured.sagemaker_training_jobs_vpc_settings_configured.sagemaker_client",
             sagemaker_client,
         ):
             from prowler.providers.aws.services.sagemaker.sagemaker_training_jobs_vpc_settings_configured.sagemaker_training_jobs_vpc_settings_configured import (

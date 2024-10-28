@@ -103,7 +103,7 @@ test_public_policy_with_invalid_condition_block = {
 class Test_dynamodb_table_cross_account_access:
     def test_no_tables(self):
         dynamodb_client = mock.MagicMock
-        dynamodb_client.tables = []
+        dynamodb_client.tables = {}
         with mock.patch(
             "prowler.providers.aws.services.dynamodb.dynamodb_service.DynamoDB",
             new=dynamodb_client,
@@ -124,14 +124,16 @@ class Test_dynamodb_table_cross_account_access:
         from prowler.providers.aws.services.dynamodb.dynamodb_service import Table
 
         dynamodb_client.audited_account = AWS_ACCOUNT_NUMBER
-        dynamodb_client.tables = []
-        dynamodb_client.tables.append(
-            Table(
-                arn=test_table_arn,
+        dynamodb_client.audit_config = {}
+        arn = test_table_arn
+        dynamodb_client.tables = {
+            arn: Table(
+                arn=arn,
                 name=test_table_name,
                 region=AWS_REGION_EU_WEST_1,
             )
-        )
+        }
+
         with mock.patch(
             "prowler.providers.aws.services.dynamodb.dynamodb_service.DynamoDB",
             new=dynamodb_client,
@@ -160,15 +162,16 @@ class Test_dynamodb_table_cross_account_access:
         from prowler.providers.aws.services.dynamodb.dynamodb_service import Table
 
         dynamodb_client.audited_account = AWS_ACCOUNT_NUMBER
-        dynamodb_client.tables = []
-        dynamodb_client.tables.append(
-            Table(
-                arn=test_table_arn,
+        dynamodb_client.audit_config = {}
+        arn = test_table_arn
+        dynamodb_client.tables = {
+            arn: Table(
+                arn=arn,
                 name=test_table_name,
                 region=AWS_REGION_EU_WEST_1,
                 policy=test_restricted_policy,
             )
-        )
+        }
         with mock.patch(
             "prowler.providers.aws.services.dynamodb.dynamodb_service.DynamoDB",
             new=dynamodb_client,
@@ -197,15 +200,17 @@ class Test_dynamodb_table_cross_account_access:
         from prowler.providers.aws.services.dynamodb.dynamodb_service import Table
 
         dynamodb_client.audited_account = AWS_ACCOUNT_NUMBER
-        dynamodb_client.tables = []
-        dynamodb_client.tables.append(
-            Table(
+        dynamodb_client.audit_config = {}
+        arn = test_table_arn
+        dynamodb_client.tables = {
+            arn: Table(
                 arn=test_table_arn,
                 name=test_table_name,
                 region=AWS_REGION_EU_WEST_1,
                 policy=test_public_policy,
             )
-        )
+        }
+
         with mock.patch(
             "prowler.providers.aws.services.dynamodb.dynamodb_service.DynamoDB",
             new=dynamodb_client,
@@ -234,16 +239,18 @@ class Test_dynamodb_table_cross_account_access:
         dynamodb_client = mock.MagicMock
         from prowler.providers.aws.services.dynamodb.dynamodb_service import Table
 
-        dynamodb_client.tables = []
         dynamodb_client.audited_account = AWS_ACCOUNT_NUMBER
-        dynamodb_client.tables.append(
-            Table(
+        dynamodb_client.audit_config = {}
+        arn = test_table_arn
+        dynamodb_client.tables = {
+            arn: Table(
                 arn=test_table_arn,
                 name=test_table_name,
                 region=AWS_REGION_EU_WEST_1,
                 policy=test_public_policy_with_condition_same_account_not_valid,
             )
-        )
+        }
+
         with mock.patch(
             "prowler.providers.aws.services.dynamodb.dynamodb_service.DynamoDB",
             new=dynamodb_client,
@@ -272,16 +279,18 @@ class Test_dynamodb_table_cross_account_access:
         dynamodb_client = mock.MagicMock
         from prowler.providers.aws.services.dynamodb.dynamodb_service import Table
 
-        dynamodb_client.tables = []
         dynamodb_client.audited_account = AWS_ACCOUNT_NUMBER
-        dynamodb_client.tables.append(
-            Table(
+        dynamodb_client.audit_config = {}
+        arn = test_table_arn
+        dynamodb_client.tables = {
+            arn: Table(
                 arn=test_table_arn,
                 name=test_table_name,
                 region=AWS_REGION_EU_WEST_1,
                 policy=test_public_policy_with_condition_same_account,
             )
-        )
+        }
+
         with mock.patch(
             "prowler.providers.aws.services.dynamodb.dynamodb_service.DynamoDB",
             new=dynamodb_client,
@@ -309,16 +318,18 @@ class Test_dynamodb_table_cross_account_access:
         dynamodb_client = mock.MagicMock
         from prowler.providers.aws.services.dynamodb.dynamodb_service import Table
 
-        dynamodb_client.tables = []
         dynamodb_client.audited_account = AWS_ACCOUNT_NUMBER
-        dynamodb_client.tables.append(
-            Table(
+        dynamodb_client.audit_config = {}
+        arn = test_table_arn
+        dynamodb_client.tables = {
+            arn: Table(
                 arn=test_table_arn,
                 name=test_table_name,
                 region=AWS_REGION_EU_WEST_1,
                 policy=test_public_policy_with_condition_diff_account,
             )
-        )
+        }
+
         with mock.patch(
             "prowler.providers.aws.services.dynamodb.dynamodb_service.DynamoDB",
             new=dynamodb_client,
@@ -346,16 +357,18 @@ class Test_dynamodb_table_cross_account_access:
         dynamodb_client = mock.MagicMock
         from prowler.providers.aws.services.dynamodb.dynamodb_service import Table
 
-        dynamodb_client.tables = []
         dynamodb_client.audited_account = AWS_ACCOUNT_NUMBER
-        dynamodb_client.tables.append(
-            Table(
+        dynamodb_client.audit_config = {}
+        arn = test_table_arn
+        dynamodb_client.tables = {
+            arn: Table(
                 arn=test_table_arn,
                 name=test_table_name,
                 region=AWS_REGION_EU_WEST_1,
                 policy=test_public_policy_with_invalid_condition_block,
             )
-        )
+        }
+
         with mock.patch(
             "prowler.providers.aws.services.dynamodb.dynamodb_service.DynamoDB",
             new=dynamodb_client,

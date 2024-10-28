@@ -2,8 +2,6 @@ import json
 from unittest.mock import patch
 
 import botocore
-from boto3 import client
-from moto import mock_aws
 
 from prowler.providers.aws.services.efs.efs_service import EFS
 from tests.providers.aws.utils import (
@@ -15,13 +13,11 @@ from tests.providers.aws.utils import (
 # Mocking Access Analyzer Calls
 make_api_call = botocore.client.BaseClient._make_api_call
 
-file_system_id = "fs-c7a0456e"
+FILE_SYSTEM_ID = "fs-c7a0456e"
 
-creation_token = "console-d215fa78-1f83-4651-b026-facafd8a7da7"
+CREATION_TOKEN = "console-d215fa78-1f83-4651-b026-facafd8a7da7"
 
-backup_policy_status = "ENABLED"
-
-filesystem_policy = {
+FILESYSTEM_POLICY = {
     "Id": "1",
     "Statement": [
         {
@@ -34,10 +30,49 @@ filesystem_policy = {
 
 
 def mock_make_api_call(self, operation_name, kwarg):
+    if operation_name == "DescribeFileSystems":
+        return {
+            "FileSystems": [
+                {
+                    "FileSystemId": FILE_SYSTEM_ID,
+                    "Encrypted": True,
+                    "Tags": [{"Key": "test", "Value": "test"}],
+                    "AvailabilityZoneId": "az-12345",
+                    "NumberOfMountTargets": 123,
+                    "BackupPolicy": {"Status": "ENABLED"},
+                    "Policy": json.dumps(FILESYSTEM_POLICY),
+                }
+            ]
+        }
+    if operation_name == "DescribeMountTargets":
+        return {
+            "MountTargets": [
+                {
+                    "MountTargetId": "fsmt-123",
+                    "FileSystemId": FILE_SYSTEM_ID,
+                    "SubnetId": "subnet-123",
+                    "LifeCycleState": "available",
+                    "OwnerId": AWS_ACCOUNT_NUMBER,
+                    "VpcId": "vpc-123",
+                }
+            ]
+        }
+    if operation_name == "DescribeAccessPoints":
+        return {
+            "AccessPoints": [
+                {
+                    "AccessPointId": "fsap-123",
+                    "AccessPointArn": f"arn:aws:elasticfilesystem:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:access-point/{FILE_SYSTEM_ID}/fsap-123",
+                    "FileSystemId": FILE_SYSTEM_ID,
+                    "RootDirectory": {"Path": "/"},
+                    "PosixUser": {"Uid": 1000, "Gid": 1000},
+                }
+            ]
+        }
     if operation_name == "DescribeFileSystemPolicy":
-        return {"FileSystemId": file_system_id, "Policy": json.dumps(filesystem_policy)}
+        return {"FileSystemId": FILE_SYSTEM_ID, "Policy": json.dumps(FILESYSTEM_POLICY)}
     if operation_name == "DescribeBackupPolicy":
-        return {"BackupPolicy": {"Status": backup_policy_status}}
+        return {"BackupPolicy": {"Status": "ENABLED"}}
     return make_api_call(self, operation_name, kwarg)
 
 
@@ -66,35 +101,59 @@ class Test_EFS:
         access_analyzer = EFS(set_mocked_aws_provider())
         assert access_analyzer.service == "efs"
 
-    @mock_aws
+    @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     # Test EFS describe file systems
     def test_describe_file_systems(self):
-        efs_client = client("efs", AWS_REGION_EU_WEST_1)
-        efs = efs_client.create_file_system(
-            CreationToken=creation_token,
-            Encrypted=True,
-            Tags=[
-                {"Key": "test", "Value": "test"},
-            ],
-        )
-        filesystem = EFS(set_mocked_aws_provider())
-        assert len(filesystem.filesystems) == 1
-        assert filesystem.filesystems[0].id == efs["FileSystemId"]
-        assert filesystem.filesystems[0].encrypted == efs["Encrypted"]
-        assert filesystem.filesystems[0].tags == [
+        aws_provider = set_mocked_aws_provider()
+        efs = EFS(aws_provider)
+        efs_arn = f"arn:aws:elasticfilesystem:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:file-system/{FILE_SYSTEM_ID}"
+        assert len(efs.filesystems) == 1
+        assert efs.filesystems[efs_arn].id == FILE_SYSTEM_ID
+        assert efs.filesystems[efs_arn].encrypted
+        assert efs.filesystems[efs_arn].availability_zone_id == "az-12345"
+        assert efs.filesystems[efs_arn].number_of_mount_targets == 123
+        assert efs.filesystems[efs_arn].tags == [
             {"Key": "test", "Value": "test"},
         ]
 
-    @mock_aws
-    # Test EFS describe file systems
+    @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
+    # Test EFS describe file systems policies
     def test_describe_file_system_policies(self):
-        efs_client = client("efs", AWS_REGION_EU_WEST_1)
-        efs = efs_client.create_file_system(
-            CreationToken=creation_token, Encrypted=True
+        aws_provider = set_mocked_aws_provider()
+        efs = EFS(aws_provider)
+        efs_arn = f"arn:aws:elasticfilesystem:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:file-system/{FILE_SYSTEM_ID}"
+        assert len(efs.filesystems) == 1
+        assert efs.filesystems[efs_arn].id == FILE_SYSTEM_ID
+        assert efs.filesystems[efs_arn].encrypted
+        assert efs.filesystems[efs_arn].backup_policy == "ENABLED"
+        assert efs.filesystems[efs_arn].policy == FILESYSTEM_POLICY
+
+    @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
+    # Test EFS describe mount targets
+    def test_describe_mount_targets(self):
+        aws_provider = set_mocked_aws_provider()
+        efs = EFS(aws_provider)
+        assert len(efs.filesystems) == 1
+        efs_arn = f"arn:aws:elasticfilesystem:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:file-system/{FILE_SYSTEM_ID}"
+        assert (
+            efs.filesystems[efs_arn].mount_targets[0].file_system_id == FILE_SYSTEM_ID
         )
-        filesystem = EFS(set_mocked_aws_provider())
-        assert len(filesystem.filesystems) == 1
-        assert filesystem.filesystems[0].id == efs["FileSystemId"]
-        assert filesystem.filesystems[0].encrypted == efs["Encrypted"]
-        assert filesystem.filesystems[0].backup_policy == backup_policy_status
-        assert filesystem.filesystems[0].policy == filesystem_policy
+        assert efs.filesystems[efs_arn].mount_targets[0].id == "fsmt-123"
+        assert efs.filesystems[efs_arn].mount_targets[0].subnet_id == "subnet-123"
+
+    @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
+    # Test EFS describe access points
+    def test_describe_access_points(self):
+        aws_provider = set_mocked_aws_provider()
+        efs = EFS(aws_provider)
+        assert len(efs.filesystems) == 1
+        efs_arn = f"arn:aws:elasticfilesystem:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:file-system/{FILE_SYSTEM_ID}"
+        assert (
+            efs.filesystems[efs_arn].access_points[0].file_system_id == FILE_SYSTEM_ID
+        )
+        assert efs.filesystems[efs_arn].access_points[0].id == "fsap-123"
+        assert efs.filesystems[efs_arn].access_points[0].root_directory_path == "/"
+        assert efs.filesystems[efs_arn].access_points[0].posix_user == {
+            "Uid": 1000,
+            "Gid": 1000,
+        }

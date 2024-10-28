@@ -133,7 +133,7 @@ def detect_secrets_scan(
                 {"name": "SoftlayerDetector"},
                 {"name": "SquareOAuthDetector"},
                 {"name": "StripeDetector"},
-                # {"name": "TelegramBotTokenDetector"}, https://github.com/Yelp/detect-secrets/pull/878
+                {"name": "TelegramBotTokenDetector"},
                 {"name": "TwilioKeyDetector"},
             ],
             "filters_used": [
@@ -272,3 +272,24 @@ def print_boxes(messages: list, report_title: str):
             f"{Style.BRIGHT}{Style.RESET_ALL}  · {message}{Style.BRIGHT}{Style.RESET_ALL}"
         )
     print()
+
+
+def dict_to_lowercase(d):
+    """
+    Convert all keys in a dictionary to lowercase.
+    This function takes a dictionary and returns a new dictionary
+    with all the keys converted to lowercase. If a value in the
+    dictionary is another dictionary, the function will recursively
+    convert the keys of that dictionary to lowercase as well.
+    Args:
+        d (dict): The dictionary to convert.
+    Returns:
+        dict: A new dictionary with all keys in lowercase.
+    """
+
+    new_dict = {}
+    for k, v in d.items():
+        if isinstance(v, dict):
+            v = dict_to_lowercase(v)
+        new_dict[k.lower()] = v
+    return new_dict

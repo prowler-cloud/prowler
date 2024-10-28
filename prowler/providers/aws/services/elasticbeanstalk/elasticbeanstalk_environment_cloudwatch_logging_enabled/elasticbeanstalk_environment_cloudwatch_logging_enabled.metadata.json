@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "elasticbeanstalk_environment_cloudwatch_logging_enabled",
+  "CheckTitle": "Elastic Beanstalk environment should stream logs to CloudWatch",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "elasticbeanstalk",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:elasticbeanstalk:{region}:{account-id}:environment/{environment-id}",
+  "Severity": "high",
+  "ResourceType": "AwsElasticBeanstalkEnvironment",
+  "Description": "This control checks whether an Elastic Beanstalk environment is configured to send logs to CloudWatch Logs. The control fails if an Elastic Beanstalk environment isn't configured to send logs to CloudWatch Logs.",
+  "Risk": "Without log streaming to CloudWatch, it becomes difficult to monitor and troubleshoot your Elastic Beanstalk environments, which can lead to missed events or security incidents.",
+  "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/elastic-beanstalk-logs-to-cloudwatch.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws elasticbeanstalk update-environment --environment-id <environment-id> --option-settings Namespace=aws:elasticbeanstalk:environment:proxy:logging,OptionName=StreamLogs,Value=true",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/elasticbeanstalk-controls.html#elasticbeanstalk-3",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable log streaming to CloudWatch for your Elastic Beanstalk environment to monitor and retain logs.",
+      "Url": "https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/AWSHowTo.cloudwatchlogs.html#AWSHowTo.cloudwatchlogs.streaming"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -10,9 +10,6 @@ from tests.providers.aws.utils import (
     set_mocked_aws_provider,
 )
 
-# Moto: NotImplementedError: The TAG_POLICY policy type has not been implemented
-# Needs to Mock manually
-
 
 class Test_organizations_tags_policies_enabled_and_attached:
     def test_organization_no_organization(self):
@@ -64,16 +61,18 @@ class Test_organizations_tags_policies_enabled_and_attached:
                 arn="arn:aws:organizations::1234567890:organization/o-1234567890",
                 status="ACTIVE",
                 master_id="1234567890",
-                policies=[
-                    Policy(
-                        id="p-1234567890",
-                        arn="arn:aws:organizations::1234567890:policy/o-1234567890/p-1234567890",
-                        type="TAG_POLICY",
-                        aws_managed=False,
-                        content={"tags": {"Owner": {}}},
-                        targets=[],
-                    )
-                ],
+                policies={
+                    "TAG_POLICY": [
+                        Policy(
+                            id="p-1234567890",
+                            arn="arn:aws:organizations::1234567890:policy/o-1234567890/p-1234567890",
+                            type="TAG_POLICY",
+                            aws_managed=False,
+                            content={"tags": {"Owner": {}}},
+                            targets=[],
+                        )
+                    ]
+                },
                 delegated_administrators=None,
             )
         ]
@@ -118,16 +117,18 @@ class Test_organizations_tags_policies_enabled_and_attached:
                 arn="arn:aws:organizations::1234567890:organization/o-1234567890",
                 status="ACTIVE",
                 master_id="1234567890",
-                policies=[
-                    Policy(
-                        id="p-1234567890",
-                        arn="arn:aws:organizations::1234567890:policy/o-1234567890/p-1234567890",
-                        type="TAG_POLICY",
-                        aws_managed=False,
-                        content={"tags": {"Owner": {}}},
-                        targets=["1234567890"],
-                    )
-                ],
+                policies={
+                    "TAG_POLICY": [
+                        Policy(
+                            id="p-1234567890",
+                            arn="arn:aws:organizations::1234567890:policy/o-1234567890/p-1234567890",
+                            type="TAG_POLICY",
+                            aws_managed=False,
+                            content={"tags": {"Owner": {}}},
+                            targets=["1234567890"],
+                        )
+                    ]
+                },
                 delegated_administrators=None,
             )
         ]

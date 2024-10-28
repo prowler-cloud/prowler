@@ -25,7 +25,6 @@ class Test_rds_instance_non_default_port:
                 "prowler.providers.aws.services.rds.rds_instance_non_default_port.rds_instance_non_default_port.rds_client",
                 new=RDS(aws_provider),
             ):
-                # Test del check
                 from prowler.providers.aws.services.rds.rds_instance_non_default_port.rds_instance_non_default_port import (
                     rds_instance_non_default_port,
                 )
@@ -49,7 +48,7 @@ class Test_rds_instance_non_default_port:
             PubliclyAccessible=True,
             AutoMinorVersionUpgrade=True,
             BackupRetentionPeriod=10,
-            Port=5432,  # Puerto por defecto para postgres
+            Port=5432,
             Tags=[{"Key": "test", "Value": "test"}],
         )
 
@@ -65,7 +64,6 @@ class Test_rds_instance_non_default_port:
                 "prowler.providers.aws.services.rds.rds_instance_non_default_port.rds_instance_non_default_port.rds_client",
                 new=RDS(aws_provider),
             ):
-                # Test del check
                 from prowler.providers.aws.services.rds.rds_instance_non_default_port.rds_instance_non_default_port import (
                     rds_instance_non_default_port,
                 )
@@ -101,7 +99,7 @@ class Test_rds_instance_non_default_port:
             PubliclyAccessible=True,
             AutoMinorVersionUpgrade=True,
             BackupRetentionPeriod=10,
-            Port=5433,  # Puerto no por defecto para postgres
+            Port=5433,
             Tags=[{"Key": "env", "Value": "production"}],
         )
 
@@ -117,7 +115,6 @@ class Test_rds_instance_non_default_port:
                 "prowler.providers.aws.services.rds.rds_instance_non_default_port.rds_instance_non_default_port.rds_client",
                 new=RDS(aws_provider),
             ):
-                # Test del check
                 from prowler.providers.aws.services.rds.rds_instance_non_default_port.rds_instance_non_default_port import (
                     rds_instance_non_default_port,
                 )
@@ -155,7 +152,7 @@ class Test_rds_instance_non_default_port:
             PubliclyAccessible=True,
             AutoMinorVersionUpgrade=True,
             BackupRetentionPeriod=10,
-            Port=3306,  # Puerto por defecto para mariadb
+            Port=3306,
             Tags=[{"Key": "env", "Value": "staging"}],
         )
 
@@ -171,7 +168,6 @@ class Test_rds_instance_non_default_port:
                 "prowler.providers.aws.services.rds.rds_instance_non_default_port.rds_instance_non_default_port.rds_client",
                 new=RDS(aws_provider),
             ):
-                # Test del check
                 from prowler.providers.aws.services.rds.rds_instance_non_default_port.rds_instance_non_default_port import (
                     rds_instance_non_default_port,
                 )
@@ -207,7 +203,7 @@ class Test_rds_instance_non_default_port:
             PubliclyAccessible=True,
             AutoMinorVersionUpgrade=True,
             BackupRetentionPeriod=10,
-            Port=3307,  # Puerto no por defecto para mariadb
+            Port=3307,
             Tags=[{"Key": "env", "Value": "production"}],
         )
 
@@ -223,7 +219,6 @@ class Test_rds_instance_non_default_port:
                 "prowler.providers.aws.services.rds.rds_instance_non_default_port.rds_instance_non_default_port.rds_client",
                 new=RDS(aws_provider),
             ):
-                # Test del check
                 from prowler.providers.aws.services.rds.rds_instance_non_default_port.rds_instance_non_default_port import (
                     rds_instance_non_default_port,
                 )

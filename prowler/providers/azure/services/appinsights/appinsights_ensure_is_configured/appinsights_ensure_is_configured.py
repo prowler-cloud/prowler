@@ -14,11 +14,11 @@ class appinsights_ensure_is_configured(Check):
             report.subscription = subscription_name
             report.resource_name = "AppInsights"
             report.resource_id = "AppInsights"
-            report.status_extended = f"There is at least one AppInsight configured in susbscription {subscription_name}."
+            report.status_extended = f"There is at least one AppInsight configured in subscription {subscription_name}."
 
             if len(components) < 1:
                 report.status = "FAIL"
-                report.status_extended = f"There are no AppInsight configured in susbscription {subscription_name}."
+                report.status_extended = f"There are no AppInsight configured in subscription {subscription_name}."
 
             findings.append(report)
 

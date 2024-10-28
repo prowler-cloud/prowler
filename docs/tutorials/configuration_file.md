@@ -56,6 +56,7 @@ The following list includes all the AWS checks with configurable variables that 
 | `organizations_scp_check_deny_regions`                        | `organizations_enabled_regions`                  | List of Strings |
 | `rds_instance_backup_enabled`                                 | `check_rds_instance_replicas`                    | Boolean         |
 | `securityhub_enabled`                                         | `mute_non_default_regions`                       | Boolean         |
+| `secretsmanager_secret_unused`                                | `max_days_secret_unused`                         | Integer         |
 | `ssm_document_secrets`                                        | `secrets_ignore_patterns`                        | List of Strings |
 | `trustedadvisor_premium_support_plan_subscribed`              | `verify_premium_support_plans`                   | Boolean         |
 | `vpc_endpoint_connections_trust_boundaries`                   | `trusted_account_ids`                            | List of Strings |
@@ -158,6 +159,7 @@ aws:
     ]
 
   # AWS VPC Configuration (vpc_endpoint_connections_trust_boundaries, vpc_endpoint_services_allowed_principals_trust_boundaries)
+  # AWS SSM Configuration (aws.ssm_documents_set_as_public)
   # Single account environment: No action required. The AWS account number will be automatically added by the checks.
   # Multi account environment: Any additional trusted account number should be added as a space separated list, e.g.
   # trusted_account_ids : ["123456789012", "098765432109", "678901234567"]
@@ -225,7 +227,7 @@ aws:
 
   # AWS CloudTrail Configuration
   # aws.cloudtrail_threat_detection_privilege_escalation
-  threat_detection_privilege_escalation_threshold: 0.1 # Percentage of actions found to decide if it is an privilege_escalation attack event, by default is 0.1 (10%)
+  threat_detection_privilege_escalation_threshold: 0.2 # Percentage of actions found to decide if it is an privilege_escalation attack event, by default is 0.2 (20%)
   threat_detection_privilege_escalation_minutes: 1440 # Past minutes to search from now for privilege_escalation attacks, by default is 1440 minutes (24 hours)
   threat_detection_privilege_escalation_actions:
     [
@@ -282,7 +284,7 @@ aws:
       "UpdateLoginProfile",
     ]
   # aws.cloudtrail_threat_detection_enumeration
-  threat_detection_enumeration_threshold: 0.1 # Percentage of actions found to decide if it is an enumeration attack event, by default is 0.1 (10%)
+  threat_detection_enumeration_threshold: 0.3 # Percentage of actions found to decide if it is an enumeration attack event, by default is 0.3 (30%)
   threat_detection_enumeration_minutes: 1440 # Past minutes to search from now for enumeration attacks, by default is 1440 minutes (24 hours)
   threat_detection_enumeration_actions:
     [
@@ -376,6 +378,24 @@ aws:
       "ListUsers",
       "LookupEvents",
       "Search",
+    ]
+  # aws.cloudtrail_threat_detection_llm_jacking
+  threat_detection_llm_jacking_threshold: 0.4 # Percentage of actions found to decide if it is an LLM Jacking attack event, by default is 0.4 (40%)
+  threat_detection_llm_jacking_minutes: 1440 # Past minutes to search from now for LLM Jacking attacks, by default is 1440 minutes (24 hours)
+  threat_detection_llm_jacking_actions:
+    [
+    "PutUseCaseForModelAccess",  # Submits a use case for model access, providing justification (Write).
+    "PutFoundationModelEntitlement",  # Grants entitlement for accessing a foundation model (Write).
+    "PutModelInvocationLoggingConfiguration", # Configures logging for model invocations (Write).
+    "CreateFoundationModelAgreement",  # Creates a new agreement to use a foundation model (Write).
+    "InvokeModel",  # Invokes a specified Bedrock model for inference using provided prompt and parameters (Read).
+    "InvokeModelWithResponseStream",  # Invokes a Bedrock model for inference with real-time token streaming (Read).
+    "GetUseCaseForModelAccess",  # Retrieves an existing use case for model access (Read).
+    "GetModelInvocationLoggingConfiguration",  # Fetches the logging configuration for model invocations (Read).
+    "GetFoundationModelAvailability",  # Checks the availability of a foundation model for use (Read).
+    "ListFoundationModelAgreementOffers",  # Lists available agreement offers for accessing foundation models (List).
+    "ListFoundationModels",  # Lists the available foundation models in Bedrock (List).
+    "ListProvisionedModelThroughputs",  # Lists the provisioned throughput for previously created models (List).
     ]
 
   # AWS RDS Configuration

@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "guardduty_lambda_protection_enabled",
+  "CheckTitle": "Check if GuardDuty Lambda Protection is enabled.",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "guardduty",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:guardduty:region:account-id/detector-id",
+  "Severity": "high",
+  "ResourceType": "AwsGuardDutyDetector",
+  "Description": "GuardDuty Lambda Protection helps you identify potential security threats when an AWS Lambda function gets invoked. After you enable Lambda Protection, GuardDuty starts monitoring Lambda network activity logs associated with the Lambda functions in your AWS account.",
+  "Risk": "If Lambda Protection is not enabled, GuardDuty will not be able to monitor Lambda network activity logs and may miss potential security threats.",
+  "RelatedUrl": "https://docs.aws.amazon.com/guardduty/latest/ug/lambda-protection.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws guardduty update-detector --detector-id <detector-id> --features Name=LAMBDA_NETWORK_LOGS,Status=ENABLED",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/guardduty-controls.html#guardduty-6",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable Lambda Protection in your GuardDuty detector to start monitoring Lambda Network Activity in your account.",
+      "Url": "https://docs.aws.amazon.com/guardduty/latest/ug/configure-lambda-protection-standalone-acc.html"
+    }
+  },
+  "Categories": [],
+  "Notes": "",
+  "DependsOn": [],
+  "RelatedTo": []
+}
