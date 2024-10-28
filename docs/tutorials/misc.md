@@ -24,6 +24,11 @@ Prowler can run without showing its banner:
 ```console
 prowler <provider> -b/--no-banner
 ```
+## Disable Colors
+Prowler can run without showing colors:
+```console
+prowler <provider> --no-color
+```
 ## Checks
 Prowler has checks per provider, there are options related with them:
 
