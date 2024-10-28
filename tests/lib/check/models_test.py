@@ -72,7 +72,7 @@ class TestCheckMetada:
         result = CheckMetadata.list(bulk_checks_metadata=bulk_metadata)
 
         # Assertions
-        assert result == ["accessanalyzer_enabled"]
+        assert result == {"accessanalyzer_enabled"}
 
     @mock.patch("prowler.lib.check.models.load_check_metadata")
     @mock.patch("prowler.lib.check.models.recover_checks_from_provider")
@@ -90,7 +90,7 @@ class TestCheckMetada:
         result = CheckMetadata.list(bulk_checks_metadata=bulk_metadata)
 
         # Assertions
-        assert result == ["accessanalyzer_enabled"]
+        assert result == {"accessanalyzer_enabled"}
 
     @mock.patch("prowler.lib.check.models.load_check_metadata")
     @mock.patch("prowler.lib.check.models.recover_checks_from_provider")
@@ -108,7 +108,7 @@ class TestCheckMetada:
         result = CheckMetadata.list(bulk_checks_metadata=bulk_metadata, severity="high")
 
         # Assertions
-        assert result == ["accessanalyzer_enabled"]
+        assert result == {"accessanalyzer_enabled"}
 
     @mock.patch("prowler.lib.check.models.load_check_metadata")
     @mock.patch("prowler.lib.check.models.recover_checks_from_provider")
@@ -126,7 +126,7 @@ class TestCheckMetada:
         result = CheckMetadata.list(bulk_checks_metadata=bulk_metadata, severity="low")
 
         # Assertions
-        assert result == []
+        assert result == set()
 
     @mock.patch("prowler.lib.check.models.load_check_metadata")
     @mock.patch("prowler.lib.check.models.recover_checks_from_provider")
@@ -146,7 +146,7 @@ class TestCheckMetada:
         )
 
         # Assertions
-        assert result == ["accessanalyzer_enabled"]
+        assert result == {"accessanalyzer_enabled"}
 
     @mock.patch("prowler.lib.check.models.load_check_metadata")
     @mock.patch("prowler.lib.check.models.recover_checks_from_provider")
@@ -166,7 +166,7 @@ class TestCheckMetada:
         )
 
         # Assertions
-        assert result == []
+        assert result == set()
 
     @mock.patch("prowler.lib.check.models.load_check_metadata")
     @mock.patch("prowler.lib.check.models.recover_checks_from_provider")
@@ -186,7 +186,7 @@ class TestCheckMetada:
         )
 
         # Assertions
-        assert result == ["accessanalyzer_enabled"]
+        assert result == {"accessanalyzer_enabled"}
 
     @mock.patch("prowler.lib.check.models.load_check_metadata")
     @mock.patch("prowler.lib.check.models.recover_checks_from_provider")
@@ -206,7 +206,7 @@ class TestCheckMetada:
         )
 
         # Assertions
-        assert result == []
+        assert result == set()
 
     @mock.patch("prowler.lib.check.models.load_check_metadata")
     @mock.patch("prowler.lib.check.models.recover_checks_from_provider")
@@ -233,7 +233,7 @@ class TestCheckMetada:
         )
 
         # Assertions
-        assert result == ["accessanalyzer_enabled"]
+        assert result == {"accessanalyzer_enabled"}
 
     def test_list_by_compliance_empty(self):
         bulk_compliance_frameworks = custom_compliance_metadata
@@ -243,7 +243,7 @@ class TestCheckMetada:
         )
 
         # Assertions
-        assert result == []
+        assert result == set()
 
     @mock.patch("prowler.lib.check.models.load_check_metadata")
     @mock.patch("prowler.lib.check.models.recover_checks_from_provider")
@@ -254,4 +254,4 @@ class TestCheckMetada:
         bulk_metadata = CheckMetadata.get_bulk(provider="aws")
 
         result = CheckMetadata.list(bulk_checks_metadata=bulk_metadata)
-        assert result == []
+        assert result == set()

@@ -234,17 +234,17 @@ class CheckMetadata(BaseModel):
         checks = set(bulk_checks_metadata.keys())
         # Get the intersection of the checks
         if len(checks_from_provider) > 0 or provider:
-            checks = list(checks & checks_from_provider)
+            checks = checks & checks_from_provider
         if len(checks_from_severity) > 0 or severity:
-            checks = list(checks & checks_from_severity)
+            checks = checks & checks_from_severity
         if len(checks_from_category) > 0 or category:
-            checks = list(checks & checks_from_category)
+            checks = checks & checks_from_category
         if len(checks_from_service) > 0 or service:
-            checks = list(checks & checks_from_service)
+            checks = checks & checks_from_service
         if len(checks_from_compliance_framework) > 0 or compliance_framework:
-            checks = list(checks & checks_from_compliance_framework)
+            checks = checks & checks_from_compliance_framework
 
-        return list(checks)
+        return checks
 
     @staticmethod
     def get(bulk_checks_metadata: dict, check_id: str) -> "CheckMetadata":
