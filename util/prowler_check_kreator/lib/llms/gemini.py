@@ -145,7 +145,7 @@ class Gemini:
                 get_metadata_valid_check_type(metadata.get("Provider")), indent=2
             ),
             "One example of a valid CheckType value is: 'Software and Configuration Checks/Vulnerabilities/CVE'. If you don't have a valid value for CheckType, you can leave it empty.",
-            f"The field ResourceType must be one of the following values (if there is not a valid value, you can put '{get_metadata_placeholder_resource_type(metadata.get("Provider"))}'): ",
+            f"The field ResourceType must be one of the following values, if there is not a valid value you can put '{get_metadata_placeholder_resource_type(metadata.get("Provider"))}': ",
             ", ".join(get_metadata_valid_resource_type(metadata.get("Provider"))),
             "If you don't have a valid value for ResourceType, you can leave it empty.",
             f"The field Category must be one or more of the following values: {', '.join(valid_prowler_categories)}.",
