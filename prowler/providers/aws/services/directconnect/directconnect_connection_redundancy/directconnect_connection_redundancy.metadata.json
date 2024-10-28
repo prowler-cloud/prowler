@@ -3,7 +3,7 @@
   "CheckID": "directconnect_connection_redundancy",
   "CheckTitle": "Ensure Direct Connect connections are redundant",
   "CheckType": [
-    "Resiliance"
+    "Resilience"
   ],
   "ServiceName": "directconnect",
   "SubServiceName": "",
@@ -17,15 +17,17 @@
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://docs.aws.amazon.com/awssupport/latest/user/fault-tolerance-checks.html#amazon-direct-connect-location-resiliency",
+      "Other": "",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "To build Direct Connect location resiliency, you should have atleast two connections from at least two distinct Direct Connect locations.",
+      "Text": "To build Direct Connect location resiliency, you should have at least two connections from at least two distinct Direct Connect locations.",
       "Url": "https://aws.amazon.com/directconnect/resiliency-recommendation/"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "redundancy"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

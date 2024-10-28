@@ -30,14 +30,13 @@ class DirectConnect(AWSService):
             dx_connect = regional_client.describe_connections()
 
             for connection in dx_connect["connections"]:
+                connection_arn = f"arn:{self.audited_partition}:directconnect:{regional_client.region}:{self.audited_account}:dxcon/{connection['connectionId']}"
                 if not self.audit_resources or (
-                    is_resource_filtered(
-                        connection["connectionId"], self.audit_resources
-                    )
+                    is_resource_filtered(connection_arn, self.audit_resources)
                 ):
-                    connection_id = connection.get("connectionId")
-                    self.connections[connection_id] = Connection(
-                        id=connection_id,
+                    self.connections[connection_arn] = Connection(
+                        arn=connection_arn,
+                        id=connection["connectionId"],
                         name=connection["connectionName"],
                         location=connection["location"],
                         region=regional_client.region,
@@ -55,42 +54,46 @@ class DirectConnect(AWSService):
         try:
             describe_vifs = regional_client.describe_virtual_interfaces()
             for vif in describe_vifs["virtualInterfaces"]:
+                vif_id = vif["virtualInterfaceId"]
+                vif_arn = f"arn:{self.audited_partition}:directconnect:{regional_client.region}:{self.audited_account}:dxvif/{vif_id}"
                 if not self.audit_resources or (
-                    is_resource_filtered(
-                        vif["virtualInterfaceId"], self.audit_resources
-                    )
+                    is_resource_filtered(vif_arn, self.audit_resources)
                 ):
-                    vif_id = vif.get("virtualInterfaceId")
                     vgw_id = vif.get("virtualGatewayId")
                     connection_id = vif.get("connectionId")
                     dxgw_id = vif.get("directConnectGatewayId")
-                    self.vifs[vif_id] = VirtualInterface(
+                    self.vifs[vif_arn] = VirtualInterface(
+                        arn=vif_arn,
                         id=vif_id,
                         name=vif["virtualInterfaceName"],
-                        connection_id=vif["connectionId"],
+                        connection_id=connection_id,
                         vgw_gateway_id=vif["virtualGatewayId"],
-                        dx_gateway_id=vif["directConnectGatewayId"],
+                        dx_gateway_id=dxgw_id,
                         location=vif["location"],
                         region=regional_client.region,
                     )
-                    if vgw_id != "":
-                        if vgw_id in self.vgws:
-                            self.vgws[vgw_id].vifs.append(vif["virtualInterfaceId"])
-                            self.vgws[vgw_id].connections.append(vif["connectionId"])
+                    if vgw_id:
+                        vgw_arn = f"arn:{self.audited_partition}:directconnect:{regional_client.region}:{self.audited_account}:virtual-gateway/{vgw_id}"
+                        if vgw_arn in self.vgws:
+                            self.vgws[vgw_arn].vifs.append(vif_id)
+                            self.vgws[vgw_arn].connections.append(connection_id)
                         else:
-                            self.vgws[vgw_id] = VirtualGateway(
+                            self.vgws[vgw_arn] = VirtualGateway(
+                                arn=vgw_arn,
                                 id=vgw_id,
                                 vifs=[vif_id],
                                 connections=[connection_id],
                                 region=regional_client.region,
                             )
 
-                    if dxgw_id != "":
-                        if dxgw_id in self.dxgws:
-                            self.dxgws[dxgw_id].vifs.append(vif["virtualInterfaceId"])
-                            self.dxgws[dxgw_id].connections.append(vif["connectionId"])
+                    if dxgw_id:
+                        dxgw_arn = f"arn:{self.audited_partition}:directconnect:{regional_client.region}:{self.audited_account}:dx-gateway/{dxgw_id}"
+                        if dxgw_arn in self.dxgws:
+                            self.dxgws[dxgw_arn].vifs.append(vif_id)
+                            self.dxgws[dxgw_arn].connections.append(connection_id)
                         else:
-                            self.dxgws[dxgw_id] = DXGateway(
+                            self.dxgws[dxgw_arn] = DXGateway(
+                                arn=dxgw_arn,
                                 id=dxgw_id,
                                 vifs=[vif_id],
                                 connections=[connection_id],
@@ -112,6 +115,7 @@ class DirectConnect(AWSService):
 
 
 class Connection(BaseModel):
+    arn = str
     id: str
     name: Optional[str] = None
     location: str
@@ -119,6 +123,7 @@ class Connection(BaseModel):
 
 
 class VirtualInterface(BaseModel):
+    arn: str
     id: str
     name: str
     connection_id: Optional[str] = None
@@ -129,6 +134,7 @@ class VirtualInterface(BaseModel):
 
 
 class VirtualGateway(BaseModel):
+    arn: str
     id: str
     vifs: list
     connections: list
@@ -136,6 +142,7 @@ class VirtualGateway(BaseModel):
 
 
 class DXGateway(BaseModel):
+    arn: str
     id: str
     vifs: list
     connections: list

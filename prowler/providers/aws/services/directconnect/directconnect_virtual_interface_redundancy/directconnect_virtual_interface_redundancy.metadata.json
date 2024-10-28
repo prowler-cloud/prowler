@@ -3,7 +3,7 @@
   "CheckID": "directconnect_virtual_interface_redundancy",
   "CheckTitle": "Ensure Direct Connect virtual interface(s) are providing redundant connections",
   "CheckType": [
-    "Resiliance"
+    "Resilience"
   ],
   "ServiceName": "directconnect",
   "SubServiceName": "",
@@ -17,7 +17,7 @@
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://docs.aws.amazon.com/awssupport/latest/user/fault-tolerance-checks.html#amazon-direct-connect-location-resiliency",
+      "Other": "",
       "Terraform": ""
     },
     "Recommendation": {
@@ -25,7 +25,9 @@
       "Url": "https://aws.amazon.com/directconnect/resiliency-recommendation/"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "redundancy"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

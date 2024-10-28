@@ -1,5 +1,4 @@
 import botocore
-from boto3 import client
 from mock import patch
 from moto import mock_aws
 
@@ -143,78 +142,59 @@ class Test_DirectConnect_Service:
 
     @mock_aws
     def test_describe_connect(self):
-        # USA
-        dx_client = client("directconnect", region_name=AWS_REGION_US_EAST_1)
-        dx_client.create_connection(
-            bandwidth="5000",
-            connectionName="test-conn",
-            location="Ashburn",
-            tags=[
-                {"key": "test", "value": "test"},
-            ],
-        )
+        arn = f"arn:aws:directconnect:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:dxcon/dx-moto-test-conn-20241022005109"
 
         aws_provider = set_mocked_aws_provider(AWS_REGION_US_EAST_1)
         directconnect = DirectConnect(aws_provider)
         assert len(directconnect.connections) == 1
-        assert (
-            directconnect.connections["dx-moto-test-conn-20241022005109"].region
-            == AWS_REGION_US_EAST_1
-        )
-        assert (
-            directconnect.connections["dx-moto-test-conn-20241022005109"].location
-            == "Ashburn"
-        )
-        assert (
-            directconnect.connections["dx-moto-test-conn-20241022005109"].name
-            == "test-conn"
-        )
+        assert directconnect.connections[arn].region == AWS_REGION_US_EAST_1
+        assert directconnect.connections[arn].location == "Ashburn"
+        assert directconnect.connections[arn].name == "test-conn"
+        assert directconnect.connections[arn].id == "dx-moto-test-conn-20241022005109"
 
     @mock_aws
     def test_describe_vif(self):
         aws_provider = set_mocked_aws_provider(AWS_REGION_US_EAST_1)
         directconnect = DirectConnect(aws_provider)
+        vif_arn = f"arn:aws:directconnect:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:dxvif/vif-moto-test-conn"
         assert len(directconnect.vifs) == 2
-        assert directconnect.vifs["vif-moto-test-conn"].region == AWS_REGION_US_EAST_1
-        assert directconnect.vifs["vif-moto-test-conn"].location == "Ashburn"
+        assert directconnect.vifs[vif_arn].arn == vif_arn
+        assert directconnect.vifs[vif_arn].region == AWS_REGION_US_EAST_1
+        assert directconnect.vifs[vif_arn].location == "Ashburn"
         assert (
-            directconnect.vifs["vif-moto-test-conn"].connection_id
+            directconnect.vifs[vif_arn].connection_id
             == "dx-moto-test-conn-20241022005109"
         )
-        assert (
-            directconnect.vifs["vif-moto-test-conn"].vgw_gateway_id
-            == "vgw-moto-test-conn"
-        )
-        assert (
-            directconnect.vifs["vif-moto-test-conn"].dx_gateway_id
-            == "dxgw-moto-test-conn"
-        )
-        assert directconnect.vifs["vif-moto-test-conn"].name == "test-viff"
+        assert directconnect.vifs[vif_arn].vgw_gateway_id == "vgw-moto-test-conn"
+        assert directconnect.vifs[vif_arn].dx_gateway_id == "dxgw-moto-test-conn"
+        assert directconnect.vifs[vif_arn].name == "test-viff"
 
     @mock_aws
     def test_describe_vgws(self):
         aws_provider = set_mocked_aws_provider(AWS_REGION_US_EAST_1)
         directconnect = DirectConnect(aws_provider)
+        vgw_arn = f"arn:aws:directconnect:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:virtual-gateway/vgw-moto-test-conn"
+        dxgw_arn = f"arn:aws:directconnect:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:dx-gateway/dxgw-moto-test-conn"
         assert len(directconnect.vifs) == 2
         assert len(directconnect.vgws) == 1
         assert len(directconnect.dxgws) == 1
-        assert directconnect.vgws["vgw-moto-test-conn"].region == AWS_REGION_US_EAST_1
-        assert directconnect.vgws["vgw-moto-test-conn"].id == "vgw-moto-test-conn"
-        assert directconnect.vgws["vgw-moto-test-conn"].connections == [
+        assert directconnect.vgws[vgw_arn].region == AWS_REGION_US_EAST_1
+        assert directconnect.vgws[vgw_arn].id == "vgw-moto-test-conn"
+        assert directconnect.vgws[vgw_arn].connections == [
             "dx-moto-test-conn-20241022005109",
             "dx-moto-test-conn-202410220051092",
         ]
-        assert directconnect.vgws["vgw-moto-test-conn"].vifs == [
+        assert directconnect.vgws[vgw_arn].vifs == [
             "vif-moto-test-conn",
             "vif-moto-test-conn-2",
         ]
-        assert directconnect.dxgws["dxgw-moto-test-conn"].region == AWS_REGION_US_EAST_1
-        assert directconnect.dxgws["dxgw-moto-test-conn"].id == "dxgw-moto-test-conn"
-        assert directconnect.dxgws["dxgw-moto-test-conn"].connections == [
+        assert directconnect.dxgws[dxgw_arn].region == AWS_REGION_US_EAST_1
+        assert directconnect.dxgws[dxgw_arn].id == "dxgw-moto-test-conn"
+        assert directconnect.dxgws[dxgw_arn].connections == [
             "dx-moto-test-conn-20241022005109",
             "dx-moto-test-conn-202410220051092",
         ]
-        assert directconnect.dxgws["dxgw-moto-test-conn"].vifs == [
+        assert directconnect.dxgws[dxgw_arn].vifs == [
             "vif-moto-test-conn",
             "vif-moto-test-conn-2",
         ]

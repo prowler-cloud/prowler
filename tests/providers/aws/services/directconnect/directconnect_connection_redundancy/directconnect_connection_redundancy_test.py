@@ -3,9 +3,7 @@ from unittest import mock
 from prowler.providers.aws.services.directconnect.directconnect_service import (
     Connection,
 )
-
-AWS_REGION = "eu-west-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
+from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_EU_WEST_1
 
 
 class Test_directconnect_connection_redundancy:
@@ -29,7 +27,10 @@ class Test_directconnect_connection_redundancy:
     def test_single_connection(self):
         dx_client = mock.MagicMock
         dx_client.audited_account = AWS_ACCOUNT_NUMBER
-        dx_client.region = AWS_REGION
+        dx_client.audited_account_arn = (
+            f"arn:aws:directconnect:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}"
+        )
+        dx_client.region = AWS_REGION_EU_WEST_1
         dx_client.connections = {}
         dx_client.connections = {
             "conn-test": Connection(
@@ -55,16 +56,22 @@ class Test_directconnect_connection_redundancy:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "There is only one direct connect connection in eu-west-1."
+                == "There is only one Direct Connect connection."
             )
-            assert result[0].resource_id == "Direct Connect Connection(s)"
-            assert result[0].resource_arn == "Direct Connect Connection(s)"
-            assert result[0].region == AWS_REGION
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:directconnect:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}"
+            )
+            assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_multiple_connections_single_location(self):
         dx_client = mock.MagicMock
         dx_client.audited_account = AWS_ACCOUNT_NUMBER
-        dx_client.region = AWS_REGION
+        dx_client.audited_account_arn = (
+            f"arn:aws:directconnect:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}"
+        )
+        dx_client.region = AWS_REGION_EU_WEST_1
         dx_client.connections = {}
         dx_client.connections = {
             "conn-test": Connection(
@@ -96,16 +103,22 @@ class Test_directconnect_connection_redundancy:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "There is only one location Ashburn used by all the direct connect connections in eu-west-1."
+                == "There is only one location Ashburn used by all the Direct Connect connections."
             )
-            assert result[0].resource_id == "Direct Connect Connection(s)"
-            assert result[0].resource_arn == "Direct Connect Connection(s)"
-            assert result[0].region == AWS_REGION
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:directconnect:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}"
+            )
+            assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_multiple_connections_multiple_locations(self):
         dx_client = mock.MagicMock
         dx_client.audited_account = AWS_ACCOUNT_NUMBER
-        dx_client.region = AWS_REGION
+        dx_client.audited_account_arn = (
+            f"arn:aws:directconnect:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}"
+        )
+        dx_client.region = AWS_REGION_EU_WEST_1
         dx_client.connections = {}
         dx_client.connections = {
             "conn-test": Connection(
@@ -137,8 +150,11 @@ class Test_directconnect_connection_redundancy:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "There are 2 direct connect connections, using 2 locations in eu-west-1."
+                == "There are 2 Direct Connect connections across 2 locations."
             )
-            assert result[0].resource_id == "Direct Connect Connection(s)"
-            assert result[0].resource_arn == "Direct Connect Connection(s)"
-            assert result[0].region == AWS_REGION
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:directconnect:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}"
+            )
+            assert result[0].region == AWS_REGION_EU_WEST_1

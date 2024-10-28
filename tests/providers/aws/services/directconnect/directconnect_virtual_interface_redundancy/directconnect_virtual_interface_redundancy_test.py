@@ -36,6 +36,7 @@ class Test_directconnect_virtual_interface_redundancy:
         dx_client.dxgws = {}
         dx_client.vgws = {
             "vgw-test": VirtualGateway(
+                arn="vgw-test",
                 id="vgw-test",
                 vifs=["vif-id"],
                 connections=["dx-conn"],
@@ -58,7 +59,7 @@ class Test_directconnect_virtual_interface_redundancy:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "There is only one VIF for the virtual gateway vgw-test."
+                == "Virtual private gateway vgw-test only has one VIF."
             )
             assert result[0].resource_id == "vgw-test"
             assert result[0].resource_arn == "vgw-test"
@@ -72,6 +73,7 @@ class Test_directconnect_virtual_interface_redundancy:
         dx_client.dxgws = {}
         dx_client.vgws = {
             "vgw-test": VirtualGateway(
+                arn="vgw-test",
                 id="vgw-test",
                 vifs=["vif-id", "vif-id2"],
                 connections=["dx-conn"],
@@ -94,7 +96,7 @@ class Test_directconnect_virtual_interface_redundancy:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "There are more than 1 VIFs for the virtual gateway vgw-test, but all the VIFs are on the same DX Connection."
+                == "Virtual private gateway vgw-test has more than 1 VIFs, but all the VIFs are on the same DX Connection."
             )
             assert result[0].resource_id == "vgw-test"
             assert result[0].resource_arn == "vgw-test"
@@ -108,6 +110,7 @@ class Test_directconnect_virtual_interface_redundancy:
         dx_client.dxgws = {}
         dx_client.vgws = {
             "vgw-test": VirtualGateway(
+                arn="vgw-test",
                 id="vgw-test",
                 vifs=["vif-id", "vif-id2"],
                 connections=["dx-conn", "dx-conn2"],
@@ -130,7 +133,7 @@ class Test_directconnect_virtual_interface_redundancy:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "There are more than 1 VIFs for the virtual gateway vgw-test, and the VIFs are on more than one DX connection."
+                == "Virtual private gateway vgw-test has more than 1 VIFs and the VIFs are on more than one DX connection."
             )
             assert result[0].resource_id == "vgw-test"
             assert result[0].resource_arn == "vgw-test"
@@ -144,6 +147,7 @@ class Test_directconnect_virtual_interface_redundancy:
         dx_client.dxgws = {}
         dx_client.dxgws = {
             "dx-test": DXGateway(
+                arn="dx-test",
                 id="dx-test",
                 vifs=["vif-id"],
                 connections=["dx-conn"],
@@ -166,7 +170,7 @@ class Test_directconnect_virtual_interface_redundancy:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "There is only one VIF for the direct connect gateway dx-test."
+                == "Direct Connect gateway dx-test only has one VIF."
             )
             assert result[0].resource_id == "dx-test"
             assert result[0].resource_arn == "dx-test"
@@ -180,6 +184,7 @@ class Test_directconnect_virtual_interface_redundancy:
         dx_client.dxgws = {}
         dx_client.dxgws = {
             "dx-test": DXGateway(
+                arn="dx-test",
                 id="dx-test",
                 vifs=["vif-id", "vif-id2"],
                 connections=["dx-conn"],
@@ -202,7 +207,7 @@ class Test_directconnect_virtual_interface_redundancy:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "There are more than 1 VIFs for direct connect gateway dx-test, but all the VIFs are on the same DX Connection."
+                == "Direct Connect gateway dx-test has more than 1 VIFs, but all the VIFs are on the same DX Connection."
             )
             assert result[0].resource_id == "dx-test"
             assert result[0].resource_arn == "dx-test"
@@ -216,6 +221,7 @@ class Test_directconnect_virtual_interface_redundancy:
         dx_client.dxgws = {}
         dx_client.dxgws = {
             "dx-test": DXGateway(
+                arn="dx-test",
                 id="dx-test",
                 vifs=["vif-id", "vif-id2"],
                 connections=["dx-conn", "dx-conn2"],
@@ -238,7 +244,7 @@ class Test_directconnect_virtual_interface_redundancy:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "There are more than 1 VIFs for the direct connect gateway dx-test, and the VIFs are on more than one DX connection."
+                == "Direct Connect gateway dx-test has more than 1 VIFs and the VIFs are on more than one DX connection."
             )
             assert result[0].resource_id == "dx-test"
             assert result[0].resource_arn == "dx-test"
