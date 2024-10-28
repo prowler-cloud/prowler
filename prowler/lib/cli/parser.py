@@ -179,7 +179,6 @@ Detailed documentation at https://docs.prowler.com
         )
         common_outputs_parser.add_argument(
             "--no-color",
-            "-Q",
             action="store_true",
             help="Disable color codes in output",
         )

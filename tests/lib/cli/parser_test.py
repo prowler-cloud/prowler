@@ -360,11 +360,6 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.no_banner
 
-    def test_root_parser_no_color_short(self):
-        command = [prowler_command, "-Q"]
-        parsed = self.parser.parse(command)
-        assert parsed.no_color
-
     def test_root_parser_no_color_long(self):
         command = [prowler_command, "--no-color"]
         parsed = self.parser.parse(command)
