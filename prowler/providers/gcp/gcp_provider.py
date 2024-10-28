@@ -224,27 +224,6 @@ class GcpProvider(Provider):
         """
         return self._mutelist
 
-    @property
-    def get_output_mapping(self):
-        return {
-            # Account: identity.profile
-            "auth_method": "identity.profile",
-            "provider": "type",
-            # TODO: comes from finding, finding.project_id
-            # "account_uid": "",
-            # TODO: get project name from GCP
-            # "account_name": "organizations_metadata.account_details_name",
-            # There is no concept as project email in GCP
-            # "account_email": "organizations_metadata.account_details_email",
-            # TODO: get project organization ID from GCP
-            # "account_organization_uid": "organizations_metadata.account_details_arn",
-            # TODO: get project organization from GCP
-            # "account_organization": "",
-            # TODO: get project tags organization from GCP
-            # "account_tags": "organizations_metadata.account_details_tags",
-            # "partition": "identity.partition",
-        }
-
     @staticmethod
     def setup_session(
         credentials_file: str, service_account: str, gcp_credentials: dict = None
