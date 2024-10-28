@@ -1,3 +1,4 @@
+import os
 from typing import Any
 
 from slack_sdk import WebClient
@@ -5,6 +6,11 @@ from slack_sdk.web.base_client import SlackResponse
 
 from prowler.config.config import aws_logo, azure_logo, gcp_logo, square_logo_img
 from prowler.lib.logger import logger
+from prowler.lib.outputs.slack.exceptions.exceptions import (
+    SlackChannelNotFound,
+    SlackClientError,
+    SlackNoCredentialsError,
+)
 from prowler.providers.common.models import Connection
 
 
@@ -51,7 +57,6 @@ class Slack:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            return error
 
     def __create_message_identity__(self, provider: Any):
         """
@@ -254,25 +259,58 @@ class Slack:
             auth_response = client.auth_test()
             if auth_response["ok"]:
                 # Test if the channel is accessible
-                channels_response = client.conversations_list(
-                    types="public_channel", limit=1000
+                channels_response = client.conversations_info(
+                    token=token, channel=channel
                 )
                 if channels_response["ok"]:
-                    for ch in channels_response["channels"]:
-                        if ch["name"] == channel or ch["id"] == channel:
-                            return Connection(is_connected=True)
-                private_channels_response = client.conversations_list(
-                    types="private_channel", limit=1000
+                    return Connection(is_connected=True)
+                else:
+                    if raise_on_exception:
+                        raise SlackChannelNotFound(
+                            file=os.path.basename(__file__),
+                            message=(
+                                channels_response["error"]
+                                if "error" in channels_response
+                                else "Unknown error"
+                            ),
+                        )
+                    return Connection(
+                        error=SlackChannelNotFound(
+                            file=os.path.basename(__file__),
+                            message=(
+                                channels_response["error"]
+                                if "error" in channels_response
+                                else "Unknown error"
+                            ),
+                        )
+                    )
+            else:
+                if raise_on_exception:
+                    raise SlackNoCredentialsError(
+                        file=os.path.basename(__file__),
+                        message=(
+                            auth_response["error"]
+                            if "error" in auth_response
+                            else "Unknown error"
+                        ),
+                    )
+                return Connection(
+                    error=SlackNoCredentialsError(
+                        file=os.path.basename(__file__),
+                        message=(
+                            auth_response["error"]
+                            if "error" in auth_response
+                            else "Unknown error"
+                        ),
+                    )
                 )
-                if private_channels_response["ok"]:
-                    for ch in private_channels_response["channels"]:
-                        if ch["name"] == channel or ch["id"] == channel:
-                            return Connection(is_connected=True)
-            return Connection(is_connected=False)
+
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             if raise_on_exception:
-                raise error
+                raise SlackClientError(
+                    file=os.path.basename(__file__),
+                ) from error
             return Connection(error=error)
