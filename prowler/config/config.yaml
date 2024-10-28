@@ -364,6 +364,10 @@ aws:
   # Maximum number of days a secret can be unused
   max_days_secret_unused: 90
 
+  # AWS Kinesis Configuration
+  # Minimum retention period for Kinesis streams
+  min_kinesis_stream_retention_period: 168
+
 # Azure Configuration
 azure:
   # Azure Network Configuration
