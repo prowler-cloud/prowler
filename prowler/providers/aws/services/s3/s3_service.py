@@ -473,6 +473,7 @@ class S3Control(AWSService):
         self.multi_region_access_points = {}
         self.__threading_call__(self._list_access_points)
         self.__threading_call__(self._get_access_point, self.access_points.values())
+        self._list_multi_region_access_points()
 
     def _get_public_access_block(self):
         logger.info("S3 - Get account public access block...")
@@ -507,6 +508,7 @@ class S3Control(AWSService):
             )["AccessPointList"]
             for ap in list_access_points:
                 self.access_points[ap["AccessPointArn"]] = AccessPoint(
+                    arn=ap["AccessPointArn"],
                     account_id=self.audited_account,
                     name=ap["Name"],
                     bucket=ap["Bucket"],
@@ -529,18 +531,19 @@ class S3Control(AWSService):
     def _list_multi_region_access_points(self):
         logger.info("S3 - Listing account multi region access points...")
         try:
-            list_multi_region_access_points = self.regional_clients[
-                "us-west-2"
-            ].list_multi_region_access_points(AccountId=self.audited_account)[
-                "MultiRegionAccessPointDetails"
-            ]
+            list_multi_region_access_points = (
+                self.client.list_multi_region_access_points(
+                    AccountId=self.audited_account
+                )["AccessPoints"]
+            )
             for mr_access_point in list_multi_region_access_points:
-                mr_ap_arn = f"arn:{self.audited_partition}:s3:{"us-west-2"}:{self.audited_account}:accesspoint:{mr_access_point['Name']}"
+                mr_ap_arn = f"arn:{self.audited_partition}:s3:{self.audited_account}:accesspoint/{mr_access_point['Name']}"
                 self.multi_region_access_points[mr_ap_arn] = AccessPoint(
+                    arn=mr_ap_arn,
                     account_id=self.audited_account,
                     name=mr_access_point["Name"],
                     bucket=mr_access_point["Bucket"],
-                    region=self.regional_clients["us-west-2"].region,
+                    region="us-east-1",
                     public_access_block=PublicAccessBlock(
                         block_public_acls=mr_access_point.get(
                             "PublicAccessBlockConfiguration", {}
@@ -612,6 +615,7 @@ class PublicAccessBlock(BaseModel):
 
 
 class AccessPoint(BaseModel):
+    arn: str
     account_id: str
     name: str
     bucket: str
