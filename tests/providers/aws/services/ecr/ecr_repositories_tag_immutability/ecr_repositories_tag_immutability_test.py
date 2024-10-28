@@ -51,6 +51,7 @@ class Test_ecr_repositories_tag_immutability:
         ecr_client.registries = {}
         ecr_client.registries[AWS_REGION_EU_WEST_1] = Registry(
             id=AWS_ACCOUNT_NUMBER,
+            arn=f"arn:aws:ecr:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:registry/{AWS_ACCOUNT_NUMBER}",
             region=AWS_REGION_EU_WEST_1,
             scan_type="BASIC",
             repositories=[],
@@ -77,6 +78,7 @@ class Test_ecr_repositories_tag_immutability:
         ecr_client.registries = {}
         ecr_client.registries[AWS_REGION_EU_WEST_1] = Registry(
             id=AWS_ACCOUNT_NUMBER,
+            arn=f"arn:aws:ecr:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:registry/{AWS_ACCOUNT_NUMBER}",
             region=AWS_REGION_EU_WEST_1,
             scan_type="BASIC",
             rules=[],
@@ -122,6 +124,7 @@ class Test_ecr_repositories_tag_immutability:
         ecr_client.registries = {}
         ecr_client.registries[AWS_REGION_EU_WEST_1] = Registry(
             id=AWS_ACCOUNT_NUMBER,
+            arn=f"arn:aws:ecr:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:registry/{AWS_ACCOUNT_NUMBER}",
             region=AWS_REGION_EU_WEST_1,
             scan_type="BASIC",
             rules=[],

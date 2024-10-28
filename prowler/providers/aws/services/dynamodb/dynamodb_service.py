@@ -185,6 +185,10 @@ class DAX(AWSService):
                                 arn=cluster["ClusterArn"],
                                 name=cluster["ClusterName"],
                                 encryption=encryption,
+                                node_azs=[
+                                    node["AvailabilityZone"]
+                                    for node in cluster.get("Nodes", {})
+                                ],
                                 region=regional_client.region,
                                 tls_encryption=tls_encryption,
                             )
@@ -232,6 +236,7 @@ class Cluster(BaseModel):
     arn: str
     name: str
     encryption: bool
+    node_azs: Optional[list] = []
     region: str
     tags: Optional[list] = []
     tls_encryption: bool
