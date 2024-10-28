@@ -120,7 +120,7 @@ def detect_secrets_scan(
                 {"name": "HexHighEntropyString", "limit": 3.0},
                 {"name": "IbmCloudIamDetector"},
                 {"name": "IbmCosHmacDetector"},
-                {"name": "IPPublicDetector"},
+                # {"name": "IPPublicDetector"}, https://github.com/Yelp/detect-secrets/pull/885
                 {"name": "JwtTokenDetector"},
                 {"name": "KeywordDetector"},
                 {"name": "MailchimpDetector"},
@@ -133,7 +133,7 @@ def detect_secrets_scan(
                 {"name": "SoftlayerDetector"},
                 {"name": "SquareOAuthDetector"},
                 {"name": "StripeDetector"},
-                {"name": "TelegramBotTokenDetector"},
+                # {"name": "TelegramBotTokenDetector"}, https://github.com/Yelp/detect-secrets/pull/878
                 {"name": "TwilioKeyDetector"},
             ],
             "filters_used": [
