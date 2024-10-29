@@ -469,9 +469,7 @@ class S3(AWSService):
                 bucket.notification_config = {}
 
         except ClientError as error:
-            if error.response["Error"]["Code"] == "NoSuchNotificationConfiguration":
-                bucket.notification_config = {}
-            elif error.response["Error"]["Code"] == "NoSuchBucket":
+            if error.response["Error"]["Code"] == "NoSuchBucket":
                 logger.warning(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
