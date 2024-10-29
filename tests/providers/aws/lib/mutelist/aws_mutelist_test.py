@@ -1844,3 +1844,37 @@ class TestAWSMutelist:
         allowlist_resources = ["*.es"]
 
         assert AWSMutelist.is_item_matched(allowlist_resources, "google.es")
+
+    def test_mute_finding(self):
+        # Mutelist
+        mutelist_content = {
+            "Accounts": {
+                AWS_ACCOUNT_NUMBER: {
+                    "Checks": {
+                        "check_test": {
+                            "Regions": [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1],
+                            "Resources": ["prowler", "^test", "prowler-pro"],
+                        }
+                    }
+                }
+            }
+        }
+        mutelist = AWSMutelist(mutelist_content=mutelist_content)
+
+        # Finding
+        finding_1 = MagicMock
+        finding_1.metadata = MagicMock
+        finding_1.metadata.CheckID = "check_test"
+        finding_1.status = "FAIL"
+        finding_1.region = AWS_REGION_US_EAST_1
+        finding_1.account_uid = AWS_ACCOUNT_NUMBER
+        finding_1.resource_id = "prowler"
+        finding_1.resource_tags = []
+        finding_1.muted = False
+        finding_1.raw = {}
+
+        muted_finding = mutelist.mute_finding(finding_1)
+
+        assert muted_finding.status == "MUTED"
+        assert muted_finding.muted
+        assert muted_finding.raw["status"] == "FAIL"

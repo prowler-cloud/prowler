@@ -66,3 +66,37 @@ class TestAzureMutelist:
         finding.subscription = "subscription_1"
 
         assert mutelist.is_finding_muted(finding)
+
+    def test_mute_finding(self):
+        # Mutelist
+        mutelist_content = {
+            "Accounts": {
+                "subscription_1": {
+                    "Checks": {
+                        "check_test": {
+                            "Regions": ["*"],
+                            "Resources": ["test_resource"],
+                        }
+                    }
+                }
+            }
+        }
+
+        mutelist = AzureMutelist(mutelist_content=mutelist_content)
+
+        finding = MagicMock
+        finding.metadata = MagicMock
+        finding.metadata.CheckID = "check_test"
+        finding.region = "West Europe"
+        finding.status = "FAIL"
+        finding.resource_id = "test_resource"
+        finding.resource_tags = []
+        finding.account_uid = "subscription_1"
+        finding.muted = False
+        finding.raw = {}
+
+        muted_finding = mutelist.mute_finding(finding=finding)
+
+        assert muted_finding.status == "MUTED"
+        assert muted_finding.muted is True
+        assert muted_finding.raw["status"] == "FAIL"

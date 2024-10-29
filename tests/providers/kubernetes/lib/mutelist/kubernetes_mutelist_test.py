@@ -128,3 +128,37 @@ class TestKubernetesMutelist:
         finding.resource_tags = []
 
         assert mutelist.is_finding_muted(finding, "cluster_1")
+
+    def test_mute_finding(self):
+        # Mutelist
+        mutelist_content = {
+            "Accounts": {
+                "cluster_1": {
+                    "Checks": {
+                        "check_test": {
+                            "Regions": ["*"],
+                            "Resources": ["test_resource"],
+                        }
+                    }
+                }
+            }
+        }
+
+        mutelist = KubernetesMutelist(mutelist_content=mutelist_content)
+
+        finding = MagicMock
+        finding.metadata = MagicMock
+        finding.metadata.CheckID = "check_test"
+        finding.status = "FAIL"
+        finding.resource_id = "test_resource"
+        finding.account_uid = "cluster_1"
+        finding.region = "test-location"
+        finding.resource_tags = []
+        finding.raw = {}
+        finding.muted = False
+
+        muted_finding = mutelist.mute_finding(finding)
+
+        assert muted_finding.status == "MUTED"
+        assert muted_finding.muted is True
+        assert muted_finding.raw["status"] == "FAIL"

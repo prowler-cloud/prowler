@@ -64,3 +64,37 @@ class TestGCPMutelist:
         finding.project_id = "project_1"
 
         assert mutelist.is_finding_muted(finding)
+
+    def test_mute_finding(self):
+        # Mutelist
+        mutelist_content = {
+            "Accounts": {
+                "project_1": {
+                    "Checks": {
+                        "check_test": {
+                            "Regions": ["*"],
+                            "Resources": ["test_resource"],
+                        }
+                    }
+                }
+            }
+        }
+
+        mutelist = GCPMutelist(mutelist_content=mutelist_content)
+
+        finding = MagicMock
+        finding.metadata = MagicMock
+        finding.metadata.CheckID = "check_test"
+        finding.status = "FAIL"
+        finding.region = "test-location"
+        finding.resource_tags = []
+        finding.resource_id = "test_resource"
+        finding.account_uid = "project_1"
+        finding.muted = False
+        finding.raw = {}
+
+        muted_finding = mutelist.mute_finding(finding=finding)
+
+        assert muted_finding.status == "MUTED"
+        assert muted_finding.muted
+        assert muted_finding.raw["status"] == "FAIL"
