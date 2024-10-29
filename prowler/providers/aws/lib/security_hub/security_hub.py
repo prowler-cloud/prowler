@@ -10,7 +10,6 @@ from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.aws.lib.security_hub.exceptions.exceptions import (
     SecurityHubInvalidRegionError,
     SecurityHubNoEnabledRegionsError,
-    SecurityHubTestConnectionError,
 )
 from prowler.providers.common.models import Connection
 
@@ -410,15 +409,4 @@ class SecurityHub:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            exception_error = SecurityHubTestConnectionError(
-                message="Failed to test connection on the Security Hub integration"
-            )
-            if raise_on_exception:
-                raise exception_error
-
-            return SecurityHubConnection(
-                is_connected=False,
-                error=exception_error,
-                enabled_regions=enabled_regions,
-                disabled_regions=disabled_regions,
-            )
+            raise error

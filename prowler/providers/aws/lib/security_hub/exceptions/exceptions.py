@@ -6,15 +6,11 @@ class SecurityHubBaseException(ProwlerException):
     """Base class for Security Hub exceptions."""
 
     SECURITYHUB_ERROR_CODES = {
-        (7000, "SecurityHubTestConnectionError"): {
-            "message": "Failed to test connection on the Security Hub integration",
-            "remediation": "Please check the connection settings and permissions and try again.",
-        },
-        (7001, "SecurityHubNoEnabledRegionsError"): {
+        (7000, "SecurityHubNoEnabledRegionsError"): {
             "message": "No regions were found to with the Security Hub integration enabled.",
             "remediation": "Please check the connection settings and permissions and try again.",
         },
-        (7002, "SecurityHubInvalidRegionError"): {
+        (7001, "SecurityHubInvalidRegionError"): {
             "message": "Given region has not Security Hub enabled.",
             "remediation": "Please provide a valid region.",
         },
@@ -34,22 +30,15 @@ class SecurityHubBaseException(ProwlerException):
         )
 
 
-class SecurityHubTestConnectionError(SecurityHubBaseException):
+class SecurityHubNoEnabledRegionsError(SecurityHubBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             7000, file=file, original_exception=original_exception, message=message
         )
 
 
-class SecurityHubNoEnabledRegionsError(SecurityHubBaseException):
-    def __init__(self, file=None, original_exception=None, message=None):
-        super().__init__(
-            7001, file=file, original_exception=original_exception, message=message
-        )
-
-
 class SecurityHubInvalidRegionError(SecurityHubBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            7002, file=file, original_exception=original_exception, message=message
+            7001, file=file, original_exception=original_exception, message=message
         )
