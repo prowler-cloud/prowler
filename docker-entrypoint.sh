@@ -31,14 +31,25 @@ start_worker() {
   poetry run python -m celery -A config.celery worker -l "${DJANGO_LOGGING_LEVEL:-info}" -Q celery,scans -E
 }
 
+manage_db_partitions() {
+  if [ "${DJANGO_MANAGE_DB_PARTITIONS}" = "True" ]; then
+    echo "Managing DB partitions..."
+    # For now we skip the deletion of partitions until we define the data retention policy
+    # --yes auto approves the operation without the need of an interactive terminal
+    poetry run python manage.py pgpartition --using admin --skip-delete --yes
+  fi
+}
+
 case "$1" in
   dev)
     apply_migrations
     apply_fixtures
+    manage_db_partitions
     start_dev_server
     ;;
   prod)
     apply_migrations
+    manage_db_partitions
     start_prod_server
     ;;
   worker)
