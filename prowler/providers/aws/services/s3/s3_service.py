@@ -473,7 +473,10 @@ class S3Control(AWSService):
         self.multi_region_access_points = {}
         self.__threading_call__(self._list_access_points)
         self.__threading_call__(self._get_access_point, self.access_points.values())
-        self._list_multi_region_access_points()
+        if self.audited_partition == "aws":
+            self.region = "us-west-2"
+            self.client = self.session.client(self.service, self.region)
+            self._list_multi_region_access_points()
 
     def _get_public_access_block(self):
         logger.info("S3 - Get account public access block...")
