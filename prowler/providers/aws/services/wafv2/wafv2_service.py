@@ -29,29 +29,25 @@ class WAFv2(AWSService):
 
     def _list_web_acls_global(self):
         logger.info("WAFv2 - Listing Global Web ACLs...")
-        if "us-east-1" in self.regional_clients:
-            try:
-                regional_client = self.regional_clients["us-east-1"]
-                for wafv2 in regional_client.list_web_acls(Scope="CLOUDFRONT")[
-                    "WebACLs"
-                ]:
-                    if not self.audit_resources or (
-                        is_resource_filtered(wafv2["ARN"], self.audit_resources)
-                    ):
-                        arn = wafv2["ARN"]
-                        self.web_acls[arn] = WebAclv2(
-                            arn=arn,
-                            name=wafv2["Name"],
-                            id=wafv2["Id"],
-                            albs=[],
-                            user_pools=[],
-                            scope=Scope.CLOUDFRONT,
-                            region="us-east-1",
-                        )
-            except Exception as error:
-                logger.error(
-                    f"us-east-1 -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
+        try:
+            for wafv2 in self.client.list_web_acls(Scope="CLOUDFRONT")["WebACLs"]:
+                if not self.audit_resources or (
+                    is_resource_filtered(wafv2["ARN"], self.audit_resources)
+                ):
+                    arn = wafv2["ARN"]
+                    self.web_acls[arn] = WebAclv2(
+                        arn=arn,
+                        name=wafv2["Name"],
+                        id=wafv2["Id"],
+                        albs=[],
+                        user_pools=[],
+                        scope=Scope.CLOUDFRONT,
+                        region=self.region,
+                    )
+        except Exception as error:
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
     def _list_web_acls_regional(self, regional_client):
         logger.info("WAFv2 - Listing Regional Web ACLs...")
