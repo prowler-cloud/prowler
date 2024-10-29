@@ -454,6 +454,7 @@ class S3(AWSService):
                     Bucket=bucket.name
                 )
             )
+            print(bucket_notification_config)
 
             if any(
                 key in bucket_notification_config
@@ -465,7 +466,7 @@ class S3(AWSService):
             ):
                 bucket.notification_config = bucket_notification_config
             else:
-                bucket.notification_config = {}  # No hay notificaciones configuradas
+                bucket.notification_config = {}
 
         except ClientError as error:
             if error.response["Error"]["Code"] == "NoSuchNotificationConfiguration":
@@ -474,6 +475,14 @@ class S3(AWSService):
                 logger.warning(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
+            else:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
     def _head_bucket(self, bucket_name):
         logger.info("S3 - Checking if bucket exists...")
