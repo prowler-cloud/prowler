@@ -7,7 +7,7 @@
   ],
   "ServiceName": "cloudwatch",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:ses:region:account-id:identity/<IDENTITY-NAME>",
+  "ResourceIdTemplate": "arn:aws:ses:region:account-id:log-group/log_group_name",
   "Severity": "high",
   "ResourceType": "Other",
   "Description": "This check ensures that no CloudWatch Log Groups are publicly accessible by checking for resource policies that allow access from any entity (Principal: '*'). Publicly exposed log groups pose a serious security risk as sensitive log data could be accessed by unauthorized parties.",
