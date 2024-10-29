@@ -17,7 +17,7 @@
     "Code": {
       "CLI": "aws autoscaling create-auto-scaling-group --capacity-rebalance",
       "NativeIaC": "",
-      "Other": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-capacity-rebalancing.html",
+      "Other": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/enable-capacity-rebalancing-console-cli.html",
       "Terraform": ""
     },
     "Recommendation": {
@@ -25,7 +25,9 @@
       "Url": "https://docs.aws.amazon.com/awssupport/latest/user/fault-tolerance-checks.html#amazon-ec2-auto-scaling-group-capacity-rebalance-enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "redundancy"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
