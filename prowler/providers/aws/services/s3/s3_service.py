@@ -454,7 +454,6 @@ class S3(AWSService):
                     Bucket=bucket.name
                 )
             )
-            print(bucket_notification_config)
 
             if any(
                 key in bucket_notification_config
@@ -462,6 +461,7 @@ class S3(AWSService):
                     "TopicConfigurations",
                     "QueueConfigurations",
                     "LambdaFunctionConfigurations",
+                    "EventBridgeConfiguration",
                 )
             ):
                 bucket.notification_config = bucket_notification_config
