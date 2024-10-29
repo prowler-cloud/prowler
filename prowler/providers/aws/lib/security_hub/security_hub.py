@@ -370,7 +370,7 @@ class SecurityHub:
                     )
                 else:
                     logger.info(
-                        f"Prowler integration is enabled in regions: {list(regions)}."
+                        f"Prowler integration is enabled in regions: {', '.join(regions)}."
                     )
                     return SecurityHubConnection(
                         is_connected=True,
@@ -380,11 +380,12 @@ class SecurityHub:
                     )
 
             if len(enabled_regions) == 0:
-                logger.warning(
-                    "No regions were found to with the Security Hub integration enabled."
+                error_str = (
+                    "No regions found with the Security Hub integration enabled."
                 )
+                logger.warning(error_str)
                 no_enabled_regions_error = SecurityHubNoEnabledRegionsError(
-                    message="No regions were found to with the Security Hub integration enabled."
+                    message=error_str
                 )
                 if raise_on_exception:
                     raise no_enabled_regions_error
