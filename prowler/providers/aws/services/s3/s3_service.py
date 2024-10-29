@@ -32,6 +32,9 @@ class S3(AWSService):
         self.__threading_call__(self._get_bucket_tagging, self.buckets.values())
         self.__threading_call__(self._get_bucket_replication, self.buckets.values())
         self.__threading_call__(self._get_bucket_lifecycle, self.buckets.values())
+        self.__threading_call__(
+            self._get_bucket_notification_configuration, self.buckets.values()
+        )
 
     def _list_buckets(self, provider):
         logger.info("S3 - Listing buckets...")
@@ -442,6 +445,36 @@ class S3(AWSService):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
+    def _get_bucket_notification_configuration(self, bucket):
+        logger.info("S3 - Get bucket's notification configuration...")
+        try:
+            regional_client = self.regional_clients[bucket.region]
+            bucket_notification_config = (
+                regional_client.get_bucket_notification_configuration(
+                    Bucket=bucket.name
+                )
+            )
+
+            if any(
+                key in bucket_notification_config
+                for key in (
+                    "TopicConfigurations",
+                    "QueueConfigurations",
+                    "LambdaFunctionConfigurations",
+                )
+            ):
+                bucket.notification_config = bucket_notification_config
+            else:
+                bucket.notification_config = {}  # No hay notificaciones configuradas
+
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "NoSuchNotificationConfiguration":
+                bucket.notification_config = {}
+            elif error.response["Error"]["Code"] == "NoSuchBucket":
+                logger.warning(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
     def _head_bucket(self, bucket_name):
         logger.info("S3 - Checking if bucket exists...")
         try:
@@ -601,3 +634,4 @@ class Bucket(BaseModel):
     tags: Optional[list] = []
     lifecycle: Optional[list[LifeCycleRule]] = []
     replication_rules: Optional[list[ReplicationRule]] = []
+    notification_config: Optional[dict] = {}
