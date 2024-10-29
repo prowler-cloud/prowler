@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "storagegateway_fault_tolerance",
-  "CheckTitle": "Check if AWS StorageGateway File Shares are running on EC2.",
+  "CheckTitle": "Check if AWS StorageGateway Gateways are running on EC2.",
   "CheckType": [
     "Resiliance"
   ],
