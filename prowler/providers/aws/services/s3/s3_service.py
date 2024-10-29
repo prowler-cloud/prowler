@@ -470,8 +470,11 @@ class S3Control(AWSService):
         super().__init__(__class__.__name__, provider)
         self.account_public_access_block = self._get_public_access_block()
         self.access_points = {}
+        self.multi_region_access_points = {}
         self.__threading_call__(self._list_access_points)
         self.__threading_call__(self._get_access_point, self.access_points.values())
+        if self.audited_partition == "aws":
+            self._list_multi_region_access_points()
 
     def _get_public_access_block(self):
         logger.info("S3 - Get account public access block...")
@@ -506,23 +509,57 @@ class S3Control(AWSService):
             )["AccessPointList"]
             for ap in list_access_points:
                 self.access_points[ap["AccessPointArn"]] = AccessPoint(
+                    arn=ap["AccessPointArn"],
                     account_id=self.audited_account,
                     name=ap["Name"],
                     bucket=ap["Bucket"],
                     region=regional_client.region,
                 )
-        except ClientError as error:
-            if error.response["Error"]["Code"] == "NoSuchMultiRegionAccessPoint":
-                logger.warning(
-                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
-            else:
-                logger.error(
-                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _list_multi_region_access_points(self):
+        # NOTE: This function is restricted to the us-west-2 region due to AWS limitations on Multi-Region Access Points.
+        # For more details on region restrictions, see the AWS documentation:
+        # https://docs.aws.amazon.com/AmazonS3/latest/userguide/MultiRegionAccessPointRestrictions.html
+        logger.info("S3 - Listing account multi region access points...")
+        try:
+            region = "us-west-2"
+            client = self.session.client(self.service, region)
+            list_multi_region_access_points = client.list_multi_region_access_points(
+                AccountId=self.audited_account
+            ).get("AccessPoints", [])
+            for mr_access_point in list_multi_region_access_points:
+                mr_ap_arn = f"arn:{self.audited_partition}:s3::{self.audited_account}:accesspoint/{mr_access_point['Name']}"
+                bucket_list = []
+                for mrap_region in mr_access_point.get("Regions", []):
+                    bucket_list.append(mrap_region.get("Bucket", ""))
+                self.multi_region_access_points[mr_ap_arn] = MultiRegionAccessPoint(
+                    arn=mr_ap_arn,
+                    account_id=self.audited_account,
+                    name=mr_access_point["Name"],
+                    buckets=bucket_list,
+                    region=region,
+                    public_access_block=PublicAccessBlock(
+                        block_public_acls=mr_access_point.get(
+                            "PublicAccessBlock", {}
+                        ).get("BlockPublicAcls", False),
+                        ignore_public_acls=mr_access_point.get(
+                            "PublicAccessBlock", {}
+                        ).get("IgnorePublicAcls", False),
+                        block_public_policy=mr_access_point.get(
+                            "PublicAccessBlock", {}
+                        ).get("BlockPublicPolicy", False),
+                        restrict_public_buckets=mr_access_point.get(
+                            "PublicAccessBlock", {}
+                        ).get("RestrictPublicBuckets", False),
+                    ),
+                )
+        except Exception as error:
+            logger.error(
+                f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def _get_access_point(self, ap):
@@ -567,9 +604,19 @@ class PublicAccessBlock(BaseModel):
 
 
 class AccessPoint(BaseModel):
+    arn: str
     account_id: str
     name: str
     bucket: str
+    public_access_block: Optional[PublicAccessBlock]
+    region: str
+
+
+class MultiRegionAccessPoint(BaseModel):
+    arn: str
+    account_id: str
+    name: str
+    buckets: list[str] = []
     public_access_block: Optional[PublicAccessBlock]
     region: str
 
