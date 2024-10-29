@@ -237,6 +237,38 @@ class Mutelist(ABC):
             )
             return False
 
+    def mute_finding(self, finding: Finding) -> Finding:
+        """
+        Check if the provided finding is muted
+
+        Args:
+            finding (Finding): The finding to be evaluated for muting.
+
+        Returns:
+            Finding: The finding with the status updated if it is muted, otherwise the finding is returned
+
+        """
+        try:
+            is_finding_muted = self.is_muted(
+                finding.account_uid,
+                finding.metadata.CheckID,
+                finding.region,
+                finding.resource_id,
+                finding.resource_tags,
+            )
+
+            if is_finding_muted:
+                finding.raw = finding.status
+                finding.status = "MUTED"
+                finding.muted = True
+
+            return finding
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
+            )
+            return False
+
     def is_excepted(
         self,
         exceptions,
