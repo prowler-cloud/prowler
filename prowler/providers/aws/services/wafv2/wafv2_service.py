@@ -14,7 +14,11 @@ class WAFv2(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.web_acls = {}
-        self._list_web_acls_global()
+        if self.audited_partition == "aws":
+            # AWS WAFv2 is available globally for CloudFront distributions, but you must use the Region US East (N. Virginia) to create your web ACL.
+            self.region = "us-east-1"
+            self.client = self.session.client(self.service, self.region)
+            self._list_web_acls_global()
         self.__threading_call__(self._list_web_acls_regional)
         self.__threading_call__(self._get_web_acl, self.web_acls.values())
         self.__threading_call__(
