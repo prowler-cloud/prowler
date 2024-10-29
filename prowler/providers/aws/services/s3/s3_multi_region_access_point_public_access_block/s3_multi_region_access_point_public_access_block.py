@@ -25,7 +25,6 @@ class s3_multi_region_access_point_public_access_block(Check):
             report.status = "PASS"
             report.status_extended = f"S3 Multi Region Access Point {mr_access_point.name} of buckets {', '.join(mr_access_point.buckets)} does have Public Access Block enabled."
 
-            print(mr_access_point.public_access_block)
             if not (
                 mr_access_point.public_access_block.block_public_acls
                 and mr_access_point.public_access_block.ignore_public_acls
