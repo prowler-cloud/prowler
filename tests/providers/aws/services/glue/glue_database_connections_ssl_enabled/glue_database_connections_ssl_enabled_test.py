@@ -1,4 +1,3 @@
-from re import search
 from unittest.mock import MagicMock, patch
 
 from prowler.providers.aws.services.glue.glue_service import Connection
@@ -62,9 +61,9 @@ class Test_glue_database_connections_ssl_enabled:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert search(
-                "has SSL connection disabled",
-                result[0].status_extended,
+            assert (
+                result[0].status_extended
+                == "Glue connection test has SSL connection disabled."
             )
             assert result[0].resource_id == "test"
             assert result[0].resource_arn == "arn_test"
@@ -106,9 +105,9 @@ class Test_glue_database_connections_ssl_enabled:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert search(
-                "has SSL connection enabled",
-                result[0].status_extended,
+            assert (
+                result[0].status_extended
+                == "Glue connection test has SSL connection enabled."
             )
             assert result[0].resource_id == "test"
             assert result[0].resource_arn == "arn_test"

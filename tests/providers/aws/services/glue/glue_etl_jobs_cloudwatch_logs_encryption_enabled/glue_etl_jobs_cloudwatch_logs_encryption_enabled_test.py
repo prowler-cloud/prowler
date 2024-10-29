@@ -1,4 +1,3 @@
-from re import search
 from unittest.mock import MagicMock, patch
 
 from prowler.providers.aws.services.glue.glue_service import Job, SecurityConfig
@@ -67,9 +66,9 @@ class Test_glue_etl_jobs_cloudwatch_logs_encryption_enabled:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert search(
-                "has CloudWatch Logs encryption enabled with key",
-                result[0].status_extended,
+            assert (
+                result[0].status_extended
+                == "Glue job test has CloudWatch Logs encryption enabled with key key_arn."
             )
             assert result[0].resource_id == "test"
             assert result[0].resource_arn == "arn_test"
@@ -114,9 +113,9 @@ class Test_glue_etl_jobs_cloudwatch_logs_encryption_enabled:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert search(
-                "does not have CloudWatch Logs encryption enabled",
-                result[0].status_extended,
+            assert (
+                result[0].status_extended
+                == "Glue job test does not have CloudWatch Logs encryption enabled."
             )
             assert result[0].resource_id == "test"
             assert result[0].resource_arn == "arn_test"
@@ -152,9 +151,9 @@ class Test_glue_etl_jobs_cloudwatch_logs_encryption_enabled:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert search(
-                "does not have security configuration",
-                result[0].status_extended,
+            assert (
+                result[0].status_extended
+                == "Glue job test does not have security configuration."
             )
             assert result[0].resource_id == "test"
             assert result[0].resource_arn == "arn_test"
