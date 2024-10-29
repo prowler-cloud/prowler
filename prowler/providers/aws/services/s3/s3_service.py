@@ -514,15 +514,6 @@ class S3Control(AWSService):
                     bucket=ap["Bucket"],
                     region=regional_client.region,
                 )
-        except ClientError as error:
-            if error.response["Error"]["Code"] == "NoSuchMultiRegionAccessPoint":
-                logger.warning(
-                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
-            else:
-                logger.error(
-                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -537,7 +528,7 @@ class S3Control(AWSService):
                 )["AccessPoints"]
             )
             for mr_access_point in list_multi_region_access_points:
-                mr_ap_arn = f"arn:{self.audited_partition}:s3:{self.audited_account}:accesspoint/{mr_access_point['Name']}"
+                mr_ap_arn = f"arn:{self.audited_partition}:s3::{self.audited_account}:accesspoint/{mr_access_point['Name']}"
                 self.multi_region_access_points[mr_ap_arn] = AccessPoint(
                     arn=mr_ap_arn,
                     account_id=self.audited_account,
@@ -558,15 +549,6 @@ class S3Control(AWSService):
                             "PublicAccessBlockConfiguration", {}
                         ).get("RestrictPublicBuckets", False),
                     ),
-                )
-        except ClientError as error:
-            if error.response["Error"]["Code"] == "NoSuchMultiRegionAccessPoint":
-                logger.warning(
-                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
-            else:
-                logger.error(
-                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         except Exception as error:
             logger.error(
