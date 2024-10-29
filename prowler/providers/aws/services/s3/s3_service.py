@@ -473,7 +473,8 @@ class S3Control(AWSService):
         self.multi_region_access_points = {}
         self.__threading_call__(self._list_access_points)
         self.__threading_call__(self._get_access_point, self.access_points.values())
-        self._list_multi_region_access_points()
+        if self.audited_partition == "aws":
+            self._list_multi_region_access_points()
 
     def _get_public_access_block(self):
         logger.info("S3 - Get account public access block...")
@@ -520,42 +521,45 @@ class S3Control(AWSService):
             )
 
     def _list_multi_region_access_points(self):
+        # NOTE: This function is restricted to the us-west-2 region due to AWS limitations on Multi-Region Access Points.
+        # For more details on region restrictions, see the AWS documentation:
+        # https://docs.aws.amazon.com/AmazonS3/latest/userguide/MultiRegionAccessPointRestrictions.html
         logger.info("S3 - Listing account multi region access points...")
         try:
-            list_multi_region_access_points = (
-                self.regional_clients.get("us-west-2")
-                .list_multi_region_access_points(AccountId=self.audited_account)
-                .get("AccessPoints", [])
-            )
+            region = "us-west-2"
+            client = self.session.client(self.service, region)
+            list_multi_region_access_points = client.list_multi_region_access_points(
+                AccountId=self.audited_account
+            ).get("AccessPoints", [])
             for mr_access_point in list_multi_region_access_points:
                 mr_ap_arn = f"arn:{self.audited_partition}:s3::{self.audited_account}:accesspoint/{mr_access_point['Name']}"
                 bucket_list = []
-                for region in mr_access_point.get("Regions", []):
-                    bucket_list.append(region.get("Bucket", ""))
+                for mrap_region in mr_access_point.get("Regions", []):
+                    bucket_list.append(mrap_region.get("Bucket", ""))
                 self.multi_region_access_points[mr_ap_arn] = MultiRegionAccessPoint(
                     arn=mr_ap_arn,
                     account_id=self.audited_account,
                     name=mr_access_point["Name"],
                     buckets=bucket_list,
-                    region=self.region,
+                    region=region,
                     public_access_block=PublicAccessBlock(
                         block_public_acls=mr_access_point.get(
-                            "PublicAccessBlockConfiguration", {}
+                            "PublicAccessBlock", {}
                         ).get("BlockPublicAcls", False),
                         ignore_public_acls=mr_access_point.get(
-                            "PublicAccessBlockConfiguration", {}
+                            "PublicAccessBlock", {}
                         ).get("IgnorePublicAcls", False),
                         block_public_policy=mr_access_point.get(
-                            "PublicAccessBlockConfiguration", {}
+                            "PublicAccessBlock", {}
                         ).get("BlockPublicPolicy", False),
                         restrict_public_buckets=mr_access_point.get(
-                            "PublicAccessBlockConfiguration", {}
+                            "PublicAccessBlock", {}
                         ).get("RestrictPublicBuckets", False),
                     ),
                 )
         except Exception as error:
             logger.error(
-                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def _get_access_point(self, ap):

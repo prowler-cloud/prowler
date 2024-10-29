@@ -30,7 +30,7 @@ def mock_make_api_call_pab_enabled(self, operation_name, kwarg):
                             "Region": "us-west-2",
                         }
                     ],
-                    "PublicAccessBlockConfiguration": {
+                    "PublicAccessBlock": {
                         "BlockPublicAcls": True,
                         "IgnorePublicAcls": True,
                         "BlockPublicPolicy": True,
@@ -55,7 +55,7 @@ def mock_make_api_call_pab_disabled(self, operation_name, kwarg):
                             "Region": "us-west-2",
                         }
                     ],
-                    "PublicAccessBlockConfiguration": {
+                    "PublicAccessBlock": {
                         "BlockPublicAcls": False,
                         "IgnorePublicAcls": False,
                         "BlockPublicPolicy": False,
@@ -80,7 +80,7 @@ def mock_make_api_call_pab_one_disabled(self, operation_name, kwarg):
                             "Region": "us-west-2",
                         }
                     ],
-                    "PublicAccessBlockConfiguration": {
+                    "PublicAccessBlock": {
                         "BlockPublicAcls": False,
                         "IgnorePublicAcls": True,
                         "BlockPublicPolicy": True,
