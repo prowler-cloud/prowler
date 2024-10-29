@@ -18,7 +18,7 @@ export const NavigationHeader: React.FC<NavigationHeaderProps> = ({
     <>
       <header className="flex items-center gap-3 border-b border-gray-200 px-6 py-4 dark:border-gray-800">
         <Link
-          className="mr-3 flex h-[2.625rem] w-[2.625rem] items-center justify-center rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700"
+          className="mr-3 flex h-[2.625rem] w-[2.625rem] items-center justify-center rounded-lg border border-solid border-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700"
           href={href || ""}
         >
           <Icon
