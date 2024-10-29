@@ -1,8 +1,8 @@
 import json
-from typing import Optional
+from typing import Dict, List, Optional
 
 from botocore.client import ClientError
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -623,15 +623,15 @@ class Bucket(BaseModel):
     versioning: bool = False
     logging: bool = False
     public_access_block: Optional[PublicAccessBlock]
-    acl_grantees: list[ACL_Grantee] = []
-    policy: dict = {}
+    acl_grantees: List[ACL_Grantee] = Field(default_factory=list)
+    policy: Dict = Field(default_factory=dict)
     encryption: Optional[str]
     region: str
     logging_target_bucket: Optional[str]
     ownership: Optional[str]
     object_lock: bool = False
     mfa_delete: bool = False
-    tags: Optional[list] = []
-    lifecycle: Optional[list[LifeCycleRule]] = []
-    replication_rules: Optional[list[ReplicationRule]] = []
-    notification_config: Optional[dict] = {}
+    tags: List[Dict[str, str]] = Field(default_factory=list)
+    lifecycle: List[LifeCycleRule] = Field(default_factory=list)
+    replication_rules: List[ReplicationRule] = Field(default_factory=list)
+    notification_config: Dict = Field(default_factory=dict)

@@ -4,7 +4,19 @@ from prowler.providers.aws.services.s3.s3_client import s3_client
 
 
 class s3_bucket_event_notifications_enabled(Check):
-    def execute(self):
+    """Ensure S3 Buckets have event notifications enabled
+
+    This check will return a FAIL if the S3 Bucket does not have event notifications enabled.
+    """
+
+    def execute(self) -> list[Check_Report_AWS]:
+        """Execute the s3_bucket_event_notifications_enabled check
+
+        Iterates over all S3 Buckets and checks if they have event notifications enabled.
+
+        Returns:
+            list[Check_Report_AWS]: List of Check_Report_AWS objects
+        """
         findings = []
         for arn, bucket in s3_client.buckets.items():
             report = Check_Report_AWS(self.metadata())
