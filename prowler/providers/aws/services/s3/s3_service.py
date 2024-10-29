@@ -473,10 +473,7 @@ class S3Control(AWSService):
         self.multi_region_access_points = {}
         self.__threading_call__(self._list_access_points)
         self.__threading_call__(self._get_access_point, self.access_points.values())
-        if self.audited_partition == "aws":
-            self.region = "us-west-2"
-            self.client = self.session.client(self.service, self.region)
-            self._list_multi_region_access_points()
+        self._list_multi_region_access_points()
 
     def _get_public_access_block(self):
         logger.info("S3 - Get account public access block...")
@@ -526,17 +523,20 @@ class S3Control(AWSService):
         logger.info("S3 - Listing account multi region access points...")
         try:
             list_multi_region_access_points = (
-                self.client.list_multi_region_access_points(
-                    AccountId=self.audited_account
-                )["AccessPoints"]
+                self.regional_clients.get("us-west-2")
+                .list_multi_region_access_points(AccountId=self.audited_account)
+                .get("AccessPoints", [])
             )
             for mr_access_point in list_multi_region_access_points:
                 mr_ap_arn = f"arn:{self.audited_partition}:s3::{self.audited_account}:accesspoint/{mr_access_point['Name']}"
-                self.multi_region_access_points[mr_ap_arn] = AccessPoint(
+                bucket_list = []
+                for region in mr_access_point.get("Regions", []):
+                    bucket_list.append(region.get("Bucket", ""))
+                self.multi_region_access_points[mr_ap_arn] = MultiRegionAccessPoint(
                     arn=mr_ap_arn,
                     account_id=self.audited_account,
                     name=mr_access_point["Name"],
-                    bucket=mr_access_point["Bucket"],
+                    buckets=bucket_list,
                     region=self.region,
                     public_access_block=PublicAccessBlock(
                         block_public_acls=mr_access_point.get(
@@ -604,6 +604,15 @@ class AccessPoint(BaseModel):
     account_id: str
     name: str
     bucket: str
+    public_access_block: Optional[PublicAccessBlock]
+    region: str
+
+
+class MultiRegionAccessPoint(BaseModel):
+    arn: str
+    account_id: str
+    name: str
+    buckets: list[str] = []
     public_access_block: Optional[PublicAccessBlock]
     region: str
 

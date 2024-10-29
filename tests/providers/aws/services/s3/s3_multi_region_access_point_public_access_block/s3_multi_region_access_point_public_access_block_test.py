@@ -6,7 +6,7 @@ from moto import mock_aws
 
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
-    AWS_REGION_US_EAST_1,
+    AWS_REGION_US_WEST_2,
     set_mocked_aws_provider,
 )
 
@@ -24,8 +24,12 @@ def mock_make_api_call_pab_enabled(self, operation_name, kwarg):
             "AccessPoints": [
                 {
                     "Name": MRAP_NAME,
-                    "Bucket": BUCKET_NAME,
-                    "NetworkOrigin": "Internet",
+                    "Regions": [
+                        {
+                            "Bucket": BUCKET_NAME,
+                            "Region": "us-west-2",
+                        }
+                    ],
                     "PublicAccessBlockConfiguration": {
                         "BlockPublicAcls": True,
                         "IgnorePublicAcls": True,
@@ -45,8 +49,12 @@ def mock_make_api_call_pab_disabled(self, operation_name, kwarg):
             "AccessPoints": [
                 {
                     "Name": MRAP_NAME,
-                    "Bucket": BUCKET_NAME,
-                    "NetworkOrigin": "Internet",
+                    "Regions": [
+                        {
+                            "Bucket": BUCKET_NAME,
+                            "Region": "us-west-2",
+                        }
+                    ],
                     "PublicAccessBlockConfiguration": {
                         "BlockPublicAcls": False,
                         "IgnorePublicAcls": False,
@@ -66,8 +74,12 @@ def mock_make_api_call_pab_one_disabled(self, operation_name, kwarg):
             "AccessPoints": [
                 {
                     "Name": MRAP_NAME,
-                    "Bucket": BUCKET_NAME,
-                    "NetworkOrigin": "Internet",
+                    "Regions": [
+                        {
+                            "Bucket": BUCKET_NAME,
+                            "Region": "us-west-2",
+                        }
+                    ],
                     "PublicAccessBlockConfiguration": {
                         "BlockPublicAcls": False,
                         "IgnorePublicAcls": True,
@@ -86,7 +98,7 @@ class Test_s3_multi_region_access_point_public_access_block:
     def test_no_multi_region_access_points(self):
         from prowler.providers.aws.services.s3.s3_service import S3Control
 
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_WEST_2])
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -111,7 +123,7 @@ class Test_s3_multi_region_access_point_public_access_block:
     def test_multi_region_access_points_with_public_access_block(self):
         from prowler.providers.aws.services.s3.s3_service import S3Control
 
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_WEST_2])
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -132,12 +144,12 @@ class Test_s3_multi_region_access_point_public_access_block:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == f"S3 Multi Region Access Point {MRAP_NAME} of bucket {BUCKET_NAME} does have Public Access Block enabled."
+                    == f"S3 Multi Region Access Point {MRAP_NAME} of buckets {BUCKET_NAME} does have Public Access Block enabled."
                 )
                 assert result[0].resource_id == MRAP_NAME
                 assert (
                     result[0].resource_arn
-                    == f"arn:{aws_provider.identity.partition}:s3:{AWS_ACCOUNT_NUMBER}:accesspoint/{MRAP_NAME}"
+                    == f"arn:{aws_provider.identity.partition}:s3::{AWS_ACCOUNT_NUMBER}:accesspoint/{MRAP_NAME}"
                 )
 
     @patch(
@@ -146,7 +158,7 @@ class Test_s3_multi_region_access_point_public_access_block:
     def test_multi_region_access_points_without_public_access_block(self):
         from prowler.providers.aws.services.s3.s3_service import S3Control
 
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_WEST_2])
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -167,12 +179,12 @@ class Test_s3_multi_region_access_point_public_access_block:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"S3 Multi Region Access Point {MRAP_NAME} of bucket {BUCKET_NAME} does not have Public Access Block enabled."
+                    == f"S3 Multi Region Access Point {MRAP_NAME} of buckets {BUCKET_NAME} does not have Public Access Block enabled."
                 )
                 assert result[0].resource_id == MRAP_NAME
                 assert (
                     result[0].resource_arn
-                    == f"arn:{aws_provider.identity.partition}:s3:{AWS_ACCOUNT_NUMBER}:accesspoint/{MRAP_NAME}"
+                    == f"arn:{aws_provider.identity.partition}:s3::{AWS_ACCOUNT_NUMBER}:accesspoint/{MRAP_NAME}"
                 )
 
     @patch(
@@ -182,7 +194,7 @@ class Test_s3_multi_region_access_point_public_access_block:
     def test_multi_region_access_points_without_one_public_access_block(self):
         from prowler.providers.aws.services.s3.s3_service import S3Control
 
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_WEST_2])
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -203,10 +215,10 @@ class Test_s3_multi_region_access_point_public_access_block:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"S3 Multi Region Access Point {MRAP_NAME} of bucket {BUCKET_NAME} does not have Public Access Block enabled."
+                    == f"S3 Multi Region Access Point {MRAP_NAME} of buckets {BUCKET_NAME} does not have Public Access Block enabled."
                 )
                 assert result[0].resource_id == MRAP_NAME
                 assert (
                     result[0].resource_arn
-                    == f"arn:{aws_provider.identity.partition}:s3:{AWS_ACCOUNT_NUMBER}:accesspoint/{MRAP_NAME}"
+                    == f"arn:{aws_provider.identity.partition}:s3::{AWS_ACCOUNT_NUMBER}:accesspoint/{MRAP_NAME}"
                 )
