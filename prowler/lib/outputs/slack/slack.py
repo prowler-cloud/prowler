@@ -265,45 +265,29 @@ class Slack:
                 if channels_response["ok"]:
                     return Connection(is_connected=True)
                 else:
+                    exception = SlackChannelNotFound(
+                        file=os.path.basename(__file__),
+                        message=(
+                            channels_response["error"]
+                            if "error" in channels_response
+                            else "Unknown error"
+                        ),
+                    )
                     if raise_on_exception:
-                        raise SlackChannelNotFound(
-                            file=os.path.basename(__file__),
-                            message=(
-                                channels_response["error"]
-                                if "error" in channels_response
-                                else "Unknown error"
-                            ),
-                        )
-                    return Connection(
-                        error=SlackChannelNotFound(
-                            file=os.path.basename(__file__),
-                            message=(
-                                channels_response["error"]
-                                if "error" in channels_response
-                                else "Unknown error"
-                            ),
-                        )
-                    )
+                        raise exception
+                    return Connection(error=exception)
             else:
-                if raise_on_exception:
-                    raise SlackNoCredentialsError(
-                        file=os.path.basename(__file__),
-                        message=(
-                            auth_response["error"]
-                            if "error" in auth_response
-                            else "Unknown error"
-                        ),
-                    )
-                return Connection(
-                    error=SlackNoCredentialsError(
-                        file=os.path.basename(__file__),
-                        message=(
-                            auth_response["error"]
-                            if "error" in auth_response
-                            else "Unknown error"
-                        ),
-                    )
+                exception = SlackNoCredentialsError(
+                    file=os.path.basename(__file__),
+                    message=(
+                        auth_response["error"]
+                        if "error" in auth_response
+                        else "Unknown error"
+                    ),
                 )
+                if raise_on_exception:
+                    raise exception
+                return Connection(error=exception)
 
         except Exception as error:
             logger.error(
@@ -312,5 +296,6 @@ class Slack:
             if raise_on_exception:
                 raise SlackClientError(
                     file=os.path.basename(__file__),
+                    original_exception=error,
                 ) from error
             return Connection(error=error)
