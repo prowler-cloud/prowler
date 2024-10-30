@@ -1,5 +1,7 @@
 import { MetaDataProps } from "@/types";
 
+export const wait = (ms: number) =>
+  new Promise((resolve) => setTimeout(resolve, ms));
 // Helper function to create dictionaries by type
 export const createDict = (
   type: string,

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/auth.config";
-import { getErrorMessage, parseStringify } from "@/lib";
+import { getErrorMessage, parseStringify, wait } from "@/lib";
 
 export const getProviders = async ({
   page = 1,
@@ -190,6 +190,7 @@ export const deleteProvider = async (formData: FormData) => {
       },
     });
     const data = await response.json();
+    await wait(1000);
     revalidatePath("/providers");
     return parseStringify(data);
   } catch (error) {

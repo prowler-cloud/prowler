@@ -25,7 +25,7 @@ const steps = [
     href: "/providers/test-connection",
   },
   {
-    title: "Lunch scan",
+    title: "Launch scan",
     description: "Choose when you want to launch your scan.",
     href: "/providers",
   },

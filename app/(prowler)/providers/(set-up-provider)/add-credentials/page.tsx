@@ -1,15 +1,7 @@
 import React from "react";
 
-import { NavigationHeader } from "@/components/ui";
+import { AddCredentialsForm } from "@/components/providers/workflow/forms";
 
 export default function AddCredentialsPage() {
-  return (
-    <>
-      <NavigationHeader
-        title="Connect your account via credentials"
-        icon="bi:arrow-left"
-        href="/providers/connect-account"
-      />
-    </>
-  );
+  return <AddCredentialsForm providerType="aws" />;
 }

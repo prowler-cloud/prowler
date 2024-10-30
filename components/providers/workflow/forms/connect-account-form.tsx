@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronLeftIcon, ChevronRightIcon, SaveIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -35,6 +36,8 @@ export const ConnectAccountForm = () => {
   const providerType = form.watch("providerType");
   const isLoading = form.formState.isSubmitting;
 
+  const router = useRouter();
+
   const onSubmitClient = async (values: FormValues) => {
     const formData = new FormData();
 
@@ -43,6 +46,7 @@ export const ConnectAccountForm = () => {
     );
 
     const data = await addProvider(formData);
+    console.log(data);
 
     if (data?.errors && data.errors.length > 0) {
       data.errors.forEach((error: ApiError) => {
@@ -76,6 +80,8 @@ export const ConnectAccountForm = () => {
         }
       });
       setPrevStep(1);
+    } else {
+      router.push("/providers/add-credentials");
     }
   };
 
