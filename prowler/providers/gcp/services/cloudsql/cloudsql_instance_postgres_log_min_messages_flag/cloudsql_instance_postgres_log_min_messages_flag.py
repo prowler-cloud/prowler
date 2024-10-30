@@ -12,7 +12,6 @@ class cloudsql_instance_postgres_log_min_messages_flag(Check):
             "DEBUG1",
             "INFO",
             "NOTICE",
-            "WARNING",
         ]
 
         findings = []
