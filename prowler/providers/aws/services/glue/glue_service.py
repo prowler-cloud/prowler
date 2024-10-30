@@ -112,7 +112,7 @@ class Glue(AWSService):
                                 name=job["Name"],
                                 arn=arn,
                                 security=job.get("SecurityConfiguration"),
-                                arguments=job.get("DefaultArguments"),
+                                arguments=job.get("DefaultArguments", {}),
                                 continuous_logging=job.get("DefaultArguments", {}).get(
                                     "--enable-continuous-cloudwatch-log", "false"
                                 )
@@ -312,7 +312,7 @@ class Job(BaseModel):
     arn: str
     name: str
     security: Optional[str]
-    arguments: Optional[dict]
+    arguments: Optional[Dict[str, str]] = Field(default_factory=dict)
     region: str
     tags: Optional[List[Dict[str, str]]] = Field(default_factory=list)
 

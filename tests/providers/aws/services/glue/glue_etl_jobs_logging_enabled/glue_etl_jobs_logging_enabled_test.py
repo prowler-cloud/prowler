@@ -22,17 +22,17 @@ class Test_glue_etl_jobs_logging_enabled:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.s3.s3_bucket_default_encryption.s3_bucket_default_encryption.s3_client",
+                "prowler.providers.aws.services.glue.glue_etl_jobs_logging_enabled.glue_etl_jobs_logging_enabled.glue_client",
                 new=Glue(aws_provider),
             ):
                 from prowler.providers.aws.services.glue.glue_etl_jobs_logging_enabled.glue_etl_jobs_logging_enabled import (
                     glue_etl_jobs_logging_enabled,
                 )
 
-            check = glue_etl_jobs_logging_enabled()
-            result = check.execute()
+                check = glue_etl_jobs_logging_enabled()
+                result = check.execute()
 
-            assert len(result) == 0
+                assert len(result) == 0
 
     @mock_aws
     def test_glue_job_logging_enabled(self):
@@ -66,25 +66,25 @@ class Test_glue_etl_jobs_logging_enabled:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.s3.s3_bucket_default_encryption.s3_bucket_default_encryption.s3_client",
+                "prowler.providers.aws.services.glue.glue_etl_jobs_logging_enabled.glue_etl_jobs_logging_enabled.glue_client",
                 new=Glue(aws_provider),
             ):
                 from prowler.providers.aws.services.glue.glue_etl_jobs_logging_enabled.glue_etl_jobs_logging_enabled import (
                     glue_etl_jobs_logging_enabled,
                 )
 
-            check = glue_etl_jobs_logging_enabled()
-            result = check.execute()
+                check = glue_etl_jobs_logging_enabled()
+                result = check.execute()
 
-            assert len(result) == 1
-            assert result[0].status == "PASS"
-            assert (
-                result[0].status_extended
-                == f"Glue job {job_name} does have logging enabled."
-            )
-            assert result[0].resource_id == job_name
-            assert result[0].resource_arn == job_arn
-            assert result[0].resource_tags == [{"key_test": "value_test"}]
+                assert len(result) == 1
+                assert result[0].status == "PASS"
+                assert (
+                    result[0].status_extended
+                    == f"Glue job {job_name} does have logging enabled."
+                )
+                assert result[0].resource_id == job_name
+                assert result[0].resource_arn == job_arn
+                assert result[0].resource_tags == [{"key_test": "value_test"}]
 
     @mock_aws
     def test_glue_job_logging_disabled(self):
@@ -117,22 +117,22 @@ class Test_glue_etl_jobs_logging_enabled:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.s3.s3_bucket_default_encryption.s3_bucket_default_encryption.s3_client",
+                "prowler.providers.aws.services.glue.glue_etl_jobs_logging_enabled.glue_etl_jobs_logging_enabled.glue_client",
                 new=Glue(aws_provider),
             ):
                 from prowler.providers.aws.services.glue.glue_etl_jobs_logging_enabled.glue_etl_jobs_logging_enabled import (
                     glue_etl_jobs_logging_enabled,
                 )
 
-            check = glue_etl_jobs_logging_enabled()
-            result = check.execute()
+                check = glue_etl_jobs_logging_enabled()
+                result = check.execute()
 
-            assert len(result) == 1
-            assert result[0].status == "FAIL"
-            assert (
-                result[0].status_extended
-                == f"Glue job {job_name} does not have logging enabled."
-            )
-            assert result[0].resource_id == job_name
-            assert result[0].resource_arn == job_arn
-            assert result[0].resource_tags == [{"key_test": "value_test"}]
+                assert len(result) == 1
+                assert result[0].status == "FAIL"
+                assert (
+                    result[0].status_extended
+                    == f"Glue job {job_name} does not have logging enabled."
+                )
+                assert result[0].resource_id == job_name
+                assert result[0].resource_arn == job_arn
+                assert result[0].resource_tags == [{"key_test": "value_test"}]
