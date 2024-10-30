@@ -227,7 +227,7 @@ class S3:
                     raise S3IllegalLocationConstraintError(
                         original_exception=client_error
                     )
-                elif "AccessDeniedException" in client_error.response["Error"]["Code"]:
+                elif "AccessDenied" in client_error.response["Error"]["Code"]:
                     raise S3BucketAccessDeniedError(original_exception=client_error)
                 else:
                     raise S3ClientError(original_exception=client_error)
