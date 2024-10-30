@@ -39,8 +39,10 @@ export const addProviderFormSchema = z.object({
 });
 
 export const addCredentialsFormSchema = (providerType: string) =>
-  z.object(
-    providerType === "aws"
+  z.object({
+    secretName: z.string().optional(),
+    providerId: z.string(),
+    ...(providerType === "aws"
       ? {
           aws_access_key_id: z.string(),
           aws_secret_access_key: z.string(),
@@ -58,8 +60,8 @@ export const addCredentialsFormSchema = (providerType: string) =>
               client_secret: z.string(),
               refresh_token: z.string(),
             }
-          : {},
-  );
+          : {}),
+  });
 
 export const editProviderFormSchema = (currentAlias: string) =>
   z.object({

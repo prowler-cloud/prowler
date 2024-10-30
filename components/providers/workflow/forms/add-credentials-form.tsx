@@ -3,26 +3,57 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { SaveIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { FieldErrors, useForm } from "react-hook-form";
 import * as z from "zod";
 
+import { addCredentialsProvider } from "@/actions/providers/providers";
 import { useToast } from "@/components/ui";
 import { CustomButton, CustomInput } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
 
-import { addProvider } from "../../../../actions/providers/providers";
-import { addCredentialsFormSchema, ApiError } from "../../../../types";
+import {
+  addCredentialsFormSchema,
+  ApiError,
+  AWSCredentials,
+  CredentialsFormSchema,
+} from "../../../../types";
 
 export const AddCredentialsForm = ({
-  providerType,
+  searchParams,
 }: {
-  providerType: string;
+  searchParams: { provider: string; id: string };
 }) => {
-  const formSchema = addCredentialsFormSchema(providerType);
-  const { toast } = useToast();
+  const providerType = searchParams.provider;
+  const providerId = searchParams.id;
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const formSchema = addCredentialsFormSchema(providerType);
+
+  const { toast } = useToast();
+  const form = useForm<CredentialsFormSchema>({
     resolver: zodResolver(formSchema),
+    defaultValues: {
+      secretName: "",
+      providerId,
+      ...(providerType === "aws"
+        ? {
+            aws_access_key_id: "",
+            aws_secret_access_key: "",
+            aws_session_token: "",
+          }
+        : providerType === "azure"
+          ? {
+              client_id: "",
+              client_secret: "",
+              tenant_id: "",
+            }
+          : providerType === "gcp"
+            ? {
+                client_id: "",
+                client_secret: "",
+                refresh_token: "",
+              }
+            : {}),
+    },
   });
 
   const isLoading = form.formState.isSubmitting;
@@ -36,28 +67,32 @@ export const AddCredentialsForm = ({
       ([key, value]) => value !== undefined && formData.append(key, value),
     );
 
-    const data = await addProvider(formData);
-    console.log(data);
+    const data = await addCredentialsProvider(formData);
 
     if (data?.errors && data.errors.length > 0) {
       data.errors.forEach((error: ApiError) => {
         const errorMessage = error.detail;
         switch (error.source.pointer) {
-          case "/data/attributes/provider":
-            form.setError("providerType", {
+          case "/data/attributes/secret/aws_access_key_id":
+            form.setError("aws_access_key_id", {
               type: "server",
               message: errorMessage,
             });
             break;
-          case "/data/attributes/uid":
-          case "/data/attributes/__all__":
-            form.setError("providerId", {
+          case "/data/attributes/secret/aws_secret_access_key":
+            form.setError("aws_secret_access_key", {
               type: "server",
               message: errorMessage,
             });
             break;
-          case "/data/attributes/alias":
-            form.setError("providerAlias", {
+          case "/data/attributes/secret/aws_session_token":
+            form.setError("aws_session_token", {
+              type: "server",
+              message: errorMessage,
+            });
+            break;
+          case "/data/attributes/name":
+            form.setError("secretName", {
               type: "server",
               message: errorMessage,
             });
@@ -81,43 +116,61 @@ export const AddCredentialsForm = ({
         onSubmit={form.handleSubmit(onSubmitClient)}
         className="flex flex-col space-y-4"
       >
+        <input type="hidden" name="providerId" value={providerId} />
+        <CustomInput
+          control={form.control}
+          name="secretName"
+          type="text"
+          label="Secret Name"
+          labelPlacement="inside"
+          placeholder={"Enter the Secret Name"}
+          variant="bordered"
+          isRequired={false}
+          isInvalid={!!form.formState.errors.secretName}
+        />
         {providerType === "aws" && (
           <>
-            {/* AWS Access Key ID */}
             <CustomInput
               control={form.control}
               name="aws_access_key_id"
               type="text"
               label="AWS Access Key ID"
               labelPlacement="inside"
-              placeholder={"Enter the AWS Access Key ID"}
+              placeholder="Enter the AWS Access Key ID"
               variant="bordered"
               isRequired
-              isInvalid={!!form.formState.errors.aws_access_key_id}
+              isInvalid={
+                !!(form.formState.errors as FieldErrors<AWSCredentials>)
+                  .aws_access_key_id
+              }
             />
-            {/* AWS Secret Access Key */}
             <CustomInput
               control={form.control}
               name="aws_secret_access_key"
               type="text"
               label="AWS Secret Access Key"
               labelPlacement="inside"
-              placeholder={"Enter the AWS Secret Access Key"}
+              placeholder="Enter the AWS Secret Access Key"
               variant="bordered"
               isRequired
-              isInvalid={!!form.formState.errors.aws_secret_access_key}
+              isInvalid={
+                !!(form.formState.errors as FieldErrors<AWSCredentials>)
+                  .aws_secret_access_key
+              }
             />
-            {/* AWS Session Token */}
             <CustomInput
               control={form.control}
               name="aws_session_token"
               type="text"
               label="AWS Session Token"
               labelPlacement="inside"
-              placeholder={"Enter the AWS Session Token"}
+              placeholder="Enter the AWS Session Token"
               variant="bordered"
               isRequired
-              isInvalid={!!form.formState.errors.aws_session_token}
+              isInvalid={
+                !!(form.formState.errors as FieldErrors<AWSCredentials>)
+                  .aws_session_token
+              }
             />
           </>
         )}

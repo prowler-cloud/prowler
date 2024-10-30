@@ -148,9 +148,63 @@ export const addProvider = async (formData: FormData) => {
     };
   }
 };
+export const addCredentialsProvider = async (formData: FormData) => {
+  const session = await auth();
+  const keyServer = process.env.API_BASE_URL;
+  const url = new URL(`${keyServer}/providers/secrets`);
+
+  const aws_access_key_id = formData.get("aws_access_key_id");
+  const aws_secret_access_key = formData.get("aws_secret_access_key");
+  const aws_session_token = formData.get("aws_session_token");
+  const secretName = formData.get("secretName");
+  const providerId = formData.get("providerId");
+
+  const bodyData = {
+    data: {
+      type: "ProviderSecret",
+      attributes: {
+        secret_type: "static",
+        secret: {
+          aws_access_key_id: aws_access_key_id,
+          aws_secret_access_key: aws_secret_access_key,
+          aws_session_token: aws_session_token,
+        },
+        name: secretName,
+      },
+      relationships: {
+        provider: {
+          data: {
+            id: providerId,
+            type: "Provider",
+          },
+        },
+      },
+    },
+  };
+
+  try {
+    const response = await fetch(url.toString(), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/vnd.api+json",
+        Accept: "application/vnd.api+json",
+        Authorization: `Bearer ${session?.accessToken}`,
+      },
+      body: JSON.stringify(bodyData),
+    });
+    const data = await response.json();
+    revalidatePath("/providers");
+    return parseStringify(data);
+  } catch (error) {
+    console.error(error);
+    return {
+      error: getErrorMessage(error),
+    };
+  }
+};
 
 export const checkConnectionProvider = async (formData: FormData) => {
-  // const session = await auth();
+  const session = await auth();
   const keyServer = process.env.API_BASE_URL;
 
   const providerId = formData.get("id");
@@ -162,9 +216,11 @@ export const checkConnectionProvider = async (formData: FormData) => {
       method: "POST",
       headers: {
         Accept: "application/vnd.api+json",
+        Authorization: `Bearer ${session?.accessToken}`,
       },
     });
     const data = await response.json();
+    await wait(1000);
     revalidatePath("/providers");
     return parseStringify(data);
   } catch (error) {

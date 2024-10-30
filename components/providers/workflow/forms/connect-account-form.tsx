@@ -81,7 +81,11 @@ export const ConnectAccountForm = () => {
       });
       setPrevStep(1);
     } else {
-      router.push("/providers/add-credentials");
+      const {
+        id,
+        attributes: { provider },
+      } = data.data;
+      router.push(`/providers/add-credentials?provider=${provider}&id=${id}`);
     }
   };
 
