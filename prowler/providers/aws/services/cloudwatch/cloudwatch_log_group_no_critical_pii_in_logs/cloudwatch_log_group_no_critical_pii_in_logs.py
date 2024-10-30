@@ -1,4 +1,5 @@
 from json import dumps
+from typing import Set
 
 from presidio_analyzer import AnalyzerEngine
 
@@ -62,8 +63,6 @@ class cloudwatch_log_group_no_critical_pii_in_logs(Check):
                                 score_threshold=1,
                                 language=pii_language,
                             )
-                            print(chunk)
-                            print(pii_detection_result)
 
                             # Track cumulative character count to map PII to log event
                             cumulative_char_count = 0
@@ -103,7 +102,7 @@ class cloudwatch_log_group_no_critical_pii_in_logs(Check):
                         if log_stream_pii:
                             pii_string = "; ".join(
                                 [
-                                    f"at {timestamp} - {log_stream_pii[timestamp].to_string()}"
+                                    f"at {timestamp} - {str(log_stream_pii[timestamp])}"
                                     for timestamp in log_stream_pii
                                 ]
                             )
@@ -118,20 +117,16 @@ class cloudwatch_log_group_no_critical_pii_in_logs(Check):
         return findings
 
 
-class SecretsDict(dict):
-    # Using this dict to remove duplicates of the PII type showing up multiple times on the same line
-    # Also includes the to_string method
-    def add_secret(self, line_number, pii_type):
-        if line_number not in self.keys():
-            self[line_number] = [pii_type]
-        else:
-            if pii_type not in self[line_number]:
-                self[line_number] += [pii_type]
+class SecretsDict(dict[int, Set[str]]):
+    """Dictionary to track unique PII types on each line."""
 
-    def to_string(self):
+    def add_secret(self, line_number: int, pii_type: str) -> None:
+        """Add a PII type to a specific line number, ensuring no duplicates."""
+        self.setdefault(line_number, set()).add(pii_type)
+
+    def __str__(self) -> str:
+        """Generate a formatted string representation of the dictionary."""
         return ", ".join(
-            [
-                f"{', '.join(pii_types)} on line {line_number}"
-                for line_number, pii_types in sorted(self.items())
-            ]
+            f"{', '.join(sorted(pii_types))} on line {line_number}"
+            for line_number, pii_types in sorted(self.items())
         )

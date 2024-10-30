@@ -2,10 +2,7 @@
   "Provider": "aws",
   "CheckID": "cloudwatch_log_group_no_critical_pii_in_logs",
   "CheckTitle": "Check if secrets exists in CloudWatch logs.",
-  "CheckType": [
-    "Protect",
-    "Secure development"
-  ],
+  "CheckType": [],
   "ServiceName": "cloudwatch",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:cloudwatch:region:account-id:log-group/resource-id",
@@ -29,7 +26,6 @@
   "Categories": [
     "secrets"
   ],
-  "Tags": {},
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
