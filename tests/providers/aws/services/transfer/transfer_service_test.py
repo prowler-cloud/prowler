@@ -10,10 +10,11 @@ from tests.providers.aws.utils import (
     set_mocked_aws_provider,
 )
 
-make_api_call = botocore.client.BaseClient._make_api_call
-
 SERVER_ID = "SERVICE_MANAGED::s-01234567890abcdef"
 SERVER_ARN = f"arn:aws:transfer:us-east-1:{AWS_ACCOUNT_NUMBER}:server/{SERVER_ID}"
+
+
+make_api_call = botocore.client.BaseClient._make_api_call
 
 
 def mock_make_api_call(self, operation_name, kwarg):
