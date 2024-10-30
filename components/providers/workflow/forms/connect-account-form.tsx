@@ -13,6 +13,9 @@ import { Form } from "@/components/ui/form";
 import { addProvider } from "../../../../actions/providers/providers";
 import { addProviderFormSchema, ApiError } from "../../../../types";
 import { RadioGroupProvider } from "../../radio-group-provider";
+import { RadioGroupAWSViaCredentialsForm } from "./radio-group-aws-via-credentials-form";
+
+export type FormValues = z.infer<typeof addProviderFormSchema>;
 
 export const ConnectAccountForm = () => {
   const { toast } = useToast();
@@ -20,18 +23,19 @@ export const ConnectAccountForm = () => {
 
   const formSchema = addProviderFormSchema;
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       providerType: "",
       providerId: "",
       providerAlias: "",
+      awsCredentialsType: "",
     },
   });
   const providerType = form.watch("providerType");
   const isLoading = form.formState.isSubmitting;
 
-  const onSubmitClient = async (values: z.infer<typeof formSchema>) => {
+  const onSubmitClient = async (values: FormValues) => {
     const formData = new FormData();
 
     Object.entries(values).forEach(
@@ -125,37 +129,11 @@ export const ConnectAccountForm = () => {
 
         {prevStep === 2 && (
           <>
-            {/* Select a provider */}
-            <RadioGroupProvider
-              control={form.control}
-              isInvalid={!!form.formState.errors.providerType}
-            />
-            {/* Provider UID */}
-            <CustomInput
-              control={form.control}
-              name="providerId"
-              type="text"
-              label="Provider UID"
-              labelPlacement="inside"
-              placeholder={"Enter the provider UID"}
-              variant="bordered"
-              isRequired
-              isInvalid={!!form.formState.errors.providerId}
-            />
-            {/* Provider alias */}
-            <CustomInput
-              control={form.control}
-              name="providerAlias"
-              type="text"
-              label="Provider alias (optional)"
-              labelPlacement="inside"
-              placeholder={"Enter the account alias"}
-              variant="bordered"
-              isRequired={false}
-              isInvalid={!!form.formState.errors.providerAlias}
-            />
+            {/* Select AWS credentials type */}
+            <RadioGroupAWSViaCredentialsForm control={form.control} />
           </>
         )}
+
         <div className="flex w-full justify-end sm:space-x-6">
           {prevStep === 2 && (
             <CustomButton

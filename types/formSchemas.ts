@@ -35,6 +35,7 @@ export const addProviderFormSchema = z.object({
   providerType: z.string(),
   providerAlias: z.string(),
   providerId: z.string(),
+  awsCredentialsType: z.string().optional(),
 });
 
 export const editProviderFormSchema = (currentAlias: string) =>
