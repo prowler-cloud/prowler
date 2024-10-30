@@ -7,6 +7,10 @@ from botocore.client import ClientError
 from mock import patch
 
 from prowler.lib.outputs.asff.asff import ASFF
+from prowler.providers.aws.lib.security_hub.exceptions.exceptions import (
+    SecurityHubInvalidRegionError,
+    SecurityHubNoEnabledRegionsError,
+)
 from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 from tests.providers.aws.utils import (
@@ -404,3 +408,116 @@ class TestSecurityHub:
         )
 
         assert security_hub.batch_send_to_security_hub() == 2
+
+    @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
+    def test_security_hub_test_connection_success(self):
+        session_mock = session.Session(region_name=AWS_REGION_EU_WEST_1)
+
+        # Test successful connection
+        connection = SecurityHub.test_connection(
+            session=session_mock,
+            regions={AWS_REGION_EU_WEST_1},
+            aws_account_id=AWS_ACCOUNT_NUMBER,
+            aws_partition=AWS_COMMERCIAL_PARTITION,
+            raise_on_exception=False,
+        )
+
+        assert connection.is_connected is True
+        assert connection.error is None
+
+    @patch("prowler.providers.aws.lib.security_hub.security_hub.Session.client")
+    def test_security_hub_test_connection_invalid_access_exception(
+        self, mock_security_hub_client
+    ):
+        # Mock an InvalidAccessException
+        error_message = f"Account {AWS_ACCOUNT_NUMBER} is not subscribed to AWS Security Hub in region {AWS_REGION_EU_WEST_1}"
+        error_code = "InvalidAccessException"
+        error_response = {
+            "Error": {
+                "Code": error_code,
+                "Message": error_message,
+            }
+        }
+        operation_name = "DescribeHub"
+        mock_security_hub_client.side_effect = ClientError(
+            error_response, operation_name
+        )
+
+        session_mock = session.Session(region_name=AWS_REGION_EU_WEST_1)
+
+        # Test connection failure due to invalid access
+        connection = SecurityHub.test_connection(
+            session=session_mock,
+            regions={AWS_REGION_EU_WEST_1},
+            aws_account_id=AWS_ACCOUNT_NUMBER,
+            aws_partition=AWS_COMMERCIAL_PARTITION,
+            raise_on_exception=False,
+        )
+
+        assert connection.is_connected is False
+        assert isinstance(connection.error, SecurityHubInvalidRegionError)
+
+    @patch("prowler.providers.aws.lib.security_hub.security_hub.Session.client")
+    def test_security_hub_test_connection_prowler_not_subscribed(
+        self, mock_security_hub_client
+    ):
+        # Mock successful Security Hub but no Prowler subscription
+        mock_security_hub_client.describe_hub.return_value = {}
+        mock_security_hub_client.list_enabled_products_for_import.return_value = {
+            "ProductSubscriptions": []
+        }
+
+        session_mock = session.Session(region_name=AWS_REGION_EU_WEST_1)
+
+        # Test connection failure due to missing Prowler subscription
+        connection = SecurityHub.test_connection(
+            session=session_mock,
+            regions={AWS_REGION_EU_WEST_1},
+            aws_account_id=AWS_ACCOUNT_NUMBER,
+            aws_partition=AWS_COMMERCIAL_PARTITION,
+            raise_on_exception=False,
+        )
+
+        assert connection.is_connected is False
+        assert isinstance(connection.error, SecurityHubInvalidRegionError)
+
+    @patch("prowler.providers.aws.lib.security_hub.security_hub.Session.client")
+    def test_security_hub_test_connection_unexpected_exception(
+        self, mock_security_hub_client
+    ):
+        # Mock unexpected exception
+        mock_security_hub_client.side_effect = Exception("Unexpected error")
+
+        session_mock = session.Session(region_name=AWS_REGION_EU_WEST_1)
+
+        # Test connection failure due to an unexpected exception
+        connection = SecurityHub.test_connection(
+            session=session_mock,
+            regions={AWS_REGION_EU_WEST_1},
+            aws_account_id=AWS_ACCOUNT_NUMBER,
+            aws_partition=AWS_COMMERCIAL_PARTITION,
+            raise_on_exception=False,
+        )
+
+        assert connection.is_connected is False
+        assert isinstance(connection.error, SecurityHubInvalidRegionError)
+
+    @patch("prowler.providers.aws.lib.security_hub.security_hub.Session.client")
+    def test_security_hub_test_connection_no_regions_enabled(
+        self, mock_security_hub_client
+    ):
+        # Mock unexpected exception
+        mock_security_hub_client.side_effect = Exception("Unexpected error")
+
+        session_mock = session.Session(region_name=AWS_REGION_EU_WEST_1)
+
+        # Test connection failure due to an unexpected exception
+        connection = SecurityHub.test_connection(
+            session=session_mock,
+            aws_account_id=AWS_ACCOUNT_NUMBER,
+            aws_partition=AWS_COMMERCIAL_PARTITION,
+            raise_on_exception=False,
+        )
+
+        assert connection.is_connected is False
+        assert isinstance(connection.error, SecurityHubNoEnabledRegionsError)

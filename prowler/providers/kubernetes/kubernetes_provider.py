@@ -144,22 +144,6 @@ class KubernetesProvider(Provider):
         """
         return self._mutelist
 
-    @property
-    def get_output_mapping(self):
-        return {
-            # "in-cluster/kubeconfig"
-            # "auth_method": "identity.profile",
-            "provider": "type",
-            # cluster: <context>
-            "account_uid": "identity.cluster",
-            # "account_name": "organizations_metadata.account_details_name",
-            # "account_email": "organizations_metadata.account_details_email",
-            # "account_organization_uid": "organizations_metadata.account_details_arn",
-            # "account_organization": "organizations_metadata.account_details_org",
-            # "account_tags": "organizations_metadata.account_details_tags",
-            # "partition": "identity.partition",
-        }
-
     @staticmethod
     def setup_session(
         kubeconfig_file: str = None,

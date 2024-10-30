@@ -1,6 +1,7 @@
 import os
 import pathlib
 from datetime import datetime, timezone
+from enum import Enum
 from os import getcwd
 
 import requests
@@ -22,13 +23,20 @@ orange_color = "\033[38;5;208m"
 banner_color = "\033[1;92m"
 
 
+class Provider(str, Enum):
+    AWS = "aws"
+    GCP = "gcp"
+    AZURE = "azure"
+    KUBERNETES = "kubernetes"
+
+
 # Compliance
 actual_directory = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
 
 
 def get_available_compliance_frameworks(provider=None):
     available_compliance_frameworks = []
-    providers = ["aws", "gcp", "azure", "kubernetes"]
+    providers = [p.value for p in Provider]
     if provider:
         providers = [provider]
     for provider in providers:

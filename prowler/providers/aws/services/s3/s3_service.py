@@ -1,8 +1,8 @@
 import json
-from typing import Optional
+from typing import Dict, List, Optional
 
 from botocore.client import ClientError
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -32,6 +32,9 @@ class S3(AWSService):
         self.__threading_call__(self._get_bucket_tagging, self.buckets.values())
         self.__threading_call__(self._get_bucket_replication, self.buckets.values())
         self.__threading_call__(self._get_bucket_lifecycle, self.buckets.values())
+        self.__threading_call__(
+            self._get_bucket_notification_configuration, self.buckets.values()
+        )
 
     def _list_buckets(self, provider):
         logger.info("S3 - Listing buckets...")
@@ -442,6 +445,43 @@ class S3(AWSService):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
+    def _get_bucket_notification_configuration(self, bucket):
+        logger.info("S3 - Get bucket's notification configuration...")
+        try:
+            regional_client = self.regional_clients[bucket.region]
+            bucket_notification_config = (
+                regional_client.get_bucket_notification_configuration(
+                    Bucket=bucket.name
+                )
+            )
+
+            if any(
+                key in bucket_notification_config
+                for key in (
+                    "TopicConfigurations",
+                    "QueueConfigurations",
+                    "LambdaFunctionConfigurations",
+                    "EventBridgeConfiguration",
+                )
+            ):
+                bucket.notification_config = bucket_notification_config
+            else:
+                bucket.notification_config = {}
+
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "NoSuchBucket":
+                logger.warning(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
     def _head_bucket(self, bucket_name):
         logger.info("S3 - Checking if bucket exists...")
         try:
@@ -637,14 +677,15 @@ class Bucket(BaseModel):
     versioning: bool = False
     logging: bool = False
     public_access_block: Optional[PublicAccessBlock]
-    acl_grantees: list[ACL_Grantee] = []
-    policy: dict = {}
+    acl_grantees: List[ACL_Grantee] = Field(default_factory=list)
+    policy: Dict = Field(default_factory=dict)
     encryption: Optional[str]
     region: str
     logging_target_bucket: Optional[str]
     ownership: Optional[str]
     object_lock: bool = False
     mfa_delete: bool = False
-    tags: Optional[list] = []
-    lifecycle: Optional[list[LifeCycleRule]] = []
-    replication_rules: Optional[list[ReplicationRule]] = []
+    tags: List[Dict[str, str]] = Field(default_factory=list)
+    lifecycle: List[LifeCycleRule] = Field(default_factory=list)
+    replication_rules: List[ReplicationRule] = Field(default_factory=list)
+    notification_config: Dict = Field(default_factory=dict)
