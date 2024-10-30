@@ -319,25 +319,29 @@ class TestS3:
 
     @mock_aws
     def test_test_connection_S3(self):
-        current_session = boto3.session.Session(
-            region_name=AWS_REGION_US_EAST_1
-        ).client("s3")
-        current_session.create_bucket(Bucket=S3_BUCKET_NAME)
+        current_session = boto3.session.Session(region_name=AWS_REGION_US_EAST_1)
+        s3_client = current_session.client("s3")
+        s3_client.create_bucket(Bucket=S3_BUCKET_NAME)
         s3 = S3.test_connection(
             session=current_session,
             bucket_name=S3_BUCKET_NAME,
         )
         assert s3 is not None
-        assert s3
+        assert s3.is_connected is True
+        assert s3.error is None
 
     @mock_aws
     def test_test_connection_S3_bucket_invalid_name(self):
-        current_session = boto3.session.Session(
-            region_name=AWS_REGION_US_EAST_1
-        ).client("s3")
-        current_session.create_bucket(Bucket=S3_BUCKET_NAME)
+        current_session = boto3.session.Session(region_name=AWS_REGION_US_EAST_1)
+        s3_client = current_session.client("s3")
+
+        s3_client.create_bucket(Bucket=S3_BUCKET_NAME)
         with pytest.raises(S3InvalidBucketNameError):
-            S3.test_connection(
+            s3 = S3.test_connection(
                 session=current_session,
                 bucket_name="invalid_bucket",
             )
+
+            assert s3 is not None
+            assert s3.is_connected is False
+            assert s3.error is not None
