@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 
 from boto3 import client
@@ -40,7 +39,10 @@ class Test_efs_have_backup_enabled:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert search("has backup enabled", result[0].status_extended)
+            assert (
+                result[0].status_extended
+                == f"EFS {file_system['FileSystemId']} has backup enabled."
+            )
             assert result[0].resource_id == file_system["FileSystemId"]
             assert (
                 result[0].resource_arn
@@ -73,7 +75,10 @@ class Test_efs_have_backup_enabled:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert search("does not have backup enabled", result[0].status_extended)
+            assert (
+                result[0].status_extended
+                == f"EFS {file_system['FileSystemId']} does not have backup enabled."
+            )
             assert result[0].resource_id == file_system["FileSystemId"]
             assert (
                 result[0].resource_arn
@@ -106,7 +111,10 @@ class Test_efs_have_backup_enabled:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert search("does not have backup enabled", result[0].status_extended)
+            assert (
+                result[0].status_extended
+                == f"EFS {file_system['FileSystemId']} does not have backup enabled."
+            )
             assert result[0].resource_id == file_system["FileSystemId"]
             assert (
                 result[0].resource_arn
