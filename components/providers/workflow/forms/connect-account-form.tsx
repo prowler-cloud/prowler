@@ -1,7 +1,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { SaveIcon } from "lucide-react";
+import { ChevronLeftIcon, ChevronRightIcon, SaveIcon } from "lucide-react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
@@ -14,6 +15,9 @@ import { addProviderFormSchema, ApiError } from "../../../../types";
 import { RadioGroupProvider } from "../../radio-group-provider";
 
 export const ConnectAccountForm = () => {
+  const { toast } = useToast();
+  const [prevStep, setPrevStep] = useState(1);
+
   const formSchema = addProviderFormSchema;
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -24,9 +28,7 @@ export const ConnectAccountForm = () => {
       providerAlias: "",
     },
   });
-
-  const { toast } = useToast();
-
+  const providerType = form.watch("providerType");
   const isLoading = form.formState.isSubmitting;
 
   const onSubmitClient = async (values: z.infer<typeof formSchema>) => {
@@ -69,7 +71,16 @@ export const ConnectAccountForm = () => {
             });
         }
       });
+      setPrevStep(1);
     }
+  };
+
+  const handleNextStep = () => {
+    setPrevStep((prev) => prev + 1);
+  };
+
+  const handleBackStep = () => {
+    setPrevStep((prev) => prev - 1);
   };
 
   return (
@@ -78,57 +89,126 @@ export const ConnectAccountForm = () => {
         onSubmit={form.handleSubmit(onSubmitClient)}
         className="flex flex-col space-y-4"
       >
-        <RadioGroupProvider
-          control={form.control}
-          isInvalid={!!form.formState.errors.providerType}
-        />
-        <CustomInput
-          control={form.control}
-          name="providerId"
-          type="text"
-          label="Provider UID"
-          labelPlacement="inside"
-          placeholder={"Enter the provider UID"}
-          variant="bordered"
-          isRequired
-          isInvalid={!!form.formState.errors.providerId}
-        />
-        <CustomInput
-          control={form.control}
-          name="providerAlias"
-          type="text"
-          label="Alias (optional)"
-          labelPlacement="inside"
-          placeholder={"Enter the provider alias"}
-          variant="bordered"
-          isRequired={false}
-          isInvalid={!!form.formState.errors.providerAlias}
-        />
+        {prevStep === 1 && (
+          <>
+            {/* Select a provider */}
+            <RadioGroupProvider
+              control={form.control}
+              isInvalid={!!form.formState.errors.providerType}
+            />
+            {/* Provider UID */}
+            <CustomInput
+              control={form.control}
+              name="providerId"
+              type="text"
+              label="Provider UID"
+              labelPlacement="inside"
+              placeholder={"Enter the provider UID"}
+              variant="bordered"
+              isRequired
+              isInvalid={!!form.formState.errors.providerId}
+            />
+            {/* Provider alias */}
+            <CustomInput
+              control={form.control}
+              name="providerAlias"
+              type="text"
+              label="Provider alias (optional)"
+              labelPlacement="inside"
+              placeholder={"Enter the provider alias"}
+              variant="bordered"
+              isRequired={false}
+              isInvalid={!!form.formState.errors.providerAlias}
+            />
+          </>
+        )}
 
-        <div className="flex w-full justify-center sm:space-x-6">
+        {prevStep === 2 && (
+          <>
+            {/* Select a provider */}
+            <RadioGroupProvider
+              control={form.control}
+              isInvalid={!!form.formState.errors.providerType}
+            />
+            {/* Provider UID */}
+            <CustomInput
+              control={form.control}
+              name="providerId"
+              type="text"
+              label="Provider UID"
+              labelPlacement="inside"
+              placeholder={"Enter the provider UID"}
+              variant="bordered"
+              isRequired
+              isInvalid={!!form.formState.errors.providerId}
+            />
+            {/* Provider alias */}
+            <CustomInput
+              control={form.control}
+              name="providerAlias"
+              type="text"
+              label="Provider alias (optional)"
+              labelPlacement="inside"
+              placeholder={"Enter the account alias"}
+              variant="bordered"
+              isRequired={false}
+              isInvalid={!!form.formState.errors.providerAlias}
+            />
+          </>
+        )}
+        <div className="flex w-full justify-end sm:space-x-6">
+          {prevStep === 2 && (
+            <CustomButton
+              type="button"
+              ariaLabel="Back"
+              className="w-1/2 bg-transparent"
+              variant="faded"
+              size="lg"
+              radius="lg"
+              onPress={handleBackStep}
+              startContent={!isLoading && <ChevronLeftIcon size={24} />}
+              isDisabled={isLoading}
+            >
+              <span>Back</span>
+            </CustomButton>
+          )}
+
           <CustomButton
             type="button"
-            ariaLabel="Cancel"
-            className="w-full bg-transparent"
-            variant="faded"
-            size="lg"
-            radius="lg"
-            isDisabled={isLoading}
-          >
-            <span>Cancel</span>
-          </CustomButton>
-
-          <CustomButton
-            type="submit"
-            ariaLabel="Next"
-            className="w-full"
+            ariaLabel={
+              prevStep === 1 && providerType === "aws" ? "Next" : "Save"
+            }
+            className="w-1/2"
             variant="solid"
             color="action"
             size="lg"
             isLoading={isLoading}
-            startContent={!isLoading && <SaveIcon size={24} />}
+            startContent={
+              !isLoading &&
+              !(prevStep === 1 && providerType === "aws") && (
+                <SaveIcon size={24} />
+              )
+            }
+            endContent={
+              !isLoading &&
+              prevStep === 1 &&
+              providerType === "aws" && <ChevronRightIcon size={24} />
+            }
+            onPress={() => {
+              if (prevStep === 1 && providerType === "aws") {
+                handleNextStep();
+              } else {
+                form.handleSubmit(onSubmitClient)();
+              }
+            }}
           >
-            {isLoading ? <>Loading</> : <span>Next</span>}
+            {isLoading ? (
+              <>Loading</>
+            ) : (
+              <span>
+                {prevStep === 1 && providerType === "aws" ? "Next" : "Save"}
+              </span>
+            )}
           </CustomButton>
         </div>
       </form>

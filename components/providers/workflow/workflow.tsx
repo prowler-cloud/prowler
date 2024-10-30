@@ -10,22 +10,23 @@ const steps = [
   {
     title: "Add your cloud account",
     description:
-      "Select the cloud provider of the account you want to connect.",
+      "Select the cloud provider of the account you want to connect and choose whether to use IAM role or credentials for access.",
     href: "/providers/connect-account",
   },
   {
-    title: "Add credentials to your cloud provider",
-    description: "Please add your credentials to your cloud provider.",
+    title: "Add credentials to your cloud account",
+    description: "Add the credentials needed to connect to your cloud account.",
     href: "/providers/add-credentials",
   },
   {
     title: "Test connection",
-    description: "Please test your connection to your cloud provider.",
+    description:
+      "Test your connection to verify that the credentials provided are valid for accessing your cloud account.",
     href: "/providers/test-connection",
   },
   {
     title: "Lunch scan",
-    description: "Please choose when you want to launch your scan.",
+    description: "Choose when you want to launch your scan.",
     href: "/providers",
   },
 ];
