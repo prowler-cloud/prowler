@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "elbv2_nlb_listener_security",
+  "CheckID": "elbv2_nlb_tls_termination_enabled",
   "CheckTitle": "Check if Network Load Balancers (NLB) has TLS termination enabled.",
   "CheckType": [
     "Data Protection"
@@ -15,7 +15,7 @@
   "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELBv2/network-load-balancer-listener-security.html#",
   "Remediation": {
     "Code": {
-      "CLI": "aws elbv2 create-listener --load-balancer-arn <lb_arn> --protocol TLS --port 443 --ssl-policy ELBSecurityPolicy-TLS13-1-2-2021-06 --certificates CertificateArn=<certificate_arn> --default-actions Type=forward,TargetGroupArn=arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/cc-network-target-group/1111222233334444",
+      "CLI": "aws elbv2 create-listener --load-balancer-arn <nlb_arn> --protocol TLS --port 443 --ssl-policy ELBSecurityPolicy-TLS13-1-2-2021-06 --certificates CertificateArn=<certificate_arn> --default-actions Type=forward,TargetGroupArn=<target_group_arn>",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELBv2/network-load-balancer-listener-security.html#",
       "Terraform": ""

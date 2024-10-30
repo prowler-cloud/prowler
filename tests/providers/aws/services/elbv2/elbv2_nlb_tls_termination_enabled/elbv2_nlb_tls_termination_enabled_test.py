@@ -23,17 +23,17 @@ class Test_elbv2_nlb_listener_security:
                 [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
             ),
         ), mock.patch(
-            "prowler.providers.aws.services.elbv2.elbv2_nlb_listener_security.elbv2_nlb_listener_security.elbv2_client",
+            "prowler.providers.aws.services.elbv2.elbv2_nlb_tls_termination_enabled.elbv2_nlb_tls_termination_enabled.elbv2_client",
             new=ELBv2(
                 set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
             ),
         ):
             # Test Check
-            from prowler.providers.aws.services.elbv2.elbv2_nlb_listener_security.elbv2_nlb_listener_security import (
-                elbv2_nlb_listener_security,
+            from prowler.providers.aws.services.elbv2.elbv2_nlb_tls_termination_enabled.elbv2_nlb_tls_termination_enabled import (
+                elbv2_nlb_tls_termination_enabled,
             )
 
-            check = elbv2_nlb_listener_security()
+            check = elbv2_nlb_tls_termination_enabled()
             result = check.execute()
 
             assert len(result) == 0
@@ -97,16 +97,16 @@ class Test_elbv2_nlb_listener_security:
                 [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
             ),
         ), mock.patch(
-            "prowler.providers.aws.services.elbv2.elbv2_nlb_listener_security.elbv2_nlb_listener_security.elbv2_client",
+            "prowler.providers.aws.services.elbv2.elbv2_nlb_tls_termination_enabled.elbv2_nlb_tls_termination_enabled.elbv2_client",
             new=ELBv2(
                 set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
             ),
         ):
-            from prowler.providers.aws.services.elbv2.elbv2_nlb_listener_security.elbv2_nlb_listener_security import (
-                elbv2_nlb_listener_security,
+            from prowler.providers.aws.services.elbv2.elbv2_nlb_tls_termination_enabled.elbv2_nlb_tls_termination_enabled import (
+                elbv2_nlb_tls_termination_enabled,
             )
 
-            check = elbv2_nlb_listener_security()
+            check = elbv2_nlb_tls_termination_enabled()
             result = check.execute()
 
             assert len(result) == 1
@@ -177,16 +177,16 @@ class Test_elbv2_nlb_listener_security:
                 [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
             ),
         ), mock.patch(
-            "prowler.providers.aws.services.elbv2.elbv2_nlb_listener_security.elbv2_nlb_listener_security.elbv2_client",
+            "prowler.providers.aws.services.elbv2.elbv2_nlb_tls_termination_enabled.elbv2_nlb_tls_termination_enabled.elbv2_client",
             new=ELBv2(
                 set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
             ),
         ):
-            from prowler.providers.aws.services.elbv2.elbv2_nlb_listener_security.elbv2_nlb_listener_security import (
-                elbv2_nlb_listener_security,
+            from prowler.providers.aws.services.elbv2.elbv2_nlb_tls_termination_enabled.elbv2_nlb_tls_termination_enabled import (
+                elbv2_nlb_tls_termination_enabled,
             )
 
-            check = elbv2_nlb_listener_security()
+            check = elbv2_nlb_tls_termination_enabled()
             result = check.execute()
 
             assert len(result) == 1
