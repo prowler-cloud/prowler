@@ -44,6 +44,9 @@ def mock_make_api_call(self, operation_name, kwargs):
                     "EndpointIdentifier": DMS_ENDPOINT_NAME,
                     "EndpointArn": DMS_ENDPOINT_ARN,
                     "SslMode": "require",
+                    "RedisSettings": {
+                        "SslSecurityProtocol": "ssl-encryption",
+                    },
                 }
             ]
         }
@@ -121,6 +124,7 @@ class Test_DMS_Service:
         assert len(dms.endpoints) == 1
         assert dms.endpoints[DMS_ENDPOINT_ARN].id == DMS_ENDPOINT_NAME
         assert dms.endpoints[DMS_ENDPOINT_ARN].ssl_mode == "require"
+        assert dms.endpoints[DMS_ENDPOINT_ARN].redis_tls_enabled == "ssl-encryption"
 
     def test_list_tags(self):
         aws_provider = set_mocked_aws_provider()
