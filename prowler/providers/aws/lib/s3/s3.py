@@ -177,10 +177,11 @@ class S3:
         - Exception: An exception indicating that the connection test failed.
         """
         try:
+            s3_client = session.client(__class__.__name__.lower())
             if "s3://" in bucket_name:
                 bucket_name = bucket_name.removeprefix("s3://")
             # Check for the bucket location
-            bucket_location = session.get_bucket_location(Bucket=bucket_name)
+            bucket_location = s3_client.get_bucket_location(Bucket=bucket_name)
             if bucket_location["LocationConstraint"] == "EU":
                 bucket_location["LocationConstraint"] = "eu-west-1"
             if (
@@ -194,7 +195,7 @@ class S3:
                 session.region_name != bucket_location["LocationConstraint"]
                 and bucket_location["LocationConstraint"] is not None
             ):
-                session = session.client(
+                s3_client = session.client(
                     __class__.__name__.lower(),
                     region_name=bucket_location["LocationConstraint"],
                 )
@@ -202,12 +203,14 @@ class S3:
             with tempfile.TemporaryFile() as temp_file:
                 temp_file.write(b"Test Prowler Connection")
                 temp_file.seek(0)
-                session.upload_fileobj(
+                s3_client.upload_fileobj(
                     temp_file, bucket_name, "test-prowler-connection.txt"
                 )
 
             # Try to delete the file
-            session.delete_object(Bucket=bucket_name, Key="test-prowler-connection.txt")
+            s3_client.delete_object(
+                Bucket=bucket_name, Key="test-prowler-connection.txt"
+            )
             return Connection(is_connected=True)
 
         except exceptions.ClientError as client_error:
