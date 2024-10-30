@@ -75,7 +75,6 @@ export const RadioGroupProvider: React.FC<RadioGroupProviderProps> = ({
         <>
           <RadioGroup
             className="flex flex-wrap"
-            label="Select one provider"
             isInvalid={isInvalid}
             {...field}
           >

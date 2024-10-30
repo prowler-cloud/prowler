@@ -49,6 +49,7 @@ export const ConnectAccountForm = () => {
             });
             break;
           case "/data/attributes/uid":
+          case "/data/attributes/__all__":
             form.setError("providerId", {
               type: "server",
               message: errorMessage,
@@ -85,9 +86,9 @@ export const ConnectAccountForm = () => {
           control={form.control}
           name="providerId"
           type="text"
-          label="Provider ID"
+          label="Provider UID"
           labelPlacement="inside"
-          placeholder={"Enter the provider ID"}
+          placeholder={"Enter the provider UID"}
           variant="bordered"
           isRequired
           isInvalid={!!form.formState.errors.providerId}

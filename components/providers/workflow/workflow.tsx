@@ -9,7 +9,8 @@ import { VerticalSteps } from "./vertical-steps";
 const steps = [
   {
     title: "Add your cloud account",
-    description: "Please add your cloud account to get started.",
+    description:
+      "Select the cloud provider of the account you want to connect.",
     href: "/providers/connect-account",
   },
   {
@@ -41,7 +42,7 @@ export const Workflow = () => {
   return (
     <section className="max-w-sm">
       <h1 className="mb-2 text-xl font-medium" id="getting-started">
-        Getting started
+        Add a cloud account
       </h1>
       <p className="mb-5 text-small text-default-500">
         Follow the steps to configure your cloud account. This allows you to

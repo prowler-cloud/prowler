@@ -23,7 +23,7 @@ module.exports = {
           theme: {
             midnight: "#030921",
             pale: "#f3fcff",
-            green: "#6af400",
+            green: "#8ce112",
             purple: "#5001d0",
             coral: "#ff5356",
             orange: "#f69000",
