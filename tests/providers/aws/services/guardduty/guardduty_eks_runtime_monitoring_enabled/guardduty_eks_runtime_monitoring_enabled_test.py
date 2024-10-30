@@ -99,7 +99,7 @@ class Test_guardduty_eks_runtime_monitoring_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "GuardDuty detector does not have Runtime Monitoring enabled."
+                == f"GuardDuty detector {response['DetectorId']} does not have EKS Runtime Monitoring enabled."
             )
             assert result[0].resource_id == response["DetectorId"]
             assert result[0].region == AWS_REGION_US_EAST_1
@@ -141,7 +141,7 @@ class Test_guardduty_eks_runtime_monitoring_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "GuardDuty detector has Runtime Monitoring enabled."
+                == f"GuardDuty detector {response['DetectorId']} has EKS Runtime Monitoring enabled."
             )
             assert result[0].resource_id == response["DetectorId"]
             assert result[0].region == AWS_REGION_US_EAST_1

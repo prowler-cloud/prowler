@@ -13,13 +13,9 @@ class guardduty_eks_runtime_monitoring_enabled(Check):
                 report.resource_arn = detector.arn
                 report.resource_tags = detector.tags
                 report.status = "FAIL"
-                report.status_extended = (
-                    "GuardDuty detector does not have Runtime Monitoring enabled."
-                )
+                report.status_extended = f"GuardDuty detector {detector.id} does not have EKS Runtime Monitoring enabled."
                 if detector.eks_runtime_monitoring:
                     report.status = "PASS"
-                    report.status_extended = (
-                        "GuardDuty detector has Runtime Monitoring enabled."
-                    )
+                    report.status_extended = f"GuardDuty detector {detector.id} has EKS Runtime Monitoring enabled."
                 findings.append(report)
         return findings
