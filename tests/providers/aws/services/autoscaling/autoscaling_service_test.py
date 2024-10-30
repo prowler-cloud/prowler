@@ -27,6 +27,7 @@ def mock_make_api_call(self, operation_name, kwarg):
                     "AutoScalingGroupName": "my-autoscaling-group",
                     "AutoScalingGroupARN": "arn:aws:autoscaling:us-east-1:123456789012:autoScalingGroup:uuid:autoScalingGroupName/my-autoscaling-group",
                     "AvailabilityZones": ["us-east-1a", "us-east-1b"],
+                    "CapacityRebalance": True,
                     "Tags": [
                         {
                             "Key": "tag_test",
@@ -176,6 +177,7 @@ class Test_AutoScaling_Service:
                 MaxSize=0,
                 DesiredCapacity=0,
                 AvailabilityZones=["us-east-1a", "us-east-1b"],
+                CapacityRebalance=True,
                 Tags=[
                     {
                         "Key": "tag_test",
@@ -196,6 +198,7 @@ class Test_AutoScaling_Service:
                 "us-east-1a",
                 "us-east-1b",
             ]
+            assert autoscaling.groups[0].capacity_rebalance
             assert autoscaling.groups[0].tags == [
                 {
                     "Key": "tag_test",

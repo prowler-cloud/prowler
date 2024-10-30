@@ -34,6 +34,7 @@ class Test_iam_aws_attached_policy_no_administrative_privileges_test:
 
             check = iam_aws_attached_policy_no_administrative_privileges()
             results = check.execute()
+            assert len(results) == 1, f"Expected 1 result, but got {len(results)}"
             for result in results:
                 if result.resource_id == "AdministratorAccess":
                     assert result.status == "FAIL"
@@ -73,6 +74,7 @@ class Test_iam_aws_attached_policy_no_administrative_privileges_test:
 
             check = iam_aws_attached_policy_no_administrative_privileges()
             results = check.execute()
+            assert len(results) == 1, f"Expected 1 result, but got {len(results)}"
             for result in results:
                 if result.resource_id == "IAMUserChangePassword":
                     assert result.status == "PASS"
@@ -115,6 +117,7 @@ class Test_iam_aws_attached_policy_no_administrative_privileges_test:
 
             check = iam_aws_attached_policy_no_administrative_privileges()
             results = check.execute()
+            assert len(results) == 2, f"Expected 2 results, but got {len(results)}"
             for result in results:
                 if result.resource_id == "IAMUserChangePassword":
                     assert result.status == "PASS"
