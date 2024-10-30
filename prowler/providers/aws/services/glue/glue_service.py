@@ -314,7 +314,6 @@ class Job(BaseModel):
     security: Optional[str]
     arguments: Optional[dict]
     region: str
-    continuous_logging: Optional[bool] = False
     tags: Optional[List[Dict[str, str]]] = Field(default_factory=list)
 
 

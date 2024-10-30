@@ -32,7 +32,6 @@ def mock_make_api_call(self, operation_name, kwarg):
                         "--encryption-type": "sse-s3",
                         "--enable-job-insights": "false",
                     },
-                    "LogUri": "s3://bck-dev",
                 }
             ]
         }
@@ -257,7 +256,6 @@ class Test_Glue_Service:
             "--encryption-type": "sse-s3",
             "--enable-job-insights": "false",
         }
-        assert glue.jobs[0].log_uri == "s3://bck-dev"
         assert glue.jobs[0].region == AWS_REGION_US_EAST_1
 
     @mock_aws

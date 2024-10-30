@@ -30,7 +30,10 @@ class glue_etl_jobs_logging_enabled(Check):
                 f"Glue job {job.name} does not have logging enabled."
             )
 
-            if job.continuous_logging:
+            if (
+                job.arguments.get("--enable-continuous-cloudwatch-log", "false")
+                == "true"
+            ):
                 report.status = "PASS"
                 report.status_extended = (
                     f"Glue job {job.name} does have logging enabled."
