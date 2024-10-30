@@ -20,7 +20,7 @@
     },
     "Recommendation": {
       "Text": "Enable Guardrails for Amazon Bedrock agent sessions to protect against harmful inputs and outputs during interactions.",
-      "Url": "https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails.html#enabling-guardrails"
+      "Url": "https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails-create.html"
     }
   },
   "Categories": [],

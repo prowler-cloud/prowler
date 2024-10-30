@@ -142,19 +142,19 @@ class BedrockAgent(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _list_tags_for_resource(self, agent):
+    def _list_tags_for_resource(self, resource):
         logger.info("Bedrock Agent - Listing Tags for Resource...")
         try:
             agent_tags = (
-                self.regional_clients[agent.region]
-                .list_tags_for_resource(resourceArn=agent.arn)
+                self.regional_clients[resource.region]
+                .list_tags_for_resource(resourceArn=resource.arn)
                 .get("tags", {})
             )
             if agent_tags:
-                agent.tags = [agent_tags]
+                resource.tags = [agent_tags]
         except Exception as error:
             logger.error(
-                f"{agent.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{resource.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
 
