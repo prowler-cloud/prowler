@@ -41,12 +41,11 @@ class Test_glue_etl_jobs_logging_enabled:
         job_arn = (
             f"arn:aws:glue:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:job/{job_name}"
         )
-        log_uri = "s3://log_uri"
         glue_client.create_job(
             Name=job_name,
             Role="role_test",
             Command={"Name": "name_test", "ScriptLocation": "script_test"},
-            DefaultArguments={"key_test": "value_test"},
+            DefaultArguments={"--enable-continuous-cloudwatch-log": "true"},
             Tags={"key_test": "value_test"},
             GlueVersion="1.0",
             MaxCapacity=0.0625,
@@ -56,7 +55,6 @@ class Test_glue_etl_jobs_logging_enabled:
             WorkerType="G.1X",
             SecurityConfiguration="sec_config",
             NotificationProperty={"NotifyDelayAfter": 1},
-            LogUri=log_uri,
         )
 
         from prowler.providers.aws.services.glue.glue_service import Glue
@@ -82,7 +80,7 @@ class Test_glue_etl_jobs_logging_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Glue job {job_name} does have logging enabled in {log_uri}."
+                == f"Glue job {job_name} does have logging enabled."
             )
             assert result[0].resource_id == job_name
             assert result[0].resource_arn == job_arn
@@ -99,7 +97,7 @@ class Test_glue_etl_jobs_logging_enabled:
             Name=job_name,
             Role="role_test",
             Command={"Name": "name_test", "ScriptLocation": "script_test"},
-            DefaultArguments={"key_test": "value_test"},
+            DefaultArguments={},
             Tags={"key_test": "value_test"},
             GlueVersion="1.0",
             MaxCapacity=0.0625,

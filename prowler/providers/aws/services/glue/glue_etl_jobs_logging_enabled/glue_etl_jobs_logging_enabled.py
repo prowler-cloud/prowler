@@ -30,10 +30,10 @@ class glue_etl_jobs_logging_enabled(Check):
                 f"Glue job {job.name} does not have logging enabled."
             )
 
-            if job.log_uri:
+            if job.continuous_logging:
                 report.status = "PASS"
                 report.status_extended = (
-                    f"Glue job {job.name} does have logging enabled in {job.log_uri}."
+                    f"Glue job {job.name} does have logging enabled."
                 )
 
             findings.append(report)
