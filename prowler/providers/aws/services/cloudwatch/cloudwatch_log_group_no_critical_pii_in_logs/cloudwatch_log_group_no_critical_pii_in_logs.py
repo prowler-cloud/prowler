@@ -51,53 +51,68 @@ class cloudwatch_log_group_no_critical_pii_in_logs(Check):
                             for event in log_group.log_streams[log_stream_name]
                         ]
 
-                        # Process log data in chunks
-                        chunk_size = 50000  # Adjust chunk size based on performance
-                        for i in range(0, len(log_stream_events), chunk_size):
-                            chunk = "\n".join(log_stream_events[i : i + chunk_size])
+                        # Process log data in manageable chunks since the limit of Presidio Analyzer is 100,000 characters
+                        MAX_CHUNK_SIZE = 100000
+                        for i in range(0, len(log_stream_events)):
+                            chunk = log_stream_events[i]
 
-                            # PII detection for each chunk
-                            pii_detection_result = analyzer.analyze(
-                                text=chunk,
-                                entities=critical_pii_entities,
-                                score_threshold=1,
-                                language=pii_language,
-                            )
+                            # Split if chunk exceeds max allowed size for analyzer
+                            if len(chunk) > MAX_CHUNK_SIZE:
+                                split_chunks = [
+                                    chunk[j : j + MAX_CHUNK_SIZE]
+                                    for j in range(0, len(chunk), MAX_CHUNK_SIZE)
+                                ]
+                            else:
+                                split_chunks = [chunk]
 
-                            # Track cumulative character count to map PII to log event
-                            cumulative_char_count = 0
-                            for j, log_event in enumerate(
-                                log_stream_events[i : i + chunk_size]
-                            ):
-                                log_event_length = len(log_event)
-                                for pii in pii_detection_result:
-                                    # Check if PII start position falls within this log event
-                                    if (
-                                        cumulative_char_count
-                                        <= pii.start
-                                        < cumulative_char_count + log_event_length
-                                    ):
-                                        flagged_event = log_group.log_streams[
-                                            log_stream_name
-                                        ][j]
-                                        cloudwatch_timestamp = (
-                                            convert_to_cloudwatch_timestamp_format(
-                                                flagged_event["timestamp"]
+                            for split_chunk in split_chunks:
+                                # PII detection for each split chunk
+                                pii_detection_result = analyzer.analyze(
+                                    text=split_chunk,
+                                    entities=critical_pii_entities,
+                                    score_threshold=1,
+                                    language=pii_language,
+                                )
+
+                                # Track cumulative character count to map PII to log event
+                                cumulative_char_count = 0
+                                for j, log_event in enumerate(
+                                    log_stream_events[i : i + len(split_chunks)]
+                                ):
+                                    log_event_length = len(log_event)
+                                    for pii in pii_detection_result:
+                                        # Check if PII start position falls within this log event
+                                        if (
+                                            cumulative_char_count
+                                            <= pii.start
+                                            < cumulative_char_count + log_event_length
+                                        ):
+                                            flagged_event = log_group.log_streams[
+                                                log_stream_name
+                                            ][j]
+                                            cloudwatch_timestamp = (
+                                                convert_to_cloudwatch_timestamp_format(
+                                                    flagged_event["timestamp"]
+                                                )
                                             )
-                                        )
-                                        if cloudwatch_timestamp not in log_stream_pii:
-                                            log_stream_pii[cloudwatch_timestamp] = (
-                                                SecretsDict()
-                                            )
+                                            if (
+                                                cloudwatch_timestamp
+                                                not in log_stream_pii
+                                            ):
+                                                log_stream_pii[cloudwatch_timestamp] = (
+                                                    SecretsDict()
+                                                )
 
-                                        # Add the detected PII entity to log_stream_pii
-                                        log_stream_pii[cloudwatch_timestamp].add_secret(
-                                            pii.start - cumulative_char_count,
-                                            pii.entity_type,
-                                        )
-                                cumulative_char_count += (
-                                    log_event_length + 1
-                                )  # +1 to account for '\n'
+                                            # Add the detected PII entity to log_stream_pii
+                                            log_stream_pii[
+                                                cloudwatch_timestamp
+                                            ].add_secret(
+                                                pii.start - cumulative_char_count,
+                                                pii.entity_type,
+                                            )
+                                    cumulative_char_count += (
+                                        log_event_length + 1
+                                    )  # +1 to account for '\n'
 
                         if log_stream_pii:
                             pii_string = "; ".join(
