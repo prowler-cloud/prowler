@@ -460,22 +460,6 @@ class TestAWSProvider:
             )
 
     @mock_aws
-    def test_aws_provider_get_output_mapping(self):
-        aws_provider = AwsProvider()
-
-        assert aws_provider.get_output_mapping == {
-            "auth_method": "identity.profile",
-            "provider": "type",
-            "account_uid": "identity.account",
-            "account_name": "organizations_metadata.account_name",
-            "account_email": "organizations_metadata.account_email",
-            "account_organization_uid": "organizations_metadata.organization_arn",
-            "account_organization_name": "organizations_metadata.organization_id",
-            "account_tags": "organizations_metadata.account_tags",
-            "partition": "identity.partition",
-        }
-
-    @mock_aws
     def test_aws_provider_assume_role_with_mfa(self):
         # Variables
         mfa = True
@@ -994,9 +978,9 @@ aws:
                 }
             },
         ):
-            assert aws_provider.get_available_aws_service_regions("ec2") == {
-                AWS_REGION_US_EAST_1
-            }
+            assert aws_provider.get_available_aws_service_regions(
+                "ec2", "aws", {AWS_REGION_US_EAST_1}
+            ) == {AWS_REGION_US_EAST_1}
 
     @mock_aws
     def test_get_available_aws_service_regions_with_all_regions_audited(self):
@@ -1033,7 +1017,9 @@ aws:
                 }
             },
         ):
-            assert len(aws_provider.get_available_aws_service_regions("ec2")) == 17
+            assert (
+                len(aws_provider.get_available_aws_service_regions("ec2", "aws")) == 17
+            )
 
     @mock_aws
     def test_get_tagged_resources(self):

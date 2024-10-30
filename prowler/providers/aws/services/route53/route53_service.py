@@ -161,7 +161,9 @@ class Route53Domains(AWSService):
                     domain_name = domain["DomainName"]
 
                     self.domains[domain_name] = Domain(
-                        name=domain_name, region=self.region
+                        name=domain_name,
+                        arn=f"arn:{self.audited_partition}:route53:::domain/{domain_name}",
+                        region=self.region,
                     )
 
         except Exception as error:
@@ -198,6 +200,7 @@ class Route53Domains(AWSService):
 
 class Domain(BaseModel):
     name: str
+    arn: str
     region: str
     admin_privacy: bool = False
     status_list: list[str] = None

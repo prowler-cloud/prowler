@@ -360,20 +360,6 @@ class AwsProvider(Provider):
         """
         return self._mutelist
 
-    @property
-    def get_output_mapping(self):
-        return {
-            "auth_method": "identity.profile",
-            "provider": "type",
-            "account_uid": "identity.account",
-            "account_name": "organizations_metadata.account_name",
-            "account_email": "organizations_metadata.account_email",
-            "account_organization_uid": "organizations_metadata.organization_arn",
-            "account_organization_name": "organizations_metadata.organization_id",
-            "account_tags": "organizations_metadata.account_tags",
-            "partition": "identity.partition",
-        }
-
     # TODO: This can be moved to another class since it doesn't need self
     def get_organizations_info(
         self, organizations_session: Session, aws_account_id: str
@@ -643,7 +629,9 @@ class AwsProvider(Provider):
         """
         try:
             regional_clients = {}
-            service_regions = self.get_available_aws_service_regions(service)
+            service_regions = AwsProvider.get_available_aws_service_regions(
+                service, self._identity.partition, self._identity.audited_regions
+            )
 
             # Get the regions enabled for the account and get the intersection with the service available regions
             if self._enabled_regions:
@@ -664,14 +652,26 @@ class AwsProvider(Provider):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def get_available_aws_service_regions(self, service: str) -> set:
+    @staticmethod
+    def get_available_aws_service_regions(
+        service: str, partition: str = "aws", audited_regions: set = None
+    ) -> set:
+        """
+        get_available_aws_service_regions returns the available regions for the given service and partition.
+
+        Arguments:
+            - service: The AWS service name.
+            - partition: The AWS partition name. Default is "aws".
+            - audited_regions: A set of regions to audit. Default is None.
+
+        Returns:
+            - A set of strings representing the available regions for the given service and partition.
+        """
         data = read_aws_regions_file()
-        json_regions = set(
-            data["services"][service]["regions"][self._identity.partition]
-        )
-        if self._identity.audited_regions:
+        json_regions = set(data["services"][service]["regions"][partition])
+        if audited_regions:
             # Get common regions between input and json
-            regions = json_regions.intersection(self._identity.audited_regions)
+            regions = json_regions.intersection(audited_regions)
         else:  # Get all regions from json of the service and partition
             regions = json_regions
         return regions
@@ -807,7 +807,9 @@ class AwsProvider(Provider):
     def get_default_region(self, service: str) -> str:
         """get_default_region returns the default region based on the profile and audited service regions"""
         try:
-            service_regions = self.get_available_aws_service_regions(service)
+            service_regions = AwsProvider.get_available_aws_service_regions(
+                service, self._identity.partition, self._identity.audited_regions
+            )
             default_region = self.get_global_region()
             # global region of the partition when all regions are audited and there is no profile region
             if self._identity.profile_region in service_regions:

@@ -5,11 +5,11 @@
   "CheckType": [
     "Software and Configuration Checks/Vulnerabilities/NIST 800-53 Controls (USA)"
   ],
-  "ServiceName": "elasticloadbalancing",
+  "ServiceName": "elb",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:elasticloadbalancing:{region}:{account-id}:loadbalancer/{loadbalancer-name}",
   "Severity": "medium",
-  "ResourceType": "AwsElasticLoadBalancingLoadBalancer",
+  "ResourceType": "AwsElbLoadBalancer",
   "Description": "This control checks whether the Classic Load Balancer uses HTTPS/SSL certificates provided by AWS Certificate Manager (ACM). The control fails if the Classic Load Balancer does not use a certificate provided by ACM.",
   "Risk": "If Classic Load Balancers are not using ACM certificates, it increases the risk of using self-signed or expired certificates, which can impact secure communication and lead to compliance issues.",
   "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/elb-acm-certificate-required.html",

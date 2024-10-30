@@ -178,6 +178,12 @@ Detailed documentation at https://docs.prowler.com
             "--no-banner", "-b", action="store_true", help="Hide Prowler banner"
         )
         common_outputs_parser.add_argument(
+            "--no-color",
+            action="store_true",
+            help="Disable color codes in output",
+        )
+
+        common_outputs_parser.add_argument(
             "--unix-timestamp",
             action="store_true",
             default=False,

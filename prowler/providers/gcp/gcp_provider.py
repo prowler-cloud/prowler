@@ -20,6 +20,7 @@ from prowler.lib.utils.utils import print_boxes
 from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
 from prowler.providers.gcp.exceptions.exceptions import (
+    GCPCloudAssetAPINotUsedError,
     GCPCloudResourceManagerAPINotUsedError,
     GCPGetProjectError,
     GCPHTTPError,
@@ -47,6 +48,7 @@ class GcpProvider(Provider):
 
     def __init__(
         self,
+        organization_id: str = None,
         project_ids: list = None,
         excluded_project_ids: list = None,
         credentials_file: str = None,
@@ -65,6 +67,7 @@ class GcpProvider(Provider):
         GCP Provider constructor
 
         Args:
+            organization_id: str
             project_ids: list
             excluded_project_ids: list
             credentials_file: str
@@ -95,7 +98,7 @@ class GcpProvider(Provider):
         self._project_ids = []
         self._projects = {}
         self._excluded_project_ids = []
-        accessible_projects = self.get_projects(self._session)
+        accessible_projects = self.get_projects(self._session, organization_id)
         if not accessible_projects:
             logger.critical("No Project IDs can be accessed via Google Credentials.")
             raise GCPNoAccesibleProjectsError(
@@ -223,27 +226,6 @@ class GcpProvider(Provider):
         mutelist method returns the provider's mutelist.
         """
         return self._mutelist
-
-    @property
-    def get_output_mapping(self):
-        return {
-            # Account: identity.profile
-            "auth_method": "identity.profile",
-            "provider": "type",
-            # TODO: comes from finding, finding.project_id
-            # "account_uid": "",
-            # TODO: get project name from GCP
-            # "account_name": "organizations_metadata.account_details_name",
-            # There is no concept as project email in GCP
-            # "account_email": "organizations_metadata.account_details_email",
-            # TODO: get project organization ID from GCP
-            # "account_organization_uid": "organizations_metadata.account_details_arn",
-            # TODO: get project organization from GCP
-            # "account_organization": "",
-            # TODO: get project tags organization from GCP
-            # "account_tags": "organizations_metadata.account_details_tags",
-            # "partition": "identity.partition",
-        }
 
     @staticmethod
     def setup_session(
@@ -428,47 +410,101 @@ class GcpProvider(Provider):
         print_boxes(report_lines, report_title)
 
     @staticmethod
-    def get_projects(credentials) -> dict[str, GCPProject]:
+    def get_projects(
+        credentials: Credentials, organization_id: str
+    ) -> dict[str, GCPProject]:
+        """
+        Get the projects accessible by the provided credentials. If an organization ID is provided, only the projects under that organization are returned.
+        Args:
+            credentials: Credentials
+            organization_id: str
+        Returns:
+            dict[str, GCPProject]
+        """
         try:
             projects = {}
 
-            service = discovery.build(
-                "cloudresourcemanager", "v1", credentials=credentials
-            )
+            if organization_id:
+                # Initialize Cloud Asset Inventory API for recursive project retrieval
+                asset_service = discovery.build(
+                    "cloudasset", "v1", credentials=credentials
+                )
+                # Set the scope to the specified organization and filter for projects
+                scope = f"organizations/{organization_id}"
+                request = asset_service.assets().list(
+                    parent=scope,
+                    assetTypes=["cloudresourcemanager.googleapis.com/Project"],
+                    contentType="RESOURCE",
+                )
 
-            request = service.projects().list()
+                while request is not None:
+                    response = request.execute()
 
-            while request is not None:
-                response = request.execute()
-
-                for project in response.get("projects", []):
-                    labels = {}
-                    for key, value in project.get("labels", {}).items():
-                        labels[key] = value
-
-                    project_id = project["projectId"]
-                    gcp_project = GCPProject(
-                        number=project["projectNumber"],
-                        id=project_id,
-                        name=project.get("name", project_id),
-                        lifecycle_state=project["lifecycleState"],
-                        labels=labels,
-                    )
-
-                    if (
-                        "parent" in project
-                        and "type" in project["parent"]
-                        and project["parent"]["type"] == "organization"
-                    ):
-                        organization_id = project["parent"]["id"]
+                    for asset in response.get("assets", []):
+                        # Extract labels and other project details
+                        labels = {
+                            k: v
+                            for k, v in asset["resource"]["data"]
+                            .get("labels", {})
+                            .items()
+                        }
+                        project_id = asset["resource"]["data"]["projectId"]
+                        gcp_project = GCPProject(
+                            number=asset["resource"]["data"]["projectNumber"],
+                            id=project_id,
+                            name=asset["resource"]["data"].get("name", project_id),
+                            lifecycle_state=asset["resource"]["data"].get(
+                                "lifecycleState"
+                            ),
+                            labels=labels,
+                        )
                         gcp_project.organization = GCPOrganization(
                             id=organization_id, name=f"organizations/{organization_id}"
                         )
 
-                    projects[project_id] = gcp_project
-                request = service.projects().list_next(
-                    previous_request=request, previous_response=response
+                        projects[project_id] = gcp_project
+
+                    request = asset_service.assets().list_next(
+                        previous_request=request, previous_response=response
+                    )
+
+            else:
+                # Initialize Cloud Resource Manager API for simple project listing
+                service = discovery.build(
+                    "cloudresourcemanager", "v1", credentials=credentials
                 )
+                request = service.projects().list()
+
+                while request is not None:
+                    response = request.execute()
+
+                    for project in response.get("projects", []):
+                        # Extract labels and other project details
+                        labels = {k: v for k, v in project.get("labels", {}).items()}
+                        project_id = project["projectId"]
+                        gcp_project = GCPProject(
+                            number=project["projectNumber"],
+                            id=project_id,
+                            name=project.get("name", project_id),
+                            lifecycle_state=project["lifecycleState"],
+                            labels=labels,
+                        )
+
+                        # Set organization if present in the project metadata
+                        if (
+                            "parent" in project
+                            and project["parent"].get("type") == "organization"
+                        ):
+                            parent_org_id = project["parent"]["id"]
+                            gcp_project.organization = GCPOrganization(
+                                id=parent_org_id, name=f"organizations/{parent_org_id}"
+                            )
+
+                        projects[project_id] = gcp_project
+
+                    request = service.projects().list_next(
+                        previous_request=request, previous_response=response
+                    )
 
         except HttpError as http_error:
             if "Cloud Resource Manager API has not been used" in str(http_error):
@@ -476,6 +512,13 @@ class GcpProvider(Provider):
                     "Cloud Resource Manager API has not been used before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/cloudresourcemanager.googleapis.com/ then retry."
                 )
                 raise GCPCloudResourceManagerAPINotUsedError(
+                    file=__file__, original_exception=http_error
+                )
+            elif "Cloud Asset API has not been used" in str(http_error):
+                logger.critical(
+                    "Cloud Asset API has not been used before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/cloudasset.googleapis.com/ then retry."
+                )
+                raise GCPCloudAssetAPINotUsedError(
                     file=__file__, original_exception=http_error
                 )
             else:

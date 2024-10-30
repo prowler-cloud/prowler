@@ -17,7 +17,8 @@ class elb_ssl_listeners_use_acm_certificate(Check):
             report.status_extended = f"ELB {lb.name} HTTPS/SSL listeners are using certificates managed by ACM."
             for listener in lb.listeners:
                 if (
-                    listener.protocol in secure_protocols
+                    listener.certificate_arn
+                    and listener.protocol in secure_protocols
                     and acm_client.certificates[listener.certificate_arn].type
                     != "AMAZON_ISSUED"
                 ):
