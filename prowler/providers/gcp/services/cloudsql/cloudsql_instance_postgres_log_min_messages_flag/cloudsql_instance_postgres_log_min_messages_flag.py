@@ -26,15 +26,6 @@ class cloudsql_instance_postgres_log_min_messages_flag(Check):
                 report.status_extended = f"PostgreSQL Instance {instance.name} does not have 'log_min_messages' flag set."
 
                 for flag in instance.flags:
-<<<<<<< HEAD
-                    if (
-                        flag["name"] == "log_min_messages"
-                        and flag["value"] == desired_log_min_messages
-                    ):
-                        report.status = "PASS"
-                        report.status_extended = f"PostgreSQL Instance {instance.name} has 'log_min_messages' flag set minimum to '{desired_log_min_messages}'."
-                        break
-=======
                     if flag.get("name", "") == "log_min_messages":
                         current_level = flag.get("value", "").upper()
                         if current_level in failing_log_levels:
@@ -43,7 +34,6 @@ class cloudsql_instance_postgres_log_min_messages_flag(Check):
                         else:
                             report.status = "PASS"
                             report.status_extended = f"PostgreSQL Instance {instance.name} has 'log_min_messages' flag set to an acceptable severity level: '{current_level}'."
->>>>>>> 5bd394dff (fix(gcp): enforce correct severity levels in CloudSQL PostgreSQL `log_min_messages` (#5571))
                 findings.append(report)
 
         return findings
