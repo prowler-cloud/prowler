@@ -80,7 +80,7 @@ class Test_glue_etl_jobs_logging_enabled:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == f"Glue job {job_name} does have logging enabled."
+                    == f"Glue job {job_name} have logging enabled."
                 )
                 assert result[0].resource_id == job_name
                 assert result[0].resource_arn == job_arn

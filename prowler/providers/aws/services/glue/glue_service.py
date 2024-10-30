@@ -113,10 +113,6 @@ class Glue(AWSService):
                                 arn=arn,
                                 security=job.get("SecurityConfiguration"),
                                 arguments=job.get("DefaultArguments", {}),
-                                continuous_logging=job.get("DefaultArguments", {}).get(
-                                    "--enable-continuous-cloudwatch-log", "false"
-                                )
-                                == "true",
                                 region=regional_client.region,
                             )
                         )
