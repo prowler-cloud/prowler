@@ -15,8 +15,8 @@
     "Code": {
       "CLI": "aws elbv2 modify-load-balancer-attributes --load-balancer-name <load-balancer-name> --attributes Key=load_balancing.cross_zone.enabled,Value=true",
       "NativeIaC": "",
-      "Other": "https://docs.aws.amazon.com/elasticloadbalancing/latest/network/network-load-balancers.html#cross-zone-load-balancing",
-      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELBv2/enable-cross-zone-load-balancing.html#"
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELBv2/enable-cross-zone-load-balancing.html#",
+      "Terraform": ""
     },
     "Recommendation": {
       "Text": "Enable cross-zone load balancing for Network and Gateway Load Balancers to ensure even traffic distribution and enhance fault tolerance across Availability Zones.",
