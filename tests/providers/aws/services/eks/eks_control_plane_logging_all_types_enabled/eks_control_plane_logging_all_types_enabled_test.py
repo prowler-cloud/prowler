@@ -54,7 +54,7 @@ class Test_eks_control_plane_logging_all_types_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Control plane logging is not enabled for EKS cluster {cluster_name}. Required log types: ."
+                == f"Control plane logging is not enabled for EKS cluster {cluster_name}. Required log types: api, audit, authenticator, controllerManager, scheduler."
             )
             assert result[0].resource_id == cluster_name
             assert result[0].resource_arn == cluster_arn
