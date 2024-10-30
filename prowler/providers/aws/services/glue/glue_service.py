@@ -113,6 +113,7 @@ class Glue(AWSService):
                                 arn=arn,
                                 security=job.get("SecurityConfiguration"),
                                 arguments=job.get("DefaultArguments"),
+                                log_uri=job.get("LogUri"),
                                 region=regional_client.region,
                             )
                         )
@@ -309,6 +310,7 @@ class Job(BaseModel):
     security: Optional[str]
     arguments: Optional[dict]
     region: str
+    log_uri: Optional[str]
     tags: Optional[list]
 
 
