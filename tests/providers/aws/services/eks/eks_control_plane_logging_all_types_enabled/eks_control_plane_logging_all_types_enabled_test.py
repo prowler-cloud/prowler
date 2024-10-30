@@ -39,6 +39,15 @@ class Test_eks_control_plane_logging_all_types_enabled:
                 logging=None,
             )
         )
+        eks_client.audit_config = {
+            "eks_required_log_types": [
+                "api",
+                "audit",
+                "authenticator",
+                "controllerManager",
+                "scheduler",
+            ]
+        }
 
         with mock.patch(
             "prowler.providers.aws.services.eks.eks_service.EKS",
