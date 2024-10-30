@@ -1,4 +1,3 @@
-import os
 import tempfile
 from os import path
 from tempfile import NamedTemporaryFile
@@ -182,10 +181,17 @@ class S3:
                 bucket_name = bucket_name.removeprefix("s3://")
             # Check for the bucket location
             bucket_location = session.get_bucket_location(Bucket=bucket_name)
+            if bucket_location["LocationConstraint"] == "EU":
+                bucket_location["LocationConstraint"] = "eu-west-1"
+            if (
+                bucket_location["LocationConstraint"] == ""
+                or bucket_location["LocationConstraint"] is None
+            ):
+                bucket_location["LocationConstraint"] = "us-east-1"
 
             # If the bucket location is not the same as the session region, change the session region
             if (
-                os.environ["region"] != bucket_location["LocationConstraint"]
+                session.region_name != bucket_location["LocationConstraint"]
                 and bucket_location["LocationConstraint"] is not None
             ):
                 session = session.client(
