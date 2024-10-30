@@ -97,7 +97,7 @@ export const ConnectAccountForm = () => {
           control={form.control}
           name="providerAlias"
           type="text"
-          label="Alias"
+          label="Alias (optional)"
           labelPlacement="inside"
           placeholder={"Enter the provider alias"}
           variant="bordered"
