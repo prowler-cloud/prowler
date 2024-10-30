@@ -37,7 +37,7 @@ export const CustomRadio: React.FC<CustomRadioProps> = (props) => {
       className={cn(
         "group inline-flex flex-row-reverse items-center justify-between tap-highlight-transparent hover:opacity-70 active:opacity-50",
         "max-w-full cursor-pointer gap-4 rounded-lg border-2 border-default p-4",
-        "data-[selected=true]:border-primar w-full",
+        "w-full hover:border-action data-[selected=true]:border-action",
       )}
     >
       <VisuallyHidden>
@@ -78,23 +78,23 @@ export const RadioGroupProvider: React.FC<RadioGroupProviderProps> = ({
             isInvalid={isInvalid}
             {...field}
           >
-            <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-4">
               <CustomRadio description="Amazon Web Services" value="aws">
                 <div className="flex items-center">
                   <AWSProviderBadge size={26} />
-                  <span className="ml-2">AWS</span>
+                  <span className="ml-2">Amazon Web Services</span>
                 </div>
               </CustomRadio>
               <CustomRadio description="Google Cloud Platform" value="gcp">
                 <div className="flex items-center">
                   <GCPProviderBadge size={26} />
-                  <span className="ml-2">GCP</span>
+                  <span className="ml-2">Google Cloud Platform</span>
                 </div>
               </CustomRadio>
               <CustomRadio description="Microsoft Azure" value="azure">
                 <div className="flex items-center">
                   <AzureProviderBadge size={26} />
-                  <span className="ml-2">Azure</span>
+                  <span className="ml-2">Microsoft Azure</span>
                 </div>
               </CustomRadio>
               <CustomRadio description="Kubernetes" value="kubernetes">

@@ -23,7 +23,9 @@ export default function ProviderLayout({ children }: ProviderLayoutProps) {
         <div className="order-1 my-auto hidden h-full lg:col-span-4 lg:col-start-2 lg:block">
           <Workflow />
         </div>
-        <div className="order-2 lg:col-span-5 lg:col-start-6">{children}</div>
+        <div className="order-2 my-auto lg:col-span-5 lg:col-start-6">
+          {children}
+        </div>
       </div>
     </>
   );
