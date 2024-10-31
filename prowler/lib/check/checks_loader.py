@@ -1,12 +1,14 @@
 from colorama import Fore, Style
 
 from prowler.lib.check.check import parse_checks_from_file
+from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.check.models import CheckMetadata, Severity
 from prowler.lib.logger import logger
 
 
 # Generate the list of checks to execute
 def load_checks_to_execute(
+    provider: str,
     bulk_checks_metadata: dict = None,
     bulk_compliance_frameworks: dict = None,
     checks_file: str = None,
@@ -15,7 +17,6 @@ def load_checks_to_execute(
     severities: list = None,
     compliance_frameworks: list = None,
     categories: set = None,
-    provider: str = None,
 ) -> set:
     """Generate the list of checks to execute based on the cloud provider and the input arguments given"""
     try:
@@ -25,29 +26,30 @@ def load_checks_to_execute(
         check_categories = {}
         check_severities = {severity.value: [] for severity in Severity}
 
-        if bulk_checks_metadata:
-            # First, loop over the bulk_checks_metadata to extract the needed subsets
-            for check, metadata in bulk_checks_metadata.items():
-                try:
-                    # Aliases
-                    for alias in metadata.CheckAliases:
-                        if alias not in check_aliases:
-                            check_aliases[alias] = []
-                        check_aliases[alias].append(check)
+        if not bulk_checks_metadata:
+            bulk_checks_metadata = CheckMetadata.get_bulk(provider=provider)
+        # First, loop over the bulk_checks_metadata to extract the needed subsets
+        for check, metadata in bulk_checks_metadata.items():
+            try:
+                # Aliases
+                for alias in metadata.CheckAliases:
+                    if alias not in check_aliases:
+                        check_aliases[alias] = []
+                    check_aliases[alias].append(check)
 
-                    # Severities
-                    if metadata.Severity:
-                        check_severities[metadata.Severity].append(check)
+                # Severities
+                if metadata.Severity:
+                    check_severities[metadata.Severity].append(check)
 
-                    # Categories
-                    for category in metadata.Categories:
-                        if category not in check_categories:
-                            check_categories[category] = []
-                        check_categories[category].append(check)
-                except Exception as error:
-                    logger.error(
-                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
-                    )
+                # Categories
+                for category in metadata.Categories:
+                    if category not in check_categories:
+                        check_categories[category] = []
+                    check_categories[category].append(check)
+            except Exception as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+                )
 
         # Handle if there are checks passed using -c/--checks
         if check_list:
@@ -86,6 +88,8 @@ def load_checks_to_execute(
 
         # Handle if there are compliance frameworks passed using --compliance
         elif compliance_frameworks:
+            if not bulk_compliance_frameworks:
+                bulk_compliance_frameworks = Compliance.get_bulk(provider=provider)
             for compliance_framework in compliance_frameworks:
                 checks_to_execute.update(
                     CheckMetadata.list(
