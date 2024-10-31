@@ -172,6 +172,12 @@ export const addCredentialsProvider = async (formData: FormData) => {
       client_secret: formData.get("client_secret"),
       tenant_id: formData.get("tenant_id"),
     };
+  } else if (providerType === "gcp") {
+    secret = {
+      client_id: formData.get("client_id"),
+      client_secret: formData.get("client_secret"),
+      refresh_token: formData.get("refresh_token"),
+    };
   }
 
   const bodyData = {

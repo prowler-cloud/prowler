@@ -10,11 +10,17 @@ import { addCredentialsProvider } from "@/actions/providers/providers";
 import { useToast } from "@/components/ui";
 import { CustomButton, CustomInput } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
-import { addCredentialsFormSchema, ApiError, AzureCredentials } from "@/types";
-import { AWSCredentials } from "@/types";
+import {
+  addCredentialsFormSchema,
+  ApiError,
+  AWSCredentials,
+  AzureCredentials,
+  GCPCredentials,
+} from "@/types";
 
 import { AWScredentialsForm } from "./via-credentials/aws-credentials-form";
 import { AzureCredentialsForm } from "./via-credentials/azure-credentials-form";
+import { GCPcredentialsForm } from "./via-credentials/gcp-credentials-form";
 
 type CredentialsFormSchema = z.infer<
   ReturnType<typeof addCredentialsFormSchema>
@@ -151,6 +157,11 @@ export const ViaCredentialsForm = ({
         {providerType === "azure" && (
           <AzureCredentialsForm
             control={form.control as unknown as Control<AzureCredentials>}
+          />
+        )}
+        {providerType === "gcp" && (
+          <GCPcredentialsForm
+            control={form.control as unknown as Control<GCPCredentials>}
           />
         )}
 
