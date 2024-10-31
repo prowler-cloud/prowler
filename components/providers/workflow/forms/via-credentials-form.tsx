@@ -10,16 +10,18 @@ import { addCredentialsProvider } from "@/actions/providers/providers";
 import { useToast } from "@/components/ui";
 import { CustomButton, CustomInput } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
+import { addCredentialsFormSchema, ApiError, AzureCredentials } from "@/types";
+import { AWSCredentials } from "@/types";
 
-import {
-  addCredentialsFormSchema,
-  ApiError,
-  AWSCredentials,
-  AzureCredentials,
-  CredentialsFormSchema,
-} from "../../../../types";
 import { AWScredentialsForm } from "./via-credentials/aws-credentials-form";
 import { AzureCredentialsForm } from "./via-credentials/azure-credentials-form";
+
+type CredentialsFormSchema = z.infer<
+  ReturnType<typeof addCredentialsFormSchema>
+>;
+
+// Add this type intersection to include all fields
+type FormType = CredentialsFormSchema & AWSCredentials & AzureCredentials;
 
 export const ViaCredentialsForm = ({
   searchParams,
@@ -31,14 +33,14 @@ export const ViaCredentialsForm = ({
 
   const providerType = searchParams.provider;
   const providerId = searchParams.id;
-
   const formSchema = addCredentialsFormSchema(providerType);
 
-  const form = useForm<CredentialsFormSchema>({
+  const form = useForm<FormType>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       secretName: "",
       providerId,
+      providerType,
       ...(providerType === "aws"
         ? {
             aws_access_key_id: "",
@@ -63,7 +65,8 @@ export const ViaCredentialsForm = ({
 
   const isLoading = form.formState.isSubmitting;
 
-  const onSubmitClient = async (values: z.infer<typeof formSchema>) => {
+  const onSubmitClient = async (values: FormType) => {
+    console.log("via credentials form", values);
     const formData = new FormData();
 
     Object.entries(values).forEach(
@@ -94,6 +97,24 @@ export const ViaCredentialsForm = ({
               message: errorMessage,
             });
             break;
+          case "/data/attributes/secret/client_id":
+            form.setError("client_id", {
+              type: "server",
+              message: errorMessage,
+            });
+            break;
+          case "/data/attributes/secret/client_secret":
+            form.setError("client_secret", {
+              type: "server",
+              message: errorMessage,
+            });
+            break;
+          case "/data/attributes/secret/tenant_id":
+            form.setError("tenant_id", {
+              type: "server",
+              message: errorMessage,
+            });
+            break;
           case "/data/attributes/name":
             form.setError("secretName", {
               type: "server",
@@ -109,7 +130,7 @@ export const ViaCredentialsForm = ({
         }
       });
     } else {
-      router.push("/providers/test-connection");
+      router.push(`/providers/test-connection?id=${providerId}`);
     }
   };
 
@@ -120,17 +141,19 @@ export const ViaCredentialsForm = ({
         className="flex flex-col space-y-4"
       >
         <input type="hidden" name="providerId" value={providerId} />
+        <input type="hidden" name="providerType" value={providerType} />
 
         {providerType === "aws" && (
           <AWScredentialsForm
-            control={form.control as Control<AWSCredentials>}
+            control={form.control as unknown as Control<AWSCredentials>}
           />
         )}
         {providerType === "azure" && (
           <AzureCredentialsForm
-            control={form.control as Control<AzureCredentials>}
+            control={form.control as unknown as Control<AzureCredentials>}
           />
         )}
+
         <span className="text-sm text-default-500">Name (Optional)</span>
         <CustomInput
           control={form.control}

@@ -1,14 +1,13 @@
-import { Control, FieldErrors } from "react-hook-form";
+import { Control } from "react-hook-form";
 
 import { CustomInput } from "@/components/ui/custom";
+import { AWSCredentials } from "@/types";
 
-import { AWSCredentials } from "../../../../../types";
-
-interface AWScredentialsFormProps {
+export const AWScredentialsForm = ({
+  control,
+}: {
   control: Control<AWSCredentials>;
-}
-
-export const AWScredentialsForm = ({ control }: AWScredentialsFormProps) => {
+}) => {
   return (
     <>
       <div className="text-left">
@@ -28,10 +27,7 @@ export const AWScredentialsForm = ({ control }: AWScredentialsFormProps) => {
         placeholder="Enter the AWS Access Key ID"
         variant="bordered"
         isRequired
-        isInvalid={
-          !!(control._formState.errors as FieldErrors<AWSCredentials>)
-            .aws_access_key_id
-        }
+        isInvalid={!!control._formState.errors.aws_access_key_id}
       />
       <CustomInput
         control={control}
@@ -42,10 +38,7 @@ export const AWScredentialsForm = ({ control }: AWScredentialsFormProps) => {
         placeholder="Enter the AWS Secret Access Key"
         variant="bordered"
         isRequired
-        isInvalid={
-          !!(control._formState.errors as FieldErrors<AWSCredentials>)
-            .aws_secret_access_key
-        }
+        isInvalid={!!control._formState.errors.aws_secret_access_key}
       />
       <CustomInput
         control={control}
@@ -55,11 +48,8 @@ export const AWScredentialsForm = ({ control }: AWScredentialsFormProps) => {
         labelPlacement="inside"
         placeholder="Enter the AWS Session Token"
         variant="bordered"
-        isRequired
-        isInvalid={
-          !!(control._formState.errors as FieldErrors<AWSCredentials>)
-            .aws_session_token
-        }
+        isRequired={false}
+        isInvalid={!!control._formState.errors.aws_session_token}
       />
     </>
   );

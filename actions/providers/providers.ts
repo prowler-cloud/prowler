@@ -148,27 +148,38 @@ export const addProvider = async (formData: FormData) => {
     };
   }
 };
+
 export const addCredentialsProvider = async (formData: FormData) => {
   const session = await auth();
   const keyServer = process.env.API_BASE_URL;
   const url = new URL(`${keyServer}/providers/secrets`);
 
-  const aws_access_key_id = formData.get("aws_access_key_id");
-  const aws_secret_access_key = formData.get("aws_secret_access_key");
-  const aws_session_token = formData.get("aws_session_token");
   const secretName = formData.get("secretName");
   const providerId = formData.get("providerId");
+  const providerType = formData.get("providerType");
+
+  let secret = {};
+
+  if (providerType === "aws") {
+    secret = {
+      aws_access_key_id: formData.get("aws_access_key_id"),
+      aws_secret_access_key: formData.get("aws_secret_access_key"),
+      aws_session_token: formData.get("aws_session_token") || undefined,
+    };
+  } else if (providerType === "azure") {
+    secret = {
+      client_id: formData.get("client_id"),
+      client_secret: formData.get("client_secret"),
+      tenant_id: formData.get("tenant_id"),
+    };
+  }
 
   const bodyData = {
     data: {
       type: "ProviderSecret",
       attributes: {
         secret_type: "static",
-        secret: {
-          aws_access_key_id: aws_access_key_id,
-          aws_secret_access_key: aws_secret_access_key,
-          aws_session_token: aws_session_token,
-        },
+        secret,
         name: secretName,
       },
       relationships: {

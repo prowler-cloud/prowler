@@ -1,16 +1,13 @@
-import { Control, FieldErrors } from "react-hook-form";
+import { Control } from "react-hook-form";
 
 import { CustomInput } from "@/components/ui/custom";
-
-import { AzureCredentials } from "../../../../../types";
-
-interface AzureCredentialsFormProps {
-  control: Control<AzureCredentials>;
-}
+import { AzureCredentials } from "@/types";
 
 export const AzureCredentialsForm = ({
   control,
-}: AzureCredentialsFormProps) => {
+}: {
+  control: Control<AzureCredentials>;
+}) => {
   return (
     <>
       <div className="text-left">
@@ -30,10 +27,7 @@ export const AzureCredentialsForm = ({
         placeholder="Enter the Client ID"
         variant="bordered"
         isRequired
-        isInvalid={
-          !!(control._formState.errors as FieldErrors<AzureCredentials>)
-            .client_id
-        }
+        isInvalid={!!control._formState.errors.client_id}
       />
       <CustomInput
         control={control}
@@ -44,10 +38,7 @@ export const AzureCredentialsForm = ({
         placeholder="Enter the Client Secret"
         variant="bordered"
         isRequired
-        isInvalid={
-          !!(control._formState.errors as FieldErrors<AzureCredentials>)
-            .client_secret
-        }
+        isInvalid={!!control._formState.errors.client_secret}
       />
       <CustomInput
         control={control}
@@ -58,10 +49,7 @@ export const AzureCredentialsForm = ({
         placeholder="Enter the Tenant ID"
         variant="bordered"
         isRequired
-        isInvalid={
-          !!(control._formState.errors as FieldErrors<AzureCredentials>)
-            .tenant_id
-        }
+        isInvalid={!!control._formState.errors.tenant_id}
       />
     </>
   );

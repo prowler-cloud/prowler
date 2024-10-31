@@ -72,23 +72,28 @@ export const addCredentialsFormSchema = (providerType: string) =>
   z.object({
     secretName: z.string().optional(),
     providerId: z.string(),
+    providerType: z.string(),
     ...(providerType === "aws"
       ? {
-          aws_access_key_id: z.string(),
-          aws_secret_access_key: z.string(),
-          aws_session_token: z.string(),
+          aws_access_key_id: z
+            .string()
+            .nonempty("AWS Access Key ID is required"),
+          aws_secret_access_key: z
+            .string()
+            .nonempty("AWS Secret Access Key is required"),
+          aws_session_token: z.string().optional(),
         }
       : providerType === "azure"
         ? {
-            client_id: z.string(),
-            client_secret: z.string(),
-            tenant_id: z.string(),
+            client_id: z.string().nonempty("Client ID is required"),
+            client_secret: z.string().nonempty("Client Secret is required"),
+            tenant_id: z.string().nonempty("Tenant ID is required"),
           }
         : providerType === "gcp"
           ? {
-              client_id: z.string(),
-              client_secret: z.string(),
-              refresh_token: z.string(),
+              client_id: z.string().nonempty("Client ID is required"),
+              client_secret: z.string().nonempty("Client Secret is required"),
+              refresh_token: z.string().nonempty("Refresh Token is required"),
             }
           : {}),
   });
