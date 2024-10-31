@@ -401,6 +401,7 @@ class Test_rds_instance_protected_by_backup_plan:
 
     def test_rds_cluster_with_backup_plan(self):
         cluster = mock.MagicMock()
+        mock.MagicMock()
 
         from prowler.providers.aws.services.rds.rds_service import DBCluster
 
@@ -477,6 +478,7 @@ class Test_rds_instance_protected_by_backup_plan:
 
     def test_rds_cluster_without_backup_plan(self):
         cluster = mock.MagicMock()
+        mock.MagicMock()
 
         from prowler.providers.aws.services.rds.rds_service import DBCluster
 
@@ -553,6 +555,7 @@ class Test_rds_instance_protected_by_backup_plan:
 
     def test_rds_cluster_with_backup_plan_via_cluster_wildcard(self):
         cluster = mock.MagicMock()
+        mock.MagicMock()
 
         from prowler.providers.aws.services.rds.rds_service import DBCluster
 
