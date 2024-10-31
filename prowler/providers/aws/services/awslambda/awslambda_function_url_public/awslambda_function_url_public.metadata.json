@@ -23,7 +23,9 @@
       "Url": "https://docs.aws.amazon.com/secretsmanager/latest/userguide/lambda-functions.html"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "internet-exposed"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
