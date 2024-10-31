@@ -25,21 +25,20 @@ class dms_endpoint_redis_tls_enabled(Check):
         """
         findings = []
         for endpoint_arn, endpoint in dms_client.endpoints.items():
-            report = Check_Report_AWS(self.metadata())
-            report.resource_id = endpoint.id
-            report.resource_arn = endpoint_arn
-            report.region = endpoint.region
-            report.resource_tags = endpoint.tags
-            report.status = "FAIL"
-            report.status_extended = (
-                f"DMS Endpoint '{endpoint.id}' for Redis OSS does not have TLS enabled."
-            )
-            if endpoint.redis_tls_enabled == "ssl-encryption":
-                report.status = "PASS"
-                report.status_extended = (
-                    f"DMS Endpoint '{endpoint.id}' for Redis OSS has TLS enabled."
-                )
+            if endpoint.engine_name == "redis":
+                report = Check_Report_AWS(self.metadata())
+                report.resource_id = endpoint.id
+                report.resource_arn = endpoint_arn
+                report.region = endpoint.region
+                report.resource_tags = endpoint.tags
+                report.status = "FAIL"
+                report.status_extended = f"DMS Endpoint '{endpoint.id}' for Redis OSS does not have TLS enabled."
+                if endpoint.redis_tls_enabled == "ssl-encryption":
+                    report.status = "PASS"
+                    report.status_extended = (
+                        f"DMS Endpoint '{endpoint.id}' for Redis OSS has TLS enabled."
+                    )
 
-            findings.append(report)
+                findings.append(report)
 
         return findings

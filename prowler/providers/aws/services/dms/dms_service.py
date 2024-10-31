@@ -74,6 +74,7 @@ class DMS(AWSService):
                             redis_tls_enabled=endpoint.get("RedisSettings", {}).get(
                                 "SslSecurityProtocol", "plaintext"
                             ),
+                            engine_name=endpoint["EngineName"],
                         )
         except Exception as error:
             logger.error(
@@ -98,6 +99,7 @@ class Endpoint(BaseModel):
     ssl_mode: str
     tags: Optional[list]
     redis_tls_enabled: Optional[str]
+    engine_name: Optional[str]
 
 
 class RepInstance(BaseModel):
