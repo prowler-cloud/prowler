@@ -74,6 +74,7 @@ class DMS(AWSService):
                             neptune_iam_auth_enabled=endpoint.get(
                                 "NeptuneSettings", {}
                             ).get("IamAuthEnabled", False),
+                            engine_name=endpoint["EngineName"],
                         )
         except Exception as error:
             logger.error(
@@ -98,6 +99,7 @@ class Endpoint(BaseModel):
     ssl_mode: str
     tags: Optional[list]
     neptune_iam_auth_enabled: Optional[bool]
+    engine_name: Optional[str]
 
 
 class RepInstance(BaseModel):

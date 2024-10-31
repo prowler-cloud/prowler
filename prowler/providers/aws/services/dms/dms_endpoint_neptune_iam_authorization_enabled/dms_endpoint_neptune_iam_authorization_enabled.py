@@ -24,17 +24,18 @@ class dms_endpoint_neptune_iam_authorization_enabled(Check):
         """
         findings = []
         for endpoint_arn, endpoint in dms_client.endpoints.items():
-            report = Check_Report_AWS(self.metadata())
-            report.resource_id = endpoint.id
-            report.resource_arn = endpoint_arn
-            report.region = endpoint.region
-            report.resource_tags = endpoint.tags
-            report.status = "FAIL"
-            report.status_extended = f"DMS Endpoint '{endpoint.id}' for Neptune database does not have IAM authorization enabled."
-            if endpoint.neptune_iam_auth_enabled:
-                report.status = "PASS"
-                report.status_extended = f"DMS Endpoint '{endpoint.id}' for Neptune database has IAM authorization enabled."
+            if endpoint.engine_name == "neptune":
+                report = Check_Report_AWS(self.metadata())
+                report.resource_id = endpoint.id
+                report.resource_arn = endpoint_arn
+                report.region = endpoint.region
+                report.resource_tags = endpoint.tags
+                report.status = "FAIL"
+                report.status_extended = f"DMS Endpoint '{endpoint.id}' for Neptune database does not have IAM authorization enabled."
+                if endpoint.neptune_iam_auth_enabled:
+                    report.status = "PASS"
+                    report.status_extended = f"DMS Endpoint '{endpoint.id}' for Neptune database has IAM authorization enabled."
 
-            findings.append(report)
+                findings.append(report)
 
         return findings
