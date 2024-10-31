@@ -10,6 +10,7 @@ from moto import mock_aws
 
 from prowler.config.config import encoding_format_utf_8
 from prowler.providers.aws.lib.mutelist.mutelist import AWSMutelist
+from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 from tests.providers.aws.services.awslambda.awslambda_service_test import (
     create_zip_file,
 )
@@ -1862,16 +1863,24 @@ class TestAWSMutelist:
         mutelist = AWSMutelist(mutelist_content=mutelist_content)
 
         # Finding
-        finding_1 = MagicMock
-        finding_1.metadata = MagicMock
-        finding_1.metadata.CheckID = "check_test"
-        finding_1.status = "FAIL"
-        finding_1.region = AWS_REGION_US_EAST_1
-        finding_1.account_uid = AWS_ACCOUNT_NUMBER
-        finding_1.resource_id = "prowler"
-        finding_1.resource_tags = []
-        finding_1.muted = False
-        finding_1.raw = {}
+        finding_1 = generate_finding_output(
+            check_id="check_test",
+            status="FAIL",
+            region=AWS_REGION_US_EAST_1,
+            resource_uid="prowler",
+            resource_tags=[],
+            muted=False,
+        )
+        # finding_1 = MagicMock
+        # finding_1.metadata = MagicMock
+        # finding_1.metadata.CheckID = "check_test"
+        # finding_1.status = "FAIL"
+        # finding_1.region = AWS_REGION_US_EAST_1
+        # finding_1.account_uid = AWS_ACCOUNT_NUMBER
+        # finding_1.resource_id = "prowler"
+        # finding_1.resource_tags = []
+        # finding_1.muted = False
+        # finding_1.raw = {}
 
         muted_finding = mutelist.mute_finding(finding_1)
 

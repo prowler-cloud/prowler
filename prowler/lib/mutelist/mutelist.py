@@ -255,7 +255,7 @@ class Mutelist(ABC):
                 finding.account_uid,
                 finding.metadata.CheckID,
                 finding.region,
-                finding.resource_id,
+                finding.resource_uid,
                 unroll_dict(unroll_tags(finding.resource_tags)),
             ):
                 finding.raw["status"] = finding.status
