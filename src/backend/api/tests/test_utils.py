@@ -12,6 +12,7 @@ from api.utils import (
     return_prowler_provider,
     initialize_prowler_provider,
     prowler_provider_connection_test,
+    get_prowler_provider_kwargs,
 )
 
 
@@ -136,3 +137,75 @@ class TestProwlerProviderConnectionTest:
         mock_return_prowler_provider.return_value.test_connection.assert_called_once_with(
             key="value", provider_id="1234567890", raise_on_exception=False
         )
+
+
+class TestGetProwlerProviderKwargs:
+    @pytest.mark.parametrize(
+        "provider_type, expected_extra_kwargs",
+        [
+            (
+                Provider.ProviderChoices.AWS.value,
+                {},
+            ),
+            (
+                Provider.ProviderChoices.AZURE.value,
+                {"subscription_ids": ["provider_uid"]},
+            ),
+            (
+                Provider.ProviderChoices.GCP.value,
+                {"project_ids": ["provider_uid"]},
+            ),
+            (
+                Provider.ProviderChoices.KUBERNETES.value,
+                {"context": "provider_uid"},
+            ),
+        ],
+    )
+    def test_get_prowler_provider_kwargs(self, provider_type, expected_extra_kwargs):
+        provider_uid = "provider_uid"
+        secret_dict = {"key": "value"}
+        secret_mock = MagicMock()
+        secret_mock.secret = secret_dict
+
+        provider = MagicMock()
+        provider.provider = provider_type
+        provider.secret = secret_mock
+        provider.uid = provider_uid
+
+        result = get_prowler_provider_kwargs(provider)
+
+        expected_result = {**secret_dict, **expected_extra_kwargs}
+        assert result == expected_result
+
+    def test_get_prowler_provider_kwargs_unsupported_provider(self):
+        # Setup
+        provider_uid = "provider_uid"
+        secret_dict = {"key": "value"}
+        secret_mock = MagicMock()
+        secret_mock.secret = secret_dict
+
+        provider = MagicMock()
+        provider.provider = "UNSUPPORTED_PROVIDER"
+        provider.secret = secret_mock
+        provider.uid = provider_uid
+
+        result = get_prowler_provider_kwargs(provider)
+
+        expected_result = secret_dict.copy()
+        assert result == expected_result
+
+    def test_get_prowler_provider_kwargs_no_secret(self):
+        # Setup
+        provider_uid = "provider_uid"
+        secret_mock = MagicMock()
+        secret_mock.secret = {}
+
+        provider = MagicMock()
+        provider.provider = Provider.ProviderChoices.AWS.value
+        provider.secret = secret_mock
+        provider.uid = provider_uid
+
+        result = get_prowler_provider_kwargs(provider)
+
+        expected_result = {}
+        assert result == expected_result

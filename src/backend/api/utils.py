@@ -62,6 +62,31 @@ def return_prowler_provider(
     return prowler_provider
 
 
+def get_prowler_provider_kwargs(provider: Provider) -> dict:
+    """Get the Prowler provider kwargs based on the given provider type.
+
+    Args:
+        provider (Provider): The provider object containing the provider type and associated secret.
+
+    Returns:
+        dict: The provider kwargs for the corresponding provider class.
+    """
+    prowler_provider_kwargs = provider.secret.secret
+    if provider.provider == Provider.ProviderChoices.AZURE.value:
+        prowler_provider_kwargs = {
+            **prowler_provider_kwargs,
+            "subscription_ids": [provider.uid],
+        }
+    elif provider.provider == Provider.ProviderChoices.GCP.value:
+        prowler_provider_kwargs = {
+            **prowler_provider_kwargs,
+            "project_ids": [provider.uid],
+        }
+    elif provider.provider == Provider.ProviderChoices.KUBERNETES.value:
+        prowler_provider_kwargs = {**prowler_provider_kwargs, "context": provider.uid}
+    return prowler_provider_kwargs
+
+
 def initialize_prowler_provider(
     provider: Provider,
 ) -> AwsProvider | AzureProvider | GcpProvider | KubernetesProvider:
@@ -76,7 +101,7 @@ def initialize_prowler_provider(
             provider's secrets.
     """
     prowler_provider = return_prowler_provider(provider)
-    prowler_provider_kwargs = provider.secret.secret
+    prowler_provider_kwargs = get_prowler_provider_kwargs(provider)
     return prowler_provider(**prowler_provider_kwargs)
 
 
@@ -90,7 +115,7 @@ def prowler_provider_connection_test(provider: Provider) -> Connection:
         Connection: A connection object representing the result of the connection test for the specified provider.
     """
     prowler_provider = return_prowler_provider(provider)
-    prowler_provider_kwargs = provider.secret.secret
+    prowler_provider_kwargs = get_prowler_provider_kwargs(provider)
     return prowler_provider.test_connection(
         **prowler_provider_kwargs, provider_id=provider.uid, raise_on_exception=False
     )

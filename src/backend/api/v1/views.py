@@ -139,6 +139,41 @@ class SchemaView(SpectacularAPIView):
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
+        spectacular_settings.TAGS = [
+            {"name": "User", "description": "Endpoints for managing user accounts."},
+            {
+                "name": "Token",
+                "description": "Endpoints for token management, including obtaining a new token and "
+                "refreshing an existing token for authentication purposes.",
+            },
+            {
+                "name": "Tenant",
+                "description": "Endpoints for managing tenants, along with their memberships.",
+            },
+            {
+                "name": "Provider",
+                "description": "Endpoints for managing providers (AWS, GCP, Azure, etc...).",
+            },
+            {
+                "name": "Scan",
+                "description": "Endpoints for triggering manual scans and viewing scan results.",
+            },
+            {
+                "name": "Resource",
+                "description": "Endpoints for managing resources discovered by scans, allowing "
+                "retrieval and filtering of resource information.",
+            },
+            {
+                "name": "Finding",
+                "description": "Endpoints for managing findings, allowing retrieval and filtering of "
+                "findings that result from scans.",
+            },
+            {
+                "name": "Task",
+                "description": "Endpoints for task management, allowing retrieval of task status and "
+                "revoking tasks that have not started.",
+            },
+        ]
         return super().get(request, *args, **kwargs)
 
 

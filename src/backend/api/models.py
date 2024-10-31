@@ -626,6 +626,7 @@ class ResourceFindingMapping(PostgresPartitionedModel, RowLevelSecurityProtected
 class ProviderSecret(RowLevelSecurityProtectedModel):
     class TypeChoices(models.TextChoices):
         STATIC = "static", _("Key-value pairs")
+        ROLE = "role", _("Role assumption")
 
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)

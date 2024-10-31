@@ -1139,21 +1139,82 @@ class TestProviderSecretViewSet:
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
+    @pytest.mark.parametrize(
+        "provider_type, secret_type, secret_data",
+        [
+            # AWS with STATIC secret
+            (
+                Provider.ProviderChoices.AWS.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "aws_access_key_id": "value",
+                    "aws_secret_access_key": "value",
+                    "aws_session_token": "value",
+                },
+            ),
+            # AWS with ROLE secret
+            (
+                Provider.ProviderChoices.AWS.value,
+                ProviderSecret.TypeChoices.ROLE,
+                {
+                    "role_arn": "arn:aws:iam::123456789012:role/example-role",
+                    # Optional fields
+                    "external_id": "external-id",
+                    "role_session_name": "session-name",
+                    "session_duration": 3600,
+                    "aws_access_key_id": "value",
+                    "aws_secret_access_key": "value",
+                    "aws_session_token": "value",
+                },
+            ),
+            # Azure with STATIC secret
+            (
+                Provider.ProviderChoices.AZURE.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "client_id": "client-id",
+                    "client_secret": "client-secret",
+                    "tenant_id": "tenant-id",
+                },
+            ),
+            # GCP with STATIC secret
+            (
+                Provider.ProviderChoices.GCP.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "client_id": "client-id",
+                    "client_secret": "client-secret",
+                    "refresh_token": "refresh-token",
+                },
+            ),
+            # Kubernetes with STATIC secret
+            (
+                Provider.ProviderChoices.KUBERNETES.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "kubeconfig_content": "kubeconfig-content",
+                },
+            ),
+        ],
+    )
     def test_provider_secrets_create_valid(
-        self, authenticated_client, providers_fixture
+        self,
+        authenticated_client,
+        providers_fixture,
+        provider_type,
+        secret_type,
+        secret_data,
     ):
-        provider, *_ = providers_fixture
+        # Get the provider from the fixture and set its type
+        provider = Provider.objects.filter(provider=provider_type)[0]
+
         data = {
             "data": {
                 "type": "ProviderSecret",
                 "attributes": {
                     "name": "My Secret",
-                    "secret_type": "static",
-                    "secret": {
-                        "aws_access_key_id": "value",
-                        "aws_secret_access_key": "value",
-                        "aws_session_token": "value",
-                    },
+                    "secret_type": secret_type,
+                    "secret": secret_data,
                 },
                 "relationships": {
                     "provider": {"data": {"type": "Provider", "id": str(provider.id)}}
@@ -1167,13 +1228,11 @@ class TestProviderSecretViewSet:
         )
         assert response.status_code == status.HTTP_201_CREATED
         assert ProviderSecret.objects.count() == 1
-        assert ProviderSecret.objects.get().name == data["data"]["attributes"]["name"]
+        provider_secret = ProviderSecret.objects.first()
+        assert provider_secret.name == data["data"]["attributes"]["name"]
+        assert provider_secret.secret_type == data["data"]["attributes"]["secret_type"]
         assert (
-            ProviderSecret.objects.get().secret_type
-            == data["data"]["attributes"]["secret_type"]
-        )
-        assert (
-            str(ProviderSecret.objects.get().provider.id)
+            str(provider_secret.provider.id)
             == data["data"]["relationships"]["provider"]["data"]["id"]
         )
 
