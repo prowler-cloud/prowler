@@ -15,6 +15,7 @@ class ECS(AWSService):
         self.task_definitions = {}
         self.services = {}
         self.clusters = {}
+        self.task_sets = {}
         self.__threading_call__(self._list_task_definitions)
         self.__threading_call__(
             self._describe_task_definition, self.task_definitions.values()
@@ -124,6 +125,21 @@ class ECS(AWSService):
                         platform_family=service_desc.get("platformFamily", ""),
                         tags=service_desc.get("tags", []),
                     )
+                    if service_desc.get("taskSets"):
+                        for task_set in service_desc["taskSets"]:
+                            self.task_sets[task_set["taskSetArn"]] = TaskSet(
+                                id=task_set.get("id"),
+                                arn=task_set.get("taskSetArn"),
+                                cluster_arn=task_set.get("clusterArn"),
+                                service_arn=task_set.get("serviceArn"),
+                                assign_public_ip=task_set.get(
+                                    "networkConfiguration", {}
+                                )
+                                .get("awsvpcConfiguration", {})
+                                .get("assignPublicIp", "DISABLED"),
+                                region=cluster.region,
+                                tags=task_set.get("tags", []),
+                            )
                     cluster.services[service_arn] = service_obj
                     self.services[service_arn] = service_obj
         except Exception as error:
@@ -210,4 +226,14 @@ class Cluster(BaseModel):
     region: str
     services: dict = {}
     settings: Optional[list] = []
+    tags: Optional[list] = []
+
+
+class TaskSet(BaseModel):
+    id: str
+    arn: str
+    cluster_arn: str
+    service_arn: str
+    region: str
+    assign_public_ip: Optional[str]
     tags: Optional[list] = []
