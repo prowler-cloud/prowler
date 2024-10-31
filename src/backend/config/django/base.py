@@ -143,6 +143,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 SIMPLE_JWT = {
+    # Token lifetime settings
     "ACCESS_TOKEN_LIFETIME": timedelta(
         minutes=env.int("DJANGO_ACCESS_TOKEN_LIFETIME", 30)
     ),
@@ -151,13 +152,26 @@ SIMPLE_JWT = {
     ),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
-    # TODO Add environment variable for this
+    # Algorithm and keys
     "ALGORITHM": "RS256",
     "SIGNING_KEY": env.str("DJANGO_TOKEN_SIGNING_KEY", ""),
     "VERIFYING_KEY": env.str("DJANGO_TOKEN_VERIFYING_KEY", ""),
+    # Authorization header configuration
     "AUTH_HEADER_TYPES": ("Bearer",),
+    "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
+    # Custom serializers
     "TOKEN_OBTAIN_SERIALIZER": "api.serializers.TokenSerializer",
     "TOKEN_REFRESH_SERIALIZER": "api.serializers.TokenRefreshSerializer",
+    # Standard JWT claims
+    "TOKEN_TYPE_CLAIM": "typ",
+    "JTI_CLAIM": "jti",
+    "USER_ID_FIELD": "id",
+    "USER_ID_CLAIM": "sub",
+    # Issuer and Audience claims, for the moment we will keep these values as default values, they may change in the future.
+    "AUDIENCE": env.str("DJANGO_JWT_AUDIENCE", "https://api.prowler.com"),
+    "ISSUER": env.str("DJANGO_JWT_ISSUER", "https://api.prowler.com"),
+    # Additional security settings
+    "UPDATE_LAST_LOGIN": True,
 }
 
 SECRETS_ENCRYPTION_KEY = env.str("DJANGO_SECRETS_ENCRYPTION_KEY", "")

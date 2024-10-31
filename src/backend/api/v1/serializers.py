@@ -2,6 +2,7 @@ import json
 
 from django.conf import settings
 from django.contrib.auth import authenticate
+from django.contrib.auth.models import update_last_login
 from django.contrib.auth.password_validation import validate_password
 from drf_spectacular.utils import extend_schema_field
 from jwt.exceptions import InvalidKeyError
@@ -9,6 +10,7 @@ from rest_framework_json_api import serializers
 from rest_framework_json_api.serializers import ValidationError
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from api.models import (
     StateChoices,
@@ -29,7 +31,7 @@ from api.utils import merge_dicts
 # Tokens
 
 
-class TokenSerializer(serializers.Serializer):
+class TokenSerializer(TokenObtainPairSerializer):
     email = serializers.EmailField(write_only=True)
     password = serializers.CharField(write_only=True)
     tenant_id = serializers.UUIDField(
@@ -68,8 +70,6 @@ class TokenSerializer(serializers.Serializer):
         # Generate tokens
         try:
             refresh = RefreshToken.for_user(user)
-            refresh["tenant_id"] = tenant_id
-            access = refresh.access_token
         except InvalidKeyError:
             # Handle invalid key error
             raise ValidationError(
@@ -81,9 +81,23 @@ class TokenSerializer(serializers.Serializer):
         except Exception as e:
             raise ValidationError({"detail": str(e)})
 
+        # Post-process the tokens
+        # Set the tenant_id
+        refresh["tenant_id"] = tenant_id
+
+        # Set the nbf (not before) claim to the iat (issued at) claim. At this moment, simplejwt does not provide a way to set the nbf claim
+        refresh.payload["nbf"] = refresh["iat"]
+
+        # Get the access token
+        access = refresh.access_token
+
+        if settings.SIMPLE_JWT["UPDATE_LAST_LOGIN"]:
+            update_last_login(None, user)
+
         return {"access": str(access), "refresh": str(refresh)}
 
 
+# TODO: Check if we can change the parent class to TokenRefreshSerializer from rest_framework_simplejwt.serializers
 class TokenRefreshSerializer(serializers.Serializer):
     refresh = serializers.CharField()
 
