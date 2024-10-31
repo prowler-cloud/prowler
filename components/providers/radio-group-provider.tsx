@@ -16,11 +16,13 @@ import { FormMessage } from "../ui/form";
 interface RadioGroupProviderProps {
   control: Control<z.infer<typeof addProviderFormSchema>>;
   isInvalid: boolean;
+  errorMessage?: string;
 }
 
 export const RadioGroupProvider: React.FC<RadioGroupProviderProps> = ({
   control,
   isInvalid,
+  errorMessage,
 }) => {
   return (
     <Controller
@@ -32,6 +34,7 @@ export const RadioGroupProvider: React.FC<RadioGroupProviderProps> = ({
             className="flex flex-wrap"
             isInvalid={isInvalid}
             {...field}
+            value={field.value || ""}
           >
             <div className="flex flex-col gap-4">
               <CustomRadio description="Amazon Web Services" value="aws">
@@ -60,7 +63,11 @@ export const RadioGroupProvider: React.FC<RadioGroupProviderProps> = ({
               </CustomRadio>
             </div>
           </RadioGroup>
-          <FormMessage className="text-system-error dark:text-system-error" />
+          {errorMessage && (
+            <FormMessage className="text-system-error dark:text-system-error">
+              {errorMessage}
+            </FormMessage>
+          )}
         </>
       )}
     />

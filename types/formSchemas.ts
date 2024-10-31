@@ -31,12 +31,42 @@ export const scheduleScanFormSchema = () =>
     scheduleDate: z.string(),
   });
 
-export const addProviderFormSchema = z.object({
-  providerType: z.string(),
-  providerAlias: z.string(),
-  providerId: z.string(),
-  awsCredentialsType: z.string().optional(),
-});
+export const addProviderFormSchema = z
+  .object({
+    providerType: z.enum(["aws", "azure", "gcp", "kubernetes"], {
+      required_error: "Please select a provider type",
+    }),
+  })
+  .and(
+    z.discriminatedUnion("providerType", [
+      z.object({
+        providerType: z.literal("aws"),
+        providerAlias: z.string(),
+        providerId: z.string(),
+        awsCredentialsType: z.string().min(1, {
+          message: "Please select the type of credentials you want to use",
+        }),
+      }),
+      z.object({
+        providerType: z.literal("azure"),
+        providerAlias: z.string(),
+        providerId: z.string(),
+        awsCredentialsType: z.string().optional(),
+      }),
+      z.object({
+        providerType: z.literal("gcp"),
+        providerAlias: z.string(),
+        providerId: z.string(),
+        awsCredentialsType: z.string().optional(),
+      }),
+      z.object({
+        providerType: z.literal("kubernetes"),
+        providerAlias: z.string(),
+        providerId: z.string(),
+        awsCredentialsType: z.string().optional(),
+      }),
+    ]),
+  );
 
 export const addCredentialsFormSchema = (providerType: string) =>
   z.object({

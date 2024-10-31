@@ -21,13 +21,14 @@ export type FormValues = z.infer<typeof addProviderFormSchema>;
 export const ConnectAccountForm = () => {
   const { toast } = useToast();
   const [prevStep, setPrevStep] = useState(1);
+  const router = useRouter();
 
   const formSchema = addProviderFormSchema;
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      providerType: "",
+      providerType: undefined,
       providerId: "",
       providerAlias: "",
       awsCredentialsType: "",
@@ -36,9 +37,8 @@ export const ConnectAccountForm = () => {
   const providerType = form.watch("providerType");
   const isLoading = form.formState.isSubmitting;
 
-  const router = useRouter();
-
   const onSubmitClient = async (values: FormValues) => {
+    console.log({ values });
     const formData = new FormData();
 
     Object.entries(values).forEach(
@@ -46,7 +46,6 @@ export const ConnectAccountForm = () => {
     );
 
     const data = await addProvider(formData);
-    console.log(data);
 
     if (data?.errors && data.errors.length > 0) {
       data.errors.forEach((error: ApiError) => {
@@ -109,6 +108,7 @@ export const ConnectAccountForm = () => {
             <RadioGroupProvider
               control={form.control}
               isInvalid={!!form.formState.errors.providerType}
+              errorMessage={form.formState.errors.providerType?.message}
             />
             {/* Provider UID */}
             <CustomInput
@@ -140,7 +140,11 @@ export const ConnectAccountForm = () => {
         {prevStep === 2 && (
           <>
             {/* Select AWS credentials type */}
-            <RadioGroupAWSViaCredentialsForm control={form.control} />
+            <RadioGroupAWSViaCredentialsForm
+              control={form.control}
+              isInvalid={!!form.formState.errors.awsCredentialsType}
+              errorMessage={form.formState.errors.awsCredentialsType?.message}
+            />
           </>
         )}
 
