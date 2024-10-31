@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { SaveIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Control, FieldErrors, useForm } from "react-hook-form";
+import { Control, useForm } from "react-hook-form";
 import * as z from "zod";
 
 import { addCredentialsProvider } from "@/actions/providers/providers";
@@ -19,6 +19,7 @@ import {
   CredentialsFormSchema,
 } from "../../../../types";
 import { AWScredentialsForm } from "./via-credentials/aws-credentials-form";
+import { AzureCredentialsForm } from "./via-credentials/azure-credentials-form";
 
 export const ViaCredentialsForm = ({
   searchParams,
@@ -126,58 +127,9 @@ export const ViaCredentialsForm = ({
           />
         )}
         {providerType === "azure" && (
-          <>
-            <div className="text-left">
-              <div className="text-2xl font-bold leading-9 text-default-foreground">
-                Connect via Credentials
-              </div>
-              <div className="py-2 text-default-500">
-                Please provide the information for your Azure credentials.
-              </div>
-            </div>
-            <CustomInput
-              control={form.control}
-              name="client_id"
-              type="text"
-              label="Client ID"
-              labelPlacement="inside"
-              placeholder="Enter the Client ID"
-              variant="bordered"
-              isRequired
-              isInvalid={
-                !!(form.formState.errors as FieldErrors<AzureCredentials>)
-                  .client_id
-              }
-            />
-            <CustomInput
-              control={form.control}
-              name="client_secret"
-              type="text"
-              label="Client Secret"
-              labelPlacement="inside"
-              placeholder="Enter the Client Secret"
-              variant="bordered"
-              isRequired
-              isInvalid={
-                !!(form.formState.errors as FieldErrors<AzureCredentials>)
-                  .client_secret
-              }
-            />
-            <CustomInput
-              control={form.control}
-              name="tenant_id"
-              type="text"
-              label="Tenant ID"
-              labelPlacement="inside"
-              placeholder="Enter the Tenant ID"
-              variant="bordered"
-              isRequired
-              isInvalid={
-                !!(form.formState.errors as FieldErrors<AzureCredentials>)
-                  .tenant_id
-              }
-            />
-          </>
+          <AzureCredentialsForm
+            control={form.control as Control<AzureCredentials>}
+          />
         )}
         <span className="text-sm text-default-500">Name (Optional)</span>
         <CustomInput
