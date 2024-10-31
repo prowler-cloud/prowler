@@ -47,6 +47,7 @@ def mock_make_api_call(self, operation_name, kwargs):
                     "MongoDbSettings": {
                         "AuthType": "password",
                     },
+                    "EngineName": "neptune",
                 }
             ]
         }
@@ -125,6 +126,7 @@ class Test_DMS_Service:
         assert dms.endpoints[DMS_ENDPOINT_ARN].id == DMS_ENDPOINT_NAME
         assert dms.endpoints[DMS_ENDPOINT_ARN].ssl_mode == "require"
         assert dms.endpoints[DMS_ENDPOINT_ARN].mongodb_auth_type == "password"
+        assert dms.endpoints[DMS_ENDPOINT_ARN].engine_name == "neptune"
 
     def test_list_tags(self):
         aws_provider = set_mocked_aws_provider()

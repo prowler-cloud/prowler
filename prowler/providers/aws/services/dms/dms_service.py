@@ -74,6 +74,7 @@ class DMS(AWSService):
                             mongodb_auth_type=endpoint.get("MongoDbSettings", {}).get(
                                 "AuthType", "no"
                             ),
+                            engine_name=endpoint["EngineName"],
                         )
         except Exception as error:
             logger.error(
@@ -98,6 +99,7 @@ class Endpoint(BaseModel):
     ssl_mode: str
     tags: Optional[list]
     mongodb_auth_type: Optional[str]
+    engine_name: Optional[str]
 
 
 class RepInstance(BaseModel):

@@ -25,17 +25,18 @@ class dms_endpoint_mongodb_authtype_configured(Check):
         """
         findings = []
         for endpoint_arn, endpoint in dms_client.endpoints.items():
-            report = Check_Report_AWS(self.metadata())
-            report.resource_id = endpoint.id
-            report.resource_arn = endpoint_arn
-            report.region = endpoint.region
-            report.resource_tags = endpoint.tags
-            report.status = "FAIL"
-            report.status_extended = f"DMS Endpoint '{endpoint.id}' for MongoDB does not have an authentication mechanism enabled."
-            if endpoint.mongodb_auth_type != "no":
-                report.status = "PASS"
-                report.status_extended = f"DMS Endpoint '{endpoint.id}' for MongoDB has an authentication mechanism enabled."
+            if endpoint.engine_name == "mongodb":
+                report = Check_Report_AWS(self.metadata())
+                report.resource_id = endpoint.id
+                report.resource_arn = endpoint_arn
+                report.region = endpoint.region
+                report.resource_tags = endpoint.tags
+                report.status = "FAIL"
+                report.status_extended = f"DMS Endpoint '{endpoint.id}' for MongoDB does not have an authentication mechanism enabled."
+                if endpoint.mongodb_auth_type != "no":
+                    report.status = "PASS"
+                    report.status_extended = f"DMS Endpoint '{endpoint.id}' for MongoDB has an authentication mechanism enabled."
 
-            findings.append(report)
+                findings.append(report)
 
         return findings
