@@ -285,7 +285,7 @@ class TaskSerializer(RLSSerializer, TaskBase):
         task_args = self.get_json_field(obj, "task_kwargs")
         # Celery task_kwargs are stored as a double string JSON in the database when not empty
         if isinstance(task_args, str):
-            task_args = json.loads(task_args.replace("'", '"'))
+            task_args = json.loads(task_args.replace("'", '"').replace("None", "null"))
         # Remove tenant_id from task_kwargs if present
         task_args.pop("tenant_id", None)
 
