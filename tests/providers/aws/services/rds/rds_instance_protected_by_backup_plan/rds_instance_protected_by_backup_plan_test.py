@@ -404,12 +404,12 @@ class Test_rds_instance_protected_by_backup_plan:
 
         from prowler.providers.aws.services.rds.rds_service import DBCluster
 
-        arn = f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:cluster:db-master-1"
+        arn = f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:cluster:db-cluster-1"
         cluster.db_clusters = {
             arn: DBCluster(
-                id="db-master-1",
-                arn=f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:cluster:db-master-1",
-                endpoint="db-master-1.c9akciq32.rds.amazonaws.com",
+                id="db-cluster-1",
+                arn=f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:cluster:db-cluster-1",
+                endpoint="db-cluster-1.c9akciq32.rds.amazonaws.com",
                 engine_version="13.3",
                 backtrack=1,
                 parameter_group="test",
@@ -421,7 +421,7 @@ class Test_rds_instance_protected_by_backup_plan:
                 multi_az=False,
                 username="admin",
                 iam_auth=False,
-                name="db-master-1",
+                name="db-cluster-1",
                 region="us-east-1",
                 instance_class="db.m1.small",
                 engine="aurora-postgresql",
@@ -465,13 +465,13 @@ class Test_rds_instance_protected_by_backup_plan:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == "RDS Cluster db-master-1 is protected by a backup plan."
+                    == "RDS Cluster db-cluster-1 is protected by a backup plan."
                 )
-                assert result[0].resource_id == "db-master-1"
+                assert result[0].resource_id == "db-cluster-1"
                 assert result[0].region == AWS_REGION_US_EAST_1
                 assert (
                     result[0].resource_arn
-                    == f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:cluster:db-master-1"
+                    == f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:cluster:db-cluster-1"
                 )
                 assert result[0].resource_tags == []
 
@@ -480,12 +480,12 @@ class Test_rds_instance_protected_by_backup_plan:
 
         from prowler.providers.aws.services.rds.rds_service import DBCluster
 
-        arn = f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:cluster:db-master-1"
+        arn = f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:cluster:db-cluster-1"
         cluster.db_clusters = {
             arn: DBCluster(
-                id="db-master-1",
-                arn=f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:cluster:db-master-1",
-                endpoint="db-master-1.c9akciq32.rds.amazonaws.com",
+                id="db-cluster-1",
+                arn=f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:cluster:db-cluster-1",
+                endpoint="db-cluster-1.c9akciq32.rds.amazonaws.com",
                 engine_version="13.3",
                 backtrack=1,
                 parameter_group="test",
@@ -497,7 +497,7 @@ class Test_rds_instance_protected_by_backup_plan:
                 multi_az=False,
                 username="admin",
                 iam_auth=False,
-                name="db-master-1",
+                name="db-cluster-1",
                 region="us-east-1",
                 instance_class="db.m1.small",
                 engine="aurora-postgresql",
@@ -508,7 +508,7 @@ class Test_rds_instance_protected_by_backup_plan:
         }
 
         backup = mock.MagicMock()
-        backup.protected_resources = f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:cluster:db-master-2"
+        backup.protected_resources = f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:cluster:db-cluster-2"
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
@@ -541,13 +541,13 @@ class Test_rds_instance_protected_by_backup_plan:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == "RDS Cluster db-master-1 is not protected by a backup plan."
+                    == "RDS Cluster db-cluster-1 is not protected by a backup plan."
                 )
-                assert result[0].resource_id == "db-master-1"
+                assert result[0].resource_id == "db-cluster-1"
                 assert result[0].region == AWS_REGION_US_EAST_1
                 assert (
                     result[0].resource_arn
-                    == f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:cluster:db-master-1"
+                    == f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:cluster:db-cluster-1"
                 )
                 assert result[0].resource_tags == []
 
@@ -556,12 +556,12 @@ class Test_rds_instance_protected_by_backup_plan:
 
         from prowler.providers.aws.services.rds.rds_service import DBCluster
 
-        arn = f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:cluster:db-master-1"
+        arn = f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:cluster:db-cluster-1"
         cluster.db_clusters = {
             arn: DBCluster(
-                id="db-master-1",
-                arn=f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:cluster:db-master-1",
-                endpoint="db-master-1.c9akciq32.rds.amazonaws.com",
+                id="db-cluster-1",
+                arn=f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:cluster:db-cluster-1",
+                endpoint="db-cluster-1.c9akciq32.rds.amazonaws.com",
                 engine_version="13.3",
                 backtrack=1,
                 parameter_group="test",
@@ -573,7 +573,7 @@ class Test_rds_instance_protected_by_backup_plan:
                 multi_az=False,
                 username="admin",
                 iam_auth=False,
-                name="db-master-1",
+                name="db-cluster-1",
                 region="us-east-1",
                 instance_class="db.m1.small",
                 engine="aurora-postgresql",
@@ -617,12 +617,12 @@ class Test_rds_instance_protected_by_backup_plan:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == "RDS Cluster db-master-1 is protected by a backup plan."
+                    == "RDS Cluster db-cluster-1 is protected by a backup plan."
                 )
-                assert result[0].resource_id == "db-master-1"
+                assert result[0].resource_id == "db-cluster-1"
                 assert result[0].region == AWS_REGION_US_EAST_1
                 assert (
                     result[0].resource_arn
-                    == f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:cluster:db-master-1"
+                    == f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:cluster:db-cluster-1"
                 )
                 assert result[0].resource_tags == []
