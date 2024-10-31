@@ -159,7 +159,12 @@ class Migration(migrations.Migration):
                 (
                     "email",
                     models.EmailField(
-                        max_length=254, unique=True, help_text="Case insensitive"
+                        error_messages={
+                            "unique": "Please check the email address and try again."
+                        },
+                        help_text="Case insensitive",
+                        max_length=254,
+                        unique=True,
                     ),
                 ),
                 ("company_name", models.CharField(max_length=150, blank=True)),
