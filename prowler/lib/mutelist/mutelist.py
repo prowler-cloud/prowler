@@ -5,6 +5,7 @@ import yaml
 
 from prowler.lib.logger import logger
 from prowler.lib.mutelist.models import mutelist_schema
+from prowler.lib.outputs.common import Status
 from prowler.lib.outputs.utils import unroll_dict, unroll_tags
 
 
@@ -250,24 +251,22 @@ class Mutelist(ABC):
 
         """
         try:
-            is_finding_muted = self.is_muted(
+            if self.is_muted(
                 finding.account_uid,
                 finding.metadata.CheckID,
                 finding.region,
                 finding.resource_id,
                 unroll_dict(unroll_tags(finding.resource_tags)),
-            )
-
-            if is_finding_muted:
+            ):
                 finding.raw["status"] = finding.status
-                finding.status = "MUTED"
+                finding.status = Status.MUTED
                 finding.muted = True
             return finding
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
             )
-            return False
+            return finding
 
     def is_excepted(
         self,
