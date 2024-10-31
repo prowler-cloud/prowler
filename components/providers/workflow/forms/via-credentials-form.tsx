@@ -18,17 +18,19 @@ import {
   CredentialsFormSchema,
 } from "../../../../types";
 
-export const AddCredentialsForm = ({
+export const ViaCredentialsForm = ({
   searchParams,
 }: {
   searchParams: { provider: string; id: string };
 }) => {
+  const router = useRouter();
+  const { toast } = useToast();
+
   const providerType = searchParams.provider;
   const providerId = searchParams.id;
 
   const formSchema = addCredentialsFormSchema(providerType);
 
-  const { toast } = useToast();
   const form = useForm<CredentialsFormSchema>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -57,8 +59,6 @@ export const AddCredentialsForm = ({
   });
 
   const isLoading = form.formState.isSubmitting;
-
-  const router = useRouter();
 
   const onSubmitClient = async (values: z.infer<typeof formSchema>) => {
     const formData = new FormData();
@@ -117,19 +117,17 @@ export const AddCredentialsForm = ({
         className="flex flex-col space-y-4"
       >
         <input type="hidden" name="providerId" value={providerId} />
-        <CustomInput
-          control={form.control}
-          name="secretName"
-          type="text"
-          label="Secret Name"
-          labelPlacement="inside"
-          placeholder={"Enter the Secret Name"}
-          variant="bordered"
-          isRequired={false}
-          isInvalid={!!form.formState.errors.secretName}
-        />
+
         {providerType === "aws" && (
           <>
+            <div className="text-left">
+              <div className="text-2xl font-bold leading-9 text-default-foreground">
+                Connect via Credentials
+              </div>
+              <div className="py-2 text-default-500">
+                Please provide the information for your AWS credentials.
+              </div>
+            </div>
             <CustomInput
               control={form.control}
               name="aws_access_key_id"
@@ -174,6 +172,19 @@ export const AddCredentialsForm = ({
             />
           </>
         )}
+        <span className="text-sm text-default-500">Name (Optional)</span>
+        <CustomInput
+          control={form.control}
+          name="secretName"
+          type="text"
+          label="Credential name"
+          labelPlacement="inside"
+          placeholder={"Enter the credential name"}
+          variant="bordered"
+          isRequired={false}
+          size="sm"
+          isInvalid={!!form.formState.errors.secretName}
+        />
 
         <div className="flex w-full justify-end sm:space-x-6">
           <CustomButton
