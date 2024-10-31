@@ -4,6 +4,7 @@ from prowler.lib.check.checks_loader import (
     load_checks_to_execute,
     update_checks_to_execute_with_aliases,
 )
+from prowler.lib.check.compliance_models import Compliance, Compliance_Requirement
 from prowler.lib.check.models import CheckMetadata, Code, Recommendation, Remediation
 
 S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME = "s3_bucket_level_public_access_block"
@@ -63,21 +64,17 @@ class TestCheckLoader:
         compliance_frameworks = None
         categories = None
 
-        with patch(
-            "prowler.lib.check.checks_loader.CheckMetadata.list",
-            return_value={S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME},
-        ):
-            assert {S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME} == load_checks_to_execute(
-                bulk_checks_metatada,
-                bulk_compliance_frameworks,
-                checks_file,
-                check_list,
-                service_list,
-                severities,
-                compliance_frameworks,
-                categories,
-                self.provider,
-            )
+        assert {S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME} == load_checks_to_execute(
+            bulk_checks_metatada,
+            bulk_compliance_frameworks,
+            checks_file,
+            check_list,
+            service_list,
+            severities,
+            compliance_frameworks,
+            categories,
+            self.provider,
+        )
 
     def test_load_checks_to_execute_with_check_list(self):
         bulk_checks_metatada = {
@@ -139,21 +136,17 @@ class TestCheckLoader:
         compliance_frameworks = None
         categories = None
 
-        with patch(
-            "prowler.lib.check.checks_loader.CheckMetadata.list_by_service",
-            return_value={S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME},
-        ):
-            assert {S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME} == load_checks_to_execute(
-                bulk_checks_metatada,
-                bulk_compliance_frameworks,
-                checks_file,
-                check_list,
-                service_list,
-                severities,
-                compliance_frameworks,
-                categories,
-                self.provider,
-            )
+        assert {S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME} == load_checks_to_execute(
+            bulk_checks_metatada,
+            bulk_compliance_frameworks,
+            checks_file,
+            check_list,
+            service_list,
+            severities,
+            compliance_frameworks,
+            categories,
+            self.provider,
+        )
 
     def test_load_checks_to_execute_with_severities_and_services_not_within_severity(
         self,
@@ -169,24 +162,17 @@ class TestCheckLoader:
         compliance_frameworks = None
         categories = None
 
-        with patch(
-            "prowler.lib.check.checks_loader.CheckMetadata.list_by_severity",
-            return_value={S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME},
-        ), patch(
-            "prowler.lib.check.checks_loader.CheckMetadata.list_by_service",
-            return_value={"ec2_ami_public"},
-        ):
-            assert set() == load_checks_to_execute(
-                bulk_checks_metatada,
-                bulk_compliance_frameworks,
-                checks_file,
-                check_list,
-                service_list,
-                severities,
-                compliance_frameworks,
-                categories,
-                self.provider,
-            )
+        assert set() == load_checks_to_execute(
+            bulk_checks_metatada,
+            bulk_compliance_frameworks,
+            checks_file,
+            check_list,
+            service_list,
+            severities,
+            compliance_frameworks,
+            categories,
+            self.provider,
+        )
 
     def test_load_checks_to_execute_with_checks_file(
         self,
@@ -201,7 +187,6 @@ class TestCheckLoader:
         severities = []
         compliance_frameworks = None
         categories = None
-
         with patch(
             "prowler.lib.check.checks_loader.parse_checks_from_file",
             return_value={S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME},
@@ -232,51 +217,56 @@ class TestCheckLoader:
         compliance_frameworks = None
         categories = None
 
-        with patch(
-            "prowler.lib.check.checks_loader.CheckMetadata.list_by_service",
-            return_value={S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME},
-        ):
-            assert {S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME} == load_checks_to_execute(
-                bulk_checks_metatada,
-                bulk_compliance_frameworks,
-                checks_file,
-                check_list,
-                service_list,
-                severities,
-                compliance_frameworks,
-                categories,
-                self.provider,
-            )
+        assert {S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME} == load_checks_to_execute(
+            bulk_checks_metatada,
+            bulk_compliance_frameworks,
+            checks_file,
+            check_list,
+            service_list,
+            severities,
+            compliance_frameworks,
+            categories,
+            self.provider,
+        )
 
     def test_load_checks_to_execute_with_compliance_frameworks(
         self,
     ):
-        bulk_checks_metatada = {
-            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_metadata()
+        bulk_compliance_frameworks = {
+            "soc2_aws": Compliance(
+                Framework="SOC2",
+                Provider="aws",
+                Version="2.0",
+                Description="This CIS Benchmark is the product of a community consensus process and consists of secure configuration guidelines developed for Azuee Platform",
+                Requirements=[
+                    Compliance_Requirement(
+                        Checks=[S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME],
+                        Id="",
+                        Description="",
+                        Attributes=[],
+                    )
+                ],
+            ),
         }
-        bulk_compliance_frameworks = None
+        bulk_checks_metatada = None
         checks_file = None
         check_list = []
         service_list = []
         severities = []
-        compliance_frameworks = ["test-compliance-framework"]
+        compliance_frameworks = ["soc2_aws"]
         categories = None
 
-        with patch(
-            "prowler.lib.check.checks_loader.CheckMetadata.list",
-            return_value={S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME},
-        ):
-            assert {S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME} == load_checks_to_execute(
-                bulk_checks_metatada,
-                bulk_compliance_frameworks,
-                checks_file,
-                check_list,
-                service_list,
-                severities,
-                compliance_frameworks,
-                categories,
-                self.provider,
-            )
+        assert {S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME} == load_checks_to_execute(
+            bulk_checks_metatada,
+            bulk_compliance_frameworks,
+            checks_file,
+            check_list,
+            service_list,
+            severities,
+            compliance_frameworks,
+            categories,
+            self.provider,
+        )
 
     def test_load_checks_to_execute_with_categories(
         self,
