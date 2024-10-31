@@ -621,7 +621,11 @@ def prowler():
             )
 
             security_hub_regions = (
-                global_provider.get_available_aws_service_regions("securityhub")
+                global_provider.get_available_aws_service_regions(
+                    "securityhub",
+                    global_provider.identity.partition,
+                    global_provider.identity.audited_regions,
+                )
                 if not global_provider.identity.audited_regions
                 else global_provider.identity.audited_regions
             )
