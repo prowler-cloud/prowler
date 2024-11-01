@@ -50,10 +50,17 @@ export type GCPCredentials = {
   providerId: string;
 };
 
+export type KubernetesCredentials = {
+  kubeconfig_content: string;
+  secretName: string;
+  providerId: string;
+};
+
 export type CredentialsFormSchema =
   | AWSCredentials
   | AzureCredentials
-  | GCPCredentials;
+  | GCPCredentials
+  | KubernetesCredentials;
 
 export interface SearchParamsProps {
   [key: string]: string | string[] | undefined;

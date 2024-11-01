@@ -178,6 +178,10 @@ export const addCredentialsProvider = async (formData: FormData) => {
       client_secret: formData.get("client_secret"),
       refresh_token: formData.get("refresh_token"),
     };
+  } else if (providerType === "kubernetes") {
+    secret = {
+      kubeconfig_content: formData.get("kubeconfig_content"),
+    };
   }
 
   const bodyData = {

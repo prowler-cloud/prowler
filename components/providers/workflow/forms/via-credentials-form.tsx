@@ -16,18 +16,24 @@ import {
   AWSCredentials,
   AzureCredentials,
   GCPCredentials,
+  KubernetesCredentials,
 } from "@/types";
 
 import { AWScredentialsForm } from "./via-credentials/aws-credentials-form";
 import { AzureCredentialsForm } from "./via-credentials/azure-credentials-form";
 import { GCPcredentialsForm } from "./via-credentials/gcp-credentials-form";
+import { KubernetesCredentialsForm } from "./via-credentials/k8s-credentials-form";
 
 type CredentialsFormSchema = z.infer<
   ReturnType<typeof addCredentialsFormSchema>
 >;
 
 // Add this type intersection to include all fields
-type FormType = CredentialsFormSchema & AWSCredentials & AzureCredentials;
+type FormType = CredentialsFormSchema &
+  AWSCredentials &
+  AzureCredentials &
+  GCPCredentials &
+  KubernetesCredentials;
 
 export const ViaCredentialsForm = ({
   searchParams,
@@ -65,7 +71,11 @@ export const ViaCredentialsForm = ({
                 client_secret: "",
                 refresh_token: "",
               }
-            : {}),
+            : providerType === "kubernetes"
+              ? {
+                  kubeconfig_content: "",
+                }
+              : {}),
     },
   });
 
@@ -121,6 +131,12 @@ export const ViaCredentialsForm = ({
               message: errorMessage,
             });
             break;
+          case "/data/attributes/secret/kubeconfig_content":
+            form.setError("kubeconfig_content", {
+              type: "server",
+              message: errorMessage,
+            });
+            break;
           case "/data/attributes/name":
             form.setError("secretName", {
               type: "server",
@@ -162,6 +178,11 @@ export const ViaCredentialsForm = ({
         {providerType === "gcp" && (
           <GCPcredentialsForm
             control={form.control as unknown as Control<GCPCredentials>}
+          />
+        )}
+        {providerType === "kubernetes" && (
+          <KubernetesCredentialsForm
+            control={form.control as unknown as Control<KubernetesCredentials>}
           />
         )}
 

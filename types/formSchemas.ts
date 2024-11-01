@@ -95,7 +95,13 @@ export const addCredentialsFormSchema = (providerType: string) =>
               client_secret: z.string().nonempty("Client Secret is required"),
               refresh_token: z.string().nonempty("Refresh Token is required"),
             }
-          : {}),
+          : providerType === "kubernetes"
+            ? {
+                kubeconfig_content: z
+                  .string()
+                  .nonempty("Kubeconfig Content is required"),
+              }
+            : {}),
   });
 
 export const editProviderFormSchema = (currentAlias: string) =>
