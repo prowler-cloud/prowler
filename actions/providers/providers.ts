@@ -228,7 +228,7 @@ export const checkConnectionProvider = async (formData: FormData) => {
   const session = await auth();
   const keyServer = process.env.API_BASE_URL;
 
-  const providerId = formData.get("id");
+  const providerId = formData.get("providerId");
 
   const url = new URL(`${keyServer}/providers/${providerId}/connection`);
 

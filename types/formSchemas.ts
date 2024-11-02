@@ -104,6 +104,10 @@ export const addCredentialsFormSchema = (providerType: string) =>
             : {}),
   });
 
+export const testConnectionFormSchema = z.object({
+  providerId: z.string(),
+});
+
 export const editProviderFormSchema = (currentAlias: string) =>
   z.object({
     alias: z

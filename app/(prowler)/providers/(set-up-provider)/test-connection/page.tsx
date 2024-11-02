@@ -1,5 +1,16 @@
+import { redirect } from "next/navigation";
 import React from "react";
 
-export default function TestConnectionPage() {
-  return <div>TestConnectionPage</div>;
+import { TestConnectionForm } from "@/components/providers/workflow/forms";
+
+interface Props {
+  searchParams: { id: string };
+}
+
+export default function TestConnectionPage({ searchParams }: Props) {
+  if (!searchParams.id) {
+    redirect("/providers/connect-account");
+  }
+
+  return <TestConnectionForm searchParams={searchParams} />;
 }
