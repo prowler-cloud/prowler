@@ -4,7 +4,7 @@ import React from "react";
 import { TestConnectionForm } from "@/components/providers/workflow/forms";
 
 interface Props {
-  searchParams: { id: string };
+  searchParams: { type: string; id: string };
 }
 
 export default function TestConnectionPage({ searchParams }: Props) {

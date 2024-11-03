@@ -26,8 +26,9 @@ const steps = [
   },
   {
     title: "Launch scan",
-    description: "Choose when you want to launch your scan.",
-    href: "/providers",
+    description:
+      "Launch the scan now or schedule it for a later date and time.",
+    href: "/providers/launch-scan",
   },
 ];
 

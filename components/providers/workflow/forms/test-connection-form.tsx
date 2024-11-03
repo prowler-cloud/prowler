@@ -3,12 +3,13 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Icon } from "@iconify/react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
-// import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { checkConnectionProvider } from "@/actions/providers/providers";
+import { getTask } from "@/actions/task/tasks";
 import { SaveIcon } from "@/components/icons";
 import { useToast } from "@/components/ui";
 import { CustomButton } from "@/components/ui/custom";
@@ -20,13 +21,19 @@ type FormValues = z.infer<typeof testConnectionFormSchema>;
 export const TestConnectionForm = ({
   searchParams,
 }: {
-  searchParams: { id: string };
+  searchParams: { type: string; id: string };
 }) => {
   const { toast } = useToast();
+  const router = useRouter();
+  const providerType = searchParams.type;
   const providerId = searchParams.id;
 
   const formSchema = testConnectionFormSchema;
   const [apiErrorMessage, setApiErrorMessage] = useState<string | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<{
+    connected: boolean;
+    error: string | null;
+  } | null>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -62,7 +69,25 @@ export const TestConnectionForm = ({
       });
     } else {
       console.log({ data: data.data.id }, "success");
+      const taskId = data.data.id;
       setApiErrorMessage(null);
+
+      const task = await getTask(taskId);
+      console.log({ task }, "task");
+
+      const connected = task.data.attributes.result.connected;
+      const error = task.data.attributes.result.error;
+
+      setConnectionStatus({
+        connected,
+        error,
+      });
+
+      if (connected) {
+        router.push(
+          `/providers/launch-scan?type=${providerType}&id=${providerId}&connected=${connected}`,
+        );
+      }
     }
   };
 
@@ -84,6 +109,22 @@ export const TestConnectionForm = ({
         {apiErrorMessage && (
           <div className="mt-4 rounded-md bg-red-100 p-3 text-red-700">
             <p>{`Provider ID ${apiErrorMessage.toLowerCase()}. Please check and try again.`}</p>
+          </div>
+        )}
+
+        {connectionStatus && !connectionStatus.connected && (
+          <div className="flex items-center gap-4 rounded-lg border border-red-200 bg-red-50 p-4">
+            <div className="flex items-center">
+              <Icon
+                icon="heroicons:exclamation-circle"
+                className="h-5 w-5 text-red-500"
+              />
+            </div>
+            <div className="flex items-center">
+              <p className="text-red-700">
+                {connectionStatus.error || "Unknown error"}
+              </p>
+            </div>
           </div>
         )}
 
