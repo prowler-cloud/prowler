@@ -20,7 +20,6 @@ import { useState } from "react";
 import { VerticalDotsIcon } from "@/components/icons";
 import { CustomAlertModal } from "@/components/ui/custom";
 
-import { CheckConnectionProvider } from "../CheckConnectionProvider";
 import { EditForm } from "../forms";
 import { DeleteForm } from "../forms/delete-form";
 
@@ -80,7 +79,7 @@ export function DataTableRowActions<ProviderProps>({
                 textValue="Check Connection"
                 startContent={<AddNoteBulkIcon className={iconClasses} />}
               >
-                <CheckConnectionProvider id={providerId} />
+                {/* TODO: add the provider type to the search params */}
               </DropdownItem>
               <DropdownItem
                 key="edit"
