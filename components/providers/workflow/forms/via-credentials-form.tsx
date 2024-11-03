@@ -152,7 +152,9 @@ export const ViaCredentialsForm = ({
         }
       });
     } else {
-      router.push(`/providers/test-connection?id=${providerId}`);
+      router.push(
+        `/providers/test-connection?type=${providerType}&id=${providerId}`,
+      );
     }
   };
 

@@ -108,6 +108,17 @@ export const testConnectionFormSchema = z.object({
   providerId: z.string(),
 });
 
+export const launchScanFormSchema = () =>
+  z.object({
+    providerId: z.string(),
+    providerType: z.string(),
+    scannerArgs: z
+      .object({
+        checksToExecute: z.array(z.string()).optional(),
+      })
+      .optional(),
+  });
+
 export const editProviderFormSchema = (currentAlias: string) =>
   z.object({
     alias: z
