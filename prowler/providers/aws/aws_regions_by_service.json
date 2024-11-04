@@ -1284,6 +1284,30 @@
         ]
       }
     },
+    "bedrock-agent": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "eu-west-3",
+          "sa-east-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": [
+          "us-gov-west-1"
+        ]
+      }
+    },
     "bedrock-runtime": {
       "regions": {
         "aws": [
@@ -6949,7 +6973,10 @@
           "cn-north-1",
           "cn-northwest-1"
         ],
-        "aws-us-gov": []
+        "aws-us-gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
       }
     },
     "meteringmarketplace": {

@@ -1,21 +1,22 @@
 from colorama import Fore, Style
 
 from prowler.lib.check.check import parse_checks_from_file
+from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.check.models import CheckMetadata, Severity
 from prowler.lib.logger import logger
 
 
 # Generate the list of checks to execute
 def load_checks_to_execute(
-    bulk_checks_metadata: dict,
-    bulk_compliance_frameworks: dict,
-    checks_file: str,
-    check_list: list,
-    service_list: list,
-    severities: list,
-    compliance_frameworks: list,
-    categories: set,
     provider: str,
+    bulk_checks_metadata: dict = None,
+    bulk_compliance_frameworks: dict = None,
+    checks_file: str = None,
+    check_list: list = None,
+    service_list: list = None,
+    severities: list = None,
+    compliance_frameworks: list = None,
+    categories: set = None,
 ) -> set:
     """Generate the list of checks to execute based on the cloud provider and the input arguments given"""
     try:
@@ -25,6 +26,8 @@ def load_checks_to_execute(
         check_categories = {}
         check_severities = {severity.value: [] for severity in Severity}
 
+        if not bulk_checks_metadata:
+            bulk_checks_metadata = CheckMetadata.get_bulk(provider=provider)
         # First, loop over the bulk_checks_metadata to extract the needed subsets
         for check, metadata in bulk_checks_metadata.items():
             try:
@@ -85,10 +88,12 @@ def load_checks_to_execute(
 
         # Handle if there are compliance frameworks passed using --compliance
         elif compliance_frameworks:
+            if not bulk_compliance_frameworks:
+                bulk_compliance_frameworks = Compliance.get_bulk(provider=provider)
             for compliance_framework in compliance_frameworks:
                 checks_to_execute.update(
                     CheckMetadata.list(
-                        bulk_checks_metadata=bulk_compliance_frameworks,
+                        bulk_compliance_frameworks=bulk_compliance_frameworks,
                         compliance_framework=compliance_framework,
                     )
                 )

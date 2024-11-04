@@ -15,7 +15,6 @@ class Transfer(AWSService):
         self.servers = {}
         self.__threading_call__(self._list_servers)
         self.__threading_call__(self._describe_server, self.servers.values())
-        self.__threading_call__(self._list_tags_for_resource, self.servers.values())
 
     def _list_servers(self, regional_client):
         logger.info("Transfer - Listing Transfer Servers...")
@@ -47,19 +46,7 @@ class Transfer(AWSService):
             )
             for protocol in server_description.get("Protocols", []):
                 server.protocols.append(Protocol(protocol))
-        except Exception as error:
-            logger.error(
-                f"{server.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-
-    def _list_tags_for_resource(self, server):
-        logger.info(f"Transfer - Listing tags for Server {server.name}...")
-        try:
-            server.tags = (
-                self.regional_clients[server.region]
-                .list_tags_for_resource(Arn=server.arn)
-                .get("Tags", [])
-            )
+            server.tags = server_description.get("Tags", [])
         except Exception as error:
             logger.error(
                 f"{server.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

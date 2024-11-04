@@ -8,7 +8,8 @@ from prowler.lib.check.models import (
     Remediation,
     Severity,
 )
-from prowler.lib.outputs.finding import Finding, Status
+from prowler.lib.outputs.common import Status
+from prowler.lib.outputs.finding import Finding
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 
 

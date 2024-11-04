@@ -4,7 +4,7 @@ import botocore
 from boto3 import client
 from moto import mock_aws
 
-from prowler.providers.aws.services.bedrock.bedrock_service import Bedrock
+from prowler.providers.aws.services.bedrock.bedrock_service import Bedrock, BedrockAgent
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
@@ -153,4 +153,65 @@ class Test_Bedrock_Service:
         bedrock = Bedrock(aws_provider)
         assert bedrock.guardrails[GUARDRAIL_ARN].tags == [
             {"Key": "Name", "Value": "test"}
+        ]
+
+
+class Test_Bedrock_Agent_Service:
+    @mock_aws
+    def test_service(self):
+        aws_provider = set_mocked_aws_provider(
+            audited_regions=[AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
+        bedrock_agent = BedrockAgent(aws_provider)
+        assert bedrock_agent.service == "bedrock-agent"
+
+    @mock_aws
+    def test_client(self):
+        aws_provider = set_mocked_aws_provider(
+            audited_regions=[AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
+        bedrock_agent = BedrockAgent(aws_provider)
+        for regional_client in bedrock_agent.regional_clients.values():
+            assert regional_client.__class__.__name__ == "AgentsforBedrock"
+
+    @mock_aws
+    def test__get_session__(self):
+        aws_provider = set_mocked_aws_provider(
+            audited_regions=[AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
+        bedrock_agent = BedrockAgent(aws_provider)
+        assert bedrock_agent.session.__class__.__name__ == "Session"
+
+    @mock_aws
+    def test_audited_account(self):
+        aws_provider = set_mocked_aws_provider(
+            audited_regions=[AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
+        bedrock_agent = BedrockAgent(aws_provider)
+        assert bedrock_agent.audited_account == AWS_ACCOUNT_NUMBER
+
+    @mock_aws
+    def test_list_agents(self):
+        bedrock_agent_client = client("bedrock-agent", region_name=AWS_REGION_US_EAST_1)
+        agent = bedrock_agent_client.create_agent(
+            agentName="agent_name",
+            agentResourceRoleArn="test-agent-arn",
+            tags={
+                "Key": "test-tag-key",
+            },
+        )["agent"]
+        agent_id = agent["agentId"]
+        agent_arn = agent["agentArn"]
+        agent_name = agent["agentName"]
+        aws_provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_US_EAST_1])
+        bedrock_agent = BedrockAgent(aws_provider)
+        assert len(bedrock_agent.agents) == 1
+        assert bedrock_agent.agents[agent_arn].id == agent_id
+        assert bedrock_agent.agents[agent_arn].name == agent_name
+        assert bedrock_agent.agents[agent_arn].region == AWS_REGION_US_EAST_1
+        assert bedrock_agent.agents[agent_arn].guardrail_id is None
+        assert bedrock_agent.agents[agent_arn].tags == [
+            {
+                "Key": "test-tag-key",
+            }
         ]

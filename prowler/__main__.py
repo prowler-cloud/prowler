@@ -177,15 +177,15 @@ def prowler():
 
     # Load checks to execute
     checks_to_execute = load_checks_to_execute(
-        bulk_checks_metadata,
-        bulk_compliance_frameworks,
-        checks_file,
-        checks,
-        services,
-        severities,
-        compliance_framework,
-        categories,
-        provider,
+        bulk_checks_metadata=bulk_checks_metadata,
+        bulk_compliance_frameworks=bulk_compliance_frameworks,
+        checks_file=checks_file,
+        check_list=checks,
+        service_list=services,
+        severities=severities,
+        compliance_frameworks=compliance_framework,
+        categories=categories,
+        provider=provider,
     )
 
     # if --list-checks-json, dump a json file and exit
