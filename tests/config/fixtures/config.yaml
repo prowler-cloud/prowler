@@ -385,6 +385,10 @@ aws:
   # Maximum number of days a secret can be unused
   max_days_secret_unused: 90
 
+  # aws.secretsmanager_secret_rotated_periodically
+  # Maximum number of days a secret should be rotated
+  max_days_secret_unrotated: 90
+
 # Azure Configuration
 azure:
   # Azure Network Configuration
