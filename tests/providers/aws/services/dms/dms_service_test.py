@@ -155,6 +155,10 @@ class Test_DMS_Service:
                             {
                                 "Id": "SOURCE_CAPTURE",
                                 "Severity": "LOGGER_SEVERITY_DEFAULT"
+                            },
+                            {
+                                "Id": "SOURCE_UNLOAD",
+                                "Severity": "LOGGER_SEVERITY_DEFAULT"
                             }
                         ]
                     }
@@ -173,9 +177,15 @@ class Test_DMS_Service:
         )
         dms = DMS(aws_provider)
 
+        assert dms.replication_tasks[dms_replication_task_arn].id == "rep-task"
+        assert (
+            dms.replication_tasks[dms_replication_task_arn].region
+            == AWS_REGION_US_EAST_1
+        )
         assert dms.replication_tasks[dms_replication_task_arn].logging_enabled
         assert dms.replication_tasks[dms_replication_task_arn].log_components == [
-            {"Id": "SOURCE_CAPTURE", "Severity": "LOGGER_SEVERITY_DEFAULT"}
+            {"Id": "SOURCE_CAPTURE", "Severity": "LOGGER_SEVERITY_DEFAULT"},
+            {"Id": "SOURCE_UNLOAD", "Severity": "LOGGER_SEVERITY_DEFAULT"},
         ]
         assert (
             dms.replication_tasks[dms_replication_task_arn].source_endpoint_arn
@@ -194,6 +204,10 @@ class Test_DMS_Service:
                         "LogComponents": [
                             {
                                 "Id": "SOURCE_CAPTURE",
+                                "Severity": "LOGGER_SEVERITY_DEFAULT"
+                            },
+                            {
+                                "Id": "SOURCE_UNLOAD",
                                 "Severity": "LOGGER_SEVERITY_DEFAULT"
                             }
                         ]

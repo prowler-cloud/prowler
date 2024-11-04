@@ -98,11 +98,14 @@ class DMS(AWSService):
 
                         self.replication_tasks[arn] = ReplicationTasks(
                             arn=arn,
+                            id=task["ReplicationTaskIdentifier"],
+                            region=regional_client.region,
                             source_endpoint_arn=task["SourceEndpointArn"],
                             target_endpoint_arn=task["TargetEndpointArn"],
                             replication_task_settings=task_settings_json,
                             logging_enabled=enable_logging,
                             log_components=log_components,
+                            tags=[],
                         )
 
                     except json.JSONDecodeError:
@@ -149,6 +152,8 @@ class RepInstance(BaseModel):
 
 class ReplicationTasks(BaseModel):
     arn: str
+    id: str
+    region: str
     source_endpoint_arn: str
     target_endpoint_arn: str
     replication_task_settings: str
