@@ -85,7 +85,7 @@ export const TestConnectionForm = ({
 
       if (connected) {
         router.push(
-          `/providers/launch-scan?type=${providerType}&id=${providerId}&connected=${connected}`,
+          `/providers/launch-scan?type=${providerType}&id=${providerId}`,
         );
       }
     }

@@ -1,7 +1,3 @@
-### Motivation
-
-Why it this PR useful for the project?
-
 ### Description
 
 What was done in this PR

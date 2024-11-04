@@ -5,12 +5,11 @@ import { getProvider } from "@/actions/providers";
 import { LaunchScanForm } from "@/components/providers/workflow/forms";
 
 interface Props {
-  searchParams: { type: string; id: string; connected: boolean };
+  searchParams: { type: string; id: string };
 }
 
 export default async function LaunchScanPage({ searchParams }: Props) {
   const providerId = searchParams.id;
-  const connectedSearchParam = searchParams.connected;
 
   if (!providerId) {
     redirect("/providers/connect-account");
@@ -23,7 +22,7 @@ export default async function LaunchScanPage({ searchParams }: Props) {
 
   const isConnected = providerData?.data?.attributes?.connection?.connected;
 
-  if (!isConnected || connectedSearchParam !== isConnected.toString()) {
+  if (!isConnected) {
     redirect("/providers/connect-account");
   }
 

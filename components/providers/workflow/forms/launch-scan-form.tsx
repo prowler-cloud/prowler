@@ -16,7 +16,7 @@ import { ProviderInfo } from "../../provider-info";
 type FormValues = z.infer<ReturnType<typeof launchScanFormSchema>>;
 
 interface LaunchScanFormProps {
-  searchParams: { type: string; id: string; connected: boolean };
+  searchParams: { type: string; id: string };
   providerData: {
     data: {
       type: string;
@@ -32,7 +32,6 @@ export const LaunchScanForm = ({
 }: LaunchScanFormProps) => {
   const providerType = searchParams.type;
   const providerId = searchParams.id;
-  const connected = searchParams.connected;
 
   //   const [apiErrorMessage, setApiErrorMessage] = useState<string | null>(null);
 
@@ -53,10 +52,12 @@ export const LaunchScanForm = ({
 
   const isLoading = form.formState.isSubmitting;
 
+  const isConnected = providerData.data.attributes.connection.connected;
+
   const onSubmitClient = async (values: FormValues) => {
     console.log({ values }, "values from test connection form");
 
-    if (connected) {
+    if (isConnected) {
       console.log("connected");
     } else {
       console.log("not connected");
