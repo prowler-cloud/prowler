@@ -3,7 +3,6 @@ from azure.identity import AzureAuthorityHosts
 from prowler.providers.azure.lib.regions.regions import (
     AZURE_CHINA_CLOUD,
     AZURE_GENERIC_CLOUD,
-    AZURE_GERMAN_CLOUD,
     AZURE_US_GOV_CLOUD,
     get_regions_config,
 )
@@ -15,7 +14,6 @@ class Test_azure_regions:
             "AzureCloud",
             "AzureChinaCloud",
             "AzureUSGovernment",
-            "AzureGermanCloud",
         ]
         expected_output = {
             "AzureCloud": {
@@ -32,11 +30,6 @@ class Test_azure_regions:
                 "authority": AzureAuthorityHosts.AZURE_GOVERNMENT,
                 "base_url": AZURE_US_GOV_CLOUD,
                 "credential_scopes": [AZURE_US_GOV_CLOUD + "/.default"],
-            },
-            "AzureGermanCloud": {
-                "authority": AzureAuthorityHosts.AZURE_GERMANY,
-                "base_url": AZURE_GERMAN_CLOUD,
-                "credential_scopes": [AZURE_GERMAN_CLOUD + "/.default"],
             },
         }
 
