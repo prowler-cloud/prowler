@@ -203,7 +203,7 @@ class Test_dms_endpoint_neptune_iam_authorization_enabled:
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
                 assert result[0].status_extended == (
-                    "DMS Endpoint 'dms-endpoint' for Neptune database does not have IAM authorization enabled."
+                    "DMS Endpoint dms-endpoint for Neptune databases does not have IAM authorization enabled."
                 )
                 assert result[0].resource_id == "dms-endpoint"
                 assert (
@@ -251,7 +251,7 @@ class Test_dms_endpoint_neptune_iam_authorization_enabled:
                 assert len(result) == 1
                 assert result[0].status == "PASS"
                 assert result[0].status_extended == (
-                    "DMS Endpoint 'dms-endpoint' for Neptune database has IAM authorization enabled."
+                    "DMS Endpoint dms-endpoint for Neptune databases has IAM authorization enabled."
                 )
                 assert result[0].resource_id == "dms-endpoint"
                 assert (

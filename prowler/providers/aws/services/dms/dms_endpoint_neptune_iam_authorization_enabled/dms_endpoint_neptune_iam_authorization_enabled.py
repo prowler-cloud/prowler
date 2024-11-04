@@ -31,10 +31,10 @@ class dms_endpoint_neptune_iam_authorization_enabled(Check):
                 report.region = endpoint.region
                 report.resource_tags = endpoint.tags
                 report.status = "FAIL"
-                report.status_extended = f"DMS Endpoint '{endpoint.id}' for Neptune database does not have IAM authorization enabled."
+                report.status_extended = f"DMS Endpoint {endpoint.id} for Neptune databases does not have IAM authorization enabled."
                 if endpoint.neptune_iam_auth_enabled:
                     report.status = "PASS"
-                    report.status_extended = f"DMS Endpoint '{endpoint.id}' for Neptune database has IAM authorization enabled."
+                    report.status_extended = f"DMS Endpoint {endpoint.id} for Neptune databases has IAM authorization enabled."
 
                 findings.append(report)
 
