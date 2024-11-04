@@ -18,8 +18,6 @@ updates:
     schedule:
       interval: "weekly"
     target-branch: master
-<<<<<<< HEAD
-=======
     labels:
       - "dependencies"
       - "github_actions"
@@ -44,4 +42,3 @@ updates:
       - "dependencies"
       - "github_actions"
       - "v3"
->>>>>>> 5214a37d6 (chore: add dependabot labels (#5624))
