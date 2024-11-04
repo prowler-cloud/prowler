@@ -2,6 +2,7 @@ import yaml
 from mock import MagicMock
 
 from prowler.providers.azure.lib.mutelist.mutelist import AzureMutelist
+from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 
 MUTELIST_FIXTURE_PATH = (
     "tests/providers/azure/lib/mutelist/fixtures/azure_mutelist.yaml"
@@ -66,3 +67,36 @@ class TestAzureMutelist:
         finding.subscription = "subscription_1"
 
         assert mutelist.is_finding_muted(finding)
+
+    def test_mute_finding(self):
+        # Mutelist
+        mutelist_content = {
+            "Accounts": {
+                "subscription_1": {
+                    "Checks": {
+                        "check_test": {
+                            "Regions": ["*"],
+                            "Resources": ["test_resource"],
+                        }
+                    }
+                }
+            }
+        }
+
+        mutelist = AzureMutelist(mutelist_content=mutelist_content)
+
+        finding_1 = generate_finding_output(
+            check_id="check_test",
+            status="FAIL",
+            account_uid="subscription_1",
+            region="subscription_1",
+            resource_uid="test_resource",
+            resource_tags=[],
+            muted=False,
+        )
+
+        muted_finding = mutelist.mute_finding(finding=finding_1)
+
+        assert muted_finding.status == "MUTED"
+        assert muted_finding.muted is True
+        assert muted_finding.raw["status"] == "FAIL"

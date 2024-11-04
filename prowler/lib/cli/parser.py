@@ -12,7 +12,7 @@ from prowler.config.config import (
     default_output_directory,
 )
 from prowler.lib.check.models import Severity
-from prowler.lib.outputs.finding import Status
+from prowler.lib.outputs.common import Status
 from prowler.providers.common.arguments import (
     init_providers_parser,
     validate_provider_arguments,
