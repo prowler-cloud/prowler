@@ -1,11 +1,13 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
+import { scanOnDemand } from "@/actions/scans/scans";
 import { RocketIcon, ScheduleIcon } from "@/components/icons";
-// import { useToast } from "@/components/ui";
 import { CustomButton } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
 import { ProviderProps } from "@/types"; // Asegúrate de importar la interfaz correcta
@@ -33,7 +35,8 @@ export const LaunchScanForm = ({
   const providerType = searchParams.type;
   const providerId = searchParams.id;
 
-  //   const [apiErrorMessage, setApiErrorMessage] = useState<string | null>(null);
+  const [apiErrorMessage, setApiErrorMessage] = useState<string | null>(null);
+  const router = useRouter();
 
   const formSchema = launchScanFormSchema();
 
@@ -50,15 +53,36 @@ export const LaunchScanForm = ({
 
   const isLoading = form.formState.isSubmitting;
 
-  const isConnected = providerData.data.attributes.connection.connected;
-
   const onSubmitClient = async (values: FormValues) => {
-    console.log({ values }, "values from test connection form");
+    const formData = new FormData();
+    formData.append("providerId", values.providerId);
 
-    if (isConnected) {
-      console.log("connected");
-    } else {
-      console.log("not connected");
+    // Generate default scan name using provider type and current date
+    const date = new Date();
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const day = date.getDate().toString().padStart(2, "0");
+    const year = date.getFullYear();
+    const defaultScanName = `${providerType}:${month}/${day}/${year}`;
+
+    formData.append("scanName", defaultScanName);
+
+    try {
+      const data = await scanOnDemand(formData);
+
+      if (data.error) {
+        setApiErrorMessage(data.error);
+        form.setError("providerId", {
+          type: "server",
+          message: data.error,
+        });
+      } else {
+        router.push("/scans");
+      }
+    } catch (error) {
+      form.setError("providerId", {
+        type: "server",
+        message: "An unexpected error occurred. Please try again.",
+      });
     }
   };
 
@@ -77,11 +101,11 @@ export const LaunchScanForm = ({
           </div>
         </div>
 
-        {/* {apiErrorMessage && (
+        {apiErrorMessage && (
           <div className="mt-4 rounded-md bg-red-100 p-3 text-red-700">
-            <p>{`Provider ID ${apiErrorMessage.toLowerCase()}. Please check and try again.`}</p>
+            <p>{apiErrorMessage.toLowerCase()}</p>
           </div>
-        )} */}
+        )}
 
         <ProviderInfo
           connected={providerData.data.attributes.connection.connected}
