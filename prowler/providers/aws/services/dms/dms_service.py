@@ -1,3 +1,4 @@
+import json
 from typing import Optional
 
 from pydantic import BaseModel
@@ -13,9 +14,11 @@ class DMS(AWSService):
         super().__init__(__class__.__name__, provider)
         self.instances = []
         self.endpoints = {}
+        self.replication_tasks = {}
         self.__threading_call__(self._describe_replication_instances)
         self.__threading_call__(self._list_tags, self.instances)
         self.__threading_call__(self._describe_endpoints)
+        self.__threading_call__(self._describe_replication_tasks)
         self.__threading_call__(self._list_tags, self.endpoints.values())
 
     def _describe_replication_instances(self, regional_client):
@@ -77,6 +80,42 @@ class DMS(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _describe_replication_tasks(self, regional_client):
+        logger.info("DMS - Describing DMS Replication Tasks for Logging Settings...")
+        try:
+            paginator = regional_client.get_paginator("describe_replication_tasks")
+            for page in paginator.paginate():
+                for task in page["ReplicationTasks"]:
+                    task_settings_json = task["ReplicationTaskSettings"]
+                    arn = task["ReplicationTaskArn"]
+
+                    try:
+                        task_settings = json.loads(task_settings_json)
+                        logging_config = task_settings.get("Logging", {})
+
+                        enable_logging = logging_config.get("EnableLogging", False)
+                        log_components = logging_config.get("LogComponents", [])
+
+                        self.replication_tasks[arn] = ReplicationTasks(
+                            arn=arn,
+                            id=task["ReplicationTaskIdentifier"],
+                            region=regional_client.region,
+                            source_endpoint_arn=task["SourceEndpointArn"],
+                            target_endpoint_arn=task["TargetEndpointArn"],
+                            replication_task_settings=task_settings_json,
+                            logging_enabled=enable_logging,
+                            log_components=log_components,
+                            tags=[],
+                        )
+
+                    except json.JSONDecodeError:
+                        logger.error(f"Error decoding JSON for replication task {arn}")
+
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
     def _list_tags(self, resource: any):
         try:
             resource.tags = self.regional_clients[
@@ -94,6 +133,8 @@ class Endpoint(BaseModel):
     region: str
     ssl_mode: str
     tags: Optional[list]
+    logging_enabled: bool = False
+    log_components: list[dict] = []
 
 
 class RepInstance(BaseModel):
@@ -107,3 +148,15 @@ class RepInstance(BaseModel):
     multi_az: bool
     region: str
     tags: Optional[list]
+
+
+class ReplicationTasks(BaseModel):
+    arn: str
+    id: str
+    region: str
+    source_endpoint_arn: str
+    target_endpoint_arn: str
+    replication_task_settings: str
+    tags: Optional[list]
+    logging_enabled: bool = False
+    log_components: list[dict] = []
