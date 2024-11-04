@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "iam_policy_no_kms_decryption_actions",
+  "CheckTitle": "Check if IAM customer managed policies",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/CIS AWS Foundations Benchmark"
+  ],
+  "ServiceName": "iam",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:iam::{account-id}:{resource-type}/{resource-id}",
+  "Severity": "medium",
+  "ResourceType": "AwsIamPolicy",
+  "Description": "Ensure IAM customer managed policies do not allow broad decryption permissions (kms:Decrypt or kms:ReEncryptFrom) on all AWS KMS keys",
+  "Risk": "Allowing broad decryption permissions (kms:Decrypt or kms:ReEncryptFrom) on all AWS KMS keys can lead to unauthorized data access, especially if users inadvertently or maliciously decrypt sensitive information.",
+  "RelatedUrl": "https://docs.aws.amazon.com/kms/latest/developerguide/iam-policies.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws iam update-policy --policy-arn <policy-arn> --policy-document '{ \"Version\": \"2012-10-17\", \"Statement\": [ { \"Effect\": \"Allow\", \"Action\": [ \"kms:Decrypt\", \"kms:ReEncryptFrom\" ], \"Resource\": \"arn:aws:kms:<region>:<account-id>:key/<key-id>\" } ] }'",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/kms-controls.html#kms-1",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Restrict decryption actions in IAM customer managed policies to specific KMS keys rather than allowing permissions on all keys. By specifying particular key ARNs in the Resource field, you limit the keys that identities can decrypt, enhancing control and compliance with best practices in data security.",
+      "Url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_manage-edit.html#edit-managed-policy-console"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
