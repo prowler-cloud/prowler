@@ -49,6 +49,7 @@ class Finding(BaseModel):
     region: str
     compliance: dict
     prowler_version: str = prowler_version
+    raw: dict = Field(default_factory=dict)
 
     @property
     def provider(self) -> str:
@@ -84,13 +85,6 @@ class Finding(BaseModel):
         Returns the service name from the finding check's metadata.
         """
         return self.metadata.ServiceName
-
-    @property
-    def raw(self) -> dict:
-        """
-        Returns the raw (dict) finding without any post-processing.
-        """
-        return {}
 
     def get_metadata(self) -> dict:
         """
