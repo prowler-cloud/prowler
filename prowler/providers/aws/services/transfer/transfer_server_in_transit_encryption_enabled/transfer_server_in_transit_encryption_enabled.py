@@ -5,7 +5,7 @@ from prowler.providers.aws.services.transfer.transfer_client import transfer_cli
 from prowler.providers.aws.services.transfer.transfer_service import Protocol
 
 
-class transfer_server_encryption_in_transit(Check):
+class transfer_server_in_transit_encryption_enabled(Check):
     """Check if Transfer Servers have encryption in transit enabled.
 
     This class checks if Transfer Servers have encryption in transit enabled.

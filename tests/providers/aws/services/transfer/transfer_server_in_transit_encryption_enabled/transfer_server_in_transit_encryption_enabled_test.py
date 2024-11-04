@@ -72,15 +72,15 @@ class Test_transfer_server_encryption_in_transit:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.transfer.transfer_server_encryption_in_transit.transfer_server_encryption_in_transit.transfer_client",
+                "prowler.providers.aws.services.transfer.transfer_server_in_transit_encryption_enabled.transfer_server_in_transit_encryption_enabled.transfer_client",
                 new=Transfer(aws_provider),
             ):
                 # Test Check
-                from prowler.providers.aws.services.transfer.transfer_server_encryption_in_transit.transfer_server_encryption_in_transit import (
-                    transfer_server_encryption_in_transit,
+                from prowler.providers.aws.services.transfer.transfer_server_in_transit_encryption_enabled.transfer_server_in_transit_encryption_enabled import (
+                    transfer_server_in_transit_encryption_enabled,
                 )
 
-                check = transfer_server_encryption_in_transit()
+                check = transfer_server_in_transit_encryption_enabled()
                 result = check.execute()
 
                 assert len(result) == 0
@@ -99,15 +99,15 @@ class Test_transfer_server_encryption_in_transit:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.transfer.transfer_server_encryption_in_transit.transfer_server_encryption_in_transit.transfer_client",
+                "prowler.providers.aws.services.transfer.transfer_server_in_transit_encryption_enabled.transfer_server_in_transit_encryption_enabled.transfer_client",
                 new=Transfer(aws_provider),
             ):
                 # Test Check
-                from prowler.providers.aws.services.transfer.transfer_server_encryption_in_transit.transfer_server_encryption_in_transit import (
-                    transfer_server_encryption_in_transit,
+                from prowler.providers.aws.services.transfer.transfer_server_in_transit_encryption_enabled.transfer_server_in_transit_encryption_enabled import (
+                    transfer_server_in_transit_encryption_enabled,
                 )
 
-                check = transfer_server_encryption_in_transit()
+                check = transfer_server_in_transit_encryption_enabled()
                 result = check.execute()
 
                 assert len(result) == 1
@@ -134,15 +134,15 @@ class Test_transfer_server_encryption_in_transit:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.transfer.transfer_server_encryption_in_transit.transfer_server_encryption_in_transit.transfer_client",
+                "prowler.providers.aws.services.transfer.transfer_server_in_transit_encryption_enabled.transfer_server_in_transit_encryption_enabled.transfer_client",
                 new=Transfer(aws_provider),
             ):
                 # Test Check
-                from prowler.providers.aws.services.transfer.transfer_server_encryption_in_transit.transfer_server_encryption_in_transit import (
-                    transfer_server_encryption_in_transit,
+                from prowler.providers.aws.services.transfer.transfer_server_in_transit_encryption_enabled.transfer_server_in_transit_encryption_enabled import (
+                    transfer_server_in_transit_encryption_enabled,
                 )
 
-                check = transfer_server_encryption_in_transit()
+                check = transfer_server_in_transit_encryption_enabled()
                 result = check.execute()
 
                 assert len(result) == 1
