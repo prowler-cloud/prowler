@@ -1,14 +1,13 @@
 import json
-from typing import Optional
+from typing import Dict, List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################## KMS
 class KMS(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
@@ -115,11 +114,11 @@ class KMS(AWSService):
 class Key(BaseModel):
     id: str
     arn: str
-    state: Optional[str]
-    origin: Optional[str]
-    manager: Optional[str]
-    rotation_enabled: Optional[bool]
-    policy: Optional[dict]
-    spec: Optional[str]
+    state: Optional[str] = None
+    origin: Optional[str] = None
+    manager: Optional[str] = None
+    rotation_enabled: Optional[bool] = None
+    policy: Optional[Dict] = None
+    spec: Optional[str] = None
     region: str
-    tags: Optional[list] = []
+    tags: List[Dict[str, str]] = Field(default_factory=list)
