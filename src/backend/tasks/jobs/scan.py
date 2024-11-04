@@ -108,14 +108,22 @@ def _store_resources(
 
     """
     with tenant_transaction(tenant_id):
-        resource_instance, _ = Resource.objects.get_or_create(
+        resource_instance, created = Resource.objects.get_or_create(
             tenant_id=tenant_id,
             provider=provider_instance,
             uid=finding.resource_uid,
-            region=finding.region,
-            service=finding.service_name,
-            type=finding.resource_type,
+            defaults={
+                "region": finding.region,
+                "service": finding.service_name,
+                "type": finding.resource_type,
+            },
         )
+
+        if not created:
+            resource_instance.region = finding.region
+            resource_instance.service = finding.service_name
+            resource_instance.type = finding.resource_type
+            resource_instance.save()
     with tenant_transaction(tenant_id):
         tags = [
             ResourceTag.objects.get_or_create(

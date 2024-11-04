@@ -864,7 +864,7 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name="resource",
             constraint=models.UniqueConstraint(
-                fields=("tenant_id", "provider_id", "uid", "region"),
+                fields=("tenant_id", "provider_id", "uid"),
                 name="unique_resources_by_provider",
             ),
         ),

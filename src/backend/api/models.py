@@ -432,7 +432,7 @@ class Resource(RowLevelSecurityProtectedModel):
 
         constraints = [
             models.UniqueConstraint(
-                fields=("tenant_id", "provider_id", "uid", "region"),
+                fields=("tenant_id", "provider_id", "uid"),
                 name="unique_resources_by_provider",
             ),
             RowLevelSecurityConstraint(
