@@ -5,11 +5,11 @@
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices"
   ],
-  "ServiceName": "kafka-connect",
+  "ServiceName": "kafka",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:kafkaconnect:{region}:{account-id}:connector/{connector-name}/{connector-id}",
   "Severity": "medium",
-  "ResourceType": "AwsKafkaConnectConnector",
+  "ResourceType": "Other",
   "Description": "This control checks whether an Amazon MSK Connect connector is encrypted in transit. This control fails if the connector isn't encrypted in transit.",
   "Risk": "Data in transit can be intercepted or eavesdropped on by unauthorized users. Ensuring encryption in transit helps to protect sensitive data as it moves between nodes in a network or from your MSK cluster to connected applications.",
   "RelatedUrl": "https://docs.aws.amazon.com/msk/latest/developerguide/msk-connect.html",

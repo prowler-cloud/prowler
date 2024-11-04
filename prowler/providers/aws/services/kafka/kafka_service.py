@@ -117,11 +117,9 @@ class KafkaVersion(BaseModel):
     status: str
 
 
-################################ KafkaConnector
 class KafkaConnect(AWSService):
     def __init__(self, provider):
         super().__init__(__class__.__name__, provider)
-        self.account_arn_template = f"arn:{self.audited_partition}:kafka:{self.region}:{self.audited_account}:connector"
         self.connectors = {}
         self.__threading_call__(self._list_connectors)
 
@@ -131,9 +129,7 @@ class KafkaConnect(AWSService):
 
             for page in connector_paginator.paginate():
                 for connector in page["connectors"]:
-                    connector_arn = connector.get(
-                        "connectorArn",
-                    )
+                    connector_arn = connector["connectorArn"]
 
                     if not self.audit_resources or is_resource_filtered(
                         connector_arn, self.audit_resources
@@ -156,4 +152,4 @@ class Connector(BaseModel):
     name: str
     arn: str
     region: str
-    encryption_in_transit: Optional[str]
+    encryption_in_transit: str
