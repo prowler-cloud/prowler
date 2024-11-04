@@ -2,6 +2,7 @@ import yaml
 from mock import MagicMock
 
 from prowler.providers.gcp.lib.mutelist.mutelist import GCPMutelist
+from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 
 MUTELIST_FIXTURE_PATH = "tests/providers/gcp/lib/mutelist/fixtures/gcp_mutelist.yaml"
 
@@ -82,18 +83,17 @@ class TestGCPMutelist:
 
         mutelist = GCPMutelist(mutelist_content=mutelist_content)
 
-        finding = MagicMock
-        finding.metadata = MagicMock
-        finding.metadata.CheckID = "check_test"
-        finding.status = "FAIL"
-        finding.region = "test-location"
-        finding.resource_tags = []
-        finding.resource_id = "test_resource"
-        finding.account_uid = "project_1"
-        finding.muted = False
-        finding.raw = {}
+        finding_1 = generate_finding_output(
+            check_id="check_test",
+            status="FAIL",
+            account_uid="project_1",
+            region="test-region",
+            resource_uid="test_resource",
+            resource_tags=[],
+            muted=False,
+        )
 
-        muted_finding = mutelist.mute_finding(finding=finding)
+        muted_finding = mutelist.mute_finding(finding=finding_1)
 
         assert muted_finding.status == "MUTED"
         assert muted_finding.muted

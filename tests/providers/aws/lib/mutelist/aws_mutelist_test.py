@@ -1871,16 +1871,6 @@ class TestAWSMutelist:
             resource_tags=[],
             muted=False,
         )
-        # finding_1 = MagicMock
-        # finding_1.metadata = MagicMock
-        # finding_1.metadata.CheckID = "check_test"
-        # finding_1.status = "FAIL"
-        # finding_1.region = AWS_REGION_US_EAST_1
-        # finding_1.account_uid = AWS_ACCOUNT_NUMBER
-        # finding_1.resource_id = "prowler"
-        # finding_1.resource_tags = []
-        # finding_1.muted = False
-        # finding_1.raw = {}
 
         muted_finding = mutelist.mute_finding(finding_1)
 
