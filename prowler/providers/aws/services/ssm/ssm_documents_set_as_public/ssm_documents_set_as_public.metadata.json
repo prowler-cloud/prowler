@@ -23,7 +23,9 @@
       "Url": "https://docs.aws.amazon.com/systems-manager/latest/userguide/ssm-before-you-share.html"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "internet-exposed"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
