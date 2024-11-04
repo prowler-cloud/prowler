@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { SaveIcon } from "@/components/icons";
+import { RocketIcon, ScheduleIcon } from "@/components/icons";
 // import { useToast } from "@/components/ui";
 import { CustomButton } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
@@ -47,8 +47,6 @@ export const LaunchScanForm = ({
       },
     },
   });
-
-  console.log({ providerData });
 
   const isLoading = form.formState.isSubmitting;
 
@@ -103,9 +101,22 @@ export const LaunchScanForm = ({
             color="action"
             size="lg"
             isLoading={isLoading}
-            startContent={!isLoading && <SaveIcon size={24} />}
+            startContent={!isLoading && <ScheduleIcon size={24} />}
+            isDisabled={true}
           >
-            {isLoading ? <>Loading</> : <span>Launch scan</span>}
+            <span>Schedule</span>
+          </CustomButton>
+          <CustomButton
+            type="submit"
+            ariaLabel={"Save"}
+            className="w-1/2"
+            variant="solid"
+            color="action"
+            size="lg"
+            isLoading={isLoading}
+            endContent={!isLoading && <RocketIcon size={24} />}
+          >
+            {isLoading ? <>Loading</> : <span>Start now</span>}
           </CustomButton>
         </div>
       </form>

@@ -201,108 +201,6 @@ export const VerticalDotsIcon: React.FC<IconSvgProps> = ({
     </g>
   </svg>
 );
-export const WifiIcon: React.FC<IconSvgProps> = ({
-  size = 24,
-  width,
-  height,
-  ...props
-}) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    aria-hidden="true"
-    fill="none"
-    focusable="false"
-    height={size || height}
-    role="presentation"
-    viewBox="0 0 48 48"
-    width={size || width}
-    {...props}
-  >
-    <g fill="none">
-      <path
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="4"
-        d="M4 18.965a29.355 29.355 0 0 1 1.817-1.586C17.037 8.374 33.382 8.903 44 18.965"
-      />
-      <path
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="4"
-        d="M38 25.799c-7.732-7.732-20.268-7.732-28 0m22 6.515c-4.418-4.419-11.582-4.419-16 0"
-      />
-      <path
-        fill="currentColor"
-        fillRule="evenodd"
-        d="M24 40a2.5 2.5 0 1 0 0-5a2.5 2.5 0 0 0 0 5"
-        clipRule="evenodd"
-      />
-    </g>
-  </svg>
-);
-
-export const WifiOffIcon: React.FC<IconSvgProps> = ({
-  size = 24,
-  width,
-  height,
-  ...props
-}) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    aria-hidden="true"
-    fill="none"
-    focusable="false"
-    height={size || height}
-    role="presentation"
-    viewBox="0 0 24 24"
-    width={size || width}
-    {...props}
-  >
-    <path
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-      d="M17.85 11.544a8 8 0 0 0-2.88-1.972m5.806-.756a12 12 0 0 0-9.488-3.795m-2.945 9.57a5 5 0 0 1 4.902-1.434m-7.096-1.613A8 8 0 0 1 9.623 9.36m-6.4-.545a12 12 0 0 1 3.11-2.393M4.413 4l14.142 14.142M12 19a1 1 0 1 1 0-2a1 1 0 0 1 0 2"
-    />
-  </svg>
-);
-
-export const WifiPendingIcon: React.FC<IconSvgProps> = ({
-  size = 24,
-  width,
-  height,
-  ...props
-}) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    aria-hidden="true"
-    fill="none"
-    focusable="false"
-    height={size || height}
-    role="presentation"
-    viewBox="0 0 24 24"
-    width={size || width}
-    {...props}
-  >
-    <path
-      fill="currentColor"
-      d="M22.59 10.39L24 8.98A16.88 16.88 0 0 0 12 4C7.31 4 3.07 5.9 0 8.98L12 21l1.41-1.42L2.93 9.08C5.45 7.16 8.59 6 12 6c4.13 0 7.88 1.68 10.59 4.39"
-    />
-    <path
-      fill="currentColor"
-      d="m23 18.59-2.56-2.56c.35-.59.56-1.28.56-2.03c0-2.24-1.76-4-4-4s-4 1.76-4 4s1.76 4 4 4c.75 0 1.44-.21 2.03-.56L21.59 20zM15 14c0-1.12.88-2 2-2s2 .88 2 2s-.88 2-2 2s-2-.88-2-2"
-    />
-    <path
-      fill="currentColor"
-      d="M22.59 10.39A14.943 14.943 0 0 0 12 6C8.59 6 5.45 7.16 2.93 9.08l2.26 2.26l8.24 8.24l.46-.46C12.15 18.09 11 16.21 11 14c0-1.62.62-3.13 1.75-4.25S15.38 8 17 8c2.21 0 4.09 1.15 5.13 2.89l.49-.49l-.02-.02z"
-      opacity="0.3"
-    />
-  </svg>
-);
 
 export const DeleteIcon: React.FC<IconSvgProps> = ({
   size,
@@ -857,6 +755,33 @@ export const AddIcon: React.FC<IconSvgProps> = ({
         d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10m.75-13a.75.75 0 0 0-1.5 0v2.25H9a.75.75 0 0 0 0 1.5h2.25V15a.75.75 0 0 0 1.5 0v-2.25H15a.75.75 0 0 0 0-1.5h-2.25z"
         clipRule="evenodd"
       />
+    </svg>
+  );
+};
+
+export const ScheduleIcon: React.FC<IconSvgProps> = ({
+  size,
+  height,
+  width,
+  ...props
+}) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={size || width || 24}
+      height={size || height || 24}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      {...props}
+    >
+      <path d="M21 7.5V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3.5" />
+      <path d="M16 2v4M8 2v4M3 10h5" />
+      <path d="M17.5 17.5L16 16.3V14" />
+      <circle cx="16" cy="16" r="6" />
     </svg>
   );
 };

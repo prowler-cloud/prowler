@@ -67,7 +67,7 @@ export const Workflow = () => {
       <VerticalSteps
         hideProgressBars
         currentStep={currentStep}
-        stepClassName="border border-default-200 dark:border-default-50 aria-[current]:bg-default-100 dark:aria-[current]:bg-default-50"
+        stepClassName="border border-default-200 dark:border-default-50 aria-[current]:bg-default-100 dark:aria-[current]:bg-default-50 cursor-default"
         steps={steps}
       />
       <Spacer y={4} />
