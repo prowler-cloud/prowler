@@ -194,7 +194,7 @@ class Test_secretsmanager_secret_rotated_periodically:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Secret test-secret was last rotated on April 09, 2023 UTC."
+                == "Secret test-secret was last rotated on April 09, 2023."
             )
             assert result[0].resource_id == "test-secret"
             assert (

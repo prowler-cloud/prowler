@@ -31,7 +31,7 @@ class secretsmanager_secret_rotated_periodically(Check):
             report.region = secret.region
             report.resource_tags = secret.tags
             report.status = "PASS"
-            report.status_extended = f"Secret {secret.name} was last rotated on {secret.last_rotated_date.strftime('%B %d, %Y')} UTC."
+            report.status_extended = f"Secret {secret.name} was last rotated on {secret.last_rotated_date.strftime('%B %d, %Y')}."
 
             if secret.last_rotated_date == datetime.min.replace(tzinfo=timezone.utc):
                 report.status = "FAIL"
