@@ -19,23 +19,19 @@ KMS_KEY_ID = f"arn:aws:kms:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:key/abcda
 
 class Test_dms_instance_no_public_access:
     def test_dms_no_instances(self):
-        dms_client = mock.MagicMock
+        dms_client = mock.MagicMock()
         dms_client.instances = []
-
-        from prowler.providers.aws.services.ec2.ec2_service import EC2
-
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
+            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
         ):
             with mock.patch(
                 "prowler.providers.aws.services.dms.dms_service.DMS",
                 new=dms_client,
             ), mock.patch(
-                "prowler.providers.aws.services.rds.rds_instance_no_public_access.rds_instance_no_public_access.ec2_client",
-                new=EC2(aws_provider),
+                "prowler.providers.aws.services.dms.dms_client.dms_client",
+                new=dms_client,
             ):
                 from prowler.providers.aws.services.dms.dms_instance_no_public_access.dms_instance_no_public_access import (
                     dms_instance_no_public_access,
@@ -46,7 +42,7 @@ class Test_dms_instance_no_public_access:
                 assert len(result) == 0
 
     def test_dms_private(self):
-        dms_client = mock.MagicMock
+        dms_client = mock.MagicMock()
         dms_client.instances = []
         dms_client.instances.append(
             RepInstance(
@@ -63,14 +59,15 @@ class Test_dms_instance_no_public_access:
             )
         )
 
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
-
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
+            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
         ):
             with mock.patch(
                 "prowler.providers.aws.services.dms.dms_service.DMS",
+                new=dms_client,
+            ), mock.patch(
+                "prowler.providers.aws.services.dms.dms_client.dms_client",
                 new=dms_client,
             ):
                 from prowler.providers.aws.services.dms.dms_instance_no_public_access.dms_instance_no_public_access import (
@@ -96,7 +93,7 @@ class Test_dms_instance_no_public_access:
                 ]
 
     def test_dms_public(self):
-        dms_client = mock.MagicMock
+        dms_client = mock.MagicMock()
         dms_client.instances = []
         dms_client.instances.append(
             RepInstance(
@@ -113,14 +110,15 @@ class Test_dms_instance_no_public_access:
             )
         )
 
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
-
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
+            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
         ):
             with mock.patch(
                 "prowler.providers.aws.services.dms.dms_service.DMS",
+                new=dms_client,
+            ), mock.patch(
+                "prowler.providers.aws.services.dms.dms_client.dms_client",
                 new=dms_client,
             ):
                 from prowler.providers.aws.services.dms.dms_instance_no_public_access.dms_instance_no_public_access import (
@@ -162,7 +160,7 @@ class Test_dms_instance_no_public_access:
                 }
             ],
         )
-        dms_client = mock.MagicMock
+        dms_client = mock.MagicMock()
         dms_client.instances = []
         dms_client.instances.append(
             RepInstance(
@@ -191,7 +189,10 @@ class Test_dms_instance_no_public_access:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.dms.dms_service.DMS",
+                "prowler.providers.aws.services.dms.dms_instance_no_public_access.dms_instance_no_public_access.dms_client",
+                new=dms_client,
+            ), mock.patch(
+                "prowler.providers.aws.services.dms.dms_client.dms_client",
                 new=dms_client,
             ), mock.patch(
                 "prowler.providers.aws.services.dms.dms_instance_no_public_access.dms_instance_no_public_access.ec2_client",
@@ -267,7 +268,10 @@ class Test_dms_instance_no_public_access:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.dms.dms_service.DMS",
+                "prowler.providers.aws.services.dms.dms_instance_no_public_access.dms_instance_no_public_access.dms_client",
+                new=dms_client,
+            ), mock.patch(
+                "prowler.providers.aws.services.dms.dms_client.dms_client",
                 new=dms_client,
             ), mock.patch(
                 "prowler.providers.aws.services.dms.dms_instance_no_public_access.dms_instance_no_public_access.ec2_client",
