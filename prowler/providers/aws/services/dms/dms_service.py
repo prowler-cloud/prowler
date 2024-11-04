@@ -98,8 +98,8 @@ class Endpoint(BaseModel):
     region: str
     ssl_mode: str
     tags: Optional[list]
-    neptune_iam_auth_enabled: Optional[bool]
-    engine_name: Optional[str]
+    neptune_iam_auth_enabled: bool = False
+    engine_name: str
 
 
 class RepInstance(BaseModel):
