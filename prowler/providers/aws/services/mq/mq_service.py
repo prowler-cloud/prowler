@@ -11,7 +11,7 @@ from prowler.providers.aws.lib.service.service import AWSService
 class MQ(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
-        super().__init__("mq", provider)
+        super().__init__(__class__.__name__, provider)
         self.brokers = {}
         self.__threading_call__(self._list_brokers)
         self.__threading_call__(self._describe_broker, self.brokers.values())
