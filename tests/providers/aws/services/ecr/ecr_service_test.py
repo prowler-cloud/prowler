@@ -203,6 +203,10 @@ class Test_ECR_Service:
 
         assert len(ecr.registries) == 1
         assert ecr.registries[AWS_REGION_EU_WEST_1].id == AWS_ACCOUNT_NUMBER
+        assert (
+            ecr.registries[AWS_REGION_EU_WEST_1].arn
+            == f"arn:aws:ecr:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:registry/{AWS_ACCOUNT_NUMBER}"
+        )
         assert ecr.registries[AWS_REGION_EU_WEST_1].region == AWS_REGION_EU_WEST_1
         assert len(ecr.registries[AWS_REGION_EU_WEST_1].repositories) == 1
 
