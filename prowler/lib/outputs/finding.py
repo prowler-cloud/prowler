@@ -1,5 +1,4 @@
 from datetime import datetime
-from enum import Enum
 from typing import Optional, Union
 
 from pydantic import BaseModel, Field
@@ -7,16 +6,10 @@ from pydantic import BaseModel, Field
 from prowler.config.config import prowler_version
 from prowler.lib.check.models import Check_Report, CheckMetadata
 from prowler.lib.logger import logger
-from prowler.lib.outputs.common import fill_common_finding_data
+from prowler.lib.outputs.common import Status, fill_common_finding_data
 from prowler.lib.outputs.compliance.compliance import get_check_compliance
 from prowler.lib.utils.utils import dict_to_lowercase, get_nested_attribute
 from prowler.providers.common.provider import Provider
-
-
-class Status(str, Enum):
-    PASS = "PASS"
-    FAIL = "FAIL"
-    MANUAL = "MANUAL"
 
 
 class Finding(BaseModel):
