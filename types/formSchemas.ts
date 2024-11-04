@@ -42,7 +42,7 @@ export const addProviderFormSchema = z
       z.object({
         providerType: z.literal("aws"),
         providerAlias: z.string(),
-        providerId: z.string(),
+        providerUid: z.string(),
         awsCredentialsType: z.string().min(1, {
           message: "Please select the type of credentials you want to use",
         }),
@@ -50,19 +50,19 @@ export const addProviderFormSchema = z
       z.object({
         providerType: z.literal("azure"),
         providerAlias: z.string(),
-        providerId: z.string(),
+        providerUid: z.string(),
         awsCredentialsType: z.string().optional(),
       }),
       z.object({
         providerType: z.literal("gcp"),
         providerAlias: z.string(),
-        providerId: z.string(),
+        providerUid: z.string(),
         awsCredentialsType: z.string().optional(),
       }),
       z.object({
         providerType: z.literal("kubernetes"),
         providerAlias: z.string(),
-        providerId: z.string(),
+        providerUid: z.string(),
         awsCredentialsType: z.string().optional(),
       }),
     ]),

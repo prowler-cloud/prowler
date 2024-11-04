@@ -29,7 +29,7 @@ export const ConnectAccountForm = () => {
     resolver: zodResolver(formSchema),
     defaultValues: {
       providerType: undefined,
-      providerId: "",
+      providerUid: "",
       providerAlias: "",
       awsCredentialsType: "",
     },
@@ -38,10 +38,21 @@ export const ConnectAccountForm = () => {
   const isLoading = form.formState.isSubmitting;
 
   const onSubmitClient = async (values: FormValues) => {
-    console.log({ values });
+    const formValues = { ...values };
+
+    // If providerAlias is empty, set default value
+    if (!formValues.providerAlias.trim()) {
+      const date = new Date();
+      const month = (date.getMonth() + 1).toString().padStart(2, "0");
+      const day = date.getDate().toString().padStart(2, "0");
+      const year = date.getFullYear();
+      formValues.providerAlias = `${formValues.providerType}:${month}/${day}/${year}`;
+    }
+
+    console.log({ formValues });
     const formData = new FormData();
 
-    Object.entries(values).forEach(
+    Object.entries(formValues).forEach(
       ([key, value]) => value !== undefined && formData.append(key, value),
     );
 
@@ -59,7 +70,7 @@ export const ConnectAccountForm = () => {
             break;
           case "/data/attributes/uid":
           case "/data/attributes/__all__":
-            form.setError("providerId", {
+            form.setError("providerUid", {
               type: "server",
               message: errorMessage,
             });
@@ -118,14 +129,14 @@ export const ConnectAccountForm = () => {
             {/* Provider UID */}
             <CustomInput
               control={form.control}
-              name="providerId"
+              name="providerUid"
               type="text"
               label="Provider UID"
               labelPlacement="inside"
               placeholder={"Enter the provider UID"}
               variant="bordered"
               isRequired
-              isInvalid={!!form.formState.errors.providerId}
+              isInvalid={!!form.formState.errors.providerUid}
             />
             {/* Provider alias */}
             <CustomInput
