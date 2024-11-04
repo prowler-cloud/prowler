@@ -6,16 +6,23 @@ from prowler.providers.aws.services.dms.dms_client import dms_client
 
 class dms_replication_task_source_logging_enabled(Check):
     """
-    Check if AWS DMS Endpoints for Neptune have IAM authorization enabled.
-    This class verifies whether each AWS DMS Endpoint configured for Neptune has IAM authorization enabled
-    by checking the `NeptuneSettings.IamAuthEnabled` property in the endpoint's configuration.
+    Check if AWS DMS replication tasks have logging enabled with the required
+    logging components and severity levels.
+
+    This class verifies that each DMS replication task has logging enabled
+    and that the components SOURCE_CAPTURE and SOURCE_UNLOAD are configured with
+    at least LOGGER_SEVERITY_DEFAULT severity level. If either component is missing
+    or does not meet the minimum severity requirement, the check will fail.
     """
 
     def execute(self) -> List[Check_Report_AWS]:
         """
-        Execute the DMS Neptune IAM authorization enabled check.
-        Iterates over all DMS Endpoints and generates a report indicating whether
-        each Neptune endpoint has IAM authorization enabled.
+        Execute the DMS replication task logging requirements check.
+
+        Iterates over all DMS replication tasks and generates a report indicating
+        whether each task has logging enabled and meets the logging requirements
+        for SOURCE_CAPTURE and SOURCE_UNLOAD components.
+
         Returns:
             List[Check_Report_AWS]: A list of report objects with the results of the check.
         """
