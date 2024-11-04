@@ -113,14 +113,14 @@ class Test_ecs_task_sets_no_assign_public_ip:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=mocked_aws_provider,
         ), patch(
-            "prowler.providers.aws.services.ecs.ecs_task_sets_no_assign_public_ip.ecs_task_sets_no_assign_public_ip.ecs_client",
+            "prowler.providers.aws.services.ecs.ecs_task_set_no_assign_public_ip.ecs_task_set_no_assign_public_ip.ecs_client",
             new=ECS(mocked_aws_provider),
         ):
-            from prowler.providers.aws.services.ecs.ecs_task_sets_no_assign_public_ip.ecs_task_sets_no_assign_public_ip import (
-                ecs_task_sets_no_assign_public_ip,
+            from prowler.providers.aws.services.ecs.ecs_task_set_no_assign_public_ip.ecs_task_set_no_assign_public_ip import (
+                ecs_task_set_no_assign_public_ip,
             )
 
-            check = ecs_task_sets_no_assign_public_ip()
+            check = ecs_task_set_no_assign_public_ip()
             result = check.execute()
             assert len(result) == 0
 
@@ -153,14 +153,14 @@ class Test_ecs_task_sets_no_assign_public_ip:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=mocked_aws_provider,
         ), patch(
-            "prowler.providers.aws.services.ecs.ecs_task_sets_no_assign_public_ip.ecs_task_sets_no_assign_public_ip.ecs_client",
+            "prowler.providers.aws.services.ecs.ecs_task_set_no_assign_public_ip.ecs_task_set_no_assign_public_ip.ecs_client",
             new=ECS(mocked_aws_provider),
         ):
-            from prowler.providers.aws.services.ecs.ecs_task_sets_no_assign_public_ip.ecs_task_sets_no_assign_public_ip import (
-                ecs_task_sets_no_assign_public_ip,
+            from prowler.providers.aws.services.ecs.ecs_task_set_no_assign_public_ip.ecs_task_set_no_assign_public_ip import (
+                ecs_task_set_no_assign_public_ip,
             )
 
-            check = ecs_task_sets_no_assign_public_ip()
+            check = ecs_task_set_no_assign_public_ip()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
@@ -205,14 +205,14 @@ class Test_ecs_task_sets_no_assign_public_ip:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=mocked_aws_provider,
         ), patch(
-            "prowler.providers.aws.services.ecs.ecs_task_sets_no_assign_public_ip.ecs_task_sets_no_assign_public_ip.ecs_client",
+            "prowler.providers.aws.services.ecs.ecs_task_set_no_assign_public_ip.ecs_task_set_no_assign_public_ip.ecs_client",
             new=ECS(mocked_aws_provider),
         ):
-            from prowler.providers.aws.services.ecs.ecs_task_sets_no_assign_public_ip.ecs_task_sets_no_assign_public_ip import (
-                ecs_task_sets_no_assign_public_ip,
+            from prowler.providers.aws.services.ecs.ecs_task_set_no_assign_public_ip.ecs_task_set_no_assign_public_ip import (
+                ecs_task_set_no_assign_public_ip,
             )
 
-            check = ecs_task_sets_no_assign_public_ip()
+            check = ecs_task_set_no_assign_public_ip()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"

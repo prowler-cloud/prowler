@@ -2,7 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ecs.ecs_client import ecs_client
 
 
-class ecs_task_sets_no_assign_public_ip(Check):
+class ecs_task_set_no_assign_public_ip(Check):
     def execute(self):
         findings = []
         for task_set in ecs_client.task_sets.values():

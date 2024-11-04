@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "ecs_task_sets_no_assign_public_ip",
+  "CheckID": "ecs_task_set_no_assign_public_ip",
   "CheckTitle": "ECS task sets should not automatically assign public IP addresses",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices"
