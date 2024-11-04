@@ -87,7 +87,7 @@ class Test_ServiceCatalog_Service:
         assert service_catalog.portfolios[arn].region == AWS_REGION_EU_WEST_1
 
     @mock_aws
-    # Test ServiceCatalog describe
+    # Test ServiceCatalog describe portfolio shares
     def test_describe_portfolio_shares(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         service_catalog = ServiceCatalog(aws_provider)
@@ -97,7 +97,7 @@ class Test_ServiceCatalog_Service:
         assert service_catalog.portfolios[arn].shares[0].type == "ACCOUNT"
 
     @mock_aws
-    # Test ServiceCatalog list queues
+    # Test ServiceCatalog describe portfolio
     def test_describe_portfolio(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         service_catalog = ServiceCatalog(aws_provider)
