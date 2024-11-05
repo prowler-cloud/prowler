@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import React from "react";
+import React, { Suspense } from "react";
 
 import { getProvider } from "@/actions/providers";
 import { TestConnectionForm } from "@/components/providers/workflow/forms";
@@ -15,8 +15,20 @@ export default async function TestConnectionPage({ searchParams }: Props) {
     redirect("/providers/connect-account");
   }
 
+  return (
+    <Suspense fallback={<p>Loading...</p>}>
+      <SSRTestConnection searchParams={searchParams} />
+    </Suspense>
+  );
+}
+
+async function SSRTestConnection({
+  searchParams,
+}: {
+  searchParams: { type: string; id: string };
+}) {
   const formData = new FormData();
-  formData.append("id", providerId);
+  formData.append("id", searchParams.id);
 
   const providerData = await getProvider(formData);
 
