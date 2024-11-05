@@ -2,11 +2,11 @@ FROM python:3.12-alpine
 
 LABEL maintainer="https://github.com/prowler-cloud/prowler"
 
-# Update system dependencies and install essential tools
-#hadolint ignore=DL3018
-RUN apk --no-cache upgrade && apk --no-cache add curl git
+# Install essential tool to compile presidio-analyze library
+# hadolint ignore=DL3018
+RUN apk --no-cache add g++
 
-# Create nonroot user
+# Create non-root user
 RUN mkdir -p /home/prowler && \
     echo 'prowler:x:1000:1000:prowler:/home/prowler:' > /etc/passwd && \
     echo 'prowler:x:1000:' > /etc/group && \
