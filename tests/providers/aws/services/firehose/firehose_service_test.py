@@ -1,8 +1,15 @@
 from boto3 import client
 from moto import mock_aws
 
-from prowler.providers.aws.services.firehose.firehose_service import Firehose
-from tests.providers.aws.utils import AWS_REGION_EU_WEST_1, set_mocked_aws_provider
+from prowler.providers.aws.services.firehose.firehose_service import (
+    EncryptionStatus,
+    Firehose,
+)
+from tests.providers.aws.utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_provider,
+)
 
 
 class Test_Firehose_Service:
@@ -109,6 +116,14 @@ class Test_Firehose_Service:
         arn = delivery_stream["DeliveryStreamARN"]
         delivery_stream_name = arn.split("/")[-1]
 
+        firehose_client.start_delivery_stream_encryption(
+            DeliveryStreamName=delivery_stream_name,
+            DeliveryStreamEncryptionConfigurationInput={
+                "KeyARN": f"arn:aws:kms:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:key/test-kms-key-id",
+                "KeyType": "CUSTOMER_MANAGED_CMK",
+            },
+        )
+
         # Firehose Client for this test class
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         firehose = Firehose(aws_provider)
@@ -118,10 +133,8 @@ class Test_Firehose_Service:
         assert firehose.delivery_streams[arn].name == delivery_stream_name
         assert firehose.delivery_streams[arn].region == AWS_REGION_EU_WEST_1
         assert firehose.delivery_streams[arn].tags == [{"Key": "key", "Value": "value"}]
-        assert firehose.delivery_streams[arn].kms_encryption == "ENABLED"
+        assert firehose.delivery_streams[arn].kms_encryption == EncryptionStatus.ENABLED
         assert (
             firehose.delivery_streams[arn].kms_key_arn
-            == delivery_stream["DeliveryStreamDescription"]["Destinations"][0][
-                "ExtendedS3DestinationDescription"
-            ]["EncryptionConfiguration"]["KMSEncryptionConfig"]["AWSKMSKeyARN"]
+            == f"arn:aws:kms:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:key/test-kms-key-id"
         )
