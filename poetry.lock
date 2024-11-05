@@ -305,13 +305,13 @@ aio = ["aiohttp (>=3.0)"]
 
 [[package]]
 name = "azure-identity"
-version = "1.18.0"
+version = "1.19.0"
 description = "Microsoft Azure Identity Library for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "azure_identity-1.18.0-py3-none-any.whl", hash = "sha256:bccf6106245b49ff41d0c4cd7b72851c5a2ba3a32cef7589da246f5727f26f02"},
-    {file = "azure_identity-1.18.0.tar.gz", hash = "sha256:f567579a65d8932fa913c76eddf3305101a15e5727a5e4aa5df649a0f553d4c3"},
+    {file = "azure_identity-1.19.0-py3-none-any.whl", hash = "sha256:e3f6558c181692d7509f09de10cca527c7dce426776454fb97df512a46527e81"},
+    {file = "azure_identity-1.19.0.tar.gz", hash = "sha256:500144dc18197d7019b81501165d4fa92225f03778f17d7ca8a2a180129a9c83"},
 ]
 
 [package.dependencies]
@@ -4566,4 +4566,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "3d883fb0610d76c41fa229cef91c639eac695315912b92ccd22cbd23c6c46603"
+content-hash = "bd8a94a1a4b3e739a029db5ba759d0d862b75163f3a7b32b02db9df4e2e4b946"
