@@ -16,12 +16,27 @@ import { CustomButton } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
 import { ApiError, testConnectionFormSchema } from "@/types";
 
+import { ProviderInfo } from "../..";
+
 type FormValues = z.infer<typeof testConnectionFormSchema>;
 
 export const TestConnectionForm = ({
   searchParams,
+  providerData,
 }: {
   searchParams: { type: string; id: string };
+  providerData: {
+    data: {
+      id: string;
+      attributes: {
+        connection: {
+          connected: boolean;
+        };
+        provider: "aws" | "azure" | "gcp" | "kubernetes";
+        alias: string;
+      };
+    };
+  };
 }) => {
   const { toast } = useToast();
   const router = useRouter();
@@ -68,7 +83,6 @@ export const TestConnectionForm = ({
         }
       });
     } else {
-      console.log({ data: data.data.id }, "success");
       const taskId = data.data.id;
       setApiErrorMessage(null);
 
@@ -128,6 +142,12 @@ export const TestConnectionForm = ({
           </div>
         )}
 
+        <ProviderInfo
+          connected={providerData.data.attributes.connection.connected}
+          provider={providerData.data.attributes.provider}
+          providerAlias={providerData.data.attributes.alias}
+        />
+
         <input type="hidden" name="providerId" value={providerId} />
 
         <div className="flex w-full justify-end sm:space-x-6">
@@ -142,6 +162,17 @@ export const TestConnectionForm = ({
               />
               <span>Back to providers</span>
             </Link>
+          ) : connectionStatus?.error ? (
+            <Link
+              href="/providers/add-credentials"
+              className="mr-3 flex w-fit items-center justify-center space-x-2 rounded-lg border border-solid border-gray-200 px-4 py-2 hover:bg-gray-200 dark:hover:bg-gray-700"
+            >
+              <Icon
+                icon="icon-park-outline:close-small"
+                className="h-5 w-5 text-gray-600 dark:text-gray-400"
+              />
+              <span>Handle credentials</span>
+            </Link>
           ) : (
             <CustomButton
               type="submit"
@@ -153,7 +184,7 @@ export const TestConnectionForm = ({
               isLoading={isLoading}
               startContent={!isLoading && <SaveIcon size={24} />}
             >
-              {isLoading ? <>Loading</> : <span>Connect account</span>}
+              {isLoading ? <>Loading</> : <span>Test connection</span>}
             </CustomButton>
           )}
         </div>

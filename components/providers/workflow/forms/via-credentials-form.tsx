@@ -38,12 +38,12 @@ type FormType = CredentialsFormSchema &
 export const ViaCredentialsForm = ({
   searchParams,
 }: {
-  searchParams: { provider: string; id: string };
+  searchParams: { type: string; id: string };
 }) => {
   const router = useRouter();
   const { toast } = useToast();
 
-  const providerType = searchParams.provider;
+  const providerType = searchParams.type;
   const providerId = searchParams.id;
   const formSchema = addCredentialsFormSchema(providerType);
 

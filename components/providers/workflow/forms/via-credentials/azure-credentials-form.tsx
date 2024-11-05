@@ -32,7 +32,7 @@ export const AzureCredentialsForm = ({
       <CustomInput
         control={control}
         name="client_secret"
-        type="text"
+        type="password"
         label="Client Secret"
         labelPlacement="inside"
         placeholder="Enter the Client Secret"

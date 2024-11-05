@@ -21,7 +21,7 @@ export const AWScredentialsForm = ({
       <CustomInput
         control={control}
         name="aws_access_key_id"
-        type="text"
+        type="password"
         label="AWS Access Key ID"
         labelPlacement="inside"
         placeholder="Enter the AWS Access Key ID"
@@ -32,7 +32,7 @@ export const AWScredentialsForm = ({
       <CustomInput
         control={control}
         name="aws_secret_access_key"
-        type="text"
+        type="password"
         label="AWS Secret Access Key"
         labelPlacement="inside"
         placeholder="Enter the AWS Secret Access Key"
@@ -43,7 +43,7 @@ export const AWScredentialsForm = ({
       <CustomInput
         control={control}
         name="aws_session_token"
-        type="text"
+        type="password"
         label="AWS Session Token"
         labelPlacement="inside"
         placeholder="Enter the AWS Session Token"

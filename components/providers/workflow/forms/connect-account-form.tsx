@@ -93,13 +93,13 @@ export const ConnectAccountForm = () => {
     } else {
       const {
         id,
-        attributes: { provider },
+        attributes: { provider: providerType },
       } = data.data;
       const credentialsParam = values.awsCredentialsType
         ? `&via=${values.awsCredentialsType}`
         : "";
       router.push(
-        `/providers/add-credentials?provider=${provider}&id=${id}${credentialsParam}`,
+        `/providers/add-credentials?type=${providerType}&id=${id}${credentialsParam}`,
       );
     }
   };

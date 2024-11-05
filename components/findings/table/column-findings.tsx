@@ -88,7 +88,7 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
   },
   {
     accessorKey: "status",
-    header: "Scan Status",
+    header: "Status",
     cell: ({ row }) => {
       const {
         attributes: { status },

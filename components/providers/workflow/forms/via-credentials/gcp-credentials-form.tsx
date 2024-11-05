@@ -32,7 +32,7 @@ export const GCPcredentialsForm = ({
       <CustomInput
         control={control}
         name="client_secret"
-        type="text"
+        type="password"
         label="Client Secret"
         labelPlacement="inside"
         placeholder="Enter the Client Secret"
@@ -43,7 +43,7 @@ export const GCPcredentialsForm = ({
       <CustomInput
         control={control}
         name="refresh_token"
-        type="text"
+        type="password"
         label="Refresh Token"
         labelPlacement="inside"
         placeholder="Enter the Refresh Token"
