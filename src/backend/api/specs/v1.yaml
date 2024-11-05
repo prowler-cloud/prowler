@@ -3010,8 +3010,14 @@ components:
                           role assumption; may be required by the role administrator.
                       role_session_name:
                         type: string
-                        description: An identifier for the role session, useful for
-                          tracking sessions in AWS logs.
+                        description: |-
+                          An identifier for the role session, useful for tracking sessions in AWS logs. The regex used to validate this parameter is a string of characters consisting of upper- and lower-case alphanumeric characters with no spaces. You can also include underscores or any of the following characters: =,.@-
+
+                          Examples:
+                          - MySession123
+                          - User_Session-1
+                          - Test.Session@2
+                        pattern: ^[a-zA-Z0-9=,.@_-]+$
                     required:
                     - role_arn
                   - type: object
@@ -3610,8 +3616,14 @@ components:
                       assumption; may be required by the role administrator.
                   role_session_name:
                     type: string
-                    description: An identifier for the role session, useful for tracking
-                      sessions in AWS logs.
+                    description: |-
+                      An identifier for the role session, useful for tracking sessions in AWS logs. The regex used to validate this parameter is a string of characters consisting of upper- and lower-case alphanumeric characters with no spaces. You can also include underscores or any of the following characters: =,.@-
+
+                      Examples:
+                      - MySession123
+                      - User_Session-1
+                      - Test.Session@2
+                    pattern: ^[a-zA-Z0-9=,.@_-]+$
                 required:
                 - role_arn
               - type: object
@@ -3786,8 +3798,14 @@ components:
                           role assumption; may be required by the role administrator.
                       role_session_name:
                         type: string
-                        description: An identifier for the role session, useful for
-                          tracking sessions in AWS logs.
+                        description: |-
+                          An identifier for the role session, useful for tracking sessions in AWS logs. The regex used to validate this parameter is a string of characters consisting of upper- and lower-case alphanumeric characters with no spaces. You can also include underscores or any of the following characters: =,.@-
+
+                          Examples:
+                          - MySession123
+                          - User_Session-1
+                          - Test.Session@2
+                        pattern: ^[a-zA-Z0-9=,.@_-]+$
                     required:
                     - role_arn
                   - type: object
@@ -3976,8 +3994,14 @@ components:
                       assumption; may be required by the role administrator.
                   role_session_name:
                     type: string
-                    description: An identifier for the role session, useful for tracking
-                      sessions in AWS logs.
+                    description: |-
+                      An identifier for the role session, useful for tracking sessions in AWS logs. The regex used to validate this parameter is a string of characters consisting of upper- and lower-case alphanumeric characters with no spaces. You can also include underscores or any of the following characters: =,.@-
+
+                      Examples:
+                      - MySession123
+                      - User_Session-1
+                      - Test.Session@2
+                    pattern: ^[a-zA-Z0-9=,.@_-]+$
                 required:
                 - role_arn
               - type: object
@@ -4615,7 +4639,6 @@ components:
           properties:
             email:
               type: string
-              format: email
               writeOnly: true
             password:
               type: string
@@ -4719,7 +4742,6 @@ components:
               properties:
                 email:
                   type: string
-                  format: email
                   writeOnly: true
                   minLength: 1
                 password:

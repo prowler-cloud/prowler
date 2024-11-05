@@ -755,7 +755,15 @@ class AWSRoleAssumptionProviderSecret(serializers.Serializer):
                     },
                     "role_session_name": {
                         "type": "string",
-                        "description": "An identifier for the role session, useful for tracking sessions in AWS logs.",
+                        "description": "An identifier for the role session, useful for tracking sessions in AWS logs. "
+                        "The regex used to validate this parameter is a string of characters consisting of "
+                        "upper- and lower-case alphanumeric characters with no spaces. You can also include "
+                        "underscores or any of the following characters: =,.@-\n\n"
+                        "Examples:\n"
+                        "- MySession123\n"
+                        "- User_Session-1\n"
+                        "- Test.Session@2",
+                        "pattern": "^[a-zA-Z0-9=,.@_-]+$",
                     },
                 },
                 "required": ["role_arn"],
