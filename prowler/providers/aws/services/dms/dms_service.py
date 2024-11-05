@@ -112,4 +112,4 @@ class RepInstance(BaseModel):
     security_groups: list[str] = []
     multi_az: bool
     region: str
-    tags: Optional[list]
+    tags: Optional[list] = []
