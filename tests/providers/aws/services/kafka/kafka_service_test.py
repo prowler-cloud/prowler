@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 import botocore
 
-from prowler.providers.aws.services.kafka.kafka_service import Kafka
+from prowler.providers.aws.services.kafka.kafka_service import Kafka, KafkaConnect
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
@@ -63,6 +63,16 @@ def mock_make_api_call(self, operation_name, kwarg):
                 {"Version": "2.8.0", "Status": "ACTIVE"},
             ]
         }
+    elif operation_name == "ListConnectors":
+        return {
+            "connectors": [
+                {
+                    "connectorName": "demo-connector",
+                    "connectorArn": f"arn:aws:kafkaconnect:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:connector/demo-connector/058406e6-a8f7-4135-8860-d4786220a395-3",
+                    "kafkaClusterEncryptionInTransit": {"encryptionType": "PLAINTEXT"},
+                },
+            ],
+        }
     return make_api_call(self, operation_name, kwarg)
 
 
@@ -107,3 +117,15 @@ class TestKafkaService:
         assert kafka.kafka_versions[0].status == "DEPRECATED"
         assert kafka.kafka_versions[1].version == "2.8.0"
         assert kafka.kafka_versions[1].status == "ACTIVE"
+
+    @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
+    def test_list_connectors(self):
+        kafka = KafkaConnect(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
+
+        assert len(kafka.connectors) == 1
+        connector_arn = f"arn:aws:kafkaconnect:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:connector/demo-connector/058406e6-a8f7-4135-8860-d4786220a395-3"
+        assert connector_arn in kafka.connectors
+        assert kafka.connectors[connector_arn].name == "demo-connector"
+        assert kafka.connectors[connector_arn].arn == connector_arn
+        assert kafka.connectors[connector_arn].region == AWS_REGION_US_EAST_1
+        assert kafka.connectors[connector_arn].encryption_in_transit == "PLAINTEXT"

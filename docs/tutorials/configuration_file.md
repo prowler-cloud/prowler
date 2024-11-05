@@ -30,6 +30,8 @@ The following list includes all the AWS checks with configurable variables that 
 | `cloudtrail_threat_detection_privilege_escalation`            | `threat_detection_privilege_escalation_entropy`  | Integer         |
 | `cloudtrail_threat_detection_privilege_escalation`            | `threat_detection_privilege_escalation_minutes`  | Integer         |
 | `cloudwatch_log_group_no_secrets_in_logs`                     | `secrets_ignore_patterns`                        | List of Strings |
+| `cloudwatch_log_group_no_critical_pii_in_logs`                | `critical_pii_entities`                          | List of Strings |
+| `cloudwatch_log_group_no_critical_pii_in_logs`                | `pii_language`                                   | String          |
 | `cloudwatch_log_group_retention_policy_specific_days_enabled` | `log_group_retention_days`                       | Integer         |
 | `codebuild_project_no_secrets_in_variables`                   | `excluded_sensitive_environment_variables`       | List of Strings |
 | `codebuild_project_no_secrets_in_variables`                   | `secrets_ignore_patterns`                        | List of Strings |
@@ -57,6 +59,7 @@ The following list includes all the AWS checks with configurable variables that 
 | `rds_instance_backup_enabled`                                 | `check_rds_instance_replicas`                    | Boolean         |
 | `securityhub_enabled`                                         | `mute_non_default_regions`                       | Boolean         |
 | `secretsmanager_secret_unused`                                | `max_days_secret_unused`                         | Integer         |
+| `secretsmanager_secret_rotated_periodically`                  | `max_days_secret_unrotated`                      | Integer         |
 | `ssm_document_secrets`                                        | `secrets_ignore_patterns`                        | List of Strings |
 | `trustedadvisor_premium_support_plan_subscribed`              | `verify_premium_support_plans`                   | Boolean         |
 | `vpc_endpoint_connections_trust_boundaries`                   | `trusted_account_ids`                            | List of Strings |

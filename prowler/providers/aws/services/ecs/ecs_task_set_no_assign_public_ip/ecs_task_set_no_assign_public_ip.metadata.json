@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "ecs_task_set_no_assign_public_ip",
+  "CheckTitle": "ECS task sets should not automatically assign public IP addresses",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "ecs",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:ecs:{region}:{account-id}:task-set/{cluster-name}/{service-name}/{task-set-id}",
+  "Severity": "high",
+  "ResourceType": "AwsEcsTaskSet",
+  "Description": "This control checks whether an Amazon ECS task set is configured to automatically assign public IP addresses. The control fails if AssignPublicIP is set to ENABLED.",
+  "Risk": "A public IP address is reachable from the internet, potentially exposing resources associated with the ECS task set. ECS task sets shouldn't be publicly accessible, as this may allow unintended access to container application servers.",
+  "RelatedUrl": "https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_TaskSet.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws ecs update-service --cluster <cluster-name> --service <service-name> --network-configuration 'awsvpcConfiguration={assignPublicIp=\"DISABLED\"}'",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/ecs-controls.html#ecs-16",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure ECS task sets to not assign public IP addresses to prevent unintended public access to your containerized applications.",
+      "Url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/update-task-definition-console-v2.html"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
