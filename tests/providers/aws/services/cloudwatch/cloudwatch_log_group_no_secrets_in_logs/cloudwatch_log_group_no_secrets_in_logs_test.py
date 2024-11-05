@@ -1,4 +1,4 @@
-from re import search
+from datetime import datetime
 from unittest import mock
 
 from boto3 import client
@@ -9,6 +9,13 @@ from tests.providers.aws.utils import (
     AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
     set_mocked_aws_provider,
+)
+
+timestamp = int(unix_time_millis())
+dttimestamp = (
+    (datetime.fromtimestamp(timestamp / 1000))
+    .astimezone()
+    .isoformat(timespec="milliseconds")
 )
 
 
@@ -59,7 +66,7 @@ class Test_cloudwatch_log_group_no_secrets_in_logs:
             logStreamName="test stream",
             logEvents=[
                 {
-                    "timestamp": int(unix_time_millis()),
+                    "timestamp": timestamp,
                     "message": "non sensitive message",
                 }
             ],
@@ -118,7 +125,7 @@ class Test_cloudwatch_log_group_no_secrets_in_logs:
             logStreamName="test stream",
             logEvents=[
                 {
-                    "timestamp": int(unix_time_millis()),
+                    "timestamp": timestamp,
                     "message": "password = password123",
                 }
             ],
@@ -156,8 +163,9 @@ class Test_cloudwatch_log_group_no_secrets_in_logs:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert search(
-                "Potential secrets found in log group", result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"Potential secrets found in log group test in log stream test stream at {dttimestamp} - Secret Keyword on line 1."
             )
             assert result[0].resource_id == "test"
             assert (

@@ -74,6 +74,12 @@ class DMS(AWSService):
                             redis_tls_enabled=endpoint.get("RedisSettings", {}).get(
                                 "SslSecurityProtocol", "plaintext"
                             ),
+                            mongodb_auth_type=endpoint.get("MongoDbSettings", {}).get(
+                                "AuthType", "no"
+                            ),
+                            neptune_iam_auth_enabled=endpoint.get(
+                                "NeptuneSettings", {}
+                            ).get("IamAuthEnabled", False),
                             engine_name=endpoint["EngineName"],
                         )
         except Exception as error:
@@ -99,7 +105,9 @@ class Endpoint(BaseModel):
     ssl_mode: str
     tags: Optional[list]
     redis_tls_enabled: Optional[str]
-    engine_name: Optional[str]
+    mongodb_auth_type: str
+    neptune_iam_auth_enabled: bool = False
+    engine_name: str
 
 
 class RepInstance(BaseModel):
@@ -112,4 +120,4 @@ class RepInstance(BaseModel):
     security_groups: list[str] = []
     multi_az: bool
     region: str
-    tags: Optional[list]
+    tags: Optional[list] = []

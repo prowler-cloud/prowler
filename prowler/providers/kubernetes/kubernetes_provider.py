@@ -366,17 +366,15 @@ class KubernetesProvider(Provider):
             logger.info("Context user roles retrieved successfully.")
             return roles
         except ApiException as api_error:
-            logger.critical(
+            logger.error(
                 f"ApiException[{api_error.__traceback__.tb_lineno}]: {api_error}"
             )
-            raise KubernetesAPIError(original_exception=api_error)
         except KubernetesError as error:
             raise error
         except Exception as error:
-            logger.critical(
+            logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            raise KubernetesError(original_exception=error)
 
     def get_all_namespaces(self) -> list[str]:
         """

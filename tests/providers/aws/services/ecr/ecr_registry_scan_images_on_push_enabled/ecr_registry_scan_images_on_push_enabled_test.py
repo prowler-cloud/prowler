@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 
 from prowler.providers.aws.services.ecr.ecr_service import (
@@ -109,7 +108,10 @@ class Test_ecr_registry_scan_images_on_push_enabled:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert search("with scan on push", result[0].status_extended)
+            assert (
+                result[0].status_extended
+                == f"ECR registry {AWS_ACCOUNT_NUMBER} has BASIC scan with scan on push enabled."
+            )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert (
                 result[0].resource_arn
@@ -160,9 +162,9 @@ class Test_ecr_registry_scan_images_on_push_enabled:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert search(
-                "scanning with scan on push but with repository filters",
-                result[0].status_extended,
+            assert (
+                result[0].status_extended
+                == f"ECR registry {AWS_ACCOUNT_NUMBER} has BASIC scanning with scan on push but with repository filters."
             )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert (
@@ -209,7 +211,10 @@ class Test_ecr_registry_scan_images_on_push_enabled:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert search("scanning without scan on push", result[0].status_extended)
+            assert (
+                result[0].status_extended
+                == f"ECR registry {AWS_ACCOUNT_NUMBER} has BASIC scanning without scan on push enabled."
+            )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert (
                 result[0].resource_arn
