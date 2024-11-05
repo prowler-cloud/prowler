@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Dict, List, Optional
 
 from botocore.client import ClientError
@@ -17,6 +18,9 @@ class Firehose(AWSService):
         self.__threading_call__(self._list_delivery_streams)
         self.__threading_call__(
             self._list_tags_for_delivery_stream, self.delivery_streams.values()
+        )
+        self.__threading_call__(
+            self._describe_delivery_stream, self.delivery_streams.values()
         )
 
     def _list_delivery_streams(self, regional_client):
@@ -53,9 +57,41 @@ class Firehose(AWSService):
                 f"{stream.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _describe_delivery_stream(self, stream):
+        try:
+            describe_stream = self.regional_clients[
+                stream.region
+            ].describe_delivery_stream(DeliveryStreamName=stream.name)
+            encryption_config = describe_stream.get(
+                "DeliveryStreamDescription", {}
+            ).get("DeliveryStreamEncryptionConfiguration", {})
+            stream.kms_encryption = EncryptionStatus(
+                encryption_config.get("Status", "DISABLED")
+            )
+            stream.kms_key_arn = encryption_config.get("KeyARN", "")
+        except ClientError as error:
+            logger.error(
+                f"{stream.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+
+class EncryptionStatus(Enum):
+    """Possible values for the status of the encryption of a Firehose stream"""
+
+    ENABLED = "ENABLED"
+    DISABLED = "DISABLED"
+    ENABLING = "ENABLING"
+    DISABLING = "DISABLING"
+    ENABLING_FAILED = "ENABLING_FAILED"
+    DISABLING_FAILED = "DISABLING_FAILED"
+
 
 class DeliveryStream(BaseModel):
+    """Model for a Firehose Delivery Stream"""
+
     arn: str
     name: str
     region: str
     tags: Optional[List[Dict[str, str]]] = Field(default_factory=list)
+    kms_key_arn: Optional[str] = ""
+    kms_encryption: Optional[str] = ""
