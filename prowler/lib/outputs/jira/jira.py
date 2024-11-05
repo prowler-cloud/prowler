@@ -29,29 +29,30 @@ from prowler.providers.common.models import Connection
 
 
 class Jira:
-    _redirect_uri: str
-    _client_id: str
-    _client_secret: str
-    _state_param: str
-    _access_token: str
-    _refresh_token: str
-    _auth_expiration: int
-    _cloud_id: str
-    _scopes: list[str]
+    _redirect_uri: str = None
+    _client_id: str = None
+    _client_secret: str = None
+    _state_param: str = None
+    _access_token: str = None
+    _refresh_token: str = None
+    _auth_expiration: int = None
+    _cloud_id: str = None
+    _scopes: list[str] = None
 
-    def __init__(self, redirect_uri, client_id, client_secret, state_param):
+    def __init__(
+        self,
+        redirect_uri: str = None,
+        client_id: str = None,
+        client_secret: str = None,
+        state_param: str = None,
+    ):
         self._redirect_uri = redirect_uri
         self._client_id = client_id
         self._client_secret = client_secret
         self._state_param = state_param
-        self._access_token = None
-        self._refresh_token = None
-        self._auth_expiration = None
-        self._cloud_id = None
         self._scopes = ["read:jira-user", "read:jira-work", "write:jira-work"]
         auth_url = self.auth_code_url(state_param)
-        print(f"Authorize the application by visiting this URL: {auth_url}")
-        authorization_code = input("Enter the authorization code from Jira: ")
+        authorization_code = self.input_authorization_code(auth_url)
         self.get_auth(authorization_code)
 
     @property
@@ -90,6 +91,11 @@ class Jira:
     def scopes(self):
         return self._scopes
 
+    @staticmethod
+    def input_authorization_code(auth_url: str = None) -> str:
+        print(f"Authorize the application by visiting this URL: {auth_url}")
+        return input("Enter the authorization code from Jira: ")
+
     def auth_code_url(self) -> str:
         """Generate the URL to authorize the application"""
         # Generate the state parameter
@@ -111,7 +117,7 @@ class Jira:
             f"https://auth.atlassian.com/authorize?{requests.compat.urlencode(params)}"
         )
 
-    def get_auth(self, auth_code) -> None:
+    def get_auth(self, auth_code: str = None) -> None:
         """Get the access token and refresh token
 
         Args:
@@ -169,7 +175,7 @@ class Jira:
                 file=os.path.basename(__file__),
             )
 
-    def get_cloud_id(self, access_token) -> str:
+    def get_cloud_id(self, access_token: str = None) -> str:
         """Get the cloud ID from Jira
 
         Args:
@@ -284,7 +290,11 @@ class Jira:
 
     @staticmethod
     def test_connection(
-        redirect_uri, client_id, client_secret, state_param, raise_on_exception
+        redirect_uri: str = None,
+        client_id: str = None,
+        client_secret: str = None,
+        state_param: str = None,
+        raise_on_exception: bool = True,
     ) -> Connection:
         """Test the connection to Jira
 
@@ -418,7 +428,7 @@ class Jira:
                 file=os.path.basename(__file__),
             )
 
-    def get_available_issue_types(self, project_key: str) -> list[str]:
+    def get_available_issue_types(self, project_key: str = None) -> list[str]:
         """Get the available issue types for a project
 
         Args:
@@ -470,7 +480,10 @@ class Jira:
             )
 
     def send_findings(
-        self, findings: list[Finding], project_key: str, issue_type: str = "Bug"
+        self,
+        findings: list[Finding] = None,
+        project_key: str = None,
+        issue_type: str = "Bug",
     ):
         """
         Send the findings to Jira
