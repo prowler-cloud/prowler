@@ -411,7 +411,7 @@ class GcpProvider(Provider):
 
     @staticmethod
     def get_projects(
-        credentials: Credentials, organization_id: str
+        credentials: Credentials, organization_id: str = None
     ) -> dict[str, GCPProject]:
         """
         Get the projects accessible by the provided credentials. If an organization ID is provided, only the projects under that organization are returned.
