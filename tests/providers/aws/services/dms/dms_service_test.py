@@ -46,6 +46,7 @@ def mock_make_api_call(self, operation_name, kwargs):
                     "SslMode": "require",
                     "MongoDbSettings": {
                         "AuthType": "password",
+                    },
                     "NeptuneSettings": {
                         "IamAuthEnabled": True,
                     },
