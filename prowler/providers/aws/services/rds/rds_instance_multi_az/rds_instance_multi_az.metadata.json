@@ -23,7 +23,9 @@
       "Url": "https://aws.amazon.com/rds/features/multi-az/"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "redundancy"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
