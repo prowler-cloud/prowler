@@ -3,7 +3,7 @@ FROM python:3.12-alpine AS build
 LABEL maintainer="https://github.com/prowler-cloud/api"
 
 # hadolint ignore=DL3018
-RUN apk --no-cache add gcc python3-dev musl-dev linux-headers curl-dev
+RUN apk --no-cache add gcc g++ python3-dev musl-dev linux-headers curl-dev
 
 RUN apk --no-cache upgrade && \
     addgroup -g 1000 prowler && \
