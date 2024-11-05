@@ -1,11 +1,16 @@
-from unittest.mock import MagicMock, patch
+from datetime import datetime, timedelta, timezone
+from unittest.mock import patch, MagicMock
 
 import pytest
 from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
+from rest_framework.exceptions import ValidationError, NotFound
 
+from api.db_router import MainRouter
+from api.exceptions import InvitationTokenExpiredException
+from api.models import Invitation
 from api.models import Provider
 from api.utils import (
     merge_dicts,
@@ -14,6 +19,7 @@ from api.utils import (
     prowler_provider_connection_test,
     get_prowler_provider_kwargs,
 )
+from api.utils import validate_invitation
 
 
 class TestMergeDicts:
@@ -209,3 +215,104 @@ class TestGetProwlerProviderKwargs:
 
         expected_result = {}
         assert result == expected_result
+
+
+class TestValidateInvitation:
+    @pytest.fixture
+    def invitation(self):
+        invitation = MagicMock(spec=Invitation)
+        invitation.token = "VALID_TOKEN"
+        invitation.email = "user@example.com"
+        invitation.expires_at = datetime.now(timezone.utc) + timedelta(days=1)
+        invitation.state = Invitation.State.PENDING
+        invitation.tenant = MagicMock()
+        return invitation
+
+    def test_valid_invitation(self, invitation):
+        with patch("api.utils.Invitation.objects.using") as mock_using:
+            mock_db = mock_using.return_value
+            mock_db.get.return_value = invitation
+
+            result = validate_invitation("VALID_TOKEN", "user@example.com")
+
+            assert result == invitation
+            mock_db.get.assert_called_once_with(
+                token="VALID_TOKEN", email="user@example.com"
+            )
+
+    def test_invitation_not_found_raises_validation_error(self):
+        with patch("api.utils.Invitation.objects.using") as mock_using:
+            mock_db = mock_using.return_value
+            mock_db.get.side_effect = Invitation.DoesNotExist
+
+            with pytest.raises(ValidationError) as exc_info:
+                validate_invitation("INVALID_TOKEN", "user@example.com")
+
+            assert exc_info.value.detail == {
+                "invitation_token": "Invalid invitation code."
+            }
+            mock_db.get.assert_called_once_with(
+                token="INVALID_TOKEN", email="user@example.com"
+            )
+
+    def test_invitation_not_found_raises_not_found(self):
+        with patch("api.utils.Invitation.objects.using") as mock_using:
+            mock_db = mock_using.return_value
+            mock_db.get.side_effect = Invitation.DoesNotExist
+
+            with pytest.raises(NotFound) as exc_info:
+                validate_invitation(
+                    "INVALID_TOKEN", "user@example.com", raise_not_found=True
+                )
+
+            assert exc_info.value.detail == "Invitation is not valid."
+            mock_db.get.assert_called_once_with(
+                token="INVALID_TOKEN", email="user@example.com"
+            )
+
+    def test_invitation_expired(self, invitation):
+        expired_time = datetime.now(timezone.utc) - timedelta(days=1)
+        invitation.expires_at = expired_time
+
+        with patch("api.utils.Invitation.objects.using") as mock_using, patch(
+            "api.utils.datetime"
+        ) as mock_datetime:
+            mock_db = mock_using.return_value
+            mock_db.get.return_value = invitation
+            mock_datetime.now.return_value = datetime.now(timezone.utc)
+
+            with pytest.raises(InvitationTokenExpiredException):
+                validate_invitation("VALID_TOKEN", "user@example.com")
+
+            # Ensure the invitation state was updated to EXPIRED
+            assert invitation.state == Invitation.State.EXPIRED
+            invitation.save.assert_called_once_with(using=MainRouter.admin_db)
+
+    def test_invitation_not_pending(self, invitation):
+        invitation.state = Invitation.State.ACCEPTED
+
+        with patch("api.utils.Invitation.objects.using") as mock_using:
+            mock_db = mock_using.return_value
+            mock_db.get.return_value = invitation
+
+            with pytest.raises(ValidationError) as exc_info:
+                validate_invitation("VALID_TOKEN", "user@example.com")
+
+            assert exc_info.value.detail == {
+                "invitation_token": "This invitation is no longer valid."
+            }
+
+    def test_invitation_with_different_email(self):
+        with patch("api.utils.Invitation.objects.using") as mock_using:
+            mock_db = mock_using.return_value
+            mock_db.get.side_effect = Invitation.DoesNotExist
+
+            with pytest.raises(ValidationError) as exc_info:
+                validate_invitation("VALID_TOKEN", "different@example.com")
+
+            assert exc_info.value.detail == {
+                "invitation_token": "Invalid invitation code."
+            }
+            mock_db.get.assert_called_once_with(
+                token="VALID_TOKEN", email="different@example.com"
+            )

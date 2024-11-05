@@ -27,6 +27,9 @@ from api.db_utils import (
     StatusEnumField,
     CustomUserManager,
     ProviderSecretTypeEnumField,
+    InvitationStateEnumField,
+    one_week_from_now,
+    generate_random_token,
 )
 from api.exceptions import ModelValidationError
 from api.rls import (
@@ -509,11 +512,8 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
     impact_extended = models.TextField(blank=True, null=True)
 
     raw_result = models.JSONField(default=dict)
-    # TODO: review usability
     tags = models.JSONField(default=dict, null=True, blank=True)
-
     check_id = models.CharField(max_length=100, blank=False, null=False)
-    # TODO: review usability
     check_metadata = models.JSONField(default=dict, null=False)
 
     # Relationships
@@ -669,3 +669,49 @@ class ProviderSecret(RowLevelSecurityProtectedModel):
     def secret(self, value):
         encrypted_data = fernet.encrypt(json.dumps(value).encode())
         self._secret = encrypted_data
+
+
+class Invitation(RowLevelSecurityProtectedModel):
+    class State(models.TextChoices):
+        PENDING = "pending", _("Invitation is pending")
+        ACCEPTED = "accepted", _("Invitation was accepted by a user")
+        EXPIRED = "expired", _("Invitation expired after the configured time")
+        REVOKED = "revoked", _("Invitation was revoked by a user")
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+    email = models.EmailField(max_length=254, blank=False, null=False)
+    state = InvitationStateEnumField(choices=State.choices, default=State.PENDING)
+    token = models.CharField(
+        max_length=14,
+        unique=True,
+        default=generate_random_token,
+        editable=False,
+        blank=False,
+        null=False,
+        validators=[MinLengthValidator(14)],
+    )
+    expires_at = models.DateTimeField(default=one_week_from_now)
+    inviter = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        related_name="invitations",
+        related_query_name="invitation",
+        null=True,
+    )
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "invitations"
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=("tenant", "token", "email"),
+                name="unique_tenant_token_email_by_invitation",
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]

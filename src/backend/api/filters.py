@@ -20,6 +20,7 @@ from api.db_utils import (
     FindingDeltaEnumField,
     StatusEnumField,
     SeverityEnumField,
+    InvitationStateEnumField,
 )
 from api.models import (
     Membership,
@@ -33,6 +34,7 @@ from api.models import (
     SeverityChoices,
     StatusChoices,
     ProviderSecret,
+    Invitation,
 )
 from api.rls import Tenant
 from api.uuid_utils import (
@@ -377,4 +379,27 @@ class ProviderSecretFilter(FilterSet):
         model = ProviderSecret
         fields = {
             "name": ["exact", "icontains"],
+        }
+
+
+class InvitationFilter(FilterSet):
+    inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
+    updated_at = DateFilter(field_name="updated_at", lookup_expr="date")
+    expires_at = DateFilter(field_name="expires_at", lookup_expr="date")
+    state = ChoiceFilter(choices=Invitation.State.choices)
+    state__in = ChoiceInFilter(choices=Invitation.State.choices, lookup_expr="in")
+
+    class Meta:
+        model = Invitation
+        fields = {
+            "email": ["exact", "icontains"],
+            "inserted_at": ["date", "gte", "lte"],
+            "updated_at": ["date", "gte", "lte"],
+            "expires_at": ["date", "gte", "lte"],
+            "inviter": ["exact"],
+        }
+        filter_overrides = {
+            InvitationStateEnumField: {
+                "filter_class": CharFilter,
+            }
         }

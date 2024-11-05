@@ -1,10 +1,15 @@
+from datetime import datetime, timezone
+
 from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.common.models import Connection
 from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
+from rest_framework.exceptions import ValidationError, NotFound
 
-from api.models import Provider
+from api.db_router import MainRouter
+from api.exceptions import InvitationTokenExpiredException
+from api.models import Provider, Invitation
 
 
 def merge_dicts(default_dict: dict, replacement_dict: dict) -> dict:
@@ -119,3 +124,66 @@ def prowler_provider_connection_test(provider: Provider) -> Connection:
     return prowler_provider.test_connection(
         **prowler_provider_kwargs, provider_id=provider.uid, raise_on_exception=False
     )
+
+
+def validate_invitation(
+    invitation_token: str, email: str, raise_not_found=False
+) -> Invitation:
+    """
+    Validates an invitation based on the provided token and email.
+
+    This function attempts to retrieve an Invitation object using the given
+    `invitation_token` and `email`. It performs several checks to ensure that
+    the invitation is valid, not expired, and in the correct state for acceptance.
+
+    Args:
+        invitation_token (str): The token associated with the invitation.
+        email (str): The email address associated with the invitation.
+        raise_not_found (bool, optional): If True, raises a `NotFound` exception
+            when the invitation is not found. If False, raises a `ValidationError`.
+            Defaults to False.
+
+    Returns:
+        Invitation: The validated Invitation object.
+
+    Raises:
+        NotFound: If `raise_not_found` is True and the invitation does not exist.
+        ValidationError: If the invitation does not exist and `raise_not_found`
+            is False, or if the invitation is invalid or in an incorrect state.
+        InvitationTokenExpiredException: If the invitation has expired.
+
+    Notes:
+        - This function uses the admin database connector to bypass RLS protection
+          since the invitation may belong to a tenant the user is not a member of yet.
+        - If the invitation has expired, its state is updated to EXPIRED, and an
+          `InvitationTokenExpiredException` is raised.
+        - Only invitations in the PENDING state can be accepted.
+
+    Examples:
+        invitation = validate_invitation("TOKEN123", "user@example.com")
+    """
+    try:
+        # Admin DB connector is used to bypass RLS protection since the invitation belongs to a tenant the user
+        # is not a member of yet
+        invitation = Invitation.objects.using(MainRouter.admin_db).get(
+            token=invitation_token, email=email
+        )
+    except Invitation.DoesNotExist:
+        if raise_not_found:
+            raise NotFound(detail="Invitation is not valid.")
+        else:
+            raise ValidationError({"invitation_token": "Invalid invitation code."})
+
+    # Check if the invitation has expired
+    if invitation.expires_at < datetime.now(timezone.utc):
+        invitation.state = Invitation.State.EXPIRED
+        invitation.save(using=MainRouter.admin_db)
+        raise InvitationTokenExpiredException()
+
+    # Check the state of the invitation
+    if invitation.state != Invitation.State.PENDING:
+        raise ValidationError(
+            {"invitation_token": "This invitation is no longer valid."}
+        )
+
+    return invitation

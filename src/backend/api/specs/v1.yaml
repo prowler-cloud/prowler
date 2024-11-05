@@ -503,6 +503,35 @@ paths:
               schema:
                 $ref: '#/components/schemas/FindingResponse'
           description: ''
+  /api/v1/invitations/accept:
+    post:
+      operationId: invitations_accept_create
+      description: Accept an invitation to an existing tenant. This invitation cannot
+        be expired and the emails must match.
+      summary: Accept an invitation
+      tags:
+      - Invitation
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/InvitationAcceptRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/InvitationAcceptRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/InvitationAcceptRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/OpenApiResponseResponse'
+          description: ''
   /api/v1/providers:
     get:
       operationId: providers_list
@@ -2221,6 +2250,310 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/tenants/invitations:
+    get:
+      operationId: tenants_invitations_list
+      description: Retrieve a list of all tenant invitations with options for filtering
+        by various criteria.
+      summary: List all invitations
+      parameters:
+      - in: query
+        name: fields[Invitation]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - inserted_at
+            - updated_at
+            - email
+            - state
+            - token
+            - expires_at
+            - inviter
+            - url
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[email]
+        schema:
+          type: string
+      - in: query
+        name: filter[email__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[expires_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[expires_at__date]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[expires_at__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[expires_at__lte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[inserted_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__date]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[inserted_at__lte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[inviter]
+        schema:
+          type: string
+          format: uuid
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: filter[state]
+        schema:
+          type: string
+          enum:
+          - accepted
+          - expired
+          - pending
+          - revoked
+        description: |-
+          * `pending` - Invitation is pending
+          * `accepted` - Invitation was accepted by a user
+          * `expired` - Invitation expired after the configured time
+          * `revoked` - Invitation was revoked by a user
+      - in: query
+        name: filter[state__in]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - accepted
+            - expired
+            - pending
+            - revoked
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `pending` - Invitation is pending
+          * `accepted` - Invitation was accepted by a user
+          * `expired` - Invitation expired after the configured time
+          * `revoked` - Invitation was revoked by a user
+        explode: false
+        style: form
+      - in: query
+        name: filter[updated_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[updated_at__date]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[updated_at__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[updated_at__lte]
+        schema:
+          type: string
+          format: date-time
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page[size]
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - inserted_at
+            - -inserted_at
+            - updated_at
+            - -updated_at
+            - expires_at
+            - -expires_at
+            - state
+            - -state
+            - inviter
+            - -inviter
+        explode: false
+      tags:
+      - Invitation
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedInvitationList'
+          description: ''
+    post:
+      operationId: tenants_invitations_create
+      description: Add a new tenant invitation to the system by providing the required
+        invitation details. The invited user will have to accept the invitations or
+        create an account using the given code.
+      summary: Invite a user to a tenant
+      tags:
+      - Invitation
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/InvitationCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/InvitationCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/InvitationCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/InvitationCreateResponse'
+          description: ''
+  /api/v1/tenants/invitations/{id}:
+    get:
+      operationId: tenants_invitations_retrieve
+      description: Fetch detailed information about a specific invitation by its ID.
+      summary: Retrieve data from a tenant invitation
+      parameters:
+      - in: query
+        name: fields[Invitation]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - inserted_at
+            - updated_at
+            - email
+            - state
+            - token
+            - expires_at
+            - inviter
+            - url
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Invitation
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/InvitationResponse'
+          description: ''
+    patch:
+      operationId: tenants_invitations_partial_update
+      description: Update certain fields of an existing tenant invitation's information
+        without affecting other fields.
+      summary: Partially update a tenant invitation
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Invitation
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/PatchedInvitationUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedInvitationUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedInvitationUpdateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/InvitationUpdateResponse'
+          description: ''
+    delete:
+      operationId: tenants_invitations_destroy
+      description: Revoke a tenant invitation from the system by their ID.
+      summary: Revoke a tenant invitation
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - Invitation
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/v1/tokens:
     post:
       operationId: tokens_create
@@ -2287,6 +2620,13 @@ paths:
       description: Create a new user account by providing the necessary registration
         details.
       summary: Register a new user
+      parameters:
+      - in: query
+        name: invitation_token
+        schema:
+          type: string
+          example: F3NMFPNDZHR4Z9
+        description: Optional invitation code for joining an existing tenant.
       tags:
       - User
       requestBody:
@@ -2739,7 +3079,7 @@ components:
       type: string
       enum:
       - Finding
-    Membership:
+    Invitation:
       type: object
       required:
       - type
@@ -2748,13 +3088,328 @@ components:
       properties:
         type:
           allOf:
-          - $ref: '#/components/schemas/MembershipTypeEnum'
+          - $ref: '#/components/schemas/Type4b9Enum'
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
         id:
           type: string
           format: uuid
+        attributes:
+          type: object
+          properties:
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
+            updated_at:
+              type: string
+              format: date-time
+              readOnly: true
+            email:
+              type: string
+              format: email
+              maxLength: 254
+            state:
+              enum:
+              - pending
+              - accepted
+              - expired
+              - revoked
+              type: string
+              description: |-
+                * `pending` - Invitation is pending
+                * `accepted` - Invitation was accepted by a user
+                * `expired` - Invitation expired after the configured time
+                * `revoked` - Invitation was revoked by a user
+            token:
+              type: string
+              readOnly: true
+            expires_at:
+              type: string
+              format: date-time
+          required:
+          - email
+        relationships:
+          type: object
+          properties:
+            inviter:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    type:
+                      type: string
+                      enum:
+                      - User
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
+              required:
+              - data
+              description: The identifier of the related object.
+              title: Resource Identifier
+              nullable: true
+    InvitationAcceptRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - Invitation
+            attributes:
+              type: object
+              properties:
+                invitation_token:
+                  type: string
+                  writeOnly: true
+                  minLength: 1
+              required:
+              - invitation_token
+      required:
+      - data
+    InvitationCreate:
+      type: object
+      required:
+      - type
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/Type4b9Enum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        attributes:
+          type: object
+          properties:
+            email:
+              type: string
+              format: email
+              maxLength: 254
+            expires_at:
+              type: string
+              format: date-time
+              description: UTC. Default 7 days. If this attribute is provided, it
+                must be at least 24 hours in the future.
+            state:
+              enum:
+              - pending
+              - accepted
+              - expired
+              - revoked
+              type: string
+              description: |-
+                * `pending` - Invitation is pending
+                * `accepted` - Invitation was accepted by a user
+                * `expired` - Invitation expired after the configured time
+                * `revoked` - Invitation was revoked by a user
+              readOnly: true
+            token:
+              type: string
+              readOnly: true
+          required:
+          - email
+        relationships:
+          type: object
+          properties:
+            inviter:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    type:
+                      type: string
+                      enum:
+                      - User
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
+              required:
+              - data
+              description: The identifier of the related object.
+              title: Resource Identifier
+              readOnly: true
+              nullable: true
+    InvitationCreateRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - Invitation
+            attributes:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  minLength: 1
+                  maxLength: 254
+                expires_at:
+                  type: string
+                  format: date-time
+                  description: UTC. Default 7 days. If this attribute is provided,
+                    it must be at least 24 hours in the future.
+                state:
+                  enum:
+                  - pending
+                  - accepted
+                  - expired
+                  - revoked
+                  type: string
+                  description: |-
+                    * `pending` - Invitation is pending
+                    * `accepted` - Invitation was accepted by a user
+                    * `expired` - Invitation expired after the configured time
+                    * `revoked` - Invitation was revoked by a user
+                  readOnly: true
+                token:
+                  type: string
+                  readOnly: true
+                  minLength: 1
+              required:
+              - email
+            relationships:
+              type: object
+              properties:
+                inviter:
+                  type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        type:
+                          type: string
+                          enum:
+                          - User
+                          title: Resource Type Name
+                          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                            member is used to describe resource objects that share
+                            common attributes and relationships.
+                      required:
+                      - id
+                      - type
+                  required:
+                  - data
+                  description: The identifier of the related object.
+                  title: Resource Identifier
+                  readOnly: true
+                  nullable: true
+      required:
+      - data
+    InvitationCreateResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/InvitationCreate'
+      required:
+      - data
+    InvitationResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Invitation'
+      required:
+      - data
+    InvitationUpdate:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/Type4b9Enum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        id:
+          type: string
+          format: uuid
+        attributes:
+          type: object
+          properties:
+            email:
+              type: string
+              format: email
+              maxLength: 254
+            expires_at:
+              type: string
+              format: date-time
+            state:
+              enum:
+              - pending
+              - accepted
+              - expired
+              - revoked
+              type: string
+              description: |-
+                * `pending` - Invitation is pending
+                * `accepted` - Invitation was accepted by a user
+                * `expired` - Invitation expired after the configured time
+                * `revoked` - Invitation was revoked by a user
+              readOnly: true
+            token:
+              type: string
+              readOnly: true
+    InvitationUpdateResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/InvitationUpdate'
+      required:
+      - data
+    Membership:
+      type: object
+      required:
+      - type
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/MembershipTypeEnum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
         attributes:
           type: object
           properties:
@@ -2840,7 +3495,7 @@ components:
       type: object
       properties:
         data:
-          $ref: '#/components/schemas/Task'
+          $ref: '#/components/schemas/Membership'
       required:
       - data
     PaginatedFindingList:
@@ -2850,6 +3505,15 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Finding'
+      required:
+      - data
+    PaginatedInvitationList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Invitation'
       required:
       - data
     PaginatedMembershipList:
@@ -2915,6 +3579,56 @@ components:
             $ref: '#/components/schemas/Tenant'
       required:
       - data
+    PatchedInvitationUpdateRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          - id
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - Invitation
+            id:
+              type: string
+              format: uuid
+            attributes:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  minLength: 1
+                  maxLength: 254
+                expires_at:
+                  type: string
+                  format: date-time
+                state:
+                  enum:
+                  - pending
+                  - accepted
+                  - expired
+                  - revoked
+                  type: string
+                  description: |-
+                    * `pending` - Invitation is pending
+                    * `accepted` - Invitation was accepted by a user
+                    * `expired` - Invitation expired after the configured time
+                    * `revoked` - Invitation was revoked by a user
+                  readOnly: true
+                token:
+                  type: string
+                  readOnly: true
+                  minLength: 1
+      required:
+      - data
     PatchedProviderSecretUpdateRequest:
       type: object
       properties:
@@ -2932,7 +3646,9 @@ components:
                 and relationships.
               enum:
               - ProviderSecret
-            id: {}
+            id:
+              type: string
+              format: uuid
             attributes:
               type: object
               properties:
@@ -3917,7 +4633,9 @@ components:
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
-        id: {}
+        id:
+          type: string
+          format: uuid
         attributes:
           type: object
           properties:
@@ -4786,6 +5504,10 @@ components:
       type: string
       enum:
       - ProviderSecret
+    Type4b9Enum:
+      type: string
+      enum:
+      - Invitation
     Type4e8Enum:
       type: string
       enum:
@@ -5023,3 +5745,6 @@ tags:
 - name: Task
   description: Endpoints for task management, allowing retrieval of task status and
     revoking tasks that have not started.
+- name: Invitation
+  description: Endpoints for tenant invitations management, allowing retrieval and
+    filtering of invitations, creating new invitations, accepting and revoking them.

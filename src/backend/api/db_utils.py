@@ -1,4 +1,6 @@
+import secrets
 from contextlib import contextmanager
+from datetime import datetime, timezone, timedelta
 
 from django.conf import settings
 from django.contrib.auth.models import BaseUserManager
@@ -69,6 +71,21 @@ def enum_to_choices(enum_class):
     It's for use with Django's `choices` attribute, which expects a list of tuples.
     """
     return [(item.value, item.name.replace("_", " ").title()) for item in enum_class]
+
+
+def one_week_from_now():
+    """
+    Return a datetime object with a date one week from now.
+    """
+    return datetime.now(timezone.utc) + timedelta(days=7)
+
+
+def generate_random_token(length: int = 14, symbols: str | None = None) -> str:
+    """
+    Generate a random token with the specified length.
+    """
+    _symbols = "23456789ABCDEFGHJKMNPQRSTVWXYZ"
+    return "".join(secrets.choice(symbols or _symbols) for _ in range(length))
 
 
 # Postgres Enums
@@ -240,3 +257,15 @@ class ProviderSecretTypeEnum(EnumType):
 class ProviderSecretTypeEnumField(PostgresEnumField):
     def __init__(self, *args, **kwargs):
         super().__init__("provider_secret_type", *args, **kwargs)
+
+
+# Postgres enum definition for Provider secrets type
+
+
+class InvitationStateEnum(EnumType):
+    enum_type_name = "invitation_state"
+
+
+class InvitationStateEnumField(PostgresEnumField):
+    def __init__(self, *args, **kwargs):
+        super().__init__("invitation_state", *args, **kwargs)

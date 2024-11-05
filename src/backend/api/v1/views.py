@@ -18,13 +18,19 @@ from drf_spectacular.utils import (
 from drf_spectacular.views import SpectacularAPIView
 from rest_framework import status, permissions
 from rest_framework.decorators import action
-from rest_framework.exceptions import MethodNotAllowed, NotFound, PermissionDenied
+from rest_framework.exceptions import (
+    MethodNotAllowed,
+    NotFound,
+    PermissionDenied,
+    ValidationError,
+)
 from rest_framework.generics import get_object_or_404, GenericAPIView
 from rest_framework_json_api.views import Response
 from rest_framework_simplejwt.exceptions import InvalidToken
 from rest_framework_simplejwt.exceptions import TokenError
 
 from api.base_views import BaseTenantViewset, BaseRLSViewSet, BaseViewSet
+from api.db_router import MainRouter
 from api.filters import (
     ProviderFilter,
     TenantFilter,
@@ -34,6 +40,7 @@ from api.filters import (
     ResourceFilter,
     FindingFilter,
     ProviderSecretFilter,
+    InvitationFilter,
 )
 from api.models import (
     User,
@@ -44,8 +51,10 @@ from api.models import (
     Resource,
     Finding,
     ProviderSecret,
+    Invitation,
 )
 from api.rls import Tenant
+from api.utils import validate_invitation
 from api.uuid_utils import datetime_to_uuid7
 from api.v1.serializers import (
     TokenSerializer,
@@ -67,6 +76,10 @@ from api.v1.serializers import (
     ProviderSecretSerializer,
     ProviderSecretUpdateSerializer,
     ProviderSecretCreateSerializer,
+    InvitationSerializer,
+    InvitationCreateSerializer,
+    InvitationUpdateSerializer,
+    InvitationAcceptSerializer,
 )
 from tasks.tasks import (
     check_provider_connection_task,
@@ -173,6 +186,11 @@ class SchemaView(SpectacularAPIView):
                 "description": "Endpoints for task management, allowing retrieval of task status and "
                 "revoking tasks that have not started.",
             },
+            {
+                "name": "Invitation",
+                "description": "Endpoints for tenant invitations management, allowing retrieval and filtering of "
+                "invitations, creating new invitations, accepting and revoking them.",
+            },
         ]
         return super().get(request, *args, **kwargs)
 
@@ -242,18 +260,53 @@ class UserViewSet(BaseViewSet):
             status=status.HTTP_200_OK,
         )
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="invitation_token",
+                description="Optional invitation code for joining an existing tenant.",
+                required=False,
+                type={"type": "string", "example": "F3NMFPNDZHR4Z9"},
+                location=OpenApiParameter.QUERY,
+            ),
+        ]
+    )
     def create(self, request, *args, **kwargs):
+        invitation_token = request.query_params.get("invitation_token", None)
+        invitation = None
+
         serializer = self.get_serializer(
             data=request.data, context=self.get_serializer_context()
         )
         serializer.is_valid(raise_exception=True)
-        user = serializer.save()
-        tenant = Tenant.objects.create(
-            name=f"{user.email.split('@')[0]} default tenant"
+
+        if invitation_token:
+            invitation = validate_invitation(
+                invitation_token, serializer.validated_data["email"]
+            )
+
+        # Proceed with creating the user and membership
+        user = User.objects.db_manager(MainRouter.admin_db).create_user(
+            **serializer.validated_data
         )
-        Membership.objects.create(
-            user=user, tenant=tenant, role=Membership.RoleChoices.OWNER
+        tenant = (
+            invitation.tenant
+            if invitation_token
+            else Tenant.objects.using(MainRouter.admin_db).create(
+                name=f"{user.email.split('@')[0]} default tenant"
+            )
         )
+        role = (
+            Membership.RoleChoices.MEMBER
+            if invitation_token
+            else Membership.RoleChoices.OWNER
+        )
+        Membership.objects.using(MainRouter.admin_db).create(
+            user=user, tenant=tenant, role=role
+        )
+        if invitation:
+            invitation.state = Invitation.State.ACCEPTED
+            invitation.save(using=MainRouter.admin_db)
         return Response(data=UserSerializer(user).data, status=status.HTTP_201_CREATED)
 
     def partial_update(self, request, *args, **kwargs):
@@ -621,7 +674,7 @@ class ScanViewSet(BaseRLSViewSet):
                 tenant_id=request.tenant_id,
                 scan_id=str(scan.id),
                 provider_id=str(scan.provider_id),
-                checks_to_execute=scan.scanner_args.get("checks_to_execute", []),
+                checks_to_execute=scan.scanner_args.get("checks_to_execute"),
             )
 
         scan.task_id = task.id
@@ -886,3 +939,143 @@ class ProviderSecretViewSet(BaseRLSViewSet):
         elif self.action == "partial_update":
             return ProviderSecretUpdateSerializer
         return super().get_serializer_class()
+
+
+@extend_schema_view(
+    list=extend_schema(
+        tags=["Invitation"],
+        summary="List all invitations",
+        description="Retrieve a list of all tenant invitations with options for filtering by various criteria.",
+    ),
+    retrieve=extend_schema(
+        tags=["Invitation"],
+        summary="Retrieve data from a tenant invitation",
+        description="Fetch detailed information about a specific invitation by its ID.",
+    ),
+    create=extend_schema(
+        tags=["Invitation"],
+        summary="Invite a user to a tenant",
+        description="Add a new tenant invitation to the system by providing the required invitation details. The "
+        "invited user will have to accept the invitations or create an account using the given code.",
+    ),
+    partial_update=extend_schema(
+        tags=["Invitation"],
+        summary="Partially update a tenant invitation",
+        description="Update certain fields of an existing tenant invitation's information without affecting other "
+        "fields.",
+    ),
+    destroy=extend_schema(
+        tags=["Invitation"],
+        summary="Revoke a tenant invitation",
+        description="Revoke a tenant invitation from the system by their ID.",
+    ),
+)
+@method_decorator(CACHE_DECORATOR, name="list")
+@method_decorator(CACHE_DECORATOR, name="retrieve")
+class InvitationViewSet(BaseRLSViewSet):
+    queryset = Invitation.objects.all()
+    serializer_class = InvitationSerializer
+    filterset_class = InvitationFilter
+    http_method_names = ["get", "post", "patch", "delete"]
+    search_fields = ["email"]
+    ordering = ["-inserted_at"]
+    ordering_fields = [
+        "inserted_at",
+        "updated_at",
+        "expires_at",
+        "state",
+        "inviter",
+    ]
+
+    def get_queryset(self):
+        return Invitation.objects.all()
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return InvitationCreateSerializer
+        elif self.action == "partial_update":
+            return InvitationUpdateSerializer
+        return super().get_serializer_class()
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(
+            data=request.data,
+            context={"tenant_id": self.request.tenant_id, "request": request},
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(data=serializer.data, status=status.HTTP_201_CREATED)
+
+    def partial_update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.state != Invitation.State.PENDING:
+            raise ValidationError(detail="This invitation cannot be updated.")
+        serializer = self.get_serializer(
+            instance,
+            data=request.data,
+            partial=True,
+            context={"tenant_id": self.request.tenant_id, "request": request},
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(data=serializer.data, status=status.HTTP_200_OK)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.state != Invitation.State.PENDING:
+            raise ValidationError(detail="This invitation cannot be revoked.")
+        instance.state = Invitation.State.REVOKED
+        instance.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class InvitationAcceptViewSet(BaseRLSViewSet):
+    queryset = Invitation.objects.all()
+    serializer_class = InvitationAcceptSerializer
+    http_method_names = ["post"]
+
+    def get_queryset(self):
+        return Invitation.objects.all()
+
+    def get_serializer_class(self):
+        if hasattr(self, "response_serializer_class"):
+            return self.response_serializer_class
+        return InvitationAcceptSerializer
+
+    @extend_schema(exclude=True)
+    def create(self, request, *args, **kwargs):
+        raise MethodNotAllowed(method="POST")
+
+    @extend_schema(
+        tags=["Invitation"],
+        summary="Accept an invitation",
+        description="Accept an invitation to an existing tenant. This invitation cannot be expired and the emails must "
+        "match.",
+        responses={201: OpenApiResponse(response=MembershipSerializer)},
+    )
+    @action(detail=False, methods=["post"], url_name="accept")
+    def accept(self, request):
+        serializer = self.get_serializer(
+            data=request.data,
+            context=self.get_serializer_context(),
+        )
+        serializer.is_valid(raise_exception=True)
+        invitation_token = serializer.validated_data["invitation_token"]
+        user_email = request.user.email
+
+        invitation = validate_invitation(
+            invitation_token, user_email, raise_not_found=True
+        )
+
+        # Proceed with accepting the invitation
+        user = User.objects.using(MainRouter.admin_db).get(email=user_email)
+        membership = Membership.objects.using(MainRouter.admin_db).create(
+            user=user,
+            tenant=invitation.tenant,
+        )
+        invitation.state = Invitation.State.ACCEPTED
+        invitation.save(using=MainRouter.admin_db)
+
+        self.response_serializer_class = MembershipSerializer
+        membership_serializer = self.get_serializer(membership)
+        return Response(data=membership_serializer.data, status=status.HTTP_201_CREATED)

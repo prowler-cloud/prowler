@@ -1,4 +1,5 @@
 import json
+from datetime import datetime, timezone, timedelta
 
 from django.conf import settings
 from django.contrib.auth import authenticate
@@ -9,8 +10,8 @@ from jwt.exceptions import InvalidKeyError
 from rest_framework_json_api import serializers
 from rest_framework_json_api.serializers import ValidationError
 from rest_framework_simplejwt.exceptions import TokenError
-from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from api.models import (
     StateChoices,
@@ -23,6 +24,7 @@ from api.models import (
     ResourceTag,
     Finding,
     ProviderSecret,
+    Invitation,
 )
 from api.rls import Tenant
 from api.utils import merge_dicts
@@ -881,6 +883,7 @@ class ProviderSecretUpdateSerializer(BaseWriteProviderSecretSerializer):
     class Meta:
         model = ProviderSecret
         fields = [
+            "id",
             "inserted_at",
             "updated_at",
             "name",
@@ -903,3 +906,99 @@ class ProviderSecretUpdateSerializer(BaseWriteProviderSecretSerializer):
         validated_attrs = super().validate(attrs)
         self.validate_secret_based_on_provider(provider.provider, secret_type, secret)
         return validated_attrs
+
+
+# Invitations
+
+
+class InvitationSerializer(RLSSerializer):
+    """
+    Serializer for the Invitation model.
+    """
+
+    class Meta:
+        model = Invitation
+        fields = [
+            "id",
+            "inserted_at",
+            "updated_at",
+            "email",
+            "state",
+            "token",
+            "expires_at",
+            "inviter",
+            "url",
+        ]
+
+
+class InvitationBaseWriteSerializer(BaseWriteSerializer):
+    def validate_email(self, value):
+        user = User.objects.filter(email=value).first()
+        tenant_id = self.context["tenant_id"]
+        if user and Membership.objects.filter(user=user, tenant=tenant_id).exists():
+            raise ValidationError(
+                "The user may already be a member of the tenant or there was an issue with the "
+                "email provided."
+            )
+        if Invitation.objects.filter(
+            email=value, state=Invitation.State.PENDING
+        ).exists():
+            raise ValidationError(
+                "Unable to process your request. Please check the information provided and "
+                "try again."
+            )
+        return value
+
+    def validate_expires_at(self, value):
+        now = datetime.now(timezone.utc)
+        if value and value < now + timedelta(hours=24):
+            raise ValidationError(
+                "Expiry date must be at least 24 hours in the future."
+            )
+        return value
+
+
+class InvitationCreateSerializer(InvitationBaseWriteSerializer, RLSSerializer):
+    expires_at = serializers.DateTimeField(
+        required=False,
+        help_text="UTC. Default 7 days. If this attribute is "
+        "provided, it must be at least 24 hours in the "
+        "future.",
+    )
+
+    class Meta:
+        model = Invitation
+        fields = ["email", "expires_at", "state", "token", "inviter"]
+        extra_kwargs = {
+            "token": {"read_only": True},
+            "state": {"read_only": True},
+            "inviter": {"read_only": True},
+            "expires_at": {"required": False},
+        }
+
+    def create(self, validated_data):
+        inviter = self.context.get("request").user
+        validated_data["inviter"] = inviter
+        return super().create(validated_data)
+
+
+class InvitationUpdateSerializer(InvitationBaseWriteSerializer):
+    class Meta:
+        model = Invitation
+        fields = ["id", "email", "expires_at", "state", "token"]
+        extra_kwargs = {
+            "token": {"read_only": True},
+            "state": {"read_only": True},
+            "expires_at": {"required": False},
+            "email": {"required": False},
+        }
+
+
+class InvitationAcceptSerializer(RLSSerializer):
+    """Serializer for accepting an invitation."""
+
+    invitation_token = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = Invitation
+        fields = ["invitation_token"]

@@ -33,6 +33,8 @@ from api.db_utils import (
     StateEnumField,
     StateEnum,
     ScanTriggerEnumField,
+    InvitationStateEnum,
+    InvitationStateEnumField,
     register_enum,
     DB_PROWLER_USER,
     DB_PROWLER_PASSWORD,
@@ -49,6 +51,7 @@ from api.models import (
     SeverityChoices,
     Membership,
     ProviderSecret,
+    Invitation,
 )
 
 DB_NAME = settings.DATABASES["default"]["NAME"]
@@ -95,6 +98,11 @@ ProviderSecretTypeEnumMigration = PostgresEnumMigration(
     enum_values=tuple(
         secret_type[0] for secret_type in ProviderSecret.TypeChoices.choices
     ),
+)
+
+InvitationStateEnumMigration = PostgresEnumMigration(
+    enum_name="invitation_state",
+    enum_values=tuple(state[0] for state in Invitation.State.choices),
 )
 
 
@@ -1204,6 +1212,89 @@ class Migration(migrations.Migration):
             constraint=api.rls.RowLevelSecurityConstraint(
                 "tenant_id",
                 name="rls_on_providersecret",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ),
+        migrations.RunPython(
+            InvitationStateEnumMigration.create_enum_type,
+            reverse_code=InvitationStateEnumMigration.drop_enum_type,
+        ),
+        migrations.RunPython(partial(register_enum, enum_class=InvitationStateEnum)),
+        migrations.CreateModel(
+            name="Invitation",
+            fields=[
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("inserted_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("email", models.EmailField(max_length=254)),
+                (
+                    "state",
+                    InvitationStateEnumField(
+                        choices=[
+                            ("pending", "Invitation is pending"),
+                            ("accepted", "Invitation was accepted by a user"),
+                            ("expired", "Invitation expired after the configured time"),
+                            ("revoked", "Invitation was revoked by a user"),
+                        ],
+                        default="pending",
+                    ),
+                ),
+                (
+                    "token",
+                    models.CharField(
+                        unique=True,
+                        default=api.db_utils.generate_random_token,
+                        editable=False,
+                        max_length=14,
+                        validators=[django.core.validators.MinLengthValidator(14)],
+                    ),
+                ),
+                (
+                    "expires_at",
+                    models.DateTimeField(default=api.db_utils.one_week_from_now),
+                ),
+                (
+                    "inviter",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="invitations",
+                        related_query_name="invitation",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "tenant",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="api.tenant"
+                    ),
+                ),
+            ],
+            options={
+                "db_table": "invitations",
+                "abstract": False,
+            },
+        ),
+        migrations.AddConstraint(
+            model_name="invitation",
+            constraint=models.UniqueConstraint(
+                fields=("tenant", "token", "email"),
+                name="unique_tenant_token_email_by_invitation",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="invitation",
+            constraint=api.rls.RowLevelSecurityConstraint(
+                "tenant_id",
+                name="rls_on_invitation",
                 statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
             ),
         ),

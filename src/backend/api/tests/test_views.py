@@ -1,18 +1,20 @@
 import json
 from datetime import datetime
+from datetime import timezone, timedelta
 from unittest.mock import ANY, Mock, patch
 
 import jwt
 import pytest
-from api.models import Membership, Provider, ProviderSecret, Scan, User
+from django.urls import reverse
+from rest_framework import status
+
+from api.models import User, Membership, Provider, Scan, ProviderSecret, Invitation
 from api.rls import Tenant
 from conftest import (
     API_JSON_CONTENT_TYPE,
     TEST_PASSWORD,
     TEST_USER,
 )
-from django.urls import reverse
-from rest_framework import status
 
 TODAY = str(datetime.today().date())
 
@@ -34,6 +36,7 @@ class TestUserViewSet:
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["data"]["attributes"]["email"] == create_test_user.email
 
+    @patch("api.db_router.MainRouter.admin_db", new="default")
     def test_users_create(self, client):
         valid_user_payload = {
             "name": "test",
@@ -50,6 +53,7 @@ class TestUserViewSet:
             == valid_user_payload["email"].lower()
         )
 
+    @patch("api.db_router.MainRouter.admin_db", new="default")
     def test_users_create_duplicated_email(self, client):
         # Create a user
         self.test_users_create(client)
@@ -104,6 +108,7 @@ class TestUserViewSet:
             "NonExistentEmail@prowler.com",
         ],
     )
+    @patch("api.db_router.MainRouter.admin_db", new="default")
     def test_users_create_used_email(self, authenticated_client, email):
         # First user created; no errors should occur
         user_payload = {
@@ -295,7 +300,7 @@ class TestTenantViewSet:
 
     @pytest.fixture
     def extra_users(self, tenants_fixture):
-        _, tenant2 = tenants_fixture
+        _, tenant2, _ = tenants_fixture
         user2 = User.objects.create_user(
             name="testing2",
             password=TEST_PASSWORD,
@@ -324,7 +329,7 @@ class TestTenantViewSet:
         assert len(response.json()["data"]) == len(tenants_fixture)
 
     def test_tenants_retrieve(self, authenticated_client, tenants_fixture):
-        tenant1, _ = tenants_fixture
+        tenant1, *_ = tenants_fixture
         response = authenticated_client.get(
             reverse("tenant-detail", kwargs={"pk": tenant1.id})
         )
@@ -343,7 +348,7 @@ class TestTenantViewSet:
         )
         assert response.status_code == status.HTTP_201_CREATED
         # Two tenants from the fixture + the new one
-        assert Tenant.objects.count() == 3
+        assert Tenant.objects.count() == 4
         assert (
             response.json()["data"]["attributes"]["name"]
             == valid_tenant_payload["name"]
@@ -359,7 +364,7 @@ class TestTenantViewSet:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_tenants_partial_update(self, authenticated_client, tenants_fixture):
-        tenant1, _ = tenants_fixture
+        tenant1, *_ = tenants_fixture
         new_name = "This is the new name"
         payload = {
             "data": {
@@ -380,7 +385,7 @@ class TestTenantViewSet:
     def test_tenants_partial_update_invalid_content_type(
         self, authenticated_client, tenants_fixture
     ):
-        tenant1, _ = tenants_fixture
+        tenant1, *_ = tenants_fixture
         response = authenticated_client.patch(
             reverse("tenant-detail", kwargs={"pk": tenant1.id}), data={}
         )
@@ -389,7 +394,7 @@ class TestTenantViewSet:
     def test_tenants_partial_update_invalid_content(
         self, authenticated_client, tenants_fixture
     ):
-        tenant1, _ = tenants_fixture
+        tenant1, *_ = tenants_fixture
         new_name = "This is the new name"
         payload = {"name": new_name}
         response = authenticated_client.patch(
@@ -400,12 +405,12 @@ class TestTenantViewSet:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_tenants_delete(self, authenticated_client, tenants_fixture):
-        tenant1, _ = tenants_fixture
+        tenant1, *_ = tenants_fixture
         response = authenticated_client.delete(
             reverse("tenant-detail", kwargs={"pk": tenant1.id})
         )
         assert response.status_code == status.HTTP_204_NO_CONTENT
-        assert Tenant.objects.count() == 1
+        assert Tenant.objects.count() == len(tenants_fixture) - 1
 
     def test_tenants_delete_invalid(self, authenticated_client):
         response = authenticated_client.delete(
@@ -417,7 +422,7 @@ class TestTenantViewSet:
 
     def test_tenants_list_filter_search(self, authenticated_client, tenants_fixture):
         """Search is applied to tenants_fixture  name."""
-        tenant1, _ = tenants_fixture
+        tenant1, *_ = tenants_fixture
         response = authenticated_client.get(
             reverse("tenant-list"), {"filter[search]": tenant1.name}
         )
@@ -426,7 +431,7 @@ class TestTenantViewSet:
         assert response.json()["data"][0]["attributes"]["name"] == tenant1.name
 
     def test_tenants_list_query_param_name(self, authenticated_client, tenants_fixture):
-        tenant1, _ = tenants_fixture
+        tenant1, *_ = tenants_fixture
         response = authenticated_client.get(
             reverse("tenant-list"), {"name": tenant1.name}
         )
@@ -441,11 +446,11 @@ class TestTenantViewSet:
         (
             [
                 ("name", "Tenant One", 1),
-                ("name.icontains", "Tenant", 2),
-                ("inserted_at", TODAY, 2),
-                ("inserted_at.gte", "2024-01-01", 2),
+                ("name.icontains", "Tenant", 3),
+                ("inserted_at", TODAY, 3),
+                ("inserted_at.gte", "2024-01-01", 3),
                 ("inserted_at.lte", "2024-01-01", 0),
-                ("updated_at.gte", "2024-01-01", 2),
+                ("updated_at.gte", "2024-01-01", 3),
                 ("updated_at.lte", "2024-01-01", 0),
             ]
         ),
@@ -497,16 +502,16 @@ class TestTenantViewSet:
         assert response.json()["meta"]["pagination"]["pages"] == len(tenants_fixture)
 
     def test_tenants_list_sort_name(self, authenticated_client, tenants_fixture):
-        _, tenant2 = tenants_fixture
+        _, tenant2, _ = tenants_fixture
         response = authenticated_client.get(reverse("tenant-list"), {"sort": "-name"})
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.json()["data"]) == 2
+        assert len(response.json()["data"]) == 3
         assert response.json()["data"][0]["attributes"]["name"] == tenant2.name
 
     def test_tenants_list_memberships_as_owner(
         self, authenticated_client, tenants_fixture, extra_users
     ):
-        _, tenant2 = tenants_fixture
+        _, tenant2, _ = tenants_fixture
         response = authenticated_client.get(
             reverse("tenant-membership-list", kwargs={"tenant_pk": tenant2.id})
         )
@@ -517,7 +522,7 @@ class TestTenantViewSet:
     def test_tenants_list_memberships_as_member(
         self, authenticated_client, tenants_fixture, extra_users
     ):
-        _, tenant2 = tenants_fixture
+        _, tenant2, _ = tenants_fixture
         _, user3_membership = extra_users
         user3, membership3 = user3_membership
         token_response = authenticated_client.post(
@@ -539,7 +544,7 @@ class TestTenantViewSet:
     def test_tenants_delete_own_membership_as_member(
         self, authenticated_client, tenants_fixture, extra_users
     ):
-        tenant1, _ = tenants_fixture
+        tenant1, *_ = tenants_fixture
         membership = Membership.objects.get(tenant=tenant1, user__email=TEST_USER)
 
         response = authenticated_client.delete(
@@ -555,7 +560,7 @@ class TestTenantViewSet:
         self, authenticated_client, tenants_fixture, extra_users
     ):
         # With extra_users, tenant2 has 2 owners
-        _, tenant2 = tenants_fixture
+        _, tenant2, _ = tenants_fixture
         user_membership = Membership.objects.get(tenant=tenant2, user__email=TEST_USER)
         response = authenticated_client.delete(
             reverse(
@@ -569,7 +574,7 @@ class TestTenantViewSet:
     def test_tenants_delete_own_membership_as_last_owner(
         self, authenticated_client, tenants_fixture
     ):
-        _, tenant2 = tenants_fixture
+        _, tenant2, _ = tenants_fixture
         user_membership = Membership.objects.get(tenant=tenant2, user__email=TEST_USER)
         response = authenticated_client.delete(
             reverse(
@@ -583,7 +588,7 @@ class TestTenantViewSet:
     def test_tenants_delete_another_membership_as_owner(
         self, authenticated_client, tenants_fixture, extra_users
     ):
-        _, tenant2 = tenants_fixture
+        _, tenant2, _ = tenants_fixture
         _, user3_membership = extra_users
         user3, membership3 = user3_membership
 
@@ -599,7 +604,7 @@ class TestTenantViewSet:
     def test_tenants_delete_another_membership_as_member(
         self, authenticated_client, tenants_fixture, extra_users
     ):
-        _, tenant2 = tenants_fixture
+        _, tenant2, _ = tenants_fixture
         _, user3_membership = extra_users
         user3, membership3 = user3_membership
 
@@ -619,10 +624,10 @@ class TestTenantViewSet:
 
     def test_tenants_list_memberships_not_member_of_tenant(self, authenticated_client):
         # Create a tenant the user is not a member of
-        tenant3 = Tenant.objects.create(name="Tenant Three")
+        tenant4 = Tenant.objects.create(name="Tenant Four")
 
         response = authenticated_client.get(
-            reverse("tenant-membership-list", kwargs={"tenant_pk": tenant3.id})
+            reverse("tenant-membership-list", kwargs={"tenant_pk": tenant4.id})
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
@@ -635,7 +640,7 @@ class TestMembershipViewSet:
             reverse("user-membership-list", kwargs={"user_pk": user_id}),
         )
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.json()["data"]) == len(tenants_fixture)
+        assert len(response.json()["data"]) == 2
 
     def test_memberships_retrieve(self, authenticated_client, tenants_fixture):
         user_id = authenticated_client.user.pk
@@ -2227,3 +2232,554 @@ class TestJWTFields:
             assert (
                 isinstance(payload[id_field], str) and payload[id_field]
             ), f"The field '{id_field}' is not a valid string"
+
+
+@pytest.mark.django_db
+class TestInvitationViewSet:
+    TOMORROW = datetime.now(timezone.utc) + timedelta(days=1, hours=1)
+    TOMORROW_ISO = TOMORROW.isoformat()
+
+    def test_invitations_list(self, authenticated_client, invitations_fixture):
+        response = authenticated_client.get(reverse("invitation-list"))
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == len(invitations_fixture)
+
+    def test_invitations_retrieve(self, authenticated_client, invitations_fixture):
+        invitation1, _ = invitations_fixture
+        response = authenticated_client.get(
+            reverse(
+                "invitation-detail",
+                kwargs={"pk": invitation1.id},
+            ),
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["data"]["attributes"]["email"] == invitation1.email
+        assert response.json()["data"]["attributes"]["state"] == invitation1.state
+        assert response.json()["data"]["attributes"]["token"] == invitation1.token
+        assert response.json()["data"]["relationships"]["inviter"]["data"]["id"] == str(
+            invitation1.inviter.id
+        )
+
+    def test_invitations_invalid_retrieve(self, authenticated_client):
+        response = authenticated_client.get(
+            reverse(
+                "invitation-detail",
+                kwargs={
+                    "pk": "f498b103-c760-4785-9a3e-e23fafbb7b02",
+                },
+            ),
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_invitations_create_valid(self, authenticated_client, create_test_user):
+        user = create_test_user
+        data = {
+            "data": {
+                "type": "Invitation",
+                "attributes": {
+                    "email": "any_email@prowler.com",
+                    "expires_at": self.TOMORROW_ISO,
+                },
+            }
+        }
+        response = authenticated_client.post(
+            reverse("invitation-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        assert Invitation.objects.count() == 1
+        assert (
+            response.json()["data"]["attributes"]["email"]
+            == data["data"]["attributes"]["email"]
+        )
+        assert response.json()["data"]["attributes"]["expires_at"] == data["data"][
+            "attributes"
+        ]["expires_at"].replace("+00:00", "Z")
+        assert (
+            response.json()["data"]["attributes"]["state"]
+            == Invitation.State.PENDING.value
+        )
+        assert response.json()["data"]["relationships"]["inviter"]["data"]["id"] == str(
+            user.id
+        )
+
+    @pytest.mark.parametrize(
+        "email",
+        [
+            "invalid_email",
+            "invalid_email@",
+            # There is a pending invitation with this email
+            "testing@prowler.com",
+            # User is already a member of the tenant
+            TEST_USER,
+        ],
+    )
+    def test_invitations_create_invalid_email(
+        self, email, authenticated_client, invitations_fixture
+    ):
+        data = {
+            "data": {
+                "type": "Invitation",
+                "attributes": {
+                    "email": email,
+                    "expires_at": self.TOMORROW_ISO,
+                },
+            }
+        }
+        response = authenticated_client.post(
+            reverse("invitation-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["errors"][0]["code"] == "invalid"
+        assert (
+            response.json()["errors"][0]["source"]["pointer"]
+            == "/data/attributes/email"
+        )
+
+    def test_invitations_create_invalid_expires_at(
+        self, authenticated_client, invitations_fixture
+    ):
+        data = {
+            "data": {
+                "type": "Invitation",
+                "attributes": {
+                    "email": "thisisarandomemail@prowler.com",
+                    "expires_at": (
+                        datetime.now(timezone.utc) + timedelta(hours=23)
+                    ).isoformat(),
+                },
+            }
+        }
+        response = authenticated_client.post(
+            reverse("invitation-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["errors"][0]["code"] == "invalid"
+        assert (
+            response.json()["errors"][0]["source"]["pointer"]
+            == "/data/attributes/expires_at"
+        )
+
+    def test_invitations_partial_update_valid(
+        self, authenticated_client, invitations_fixture
+    ):
+        invitation, *_ = invitations_fixture
+        new_email = "new_email@prowler.com"
+        new_expires_at = datetime.now(timezone.utc) + timedelta(days=7)
+        new_expires_at_iso = new_expires_at.isoformat()
+        data = {
+            "data": {
+                "id": str(invitation.id),
+                "type": "Invitation",
+                "attributes": {
+                    "email": new_email,
+                    "expires_at": new_expires_at_iso,
+                },
+            }
+        }
+        assert invitation.email != new_email
+        assert invitation.expires_at != new_expires_at
+
+        response = authenticated_client.patch(
+            reverse(
+                "invitation-detail",
+                kwargs={"pk": str(invitation.id)},
+            ),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_200_OK
+        invitation.refresh_from_db()
+
+        assert invitation.email == new_email
+        assert invitation.expires_at == new_expires_at
+
+    @pytest.mark.parametrize(
+        "email",
+        [
+            "invalid_email",
+            "invalid_email@",
+            # There is a pending invitation with this email
+            "testing@prowler.com",
+            # User is already a member of the tenant
+            TEST_USER,
+        ],
+    )
+    def test_invitations_partial_update_invalid_email(
+        self, email, authenticated_client, invitations_fixture
+    ):
+        invitation, *_ = invitations_fixture
+        data = {
+            "data": {
+                "id": str(invitation.id),
+                "type": "Invitation",
+                "attributes": {
+                    "email": email,
+                    "expires_at": self.TOMORROW_ISO,
+                },
+            }
+        }
+        response = authenticated_client.patch(
+            reverse(
+                "invitation-detail",
+                kwargs={"pk": str(invitation.id)},
+            ),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["errors"][0]["code"] == "invalid"
+        assert (
+            response.json()["errors"][0]["source"]["pointer"]
+            == "/data/attributes/email"
+        )
+
+    def test_invitations_partial_update_invalid_expires_at(
+        self, authenticated_client, invitations_fixture
+    ):
+        invitation, *_ = invitations_fixture
+        data = {
+            "data": {
+                "id": str(invitation.id),
+                "type": "Invitation",
+                "attributes": {
+                    "expires_at": (
+                        datetime.now(timezone.utc) + timedelta(hours=23)
+                    ).isoformat(),
+                },
+            }
+        }
+        response = authenticated_client.patch(
+            reverse(
+                "invitation-detail",
+                kwargs={"pk": str(invitation.id)},
+            ),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["errors"][0]["code"] == "invalid"
+        assert (
+            response.json()["errors"][0]["source"]["pointer"]
+            == "/data/attributes/expires_at"
+        )
+
+    def test_invitations_partial_update_invalid_content_type(
+        self, authenticated_client, invitations_fixture
+    ):
+        invitation, *_ = invitations_fixture
+        response = authenticated_client.patch(
+            reverse(
+                "invitation-detail",
+                kwargs={"pk": str(invitation.id)},
+            ),
+            data={},
+        )
+        assert response.status_code == status.HTTP_415_UNSUPPORTED_MEDIA_TYPE
+
+    def test_invitations_partial_update_invalid_content(
+        self, authenticated_client, invitations_fixture
+    ):
+        invitation, *_ = invitations_fixture
+        response = authenticated_client.patch(
+            reverse(
+                "invitation-detail",
+                kwargs={"pk": str(invitation.id)},
+            ),
+            data={"email": "invalid_email"},
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_invitations_partial_update_invalid_invitation(self, authenticated_client):
+        response = authenticated_client.patch(
+            reverse(
+                "invitation-detail",
+                kwargs={"pk": "54611fc8-b02e-4cc1-aaaa-34acae625629"},
+            ),
+            data={},
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_invitations_delete(self, authenticated_client, invitations_fixture):
+        invitation, *_ = invitations_fixture
+        assert invitation.state == Invitation.State.PENDING.value
+
+        response = authenticated_client.delete(
+            reverse(
+                "invitation-detail",
+                kwargs={"pk": str(invitation.id)},
+            )
+        )
+        invitation.refresh_from_db()
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        assert invitation.state == Invitation.State.REVOKED.value
+
+    def test_invitations_invalid_delete(self, authenticated_client):
+        response = authenticated_client.delete(
+            reverse(
+                "invitation-detail",
+                kwargs={"pk": "54611fc8-b02e-4cc1-aaaa-34acae625629"},
+            )
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_invitations_invalid_delete_invalid_state(
+        self, authenticated_client, invitations_fixture
+    ):
+        invitation, *_ = invitations_fixture
+        invitation.state = Invitation.State.ACCEPTED.value
+        invitation.save()
+
+        response = authenticated_client.delete(
+            reverse(
+                "invitation-detail",
+                kwargs={"pk": str(invitation.id)},
+            )
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["errors"][0]["code"] == "invalid"
+        assert response.json()["errors"][0]["source"]["pointer"] == "/data"
+        assert (
+            response.json()["errors"][0]["detail"]
+            == "This invitation cannot be revoked."
+        )
+
+    @patch("api.db_router.MainRouter.admin_db", new="default")
+    def test_invitations_accept_invitation_new_user(self, client, invitations_fixture):
+        invitation, *_ = invitations_fixture
+
+        data = {
+            "name": "test",
+            "password": "newpassword123",
+            "email": invitation.email,
+        }
+        assert invitation.state == Invitation.State.PENDING.value
+        assert not User.objects.filter(email__iexact=invitation.email).exists()
+
+        response = client.post(
+            reverse("user-list") + f"?invitation_token={invitation.token}",
+            data=data,
+            format="json",
+        )
+
+        invitation.refresh_from_db()
+        assert response.status_code == status.HTTP_201_CREATED
+        assert User.objects.filter(email__iexact=invitation.email).exists()
+        assert invitation.state == Invitation.State.ACCEPTED.value
+        assert Membership.objects.filter(
+            user__email__iexact=invitation.email, tenant=invitation.tenant
+        ).exists()
+
+    @patch("api.db_router.MainRouter.admin_db", new="default")
+    def test_invitations_accept_invitation_existing_user(
+        self, authenticated_client, create_test_user, tenants_fixture
+    ):
+        *_, tenant = tenants_fixture
+        user = create_test_user
+
+        invitation = Invitation.objects.create(
+            tenant=tenant,
+            email=TEST_USER,
+            inviter=user,
+            expires_at=self.TOMORROW,
+        )
+
+        data = {
+            "invitation_token": invitation.token,
+        }
+
+        assert not Membership.objects.filter(
+            user__email__iexact=user.email, tenant=tenant
+        ).exists()
+
+        response = authenticated_client.post(
+            reverse("invitation-accept"), data=data, format="json"
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED
+        invitation.refresh_from_db()
+        assert Membership.objects.filter(
+            user__email__iexact=user.email, tenant=tenant
+        ).exists()
+        assert invitation.state == Invitation.State.ACCEPTED.value
+
+    @patch("api.db_router.MainRouter.admin_db", new="default")
+    def test_invitations_accept_invitation_invalid_token(self, authenticated_client):
+        data = {
+            "invitation_token": "invalid_token",
+        }
+
+        response = authenticated_client.post(
+            reverse("invitation-accept"), data=data, format="json"
+        )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert response.json()["errors"][0]["code"] == "not_found"
+
+    @patch("api.db_router.MainRouter.admin_db", new="default")
+    def test_invitations_accept_invitation_invalid_token_expired(
+        self, authenticated_client, invitations_fixture
+    ):
+        invitation, *_ = invitations_fixture
+        invitation.expires_at = datetime.now(timezone.utc) - timedelta(days=1)
+        invitation.email = TEST_USER
+        invitation.save()
+
+        data = {
+            "invitation_token": invitation.token,
+        }
+
+        response = authenticated_client.post(
+            reverse("invitation-accept"), data=data, format="json"
+        )
+
+        assert response.status_code == status.HTTP_410_GONE
+
+    @patch("api.db_router.MainRouter.admin_db", new="default")
+    def test_invitations_accept_invitation_invalid_token_expired_new_user(
+        self, client, invitations_fixture
+    ):
+        new_email = "new_email@prowler.com"
+        invitation, *_ = invitations_fixture
+        invitation.expires_at = datetime.now(timezone.utc) - timedelta(days=1)
+        invitation.email = new_email
+        invitation.save()
+
+        data = {
+            "name": "test",
+            "password": "newpassword123",
+            "email": new_email,
+        }
+
+        response = client.post(
+            reverse("user-list") + f"?invitation_token={invitation.token}",
+            data=data,
+            format="json",
+        )
+
+        assert response.status_code == status.HTTP_410_GONE
+
+    @patch("api.db_router.MainRouter.admin_db", new="default")
+    def test_invitations_accept_invitation_invalid_token_accepted(
+        self, authenticated_client, invitations_fixture
+    ):
+        invitation, *_ = invitations_fixture
+        invitation.state = Invitation.State.ACCEPTED.value
+        invitation.email = TEST_USER
+        invitation.save()
+
+        data = {
+            "invitation_token": invitation.token,
+        }
+
+        response = authenticated_client.post(
+            reverse("invitation-accept"), data=data, format="json"
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["errors"][0]["code"] == "invalid"
+        assert (
+            response.json()["errors"][0]["detail"]
+            == "This invitation is no longer valid."
+        )
+
+    @patch("api.db_router.MainRouter.admin_db", new="default")
+    def test_invitations_accept_invitation_invalid_token_revoked(
+        self, authenticated_client, invitations_fixture
+    ):
+        invitation, *_ = invitations_fixture
+        invitation.state = Invitation.State.REVOKED.value
+        invitation.email = TEST_USER
+        invitation.save()
+
+        data = {
+            "invitation_token": invitation.token,
+        }
+
+        response = authenticated_client.post(
+            reverse("invitation-accept"), data=data, format="json"
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert (
+            response.json()["errors"][0]["detail"]
+            == "This invitation is no longer valid."
+        )
+
+    @pytest.mark.parametrize(
+        "filter_name, filter_value, expected_count",
+        (
+            [
+                ("inserted_at", TODAY, 2),
+                ("inserted_at.gte", "2024-01-01", 2),
+                ("inserted_at.lte", "2024-01-01", 0),
+                ("updated_at.gte", "2024-01-01", 2),
+                ("updated_at.lte", "2024-01-01", 0),
+                ("expires_at.gte", TODAY, 1),
+                ("expires_at.lte", TODAY, 1),
+                ("expires_at", TODAY, 0),
+                ("email", "testing@prowler.com", 2),
+                ("email.icontains", "testing", 2),
+                ("inviter", "", 2),
+            ]
+        ),
+    )
+    def test_invitations_filters(
+        self,
+        authenticated_client,
+        create_test_user,
+        invitations_fixture,
+        filter_name,
+        filter_value,
+        expected_count,
+    ):
+        user = create_test_user
+        response = authenticated_client.get(
+            reverse("invitation-list"),
+            {
+                f"filter[{filter_name}]": filter_value
+                if filter_name != "inviter"
+                else str(user.id)
+            },
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == expected_count
+
+    def test_invitations_list_filter_invalid(self, authenticated_client):
+        response = authenticated_client.get(
+            reverse("invitation-list"),
+            {"filter[invalid]": "whatever"},
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    @pytest.mark.parametrize(
+        "sort_field",
+        [
+            "inserted_at",
+            "updated_at",
+            "expires_at",
+            "state",
+            "inviter",
+        ],
+    )
+    def test_invitations_sort(self, authenticated_client, sort_field):
+        response = authenticated_client.get(
+            reverse("invitation-list"),
+            {"sort": sort_field},
+        )
+        assert response.status_code == status.HTTP_200_OK
+
+    def test_invitations_sort_invalid(self, authenticated_client):
+        response = authenticated_client.get(
+            reverse("invitation-list"),
+            {"sort": "invalid"},
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST

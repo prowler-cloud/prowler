@@ -1,4 +1,6 @@
 from django.core.exceptions import ValidationError as django_validation_error
+from rest_framework import status
+from rest_framework.exceptions import APIException
 from rest_framework_json_api.exceptions import exception_handler
 from rest_framework_json_api.serializers import ValidationError
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
@@ -22,6 +24,12 @@ class ModelValidationError(ValidationError):
                 }
             ]
         )
+
+
+class InvitationTokenExpiredException(APIException):
+    status_code = status.HTTP_410_GONE
+    default_detail = "The invitation token has expired and is no longer valid."
+    default_code = "token_expired"
 
 
 def custom_exception_handler(exc, context):

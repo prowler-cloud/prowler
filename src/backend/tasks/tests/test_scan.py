@@ -27,7 +27,7 @@ class TestPerformScan:
         assert len(Finding.objects.all()) == 0
         assert len(Resource.objects.all()) == 0
 
-        tenant, _ = tenants_fixture
+        tenant, *_ = tenants_fixture
         scan, *_ = scans_fixture
         provider, *_ = providers_fixture
 
@@ -89,7 +89,7 @@ class TestPerformScan:
         scans_fixture,
         providers_fixture,
     ):
-        tenant, _ = tenants_fixture
+        tenant, *_ = tenants_fixture
         scan, *_ = scans_fixture
         provider, *_ = providers_fixture
 

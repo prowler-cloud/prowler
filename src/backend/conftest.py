@@ -2,6 +2,7 @@ import logging
 
 import pytest
 from django.conf import settings
+from datetime import datetime, timezone, timedelta
 from django.db import connections as django_connections, connection as django_connection
 from django.urls import reverse
 from django_celery_results.models import TaskResult
@@ -23,6 +24,7 @@ from api.models import (
     Task,
     Membership,
     ProviderSecret,
+    Invitation,
 )
 from api.rls import Tenant
 from api.v1.serializers import TokenSerializer
@@ -121,12 +123,37 @@ def tenants_fixture(create_test_user):
         tenant=tenant2,
         role=Membership.RoleChoices.OWNER,
     )
-    return tenant1, tenant2
+    tenant3 = Tenant.objects.create(
+        name="Tenant Three",
+    )
+    return tenant1, tenant2, tenant3
+
+
+@pytest.fixture
+def invitations_fixture(create_test_user, tenants_fixture):
+    user = create_test_user
+    *_, tenant = tenants_fixture
+    valid_invitation = Invitation.objects.create(
+        email="testing@prowler.com",
+        state=Invitation.State.PENDING,
+        token="TESTING1234567",
+        inviter=user,
+        tenant=tenant,
+    )
+    expired_invitation = Invitation.objects.create(
+        email="testing@prowler.com",
+        state=Invitation.State.EXPIRED,
+        token="TESTING1234568",
+        expires_at=datetime.now(timezone.utc) - timedelta(days=1),
+        inviter=user,
+        tenant=tenant,
+    )
+    return valid_invitation, expired_invitation
 
 
 @pytest.fixture
 def providers_fixture(tenants_fixture):
-    tenant, _ = tenants_fixture
+    tenant, *_ = tenants_fixture
     provider1 = Provider.objects.create(
         provider="aws",
         uid="123456789012",
@@ -178,7 +205,7 @@ def provider_secret_fixture(providers_fixture):
 
 @pytest.fixture
 def scans_fixture(tenants_fixture, providers_fixture):
-    tenant, _ = tenants_fixture
+    tenant, *_ = tenants_fixture
     provider, provider2, *_ = providers_fixture
 
     scan1 = Scan.objects.create(
@@ -210,7 +237,7 @@ def scans_fixture(tenants_fixture, providers_fixture):
 
 @pytest.fixture
 def tasks_fixture(tenants_fixture):
-    tenant, _ = tenants_fixture
+    tenant, *_ = tenants_fixture
 
     task_runner_task1 = TaskResult.objects.create(
         task_id="81a1b34b-ff6e-498e-979c-d6a83260167f",
