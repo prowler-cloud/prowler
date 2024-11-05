@@ -1,152 +1,540 @@
-import logging
+import base64
 import os
 
-from jira import JIRA as JiraSDK
+import requests
+import requests.compat
 
 from prowler.lib.logger import logger
 from prowler.lib.outputs.finding import Finding
+from prowler.lib.outputs.jira.exceptions import JiraNoProjectsError
 from prowler.lib.outputs.jira.exceptions.exceptions import (
     JiraAuthenticationError,
+    JiraCreateIssueError,
+    JiraGetAccessTokenError,
+    JiraGetAuthResponseError,
+    JiraGetAvailableIssueTypesError,
+    JiraGetAvailableIssueTypesResponseError,
+    JiraGetCloudIdError,
+    JiraGetCloudIdNoResourcesError,
+    JiraGetCloudIdResponseError,
     JiraGetProjectsError,
-    JiraNoProjectsError,
+    JiraGetProjectsResponseError,
+    JiraInvalidIssueTypeError,
+    JiraRefreshTokenError,
+    JiraRefreshTokenResponseError,
+    JiraSendFindingsResponseError,
     JiraTestConnectionError,
 )
 from prowler.providers.common.models import Connection
 
 
 class Jira:
-    def __init__(self, server_url, username, api_token):
-        """
-        Initialize a Jira object.
+    _redirect_uri: str
+    _client_id: str
+    _client_secret: str
+    _state_param: str
+    _access_token: str
+    _refresh_token: str
+    _auth_expiration: int
+    _cloud_id: str
+    _scopes: list[str]
+
+    def __init__(self, redirect_uri, client_id, client_secret, state_param):
+        self._redirect_uri = redirect_uri
+        self._client_id = client_id
+        self._client_secret = client_secret
+        self._state_param = state_param
+        self._access_token = None
+        self._refresh_token = None
+        self._auth_expiration = None
+        self._cloud_id = None
+        self._scopes = ["read:jira-user", "read:jira-work", "write:jira-work"]
+        auth_url = self.auth_code_url(state_param)
+        print(f"Authorize the application by visiting this URL: {auth_url}")
+        authorization_code = input("Enter the authorization code from Jira: ")
+        self.get_auth(authorization_code)
+
+    @property
+    def redirect_uri(self):
+        return self._redirect_uri
+
+    @property
+    def client_id(self):
+        return self._client_id
+
+    @property
+    def client_secret(self):
+        return self._client_secret
+
+    @property
+    def state_param(self):
+        return self._state_param
+
+    @property
+    def access_token(self):
+        return self._access_token
+
+    @property
+    def refresh_token(self):
+        return self._refresh_token
+
+    @property
+    def auth_expiration(self):
+        return self._auth_expiration
+
+    @property
+    def cloud_id(self):
+        return self.cloud_id
+
+    @property
+    def scopes(self):
+        return self._scopes
+
+    def auth_code_url(self) -> str:
+        """Generate the URL to authorize the application"""
+        # Generate the state parameter
+        random_bytes = os.urandom(24)
+        state_encoded = base64.urlsafe_b64encode(random_bytes).decode("utf-8")
+
+        # Generate the URL
+        params = {
+            "audience": "api.atlassian.com",
+            "client_id": self.client_id,
+            "scope": " ".join(self.scopes),
+            "redirect_uri": self.redirect_uri,
+            "state": state_encoded,
+            "response_type": "code",
+            "prompt": "consent",
+        }
+
+        return (
+            f"https://auth.atlassian.com/authorize?{requests.compat.urlencode(params)}"
+        )
+
+    def get_auth(self, auth_code) -> None:
+        """Get the access token and refresh token
 
         Args:
-            server_url (str): The Jira server URL.
-            username (str): The Jira username.
-            api_token (str): The Jira API token.
-        """
-        self.server_url = server_url
-        self.username = username
-        self.api_token = api_token
-        self.jira = self.authenticate()
-
-    def authenticate(self) -> JiraSDK:
-        """
-        Authenticate with Jira using the provided credentials.
+            - auth_code: The authorization code from Jira
 
         Returns:
-            - JiraSDK: an authenticated JiraSDK object
+            - None
 
         Raises:
-            - JiraAuthenticationError: if the authentication fails
+            - JiraGetAuthResponseError: Failed to get the access token and refresh token
+            - JiraGetCloudIdNoResourcesError: No resources were found in Jira when getting the cloud id
+            - JiraGetCloudIdResponseError: Failed to get the cloud ID, response code did not match 200
+            - JiraGetCloudIdError: Failed to get the cloud ID from Jira
+            - JiraAuthenticationError: Failed to authenticate
+            - JiraRefreshTokenError: Failed to refresh the access token
+            - JiraRefreshTokenResponseError: Failed to refresh the access token, response code did not match 200
+            - JiraGetAccessTokenError: Failed to get the access token
         """
-
         try:
-            jira = JiraSDK(
-                server=self.server_url, basic_auth=(self.username, self.api_token)
-            )
-            logging.info("Successfully authenticated with Jira")
-            return jira
-        except Exception as error:
-            logger.critical(
-                f"JiraAuthenticationError[{error.__traceback__.tb_lineno}]: {error}"
-            )
+            url = "https://auth.atlassian.com/oauth/token"
+            body = {
+                "grant_type": "authorization_code",
+                "client_id": self.client_id,
+                "client_secret": self.client_secret,
+                "code": auth_code,
+                "redirect_uri": self.redirect_uri,
+            }
+
+            headers = {"Content-Type": "application/json"}
+            response = requests.post(url, json=body, headers=headers)
+
+            if response.status_code == 200:
+                tokens = response.json()
+                self._access_token = tokens.get("access_token")
+                self._refresh_token = tokens.get("refresh_token")
+                self._auth_expiration = tokens.get("expires_in")
+                self._cloud_id = self.get_cloud_id(self.access_token)
+            else:
+                response_error = (
+                    f"Failed to get auth: {response.status_code} - {response.json()}"
+                )
+                raise JiraGetAuthResponseError(
+                    message=response_error, file=os.path.basename(__file__)
+                )
+        except JiraGetCloudIdNoResourcesError as no_resources_error:
+            raise no_resources_error
+        except JiraGetCloudIdResponseError as response_error:
+            raise response_error
+        except JiraGetCloudIdError as cloud_id_error:
+            raise cloud_id_error
+        except Exception as e:
+            logger.error(f"Failed to get auth: {e}")
             raise JiraAuthenticationError(
-                original_exception=error, file=os.path.basename(__file__)
+                message="Failed to authenticate with Jira",
+                file=os.path.basename(__file__),
+            )
+
+    def get_cloud_id(self, access_token) -> str:
+        """Get the cloud ID from Jira
+
+        Args:
+            - access_token: The access token from Jira
+
+        Returns:
+            - str: The cloud ID
+
+        Raises:
+            - JiraGetCloudIdNoResourcesError: No resources were found in Jira when getting the cloud id
+            - JiraGetCloudIdResponseError: Failed to get the cloud ID, response code did not match 200
+            - JiraGetCloudIdError: Failed to get the cloud ID from Jira
+        """
+        try:
+            url = "https://api.atlassian.com/oauth/token/accessible-resources"
+            headers = {"Authorization": f"Bearer {access_token}"}
+            response = requests.get(url, headers=headers)
+
+            if response.status_code == 200:
+                resources = response.json()
+                if resources:
+                    return resources[0].get("id")
+                else:
+                    logger.error("No resources found")
+                    raise JiraGetCloudIdNoResourcesError(
+                        message="No resources were found in Jira when getting the cloud id",
+                        file=os.path.basename(__file__),
+                    )
+            else:
+                response_error = f"Failed to get cloud id: {response.status_code} - {response.json()}"
+                logger.warning(response_error)
+                raise JiraGetCloudIdResponseError(
+                    message=response_error, file=os.path.basename(__file__)
+                )
+        except Exception as e:
+            logger.error(f"Failed to get cloud id: {e}")
+            raise JiraGetCloudIdError(
+                message="Failed to get the cloud ID from Jira",
+                file=os.path.basename(__file__),
+            )
+
+    def get_access_token(self) -> str:
+        """Get the access token
+
+        Returns:
+            - str: The access token
+
+        Raises:
+            - JiraRefreshTokenError: Failed to refresh the access token
+            - JiraRefreshTokenResponseError: Failed to refresh the access token, response code did not match 200
+            - JiraGetAccessTokenError: Failed to get the access token
+        """
+        try:
+            now = requests.datetime.datetime.utcnow()
+
+            if self.auth_expiration and self.auth_expiration > now.timestamp():
+                return self.access_token
+            else:
+                return self.refresh_access_token()
+        except JiraRefreshTokenError as refresh_error:
+            raise refresh_error
+        except JiraRefreshTokenResponseError as response_error:
+            raise response_error
+        except Exception as e:
+            logger.error(f"Failed to get access token: {e}")
+            raise JiraGetAccessTokenError(
+                message="Failed to get the access token",
+                file=os.path.basename(__file__),
+            )
+
+    def refresh_access_token(self) -> str:
+        """Refresh the access token
+
+        Returns:
+            - str: The access token
+
+        Raises:
+            - JiraRefreshTokenError: Failed to refresh the access token
+            - JiraRefreshTokenResponseError: Failed to refresh the access token, response code did not match 200
+        """
+        try:
+            url = "https://auth.atlassian.com/oauth/token"
+            body = {
+                "grant_type": "refresh_token",
+                "client_id": self.client_id,
+                "client_secret": self.client_secret,
+                "refresh_token": self.refresh_token,
+            }
+
+            headers = {"Content-Type": "application/json"}
+            response = requests.post(url, json=body, headers=headers)
+
+            if response.status_code == 200:
+                tokens = response.json()
+                self._access_token = tokens.get("access_token")
+                self._refresh_token = tokens.get("refresh_token")
+                self._auth_expiration = tokens.get("expires_in")
+                return self.access_token
+            else:
+                response_error = f"Failed to refresh access token: {response.status_code} - {response.json()}"
+                logger.warning(response_error)
+                raise JiraRefreshTokenResponseError(
+                    message=response_error, file=os.path.basename(__file__)
+                )
+
+        except Exception as e:
+            logger.error(f"Failed to refresh access token: {e}")
+            raise JiraRefreshTokenError(
+                message="Failed to refresh the access token",
+                file=os.path.basename(__file__),
             )
 
     @staticmethod
     def test_connection(
-        server_url: str = None,
-        username: str = None,
-        api_token: str = None,
-        raise_on_exception: bool = True,
+        redirect_uri, client_id, client_secret, state_param, raise_on_exception
     ) -> Connection:
-        """
-        Test the connection to Jira using the provided credentials.
+        """Test the connection to Jira
 
         Args:
-            server_url (str): The Jira server URL.
-            username (str): The Jira username.
-            api_token (str): The Jira API token.
-            raise_on_exception (bool): Whether to raise an exception if the connection test fails.
+            - redirect_uri: The redirect URI
+            - client_id: The client ID
+            - client_secret: The client secret
+            - state_param: The state parameter
+            - raise_on_exception: Whether to raise an exception or not
 
         Returns:
-            - Connection: A Connection object with the connection status.
+            - Connection: The connection object
 
         Raises:
-            - JiraTestConnectionError: if the connection test fails and raise_on_exception is True.
+            - JiraGetCloudIdNoResourcesError: No resources were found in Jira when getting the cloud id
+            - JiraGetCloudIdResponseError: Failed to get the cloud ID, response code did not match 200
+            - JiraGetCloudIdError: Failed to get the cloud ID from Jira
+            - JiraAuthenticationError: Failed to authenticate
+            - JiraTestConnectionError: Failed to test the connection
         """
         try:
-            jira = JiraSDK(server=server_url, basic_auth=(username, api_token))
-            user = jira.myself()
-            logging.info(f"Authenticated as {user['displayName']}")
-            return Connection(
-                is_connected=True,
+            jira = Jira(redirect_uri, client_id, client_secret, state_param)
+            access_token = jira.get_access_token()
+
+            if not access_token:
+                return ValueError("Failed to get access token")
+
+            headers = {"Authorization": f"Bearer {access_token}"}
+            response = requests.get(
+                f"https://api.atlassian.com/ex/jira/{jira.cloud_id}/rest/api/3/myself",
+                headers=headers,
             )
-        except Exception as error:
+
+            if response.status_code == 200:
+                return Connection(is_connected=True)
+            else:
+                return Connection(is_connected=False, error=response.json())
+        except JiraGetCloudIdNoResourcesError as no_resources_error:
             logger.error(
-                f"JiraConnectionError[{error.__traceback__.tb_lineno}]: {error}"
+                f"{no_resources_error.__class__.__name__}[{no_resources_error.__traceback__.tb_lineno}]: {no_resources_error}"
             )
             if raise_on_exception:
+                raise no_resources_error
+            return Connection(error=no_resources_error)
+        except JiraGetCloudIdResponseError as response_error:
+            logger.error(
+                f"{response_error.__class__.__name__}[{response_error.__traceback__.tb_lineno}]: {response_error}"
+            )
+            if raise_on_exception:
+                raise response_error
+            return Connection(error=response_error)
+        except JiraGetCloudIdError as cloud_id_error:
+            logger.error(
+                f"{cloud_id_error.__class__.__name__}[{cloud_id_error.__traceback__.tb_lineno}]: {cloud_id_error}"
+            )
+            if raise_on_exception:
+                raise cloud_id_error
+            return Connection(error=cloud_id_error)
+        except JiraAuthenticationError as auth_error:
+            logger.error(
+                f"{auth_error.__class__.__name__}[{auth_error.__traceback__.tb_lineno}]: {auth_error}"
+            )
+            if raise_on_exception:
+                raise auth_error
+            return Connection(error=auth_error)
+        except Exception as error:
+            logger.error(f"Failed to test connection: {error}")
+            if raise_on_exception:
                 raise JiraTestConnectionError(
-                    file=os.path.basename(__file__), original_exception=error
-                ) from error
-            return Connection(error=error)
+                    message="Failed to test connection on the Jira integration",
+                    file=os.path.basename(__file__),
+                )
+            return Connection(is_connected=False, error=error)
 
     def get_projects(self) -> list[dict]:
-        """
-        Fetch all projects from Jira.
+        """Get the projects from Jira
 
         Returns:
-            - list[dict]: A list of dictionaries containing the key and name of each project.
+            - list[dict]: The projects following the format {"key": str, "name": str}
 
         Raises:
-            - JiraGetProjectsError: if the request to get projects fails.
+            - JiraNoProjectsError: No projects found in Jira
+            - JiraGetProjectsError: Failed to get projects from Jira
+            - JiraRefreshTokenError: Failed to refresh the access token
+            - JiraRefreshTokenResponseError: Failed to refresh the access token, response code did not match
+            - JiraGetProjectsResponseError: Failed to get projects from Jira, response code did not match 200
         """
         try:
-            projects = self.jira.projects()
-            project_objects = [
-                {"key": project.key, "name": project.name} for project in projects
-            ]
+            access_token = self.get_access_token()
 
-            if not project_objects:
-                logging.error("No projects found in Jira")
-                raise JiraNoProjectsError(
-                    message="No projects found in Jira", file=os.path.basename(__file__)
+            if not access_token:
+                return ValueError("Failed to get access token")
+
+            headers = {"Authorization": f"Bearer {access_token}"}
+            response = requests.get(
+                f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/project",
+                headers=headers,
+            )
+
+            if response.status_code == 200:
+                # Return the Project Key and Name
+                projects = [
+                    {"key": project.get("key"), "name": project.get("name")}
+                    for project in response.json()
+                ]
+                if len(projects) == 0:
+                    logger.error("No projects found")
+                    raise JiraNoProjectsError(
+                        message="No projects found in Jira",
+                        file=os.path.basename(__file__),
+                    )
+                return projects
+            else:
+                logger.error(
+                    f"Failed to get projects: {response.status_code} - {response.json()}"
                 )
-            return project_objects
+                raise JiraGetProjectsResponseError(
+                    message="Failed to get projects from Jira",
+                    file=os.path.basename(__file__),
+                )
+        except JiraNoProjectsError as no_projects_error:
+            raise no_projects_error
+        except JiraRefreshTokenError as refresh_error:
+            raise refresh_error
+        except JiraRefreshTokenResponseError as response_error:
+            raise response_error
         except Exception as e:
-            logging.error(f"Failed to get projects: {e}")
+            logger.error(f"Failed to get projects: {e}")
             raise JiraGetProjectsError(
-                original_exception=e, file=os.path.basename(__file__)
+                message="Failed to get projects from Jira",
+                file=os.path.basename(__file__),
+            )
+
+    def get_available_issue_types(self, project_key: str) -> list[str]:
+        """Get the available issue types for a project
+
+        Args:
+            - project_key: The project key
+
+        Returns:
+            - list[str]: The available issue types
+
+        Raises:
+            - JiraRefreshTokenError: Failed to refresh the access token
+            - JiraRefreshTokenResponseError: Failed to refresh the access token, response code did not match 200
+            - JiraGetAccessTokenError: Failed to get the access token
+            - JiraGetAuthResponseError: Failed to authenticate with Jira
+            - JiraGetProjectsError: Failed to get projects from Jira
+            - JiraGetProjectsResponseError: Failed to get projects from Jira, response code did not match 200
+        """
+
+        try:
+            access_token = self.get_access_token()
+
+            if not access_token:
+                return ValueError("Failed to get access token")
+
+            headers = {"Authorization": f"Bearer {access_token}"}
+            response = requests.get(
+                f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/issue/createmeta?projectKeys={project_key}&expand=projects.issuetypes.fields",
+                headers=headers,
+            )
+
+            if response.status_code == 200:
+                issue_types = response.json()["projects"][0]["issuetypes"]
+                return [issue_type["name"] for issue_type in issue_types]
+            else:
+                # Must be replaced with proper error handling from custom exceptions
+                response_error = f"Failed to get available issue types: {response.status_code} - {response.json()}"
+                logger.warning(response_error)
+                raise JiraGetAvailableIssueTypesResponseError(
+                    message=response_error, file=os.path.basename(__file__)
+                )
+        except JiraRefreshTokenError as refresh_error:
+            raise refresh_error
+        except JiraRefreshTokenResponseError as response_error:
+            raise response_error
+        except Exception as e:
+            logger.error(f"Failed to get available issue types: {e}")
+            raise JiraGetAvailableIssueTypesError(
+                message="Failed to get available issue types",
+                file=os.path.basename(__file__),
             )
 
     def send_findings(
-        self,
-        project_key: str = None,
-        findings: list[Finding] = None,
-        issue_type: str = "Bug",
+        self, findings: list[Finding], project_key: str, issue_type: str = "Bug"
     ):
         """
-        Create Jira issues for the given findings.
+        Send the findings to Jira
 
         Args:
-            project_key (str): The Jira project key.
-            findings (list[Finding]): A list of Finding objects.
-            issue_type (str): The issue type to create (default: "Bug").
+            - findings: The findings to send
+            - project_key: The project key
+            - issue_type: The issue type
 
         Raises:
-            - JiraCreateIssueError: if the request to create an issue fails.
+            - JiraRefreshTokenError: Failed to refresh the access token
+            - JiraRefreshTokenResponseError: Failed to refresh the access token, response code did not match 200
+            - JiraCreateIssueError: Failed to create an issue in Jira
+            - JiraSendFindingsResponseError: Failed to send the findings to Jira
         """
-        for finding in findings:
-            try:
-                issue_dict = {
-                    "project": {"key": project_key},
-                    "summary": finding["summary"],
-                    "description": finding["description"],
-                    "issuetype": {"name": issue_type},
+        try:
+            access_token = self.get_access_token()
+
+            if not access_token:
+                return ValueError("Failed to get access token")
+
+            available_issue_types = self.get_available_issue_types(project_key)
+
+            if issue_type not in available_issue_types:
+                logger.error("The issue type is invalid")
+                raise JiraInvalidIssueTypeError(
+                    message="The issue type is invalid", file=os.path.basename(__file__)
+                )
+            headers = {
+                "Authorization": f"Bearer {access_token}",
+                "Content-Type": "application/json",
+            }
+
+            for finding in findings:
+                payload = {
+                    "fields": {
+                        "project": {"key": project_key},
+                        "summary": finding.metadata.CheckTitle,
+                        "description": finding.metadata.Description,
+                        "issuetype": {"name": issue_type},
+                    }
                 }
-                new_issue = self.jira.create_issue(fields=issue_dict)
-                print(f"Successfully created issue: {new_issue.key}")
-            except Exception as e:
-                logging.error(f"Failed to create issue: {e}")
+
+                response = requests.post(
+                    f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/issue",
+                    json=payload,
+                    headers=headers,
+                )
+
+                if response.status_code != 201:
+                    response_error = f"Failed to send finding: {response.status_code} - {response.json()}"
+                    logger.warning(response_error)
+                    raise JiraSendFindingsResponseError(
+                        message=response_error, file=os.path.basename(__file__)
+                    )
+                else:
+                    logger.info(f"Finding sent successfully: {response.json()}")
+        except JiraRefreshTokenError as refresh_error:
+            raise refresh_error
+        except JiraRefreshTokenResponseError as response_error:
+            raise response_error
+        except Exception as e:
+            logger.error(f"Failed to send findings: {e}")
+            raise JiraCreateIssueError(
+                message="Failed to create an issue in Jira",
+                file=os.path.basename(__file__),
+            )
