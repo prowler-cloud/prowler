@@ -71,7 +71,7 @@ class DMS(AWSService):
                             id=endpoint["EndpointIdentifier"],
                             region=regional_client.region,
                             ssl_mode=endpoint.get("SslMode", False),
-                            redis_tls_enabled=endpoint.get("RedisSettings", {}).get(
+                            redis_ssl_protocol=endpoint.get("RedisSettings", {}).get(
                                 "SslSecurityProtocol", "plaintext"
                             ),
                             mongodb_auth_type=endpoint.get("MongoDbSettings", {}).get(
@@ -104,7 +104,7 @@ class Endpoint(BaseModel):
     region: str
     ssl_mode: str
     tags: Optional[list]
-    redis_tls_enabled: Optional[str]
+    redis_ssl_protocol: Optional[str]
     mongodb_auth_type: str
     neptune_iam_auth_enabled: bool = False
     engine_name: str

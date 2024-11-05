@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
-  "CheckID": "dms_endpoint_redis_tls_enabled",
-  "CheckTitle": "Check if DMS endpoints for Redis OSS have TLS enabled.",
+  "CheckID": "dms_endpoint_redis_in_transit_encryption_enabled",
+  "CheckTitle": "Check if DMS endpoints for Redis OSS are encrypted in transit.",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices"
   ],

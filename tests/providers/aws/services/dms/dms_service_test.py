@@ -131,7 +131,7 @@ class Test_DMS_Service:
         assert len(dms.endpoints) == 1
         assert dms.endpoints[DMS_ENDPOINT_ARN].id == DMS_ENDPOINT_NAME
         assert dms.endpoints[DMS_ENDPOINT_ARN].ssl_mode == "require"
-        assert dms.endpoints[DMS_ENDPOINT_ARN].redis_tls_enabled == "ssl-encryption"
+        assert dms.endpoints[DMS_ENDPOINT_ARN].redis_ssl_protocol == "ssl-encryption"
         assert dms.endpoints[DMS_ENDPOINT_ARN].mongodb_auth_type == "password"
         assert dms.endpoints[DMS_ENDPOINT_ARN].neptune_iam_auth_enabled
         assert dms.endpoints[DMS_ENDPOINT_ARN].engine_name == "neptune"
