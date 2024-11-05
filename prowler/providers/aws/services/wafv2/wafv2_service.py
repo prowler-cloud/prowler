@@ -74,12 +74,13 @@ class WAFv2(AWSService):
     def _get_logging_configuration(self, acl):
         logger.info("WAFv2 - Get Logging Configuration...")
         try:
-            logging_enabled = self.regional_clients[
-                acl.region
-            ].get_logging_configuration(ResourceArn=acl.arn)
-            acl.logging_enabled = bool(
-                logging_enabled["LoggingConfiguration"]["LogDestinationConfigs"]
-            )
+            if acl.scope == Scope.REGIONAL or acl.region in self.regional_clients:
+                logging_enabled = self.regional_clients[
+                    acl.region
+                ].get_logging_configuration(ResourceArn=acl.arn)
+                acl.logging_enabled = bool(
+                    logging_enabled["LoggingConfiguration"]["LogDestinationConfigs"]
+                )
 
         except ClientError as error:
             if error.response["Error"]["Code"] == "WAFNonexistentItemException":
@@ -98,7 +99,7 @@ class WAFv2(AWSService):
     def _list_resources_for_web_acl(self, acl):
         logger.info("WAFv2 - Describing resources...")
         try:
-            if acl.scope == Scope.REGIONAL:
+            if acl.scope == Scope.REGIONAL or acl.region in self.regional_clients:
                 for resource in self.regional_clients[
                     acl.region
                 ].list_resources_for_web_acl(
@@ -125,33 +126,34 @@ class WAFv2(AWSService):
     def _get_web_acl(self, acl: str):
         logger.info("WAFv2 - Getting Web ACL...")
         try:
-            scope = acl.scope.value
-            get_web_acl = self.regional_clients[acl.region].get_web_acl(
-                Name=acl.name, Scope=scope, Id=acl.id
-            )
-
-            try:
-                rules = get_web_acl.get("WebACL", {}).get("Rules", [])
-                for rule in rules:
-                    new_rule = Rule(
-                        name=rule.get("Name", ""),
-                        cloudwatch_metrics_enabled=rule.get("VisibilityConfig", {}).get(
-                            "CloudWatchMetricsEnabled", False
-                        ),
-                    )
-                    if (
-                        rule.get("Statement", {})
-                        .get("RuleGroupReferenceStatement", {})
-                        .get("ARN")
-                    ):
-                        acl.rule_groups.append(new_rule)
-                    else:
-                        acl.rules.append(new_rule)
-
-            except Exception as error:
-                logger.error(
-                    f"{acl.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            if acl.scope == Scope.REGIONAL or acl.region in self.regional_clients:
+                scope = acl.scope.value
+                get_web_acl = self.regional_clients[acl.region].get_web_acl(
+                    Name=acl.name, Scope=scope, Id=acl.id
                 )
+
+                try:
+                    rules = get_web_acl.get("WebACL", {}).get("Rules", [])
+                    for rule in rules:
+                        new_rule = Rule(
+                            name=rule.get("Name", ""),
+                            cloudwatch_metrics_enabled=rule.get(
+                                "VisibilityConfig", {}
+                            ).get("CloudWatchMetricsEnabled", False),
+                        )
+                        if (
+                            rule.get("Statement", {})
+                            .get("RuleGroupReferenceStatement", {})
+                            .get("ARN")
+                        ):
+                            acl.rule_groups.append(new_rule)
+                        else:
+                            acl.rules.append(new_rule)
+
+                except Exception as error:
+                    logger.error(
+                        f"{acl.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
 
         except Exception as error:
             logger.error(
@@ -161,12 +163,16 @@ class WAFv2(AWSService):
     def _list_tags(self, resource: any):
         logger.info("WAFv2 - Listing tags...")
         try:
-            resource.tags = (
-                self.regional_clients[resource.region]
-                .list_tags_for_resource(ResourceARN=resource.arn)
-                .get("TagInfoForResource", {})
-                .get("TagList", [])
-            )
+            if (
+                resource.scope == Scope.REGIONAL
+                or resource.region in self.regional_clients
+            ):
+                resource.tags = (
+                    self.regional_clients[resource.region]
+                    .list_tags_for_resource(ResourceARN=resource.arn)
+                    .get("TagInfoForResource", {})
+                    .get("TagList", [])
+                )
         except Exception as error:
             logger.error(
                 f"{resource.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
