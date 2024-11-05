@@ -6,7 +6,6 @@ import requests.compat
 
 from prowler.lib.logger import logger
 from prowler.lib.outputs.finding import Finding
-from prowler.lib.outputs.jira.exceptions import JiraNoProjectsError
 from prowler.lib.outputs.jira.exceptions.exceptions import (
     JiraAuthenticationError,
     JiraCreateIssueError,
@@ -20,6 +19,7 @@ from prowler.lib.outputs.jira.exceptions.exceptions import (
     JiraGetProjectsError,
     JiraGetProjectsResponseError,
     JiraInvalidIssueTypeError,
+    JiraNoProjectsError,
     JiraRefreshTokenError,
     JiraRefreshTokenResponseError,
     JiraSendFindingsResponseError,
@@ -44,14 +44,12 @@ class Jira:
         redirect_uri: str = None,
         client_id: str = None,
         client_secret: str = None,
-        state_param: str = None,
     ):
         self._redirect_uri = redirect_uri
         self._client_id = client_id
         self._client_secret = client_secret
-        self._state_param = state_param
         self._scopes = ["read:jira-user", "read:jira-work", "write:jira-work"]
-        auth_url = self.auth_code_url(state_param)
+        auth_url = self.auth_code_url()
         authorization_code = self.input_authorization_code(auth_url)
         self.get_auth(authorization_code)
 
@@ -101,7 +99,7 @@ class Jira:
         # Generate the state parameter
         random_bytes = os.urandom(24)
         state_encoded = base64.urlsafe_b64encode(random_bytes).decode("utf-8")
-
+        self._state_param = state_encoded
         # Generate the URL
         params = {
             "audience": "api.atlassian.com",
@@ -518,6 +516,8 @@ class Jira:
             }
 
             for finding in findings:
+                if finding.status != "FAIL":
+                    continue
                 payload = {
                     "fields": {
                         "project": {"key": project_key},
