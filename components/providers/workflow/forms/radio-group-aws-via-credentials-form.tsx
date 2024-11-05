@@ -34,20 +34,9 @@ export const RadioGroupAWSViaCredentialsForm = ({
           >
             <div className="flex flex-col gap-4">
               <span className="text-sm text-default-500">Using IAM Role</span>
-              <CustomRadio
-                description="Connect via CloudFormation"
-                value="cloudformation"
-              >
+              <CustomRadio description="Connect assuming IAM Role" value="role">
                 <div className="flex items-center">
-                  <span className="ml-2">Connect via CloudFormation</span>
-                </div>
-              </CustomRadio>
-              <CustomRadio
-                description="Connect via Terraform"
-                value="terraform"
-              >
-                <div className="flex items-center">
-                  <span className="ml-2">Connect via Terraform</span>
+                  <span className="ml-2">Connect assuming IAM Role</span>
                 </div>
               </CustomRadio>
               <span className="text-sm text-default-500">

@@ -158,27 +158,50 @@ export const addCredentialsProvider = async (formData: FormData) => {
   const providerId = formData.get("providerId");
   const providerType = formData.get("providerType");
 
+  const isRole = formData.get("role_arn") !== null;
+
   let secret = {};
+  let secretType = "static"; // Default to static credentials
 
   if (providerType === "aws") {
-    secret = {
-      aws_access_key_id: formData.get("aws_access_key_id"),
-      aws_secret_access_key: formData.get("aws_secret_access_key"),
-      aws_session_token: formData.get("aws_session_token") || undefined,
-    };
+    if (isRole) {
+      // Role-based configuration for AWS
+      secretType = "role";
+      secret = {
+        role_arn: formData.get("role_arn"),
+        aws_access_key_id: formData.get("aws_access_key_id") || undefined,
+        aws_secret_access_key:
+          formData.get("aws_secret_access_key") || undefined,
+        aws_session_token: formData.get("aws_session_token") || undefined,
+        session_duration:
+          parseInt(formData.get("session_duration") as string, 10) || 3600,
+        external_id: formData.get("external_id") || undefined,
+        role_session_name: formData.get("role_session_name") || undefined,
+      };
+    } else {
+      // Static credentials configuration for AWS
+      secret = {
+        aws_access_key_id: formData.get("aws_access_key_id"),
+        aws_secret_access_key: formData.get("aws_secret_access_key"),
+        aws_session_token: formData.get("aws_session_token") || undefined,
+      };
+    }
   } else if (providerType === "azure") {
+    // Static credentials configuration for Azure
     secret = {
       client_id: formData.get("client_id"),
       client_secret: formData.get("client_secret"),
       tenant_id: formData.get("tenant_id"),
     };
   } else if (providerType === "gcp") {
+    // Static credentials configuration for GCP
     secret = {
       client_id: formData.get("client_id"),
       client_secret: formData.get("client_secret"),
       refresh_token: formData.get("refresh_token"),
     };
   } else if (providerType === "kubernetes") {
+    // Static credentials configuration for Kubernetes
     secret = {
       kubeconfig_content: formData.get("kubeconfig_content"),
     };
@@ -188,7 +211,7 @@ export const addCredentialsProvider = async (formData: FormData) => {
     data: {
       type: "ProviderSecret",
       attributes: {
-        secret_type: "static",
+        secret_type: secretType,
         secret,
         name: secretName,
       },

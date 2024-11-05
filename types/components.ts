@@ -34,6 +34,16 @@ export type AWSCredentials = {
   providerId: string;
 };
 
+export type AWSCredentialsRole = {
+  role_arn: string;
+  aws_access_key_id?: string;
+  aws_secret_access_key?: string;
+  aws_session_token?: string;
+  external_id?: string;
+  role_session_name?: string;
+  session_duration?: number;
+};
+
 export type AzureCredentials = {
   client_id: string;
   client_secret: string;

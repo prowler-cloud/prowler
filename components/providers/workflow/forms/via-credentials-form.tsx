@@ -8,7 +8,7 @@ import * as z from "zod";
 
 import { addCredentialsProvider } from "@/actions/providers/providers";
 import { useToast } from "@/components/ui";
-import { CustomButton, CustomInput } from "@/components/ui/custom";
+import { CustomButton } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
 import {
   addCredentialsFormSchema,
@@ -50,7 +50,6 @@ export const ViaCredentialsForm = ({
   const form = useForm<FormType>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      secretName: "",
       providerId,
       providerType,
       ...(providerType === "aws"
@@ -187,20 +186,6 @@ export const ViaCredentialsForm = ({
             control={form.control as unknown as Control<KubernetesCredentials>}
           />
         )}
-
-        <span className="text-sm text-default-500">Name (Optional)</span>
-        <CustomInput
-          control={form.control}
-          name="secretName"
-          type="text"
-          label="Credential name"
-          labelPlacement="inside"
-          placeholder={"Enter the credential name"}
-          variant="bordered"
-          isRequired={false}
-          size="sm"
-          isInvalid={!!form.formState.errors.secretName}
-        />
 
         <div className="flex w-full justify-end sm:space-x-6">
           <CustomButton

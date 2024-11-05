@@ -104,6 +104,24 @@ export const addCredentialsFormSchema = (providerType: string) =>
             : {}),
   });
 
+export const addCredentialsRoleFormSchema = (providerType: string) =>
+  providerType === "aws"
+    ? z.object({
+        providerId: z.string(),
+        providerType: z.string(),
+        role_arn: z.string().optional(),
+        aws_access_key_id: z.string().optional(),
+        aws_secret_access_key: z.string().optional(),
+        aws_session_token: z.string().optional(),
+        session_duration: z.number().optional(),
+        external_id: z.string().optional(),
+        role_session_name: z.string().optional(),
+      })
+    : z.object({
+        providerId: z.string(),
+        providerType: z.string(),
+      });
+
 export const testConnectionFormSchema = z.object({
   providerId: z.string(),
 });
