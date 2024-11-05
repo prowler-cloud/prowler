@@ -31,6 +31,7 @@ class Test_dms_endpoint_ssl_enabled:
             endpoint_arn: Endpoint(
                 arn=endpoint_arn,
                 id="test-endpoint-no-ssl",
+                mongodb_auth_type="no",
                 engine_name="test-engine",
                 region=AWS_REGION_US_EAST_1,
                 ssl_mode="none",
@@ -78,6 +79,7 @@ class Test_dms_endpoint_ssl_enabled:
             endpoint_arn: Endpoint(
                 arn=endpoint_arn,
                 id="test-endpoint-ssl-require",
+                mongodb_auth_type="no",
                 engine_name="test-engine",
                 region=AWS_REGION_US_EAST_1,
                 ssl_mode="require",
@@ -123,6 +125,7 @@ class Test_dms_endpoint_ssl_enabled:
                 arn=endpoint_arn,
                 id="test-endpoint-ssl-verify-ca",
                 engine_name="test-engine",
+                mongodb_auth_type="no",
                 region=AWS_REGION_US_EAST_1,
                 ssl_mode="verify-ca",
                 tags=[{"Key": "Name", "Value": "test-endpoint-ssl-verify-ca"}],
@@ -166,6 +169,7 @@ class Test_dms_endpoint_ssl_enabled:
             endpoint_arn: Endpoint(
                 arn=endpoint_arn,
                 id="test-endpoint-ssl-verify-full",
+                mongodb_auth_type="no",
                 engine_name="test-engine",
                 region=AWS_REGION_US_EAST_1,
                 ssl_mode="verify-full",

@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "dms_endpoint_mongodb_authtype_configured",
+  "CheckID": "dms_endpoint_mongodb_authentication_enabled",
   "CheckTitle": "Check if DMS endpoints for MongoDB have an authentication mechanism enabled.",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices"

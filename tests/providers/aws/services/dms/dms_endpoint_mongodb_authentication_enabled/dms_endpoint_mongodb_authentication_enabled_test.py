@@ -119,7 +119,7 @@ def mock_make_api_call_not_enabled(self, operation_name, kwarg):
     return make_api_call(self, operation_name, kwarg)
 
 
-class Test_dms_endpoint_mongodb_authtype_configured:
+class Test_dms_endpoint_mongodb_authentication_enabled:
     @mock_aws
     def test_no_dms_endpoints(self):
         dms_client = client("dms", region_name=AWS_REGION_US_EAST_1)
@@ -133,15 +133,15 @@ class Test_dms_endpoint_mongodb_authtype_configured:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.dms.dms_endpoint_mongodb_authtype_configured.dms_endpoint_mongodb_authtype_configured.dms_client",
+            "prowler.providers.aws.services.dms.dms_endpoint_mongodb_authentication_enabled.dms_endpoint_mongodb_authentication_enabled.dms_client",
             new=DMS(aws_provider),
         ):
             # Test Check
-            from prowler.providers.aws.services.dms.dms_endpoint_mongodb_authtype_configured.dms_endpoint_mongodb_authtype_configured import (
-                dms_endpoint_mongodb_authtype_configured,
+            from prowler.providers.aws.services.dms.dms_endpoint_mongodb_authentication_enabled.dms_endpoint_mongodb_authentication_enabled import (
+                dms_endpoint_mongodb_authentication_enabled,
             )
 
-            check = dms_endpoint_mongodb_authtype_configured()
+            check = dms_endpoint_mongodb_authentication_enabled()
             result = check.execute()
 
             assert len(result) == 0
@@ -161,15 +161,15 @@ class Test_dms_endpoint_mongodb_authtype_configured:
                 "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=aws_provider,
             ), mock.patch(
-                "prowler.providers.aws.services.dms.dms_endpoint_mongodb_authtype_configured.dms_endpoint_mongodb_authtype_configured.dms_client",
+                "prowler.providers.aws.services.dms.dms_endpoint_mongodb_authentication_enabled.dms_endpoint_mongodb_authentication_enabled.dms_client",
                 new=DMS(aws_provider),
             ):
                 # Test Check
-                from prowler.providers.aws.services.dms.dms_endpoint_mongodb_authtype_configured.dms_endpoint_mongodb_authtype_configured import (
-                    dms_endpoint_mongodb_authtype_configured,
+                from prowler.providers.aws.services.dms.dms_endpoint_mongodb_authentication_enabled.dms_endpoint_mongodb_authentication_enabled import (
+                    dms_endpoint_mongodb_authentication_enabled,
                 )
 
-                check = dms_endpoint_mongodb_authtype_configured()
+                check = dms_endpoint_mongodb_authentication_enabled()
                 result = check.execute()
 
                 assert len(result) == 0
@@ -189,15 +189,15 @@ class Test_dms_endpoint_mongodb_authtype_configured:
                 "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=aws_provider,
             ), mock.patch(
-                "prowler.providers.aws.services.dms.dms_endpoint_mongodb_authtype_configured.dms_endpoint_mongodb_authtype_configured.dms_client",
+                "prowler.providers.aws.services.dms.dms_endpoint_mongodb_authentication_enabled.dms_endpoint_mongodb_authentication_enabled.dms_client",
                 new=DMS(aws_provider),
             ):
                 # Test Check
-                from prowler.providers.aws.services.dms.dms_endpoint_mongodb_authtype_configured.dms_endpoint_mongodb_authtype_configured import (
-                    dms_endpoint_mongodb_authtype_configured,
+                from prowler.providers.aws.services.dms.dms_endpoint_mongodb_authentication_enabled.dms_endpoint_mongodb_authentication_enabled import (
+                    dms_endpoint_mongodb_authentication_enabled,
                 )
 
-                check = dms_endpoint_mongodb_authtype_configured()
+                check = dms_endpoint_mongodb_authentication_enabled()
                 result = check.execute()
 
                 assert len(result) == 1
@@ -237,21 +237,21 @@ class Test_dms_endpoint_mongodb_authtype_configured:
                 "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=aws_provider,
             ), mock.patch(
-                "prowler.providers.aws.services.dms.dms_endpoint_mongodb_authtype_configured.dms_endpoint_mongodb_authtype_configured.dms_client",
+                "prowler.providers.aws.services.dms.dms_endpoint_mongodb_authentication_enabled.dms_endpoint_mongodb_authentication_enabled.dms_client",
                 new=DMS(aws_provider),
             ):
                 # Test Check
-                from prowler.providers.aws.services.dms.dms_endpoint_mongodb_authtype_configured.dms_endpoint_mongodb_authtype_configured import (
-                    dms_endpoint_mongodb_authtype_configured,
+                from prowler.providers.aws.services.dms.dms_endpoint_mongodb_authentication_enabled.dms_endpoint_mongodb_authentication_enabled import (
+                    dms_endpoint_mongodb_authentication_enabled,
                 )
 
-                check = dms_endpoint_mongodb_authtype_configured()
+                check = dms_endpoint_mongodb_authentication_enabled()
                 result = check.execute()
 
                 assert len(result) == 1
                 assert result[0].status == "PASS"
                 assert result[0].status_extended == (
-                    "DMS Endpoint 'dms-endpoint' for MongoDB has an authentication mechanism enabled."
+                    "DMS Endpoint 'dms-endpoint' for MongoDB has password as the authentication mechanism."
                 )
                 assert result[0].resource_id == "dms-endpoint"
                 assert (

@@ -4,7 +4,7 @@ from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.dms.dms_client import dms_client
 
 
-class dms_endpoint_mongodb_authtype_configured(Check):
+class dms_endpoint_mongodb_authentication_enabled(Check):
     """
     Check if AWS DMS Endpoints for MongoDB have an authentication mechanism enabled.
 
@@ -35,7 +35,7 @@ class dms_endpoint_mongodb_authtype_configured(Check):
                 report.status_extended = f"DMS Endpoint '{endpoint.id}' for MongoDB does not have an authentication mechanism enabled."
                 if endpoint.mongodb_auth_type != "no":
                     report.status = "PASS"
-                    report.status_extended = f"DMS Endpoint '{endpoint.id}' for MongoDB has an authentication mechanism enabled."
+                    report.status_extended = f"DMS Endpoint '{endpoint.id}' for MongoDB has {endpoint.mongodb_auth_type} as the authentication mechanism."
 
                 findings.append(report)
 
