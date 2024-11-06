@@ -203,7 +203,7 @@ class Test_dms_endpoint_redis_in_transit_encryption_enabled:
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
                 assert result[0].status_extended == (
-                    "DMS Endpoint 'dms-endpoint' for Redis OSS is not encrypted in transit."
+                    "DMS Endpoint dms-endpoint for Redis OSS is not encrypted in transit."
                 )
                 assert result[0].resource_id == "dms-endpoint"
                 assert (
@@ -251,7 +251,7 @@ class Test_dms_endpoint_redis_in_transit_encryption_enabled:
                 assert len(result) == 1
                 assert result[0].status == "PASS"
                 assert result[0].status_extended == (
-                    "DMS Endpoint 'dms-endpoint' for Redis OSS is encrypted in transit."
+                    "DMS Endpoint dms-endpoint for Redis OSS is encrypted in transit."
                 )
                 assert result[0].resource_id == "dms-endpoint"
                 assert (

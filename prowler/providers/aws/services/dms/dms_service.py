@@ -104,7 +104,7 @@ class Endpoint(BaseModel):
     region: str
     ssl_mode: str
     tags: Optional[list]
-    redis_ssl_protocol: Optional[str]
+    redis_ssl_protocol: str
     mongodb_auth_type: str
     neptune_iam_auth_enabled: bool = False
     engine_name: str

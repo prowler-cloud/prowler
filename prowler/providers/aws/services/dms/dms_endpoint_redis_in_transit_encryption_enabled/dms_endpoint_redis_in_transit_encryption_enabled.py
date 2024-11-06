@@ -32,10 +32,10 @@ class dms_endpoint_redis_in_transit_encryption_enabled(Check):
                 report.region = endpoint.region
                 report.resource_tags = endpoint.tags
                 report.status = "FAIL"
-                report.status_extended = f"DMS Endpoint '{endpoint.id}' for Redis OSS is not encrypted in transit."
+                report.status_extended = f"DMS Endpoint {endpoint.id} for Redis OSS is not encrypted in transit."
                 if endpoint.redis_ssl_protocol == "ssl-encryption":
                     report.status = "PASS"
-                    report.status_extended = f"DMS Endpoint '{endpoint.id}' for Redis OSS is encrypted in transit."
+                    report.status_extended = f"DMS Endpoint {endpoint.id} for Redis OSS is encrypted in transit."
 
                 findings.append(report)
 
