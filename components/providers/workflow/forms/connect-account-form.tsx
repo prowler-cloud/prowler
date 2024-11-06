@@ -49,7 +49,6 @@ export const ConnectAccountForm = () => {
       formValues.providerAlias = `${formValues.providerType}:${month}/${day}/${year}`;
     }
 
-    console.log({ formValues });
     const formData = new FormData();
 
     Object.entries(formValues).forEach(

@@ -135,33 +135,28 @@ export const TestConnectionForm = ({
 
   const onResetCredentials = async () => {
     setIsResettingCredentials(true);
-    // Check if provider has no credentials
+
+    // Check if provider the provider has no credentials
     const providerSecretId =
       providerData?.data?.relationships?.secret?.data?.id;
     const hasNoCredentials = !providerSecretId;
-    console.log({ providerSecretId }, "providerSecretId");
-    console.log({ hasNoCredentials }, "hasNoCredentials");
 
     if (hasNoCredentials) {
       // If no credentials, redirect to add credentials page
-      console.log("no credentials");
-      // router.push(
-      //   `/providers/add-credentials?type=${providerType}&id=${providerId}`,
-      // );
+      router.push(
+        `/providers/add-credentials?type=${providerType}&id=${providerId}`,
+      );
       return;
     }
 
-    // If has credentials, delete them first
+    // If provider has credentials, delete them first
     try {
-      // This function will need to be implemented
       await deleteCredentials(providerSecretId);
       // After successful deletion, redirect to add credentials page
-      console.log("deleted credentials with success");
       router.push(
         `/providers/add-credentials?type=${providerType}&id=${providerId}`,
       );
     } catch (error) {
-      // Handle error appropriately
       console.error("Failed to delete credentials:", error);
     } finally {
       setIsResettingCredentials(false);
