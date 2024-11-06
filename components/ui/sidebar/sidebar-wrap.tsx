@@ -91,19 +91,17 @@ export const SidebarWrap = () => {
             "w-full": !isCompact,
           })}
         >
-          {/* TODO: Create a custom-link component and use it here */}
-          <Link href={"/scans"}>
-            <CustomButton
-              className="w-full"
-              ariaLabel="Launch Scan"
-              variant="solid"
-              color="action"
-              size="md"
-              endContent={<AddIcon size={20} />}
-            >
-              Launch Scan
-            </CustomButton>
-          </Link>
+          <CustomButton
+            asLink="/scans"
+            className="w-full"
+            ariaLabel="Launch Scan"
+            variant="solid"
+            color="action"
+            size="md"
+            endContent={<AddIcon size={20} />}
+          >
+            Launch Scan
+          </CustomButton>
         </div>
       </div>
 

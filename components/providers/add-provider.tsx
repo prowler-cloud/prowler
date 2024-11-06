@@ -7,6 +7,7 @@ export const AddProvider = () => {
   return (
     <div className="flex w-full items-center justify-end">
       <CustomButton
+        asLink="/providers/connect-account"
         ariaLabel="Add Account"
         variant="solid"
         color="action"

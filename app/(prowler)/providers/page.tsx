@@ -1,5 +1,4 @@
 import { Spacer } from "@nextui-org/react";
-import Link from "next/link";
 import { Suspense } from "react";
 
 import { getProviders } from "@/actions/providers";
@@ -27,7 +26,6 @@ export default async function Providers({
       <Spacer y={4} />
       <FilterControls search providers />
       <Spacer y={4} />
-      <Link href="/providers/connect-account">add provider</Link>
       <AddProvider />
       <Spacer y={4} />
 
