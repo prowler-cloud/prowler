@@ -95,7 +95,7 @@ class Test_dms_replication_task_source_logging_enabled:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].status_extended == (
-                "DMS Replication Task rep-task does not have logging enabled."
+                "DMS Replication Task rep-task does not have logging enabled for source events."
             )
             assert result[0].resource_id == "rep-task"
             assert result[0].resource_arn == dms_replication_task_arn
@@ -153,8 +153,7 @@ class Test_dms_replication_task_source_logging_enabled:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].status_extended == (
-                "DMS Replication Task rep-task does not meet logging requirements. "
-                "Missing or non-compliant components: SOURCE_UNLOAD."
+                "DMS Replication Task rep-task does not meet the minimum severity level of logging in SOURCE_UNLOAD events."
             )
             assert result[0].resource_id == "rep-task"
             assert result[0].resource_arn == dms_replication_task_arn
@@ -212,8 +211,7 @@ class Test_dms_replication_task_source_logging_enabled:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].status_extended == (
-                "DMS Replication Task rep-task does not meet logging requirements. "
-                "Missing or non-compliant components: SOURCE_CAPTURE."
+                "DMS Replication Task rep-task does not meet the minimum severity level of logging in SOURCE_CAPTURE events."
             )
             assert result[0].resource_id == "rep-task"
             assert result[0].resource_arn == dms_replication_task_arn
@@ -277,8 +275,7 @@ class Test_dms_replication_task_source_logging_enabled:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].status_extended == (
-                "DMS Replication Task rep-task does not meet logging requirements. "
-                "Missing or non-compliant components: SOURCE_CAPTURE."
+                "DMS Replication Task rep-task does not meet the minimum severity level of logging in SOURCE_CAPTURE events."
             )
             assert result[0].resource_id == "rep-task"
             assert result[0].resource_arn == dms_replication_task_arn
@@ -342,8 +339,7 @@ class Test_dms_replication_task_source_logging_enabled:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].status_extended == (
-                "DMS Replication Task rep-task does not meet logging requirements. "
-                "Missing or non-compliant components: SOURCE_UNLOAD."
+                "DMS Replication Task rep-task does not meet the minimum severity level of logging in SOURCE_UNLOAD events."
             )
             assert result[0].resource_id == "rep-task"
             assert result[0].resource_arn == dms_replication_task_arn
@@ -407,8 +403,7 @@ class Test_dms_replication_task_source_logging_enabled:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].status_extended == (
-                "DMS Replication Task rep-task does not meet logging requirements. "
-                "Missing or non-compliant components: SOURCE_CAPTURE, SOURCE_UNLOAD."
+                "DMS Replication Task rep-task does not meet the minimum severity level of logging in SOURCE_CAPTURE, SOURCE_UNLOAD events."
             )
             assert result[0].resource_id == "rep-task"
             assert result[0].resource_arn == dms_replication_task_arn
@@ -472,7 +467,7 @@ class Test_dms_replication_task_source_logging_enabled:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert result[0].status_extended == (
-                "DMS Replication Task rep-task has logging enabled with required levels for SOURCE_CAPTURE and SOURCE_UNLOAD components."
+                "DMS Replication Task rep-task has logging enabled with the minimum severity level in source events."
             )
             assert result[0].resource_id == "rep-task"
             assert result[0].resource_arn == dms_replication_task_arn

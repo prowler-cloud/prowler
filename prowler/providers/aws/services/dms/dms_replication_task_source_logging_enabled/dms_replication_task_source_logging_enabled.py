@@ -39,7 +39,7 @@ class dms_replication_task_source_logging_enabled(Check):
 
             if not replication_task.logging_enabled:
                 report.status = "FAIL"
-                report.status_extended = f"DMS Replication Task {replication_task.id} does not have logging enabled."
+                report.status_extended = f"DMS Replication Task {replication_task.id} does not have logging enabled for source events."
             else:
                 missing_components = []
                 source_capture_compliant = False
@@ -70,16 +70,10 @@ class dms_replication_task_source_logging_enabled(Check):
 
                 if source_capture_compliant and source_unload_compliant:
                     report.status = "PASS"
-                    report.status_extended = (
-                        f"DMS Replication Task {replication_task.id} has logging enabled with "
-                        f"required levels for SOURCE_CAPTURE and SOURCE_UNLOAD components."
-                    )
+                    report.status_extended = f"DMS Replication Task {replication_task.id} has logging enabled with the minimum severity level in source events."
                 else:
                     report.status = "FAIL"
-                    report.status_extended = (
-                        f"DMS Replication Task {replication_task.id} does not meet logging requirements. "
-                        f"Missing or non-compliant components: {', '.join(missing_components)}."
-                    )
+                    report.status_extended = f"DMS Replication Task {replication_task.id} does not meet the minimum severity level of logging in {', '.join(missing_components)} events."
 
             findings.append(report)
 
