@@ -91,22 +91,25 @@ export const TestConnectionForm = ({
       const taskResult = await checkTaskStatus(taskId);
 
       if (taskResult.completed) {
-        // If the task is completed, fetch the final task data
         const task = await getTask(taskId);
-        const connected = task.data.attributes.result.connected;
+        const { connected, error } = task.data.attributes.result;
 
         setConnectionStatus({
           connected,
-          error: null,
+          error: connected ? null : error || "Unknown error",
         });
 
         if (connected) {
           router.push(
             `/providers/launch-scan?type=${providerType}&id=${providerId}`,
           );
+        } else {
+          setConnectionStatus({
+            connected: false,
+            error: error || "Connection failed, please review credentials.",
+          });
         }
       } else {
-        // If the task failed, display the error message
         setConnectionStatus({
           connected: false,
           error: taskResult.error || "Unknown error",
