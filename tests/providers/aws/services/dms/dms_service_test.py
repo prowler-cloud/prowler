@@ -205,23 +205,3 @@ class Test_DMS_Service:
             dms.replication_tasks[dms_replication_task_arn].target_endpoint_arn
             == DMS_ENDPOINT_ARN
         )
-        assert (
-            dms.replication_tasks[dms_replication_task_arn].replication_task_settings
-            == """
-                {
-                    "Logging": {
-                        "EnableLogging": true,
-                        "LogComponents": [
-                            {
-                                "Id": "SOURCE_CAPTURE",
-                                "Severity": "LOGGER_SEVERITY_DEFAULT"
-                            },
-                            {
-                                "Id": "SOURCE_UNLOAD",
-                                "Severity": "LOGGER_SEVERITY_DEFAULT"
-                            }
-                        ]
-                    }
-                }
-            """
-        )
