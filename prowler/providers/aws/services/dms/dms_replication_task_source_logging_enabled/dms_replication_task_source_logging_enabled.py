@@ -64,9 +64,9 @@ class dms_replication_task_source_logging_enabled(Check):
                         source_unload_compliant = True
 
                 if not source_capture_compliant:
-                    missing_components.append("SOURCE_CAPTURE")
+                    missing_components.append("Source Capture")
                 if not source_unload_compliant:
-                    missing_components.append("SOURCE_UNLOAD")
+                    missing_components.append("Source Unload")
 
                 if source_capture_compliant and source_unload_compliant:
                     report.status = "PASS"

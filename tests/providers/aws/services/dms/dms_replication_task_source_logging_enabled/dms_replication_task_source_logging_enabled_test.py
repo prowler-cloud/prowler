@@ -153,7 +153,7 @@ class Test_dms_replication_task_source_logging_enabled:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].status_extended == (
-                "DMS Replication Task rep-task does not meet the minimum severity level of logging in SOURCE_UNLOAD events."
+                "DMS Replication Task rep-task does not meet the minimum severity level of logging in Source Unload events."
             )
             assert result[0].resource_id == "rep-task"
             assert result[0].resource_arn == dms_replication_task_arn
@@ -211,7 +211,7 @@ class Test_dms_replication_task_source_logging_enabled:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].status_extended == (
-                "DMS Replication Task rep-task does not meet the minimum severity level of logging in SOURCE_CAPTURE events."
+                "DMS Replication Task rep-task does not meet the minimum severity level of logging in Source Capture events."
             )
             assert result[0].resource_id == "rep-task"
             assert result[0].resource_arn == dms_replication_task_arn
@@ -275,7 +275,7 @@ class Test_dms_replication_task_source_logging_enabled:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].status_extended == (
-                "DMS Replication Task rep-task does not meet the minimum severity level of logging in SOURCE_CAPTURE events."
+                "DMS Replication Task rep-task does not meet the minimum severity level of logging in Source Capture events."
             )
             assert result[0].resource_id == "rep-task"
             assert result[0].resource_arn == dms_replication_task_arn
@@ -339,7 +339,7 @@ class Test_dms_replication_task_source_logging_enabled:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].status_extended == (
-                "DMS Replication Task rep-task does not meet the minimum severity level of logging in SOURCE_UNLOAD events."
+                "DMS Replication Task rep-task does not meet the minimum severity level of logging in Source Unload events."
             )
             assert result[0].resource_id == "rep-task"
             assert result[0].resource_arn == dms_replication_task_arn
@@ -403,7 +403,7 @@ class Test_dms_replication_task_source_logging_enabled:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].status_extended == (
-                "DMS Replication Task rep-task does not meet the minimum severity level of logging in SOURCE_CAPTURE, SOURCE_UNLOAD events."
+                "DMS Replication Task rep-task does not meet the minimum severity level of logging in Source Capture, Source Unload events."
             )
             assert result[0].resource_id == "rep-task"
             assert result[0].resource_arn == dms_replication_task_arn
