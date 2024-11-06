@@ -31,6 +31,9 @@ async function SSRTestConnection({
   formData.append("id", searchParams.id);
 
   const providerData = await getProvider(formData);
+  if (providerData.errors) {
+    redirect("/providers/connect-account");
+  }
 
   return (
     <TestConnectionForm

@@ -3,16 +3,19 @@ import { MetaDataProps } from "@/types";
 export const wait = (ms: number) =>
   new Promise((resolve) => setTimeout(resolve, ms));
 // Helper function to create dictionaries by type
-export const createDict = (
-  type: string,
-  data: any,
-  includedField: string = "included",
-) =>
-  Object.fromEntries(
-    data[includedField]
-      .filter((item: { type: string }) => item.type === type)
-      .map((item: { id: string }) => [item.id, item]),
+export function createDict(type: string, data: any) {
+  const includedField = data?.included?.filter(
+    (item: { type: string }) => item.type === type,
   );
+
+  if (!includedField || includedField.length === 0) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    includedField.map((item: { id: string }) => [item.id, item]),
+  );
+}
 
 export const parseStringify = (value: any) => JSON.parse(JSON.stringify(value));
 
