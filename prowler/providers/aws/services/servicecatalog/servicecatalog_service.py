@@ -6,6 +6,13 @@ from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
+PORTFOLIO_SHARE_TYPES = [
+    "ACCOUNT",
+    "ORGANIZATION",
+    "ORGANIZATION_UNIT",
+    "ORGANIZATION_MEMBER_ACCOUNT",
+]
+
 
 class ServiceCatalog(AWSService):
     def __init__(self, provider):
@@ -43,18 +50,11 @@ class ServiceCatalog(AWSService):
             logger.info("ServiceCatalog - describing portfolios shares...")
             try:
                 regional_client = self.regional_clients[portfolio.region]
-                types = [
-                    "ACCOUNT",
-                    "ORGANIZATION",
-                    "ORGANIZATION_UNIT",
-                    "ORGANIZATION_MEMBER_ACCOUNT",
-                ]
-                for portfolio_type in types:
-                    portfolio_shares = regional_client.describe_portfolio_shares(
+                for portfolio_type in PORTFOLIO_SHARE_TYPES:
+                    for share in regional_client.describe_portfolio_shares(
                         PortfolioId=portfolio.id,
                         Type=portfolio_type,
-                    )["PortfolioShareDetails"]
-                    for share in portfolio_shares:
+                    ).get("PortfolioShareDetails", []):
                         portfolio_share = PortfolioShare(
                             type=portfolio_type,
                             accepted=share["Accepted"],
