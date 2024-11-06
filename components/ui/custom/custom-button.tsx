@@ -1,6 +1,7 @@
-import { Button, CircularProgress, Link } from "@nextui-org/react";
+import { Button, CircularProgress } from "@nextui-org/react";
 import type { PressEvent } from "@react-types/shared";
 import clsx from "clsx";
+import Link from "next/link";
 import React from "react";
 
 import { NextUIColors, NextUIVariants } from "@/types";

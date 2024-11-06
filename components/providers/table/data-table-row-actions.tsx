@@ -34,7 +34,6 @@ export function DataTableRowActions<ProviderProps>({
 }: DataTableRowActionsProps<ProviderProps>) {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  console.log("row.original:", row.original);
   const providerId = (row.original as { id: string }).id;
   const providerType = (row.original as any).attributes?.provider;
   const providerAlias = (row.original as any).attributes?.alias;
