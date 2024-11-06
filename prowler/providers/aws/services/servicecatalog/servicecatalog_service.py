@@ -9,7 +9,7 @@ from prowler.providers.aws.lib.service.service import AWSService
 PORTFOLIO_SHARE_TYPES = [
     "ACCOUNT",
     "ORGANIZATION",
-    "ORGANIZATION_UNIT",
+    "ORGANIZATIONAL_UNIT",
     "ORGANIZATION_MEMBER_ACCOUNT",
 ]
 
@@ -50,20 +50,26 @@ class ServiceCatalog(AWSService):
             logger.info("ServiceCatalog - describing portfolios shares...")
             regional_client = self.regional_clients[portfolio.region]
             for portfolio_type in PORTFOLIO_SHARE_TYPES:
-              try:
-                  for share in regional_client.describe_portfolio_shares(
-                      PortfolioId=portfolio.id,
-                      Type=portfolio_type,
-                  ).get("PortfolioShareDetails", []):
-                      portfolio_share = PortfolioShare(
-                          type=portfolio_type,
-                          accepted=share["Accepted"],
-                      )
-                      portfolio.shares.append(portfolio_share)
-              except Exception as error:
-                  logger.error(
-                      f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                  )
+                try:
+                    for share in regional_client.describe_portfolio_shares(
+                        PortfolioId=portfolio.id,
+                        Type=portfolio_type,
+                    ).get("PortfolioShareDetails", []):
+                        portfolio_share = PortfolioShare(
+                            type=portfolio_type,
+                            accepted=share["Accepted"],
+                        )
+                        portfolio.shares.append(portfolio_share)
+                except Exception as error:
+                    if error.response["Error"]["Code"] == "AccessDeniedException":
+                        logger.error(
+                            f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                        portfolio.shares = None
+                    else:
+                        logger.error(
+                            f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -75,7 +81,7 @@ class ServiceCatalog(AWSService):
             try:
                 regional_client = self.regional_clients[portfolio.region]
                 portfolio.tags = regional_client.describe_portfolio(
-                    PortfolioId=portfolio.id,
+                    Id=portfolio.id,
                 )["Tags"]
             except Exception as error:
                 logger.error(

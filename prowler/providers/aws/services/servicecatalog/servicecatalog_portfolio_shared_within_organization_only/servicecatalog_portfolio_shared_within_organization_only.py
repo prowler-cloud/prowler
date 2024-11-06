@@ -13,18 +13,20 @@ class servicecatalog_portfolio_shared_within_organization_only(Check):
         for org in organizations_client.organizations:
             if org.status == "ACTIVE":
                 for portfolio in servicecatalog_client.portfolios.values():
-                    report = Check_Report_AWS(self.metadata())
-                    report.region = portfolio.region
-                    report.resource_id = portfolio.id
-                    report.resource_arn = portfolio.arn
-                    report.resource_tags = portfolio.tags
-                    report.status = "PASS"
-                    report.status_extended = f"ServiceCatalog Portfolio {portfolio.name} is shared within your AWS Organization."
-                    for portfolio_share in portfolio.shares:
-                        if portfolio_share.type == "ACCOUNT":
-                            report.status = "FAIL"
-                            report.status_extended = f"ServiceCatalog Portfolio {portfolio.name} is shared with an account."
+                    if portfolio.shares is not None:
+                        report = Check_Report_AWS(self.metadata())
+                        report.region = portfolio.region
+                        report.resource_id = portfolio.id
+                        report.resource_arn = portfolio.arn
+                        report.resource_tags = portfolio.tags
+                        report.status = "PASS"
+                        report.status_extended = f"ServiceCatalog Portfolio {portfolio.name} is shared within your AWS Organization."
+                        for portfolio_share in portfolio.shares:
+                            if portfolio_share.type == "ACCOUNT":
+                                report.status = "FAIL"
+                                report.status_extended = f"ServiceCatalog Portfolio {portfolio.name} is shared with an account."
+                                break
 
-                    findings.append(report)
+                        findings.append(report)
 
         return findings
