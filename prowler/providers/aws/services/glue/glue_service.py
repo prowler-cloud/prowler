@@ -1,8 +1,8 @@
 import json
-from typing import Optional
+from typing import Dict, List, Optional
 
 from botocore.exceptions import ClientError
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -112,7 +112,7 @@ class Glue(AWSService):
                                 name=job["Name"],
                                 arn=arn,
                                 security=job.get("SecurityConfiguration"),
-                                arguments=job.get("DefaultArguments"),
+                                arguments=job.get("DefaultArguments", {}),
                                 region=regional_client.region,
                             )
                         )
@@ -277,7 +277,7 @@ class Connection(BaseModel):
     type: str
     properties: dict
     region: str
-    tags: Optional[list]
+    tags: Optional[List[Dict[str, str]]] = Field(default_factory=list)
 
 
 class Table(BaseModel):
@@ -286,6 +286,7 @@ class Table(BaseModel):
     database: str
     catalog: Optional[str]
     region: str
+    tags: Optional[List[Dict[str, str]]] = Field(default_factory=list)
 
 
 class CatalogEncryptionSetting(BaseModel):
@@ -300,16 +301,16 @@ class DevEndpoint(BaseModel):
     arn: str
     security: Optional[str]
     region: str
-    tags: Optional[list]
+    tags: Optional[List[Dict[str, str]]] = Field(default_factory=list)
 
 
 class Job(BaseModel):
     arn: str
     name: str
     security: Optional[str]
-    arguments: Optional[dict]
+    arguments: Optional[Dict[str, str]] = Field(default_factory=dict)
     region: str
-    tags: Optional[list]
+    tags: Optional[List[Dict[str, str]]] = Field(default_factory=list)
 
 
 class SecurityConfig(BaseModel):
@@ -321,6 +322,7 @@ class SecurityConfig(BaseModel):
     jb_encryption: str
     jb_key_arn: Optional[str]
     region: str
+    tags: Optional[List[Dict[str, str]]] = Field(default_factory=list)
 
 
 class MLTransform(BaseModel):
@@ -329,7 +331,7 @@ class MLTransform(BaseModel):
     name: str
     user_data_encryption: str
     region: str
-    tags: Optional[list]
+    tags: Optional[List[Dict[str, str]]] = Field(default_factory=list)
 
 
 class DataCatalog(BaseModel):
@@ -337,3 +339,4 @@ class DataCatalog(BaseModel):
     region: str
     encryption_settings: Optional[CatalogEncryptionSetting]
     policy: Optional[dict]
+    tags: Optional[List[Dict[str, str]]] = Field(default_factory=list)

@@ -12,6 +12,9 @@ class Test_dms_endpoint_ssl_enabled:
         with mock.patch(
             "prowler.providers.aws.services.dms.dms_service.DMS",
             new=dms_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.dms.dms_client.dms_client",
+            new=dms_client,
         ):
             from prowler.providers.aws.services.dms.dms_endpoint_ssl_enabled.dms_endpoint_ssl_enabled import (
                 dms_endpoint_ssl_enabled,
@@ -28,6 +31,9 @@ class Test_dms_endpoint_ssl_enabled:
             endpoint_arn: Endpoint(
                 arn=endpoint_arn,
                 id="test-endpoint-no-ssl",
+                mongodb_auth_type="no",
+                engine_name="test-engine",
+                redis_ssl_protocol="plaintext",
                 region=AWS_REGION_US_EAST_1,
                 ssl_mode="none",
                 tags=[{"Key": "Name", "Value": "test-endpoint-no-ssl"}],
@@ -39,6 +45,9 @@ class Test_dms_endpoint_ssl_enabled:
 
         with mock.patch(
             "prowler.providers.aws.services.dms.dms_service.DMS",
+            new=dms_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.dms.dms_client.dms_client",
             new=dms_client,
         ):
             from prowler.providers.aws.services.dms.dms_endpoint_ssl_enabled.dms_endpoint_ssl_enabled import (
@@ -71,6 +80,9 @@ class Test_dms_endpoint_ssl_enabled:
             endpoint_arn: Endpoint(
                 arn=endpoint_arn,
                 id="test-endpoint-ssl-require",
+                mongodb_auth_type="no",
+                engine_name="test-engine",
+                redis_ssl_protocol="plaintext",
                 region=AWS_REGION_US_EAST_1,
                 ssl_mode="require",
                 tags=[{"Key": "Name", "Value": "test-endpoint-ssl-require"}],
@@ -82,6 +94,9 @@ class Test_dms_endpoint_ssl_enabled:
 
         with mock.patch(
             "prowler.providers.aws.services.dms.dms_service.DMS",
+            new=dms_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.dms.dms_client.dms_client",
             new=dms_client,
         ):
             from prowler.providers.aws.services.dms.dms_endpoint_ssl_enabled.dms_endpoint_ssl_enabled import (
@@ -111,6 +126,9 @@ class Test_dms_endpoint_ssl_enabled:
             endpoint_arn: Endpoint(
                 arn=endpoint_arn,
                 id="test-endpoint-ssl-verify-ca",
+                engine_name="test-engine",
+                mongodb_auth_type="no",
+                redis_ssl_protocol="plaintext",
                 region=AWS_REGION_US_EAST_1,
                 ssl_mode="verify-ca",
                 tags=[{"Key": "Name", "Value": "test-endpoint-ssl-verify-ca"}],
@@ -122,6 +140,9 @@ class Test_dms_endpoint_ssl_enabled:
 
         with mock.patch(
             "prowler.providers.aws.services.dms.dms_service.DMS",
+            new=dms_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.dms.dms_client.dms_client",
             new=dms_client,
         ):
             from prowler.providers.aws.services.dms.dms_endpoint_ssl_enabled.dms_endpoint_ssl_enabled import (
@@ -151,6 +172,9 @@ class Test_dms_endpoint_ssl_enabled:
             endpoint_arn: Endpoint(
                 arn=endpoint_arn,
                 id="test-endpoint-ssl-verify-full",
+                mongodb_auth_type="no",
+                engine_name="test-engine",
+                redis_ssl_protocol="plaintext",
                 region=AWS_REGION_US_EAST_1,
                 ssl_mode="verify-full",
                 tags=[{"Key": "Name", "Value": "test-endpoint-ssl-verify-full"}],
@@ -162,6 +186,9 @@ class Test_dms_endpoint_ssl_enabled:
 
         with mock.patch(
             "prowler.providers.aws.services.dms.dms_service.DMS",
+            new=dms_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.dms.dms_client.dms_client",
             new=dms_client,
         ):
             from prowler.providers.aws.services.dms.dms_endpoint_ssl_enabled.dms_endpoint_ssl_enabled import (

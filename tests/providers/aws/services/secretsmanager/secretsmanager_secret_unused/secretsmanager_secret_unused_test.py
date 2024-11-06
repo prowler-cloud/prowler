@@ -21,6 +21,9 @@ def mock_make_api_call_secret_accessed_100_days_ago(self, operation_name, kwarg)
                     "LastAccessedDate": datetime(
                         2023, 1, 1, 0, 0, 0, tzinfo=timezone.utc
                     ),
+                    "LastRotatedDate": datetime(
+                        2023, 4, 9, 0, 0, 0, tzinfo=timezone.utc
+                    ),
                     "Tags": [{"Key": "Name", "Value": "test-100-days-secret"}],
                 }
             ]
@@ -37,6 +40,9 @@ def mock_make_api_call_secret_accessed_yesterday(self, operation_name, kwarg):
                     "ARN": "arn:aws:secretsmanager:eu-west-1:123456789012:secret:test-secret",
                     "Name": "test-secret",
                     "LastAccessedDate": datetime(
+                        2023, 4, 9, 0, 0, 0, tzinfo=timezone.utc
+                    ),
+                    "LastRotatedDate": datetime(
                         2023, 4, 9, 0, 0, 0, tzinfo=timezone.utc
                     ),
                     "Tags": [{"Key": "Name", "Value": "test-secret"}],

@@ -1923,6 +1923,44 @@ class Test_Policy:
         }
         assert not is_policy_public(policy, TRUSTED_AWS_ACCOUNT_NUMBER)
 
+    def test_is_policy_public_cross_cross_service_confused_deputy(
+        self,
+    ):
+        policy = {
+            "Statement": [
+                {
+                    "Sid": "test",
+                    "Effect": "Allow",
+                    "Principal": {"Service": "ec2.amazonaws.com"},
+                    "Action": "lambda:InvokeFunction",
+                    "Resource": "*",
+                }
+            ]
+        }
+        assert is_policy_public(
+            policy, TRUSTED_AWS_ACCOUNT_NUMBER, check_cross_service_confused_deputy=True
+        )
+
+    def test_is_policy_public_cross_cross_service_confused_deputy_ignored(
+        self,
+    ):
+        policy = {
+            "Statement": [
+                {
+                    "Sid": "test",
+                    "Effect": "Allow",
+                    "Principal": {"Service": "ec2.amazonaws.com"},
+                    "Action": "lambda:InvokeFunction",
+                    "Resource": "*",
+                }
+            ]
+        }
+        assert not is_policy_public(
+            policy,
+            TRUSTED_AWS_ACCOUNT_NUMBER,
+            check_cross_service_confused_deputy=False,
+        )
+
     def test_is_policy_public_alexa_condition(
         self,
     ):

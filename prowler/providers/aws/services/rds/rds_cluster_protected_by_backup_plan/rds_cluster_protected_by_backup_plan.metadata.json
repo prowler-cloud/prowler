@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "rds_cluster_protected_by_backup_plan",
+  "CheckTitle": "Check if RDS clusters are protected by a backup plan.",
+  "CheckType": [
+    "Software and Configuration Checks, AWS Security Best Practices"
+  ],
+  "ServiceName": "rds",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-cluster",
+  "Severity": "medium",
+  "ResourceType": "AwsRdsDbInstance",
+  "Description": "Check if RDS clusters are protected by a backup plan.",
+  "Risk": "Without a backup plan, RDS clusters are vulnerable to data loss, accidental deletion, or corruption. This could lead to significant operational disruptions or loss of critical data.",
+  "RelatedUrl": "https://docs.aws.amazon.com/aws-backup/latest/devguide/assigning-resources.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws backup create-backup-plan --backup-plan , aws backup tag-resource --resource-arn <rds-cluster-arn> --tags Key=backup,Value=true",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-26",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Create a backup plan for the RDS cluster to protect it from data loss, accidental deletion, or corruption.",
+      "Url": "https://docs.aws.amazon.com/aws-backup/latest/devguide/assigning-resources.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
