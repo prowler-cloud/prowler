@@ -60,7 +60,7 @@ class Test_AppSync_Service:
         api_arn = api["graphqlApi"]["arn"]
         appsync_client = AppSync(aws_provider)
 
-        assert appsync_client.graphqlapis[api_arn].name == "test-api"
-        assert appsync_client.graphqlapis[api_arn].field_log_level == "ALL"
-        assert appsync_client.graphqlapis[api_arn].authentication_type == "API_KEY"
-        assert appsync_client.graphqlapis[api_arn].tags == []
+        assert appsync_client.graphql_apis[api_arn].name == "test-api"
+        assert appsync_client.graphql_apis[api_arn].field_log_level == "ALL"
+        assert appsync_client.graphql_apis[api_arn].authentication_type == "API_KEY"
+        assert appsync_client.graphql_apis[api_arn].tags == [{}]
