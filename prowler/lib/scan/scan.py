@@ -12,7 +12,8 @@ from prowler.lib.check.compliance import update_checks_metadata_with_compliance
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.check.models import CheckMetadata, Severity
 from prowler.lib.logger import logger
-from prowler.lib.outputs.finding import Finding, Status
+from prowler.lib.outputs.common import Status
+from prowler.lib.outputs.finding import Finding
 from prowler.lib.scan.exceptions.exceptions import (
     ScanInvalidCategoryError,
     ScanInvalidCheckError,

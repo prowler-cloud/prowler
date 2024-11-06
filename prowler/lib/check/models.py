@@ -187,11 +187,11 @@ class CheckMetadata(BaseModel):
         Returns:
             set: A set of checks.
         """
-        checks_from_provider = {}
-        checks_from_severity = {}
-        checks_from_category = {}
-        checks_from_service = {}
-        checks_from_compliance_framework = {}
+        checks_from_provider = set()
+        checks_from_severity = set()
+        checks_from_category = set()
+        checks_from_service = set()
+        checks_from_compliance_framework = set()
         # If the bulk checks metadata is not provided, get it
         if not bulk_checks_metadata:
             bulk_checks_metadata = {}
@@ -223,7 +223,7 @@ class CheckMetadata(BaseModel):
                 available_providers = [p.value for p in Provider]
                 for provider in available_providers:
                     bulk_compliance_frameworks = Compliance.get_bulk(provider=provider)
-            checks_from_compliance_framework = set(
+            checks_from_compliance_framework = (
                 CheckMetadata.list_by_compliance_framework(
                     bulk_compliance_frameworks=bulk_compliance_frameworks,
                     compliance_framework=compliance_framework,

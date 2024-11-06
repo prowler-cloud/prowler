@@ -25,7 +25,9 @@
       "Url": "https://aws.amazon.com/es/blogs/networking-and-content-delivery/deployment-models-for-aws-network-firewall/"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "redundancy"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
