@@ -274,6 +274,28 @@ export const checkConnectionProvider = async (formData: FormData) => {
   }
 };
 
+export const deleteCredentials = async (secretId: string) => {
+  const session = await auth();
+  const keyServer = process.env.API_BASE_URL;
+  const url = new URL(`${keyServer}/providers/secrets/${secretId}`);
+
+  try {
+    const response = await fetch(url.toString(), {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${session?.accessToken}`,
+      },
+    });
+    const data = await response.json();
+    revalidatePath("/providers");
+    return parseStringify(data);
+  } catch (error) {
+    return {
+      error: getErrorMessage(error),
+    };
+  }
+};
+
 export const deleteProvider = async (formData: FormData) => {
   const session = await auth();
   const keyServer = process.env.API_BASE_URL;

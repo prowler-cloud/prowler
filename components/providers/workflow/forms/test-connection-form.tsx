@@ -8,9 +8,12 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { checkConnectionProvider } from "@/actions/providers/providers";
+import {
+  checkConnectionProvider,
+  deleteCredentials,
+} from "@/actions/providers";
 import { getTask } from "@/actions/task/tasks";
-import { SaveIcon } from "@/components/icons";
+import { CheckIcon, SaveIcon } from "@/components/icons";
 import { useToast } from "@/components/ui";
 import { CustomButton } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
@@ -29,12 +32,23 @@ export const TestConnectionForm = ({
   providerData: {
     data: {
       id: string;
+      type: string;
       attributes: {
         connection: {
-          connected: boolean;
+          connected: boolean | null;
+          last_checked_at: string | null;
         };
         provider: "aws" | "azure" | "gcp" | "kubernetes";
         alias: string;
+        scanner_args: Record<string, any>;
+      };
+      relationships: {
+        secret: {
+          data: {
+            type: string;
+            id: string;
+          } | null;
+        };
       };
     };
   };
@@ -43,13 +57,14 @@ export const TestConnectionForm = ({
   const router = useRouter();
   const providerType = searchParams.type;
   const providerId = searchParams.id;
-
+  console.log({ providerData }, "providerData from test connection form");
   const formSchema = testConnectionFormSchema;
   const [apiErrorMessage, setApiErrorMessage] = useState<string | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<{
     connected: boolean;
     error: string | null;
   } | null>(null);
+  const [isResettingCredentials, setIsResettingCredentials] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -118,6 +133,41 @@ export const TestConnectionForm = ({
     }
   };
 
+  const onResetCredentials = async () => {
+    setIsResettingCredentials(true);
+    // Check if provider has no credentials
+    const providerSecretId =
+      providerData?.data?.relationships?.secret?.data?.id;
+    const hasNoCredentials = !providerSecretId;
+    console.log({ providerSecretId }, "providerSecretId");
+    console.log({ hasNoCredentials }, "hasNoCredentials");
+
+    if (hasNoCredentials) {
+      // If no credentials, redirect to add credentials page
+      console.log("no credentials");
+      // router.push(
+      //   `/providers/add-credentials?type=${providerType}&id=${providerId}`,
+      // );
+      return;
+    }
+
+    // If has credentials, delete them first
+    try {
+      // This function will need to be implemented
+      await deleteCredentials(providerSecretId);
+      // After successful deletion, redirect to add credentials page
+      console.log("deleted credentials with success");
+      router.push(
+        `/providers/add-credentials?type=${providerType}&id=${providerId}`,
+      );
+    } catch (error) {
+      // Handle error appropriately
+      console.error("Failed to delete credentials:", error);
+    } finally {
+      setIsResettingCredentials(false);
+    }
+  };
+
   return (
     <Form {...form}>
       <form
@@ -136,25 +186,31 @@ export const TestConnectionForm = ({
         </div>
 
         {apiErrorMessage && (
-          <div className="mt-4 rounded-md bg-red-100 p-3 text-red-700">
+          <div className="mt-4 rounded-md bg-red-100 p-3 text-danger">
             <p>{`Provider ID ${apiErrorMessage.toLowerCase()}. Please check and try again.`}</p>
           </div>
         )}
 
         {connectionStatus && !connectionStatus.connected && (
-          <div className="flex items-center gap-4 rounded-lg border border-red-200 bg-red-50 p-4">
-            <div className="flex items-center">
-              <Icon
-                icon="heroicons:exclamation-circle"
-                className="h-5 w-5 text-red-500"
-              />
+          <>
+            <div className="flex items-center gap-4 rounded-lg border border-red-200 bg-red-50 p-4">
+              <div className="flex items-center">
+                <Icon
+                  icon="heroicons:exclamation-circle"
+                  className="h-5 w-5 text-danger"
+                />
+              </div>
+              <div className="flex items-center">
+                <p className="text-danger">
+                  {connectionStatus.error || "Unknown error"}
+                </p>
+              </div>
             </div>
-            <div className="flex items-center">
-              <p className="text-red-700">
-                {connectionStatus.error || "Unknown error"}
-              </p>
-            </div>
-          </div>
+            <p className="text-md text-danger">
+              It seems there was an issue with your credentials. Please review
+              your credentials and try again.
+            </p>
+          </>
         )}
 
         <ProviderInfo
@@ -178,16 +234,24 @@ export const TestConnectionForm = ({
               <span>Back to providers</span>
             </Link>
           ) : connectionStatus?.error ? (
-            <Link
-              href="/providers/add-credentials"
-              className="mr-3 flex w-fit items-center justify-center space-x-2 rounded-lg border border-solid border-gray-200 px-4 py-2 hover:bg-gray-200 dark:hover:bg-gray-700"
+            <CustomButton
+              onPress={onResetCredentials}
+              type="button"
+              ariaLabel={"Save"}
+              className="w-1/2"
+              variant="solid"
+              color="warning"
+              size="lg"
+              isLoading={isResettingCredentials}
+              startContent={!isResettingCredentials && <CheckIcon size={24} />}
+              isDisabled={isResettingCredentials}
             >
-              <Icon
-                icon="icon-park-outline:close-small"
-                className="h-5 w-5 text-gray-600 dark:text-gray-400"
-              />
-              <span>Handle credentials</span>
-            </Link>
+              {isResettingCredentials ? (
+                <>Loading</>
+              ) : (
+                <span>Reset credentials</span>
+              )}
+            </CustomButton>
           ) : (
             <CustomButton
               type="submit"
