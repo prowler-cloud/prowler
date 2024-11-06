@@ -2,9 +2,9 @@ FROM python:3.12-alpine
 
 LABEL maintainer="https://github.com/prowler-cloud/prowler"
 
-# Install essential tool to compile presidio-analyze library
-# hadolint ignore=DL3018
-RUN apk --no-cache add g++
+# Update system dependencies and install essential tools
+#hadolint ignore=DL3018
+RUN apk --no-cache upgrade && apk --no-cache add curl git g++
 
 # Create non-root user
 RUN mkdir -p /home/prowler && \
