@@ -194,7 +194,7 @@ class Jira:
 
             if response.status_code == 200:
                 resources = response.json()
-                if resources:
+                if len(resources) > 0:
                     return resources[0].get("id")
                 else:
                     logger.error("No resources found")
@@ -291,7 +291,6 @@ class Jira:
         redirect_uri: str = None,
         client_id: str = None,
         client_secret: str = None,
-        state_param: str = None,
         raise_on_exception: bool = True,
     ) -> Connection:
         """Test the connection to Jira
@@ -300,7 +299,6 @@ class Jira:
             - redirect_uri: The redirect URI
             - client_id: The client ID
             - client_secret: The client secret
-            - state_param: The state parameter
             - raise_on_exception: Whether to raise an exception or not
 
         Returns:
@@ -314,7 +312,7 @@ class Jira:
             - JiraTestConnectionError: Failed to test the connection
         """
         try:
-            jira = Jira(redirect_uri, client_id, client_secret, state_param)
+            jira = Jira(redirect_uri, client_id, client_secret)
             access_token = jira.get_access_token()
 
             if not access_token:
