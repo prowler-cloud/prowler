@@ -75,6 +75,9 @@ class DMS(AWSService):
                             id=endpoint["EndpointIdentifier"],
                             region=regional_client.region,
                             ssl_mode=endpoint.get("SslMode", False),
+                            redis_ssl_protocol=endpoint.get("RedisSettings", {}).get(
+                                "SslSecurityProtocol", "plaintext"
+                            ),
                             mongodb_auth_type=endpoint.get("MongoDbSettings", {}).get(
                                 "AuthType", "no"
                             ),
