@@ -14,6 +14,7 @@ import { SaveIcon } from "@/components/icons";
 import { useToast } from "@/components/ui";
 import { CustomButton } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
+import { checkTaskStatus } from "@/lib/helper";
 import { ApiError, testConnectionFormSchema } from "@/types";
 
 import { ProviderInfo } from "../..";
@@ -86,21 +87,30 @@ export const TestConnectionForm = ({
       const taskId = data.data.id;
       setApiErrorMessage(null);
 
-      const task = await getTask(taskId);
-      console.log({ task }, "task");
+      // Use the helper function to check the task status
+      const taskResult = await checkTaskStatus(taskId);
 
-      const connected = task.data.attributes.result.connected;
-      const error = task.data.attributes.result.error;
+      if (taskResult.completed) {
+        // If the task is completed, fetch the final task data
+        const task = await getTask(taskId);
+        const connected = task.data.attributes.result.connected;
 
-      setConnectionStatus({
-        connected,
-        error,
-      });
+        setConnectionStatus({
+          connected,
+          error: null,
+        });
 
-      if (connected) {
-        router.push(
-          `/providers/launch-scan?type=${providerType}&id=${providerId}`,
-        );
+        if (connected) {
+          router.push(
+            `/providers/launch-scan?type=${providerType}&id=${providerId}`,
+          );
+        }
+      } else {
+        // If the task failed, display the error message
+        setConnectionStatus({
+          connected: false,
+          error: taskResult.error || "Unknown error",
+        });
       }
     }
   };
@@ -115,9 +125,11 @@ export const TestConnectionForm = ({
           <div className="text-2xl font-bold leading-9 text-default-foreground">
             Test connection
           </div>
-          <div className="py-2 text-default-500">
-            Please check the provider connection
-          </div>
+          <p className="py-2 text-default-500">
+            Ensure all required credentials and configurations are completed
+            accurately. A successful connection will enable the option to
+            initiate a scan in the following step.
+          </p>
         </div>
 
         {apiErrorMessage && (
