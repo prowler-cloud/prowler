@@ -7,7 +7,6 @@ import {
   DropdownMenu,
   DropdownSection,
   DropdownTrigger,
-  Link,
 } from "@nextui-org/react";
 import {
   AddNoteBulkIcon,
@@ -35,8 +34,9 @@ export function DataTableRowActions<ProviderProps>({
 }: DataTableRowActionsProps<ProviderProps>) {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  console.log("row.original:", row.original);
   const providerId = (row.original as { id: string }).id;
-  const providerType = (row.original as { type: string }).type;
+  const providerType = (row.original as any).attributes?.provider;
   const providerAlias = (row.original as any).attributes?.alias;
   return (
     <>
@@ -76,18 +76,13 @@ export function DataTableRowActions<ProviderProps>({
           >
             <DropdownSection title="Actions">
               <DropdownItem
+                href={`/providers/test-connection?type=${providerType}&id=${providerId}`}
                 key="new"
                 description="Check the connection to the provider"
                 textValue="Check Connection"
                 startContent={<AddNoteBulkIcon className={iconClasses} />}
               >
-                <Link
-                  href={`/providers/test-connection?type=${providerType}&id=${providerId}`}
-                >
-                  <span className="text-sm text-default-600">
-                    Test Connection
-                  </span>
-                </Link>
+                Test Connection
               </DropdownItem>
               <DropdownItem
                 key="edit"
