@@ -4,8 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Icon } from "@iconify/react";
 import { Button, Checkbox, Divider, Link } from "@nextui-org/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { useFormState } from "react-dom";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -40,35 +38,43 @@ export const AuthForm = ({ type }: { type: string }) => {
     },
   });
 
-  const [state, dispatch] = useFormState(authenticate, undefined);
-  const [isLoading, setIsLoading] = useState(false);
+  const isLoading = form.formState.isSubmitting;
   const { toast } = useToast();
-
-  useEffect(() => {
-    if (state?.message === "Success") {
-      router.push("/");
-    }
-  }, [state]);
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     if (type === "sign-in") {
-      setIsLoading(true);
-      dispatch({
+      const result = await authenticate(null, {
         email: data.email.toLowerCase(),
         password: data.password,
       });
-      setIsLoading(false);
+
+      if (result?.message === "Success") {
+        router.push("/");
+      } else if (result?.errors && "credentials" in result.errors) {
+        form.setError("email", {
+          type: "server",
+          message: result.errors.credentials ?? "Incorrect email or password",
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Oops! Something went wrong",
+          description: "An unexpected error occurred. Please try again.",
+        });
+      }
     }
+
     if (type === "sign-up") {
-      setIsLoading(true);
       const newUser = await createNewUser(data);
-      setIsLoading(false);
 
       if (!newUser.errors) {
+        toast({
+          title: "Success!",
+          description: "The user was registered successfully.",
+        });
+        form.reset();
         router.push("/sign-in");
-      }
-
-      if (newUser?.errors && newUser.errors.length > 0) {
+      } else {
         newUser.errors.forEach((error: ApiError) => {
           const errorMessage = error.detail;
           switch (error.source.pointer) {
@@ -97,18 +103,6 @@ export const AuthForm = ({ type }: { type: string }) => {
                 description: errorMessage,
               });
           }
-        });
-      } else {
-        toast({
-          title: "Success!",
-          description: "The user was registered successfully.",
-        });
-        form.reset({
-          name: "",
-          company: "",
-          email: "",
-          password: "",
-          termsAndConditions: false,
         });
       }
     }
@@ -222,7 +216,7 @@ export const AuthForm = ({ type }: { type: string }) => {
                 </>
               )}
 
-              {state?.message === "Credentials error" && (
+              {form.formState.errors?.email && (
                 <div className="flex flex-row items-center gap-2 text-system-error">
                   <NotificationIcon size={16} />
                   <p className="text-s">No user found</p>
