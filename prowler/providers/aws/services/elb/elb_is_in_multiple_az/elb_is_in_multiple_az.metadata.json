@@ -23,7 +23,9 @@
       "Url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/enable-disable-crosszone-lb.html"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "redundancy"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

@@ -61,6 +61,22 @@ def mock_make_api_call(self, operation_name, kwarg):
                     "launchType": "FARGATE",
                     "platformVersion": "1.4.0",
                     "platformFamily": "Linux",
+                    "taskSets": [
+                        {
+                            "id": "ecs-svc/task-set",
+                            "taskSetArn": "arn:aws:ecs:eu-west-1:123456789012:task-set/test_cluster_1/test_ecs_service/ecs-svc/task-set",
+                            "clusterArn": "arn:aws:ecs:eu-west-1:123456789012:cluster/test_cluster_1",
+                            "serviceArn": "arn:aws:ecs:eu-west-1:123456789012:service/test_cluster_1/test_ecs_service",
+                            "networkConfiguration": {
+                                "awsvpcConfiguration": {
+                                    "subnets": ["subnet-12345678"],
+                                    "securityGroups": ["sg-12345678"],
+                                    "assignPublicIp": "DISABLED",
+                                },
+                            },
+                            "tags": [],
+                        }
+                    ],
                 }
             ]
         }
@@ -228,6 +244,8 @@ class Test_ECS_Service:
             "arn:aws:ecs:eu-west-1:123456789012:service/test_cluster_1/test_ecs_service"
         )
 
+        task_set_arn = "arn:aws:ecs:eu-west-1:123456789012:task-set/test_cluster_1/test_ecs_service/ecs-svc/task-set"
+
         assert len(ecs.services) == 1
         assert ecs.services[service_arn].name == "test_ecs_service"
         assert ecs.services[service_arn].arn == service_arn
@@ -237,3 +255,14 @@ class Test_ECS_Service:
         assert ecs.services[service_arn].launch_type == "FARGATE"
         assert ecs.services[service_arn].platform_version == "1.4.0"
         assert ecs.services[service_arn].platform_family == "Linux"
+        assert len(ecs.task_sets) == 1
+        assert ecs.task_sets[task_set_arn].id == "ecs-svc/task-set"
+        assert ecs.task_sets[task_set_arn].arn == task_set_arn
+        assert (
+            ecs.task_sets[task_set_arn].cluster_arn
+            == "arn:aws:ecs:eu-west-1:123456789012:cluster/test_cluster_1"
+        )
+        assert ecs.task_sets[task_set_arn].service_arn == service_arn
+        assert ecs.task_sets[task_set_arn].assign_public_ip == "DISABLED"
+        assert ecs.task_sets[task_set_arn].region == AWS_REGION_EU_WEST_1
+        assert ecs.task_sets[task_set_arn].tags == []
