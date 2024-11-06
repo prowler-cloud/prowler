@@ -173,8 +173,8 @@ class Provider(ABC):
                         arguments.scan_unused_services,
                         arguments.resource_tag,
                         arguments.resource_arn,
-                        arguments.config_file,
-                        arguments.mutelist_file,
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
                     )
                 elif "azure" in provider_class_name.lower():
@@ -186,8 +186,8 @@ class Provider(ABC):
                         arguments.tenant_id,
                         arguments.azure_region,
                         arguments.subscription_id,
-                        arguments.config_file,
-                        arguments.mutelist_file,
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
                     )
                 elif "gcp" in provider_class_name.lower():
@@ -198,8 +198,8 @@ class Provider(ABC):
                         arguments.credentials_file,
                         arguments.impersonate_service_account,
                         arguments.list_project_id,
-                        arguments.config_file,
-                        arguments.mutelist_file,
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
                     )
                 elif "kubernetes" in provider_class_name.lower():
@@ -207,8 +207,8 @@ class Provider(ABC):
                         arguments.kubeconfig_file,
                         arguments.context,
                         arguments.namespace,
-                        arguments.config_file,
-                        arguments.mutelist_file,
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
                     )
 
