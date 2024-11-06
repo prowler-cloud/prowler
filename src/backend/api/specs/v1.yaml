@@ -284,10 +284,17 @@ paths:
         name: filter[scan]
         schema:
           type: string
+          format: uuid
       - in: query
         name: filter[scan__in]
         schema:
-          type: string
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - name: filter[search]
         required: false
         in: query

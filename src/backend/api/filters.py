@@ -1,5 +1,4 @@
 from datetime import date, datetime, timezone
-from uuid import UUID
 
 from django.conf import settings
 from django.db.models import Q
@@ -42,7 +41,7 @@ from api.uuid_utils import (
     uuid7_start,
     uuid7_end,
     uuid7_range,
-    parse_params_to_uuid7,
+    transform_into_uuid7,
 )
 from api.v1.serializers import TaskBase
 
@@ -287,8 +286,8 @@ class FindingFilter(FilterSet):
         field_name="resources__type", lookup_expr="icontains"
     )
 
-    scan = CharFilter(method="filter_scan_id")
-    scan__in = CharFilter(method="filter_scan_id_in")
+    scan = UUIDFilter(method="filter_scan_id")
+    scan__in = UUIDInFilter(method="filter_scan_id_in")
 
     inserted_at = DateFilter(method="filter_inserted_at", lookup_expr="date")
     inserted_at__date = DateFilter(method="filter_inserted_at", lookup_expr="date")
@@ -323,32 +322,64 @@ class FindingFilter(FilterSet):
     #  Convert filter values to UUIDv7 values for use with partitioning
 
     def filter_scan_id(self, queryset, name, value):
-        value = parse_params_to_uuid7(value)
+        try:
+            value_uuid = transform_into_uuid7(value)
+            start = uuid7_start(value_uuid)
+            end = uuid7_end(value_uuid, settings.FINDINGS_TABLE_PARTITION_DAYS)
+        except ValidationError as validation_error:
+            detail = str(validation_error.detail[0])
+            raise ValidationError(
+                [
+                    {
+                        "detail": detail,
+                        "status": 400,
+                        "source": {"pointer": "/data/relationships/scan"},
+                        "code": "invalid",
+                    }
+                ]
+            )
 
-        start = uuid7_start(value)
-        end = uuid7_end(value, settings.FINDINGS_TABLE_PARTITION_DAYS)
-        return queryset.filter(id__gte=start).filter(id__lt=end).filter(scan__id=value)
+        return (
+            queryset.filter(id__gte=start)
+            .filter(id__lt=end)
+            .filter(scan__id=value_uuid)
+        )
 
     def filter_scan_id_in(self, queryset, name, value):
-        value = parse_params_to_uuid7(value)
-        if isinstance(value, UUID):
-            value = [value]
+        try:
+            uuid_list = [
+                transform_into_uuid7(value_uuid)
+                for value_uuid in value
+                if value_uuid is not None
+            ]
 
-        start, end = uuid7_range(value)
+            start, end = uuid7_range(uuid_list)
+        except ValidationError as validation_error:
+            detail = str(validation_error.detail[0])
+            raise ValidationError(
+                [
+                    {
+                        "detail": detail,
+                        "status": 400,
+                        "source": {"pointer": "/data/relationships/scan"},
+                        "code": "invalid",
+                    }
+                ]
+            )
         if start == end:
-            return queryset.filter(id__gte=start).filter(scan__id__in=value)
+            return queryset.filter(id__gte=start).filter(scan__id__in=uuid_list)
         else:
             return (
                 queryset.filter(id__gte=start)
                 .filter(id__lt=end)
-                .filter(scan__id__in=value)
+                .filter(scan__id__in=uuid_list)
             )
 
     def filter_inserted_at(self, queryset, name, value):
         value = self.maybe_date_to_datetime(value)
         start = uuid7_start(datetime_to_uuid7(value))
 
-        return queryset.filter(id__gte=start).filter(inserted_at=value)
+        return queryset.filter(id__gte=start).filter(inserted_at__date=value)
 
     def filter_inserted_at_gte(self, queryset, name, value):
         value = self.maybe_date_to_datetime(value)
