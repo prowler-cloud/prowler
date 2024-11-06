@@ -190,9 +190,9 @@ from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.provider import Provider
 from prowler.providers.<new_provider_name>.models import (
     # All providers models needed
-    ProvierSessionModel,
-    ProvierIdentityModel,
-    ProvierOutputOptionsModel
+    ProviderSessionModel,
+    ProviderIdentityModel,
+    ProviderOutputOptionsModel
 )
 
 class NewProvider(Provider):
@@ -201,7 +201,7 @@ class NewProvider(Provider):
     _session: <ProvierSessionModel>
     _identity: <ProvierIdentityModel>
     _audit_config: dict
-    _output_options: ProvierOutputOptionsModel
+    _output_options: ProviderOutputOptionsModel
     _mutelist: dict
     audit_metadata: Audit_Metadata
 
