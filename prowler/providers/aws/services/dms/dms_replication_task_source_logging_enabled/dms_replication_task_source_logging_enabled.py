@@ -26,6 +26,11 @@ class dms_replication_task_source_logging_enabled(Check):
         Returns:
             List[Check_Report_AWS]: A list of report objects with the results of the check.
         """
+        MINIMUM_SEVERITY_LEVELS = [
+            "LOGGER_SEVERITY_DEFAULT",
+            "LOGGER_SEVERITY_DEBUG",
+            "LOGGER_SEVERITY_DETAILED_DEBUG",
+        ]
         findings = []
         for (
             replication_task_arn,
@@ -46,21 +51,15 @@ class dms_replication_task_source_logging_enabled(Check):
                 source_unload_compliant = False
 
                 for component in replication_task.log_components:
-                    if component["Id"] == "SOURCE_CAPTURE" and component[
-                        "Severity"
-                    ] in [
-                        "LOGGER_SEVERITY_DEFAULT",
-                        "LOGGER_SEVERITY_DEBUG",
-                        "LOGGER_SEVERITY_DETAILED_DEBUG",
-                    ]:
+                    if (
+                        component["Id"] == "SOURCE_CAPTURE"
+                        and component["Severity"] in MINIMUM_SEVERITY_LEVELS
+                    ):
                         source_capture_compliant = True
-                    elif component["Id"] == "SOURCE_UNLOAD" and component[
-                        "Severity"
-                    ] in [
-                        "LOGGER_SEVERITY_DEFAULT",
-                        "LOGGER_SEVERITY_DEBUG",
-                        "LOGGER_SEVERITY_DETAILED_DEBUG",
-                    ]:
+                    elif (
+                        component["Id"] == "SOURCE_UNLOAD"
+                        and component["Severity"] in MINIMUM_SEVERITY_LEVELS
+                    ):
                         source_unload_compliant = True
 
                 if not source_capture_compliant:
