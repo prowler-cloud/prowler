@@ -13,6 +13,7 @@ interface CustomInputProps<T extends FieldValues> {
   label?: string;
   labelPlacement?: "inside" | "outside";
   variant?: "flat" | "bordered" | "underlined" | "faded";
+  size?: "sm" | "md" | "lg";
   type?: string;
   placeholder?: string;
   password?: boolean;
@@ -29,6 +30,7 @@ export const CustomInput = <T extends FieldValues>({
   labelPlacement = "inside",
   placeholder,
   variant = "bordered",
+  size = "md",
   confirmPassword = false,
   password = false,
   isRequired = true,
@@ -95,6 +97,7 @@ export const CustomInput = <T extends FieldValues>({
               placeholder={inputPlaceholder}
               type={inputType}
               variant={variant}
+              size={size}
               isInvalid={isInvalid}
               endContent={endContent}
               {...field}

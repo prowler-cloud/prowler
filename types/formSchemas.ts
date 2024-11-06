@@ -31,11 +31,111 @@ export const scheduleScanFormSchema = () =>
     scheduleDate: z.string(),
   });
 
-export const addProviderFormSchema = z.object({
-  providerType: z.string(),
-  providerAlias: z.string(),
+export const addProviderFormSchema = z
+  .object({
+    providerType: z.enum(["aws", "azure", "gcp", "kubernetes"], {
+      required_error: "Please select a provider type",
+    }),
+  })
+  .and(
+    z.discriminatedUnion("providerType", [
+      z.object({
+        providerType: z.literal("aws"),
+        providerAlias: z.string(),
+        providerUid: z.string(),
+        awsCredentialsType: z.string().min(1, {
+          message: "Please select the type of credentials you want to use",
+        }),
+      }),
+      z.object({
+        providerType: z.literal("azure"),
+        providerAlias: z.string(),
+        providerUid: z.string(),
+        awsCredentialsType: z.string().optional(),
+      }),
+      z.object({
+        providerType: z.literal("gcp"),
+        providerAlias: z.string(),
+        providerUid: z.string(),
+        awsCredentialsType: z.string().optional(),
+      }),
+      z.object({
+        providerType: z.literal("kubernetes"),
+        providerAlias: z.string(),
+        providerUid: z.string(),
+        awsCredentialsType: z.string().optional(),
+      }),
+    ]),
+  );
+
+export const addCredentialsFormSchema = (providerType: string) =>
+  z.object({
+    secretName: z.string().optional(),
+    providerId: z.string(),
+    providerType: z.string(),
+    ...(providerType === "aws"
+      ? {
+          aws_access_key_id: z
+            .string()
+            .nonempty("AWS Access Key ID is required"),
+          aws_secret_access_key: z
+            .string()
+            .nonempty("AWS Secret Access Key is required"),
+          aws_session_token: z.string().optional(),
+        }
+      : providerType === "azure"
+        ? {
+            client_id: z.string().nonempty("Client ID is required"),
+            client_secret: z.string().nonempty("Client Secret is required"),
+            tenant_id: z.string().nonempty("Tenant ID is required"),
+          }
+        : providerType === "gcp"
+          ? {
+              client_id: z.string().nonempty("Client ID is required"),
+              client_secret: z.string().nonempty("Client Secret is required"),
+              refresh_token: z.string().nonempty("Refresh Token is required"),
+            }
+          : providerType === "kubernetes"
+            ? {
+                kubeconfig_content: z
+                  .string()
+                  .nonempty("Kubeconfig Content is required"),
+              }
+            : {}),
+  });
+
+export const addCredentialsRoleFormSchema = (providerType: string) =>
+  providerType === "aws"
+    ? z.object({
+        providerId: z.string(),
+        providerType: z.string(),
+        role_arn: z.string().optional(),
+        aws_access_key_id: z.string().optional(),
+        aws_secret_access_key: z.string().optional(),
+        aws_session_token: z.string().optional(),
+        session_duration: z.number().optional(),
+        external_id: z.string().optional(),
+        role_session_name: z.string().optional(),
+      })
+    : z.object({
+        providerId: z.string(),
+        providerType: z.string(),
+      });
+
+export const testConnectionFormSchema = z.object({
   providerId: z.string(),
 });
+
+export const launchScanFormSchema = () =>
+  z.object({
+    providerId: z.string(),
+    providerType: z.string(),
+    scannerArgs: z
+      .object({
+        checksToExecute: z.array(z.string()).optional(),
+      })
+      .optional(),
+  });
 
 export const editProviderFormSchema = (currentAlias: string) =>
   z.object({

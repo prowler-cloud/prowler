@@ -20,7 +20,6 @@ import { useState } from "react";
 import { VerticalDotsIcon } from "@/components/icons";
 import { CustomAlertModal } from "@/components/ui/custom";
 
-import { CheckConnectionProvider } from "../CheckConnectionProvider";
 import { EditForm } from "../forms";
 import { DeleteForm } from "../forms/delete-form";
 
@@ -36,6 +35,7 @@ export function DataTableRowActions<ProviderProps>({
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const providerId = (row.original as { id: string }).id;
+  const providerType = (row.original as any).attributes?.provider;
   const providerAlias = (row.original as any).attributes?.alias;
   return (
     <>
@@ -75,12 +75,13 @@ export function DataTableRowActions<ProviderProps>({
           >
             <DropdownSection title="Actions">
               <DropdownItem
+                href={`/providers/test-connection?type=${providerType}&id=${providerId}`}
                 key="new"
                 description="Check the connection to the provider"
                 textValue="Check Connection"
                 startContent={<AddNoteBulkIcon className={iconClasses} />}
               >
-                <CheckConnectionProvider id={providerId} />
+                Test Connection
               </DropdownItem>
               <DropdownItem
                 key="edit"

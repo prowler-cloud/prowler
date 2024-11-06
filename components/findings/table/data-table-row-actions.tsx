@@ -10,7 +10,6 @@ import {
 } from "@nextui-org/react";
 import {
   // AddNoteBulkIcon,
-  DeleteDocumentBulkIcon,
   EditDocumentBulkIcon,
 } from "@nextui-org/shared-icons";
 import { Row } from "@tanstack/react-table";
@@ -31,10 +30,8 @@ const iconClasses =
 export function DataTableRowActions<FindingProps>({
   row,
 }: DataTableRowActionsProps<FindingProps>) {
-  // const [isEditOpen, setIsEditOpen] = useState(false);
-  // const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  // const providerId = (row.original as { id: string }).id;
-  // const providerAlias = (row.original as any).attributes?.alias;
+  const findingId = (row.original as { id: string }).id;
+  console.log(findingId);
   return (
     <>
       {/* <CustomAlertModal

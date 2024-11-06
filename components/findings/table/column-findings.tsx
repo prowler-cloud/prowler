@@ -2,12 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 
-import {
-  DataTableColumnHeader,
-  SeverityBadge,
-  Status,
-  StatusBadge,
-} from "@/components/ui/table";
+import { SeverityBadge, Status, StatusBadge } from "@/components/ui/table";
 import { FindingProps } from "@/types";
 
 import { DataTableRowActions } from "./data-table-row-actions";
@@ -20,7 +15,6 @@ const statusMap: Record<"PASS" | "FAIL" | "MANUAL" | "MUTED", Status> = {
 };
 
 const getFindingsData = (row: { original: FindingProps }) => {
-  console.log(row.original);
   return row.original;
 };
 
@@ -94,7 +88,7 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
   },
   {
     accessorKey: "status",
-    header: "Scan Status",
+    header: "Status",
     cell: ({ row }) => {
       const {
         attributes: { status },

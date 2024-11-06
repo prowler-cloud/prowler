@@ -26,7 +26,6 @@ export default async function Providers({
       <Spacer y={4} />
       <FilterControls search providers />
       <Spacer y={4} />
-
       <AddProvider />
       <Spacer y={4} />
 

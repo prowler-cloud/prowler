@@ -18,6 +18,8 @@ export default async function Findings({
 }: {
   searchParams: SearchParamsProps;
 }) {
+  const searchParamsKey = JSON.stringify(searchParams || {});
+
   return (
     <>
       <Header title="Findings" icon="ph:list-checks-duotone" />
@@ -25,7 +27,7 @@ export default async function Findings({
       <Spacer y={4} />
       <FilterControls search providers date />
       <Spacer y={4} />
-      <Suspense fallback={<SkeletonTableFindings />}>
+      <Suspense key={searchParamsKey} fallback={<SkeletonTableFindings />}>
         <SSRDataTable searchParams={searchParams} />
       </Suspense>
     </>

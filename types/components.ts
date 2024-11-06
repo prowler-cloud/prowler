@@ -26,6 +26,52 @@ export type NextUIColors =
   | "danger"
   | "default";
 
+export type AWSCredentials = {
+  aws_access_key_id: string;
+  aws_secret_access_key: string;
+  aws_session_token: string;
+  secretName: string;
+  providerId: string;
+};
+
+export type AWSCredentialsRole = {
+  role_arn: string;
+  aws_access_key_id?: string;
+  aws_secret_access_key?: string;
+  aws_session_token?: string;
+  external_id?: string;
+  role_session_name?: string;
+  session_duration?: number;
+};
+
+export type AzureCredentials = {
+  client_id: string;
+  client_secret: string;
+  tenant_id: string;
+  secretName: string;
+  providerId: string;
+};
+
+export type GCPCredentials = {
+  client_id: string;
+  client_secret: string;
+  refresh_token: string;
+  secretName: string;
+  providerId: string;
+};
+
+export type KubernetesCredentials = {
+  kubeconfig_content: string;
+  secretName: string;
+  providerId: string;
+};
+
+export type CredentialsFormSchema =
+  | AWSCredentials
+  | AzureCredentials
+  | GCPCredentials
+  | KubernetesCredentials;
+
 export interface SearchParamsProps {
   [key: string]: string | string[] | undefined;
 }
