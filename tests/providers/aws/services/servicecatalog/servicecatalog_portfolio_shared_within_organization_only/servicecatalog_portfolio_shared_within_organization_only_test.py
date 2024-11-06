@@ -68,7 +68,6 @@ def mock_make_api_call_v2(self, operation_name, kwarg):
 
 class Test_servicecatalog_portfolio_shared_within_organization_only:
     def test_no_portfolios(self):
-        client("servicecatalog", region_name=AWS_REGION_EU_WEST_1)
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
@@ -86,6 +85,7 @@ class Test_servicecatalog_portfolio_shared_within_organization_only:
             result = check.execute()
             assert len(result) == 0
 
+    @mock_aws
     @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     def test_organizations_not_active(self):
         client("servicecatalog", region_name=AWS_REGION_EU_WEST_1)
