@@ -125,5 +125,5 @@ prowler <provider> --list-categories
 ```
 - Execute specific category(s):
 ```console
-prowler  <provider> --categories
+prowler  <provider> --categories secrets
 ```

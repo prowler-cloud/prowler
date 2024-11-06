@@ -58,6 +58,7 @@ class Test_cloudfront_s3_origin_non_existent_bucket:
                         id="S3-ORIGIN",
                         origin_protocol_policy="",
                         origin_ssl_protocols=[],
+                        s3_origin_config={"OriginAccessIdentity": ""},
                     ),
                 ],
             )

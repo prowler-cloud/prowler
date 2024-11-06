@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "s3_bucket_event_notifications_enabled",
+  "CheckTitle": "Check if S3 buckets have event notifications enabled.",
+  "CheckType": [
+    "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53 Controls"
+  ],
+  "ServiceName": "s3",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:s3:::bucket_name",
+  "Severity": "medium",
+  "ResourceType": "AwsS3Bucket",
+  "Description": "Ensure whether S3 buckets have event notifications enabled.",
+  "Risk": "Without event notifications, important actions on S3 buckets may go unnoticed, leading to missed opportunities for timely response to critical changes, such as object creation, deletion, or updates that could impact data security and availability.",
+  "RelatedUrl": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/notification-how-to-event-types-and-destinations.html#supported-notification-event-types",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/s3-controls.html#s3-11",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable event notifications for all S3 general-purpose buckets to monitor important events such as object creation, deletion, tagging, and lifecycle events, ensuring visibility and quick action on relevant changes.",
+      "Url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/EventNotifications.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

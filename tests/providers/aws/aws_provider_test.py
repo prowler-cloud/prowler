@@ -978,9 +978,9 @@ aws:
                 }
             },
         ):
-            assert aws_provider.get_available_aws_service_regions("ec2") == {
-                AWS_REGION_US_EAST_1
-            }
+            assert aws_provider.get_available_aws_service_regions(
+                "ec2", "aws", {AWS_REGION_US_EAST_1}
+            ) == {AWS_REGION_US_EAST_1}
 
     @mock_aws
     def test_get_available_aws_service_regions_with_all_regions_audited(self):
@@ -1017,7 +1017,9 @@ aws:
                 }
             },
         ):
-            assert len(aws_provider.get_available_aws_service_regions("ec2")) == 17
+            assert (
+                len(aws_provider.get_available_aws_service_regions("ec2", "aws")) == 17
+            )
 
     @mock_aws
     def test_get_tagged_resources(self):
@@ -1440,6 +1442,18 @@ aws:
             == "The provided AWS credentials belong to a different account"
         )
         assert connection.error.code == 1015
+
+    @mock_aws
+    def test_test_connection_generic_exception(self):
+        with patch(
+            "prowler.providers.aws.aws_provider.AwsProvider.setup_session",
+            side_effect=Exception(),
+        ):
+            connection = AwsProvider.test_connection(raise_on_exception=False)
+
+        assert isinstance(connection, Connection)
+        assert not connection.is_connected
+        assert isinstance(connection.error, Exception)
 
     @mock_aws
     def test_create_sts_session(self):

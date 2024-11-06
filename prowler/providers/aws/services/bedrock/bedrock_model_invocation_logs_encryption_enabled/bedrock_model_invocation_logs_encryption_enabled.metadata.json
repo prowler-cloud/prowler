@@ -25,8 +25,7 @@
   },
   "Categories": [
     "encryption",
-    "logging",
-    "security"
+    "logging"
   ],
   "DependsOn": [],
   "RelatedTo": [],

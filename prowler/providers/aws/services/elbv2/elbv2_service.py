@@ -103,6 +103,8 @@ class ELBv2(AWSService):
             )["Attributes"]:
                 if attribute["Key"] == "routing.http.desync_mitigation_mode":
                     load_balancer[1].desync_mitigation_mode = attribute["Value"]
+                if attribute["Key"] == "load_balancing.cross_zone.enabled":
+                    load_balancer[1].cross_zone_load_balancing = attribute["Value"]
                 if attribute["Key"] == "deletion_protection.enabled":
                     load_balancer[1].deletion_protection = attribute["Value"]
                 if attribute["Key"] == "access_logs.s3.enabled":
@@ -203,6 +205,7 @@ class LoadBalancerv2(BaseModel):
     deletion_protection: Optional[str]
     dns: Optional[str]
     drop_invalid_header_fields: Optional[str]
+    cross_zone_load_balancing: Optional[str]
     listeners: Dict[str, Listenerv2] = {}
     scheme: Optional[str]
     security_groups: list[str] = []
