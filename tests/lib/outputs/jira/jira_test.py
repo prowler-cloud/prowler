@@ -1,11 +1,16 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, PropertyMock, patch
 from urllib.parse import parse_qs, urlparse
 
 import pytest
 
 from prowler.lib.outputs.jira.exceptions.exceptions import (
     JiraAuthenticationError,
+    JiraCreateIssueError,
+    JiraGetAvailableIssueTypesError,
     JiraGetCloudIdError,
+    JiraGetProjectsError,
+    JiraNoProjectsError,
+    JiraRefreshTokenError,
 )
 from prowler.lib.outputs.jira.jira import Jira
 
@@ -14,10 +19,10 @@ class TestJiraIntegration:
     @pytest.fixture(autouse=True)
     @patch.object(Jira, "get_auth", return_value=None)
     def setup(self, mock_get_auth, monkeypatch):
+        monkeypatch.setattr("builtins.input", lambda _: "test_authorization_code")
+
         # To disable vulture
         mock_get_auth = mock_get_auth
-
-        monkeypatch.setattr("builtins.input", lambda _: "test_authorization_code")
 
         self.redirect_uri = "https://example.com/callback"
         self.client_id = "test_client_id"
@@ -33,6 +38,7 @@ class TestJiraIntegration:
     @patch.object(Jira, "get_auth", return_value=None)
     def test_auth_code_url(self, mock_get_auth):
         """Test to verify the authorization URL generation with correct query parameters"""
+
         # To disable vulture
         mock_get_auth = mock_get_auth
 
@@ -87,6 +93,8 @@ class TestJiraIntegration:
     )
     def test_get_auth_connection_error(self, mock_post):
         """Test get_auth raises JiraAuthenticationError on connection failure."""
+        # To disable vulture
+        mock_post = mock_post
 
         with pytest.raises(JiraAuthenticationError):
             self.jira_integration.get_auth("test_auth_code")
@@ -134,6 +142,862 @@ class TestJiraIntegration:
     )
     def test_get_cloud_id_unexpected_error(self, mock_get):
         """Test get_cloud_id raises JiraGetCloudIdError on an unexpected exception."""
+        # To disable vulture
+        mock_get = mock_get
 
         with pytest.raises(JiraGetCloudIdError):
             self.jira_integration.get_cloud_id("test_access_token")
+
+    @patch.object(Jira, "refresh_access_token", return_value="new_access_token")
+    def test_get_access_token_refresh(self, mock_refresh_access_token):
+        """Test get_access_token refreshes token when expired."""
+
+        self.jira_integration.auth_expiration = 0
+        access_token = self.jira_integration.get_access_token()
+
+        assert access_token == "new_access_token"
+        mock_refresh_access_token.assert_called_once()
+
+    def test_get_access_token_valid_token(self):
+        """Test get_access_token returns existing token if not expired."""
+
+        self.jira_integration.auth_expiration = 100
+        self.jira_integration.access_token = "valid_access_token"
+        access_token = self.jira_integration.get_access_token()
+
+        assert access_token == "valid_access_token"
+
+    @patch.object(Jira, "refresh_access_token", side_effect=JiraRefreshTokenError)
+    def test_get_access_token_refresh_error(self, mock_refresh_access_token):
+        """Test get_access_token raises JiraRefreshTokenError on token refresh failure."""
+
+        # To disable vulture
+        mock_refresh_access_token = mock_refresh_access_token
+
+        self.jira_integration.auth_expiration = 0
+
+        with pytest.raises(JiraRefreshTokenError):
+            self.jira_integration.get_access_token()
+
+    @patch("prowler.lib.outputs.jira.jira.requests.post")
+    def test_refresh_access_token_successful(self, mock_post):
+        """Test successful access token refresh in refresh_access_token."""
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "access_token": "new_access_token",
+            "refresh_token": "new_refresh_token",
+            "expires_in": 3600,
+        }
+        mock_post.return_value = mock_response
+
+        new_access_token = self.jira_integration.refresh_access_token()
+
+        assert new_access_token == "new_access_token"
+        assert self.jira_integration._access_token == "new_access_token"
+        assert self.jira_integration._refresh_token == "new_refresh_token"
+        assert self.jira_integration._auth_expiration == 3600
+
+    @patch("prowler.lib.outputs.jira.jira.requests.post")
+    def test_refresh_access_token_response_error(self, mock_post):
+        """Test refresh_access_token raises JiraRefreshTokenResponseError when response code is not 200, later JiraRefreshTokenError will be raised."""
+        mock_response = MagicMock()
+        mock_response.status_code = 400
+        mock_response.json.return_value = {"error": "invalid_request"}
+        mock_post.return_value = mock_response
+
+        with pytest.raises(JiraRefreshTokenError):
+            self.jira_integration.refresh_access_token()
+
+    @patch(
+        "prowler.lib.outputs.jira.jira.requests.post",
+        side_effect=Exception("Connection error"),
+    )
+    def test_refresh_access_token_unexpected_error(self, mock_post):
+        """Test refresh_access_token raises JiraRefreshTokenError on unexpected exception."""
+        # To disable vulture
+        mock_post = mock_post
+
+        with pytest.raises(JiraRefreshTokenError):
+            self.jira_integration.refresh_access_token()
+
+    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
+    @patch.object(Jira, "get_cloud_id", return_value="test_cloud_id")
+    @patch.object(Jira, "get_auth", return_value=None)
+    @patch("prowler.lib.outputs.jira.jira.requests.get")
+    def test_test_connection_successful(
+        self, mock_get, mock_get_cloud_id, mock_get_auth, mock_get_access_token
+    ):
+        """Test that a successful connection returns an active Connection object."""
+        # To disable vulture
+        mock_get_cloud_id = mock_get_cloud_id
+        mock_get_auth = mock_get_auth
+        mock_get_access_token = mock_get_access_token
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"id": "test_user_id"}
+        mock_get.return_value = mock_response
+
+        connection = self.jira_integration.test_connection(
+            redirect_uri=self.redirect_uri,
+            client_id=self.client_id,
+            client_secret=self.client_secret,
+        )
+
+        assert connection.is_connected
+        assert connection.error is None
+
+    @patch.object(
+        Jira,
+        "get_access_token",
+        side_effect=JiraAuthenticationError("Failed to authenticate with Jira"),
+    )
+    def test_test_connection_failed(self, mock_get_access_token):
+        """Test that a failed connection raises JiraAuthenticationError."""
+        # To disable vulture
+        mock_get_access_token = mock_get_access_token
+
+        with pytest.raises(JiraAuthenticationError):
+            self.jira_integration.test_connection(
+                redirect_uri=self.redirect_uri,
+                client_id=self.client_id,
+                client_secret=self.client_secret,
+            )
+
+    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
+    @patch.object(
+        Jira, "cloud_id", new_callable=PropertyMock, return_value="test_cloud_id"
+    )
+    @patch("prowler.lib.outputs.jira.jira.requests.get")
+    def test_get_projects_successful(
+        self, mock_get, mock_cloud_id, mock_get_access_token
+    ):
+        """Test successful retrieval of projects from Jira."""
+        # To disable vulture
+        mock_cloud_id = mock_cloud_id
+        mock_get_access_token = mock_get_access_token
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = [
+            {"key": "PROJ1", "name": "Project One"},
+            {"key": "PROJ2", "name": "Project Two"},
+        ]
+        mock_get.return_value = mock_response
+
+        projects = self.jira_integration.get_projects()
+
+        expected_projects = [
+            {"key": "PROJ1", "name": "Project One"},
+            {"key": "PROJ2", "name": "Project Two"},
+        ]
+        assert projects == expected_projects
+
+    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
+    @patch.object(
+        Jira, "cloud_id", new_callable=PropertyMock, return_value="test_cloud_id"
+    )
+    @patch("prowler.lib.outputs.jira.jira.requests.get")
+    def test_get_projects_no_projects_found(
+        self, mock_get, mock_cloud_id, mock_get_access_token
+    ):
+        """Test that get_projects raises JiraNoProjectsError when no projects are found."""
+        # To disable vulture
+        mock_cloud_id = mock_cloud_id
+        mock_get_access_token = mock_get_access_token
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = []
+        mock_get.return_value = mock_response
+
+        with pytest.raises(JiraNoProjectsError):
+            self.jira_integration.get_projects()
+
+    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
+    @patch.object(
+        Jira, "cloud_id", new_callable=PropertyMock, return_value="test_cloud_id"
+    )
+    @patch("prowler.lib.outputs.jira.jira.requests.get")
+    def test_get_projects_response_error(
+        self, mock_get, mock_cloud_id, mock_get_access_token
+    ):
+        """Test that get_projects raises JiraGetProjectsResponseError on non-200 response."""
+        # To disable vulture
+        mock_cloud_id = mock_cloud_id
+        mock_get_access_token = mock_get_access_token
+
+        mock_response = MagicMock()
+        mock_response.status_code = 404
+        mock_response.json.return_value = {"error": "Not Found"}
+        mock_get.return_value = mock_response
+
+        with pytest.raises(JiraGetProjectsError):
+            self.jira_integration.get_projects()
+
+    @patch.object(
+        Jira,
+        "get_access_token",
+        side_effect=JiraRefreshTokenError("Failed to refresh the access token"),
+    )
+    def test_get_projects_refresh_token_error(self, mock_get_access_token):
+        """Test that get_projects raises JiraRefreshTokenError when refreshing the token fails."""
+        # To disable vulture
+        mock_get_access_token = mock_get_access_token
+
+        with pytest.raises(JiraRefreshTokenError):
+            self.jira_integration.get_projects()
+
+    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
+    @patch.object(
+        Jira, "cloud_id", new_callable=PropertyMock, return_value="test_cloud_id"
+    )
+    @patch("prowler.lib.outputs.jira.jira.requests.get")
+    def test_get_available_issue_types_successful(
+        self, mock_get, mock_cloud_id, mock_get_access_token
+    ):
+        """Test successful retrieval of issue types for a project."""
+        # To disable vulture
+        mock_cloud_id = mock_cloud_id
+        mock_get_access_token = mock_get_access_token
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "projects": [
+                {
+                    "issuetypes": [
+                        {"name": "Bug"},
+                        {"name": "Task"},
+                        {"name": "Story"},
+                    ]
+                }
+            ]
+        }
+        mock_get.return_value = mock_response
+
+        issue_types = self.jira_integration.get_available_issue_types(
+            project_key="TEST"
+        )
+
+        expected_issue_types = ["Bug", "Task", "Story"]
+        assert issue_types == expected_issue_types
+
+    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
+    @patch.object(
+        Jira, "cloud_id", new_callable=PropertyMock, return_value="test_cloud_id"
+    )
+    @patch("prowler.lib.outputs.jira.jira.requests.get")
+    def test_get_available_issue_types_no_projects_found(
+        self, mock_get, mock_cloud_id, mock_get_access_token
+    ):
+        """Test that get_available_issue_types raises JiraNoProjectsError when no projects are found, later JiraGetAvailableIssueTypesError is raised."""
+        # To disable vulture
+        mock_cloud_id = mock_cloud_id
+        mock_get_access_token = mock_get_access_token
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"projects": []}
+        mock_get.return_value = mock_response
+
+        with pytest.raises(JiraGetAvailableIssueTypesError):
+            self.jira_integration.get_available_issue_types(project_key="TEST")
+
+    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
+    @patch.object(
+        Jira, "cloud_id", new_callable=PropertyMock, return_value="test_cloud_id"
+    )
+    @patch("prowler.lib.outputs.jira.jira.requests.get")
+    def test_get_available_issue_types_response_error(
+        self, mock_get, mock_cloud_id, mock_get_access_token
+    ):
+        """Test that get_available_issue_types raises JiraGetAvailableIssueTypesResponseError on non-200 response, JiraGetAvailableIssueTypesError will be raised later"""
+        # To disable vulture
+        mock_cloud_id = mock_cloud_id
+        mock_get_access_token = mock_get_access_token
+
+        mock_response = MagicMock()
+        mock_response.status_code = 404
+        mock_response.json.return_value = {"error": "Not Found"}
+        mock_get.return_value = mock_response
+
+        with pytest.raises(JiraGetAvailableIssueTypesError):
+            self.jira_integration.get_available_issue_types(project_key="TEST")
+
+    @patch.object(
+        Jira,
+        "get_access_token",
+        side_effect=JiraRefreshTokenError("Failed to refresh the access token"),
+    )
+    def test_get_available_issue_types_refresh_token_error(self, mock_get_access_token):
+        """Test that get_available_issue_types raises JiraRefreshTokenError when refreshing the token fails."""
+        # To disable vulture
+        mock_get_access_token = mock_get_access_token
+
+        with pytest.raises(JiraRefreshTokenError):
+            self.jira_integration.get_available_issue_types(project_key="TEST")
+
+    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
+    @patch.object(
+        Jira, "get_available_issue_types", return_value=["Bug", "Task", "Story"]
+    )
+    @patch("prowler.lib.outputs.jira.jira.requests.post")
+    def test_send_findings_successful(
+        self, mock_post, mock_get_available_issue_types, mock_get_access_token
+    ):
+        """Test successful sending of findings to Jira."""
+        # To disable vulture
+        mock_get_available_issue_types = mock_get_available_issue_types
+        mock_get_access_token = mock_get_access_token
+
+        mock_response = MagicMock()
+        mock_response.status_code = 201
+        mock_response.json.return_value = {"id": "12345", "key": "TEST-1"}
+        mock_post.return_value = mock_response
+
+        finding = MagicMock()
+        finding.status.value = "FAIL"
+        finding.status_extended = "status_extended"
+        finding.metadata.Severity.value = "HIGH"
+        finding.metadata.CheckID = "CHECK-1"
+        finding.metadata.CheckTitle = "Check Title"
+        finding.resource_uid = "resource-1"
+        finding.resource_name = "resource_name"
+        finding.metadata.Provider = "aws"
+        finding.region = "region"
+        finding.metadata.Risk = "risk"
+        finding.metadata.Remediation.Recommendation.Text = "remediation_text"
+        finding.metadata.Remediation.Recommendation.Url = "remediation_url"
+
+        self.jira_integration.cloud_id = "valid_cloud_id"
+
+        self.jira_integration.send_findings(
+            findings=[finding], project_key="TEST", issue_type="Bug"
+        )
+
+        expected_url = (
+            "https://api.atlassian.com/ex/jira/valid_cloud_id/rest/api/3/issue"
+        )
+        expected_json = {
+            "fields": {
+                "project": {"key": "TEST"},
+                "summary": "[Prowler] HIGH - CHECK-1 - resource-1",
+                "description": {
+                    "type": "doc",
+                    "version": 1,
+                    "content": [
+                        {
+                            "type": "paragraph",
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "text": "Prowler has discovered the following finding:",
+                                }
+                            ],
+                        },
+                        {
+                            "type": "table",
+                            "attrs": {"layout": "full-width"},
+                            "content": [
+                                {
+                                    "type": "tableRow",
+                                    "content": [
+                                        {
+                                            "type": "tableCell",
+                                            "attrs": {"colwidth": [1]},
+                                            "content": [
+                                                {
+                                                    "type": "paragraph",
+                                                    "content": [
+                                                        {
+                                                            "type": "text",
+                                                            "text": "Check Id",
+                                                            "marks": [
+                                                                {"type": "strong"}
+                                                            ],
+                                                        }
+                                                    ],
+                                                }
+                                            ],
+                                        },
+                                        {
+                                            "type": "tableCell",
+                                            "attrs": {"colwidth": [3]},
+                                            "content": [
+                                                {
+                                                    "type": "paragraph",
+                                                    "content": [
+                                                        {
+                                                            "type": "text",
+                                                            "text": "CHECK-1",
+                                                            "marks": [{"type": "code"}],
+                                                        }
+                                                    ],
+                                                }
+                                            ],
+                                        },
+                                    ],
+                                },
+                                {
+                                    "type": "tableRow",
+                                    "content": [
+                                        {
+                                            "type": "tableCell",
+                                            "attrs": {"colwidth": [1]},
+                                            "content": [
+                                                {
+                                                    "type": "paragraph",
+                                                    "content": [
+                                                        {
+                                                            "type": "text",
+                                                            "text": "Check Title",
+                                                            "marks": [
+                                                                {"type": "strong"}
+                                                            ],
+                                                        }
+                                                    ],
+                                                }
+                                            ],
+                                        },
+                                        {
+                                            "type": "tableCell",
+                                            "attrs": {"colwidth": [3]},
+                                            "content": [
+                                                {
+                                                    "type": "paragraph",
+                                                    "content": [
+                                                        {
+                                                            "type": "text",
+                                                            "text": "Check Title",
+                                                        }
+                                                    ],
+                                                }
+                                            ],
+                                        },
+                                    ],
+                                },
+                                {
+                                    "type": "tableRow",
+                                    "content": [
+                                        {
+                                            "type": "tableCell",
+                                            "attrs": {"colwidth": [1]},
+                                            "content": [
+                                                {
+                                                    "type": "paragraph",
+                                                    "content": [
+                                                        {
+                                                            "type": "text",
+                                                            "text": "Severity",
+                                                            "marks": [
+                                                                {"type": "strong"}
+                                                            ],
+                                                        }
+                                                    ],
+                                                }
+                                            ],
+                                        },
+                                        {
+                                            "type": "tableCell",
+                                            "attrs": {"colwidth": [3]},
+                                            "content": [
+                                                {
+                                                    "type": "paragraph",
+                                                    "content": [
+                                                        {"type": "text", "text": "HIGH"}
+                                                    ],
+                                                }
+                                            ],
+                                        },
+                                    ],
+                                },
+                                {
+                                    "type": "tableRow",
+                                    "content": [
+                                        {
+                                            "type": "tableCell",
+                                            "attrs": {"colwidth": [1]},
+                                            "content": [
+                                                {
+                                                    "type": "paragraph",
+                                                    "content": [
+                                                        {
+                                                            "type": "text",
+                                                            "text": "Status",
+                                                            "marks": [
+                                                                {"type": "strong"}
+                                                            ],
+                                                        }
+                                                    ],
+                                                }
+                                            ],
+                                        },
+                                        {
+                                            "type": "tableCell",
+                                            "attrs": {"colwidth": [3]},
+                                            "content": [
+                                                {
+                                                    "type": "paragraph",
+                                                    "content": [
+                                                        {
+                                                            "type": "text",
+                                                            "text": "FAIL",
+                                                            "marks": [
+                                                                {"type": "strong"},
+                                                                {
+                                                                    "type": "textColor",
+                                                                    "attrs": {
+                                                                        "color": "#FF0000"
+                                                                    },
+                                                                },
+                                                            ],
+                                                        }
+                                                    ],
+                                                }
+                                            ],
+                                        },
+                                    ],
+                                },
+                                {
+                                    "type": "tableRow",
+                                    "content": [
+                                        {
+                                            "type": "tableCell",
+                                            "attrs": {"colwidth": [1]},
+                                            "content": [
+                                                {
+                                                    "type": "paragraph",
+                                                    "content": [
+                                                        {
+                                                            "type": "text",
+                                                            "text": "Status Extended",
+                                                            "marks": [
+                                                                {"type": "strong"}
+                                                            ],
+                                                        }
+                                                    ],
+                                                }
+                                            ],
+                                        },
+                                        {
+                                            "type": "tableCell",
+                                            "attrs": {"colwidth": [3]},
+                                            "content": [
+                                                {
+                                                    "type": "paragraph",
+                                                    "content": [
+                                                        {
+                                                            "type": "text",
+                                                            "text": "status_extended",
+                                                        }
+                                                    ],
+                                                }
+                                            ],
+                                        },
+                                    ],
+                                },
+                                {
+                                    "type": "tableRow",
+                                    "content": [
+                                        {
+                                            "type": "tableCell",
+                                            "attrs": {"colwidth": [1]},
+                                            "content": [
+                                                {
+                                                    "type": "paragraph",
+                                                    "content": [
+                                                        {
+                                                            "type": "text",
+                                                            "text": "Provider",
+                                                            "marks": [
+                                                                {"type": "strong"}
+                                                            ],
+                                                        }
+                                                    ],
+                                                }
+                                            ],
+                                        },
+                                        {
+                                            "type": "tableCell",
+                                            "attrs": {"colwidth": [3]},
+                                            "content": [
+                                                {
+                                                    "type": "paragraph",
+                                                    "content": [
+                                                        {
+                                                            "type": "text",
+                                                            "text": "aws",
+                                                            "marks": [{"type": "code"}],
+                                                        }
+                                                    ],
+                                                }
+                                            ],
+                                        },
+                                    ],
+                                },
+                                {
+                                    "type": "tableRow",
+                                    "content": [
+                                        {
+                                            "type": "tableCell",
+                                            "attrs": {"colwidth": [1]},
+                                            "content": [
+                                                {
+                                                    "type": "paragraph",
+                                                    "content": [
+                                                        {
+                                                            "type": "text",
+                                                            "text": "Region",
+                                                            "marks": [
+                                                                {"type": "strong"}
+                                                            ],
+                                                        }
+                                                    ],
+                                                }
+                                            ],
+                                        },
+                                        {
+                                            "type": "tableCell",
+                                            "attrs": {"colwidth": [3]},
+                                            "content": [
+                                                {
+                                                    "type": "paragraph",
+                                                    "content": [
+                                                        {
+                                                            "type": "text",
+                                                            "text": "region",
+                                                            "marks": [{"type": "code"}],
+                                                        }
+                                                    ],
+                                                }
+                                            ],
+                                        },
+                                    ],
+                                },
+                                {
+                                    "type": "tableRow",
+                                    "content": [
+                                        {
+                                            "type": "tableCell",
+                                            "attrs": {"colwidth": [1]},
+                                            "content": [
+                                                {
+                                                    "type": "paragraph",
+                                                    "content": [
+                                                        {
+                                                            "type": "text",
+                                                            "text": "Resource UID",
+                                                            "marks": [
+                                                                {"type": "strong"}
+                                                            ],
+                                                        }
+                                                    ],
+                                                }
+                                            ],
+                                        },
+                                        {
+                                            "type": "tableCell",
+                                            "attrs": {"colwidth": [3]},
+                                            "content": [
+                                                {
+                                                    "type": "paragraph",
+                                                    "content": [
+                                                        {
+                                                            "type": "text",
+                                                            "text": "resource-1",
+                                                            "marks": [{"type": "code"}],
+                                                        }
+                                                    ],
+                                                }
+                                            ],
+                                        },
+                                    ],
+                                },
+                                {
+                                    "type": "tableRow",
+                                    "content": [
+                                        {
+                                            "type": "tableCell",
+                                            "attrs": {"colwidth": [1]},
+                                            "content": [
+                                                {
+                                                    "type": "paragraph",
+                                                    "content": [
+                                                        {
+                                                            "type": "text",
+                                                            "text": "Resource Name",
+                                                            "marks": [
+                                                                {"type": "strong"}
+                                                            ],
+                                                        }
+                                                    ],
+                                                }
+                                            ],
+                                        },
+                                        {
+                                            "type": "tableCell",
+                                            "attrs": {"colwidth": [3]},
+                                            "content": [
+                                                {
+                                                    "type": "paragraph",
+                                                    "content": [
+                                                        {
+                                                            "type": "text",
+                                                            "text": "resource_name",
+                                                            "marks": [{"type": "code"}],
+                                                        }
+                                                    ],
+                                                }
+                                            ],
+                                        },
+                                    ],
+                                },
+                                {
+                                    "type": "tableRow",
+                                    "content": [
+                                        {
+                                            "type": "tableCell",
+                                            "attrs": {"colwidth": [1]},
+                                            "content": [
+                                                {
+                                                    "type": "paragraph",
+                                                    "content": [
+                                                        {
+                                                            "type": "text",
+                                                            "text": "Risk",
+                                                            "marks": [
+                                                                {"type": "strong"}
+                                                            ],
+                                                        }
+                                                    ],
+                                                }
+                                            ],
+                                        },
+                                        {
+                                            "type": "tableCell",
+                                            "attrs": {"colwidth": [3]},
+                                            "content": [
+                                                {
+                                                    "type": "paragraph",
+                                                    "content": [
+                                                        {"type": "text", "text": "risk"}
+                                                    ],
+                                                }
+                                            ],
+                                        },
+                                    ],
+                                },
+                                {
+                                    "type": "tableRow",
+                                    "content": [
+                                        {
+                                            "type": "tableCell",
+                                            "attrs": {"colwidth": [1]},
+                                            "content": [
+                                                {
+                                                    "type": "paragraph",
+                                                    "content": [
+                                                        {
+                                                            "type": "text",
+                                                            "text": "Recommendation",
+                                                            "marks": [
+                                                                {"type": "strong"}
+                                                            ],
+                                                        }
+                                                    ],
+                                                }
+                                            ],
+                                        },
+                                        {
+                                            "type": "tableCell",
+                                            "attrs": {"colwidth": [3]},
+                                            "content": [
+                                                {
+                                                    "type": "paragraph",
+                                                    "content": [
+                                                        {
+                                                            "type": "text",
+                                                            "text": "remediation_text ",
+                                                        },
+                                                        {
+                                                            "type": "text",
+                                                            "text": "remediation_url",
+                                                            "marks": [
+                                                                {
+                                                                    "type": "link",
+                                                                    "attrs": {
+                                                                        "href": "remediation_url"
+                                                                    },
+                                                                }
+                                                            ],
+                                                        },
+                                                    ],
+                                                }
+                                            ],
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                    ],
+                },
+                "issuetype": {"name": "Bug"},
+            }
+        }
+        expected_headers = {
+            "Authorization": "Bearer valid_access_token",
+            "Content-Type": "application/json",
+        }
+
+        mock_post.assert_called_once_with(
+            expected_url, json=expected_json, headers=expected_headers
+        )
+
+    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
+    @patch.object(
+        Jira, "get_available_issue_types", return_value=["Bug", "Task", "Story"]
+    )
+    @patch("prowler.lib.outputs.jira.jira.requests.post")
+    def test_send_findings_invalid_issue_type(
+        self, mock_post, mock_get_available_issue_types, mock_get_access_token
+    ):
+        """Test that send_findings raises JiraInvalidIssueTypeError if the issue type is invalid that will raise JiraCreateIssueError later."""
+        # To disable vulture
+        mock_get_available_issue_types = mock_get_available_issue_types
+        mock_get_access_token = mock_get_access_token
+
+        with pytest.raises(JiraCreateIssueError):
+            self.jira_integration.send_findings(
+                findings=[MagicMock()], project_key="TEST", issue_type="InvalidType"
+            )
+
+    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
+    @patch.object(
+        Jira, "get_available_issue_types", return_value=["Bug", "Task", "Story"]
+    )
+    @patch("prowler.lib.outputs.jira.jira.requests.post")
+    def test_send_findings_response_error(
+        self, mock_post, mock_get_available_issue_types, mock_get_access_token
+    ):
+        """Test that send_findings raises JiraSendFindingsResponseError on non-201 response that will raise JiraCreateIssueError later."""
+        # To disable vulture
+        mock_get_available_issue_types = mock_get_available_issue_types
+        mock_get_access_token = mock_get_access_token
+
+        mock_response = MagicMock()
+        mock_response.status_code = 400
+        mock_response.json.return_value = {"error": "Bad Request"}
+        mock_post.return_value = mock_response
+
+        finding = MagicMock()
+        finding.status.value = "FAIL"
+        finding.metadata.Severity.value = "HIGH"
+        finding.metadata.CheckID = "CHECK-1"
+        finding.resource_uid = "resource-1"
+
+        with pytest.raises(JiraCreateIssueError):
+            self.jira_integration.send_findings(
+                findings=[finding], project_key="TEST", issue_type="Bug"
+            )

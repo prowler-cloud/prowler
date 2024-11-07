@@ -73,6 +73,10 @@ class Jira:
     def access_token(self):
         return self._access_token
 
+    @access_token.setter
+    def access_token(self, value):
+        self._access_token = value
+
     @property
     def refresh_token(self):
         return self._refresh_token
@@ -81,9 +85,17 @@ class Jira:
     def auth_expiration(self):
         return self._auth_expiration
 
+    @auth_expiration.setter
+    def auth_expiration(self, value):
+        self._auth_expiration = value
+
     @property
     def cloud_id(self):
         return self._cloud_id
+
+    @cloud_id.setter
+    def cloud_id(self, value):
+        self._cloud_id = value
 
     @property
     def scopes(self):
@@ -651,7 +663,7 @@ class Jira:
                                                     "content": [
                                                         {
                                                             "type": "text",
-                                                            "text": finding.metadata.Severity.upper(),
+                                                            "text": finding.metadata.Severity.value.upper(),
                                                         }
                                                     ],
                                                 }
