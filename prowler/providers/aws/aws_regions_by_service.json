@@ -1285,8 +1285,6 @@
         ]
       }
     },
-<<<<<<< HEAD
-=======
     "bedrock-agent": {
       "regions": {
         "aws": [
@@ -1312,7 +1310,6 @@
         ]
       }
     },
->>>>>>> bf4db86de (chore(regions_update): Changes in regions for AWS services (#5655))
     "bedrock-runtime": {
       "regions": {
         "aws": [
