@@ -10,7 +10,7 @@
   "ResourceIdTemplate": "arn:aws:appsync:{region}:{account-id}:apis/{api-id}",
   "Severity": "medium",
   "ResourceType": "AwsAppSyncGraphQLApi",
-  "Description": "This control checks whether an AWS AppSync API has field-level logging turned on. The control fails if the field resolver log level is set to None.",
+  "Description": "This control checks whether an AWS AppSync API (only GraphQL APIs since boto3 doesnt have a method to return other APIs) field-level logging turned on. The control fails if the field resolver log level is set to None.",
   "Risk": "Without field-level logging enabled, it's difficult to monitor, troubleshoot, and optimize GraphQL API queries effectively.",
   "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/appsync-logging-enabled.html",
   "Remediation": {
