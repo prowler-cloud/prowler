@@ -3,8 +3,9 @@ import { Suspense } from "react";
 
 import { getProviders } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
-import { FilterControls, filterScans } from "@/components/filters";
+import { filterScans } from "@/components/filters";
 import { InfoIcon } from "@/components/icons";
+import { LaunchScanWorkflow } from "@/components/scans/launch-workflow";
 import { SkeletonTableScans } from "@/components/scans/table";
 import { ColumnProviderScans } from "@/components/scans/table/provider-scans";
 import { ColumnGetScans } from "@/components/scans/table/scans";
@@ -24,7 +25,9 @@ export default async function Scans({
       <Header title="Scans" icon="lucide:scan-search" />
 
       <Spacer y={4} />
-      <FilterControls search date providers />
+      <Suspense key={searchParamsKey} fallback={<SkeletonTableScans />}>
+        <LaunchScanWorkflow />
+      </Suspense>
       <Spacer y={8} />
 
       <div className="grid grid-cols-12 items-start gap-4">
@@ -44,8 +47,9 @@ export default async function Scans({
 }
 
 const SSRDataTableProviders = async () => {
-  const filters = { "filter[connected]": "true" };
-  const providersData = await getProviders({ page: 1, filters });
+  const providersData = await getProviders({
+    filters: { "filter[connected]": "true" },
+  });
   return (
     <>
       <div className="mb-2 flex items-center gap-2">
