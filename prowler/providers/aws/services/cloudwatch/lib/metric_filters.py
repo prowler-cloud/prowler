@@ -12,7 +12,7 @@ def check_cloudwatch_log_metric_filter(
     report: Check_Report_AWS,
 ):
     # 1. Iterate for CloudWatch Log Group in CloudTrail trails
-    log_groups = mklist()
+    log_groups = []
     if trails is not None:
         for trail in trails.values():
             if trail.log_group_arn:
