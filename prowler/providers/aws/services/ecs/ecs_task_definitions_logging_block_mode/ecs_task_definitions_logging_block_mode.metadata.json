@@ -3,7 +3,7 @@
   "CheckID": "ecs_task_definitions_logging_block_mode",
   "CheckTitle": "ECS task definitions containers should have a logging configured with non blocking mode",
   "CheckType": [
-    "Resiliance"
+    "Resilience"
   ],
   "ServiceName": "ecs",
   "SubServiceName": "",

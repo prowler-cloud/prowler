@@ -1262,7 +1262,9 @@ class AwsProvider(Provider):
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            raise error
+            if raise_on_exception:
+                raise error
+            return Connection(error=error)
 
     @staticmethod
     def create_sts_session(
