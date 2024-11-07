@@ -38,7 +38,9 @@ class AppSync(AWSService):
                             field_log_level=api.get("logConfig", {}).get(
                                 "fieldLogLevel", ""
                             ),
-                            authentication_type=api.get("authenticationType", ""),
+                            authentication_type=api.get(
+                                "authenticationType", "API_KEY"
+                            ),
                             tags=[api.get("tags", {})],
                         )
 

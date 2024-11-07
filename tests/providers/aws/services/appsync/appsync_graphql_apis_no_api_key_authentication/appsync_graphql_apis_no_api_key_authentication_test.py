@@ -20,7 +20,7 @@ def mock_make_api_call(self, operation_name, kwarg):
             "graphqlApis": [
                 {
                     "name": "test-merged-api",
-                    "apiId": "idididid",
+                    "apiId": "api_id",
                     "apiType": "MERGED",
                     "arn": f"arn:aws:appsync:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:graphqlapi/test-merged-api",
                     "authenticationType": "API_KEY",
@@ -38,7 +38,7 @@ def mock_make_api_call_v2(self, operation_name, kwarg):
             "graphqlApis": [
                 {
                     "name": "test-graphql-no-api-key",
-                    "apiId": "idididid",
+                    "apiId": "api_id",
                     "apiType": "GRAPHQL",
                     "arn": f"arn:aws:appsync:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:graphqlapi/test-graphql-no-api-key",
                     "authenticationType": "AWS_IAM",
@@ -56,7 +56,7 @@ def mock_make_api_call_v3(self, operation_name, kwarg):
             "graphqlApis": [
                 {
                     "name": "test-graphql-api-key",
-                    "apiId": "idididid",
+                    "apiId": "api_id",
                     "apiType": "GRAPHQL",
                     "arn": f"arn:aws:appsync:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:graphqlapi/test-graphql-api-key",
                     "authenticationType": "API_KEY",
@@ -92,6 +92,7 @@ class Test_appsync_graphql_apis_no_api_key_authentication:
 
             assert len(result) == 0
 
+    @mock_aws
     @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     def test_merged_api(self):
 
@@ -114,6 +115,7 @@ class Test_appsync_graphql_apis_no_api_key_authentication:
 
             assert len(result) == 0
 
+    @mock_aws
     @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call_v2)
     def test_graphql_no_api_key(self):
 
@@ -140,14 +142,15 @@ class Test_appsync_graphql_apis_no_api_key_authentication:
                 == f"arn:aws:appsync:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:graphqlapi/test-graphql-no-api-key"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
-            assert result[0].resource_id == "idididid"
+            assert result[0].resource_id == "api_id"
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "AppSync GraphqlApi test-graphql-no-api-key is not using an API KEY for authentication."
+                == "AppSync GraphQL API test-graphql-no-api-key is not using an API KEY for authentication."
             )
             assert result[0].resource_tags == [{"test": "test", "test2": "test2"}]
 
+    @mock_aws
     @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call_v3)
     def test_graphql_api_key(self):
 
@@ -174,10 +177,10 @@ class Test_appsync_graphql_apis_no_api_key_authentication:
                 == f"arn:aws:appsync:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:graphqlapi/test-graphql-api-key"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
-            assert result[0].resource_id == "idididid"
+            assert result[0].resource_id == "api_id"
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "AppSync GraphqlApi test-graphql-api-key is using an API KEY for authentication."
+                == "AppSync GraphQL API test-graphql-api-key is using an API KEY for authentication."
             )
             assert result[0].resource_tags == [{"test": "test", "test2": "test2"}]
