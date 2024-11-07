@@ -46,7 +46,6 @@ class TestCSV:
 
         output = CSV(findings)
         output_data = output.data[0]
-        assert isinstance(output_data, dict)
         assert isinstance(output_data["TIMESTAMP"], datetime)
         assert isinstance(output_data["ACCOUNT_TAGS"], str)
         assert isinstance(output_data["SEVERITY"], str)

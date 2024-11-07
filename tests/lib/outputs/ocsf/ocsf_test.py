@@ -42,7 +42,6 @@ class TestOCSF:
 
         output_data = ocsf.data[0]
 
-        assert isinstance(output_data, DetectionFinding)
         assert output_data.activity_id == ActivityID.Create.value
         assert output_data.activity_name == ActivityID.Create.name
         assert output_data.finding_info.created_time == findings[0].timestamp
@@ -210,7 +209,6 @@ class TestOCSF:
         # Finding Information
         finding_information = finding_ocsf.finding_info
 
-        assert isinstance(finding_information, FindingInformation)
         assert finding_information.created_time == finding_output.timestamp
         assert finding_information.desc == finding_output.description
         assert finding_information.title == finding_output.check_title
@@ -222,7 +220,6 @@ class TestOCSF:
 
         # Remediation
         remediation = finding_ocsf.remediation
-        assert isinstance(remediation, Remediation)
         assert remediation.desc == finding_output.remediation_recommendation_text
         assert remediation.references == []
 
@@ -254,8 +251,6 @@ class TestOCSF:
         resource_details = finding_ocsf.resources
 
         assert len(resource_details) == 1
-        assert isinstance(resource_details, list)
-        assert isinstance(resource_details[0], ResourceDetails)
         assert resource_details[0].labels == ["Name:test", "Environment:dev"]
         assert resource_details[0].name == finding_output.resource_name
         assert resource_details[0].uid == finding_output.resource_uid
@@ -265,16 +260,13 @@ class TestOCSF:
         assert resource_details[0].data == {"details": finding_output.resource_details}
 
         resource_details_group = resource_details[0].group
-        assert isinstance(resource_details_group, Group)
         assert resource_details_group.name == finding_output.service_name
 
         # Metadata
         metadata = finding_ocsf.metadata
-        assert isinstance(metadata, Metadata)
         assert metadata.event_code == finding_output.check_id
 
         metadata_product = metadata.product
-        assert isinstance(metadata_product, Product)
         assert metadata_product.name == "Prowler"
         assert metadata_product.vendor_name == "Prowler"
         assert metadata_product.version == prowler_version
@@ -285,12 +277,10 @@ class TestOCSF:
 
         # Cloud
         cloud = finding_ocsf.cloud
-        assert isinstance(cloud, Cloud)
         assert cloud.provider == "aws"
         assert cloud.region == finding_output.region
 
         cloud_account = cloud.account
-        assert isinstance(cloud_account, Account)
         assert cloud_account.name == finding_output.account_name
         assert cloud_account.type_id == TypeID.AWS_Account
         assert cloud_account.type == TypeID.AWS_Account.name
@@ -298,7 +288,6 @@ class TestOCSF:
         assert cloud_account.labels == ["test-tag:test-value"]
 
         cloud_organization = cloud.org
-        assert isinstance(cloud_organization, Organization)
         assert cloud_organization.uid == finding_output.account_organization_uid
         assert cloud_organization.name == finding_output.account_organization_name
 

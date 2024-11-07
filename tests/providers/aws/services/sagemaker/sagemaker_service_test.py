@@ -131,7 +131,7 @@ class Test_SageMaker_Service:
         assert sagemaker.sagemaker_notebook_instances[0].name == test_notebook_instance
         assert sagemaker.sagemaker_notebook_instances[0].arn == notebook_instance_arn
         assert sagemaker.sagemaker_notebook_instances[0].region == AWS_REGION_EU_WEST_1
-        assert sagemaker.sagemaker_notebook_instances[0].tags == [
+        assert list(sagemaker.sagemaker_notebook_instances[0].tags) == [
             {"Key": "test", "Value": "test"},
         ]
 
@@ -143,7 +143,7 @@ class Test_SageMaker_Service:
         assert sagemaker.sagemaker_models[0].name == test_model
         assert sagemaker.sagemaker_models[0].arn == test_arn_model
         assert sagemaker.sagemaker_models[0].region == AWS_REGION_EU_WEST_1
-        assert sagemaker.sagemaker_models[0].tags == [
+        assert list(sagemaker.sagemaker_models[0].tags) == [
             {"Key": "test", "Value": "test"},
         ]
 

@@ -76,7 +76,7 @@ class HTML(Output):
             ):
                 HTML.write_header(self._file_descriptor, provider, stats)
                 for finding in self._data:
-                    self._file_descriptor.write(finding)
+                    self._file_descriptor.write(str(finding))
                 HTML.write_footer(self._file_descriptor)
                 # Close file descriptor
                 self._file_descriptor.close()

@@ -636,7 +636,11 @@ class TestCheck:
             ),
         ]
         returned_checks = recover_checks_from_provider(provider, service)
-        assert returned_checks == expected_checks
+
+        # Due the restrictions of SQLDicts and SQLLists, we need to compare the values one by one
+        for index, (key, value) in enumerate(expected_checks):
+            assert returned_checks[index][0] == key
+            assert returned_checks[index][1] == value
 
     @patch("prowler.lib.check.utils.walk_packages", new=mock_walk_packages)
     def test_list_modules(self):
@@ -903,8 +907,8 @@ class TestCheck:
         check.execute = Mock(side_effect=error)
 
         with patch("prowler.lib.check.check.execute", return_value=findings):
-            assert run_check(check, only_logs=True) == findings
-            assert caplog.record_tuples == [
+            assert list(run_check(check, only_logs=True)) == findings
+            assert list(caplog.record_tuples) == [
                 (
                     "root",
                     ERROR,
@@ -925,13 +929,15 @@ class TestCheck:
 
         with patch("prowler.lib.check.check.execute", return_value=findings):
             assert (
-                run_check(
-                    check,
-                    verbose=False,
-                )
-                == findings
+                    list(
+                        run_check(
+                            check,
+                            verbose=False,
+                        )
+                    )
+                    == findings
             )
-            assert caplog.record_tuples == [
+            assert list(caplog.record_tuples) == [
                 (
                     "root",
                     ERROR,

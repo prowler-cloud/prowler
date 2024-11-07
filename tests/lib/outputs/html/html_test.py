@@ -451,29 +451,25 @@ class TestHTML:
         ]
 
         html = HTML(findings)
-        output_data = html.data[0]
-        assert isinstance(output_data, str)
+        output_data = str(html.data[0])
         assert output_data == fail_html_finding
 
     def test_transform_pass_finding(self):
         findings = [generate_finding_output()]
         html = HTML(findings)
-        output_data = html.data[0]
-        assert isinstance(output_data, str)
+        output_data = str(html.data[0])
         assert output_data == pass_html_finding
 
     def test_transform_muted_finding(self):
         findings = [generate_finding_output(muted=True)]
         html = HTML(findings)
-        output_data = html.data[0]
-        assert isinstance(output_data, str)
+        output_data = str(html.data[0])
         assert output_data == muted_html_finding
 
     def test_transform_manual_finding(self):
         findings = [generate_finding_output(status="MANUAL")]
         html = HTML(findings)
-        output_data = html.data[0]
-        assert isinstance(output_data, str)
+        output_data = str(html.data[0])
         assert output_data == manual_html_finding
 
     def test_batch_write_data_to_file(self):
