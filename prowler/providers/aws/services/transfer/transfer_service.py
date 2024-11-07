@@ -46,8 +46,7 @@ class Transfer(AWSService):
             )
             for protocol in server_description.get("Protocols", []):
                 server.protocols.append(Protocol(protocol))
-            for tag in server_description.get("Tags", []):
-                server.tags.append(tag)
+            server.tags = server_description.get("Tags", [])
         except Exception as error:
             logger.error(
                 f"{server.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
