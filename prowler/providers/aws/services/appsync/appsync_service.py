@@ -11,7 +11,7 @@ class AppSync(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
-        self.graphqlapis = {}
+        self.graphql_apis = {}
         self.__threading_call__(self._list_graphql_apis)
 
     def _list_graphql_apis(self, regional_client):
@@ -29,20 +29,17 @@ class AppSync(AWSService):
                             self.audit_resources,
                         )
                     ):
-                        aux_tags = []
-                        if api.get("tags"):
-                            aux_tags.append(api.get("tags"))
-                        self.graphqlapis[api_arn] = GraphqlApi(
+                        self.graphql_apis[api_arn] = GraphqlApi(
                             id=api["apiId"],
                             name=api["name"],
                             arn=api_arn,
                             region=regional_client.region,
-                            type=api.get("apiType"),
+                            type=api.get("apiType", "GRAPHQL"),
                             field_log_level=api.get("logConfig", {}).get(
                                 "fieldLogLevel", ""
                             ),
                             authentication_type=api.get("authenticationType", ""),
-                            tags=aux_tags,
+                            tags=[api.get("tags", {})],
                         )
 
         except Exception as error:
@@ -56,7 +53,7 @@ class GraphqlApi(BaseModel):
     name: str
     arn: str
     region: str
-    type: Optional[str]
-    field_log_level: Optional[str]
-    authentication_type: Optional[str]
+    type: str
+    field_log_level: str
+    authentication_type: str
     tags: Optional[list] = []

@@ -23,7 +23,7 @@ packages = [
   {include = "dashboard"}
 ]
 readme = "README.md"
-version = "4.5.0"
+version = "4.6.0"
 
 [tool.poetry.dependencies]
 alive-progress = "3.1.5"
@@ -48,7 +48,7 @@ azure-mgmt-subscription = "3.1.1"
 azure-mgmt-web = "7.3.1"
 azure-storage-blob = "12.23.1"
 boto3 = "1.35.29"
-botocore = "1.35.29"
+botocore = "1.35.55"
 colorama = "0.4.6"
 cryptography = "43.0.1"
 dash = "2.18.1"
@@ -62,6 +62,7 @@ microsoft-kiota-abstractions = "1.3.3"
 msgraph-sdk = "1.8.0"
 numpy = "2.0.2"
 pandas = "2.2.3"
+presidio-analyzer = "2.2.355"
 py-ocsf-models = "0.2.0"
 pydantic = "1.10.18"
 python = ">=3.9,<3.13"
@@ -75,7 +76,7 @@ tzlocal = "5.2"
 
 [tool.poetry.group.dev.dependencies]
 bandit = "1.7.10"
-black = "24.8.0"
+black = "24.10.0"
 coverage = "7.6.1"
 docker = "7.1.0"
 flake8 = "7.1.1"
@@ -86,12 +87,12 @@ openapi-schema-validator = "0.6.2"
 openapi-spec-validator = "0.7.1"
 pylint = "3.3.1"
 pytest = "8.3.3"
-pytest-cov = "5.0.0"
+pytest-cov = "6.0.0"
 pytest-env = "1.1.5"
 pytest-randomly = "3.15.0"
 pytest-xdist = "3.6.1"
 safety = "3.2.8"
-vulture = "2.12"
+vulture = "2.13"
 
 [tool.poetry.group.docs]
 optional = true

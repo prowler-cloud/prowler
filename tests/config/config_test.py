@@ -33,6 +33,16 @@ old_config_aws = {
     "ec2_allowed_instance_owners": ["amazon-elb"],
     "trusted_account_ids": [],
     "log_group_retention_days": 365,
+    "critical_pii_entities": [
+        "CREDIT_CARD",  # Credit card numbers are highly sensitive financial information.
+        "CRYPTO",  # Crypto wallet numbers (e.g., Bitcoin addresses) can give access to cryptocurrency.
+        "IBAN_CODE",  # International Bank Account Numbers are critical financial information.
+        "US_BANK_NUMBER",  # US bank account numbers are sensitive and should be protected.
+        "US_SSN",  # US Social Security Numbers are critical PII used for identity verification.
+        "US_PASSPORT",  # US passport numbers can be used for identity theft.
+        "US_ITIN",  # US Individual Taxpayer Identification Numbers are sensitive personal identifiers.
+    ],
+    "pii_language": "en",  # Language for recognizing PII entities
     "max_idle_disconnect_timeout_in_seconds": 600,
     "max_disconnect_timeout_in_seconds": 300,
     "max_session_duration_seconds": 36000,
@@ -97,6 +107,16 @@ config_aws = {
     "fargate_windows_latest_version": "1.0.0",
     "trusted_account_ids": [],
     "log_group_retention_days": 365,
+    "critical_pii_entities": [
+        "CREDIT_CARD",  # Credit card numbers are highly sensitive financial information.
+        "CRYPTO",  # Crypto wallet numbers (e.g., Bitcoin addresses) can give access to cryptocurrency.
+        "IBAN_CODE",  # International Bank Account Numbers are critical financial information.
+        "US_BANK_NUMBER",  # US bank account numbers are sensitive and should be protected.
+        "US_SSN",  # US Social Security Numbers are critical PII used for identity verification.
+        "US_PASSPORT",  # US passport numbers can be used for identity theft.
+        "US_ITIN",  # US Individual Taxpayer Identification Numbers are sensitive personal identifiers.
+    ],
+    "pii_language": "en",  # Language for recognizing PII entities
     "max_idle_disconnect_timeout_in_seconds": 600,
     "max_disconnect_timeout_in_seconds": 300,
     "max_session_duration_seconds": 36000,
@@ -311,6 +331,7 @@ config_aws = {
     "elbv2_min_azs": 2,
     "secrets_ignore_patterns": [],
     "max_days_secret_unused": 90,
+    "max_days_secret_unrotated": 90,
 }
 
 config_azure = {
