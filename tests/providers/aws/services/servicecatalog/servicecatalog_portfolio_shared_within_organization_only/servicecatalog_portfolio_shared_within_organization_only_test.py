@@ -99,6 +99,9 @@ class Test_servicecatalog_portfolio_shared_within_organization_only:
         ), mock.patch(
             "prowler.providers.aws.services.servicecatalog.servicecatalog_portfolio_shared_within_organization_only.servicecatalog_portfolio_shared_within_organization_only.servicecatalog_client",
             new=ServiceCatalog(aws_provider),
+        ), mock.patch(
+            "prowler.providers.aws.services.servicecatalog.servicecatalog_portfolio_shared_within_organization_only.servicecatalog_portfolio_shared_within_organization_only.organizations_client",
+            new=Organizations(aws_provider),
         ):
             from prowler.providers.aws.services.servicecatalog.servicecatalog_portfolio_shared_within_organization_only.servicecatalog_portfolio_shared_within_organization_only import (
                 servicecatalog_portfolio_shared_within_organization_only,
