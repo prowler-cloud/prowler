@@ -1511,7 +1511,7 @@
         "eks_cluster_network_policy_enabled",
         "eks_cluster_not_publicly_accessible",
         "eks_cluster_private_nodes_enabled",
-        "eks_endpoints_not_publicly_accessible",
+        "eks_cluster_not_publicly_accessible",
         "kafka_cluster_is_public",
         "kafka_cluster_unrestricted_access_disabled",
         "vpc_peering_routing_tables_with_least_privilege",

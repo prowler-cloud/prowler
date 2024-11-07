@@ -971,7 +971,7 @@
       "Checks": [
         "ec2_ebs_public_snapshot",
         "ec2_instance_public_ip",
-        "eks_endpoints_not_publicly_accessible",
+        "eks_cluster_not_publicly_accessible",
         "emr_cluster_master_nodes_no_public_ip",
         "awslambda_function_url_public",
         "rds_instance_no_public_access",
