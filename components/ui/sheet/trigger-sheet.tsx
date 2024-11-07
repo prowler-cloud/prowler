@@ -22,7 +22,9 @@ export function TriggerSheet({
 }: TriggerSheetProps) {
   return (
     <Sheet>
-      <SheetTrigger>{triggerComponent}</SheetTrigger>
+      <SheetTrigger className="flex items-center gap-2">
+        {triggerComponent}
+      </SheetTrigger>
       <SheetContent className="max-w-[95vw] pt-10 md:max-w-[45vw]">
         <SheetHeader>
           <SheetTitle className="sr-only">{title}</SheetTitle>

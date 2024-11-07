@@ -2,11 +2,14 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 
+import { InfoIcon, PlusIcon } from "@/components/icons";
 import { DateWithTime, EntityInfoShort } from "@/components/ui/entities";
+import { TriggerSheet } from "@/components/ui/sheet";
 import { DataTableColumnHeader, StatusBadge } from "@/components/ui/table";
 import { ScanProps } from "@/types";
 
 import { DataTableRowActions } from "./data-table-row-actions";
+import { DataTableRowDetails } from "./data-table-row-details";
 
 const getScanData = (row: { original: ScanProps }) => {
   return row.original;
@@ -116,6 +119,21 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
         attributes: { unique_resource_count },
       } = getScanData(row);
       return <p className="font-medium">{unique_resource_count}</p>;
+    },
+  },
+  {
+    id: "moreInfo",
+    header: "Details",
+    cell: ({ row }) => {
+      return (
+        <TriggerSheet
+          triggerComponent={<InfoIcon className="text-primary" size={16} />}
+          title="Scan Details"
+          description="View the scan details"
+        >
+          <DataTableRowDetails entityId={row.original.id} />
+        </TriggerSheet>
+      );
     },
   },
 
