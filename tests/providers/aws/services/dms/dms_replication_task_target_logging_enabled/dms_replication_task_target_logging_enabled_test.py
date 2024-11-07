@@ -95,7 +95,7 @@ class Test_dms_replication_task_target_logging_enabled:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].status_extended == (
-                "DMS Replication Task rep-task does not have logging enabled."
+                "DMS Replication Task rep-task does not have logging enabled for target events."
             )
             assert result[0].resource_id == "rep-task"
             assert result[0].resource_arn == dms_replication_task_arn
@@ -153,8 +153,7 @@ class Test_dms_replication_task_target_logging_enabled:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].status_extended == (
-                "DMS Replication Task rep-task does not meet logging requirements. "
-                "Missing or non-compliant components: TARGET_APPLY."
+                "DMS Replication Task rep-task does not meet the minimum severity level of logging in Target Apply events."
             )
             assert result[0].resource_id == "rep-task"
             assert result[0].resource_arn == dms_replication_task_arn
@@ -212,8 +211,7 @@ class Test_dms_replication_task_target_logging_enabled:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].status_extended == (
-                "DMS Replication Task rep-task does not meet logging requirements. "
-                "Missing or non-compliant components: TARGET_LOAD."
+                "DMS Replication Task rep-task does not meet the minimum severity level of logging in Target Load events."
             )
             assert result[0].resource_id == "rep-task"
             assert result[0].resource_arn == dms_replication_task_arn
@@ -277,8 +275,7 @@ class Test_dms_replication_task_target_logging_enabled:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].status_extended == (
-                "DMS Replication Task rep-task does not meet logging requirements. "
-                "Missing or non-compliant components: TARGET_LOAD."
+                "DMS Replication Task rep-task does not meet the minimum severity level of logging in Target Load events."
             )
             assert result[0].resource_id == "rep-task"
             assert result[0].resource_arn == dms_replication_task_arn
@@ -342,8 +339,7 @@ class Test_dms_replication_task_target_logging_enabled:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].status_extended == (
-                "DMS Replication Task rep-task does not meet logging requirements. "
-                "Missing or non-compliant components: TARGET_APPLY."
+                "DMS Replication Task rep-task does not meet the minimum severity level of logging in Target Apply events."
             )
             assert result[0].resource_id == "rep-task"
             assert result[0].resource_arn == dms_replication_task_arn
@@ -407,8 +403,7 @@ class Test_dms_replication_task_target_logging_enabled:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].status_extended == (
-                "DMS Replication Task rep-task does not meet logging requirements. "
-                "Missing or non-compliant components: TARGET_APPLY, TARGET_LOAD."
+                "DMS Replication Task rep-task does not meet the minimum severity level of logging in Target Apply and Target Load events."
             )
             assert result[0].resource_id == "rep-task"
             assert result[0].resource_arn == dms_replication_task_arn
@@ -472,7 +467,7 @@ class Test_dms_replication_task_target_logging_enabled:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert result[0].status_extended == (
-                "DMS Replication Task rep-task has logging enabled with required levels for TARGET_APPLY and TARGET_LOAD components."
+                "DMS Replication Task rep-task has logging enabled with the minimum severity level in target events."
             )
             assert result[0].resource_id == "rep-task"
             assert result[0].resource_arn == dms_replication_task_arn

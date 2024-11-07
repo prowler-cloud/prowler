@@ -72,7 +72,7 @@ class dms_replication_task_source_logging_enabled(Check):
                     report.status_extended = f"DMS Replication Task {replication_task.id} has logging enabled with the minimum severity level in source events."
                 else:
                     report.status = "FAIL"
-                    report.status_extended = f"DMS Replication Task {replication_task.id} does not meet the minimum severity level of logging in {', '.join(missing_components)} events."
+                    report.status_extended = f"DMS Replication Task {replication_task.id} does not meet the minimum severity level of logging in {' and '.join(missing_components)} events."
 
             findings.append(report)
 
