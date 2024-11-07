@@ -84,10 +84,14 @@ export const ScanDetail = ({ scanDetails }: { scanDetails: ScanProps }) => {
             <DetailItem
               label="Task ID"
               value={
-                <SnippetId
-                  label="Task ID"
-                  entityId={scanDetails.relationships.task.data.id}
-                />
+                scanDetails.relationships.task?.data?.id ? (
+                  <SnippetId
+                    label="Task ID"
+                    entityId={scanDetails.relationships.task.data.id}
+                  />
+                ) : (
+                  "N/A"
+                )
               }
             />
           </div>
@@ -101,14 +105,14 @@ export const ScanDetail = ({ scanDetails }: { scanDetails: ScanProps }) => {
         <Divider />
 
         <CardBody className="p-4">
-          <DetailItem
-            label="Checks"
-            value={
-              (scanOnDemand.scanner_args as any)?.checks_to_execute?.join(
+          <div className="flex flex-col gap-2">
+            <span className="font-semibold text-default-500">Checks</span>
+            <span className="text-default-700">
+              {(scanOnDemand.scanner_args as any)?.checks_to_execute?.join(
                 ", ",
-              ) || "N/A"
-            }
-          />
+              ) || "N/A"}
+            </span>
+          </div>
         </CardBody>
       </Card>
     </div>
