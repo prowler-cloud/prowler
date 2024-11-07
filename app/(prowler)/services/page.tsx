@@ -2,7 +2,7 @@ import { Spacer } from "@nextui-org/react";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
-import { getService } from "@/actions/services";
+import { getServices } from "@/actions/services";
 import { FilterControls } from "@/components/filters";
 import { ServiceCard, ServiceSkeletonGrid } from "@/components/services";
 import { Header } from "@/components/ui";
@@ -35,19 +35,16 @@ const SSRServiceGrid = async ({
 }: {
   searchParams: SearchParamsProps;
 }) => {
-  const page = parseInt(searchParams.page?.toString() || "1", 10);
-  const servicesData = await getService({ page });
+  const servicesData = await getServices( searchParams );
   const [services] = await Promise.all([servicesData]);
-
-  if (services?.errors) redirect("/services");
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-      {services.services?.data.map((service: any) => (
+      {services?.map((service: any) => (
         <ServiceCard
-          key={service.id}
-          fidingsFailed={service.attributes.findings.failed}
-          serviceAlias={service.attributes.alias}
+          key={service.service_id}
+          fidingsFailed={service.fail_findings}
+          serviceAlias={service.service_alias}
         />
       ))}
     </div>
