@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "appsync_graphql_apis_no_api_key_authentication",
+  "CheckID": "appsync_graphql_api_no_api_key_authentication",
   "CheckTitle": "AWS AppSync GraphQL APIs should not be authenticated with API keys",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices"

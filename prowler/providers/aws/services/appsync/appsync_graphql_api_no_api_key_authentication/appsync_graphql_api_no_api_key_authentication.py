@@ -2,7 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.appsync.appsync_client import appsync_client
 
 
-class appsync_graphql_apis_no_api_key_authentication(Check):
+class appsync_graphql_api_no_api_key_authentication(Check):
     def execute(self):
         findings = []
         for api in appsync_client.graphql_apis.values():
