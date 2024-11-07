@@ -231,6 +231,7 @@ export interface FindingProps {
         type: "Resource";
         id: string;
       }[];
+      id: string;
       attributes: {
         uid: string;
         name: string;
