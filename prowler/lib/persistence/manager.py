@@ -1,11 +1,12 @@
 import os
 
 from .sqlite import SQLiteDict, SQLiteList
+from .interfaces import InterfaceDict, InterfaceList
 
 default_list = SQLiteList
 
 
-def mklist() -> list:
+def mklist() -> InterfaceList | list:
     """
     Create a new list with the given name and data.
     """
@@ -34,7 +35,7 @@ def mklist() -> list:
         raise ValueError(f"Unsupported database connection: {prowler_db_connection}")
 
 
-def mkdict() -> dict:
+def mkdict() -> InterfaceDict | dict:
     """
     Create a new dictionary with the given name and data.
     """
