@@ -83,7 +83,7 @@ class Jira:
 
     @property
     def cloud_id(self):
-        return self.cloud_id
+        return self._cloud_id
 
     @property
     def scopes(self):
@@ -227,9 +227,7 @@ class Jira:
             - JiraGetAccessTokenError: Failed to get the access token
         """
         try:
-            now = requests.datetime.datetime.utcnow()
-
-            if self.auth_expiration and self.auth_expiration > now.timestamp():
+            if self.auth_expiration and self.auth_expiration > 0:
                 return self.access_token
             else:
                 return self.refresh_access_token()
@@ -312,7 +310,11 @@ class Jira:
             - JiraTestConnectionError: Failed to test the connection
         """
         try:
-            jira = Jira(redirect_uri, client_id, client_secret)
+            jira = Jira(
+                redirect_uri=redirect_uri,
+                client_id=client_id,
+                client_secret=client_secret,
+            )
             access_token = jira.get_access_token()
 
             if not access_token:
@@ -455,6 +457,12 @@ class Jira:
             )
 
             if response.status_code == 200:
+                if len(response.json()["projects"]) == 0:
+                    logger.error("No projects found")
+                    raise JiraNoProjectsError(
+                        message="No projects found in Jira",
+                        file=os.path.basename(__file__),
+                    )
                 issue_types = response.json()["projects"][0]["issuetypes"]
                 return [issue_type["name"] for issue_type in issue_types]
             else:
@@ -514,13 +522,482 @@ class Jira:
             }
 
             for finding in findings:
-                if finding.status != "FAIL":
-                    continue
+                if finding.status.value == "PASS":
+                    status_color = "#008000"
+                else:
+                    status_color = "#FF0000"
+
+                adf_description = {
+                    "type": "doc",
+                    "version": 1,
+                    "content": [
+                        {
+                            "type": "paragraph",
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "text": "Prowler has discovered the following finding:",
+                                }
+                            ],
+                        },
+                        {
+                            "type": "table",
+                            "attrs": {"layout": "full-width"},
+                            "content": [
+                                {
+                                    "type": "tableRow",
+                                    "content": [
+                                        {
+                                            "type": "tableCell",
+                                            "attrs": {"colwidth": [1]},
+                                            "content": [
+                                                {
+                                                    "type": "paragraph",
+                                                    "content": [
+                                                        {
+                                                            "type": "text",
+                                                            "text": "Check Id",
+                                                            "marks": [
+                                                                {"type": "strong"}
+                                                            ],
+                                                        }
+                                                    ],
+                                                }
+                                            ],
+                                        },
+                                        {
+                                            "type": "tableCell",
+                                            "attrs": {"colwidth": [3]},
+                                            "content": [
+                                                {
+                                                    "type": "paragraph",
+                                                    "content": [
+                                                        {
+                                                            "type": "text",
+                                                            "text": finding.metadata.CheckID,
+                                                            "marks": [{"type": "code"}],
+                                                        }
+                                                    ],
+                                                }
+                                            ],
+                                        },
+                                    ],
+                                },
+                                {
+                                    "type": "tableRow",
+                                    "content": [
+                                        {
+                                            "type": "tableCell",
+                                            "attrs": {"colwidth": [1]},
+                                            "content": [
+                                                {
+                                                    "type": "paragraph",
+                                                    "content": [
+                                                        {
+                                                            "type": "text",
+                                                            "text": "Check Title",
+                                                            "marks": [
+                                                                {"type": "strong"}
+                                                            ],
+                                                        }
+                                                    ],
+                                                }
+                                            ],
+                                        },
+                                        {
+                                            "type": "tableCell",
+                                            "attrs": {"colwidth": [3]},
+                                            "content": [
+                                                {
+                                                    "type": "paragraph",
+                                                    "content": [
+                                                        {
+                                                            "type": "text",
+                                                            "text": finding.metadata.CheckTitle,
+                                                        }
+                                                    ],
+                                                }
+                                            ],
+                                        },
+                                    ],
+                                },
+                                {
+                                    "type": "tableRow",
+                                    "content": [
+                                        {
+                                            "type": "tableCell",
+                                            "attrs": {"colwidth": [1]},
+                                            "content": [
+                                                {
+                                                    "type": "paragraph",
+                                                    "content": [
+                                                        {
+                                                            "type": "text",
+                                                            "text": "Severity",
+                                                            "marks": [
+                                                                {"type": "strong"}
+                                                            ],
+                                                        }
+                                                    ],
+                                                }
+                                            ],
+                                        },
+                                        {
+                                            "type": "tableCell",
+                                            "attrs": {"colwidth": [3]},
+                                            "content": [
+                                                {
+                                                    "type": "paragraph",
+                                                    "content": [
+                                                        {
+                                                            "type": "text",
+                                                            "text": finding.metadata.Severity.upper(),
+                                                        }
+                                                    ],
+                                                }
+                                            ],
+                                        },
+                                    ],
+                                },
+                                {
+                                    "type": "tableRow",
+                                    "content": [
+                                        {
+                                            "type": "tableCell",
+                                            "attrs": {"colwidth": [1]},
+                                            "content": [
+                                                {
+                                                    "type": "paragraph",
+                                                    "content": [
+                                                        {
+                                                            "type": "text",
+                                                            "text": "Status",
+                                                            "marks": [
+                                                                {"type": "strong"}
+                                                            ],
+                                                        }
+                                                    ],
+                                                }
+                                            ],
+                                        },
+                                        {
+                                            "type": "tableCell",
+                                            "attrs": {"colwidth": [3]},
+                                            "content": [
+                                                {
+                                                    "type": "paragraph",
+                                                    "content": [
+                                                        {
+                                                            "type": "text",
+                                                            "text": finding.status.value,
+                                                            "marks": [
+                                                                {"type": "strong"},
+                                                                {
+                                                                    "type": "textColor",
+                                                                    "attrs": {
+                                                                        "color": status_color
+                                                                    },
+                                                                },
+                                                            ],
+                                                        }
+                                                    ],
+                                                }
+                                            ],
+                                        },
+                                    ],
+                                },
+                                {
+                                    "type": "tableRow",
+                                    "content": [
+                                        {
+                                            "type": "tableCell",
+                                            "attrs": {"colwidth": [1]},
+                                            "content": [
+                                                {
+                                                    "type": "paragraph",
+                                                    "content": [
+                                                        {
+                                                            "type": "text",
+                                                            "text": "Status Extended",
+                                                            "marks": [
+                                                                {"type": "strong"}
+                                                            ],
+                                                        }
+                                                    ],
+                                                }
+                                            ],
+                                        },
+                                        {
+                                            "type": "tableCell",
+                                            "attrs": {"colwidth": [3]},
+                                            "content": [
+                                                {
+                                                    "type": "paragraph",
+                                                    "content": [
+                                                        {
+                                                            "type": "text",
+                                                            "text": finding.status_extended,
+                                                        }
+                                                    ],
+                                                }
+                                            ],
+                                        },
+                                    ],
+                                },
+                                {
+                                    "type": "tableRow",
+                                    "content": [
+                                        {
+                                            "type": "tableCell",
+                                            "attrs": {"colwidth": [1]},
+                                            "content": [
+                                                {
+                                                    "type": "paragraph",
+                                                    "content": [
+                                                        {
+                                                            "type": "text",
+                                                            "text": "Provider",
+                                                            "marks": [
+                                                                {"type": "strong"}
+                                                            ],
+                                                        }
+                                                    ],
+                                                }
+                                            ],
+                                        },
+                                        {
+                                            "type": "tableCell",
+                                            "attrs": {"colwidth": [3]},
+                                            "content": [
+                                                {
+                                                    "type": "paragraph",
+                                                    "content": [
+                                                        {
+                                                            "type": "text",
+                                                            "text": finding.metadata.Provider,
+                                                            "marks": [{"type": "code"}],
+                                                        }
+                                                    ],
+                                                }
+                                            ],
+                                        },
+                                    ],
+                                },
+                                {
+                                    "type": "tableRow",
+                                    "content": [
+                                        {
+                                            "type": "tableCell",
+                                            "attrs": {"colwidth": [1]},
+                                            "content": [
+                                                {
+                                                    "type": "paragraph",
+                                                    "content": [
+                                                        {
+                                                            "type": "text",
+                                                            "text": "Region",
+                                                            "marks": [
+                                                                {"type": "strong"}
+                                                            ],
+                                                        }
+                                                    ],
+                                                }
+                                            ],
+                                        },
+                                        {
+                                            "type": "tableCell",
+                                            "attrs": {"colwidth": [3]},
+                                            "content": [
+                                                {
+                                                    "type": "paragraph",
+                                                    "content": [
+                                                        {
+                                                            "type": "text",
+                                                            "text": finding.region,
+                                                            "marks": [{"type": "code"}],
+                                                        }
+                                                    ],
+                                                }
+                                            ],
+                                        },
+                                    ],
+                                },
+                                {
+                                    "type": "tableRow",
+                                    "content": [
+                                        {
+                                            "type": "tableCell",
+                                            "attrs": {"colwidth": [1]},
+                                            "content": [
+                                                {
+                                                    "type": "paragraph",
+                                                    "content": [
+                                                        {
+                                                            "type": "text",
+                                                            "text": "Resource UID",
+                                                            "marks": [
+                                                                {"type": "strong"}
+                                                            ],
+                                                        }
+                                                    ],
+                                                }
+                                            ],
+                                        },
+                                        {
+                                            "type": "tableCell",
+                                            "attrs": {"colwidth": [3]},
+                                            "content": [
+                                                {
+                                                    "type": "paragraph",
+                                                    "content": [
+                                                        {
+                                                            "type": "text",
+                                                            "text": finding.resource_uid,
+                                                            "marks": [{"type": "code"}],
+                                                        }
+                                                    ],
+                                                }
+                                            ],
+                                        },
+                                    ],
+                                },
+                                {
+                                    "type": "tableRow",
+                                    "content": [
+                                        {
+                                            "type": "tableCell",
+                                            "attrs": {"colwidth": [1]},
+                                            "content": [
+                                                {
+                                                    "type": "paragraph",
+                                                    "content": [
+                                                        {
+                                                            "type": "text",
+                                                            "text": "Resource Name",
+                                                            "marks": [
+                                                                {"type": "strong"}
+                                                            ],
+                                                        }
+                                                    ],
+                                                }
+                                            ],
+                                        },
+                                        {
+                                            "type": "tableCell",
+                                            "attrs": {"colwidth": [3]},
+                                            "content": [
+                                                {
+                                                    "type": "paragraph",
+                                                    "content": [
+                                                        {
+                                                            "type": "text",
+                                                            "text": finding.resource_name,
+                                                            "marks": [{"type": "code"}],
+                                                        }
+                                                    ],
+                                                }
+                                            ],
+                                        },
+                                    ],
+                                },
+                                {
+                                    "type": "tableRow",
+                                    "content": [
+                                        {
+                                            "type": "tableCell",
+                                            "attrs": {"colwidth": [1]},
+                                            "content": [
+                                                {
+                                                    "type": "paragraph",
+                                                    "content": [
+                                                        {
+                                                            "type": "text",
+                                                            "text": "Risk",
+                                                            "marks": [
+                                                                {"type": "strong"}
+                                                            ],
+                                                        }
+                                                    ],
+                                                }
+                                            ],
+                                        },
+                                        {
+                                            "type": "tableCell",
+                                            "attrs": {"colwidth": [3]},
+                                            "content": [
+                                                {
+                                                    "type": "paragraph",
+                                                    "content": [
+                                                        {
+                                                            "type": "text",
+                                                            "text": finding.metadata.Risk,
+                                                        }
+                                                    ],
+                                                }
+                                            ],
+                                        },
+                                    ],
+                                },
+                                {
+                                    "type": "tableRow",
+                                    "content": [
+                                        {
+                                            "type": "tableCell",
+                                            "attrs": {"colwidth": [1]},
+                                            "content": [
+                                                {
+                                                    "type": "paragraph",
+                                                    "content": [
+                                                        {
+                                                            "type": "text",
+                                                            "text": "Recommendation",
+                                                            "marks": [
+                                                                {"type": "strong"}
+                                                            ],
+                                                        }
+                                                    ],
+                                                }
+                                            ],
+                                        },
+                                        {
+                                            "type": "tableCell",
+                                            "attrs": {"colwidth": [3]},
+                                            "content": [
+                                                {
+                                                    "type": "paragraph",
+                                                    "content": [
+                                                        {
+                                                            "type": "text",
+                                                            "text": finding.metadata.Remediation.Recommendation.Text
+                                                            + " ",
+                                                        },
+                                                        {
+                                                            "type": "text",
+                                                            "text": finding.metadata.Remediation.Recommendation.Url,
+                                                            "marks": [
+                                                                {
+                                                                    "type": "link",
+                                                                    "attrs": {
+                                                                        "href": finding.metadata.Remediation.Recommendation.Url
+                                                                    },
+                                                                }
+                                                            ],
+                                                        },
+                                                    ],
+                                                }
+                                            ],
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                    ],
+                }
                 payload = {
                     "fields": {
                         "project": {"key": project_key},
-                        "summary": finding.metadata.CheckTitle,
-                        "description": finding.metadata.Description,
+                        "summary": f"[Prowler] {finding.metadata.Severity.value.upper()} - {finding.metadata.CheckID} - {finding.resource_uid}",
+                        "description": adf_description,
                         "issuetype": {"name": issue_type},
                     }
                 }
