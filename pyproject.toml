@@ -76,7 +76,7 @@ tzlocal = "5.2"
 
 [tool.poetry.group.dev.dependencies]
 bandit = "1.7.10"
-black = "24.8.0"
+black = "24.10.0"
 coverage = "7.6.1"
 docker = "7.1.0"
 flake8 = "7.1.1"
@@ -92,7 +92,7 @@ pytest-env = "1.1.5"
 pytest-randomly = "3.15.0"
 pytest-xdist = "3.6.1"
 safety = "3.2.8"
-vulture = "2.12"
+vulture = "2.13"
 
 [tool.poetry.group.docs]
 optional = true

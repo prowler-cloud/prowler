@@ -47,6 +47,9 @@ def mock_make_api_call(self, operation_name, kwargs):
                     "EndpointIdentifier": DMS_ENDPOINT_NAME,
                     "EndpointArn": DMS_ENDPOINT_ARN,
                     "SslMode": "require",
+                    "RedisSettings": {
+                        "SslSecurityProtocol": "ssl-encryption",
+                    },
                     "MongoDbSettings": {
                         "AuthType": "password",
                     },
@@ -131,6 +134,7 @@ class Test_DMS_Service:
         assert len(dms.endpoints) == 1
         assert dms.endpoints[DMS_ENDPOINT_ARN].id == DMS_ENDPOINT_NAME
         assert dms.endpoints[DMS_ENDPOINT_ARN].ssl_mode == "require"
+        assert dms.endpoints[DMS_ENDPOINT_ARN].redis_ssl_protocol == "ssl-encryption"
         assert dms.endpoints[DMS_ENDPOINT_ARN].mongodb_auth_type == "password"
         assert dms.endpoints[DMS_ENDPOINT_ARN].neptune_iam_auth_enabled
         assert dms.endpoints[DMS_ENDPOINT_ARN].engine_name == "neptune"
@@ -204,24 +208,4 @@ class Test_DMS_Service:
         assert (
             dms.replication_tasks[dms_replication_task_arn].target_endpoint_arn
             == DMS_ENDPOINT_ARN
-        )
-        assert (
-            dms.replication_tasks[dms_replication_task_arn].replication_task_settings
-            == """
-                {
-                    "Logging": {
-                        "EnableLogging": true,
-                        "LogComponents": [
-                            {
-                                "Id": "SOURCE_CAPTURE",
-                                "Severity": "LOGGER_SEVERITY_DEFAULT"
-                            },
-                            {
-                                "Id": "SOURCE_UNLOAD",
-                                "Severity": "LOGGER_SEVERITY_DEFAULT"
-                            }
-                        ]
-                    }
-                }
-            """
         )

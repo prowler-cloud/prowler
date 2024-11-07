@@ -20,6 +20,8 @@ class DMS(AWSService):
         self.__threading_call__(self._describe_endpoints)
         self.__threading_call__(self._describe_replication_tasks)
         self.__threading_call__(self._list_tags, self.endpoints.values())
+        self.__threading_call__(self._describe_replication_tasks)
+        self.__threading_call__(self._list_tags, self.replication_tasks.values())
 
     def _describe_replication_instances(self, regional_client):
         logger.info("DMS - Describing DMS Replication Instances...")
@@ -74,6 +76,9 @@ class DMS(AWSService):
                             id=endpoint["EndpointIdentifier"],
                             region=regional_client.region,
                             ssl_mode=endpoint.get("SslMode", False),
+                            redis_ssl_protocol=endpoint.get("RedisSettings", {}).get(
+                                "SslSecurityProtocol", "plaintext"
+                            ),
                             mongodb_auth_type=endpoint.get("MongoDbSettings", {}).get(
                                 "AuthType", "no"
                             ),
@@ -93,31 +98,26 @@ class DMS(AWSService):
             paginator = regional_client.get_paginator("describe_replication_tasks")
             for page in paginator.paginate():
                 for task in page["ReplicationTasks"]:
-                    task_settings_json = task["ReplicationTaskSettings"]
                     arn = task["ReplicationTaskArn"]
-
-                    try:
-                        task_settings = json.loads(task_settings_json)
-                        logging_config = task_settings.get("Logging", {})
-
-                        enable_logging = logging_config.get("EnableLogging", False)
-                        log_components = logging_config.get("LogComponents", [])
-
+                    if not self.audit_resources or (
+                        is_resource_filtered(arn, self.audit_resources)
+                    ):
+                        task_settings = json.loads(
+                            task.get("ReplicationTaskSettings", "")
+                        )
                         self.replication_tasks[arn] = ReplicationTasks(
                             arn=arn,
                             id=task["ReplicationTaskIdentifier"],
                             region=regional_client.region,
                             source_endpoint_arn=task["SourceEndpointArn"],
                             target_endpoint_arn=task["TargetEndpointArn"],
-                            replication_task_settings=task_settings_json,
-                            logging_enabled=enable_logging,
-                            log_components=log_components,
-                            tags=[],
+                            logging_enabled=task_settings.get("Logging", {}).get(
+                                "EnableLogging", False
+                            ),
+                            log_components=task_settings.get("Logging", {}).get(
+                                "LogComponents", []
+                            ),
                         )
-
-                    except json.JSONDecodeError:
-                        logger.error(f"Error decoding JSON for replication task {arn}")
-
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -139,12 +139,11 @@ class Endpoint(BaseModel):
     id: str
     region: str
     ssl_mode: str
-    tags: Optional[list]
-    logging_enabled: bool = False
-    log_components: list[dict] = []
+    redis_ssl_protocol: str
     mongodb_auth_type: str
     neptune_iam_auth_enabled: bool = False
     engine_name: str
+    tags: Optional[list]
 
 
 class RepInstance(BaseModel):
@@ -166,8 +165,6 @@ class ReplicationTasks(BaseModel):
     region: str
     source_endpoint_arn: str
     target_endpoint_arn: str
-    replication_task_settings: str
-    tags: Optional[list]
     logging_enabled: bool = False
     log_components: list[dict] = []
     tags: Optional[list] = []
