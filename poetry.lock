@@ -350,17 +350,17 @@ typing-extensions = ">=4.0.0"
 
 [[package]]
 name = "azure-keyvault-keys"
-version = "4.9.0"
+version = "4.10.0"
 description = "Microsoft Azure Key Vault Keys Client Library for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "azure-keyvault-keys-4.9.0.tar.gz", hash = "sha256:08632dcd6ece28657204e9a256ad64369fe2b0e385ed43349f932f007d89f774"},
-    {file = "azure_keyvault_keys-4.9.0-py3-none-any.whl", hash = "sha256:05eff85600f2f288a38e5c818ff77c5121840d327e66188cfa7ad333defb545b"},
+    {file = "azure_keyvault_keys-4.10.0-py3-none-any.whl", hash = "sha256:210227e0061f641a79755f0e0bcbcf27bbfb4df630a933c43a99a29962283d0d"},
+    {file = "azure_keyvault_keys-4.10.0.tar.gz", hash = "sha256:511206ae90aec1726a4d6ff5a92d754bd0c0f1e8751891368d30fb70b62955f1"},
 ]
 
 [package.dependencies]
-azure-core = ">=1.29.5,<2.0.0"
+azure-core = ">=1.31.0"
 cryptography = ">=2.1.4"
 isodate = ">=0.6.1"
 typing-extensions = ">=4.0.1"
@@ -5861,4 +5861,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "11b384694ecdc78a4ffdeb071987037db2af28823f3036c26f85e7ac8266ca5e"
+content-hash = "c38f6872882db3cc91e3537bb0edfa8faa6f28f7f23f55968f4a067dfd5b6cac"
