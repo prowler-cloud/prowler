@@ -2,7 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 
-import { InfoIcon, PlusIcon } from "@/components/icons";
+import { InfoIcon } from "@/components/icons";
 import { DateWithTime, EntityInfoShort } from "@/components/ui/entities";
 import { TriggerSheet } from "@/components/ui/sheet";
 import { DataTableColumnHeader, StatusBadge } from "@/components/ui/table";
