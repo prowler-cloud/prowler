@@ -154,8 +154,8 @@ SIMPLE_JWT = {
     "BLACKLIST_AFTER_ROTATION": True,
     # Algorithm and keys
     "ALGORITHM": "RS256",
-    "SIGNING_KEY": env.str("DJANGO_TOKEN_SIGNING_KEY", ""),
-    "VERIFYING_KEY": env.str("DJANGO_TOKEN_VERIFYING_KEY", ""),
+    "SIGNING_KEY": env.str("DJANGO_TOKEN_SIGNING_KEY", "").replace("\\n", "\n"),
+    "VERIFYING_KEY": env.str("DJANGO_TOKEN_VERIFYING_KEY", "").replace("\\n", "\n"),
     # Authorization header configuration
     "AUTH_HEADER_TYPES": ("Bearer",),
     "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",

@@ -201,7 +201,7 @@ poetry shell
 python manage.py loaddata api/fixtures/0_dev_users.json --database admin
 ```
 
-> The default credentials are `prowler_dev:thisisapassword123`
+> The default credentials are `dev@prowler.com:thisisapassword123` or `dev2@prowler.com:thisisapassword123`
 
 ## Run tests
 
