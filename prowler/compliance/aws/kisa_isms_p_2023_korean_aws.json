@@ -1509,7 +1509,7 @@
         "iam_user_mfa_enabled_console_access",
         "networkfirewall_in_all_vpc",
         "eks_cluster_network_policy_enabled",
-        "eks_control_plane_endpoint_access_restricted",
+        "eks_cluster_not_publicly_accessible",
         "eks_cluster_private_nodes_enabled",
         "eks_endpoints_not_publicly_accessible",
         "kafka_cluster_is_public",
