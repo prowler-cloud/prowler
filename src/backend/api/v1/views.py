@@ -29,7 +29,7 @@ from rest_framework_json_api.views import Response
 from rest_framework_simplejwt.exceptions import InvalidToken
 from rest_framework_simplejwt.exceptions import TokenError
 
-from api.base_views import BaseTenantViewset, BaseRLSViewSet, BaseViewSet
+from api.base_views import BaseTenantViewset, BaseRLSViewSet, BaseUserViewset
 from api.db_router import MainRouter
 from api.filters import (
     ProviderFilter,
@@ -41,6 +41,7 @@ from api.filters import (
     FindingFilter,
     ProviderSecretFilter,
     InvitationFilter,
+    UserFilter,
 )
 from api.models import (
     User,
@@ -196,9 +197,13 @@ class SchemaView(SpectacularAPIView):
 
 
 @extend_schema_view(
+    list=extend_schema(
+        summary="List all users",
+        description="Retrieve a list of all users with options for filtering by various criteria.",
+    ),
     retrieve=extend_schema(
         summary="Retrieve a user's information",
-        description="Fetch detailed information about an authenticated user. It only allows using your own user ID.",
+        description="Fetch detailed information about an authenticated user.",
     ),
     create=extend_schema(
         summary="Register a new user",
@@ -218,14 +223,18 @@ class SchemaView(SpectacularAPIView):
     ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
-class UserViewSet(BaseViewSet):
+class UserViewSet(BaseUserViewset):
     serializer_class = UserSerializer
     http_method_names = ["get", "post", "patch", "delete"]
-    ordering = ["id"]
-    ordering_fields = []
+    filterset_class = UserFilter
+    ordering = ["-date_joined"]
+    ordering_fields = ["name", "email", "company_name", "date_joined", "is_active"]
 
     def get_queryset(self):
-        return User.objects.filter(id=self.request.user.id)
+        # If called during schema generation, return an empty queryset
+        if getattr(self, "swagger_fake_view", False):
+            return User.objects.none()
+        return User.objects.filter(membership__tenant__id=self.request.tenant_id)
 
     def get_permissions(self):
         if self.action == "create":
@@ -241,15 +250,6 @@ class UserViewSet(BaseViewSet):
             return UserUpdateSerializer
         else:
             return UserSerializer
-
-    @extend_schema(exclude=True)
-    def list(self, request, *args, **kwargs):
-        raise MethodNotAllowed(method="GET")
-
-    def retrieve(self, request, *args, **kwargs):
-        if kwargs["pk"] != str(request.user.id):
-            raise NotFound(detail="User was not found.")
-        return super().retrieve(request, *args, **kwargs)
 
     @action(detail=False, methods=["get"], url_name="me")
     def me(self, request):
@@ -444,8 +444,6 @@ class TenantMembersViewSet(BaseTenantViewset):
         except Membership.DoesNotExist:
             raise NotFound("Membership does not exist.")
         return membership
-
-    # TODO: Add invite functionality
 
     @extend_schema(exclude=True)
     def retrieve(self, request, *args, **kwargs):

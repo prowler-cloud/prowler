@@ -21,9 +21,18 @@ TODAY = str(datetime.today().date())
 
 @pytest.mark.django_db
 class TestUserViewSet:
-    def test_users_list_not_allowed(self, authenticated_client):
+    def test_users_list(self, authenticated_client, create_test_user):
+        user = create_test_user
+        user.refresh_from_db()
         response = authenticated_client.get(reverse("user-list"))
-        assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 1
+        assert response.json()["data"][0]["attributes"]["email"] == user.email
+        assert response.json()["data"][0]["attributes"]["name"] == user.name
+        assert (
+            response.json()["data"][0]["attributes"]["company_name"]
+            == user.company_name
+        )
 
     def test_users_retrieve(self, authenticated_client, create_test_user):
         response = authenticated_client.get(

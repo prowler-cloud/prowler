@@ -22,6 +22,7 @@ from api.db_utils import (
     InvitationStateEnumField,
 )
 from api.models import (
+    User,
     Membership,
     Provider,
     Resource,
@@ -433,4 +434,18 @@ class InvitationFilter(FilterSet):
             InvitationStateEnumField: {
                 "filter_class": CharFilter,
             }
+        }
+
+
+class UserFilter(FilterSet):
+    date_joined = DateFilter(field_name="date_joined", lookup_expr="date")
+
+    class Meta:
+        model = User
+        fields = {
+            "name": ["exact", "icontains"],
+            "email": ["exact", "icontains"],
+            "company_name": ["exact", "icontains"],
+            "date_joined": ["date", "gte", "lte"],
+            "is_active": ["exact"],
         }

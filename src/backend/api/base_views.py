@@ -74,3 +74,30 @@ class BaseTenantViewset(BaseViewSet):
         with connection.cursor() as cursor:
             cursor.execute(f"SELECT set_config('api.user_id', '{user_id}', TRUE);")
             return super().initial(request, *args, **kwargs)
+
+
+class BaseUserViewset(BaseViewSet):
+    def dispatch(self, request, *args, **kwargs):
+        with transaction.atomic():
+            return super().dispatch(request, *args, **kwargs)
+
+    def initial(self, request, *args, **kwargs):
+        # TODO refactor after improving RLS on users
+        if request.stream is not None and request.stream.method == "POST":
+            return super().initial(request, *args, **kwargs)
+        if request.auth is None:
+            raise NotAuthenticated
+
+        tenant_id = request.auth.get("tenant_id")
+        if tenant_id is None:
+            raise NotAuthenticated("Tenant ID is not present in token")
+
+        try:
+            uuid.UUID(tenant_id)
+        except ValueError:
+            raise ValidationError("Tenant ID must be a valid UUID")
+
+        with connection.cursor() as cursor:
+            cursor.execute(f"SELECT set_config('api.tenant_id', '{tenant_id}', TRUE);")
+            self.request.tenant_id = tenant_id
+            return super().initial(request, *args, **kwargs)

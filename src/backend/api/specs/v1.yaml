@@ -2622,6 +2622,124 @@ paths:
                 $ref: '#/components/schemas/TokenRefreshResponse'
           description: ''
   /api/v1/users:
+    get:
+      operationId: users_list
+      description: Retrieve a list of all users with options for filtering by various
+        criteria.
+      summary: List all users
+      parameters:
+      - in: query
+        name: fields[User]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - name
+            - email
+            - company_name
+            - date_joined
+            - memberships
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[company_name]
+        schema:
+          type: string
+      - in: query
+        name: filter[company_name__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[date_joined]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[date_joined__date]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[date_joined__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[date_joined__lte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[email]
+        schema:
+          type: string
+      - in: query
+        name: filter[email__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[is_active]
+        schema:
+          type: boolean
+      - in: query
+        name: filter[name]
+        schema:
+          type: string
+      - in: query
+        name: filter[name__icontains]
+        schema:
+          type: string
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page[size]
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - name
+            - -name
+            - email
+            - -email
+            - company_name
+            - -company_name
+            - date_joined
+            - -date_joined
+            - is_active
+            - -is_active
+        explode: false
+      tags:
+      - User
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedUserList'
+          description: ''
     post:
       operationId: users_create
       description: Create a new user account by providing the necessary registration
@@ -2661,8 +2779,7 @@ paths:
   /api/v1/users/{id}:
     get:
       operationId: users_retrieve
-      description: Fetch detailed information about an authenticated user. It only
-        allows using your own user ID.
+      description: Fetch detailed information about an authenticated user.
       summary: Retrieve a user's information
       parameters:
       - in: query
@@ -3584,6 +3701,15 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Tenant'
+      required:
+      - data
+    PaginatedUserList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
       required:
       - data
     PatchedInvitationUpdateRequest:
