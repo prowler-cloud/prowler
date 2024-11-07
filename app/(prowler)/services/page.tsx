@@ -1,5 +1,4 @@
 import { Spacer } from "@nextui-org/react";
-import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
 import { getServices } from "@/actions/services";
@@ -35,7 +34,7 @@ const SSRServiceGrid = async ({
 }: {
   searchParams: SearchParamsProps;
 }) => {
-  const servicesData = await getServices( searchParams );
+  const servicesData = await getServices(searchParams);
   const [services] = await Promise.all([servicesData]);
 
   return (

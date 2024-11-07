@@ -96,7 +96,6 @@ export const getServices = async ({}) => {
     }
   }
 
-  console.log(parsedData);
   revalidatePath("/services");
   return parsedData;
 };
