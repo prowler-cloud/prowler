@@ -46,6 +46,8 @@ class Jira:
         - _scopes: The scopes needed to authenticate, read:jira-user read:jira-work write:jira-work
         - AUTH_URL: The URL to authenticate with Jira
         - PARAMS_TEMPLATE: The template for the parameters to authenticate with Jira
+        - TOKEN_URL: The URL to get the access token from Jira
+        - API_TOKEN_URL: The URL to get the accessible resources from Jira
 
     Methods:
         - __init__: Initialize the Jira object
