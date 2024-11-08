@@ -39,11 +39,22 @@ export const LaunchScanWorkflow = ({
   const isLoading = form.formState.isSubmitting;
 
   const onSubmitClient = async (values: z.infer<typeof formSchema>) => {
+    const formValues = { ...values };
+
+    if (!formValues.scanName?.trim()) {
+      const date = new Date();
+      const month = (date.getMonth() + 1).toString().padStart(2, "0");
+      const day = date.getDate().toString().padStart(2, "0");
+      const year = date.getFullYear();
+      const hours = date.getHours().toString().padStart(2, "0");
+      const minutes = date.getMinutes().toString().padStart(2, "0");
+      formValues.scanName = `scan:${month}/${day}/${year} ${hours}:${minutes}`;
+    }
+
     const formData = new FormData();
-    console.log(values);
 
     // Loop through form values and add to formData
-    Object.entries(values).forEach(
+    Object.entries(formValues).forEach(
       ([key, value]) =>
         value !== undefined &&
         formData.append(

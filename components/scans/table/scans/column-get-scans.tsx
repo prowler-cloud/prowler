@@ -29,18 +29,6 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
       return <EntityInfoShort entityAlias={name} entityId={row.original.id} />;
     },
   },
-  {
-    accessorKey: "trigger",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={"Type"} param="trigger" />
-    ),
-    cell: ({ row }) => {
-      const {
-        attributes: { trigger },
-      } = getScanData(row);
-      return <p>{trigger}</p>;
-    },
-  },
 
   {
     accessorKey: "status",
@@ -52,6 +40,27 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
         attributes: { state },
       } = getScanData(row);
       return <StatusBadge status={state} />;
+    },
+  },
+
+  {
+    accessorKey: "scanner_args",
+    header: "Scanner Args",
+    cell: ({ row }) => {
+      const {
+        attributes: { scanner_args },
+      } = getScanData(row);
+      return <p className="font-medium">{scanner_args?.only_logs}</p>;
+    },
+  },
+  {
+    accessorKey: "resources",
+    header: "Resources",
+    cell: ({ row }) => {
+      const {
+        attributes: { unique_resource_count },
+      } = getScanData(row);
+      return <p className="font-medium">{unique_resource_count}</p>;
     },
   },
   {
@@ -103,23 +112,15 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
     },
   },
   {
-    accessorKey: "scanner_args",
-    header: "Scanner Args",
+    accessorKey: "trigger",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={"Type"} param="trigger" />
+    ),
     cell: ({ row }) => {
       const {
-        attributes: { scanner_args },
+        attributes: { trigger },
       } = getScanData(row);
-      return <p className="font-medium">{scanner_args?.only_logs}</p>;
-    },
-  },
-  {
-    accessorKey: "resources",
-    header: "Resources",
-    cell: ({ row }) => {
-      const {
-        attributes: { unique_resource_count },
-      } = getScanData(row);
-      return <p className="font-medium">{unique_resource_count}</p>;
+      return <p>{trigger}</p>;
     },
   },
   {
