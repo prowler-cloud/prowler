@@ -74,13 +74,13 @@ def test_uuid7_start():
     assert start_uuid.version == 7
 
 
-@pytest.mark.parametrize("days_offset", [0, 1, 10, 30, 60])
-def test_uuid7_end(days_offset):
+@pytest.mark.parametrize("months_offset", [0, 1, 10, 30, 60])
+def test_uuid7_end(months_offset):
     dt = datetime.now(timezone.utc)
     uuid = datetime_to_uuid7(dt)
-    end_uuid = uuid7_end(uuid, days_offset)
-    expected_dt = dt.replace(hour=0, minute=0, second=0, microsecond=0)
-    expected_dt += relativedelta(days=(days_offset + 1), microseconds=-1)
+    end_uuid = uuid7_end(uuid, months_offset)
+    expected_dt = dt.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    expected_dt += relativedelta(months=months_offset, microseconds=-1)
     expected_timestamp_ms = int(expected_dt.timestamp() * 1000) & 0xFFFFFFFFFFFF
     assert end_uuid.time == expected_timestamp_ms
     assert end_uuid.version == 7
@@ -103,8 +103,8 @@ def test_uuid7_range():
 
     # Expected end of range
     end_dt = datetime_from_uuid7(max(uuid_list, key=lambda u: u.time))
-    end_dt = end_dt.replace(hour=0, minute=0, second=0, microsecond=0)
-    end_dt += relativedelta(days=1, microseconds=-1)
+    end_dt = end_dt.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    end_dt += relativedelta(months=1, microseconds=-1)
     expected_end_timestamp_ms = int(end_dt.timestamp() * 1000) & 0xFFFFFFFFFFFF
 
     assert start_uuid.time == expected_start_timestamp_ms

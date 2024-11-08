@@ -86,7 +86,9 @@ class PostgresUUIDv7PartitioningStrategy(PostgresRangePartitioningStrategy):
         name_format: Optional[str] = None,
         **kwargs,
     ) -> None:
-        self.start_date = start_date.replace(hour=0, minute=0, second=0, microsecond=0)
+        self.start_date = start_date.replace(
+            day=1, hour=0, minute=0, second=0, microsecond=0
+        )
         self.size = size
         self.count = count
         self.max_age = max_age
@@ -140,8 +142,17 @@ class PostgresUUIDv7PartitioningStrategy(PostgresRangePartitioningStrategy):
             current_datetime -= self.size.as_delta()
 
     def get_start_datetime(self) -> datetime:
+        """
+        Gets the start of the current month in UTC timezone.
+
+        This function returns a `datetime` object set to the first day of the current
+        month, at midnight (00:00:00), in UTC.
+
+        Returns:
+            datetime: A `datetime` object representing the start of the current month in UTC.
+        """
         return datetime.now(timezone.utc).replace(
-            hour=0, minute=0, second=0, microsecond=0
+            day=1, hour=0, minute=0, second=0, microsecond=0
         )
 
 
@@ -162,13 +173,13 @@ manager = PostgresPartitioningManager(
             strategy=PostgresUUIDv7PartitioningStrategy(
                 start_date=datetime.now(timezone.utc),
                 size=PostgresTimePartitionSize(
-                    days=settings.FINDINGS_TABLE_PARTITION_DAYS
+                    months=settings.FINDINGS_TABLE_PARTITION_MONTHS
                 ),
                 count=settings.FINDINGS_TABLE_PARTITION_COUNT,
                 max_age=relative_days_or_none(
-                    settings.FINDINGS_TABLE_PARTITION_MAX_AGE_DAYS
+                    settings.FINDINGS_TABLE_PARTITION_MAX_AGE_MONTHS
                 ),
-                name_format="%Y_%b_%d",
+                name_format="%Y_%b",
                 rls_statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
             ),
         ),
@@ -178,13 +189,13 @@ manager = PostgresPartitioningManager(
             strategy=PostgresUUIDv7PartitioningStrategy(
                 start_date=datetime.now(timezone.utc),
                 size=PostgresTimePartitionSize(
-                    days=settings.FINDINGS_TABLE_PARTITION_DAYS
+                    months=settings.FINDINGS_TABLE_PARTITION_MONTHS
                 ),
                 count=settings.FINDINGS_TABLE_PARTITION_COUNT,
                 max_age=relative_days_or_none(
-                    settings.FINDINGS_TABLE_PARTITION_MAX_AGE_DAYS
+                    settings.FINDINGS_TABLE_PARTITION_MAX_AGE_MONTHS
                 ),
-                name_format="%Y_%b_%d",
+                name_format="%Y_%b",
                 rls_statements=["SELECT"],
             ),
         ),

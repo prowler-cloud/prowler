@@ -34,31 +34,32 @@ By default, the command will prompt you to accept the changes before applying th
 
 ```shell
 Finding:
-  + 2024_oct_18
-     name: 2024_oct_18
-     from_values: 01929cec-8800-7988-a49d-54cbb64b2d3f
-     to_values: 0193376b-4c18-7ff7-99d5-95b8479ce39f
-     size_unit: days
-     size_value: 30
-  + 2024_nov_17
-     name: 2024_nov_17
-     from_values: 0193376b-5000-7414-bbae-b1da382332f9
-     to_values: 0193d1ea-1418-7b00-93fa-c4e06bf36bbe
-     size_unit: days
-     size_value: 30
+   + 2024_nov
+      name: 2024_nov
+      from_values: 0192e505-9000-72c8-a47c-cce719d8fb93
+      to_values: 01937f84-5418-7eb8-b2a6-e3be749e839d
+      size_unit: months
+      size_value: 1
+   + 2024_dec
+      name: 2024_dec
+      from_values: 01937f84-5800-7b55-879c-9cdb46f023f6
+      to_values: 01941f29-7818-7f9f-b4be-20b05bb2f574
+      size_unit: months
+      size_value: 1
 
 0 partitions will be deleted
 2 partitions will be created
 ```
 
-If you choose to apply the partitions, tables will be generated with the following format: `<table_name>_<year>_<month>_<day>`. The date in the table name shows the first date of the partition.
+If you choose to apply the partitions, tables will be generated with the following format: `<table_name>_<year>_<month>`.
 
 For more info on the partitioning manager, see https://github.com/SectorLabs/django-postgres-extra
 
 ### Changing the Partitioning Parameters
 
-There are 3 environment variables that can be used to change the partitioning parameters:
+There are 4 environment variables that can be used to change the partitioning parameters:
 
-- `FINDINGS_TABLE_PARTITION_DAYS`: Set the days for each partition. Setting the partition days to 30 will create partitions with a size of 1 month.
+- `DJANGO_MANAGE_DB_PARTITIONS`: Allow Django to manage database partitons. By default is set to `False`.
+- `FINDINGS_TABLE_PARTITION_MONTHS`: Set the months for each partition. Setting the partition monts to 1 will create partitions with a size of 1 natural month.
 - `FINDINGS_TABLE_PARTITION_COUNT`: Set the number of partitions to create
-- `FINDINGS_TABLE_PARTITION_MAX_AGE_DAYS`: Set the number of days to keep partitions before deleting them. Setting this to `None` will keep partitions indefinitely.
+- `FINDINGS_TABLE_PARTITION_MAX_AGE_MONTHS`: Set the number of months to keep partitions before deleting them. Setting this to `None` will keep partitions indefinitely.

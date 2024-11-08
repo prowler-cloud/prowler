@@ -321,12 +321,11 @@ class FindingFilter(FilterSet):
         }
 
     #  Convert filter values to UUIDv7 values for use with partitioning
-
     def filter_scan_id(self, queryset, name, value):
         try:
             value_uuid = transform_into_uuid7(value)
             start = uuid7_start(value_uuid)
-            end = uuid7_end(value_uuid, settings.FINDINGS_TABLE_PARTITION_DAYS)
+            end = uuid7_end(value_uuid, settings.FINDINGS_TABLE_PARTITION_MONTHS)
         except ValidationError as validation_error:
             detail = str(validation_error.detail[0])
             raise ValidationError(

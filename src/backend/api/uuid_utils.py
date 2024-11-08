@@ -100,22 +100,23 @@ def uuid7_start(uuid_obj: UUID) -> UUID:
     return datetime_to_uuid7(start_of_day)
 
 
-def uuid7_end(uuid_obj: UUID, offset_days: int = 0) -> UUID:
+def uuid7_end(uuid_obj: UUID, offset_months: int = 1) -> UUID:
     """
-    Returns a UUIDv7 that represents the end of the day for the given UUID.
+    Returns a UUIDv7 that represents the end of the month for the given UUID.
 
     Args:
         uuid_obj: A UUIDv7 object.
-        offset_days: Number of days to offset from the given UUID's date. Defaults to 0.
+        offset_days: Number of months to offset from the given UUID's date. Defaults to 1 to handle if
+        partitions are not being used, if so the value will be the one set at FINDINGS_TABLE_PARTITION_MONTHS.
 
     Returns:
-        A UUIDv7 object representing the end of the day for the given UUID's date plus offset_days.
+        A UUIDv7 object representing the end of the month for the given UUID's date plus offset_months.
     """
-    end_of_day = datetime_from_uuid7(uuid_obj).replace(
-        hour=0, minute=0, second=0, microsecond=0
+    end_of_month = datetime_from_uuid7(uuid_obj).replace(
+        day=1, hour=0, minute=0, second=0, microsecond=0
     )
-    end_of_day += relativedelta(days=(offset_days + 1), microseconds=-1)
-    return datetime_to_uuid7(end_of_day)
+    end_of_month += relativedelta(months=offset_months, microseconds=-1)
+    return datetime_to_uuid7(end_of_month)
 
 
 def uuid7_range(uuid_list: list[UUID]) -> list[UUID]:
