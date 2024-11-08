@@ -16,7 +16,11 @@ class Gemini:
         if os.getenv("GEMINI_API_KEY"):
             self.api_key = os.getenv("GEMINI_API_KEY")
         else:
-            raise Exception("GEMINI_API_KEY environment variable is not set")
+            self.api_key = input(
+                "GEMINI_API_KEY is not set, please enter the API key: "
+            )
+            if not self.api_key:
+                raise Exception("GEMINI_API_KEY is required")
 
         if model not in ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.0-pro"]:
             raise Exception("Invalid Gemini AI model")
