@@ -150,13 +150,13 @@ frozenlist = ">=1.1.0"
 
 [[package]]
 name = "alive-progress"
-version = "3.1.5"
+version = "3.2.0"
 description = "A new kind of Progress Bar, with real-time throughput, ETA, and very cool animations!"
 optional = false
-python-versions = ">=3.7, <4"
+python-versions = "<4,>=3.9"
 files = [
-    {file = "alive-progress-3.1.5.tar.gz", hash = "sha256:42e399a66c8150dc507602dff7b7953f105ef11faf97ddaa6d27b1cbf45c4c98"},
-    {file = "alive_progress-3.1.5-py3-none-any.whl", hash = "sha256:347220c1858e3abe137fa0746895668c04df09c5261a13dc03f05795e8a29be5"},
+    {file = "alive-progress-3.2.0.tar.gz", hash = "sha256:ede29d046ff454fe56b941f686f89dd9389430c4a5b7658e445cb0b80e0e4deb"},
+    {file = "alive_progress-3.2.0-py3-none-any.whl", hash = "sha256:0677929f8d3202572e9d142f08170b34dbbe256cc6d2afbf75ef187c7da964a8"},
 ]
 
 [package.dependencies]
@@ -5851,4 +5851,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "c69dc16b3430714736102783b15399bb9a0fac297181368050edae5965120ab0"
+content-hash = "54542ac040dea7ff6833110365c9b5d3b393bd46e24c18a79039386689b653bb"
