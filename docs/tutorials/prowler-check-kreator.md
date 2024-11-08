@@ -27,6 +27,9 @@ Parameters:
 
 This tool optionally integrates AI to assist in generating the check code and metadata file content. When AI assistance is chosen, the tool uses [Gemini](https://gemini.google.com/) to produce preliminary code and metadata.
 
+???+ note
+    For this feature to work, you must have the library `google-generativeai` installed in your Python environment.
+
 ???+ warning
     AI-generated code and metadata might contain errors or require adjustments to align with specific Prowler requirements. Carefully review all AI-generated content before committing.
 
