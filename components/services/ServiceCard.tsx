@@ -20,7 +20,7 @@ export const ServiceCard: React.FC<CardServiceProps> = ({
             <small className="text-default-500">
               {fidingsFailed > 0
                 ? `${fidingsFailed} Failed Findings`
-                : "All findings passed"}
+                : "No failed findings"}
             </small>
           </div>
         </div>
@@ -39,7 +39,7 @@ export const ServiceCard: React.FC<CardServiceProps> = ({
           radius="full"
           size="md"
         >
-          {fidingsFailed > 0 ? fidingsFailed : "All passed"}
+          {fidingsFailed > 0 ? fidingsFailed : ""}
         </Chip>
       </CardBody>
     </Card>
