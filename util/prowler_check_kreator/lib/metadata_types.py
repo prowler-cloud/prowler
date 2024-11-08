@@ -1,8 +1,11 @@
 def get_metadata_valid_check_type(provider: str = "aws") -> list:
     """Get the valid check types for the provider
 
-    Keyword arguments:
-    provider -- The provider of the service
+    Args:
+        provider: The Prowler provider.
+
+    Returns:
+        A list of valid check types for the given provider.
     """
     check_types = []
 
@@ -115,8 +118,11 @@ def get_metadata_valid_check_type(provider: str = "aws") -> list:
 def get_metadata_valid_resource_type(provider: str = "aws") -> set:
     """Get the valid resource types for the provider
 
-    Keyword arguments:
-    provider -- The provider of the service
+    Args:
+        provider: The Prowler provider.
+
+    Returns:
+        A set of valid resource types for the given provider.
     """
     valid_resource_types = set()
 
@@ -226,8 +232,11 @@ def get_metadata_valid_resource_type(provider: str = "aws") -> set:
 def get_metadata_placeholder_resource_type(provider: str = "aws") -> str:
     """Get the placeholder for the resource type for the provider
 
-    Keyword arguments:
-    provider -- The provider of the service
+    Args:
+        provider: The Prowler provider.
+
+    Returns:
+        A placeholder for the resource type for the given provider.
     """
     placeholder = ""
 

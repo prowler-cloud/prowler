@@ -9,10 +9,6 @@ from util.prowler_check_kreator.lib.templates import (
 )
 
 
-# TODO: Support azure, gcp and kubernetes providers (only need to add check template, test template and metadata types)
-# TODO: Add support for other LLMs like OpenAI's GPT or Ollama locally
-# TODO: Add support to make configurable checks
-# TODO: Improve the check generation with more context
 class ProwlerCheckKreator:
     def __init__(self, provider: str, check_name: str):
         # Validate provider

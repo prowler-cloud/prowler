@@ -1,10 +1,16 @@
 def load_check_template(provider: str, service: str, check_name: str) -> str:
-    """Load the template for the check file
+    """Load the template for the check file.
 
-    Keyword arguments:
-    provider -- The provider of the service
-    service -- The service to check
-    check_name -- The name of the check
+    Args:
+        provider (str): The provider of the service.
+        service (str): The service to check.
+        check_name (str): The name of the check.
+
+    Returns:
+        A check template used when the user does not want to generate the check with AI.
+
+    Raises:
+        ValueError: If the provider is not implemented yet.
     """
     if provider == "aws":
         return f"""
@@ -37,12 +43,18 @@ class {check_name}(Check):
 
 
 def load_test_template(provider: str, service: str, check_name: str) -> str:
-    """Load the template for the test file
+    """Load the template for the test file.
 
-    Keyword arguments:
-    provider -- The provider of the service
-    service -- The service to check
-    check_name -- The name of the check
+    Args:
+        provider (str): The provider of the service (e.g., "aws").
+        service (str): The service to check (e.g., "s3").
+        check_name (str): The name of the check (e.g., "check_bucket_encryption").
+
+    Returns:
+        A test template used when the user does not want to generate the check with AI.
+
+    Raises:
+        ValueError: If the template for the given provider is not implemented.
     """
     if provider == "aws":
         return f"""
