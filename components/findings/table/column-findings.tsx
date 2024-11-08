@@ -142,10 +142,10 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
       return (
         <TriggerSheet
           triggerComponent={<PlusIcon />}
-          title="Scan Details"
-          description="View the scan details"
+          title="Finding Details"
+          description="View the finding details"
         >
-          <DataTableRowDetails entityId={row.original.id} />
+          <DataTableRowDetails finding={getFindingsData(row)} />
         </TriggerSheet>
       );
     },
