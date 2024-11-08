@@ -90,7 +90,7 @@ class TestJiraIntegration:
         assert self.jira_integration._access_token == "test_access_token"
         assert self.jira_integration._refresh_token == "test_refresh_token"
         assert (
-            self.jira_integration._auth_expiration
+            self.jira_integration._expiration_date
             == (datetime.now() + timedelta(seconds=3600)).isoformat()
         )
         assert self.jira_integration._cloud_id == "test_cloud_id"
@@ -222,7 +222,7 @@ class TestJiraIntegration:
         assert self.jira_integration._access_token == "new_access_token"
         assert self.jira_integration._refresh_token == "new_refresh_token"
         assert (
-            self.jira_integration._auth_expiration
+            self.jira_integration._expiration_date
             == (datetime.now() + timedelta(seconds=expires_in_value)).isoformat()
         )
 

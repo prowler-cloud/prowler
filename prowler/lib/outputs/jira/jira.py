@@ -41,7 +41,7 @@ class Jira:
         - _client_secret: The client secret
         - _access_token: The access token
         - _refresh_token: The refresh token
-        - _auth_expiration: The authentication expiration
+        - _expiration_date: The authentication expiration
         - _cloud_id: The cloud ID
         - _scopes: The scopes needed to authenticate, read:jira-user read:jira-work write:jira-work
         - AUTH_URL: The URL to authenticate with Jira
@@ -95,7 +95,7 @@ class Jira:
     _client_secret: str = None
     _access_token: str = None
     _refresh_token: str = None
-    _auth_expiration: int = None
+    _expiration_date: int = None
     _cloud_id: str = None
     _scopes: list[str] = None
     AUTH_URL = "https://auth.atlassian.com/authorize"
@@ -135,11 +135,11 @@ class Jira:
 
     @property
     def auth_expiration(self):
-        return self._auth_expiration
+        return self._expiration_date
 
     @auth_expiration.setter
     def auth_expiration(self, value):
-        self._auth_expiration = value
+        self._expiration_date = value
 
     @property
     def cloud_id(self):
@@ -194,14 +194,14 @@ class Jira:
         return f"{self.AUTH_URL}?{requests.compat.urlencode(params)}"
 
     @staticmethod
-    def get_timestamp_from_seconds(seconds: int) -> str:
+    def get_timestamp_from_seconds(seconds: int) -> datetime:
         """Get the timestamp adding the seconds to the current time
 
         Args:
             - seconds: The seconds to add to the current time
 
         Returns:
-            - str: The timestamp
+            - datetime: The timestamp with the seconds added
         """
         return (datetime.now() + timedelta(seconds=seconds)).isoformat()
 
@@ -240,7 +240,7 @@ class Jira:
                 tokens = response.json()
                 self._access_token = tokens.get("access_token")
                 self._refresh_token = tokens.get("refresh_token")
-                self._auth_expiration = self.get_timestamp_from_seconds(
+                self._expiration_date = self.get_timestamp_from_seconds(
                     tokens.get("expires_in")
                 )
                 self._cloud_id = self.get_cloud_id(self._access_token)
@@ -365,7 +365,7 @@ class Jira:
                 tokens = response.json()
                 self._access_token = tokens.get("access_token")
                 self._refresh_token = tokens.get("refresh_token")
-                self._auth_expiration = self.get_timestamp_from_seconds(
+                self._expiration_date = self.get_timestamp_from_seconds(
                     tokens.get("expires_in")
                 )
                 return self._access_token
@@ -1065,7 +1065,7 @@ class Jira:
         self,
         findings: list[Finding] = None,
         project_key: str = None,
-        issue_type: str = "Bug",
+        issue_type: str = None,
     ):
         """
         Send the findings to Jira
@@ -1101,8 +1101,6 @@ class Jira:
                 "Authorization": f"Bearer {access_token}",
                 "Content-Type": "application/json",
             }
-
-            findings = findings[:1]
 
             for finding in findings:
                 status_color = self.get_color_from_status(finding.status.value)
