@@ -4,8 +4,10 @@ import { ColumnDef } from "@tanstack/react-table";
 
 import { SeverityBadge, Status, StatusBadge } from "@/components/ui/table";
 import { FindingProps } from "@/types";
-
+import { TriggerSheet } from "@/components/ui/sheet";
 import { DataTableRowActions } from "./data-table-row-actions";
+import { PlusIcon } from "@/components/icons";
+import { DataTableRowDetails } from "@/components/findings/table";
 
 const statusMap: Record<"PASS" | "FAIL" | "MANUAL" | "MUTED", Status> = {
   PASS: "completed",
@@ -130,6 +132,21 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
         <>
           <div>{typeof account === "string" ? account : "Invalid account"}</div>
         </>
+      );
+    },
+  },
+  {
+    id: "moreInfo",
+    header: "Details",
+    cell: ({ row }) => {
+      return (
+        <TriggerSheet
+          triggerComponent={<PlusIcon />}
+          title="Finding Details"
+          description="View the finding details"
+        >
+          <DataTableRowDetails finding={getFindingsData(row)} />
+        </TriggerSheet>
       );
     },
   },
