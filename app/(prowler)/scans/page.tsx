@@ -11,7 +11,7 @@ import { ColumnProviderScans } from "@/components/scans/table/provider-scans";
 import { ColumnGetScans } from "@/components/scans/table/scans";
 import { Header } from "@/components/ui";
 import { DataTable } from "@/components/ui/table";
-import { SearchParamsProps } from "@/types";
+import { ProviderProps, SearchParamsProps } from "@/types";
 
 export default async function Scans({
   searchParams,
@@ -19,15 +19,27 @@ export default async function Scans({
   searchParams: SearchParamsProps;
 }) {
   const searchParamsKey = JSON.stringify(searchParams || {});
+  // const providersData = await getProviders({
+  //   filters: { "filter[connected]": "true" },
+  // });
+  const providersData = await getProviders({});
+
+  const providerInfo = providersData?.data?.length
+    ? providersData.data.map((provider: ProviderProps) => ({
+        providerId: provider.id,
+        alias: provider.attributes.alias,
+        providerType: provider.attributes.provider,
+        uid: provider.attributes.uid,
+        connected: provider.attributes.connection.connected,
+      }))
+    : [];
 
   return (
     <>
       <Header title="Scans" icon="lucide:scan-search" />
 
       <Spacer y={4} />
-      <Suspense key={searchParamsKey} fallback={<SkeletonTableScans />}>
-        <LaunchScanWorkflow />
-      </Suspense>
+      <LaunchScanWorkflow providers={providerInfo} />
       <Spacer y={8} />
 
       <div className="grid grid-cols-12 items-start gap-4">
