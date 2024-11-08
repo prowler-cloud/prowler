@@ -4,7 +4,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { getScan } from "@/actions/scans";
+import { getTask } from "@/actions/task";
 import { ScanDetail, SkeletonTableScans } from "@/components/scans/table";
+import { checkTaskStatus } from "@/lib";
 import { ScanProps } from "@/types";
 
 export const DataTableRowDetails = ({ entityId }: { entityId: string }) => {
@@ -31,9 +33,24 @@ export const DataTableRowDetails = ({ entityId }: { entityId: string }) => {
     const fetchScanDetails = async () => {
       try {
         const result = await getScan(entityId);
-        setScanDetails(result?.data);
+
+        const taskId = result.data.relationships.task?.data?.id;
+
+        if (taskId) {
+          const taskResult = await checkTaskStatus(taskId);
+
+          if (taskResult.completed !== undefined) {
+            const task = await getTask(taskId);
+            setScanDetails({
+              ...result.data,
+              taskDetails: task.data,
+            });
+          }
+        } else {
+          setScanDetails(result.data);
+        }
       } catch (error) {
-        console.error("Error fetching scan details:", error);
+        console.error("Error in fetchScanDetails:", error);
       } finally {
         setIsLoading(false);
       }
