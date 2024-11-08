@@ -115,6 +115,18 @@ def load_checks_to_execute(
             for threat_detection_check in check_categories.get("threat-detection", []):
                 checks_to_execute.discard(threat_detection_check)
 
+        # Exclude check cloudwatch_log_group_no_secrets_in_logs from the checks to execute if not in check_list
+        if (
+            "cloudwatch_log_group_no_secrets_in_logs" not in check_list
+            and "cloudwatch_log_group_no_secrets_in_logs" in checks_to_execute
+        ):
+            checks_to_execute.remove("cloudwatch_log_group_no_secrets_in_logs")
+        # Exclude check cloudwatch_log_group_no_critical_pii_in_logs from the checks to execute if not in check_list
+        if (
+            "cloudwatch_log_group_no_critical_pii_in_logs" not in check_list
+            and "cloudwatch_log_group_no_critical_pii_in_logs" in checks_to_execute
+        ):
+            checks_to_execute.remove("cloudwatch_log_group_no_critical_pii_in_logs")
         # Check Aliases
         checks_to_execute = update_checks_to_execute_with_aliases(
             checks_to_execute, check_aliases
