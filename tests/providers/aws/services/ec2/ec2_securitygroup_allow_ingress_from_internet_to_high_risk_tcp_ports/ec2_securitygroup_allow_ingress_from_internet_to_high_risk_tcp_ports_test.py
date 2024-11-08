@@ -59,11 +59,9 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports:
             )
             result = check.execute()
 
-            # One default sg per region, each port should be checked
-            expected_findings_count = (
-                len(ec2_client.audit_config["ec2_high_risk_ports"]) * 3
-            )  # 3 security groups
-            assert len(result) == expected_findings_count
+            assert (
+                len(result) == 3
+            )  # 3 security groups one default sg per region and one added
             # Search changed sg
             for sg in result:
                 # All are compliant by default
@@ -132,21 +130,17 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports:
             )
             result = check.execute()
 
-            # One default sg per region, each port should be checked
-            expected_findings_count = (
-                len(ec2_client.audit_config["ec2_high_risk_ports"]) * 3
-            )  # 3 security groups
-            assert len(result) == expected_findings_count
+            assert (
+                len(result) == 3
+            )  # 3 security groups one default sg per region and one added
             # Search changed sg
-            iterator = 0
             for sg in result:
-                port = ec2_client.audit_config["ec2_high_risk_ports"][iterator]
                 if sg.resource_id == default_sg_id:
                     assert sg.status == "FAIL"
                     assert sg.region == AWS_REGION_US_EAST_1
                     assert (
                         sg.status_extended
-                        == f"Security group {default_sg_name} ({default_sg_id}) has port {port} (high risk port) open to the Internet."
+                        == f"Security group {default_sg_name} ({default_sg_id}) has the following high-risk ports open to the Internet: 25, 110, 135, 143, 445, 3000, 4333, 5000, 5500, 8080, 8088."
                     )
                     assert (
                         sg.resource_arn
@@ -154,9 +148,6 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports:
                     )
                     assert sg.resource_details == default_sg_name
                     assert sg.resource_tags == []
-                    iterator = (iterator + 1) % len(
-                        ec2_client.audit_config["ec2_high_risk_ports"]
-                    )
 
     @mock_aws
     def test_ec2_compliant_default_sg(self):
@@ -222,21 +213,17 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports:
             )
             result = check.execute()
 
-            # One default sg per region, each port should be checked
-            expected_findings_count = (
-                len(ec2_client.audit_config["ec2_high_risk_ports"]) * 3
-            )  # 3 security groups
-            assert len(result) == expected_findings_count
+            assert (
+                len(result) == 3
+            )  # 3 security groups one default sg per region and one added
             # Search changed sg
-            iterator = 0
             for sg in result:
-                port = ec2_client.audit_config["ec2_high_risk_ports"][iterator]
                 if sg.resource_id == default_sg_id:
                     assert sg.status == "PASS"
                     assert sg.region == AWS_REGION_US_EAST_1
                     assert (
                         sg.status_extended
-                        == f"Security group {default_sg_name} ({default_sg_id}) does not have port {port} open to the Internet."
+                        == f"Security group {default_sg_name} ({default_sg_id}) does not have any high-risk port open to the Internet."
                     )
                     assert (
                         sg.resource_arn
@@ -244,9 +231,6 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports:
                     )
                     assert sg.resource_details == default_sg_name
                     assert sg.resource_tags == []
-                    iterator = (iterator + 1) % len(
-                        ec2_client.audit_config["ec2_high_risk_ports"]
-                    )
 
     @mock_aws
     def test_ec2_default_sgs_ignoring(self):
@@ -350,10 +334,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports:
             )
             result = check.execute()
 
-            expected_findings_count = len(
-                ec2_client.audit_config["ec2_high_risk_ports"]
-            )  # 1 security group in use
-            assert len(result) == expected_findings_count
+            assert len(result) == 1  # 1 security group added
             for sg in result:
                 assert sg.status == "PASS"
                 assert sg.region == AWS_REGION_US_EAST_1
@@ -452,24 +433,21 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports:
                 )
                 result_specific_port = check_specific_port.execute()
 
-                # One default sg per region, each port should be checked
-                expected_findings_count = (
-                    len(ec2_client.audit_config["ec2_high_risk_ports"]) * 3
-                )  # 2 default security groups + 1 added
-                assert len(result_specific_port) == expected_findings_count
+                assert (
+                    len(result_specific_port) == 3
+                )  # 3 security groups one default sg per region and one added
                 # Search changed sg
-                iterator = 0
                 for sg in result_specific_port:
-                    port = ec2_client.audit_config["ec2_high_risk_ports"][iterator]
                     if sg.resource_id == default_sg_id:
                         assert sg.status == "PASS"
                         assert sg.region == AWS_REGION_US_EAST_1
                         assert (
                             sg.status_extended
-                            == f"Security group {sg.resource_details} ({sg.resource_id}) has all ports open to the Internet and therefore was not checked against port {port}."
+                            == f"Security group {default_sg_name} ({default_sg_id}) has all ports open to the Internet and therefore was not checked against high-risk ports."
                         )
-                        assert sg.resource_tags == []
+                        assert (
+                            sg.resource_arn
+                            == f"arn:{aws_provider.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{aws_provider.identity.account}:security-group/{default_sg_id}"
+                        )
                         assert sg.resource_details == default_sg_name
-                        iterator = (iterator + 1) % len(
-                            ec2_client.audit_config["ec2_high_risk_ports"]
-                        )
+                        assert sg.resource_tags == []
