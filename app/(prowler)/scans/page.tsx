@@ -16,10 +16,10 @@ export default async function Scans({
 }: {
   searchParams: SearchParamsProps;
 }) {
-  const searchParamsKey = JSON.stringify(searchParams || {});
-  // const providersData = await getProviders({
-  //   filters: { "filter[connected]": "true" },
-  // });
+  const filteredParams = { ...searchParams };
+  delete filteredParams.scanId;
+  const searchParamsKey = JSON.stringify(filteredParams);
+
   const providersData = await getProviders({});
 
   const providerInfo = providersData?.data?.length
@@ -59,9 +59,11 @@ const SSRDataTableScans = async ({
   const page = parseInt(searchParams.page?.toString() || "1", 10);
   const sort = searchParams.sort?.toString();
 
-  // Extract all filter parameters
+  // Extract all filter parameters, excluding scanId
   const filters = Object.fromEntries(
-    Object.entries(searchParams).filter(([key]) => key.startsWith("filter[")),
+    Object.entries(searchParams).filter(
+      ([key]) => key.startsWith("filter[") && key !== "scanId",
+    ),
   );
 
   // Extract query from filters

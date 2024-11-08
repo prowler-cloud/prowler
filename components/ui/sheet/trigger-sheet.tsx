@@ -12,6 +12,7 @@ interface TriggerSheetProps {
   title: string;
   description: string;
   children: React.ReactNode;
+  defaultOpen?: boolean;
 }
 
 export function TriggerSheet({
@@ -19,9 +20,10 @@ export function TriggerSheet({
   title,
   description,
   children,
+  defaultOpen = false,
 }: TriggerSheetProps) {
   return (
-    <Sheet>
+    <Sheet defaultOpen={defaultOpen}>
       <SheetTrigger className="flex items-center gap-2">
         {triggerComponent}
       </SheetTrigger>

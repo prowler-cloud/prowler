@@ -1,6 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import { useSearchParams } from "next/navigation";
 
 import { InfoIcon } from "@/components/icons";
 import { DateWithTime, EntityInfoShort } from "@/components/ui/entities";
@@ -125,11 +126,16 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
     id: "moreInfo",
     header: "Details",
     cell: ({ row }) => {
+      const searchParams = useSearchParams();
+      const scanId = searchParams.get("scanId");
+      const isOpen = scanId === row.original.id;
+
       return (
         <TriggerSheet
           triggerComponent={<InfoIcon className="text-primary" size={16} />}
           title="Scan Details"
           description="View the scan details"
+          defaultOpen={isOpen}
         >
           <DataTableRowDetails entityId={row.original.id} />
         </TriggerSheet>
