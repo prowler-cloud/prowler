@@ -1,10 +1,11 @@
 "use client";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { AnimatePresence, motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
 import { scanOnDemand } from "@/actions/scans";
-import { RocketIcon } from "@/components/icons";
+import { RocketIcon, ScheduleIcon } from "@/components/icons";
 import { CustomButton, CustomInput } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
 import { toast } from "@/components/ui/toast";
@@ -31,7 +32,7 @@ export const LaunchScanWorkflow = ({
     defaultValues: {
       providerId: "",
       scanName: "",
-      scannerArgs: { checksToExecute: [] },
+      scannerArgs: undefined,
     },
   });
 
@@ -41,7 +42,7 @@ export const LaunchScanWorkflow = ({
     const formData = new FormData();
     console.log(values);
 
-    // Loop through form values and add to formData, converting objects to JSON strings
+    // Loop through form values and add to formData
     Object.entries(values).forEach(
       ([key, value]) =>
         value !== undefined &&
@@ -56,7 +57,6 @@ export const LaunchScanWorkflow = ({
     if (data?.errors && data.errors.length > 0) {
       const error = data.errors[0];
       const errorMessage = `${error.detail}`;
-      // show error
       toast({
         variant: "destructive",
         title: "Oops! Something went wrong",
@@ -67,6 +67,8 @@ export const LaunchScanWorkflow = ({
         title: "Success!",
         description: "The scan was launched successfully.",
       });
+      // Reset form after successful submission
+      form.reset();
     }
   };
 
@@ -76,9 +78,9 @@ export const LaunchScanWorkflow = ({
         onSubmit={form.handleSubmit(onSubmitClient)}
         className="flex flex-col space-y-4"
       >
-        <div className="flex flex-col gap-4">
-          <div className="grid grid-cols-1 items-center gap-x-4 gap-y-4 md:grid-cols-2 xl:grid-cols-4">
-            <div className="flex flex-col gap-2">
+        <div className="grid grid-cols-2 gap-6">
+          <div className="flex flex-col gap-6">
+            <div className="w-full">
               <span className="text-sm text-default-500">Launch Scan</span>
               <SelectScanProvider
                 providers={providers}
@@ -86,44 +88,102 @@ export const LaunchScanWorkflow = ({
                 name="providerId"
               />
             </div>
-            <CustomInput
-              control={form.control}
-              name="scanName"
-              type="text"
-              label="Scan Name"
-              labelPlacement="outside"
-              placeholder="Scan Name"
-              variant="bordered"
-              isRequired={false}
-              isInvalid={!!form.formState.errors.scanName}
-            />
-          </div>
-        </div>
-        <div className="flex w-full justify-center sm:space-x-6">
-          <CustomButton
-            type="button"
-            ariaLabel="Cancel"
-            className="w-full bg-transparent"
-            variant="faded"
-            size="lg"
-            radius="lg"
-            isDisabled={isLoading}
-          >
-            <span>Cancel</span>
-          </CustomButton>
 
-          <CustomButton
-            type="submit"
-            ariaLabel="Start scan now"
-            className="w-full"
-            variant="solid"
-            color="action"
-            size="lg"
-            isLoading={isLoading}
-            startContent={!isLoading && <RocketIcon size={24} />}
-          >
-            {isLoading ? <>Loading</> : <span>Start now</span>}
-          </CustomButton>
+            <AnimatePresence>
+              {form.watch("providerId") && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <CustomInput
+                    control={form.control}
+                    name="scanName"
+                    type="text"
+                    label="Scan Name (optional)"
+                    labelPlacement="outside"
+                    placeholder="Scan Name"
+                    variant="bordered"
+                    isRequired={false}
+                    isInvalid={!!form.formState.errors.scanName}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          <div className="flex flex-col justify-start">
+            <AnimatePresence>
+              {form.watch("providerId") && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <CustomInput
+                    control={form.control}
+                    name="scannerArgs"
+                    type="text"
+                    label="Scanner Args (optional)"
+                    labelPlacement="outside"
+                    placeholder="Scanner Args"
+                    variant="bordered"
+                    isRequired={false}
+                    isInvalid={!!form.formState.errors.scannerArgs}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          <AnimatePresence>
+            {form.watch("providerId") && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2 }}
+                className="col-span-2 flex justify-start gap-4"
+              >
+                <CustomButton
+                  onPress={() => form.reset()}
+                  className="w-fit border-gray-200 bg-transparent"
+                  ariaLabel="Clear form"
+                  variant="bordered"
+                  size="lg"
+                  radius="lg"
+                >
+                  Cancel
+                </CustomButton>
+                <CustomButton
+                  type="submit"
+                  ariaLabel="Schedule scan"
+                  variant="solid"
+                  color="action"
+                  size="lg"
+                  isLoading={isLoading}
+                  startContent={!isLoading && <ScheduleIcon size={24} />}
+                  isDisabled={true}
+                >
+                  {isLoading ? <>Loading</> : <span>Schedule</span>}
+                </CustomButton>
+
+                <CustomButton
+                  type="submit"
+                  ariaLabel="Start scan now"
+                  variant="solid"
+                  color="action"
+                  size="lg"
+                  isLoading={isLoading}
+                  startContent={!isLoading && <RocketIcon size={24} />}
+                >
+                  {isLoading ? <>Loading</> : <span>Start now</span>}
+                </CustomButton>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </form>
     </Form>

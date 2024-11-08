@@ -58,7 +58,7 @@ export const SelectScanProvider = <
               aria-label="Select a Provider"
               placeholder="Choose a provider"
               labelPlacement="outside"
-              size="sm"
+              size="md"
               selectedKeys={field.value ? new Set([field.value]) : new Set()}
               onSelectionChange={(keys) => {
                 const selectedValue = Array.from(keys)[0]?.toString();
