@@ -81,7 +81,9 @@ export const LaunchScanWorkflow = ({
         <div className="grid grid-cols-2 gap-6">
           <div className="flex flex-col gap-6">
             <div className="w-full">
-              <span className="text-sm text-default-500">Launch Scan</span>
+              <p className="pb-1 text-sm font-medium text-default-700">
+                Launch Scan
+              </p>
               <SelectScanProvider
                 providers={providers}
                 control={form.control}
