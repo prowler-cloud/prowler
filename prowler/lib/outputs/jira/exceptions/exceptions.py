@@ -12,7 +12,7 @@ class JiraBaseException(ProwlerException):
         },
         (9001, "JiraAuthenticationError"): {
             "message": "Failed to authenticate with Jira.",
-            "remediation": "Please check the connection settings and permissions and try again.",
+            "remediation": "Please check the connection settings and permissions and try again. Needed scopes are: read:jira-user read:jira-work write:jira-work",
         },
         (9002, "JiraTestConnectionError"): {
             "message": "Failed to connect to Jira.",
@@ -26,15 +26,15 @@ class JiraBaseException(ProwlerException):
             "message": "Failed to get projects from Jira.",
             "remediation": "Please check the connection settings and permissions and try again.",
         },
-        (9005, "JiraGetCloudIdError"): {
+        (9005, "JiraGetCloudIDError"): {
             "message": "Failed to get the cloud ID from Jira.",
             "remediation": "Please check the connection settings and permissions and try again.",
         },
-        (9006, "JiraGetCloudIdNoResourcesError"): {
+        (9006, "JiraGetCloudIDNoResourcesError"): {
             "message": "No resources were found in Jira.",
             "remediation": "Please check the connection settings and permissions and try again.",
         },
-        (9007, "JiraGetCloudIdResponseError"): {
+        (9007, "JiraGetCloudIDResponseError"): {
             "message": "Failed to get the cloud ID from Jira.",
             "remediation": "Please check the connection settings and permissions and try again.",
         },
@@ -73,6 +73,10 @@ class JiraBaseException(ProwlerException):
         (9016, "JiraInvalidIssueTypeError"): {
             "message": "The issue type is invalid.",
             "remediation": "Please check the issue type and try again.",
+        },
+        (9017, "JiraNoTokenError"): {
+            "message": "No token was found.",
+            "remediation": "Make sure the token is set when using the Jira integration.",
         },
     }
 
@@ -125,21 +129,21 @@ class JiraGetProjectsError(JiraBaseException):
         )
 
 
-class JiraGetCloudIdError(JiraBaseException):
+class JiraGetCloudIDError(JiraBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             9005, file=file, original_exception=original_exception, message=message
         )
 
 
-class JiraGetCloudIdNoResourcesError(JiraBaseException):
+class JiraGetCloudIDNoResourcesError(JiraBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             9006, file=file, original_exception=original_exception, message=message
         )
 
 
-class JiraGetCloudIdResponseError(JiraBaseException):
+class JiraGetCloudIDResponseError(JiraBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             9007, file=file, original_exception=original_exception, message=message
@@ -206,4 +210,11 @@ class JiraInvalidIssueTypeError(JiraBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             9016, file=file, original_exception=original_exception, message=message
+        )
+
+
+class JiraNoTokenError(JiraBaseException):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            9017, file=file, original_exception=original_exception, message=message
         )

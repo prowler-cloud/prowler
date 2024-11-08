@@ -1,18 +1,22 @@
+from datetime import datetime, timedelta
 from unittest.mock import MagicMock, PropertyMock, patch
 from urllib.parse import parse_qs, urlparse
 
 import pytest
+from freezegun import freeze_time
 
 from prowler.lib.outputs.jira.exceptions.exceptions import (
     JiraAuthenticationError,
     JiraCreateIssueError,
     JiraGetAvailableIssueTypesError,
-    JiraGetCloudIdError,
+    JiraGetCloudIDError,
     JiraGetProjectsError,
     JiraNoProjectsError,
     JiraRefreshTokenError,
 )
 from prowler.lib.outputs.jira.jira import Jira
+
+TEST_DATETIME = "2023-01-01T12:01:01+00:00"
 
 
 class TestJiraIntegration:
@@ -64,6 +68,7 @@ class TestJiraIntegration:
         assert query_params["response_type"][0] == "code"
         assert query_params["prompt"][0] == "consent"
 
+    @freeze_time(TEST_DATETIME)
     @patch("prowler.lib.outputs.jira.jira.requests.post")
     @patch.object(Jira, "get_cloud_id", return_value="test_cloud_id")
     def test_get_auth_successful(self, mock_get_cloud_id, mock_post):
@@ -84,7 +89,10 @@ class TestJiraIntegration:
 
         assert self.jira_integration._access_token == "test_access_token"
         assert self.jira_integration._refresh_token == "test_refresh_token"
-        assert self.jira_integration._auth_expiration == 3600
+        assert (
+            self.jira_integration._auth_expiration
+            == (datetime.now() + timedelta(seconds=3600)).isoformat()
+        )
         assert self.jira_integration._cloud_id == "test_cloud_id"
 
     @patch(
@@ -114,26 +122,26 @@ class TestJiraIntegration:
 
     @patch("prowler.lib.outputs.jira.jira.requests.get")
     def test_get_cloud_id_no_resources(self, mock_get):
-        """Test get_cloud_id raises JiraGetCloudIdNoResourcesError when no resources are found, later JiraGetCloudIdError will be raised."""
+        """Test get_cloud_id raises JiraGetCloudIDNoResourcesError when no resources are found, later JiraGetCloudIDError will be raised."""
 
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.json.return_value = []
         mock_get.return_value = mock_response
 
-        with pytest.raises(JiraGetCloudIdError):
+        with pytest.raises(JiraGetCloudIDError):
             self.jira_integration.get_cloud_id("test_access_token")
 
     @patch("prowler.lib.outputs.jira.jira.requests.get")
     def test_get_cloud_id_response_error(self, mock_get):
-        """Test get_cloud_id raises JiraGetCloudIdResponseError when response code is not 200, later JiraGetCloudIdError will be raised."""
+        """Test get_cloud_id raises JiraGetCloudIDResponseError when response code is not 200, later JiraGetCloudIDError will be raised."""
 
         mock_response = MagicMock()
         mock_response.status_code = 404
         mock_response.json.return_value = {"error": "Not Found"}
         mock_get.return_value = mock_response
 
-        with pytest.raises(JiraGetCloudIdError):
+        with pytest.raises(JiraGetCloudIDError):
             self.jira_integration.get_cloud_id("test_access_token")
 
     @patch(
@@ -141,11 +149,11 @@ class TestJiraIntegration:
         side_effect=Exception("Connection error"),
     )
     def test_get_cloud_id_unexpected_error(self, mock_get):
-        """Test get_cloud_id raises JiraGetCloudIdError on an unexpected exception."""
+        """Test get_cloud_id raises JiraGetCloudIDError on an unexpected exception."""
         # To disable vulture
         mock_get = mock_get
 
-        with pytest.raises(JiraGetCloudIdError):
+        with pytest.raises(JiraGetCloudIDError):
             self.jira_integration.get_cloud_id("test_access_token")
 
     @patch.object(Jira, "refresh_access_token", return_value="new_access_token")
@@ -158,13 +166,26 @@ class TestJiraIntegration:
         assert access_token == "new_access_token"
         mock_refresh_access_token.assert_called_once()
 
-    def test_get_access_token_valid_token(self):
-        """Test get_access_token returns existing token if not expired."""
+    @freeze_time(TEST_DATETIME)
+    @patch("prowler.lib.outputs.jira.jira.requests.post")
+    @patch.object(Jira, "get_cloud_id", return_value="test_cloud_id")
+    def test_get_access_token_valid_token(self, mock_get_cloud_id, mock_post):
+        """Test successful token retrieval in get_auth."""
+        # To disable vulture
+        mock_get_cloud_id = mock_get_cloud_id
 
-        self.jira_integration.auth_expiration = 100
-        self.jira_integration.access_token = "valid_access_token"
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "access_token": "valid_access_token",
+            "refresh_token": "test_refresh_token",
+            "expires_in": 3600,
+        }
+        mock_post.return_value = mock_response
+
+        self.jira_integration.get_auth("test_auth_code")
+
         access_token = self.jira_integration.get_access_token()
-
         assert access_token == "valid_access_token"
 
     @patch.object(Jira, "refresh_access_token", side_effect=JiraRefreshTokenError)
@@ -174,20 +195,24 @@ class TestJiraIntegration:
         # To disable vulture
         mock_refresh_access_token = mock_refresh_access_token
 
-        self.jira_integration.auth_expiration = 0
+        self.jira_integration.auth_expiration = (
+            datetime.now() + timedelta(seconds=0)
+        ).isoformat()
 
         with pytest.raises(JiraRefreshTokenError):
             self.jira_integration.get_access_token()
 
+    @freeze_time(TEST_DATETIME)
     @patch("prowler.lib.outputs.jira.jira.requests.post")
     def test_refresh_access_token_successful(self, mock_post):
         """Test successful access token refresh in refresh_access_token."""
         mock_response = MagicMock()
         mock_response.status_code = 200
+        expires_in_value = 3600
         mock_response.json.return_value = {
             "access_token": "new_access_token",
             "refresh_token": "new_refresh_token",
-            "expires_in": 3600,
+            "expires_in": expires_in_value,
         }
         mock_post.return_value = mock_response
 
@@ -196,7 +221,10 @@ class TestJiraIntegration:
         assert new_access_token == "new_access_token"
         assert self.jira_integration._access_token == "new_access_token"
         assert self.jira_integration._refresh_token == "new_refresh_token"
-        assert self.jira_integration._auth_expiration == 3600
+        assert (
+            self.jira_integration._auth_expiration
+            == (datetime.now() + timedelta(seconds=expires_in_value)).isoformat()
+        )
 
     @patch("prowler.lib.outputs.jira.jira.requests.post")
     def test_refresh_access_token_response_error(self, mock_post):

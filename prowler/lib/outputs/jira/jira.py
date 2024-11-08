@@ -1,5 +1,7 @@
 import base64
 import os
+from datetime import datetime, timedelta
+from typing import Dict
 
 import requests
 import requests.compat
@@ -13,13 +15,14 @@ from prowler.lib.outputs.jira.exceptions.exceptions import (
     JiraGetAuthResponseError,
     JiraGetAvailableIssueTypesError,
     JiraGetAvailableIssueTypesResponseError,
-    JiraGetCloudIdError,
-    JiraGetCloudIdNoResourcesError,
-    JiraGetCloudIdResponseError,
+    JiraGetCloudIDError,
+    JiraGetCloudIDNoResourcesError,
+    JiraGetCloudIDResponseError,
     JiraGetProjectsError,
     JiraGetProjectsResponseError,
     JiraInvalidIssueTypeError,
     JiraNoProjectsError,
+    JiraNoTokenError,
     JiraRefreshTokenError,
     JiraRefreshTokenResponseError,
     JiraSendFindingsResponseError,
@@ -29,15 +32,82 @@ from prowler.providers.common.models import Connection
 
 
 class Jira:
+    """
+    Jira class to interact with the Jira API
+
+    Attributes:
+        - _redirect_uri: The redirect URI
+        - _client_id: The client ID
+        - _client_secret: The client secret
+        - _access_token: The access token
+        - _refresh_token: The refresh token
+        - _auth_expiration: The authentication expiration
+        - _cloud_id: The cloud ID
+        - _scopes: The scopes needed to authenticate, read:jira-user read:jira-work write:jira-work
+        - AUTH_URL: The URL to authenticate with Jira
+        - PARAMS_TEMPLATE: The template for the parameters to authenticate with Jira
+
+    Methods:
+        - __init__: Initialize the Jira object
+        - input_authorization_code: Input the authorization code
+        - auth_code_url: Generate the URL to authorize the application
+        - get_auth: Get the access token and refresh token
+        - get_cloud_id: Get the cloud ID from Jira
+        - get_access_token: Get the access token
+        - refresh_access_token: Refresh the access token from Jira
+        - test_connection: Test the connection to Jira and return a Connection object
+        - get_projects: Get the projects from Jira
+        - get_available_issue_types: Get the available issue types for a project
+        - send_findings: Send the findings to Jira and create an issue
+
+    Raises:
+        - JiraGetAuthResponseError: Failed to get the access token and refresh token
+        - JiraGetCloudIDNoResourcesError: No resources were found in Jira when getting the cloud id
+        - JiraGetCloudIDResponseError: Failed to get the cloud ID, response code did not match 200
+        - JiraGetCloudIDError: Failed to get the cloud ID from Jira
+        - JiraAuthenticationError: Failed to authenticate
+        - JiraRefreshTokenError: Failed to refresh the access token
+        - JiraRefreshTokenResponseError: Failed to refresh the access token, response code did not match 200
+        - JiraGetAccessTokenError: Failed to get the access token
+        - JiraNoProjectsError: No projects found in Jira
+        - JiraGetProjectsError: Failed to get projects from Jira
+        - JiraGetProjectsResponseError: Failed to get projects from Jira, response code did not match 200
+        - JiraInvalidIssueTypeError: The issue type is invalid
+        - JiraGetAvailableIssueTypesError: Failed to get available issue types from Jira
+        - JiraGetAvailableIssueTypesResponseError: Failed to get available issue types from Jira, response code did not match 200
+        - JiraCreateIssueError: Failed to create an issue in Jira
+        - JiraSendFindingsResponseError: Failed to send the findings to Jira
+        - JiraTestConnectionError: Failed to test the connection
+
+    Usage:
+        jira = Jira(
+            redirect_uri="http://localhost:8080",
+            client_id="client_id",
+            client_secret="client_secret
+        )
+        jira.send_findings(findings=findings, project_key="KEY")
+    """
+
     _redirect_uri: str = None
     _client_id: str = None
     _client_secret: str = None
-    _state_param: str = None
     _access_token: str = None
     _refresh_token: str = None
     _auth_expiration: int = None
     _cloud_id: str = None
     _scopes: list[str] = None
+    AUTH_URL = "https://auth.atlassian.com/authorize"
+    PARAMS_TEMPLATE = {
+        "audience": "api.atlassian.com",
+        "client_id": None,
+        "scope": None,
+        "redirect_uri": None,
+        "state": None,
+        "response_type": "code",
+        "prompt": "consent",
+    }
+    TOKEN_URL = "https://auth.atlassian.com/oauth/token"
+    API_TOKEN_URL = "https://api.atlassian.com/oauth/token/accessible-resources"
 
     def __init__(
         self,
@@ -62,26 +132,6 @@ class Jira:
         return self._client_id
 
     @property
-    def client_secret(self):
-        return self._client_secret
-
-    @property
-    def state_param(self):
-        return self._state_param
-
-    @property
-    def access_token(self):
-        return self._access_token
-
-    @access_token.setter
-    def access_token(self, value):
-        self._access_token = value
-
-    @property
-    def refresh_token(self):
-        return self._refresh_token
-
-    @property
     def auth_expiration(self):
         return self._auth_expiration
 
@@ -101,31 +151,57 @@ class Jira:
     def scopes(self):
         return self._scopes
 
-    @staticmethod
-    def input_authorization_code(auth_url: str = None) -> str:
-        print(f"Authorize the application by visiting this URL: {auth_url}")
-        return input("Enter the authorization code from Jira: ")
-
-    def auth_code_url(self) -> str:
-        """Generate the URL to authorize the application"""
-        # Generate the state parameter
-        random_bytes = os.urandom(24)
-        state_encoded = base64.urlsafe_b64encode(random_bytes).decode("utf-8")
-        self._state_param = state_encoded
-        # Generate the URL
-        params = {
-            "audience": "api.atlassian.com",
+    def get_params(self, state_encoded):
+        return {
+            **self.PARAMS_TEMPLATE,
             "client_id": self.client_id,
             "scope": " ".join(self.scopes),
             "redirect_uri": self.redirect_uri,
             "state": state_encoded,
-            "response_type": "code",
-            "prompt": "consent",
         }
 
-        return (
-            f"https://auth.atlassian.com/authorize?{requests.compat.urlencode(params)}"
-        )
+    # TODO: Add static credentials for future use
+    @staticmethod
+    def input_authorization_code(auth_url: str = None) -> str:
+        """Input the authorization code
+
+        Args:
+            - auth_url: The URL to authorize the application
+
+        Returns:
+            - str: The authorization code from Jira
+        """
+        print(f"Authorize the application by visiting this URL: {auth_url}")
+        return input("Enter the authorization code from Jira: ")
+
+    def auth_code_url(self) -> str:
+        """Generate the URL to authorize the application
+
+        Returns:
+            - str: The URL to authorize the application
+
+        Raises:
+            - JiraGetAuthResponseError: Failed to get the access token and refresh token
+        """
+        # Generate the state parameter
+        random_bytes = os.urandom(24)
+        state_encoded = base64.urlsafe_b64encode(random_bytes).decode("utf-8")
+        # Generate the URL
+        params = self.get_params(state_encoded)
+
+        return f"{self.AUTH_URL}?{requests.compat.urlencode(params)}"
+
+    @staticmethod
+    def get_timestamp_from_seconds(seconds: int) -> str:
+        """Get the timestamp adding the seconds to the current time
+
+        Args:
+            - seconds: The seconds to add to the current time
+
+        Returns:
+            - str: The timestamp
+        """
+        return (datetime.now() + timedelta(seconds=seconds)).isoformat()
 
     def get_auth(self, auth_code: str = None) -> None:
         """Get the access token and refresh token
@@ -138,33 +214,34 @@ class Jira:
 
         Raises:
             - JiraGetAuthResponseError: Failed to get the access token and refresh token
-            - JiraGetCloudIdNoResourcesError: No resources were found in Jira when getting the cloud id
-            - JiraGetCloudIdResponseError: Failed to get the cloud ID, response code did not match 200
-            - JiraGetCloudIdError: Failed to get the cloud ID from Jira
+            - JiraGetCloudIDNoResourcesError: No resources were found in Jira when getting the cloud id
+            - JiraGetCloudIDResponseError: Failed to get the cloud ID, response code did not match 200
+            - JiraGetCloudIDError: Failed to get the cloud ID from Jira
             - JiraAuthenticationError: Failed to authenticate
             - JiraRefreshTokenError: Failed to refresh the access token
             - JiraRefreshTokenResponseError: Failed to refresh the access token, response code did not match 200
             - JiraGetAccessTokenError: Failed to get the access token
         """
         try:
-            url = "https://auth.atlassian.com/oauth/token"
             body = {
                 "grant_type": "authorization_code",
                 "client_id": self.client_id,
-                "client_secret": self.client_secret,
+                "client_secret": self._client_secret,
                 "code": auth_code,
                 "redirect_uri": self.redirect_uri,
             }
 
             headers = {"Content-Type": "application/json"}
-            response = requests.post(url, json=body, headers=headers)
+            response = requests.post(self.TOKEN_URL, json=body, headers=headers)
 
             if response.status_code == 200:
                 tokens = response.json()
                 self._access_token = tokens.get("access_token")
                 self._refresh_token = tokens.get("refresh_token")
-                self._auth_expiration = tokens.get("expires_in")
-                self._cloud_id = self.get_cloud_id(self.access_token)
+                self._auth_expiration = self.get_timestamp_from_seconds(
+                    tokens.get("expires_in")
+                )
+                self._cloud_id = self.get_cloud_id(self._access_token)
             else:
                 response_error = (
                     f"Failed to get auth: {response.status_code} - {response.json()}"
@@ -172,16 +249,17 @@ class Jira:
                 raise JiraGetAuthResponseError(
                     message=response_error, file=os.path.basename(__file__)
                 )
-        except JiraGetCloudIdNoResourcesError as no_resources_error:
+        except JiraGetCloudIDNoResourcesError as no_resources_error:
             raise no_resources_error
-        except JiraGetCloudIdResponseError as response_error:
+        except JiraGetCloudIDResponseError as response_error:
             raise response_error
-        except JiraGetCloudIdError as cloud_id_error:
+        except JiraGetCloudIDError as cloud_id_error:
             raise cloud_id_error
         except Exception as e:
-            logger.error(f"Failed to get auth: {e}")
+            message_error = f"Failed to get auth: {e}"
+            logger.error(message_error)
             raise JiraAuthenticationError(
-                message="Failed to authenticate with Jira",
+                message=message_error,
                 file=os.path.basename(__file__),
             )
 
@@ -195,35 +273,38 @@ class Jira:
             - str: The cloud ID
 
         Raises:
-            - JiraGetCloudIdNoResourcesError: No resources were found in Jira when getting the cloud id
-            - JiraGetCloudIdResponseError: Failed to get the cloud ID, response code did not match 200
-            - JiraGetCloudIdError: Failed to get the cloud ID from Jira
+            - JiraGetCloudIDNoResourcesError: No resources were found in Jira when getting the cloud id
+            - JiraGetCloudIDResponseError: Failed to get the cloud ID, response code did not match 200
+            - JiraGetCloudIDError: Failed to get the cloud ID from Jira
         """
         try:
-            url = "https://api.atlassian.com/oauth/token/accessible-resources"
             headers = {"Authorization": f"Bearer {access_token}"}
-            response = requests.get(url, headers=headers)
+            response = requests.get(self.API_TOKEN_URL, headers=headers)
 
             if response.status_code == 200:
                 resources = response.json()
                 if len(resources) > 0:
                     return resources[0].get("id")
                 else:
-                    logger.error("No resources found")
-                    raise JiraGetCloudIdNoResourcesError(
-                        message="No resources were found in Jira when getting the cloud id",
+                    error_message = (
+                        "No resources were found in Jira when getting the cloud id"
+                    )
+                    logger.error(error_message)
+                    raise JiraGetCloudIDNoResourcesError(
+                        message=error_message,
                         file=os.path.basename(__file__),
                     )
             else:
                 response_error = f"Failed to get cloud id: {response.status_code} - {response.json()}"
                 logger.warning(response_error)
-                raise JiraGetCloudIdResponseError(
+                raise JiraGetCloudIDResponseError(
                     message=response_error, file=os.path.basename(__file__)
                 )
         except Exception as e:
-            logger.error(f"Failed to get cloud id: {e}")
-            raise JiraGetCloudIdError(
-                message="Failed to get the cloud ID from Jira",
+            error_message = f"Failed to get the cloud ID from Jira: {e}"
+            logger.error(error_message)
+            raise JiraGetCloudIDError(
+                message=error_message,
                 file=os.path.basename(__file__),
             )
 
@@ -239,8 +320,10 @@ class Jira:
             - JiraGetAccessTokenError: Failed to get the access token
         """
         try:
-            if self.auth_expiration and self.auth_expiration > 0:
-                return self.access_token
+            if self.auth_expiration and datetime.now() < datetime.fromisoformat(
+                self.auth_expiration
+            ):
+                return self._access_token
             else:
                 return self.refresh_access_token()
         except JiraRefreshTokenError as refresh_error:
@@ -269,8 +352,8 @@ class Jira:
             body = {
                 "grant_type": "refresh_token",
                 "client_id": self.client_id,
-                "client_secret": self.client_secret,
-                "refresh_token": self.refresh_token,
+                "client_secret": self._client_secret,
+                "refresh_token": self._refresh_token,
             }
 
             headers = {"Content-Type": "application/json"}
@@ -280,8 +363,10 @@ class Jira:
                 tokens = response.json()
                 self._access_token = tokens.get("access_token")
                 self._refresh_token = tokens.get("refresh_token")
-                self._auth_expiration = tokens.get("expires_in")
-                return self.access_token
+                self._auth_expiration = self.get_timestamp_from_seconds(
+                    tokens.get("expires_in")
+                )
+                return self._access_token
             else:
                 response_error = f"Failed to refresh access token: {response.status_code} - {response.json()}"
                 logger.warning(response_error)
@@ -315,9 +400,9 @@ class Jira:
             - Connection: The connection object
 
         Raises:
-            - JiraGetCloudIdNoResourcesError: No resources were found in Jira when getting the cloud id
-            - JiraGetCloudIdResponseError: Failed to get the cloud ID, response code did not match 200
-            - JiraGetCloudIdError: Failed to get the cloud ID from Jira
+            - JiraGetCloudIDNoResourcesError: No resources were found in Jira when getting the cloud id
+            - JiraGetCloudIDResponseError: Failed to get the cloud ID, response code did not match 200
+            - JiraGetCloudIDError: Failed to get the cloud ID from Jira
             - JiraAuthenticationError: Failed to authenticate
             - JiraTestConnectionError: Failed to test the connection
         """
@@ -342,21 +427,21 @@ class Jira:
                 return Connection(is_connected=True)
             else:
                 return Connection(is_connected=False, error=response.json())
-        except JiraGetCloudIdNoResourcesError as no_resources_error:
+        except JiraGetCloudIDNoResourcesError as no_resources_error:
             logger.error(
                 f"{no_resources_error.__class__.__name__}[{no_resources_error.__traceback__.tb_lineno}]: {no_resources_error}"
             )
             if raise_on_exception:
                 raise no_resources_error
             return Connection(error=no_resources_error)
-        except JiraGetCloudIdResponseError as response_error:
+        except JiraGetCloudIDResponseError as response_error:
             logger.error(
                 f"{response_error.__class__.__name__}[{response_error.__traceback__.tb_lineno}]: {response_error}"
             )
             if raise_on_exception:
                 raise response_error
             return Connection(error=response_error)
-        except JiraGetCloudIdError as cloud_id_error:
+        except JiraGetCloudIDError as cloud_id_error:
             logger.error(
                 f"{cloud_id_error.__class__.__name__}[{cloud_id_error.__traceback__.tb_lineno}]: {cloud_id_error}"
             )
@@ -379,11 +464,11 @@ class Jira:
                 )
             return Connection(is_connected=False, error=error)
 
-    def get_projects(self) -> list[dict]:
+    def get_projects(self) -> list[Dict[str, str]]:
         """Get the projects from Jira
 
         Returns:
-            - list[dict]: The projects following the format {"key": str, "name": str}
+            - list[Dict[str, str]]: The projects from Jira as a list of dictionaries, the projects format is [{"key": "KEY", "name": "NAME"}]
 
         Raises:
             - JiraNoProjectsError: No projects found in Jira
@@ -460,7 +545,10 @@ class Jira:
             access_token = self.get_access_token()
 
             if not access_token:
-                return ValueError("Failed to get access token")
+                return JiraNoTokenError(
+                    message="No token was found",
+                    file=os.path.basename(__file__),
+                )
 
             headers = {"Authorization": f"Bearer {access_token}"}
             response = requests.get(
@@ -478,7 +566,6 @@ class Jira:
                 issue_types = response.json()["projects"][0]["issuetypes"]
                 return [issue_type["name"] for issue_type in issue_types]
             else:
-                # Must be replaced with proper error handling from custom exceptions
                 response_error = f"Failed to get available issue types: {response.status_code} - {response.json()}"
                 logger.warning(response_error)
                 raise JiraGetAvailableIssueTypesResponseError(
@@ -494,6 +581,483 @@ class Jira:
                 message="Failed to get available issue types",
                 file=os.path.basename(__file__),
             )
+
+    @staticmethod
+    def get_color_from_status(status: str) -> str:
+        """Get the color from the status
+
+        Args:
+            - status: The status of the finding
+
+        Returns:
+            - str: The color of the status
+        """
+        if status == "PASS":
+            return "#008000"
+        if status == "FAIL":
+            return "#FF0000"
+        if status == "MUTED":
+            return "#FFA500"
+
+    @staticmethod
+    def get_adf_description(
+        check_id: str = None,
+        check_title: str = None,
+        severity: str = None,
+        status: str = None,
+        status_color: str = None,
+        status_extended: str = None,
+        provider: str = None,
+        region: str = None,
+        resource_uid: str = None,
+        resource_name: str = None,
+        risk: str = None,
+        recommendation_text: str = None,
+        recommendation_url: str = None,
+    ) -> dict:
+        return {
+            "type": "doc",
+            "version": 1,
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "Prowler has discovered the following finding:",
+                        }
+                    ],
+                },
+                {
+                    "type": "table",
+                    "attrs": {"layout": "full-width"},
+                    "content": [
+                        {
+                            "type": "tableRow",
+                            "content": [
+                                {
+                                    "type": "tableCell",
+                                    "attrs": {"colwidth": [1]},
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "content": [
+                                                {
+                                                    "type": "text",
+                                                    "text": "Check Id",
+                                                    "marks": [{"type": "strong"}],
+                                                }
+                                            ],
+                                        }
+                                    ],
+                                },
+                                {
+                                    "type": "tableCell",
+                                    "attrs": {"colwidth": [3]},
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "content": [
+                                                {
+                                                    "type": "text",
+                                                    "text": check_id,
+                                                    "marks": [{"type": "code"}],
+                                                }
+                                            ],
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            "type": "tableRow",
+                            "content": [
+                                {
+                                    "type": "tableCell",
+                                    "attrs": {"colwidth": [1]},
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "content": [
+                                                {
+                                                    "type": "text",
+                                                    "text": "Check Title",
+                                                    "marks": [{"type": "strong"}],
+                                                }
+                                            ],
+                                        }
+                                    ],
+                                },
+                                {
+                                    "type": "tableCell",
+                                    "attrs": {"colwidth": [3]},
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "content": [
+                                                {
+                                                    "type": "text",
+                                                    "text": check_title,
+                                                }
+                                            ],
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            "type": "tableRow",
+                            "content": [
+                                {
+                                    "type": "tableCell",
+                                    "attrs": {"colwidth": [1]},
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "content": [
+                                                {
+                                                    "type": "text",
+                                                    "text": "Severity",
+                                                    "marks": [{"type": "strong"}],
+                                                }
+                                            ],
+                                        }
+                                    ],
+                                },
+                                {
+                                    "type": "tableCell",
+                                    "attrs": {"colwidth": [3]},
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "content": [
+                                                {
+                                                    "type": "text",
+                                                    "text": severity,
+                                                }
+                                            ],
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            "type": "tableRow",
+                            "content": [
+                                {
+                                    "type": "tableCell",
+                                    "attrs": {"colwidth": [1]},
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "content": [
+                                                {
+                                                    "type": "text",
+                                                    "text": "Status",
+                                                    "marks": [{"type": "strong"}],
+                                                }
+                                            ],
+                                        }
+                                    ],
+                                },
+                                {
+                                    "type": "tableCell",
+                                    "attrs": {"colwidth": [3]},
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "content": [
+                                                {
+                                                    "type": "text",
+                                                    "text": status,
+                                                    "marks": [
+                                                        {"type": "strong"},
+                                                        {
+                                                            "type": "textColor",
+                                                            "attrs": {
+                                                                "color": status_color
+                                                            },
+                                                        },
+                                                    ],
+                                                }
+                                            ],
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            "type": "tableRow",
+                            "content": [
+                                {
+                                    "type": "tableCell",
+                                    "attrs": {"colwidth": [1]},
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "content": [
+                                                {
+                                                    "type": "text",
+                                                    "text": "Status Extended",
+                                                    "marks": [{"type": "strong"}],
+                                                }
+                                            ],
+                                        }
+                                    ],
+                                },
+                                {
+                                    "type": "tableCell",
+                                    "attrs": {"colwidth": [3]},
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "content": [
+                                                {
+                                                    "type": "text",
+                                                    "text": status_extended,
+                                                }
+                                            ],
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            "type": "tableRow",
+                            "content": [
+                                {
+                                    "type": "tableCell",
+                                    "attrs": {"colwidth": [1]},
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "content": [
+                                                {
+                                                    "type": "text",
+                                                    "text": "Provider",
+                                                    "marks": [{"type": "strong"}],
+                                                }
+                                            ],
+                                        }
+                                    ],
+                                },
+                                {
+                                    "type": "tableCell",
+                                    "attrs": {"colwidth": [3]},
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "content": [
+                                                {
+                                                    "type": "text",
+                                                    "text": provider,
+                                                    "marks": [{"type": "code"}],
+                                                }
+                                            ],
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            "type": "tableRow",
+                            "content": [
+                                {
+                                    "type": "tableCell",
+                                    "attrs": {"colwidth": [1]},
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "content": [
+                                                {
+                                                    "type": "text",
+                                                    "text": "Region",
+                                                    "marks": [{"type": "strong"}],
+                                                }
+                                            ],
+                                        }
+                                    ],
+                                },
+                                {
+                                    "type": "tableCell",
+                                    "attrs": {"colwidth": [3]},
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "content": [
+                                                {
+                                                    "type": "text",
+                                                    "text": region,
+                                                    "marks": [{"type": "code"}],
+                                                }
+                                            ],
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            "type": "tableRow",
+                            "content": [
+                                {
+                                    "type": "tableCell",
+                                    "attrs": {"colwidth": [1]},
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "content": [
+                                                {
+                                                    "type": "text",
+                                                    "text": "Resource UID",
+                                                    "marks": [{"type": "strong"}],
+                                                }
+                                            ],
+                                        }
+                                    ],
+                                },
+                                {
+                                    "type": "tableCell",
+                                    "attrs": {"colwidth": [3]},
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "content": [
+                                                {
+                                                    "type": "text",
+                                                    "text": resource_uid,
+                                                    "marks": [{"type": "code"}],
+                                                }
+                                            ],
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            "type": "tableRow",
+                            "content": [
+                                {
+                                    "type": "tableCell",
+                                    "attrs": {"colwidth": [1]},
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "content": [
+                                                {
+                                                    "type": "text",
+                                                    "text": "Resource Name",
+                                                    "marks": [{"type": "strong"}],
+                                                }
+                                            ],
+                                        }
+                                    ],
+                                },
+                                {
+                                    "type": "tableCell",
+                                    "attrs": {"colwidth": [3]},
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "content": [
+                                                {
+                                                    "type": "text",
+                                                    "text": resource_name,
+                                                    "marks": [{"type": "code"}],
+                                                }
+                                            ],
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            "type": "tableRow",
+                            "content": [
+                                {
+                                    "type": "tableCell",
+                                    "attrs": {"colwidth": [1]},
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "content": [
+                                                {
+                                                    "type": "text",
+                                                    "text": "Risk",
+                                                    "marks": [{"type": "strong"}],
+                                                }
+                                            ],
+                                        }
+                                    ],
+                                },
+                                {
+                                    "type": "tableCell",
+                                    "attrs": {"colwidth": [3]},
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "content": [
+                                                {
+                                                    "type": "text",
+                                                    "text": risk,
+                                                }
+                                            ],
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            "type": "tableRow",
+                            "content": [
+                                {
+                                    "type": "tableCell",
+                                    "attrs": {"colwidth": [1]},
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "content": [
+                                                {
+                                                    "type": "text",
+                                                    "text": "Recommendation",
+                                                    "marks": [{"type": "strong"}],
+                                                }
+                                            ],
+                                        }
+                                    ],
+                                },
+                                {
+                                    "type": "tableCell",
+                                    "attrs": {"colwidth": [3]},
+                                    "content": [
+                                        {
+                                            "type": "paragraph",
+                                            "content": [
+                                                {
+                                                    "type": "text",
+                                                    "text": recommendation_text + " ",
+                                                },
+                                                {
+                                                    "type": "text",
+                                                    "text": recommendation_url,
+                                                    "marks": [
+                                                        {
+                                                            "type": "link",
+                                                            "attrs": {
+                                                                "href": recommendation_url
+                                                            },
+                                                        }
+                                                    ],
+                                                },
+                                            ],
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        }
 
     def send_findings(
         self,
@@ -519,7 +1083,10 @@ class Jira:
             access_token = self.get_access_token()
 
             if not access_token:
-                return ValueError("Failed to get access token")
+                raise JiraNoTokenError(
+                    message="No token was found",
+                    file=os.path.basename(__file__),
+                )
 
             available_issue_types = self.get_available_issue_types(project_key)
 
@@ -533,478 +1100,25 @@ class Jira:
                 "Content-Type": "application/json",
             }
 
-            for finding in findings:
-                if finding.status.value == "PASS":
-                    status_color = "#008000"
-                else:
-                    status_color = "#FF0000"
+            findings = findings[:1]
 
-                adf_description = {
-                    "type": "doc",
-                    "version": 1,
-                    "content": [
-                        {
-                            "type": "paragraph",
-                            "content": [
-                                {
-                                    "type": "text",
-                                    "text": "Prowler has discovered the following finding:",
-                                }
-                            ],
-                        },
-                        {
-                            "type": "table",
-                            "attrs": {"layout": "full-width"},
-                            "content": [
-                                {
-                                    "type": "tableRow",
-                                    "content": [
-                                        {
-                                            "type": "tableCell",
-                                            "attrs": {"colwidth": [1]},
-                                            "content": [
-                                                {
-                                                    "type": "paragraph",
-                                                    "content": [
-                                                        {
-                                                            "type": "text",
-                                                            "text": "Check Id",
-                                                            "marks": [
-                                                                {"type": "strong"}
-                                                            ],
-                                                        }
-                                                    ],
-                                                }
-                                            ],
-                                        },
-                                        {
-                                            "type": "tableCell",
-                                            "attrs": {"colwidth": [3]},
-                                            "content": [
-                                                {
-                                                    "type": "paragraph",
-                                                    "content": [
-                                                        {
-                                                            "type": "text",
-                                                            "text": finding.metadata.CheckID,
-                                                            "marks": [{"type": "code"}],
-                                                        }
-                                                    ],
-                                                }
-                                            ],
-                                        },
-                                    ],
-                                },
-                                {
-                                    "type": "tableRow",
-                                    "content": [
-                                        {
-                                            "type": "tableCell",
-                                            "attrs": {"colwidth": [1]},
-                                            "content": [
-                                                {
-                                                    "type": "paragraph",
-                                                    "content": [
-                                                        {
-                                                            "type": "text",
-                                                            "text": "Check Title",
-                                                            "marks": [
-                                                                {"type": "strong"}
-                                                            ],
-                                                        }
-                                                    ],
-                                                }
-                                            ],
-                                        },
-                                        {
-                                            "type": "tableCell",
-                                            "attrs": {"colwidth": [3]},
-                                            "content": [
-                                                {
-                                                    "type": "paragraph",
-                                                    "content": [
-                                                        {
-                                                            "type": "text",
-                                                            "text": finding.metadata.CheckTitle,
-                                                        }
-                                                    ],
-                                                }
-                                            ],
-                                        },
-                                    ],
-                                },
-                                {
-                                    "type": "tableRow",
-                                    "content": [
-                                        {
-                                            "type": "tableCell",
-                                            "attrs": {"colwidth": [1]},
-                                            "content": [
-                                                {
-                                                    "type": "paragraph",
-                                                    "content": [
-                                                        {
-                                                            "type": "text",
-                                                            "text": "Severity",
-                                                            "marks": [
-                                                                {"type": "strong"}
-                                                            ],
-                                                        }
-                                                    ],
-                                                }
-                                            ],
-                                        },
-                                        {
-                                            "type": "tableCell",
-                                            "attrs": {"colwidth": [3]},
-                                            "content": [
-                                                {
-                                                    "type": "paragraph",
-                                                    "content": [
-                                                        {
-                                                            "type": "text",
-                                                            "text": finding.metadata.Severity.value.upper(),
-                                                        }
-                                                    ],
-                                                }
-                                            ],
-                                        },
-                                    ],
-                                },
-                                {
-                                    "type": "tableRow",
-                                    "content": [
-                                        {
-                                            "type": "tableCell",
-                                            "attrs": {"colwidth": [1]},
-                                            "content": [
-                                                {
-                                                    "type": "paragraph",
-                                                    "content": [
-                                                        {
-                                                            "type": "text",
-                                                            "text": "Status",
-                                                            "marks": [
-                                                                {"type": "strong"}
-                                                            ],
-                                                        }
-                                                    ],
-                                                }
-                                            ],
-                                        },
-                                        {
-                                            "type": "tableCell",
-                                            "attrs": {"colwidth": [3]},
-                                            "content": [
-                                                {
-                                                    "type": "paragraph",
-                                                    "content": [
-                                                        {
-                                                            "type": "text",
-                                                            "text": finding.status.value,
-                                                            "marks": [
-                                                                {"type": "strong"},
-                                                                {
-                                                                    "type": "textColor",
-                                                                    "attrs": {
-                                                                        "color": status_color
-                                                                    },
-                                                                },
-                                                            ],
-                                                        }
-                                                    ],
-                                                }
-                                            ],
-                                        },
-                                    ],
-                                },
-                                {
-                                    "type": "tableRow",
-                                    "content": [
-                                        {
-                                            "type": "tableCell",
-                                            "attrs": {"colwidth": [1]},
-                                            "content": [
-                                                {
-                                                    "type": "paragraph",
-                                                    "content": [
-                                                        {
-                                                            "type": "text",
-                                                            "text": "Status Extended",
-                                                            "marks": [
-                                                                {"type": "strong"}
-                                                            ],
-                                                        }
-                                                    ],
-                                                }
-                                            ],
-                                        },
-                                        {
-                                            "type": "tableCell",
-                                            "attrs": {"colwidth": [3]},
-                                            "content": [
-                                                {
-                                                    "type": "paragraph",
-                                                    "content": [
-                                                        {
-                                                            "type": "text",
-                                                            "text": finding.status_extended,
-                                                        }
-                                                    ],
-                                                }
-                                            ],
-                                        },
-                                    ],
-                                },
-                                {
-                                    "type": "tableRow",
-                                    "content": [
-                                        {
-                                            "type": "tableCell",
-                                            "attrs": {"colwidth": [1]},
-                                            "content": [
-                                                {
-                                                    "type": "paragraph",
-                                                    "content": [
-                                                        {
-                                                            "type": "text",
-                                                            "text": "Provider",
-                                                            "marks": [
-                                                                {"type": "strong"}
-                                                            ],
-                                                        }
-                                                    ],
-                                                }
-                                            ],
-                                        },
-                                        {
-                                            "type": "tableCell",
-                                            "attrs": {"colwidth": [3]},
-                                            "content": [
-                                                {
-                                                    "type": "paragraph",
-                                                    "content": [
-                                                        {
-                                                            "type": "text",
-                                                            "text": finding.metadata.Provider,
-                                                            "marks": [{"type": "code"}],
-                                                        }
-                                                    ],
-                                                }
-                                            ],
-                                        },
-                                    ],
-                                },
-                                {
-                                    "type": "tableRow",
-                                    "content": [
-                                        {
-                                            "type": "tableCell",
-                                            "attrs": {"colwidth": [1]},
-                                            "content": [
-                                                {
-                                                    "type": "paragraph",
-                                                    "content": [
-                                                        {
-                                                            "type": "text",
-                                                            "text": "Region",
-                                                            "marks": [
-                                                                {"type": "strong"}
-                                                            ],
-                                                        }
-                                                    ],
-                                                }
-                                            ],
-                                        },
-                                        {
-                                            "type": "tableCell",
-                                            "attrs": {"colwidth": [3]},
-                                            "content": [
-                                                {
-                                                    "type": "paragraph",
-                                                    "content": [
-                                                        {
-                                                            "type": "text",
-                                                            "text": finding.region,
-                                                            "marks": [{"type": "code"}],
-                                                        }
-                                                    ],
-                                                }
-                                            ],
-                                        },
-                                    ],
-                                },
-                                {
-                                    "type": "tableRow",
-                                    "content": [
-                                        {
-                                            "type": "tableCell",
-                                            "attrs": {"colwidth": [1]},
-                                            "content": [
-                                                {
-                                                    "type": "paragraph",
-                                                    "content": [
-                                                        {
-                                                            "type": "text",
-                                                            "text": "Resource UID",
-                                                            "marks": [
-                                                                {"type": "strong"}
-                                                            ],
-                                                        }
-                                                    ],
-                                                }
-                                            ],
-                                        },
-                                        {
-                                            "type": "tableCell",
-                                            "attrs": {"colwidth": [3]},
-                                            "content": [
-                                                {
-                                                    "type": "paragraph",
-                                                    "content": [
-                                                        {
-                                                            "type": "text",
-                                                            "text": finding.resource_uid,
-                                                            "marks": [{"type": "code"}],
-                                                        }
-                                                    ],
-                                                }
-                                            ],
-                                        },
-                                    ],
-                                },
-                                {
-                                    "type": "tableRow",
-                                    "content": [
-                                        {
-                                            "type": "tableCell",
-                                            "attrs": {"colwidth": [1]},
-                                            "content": [
-                                                {
-                                                    "type": "paragraph",
-                                                    "content": [
-                                                        {
-                                                            "type": "text",
-                                                            "text": "Resource Name",
-                                                            "marks": [
-                                                                {"type": "strong"}
-                                                            ],
-                                                        }
-                                                    ],
-                                                }
-                                            ],
-                                        },
-                                        {
-                                            "type": "tableCell",
-                                            "attrs": {"colwidth": [3]},
-                                            "content": [
-                                                {
-                                                    "type": "paragraph",
-                                                    "content": [
-                                                        {
-                                                            "type": "text",
-                                                            "text": finding.resource_name,
-                                                            "marks": [{"type": "code"}],
-                                                        }
-                                                    ],
-                                                }
-                                            ],
-                                        },
-                                    ],
-                                },
-                                {
-                                    "type": "tableRow",
-                                    "content": [
-                                        {
-                                            "type": "tableCell",
-                                            "attrs": {"colwidth": [1]},
-                                            "content": [
-                                                {
-                                                    "type": "paragraph",
-                                                    "content": [
-                                                        {
-                                                            "type": "text",
-                                                            "text": "Risk",
-                                                            "marks": [
-                                                                {"type": "strong"}
-                                                            ],
-                                                        }
-                                                    ],
-                                                }
-                                            ],
-                                        },
-                                        {
-                                            "type": "tableCell",
-                                            "attrs": {"colwidth": [3]},
-                                            "content": [
-                                                {
-                                                    "type": "paragraph",
-                                                    "content": [
-                                                        {
-                                                            "type": "text",
-                                                            "text": finding.metadata.Risk,
-                                                        }
-                                                    ],
-                                                }
-                                            ],
-                                        },
-                                    ],
-                                },
-                                {
-                                    "type": "tableRow",
-                                    "content": [
-                                        {
-                                            "type": "tableCell",
-                                            "attrs": {"colwidth": [1]},
-                                            "content": [
-                                                {
-                                                    "type": "paragraph",
-                                                    "content": [
-                                                        {
-                                                            "type": "text",
-                                                            "text": "Recommendation",
-                                                            "marks": [
-                                                                {"type": "strong"}
-                                                            ],
-                                                        }
-                                                    ],
-                                                }
-                                            ],
-                                        },
-                                        {
-                                            "type": "tableCell",
-                                            "attrs": {"colwidth": [3]},
-                                            "content": [
-                                                {
-                                                    "type": "paragraph",
-                                                    "content": [
-                                                        {
-                                                            "type": "text",
-                                                            "text": finding.metadata.Remediation.Recommendation.Text
-                                                            + " ",
-                                                        },
-                                                        {
-                                                            "type": "text",
-                                                            "text": finding.metadata.Remediation.Recommendation.Url,
-                                                            "marks": [
-                                                                {
-                                                                    "type": "link",
-                                                                    "attrs": {
-                                                                        "href": finding.metadata.Remediation.Recommendation.Url
-                                                                    },
-                                                                }
-                                                            ],
-                                                        },
-                                                    ],
-                                                }
-                                            ],
-                                        },
-                                    ],
-                                },
-                            ],
-                        },
-                    ],
-                }
+            for finding in findings:
+                status_color = self.get_color_from_status(finding.status.value)
+                adf_description = self.get_adf_description(
+                    check_id=finding.metadata.CheckID,
+                    check_title=finding.metadata.CheckTitle,
+                    severity=finding.metadata.Severity.value.upper(),
+                    status=finding.status.value,
+                    status_color=status_color,
+                    status_extended=finding.status_extended,
+                    provider=finding.metadata.Provider,
+                    region=finding.region,
+                    resource_uid=finding.resource_uid,
+                    resource_name=finding.resource_name,
+                    risk=finding.metadata.Risk,
+                    recommendation_text=finding.metadata.Remediation.Recommendation.Text,
+                    recommendation_url=finding.metadata.Remediation.Recommendation.Url,
+                )
                 payload = {
                     "fields": {
                         "project": {"key": project_key},
