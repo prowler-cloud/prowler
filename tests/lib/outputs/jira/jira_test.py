@@ -1032,8 +1032,10 @@ class TestJiraIntegration:
                 findings=[finding], project_key="TEST", issue_type="Bug"
             )
 
-    def test_get_color_from_status(self):
+    @pytest.mark.parametrize(
+        "status, expected_color",
+        [("FAIL", "#FF0000"), ("PASS", "#008000"), ("MUTED", "#FFA500")],
+    )
+    def test_get_color_from_status(self, status, expected_color):
         """Test that get_color_from_status returns the correct color for a status."""
-        assert self.jira_integration.get_color_from_status("FAIL") == "#FF0000"
-        assert self.jira_integration.get_color_from_status("PASS") == "#008000"
-        assert self.jira_integration.get_color_from_status("MUTED") == "#FFA500"
+        assert self.jira_integration.get_color_from_status(status) == expected_color
