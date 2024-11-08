@@ -16,21 +16,22 @@ def load_check_template(provider: str, service: str, check_name: str) -> str:
         return f"""
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.{service}.{service}_client import {service}_client
+from typing import List
 
 
 class {check_name}(Check):
-    def execute(self) -> list[Check_Report_AWS]:
+    def execute(self) -> List[Check_Report_AWS]:
         findings = []
-        for <attribute_arn>, <attribute_to_check> in {service}_client.<attribute_to_check>.items():
+        for <resource_arn>, <resource_to_check> in {service}_client.<resources_dict>.items():
             report = Check_Report_AWS(self.metadata())
-            report.region = <attribute_to_check>.region
-            report.resource_id = <attribute_to_check>.name
-            report.resource_arn = <attribute_arn>
-            report.resource_tags = <attribute_to_check>.tags
+            report.region = <resource_to_check>.region
+            report.resource_id = <resource_to_check>.name
+            report.resource_arn = <resource_arn>
+            report.resource_tags = <resource_to_check>.tags
             report.status = "FAIL"
             report.status_extended = f"..."
 
-            if <check_comprobation>:
+            if <check_logic>:
                 report.status = "PASS"
                 report.status_extended = f"..."
 
@@ -46,9 +47,9 @@ def load_test_template(provider: str, service: str, check_name: str) -> str:
     """Load the template for the test file.
 
     Args:
-        provider (str): The provider of the service (e.g., "aws").
-        service (str): The service to check (e.g., "s3").
-        check_name (str): The name of the check (e.g., "check_bucket_encryption").
+        provider: The provider of the service (e.g., "aws").
+        service: The service to check (e.g., "s3").
+        check_name: The name of the check (e.g., "check_bucket_encryption").
 
     Returns:
         A test template used when the user does not want to generate the check with AI.

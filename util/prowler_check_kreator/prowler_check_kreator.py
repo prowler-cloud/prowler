@@ -13,13 +13,13 @@ class ProwlerCheckKreator:
     def __init__(self, provider: str, check_name: str):
         # Validate provider
 
-        supported_providers = {"aws"}
+        SUPPORTED_PROVIDERS = {"aws"}
 
-        if provider in supported_providers:
+        if provider in SUPPORTED_PROVIDERS:
             self._provider = provider
         else:
             raise ValueError(
-                f"Invalid provider. Supported providers: {', '.join(supported_providers)}"
+                f"Invalid provider. Supported providers: {', '.join(SUPPORTED_PROVIDERS)}"
             )
 
         # Find the Prowler folder
@@ -41,7 +41,65 @@ class ProwlerCheckKreator:
         if os.path.exists(service_path):
             self._service_name = service_name
         else:
-            raise ValueError(f"Service {service_name} does not exist for {provider}")
+            raise ValueError(
+                f"Service {service_name} does not exist for {provider}. Please introduce a valid service"
+            )
+
+        # Ask user if want to use Gemini for all the process
+
+        user_input = (
+            input(
+                "Do you want to use Gemini to create the check and metadata? Type 'yes'/'no' and press enter: "
+            )
+            .strip()
+            .lower()
+        )
+
+        if user_input == "yes":
+            # Let the user to use the model that he wants
+            supported_models = [
+                "gemini-1.5-flash",
+                "gemini-1.5-pro",
+                "gemini-1.0-pro",
+            ]
+
+            print("Select the model that you want to use:")
+            for i, model in enumerate(supported_models):
+                print(f"{i + 1}. {model}")
+
+            user_input = input(
+                "Type the number of the model and press enter (default is 1): "
+            ).strip()
+
+            if not user_input:
+                model_index = 1
+            else:
+                model_index = int(user_input)
+
+            if model_index < 1 or model_index > len(supported_models):
+                raise ValueError("Invalid model selected.")
+
+            model_name = supported_models[model_index - 1]
+
+            if "gemini" in model_name:
+                from util.prowler_check_kreator.lib.llms.gemini import Gemini
+
+                self._model = Gemini(model_name)
+
+                # Provide some context about the check to create
+                self._context = (
+                    input(
+                        "Please provide some context to generate the check and metadata:\n"
+                    )
+                ).strip()
+
+            else:
+                raise ValueError("Invalid model selected.")
+        elif user_input == "no":
+            self._model = None
+            self._context = ""
+        else:
+            raise ValueError("Invalid input. Please type 'yes' or 'no'.")
 
         if not self._check_exists(check_name):
             self._check_name = check_name
@@ -57,7 +115,7 @@ class ProwlerCheckKreator:
             # Check already exists, give the user the possibility to continue or not
             user_input = (
                 input(
-                    f"Check {check_name} already exists. Do you want to continue and overwrite it? Type 'yes'/'no' and press enter: "
+                    f"Some files of {check_name} already exists. Do you want to continue and overwrite it? Type 'yes' if you want to continue: "
                 )
                 .strip()
                 .lower()
@@ -74,42 +132,7 @@ class ProwlerCheckKreator:
                     check_name,
                 )
             else:
-                raise ValueError(f"Check {check_name} already exists")
-
-        # Let the user to use the model that he wants
-        self._model = None
-        supported_models = [
-            "gemini-1.5-flash",
-            "gemini-1.5-pro",
-            "gemini-1.0-pro",
-        ]
-
-        print("Select the model that you want to use:")
-        for i, model in enumerate(supported_models):
-            print(f"{i + 1}. {model}")
-
-        user_input = input(
-            "Type the number of the model and press enter (default is 1): "
-        ).strip()
-
-        if not user_input:
-            model_index = 1
-        else:
-            model_index = int(user_input)
-
-        if model_index < 1 or model_index > len(supported_models):
-            raise ValueError("Invalid model selected")
-
-        model_name = supported_models[model_index - 1]
-
-        if "gemini" in model_name:
-            from util.prowler_check_kreator.lib.llms.gemini import Gemini
-
-            self._model = Gemini(model_name)
-        else:
-            raise ValueError("Invalid model selected")
-
-        self._check_reference_name = ""
+                raise ValueError(f"Check {check_name} already exists.")
 
     def kreate_check(self) -> None:
         """Create a new check in Prowler"""
@@ -123,40 +146,8 @@ class ProwlerCheckKreator:
         with open(os.path.join(self._check_path, "__init__.py"), "w") as f:
             f.write("")
 
-        # Check first if the check file already exists, in that case, ask user if want to overwrite it
-        if os.path.exists(os.path.join(self._check_path, f"{self._check_name}.py")):
-            user_input = (
-                input(
-                    f"Python check file {self._check_name} already exists. Do you want to overwrite it? Type 'yes'/'no' and press enter: "
-                )
-                .strip()
-                .lower()
-            )
-
-            if user_input == "yes":
-                self._write_check_file()
-            else:
-                print("Check file not overwritten")
-        else:
-            self._write_check_file()
-
-        # Check if metadata file already exists, in that case, ask user if want to overwrite it
-        if os.path.exists(
-            os.path.join(self._check_path, f"{self._check_name}.metadata.json")
-        ):
-            user_input = (
-                input(
-                    f"Metadata file {self._check_name}.metadata.json already exists. Do you want to overwrite it? Type 'yes'/'no' and press enter: "
-                )
-                .strip()
-                .lower()
-            )
-            if user_input == "yes":
-                self._write_metadata_file()
-            else:
-                print("Metadata file not overwritten")
-        else:
-            self._write_metadata_file()
+        self._write_check_file()
+        self._write_metadata_file()
 
         # Create test directory if it does not exist
         test_folder = os.path.join(
@@ -170,27 +161,19 @@ class ProwlerCheckKreator:
 
         os.makedirs(test_folder, exist_ok=True)
 
-        # Check if test file already exists, in that case, ask user if want to overwrite it
-        if os.path.exists(os.path.join(test_folder, f"{self._check_name}_test.py")):
-            user_input = (
-                input(
-                    f"Python test file {self._check_name}_test.py already exists. Do you want to overwrite it? Type 'yes'/'no' and press enter: "
-                )
-                .strip()
-                .lower()
-            )
-
-            if user_input == "yes":
-                self._write_test_file()
-            else:
-                print("Test file not overwritten")
-        else:
-            self._write_test_file()
+        self._write_test_file()
 
         print(f"Check {self._check_name} created successfully")
 
     def _check_exists(self, check_name: str) -> bool:
-        """Check if the check already exists"""
+        """Ensure if any file related to the check already exists.
+
+        Args:
+            check_name: The name of the check.
+
+        Returns:
+            True if the check already exists, False otherwise.
+        """
 
         # Get the check path
         check_path = os.path.join(
@@ -212,55 +195,25 @@ class ProwlerCheckKreator:
             check_name,
         )
 
-        # Check if exits check.py, check_metadata.json and check_test.py
+        # Check if exits check.py, check_metadata.json or check_test.py
         return (
             os.path.exists(check_path)
-            and os.path.exists(os.path.join(check_path, "__init__.py"))
-            and os.path.exists(os.path.join(check_path, f"{check_name}.py"))
-            and os.path.exists(os.path.join(check_path, f"{check_name}.metadata.json"))
-            and os.path.exists(_test_path)
+            or os.path.exists(os.path.join(check_path, "__init__.py"))
+            or os.path.exists(os.path.join(check_path, f"{check_name}.py"))
+            or os.path.exists(os.path.join(check_path, f"{check_name}.metadata.json"))
+            or os.path.exists(_test_path)
         )
 
     def _write_check_file(self) -> None:
         """Write the check file"""
 
-        check_content = load_check_template(
-            self._provider, self._service_name, self._check_name
-        )
-
-        # Ask if want that Gemini to fill the check taking as reference another check
-
-        user_input = (
-            input(
-                "WARNING: This still in beta. The check generated may not have sense or you will have to add some parameters to the service\nDo you want to ask Gemini to fill the check now? If yes, type the reference check name and press enter. If not, press enter (it will be created with a standard template): "
-            )
-            .strip()
-            .lower()
-        )
-
-        if user_input and self._check_exists(user_input):
-            self._check_reference_name = user_input
-            # Load the file referenced by the user
-            with open(
-                os.path.join(
-                    self._prowler_folder,
-                    "prowler/providers/",
-                    self._provider,
-                    "services/",
-                    self._service_name,
-                    user_input,
-                    f"{user_input}.py",
-                ),
-                "r",
-            ) as f:
-                check_reference = f.read()
-
-            check_content = self._model.generate_check(
-                self._check_name, check_reference
+        if self._model is None:
+            check_content = load_check_template(
+                self._provider, self._service_name, self._check_name
             )
         else:
-            print(
-                "Referenced check does not exist. Check will be created with the standard template."
+            check_content = self._model.generate_check(
+                check_name=self._check_name, context=self._context
             )
 
         with open(os.path.join(self._check_path, f"{self._check_name}.py"), "w") as f:
@@ -297,34 +250,12 @@ class ProwlerCheckKreator:
             "Notes": "",
         }
 
-        # Ask if want that Gemini to fill the metadata
-
-        user_input = (
-            input(
-                "Do you want to ask Gemini to fill the metadata now? Type 'yes'/'no' and press enter: "
-            )
-            .strip()
-            .lower()
-        )
-
-        if user_input.lower().strip() == "yes":
-            # Ask for some context to the user to generate the metadata, the context input finishes with a blank line
-
-            print(
-                "Please provide some context to fill the metadata (end with an empty line):"
-            )
-            context_lines = []
-            while True:
-                line = input()
-                if line:
-                    context_lines.append(line)
-                else:
-                    break
-            context = "\n".join(context_lines)
-
-            filled_metadata = self._model.generate_metadata(metadata_template, context)
-        else:
+        if self._model is None:
             filled_metadata = metadata_template
+        else:
+            filled_metadata = self._model.generate_metadata(
+                metadata_template, self._context
+            )
 
         with open(
             os.path.join(self._check_path, f"{self._check_name}.metadata.json"), "w"
@@ -343,39 +274,12 @@ class ProwlerCheckKreator:
             self._check_name,
         )
 
-        test_content = load_test_template(
-            self._provider, self._service_name, self._check_name
-        )
-
-        # Ask if want that Gemini to fill the test taking as reference the other check tests
-        if self._check_reference_name:
-            user_input = (
-                input(
-                    "Do you want to ask Gemini to fill the test now (based on check provided as reference in the check creation)? Type 'yes'/'no' and press enter (if not, it will be created with a standard template): "
-                )
-                .strip()
-                .lower()
+        if self._model is None:
+            test_template = load_test_template(
+                self._provider, self._service_name, self._check_name
             )
-
-            if user_input.lower().strip() == "yes":
-                # Load the file referenced by the user
-                with open(
-                    os.path.join(
-                        self._prowler_folder,
-                        "tests/providers/",
-                        self._provider,
-                        "services/",
-                        self._service_name,
-                        self._check_reference_name,
-                        f"{self._check_reference_name}_test.py",
-                    ),
-                    "r",
-                ) as f:
-                    test_content = f.read()
-
-                test_template = self._model.generate_test(
-                    self._check_name, test_content
-                )
+        else:
+            test_template = self._model.generate_test(self._check_name)
 
         with open(os.path.join(test_folder, f"{self._check_name}_test.py"), "w") as f:
             f.write(test_template)
@@ -383,7 +287,7 @@ class ProwlerCheckKreator:
 
 if __name__ == "__main__":
     try:
-        if len(sys.argv) < 3:
+        if len(sys.argv) != 3:
             raise ValueError(
                 "Invalid arguments. Usage: python prowler_check_kreator.py <cloud_provider> <check_name>"
             )
@@ -396,5 +300,5 @@ if __name__ == "__main__":
         print(f"Error: {e}")
         sys.exit(1)
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Unexpected error: {e}")
         sys.exit(1)
