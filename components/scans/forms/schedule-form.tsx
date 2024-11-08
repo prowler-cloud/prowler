@@ -95,7 +95,7 @@ export const ScheduleForm = ({
 
           <CustomButton
             type="submit"
-            ariaLabel="Save"
+            ariaLabel="Schedule scan"
             className="w-full"
             variant="solid"
             color="action"

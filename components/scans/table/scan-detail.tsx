@@ -4,16 +4,23 @@ import { Card, CardBody, CardHeader, Divider } from "@nextui-org/react";
 
 import { DateWithTime, SnippetId } from "@/components/ui/entities";
 import { StatusBadge } from "@/components/ui/table/status-badge";
-import { ScanProps } from "@/types";
+import { ScanProps, TaskDetails } from "@/types";
 
-export const ScanDetail = ({ scanDetails }: { scanDetails: ScanProps }) => {
+interface ScanDetailsProps {
+  scanDetails: ScanProps & {
+    taskDetails?: TaskDetails;
+  };
+}
+
+export const ScanDetail = ({ scanDetails }: ScanDetailsProps) => {
   const scanOnDemand = scanDetails.attributes;
+  const taskDetails = scanDetails.taskDetails;
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex flex-col items-baseline md:flex-row md:gap-x-4">
-          <h2 className="text-lg font-black uppercase">Scan Details - </h2>
-          <p>{scanOnDemand.name}</p>
+          <h2 className="text-2xl font-bold">Scan Details</h2>
         </div>
 
         <StatusBadge size="lg" status={scanOnDemand.state} />
@@ -22,6 +29,7 @@ export const ScanDetail = ({ scanDetails }: { scanDetails: ScanProps }) => {
       <div className="relative z-0 flex w-full flex-col justify-between gap-4 overflow-auto rounded-large bg-content1 p-4 shadow-small">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div className="space-y-4">
+            <DetailItem label="Scan Name" value={scanOnDemand.name} />
             <DetailItem
               label="ID"
               value={<SnippetId label="Type" entityId={scanDetails.id} />}
@@ -99,7 +107,7 @@ export const ScanDetail = ({ scanDetails }: { scanDetails: ScanProps }) => {
       </div>
       <Card className="relative w-full border-small border-default-100 p-3 shadow-lg">
         <CardHeader className="py-2">
-          <h2 className="text-2xl font-bold">Scan Arguments</h2>
+          <h2 className="text-2xl font-bold">Scan arguments</h2>
         </CardHeader>
 
         <Divider />
@@ -115,6 +123,47 @@ export const ScanDetail = ({ scanDetails }: { scanDetails: ScanProps }) => {
           </div>
         </CardBody>
       </Card>
+      {taskDetails && (
+        <Card className="relative w-full border-small border-default-100 p-3 shadow-lg">
+          <CardHeader className="py-2">
+            <h2 className="text-2xl font-bold">State details</h2>
+          </CardHeader>
+          <Divider />
+          <CardBody className="p-4">
+            <div className="flex flex-col gap-2">
+              <DetailItem label="State" value={taskDetails.attributes.state} />
+              <DetailItem
+                label="Completed At"
+                value={taskDetails.attributes.completed_at}
+              />
+
+              {taskDetails.attributes.result && (
+                <>
+                  <DetailItem
+                    label="Error Type"
+                    value={taskDetails.attributes.result.exc_type}
+                  />
+                  {taskDetails.attributes.result.exc_message && (
+                    <DetailItem
+                      label="Error Message"
+                      value={taskDetails.attributes.result.exc_message.join(
+                        ", ",
+                      )}
+                    />
+                  )}
+                </>
+              )}
+
+              <DetailItem
+                label="Checks to Execute"
+                value={taskDetails.attributes.task_args.checks_to_execute.join(
+                  ", ",
+                )}
+              />
+            </div>
+          </CardBody>
+        </Card>
+      )}
     </div>
   );
 };

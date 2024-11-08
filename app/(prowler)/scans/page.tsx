@@ -1,30 +1,43 @@
-import { Link, Spacer, Tooltip } from "@nextui-org/react";
+import { Spacer } from "@nextui-org/react";
 import { Suspense } from "react";
 
 import { getProviders } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
-import { FilterControls, filterScans } from "@/components/filters";
-import { InfoIcon } from "@/components/icons";
+import { filterScans } from "@/components/filters";
+import { LaunchScanWorkflow } from "@/components/scans/launch-workflow";
 import { SkeletonTableScans } from "@/components/scans/table";
-import { ColumnProviderScans } from "@/components/scans/table/provider-scans";
 import { ColumnGetScans } from "@/components/scans/table/scans";
 import { Header } from "@/components/ui";
 import { DataTable } from "@/components/ui/table";
-import { SearchParamsProps } from "@/types";
+import { ProviderProps, SearchParamsProps } from "@/types";
 
 export default async function Scans({
   searchParams,
 }: {
   searchParams: SearchParamsProps;
 }) {
-  const searchParamsKey = JSON.stringify(searchParams || {});
+  const filteredParams = { ...searchParams };
+  delete filteredParams.scanId;
+  const searchParamsKey = JSON.stringify(filteredParams);
+
+  const providersData = await getProviders({});
+
+  const providerInfo = providersData?.data?.length
+    ? providersData.data.map((provider: ProviderProps) => ({
+        providerId: provider.id,
+        alias: provider.attributes.alias,
+        providerType: provider.attributes.provider,
+        uid: provider.attributes.uid,
+        connected: provider.attributes.connection.connected,
+      }))
+    : [];
 
   return (
     <>
       <Header title="Scans" icon="lucide:scan-search" />
 
       <Spacer y={4} />
-      <FilterControls search date providers />
+      <LaunchScanWorkflow providers={providerInfo} />
       <Spacer y={8} />
 
       <div className="grid grid-cols-12 items-start gap-4">
@@ -33,42 +46,10 @@ export default async function Scans({
             <SSRDataTableScans searchParams={searchParams} />
           </Suspense>
         </div>
-        <div className="col-span-12 lg:col-span-6">
-          <Suspense key={searchParamsKey} fallback={<SkeletonTableScans />}>
-            <SSRDataTableProviders />
-          </Suspense>
-        </div>
       </div>
     </>
   );
 }
-
-const SSRDataTableProviders = async () => {
-  const filters = { "filter[connected]": "true" };
-  const providersData = await getProviders({ page: 1, filters });
-  return (
-    <>
-      <div className="mb-2 flex items-center gap-2">
-        <Tooltip content="Only connected providers can be scanned">
-          <InfoIcon size={16} />
-        </Tooltip>
-        <p className="text-sm text-default-500">Connected providers</p>
-      </div>
-      <DataTable
-        columns={ColumnProviderScans}
-        data={providersData?.data || []}
-      />
-      <p className="-mt-4 text-sm text-default-500">
-        If you don't see any providers, please check your connection settings on
-        the{" "}
-        <Link className="text-sm font-medium" href="/providers">
-          providers page
-        </Link>
-        .
-      </p>
-    </>
-  );
-};
 
 const SSRDataTableScans = async ({
   searchParams,
@@ -78,9 +59,11 @@ const SSRDataTableScans = async ({
   const page = parseInt(searchParams.page?.toString() || "1", 10);
   const sort = searchParams.sort?.toString();
 
-  // Extract all filter parameters
+  // Extract all filter parameters, excluding scanId
   const filters = Object.fromEntries(
-    Object.entries(searchParams).filter(([key]) => key.startsWith("filter[")),
+    Object.entries(searchParams).filter(
+      ([key]) => key.startsWith("filter[") && key !== "scanId",
+    ),
   );
 
   // Extract query from filters
