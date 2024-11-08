@@ -78,6 +78,10 @@ class JiraBaseException(ProwlerException):
             "message": "No token was found.",
             "remediation": "Make sure the token is set when using the Jira integration.",
         },
+        (9018, "JiraInvalidProjectKeyError"): {
+            "message": "The project key is invalid.",
+            "remediation": "Please check the project key and try again.",
+        },
     }
 
     def __init__(self, code, file=None, original_exception=None, message=None):
@@ -217,4 +221,11 @@ class JiraNoTokenError(JiraBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             9017, file=file, original_exception=original_exception, message=message
+        )
+
+
+class JiraInvalidProjectKeyError(JiraBaseException):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            9018, file=file, original_exception=original_exception, message=message
         )

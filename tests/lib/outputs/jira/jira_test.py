@@ -315,11 +315,7 @@ class TestJiraIntegration:
         mock_get.return_value = mock_response
 
         projects = self.jira_integration.get_projects()
-
-        expected_projects = [
-            {"key": "PROJ1", "name": "Project One"},
-            {"key": "PROJ2", "name": "Project Two"},
-        ]
+        expected_projects = {"PROJ1": "Project One", "PROJ2": "Project Two"}
         assert projects == expected_projects
 
     @patch.object(Jira, "get_access_token", return_value="valid_access_token")
@@ -471,14 +467,20 @@ class TestJiraIntegration:
     @patch.object(
         Jira, "get_available_issue_types", return_value=["Bug", "Task", "Story"]
     )
+    @patch.object(Jira, "get_projects", return_value={"TEST-1": "Test Project"})
     @patch("prowler.lib.outputs.jira.jira.requests.post")
     def test_send_findings_successful(
-        self, mock_post, mock_get_available_issue_types, mock_get_access_token
+        self,
+        mock_post,
+        mock_get_available_issue_types,
+        mock_get_projects,
+        mock_get_access_token,
     ):
         """Test successful sending of findings to Jira."""
         # To disable vulture
         mock_get_available_issue_types = mock_get_available_issue_types
         mock_get_access_token = mock_get_access_token
+        mock_get_projects = mock_get_projects
 
         mock_response = MagicMock()
         mock_response.status_code = 201
@@ -502,7 +504,7 @@ class TestJiraIntegration:
         self.jira_integration.cloud_id = "valid_cloud_id"
 
         self.jira_integration.send_findings(
-            findings=[finding], project_key="TEST", issue_type="Bug"
+            findings=[finding], project_key="TEST-1", issue_type="Bug"
         )
 
         expected_url = (
@@ -510,7 +512,7 @@ class TestJiraIntegration:
         )
         expected_json = {
             "fields": {
-                "project": {"key": "TEST"},
+                "project": {"key": "TEST-1"},
                 "summary": "[Prowler] HIGH - CHECK-1 - resource-1",
                 "description": {
                     "type": "doc",
@@ -1029,3 +1031,9 @@ class TestJiraIntegration:
             self.jira_integration.send_findings(
                 findings=[finding], project_key="TEST", issue_type="Bug"
             )
+
+    def test_get_color_from_status(self):
+        """Test that get_color_from_status returns the correct color for a status."""
+        assert self.jira_integration.get_color_from_status("FAIL") == "#FF0000"
+        assert self.jira_integration.get_color_from_status("PASS") == "#008000"
+        assert self.jira_integration.get_color_from_status("MUTED") == "#FFA500"

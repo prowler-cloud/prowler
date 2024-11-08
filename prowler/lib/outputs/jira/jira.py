@@ -21,6 +21,7 @@ from prowler.lib.outputs.jira.exceptions.exceptions import (
     JiraGetProjectsError,
     JiraGetProjectsResponseError,
     JiraInvalidIssueTypeError,
+    JiraInvalidProjectKeyError,
     JiraNoProjectsError,
     JiraNoTokenError,
     JiraRefreshTokenError,
@@ -466,7 +467,7 @@ class Jira:
                 )
             return Connection(is_connected=False, error=error)
 
-    def get_projects(self) -> list[Dict[str, str]]:
+    def get_projects(self) -> Dict[str, str]:
         """Get the projects from Jira
 
         Returns:
@@ -492,11 +493,10 @@ class Jira:
             )
 
             if response.status_code == 200:
-                # Return the Project Key and Name
-                projects = [
-                    {"key": project.get("key"), "name": project.get("name")}
-                    for project in response.json()
-                ]
+                # Return the Project Key and Name, using only a dictionary
+                projects = {
+                    project["key"]: project["name"] for project in response.json()
+                }
                 if len(projects) == 0:
                     logger.error("No projects found")
                     raise JiraNoProjectsError(
@@ -1087,6 +1087,15 @@ class Jira:
             if not access_token:
                 raise JiraNoTokenError(
                     message="No token was found",
+                    file=os.path.basename(__file__),
+                )
+
+            projects = self.get_projects()
+
+            if project_key not in projects:
+                logger.error("The project key is invalid")
+                raise JiraInvalidProjectKeyError(
+                    message="The project key is invalid",
                     file=os.path.basename(__file__),
                 )
 
