@@ -63,9 +63,11 @@ export const createNewUser = async (
         name: formData.name,
         email: formData.email,
         password: formData.password,
+        ...(formData.company && { company_name: formData.company }),
       },
     },
   };
+  
 
   try {
     const response = await fetch(url.toString(), {
