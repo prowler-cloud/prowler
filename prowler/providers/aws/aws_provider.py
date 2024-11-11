@@ -68,6 +68,25 @@ from prowler.providers.common.provider import Provider
 
 
 class AwsProvider(Provider):
+    """
+    AwsProvider class is the main class for the AWS provider.
+
+    This class is responsible for initializing the AWS provider, setting up the AWS session, validating the AWS
+    credentials, assuming an IAM role, getting the AWS Organizations metadata, and setting the AWS identity.
+
+    Attributes:
+        _type (str): The provider type.
+        _identity (AWSIdentityInfo): The AWS provider identity information.
+        _session (AWSSession): The AWS provider session.
+        _organizations_metadata (AWSOrganizationsInfo): The AWS Organizations metadata.
+        _audit_resources (list): The list of resources to audit.
+        _audit_config (dict): The audit configuration.
+        _scan_unused_services (bool): A boolean indicating whether to scan unused services.
+        _enabled_regions (set): The set of enabled regions.
+        _mutelist (AWSMutelist): The AWS provider mutelist.
+        audit_metadata (Audit_Metadata): The audit metadata.
+    """
+
     _type: str = "aws"
     _identity: AWSIdentityInfo
     _session: AWSSession
@@ -109,7 +128,7 @@ class AwsProvider(Provider):
         Arguments:
             - retries_max_attempts: The maximum number of retries for the AWS client.
             - role_arn: The ARN of the IAM role to assume.
-            - session_duration: The duration of the session in seconds.
+            - session_duration: The duration of the session in seconds, between 900 and 43200.
             - external_id: The external ID to use when assuming the IAM role.
             - role_session_name: The name of the session when assuming the IAM role.
             - mfa: A boolean indicating whether MFA is enabled.
@@ -134,6 +153,27 @@ class AwsProvider(Provider):
             - ArgumentTypeError: If the input external ID is invalid.
             - ArgumentTypeError: If the input role session name is invalid.
 
+        Usage:
+            - Using static credentials:
+                provider = AwsProvider(
+                    aws_access_key_id="AWS_ACCESS_KEY_ID",
+                    aws_secret_access_key="AWS_SECRET_ACCESS_KEY",
+                    aws_session_token="AWS_SESSION_TOKEN",
+                )
+            - Using a profile:
+                provider = AwsProvider(profile="PROFILE_NAME")
+            - Using an IAM role:
+                provider = AwsProvider(role_arn="ROLE_ARN")
+            - Using an IAM role and setting session duration with external ID:
+                provider = AwsProvider(
+                    role_arn="ROLE_ARN",
+                    session_duration=3600,
+                    external_id="EXTERNAL_ID",
+                )
+            - Using an IAM role and MFA:
+                provider = AwsProvider(role_arn="ROLE_ARN", mfa=True)
+            - Using role session name:
+                provider = AwsProvider(role_arn="ROLE_ARN", role_session_name="ROLE_SESSION_NAME")
         """
 
         logger.info("Initializing AWS provider ...")
@@ -424,6 +464,21 @@ class AwsProvider(Provider):
         regions: set,
         profile_region: str,
     ) -> AWSIdentityInfo:
+        """
+        set_identity sets the AWS provider identity information.
+
+        Arguments:
+            - caller_identity: The AWS caller identity information.
+            - profile: The AWS CLI profile name.
+            - regions: A set of regions to audit.
+            - profile_region: The AWS CLI profile region.
+
+        Returns:
+            - AWSIdentityInfo: The AWS provider identity information.
+
+        Raises:
+            - AWSInvalidProviderIdError: If the AWS provider ID is invalid.
+        """
         logger.info(f"Original AWS Caller Identity UserId: {caller_identity.user_id}")
         logger.info(f"Original AWS Caller Identity ARN: {caller_identity.arn}")
 
@@ -447,6 +502,22 @@ class AwsProvider(Provider):
         aws_secret_access_key: str = None,
         aws_session_token: Optional[str] = None,
     ) -> Session:
+        """
+        setup_session sets up an AWS session using the provided credentials.
+
+        Arguments:
+            - mfa: A boolean indicating whether MFA is enabled.
+            - profile: The name of the AWS CLI profile to use.
+            - aws_access_key_id: The AWS access key ID.
+            - aws_secret_access_key: The AWS secret access key.
+            - aws_session_token: The AWS session token, optional.
+
+        Returns:
+            - Session: The AWS session.
+
+        Raises:
+            - AWSSetUpSessionError: If an error occurs during the setup process.
+        """
         try:
             logger.debug("Creating original session ...")
 
@@ -588,6 +659,21 @@ class AwsProvider(Provider):
         return refreshed_credentials
 
     def print_credentials(self):
+        """
+        Print the AWS credentials.
+
+        This method prints the AWS credentials used by the provider.
+
+        Example output:
+        ```
+        Using the AWS credentials below:
+        AWS-CLI Profile: default
+        AWS Regions: all
+        AWS Account: 123456789012
+        User Id: AIDAJDPLRKLG7EXAMPLE
+        Caller Identity ARN: arn:aws:iam::123456789012:user/prowler
+        ```
+        """
         # Beautify audited regions, set "all" if there is no filter region
         regions = (
             ", ".join(self._identity.audited_regions)
@@ -679,6 +765,12 @@ class AwsProvider(Provider):
     def get_checks_from_input_arn(self) -> set:
         """
         get_checks_from_input_arn gets the list of checks from the input arns
+
+        Returns:
+            - set: set of strings representing the checks from the input arns
+
+        Example:
+            checks = get_checks_from_input_arn()
         """
         checks_from_arn = set()
         is_subservice_in_checks = False
@@ -745,7 +837,18 @@ class AwsProvider(Provider):
 
     # TODO: This can be moved to another class since it doesn't need self
     def get_regions_from_audit_resources(self, audit_resources: list) -> set:
-        """get_regions_from_audit_resources gets the regions from the audit resources arns"""
+        """get_regions_from_audit_resources gets the regions from the audit resources arns
+
+        Arguments:
+            - audit_resources: list of ARNs of the resources to audit
+
+        Returns:
+            - set: set of strings representing the regions from the audit resources arns
+
+        Example:
+            audit_resources = ["arn:aws:ec2:us-east-1:123456789012:instance/i-1234567890abcdef0"]
+            regions = get_regions_from_audit_resources(audit_resources)
+        """
         audited_regions = set()
         for resource in audit_resources:
             region = resource.split(":")[3]
@@ -805,7 +908,18 @@ class AwsProvider(Provider):
             raise error
 
     def get_default_region(self, service: str) -> str:
-        """get_default_region returns the default region based on the profile and audited service regions"""
+        """get_default_region returns the default region based on the profile and audited service regions
+
+        Arguments:
+            - service: The AWS service name
+
+        Returns:
+            - str: The default region for the given service
+
+        Example:
+            service = "ec2"
+            default_region = get_default_region(service)
+        """
         try:
             service_regions = AwsProvider.get_available_aws_service_regions(
                 service, self._identity.partition, self._identity.audited_regions
@@ -826,7 +940,14 @@ class AwsProvider(Provider):
             raise error
 
     def get_global_region(self) -> str:
-        """get_global_region returns the global region based on the audited partition"""
+        """get_global_region returns the global region based on the audited partition
+
+        Returns:
+            - str: The global region for the audited partition
+
+        Example:
+            global_region = get_global_region()a
+        """
         global_region = "us-east-1"
         if self._identity.partition == "aws-cn":
             global_region = "cn-north-1"
@@ -838,7 +959,14 @@ class AwsProvider(Provider):
 
     @staticmethod
     def input_role_mfa_token_and_code() -> AWSMFAInfo:
-        """input_role_mfa_token_and_code ask for the AWS MFA ARN and TOTP and returns it."""
+        """input_role_mfa_token_and_code ask for the AWS MFA ARN and TOTP and returns it.
+
+        Returns:
+            - AWSMFAInfo: An object containing the MFA ARN and TOTP code
+
+        Example:
+            mfa_info = input_role_mfa_token_and_code()
+        """
         mfa_ARN = input("Enter ARN of MFA: ")
         mfa_TOTP = input("Enter MFA code: ")
         return AWSMFAInfo(arn=mfa_ARN, totp=mfa_TOTP)
@@ -846,6 +974,12 @@ class AwsProvider(Provider):
     def set_session_config(self, retries_max_attempts: int) -> Config:
         """
         set_session_config returns a botocore Config object with the Prowler user agent and the default retrier configuration if nothing is passed as argument
+
+        Arguments:
+            - retries_max_attempts: The maximum number of retries for the standard retrier config
+
+        Returns:
+            - Config: The botocore Config object
         """
         # Set the maximum retries for the standard retrier config
         default_session_config = Config(
@@ -872,6 +1006,13 @@ class AwsProvider(Provider):
     ) -> AWSCredentials:
         """
         assume_role assumes the IAM roles passed with the given session and returns AWSCredentials
+
+        Arguments:
+            - session: The AWS session object
+            - assumed_role_info: The AWSAssumeRoleInfo object
+
+        Returns:
+            - AWSCredentials: The AWS credentials for the assumed role
         """
         try:
             role_session_name = (
@@ -923,7 +1064,14 @@ class AwsProvider(Provider):
             )
 
     def get_aws_enabled_regions(self, current_session: Session) -> set:
-        """get_aws_enabled_regions returns a set of enabled AWS regions"""
+        """get_aws_enabled_regions returns a set of enabled AWS regions
+
+        Arguments:
+            - current_session: The AWS session object
+
+        Returns:
+            - set: set of strings representing the enabled AWS regions
+        """
         try:
             # EC2 Client to check enabled regions
             service = "ec2"
@@ -947,6 +1095,12 @@ class AwsProvider(Provider):
     # TODO: review this function
     # Maybe this should be done within the AwsProvider and not in __main__.py
     def get_checks_to_execute_by_audit_resources(self) -> set[str]:
+        """
+        get_checks_to_execute_by_audit_resources gets the checks to execute based on the audit resources
+
+        Returns:
+            - set: set of strings representing the checks to execute
+        """
         # Once the provider is set and we have the eventual checks from arn, it is time to exclude the others
         try:
             checks = set()
@@ -1336,6 +1490,19 @@ def get_aws_available_regions() -> set:
 
 # TODO: This can be moved to another class since it doesn't need self
 def get_aws_region_for_sts(session_region: str, regions: set[str]) -> str:
+    """
+    Get the AWS region for the STS Assume Role operation.
+
+    Args:
+        - session_region (str): The region configured in the AWS session.
+        - regions (set[str]): The regions passed with the -f/--region/--filter-region option.
+
+    Returns:
+        str: The AWS region for the STS Assume Role operation
+
+    Example:
+        aws_region = get_aws_region_for_sts(session_region, regions)
+    """
     # If there is no region passed with -f/--region/--filter-region
     if regions is None or len(regions) == 0:
         # If you have a region configured in your AWS config or credentials file
