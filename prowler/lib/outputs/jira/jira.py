@@ -36,6 +36,9 @@ class Jira:
     """
     Jira class to interact with the Jira API
 
+    [Note]
+    This feature is delimited to the Jira Cloud ID, for now the tickets will be created for the default cloud id.
+
     Attributes:
         - _redirect_uri: The redirect URI
         - _client_id: The client ID
