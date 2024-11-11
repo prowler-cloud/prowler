@@ -150,6 +150,47 @@ class AzureProvider(Provider):
             AzureConfigCredentialsError: If there is an error in configuring the Azure credentials from a dictionary.
             AzureGetTokenIdentityError: If there is an error in getting the token from the Azure identity.
             AzureHTTPResponseError: If there is an HTTP response error.
+
+        Usage:
+            - Using static credentials:
+                >>> AzureProvider(
+                ...     az_cli_auth=False,
+                ...     sp_env_auth=False,
+                ...     browser_auth=False,
+                ...     managed_identity_auth=False,
+                ...     tenant_id="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+                ...     client_id="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+                ...     client_secret="XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+                ... )
+            - Using Azure CLI authentication:
+                >>> AzureProvider(
+                ...     az_cli_auth=True,
+                ...     sp_env_auth=False,
+                ...     browser_auth=False,
+                ...     managed_identity_auth=False,
+                ... )
+            - Using Service Principal environment authentication:
+                >>> AzureProvider(
+                ...     az_cli_auth=False,
+                ...     sp_env_auth=True,
+                ...     browser_auth=False,
+                ...     managed_identity_auth=False,
+                ... )
+            - Using interactive browser authentication:
+                >>> AzureProvider(
+                ...     az_cli_auth=False,
+                ...     sp_env_auth=False,
+                ...     browser_auth=True,
+                ...     managed_identity_auth=False,
+                ...     tenant_id="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+                ... )
+            - Using managed identity authentication:
+                >>> AzureProvider(
+                ...     az_cli_auth=False,
+                ...     sp_env_auth=False,
+                ...     browser_auth=False,
+                ...     managed_identity_auth=True,
+                ... )
         """
         logger.info("Setting Azure provider ...")
 
