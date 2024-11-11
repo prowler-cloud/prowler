@@ -37,7 +37,7 @@ class Jira:
     Jira class to interact with the Jira API
 
     [Note]
-    This feature is delimited to the Jira Cloud ID, for now the tickets will be created for the default cloud id.
+    This integration is limited to a single Jira Cloud, therefore all the issues will be created for same Jira Cloud ID. We will need to work on the ability of providing a Jira Cloud ID if the user is present in more than one.
 
     Attributes:
         - _redirect_uri: The redirect URI
