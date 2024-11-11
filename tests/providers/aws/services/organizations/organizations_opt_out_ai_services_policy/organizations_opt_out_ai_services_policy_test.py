@@ -15,6 +15,8 @@ class Test_organizations_tags_policies_enabled_and_attached:
     def test_organization_no_organization(self):
         organizations_client = mock.MagicMock
         organizations_client.region = AWS_REGION_EU_WEST_1
+        organizations_client.audited_partition = "aws"
+        organizations_client.audited_account = "0123456789012"
         organizations_client.organizations = [
             Organization(
                 arn=AWS_ACCOUNT_ARN,
@@ -49,12 +51,17 @@ class Test_organizations_tags_policies_enabled_and_attached:
                     == "AWS Organizations is not in-use for this AWS Account."
                 )
                 assert result[0].resource_id == "AWS Organization"
-                assert result[0].resource_arn == AWS_ACCOUNT_ARN
+                assert (
+                    result[0].resource_arn
+                    == "arn:aws:organizations:eu-west-1:0123456789012:unknown"
+                )
                 assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_organization_with_AI_optout_no_policies(self):
         organizations_client = mock.MagicMock
         organizations_client.region = AWS_REGION_EU_WEST_1
+        organizations_client.audited_partition = "aws"
+        organizations_client.audited_account = "0123456789012"
         organizations_client.organizations = [
             Organization(
                 id="o-1234567890",
@@ -93,13 +100,15 @@ class Test_organizations_tags_policies_enabled_and_attached:
                 assert result[0].resource_id == "o-1234567890"
                 assert (
                     result[0].resource_arn
-                    == "arn:aws:organizations::1234567890:organization/o-1234567890"
+                    == "arn:aws:organizations:eu-west-1:0123456789012:unknown"
                 )
                 assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_organization_with_AI_optout_policy(self):
         organizations_client = mock.MagicMock
         organizations_client.region = AWS_REGION_EU_WEST_1
+        organizations_client.audited_partition = "aws"
+        organizations_client.audited_account = "0123456789012"
         organizations_client.organizations = [
             Organization(
                 id="o-1234567890",
@@ -162,6 +171,8 @@ class Test_organizations_tags_policies_enabled_and_attached:
     def test_organization_with_AI_optout_policy_no_content(self):
         organizations_client = mock.MagicMock
         organizations_client.region = AWS_REGION_EU_WEST_1
+        organizations_client.audited_partition = "aws"
+        organizations_client.audited_account = "0123456789012"
         organizations_client.organizations = [
             Organization(
                 id="o-1234567890",
@@ -211,6 +222,6 @@ class Test_organizations_tags_policies_enabled_and_attached:
                 assert result[0].resource_id == "o-1234567890"
                 assert (
                     result[0].resource_arn
-                    == "arn:aws:organizations::1234567890:organization/o-1234567890"
+                    == "arn:aws:organizations:eu-west-1:0123456789012:unknown"
                 )
                 assert result[0].region == AWS_REGION_EU_WEST_1

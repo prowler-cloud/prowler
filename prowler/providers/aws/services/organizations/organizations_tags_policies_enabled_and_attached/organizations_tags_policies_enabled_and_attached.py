@@ -12,7 +12,7 @@ class organizations_tags_policies_enabled_and_attached(Check):
             if org.policies is not None:  # Access Denied to list_policies
                 report = Check_Report_AWS(self.metadata())
                 report.resource_id = org.id
-                report.resource_arn = org.arn
+                report.resource_arn = f"arn:{organizations_client.audited_partition}:organizations:{organizations_client.region}:{organizations_client.audited_account}:unknown"
                 report.region = organizations_client.region
                 report.status = "FAIL"
                 report.status_extended = (
@@ -26,6 +26,7 @@ class organizations_tags_policies_enabled_and_attached(Check):
                     for policy in org.policies.get("TAG_POLICY", []):
                         report.status_extended = f"AWS Organization {org.id} has tag policies enabled but not attached."
                         if policy.targets:
+                            report.resource_arn = org.arn
                             report.status = "PASS"
                             report.status_extended = f"AWS Organization {org.id} has tag policies enabled and attached to an AWS account."
 

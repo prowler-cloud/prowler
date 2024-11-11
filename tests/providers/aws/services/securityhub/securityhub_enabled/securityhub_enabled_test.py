@@ -36,7 +36,10 @@ class Test_securityhub_enabled:
             assert result[0].status == "FAIL"
             assert result[0].status_extended == "Security Hub is not enabled."
             assert result[0].resource_id == "Security Hub"
-            assert result[0].resource_arn == AWS_ACCOUNT_ARN
+            assert (
+                result[0].resource_arn
+                == "arn:aws:securityhub:eu-west-1:0123456789012:unknown"
+            )
             assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_tags == [{"test_key": "test_value"}]
 
@@ -119,6 +122,8 @@ class Test_securityhub_enabled:
     def test_securityhub_hub_active_without_integrations_or_standards(self):
         securityhub_client = mock.MagicMock
         securityhub_client.region = AWS_REGION_EU_WEST_1
+        securityhub_client.audited_partition = "aws"
+        securityhub_client.audited_account = "0123456789012"
         securityhub_client.securityhubs = [
             SecurityHubHub(
                 arn="arn:aws:securityhub:us-east-1:0123456789012:hub/default",
@@ -150,7 +155,7 @@ class Test_securityhub_enabled:
             assert result[0].resource_id == "default"
             assert (
                 result[0].resource_arn
-                == "arn:aws:securityhub:us-east-1:0123456789012:hub/default"
+                == "arn:aws:securityhub:eu-west-1:0123456789012:unknown"
             )
             assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_tags == [{"test_key": "test_value"}]
@@ -159,6 +164,8 @@ class Test_securityhub_enabled:
         securityhub_client = mock.MagicMock
         securityhub_client.audit_config = {"mute_non_default_regions": True}
         securityhub_client.region = AWS_REGION_EU_WEST_1
+        securityhub_client.audited_partition = "aws"
+        securityhub_client.audited_account = "0123456789012"
         securityhub_client.securityhubs = [
             SecurityHubHub(
                 arn="arn:aws:securityhub:us-east-1:0123456789012:hub/default",
@@ -191,7 +198,7 @@ class Test_securityhub_enabled:
             assert result[0].resource_id == "default"
             assert (
                 result[0].resource_arn
-                == "arn:aws:securityhub:us-east-1:0123456789012:hub/default"
+                == "arn:aws:securityhub:eu-west-1:0123456789012:unknown"
             )
             assert result[0].region == "eu-south-2"
             assert result[0].resource_tags == []

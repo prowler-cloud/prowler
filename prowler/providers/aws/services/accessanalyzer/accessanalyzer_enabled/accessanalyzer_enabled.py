@@ -20,6 +20,7 @@ class accessanalyzer_enabled(Check):
                 )
 
             else:
+                report.resource_arn = f"arn:{accessanalyzer_client.audited_partition}:accessanalyzer:{analyzer.region}:{accessanalyzer_client.audited_account}:unknown"
                 if analyzer.status == "NOT_AVAILABLE":
                     report.status = "FAIL"
                     report.status_extended = f"IAM Access Analyzer in account {analyzer.name} is not enabled."

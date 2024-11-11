@@ -110,7 +110,7 @@ class Test_guardduty_is_enabled:
                     assert result.resource_id == detector_id
                     assert (
                         result.resource_arn
-                        == f"arn:aws:guardduty:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:detector/{detector_id}"
+                        == "arn:aws:guardduty:us-east-1:123456789012:unknown"
                     )
                     assert result.resource_tags == []
 
@@ -152,7 +152,7 @@ class Test_guardduty_is_enabled:
                     assert result.resource_id == detector_id
                     assert (
                         result.resource_arn
-                        == f"arn:aws:guardduty:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:detector/{detector_id}"
+                        == "arn:aws:guardduty:us-east-1:123456789012:unknown"
                     )
                     assert result.resource_tags == []
 
@@ -193,7 +193,7 @@ class Test_guardduty_is_enabled:
                     assert result.resource_id == detector_id
                     assert (
                         result.resource_arn
-                        == f"arn:aws:guardduty:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:detector/{detector_id}"
+                        == "arn:aws:guardduty:us-east-1:123456789012:unknown"
                     )
                     assert result.resource_tags == []
                     assert result.muted

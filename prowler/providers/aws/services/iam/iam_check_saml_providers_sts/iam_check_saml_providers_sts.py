@@ -9,6 +9,7 @@ class iam_check_saml_providers_sts(Check):
             report = Check_Report_AWS(self.metadata())
             report.resource_id = iam_client.audited_account
             report.resource_arn = iam_client.audited_account_arn
+            report.resource_arn = f"arn:{iam_client.audited_partition}:accessanalyzer:{iam_client.region}:{iam_client.audited_account}:unknown"
             report.region = iam_client.region
             report.status = "FAIL"
             report.status_extended = "No SAML Providers found."

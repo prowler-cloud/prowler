@@ -15,14 +15,17 @@ class guardduty_is_enabled(Check):
             report.status_extended = f"GuardDuty detector {detector.id} enabled."
 
             if not detector.enabled_in_account:
+                report.resource_arn = f"arn:{guardduty_client.audited_partition}:guardduty:{guardduty_client.region}:{guardduty_client.audited_account}:unknown"
                 report.status = "FAIL"
                 report.status_extended = "GuardDuty is not enabled."
             elif detector.status is None:
+                report.resource_arn = f"arn:{guardduty_client.audited_partition}:guardduty:{guardduty_client.region}:{guardduty_client.audited_account}:unknown"
                 report.status = "FAIL"
                 report.status_extended = (
                     f"GuardDuty detector {detector.id} not configured."
                 )
             elif not detector.status:
+                report.resource_arn = f"arn:{guardduty_client.audited_partition}:guardduty:{guardduty_client.region}:{guardduty_client.audited_account}:unknown"
                 report.status = "FAIL"
                 report.status_extended = (
                     f"GuardDuty detector {detector.id} configured but suspended."

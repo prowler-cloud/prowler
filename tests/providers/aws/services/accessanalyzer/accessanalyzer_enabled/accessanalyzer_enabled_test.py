@@ -34,6 +34,8 @@ class Test_accessanalyzer_enabled:
         # Include analyzers to check
         accessanalyzer_client = mock.MagicMock
         accessanalyzer_client.region = AWS_REGION_1
+        accessanalyzer_client.audited_partition = "aws"
+        accessanalyzer_client.audited_account = AWS_ACCOUNT_NUMBER
         accessanalyzer_client.analyzers = [
             Analyzer(
                 arn=AWS_ACCOUNT_ARN,
@@ -62,7 +64,10 @@ class Test_accessanalyzer_enabled:
                 == f"IAM Access Analyzer in account {AWS_ACCOUNT_NUMBER} is not enabled."
             )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-            assert result[0].resource_arn == AWS_ACCOUNT_ARN
+            assert (
+                result[0].resource_arn
+                == "arn:aws:accessanalyzer:eu-west-1:123456789012:unknown"
+            )
             assert result[0].region == AWS_REGION_1
             assert result[0].resource_tags == []
 
@@ -71,6 +76,8 @@ class Test_accessanalyzer_enabled:
         accessanalyzer_client = mock.MagicMock
         accessanalyzer_client.region = AWS_REGION_2
         accessanalyzer_client.audit_config = {"mute_non_default_regions": True}
+        accessanalyzer_client.audited_partition = "aws"
+        accessanalyzer_client.audited_account = AWS_ACCOUNT_NUMBER
         accessanalyzer_client.analyzers = [
             Analyzer(
                 arn=AWS_ACCOUNT_ARN,
@@ -100,13 +107,18 @@ class Test_accessanalyzer_enabled:
                 == f"IAM Access Analyzer in account {AWS_ACCOUNT_NUMBER} is not enabled."
             )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-            assert result[0].resource_arn == AWS_ACCOUNT_ARN
+            assert (
+                result[0].resource_arn
+                == "arn:aws:accessanalyzer:eu-west-1:123456789012:unknown"
+            )
             assert result[0].region == AWS_REGION_1
             assert result[0].resource_tags == []
 
     def test_two_analyzers(self):
         accessanalyzer_client = mock.MagicMock
         accessanalyzer_client.region = AWS_REGION_1
+        accessanalyzer_client.audited_partition = "aws"
+        accessanalyzer_client.audited_account = AWS_ACCOUNT_NUMBER
         accessanalyzer_client.analyzers = [
             Analyzer(
                 arn=AWS_ACCOUNT_ARN,
@@ -147,7 +159,10 @@ class Test_accessanalyzer_enabled:
                 == f"IAM Access Analyzer in account {AWS_ACCOUNT_NUMBER} is not enabled."
             )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-            assert result[0].resource_arn == AWS_ACCOUNT_ARN
+            assert (
+                result[0].resource_arn
+                == "arn:aws:accessanalyzer:eu-west-1:123456789012:unknown"
+            )
             assert result[0].resource_tags == []
             assert result[0].region == AWS_REGION_1
 

@@ -7,7 +7,6 @@ from prowler.providers.aws.services.organizations.organizations_service import (
     Organizations,
 )
 from tests.providers.aws.utils import (
-    AWS_ACCOUNT_ARN,
     AWS_REGION_EU_CENTRAL_1,
     AWS_REGION_EU_WEST_1,
     set_mocked_aws_provider,
@@ -50,7 +49,10 @@ class Test_organizations_scp_check_deny_regions:
                     == "AWS Organizations is not in-use for this AWS Account."
                 )
                 assert result[0].resource_id == "AWS Organization"
-                assert result[0].resource_arn == AWS_ACCOUNT_ARN
+                assert (
+                    result[0].resource_arn
+                    == "arn:aws:organizations:eu-west-1:123456789012:unknown"
+                )
                 assert result[0].region == AWS_REGION_EU_WEST_1
 
     @mock_aws
@@ -84,7 +86,10 @@ class Test_organizations_scp_check_deny_regions:
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
                 assert result[0].resource_id == response["Organization"]["Id"]
-                assert result[0].resource_arn == response["Organization"]["Arn"]
+                assert (
+                    result[0].resource_arn
+                    == "arn:aws:organizations:eu-west-1:123456789012:unknown"
+                )
                 assert (
                     result[0].status_extended
                     == f"AWS Organization {org_id} has SCP policies but don't restrict AWS Regions."
@@ -176,7 +181,10 @@ class Test_organizations_scp_check_deny_regions:
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
                 assert result[0].resource_id == response["Organization"]["Id"]
-                assert result[0].resource_arn == response["Organization"]["Arn"]
+                assert (
+                    result[0].resource_arn
+                    == "arn:aws:organizations:eu-west-1:123456789012:unknown"
+                )
                 assert (
                     result[0].status_extended
                     == f"AWS Organization {org_id} has SCP policies {policy_id} restricting some AWS Regions, but not all the configured ones, please check config."
