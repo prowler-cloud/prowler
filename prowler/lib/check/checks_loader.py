@@ -117,13 +117,15 @@ def load_checks_to_execute(
 
         # Exclude check cloudwatch_log_group_no_secrets_in_logs from the checks to execute if not in check_list
         if (
-            "cloudwatch_log_group_no_secrets_in_logs" not in check_list
+            check_list
+            and "cloudwatch_log_group_no_secrets_in_logs" not in check_list
             and "cloudwatch_log_group_no_secrets_in_logs" in checks_to_execute
         ):
             checks_to_execute.remove("cloudwatch_log_group_no_secrets_in_logs")
         # Exclude check cloudwatch_log_group_no_critical_pii_in_logs from the checks to execute if not in check_list
         if (
-            "cloudwatch_log_group_no_critical_pii_in_logs" not in check_list
+            check_list
+            and "cloudwatch_log_group_no_critical_pii_in_logs" not in check_list
             and "cloudwatch_log_group_no_critical_pii_in_logs" in checks_to_execute
         ):
             checks_to_execute.remove("cloudwatch_log_group_no_critical_pii_in_logs")
