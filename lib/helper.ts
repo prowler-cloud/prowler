@@ -30,7 +30,6 @@ export async function checkTaskStatus(
         await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY));
         break;
       default:
-        console.warn(`Unexpected task state: ${state}`);
         return { completed: false, error: "Unexpected task state" };
     }
   }

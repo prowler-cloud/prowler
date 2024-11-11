@@ -94,9 +94,6 @@ export const scanOnDemand = async (formData: FormData) => {
           type: "Scan",
           attributes: {
             name: scanName,
-            scanner_args: {
-              checks_to_execute: ["accessanalyzer_enabled"],
-            },
           },
           relationships: {
             provider: {
