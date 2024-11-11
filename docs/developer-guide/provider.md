@@ -212,7 +212,7 @@ class NewProvider(Provider):
             arguments (dict): A dictionary containing configuration arguments.
         """
         logger.info("Setting <NewProviderName> provider ...")
-        # First get from arguments the necessary from the cloud acount (subscriptions or projects or whatever the provider use for storing services)
+        # First get from arguments the necessary from the cloud account (subscriptions or projects or whatever the provider use for storing services)
 
         # Set the session with the method enforced by parent class
         self._session = self.setup_session(credentials_file)
