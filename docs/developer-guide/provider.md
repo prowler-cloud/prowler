@@ -190,18 +190,18 @@ from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.provider import Provider
 from prowler.providers.<new_provider_name>.models import (
     # All providers models needed
-    ProvierSessionModel,
-    ProvierIdentityModel,
-    ProvierOutputOptionsModel
+    ProviderSessionModel,
+    ProviderIdentityModel,
+    ProviderOutputOptionsModel
 )
 
 class NewProvider(Provider):
     # All properties from the class, some of this are properties in the base class
     _type: str = "<provider_name>"
-    _session: <ProvierSessionModel>
-    _identity: <ProvierIdentityModel>
+    _session: <ProviderSessionModel>
+    _identity: <ProviderIdentityModel>
     _audit_config: dict
-    _output_options: ProvierOutputOptionsModel
+    _output_options: ProviderOutputOptionsModel
     _mutelist: dict
     audit_metadata: Audit_Metadata
 
@@ -218,7 +218,7 @@ class NewProvider(Provider):
         self._session = self.setup_session(credentials_file)
 
         # Set the Identity class normaly the provider class give by Python provider library
-        self._identity = <ProvierIdentityModel>()
+        self._identity = <ProviderIdentityModel>()
 
         # Set the provider configuration
         self._audit_config = load_and_validate_config_file(
