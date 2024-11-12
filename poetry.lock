@@ -256,13 +256,13 @@ cryptography = "*"
 
 [[package]]
 name = "aws-sam-translator"
-version = "1.92.0"
+version = "1.91.0"
 description = "AWS SAM Translator is a library that transform SAM templates into AWS CloudFormation templates"
 optional = false
 python-versions = "!=4.0,<=4.0,>=3.8"
 files = [
-    {file = "aws_sam_translator-1.92.0-py3-none-any.whl", hash = "sha256:10e77ab628cead3d0e8ee0211eb84c04010c051b9a48ce6b15171c39bdbe917d"},
-    {file = "aws_sam_translator-1.92.0.tar.gz", hash = "sha256:49014e783180ca1fcdd70790645a850d20f4285c19ae694d37fefc52a60d7c64"},
+    {file = "aws_sam_translator-1.91.0-py3-none-any.whl", hash = "sha256:9ebf4b53c226338e6b89d14d8583bc4559b87f0be52ed8d577c5a1dc2db14962"},
+    {file = "aws_sam_translator-1.91.0.tar.gz", hash = "sha256:0cdfbc598f384c430c3ec064f6008d80c5a0d58f1dc45ca4e331ae5c43cb4697"},
 ]
 
 [package.dependencies]
@@ -748,13 +748,13 @@ uvloop = ["uvloop (>=0.15.2)"]
 
 [[package]]
 name = "blinker"
-version = "1.9.0"
+version = "1.8.2"
 description = "Fast, simple object-to-object and broadcast signaling"
 optional = false
-python-versions = ">=3.9"
+python-versions = ">=3.8"
 files = [
-    {file = "blinker-1.9.0-py3-none-any.whl", hash = "sha256:ba0efaa9080b619ff2f3459d1d500c57bddea4a6b424b60a91141db6fd2f08bc"},
-    {file = "blinker-1.9.0.tar.gz", hash = "sha256:b4ce2265a7abece45e7cc896e98dbebe6cead56bcf805a3d23136d145f5445bf"},
+    {file = "blinker-1.8.2-py3-none-any.whl", hash = "sha256:1779309f71bf239144b9399d06ae925637cf6634cf6bd131104184531bf67c01"},
+    {file = "blinker-1.8.2.tar.gz", hash = "sha256:8f77b09d3bf7c795e969e9486f39c2c5e9c39d4ee07424be2bc594ece9642d83"},
 ]
 
 [[package]]
@@ -1385,13 +1385,13 @@ websockets = ["websocket-client (>=1.3.0)"]
 
 [[package]]
 name = "dparse"
-version = "0.6.4"
+version = "0.6.4b0"
 description = "A parser for Python dependency files"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "dparse-0.6.4-py3-none-any.whl", hash = "sha256:fbab4d50d54d0e739fbb4dedfc3d92771003a5b9aa8545ca7a7045e3b174af57"},
-    {file = "dparse-0.6.4.tar.gz", hash = "sha256:90b29c39e3edc36c6284c82c4132648eaf28a01863eb3c231c2512196132201a"},
+    {file = "dparse-0.6.4b0-py3-none-any.whl", hash = "sha256:592ff183348b8a5ea0a18442a7965e29445d3a26063654ec2c7e8ef42cd5753c"},
+    {file = "dparse-0.6.4b0.tar.gz", hash = "sha256:f8d49b41a527f3d16a269f854e6665245b325e50e41d2c213810cb984553e5c8"},
 ]
 
 [package.dependencies]
@@ -1399,7 +1399,7 @@ packaging = "*"
 tomli = {version = "*", markers = "python_version < \"3.11\""}
 
 [package.extras]
-all = ["pipenv", "poetry", "pyyaml"]
+all = ["dparse[conda]", "dparse[pipenv]", "dparse[poetry]"]
 conda = ["pyyaml"]
 pipenv = ["pipenv"]
 poetry = ["poetry"]
@@ -1679,13 +1679,13 @@ test = ["coverage[toml]", "ddt (>=1.1.1,!=1.4.3)", "mock", "mypy", "pre-commit",
 
 [[package]]
 name = "google-api-core"
-version = "2.23.0"
+version = "2.22.0"
 description = "Google API client core library"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "google_api_core-2.23.0-py3-none-any.whl", hash = "sha256:c20100d4c4c41070cf365f1d8ddf5365915291b5eb11b83829fbd1c999b5122f"},
-    {file = "google_api_core-2.23.0.tar.gz", hash = "sha256:2ceb087315e6af43f256704b871d99326b1f12a9d6ce99beaedec99ba26a0ace"},
+    {file = "google_api_core-2.22.0-py3-none-any.whl", hash = "sha256:a6652b6bd51303902494998626653671703c420f6f4c88cfd3f50ed723e9d021"},
+    {file = "google_api_core-2.22.0.tar.gz", hash = "sha256:26f8d76b96477db42b55fd02a33aae4a42ec8b86b98b94969b7333a2c828bf35"},
 ]
 
 [package.dependencies]
@@ -2401,21 +2401,21 @@ std-uritemplate = ">=2.0.0"
 
 [[package]]
 name = "microsoft-kiota-authentication-azure"
-version = "1.6.2"
-description = "Core abstractions for kiota generated libraries in Python"
+version = "1.1.0"
+description = "Authentication provider for Kiota using Azure Identity"
 optional = false
-python-versions = "<4.0,>=3.8"
+python-versions = "*"
 files = [
-    {file = "microsoft_kiota_authentication_azure-1.6.2-py3-none-any.whl", hash = "sha256:e9dfecdb4c45ddfcc00def1abd1b9cbcf8970cb3d7ae799efa8414b6e9aaf226"},
-    {file = "microsoft_kiota_authentication_azure-1.6.2.tar.gz", hash = "sha256:f24c4c8334a32d345df5216edfdf78dd4a3f8bdca2d2d7de3c936e007bba81d4"},
+    {file = "microsoft_kiota_authentication_azure-1.1.0-py2.py3-none-any.whl", hash = "sha256:22ecbf7e89120aca525cb3f89576617e6c6601b20b06ac720a8e66175698cf84"},
+    {file = "microsoft_kiota_authentication_azure-1.1.0.tar.gz", hash = "sha256:8940084a3c1c25d1cde1d3b193ef7164dc6323e3b8200e2f695cbc937797bac6"},
 ]
 
 [package.dependencies]
 aiohttp = ">=3.8.0"
 azure-core = ">=1.21.1"
-microsoft-kiota-abstractions = ">=1.6.2,<1.7.0"
-opentelemetry-api = ">=1.27.0"
-opentelemetry-sdk = ">=1.27.0"
+microsoft-kiota-abstractions = ">=1.0.0,<2.0.0"
+opentelemetry-api = ">=1.20.0"
+opentelemetry-sdk = ">=1.20.0"
 
 [[package]]
 name = "microsoft-kiota-http"
@@ -2435,82 +2435,63 @@ opentelemetry-api = ">=1.20.0"
 opentelemetry-sdk = ">=1.20.0"
 
 [[package]]
-name = "microsoft-kiota-http"
-version = "1.6.2"
-description = "Core abstractions for kiota generated libraries in Python"
-optional = false
-python-versions = "<4.0,>=3.8"
-files = [
-    {file = "microsoft_kiota_http-1.6.2-py3-none-any.whl", hash = "sha256:5914d1b95f1969b1cb7403888ee0c65a3211953a520f41fc94a0e8f2135689f5"},
-    {file = "microsoft_kiota_http-1.6.2.tar.gz", hash = "sha256:f70ae4cd712ba81253cbff3cb98e80d33bb70e1ff57de39c72eb2b13dd48b47b"},
-]
-
-[package.dependencies]
-httpx = {version = ">=0.23,<0.28", extras = ["http2"]}
-microsoft-kiota-abstractions = ">=1.6.2,<1.7.0"
-opentelemetry-api = ">=1.27.0"
-opentelemetry-sdk = ">=1.27.0"
-urllib3 = ">=2.2.2,<3.0.0"
-
-[[package]]
 name = "microsoft-kiota-serialization-form"
-version = "1.6.2"
-description = "Core abstractions for kiota generated libraries in Python"
+version = "0.1.1"
+description = "Implementation of Kiota Serialization Interfaces for URI-Form encoded serialization"
 optional = false
-python-versions = "<4.0,>=3.8"
+python-versions = "*"
 files = [
-    {file = "microsoft_kiota_serialization_form-1.6.2-py3-none-any.whl", hash = "sha256:c8eeb287a3a1102807685e3ce3e50f72074ef0fc8c42d37476da5c288960d49e"},
-    {file = "microsoft_kiota_serialization_form-1.6.2.tar.gz", hash = "sha256:e03263a851d17b66e20f083f1d95886eec2652a5fdcce7873c0033a7362b8b3e"},
+    {file = "microsoft_kiota_serialization_form-0.1.1-py2.py3-none-any.whl", hash = "sha256:7a2da956edd3329ff74ec1a34eded910fd9cda57ce8c71f3797e359adc9993f7"},
+    {file = "microsoft_kiota_serialization_form-0.1.1.tar.gz", hash = "sha256:f72dd50081250d1e49111682eccf620d3c2e335195d50c096b35ec5a5ef59a54"},
 ]
 
 [package.dependencies]
-microsoft-kiota-abstractions = ">=1.6.2,<1.7.0"
-pendulum = ">=3.0.0b1"
+microsoft-kiota_abstractions = ">=1.0.0,<2.0.0"
+pendulum = ">=3.0.0"
 
 [[package]]
 name = "microsoft-kiota-serialization-json"
-version = "1.6.2"
-description = "Core abstractions for kiota generated libraries in Python"
+version = "1.3.3"
+description = "Implementation of Kiota Serialization interfaces for JSON"
 optional = false
-python-versions = "<4.0,>=3.8"
+python-versions = "*"
 files = [
-    {file = "microsoft_kiota_serialization_json-1.6.2-py3-none-any.whl", hash = "sha256:f20791574b62899db2d42dd6202bc982008ff17a69960dcece8f5ac87a7f5276"},
-    {file = "microsoft_kiota_serialization_json-1.6.2.tar.gz", hash = "sha256:46370cb3563b8167829142ab7b745b28cbf743d367ffc6a25995b5d832537b1e"},
+    {file = "microsoft_kiota_serialization_json-1.3.3-py2.py3-none-any.whl", hash = "sha256:3003385e0277c5e92cdbe4227f1dd4a5e3715bbcf329ce949af986d886fc73f7"},
+    {file = "microsoft_kiota_serialization_json-1.3.3.tar.gz", hash = "sha256:348fd75ec6f9993b79172018cb986ecbaf73255d7930b89ad68e648b22b579aa"},
 ]
 
 [package.dependencies]
-microsoft-kiota-abstractions = ">=1.6.2,<1.7.0"
+microsoft-kiota_abstractions = ">=1.0.0,<2.0.0"
 pendulum = ">=3.0.0b1"
 
 [[package]]
 name = "microsoft-kiota-serialization-multipart"
-version = "1.6.2"
-description = "Core abstractions for kiota generated libraries in Python"
+version = "0.1.0"
+description = "Implementation of Kiota Serialization Interfaces for Multipart serialization"
 optional = false
-python-versions = "<4.0,>=3.8"
+python-versions = "*"
 files = [
-    {file = "microsoft_kiota_serialization_multipart-1.6.2-py3-none-any.whl", hash = "sha256:7b798b8cce2731217e39a144a7d13164bf95a1b250845cbd53ccebec2e7e735b"},
-    {file = "microsoft_kiota_serialization_multipart-1.6.2.tar.gz", hash = "sha256:b3839a2695880e6cf83b49cd15b7050549538c14d2d50ca8d0d62f0ad4b66924"},
+    {file = "microsoft_kiota_serialization_multipart-0.1.0-py2.py3-none-any.whl", hash = "sha256:ef183902e77807806b8a181cdde53ba5bc04c6c9bdb2f7d80f8bad5d720e0015"},
+    {file = "microsoft_kiota_serialization_multipart-0.1.0.tar.gz", hash = "sha256:14e89e92582e6630ddbc70ac67b70bf189dacbfc41a96d3e1d10339e86c8dde5"},
 ]
 
 [package.dependencies]
-microsoft-kiota-abstractions = ">=1.6.2,<1.7.0"
-pendulum = ">=3.0.0b1"
+microsoft-kiota_abstractions = ">=1.0.0,<2.0.0"
 
 [[package]]
 name = "microsoft-kiota-serialization-text"
-version = "1.6.2"
-description = "Core abstractions for kiota generated libraries in Python"
+version = "1.0.0"
+description = "Implementation of Kiota Serialization interfaces for text/plain"
 optional = false
-python-versions = "<4.0,>=3.8"
+python-versions = "*"
 files = [
-    {file = "microsoft_kiota_serialization_text-1.6.2-py3-none-any.whl", hash = "sha256:5c80aff9e4f7765ec530d5cac30318a194f783f7fe6be36b3f1e7d5cb4389689"},
-    {file = "microsoft_kiota_serialization_text-1.6.2.tar.gz", hash = "sha256:2a01d7257973faa8862fb759f0e957cb0c59e0760c30082a3a6efaafd60add2a"},
+    {file = "microsoft_kiota_serialization_text-1.0.0-py2.py3-none-any.whl", hash = "sha256:1d3789e012b603e059a36cc675d1fd08cb81e0dde423d970c0af2eabce9c0d43"},
+    {file = "microsoft_kiota_serialization_text-1.0.0.tar.gz", hash = "sha256:c3dd3f409b1c4f4963bd1e41d51b65f7e53e852130bb441d79b77dad88ee76ed"},
 ]
 
 [package.dependencies]
-microsoft-kiota-abstractions = ">=1.6.2,<1.7.0"
-python-dateutil = "2.9.0.post0"
+microsoft-kiota_abstractions = ">=1.0.0,<2.0.0"
+python-dateutil = ">=2.8.2"
 
 [[package]]
 name = "mkdocs"
@@ -3077,13 +3058,13 @@ openapi-schema-validator = ">=0.6.0,<0.7.0"
 
 [[package]]
 name = "opentelemetry-api"
-version = "1.28.1"
+version = "1.28.0"
 description = "OpenTelemetry Python API"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "opentelemetry_api-1.28.1-py3-none-any.whl", hash = "sha256:bfe86c95576cf19a914497f439fd79c9553a38de0adbdc26f7cfc46b0c00b16c"},
-    {file = "opentelemetry_api-1.28.1.tar.gz", hash = "sha256:6fa7295a12c707f5aebef82da3d9ec5afe6992f3e42bfe7bec0339a44b3518e7"},
+    {file = "opentelemetry_api-1.28.0-py3-none-any.whl", hash = "sha256:8457cd2c59ea1bd0988560f021656cecd254ad7ef6be4ba09dbefeca2409ce52"},
+    {file = "opentelemetry_api-1.28.0.tar.gz", hash = "sha256:578610bcb8aa5cdcb11169d136cc752958548fb6ccffb0969c1036b0ee9e5353"},
 ]
 
 [package.dependencies]
@@ -3092,44 +3073,44 @@ importlib-metadata = ">=6.0,<=8.5.0"
 
 [[package]]
 name = "opentelemetry-sdk"
-version = "1.28.1"
+version = "1.28.0"
 description = "OpenTelemetry Python SDK"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "opentelemetry_sdk-1.28.1-py3-none-any.whl", hash = "sha256:72aad7f5fcbe37113c4ab4899f6cdeb6ac77ed3e62f25a85e3627b12583dad0f"},
-    {file = "opentelemetry_sdk-1.28.1.tar.gz", hash = "sha256:100fa371b2046ffba6a340c18f0b2a0463acad7461e5177e126693b613a6ca57"},
+    {file = "opentelemetry_sdk-1.28.0-py3-none-any.whl", hash = "sha256:4b37da81d7fad67f6683c4420288c97f4ed0d988845d5886435f428ec4b8429a"},
+    {file = "opentelemetry_sdk-1.28.0.tar.gz", hash = "sha256:41d5420b2e3fb7716ff4981b510d551eff1fc60eb5a95cf7335b31166812a893"},
 ]
 
 [package.dependencies]
-opentelemetry-api = "1.28.1"
-opentelemetry-semantic-conventions = "0.49b1"
+opentelemetry-api = "1.28.0"
+opentelemetry-semantic-conventions = "0.49b0"
 typing-extensions = ">=3.7.4"
 
 [[package]]
 name = "opentelemetry-semantic-conventions"
-version = "0.49b1"
+version = "0.49b0"
 description = "OpenTelemetry Semantic Conventions"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "opentelemetry_semantic_conventions-0.49b1-py3-none-any.whl", hash = "sha256:dd6f3ac8169d2198c752e1a63f827e5f5e110ae9b0ce33f2aad9a3baf0739743"},
-    {file = "opentelemetry_semantic_conventions-0.49b1.tar.gz", hash = "sha256:91817883b159ffb94c2ca9548509c4fe0aafce7c24f437aa6ac3fc613aa9a758"},
+    {file = "opentelemetry_semantic_conventions-0.49b0-py3-none-any.whl", hash = "sha256:0458117f6ead0b12e3221813e3e511d85698c31901cac84682052adb9c17c7cd"},
+    {file = "opentelemetry_semantic_conventions-0.49b0.tar.gz", hash = "sha256:dbc7b28339e5390b6b28e022835f9bac4e134a80ebf640848306d3c5192557e8"},
 ]
 
 [package.dependencies]
 deprecated = ">=1.2.6"
-opentelemetry-api = "1.28.1"
+opentelemetry-api = "1.28.0"
 
 [[package]]
 name = "packaging"
-version = "24.2"
+version = "24.1"
 description = "Core utilities for Python packages"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "packaging-24.2-py3-none-any.whl", hash = "sha256:09abb1bccd265c01f4a3aa3f7a7db064b36514d2cba19a2f694fe6150451a759"},
-    {file = "packaging-24.2.tar.gz", hash = "sha256:c228a6dc5e932d346bc5739379109d49e8853dd8223571c7c5b55260edc0b97f"},
+    {file = "packaging-24.1-py3-none-any.whl", hash = "sha256:5b8f2217dbdbd2f7f384c41c628544e6d52f2d0f53c6d0c3ea61aa5d1d7ff124"},
+    {file = "packaging-24.1.tar.gz", hash = "sha256:026ed72c8ed3fcce5bf8950572258698927fd1dbda10a5e981cdf0ac37f4f002"},
 ]
 
 [[package]]
@@ -4579,23 +4560,23 @@ files = [
 
 [[package]]
 name = "setuptools"
-version = "75.4.0"
+version = "75.3.0"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
 optional = false
-python-versions = ">=3.9"
+python-versions = ">=3.8"
 files = [
-    {file = "setuptools-75.4.0-py3-none-any.whl", hash = "sha256:b3c5d862f98500b06ffdf7cc4499b48c46c317d8d56cb30b5c8bce4d88f5c216"},
-    {file = "setuptools-75.4.0.tar.gz", hash = "sha256:1dc484f5cf56fd3fe7216d7b8df820802e7246cfb534a1db2aa64f14fcb9cdcb"},
+    {file = "setuptools-75.3.0-py3-none-any.whl", hash = "sha256:f2504966861356aa38616760c0f66568e535562374995367b4e69c7143cf6bcd"},
+    {file = "setuptools-75.3.0.tar.gz", hash = "sha256:fba5dd4d766e97be1b1681d98712680ae8f2f26d7881245f2ce9e40714f1a686"},
 ]
 
 [package.extras]
-check = ["pytest-checkdocs (>=2.4)", "pytest-ruff (>=0.2.1)", "ruff (>=0.7.0)"]
-core = ["importlib-metadata (>=6)", "jaraco.collections", "jaraco.functools (>=4)", "jaraco.text (>=3.7)", "more-itertools", "more-itertools (>=8.8)", "packaging", "packaging (>=24.2)", "platformdirs (>=4.2.2)", "tomli (>=2.0.1)", "wheel (>=0.43.0)"]
+check = ["pytest-checkdocs (>=2.4)", "pytest-ruff (>=0.2.1)", "ruff (>=0.5.2)"]
+core = ["importlib-metadata (>=6)", "importlib-resources (>=5.10.2)", "jaraco.collections", "jaraco.functools", "jaraco.text (>=3.7)", "more-itertools", "more-itertools (>=8.8)", "packaging", "packaging (>=24)", "platformdirs (>=4.2.2)", "tomli (>=2.0.1)", "wheel (>=0.43.0)"]
 cover = ["pytest-cov"]
 doc = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "pygments-github-lexers (==0.0.5)", "pyproject-hooks (!=1.1)", "rst.linker (>=1.9)", "sphinx (>=3.5)", "sphinx-favicon", "sphinx-inline-tabs", "sphinx-lint", "sphinx-notfound-page (>=1,<2)", "sphinx-reredirects", "sphinxcontrib-towncrier", "towncrier (<24.7)"]
 enabler = ["pytest-enabler (>=2.2)"]
-test = ["build[virtualenv] (>=1.0.3)", "filelock (>=3.4.0)", "ini2toml[lite] (>=0.14)", "jaraco.develop (>=7.21)", "jaraco.envs (>=2.2)", "jaraco.path (>=3.2.0)", "jaraco.test (>=5.5)", "packaging (>=24.2)", "pip (>=19.1)", "pyproject-hooks (!=1.1)", "pytest (>=6,!=8.1.*)", "pytest-home (>=0.5)", "pytest-perf", "pytest-subprocess", "pytest-timeout", "pytest-xdist (>=3)", "tomli-w (>=1.0.0)", "virtualenv (>=13.0.0)", "wheel (>=0.44.0)"]
-type = ["importlib-metadata (>=7.0.2)", "jaraco.develop (>=7.21)", "mypy (>=1.12,<1.14)", "pytest-mypy"]
+test = ["build[virtualenv] (>=1.0.3)", "filelock (>=3.4.0)", "ini2toml[lite] (>=0.14)", "jaraco.develop (>=7.21)", "jaraco.envs (>=2.2)", "jaraco.path (>=3.2.0)", "jaraco.test (>=5.5)", "packaging (>=23.2)", "pip (>=19.1)", "pyproject-hooks (!=1.1)", "pytest (>=6,!=8.1.*)", "pytest-home (>=0.5)", "pytest-perf", "pytest-subprocess", "pytest-timeout", "pytest-xdist (>=3)", "tomli-w (>=1.0.0)", "virtualenv (>=13.0.0)", "wheel (>=0.44.0)"]
+type = ["importlib-metadata (>=7.0.2)", "jaraco.develop (>=7.21)", "mypy (==1.12.*)", "pytest-mypy"]
 
 [[package]]
 name = "shellingham"
@@ -4675,13 +4656,13 @@ files = [
 
 [[package]]
 name = "std-uritemplate"
-version = "2.0.1"
+version = "2.0.0"
 description = "std-uritemplate implementation for Python"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "std_uritemplate-2.0.1-py3-none-any.whl", hash = "sha256:6405d13f9ff3b8f70e1fa4eaefa373049659e1a61870c4b651441821a3fc984d"},
-    {file = "std_uritemplate-2.0.1.tar.gz", hash = "sha256:f4684ae050167e237ed5819423139893e0b5b7f08dc6b7467bba3fdd64608be8"},
+    {file = "std_uritemplate-2.0.0-py3-none-any.whl", hash = "sha256:b69a80b707b93095075066005155eebd9172ec1ac7601992e2f9e4ec380f5a7b"},
+    {file = "std_uritemplate-2.0.0.tar.gz", hash = "sha256:be88c8a4a89fee6768237f594c537d9347d96d7e68b8ad12200a3f11a0f6398f"},
 ]
 
 [[package]]
@@ -4767,13 +4748,13 @@ testing = ["mypy", "pytest", "pytest-gitignore", "pytest-mock", "responses", "ru
 
 [[package]]
 name = "tomli"
-version = "2.1.0"
+version = "2.0.2"
 description = "A lil' TOML parser"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "tomli-2.1.0-py3-none-any.whl", hash = "sha256:a5c57c3d1c56f5ccdf89f6523458f60ef716e210fc47c4cfb188c5ba473e0391"},
-    {file = "tomli-2.1.0.tar.gz", hash = "sha256:3f646cae2aec94e17d04973e4249548320197cfabdf130015d023de4b74d8ab8"},
+    {file = "tomli-2.0.2-py3-none-any.whl", hash = "sha256:2ebe24485c53d303f690b0ec092806a085f07af5a5aa1464f3931eec36caaa38"},
+    {file = "tomli-2.0.2.tar.gz", hash = "sha256:d46d457a85337051c36524bc5349dd91b1877838e2979ac5ced3e710ed8a60ed"},
 ]
 
 [[package]]
@@ -4789,13 +4770,13 @@ files = [
 
 [[package]]
 name = "typer"
-version = "0.13.0"
+version = "0.12.5"
 description = "Typer, build great CLIs. Easy to code. Based on Python type hints."
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "typer-0.13.0-py3-none-any.whl", hash = "sha256:d85fe0b777b2517cc99c8055ed735452f2659cd45e451507c76f48ce5c1d00e2"},
-    {file = "typer-0.13.0.tar.gz", hash = "sha256:f1c7198347939361eec90139ffa0fd8b3df3a2259d5852a0f7400e476d95985c"},
+    {file = "typer-0.12.5-py3-none-any.whl", hash = "sha256:62fe4e471711b147e3365034133904df3e235698399bc4de2b36c8579298d52b"},
+    {file = "typer-0.12.5.tar.gz", hash = "sha256:f592f089bedcc8ec1b974125d64851029c3b1af145f04aca64d69410f0c9b722"},
 ]
 
 [package.dependencies]
@@ -5175,13 +5156,13 @@ propcache = ">=0.2.0"
 
 [[package]]
 name = "zipp"
-version = "3.21.0"
+version = "3.20.2"
 description = "Backport of pathlib-compatible object wrapper for zip files"
 optional = false
-python-versions = ">=3.9"
+python-versions = ">=3.8"
 files = [
-    {file = "zipp-3.21.0-py3-none-any.whl", hash = "sha256:ac1bbe05fd2991f160ebce24ffbac5f6d11d83dc90891255885223d42b3cd931"},
-    {file = "zipp-3.21.0.tar.gz", hash = "sha256:2c9958f6430a2040341a52eb608ed6dd93ef4392e02ffe219417c1b28b5dd1f4"},
+    {file = "zipp-3.20.2-py3-none-any.whl", hash = "sha256:a817ac80d6cf4b23bf7f2828b7cabf326f15a001bea8b1f9b49631780ba28350"},
+    {file = "zipp-3.20.2.tar.gz", hash = "sha256:bc9eb26f4506fda01b81bcde0ca78103b6e62f991b381fec825435c836edbc29"},
 ]
 
 [package.extras]
