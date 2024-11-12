@@ -154,26 +154,36 @@ class AwsProvider(Provider):
             - ArgumentTypeError: If the input role session name is invalid.
 
         Usage:
-            - Using static credentials:
-                provider = AwsProvider(
-                    aws_access_key_id="AWS_ACCESS_KEY_ID",
-                    aws_secret_access_key="AWS_SECRET_ACCESS_KEY",
-                    aws_session_token="AWS_SESSION_TOKEN",
-                )
-            - Using a profile:
-                provider = AwsProvider(profile="PROFILE_NAME")
-            - Using an IAM role:
-                provider = AwsProvider(role_arn="ROLE_ARN")
-            - Using an IAM role and setting session duration with external ID:
-                provider = AwsProvider(
-                    role_arn="ROLE_ARN",
-                    session_duration=3600,
-                    external_id="EXTERNAL_ID",
-                )
-            - Using an IAM role and MFA:
-                provider = AwsProvider(role_arn="ROLE_ARN", mfa=True)
-            - Using role session name:
-                provider = AwsProvider(role_arn="ROLE_ARN", role_session_name="ROLE_SESSION_NAME")
+            - Boto3 is used so we follow their credential setup process:
+                - Authentication: Make sure you have properly configured your AWS CLI with a valid Access Key and Region or declare the AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables.
+                    - aws configure
+                    or
+                    - export AWS_ACCESS_KEY_ID="ASXXXXXXX"
+                      export AWS_SECRET_ACCESS_KEY="XXXXXXXXX"
+                      export AWS_SESSION_TOKEN="XXXXXXXXX"
+                    - To create a new aws object you can use:
+                        - aws = AwsProvider()
+                        - aws = AwsProvider(aws_access_key_id="ASXXXXXXX", aws_secret_access_key="XXXXXXXXX", aws_session_token="XXXXXXXXX")
+                    - Profile: If you have multiple profiles in your AWS CLI configuration, you can specify the profile to use:
+                        - aws = AwsProvider(profile="profile_name")
+                    - MFA: If you have MFA enabled you can specify it:
+                        - aws = AwsProvider(mfa=True)
+                    * Note: If you have MFA enabled you will be prompted to enter the MFA ARN and the MFA TOTP code.
+                    * Note: Take into account that you can use static credentials or a profile, with the combination of MFA.
+
+                - Assume Role: You can use Prowler against multiple accounts using IAM Assume Role features depending on each use case:
+                    - Set up a custom profile inside your AWS CLI configuration file:
+                        - [profile profile_name]
+                            role_arn = arn:aws:iam::123456789012:role/role_name
+                        - aws = AwsProvider(profile="profile_name")
+                    - Use role_arn directly:
+                        - aws = AwsProvider(role_arn="arn:aws:iam::123456789012:role/role_name")
+                        - Use role_arn with session duration(in seconds, by default 3600) and external ID:
+                            - aws = AwsProvider(role_arn="arn:aws:iam::123456789012:role/role_name", session_duration=3600, external_id="external_id")
+                    - Use custom role session name:
+                        - aws = AwsProvider(role_arn="arn:aws:iam::123456789012:role/role_name", role_session_name="custom_session_name")
+                    * Note: You can use the combination of MFA with Assume Role.
+                        - aws = AwsProvider(role_arn="arn:aws:iam::123456789012:role/role_name", mfa=True)
         """
 
         logger.info("Initializing AWS provider ...")
