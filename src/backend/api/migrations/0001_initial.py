@@ -794,7 +794,7 @@ class Migration(migrations.Migration):
                 (
                     "resource",
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.DO_NOTHING,
+                        on_delete=django.db.models.deletion.CASCADE,
                         to="api.resource",
                     ),
                 ),

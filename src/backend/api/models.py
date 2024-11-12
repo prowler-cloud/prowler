@@ -450,7 +450,7 @@ class ResourceTagMapping(RowLevelSecurityProtectedModel):
     # NOTE that we don't really need a primary key here,
     #      but everything is easier with django if we do
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
-    resource = models.ForeignKey(Resource, on_delete=models.DO_NOTHING)
+    resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
     tag = models.ForeignKey(ResourceTag, on_delete=models.CASCADE)
 
     class Meta(RowLevelSecurityProtectedModel.Meta):
