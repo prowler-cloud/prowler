@@ -2641,19 +2641,19 @@ files = [
 
 [[package]]
 name = "microsoft-kiota-abstractions"
-version = "1.6.0"
+version = "1.6.2"
 description = "Core abstractions for kiota generated libraries in Python"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "microsoft_kiota_abstractions-1.6.0-py3-none-any.whl", hash = "sha256:ead1846da7ced9a7039bee14b0d013250ca0bc2b5790d2e0b5c2f27c5bcf8182"},
-    {file = "microsoft_kiota_abstractions-1.6.0.tar.gz", hash = "sha256:4cf8eb3f78a88619e8af6d6073ae6d15bcd075a086f86074585626ec5b8f4a08"},
+    {file = "microsoft_kiota_abstractions-1.6.2-py3-none-any.whl", hash = "sha256:8c2c777748e80f17dba3809b5d149585d9918198f0f94125e87432f7165ba80e"},
+    {file = "microsoft_kiota_abstractions-1.6.2.tar.gz", hash = "sha256:dec30f0fb427a051003e94b5c6fcf266f4702ecbd9d6961e3966124b9cbe41bf"},
 ]
 
 [package.dependencies]
 opentelemetry-api = ">=1.27.0"
 opentelemetry-sdk = ">=1.27.0"
-std-uritemplate = ">=0.0.38,<2.0.0"
+std-uritemplate = ">=2.0.0"
 
 [[package]]
 name = "microsoft-kiota-authentication-azure"
@@ -5205,13 +5205,13 @@ catalogue = ">=2.0.3,<2.1.0"
 
 [[package]]
 name = "std-uritemplate"
-version = "1.0.6"
+version = "2.0.0"
 description = "std-uritemplate implementation for Python"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "std_uritemplate-1.0.6-py3-none-any.whl", hash = "sha256:52f575b088721e6e698303b90eb8de04c2820afa946ee9f923a19dd7c21c7f23"},
-    {file = "std_uritemplate-1.0.6.tar.gz", hash = "sha256:9bed621204a9dbb47f89ea958c97c463d15f28bccbc801aab8c9b0d75719ec62"},
+    {file = "std_uritemplate-2.0.0-py3-none-any.whl", hash = "sha256:b69a80b707b93095075066005155eebd9172ec1ac7601992e2f9e4ec380f5a7b"},
+    {file = "std_uritemplate-2.0.0.tar.gz", hash = "sha256:be88c8a4a89fee6768237f594c537d9347d96d7e68b8ad12200a3f11a0f6398f"},
 ]
 
 [[package]]
@@ -5852,4 +5852,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "e7c299d2efe2a668adecafb0111bc2b1974d7f15203da6fe21ebdcfe28f42420"
+content-hash = "3d245d541604a9c5629b8d8b822e41907cebff85a228d1b3b0b1fdfe61c4aa08"
