@@ -152,45 +152,66 @@ class AzureProvider(Provider):
             AzureHTTPResponseError: If there is an HTTP response error.
 
         Usage:
-            - Using static credentials:
-                >>> AzureProvider(
-                ...     az_cli_auth=False,
-                ...     sp_env_auth=False,
-                ...     browser_auth=False,
-                ...     managed_identity_auth=False,
-                ...     tenant_id="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
-                ...     client_id="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
-                ...     client_secret="XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-                ... )
-            - Using Azure CLI authentication:
-                >>> AzureProvider(
-                ...     az_cli_auth=True,
-                ...     sp_env_auth=False,
-                ...     browser_auth=False,
-                ...     managed_identity_auth=False,
-                ... )
-            - Using Service Principal environment authentication:
+            - Authentication: By default Prowler uses Azure Python SDK identity package authentication methods using the classes DefaultAzureCredential and InteractiveBrowserCredential.
+                - Using static credentials:
+                    >>> AzureProvider(
+                    ...     az_cli_auth=False,
+                    ...     sp_env_auth=False,
+                    ...     browser_auth=False,
+                    ...     managed_identity_auth=False,
+                    ...     tenant_id="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+                    ...     client_id="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+                    ...     client_secret="XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+                    ... )
+                - Using Azure CLI authentication:
+                    >>> AzureProvider(
+                    ...     az_cli_auth=True,
+                    ...     sp_env_auth=False,
+                    ...     browser_auth=False,
+                    ...     managed_identity_auth=False,
+                    ... )
+                - Using Service Principal environment authentication:
+                    >>> AzureProvider(
+                    ...     az_cli_auth=False,
+                    ...     sp_env_auth=True,
+                    ...     browser_auth=False,
+                    ...     managed_identity_auth=False,
+                    ... )
+                - Using interactive browser authentication:
+                    >>> AzureProvider(
+                    ...     az_cli_auth=False,
+                    ...     sp_env_auth=False,
+                    ...     browser_auth=True,
+                    ...     managed_identity_auth=False,
+                    ...     tenant_id="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+                    ... )
+                    * Note: Azure Tenant ID is required for browser authentication mode.
+                - Using managed identity authentication:
+                    >>> AzureProvider(
+                    ...     az_cli_auth=False,
+                    ...     sp_env_auth=False,
+                    ...     browser_auth=False,
+                    ...     managed_identity_auth=True,
+                    ... )
+            - Non default azure region: Microsoft provides clouds for compliance with regional laws, which are available for your use. By default, Prowler uses AzureCloud cloud which is the comercial one.
+              If you want to use a different one, you can specify it using the region parameter.
                 >>> AzureProvider(
                 ...     az_cli_auth=False,
                 ...     sp_env_auth=True,
                 ...     browser_auth=False,
                 ...     managed_identity_auth=False,
+                ...     region="AzureUSGovernment",
                 ... )
-            - Using interactive browser authentication:
+            - Subscriptions: rowler is multisubscription, which means that is going to scan all the subscriptions is able to list. If you only assign permissions to one subscription, it is going to scan a single one.
+              Prowler also allows you to specify the subscriptions you want to scan by passing a list of subscription IDs.
                 >>> AzureProvider(
                 ...     az_cli_auth=False,
-                ...     sp_env_auth=False,
-                ...     browser_auth=True,
-                ...     managed_identity_auth=False,
-                ...     tenant_id="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
-                ... )
-            - Using managed identity authentication:
-                >>> AzureProvider(
-                ...     az_cli_auth=False,
-                ...     sp_env_auth=False,
+                ...     sp_env_auth=True,
                 ...     browser_auth=False,
-                ...     managed_identity_auth=True,
+                ...     managed_identity_auth=False,
+                ...     subscription_ids=["XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX", "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"],
                 ... )
+
         """
         logger.info("Setting Azure provider ...")
 
