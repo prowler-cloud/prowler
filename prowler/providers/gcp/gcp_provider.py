@@ -117,19 +117,42 @@ class GcpProvider(Provider):
             None
 
         Usage:
-            - Using static credentials:
+            - Authentication: Prowler will use by default your User Account credentials, you can configure it using:
+                - gcloud init to use a new account
+                - gcloud config set account <account> to use a specific account
+                - gcloud auth application-default login to use the Application Default Credentials
+                - Prowler will use the Application Default Credentials if no credentials are provided
+                    - Using static credentials:
+                        >>> GcpProvider(
+                        ...     client_id="client_id",
+                        ...     client_secret="client_secret",
+                        ...     refresh_token="refresh_token"
+                        ... )
+                    - Using a credentials file:
+                        >>> GcpProvider(
+                        ...     credentials_file="credentials_file"
+                        ... )
+                - Impersonating a service account: If you want to impersonate a GCP service account, you can use the impersonate_service_account parameter:
+                    >>> GcpProvider(
+                    ...     impersonate_service_account="service_account"
+                    ... )
+            - Projects: Prowler is multi-project, which means that is going to scan all the Google Cloud projects that the authenticated user has access to.
+                - If you want to scan a specific project(s), you can use the project-ids argument.
+                    >>> GcpProvider(
+                    ...     project_ids=["project_id1", "project_id2"]
+                    ... )
+                - If you want to exclude a specific project(s), you can use the excluded-project-ids argument.
+                    >>> GcpProvider(
+                    ...     excluded_project_ids=["project_id1", "project_id2"]
+                    ... )
+                    * Note: You can use asterisk * to exclude projects that match a pattern. For example, using "sys*" will exclude all the projects that start with sys.
+                - If you want to list all the available project IDs, you can use the list-project-ids argument.
+                    >>> GcpProvider(
+                    ...     list_project_ids=True
+                    ... )
+            - Organizations: If you want to scan a specific organization, you can use the organization-id argument. With this argument, Prowler will scan all the projects under that organization.
                 >>> GcpProvider(
-                ...     client_id="client_id",
-                ...     client_secret="client_secret",
-                ...     refresh_token="refresh_token"
-                ... )
-            - Using a credentials file:
-                >>> GcpProvider(
-                ...     credentials_file="credentials_file"
-                ... )
-            - Using a service account to impersonate:
-                >>> GcpProvider(
-                ...     impersonate_service_account="impersonate_service_account"
+                ...     organization_id="organization_id"
                 ... )
         """
         logger.info("Instantiating GCP Provider ...")
