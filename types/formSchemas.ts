@@ -150,3 +150,37 @@ export const editProviderFormSchema = (currentAlias: string) =>
       .optional(),
     providerId: z.string(),
   });
+
+export const editUserFormSchema = (
+  currentName: string,
+  currentEmail: string,
+  currentCompanyName: string,
+) =>
+  z.object({
+    name: z
+      .string()
+      .min(3, { message: "The name must have at least 3 characters." })
+      .max(150, { message: "The name cannot exceed 150 characters." })
+      .refine((val) => val !== currentName, {
+        message: "The new name must be different from the current one.",
+      })
+      .optional(),
+    email: z
+      .string()
+      .email({ message: "Please enter a valid email address." })
+      .refine((val) => val !== currentEmail, {
+        message: "The new email must be different from the current one.",
+      })
+      .optional(),
+    password: z
+      .string()
+      .min(1, { message: "The password cannot be empty." })
+      .optional(),
+    company_name: z
+      .string()
+      .refine((val) => val !== currentCompanyName, {
+        message: "The new company name must be different from the current one.",
+      })
+      .optional(),
+    userId: z.string(),
+  });

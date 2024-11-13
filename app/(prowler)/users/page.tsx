@@ -1,16 +1,12 @@
 import { Spacer } from "@nextui-org/react";
-import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
-import { getUsers } from "@/actions/users";
-// import { auth } from "@/auth.config";
+import { getUsers } from "@/actions/users/users";
+import { FilterControls } from "@/components/filters";
+import { filterUsers } from "@/components/filters/data-filters";
 import { Header } from "@/components/ui";
-import {
-  AddUserModal,
-  ColumnsUser,
-  DataTableUser,
-  SkeletonTableUser,
-} from "@/components/users";
+import { DataTable } from "@/components/ui/table";
+import { ColumnsUser, SkeletonTableUser } from "@/components/users/table";
 import { SearchParamsProps } from "@/types";
 
 export default async function Users({
@@ -22,17 +18,16 @@ export default async function Users({
 
   return (
     <>
-      <Header title="User Management" icon="ci:users" />
+      <Header title="Users" icon="ci:users" />
       <Spacer y={4} />
-      <div className="flex w-full flex-col items-end">
-        <div className="flex space-x-6">
-          <AddUserModal />
-        </div>
-        <Spacer y={6} />
-        <Suspense key={searchParamsKey} fallback={<SkeletonTableUser />}>
-          <SSRDataTable searchParams={searchParams} />
-        </Suspense>
-      </div>
+      <FilterControls search />
+      <Spacer y={4} />
+      {/* <AddUser /> */}
+      <Spacer y={4} />
+
+      <Suspense key={searchParamsKey} fallback={<SkeletonTableUser />}>
+        <SSRDataTable searchParams={searchParams} />
+      </Suspense>
     </>
   );
 }
@@ -43,16 +38,24 @@ const SSRDataTable = async ({
   searchParams: SearchParamsProps;
 }) => {
   const page = parseInt(searchParams.page?.toString() || "1", 10);
-  const usersData = await getUsers({ page });
-  const [users] = await Promise.all([usersData]);
+  const sort = searchParams.sort?.toString();
 
-  if (users?.errors) redirect("/users");
+  // Extract all filter parameters
+  const filters = Object.fromEntries(
+    Object.entries(searchParams).filter(([key]) => key.startsWith("filter[")),
+  );
+
+  // Extract query from filters
+  const query = (filters["filter[search]"] as string) || "";
+
+  const usersData = await getUsers({ query, page, sort, filters });
 
   return (
-    <DataTableUser
+    <DataTable
       columns={ColumnsUser}
-      data={users?.users?.data ?? []}
-      metadata={users?.meta}
+      data={usersData?.data || []}
+      metadata={usersData?.meta}
+      customFilters={filterUsers}
     />
   );
 };

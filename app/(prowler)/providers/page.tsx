@@ -53,7 +53,6 @@ const SSRDataTable = async ({
   const query = (filters["filter[search]"] as string) || "";
 
   const providersData = await getProviders({ query, page, sort, filters });
-
   return (
     <DataTable
       columns={ColumnProviders}
