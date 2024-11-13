@@ -346,14 +346,14 @@ config_kubernetes = {
 
 
 class Test_Config:
-    def test_get_aws_available_regions(self):
-        assert len(AwsProvider.get_aws_available_regions()) == 34
+    def test_get_regions_by_partition(self):
+        assert len(AwsProvider.get_regions_by_partition()) == 34
 
-    def test_get_aws_available_regions_with_partition(self):
-        assert len(AwsProvider.get_aws_available_regions("aws-cn")) == 2
+    def test_get_regions_by_partition_with_partition(self):
+        assert len(AwsProvider.get_regions_by_partition("aws-cn")) == 2
 
-    def test_get_aws_available_regions_with_unknown_partition(self):
-        assert len(AwsProvider.get_aws_available_regions("unknown")) == 0
+    def test_get_regions_by_partition_with_unknown_partition(self):
+        assert len(AwsProvider.get_regions_by_partition("unknown")) == 0
 
     @mock.patch(
         "prowler.config.config.requests.get", new=mock_prowler_get_latest_release

@@ -1716,7 +1716,7 @@ aws:
         )
         assert not recovered_regions
 
-    def test_get_aws_available_regions(self):
+    def test_get_regions_by_partition(self):
         with patch(
             "prowler.providers.aws.aws_provider.read_aws_regions_file",
             return_value={
@@ -1737,13 +1737,13 @@ aws:
                 }
             },
         ):
-            assert AwsProvider.get_aws_available_regions() == {
+            assert AwsProvider.get_regions_by_partition() == {
                 "af-south-1",
                 "cn-north-1",
                 "us-gov-west-1",
             }
 
-    def test_get_aws_available_regions_with_partition(self):
+    def test_get_regions_by_partition_with_partition(self):
         with patch(
             "prowler.providers.aws.aws_provider.read_aws_regions_file",
             return_value={
@@ -1764,11 +1764,11 @@ aws:
                 }
             },
         ):
-            assert AwsProvider.get_aws_available_regions("aws-cn") == {
+            assert AwsProvider.get_regions_by_partition("aws-cn") == {
                 "cn-north-1",
             }
 
-    def test_get_aws_available_regions_with_unknown_partition(self):
+    def test_get_regions_by_partition_with_unknown_partition(self):
         with patch(
             "prowler.providers.aws.aws_provider.read_aws_regions_file",
             return_value={
@@ -1789,7 +1789,7 @@ aws:
                 }
             },
         ):
-            assert AwsProvider.get_aws_available_regions("unknown") == set()
+            assert AwsProvider.get_regions_by_partition("unknown") == set()
 
     def test_get_aws_region_for_sts_input_regions_none_session_region_none(self):
         input_regions = None

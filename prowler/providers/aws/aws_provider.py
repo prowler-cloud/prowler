@@ -1298,7 +1298,8 @@ class AwsProvider(Provider):
             )
             raise error
 
-    def get_aws_available_regions(partition: str = None) -> set:
+    @staticmethod
+    def get_regions_by_partition(partition: str = None) -> set:
         """
         Get the available AWS regions from the AWS services JSON file with the ability of filtering by partition.
 
