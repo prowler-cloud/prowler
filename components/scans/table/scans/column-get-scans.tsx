@@ -45,17 +45,16 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
       );
     },
   },
-
-  {
-    accessorKey: "scanner_args",
-    header: "Scanner Args",
-    cell: ({ row }) => {
-      const {
-        attributes: { scanner_args },
-      } = getScanData(row);
-      return <p className="font-medium">{scanner_args?.only_logs}</p>;
-    },
-  },
+  // {
+  //   accessorKey: "scanner_args",
+  //   header: "Scanner Args",
+  //   cell: ({ row }) => {
+  //     const {
+  //       attributes: { scanner_args },
+  //     } = getScanData(row);
+  //     return <p className="font-medium">{scanner_args?.only_logs}</p>;
+  //   },
+  // },
   {
     accessorKey: "resources",
     header: "Resources",

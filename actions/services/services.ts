@@ -2,10 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { parse } from "path";
 
 import { auth } from "@/auth.config";
 import { getErrorMessage, parseStringify } from "@/lib";
-import { parse } from "path";
 
 export const getServices = async ({}) => {
   const session = await auth();
@@ -63,10 +63,8 @@ export const getServices = async ({}) => {
     { id: "trustedadvisor", alias: "AWS Trusted Advisor" },
     { id: "vpc", alias: "Amazon VPC" },
     { id: "wafv2", alias: "AWS WAF" },
-    { id: "wellarchitected", alias: "AWS Well-Architected Tool" }
+    { id: "wellarchitected", alias: "AWS Well-Architected Tool" },
   ];
-  
-  
 
   const parsedData = [];
 

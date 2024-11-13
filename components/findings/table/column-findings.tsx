@@ -2,12 +2,13 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 
+import { DataTableRowDetails } from "@/components/findings/table";
+import { PlusIcon } from "@/components/icons";
+import { TriggerSheet } from "@/components/ui/sheet";
 import { SeverityBadge, Status, StatusBadge } from "@/components/ui/table";
 import { FindingProps } from "@/types";
-import { TriggerSheet } from "@/components/ui/sheet";
+
 import { DataTableRowActions } from "./data-table-row-actions";
-import { PlusIcon } from "@/components/icons";
-import { DataTableRowDetails } from "@/components/findings/table";
 
 const statusMap: Record<"PASS" | "FAIL" | "MANUAL" | "MUTED", Status> = {
   PASS: "completed",
