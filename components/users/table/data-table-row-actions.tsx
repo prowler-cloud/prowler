@@ -80,7 +80,7 @@ export function DataTableRowActions<ProviderProps>({
                 description="Allows you to edit the user"
                 textValue="Edit User"
                 startContent={<EditDocumentBulkIcon className={iconClasses} />}
-                // onClick={() => setIsEditOpen(true)}
+                onClick={() => setIsEditOpen(true)}
               >
                 Edit User
               </DropdownItem>

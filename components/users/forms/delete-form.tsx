@@ -37,8 +37,6 @@ export const DeleteForm = ({
     Object.entries(values).forEach(
       ([key, value]) => value !== undefined && formData.append(key, value),
     );
-
-    console.log(formData);
     // client-side validation
     const data = await deleteUser(formData);
 

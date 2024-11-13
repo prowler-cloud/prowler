@@ -101,6 +101,28 @@ export interface ApiError {
   code: string;
 }
 
+export interface UserProps {
+  type: "User";
+  id: string;
+  attributes: {
+    name: string;
+    email: string;
+    company_name: string;
+    date_joined: string;
+  };
+  relationships: {
+    memberships: {
+      meta: {
+        count: number;
+      };
+      data: Array<{
+        type: "Membership";
+        id: string;
+      }>;
+    };
+  };
+}
+
 export interface ProviderProps {
   id: string;
   type: "providers";

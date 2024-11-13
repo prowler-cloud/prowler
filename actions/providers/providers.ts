@@ -307,7 +307,6 @@ export const deleteProvider = async (formData: FormData) => {
     const response = await fetch(url.toString(), {
       method: "DELETE",
       headers: {
-        Accept: "application/vnd.api+json",
         Authorization: `Bearer ${session?.accessToken}`,
       },
     });
