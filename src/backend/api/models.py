@@ -620,6 +620,12 @@ class ResourceFindingMapping(PostgresPartitionedModel, RowLevelSecurityProtected
                 name="rls_on_%(class)s",
                 statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
             ),
+            RowLevelSecurityConstraint(
+                "tenant_id",
+                name=f"rls_on_{db_table}_default",
+                partition_name="default",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
         ]
 
 
