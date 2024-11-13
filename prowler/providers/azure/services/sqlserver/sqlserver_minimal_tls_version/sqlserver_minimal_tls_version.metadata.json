@@ -19,7 +19,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "1. Go to Azure SQL Server 2. Navigate to 'Networking settings 3. Select 'Connectivity' 4. Update the TLS version to a recommended minimal version (e.g., TLS 1.2).",
+      "Text": "1. Go to Azure SQL Server 2. Navigate to 'Security' -> 'Networking' 3. Select 'Connectivity' 4. Update the TLS version in the field 'Minimum TLS version' to a recommended minimal version (e.g., TLS 1.2).",
       "Url": "https://learn.microsoft.com/en-us/azure/azure-sql/database/connectivity-settings?view=azuresql&tabs=azure-portal#configure-minimum-tls-version"
     }
   },
