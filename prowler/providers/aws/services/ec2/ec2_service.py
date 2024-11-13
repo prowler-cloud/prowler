@@ -357,7 +357,6 @@ class EC2(AWSService):
                         Image(
                             id=image["ImageId"],
                             arn=arn,
-                            name=image.get("Name", None),
                             public=image.get("Public", False),
                             region=regional_client.region,
                             tags=image.get("Tags"),
@@ -735,7 +734,6 @@ class ElasticIP(BaseModel):
 class Image(BaseModel):
     id: str
     arn: str
-    name: str
     public: bool
     region: str
     tags: Optional[list] = []
