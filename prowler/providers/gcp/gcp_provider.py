@@ -653,3 +653,31 @@ class GcpProvider(Provider):
                 file=__file__,
                 message="The provider ID does not match with the expected project_id.",
             )
+
+    def get_regions(self) -> set:
+        """
+        Get the regions available in GCP for the given project IDs
+
+        Returns:
+            set of regions
+        """
+        try:
+            regions = set()
+            service = discovery.build("compute", "v1", credentials=self._session)
+            for project_id in self._project_ids:
+                try:
+                    request = service.regions().list(project=project_id)
+                    response = request.execute()
+                    for region in response.get("items", []):
+                        regions.add(region["name"])
+                except Exception as error:
+                    logger.error(
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+                    continue
+            return regions
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return set()
