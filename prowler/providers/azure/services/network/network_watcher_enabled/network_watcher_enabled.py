@@ -9,7 +9,7 @@ class network_watcher_enabled(Check):
             report = Check_Report_Azure(self.metadata())
             report.subscription = subscription
             report.resource_name = "Network Watcher"
-            report.location = "Global"
+            report.location = "global"
             report.resource_id = f"/subscriptions/{network_client.subscriptions[subscription]}/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_*"
 
             missing_locations = set(network_client.locations[subscription]) - set(
