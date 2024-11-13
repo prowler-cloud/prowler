@@ -149,13 +149,13 @@ frozenlist = ">=1.1.0"
 
 [[package]]
 name = "alive-progress"
-version = "3.1.5"
+version = "3.2.0"
 description = "A new kind of Progress Bar, with real-time throughput, ETA, and very cool animations!"
 optional = false
-python-versions = ">=3.7, <4"
+python-versions = "<4,>=3.9"
 files = [
-    {file = "alive-progress-3.1.5.tar.gz", hash = "sha256:42e399a66c8150dc507602dff7b7953f105ef11faf97ddaa6d27b1cbf45c4c98"},
-    {file = "alive_progress-3.1.5-py3-none-any.whl", hash = "sha256:347220c1858e3abe137fa0746895668c04df09c5261a13dc03f05795e8a29be5"},
+    {file = "alive-progress-3.2.0.tar.gz", hash = "sha256:ede29d046ff454fe56b941f686f89dd9389430c4a5b7658e445cb0b80e0e4deb"},
+    {file = "alive_progress-3.2.0-py3-none-any.whl", hash = "sha256:0677929f8d3202572e9d142f08170b34dbbe256cc6d2afbf75ef187c7da964a8"},
 ]
 
 [package.dependencies]
@@ -308,13 +308,13 @@ aio = ["aiohttp (>=3.0)"]
 
 [[package]]
 name = "azure-identity"
-version = "1.18.0"
+version = "1.19.0"
 description = "Microsoft Azure Identity Library for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "azure_identity-1.18.0-py3-none-any.whl", hash = "sha256:bccf6106245b49ff41d0c4cd7b72851c5a2ba3a32cef7589da246f5727f26f02"},
-    {file = "azure_identity-1.18.0.tar.gz", hash = "sha256:f567579a65d8932fa913c76eddf3305101a15e5727a5e4aa5df649a0f553d4c3"},
+    {file = "azure_identity-1.19.0-py3-none-any.whl", hash = "sha256:e3f6558c181692d7509f09de10cca527c7dce426776454fb97df512a46527e81"},
+    {file = "azure_identity-1.19.0.tar.gz", hash = "sha256:500144dc18197d7019b81501165d4fa92225f03778f17d7ca8a2a180129a9c83"},
 ]
 
 [package.dependencies]
@@ -326,17 +326,17 @@ typing-extensions = ">=4.0.0"
 
 [[package]]
 name = "azure-keyvault-keys"
-version = "4.9.0"
+version = "4.10.0"
 description = "Microsoft Azure Key Vault Keys Client Library for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "azure-keyvault-keys-4.9.0.tar.gz", hash = "sha256:08632dcd6ece28657204e9a256ad64369fe2b0e385ed43349f932f007d89f774"},
-    {file = "azure_keyvault_keys-4.9.0-py3-none-any.whl", hash = "sha256:05eff85600f2f288a38e5c818ff77c5121840d327e66188cfa7ad333defb545b"},
+    {file = "azure_keyvault_keys-4.10.0-py3-none-any.whl", hash = "sha256:210227e0061f641a79755f0e0bcbcf27bbfb4df630a933c43a99a29962283d0d"},
+    {file = "azure_keyvault_keys-4.10.0.tar.gz", hash = "sha256:511206ae90aec1726a4d6ff5a92d754bd0c0f1e8751891368d30fb70b62955f1"},
 ]
 
 [package.dependencies]
-azure-core = ">=1.29.5,<2.0.0"
+azure-core = ">=1.31.0"
 cryptography = ">=2.1.4"
 isodate = ">=0.6.1"
 typing-extensions = ">=4.0.1"
@@ -408,13 +408,13 @@ isodate = ">=0.6.1,<1.0.0"
 
 [[package]]
 name = "azure-mgmt-containerservice"
-version = "32.0.0"
+version = "33.0.0"
 description = "Microsoft Azure Container Service Management Client Library for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "azure_mgmt_containerservice-32.0.0-py3-none-any.whl", hash = "sha256:66ff0a2651122207db0d5492e86550561f9d81509379abe7d401ed4805a1c66b"},
-    {file = "azure_mgmt_containerservice-32.0.0.tar.gz", hash = "sha256:ccb587479d8a93ec78f7162590adc82e4fba4de76e4adc3419f33ad225efb292"},
+    {file = "azure_mgmt_containerservice-33.0.0-py3-none-any.whl", hash = "sha256:5b36cb25075c9fc3070135b5a45debae9eca3183b00f8c21faddb37b2daf4a60"},
+    {file = "azure_mgmt_containerservice-33.0.0.tar.gz", hash = "sha256:868583dcdb8a4905de03a84a9b7903d76a1cb59acd9c3736f02bc743b5047c9e"},
 ]
 
 [package.dependencies]
@@ -489,13 +489,13 @@ isodate = ">=0.6.1,<1.0.0"
 
 [[package]]
 name = "azure-mgmt-network"
-version = "27.0.0"
+version = "28.0.0"
 description = "Microsoft Azure Network Management Client Library for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "azure_mgmt_network-27.0.0-py3-none-any.whl", hash = "sha256:67295fda351fdae79d14591487009e911346adea9578bb1b04636a15e3472598"},
-    {file = "azure_mgmt_network-27.0.0.tar.gz", hash = "sha256:5c1c61d8bb13ad40f788a26fd7569c1d9d60eb2e4cb19c2a1b5d9c02ae862316"},
+    {file = "azure_mgmt_network-28.0.0-py3-none-any.whl", hash = "sha256:2ee23c1f2ba75752187bd7f4c3e94ad172282cbf8153694feadc7886ef88493c"},
+    {file = "azure_mgmt_network-28.0.0.tar.gz", hash = "sha256:40356d348ef4838324f19a41cd80340b4f8dd4ac2f0a18a4cbd5cc95ef2974f3"},
 ]
 
 [package.dependencies]
@@ -522,19 +522,20 @@ msrest = ">=0.6.21"
 
 [[package]]
 name = "azure-mgmt-resource"
-version = "23.1.1"
+version = "23.2.0"
 description = "Microsoft Azure Resource Management Client Library for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "azure-mgmt-resource-23.1.1.tar.gz", hash = "sha256:20b6b006b544fdb19607f3f6a381105625e0bb60fbf3036f39885c4646d3343e"},
-    {file = "azure_mgmt_resource-23.1.1-py3-none-any.whl", hash = "sha256:fcaa4eca357d216f285b04e20b7f7bfaefda738ba6d30d956193090d3e325248"},
+    {file = "azure_mgmt_resource-23.2.0-py3-none-any.whl", hash = "sha256:7af2bca928ecd58e57ea7f7731d245f45e9d927036d82f1d30b96baa0c26b569"},
+    {file = "azure_mgmt_resource-23.2.0.tar.gz", hash = "sha256:747b750df7af23ab30e53d3f36247ab0c16de1e267d666b1a5077c39a4292529"},
 ]
 
 [package.dependencies]
 azure-common = ">=1.1"
 azure-mgmt-core = ">=1.3.2"
 isodate = ">=0.6.1"
+typing-extensions = ">=4.6.0"
 
 [[package]]
 name = "azure-mgmt-security"
@@ -685,17 +686,17 @@ files = [
 
 [[package]]
 name = "boto3"
-version = "1.35.29"
+version = "1.35.58"
 description = "The AWS SDK for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "boto3-1.35.29-py3-none-any.whl", hash = "sha256:2244044cdfa8ac345d7400536dc15a4824835e7ec5c55bc267e118af66bb27db"},
-    {file = "boto3-1.35.29.tar.gz", hash = "sha256:7bbb1ee649e09e956952285782cfdebd7e81fc78384f48dfab3d66c6eaf3f63f"},
+    {file = "boto3-1.35.58-py3-none-any.whl", hash = "sha256:856896fd5fc5871758eb04b27bad5bbbf0fdb6143a923f9e8d10125351efdf98"},
+    {file = "boto3-1.35.58.tar.gz", hash = "sha256:1ee139e63f1545ee0192914cfe422b68360b8c344a94e4612ac657dd7ece93de"},
 ]
 
 [package.dependencies]
-botocore = ">=1.35.29,<1.36.0"
+botocore = ">=1.35.58,<1.36.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.10.0,<0.11.0"
 
@@ -704,13 +705,13 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "botocore"
-version = "1.35.29"
+version = "1.35.58"
 description = "Low-level, data-driven core of boto 3."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "botocore-1.35.29-py3-none-any.whl", hash = "sha256:f8e3ae0d84214eff3fb69cb4dc51cea6c43d3bde82027a94d00c52b941d6c3d5"},
-    {file = "botocore-1.35.29.tar.gz", hash = "sha256:4ed28ab03675bb008a290c452c5ddd7aaa5d4e3fa1912aadbdf93057ee84362b"},
+    {file = "botocore-1.35.58-py3-none-any.whl", hash = "sha256:647b8706ae6484ee4c2208235f38976d9f0e52f80143e81d7941075215e96111"},
+    {file = "botocore-1.35.58.tar.gz", hash = "sha256:8303309c7b59ddf04b11d79813530809d6b10b411ac9f93916d2032c283d6881"},
 ]
 
 [package.dependencies]
@@ -719,7 +720,7 @@ python-dateutil = ">=2.1,<3.0.0"
 urllib3 = {version = ">=1.25.4,<2.2.0 || >2.2.0,<3", markers = "python_version >= \"3.10\""}
 
 [package.extras]
-crt = ["awscrt (==0.21.5)"]
+crt = ["awscrt (==0.22.0)"]
 
 [[package]]
 name = "cachetools"
@@ -1167,13 +1168,13 @@ test-randomorder = ["pytest-randomly"]
 
 [[package]]
 name = "dash"
-version = "2.18.1"
+version = "2.18.2"
 description = "A Python framework for building reactive web-apps. Developed by Plotly."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "dash-2.18.1-py3-none-any.whl", hash = "sha256:07c4513bb5f79a4b936847a0b49afc21dbd4b001ff77ea78d4d836043e211a07"},
-    {file = "dash-2.18.1.tar.gz", hash = "sha256:ffdf89690d734f6851ef1cb344222826ffb11ad2214ab9172668bf8aadd75d12"},
+    {file = "dash-2.18.2-py3-none-any.whl", hash = "sha256:0ce0479d1bc958e934630e2de7023b8a4558f23ce1f9f5a4b34b65eb3903a869"},
+    {file = "dash-2.18.2.tar.gz", hash = "sha256:20e8404f73d0fe88ce2eae33c25bbc513cbe52f30d23a401fa5f24dbb44296c8"},
 ]
 
 [package.dependencies]
@@ -1843,13 +1844,13 @@ grpcio-gcp = ["grpcio-gcp (>=0.2.2,<1.0.dev0)"]
 
 [[package]]
 name = "google-api-python-client"
-version = "2.147.0"
+version = "2.151.0"
 description = "Google API Client Library for Python"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "google_api_python_client-2.147.0-py2.py3-none-any.whl", hash = "sha256:c6ecfa193c695baa41e84562d8f8f244fcd164419eca3fc9fd7565646668f9b2"},
-    {file = "google_api_python_client-2.147.0.tar.gz", hash = "sha256:e864c2cf61d34c00f05278b8bdb72b93b6fa34f0de9ead51d20435f3b65f91be"},
+    {file = "google_api_python_client-2.151.0-py2.py3-none-any.whl", hash = "sha256:4427b2f47cd88b0355d540c2c52215f68c337f3bc9d6aae1ceeae4525977504c"},
+    {file = "google_api_python_client-2.151.0.tar.gz", hash = "sha256:a9d26d630810ed4631aea21d1de3e42072f98240aaf184a8a1a874a371115034"},
 ]
 
 [package.dependencies]
@@ -2410,19 +2411,19 @@ files = [
 
 [[package]]
 name = "microsoft-kiota-abstractions"
-version = "1.3.3"
+version = "1.6.2"
 description = "Core abstractions for kiota generated libraries in Python"
 optional = false
-python-versions = "*"
+python-versions = "<4.0,>=3.8"
 files = [
-    {file = "microsoft_kiota_abstractions-1.3.3-py2.py3-none-any.whl", hash = "sha256:deced0b01249459426d4ed45c8ab34e19250e514d4d05ce84c08893058ae06a1"},
-    {file = "microsoft_kiota_abstractions-1.3.3.tar.gz", hash = "sha256:3cc01832a2e6dc6094c4e1abf7cbef3849a87d818a3b9193ad6c83a9f88e14ff"},
+    {file = "microsoft_kiota_abstractions-1.6.2-py3-none-any.whl", hash = "sha256:8c2c777748e80f17dba3809b5d149585d9918198f0f94125e87432f7165ba80e"},
+    {file = "microsoft_kiota_abstractions-1.6.2.tar.gz", hash = "sha256:dec30f0fb427a051003e94b5c6fcf266f4702ecbd9d6961e3966124b9cbe41bf"},
 ]
 
 [package.dependencies]
-opentelemetry-api = ">=1.19.0"
-opentelemetry-sdk = ">=1.19.0"
-std-uritemplate = ">=0.0.38"
+opentelemetry-api = ">=1.27.0"
+opentelemetry-sdk = ">=1.27.0"
+std-uritemplate = ">=2.0.0"
 
 [[package]]
 name = "microsoft-kiota-authentication-azure"
@@ -2574,13 +2575,13 @@ dev = ["bumpver", "isort", "mypy", "pylint", "pytest", "yapf"]
 
 [[package]]
 name = "msgraph-sdk"
-version = "1.8.0"
+version = "1.12.0"
 description = "The Microsoft Graph Python SDK"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "msgraph_sdk-1.8.0-py3-none-any.whl", hash = "sha256:22a8e4a63f989865228f66a54501bef8105909c7156fe0a079ca9b5296339cc2"},
-    {file = "msgraph_sdk-1.8.0.tar.gz", hash = "sha256:1ac84bd47ea288a84f46f6c6d0c89d164ee3453b917615632652344538098314"},
+    {file = "msgraph_sdk-1.12.0-py3-none-any.whl", hash = "sha256:ac298b546b240391b0e407379d039db32862a56d6fe15cf7c5f7e77631fc6771"},
+    {file = "msgraph_sdk-1.12.0.tar.gz", hash = "sha256:fbb5a8a9f6eed89b496f207eb35b6b4cfc7fefa75608aeef07477a3b2276d4fa"},
 ]
 
 [package.dependencies]
@@ -3227,7 +3228,7 @@ files = [
 
 [[package]]
 name = "prowler"
-version = "4.5.0"
+version = "4.6.0"
 description = "Prowler is an Open Source security tool to perform AWS, GCP and Azure security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness. It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, FedRAMP, PCI-DSS, GDPR, HIPAA, FFIEC, SOC2, GXP, AWS Well-Architected Framework Security Pillar, AWS Foundational Technical Review (FTR), ENS (Spanish National Security Scheme) and your custom security frameworks."
 optional = false
 python-versions = ">=3.9,<3.13"
@@ -3235,40 +3236,40 @@ files = []
 develop = false
 
 [package.dependencies]
-alive-progress = "3.1.5"
+alive-progress = "3.2.0"
 awsipranges = "0.3.3"
-azure-identity = "1.18.0"
-azure-keyvault-keys = "4.9.0"
+azure-identity = "1.19.0"
+azure-keyvault-keys = "4.10.0"
 azure-mgmt-applicationinsights = "4.0.0"
 azure-mgmt-authorization = "4.0.0"
 azure-mgmt-compute = "33.0.0"
 azure-mgmt-containerregistry = "10.3.0"
-azure-mgmt-containerservice = "32.0.0"
+azure-mgmt-containerservice = "33.0.0"
 azure-mgmt-cosmosdb = "9.6.0"
 azure-mgmt-keyvault = "10.3.1"
 azure-mgmt-monitor = "6.0.2"
-azure-mgmt-network = "27.0.0"
+azure-mgmt-network = "28.0.0"
 azure-mgmt-rdbms = "10.1.0"
-azure-mgmt-resource = "23.1.1"
+azure-mgmt-resource = "23.2.0"
 azure-mgmt-security = "7.0.0"
 azure-mgmt-sql = "3.0.1"
 azure-mgmt-storage = "21.2.1"
 azure-mgmt-subscription = "3.1.1"
 azure-mgmt-web = "7.3.1"
 azure-storage-blob = "12.23.1"
-boto3 = "1.35.29"
-botocore = "1.35.29"
+boto3 = "1.35.58"
+botocore = "1.35.58"
 colorama = "0.4.6"
 cryptography = "43.0.1"
-dash = "2.18.1"
+dash = "2.18.2"
 dash-bootstrap-components = "1.6.0"
-detect-secrets = {git = "https://github.com/Yelp/detect-secrets.git", rev = "master"}
-google-api-python-client = "2.147.0"
+detect-secrets = "1.5.0"
+google-api-python-client = "2.151.0"
 google-auth-httplib2 = ">=0.1,<0.3"
 jsonschema = "4.23.0"
 kubernetes = "31.0.0"
-microsoft-kiota-abstractions = "1.3.3"
-msgraph-sdk = "1.8.0"
+microsoft-kiota-abstractions = "1.6.2"
+msgraph-sdk = "1.12.0"
 numpy = "2.0.2"
 pandas = "2.2.3"
 py-ocsf-models = "0.2.0"
@@ -3277,7 +3278,7 @@ python-dateutil = "^2.9.0.post0"
 pytz = "2024.2"
 schema = "0.7.7"
 shodan = "1.31.0"
-slack-sdk = "3.33.1"
+slack-sdk = "3.33.3"
 tabulate = "0.9.0"
 tzlocal = "5.2"
 
@@ -3285,7 +3286,7 @@ tzlocal = "5.2"
 type = "git"
 url = "https://github.com/prowler-cloud/prowler.git"
 reference = "master"
-resolved_reference = "23a20a582e90deeb34b160532e01bfeac81cb281"
+resolved_reference = "5641160177cbb4a8fe101a2f2c6f37245ee0a068"
 
 [[package]]
 name = "psutil"
@@ -4392,13 +4393,13 @@ files = [
 
 [[package]]
 name = "slack-sdk"
-version = "3.33.1"
+version = "3.33.3"
 description = "The Slack API Platform SDK for Python"
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "slack_sdk-3.33.1-py2.py3-none-any.whl", hash = "sha256:ef93beec3ce9c8f64da02fd487598a05ec4bc9c92ceed58f122dbe632691cbe2"},
-    {file = "slack_sdk-3.33.1.tar.gz", hash = "sha256:e328bb661d95db5f66b993b1d64288ac7c72201a745b4c7cf8848dafb7b74e40"},
+    {file = "slack_sdk-3.33.3-py2.py3-none-any.whl", hash = "sha256:0515fb93cd03b18de61f876a8304c4c3cef4dd3c2a3bad62d7394d2eb5a3c8e6"},
+    {file = "slack_sdk-3.33.3.tar.gz", hash = "sha256:4cc44c9ffe4bb28a01fbe3264c2f466c783b893a4eca62026ab845ec7c176ff1"},
 ]
 
 [package.extras]
