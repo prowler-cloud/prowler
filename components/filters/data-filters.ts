@@ -37,7 +37,7 @@ export const filterFindings = [
   {
     key: "severity",
     labelCheckboxGroup: "Severity",
-    values: ["informational", "low", "medium", "high", "critical"],
+    values: ["critical", "high", "medium", "low", "informational"],
   },
   {
     key: "status",
