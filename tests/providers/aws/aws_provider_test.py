@@ -15,11 +15,7 @@ from moto import mock_aws
 from pytest import raises
 from tzlocal import get_localzone
 
-from prowler.providers.aws.aws_provider import (
-    AwsProvider,
-    get_aws_available_regions,
-    get_aws_region_for_sts,
-)
+from prowler.providers.aws.aws_provider import AwsProvider, get_aws_region_for_sts
 from prowler.providers.aws.config import (
     AWS_STS_GLOBAL_ENDPOINT_REGION,
     BOTO3_USER_AGENT_EXTRA,
@@ -1720,7 +1716,7 @@ aws:
         )
         assert not recovered_regions
 
-    def test_get_aws_available_regions(self):
+    def test_get_regions_by_partition(self):
         with patch(
             "prowler.providers.aws.aws_provider.read_aws_regions_file",
             return_value={
@@ -1741,11 +1737,59 @@ aws:
                 }
             },
         ):
-            assert get_aws_available_regions() == {
+            assert AwsProvider.get_regions_by_partition() == {
                 "af-south-1",
                 "cn-north-1",
                 "us-gov-west-1",
             }
+
+    def test_get_regions_by_partition_with_partition(self):
+        with patch(
+            "prowler.providers.aws.aws_provider.read_aws_regions_file",
+            return_value={
+                "services": {
+                    "acm": {
+                        "regions": {
+                            "aws": [
+                                "af-south-1",
+                            ],
+                            "aws-cn": [
+                                "cn-north-1",
+                            ],
+                            "aws-us-gov": [
+                                "us-gov-west-1",
+                            ],
+                        }
+                    }
+                }
+            },
+        ):
+            assert AwsProvider.get_regions_by_partition("aws-cn") == {
+                "cn-north-1",
+            }
+
+    def test_get_regions_by_partition_with_unknown_partition(self):
+        with patch(
+            "prowler.providers.aws.aws_provider.read_aws_regions_file",
+            return_value={
+                "services": {
+                    "acm": {
+                        "regions": {
+                            "aws": [
+                                "af-south-1",
+                            ],
+                            "aws-cn": [
+                                "cn-north-1",
+                            ],
+                            "aws-us-gov": [
+                                "us-gov-west-1",
+                            ],
+                        }
+                    }
+                }
+            },
+        ):
+            assert AwsProvider.get_regions_by_partition("unknown") == set()
 
     def test_get_aws_region_for_sts_input_regions_none_session_region_none(self):
         input_regions = None

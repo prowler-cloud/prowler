@@ -39,6 +39,7 @@ from prowler.providers.aws.exceptions.exceptions import (
     AWSIAMRoleARNPartitionEmptyError,
     AWSIAMRoleARNRegionNotEmtpyError,
     AWSIAMRoleARNServiceNotIAMnorSTSError,
+    AWSInvalidPartitionError,
     AWSInvalidProviderIdError,
     AWSNoCredentialsError,
     AWSProfileNotFoundError,
@@ -1297,6 +1298,44 @@ class AwsProvider(Provider):
             )
             raise error
 
+    @staticmethod
+    def get_regions_by_partition(partition: str = None) -> set:
+        """
+        Get the available AWS regions from the AWS services JSON file with the ability of filtering by partition.
+
+        Args:
+            - partition (str): The AWS partition name. Default is None.
+
+        Returns:
+            set: A set of available AWS regions. All if no `partition` is especified.
+        """
+        try:
+            data = read_aws_regions_file()
+
+            regions = set()
+            if partition is None:
+                for service in data["services"].values():
+                    for partition in service["regions"]:
+                        for item in service["regions"][partition]:
+                            regions.add(item)
+            else:
+                for service in data["services"].values():
+                    try:
+                        for item in service["regions"][partition]:
+                            regions.add(item)
+                    except KeyError as key_error:
+                        logger.error(
+                            f"{key_error.__class__.__name__}[{key_error.__traceback__.tb_lineno}]: {key_error}"
+                        )
+                        raise AWSInvalidPartitionError(
+                            message=f"Invalid partition name: {partition}",
+                            file=os.path.basename(__file__),
+                        )
+            return regions
+        except Exception as error:
+            logger.error(f"{error.__class__.__name__}: {error}")
+            return set()
+
 
 def read_aws_regions_file() -> dict:
     """
@@ -1311,27 +1350,6 @@ def read_aws_regions_file() -> dict:
         data = parse_json_file(f)
 
     return data
-
-
-def get_aws_available_regions() -> set:
-    """
-    Get the available AWS regions from the AWS services JSON file.
-
-    Returns:
-        set: A set of available AWS regions.
-    """
-    try:
-        data = read_aws_regions_file()
-
-        regions = set()
-        for service in data["services"].values():
-            for partition in service["regions"]:
-                for item in service["regions"][partition]:
-                    regions.add(item)
-        return regions
-    except Exception as error:
-        logger.error(f"{error.__class__.__name__}: {error}")
-        return set()
 
 
 # TODO: This can be moved to another class since it doesn't need self
