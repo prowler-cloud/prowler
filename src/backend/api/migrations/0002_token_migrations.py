@@ -15,8 +15,9 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RunSQL(
             f"""
-            GRANT SELECT, INSERT, DELETE ON token_blacklist_blacklistedtoken TO {DB_PROWLER_USER};
-            GRANT SELECT, INSERT, DELETE ON token_blacklist_outstandingtoken TO {DB_PROWLER_USER};
+            GRANT SELECT, INSERT, UPDATE, DELETE ON token_blacklist_blacklistedtoken TO {DB_PROWLER_USER};
+            GRANT SELECT, INSERT, UPDATE, DELETE ON token_blacklist_outstandingtoken TO {DB_PROWLER_USER};
+            GRANT SELECT, DELETE ON django_admin_log TO {DB_PROWLER_USER};
             """
         ),
     ]

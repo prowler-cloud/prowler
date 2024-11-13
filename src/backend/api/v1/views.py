@@ -210,12 +210,12 @@ class SchemaView(SpectacularAPIView):
         description="Create a new user account by providing the necessary registration details.",
     ),
     partial_update=extend_schema(
-        summary="Update the current user's information",
-        description="Partially update the authenticated user's information.",
+        summary="Update user information",
+        description="Partially update information about a user.",
     ),
     destroy=extend_schema(
-        summary="Delete the current user's account",
-        description="Remove the authenticated user's account from the system.",
+        summary="Delete a user account",
+        description="Remove a user account from the system.",
     ),
     me=extend_schema(
         summary="Retrieve the current user's information",
@@ -308,16 +308,6 @@ class UserViewSet(BaseUserViewset):
             invitation.state = Invitation.State.ACCEPTED
             invitation.save(using=MainRouter.admin_db)
         return Response(data=UserSerializer(user).data, status=status.HTTP_201_CREATED)
-
-    def partial_update(self, request, *args, **kwargs):
-        if kwargs["pk"] != str(request.user.id):
-            raise NotFound(detail="User was not found.")
-        return super().partial_update(request, *args, **kwargs)
-
-    def destroy(self, request, *args, **kwargs):
-        if kwargs["pk"] != str(request.user.id):
-            raise NotFound(detail="User was not found.")
-        return super().destroy(request, *args, **kwargs)
 
 
 @extend_schema_view(

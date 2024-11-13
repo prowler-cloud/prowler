@@ -132,7 +132,7 @@ class Migration(migrations.Migration):
             """
         ),
         migrations.RunSQL(
-            # `runserver` command for dev tools requires read access to migrations
+            # Required permissions for API user related tables
             f"""
             GRANT CONNECT ON DATABASE "{DB_NAME}" TO {DB_PROWLER_USER};
             GRANT SELECT ON django_migrations TO {DB_PROWLER_USER};

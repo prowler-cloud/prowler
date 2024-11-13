@@ -2817,8 +2817,8 @@ paths:
           description: ''
     patch:
       operationId: users_partial_update
-      description: Partially update the authenticated user's information.
-      summary: Update the current user's information
+      description: Partially update information about a user.
+      summary: Update user information
       parameters:
       - in: path
         name: id
@@ -2852,8 +2852,8 @@ paths:
           description: ''
     delete:
       operationId: users_destroy
-      description: Remove the authenticated user's account from the system.
-      summary: Delete the current user's account
+      description: Remove a user account from the system.
+      summary: Delete a user account
       parameters:
       - in: path
         name: id
