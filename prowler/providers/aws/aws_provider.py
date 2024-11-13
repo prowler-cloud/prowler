@@ -1313,9 +1313,12 @@ def read_aws_regions_file() -> dict:
     return data
 
 
-def get_aws_available_regions() -> set:
+def get_aws_available_regions(partition: str = None) -> set:
     """
     Get the available AWS regions from the AWS services JSON file.
+
+    Args:
+        - partition (str): The AWS partition name. Default is None.
 
     Returns:
         set: A set of available AWS regions.
@@ -1324,10 +1327,16 @@ def get_aws_available_regions() -> set:
         data = read_aws_regions_file()
 
         regions = set()
-        for service in data["services"].values():
-            for partition in service["regions"]:
-                for item in service["regions"][partition]:
-                    regions.add(item)
+        if partition is None:
+            for service in data["services"].values():
+                for partition in service["regions"]:
+                    for item in service["regions"][partition]:
+                        regions.add(item)
+        else:
+            for service in data["services"].values():
+                if partition in service["regions"]:
+                    for item in service["regions"][partition]:
+                        regions.add(item)
         return regions
     except Exception as error:
         logger.error(f"{error.__class__.__name__}: {error}")

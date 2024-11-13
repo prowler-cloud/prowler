@@ -1747,6 +1747,54 @@ aws:
                 "us-gov-west-1",
             }
 
+    def test_get_aws_available_regions_with_partition(self):
+        with patch(
+            "prowler.providers.aws.aws_provider.read_aws_regions_file",
+            return_value={
+                "services": {
+                    "acm": {
+                        "regions": {
+                            "aws": [
+                                "af-south-1",
+                            ],
+                            "aws-cn": [
+                                "cn-north-1",
+                            ],
+                            "aws-us-gov": [
+                                "us-gov-west-1",
+                            ],
+                        }
+                    }
+                }
+            },
+        ):
+            assert get_aws_available_regions("aws-cn") == {
+                "cn-north-1",
+            }
+
+    def test_get_aws_available_regions_with_unknown_partition(self):
+        with patch(
+            "prowler.providers.aws.aws_provider.read_aws_regions_file",
+            return_value={
+                "services": {
+                    "acm": {
+                        "regions": {
+                            "aws": [
+                                "af-south-1",
+                            ],
+                            "aws-cn": [
+                                "cn-north-1",
+                            ],
+                            "aws-us-gov": [
+                                "us-gov-west-1",
+                            ],
+                        }
+                    }
+                }
+            },
+        ):
+            assert get_aws_available_regions("unknown") == set()
+
     def test_get_aws_region_for_sts_input_regions_none_session_region_none(self):
         input_regions = None
         session_region = None
