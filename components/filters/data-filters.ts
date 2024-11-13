@@ -51,3 +51,11 @@ export const filterFindings = [
   },
   // Add more filter categories as needed
 ];
+
+export const filterUsers = [
+  {
+    key: "is_active",
+    labelCheckboxGroup: "Status",
+    values: ["true", "false"],
+  },
+];
