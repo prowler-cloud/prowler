@@ -4,13 +4,13 @@ import { Suspense } from "react";
 import { getUsers } from "@/actions/users/users";
 import { FilterControls } from "@/components/filters";
 import { filterUsers } from "@/components/filters/data-filters";
+import { SendInvitationButton } from "@/components/invitations";
 import { Header } from "@/components/ui";
 import { DataTable } from "@/components/ui/table";
-import { AddUserButton } from "@/components/users";
 import { ColumnsUser, SkeletonTableUser } from "@/components/users/table";
 import { SearchParamsProps } from "@/types";
 
-export default async function Users({
+export default async function Invitations({
   searchParams,
 }: {
   searchParams: SearchParamsProps;
@@ -19,11 +19,11 @@ export default async function Users({
 
   return (
     <>
-      <Header title="Users" icon="ci:users" />
+      <Header title="Invitations" icon="ci:users" />
       <Spacer y={4} />
       <FilterControls search />
       <Spacer y={4} />
-      <AddUserButton />
+      <SendInvitationButton />
       <Spacer y={4} />
 
       <Suspense key={searchParamsKey} fallback={<SkeletonTableUser />}>

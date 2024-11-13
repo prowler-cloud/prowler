@@ -1,2 +1,2 @@
 export * from "./vertical-steps";
-export * from "./workflow";
+export * from "./workflow-add-provider";

@@ -32,7 +32,7 @@ const steps = [
   },
 ];
 
-export const Workflow = () => {
+export const WorkflowAddProvider = () => {
   const pathname = usePathname();
 
   // Calculate current step based on pathname
