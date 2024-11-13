@@ -101,6 +101,30 @@ export interface ApiError {
   code: string;
 }
 
+export interface InvitationProps {
+  type: "Invitation";
+  id: string;
+  attributes: {
+    inserted_at: string;
+    updated_at: string;
+    email: string;
+    state: string;
+    token: string;
+    expires_at: string;
+  };
+  relationships: {
+    inviter: {
+      data: {
+        type: "User";
+        id: string;
+      };
+    };
+  };
+  links: {
+    self: string;
+  };
+}
+
 export interface UserProps {
   type: "User";
   id: string;

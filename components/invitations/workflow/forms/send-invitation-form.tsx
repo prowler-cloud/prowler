@@ -57,8 +57,8 @@ export const SendInvitationForm = () => {
           }
         });
       } else {
-        const token = data?.data?.attributes.token || "";
-        router.push(`invitations/check-details/?invitation_token=${token}`);
+        const invitationId = data?.data?.id || "";
+        router.push(`/invitations/check-details/?id=${invitationId}`);
       }
     } catch (error) {
       toast({
