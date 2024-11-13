@@ -357,7 +357,7 @@ class EC2(AWSService):
                         Image(
                             id=image["ImageId"],
                             arn=arn,
-                            name=image["Name"],
+                            name=image.get("Name", None),
                             public=image.get("Public", False),
                             region=regional_client.region,
                             tags=image.get("Tags"),
