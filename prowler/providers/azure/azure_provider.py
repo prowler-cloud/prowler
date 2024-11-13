@@ -198,7 +198,7 @@ class AzureProvider(Provider):
         )
 
         # TODO: should we keep this here or within the identity?
-        self._locations = self.get_locations(self.session)
+        self._locations = self.get_locations()
 
         # Audit Config
         if config_content:
@@ -942,33 +942,29 @@ class AzureProvider(Provider):
 
         return identity
 
-    def get_locations(self, credentials) -> dict[str, list[str]]:
+    def get_locations(self) -> dict[str, list[str]]:
         """
         Retrieves the locations available for each subscription using the provided credentials.
-
-        Args:
-            credentials: The credentials object used to authenticate the request.
 
         Returns:
             A dictionary containing the locations available for each subscription. The dictionary
             has subscription display names as keys and lists of location names as values.
         """
-        locations = None
-        if credentials:
-            locations = {}
-            token = credentials.get_token("https://management.azure.com/.default").token
-            for display_name, subscription_id in self._identity.subscriptions.items():
-                locations.update({display_name: []})
-                url = f"https://management.azure.com/subscriptions/{subscription_id}/locations?api-version=2022-12-01"
-                headers = {
-                    "Authorization": f"Bearer {token}",
-                    "Content-Type": "application/json",
-                }
-                response = requests.get(url, headers=headers)
-                if response.status_code == 200:
-                    data = response.json()
-                    for location in data["value"]:
-                        locations[display_name].append(location["name"])
+        credentials = self.session
+        locations = {}
+        token = credentials.get_token("https://management.azure.com/.default").token
+        for display_name, subscription_id in self._identity.subscriptions.items():
+            locations.update({display_name: []})
+            url = f"https://management.azure.com/subscriptions/{subscription_id}/locations?api-version=2022-12-01"
+            headers = {
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json",
+            }
+            response = requests.get(url, headers=headers)
+            if response.status_code == 200:
+                data = response.json()
+                for location in data["value"]:
+                    locations[display_name].append(location["name"])
         return locations
 
     @staticmethod
