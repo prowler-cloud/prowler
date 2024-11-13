@@ -23,7 +23,11 @@ export const ScanDetail = ({ scanDetails }: ScanDetailsProps) => {
           <h2 className="text-2xl font-bold">Scan Details</h2>
         </div>
 
-        <StatusBadge size="lg" status={scanOnDemand.state} />
+        <StatusBadge
+          size="lg"
+          status={scanOnDemand.state}
+          loadingProgress={scanOnDemand.progress}
+        />
       </div>
       <Divider />
       <div className="relative z-0 flex w-full flex-col justify-between gap-4 overflow-auto rounded-large bg-content1 p-4 shadow-small">
@@ -156,7 +160,7 @@ export const ScanDetail = ({ scanDetails }: ScanDetailsProps) => {
 
               <DetailItem
                 label="Checks to Execute"
-                value={taskDetails.attributes.task_args.checks_to_execute.join(
+                value={taskDetails.attributes.task_args.checks_to_execute?.join(
                   ", ",
                 )}
               />

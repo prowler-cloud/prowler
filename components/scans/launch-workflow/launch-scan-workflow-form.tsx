@@ -39,11 +39,12 @@ export const LaunchScanWorkflow = ({
   const isLoading = form.formState.isSubmitting;
 
   const onSubmitClient = async (values: z.infer<typeof formSchema>) => {
+    const formValues = { ...values };
+
     const formData = new FormData();
-    console.log(values);
 
     // Loop through form values and add to formData
-    Object.entries(values).forEach(
+    Object.entries(formValues).forEach(
       ([key, value]) =>
         value !== undefined &&
         formData.append(

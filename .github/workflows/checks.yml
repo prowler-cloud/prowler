@@ -25,3 +25,5 @@ jobs:
         run: npm install
       - name: Run Healthcheck
         run: npm run healthcheck
+      - name: Build the application
+        run: npm run build

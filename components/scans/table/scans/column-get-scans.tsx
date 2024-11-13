@@ -4,7 +4,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { useSearchParams } from "next/navigation";
 
 import { InfoIcon } from "@/components/icons";
-import { DateWithTime, EntityInfoShort } from "@/components/ui/entities";
+import { DateWithTime, SnippetId } from "@/components/ui/entities";
 import { TriggerSheet } from "@/components/ui/sheet";
 import { DataTableColumnHeader, StatusBadge } from "@/components/ui/table";
 import { ScanProps } from "@/types";
@@ -18,30 +18,16 @@ const getScanData = (row: { original: ScanProps }) => {
 
 export const ColumnGetScans: ColumnDef<ScanProps>[] = [
   {
-    accessorKey: "name",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={"Name"} param="name" />
-    ),
+    accessorKey: "started_at",
+    header: () => <p className="pr-8">Started at</p>,
     cell: ({ row }) => {
       const {
-        attributes: { name },
+        attributes: { started_at },
       } = getScanData(row);
-      return <EntityInfoShort entityAlias={name} entityId={row.original.id} />;
-    },
-  },
-  {
-    accessorKey: "trigger",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={"Type"} param="trigger" />
-    ),
-    cell: ({ row }) => {
-      const {
-        attributes: { trigger },
-      } = getScanData(row);
-      return <p>{trigger}</p>;
-    },
-  },
 
+      return <DateWithTime dateTime={started_at} />;
+    },
+  },
   {
     accessorKey: "status",
     header: ({ column }) => (
@@ -51,7 +37,32 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
       const {
         attributes: { state },
       } = getScanData(row);
-      return <StatusBadge status={state} />;
+      return (
+        <StatusBadge
+          status={state}
+          loadingProgress={row.original.attributes.progress}
+        />
+      );
+    },
+  },
+  // {
+  //   accessorKey: "scanner_args",
+  //   header: "Scanner Args",
+  //   cell: ({ row }) => {
+  //     const {
+  //       attributes: { scanner_args },
+  //     } = getScanData(row);
+  //     return <p className="font-medium">{scanner_args?.only_logs}</p>;
+  //   },
+  // },
+  {
+    accessorKey: "resources",
+    header: "Resources",
+    cell: ({ row }) => {
+      const {
+        attributes: { unique_resource_count },
+      } = getScanData(row);
+      return <p className="font-medium">{unique_resource_count}</p>;
     },
   },
   {
@@ -70,29 +81,14 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
       return <DateWithTime dateTime={scheduled_at} />;
     },
   },
-  {
-    accessorKey: "started_at",
-    header: ({ column }) => (
-      <DataTableColumnHeader
-        column={column}
-        title={"Started at"}
-        param="started_at"
-      />
-    ),
-    cell: ({ row }) => {
-      const {
-        attributes: { started_at },
-      } = getScanData(row);
-      return <DateWithTime dateTime={started_at} />;
-    },
-  },
+
   {
     accessorKey: "completed_at",
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
         title={"Completed at"}
-        param="completed_at"
+        param="updated_at"
       />
     ),
     cell: ({ row }) => {
@@ -103,23 +99,38 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
     },
   },
   {
-    accessorKey: "scanner_args",
-    header: "Scanner Args",
+    accessorKey: "trigger",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={"Type"} param="trigger" />
+    ),
     cell: ({ row }) => {
       const {
-        attributes: { scanner_args },
+        attributes: { trigger },
       } = getScanData(row);
-      return <p className="font-medium">{scanner_args?.only_logs}</p>;
+      return <p>{trigger}</p>;
+    },
+  },
+
+  {
+    accessorKey: "id",
+    header: () => <span>ID</span>,
+    cell: ({ row }) => {
+      return <SnippetId entityId={row.original.id} />;
     },
   },
   {
-    accessorKey: "resources",
-    header: "Resources",
+    accessorKey: "name",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={"Name"} param="name" />
+    ),
     cell: ({ row }) => {
       const {
-        attributes: { unique_resource_count },
+        attributes: { name },
       } = getScanData(row);
-      return <p className="font-medium">{unique_resource_count}</p>;
+      if (name.length === 0) {
+        return <span className="font-medium">-</span>;
+      }
+      return <span className="font-medium">{name}</span>;
     },
   },
   {
