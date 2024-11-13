@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "glue_etl_jobs_logging_enabled",
-  "CheckTitle": "Check if Glue ETL Jobs have logging enabled.",
+  "CheckTitle": "[DEPRECATED] Check if Glue ETL Jobs have logging enabled.",
   "CheckType": [
     "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
   ],
@@ -10,7 +10,7 @@
   "ResourceIdTemplate": "arn:partition:glue:region:account-id:job/job-name",
   "Severity": "medium",
   "ResourceType": "AwsGlueJob",
-  "Description": "Ensure that Glue ETL Jobs have CloudWatch logs enabled.",
+  "Description": "[DEPRECATED] Ensure that Glue ETL Jobs have CloudWatch logs enabled.",
   "Risk": "Without logging enabled, AWS Glue jobs lack visibility into job activities and failures, making it difficult to detect unauthorized access, troubleshoot issues, and ensure compliance. This may result in untracked security incidents or operational issues that affect data processing.",
   "RelatedUrl": "https://docs.aws.amazon.com/glue/latest/dg/monitor-continuous-logging.html",
   "Remediation": {
@@ -25,8 +25,10 @@
       "Url": "https://docs.aws.amazon.com/glue/latest/dg/monitor-continuous-logging-enable.html"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": ""
+  "Notes": "This check is being removed since logs for all AWS Glue jobs are now always sent to Amazon CloudWatch."
 }

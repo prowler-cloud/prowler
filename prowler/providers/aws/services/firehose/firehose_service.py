@@ -14,7 +14,6 @@ class Firehose(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.delivery_streams = {}
-        self.tags = []
         self.__threading_call__(self._list_delivery_streams)
         self.__threading_call__(
             self._list_tags_for_delivery_stream, self.delivery_streams.values()
@@ -26,18 +25,17 @@ class Firehose(AWSService):
     def _list_delivery_streams(self, regional_client):
         logger.info("Firehose - Listing delivery streams...")
         try:
-            for stream in regional_client.list_delivery_streams()[
+            for stream_name in regional_client.list_delivery_streams()[
                 "DeliveryStreamNames"
             ]:
+                stream_arn = f"arn:{self.audited_partition}:firehose:{regional_client.region}:{self.audited_account}:deliverystream/{stream_name}"
                 if not self.audit_resources or (
-                    is_resource_filtered(stream, self.audit_resources)
+                    is_resource_filtered(stream_arn, self.audit_resources)
                 ):
-                    stream_region = regional_client.region
-                    stream_arn = f"arn:{self.audited_partition}:firehose:{stream_region}:{self.audited_account}:deliverystream/{stream}"
                     self.delivery_streams[stream_arn] = DeliveryStream(
                         arn=stream_arn,
-                        name=stream,
-                        region=stream_region,
+                        name=stream_name,
+                        region=regional_client.region,
                     )
         except ClientError as error:
             logger.error(
@@ -51,7 +49,6 @@ class Firehose(AWSService):
                 .list_tags_for_delivery_stream(DeliveryStreamName=stream.name)
                 .get("Tags", [])
             )
-            print(stream.tags)
         except ClientError as error:
             logger.error(
                 f"{stream.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -92,6 +89,6 @@ class DeliveryStream(BaseModel):
     arn: str
     name: str
     region: str
-    tags: Optional[List[Dict[str, str]]] = Field(default_factory=list)
     kms_key_arn: Optional[str] = ""
     kms_encryption: Optional[str] = ""
+    tags: Optional[List[Dict[str, str]]] = Field(default_factory=list)
