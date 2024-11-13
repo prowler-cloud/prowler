@@ -235,6 +235,63 @@ class Provider(RowLevelSecurityProtectedModel):
         ]
 
 
+class ProviderGroup(RowLevelSecurityProtectedModel):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    name = models.CharField(max_length=255)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+    providers = models.ManyToManyField(
+        Provider, through="ProviderGroupMembership", related_name="provider_groups"
+    )
+
+    class Meta:
+        db_table = "provider_groups"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["tenant_id", "name"],
+                name="unique_group_name_per_tenant",
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "provider-groups"
+
+
+class ProviderGroupMembership(RowLevelSecurityProtectedModel):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    provider = models.ForeignKey(
+        Provider,
+        on_delete=models.CASCADE,
+    )
+    provider_group = models.ForeignKey(
+        ProviderGroup,
+        on_delete=models.CASCADE,
+    )
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+
+    class Meta:
+        db_table = "provider_group_memberships"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["provider_id", "provider_group"],
+                name="unique_provider_group_membership",
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "provider-group-memberships"
+
+
 class Task(RowLevelSecurityProtectedModel):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)

@@ -539,6 +539,296 @@ paths:
               schema:
                 $ref: '#/components/schemas/OpenApiResponseResponse'
           description: ''
+  /api/v1/provider_groups:
+    get:
+      operationId: provider_groups_list
+      description: Retrieve a list of all provider groups with options for filtering
+        by various criteria.
+      summary: List all provider groups
+      parameters:
+      - in: query
+        name: fields[provider-groups]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - name
+            - inserted_at
+            - updated_at
+            - providers
+            - url
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[inserted_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[inserted_at__lte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[name]
+        schema:
+          type: string
+      - in: query
+        name: filter[name__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: filter[updated_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[updated_at__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[updated_at__lte]
+        schema:
+          type: string
+          format: date-time
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page[size]
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - -id
+            - name
+            - -name
+            - inserted_at
+            - -inserted_at
+            - updated_at
+            - -updated_at
+            - providers
+            - -providers
+            - url
+            - -url
+        explode: false
+      tags:
+      - Provider Group
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProviderGroupList'
+          description: ''
+    post:
+      operationId: provider_groups_create
+      description: Add a new provider group to the system by providing the required
+        provider group details.
+      summary: Create a new provider group
+      tags:
+      - Provider Group
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/ProviderGroupRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProviderGroupRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProviderGroupRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ProviderGroupResponse'
+          description: ''
+  /api/v1/provider_groups/{id}:
+    get:
+      operationId: provider_groups_retrieve
+      description: Fetch detailed information about a specific provider group by their
+        ID.
+      summary: Retrieve data from a provider group
+      parameters:
+      - in: query
+        name: fields[provider-groups]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - name
+            - inserted_at
+            - updated_at
+            - providers
+            - url
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this provider group.
+        required: true
+      tags:
+      - Provider Group
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ProviderGroupResponse'
+          description: ''
+    patch:
+      operationId: provider_groups_partial_update
+      description: Update certain fields of an existing provider group's information
+        without affecting other fields.
+      summary: Partially update a provider group
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this provider group.
+        required: true
+      tags:
+      - Provider Group
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/PatchedProviderGroupUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedProviderGroupUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedProviderGroupUpdateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/SerializerMetaclassResponse'
+          description: ''
+    delete:
+      operationId: provider_groups_destroy
+      description: Remove a provider group from the system by their ID.
+      summary: Delete a provider group
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this provider group.
+        required: true
+      tags:
+      - Provider Group
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/provider_groups/{id}/providers:
+    put:
+      operationId: provider_groups_providers_update
+      description: Add one or more providers to an existing provider group.
+      summary: Add providers to a provider group
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this provider group.
+        required: true
+      tags:
+      - Provider Group
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/ProviderGroupMembershipUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProviderGroupMembershipUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProviderGroupMembershipUpdateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/OpenApiResponseResponse'
+          description: ''
   /api/v1/providers:
     get:
       operationId: providers_list
@@ -3649,6 +3939,15 @@ components:
             $ref: '#/components/schemas/Membership'
       required:
       - data
+    PaginatedProviderGroupList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProviderGroup'
+      required:
+      - data
     PaginatedProviderList:
       type: object
       properties:
@@ -3760,6 +4059,37 @@ components:
                   type: string
                   readOnly: true
                   minLength: 1
+      required:
+      - data
+    PatchedProviderGroupUpdateRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          - id
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - provider-groups
+            id:
+              type: string
+              format: uuid
+            attributes:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+              required:
+              - name
       required:
       - data
     PatchedProviderSecretUpdateRequest:
@@ -4300,6 +4630,177 @@ components:
           $ref: '#/components/schemas/ProviderCreate'
       required:
       - data
+    ProviderGroup:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/ProviderGroupTypeEnum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        id:
+          type: string
+          format: uuid
+        attributes:
+          type: object
+          properties:
+            name:
+              type: string
+              maxLength: 255
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
+            updated_at:
+              type: string
+              format: date-time
+              readOnly: true
+          required:
+          - name
+        relationships:
+          type: object
+          properties:
+            providers:
+              type: object
+              properties:
+                data:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        title: Resource Identifier
+                        description: The identifier of the related object.
+                      type:
+                        type: string
+                        enum:
+                        - Provider
+                        title: Resource Type Name
+                        description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                          member is used to describe resource objects that share common
+                          attributes and relationships.
+                    required:
+                    - id
+                    - type
+              required:
+              - data
+              description: A related resource object from type Provider
+              title: Provider
+              readOnly: true
+    ProviderGroupMembershipUpdateRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - provider-group-memberships
+            attributes:
+              type: object
+              properties:
+                provider_ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  description: List of provider UUIDs to add to the group
+              required:
+              - provider_ids
+      required:
+      - data
+    ProviderGroupRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - provider-groups
+            attributes:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                inserted_at:
+                  type: string
+                  format: date-time
+                  readOnly: true
+                updated_at:
+                  type: string
+                  format: date-time
+                  readOnly: true
+              required:
+              - name
+            relationships:
+              type: object
+              properties:
+                providers:
+                  type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                            title: Resource Identifier
+                            description: The identifier of the related object.
+                          type:
+                            type: string
+                            enum:
+                            - Provider
+                            title: Resource Type Name
+                            description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                              member is used to describe resource objects that share
+                              common attributes and relationships.
+                        required:
+                        - id
+                        - type
+                  required:
+                  - data
+                  description: A related resource object from type Provider
+                  title: Provider
+                  readOnly: true
+      required:
+      - data
+    ProviderGroupResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/ProviderGroup'
+      required:
+      - data
+    ProviderGroupTypeEnum:
+      type: string
+      enum:
+      - provider-groups
     ProviderResponse:
       type: object
       properties:
@@ -5291,7 +5792,7 @@ components:
       type: object
       properties:
         data:
-          $ref: '#/components/schemas/Provider'
+          $ref: '#/components/schemas/ProviderGroup'
       required:
       - data
     Task:
@@ -5867,6 +6368,8 @@ tags:
   description: Endpoints for managing tenants, along with their memberships.
 - name: Provider
   description: Endpoints for managing providers (AWS, GCP, Azure, etc...).
+- name: Provider Group
+  description: Endpoints for managing provider groups.
 - name: Scan
   description: Endpoints for triggering manual scans and viewing scan results.
 - name: Resource

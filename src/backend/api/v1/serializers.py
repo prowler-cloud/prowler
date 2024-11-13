@@ -18,6 +18,8 @@ from api.models import (
     User,
     Membership,
     Provider,
+    ProviderGroup,
+    ProviderGroupMembership,
     Scan,
     Task,
     Resource,
@@ -352,6 +354,87 @@ class MembershipSerializer(serializers.ModelSerializer):
     class Meta:
         model = Membership
         fields = ["id", "user", "tenant", "role", "date_joined"]
+
+
+# Provider Groups
+class ProviderGroupSerializer(RLSSerializer, BaseWriteSerializer):
+    providers = serializers.ResourceRelatedField(many=True, read_only=True)
+
+    def validate(self, attrs):
+        tenant = self.context["tenant_id"]
+        name = attrs.get("name", self.instance.name if self.instance else None)
+
+        # Exclude the current instance when checking for uniqueness during updates
+        queryset = ProviderGroup.objects.filter(tenant=tenant, name=name)
+        if self.instance:
+            queryset = queryset.exclude(pk=self.instance.pk)
+
+        if queryset.exists():
+            raise serializers.ValidationError(
+                {
+                    "name": "A provider group with this name already exists for this tenant."
+                }
+            )
+
+        return super().validate(attrs)
+
+    class Meta:
+        model = ProviderGroup
+        fields = ["id", "name", "inserted_at", "updated_at", "providers", "url"]
+        read_only_fields = ["id", "inserted_at", "updated_at"]
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "inserted_at": {"read_only": True},
+            "updated_at": {"read_only": True},
+        }
+
+
+class ProviderGroupUpdateSerializer(RLSSerializer, BaseWriteSerializer):
+    """
+    Serializer for updating the ProviderGroup model.
+    Only allows "name" field to be updated.
+    """
+
+    class Meta:
+        model = ProviderGroup
+        fields = ["id", "name"]
+
+
+class ProviderGroupMembershipUpdateSerializer(RLSSerializer, BaseWriteSerializer):
+    """
+    Serializer for modifying provider group memberships
+    """
+
+    provider_ids = serializers.ListField(
+        child=serializers.UUIDField(),
+        help_text="List of provider UUIDs to add to the group",
+    )
+
+    def validate(self, attrs):
+        tenant_id = self.context["tenant_id"]
+        provider_ids = attrs.get("provider_ids", [])
+
+        existing_provider_ids = set(
+            Provider.objects.filter(
+                id__in=provider_ids, tenant_id=tenant_id
+            ).values_list("id", flat=True)
+        )
+        provided_provider_ids = set(provider_ids)
+
+        missing_provider_ids = provided_provider_ids - existing_provider_ids
+
+        if missing_provider_ids:
+            raise serializers.ValidationError(
+                {
+                    "provider_ids": f"The following provider IDs do not exist: {', '.join(str(id) for id in missing_provider_ids)}"
+                }
+            )
+
+        return super().validate(attrs)
+
+    class Meta:
+        model = ProviderGroupMembership
+        fields = ["id", "provider_ids"]
 
 
 # Providers

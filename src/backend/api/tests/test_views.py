@@ -8,7 +8,16 @@ import pytest
 from django.urls import reverse
 from rest_framework import status
 
-from api.models import User, Membership, Provider, Scan, ProviderSecret, Invitation
+from api.models import (
+    User,
+    Membership,
+    Provider,
+    ProviderGroup,
+    ProviderGroupMembership,
+    Scan,
+    ProviderSecret,
+    Invitation,
+)
 from api.rls import Tenant
 from conftest import (
     API_JSON_CONTENT_TYPE,
@@ -1121,6 +1130,250 @@ class TestProviderViewSet:
             reverse("provider-list"), {"sort": "invalid"}
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+
+@pytest.mark.django_db
+class TestProviderGroupViewSet:
+    def test_provider_group_list(self, authenticated_client, provider_groups_fixture):
+        response = authenticated_client.get(reverse("providergroup-list"))
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == len(provider_groups_fixture)
+
+    def test_provider_group_retrieve(
+        self, authenticated_client, provider_groups_fixture
+    ):
+        provider_group = provider_groups_fixture[0]
+        response = authenticated_client.get(
+            reverse("providergroup-detail", kwargs={"pk": provider_group.id})
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert data["id"] == str(provider_group.id)
+        assert data["attributes"]["name"] == provider_group.name
+
+    def test_provider_group_create(self, authenticated_client):
+        data = {
+            "data": {
+                "type": "provider-groups",
+                "attributes": {
+                    "name": "Test Provider Group",
+                },
+            }
+        }
+        response = authenticated_client.post(
+            reverse("providergroup-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        response_data = response.json()["data"]
+        assert response_data["attributes"]["name"] == "Test Provider Group"
+        assert ProviderGroup.objects.filter(name="Test Provider Group").exists()
+
+    def test_provider_group_create_invalid(self, authenticated_client):
+        data = {
+            "data": {
+                "type": "provider-groups",
+                "attributes": {
+                    # Name is missing
+                },
+            }
+        }
+        response = authenticated_client.post(
+            reverse("providergroup-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        errors = response.json()["errors"]
+        assert errors[0]["source"]["pointer"] == "/data/attributes/name"
+
+    def test_provider_group_partial_update(
+        self, authenticated_client, provider_groups_fixture
+    ):
+        provider_group = provider_groups_fixture[1]
+        data = {
+            "data": {
+                "id": str(provider_group.id),
+                "type": "provider-groups",
+                "attributes": {
+                    "name": "Updated Provider Group Name",
+                },
+            }
+        }
+        response = authenticated_client.patch(
+            reverse("providergroup-detail", kwargs={"pk": provider_group.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_200_OK
+        provider_group.refresh_from_db()
+        assert provider_group.name == "Updated Provider Group Name"
+
+    def test_provider_group_partial_update_invalid(
+        self, authenticated_client, provider_groups_fixture
+    ):
+        provider_group = provider_groups_fixture[2]
+        data = {
+            "data": {
+                "id": str(provider_group.id),
+                "type": "provider-groups",
+                "attributes": {
+                    "name": "",  # Invalid name
+                },
+            }
+        }
+        response = authenticated_client.patch(
+            reverse("providergroup-detail", kwargs={"pk": provider_group.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        errors = response.json()["errors"]
+        assert errors[0]["source"]["pointer"] == "/data/attributes/name"
+
+    def test_provider_group_destroy(
+        self, authenticated_client, provider_groups_fixture
+    ):
+        provider_group = provider_groups_fixture[2]
+        response = authenticated_client.delete(
+            reverse("providergroup-detail", kwargs={"pk": provider_group.id})
+        )
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        assert not ProviderGroup.objects.filter(id=provider_group.id).exists()
+
+    def test_provider_group_destroy_invalid(self, authenticated_client):
+        response = authenticated_client.delete(
+            reverse("providergroup-detail", kwargs={"pk": "non-existent-id"})
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_provider_group_providers_update(
+        self, authenticated_client, provider_groups_fixture, providers_fixture
+    ):
+        provider_group = provider_groups_fixture[0]
+        provider_ids = [str(provider.id) for provider in providers_fixture]
+
+        data = {
+            "data": {
+                "type": "provider-group-memberships",
+                "id": str(provider_group.id),
+                "attributes": {"provider_ids": provider_ids},
+            }
+        }
+
+        response = authenticated_client.put(
+            reverse("providergroup-providers", kwargs={"pk": provider_group.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_200_OK
+        memberships = ProviderGroupMembership.objects.filter(
+            provider_group=provider_group
+        )
+        assert memberships.count() == len(provider_ids)
+        for membership in memberships:
+            assert str(membership.provider_id) in provider_ids
+
+    def test_provider_group_providers_update_non_existent_provider(
+        self, authenticated_client, provider_groups_fixture, providers_fixture
+    ):
+        provider_group = provider_groups_fixture[0]
+        provider_ids = [str(provider.id) for provider in providers_fixture]
+        provider_ids[-1] = "1b59e032-3eb6-4694-93a5-df84cd9b3ce2"
+
+        data = {
+            "data": {
+                "type": "provider-group-memberships",
+                "id": str(provider_group.id),
+                "attributes": {"provider_ids": provider_ids},
+            }
+        }
+
+        response = authenticated_client.put(
+            reverse("providergroup-providers", kwargs={"pk": provider_group.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        errors = response.json()["errors"]
+        assert (
+            errors[0]["detail"]
+            == f"The following provider IDs do not exist: {provider_ids[-1]}"
+        )
+
+    def test_provider_group_providers_update_invalid_provider(
+        self, authenticated_client, provider_groups_fixture
+    ):
+        provider_group = provider_groups_fixture[1]
+        invalid_provider_id = "non-existent-id"
+        data = {
+            "data": {
+                "type": "provider-group-memberships",
+                "id": str(provider_group.id),
+                "attributes": {"provider_ids": [invalid_provider_id]},
+            }
+        }
+
+        response = authenticated_client.put(
+            reverse("providergroup-providers", kwargs={"pk": provider_group.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        errors = response.json()["errors"]
+        assert errors[0]["detail"] == "Must be a valid UUID."
+
+    def test_provider_group_providers_update_invalid_payload(
+        self, authenticated_client, provider_groups_fixture
+    ):
+        provider_group = provider_groups_fixture[2]
+        data = {
+            # Missing "provider_ids"
+        }
+
+        response = authenticated_client.put(
+            reverse("providergroup-providers", kwargs={"pk": provider_group.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        errors = response.json()["errors"]
+        assert errors[0]["detail"] == "Received document does not contain primary data"
+
+    def test_provider_group_retrieve_not_found(self, authenticated_client):
+        response = authenticated_client.get(
+            reverse("providergroup-detail", kwargs={"pk": "non-existent-id"})
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_provider_group_list_filters(
+        self, authenticated_client, provider_groups_fixture
+    ):
+        provider_group = provider_groups_fixture[0]
+        response = authenticated_client.get(
+            reverse("providergroup-list"), {"filter[name]": provider_group.name}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        assert data[0]["attributes"]["name"] == provider_group.name
+
+    def test_provider_group_list_sorting(
+        self, authenticated_client, provider_groups_fixture
+    ):
+        response = authenticated_client.get(
+            reverse("providergroup-list"), {"sort": "name"}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        names = [item["attributes"]["name"] for item in data]
+        assert names == sorted(names)
+
+    def test_provider_group_invalid_method(self, authenticated_client):
+        response = authenticated_client.put(reverse("providergroup-list"))
+        assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
 
 @pytest.mark.django_db

@@ -449,6 +449,111 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.CreateModel(
+            name="ProviderGroup",
+            fields=[
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("name", models.CharField(max_length=255)),
+                ("inserted_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+            ],
+            options={
+                "db_table": "provider_groups",
+            },
+        ),
+        migrations.CreateModel(
+            name="ProviderGroupMembership",
+            fields=[
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("inserted_at", models.DateTimeField(auto_now_add=True)),
+            ],
+            options={
+                "db_table": "provider_group_memberships",
+            },
+        ),
+        migrations.AddField(
+            model_name="providergroup",
+            name="tenant",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                to="api.tenant",
+            ),
+        ),
+        migrations.AddField(
+            model_name="providergroup",
+            name="providers",
+            field=models.ManyToManyField(
+                related_name="provider_groups",
+                through="api.ProviderGroupMembership",
+                to="api.provider",
+            ),
+        ),
+        migrations.AddField(
+            model_name="providergroupmembership",
+            name="tenant",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, to="api.tenant"
+            ),
+        ),
+        migrations.AddField(
+            model_name="providergroupmembership",
+            name="provider",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, to="api.provider"
+            ),
+        ),
+        migrations.AddField(
+            model_name="providergroupmembership",
+            name="provider_group",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, to="api.providergroup"
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="providergroup",
+            constraint=api.rls.RowLevelSecurityConstraint(
+                "tenant_id",
+                name="rls_on_providergroup",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="providergroup",
+            constraint=models.UniqueConstraint(
+                fields=("tenant_id", "name"), name="unique_group_name_per_tenant"
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="providergroupmembership",
+            constraint=api.rls.RowLevelSecurityConstraint(
+                "tenant_id",
+                name="rls_on_providergroupmembership",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="providergroupmembership",
+            constraint=models.UniqueConstraint(
+                fields=("provider_id", "provider_group"),
+                name="unique_provider_group_membership",
+            ),
+        ),
+        migrations.CreateModel(
             name="Task",
             fields=[
                 (

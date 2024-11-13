@@ -15,6 +15,7 @@ from api.v1.views import (
     TaskViewSet,
     ResourceViewSet,
     FindingViewSet,
+    ProviderGroupViewSet,
     ProviderSecretViewSet,
     InvitationViewSet,
     InvitationAcceptViewSet,
@@ -25,6 +26,7 @@ router = routers.DefaultRouter(trailing_slash=False)
 router.register(r"users", UserViewSet, basename="user")
 router.register(r"tenants", TenantViewSet, basename="tenant")
 router.register(r"providers", ProviderViewSet, basename="provider")
+router.register(r"provider_groups", ProviderGroupViewSet, basename="providergroup")
 router.register(r"scans", ScanViewSet, basename="scan")
 router.register(r"tasks", TaskViewSet, basename="task")
 router.register(r"resources", ResourceViewSet, basename="resource")

@@ -17,6 +17,7 @@ from api.models import (
 from api.models import (
     User,
     Provider,
+    ProviderGroup,
     Resource,
     ResourceTag,
     Scan,
@@ -187,6 +188,25 @@ def providers_fixture(tenants_fixture):
     )
 
     return provider1, provider2, provider3, provider4, provider5
+
+
+@pytest.fixture
+def provider_groups_fixture(tenants_fixture):
+    tenant, *_ = tenants_fixture
+    pgroup1 = ProviderGroup.objects.create(
+        name="Group One",
+        tenant_id=tenant.id,
+    )
+    pgroup2 = ProviderGroup.objects.create(
+        name="Group Two",
+        tenant_id=tenant.id,
+    )
+    pgroup3 = ProviderGroup.objects.create(
+        name="Group Three",
+        tenant_id=tenant.id,
+    )
+
+    return pgroup1, pgroup2, pgroup3
 
 
 @pytest.fixture

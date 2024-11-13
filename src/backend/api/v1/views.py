@@ -33,6 +33,7 @@ from api.base_views import BaseTenantViewset, BaseRLSViewSet, BaseUserViewset
 from api.db_router import MainRouter
 from api.filters import (
     ProviderFilter,
+    ProviderGroupFilter,
     TenantFilter,
     MembershipFilter,
     ScanFilter,
@@ -47,6 +48,8 @@ from api.models import (
     User,
     Membership,
     Provider,
+    ProviderGroup,
+    ProviderGroupMembership,
     Scan,
     Task,
     Resource,
@@ -64,6 +67,9 @@ from api.v1.serializers import (
     UserCreateSerializer,
     UserUpdateSerializer,
     MembershipSerializer,
+    ProviderGroupSerializer,
+    ProviderGroupUpdateSerializer,
+    ProviderGroupMembershipUpdateSerializer,
     ProviderSerializer,
     ProviderCreateSerializer,
     ProviderUpdateSerializer,
@@ -167,6 +173,10 @@ class SchemaView(SpectacularAPIView):
             {
                 "name": "Provider",
                 "description": "Endpoints for managing providers (AWS, GCP, Azure, etc...).",
+            },
+            {
+                "name": "Provider Group",
+                "description": "Endpoints for managing provider groups.",
             },
             {
                 "name": "Scan",
@@ -464,6 +474,98 @@ class TenantMembersViewSet(BaseTenantViewset):
 
         membership_to_delete.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@extend_schema(tags=["Provider Group"])
+@extend_schema_view(
+    list=extend_schema(
+        summary="List all provider groups",
+        description="Retrieve a list of all provider groups with options for filtering by various criteria.",
+    ),
+    retrieve=extend_schema(
+        summary="Retrieve data from a provider group",
+        description="Fetch detailed information about a specific provider group by their ID.",
+    ),
+    create=extend_schema(
+        summary="Create a new provider group",
+        description="Add a new provider group to the system by providing the required provider group details.",
+    ),
+    partial_update=extend_schema(
+        summary="Partially update a provider group",
+        description="Update certain fields of an existing provider group's information without affecting other fields.",
+        request=ProviderGroupUpdateSerializer,
+        responses={200: ProviderGroupSerializer},
+    ),
+    destroy=extend_schema(
+        summary="Delete a provider group",
+        description="Remove a provider group from the system by their ID.",
+    ),
+    update=extend_schema(exclude=True),
+)
+class ProviderGroupViewSet(BaseRLSViewSet):
+    queryset = ProviderGroup.objects.all()
+    serializer_class = ProviderGroupSerializer
+    filterset_class = ProviderGroupFilter
+    http_method_names = ["get", "post", "patch", "put", "delete"]
+    ordering = ["inserted_at"]
+
+    def get_queryset(self):
+        return ProviderGroup.objects.prefetch_related("providers")
+
+    def get_serializer_class(self):
+        if self.action == "partial_update":
+            return ProviderGroupUpdateSerializer
+        elif self.action == "providers":
+            if hasattr(self, "response_serializer_class"):
+                return self.response_serializer_class
+            return ProviderGroupMembershipUpdateSerializer
+        return super().get_serializer_class()
+
+    @extend_schema(
+        tags=["Provider Group"],
+        summary="Add providers to a provider group",
+        description="Add one or more providers to an existing provider group.",
+        request=ProviderGroupMembershipUpdateSerializer,
+        responses={200: OpenApiResponse(response=ProviderGroupSerializer)},
+    )
+    @action(detail=True, methods=["put"], url_name="providers")
+    def providers(self, request, pk=None):
+        provider_group = self.get_object()
+
+        # Validate input data
+        serializer = self.get_serializer_class()(
+            data=request.data,
+            context=self.get_serializer_context(),
+        )
+        serializer.is_valid(raise_exception=True)
+
+        provider_ids = serializer.validated_data["provider_ids"]
+
+        # Update memberships
+        ProviderGroupMembership.objects.filter(
+            provider_group=provider_group, tenant_id=request.tenant_id
+        ).delete()
+
+        provider_group_memberships = [
+            ProviderGroupMembership(
+                tenant_id=self.request.tenant_id,
+                provider_group=provider_group,
+                provider_id=provider_id,
+            )
+            for provider_id in provider_ids
+        ]
+
+        ProviderGroupMembership.objects.bulk_create(
+            provider_group_memberships, ignore_conflicts=True
+        )
+
+        # Return the updated provider group with providers
+        provider_group.refresh_from_db()
+        self.response_serializer_class = ProviderGroupSerializer
+        response_serializer = ProviderGroupSerializer(
+            provider_group, context=self.get_serializer_context()
+        )
+        return Response(data=response_serializer.data, status=status.HTTP_200_OK)
 
 
 @extend_schema_view(

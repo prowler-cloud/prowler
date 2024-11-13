@@ -25,6 +25,7 @@ from api.models import (
     User,
     Membership,
     Provider,
+    ProviderGroup,
     Resource,
     ResourceTag,
     Scan,
@@ -134,6 +135,20 @@ class ProviderRelationshipFilterSet(FilterSet):
     provider_alias__icontains = CharFilter(
         field_name="provider__alias", lookup_expr="icontains"
     )
+
+
+class ProviderGroupFilter(FilterSet):
+    inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
+    updated_at = DateFilter(field_name="updated_at", lookup_expr="date")
+
+    class Meta:
+        model = ProviderGroup
+        fields = {
+            "id": ["exact", "in"],
+            "name": ["exact", "in"],
+            "inserted_at": ["gte", "lte"],
+            "updated_at": ["gte", "lte"],
+        }
 
 
 class ScanFilter(ProviderRelationshipFilterSet):
