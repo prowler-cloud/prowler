@@ -310,7 +310,7 @@ class EC2(AWSService):
                         Image(
                             id=image["ImageId"],
                             arn=arn,
-                            name=image.get("Name", None),
+                            name=image.get("Name", ""),
                             public=image.get("Public", False),
                             region=regional_client.region,
                             tags=image.get("Tags"),
