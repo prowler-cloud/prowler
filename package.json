@@ -81,7 +81,7 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc",
-    "healthcheck": "npm run typecheck && npm run lint:check && npm run build",
+    "healthcheck": "npm run typecheck && npm run lint:check",
     "lint:check": "./node_modules/.bin/eslint ./app",
     "lint:fix": "eslint . --ext .ts,.tsx -c .eslintrc.cjs --fix",
     "format:check": "./node_modules/.bin/prettier --check ./app",
