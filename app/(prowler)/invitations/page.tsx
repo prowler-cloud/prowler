@@ -1,13 +1,16 @@
 import { Spacer } from "@nextui-org/react";
 import { Suspense } from "react";
 
-import { getUsers } from "@/actions/users/users";
+import { getInvitations } from "@/actions/invitations/invitation";
 import { FilterControls } from "@/components/filters";
-import { filterUsers } from "@/components/filters/data-filters";
+import { filterInvitations } from "@/components/filters/data-filters";
 import { SendInvitationButton } from "@/components/invitations";
+import {
+  ColumnsInvitation,
+  SkeletonTableInvitation,
+} from "@/components/invitations/table";
 import { Header } from "@/components/ui";
 import { DataTable } from "@/components/ui/table";
-import { ColumnsUser, SkeletonTableUser } from "@/components/users/table";
 import { SearchParamsProps } from "@/types";
 
 export default async function Invitations({
@@ -26,7 +29,7 @@ export default async function Invitations({
       <SendInvitationButton />
       <Spacer y={4} />
 
-      <Suspense key={searchParamsKey} fallback={<SkeletonTableUser />}>
+      <Suspense key={searchParamsKey} fallback={<SkeletonTableInvitation />}>
         <SSRDataTable searchParams={searchParams} />
       </Suspense>
     </>
@@ -49,14 +52,14 @@ const SSRDataTable = async ({
   // Extract query from filters
   const query = (filters["filter[search]"] as string) || "";
 
-  const usersData = await getUsers({ query, page, sort, filters });
+  const invitationsData = await getInvitations({ query, page, sort, filters });
 
   return (
     <DataTable
-      columns={ColumnsUser}
-      data={usersData?.data || []}
-      metadata={usersData?.meta}
-      customFilters={filterUsers}
+      columns={ColumnsInvitation}
+      data={invitationsData?.data || []}
+      metadata={invitationsData?.meta}
+      customFilters={filterInvitations}
     />
   );
 };
