@@ -3,7 +3,7 @@
   "CheckID": "autoscaling_group_capacity_rebalance_enabled",
   "CheckTitle": "Check if Amazon EC2 Auto Scaling groups have capacity rebalance enabled.",
   "CheckType": [
-    "Resiliance"
+    "Resilience"
   ],
   "ServiceName": "autoscaling",
   "SubServiceName": "",

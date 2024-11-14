@@ -25,7 +25,10 @@
       "Url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-access-logs.html"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "forensics-ready",
+    "logging"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

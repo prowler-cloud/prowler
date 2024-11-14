@@ -5,7 +5,7 @@
   "CheckType": [
     "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53 Controls"
   ],
-  "ServiceName": "DataFirehose",
+  "ServiceName": "firehose",
   "SubServiceName": "Ensure DataFirehose delivery streams are encrypted at rest.",
   "ResourceIdTemplate": "arn:partition:firehose:region:account-id:deliverystream/delivery-stream-id",
   "Severity": "medium",

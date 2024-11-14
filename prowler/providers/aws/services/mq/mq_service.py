@@ -56,6 +56,9 @@ class MQ(AWSService):
             broker.audit_logging_enabled = describe_broker.get("Logs", {}).get(
                 "Audit", False
             )
+            broker.publicly_accessible = describe_broker.get(
+                "PubliclyAccessible", False
+            )
             broker.tags = [describe_broker.get("Tags", {})]
 
         except Exception as error:
@@ -87,6 +90,7 @@ class Broker(BaseModel):
     id: str
     region: str
     auto_minor_version_upgrade: bool = Field(default=False)
+    publicly_accessible: bool = Field(default=False)
     general_logging_enabled: bool = Field(default=False)
     audit_logging_enabled: bool = Field(default=False)
     engine_type: EngineType = EngineType.ACTIVEMQ

@@ -41,6 +41,13 @@ class Test_Firehose_Service:
     # Test Firehose List Delivery Streams
     @mock_aws
     def test_list_delivery_streams(self):
+        # Generate S3 client
+        s3_client = client("s3", region_name=AWS_REGION_EU_WEST_1)
+        s3_client.create_bucket(
+            Bucket="test-bucket",
+            CreateBucketConfiguration={"LocationConstraint": AWS_REGION_EU_WEST_1},
+        )
+
         # Generate Firehose client
         firehose_client = client("firehose", region_name=AWS_REGION_EU_WEST_1)
         delivery_stream = firehose_client.create_delivery_stream(

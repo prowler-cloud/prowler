@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "dms_replication_task_target_logging_enabled",
+  "CheckTitle": "Check if DMS replication tasks for the target database have logging enabled.",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "dms",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:dms:region:account-id:task/task-id",
+  "Severity": "medium",
+  "ResourceType": "AwsDmsReplicationTask",
+  "Description": "This control checks whether logging is enabled with the minimum severity level of LOGGER_SEVERITY_DEFAULT for DMS replication tasks TARGET_APPLY and TARGET_LOAD. The control fails if logging isn't enabled for these tasks or if the minimum severity level is less than LOGGER_SEVERITY_DEFAULT.",
+  "Risk": "Without logging enabled, issues in data migration may go undetected, affecting the integrity and compliance of replicated data.",
+  "RelatedUrl": "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Monitoring.html#CHAP_Monitoring.ManagingLogs",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws dms modify-replication-task --replication-task-arn <task-arn> --task-settings '{\"Logging\":{\"EnableLogging\":true,\"LogComponents\":[{\"Id\":\"TARGET_APPLY\",\"Severity\":\"LOGGER_SEVERITY_DEFAULT\"},{\"Id\":\"TARGET_LOAD\",\"Severity\":\"LOGGER_SEVERITY_DEFAULT\"}]}}'",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/dms-controls.html#dms-7",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable logging for target database DMS replication tasks with a minimum severity level of LOGGER_SEVERITY_DEFAULT.",
+      "Url": "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Tasks.CustomizingTasks.TaskSettings.Logging.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

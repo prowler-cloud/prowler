@@ -105,22 +105,28 @@ class GcpProvider(Provider):
                 file=__file__,
                 message="No Project IDs can be accessed via Google Credentials.",
             )
-
         if project_ids:
+            if self._default_project_id not in project_ids:
+                self._default_project_id = project_ids[0]
             for input_project in project_ids:
-                for accessible_project in accessible_projects:
-                    if self.is_project_matching(input_project, accessible_project):
-                        self._projects[accessible_project] = accessible_projects[
-                            accessible_project
-                        ]
-                        self._project_ids.append(
-                            accessible_projects[accessible_project].id
-                        )
+                for (
+                    accessible_project_id,
+                    accessible_project,
+                ) in accessible_projects.items():
+                    # Only scan active projects
+                    if accessible_project.lifecycle_state == "ACTIVE":
+                        if self.is_project_matching(
+                            input_project, accessible_project_id
+                        ):
+                            self._projects[accessible_project_id] = accessible_project
+                            self._project_ids.append(accessible_project_id)
         else:
             # If not projects were input, all accessible projects are scanned by default
             for project_id, project in accessible_projects.items():
-                self._projects[project_id] = project
-                self._project_ids.append(project_id)
+                # Only scan active projects
+                if project.lifecycle_state == "ACTIVE":
+                    self._projects[project_id] = project
+                    self._project_ids.append(project_id)
 
         # Remove excluded projects if any input
         if excluded_project_ids:
@@ -134,11 +140,11 @@ class GcpProvider(Provider):
 
         if not self._projects:
             logger.critical(
-                "No Input Project IDs can be accessed via Google Credentials."
+                "No Input Project IDs are active or can be accessed via Google Credentials."
             )
             raise GCPNoAccesibleProjectsError(
                 file=__file__,
-                message="No Input Project IDs can be accessed via Google Credentials.",
+                message="No Input Project IDs are active or can be accessed via Google Credentials.",
             )
 
         if list_project_ids:
@@ -411,7 +417,7 @@ class GcpProvider(Provider):
 
     @staticmethod
     def get_projects(
-        credentials: Credentials, organization_id: str
+        credentials: Credentials, organization_id: str = None
     ) -> dict[str, GCPProject]:
         """
         Get the projects accessible by the provided credentials. If an organization ID is provided, only the projects under that organization are returned.
@@ -647,3 +653,31 @@ class GcpProvider(Provider):
                 file=__file__,
                 message="The provider ID does not match with the expected project_id.",
             )
+
+    def get_regions(self) -> set:
+        """
+        Get the regions available in GCP for the given project IDs
+
+        Returns:
+            set of regions
+        """
+        try:
+            regions = set()
+            service = discovery.build("compute", "v1", credentials=self._session)
+            for project_id in self._project_ids:
+                try:
+                    request = service.regions().list(project=project_id)
+                    response = request.execute()
+                    for region in response.get("items", []):
+                        regions.add(region["name"])
+                except Exception as error:
+                    logger.error(
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+                    continue
+            return regions
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return set()

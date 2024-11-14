@@ -11,7 +11,7 @@ from prowler.config.config import (
     load_and_validate_config_file,
     load_and_validate_fixer_config_file,
 )
-from prowler.providers.aws.aws_provider import get_aws_available_regions
+from prowler.providers.aws.aws_provider import AwsProvider
 
 MOCK_PROWLER_VERSION = "3.3.0"
 MOCK_OLD_PROWLER_VERSION = "0.0.0"
@@ -33,16 +33,6 @@ old_config_aws = {
     "ec2_allowed_instance_owners": ["amazon-elb"],
     "trusted_account_ids": [],
     "log_group_retention_days": 365,
-    "critical_pii_entities": [
-        "CREDIT_CARD",  # Credit card numbers are highly sensitive financial information.
-        "CRYPTO",  # Crypto wallet numbers (e.g., Bitcoin addresses) can give access to cryptocurrency.
-        "IBAN_CODE",  # International Bank Account Numbers are critical financial information.
-        "US_BANK_NUMBER",  # US bank account numbers are sensitive and should be protected.
-        "US_SSN",  # US Social Security Numbers are critical PII used for identity verification.
-        "US_PASSPORT",  # US passport numbers can be used for identity theft.
-        "US_ITIN",  # US Individual Taxpayer Identification Numbers are sensitive personal identifiers.
-    ],
-    "pii_language": "en",  # Language for recognizing PII entities
     "max_idle_disconnect_timeout_in_seconds": 600,
     "max_disconnect_timeout_in_seconds": 300,
     "max_session_duration_seconds": 36000,
@@ -107,16 +97,6 @@ config_aws = {
     "fargate_windows_latest_version": "1.0.0",
     "trusted_account_ids": [],
     "log_group_retention_days": 365,
-    "critical_pii_entities": [
-        "CREDIT_CARD",  # Credit card numbers are highly sensitive financial information.
-        "CRYPTO",  # Crypto wallet numbers (e.g., Bitcoin addresses) can give access to cryptocurrency.
-        "IBAN_CODE",  # International Bank Account Numbers are critical financial information.
-        "US_BANK_NUMBER",  # US bank account numbers are sensitive and should be protected.
-        "US_SSN",  # US Social Security Numbers are critical PII used for identity verification.
-        "US_PASSPORT",  # US passport numbers can be used for identity theft.
-        "US_ITIN",  # US Individual Taxpayer Identification Numbers are sensitive personal identifiers.
-    ],
-    "pii_language": "en",  # Language for recognizing PII entities
     "max_idle_disconnect_timeout_in_seconds": 600,
     "max_disconnect_timeout_in_seconds": 300,
     "max_session_duration_seconds": 36000,
@@ -366,8 +346,14 @@ config_kubernetes = {
 
 
 class Test_Config:
-    def test_get_aws_available_regions(self):
-        assert len(get_aws_available_regions()) == 34
+    def test_get_regions_by_partition(self):
+        assert len(AwsProvider.get_regions_by_partition()) == 34
+
+    def test_get_regions_by_partition_with_partition(self):
+        assert len(AwsProvider.get_regions_by_partition("aws-cn")) == 2
+
+    def test_get_regions_by_partition_with_unknown_partition(self):
+        assert len(AwsProvider.get_regions_by_partition("unknown")) == 0
 
     @mock.patch(
         "prowler.config.config.requests.get", new=mock_prowler_get_latest_release
