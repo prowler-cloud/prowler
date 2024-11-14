@@ -456,7 +456,7 @@ class TestAzureProvider:
     )
     def test_get_regions(
         self,
-        azure_provider_init_mock,
+        azure_provider_init_mock,  # noqa: F841
         azure_get_locations_mock,
         subscription_ids,
         expected_regions,
