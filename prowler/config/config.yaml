@@ -371,6 +371,7 @@ aws:
   # Minimum retention period for Kinesis streams
   min_kinesis_stream_retention_period: 168
 
+
 # Azure Configuration
 azure:
   # Azure Network Configuration
