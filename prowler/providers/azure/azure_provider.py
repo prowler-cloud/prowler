@@ -974,7 +974,7 @@ class AzureProvider(Provider):
                 locations[display_name].append(location.name)
 
         return locations
-    
+
     def get_regions(self, subscription_ids: Union[list[str], None] = None) -> set:
         """
         Retrieves a set of regions available across all subscriptions or specific subscriptions if provided.
@@ -996,10 +996,14 @@ class AzureProvider(Provider):
         """
         locations = self.get_locations()
         if subscription_ids is not None:
-            locations = {sid: regions for sid, regions in locations.items() if sid in subscription_ids}
+            locations = {
+                sid: regions
+                for sid, regions in locations.items()
+                if sid in subscription_ids
+            }
 
         return set(chain.from_iterable(locations.values()))
-    
+
     @staticmethod
     def validate_static_credentials(
         tenant_id: str = None, client_id: str = None, client_secret: str = None
