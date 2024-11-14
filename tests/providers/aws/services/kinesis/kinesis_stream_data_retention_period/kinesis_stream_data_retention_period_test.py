@@ -51,7 +51,7 @@ class Test_kinesis_encrypted_at_rest:
         )
 
         kinesis_client.audit_config = mock.MagicMock()
-        kinesis_client.audit_config = {"min_kinesis_stream_retention_period": 350}
+        kinesis_client.audit_config = {"min_kinesis_stream_retention_hours": 350}
 
         from prowler.providers.aws.services.kinesis.kinesis_service import Kinesis
 
@@ -107,7 +107,7 @@ class Test_kinesis_encrypted_at_rest:
         )
 
         kinesis_client.audit_config = mock.MagicMock()
-        kinesis_client.audit_config = {"min_kinesis_stream_retention_period": 250}
+        kinesis_client.audit_config = {"min_kinesis_stream_retention_hours": 250}
 
         from prowler.providers.aws.services.kinesis.kinesis_service import Kinesis
 

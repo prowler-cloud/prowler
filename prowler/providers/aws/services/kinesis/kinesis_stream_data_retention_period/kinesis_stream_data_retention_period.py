@@ -27,7 +27,7 @@ class kinesis_stream_data_retention_period(Check):
             report.status_extended = f"Kinesis Stream {stream.name} does not have an adequate data retention period ({stream.retention_period}hrs)."
 
             if stream.retention_period >= kinesis_client.audit_config.get(
-                "min_kinesis_stream_retention_period", 24
+                "min_kinesis_stream_retention_hours", 24
             ):
                 report.status = "PASS"
                 report.status_extended = f"Kinesis Stream {stream.name} does have an adequate data retention period ({stream.retention_period}hrs)."
