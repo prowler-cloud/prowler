@@ -56,6 +56,10 @@ export const createNewUser = async (
   const keyServer = process.env.API_BASE_URL;
   const url = new URL(`${keyServer}/users`);
 
+  if (formData.invitationToken) {
+    url.searchParams.append("invitation_token", formData.invitationToken);
+  }
+
   const bodyData = {
     data: {
       type: "User",
@@ -79,7 +83,6 @@ export const createNewUser = async (
     });
 
     const parsedResponse = await response.json();
-
     if (!response.ok) {
       return parsedResponse;
     }

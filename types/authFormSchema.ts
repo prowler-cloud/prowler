@@ -21,6 +21,8 @@ export const authFormSchema = (type: string) =>
           : z.string().min(12, {
               message: "It must contain at least 12 characters.",
             }),
+      invitationToken:
+        type === "sign-in" ? z.string().optional() : z.string().optional(),
       termsAndConditions:
         type === "sign-in"
           ? z.boolean().optional()
