@@ -23,7 +23,9 @@
       "Url": "https://docs.aws.amazon.com/directoryservice/latest/admin-guide/incident-response.html"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "ecs_task_definitions_logging_block_mode",
+  "CheckTitle": "ECS task definitions containers should have a logging configured with non blocking mode",
+  "CheckType": [
+    "Resilience"
+  ],
+  "ServiceName": "ecs",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:ecs:{region}:{account-id}:task-definition/{task-definition-name}",
+  "Severity": "low",
+  "ResourceType": "AwsEcsTaskDefinition",
+  "Description": "This control checks if the latest active Amazon ECS task definition has a logging configuration set to non blocking mode.",
+  "Risk": "When logs cannot be immediately sent to Amazon CloudWatch, calls from container code to write to stdout or stderr will block and halt execution of the code. The logging thread in the application will block, which may prevent the application from functioning and lead to health check failures and task termination. Container startup fails if the required log group or log stream cannot be created.",
+  "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/ecs-task-definition-log-configuration.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws ecs register-task-definition --family <task-family> --container-definitions '[{\"name\":\"<container-name>\",\"image\":\"<image>\",\"logConfiguration\":{\"logDriver\":\"awslogs\",\"options\":{\"awslogs-group\":\"<log-group>\",\"awslogs-region\":\"<region>\",\"awslogs-stream-prefix\":\"ecs\",\"mode\":\"non-blocking\"}}}]'",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/awssupport/latest/user/fault-tolerance-checks.html#amazon-ec2-awslogs-driver-blockingmode",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure logging in ECS task definition to non blocking mode to ensure any issues writing logs will not block or halt the container execution.",
+      "Url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/using_awslogs.html#specify-log-config"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

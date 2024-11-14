@@ -1222,6 +1222,14 @@ class Test_Parser:
         assert parsed.provider == "gcp"
         assert parsed.credentials_file == file
 
+    def test_parser_gcp_organization_id(self):
+        argument = "--organization-id"
+        organization = "test_organization"
+        command = [prowler_command, "gcp", argument, organization]
+        parsed = self.parser.parse(command)
+        assert parsed.provider == "gcp"
+        assert parsed.organization_id == organization
+
     def test_parser_gcp_project_id(self):
         argument = "--project-id"
         project_1 = "test_project_1"
@@ -1288,13 +1296,11 @@ class Test_Parser:
         expected_regions = [
             "AzureChinaCloud",
             "AzureUSGovernment",
-            "AzureGermanCloud",
             "AzureCloud",
         ]
         input_regions = [
             "AzureChinaCloud",
             "AzureUSGovernment",
-            "AzureGermanCloud",
             "AzureCloud",
         ]
         for region in input_regions:
@@ -1304,7 +1310,6 @@ class Test_Parser:
         expected_regions = [
             "AzureChinaCloud",
             "AzureUSGovernment",
-            "AzureGermanCloud",
             "AzureCloud",
         ]
         invalid_region = "non-valid-region"

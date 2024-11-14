@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "transfer_server_in_transit_encryption_enabled",
+  "CheckTitle": "Transfer Family Servers should have encryption in transit enabled.",
+  "CheckType": [
+    "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53 Controls"
+  ],
+  "ServiceName": "transfer",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:transfer:region:account-id:server/server-id",
+  "Severity": "medium",
+  "ResourceType": "AwsTransferServer",
+  "Description": "Ensure that your Transfer Family servers have encryption in transit enabled.",
+  "Risk": "Using FTP for endpoint connections leaves data in transit unencrypted, making it susceptible to interception by attackers. FTP lacks encryption, which exposes your data to person-in-the-middle and other interception risks. Adopting encrypted protocols such as SFTP, FTPS, or AS2 provides a layer of protection that helps secure sensitive data during transfer.",
+  "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/transfer-family-server-no-ftp.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws transfer update-server --server-id <server-id> --protocols SFTP FTPS AS2",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/transfer-controls.html#transfer-2",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure AWS Transfer Family servers to use secure protocols, such as SFTP, FTPS, or AS2, instead of FTP to protect data in transit. These protocols offer encryption, reducing exposure to interception and manipulation attacks.",
+      "Url": "https://docs.aws.amazon.com/transfer/latest/userguide/edit-server-config.html#edit-protocols"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

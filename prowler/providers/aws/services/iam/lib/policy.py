@@ -114,6 +114,7 @@ def is_policy_public(
     source_account: str = "",
     is_cross_account_allowed=True,
     not_allowed_actions: list = [],
+    check_cross_service_confused_deputy=False,
 ) -> bool:
     """
     Check if the policy allows public access to the resource.
@@ -121,8 +122,9 @@ def is_policy_public(
     Args:
         policy (dict): The AWS policy to check
         source_account (str): The account to check if the access is restricted to it, default: ""
-        is_cross_account_allowed (bool): If the policy can allow cross-account access, default: True
+        is_cross_account_allowed (bool): If the policy can allow cross-account access, default: True (https://docs.aws.amazon.com/IAM/latest/UserGuide/confused-deputy.html#cross-service-confused-deputy-prevention)
         not_allowed_actions (list): List of actions that are not allowed, default: []. If not_allowed_actions is empty, the function will not consider the actions in the policy.
+        check_cross_service_confused_deputy (bool): If the policy is checked for cross-service confused deputy, default: False
     Returns:
         bool: True if the policy allows public access, False otherwise
     """
@@ -164,17 +166,20 @@ def is_policy_public(
                             or "*" in principal.get("CanonicalUser", "")
                             or "arn:aws:iam::*:root"
                             in principal.get("CanonicalUser", "")
-                            or (  # Check if function can be invoked by other AWS services
-                                (
-                                    ".amazonaws.com" in principal.get("Service", "")
-                                    or ".amazon.com" in principal.get("Service", "")
-                                    or "*" in principal.get("Service", "")
+                            or check_cross_service_confused_deputy
+                            and (
+                                (  # Check if function can be invoked by other AWS services if check_cross_service_confused_deputy is True
+                                    (
+                                        ".amazonaws.com" in principal.get("Service", "")
+                                        or ".amazon.com" in principal.get("Service", "")
+                                        or "*" in principal.get("Service", "")
+                                    )
                                 )
+                                and "secretsmanager.amazonaws.com"
+                                not in principal.get(
+                                    "Service", ""
+                                )  # AWS ensures that resources called by SecretsManager are executed in the same AWS account
                             )
-                            and "secretsmanager.amazonaws.com"
-                            not in principal.get(
-                                "Service", ""
-                            )  # AWS ensures that resources called by SecretsManager are executed in the same AWS account
                         )
                     )
                 ) and (

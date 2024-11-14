@@ -39,6 +39,7 @@ from prowler.providers.aws.exceptions.exceptions import (
     AWSIAMRoleARNPartitionEmptyError,
     AWSIAMRoleARNRegionNotEmtpyError,
     AWSIAMRoleARNServiceNotIAMnorSTSError,
+    AWSInvalidPartitionError,
     AWSInvalidProviderIdError,
     AWSNoCredentialsError,
     AWSProfileNotFoundError,
@@ -629,7 +630,9 @@ class AwsProvider(Provider):
         """
         try:
             regional_clients = {}
-            service_regions = self.get_available_aws_service_regions(service)
+            service_regions = AwsProvider.get_available_aws_service_regions(
+                service, self._identity.partition, self._identity.audited_regions
+            )
 
             # Get the regions enabled for the account and get the intersection with the service available regions
             if self._enabled_regions:
@@ -650,14 +653,26 @@ class AwsProvider(Provider):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def get_available_aws_service_regions(self, service: str) -> set:
+    @staticmethod
+    def get_available_aws_service_regions(
+        service: str, partition: str = "aws", audited_regions: set = None
+    ) -> set:
+        """
+        get_available_aws_service_regions returns the available regions for the given service and partition.
+
+        Arguments:
+            - service: The AWS service name.
+            - partition: The AWS partition name. Default is "aws".
+            - audited_regions: A set of regions to audit. Default is None.
+
+        Returns:
+            - A set of strings representing the available regions for the given service and partition.
+        """
         data = read_aws_regions_file()
-        json_regions = set(
-            data["services"][service]["regions"][self._identity.partition]
-        )
-        if self._identity.audited_regions:
+        json_regions = set(data["services"][service]["regions"][partition])
+        if audited_regions:
             # Get common regions between input and json
-            regions = json_regions.intersection(self._identity.audited_regions)
+            regions = json_regions.intersection(audited_regions)
         else:  # Get all regions from json of the service and partition
             regions = json_regions
         return regions
@@ -793,7 +808,9 @@ class AwsProvider(Provider):
     def get_default_region(self, service: str) -> str:
         """get_default_region returns the default region based on the profile and audited service regions"""
         try:
-            service_regions = self.get_available_aws_service_regions(service)
+            service_regions = AwsProvider.get_available_aws_service_regions(
+                service, self._identity.partition, self._identity.audited_regions
+            )
             default_region = self.get_global_region()
             # global region of the partition when all regions are audited and there is no profile region
             if self._identity.profile_region in service_regions:
@@ -1246,7 +1263,9 @@ class AwsProvider(Provider):
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            raise error
+            if raise_on_exception:
+                raise error
+            return Connection(error=error)
 
     @staticmethod
     def create_sts_session(
@@ -1279,6 +1298,44 @@ class AwsProvider(Provider):
             )
             raise error
 
+    @staticmethod
+    def get_regions_by_partition(partition: str = None) -> set:
+        """
+        Get the available AWS regions from the AWS services JSON file with the ability of filtering by partition.
+
+        Args:
+            - partition (str): The AWS partition name. Default is None.
+
+        Returns:
+            set: A set of available AWS regions. All if no `partition` is especified.
+        """
+        try:
+            data = read_aws_regions_file()
+
+            regions = set()
+            if partition is None:
+                for service in data["services"].values():
+                    for partition in service["regions"]:
+                        for item in service["regions"][partition]:
+                            regions.add(item)
+            else:
+                for service in data["services"].values():
+                    try:
+                        for item in service["regions"][partition]:
+                            regions.add(item)
+                    except KeyError as key_error:
+                        logger.error(
+                            f"{key_error.__class__.__name__}[{key_error.__traceback__.tb_lineno}]: {key_error}"
+                        )
+                        raise AWSInvalidPartitionError(
+                            message=f"Invalid partition name: {partition}",
+                            file=os.path.basename(__file__),
+                        )
+            return regions
+        except Exception as error:
+            logger.error(f"{error.__class__.__name__}: {error}")
+            return set()
+
 
 def read_aws_regions_file() -> dict:
     """
@@ -1293,27 +1350,6 @@ def read_aws_regions_file() -> dict:
         data = parse_json_file(f)
 
     return data
-
-
-def get_aws_available_regions() -> set:
-    """
-    Get the available AWS regions from the AWS services JSON file.
-
-    Returns:
-        set: A set of available AWS regions.
-    """
-    try:
-        data = read_aws_regions_file()
-
-        regions = set()
-        for service in data["services"].values():
-            for partition in service["regions"]:
-                for item in service["regions"][partition]:
-                    regions.add(item)
-        return regions
-    except Exception as error:
-        logger.error(f"{error.__class__.__name__}: {error}")
-        return set()
 
 
 # TODO: This can be moved to another class since it doesn't need self

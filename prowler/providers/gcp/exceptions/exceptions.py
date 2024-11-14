@@ -15,8 +15,8 @@ class GCPBaseException(ProwlerException):
             "remediation": "Check the HTTP error and ensure the request is properly formatted.",
         },
         (3002, "GCPNoAccesibleProjectsError"): {
-            "message": "No Project IDs can be accessed via Google Credentials",
-            "remediation": "Ensure the project is accessible and properly set up.",
+            "message": "No Project IDs are active or can be accessed via Google Credentials",
+            "remediation": "Ensure the project is active and accessible.",
         },
         (3003, "GCPSetUpSessionError"): {
             "message": "Error setting up session",
@@ -41,6 +41,10 @@ class GCPBaseException(ProwlerException):
         (3008, "GCPInvalidProviderIdError"): {
             "message": "Provider does not match with the expected project_id",
             "remediation": "Check the provider and ensure it matches the expected project_id.",
+        },
+        (3009, "GCPCloudAssetAPINotUsedError"): {
+            "message": "Cloud Asset API not used",
+            "remediation": "Enable the Cloud Asset API for the project.",
         },
     }
 
@@ -125,4 +129,11 @@ class GCPInvalidProviderIdError(GCPBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             3008, file=file, original_exception=original_exception, message=message
+        )
+
+
+class GCPCloudAssetAPINotUsedError(GCPBaseException):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            3009, file=file, original_exception=original_exception, message=message
         )
