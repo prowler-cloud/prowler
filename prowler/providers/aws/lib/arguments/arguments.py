@@ -64,7 +64,7 @@ def init_parser(self):
         "-f",
         nargs="+",
         help="AWS region names to run Prowler against",
-        choices=AwsProvider.get_regions_by_partition(),
+        choices=AwsProvider.get_regions(partition=None),
     )
     # AWS Organizations
     aws_orgs_subparser = aws_parser.add_argument_group("AWS Organizations")
