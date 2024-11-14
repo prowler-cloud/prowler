@@ -1345,7 +1345,7 @@ class AwsProvider(Provider):
                 f"{key_error.__class__.__name__}[{key_error.__traceback__.tb_lineno}]: {key_error}"
             )
             raise AWSInvalidPartitionError(
-                message=f"Invalid partition name: {partition}",
+                message=f"Invalid partition: {partition}",
                 file=os.path.basename(__file__),
             )
         except Exception as error:
