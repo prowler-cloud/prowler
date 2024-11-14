@@ -2,7 +2,9 @@ import asyncio
 import os
 import re
 from argparse import ArgumentTypeError
+from itertools import chain
 from os import getenv
+from typing import Union
 from uuid import UUID
 
 import requests
@@ -972,6 +974,35 @@ class AzureProvider(Provider):
                 locations[display_name].append(location.name)
 
         return locations
+
+    def get_regions(self, subscription_ids: Union[list[str], None] = None) -> set:
+        """
+        Retrieves a set of regions available across all subscriptions or specific subscriptions if provided.
+
+        Args:
+            subscription_ids (List[str], optional): A list of subscription display names to filter the regions.
+                If None, regions from all subscriptions are returned.
+
+        Returns:
+            Set[str]: A set containing the unique regions available across the specified subscriptions.
+
+        Examples:
+            >>> provider = AzureProvider(...)
+            >>> provider.get_regions()
+            {'eastus', 'eastus2', 'westus', 'westus2'}
+
+            >>> provider.get_regions(subscription_ids=['Subscription 1'])
+            {'eastus', 'eastus2', 'westus', 'westus2'}
+        """
+        locations = self.get_locations()
+        if subscription_ids is not None:
+            locations = {
+                sid: regions
+                for sid, regions in locations.items()
+                if sid in subscription_ids
+            }
+
+        return set(chain.from_iterable(locations.values()))
 
     @staticmethod
     def validate_static_credentials(
