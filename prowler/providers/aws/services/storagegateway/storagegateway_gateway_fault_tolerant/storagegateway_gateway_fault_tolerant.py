@@ -4,7 +4,7 @@ from prowler.providers.aws.services.storagegateway.storagegateway_client import 
 )
 
 
-class storagegateway_fault_tolerance(Check):
+class storagegateway_gateway_fault_tolerant(Check):
     def execute(self):
         findings = []
         for gateway in storagegateway_client.gateways:
@@ -13,12 +13,10 @@ class storagegateway_fault_tolerance(Check):
             report.resource_id = gateway.id
             report.resource_arn = gateway.arn
             report.status = "FAIL"
-            report.status_extended = f"StorageGateway Gateway {gateway.name} is hosted on AWS. Please ensure this gateway is not used for critical workloads."
+            report.status_extended = f"StorageGateway Gateway {gateway.name} may not be fault tolerant as it is hosted on {gateway.environment}."
             if gateway.environment != "EC2":
                 report.status = "PASS"
-                report.status_extended = (
-                    f"StorageGateway Gateway {gateway.name} is not hosted on AWS."
-                )
+                report.status_extended = f"StorageGateway Gateway {gateway.name} may be fault tolerant as it is hosted on {gateway.environment}."
 
             findings.append(report)
 

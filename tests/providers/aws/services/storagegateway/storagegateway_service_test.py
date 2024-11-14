@@ -145,7 +145,7 @@ class Test_StorageGateway_Service:
         sgw = StorageGateway(aws_provider)
         assert len(sgw.gateways) == 1
         assert sgw.gateways[0].id == f"{test_gateway}"
-        assert sgw.gateways[0].gateway_type == "fsx"
+        assert sgw.gateways[0].type == "fsx"
         assert sgw.gateways[0].name == "test"
         assert (
             sgw.gateways[0].arn

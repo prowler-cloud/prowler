@@ -7,7 +7,7 @@ test_gateway = "sgw-12A3456B"
 test_gateway_arn = f"arn:aws:storagegateway:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:gateway/{test_gateway}"
 
 
-class Test_storagegateway_fault_tolerance:
+class Test_storagegateway_gateway_fault_tolerant:
     def test_no_storagegateway_gateway(self):
         storagegateway_client = mock.MagicMock
         storagegateway_client.gateways = []
@@ -15,11 +15,11 @@ class Test_storagegateway_fault_tolerance:
             "prowler.providers.aws.services.storagegateway.storagegateway_service.StorageGateway",
             storagegateway_client,
         ):
-            from prowler.providers.aws.services.storagegateway.storagegateway_fault_tolerance.storagegateway_fault_tolerance import (
-                storagegateway_fault_tolerance,
+            from prowler.providers.aws.services.storagegateway.storagegateway_gateway_fault_tolerant.storagegateway_gateway_fault_tolerant import (
+                storagegateway_gateway_fault_tolerant,
             )
 
-            check = storagegateway_fault_tolerance()
+            check = storagegateway_gateway_fault_tolerant()
             result = check.execute()
             assert len(result) == 0
 
@@ -31,7 +31,7 @@ class Test_storagegateway_fault_tolerance:
                 id=test_gateway,
                 arn=test_gateway_arn,
                 name="test",
-                gateway_type="fsx",
+                type="fsx",
                 region=AWS_REGION_US_EAST_1,
                 environment="EC2",
             )
@@ -40,17 +40,17 @@ class Test_storagegateway_fault_tolerance:
             "prowler.providers.aws.services.storagegateway.storagegateway_service.StorageGateway",
             storagegateway_client,
         ):
-            from prowler.providers.aws.services.storagegateway.storagegateway_fault_tolerance.storagegateway_fault_tolerance import (
-                storagegateway_fault_tolerance,
+            from prowler.providers.aws.services.storagegateway.storagegateway_gateway_fault_tolerant.storagegateway_gateway_fault_tolerant import (
+                storagegateway_gateway_fault_tolerant,
             )
 
-            check = storagegateway_fault_tolerance()
+            check = storagegateway_gateway_fault_tolerant()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "StorageGateway Gateway test is hosted on AWS. Please ensure this gateway is not used for critical workloads."
+                == "StorageGateway Gateway test may not be fault tolerant as it is hosted on EC2."
             )
             assert result[0].resource_id == f"{test_gateway}"
             assert result[0].region == AWS_REGION_US_EAST_1
@@ -67,7 +67,7 @@ class Test_storagegateway_fault_tolerance:
                 id=test_gateway,
                 arn=test_gateway_arn,
                 name="test",
-                gateway_type="fsx",
+                type="fsx",
                 region=AWS_REGION_US_EAST_1,
                 environment="VMWARE",
             )
@@ -76,17 +76,17 @@ class Test_storagegateway_fault_tolerance:
             "prowler.providers.aws.services.storagegateway.storagegateway_service.StorageGateway",
             storagegateway_client,
         ):
-            from prowler.providers.aws.services.storagegateway.storagegateway_fault_tolerance.storagegateway_fault_tolerance import (
-                storagegateway_fault_tolerance,
+            from prowler.providers.aws.services.storagegateway.storagegateway_gateway_fault_tolerant.storagegateway_gateway_fault_tolerant import (
+                storagegateway_gateway_fault_tolerant,
             )
 
-            check = storagegateway_fault_tolerance()
+            check = storagegateway_gateway_fault_tolerant()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "StorageGateway Gateway test is not hosted on AWS."
+                == "StorageGateway Gateway test may be fault tolerant as it is hosted on VMWARE."
             )
             assert result[0].resource_id == f"{test_gateway}"
             assert result[0].region == AWS_REGION_US_EAST_1

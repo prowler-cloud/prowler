@@ -20,6 +20,7 @@ class StorageGateway(AWSService):
         self.__threading_call__(self._list_gateways)
 
     def _list_file_shares(self, regional_client):
+        logger.info("StorageGateway - List FileShares...")
         try:
             list_file_share_paginator = regional_client.get_paginator(
                 "list_file_shares"
@@ -86,6 +87,7 @@ class StorageGateway(AWSService):
             )
 
     def _list_gateways(self, regional_client):
+        logger.info("StorageGateway - List Gateways...")
         try:
             list_gateway_paginator = regional_client.get_paginator("list_gateways")
             for page in list_gateway_paginator.paginate():
@@ -100,7 +102,7 @@ class StorageGateway(AWSService):
                                 id=gateway["GatewayId"],
                                 arn=gateway["GatewayARN"],
                                 name=gateway["GatewayName"],
-                                gateway_type=gateway["GatewayType"],
+                                type=gateway["GatewayType"],
                                 region=regional_client.region,
                                 environment=gateway["HostEnvironment"],
                             )
@@ -128,6 +130,6 @@ class Gateway(BaseModel):
     id: str
     arn: str
     name: str
-    gateway_type: str
+    type: str
     region: str
     environment: str
