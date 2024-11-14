@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "firehose_stream_encrypted_at_rest",
+  "CheckTitle": "DataFirehose delivery streams should be encrypted at rest.",
+  "CheckType": [
+    "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53 Controls"
+  ],
+  "ServiceName": "firehose",
+  "SubServiceName": "Ensure DataFirehose delivery streams are encrypted at rest.",
+  "ResourceIdTemplate": "arn:partition:firehose:region:account-id:deliverystream/delivery-stream-id",
+  "Severity": "medium",
+  "ResourceType": "AwsKinesisFirehoseDeliveryStream",
+  "Description": "",
+  "Risk": "Without encryption at rest, data in Amazon Kinesis Data Firehose delivery streams is vulnerable to unauthorized access if the storage layer is compromised. This increases the risk of sensitive information exposure, potentially leading to data breaches or non-compliance with security regulations.",
+  "RelatedUrl": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingKMSEncryption.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws firehose update-delivery-stream --delivery-stream-name <delivery-stream-name> --delivery-stream-encryption-configuration-input '{ \"KeyType\": \"CUSTOMER_MANAGED_CMK\", \"KeyARN\": \"<kms-key-arn>\" }'",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/general-policies/ensure-aws-kinesis-firehoses-delivery-stream-is-encrypted/",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/datafirehose-controls.html#datafirehose-1",
+      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Firehose/delivery-stream-encrypted-with-kms-customer-master-keys.html"
+    },
+    "Recommendation": {
+      "Text": "Enable server-side encryption for Kinesis Firehose delivery streams using AWS Key Management Service (KMS). This encrypts data at rest, ensuring that sensitive information remains secure and compliant with regulatory standards.",
+      "Url": "https://docs.aws.amazon.com/firehose/latest/dev/encryption.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
