@@ -1718,6 +1718,15 @@ aws:
         )
         assert not recovered_regions
 
+    def test_get_regions_all_count(self):
+        assert len(AwsProvider.get_regions(partition=None)) == 34
+
+    def test_get_regions_cn_count(self):
+        assert len(AwsProvider.get_regions("aws-cn")) == 2
+
+    def test_get_regions_aws_count(self):
+        assert len(AwsProvider.get_regions(partition="aws")) == 30
+
     def test_get_all_regions(self):
         with patch(
             "prowler.providers.aws.aws_provider.read_aws_regions_file",
