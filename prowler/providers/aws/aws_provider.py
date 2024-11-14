@@ -63,6 +63,7 @@ from prowler.providers.aws.models import (
     AWSMFAInfo,
     AWSOrganizationsInfo,
     AWSSession,
+    Partition,
 )
 from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
@@ -107,7 +108,7 @@ class AwsProvider(Provider):
         """
         Initializes the AWS provider.
 
-        Arguments:
+        Args:
             - retries_max_attempts: The maximum number of retries for the AWS client.
             - role_arn: The ARN of the IAM role to assume.
             - session_duration: The duration of the session in seconds.
@@ -368,7 +369,7 @@ class AwsProvider(Provider):
         """
         get_organizations_info returns a AWSOrganizationsInfo object if the account to be audited is a delegated administrator for AWS Organizations or if the AWS Organizations Role ARN (--organizations-role) is passed.
 
-        Arguments:
+        Args:
         - organizations_session: needs to be a Session object with permissions to do organizations:DescribeAccount and organizations:ListTagsForResource.
         - aws_account_id: is the AWS Account ID from which we want to get the AWS Organizations account metadata
 
@@ -660,7 +661,7 @@ class AwsProvider(Provider):
         """
         get_available_aws_service_regions returns the available regions for the given service and partition.
 
-        Arguments:
+        Args:
             - service: The AWS service name.
             - partition: The AWS partition name. Default is "aws".
             - audited_regions: A set of regions to audit. Default is None.
@@ -1274,7 +1275,7 @@ class AwsProvider(Provider):
         """
         Create an STS session client.
 
-        Parameters:
+        Args:
         - session (session.Session): The AWS session object.
         - aws_region (str): The AWS region to use for the session.
 
@@ -1299,42 +1300,57 @@ class AwsProvider(Provider):
             raise error
 
     @staticmethod
-    def get_regions_by_partition(partition: str = None) -> set:
+    def get_regions(partition: Partition = Partition.aws) -> set:
         """
         Get the available AWS regions from the AWS services JSON file with the ability of filtering by partition.
 
         Args:
-            - partition (str): The AWS partition name. Default is None.
+            partition (str): The AWS partition to retrieve regions for. Defaults to "aws".
 
         Returns:
-            set: A set of available AWS regions. All if no `partition` is especified.
+            set: A set of region names.
+
+        Raises:
+            AWSInvalidPartitionError: If the provided partition name is invalid.
+
+        Example:
+            >>> AwsProvider.get_regions("aws")
+            {"af-south-1"}
         """
+
         try:
+            regions = set()
             data = read_aws_regions_file()
 
-            regions = set()
             if partition is None:
                 for service in data["services"].values():
                     for partition in service["regions"]:
-                        for item in service["regions"][partition]:
-                            regions.add(item)
+                        regions.update(service["regions"][partition])
             else:
+                partition = Partition(partition)
                 for service in data["services"].values():
-                    try:
-                        for item in service["regions"][partition]:
-                            regions.add(item)
-                    except KeyError as key_error:
-                        logger.error(
-                            f"{key_error.__class__.__name__}[{key_error.__traceback__.tb_lineno}]: {key_error}"
-                        )
-                        raise AWSInvalidPartitionError(
-                            message=f"Invalid partition name: {partition}",
-                            file=os.path.basename(__file__),
-                        )
+                    regions.update(service["regions"][partition.value])
+
             return regions
+        except ValueError as value_error:
+            logger.error(
+                f"{value_error.__class__.__name__}[{value_error.__traceback__.tb_lineno}]: {value_error}"
+            )
+            raise AWSInvalidPartitionError(
+                message=f"Invalid partition: {partition}",
+                file=os.path.basename(__file__),
+            )
+        except KeyError as key_error:
+            logger.error(
+                f"{key_error.__class__.__name__}[{key_error.__traceback__.tb_lineno}]: {key_error}"
+            )
+            raise AWSInvalidPartitionError(
+                message=f"Invalid partition: {partition}",
+                file=os.path.basename(__file__),
+            )
         except Exception as error:
             logger.error(f"{error.__class__.__name__}: {error}")
-            return set()
+            raise error
 
 
 def read_aws_regions_file() -> dict:

@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
+from enum import Enum
 
 from boto3.session import Session
 from botocore.config import Config
@@ -80,6 +81,29 @@ class AWSCallerIdentity:
 class AWSMFAInfo:
     arn: str
     totp: str
+
+
+class Partition(str, Enum):
+    """
+    Enum class representing different AWS partitions.
+
+    Attributes:
+        aws (str): Represents the standard AWS commercial regions.
+        aws_cn (str): Represents the AWS China regions.
+        aws_us_gov (str): Represents the AWS GovCloud (US) Regions.
+        aws_iso (str): Represents the AWS ISO (US) Regions.
+        aws_iso_b (str): Represents the AWS ISOB (US) Regions.
+        aws_iso_e (str): Represents the AWS ISOE (Europe) Regions.
+        aws_iso_f (str): Represents the AWS ISOF Regions.
+    """
+
+    aws = "aws"
+    aws_cn = "aws-cn"
+    aws_us_gov = "aws-us-gov"
+    aws_iso = "aws-iso"
+    aws_iso_b = "aws-iso-b"
+    aws_iso_e = "aws-iso-e"
+    aws_iso_f = "aws-iso-f"
 
 
 class AWSOutputOptions(ProviderOutputOptions):
