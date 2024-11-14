@@ -3,7 +3,11 @@ from unittest.mock import patch
 import botocore
 from moto import mock_aws
 
-from prowler.providers.aws.services.kinesis.kinesis_service import Kinesis, StreamStatus
+from prowler.providers.aws.services.kinesis.kinesis_service import (
+    EncryptionType,
+    Kinesis,
+    StreamStatus,
+)
 from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
 
 make_api_call = botocore.client.BaseClient._make_api_call
@@ -28,6 +32,8 @@ def mock_make_api_call(self, operation_name, kwarg):
                 "StreamARN": "arn:aws:kinesis:us-east-1:123456789012:stream/test-stream",
                 "StreamStatus": "ACTIVE",
                 "Tags": [{"Key": "test_tag", "Value": "test_value"}],
+                "EncryptionType": "KMS",
+                "RetentionPeriodHours": 24,
             }
         }
     if operation_name == "ListTagsForStream":
@@ -72,3 +78,17 @@ class Test_Kinesis_Service:
         assert kinesis.streams[arn].tags == [{"Key": "test_tag", "Value": "test_value"}]
         assert kinesis.streams[arn].region == AWS_REGION_US_EAST_1
         assert kinesis.streams[arn].arn == arn
+
+    @mock_aws
+    def test_describe_stream(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        kinesis = Kinesis(aws_provider)
+
+        arn = "arn:aws:kinesis:us-east-1:123456789012:stream/test-stream"
+        assert kinesis.streams[arn].name == "test-stream"
+        assert kinesis.streams[arn].status == StreamStatus.ACTIVE
+        assert kinesis.streams[arn].tags == [{"Key": "test_tag", "Value": "test_value"}]
+        assert kinesis.streams[arn].region == AWS_REGION_US_EAST_1
+        assert kinesis.streams[arn].arn == arn
+        assert kinesis.streams[arn].encrypted_at_rest == EncryptionType.KMS
+        assert kinesis.streams[arn].retention_period == 24
