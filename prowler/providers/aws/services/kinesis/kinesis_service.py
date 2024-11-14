@@ -94,4 +94,4 @@ class Stream(BaseModel):
     status: StreamStatus
     tags: Optional[List[Dict[str, str]]] = Field(default_factory=list)
     encrypted_at_rest: EncryptionType = EncryptionType.NONE
-    retention_period: int = 24 # 1 day
+    retention_period: int = 24  # 1 day
