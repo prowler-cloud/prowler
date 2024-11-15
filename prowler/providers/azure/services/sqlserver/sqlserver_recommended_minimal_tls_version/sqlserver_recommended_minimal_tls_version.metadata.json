@@ -1,6 +1,6 @@
 {
   "Provider": "azure",
-  "CheckID": "sqlserver_minimal_tls_version",
+  "CheckID": "sqlserver_recommended_minimal_tls_version",
   "CheckTitle": "Ensure SQL server has a recommended minimal TLS version required.",
   "CheckType": [],
   "ServiceName": "sqlserver",

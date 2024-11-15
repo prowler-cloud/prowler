@@ -13,7 +13,7 @@ from tests.providers.azure.azure_fixtures import (
 )
 
 
-class Test_sqlserver_minimal_tls_version:
+class Test_sqlserver_recommended_minimal_tls_version:
     def test_no_sql_servers(self):
         sqlserver_client = mock.MagicMock
         sqlserver_client.sql_servers = {}
@@ -25,11 +25,15 @@ class Test_sqlserver_minimal_tls_version:
             "prowler.providers.azure.services.sqlserver.sqlserver_client.sqlserver_client",
             new=sqlserver_client,
         ):
-            from prowler.providers.azure.services.sqlserver.sqlserver_minimal_tls_version.sqlserver_minimal_tls_version import (
-                sqlserver_minimal_tls_version,
+            from prowler.providers.azure.services.sqlserver.sqlserver_recommended_minimal_tls_version.sqlserver_recommended_minimal_tls_version import (
+                sqlserver_recommended_minimal_tls_version,
             )
 
-            check = sqlserver_minimal_tls_version()
+            sqlserver_client.audit_config = {
+                "recommended_minimal_tls_versions": ["1.2", "1.3"]
+            }
+
+            check = sqlserver_recommended_minimal_tls_version()
             result = check.execute()
             assert len(result) == 0
 
@@ -68,20 +72,24 @@ class Test_sqlserver_minimal_tls_version:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
-            "prowler.providers.azure.services.sqlserver.sqlserver_minimal_tls_version.sqlserver_minimal_tls_version.sqlserver_client",
+            "prowler.providers.azure.services.sqlserver.sqlserver_recommended_minimal_tls_version.sqlserver_recommended_minimal_tls_version.sqlserver_client",
             new=sqlserver_client,
         ):
-            from prowler.providers.azure.services.sqlserver.sqlserver_minimal_tls_version.sqlserver_minimal_tls_version import (
-                sqlserver_minimal_tls_version,
+            from prowler.providers.azure.services.sqlserver.sqlserver_recommended_minimal_tls_version.sqlserver_recommended_minimal_tls_version import (
+                sqlserver_recommended_minimal_tls_version,
             )
 
-            check = sqlserver_minimal_tls_version()
+            sqlserver_client.audit_config = {
+                "recommended_minimal_tls_versions": ["1.2", "1.3"]
+            }
+
+            check = sqlserver_recommended_minimal_tls_version()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"SQL Server {sql_server_name} from subscription {AZURE_SUBSCRIPTION_ID} has no or an deprecated minimal TLS version set."
+                == f"SQL Server {sql_server_name} from subscription {AZURE_SUBSCRIPTION_ID} is using TLS version 1.0 as minimal accepted which is not recommended. Please use one of the recommended versions: {', '.join(sqlserver_client.audit_config['recommended_minimal_tls_versions'])}."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == sql_server_name
@@ -123,20 +131,24 @@ class Test_sqlserver_minimal_tls_version:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
-            "prowler.providers.azure.services.sqlserver.sqlserver_minimal_tls_version.sqlserver_minimal_tls_version.sqlserver_client",
+            "prowler.providers.azure.services.sqlserver.sqlserver_recommended_minimal_tls_version.sqlserver_recommended_minimal_tls_version.sqlserver_client",
             new=sqlserver_client,
         ):
-            from prowler.providers.azure.services.sqlserver.sqlserver_minimal_tls_version.sqlserver_minimal_tls_version import (
-                sqlserver_minimal_tls_version,
+            from prowler.providers.azure.services.sqlserver.sqlserver_recommended_minimal_tls_version.sqlserver_recommended_minimal_tls_version import (
+                sqlserver_recommended_minimal_tls_version,
             )
 
-            check = sqlserver_minimal_tls_version()
+            sqlserver_client.audit_config = {
+                "recommended_minimal_tls_versions": ["1.2", "1.3"]
+            }
+
+            check = sqlserver_recommended_minimal_tls_version()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"SQL Server {sql_server_name} from subscription {AZURE_SUBSCRIPTION_ID} has no or an deprecated minimal TLS version set."
+                == f"SQL Server {sql_server_name} from subscription {AZURE_SUBSCRIPTION_ID} is using TLS version  as minimal accepted which is not recommended. Please use one of the recommended versions: {', '.join(sqlserver_client.audit_config['recommended_minimal_tls_versions'])}."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == sql_server_name
@@ -178,14 +190,18 @@ class Test_sqlserver_minimal_tls_version:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
-            "prowler.providers.azure.services.sqlserver.sqlserver_minimal_tls_version.sqlserver_minimal_tls_version.sqlserver_client",
+            "prowler.providers.azure.services.sqlserver.sqlserver_recommended_minimal_tls_version.sqlserver_recommended_minimal_tls_version.sqlserver_client",
             new=sqlserver_client,
         ):
-            from prowler.providers.azure.services.sqlserver.sqlserver_minimal_tls_version.sqlserver_minimal_tls_version import (
-                sqlserver_minimal_tls_version,
+            from prowler.providers.azure.services.sqlserver.sqlserver_recommended_minimal_tls_version.sqlserver_recommended_minimal_tls_version import (
+                sqlserver_recommended_minimal_tls_version,
             )
 
-            check = sqlserver_minimal_tls_version()
+            sqlserver_client.audit_config = {
+                "recommended_minimal_tls_versions": ["1.2", "1.3"]
+            }
+
+            check = sqlserver_recommended_minimal_tls_version()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
