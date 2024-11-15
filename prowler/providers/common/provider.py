@@ -211,6 +211,14 @@ class Provider(ABC):
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
                     )
+                elif "github" in provider_class_name.lower():
+                    provider_class(
+                        personal_access_token=arguments.personal_access_token,
+                        github_app=arguments.github_app,
+                        oauth_app=arguments.oauth_app,
+                        config_content=arguments.config_content,
+                        config_path=arguments.config_file,
+                    )
 
         except TypeError as error:
             logger.critical(
