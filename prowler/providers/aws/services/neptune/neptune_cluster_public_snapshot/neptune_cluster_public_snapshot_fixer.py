@@ -8,6 +8,18 @@ def fixer(resource_id: str, region: str) -> bool:
     Specifically, this fixer removes the 'all' value from the 'restore' attribute to
     prevent the snapshot from being publicly accessible.
 
+    Requires the rds:ModifyDBClusterSnapshotAttribute permissions.
+    {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Action": "rds:ModifyDBClusterSnapshotAttribute",
+                "Resource": "*"
+            }
+        ]
+    }
+
     Args:
         resource_id (str): The DB cluster snapshot identifier.
         region (str): AWS region where the snapshot exists.
