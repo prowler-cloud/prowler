@@ -1,19 +1,19 @@
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.outputs.compliance.compliance_output import ComplianceOutput
-from prowler.lib.outputs.compliance.ens.models import AzureENSModel
+from prowler.lib.outputs.compliance.ens.models import GCPENSModel
 from prowler.lib.outputs.finding import Finding
 
 
-class AzureENS(ComplianceOutput):
+class GCPENS(ComplianceOutput):
     """
-    This class represents the Azure ENS compliance output.
+    This class represents the GCP ENS compliance output.
 
     Attributes:
         - _data (list): A list to store transformed data from findings.
         - _file_descriptor (TextIOWrapper): A file descriptor to write data to a file.
 
     Methods:
-        - transform: Transforms findings into Azure ENS compliance format.
+        - transform: Transforms findings into GCP ENS compliance format.
     """
 
     def transform(
@@ -39,10 +39,10 @@ class AzureENS(ComplianceOutput):
             for requirement in compliance.Requirements:
                 if requirement.Id in finding_requirements:
                     for attribute in requirement.Attributes:
-                        compliance_row = AzureENSModel(
+                        compliance_row = GCPENSModel(
                             Provider=finding.provider,
                             Description=compliance.Description,
-                            SubscriptionId=finding.account_name,
+                            ProjectId=finding.account_uid,
                             Location=finding.region,
                             AssessmentDate=str(finding.timestamp),
                             Requirements_Id=requirement.Id,
@@ -72,10 +72,10 @@ class AzureENS(ComplianceOutput):
         for requirement in compliance.Requirements:
             if not requirement.Checks:
                 for attribute in requirement.Attributes:
-                    compliance_row = AzureENSModel(
+                    compliance_row = GCPENSModel(
                         Provider=compliance.Provider.lower(),
                         Description=compliance.Description,
-                        SubscriptionId="",
+                        ProjectId="",
                         Location="",
                         AssessmentDate=str(finding.timestamp),
                         Requirements_Id=requirement.Id,
