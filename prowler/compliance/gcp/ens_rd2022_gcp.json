@@ -56,7 +56,7 @@
       "Description": "",
       "Attributes": [
         {
-          "IdGrupoControl": "",
+          "IdGrupoControl": "opc.acc.1.r1",
           "Marco": "operacional",
           "Categoria": "control de acceso",
           "DescripcionControl": "El administrador del sistema será el responsable de mantener la lista de usuarios autorizados a través de los distintos tipos de cuentas que gestiona GCP.",
@@ -158,7 +158,7 @@
       "Description": "Cuentas de servicio",
       "Attributes": [
         {
-          "IdGrupoControl": "",
+          "IdGrupoControl": "op.acc.3",
           "Marco": "operacional",
           "Categoria": "control de acceso",
           "DescripcionControl": "Las cuentas de servicio no pueden tener privilegios de administrador. GCP IAM.",
@@ -309,7 +309,7 @@
       ]
     },
     {
-      "Id": "",
+      "Id": "op.acc.6.r9.gcp.ar.1",
       "Description": "Acceso remoto",
       "Attributes": [
         {
@@ -370,7 +370,7 @@
           "Categoria": "explotación",
           "DescripcionControl": "Permitir visualizar de forma contínua el estado de todos los activos del sistema.Cloud Asset Inventory  proporciona una base de datos con un histórico de los recursos de GCP.",
           "Nivel": "alto",
-          "Tipo": "recomendación",
+          "Tipo": "recomendacion",
           "Dimensiones": [
             "confidencialidad",
             "integridad",
@@ -388,14 +388,14 @@
       ]
     },
     {
-      "Id": "",
+      "Id": "op.exp.4.gcp.mc.1",
       "Description": "Monitorización contínua",
       "Attributes": [
         {
           "IdGrupoControl": "op.exp.4.r4",
           "Marco": "operacional",
           "Categoria": "explotación",
-          "DescripcionControl": "",
+          "DescripcionControl": "Desplegar a nivel de sistema una estrategia de monitorización continua de amenazas y vulnerabilidades detallando: indicadores críticos de seguridad, política de aplicación de parches y criterios de revisión regular y excepcional de amenazas del sistema.",
           "Nivel": "alto",
           "Tipo": "refuerzo",
           "Dimensiones": [
@@ -422,7 +422,7 @@
           "IdGrupoControl": "op.exp.8",
           "Marco": "operacional",
           "Categoria": "explotación",
-          "DescripcionControl": "Configuración de las reglas de actividad de red para registrar los cambios ",
+          "DescripcionControl": "Configuración de las reglas de actividad de red para registrar los cambios",
           "Nivel": "alto",
           "Tipo": "requisito",
           "Dimensiones": [
@@ -512,7 +512,7 @@
       "Description": "Protección de claves criptográficas",
       "Attributes": [
         {
-          "IdGrupoControl": "op.exp.10 ",
+          "IdGrupoControl": "op.exp.10",
           "Marco": "operacional",
           "Categoria": "explotación",
           "DescripcionControl": "Las claves criptográficas no deben estar expuestas, deben ser protegidas por el administrador.",
@@ -538,7 +538,7 @@
       "Description": "Detección de intrusión",
       "Attributes": [
         {
-          "IdGrupoControl": "op.mon.1 ",
+          "IdGrupoControl": "op.mon.1",
           "Marco": "operacional",
           "Categoria": "monitorización del sistema",
           "DescripcionControl": "Habilitación del contenedor GCR para el registro de repositorios Docker",
@@ -564,7 +564,7 @@
       "Description": "Vigilancia",
       "Attributes": [
         {
-          "IdGrupoControl": "op.mon.3 ",
+          "IdGrupoControl": "op.mon.3",
           "Marco": "operacional",
           "Categoria": "monitorización del sistema",
           "DescripcionControl": "Se deberá habilitar la verificación de vulnerabilidades para los servicios de GCP",
@@ -591,7 +591,7 @@
       "Description": "Protección de la confidencialidad",
       "Attributes": [
         {
-          "IdGrupoControl": "mp.com.2 ",
+          "IdGrupoControl": "mp.com.2",
           "Marco": "medidas de protección",
           "Categoria": "protección de las comunicaciones",
           "DescripcionControl": "Se deberá asegurar que los balanceadores de carga HTTPS o SSL no permiten políticas poco seguras.",
