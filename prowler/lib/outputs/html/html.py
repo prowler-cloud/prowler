@@ -34,7 +34,13 @@ class HTML(Output):
                     row_class = "table-info"
                 elif finding.status == "FAIL":
                     row_class = "table-danger"
-
+                if finding.resource_tags is not None:
+                    for tag in finding.resource_tags:
+                        if tag == "yor_trace":
+                            finding.resource_tags[tag] = f'<a class="{finding.resource_tags[tag]}" href="https://github.com/search?q={finding.resource_tags[tag]}&type=code">{finding.resource_tags[tag]}</a>'
+                        if tag == "git_commit":
+                            finding.resource_tags[tag] = f'<a class="{finding.resource_tags[tag]}" href="https://github.com/search?q={finding.resource_tags[tag]}&type=commits">{finding.resource_tags[tag]}</a>'
+ 
                 self._data.append(
                     f"""
                         <tr class="{row_class}">
