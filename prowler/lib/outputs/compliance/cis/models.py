@@ -38,7 +38,7 @@ class AzureCISModel(BaseModel):
 
     Provider: str
     Description: str
-    SubscriptionId: str
+    Subscription: str
     Location: str
     AssessmentDate: str
     Requirements_Id: str
