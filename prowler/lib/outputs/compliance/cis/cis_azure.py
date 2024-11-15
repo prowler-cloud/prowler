@@ -42,7 +42,7 @@ class AzureCIS(ComplianceOutput):
                         compliance_row = AzureCISModel(
                             Provider=finding.provider,
                             Description=compliance.Description,
-                            Subscription=finding.account_name,
+                            SubscriptionId=finding.account_uid,
                             Location=finding.region,
                             AssessmentDate=str(finding.timestamp),
                             Requirements_Id=requirement.Id,
@@ -73,7 +73,7 @@ class AzureCIS(ComplianceOutput):
                     compliance_row = AzureCISModel(
                         Provider=compliance.Provider.lower(),
                         Description=compliance.Description,
-                        Subscription="",
+                        SubscriptionId="",
                         Location="",
                         AssessmentDate=str(finding.timestamp),
                         Requirements_Id=requirement.Id,
