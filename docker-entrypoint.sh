@@ -8,7 +8,7 @@ apply_migrations() {
 
 apply_fixtures() {
   echo "Applying Django fixtures..."
-  for fixture in api/fixtures/*.json; do
+  for fixture in api/fixtures/dev/*.json; do
     if [ -f "$fixture" ]; then
       echo "Loading $fixture"
       poetry run python manage.py loaddata "$fixture" --database admin

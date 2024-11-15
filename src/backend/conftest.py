@@ -26,6 +26,7 @@ from api.models import (
     Membership,
     ProviderSecret,
     Invitation,
+    ComplianceOverview,
 )
 from api.rls import Tenant
 from api.v1.serializers import TokenSerializer
@@ -86,7 +87,7 @@ def create_test_user(django_db_setup, django_db_blocker):
 def authenticated_client(create_test_user, tenants_fixture, client):
     client.user = create_test_user
     serializer = TokenSerializer(
-        data={"type": "Token", "email": TEST_USER, "password": TEST_PASSWORD}
+        data={"type": "tokens", "email": TEST_USER, "password": TEST_PASSWORD}
     )
     serializer.is_valid()
     access_token = serializer.validated_data["access"]
@@ -98,7 +99,7 @@ def authenticated_client(create_test_user, tenants_fixture, client):
 def authenticated_api_client(create_test_user, tenants_fixture):
     client = APIClient()
     serializer = TokenSerializer(
-        data={"type": "Token", "email": TEST_USER, "password": TEST_PASSWORD}
+        data={"type": "tokens", "email": TEST_USER, "password": TEST_PASSWORD}
     )
     serializer.is_valid()
     access_token = serializer.validated_data["access"]
@@ -404,12 +405,125 @@ def findings_fixture(scans_fixture, resources_fixture):
     return finding1, finding2
 
 
+@pytest.fixture
+def compliance_overviews_fixture(scans_fixture, tenants_fixture):
+    tenant = tenants_fixture[0]
+    scan1, scan2, scan3 = scans_fixture
+
+    compliance_overview1 = ComplianceOverview.objects.create(
+        tenant=tenant,
+        scan=scan1,
+        compliance_id="aws_account_security_onboarding_aws",
+        framework="AWS-Account-Security-Onboarding",
+        version="1.0",
+        description="Description for AWS Account Security Onboarding",
+        region="eu-west-1",
+        requirements={
+            "requirement1": {
+                "name": "Requirement 1",
+                "checks": {"check1.1": "PASS", "check1.2": None},
+                "status": "PASS",
+                "attributes": [],
+                "description": "Description of requirement 1",
+                "checks_status": {
+                    "total": 2,
+                    "failed": 0,
+                    "passed": 2,
+                },
+            },
+            "requirement2": {
+                "name": "Requirement 2",
+                "checks": {"check2.1": "PASS", "check2.2": "PASS"},
+                "status": "PASS",
+                "attributes": [],
+                "description": "Description of requirement 2",
+                "checks_status": {
+                    "total": 2,
+                    "failed": 0,
+                    "passed": 2,
+                },
+            },
+            "requirement3": {
+                "name": "Requirement 3 - manual",
+                "checks": {},
+                "status": "PASS",
+                "attributes": [],
+                "description": "Description of requirement 2",
+                "checks_status": {
+                    "total": 0,
+                    "failed": 0,
+                    "passed": 0,
+                },
+            },
+        },
+        requirements_passed=2,
+        requirements_failed=0,
+        requirements_manual=1,
+        total_requirements=3,
+    )
+
+    compliance_overview2 = ComplianceOverview.objects.create(
+        tenant=tenant,
+        scan=scan1,
+        compliance_id="aws_account_security_onboarding_aws",
+        framework="AWS-Account-Security-Onboarding",
+        version="1.0",
+        description="Description for AWS Account Security Onboarding",
+        region="eu-west-2",
+        requirements={
+            "requirement1": {
+                "name": "Requirement 1",
+                "checks": {"check1.1": "PASS", "check1.2": None},
+                "status": "PASS",
+                "attributes": [],
+                "description": "Description of requirement 1",
+                "checks_status": {
+                    "total": 2,
+                    "failed": 0,
+                    "passed": 2,
+                },
+            },
+            "requirement2": {
+                "name": "Requirement 2",
+                "checks": {"check2.1": "PASS", "check2.2": "FAIL"},
+                "status": "FAIL",
+                "attributes": [],
+                "description": "Description of requirement 2",
+                "checks_status": {
+                    "total": 2,
+                    "failed": 1,
+                    "passed": 1,
+                },
+            },
+            "requirement3": {
+                "name": "Requirement 3 - manual",
+                "checks": {},
+                "status": "PASS",
+                "attributes": [],
+                "description": "Description of requirement 2",
+                "checks_status": {
+                    "total": 0,
+                    "failed": 0,
+                    "passed": 0,
+                },
+            },
+        },
+        requirements_passed=1,
+        requirements_failed=1,
+        requirements_manual=1,
+        total_requirements=3,
+    )
+
+    # Return the created compliance overviews
+    return compliance_overview1, compliance_overview2
+
+
 def get_api_tokens(
     api_client, user_email: str, user_password: str, tenant_id: str = None
 ) -> tuple[str, str]:
     json_body = {
         "data": {
-            "type": "Token",
+            "type": "tokens",
             "attributes": {
                 "email": user_email,
                 "password": user_password,

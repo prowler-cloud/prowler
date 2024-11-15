@@ -23,6 +23,9 @@ class Tenant(models.Model):
     class Meta:
         db_table = "tenants"
 
+    class JSONAPIMeta:
+        resource_name = "tenants"
+
 
 class RowLevelSecurityConstraint(models.BaseConstraint):
     """

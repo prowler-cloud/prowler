@@ -105,6 +105,9 @@ class User(AbstractBaseUser):
             )
         ]
 
+    class JSONAPIMeta:
+        resource_name = "users"
+
 
 class Membership(models.Model):
     class RoleChoices(models.TextChoices):
@@ -140,6 +143,9 @@ class Membership(models.Model):
                 statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
             ),
         ]
+
+    class JSONAPIMeta:
+        resource_name = "memberships"
 
 
 class Provider(RowLevelSecurityProtectedModel):
@@ -234,6 +240,9 @@ class Provider(RowLevelSecurityProtectedModel):
             ),
         ]
 
+    class JSONAPIMeta:
+        resource_name = "providers"
+
 
 class ProviderGroup(RowLevelSecurityProtectedModel):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
@@ -322,6 +331,9 @@ class Task(RowLevelSecurityProtectedModel):
             ),
         ]
 
+    class JSONAPIMeta:
+        resource_name = "tasks"
+
 
 class Scan(RowLevelSecurityProtectedModel):
     class TriggerChoices(models.TextChoices):
@@ -378,6 +390,9 @@ class Scan(RowLevelSecurityProtectedModel):
                 name="scans_prov_state_trig_sche_idx",
             ),
         ]
+
+    class JSONAPIMeta:
+        resource_name = "scans"
 
 
 class ResourceTag(RowLevelSecurityProtectedModel):
@@ -501,6 +516,9 @@ class Resource(RowLevelSecurityProtectedModel):
                 statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
             ),
         ]
+
+    class JSONAPIMeta:
+        resource_name = "resources"
 
 
 class ResourceTagMapping(RowLevelSecurityProtectedModel):
@@ -628,6 +646,9 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
             GinIndex(fields=["text_search"], name="gin_findings_search_idx"),
         ]
 
+    class JSONAPIMeta:
+        resource_name = "findings"
+
     def add_resources(self, resources: list[Resource] | None):
         # Add new relationships with the tenant_id field
         for resource in resources:
@@ -717,6 +738,9 @@ class ProviderSecret(RowLevelSecurityProtectedModel):
             ),
         ]
 
+    class JSONAPIMeta:
+        resource_name = "provider-secrets"
+
     @property
     def secret(self):
         if isinstance(self._secret, memoryview):
@@ -778,3 +802,55 @@ class Invitation(RowLevelSecurityProtectedModel):
                 statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
             ),
         ]
+
+    class JSONAPIMeta:
+        resource_name = "invitations"
+
+
+class ComplianceOverview(RowLevelSecurityProtectedModel):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+    compliance_id = models.CharField(max_length=100, blank=False, null=False)
+    framework = models.CharField(max_length=100, blank=False, null=False)
+    version = models.CharField(max_length=50, blank=True)
+    description = models.TextField(blank=True)
+    region = models.CharField(max_length=50, blank=True)
+    requirements = models.JSONField(default=dict)
+    requirements_passed = models.IntegerField(default=0)
+    requirements_failed = models.IntegerField(default=0)
+    requirements_manual = models.IntegerField(default=0)
+    total_requirements = models.IntegerField(default=0)
+
+    scan = models.ForeignKey(
+        Scan,
+        on_delete=models.CASCADE,
+        related_name="compliance_overviews",
+        related_query_name="compliance_overview",
+        null=True,
+    )
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "compliance_overviews"
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=("tenant", "scan", "compliance_id", "region"),
+                name="unique_tenant_scan_region_compliance_by_compliance_overview",
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "DELETE"],
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["compliance_id"], name="comp_ov_cp_id_idx"),
+            models.Index(fields=["requirements_failed"], name="comp_ov_req_fail_idx"),
+            models.Index(
+                fields=["compliance_id", "requirements_failed"],
+                name="comp_ov_cp_id_req_fail_idx",
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "compliance-overviews"

@@ -26,7 +26,7 @@ def test_check_resources_between_different_tenants(
     # Create a provider on tenant 1
     provider_data = {
         "data": {
-            "type": "Provider",
+            "type": "providers",
             "attributes": {
                 "alias": "test_provider_tenant_1",
                 "provider": "aws",
@@ -46,7 +46,7 @@ def test_check_resources_between_different_tenants(
     # Create a provider on tenant 2
     provider_data = {
         "data": {
-            "type": "Provider",
+            "type": "providers",
             "attributes": {
                 "alias": "test_provider_tenant_2",
                 "provider": "aws",

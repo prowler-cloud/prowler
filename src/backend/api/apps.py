@@ -7,3 +7,6 @@ class ApiConfig(AppConfig):
 
     def ready(self):
         from api import signals  # noqa: F401
+        from api.compliance import load_prowler_compliance
+
+        load_prowler_compliance()

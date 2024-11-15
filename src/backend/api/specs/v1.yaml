@@ -7,6 +7,232 @@ info:
 
     This file is auto-generated.
 paths:
+  /api/v1/compliance-overviews:
+    get:
+      operationId: compliance_overviews_list
+      description: Retrieve an overview of all the compliance in a given scan. If
+        no region filters are provided, the region with the most fails will be returned
+        by default.
+      summary: List compliance overviews for a scan
+      parameters:
+      - in: query
+        name: fields[compliance-overviews]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - inserted_at
+            - compliance_id
+            - framework
+            - version
+            - requirements_status
+            - region
+            - provider_type
+            - scan
+            - url
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[compliance_id]
+        schema:
+          type: string
+      - in: query
+        name: filter[compliance_id__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[framework]
+        schema:
+          type: string
+      - in: query
+        name: filter[framework__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[framework__iexact]
+        schema:
+          type: string
+      - in: query
+        name: filter[inserted_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__date]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[inserted_at__lte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          enum:
+          - aws
+          - azure
+          - gcp
+          - kubernetes
+        description: |-
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - aws
+            - azure
+            - gcp
+            - kubernetes
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+        explode: false
+        style: form
+      - in: query
+        name: filter[region]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[scan_id]
+        schema:
+          type: string
+          format: uuid
+        description: Related scan ID.
+        required: true
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: filter[version]
+        schema:
+          type: string
+      - in: query
+        name: filter[version__icontains]
+        schema:
+          type: string
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page[size]
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - inserted_at
+            - -inserted_at
+            - compliance_id
+            - -compliance_id
+            - framework
+            - -framework
+            - region
+            - -region
+        explode: false
+      tags:
+      - Compliance Overview
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedComplianceOverviewList'
+          description: ''
+  /api/v1/compliance-overviews/{id}:
+    get:
+      operationId: compliance_overviews_retrieve
+      description: Fetch detailed information about a specific compliance overview
+        by its ID, including detailed requirement information and check's status.
+      summary: Retrieve data from a specific compliance overview
+      parameters:
+      - in: query
+        name: fields[compliance-overviews]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - inserted_at
+            - compliance_id
+            - framework
+            - version
+            - requirements_status
+            - region
+            - provider_type
+            - scan
+            - url
+            - description
+            - requirements
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this compliance overview.
+        required: true
+      tags:
+      - Compliance Overview
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ComplianceOverviewFullResponse'
+          description: ''
   /api/v1/findings:
     get:
       operationId: findings_list
@@ -15,7 +241,7 @@ paths:
       summary: List all findings
       parameters:
       - in: query
-        name: fields[Finding]
+        name: fields[findings]
         schema:
           type: array
           items:
@@ -71,6 +297,21 @@ paths:
           type: array
           items:
             type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
         description: Multiple values may be separated by commas.
         explode: false
         style: form
@@ -458,7 +699,7 @@ paths:
       summary: Retrieve data from a specific finding
       parameters:
       - in: query
-        name: fields[Finding]
+        name: fields[findings]
         schema:
           type: array
           items:
@@ -837,7 +1078,7 @@ paths:
       summary: List all providers
       parameters:
       - in: query
-        name: fields[Provider]
+        name: fields[providers]
         schema:
           type: array
           items:
@@ -849,7 +1090,6 @@ paths:
             - uid
             - alias
             - connection
-            - scanner_args
             - secret
             - url
         description: endpoint return only specific fields in the response on a per-type
@@ -1047,7 +1287,7 @@ paths:
       summary: Retrieve data from a provider
       parameters:
       - in: query
-        name: fields[Provider]
+        name: fields[providers]
         schema:
           type: array
           items:
@@ -1059,7 +1299,6 @@ paths:
             - uid
             - alias
             - connection
-            - scanner_args
             - secret
             - url
         description: endpoint return only specific fields in the response on a per-type
@@ -1175,7 +1414,7 @@ paths:
       summary: List all secrets
       parameters:
       - in: query
-        name: fields[ProviderSecret]
+        name: fields[provider-secrets]
         schema:
           type: array
           items:
@@ -1293,7 +1532,7 @@ paths:
       summary: Retrieve data from a secret
       parameters:
       - in: query
-        name: fields[ProviderSecret]
+        name: fields[provider-secrets]
         schema:
           type: array
           items:
@@ -1387,7 +1626,7 @@ paths:
       summary: List all resources
       parameters:
       - in: query
-        name: fields[Resource]
+        name: fields[resources]
         schema:
           type: array
           items:
@@ -1679,7 +1918,7 @@ paths:
       summary: Retrieve data for a resource
       parameters:
       - in: query
-        name: fields[Resource]
+        name: fields[resources]
         schema:
           type: array
           items:
@@ -1737,7 +1976,7 @@ paths:
       summary: List all scans
       parameters:
       - in: query
-        name: fields[Scan]
+        name: fields[scans]
         schema:
           type: array
           items:
@@ -1748,7 +1987,6 @@ paths:
             - state
             - unique_resource_count
             - progress
-            - scanner_args
             - duration
             - provider
             - task
@@ -1975,7 +2213,7 @@ paths:
       summary: Retrieve data from a specific scan
       parameters:
       - in: query
-        name: fields[Scan]
+        name: fields[scans]
         schema:
           type: array
           items:
@@ -1986,7 +2224,6 @@ paths:
             - state
             - unique_resource_count
             - progress
-            - scanner_args
             - duration
             - provider
             - task
@@ -2059,7 +2296,7 @@ paths:
       summary: List all tasks
       parameters:
       - in: query
-        name: fields[Task]
+        name: fields[tasks]
         schema:
           type: array
           items:
@@ -2158,7 +2395,7 @@ paths:
       summary: Retrieve data from a specific task
       parameters:
       - in: query
-        name: fields[Task]
+        name: fields[tasks]
         schema:
           type: array
           items:
@@ -2224,7 +2461,7 @@ paths:
       summary: List all tenants
       parameters:
       - in: query
-        name: fields[Tenant]
+        name: fields[tenants]
         schema:
           type: array
           items:
@@ -2358,7 +2595,7 @@ paths:
       summary: Retrieve data from a tenant
       parameters:
       - in: query
-        name: fields[Tenant]
+        name: fields[tenants]
         schema:
           type: array
           items:
@@ -2450,7 +2687,7 @@ paths:
       summary: List tenant memberships
       parameters:
       - in: query
-        name: fields[Membership]
+        name: fields[memberships]
         schema:
           type: array
           items:
@@ -2555,7 +2792,7 @@ paths:
       summary: List all invitations
       parameters:
       - in: query
-        name: fields[Invitation]
+        name: fields[invitations]
         schema:
           type: array
           items:
@@ -2764,7 +3001,7 @@ paths:
       summary: Retrieve data from a tenant invitation
       parameters:
       - in: query
-        name: fields[Invitation]
+        name: fields[invitations]
         schema:
           type: array
           items:
@@ -2919,7 +3156,7 @@ paths:
       summary: List all users
       parameters:
       - in: query
-        name: fields[User]
+        name: fields[users]
         schema:
           type: array
           items:
@@ -3073,7 +3310,7 @@ paths:
       summary: Retrieve a user's information
       parameters:
       - in: query
-        name: fields[User]
+        name: fields[users]
         schema:
           type: array
           items:
@@ -3167,7 +3404,7 @@ paths:
       summary: List user memberships
       parameters:
       - in: query
-        name: fields[Membership]
+        name: fields[memberships]
         schema:
           type: array
           items:
@@ -3274,7 +3511,7 @@ paths:
       summary: Retrieve membership data from the user
       parameters:
       - in: query
-        name: fields[Membership]
+        name: fields[memberships]
         schema:
           type: array
           items:
@@ -3318,7 +3555,7 @@ paths:
       summary: Retrieve the current user's information
       parameters:
       - in: query
-        name: fields[User]
+        name: fields[users]
         schema:
           type: array
           items:
@@ -3345,6 +3582,225 @@ paths:
           description: ''
 components:
   schemas:
+    ComplianceOverview:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/Type7f7Enum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        id:
+          type: string
+          format: uuid
+        attributes:
+          type: object
+          properties:
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
+            compliance_id:
+              type: string
+              maxLength: 100
+            framework:
+              type: string
+              maxLength: 100
+            version:
+              type: string
+              maxLength: 50
+            requirements_status:
+              type: object
+              properties:
+                passed:
+                  type: integer
+                failed:
+                  type: integer
+                manual:
+                  type: integer
+                total:
+                  type: integer
+              readOnly: true
+            region:
+              type: string
+              maxLength: 50
+            provider_type:
+              type: string
+              nullable: true
+              readOnly: true
+          required:
+          - compliance_id
+          - framework
+        relationships:
+          type: object
+          properties:
+            scan:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    type:
+                      type: string
+                      enum:
+                      - scans
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
+              required:
+              - data
+              description: The identifier of the related object.
+              title: Resource Identifier
+              nullable: true
+    ComplianceOverviewFull:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/Type7f7Enum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        id:
+          type: string
+          format: uuid
+        attributes:
+          type: object
+          properties:
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
+            compliance_id:
+              type: string
+              maxLength: 100
+            framework:
+              type: string
+              maxLength: 100
+            version:
+              type: string
+              maxLength: 50
+            requirements_status:
+              type: object
+              properties:
+                passed:
+                  type: integer
+                failed:
+                  type: integer
+                manual:
+                  type: integer
+                total:
+                  type: integer
+              readOnly: true
+            region:
+              type: string
+              maxLength: 50
+            provider_type:
+              type: string
+              nullable: true
+              readOnly: true
+            description:
+              type: string
+            requirements:
+              type: object
+              properties:
+                requirement_id:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    checks:
+                      type: object
+                      properties:
+                        check_name:
+                          type: object
+                          properties:
+                            status:
+                              type: string
+                              enum:
+                              - PASS
+                              - FAIL
+                              - null
+                      description: Each key in the 'checks' object is a check name,
+                        with values as 'PASS', 'FAIL', or null.
+                    status:
+                      type: string
+                      enum:
+                      - PASS
+                      - FAIL
+                      - MANUAL
+                    attributes:
+                      type: array
+                      items:
+                        type: object
+                    description:
+                      type: string
+                    checks_status:
+                      type: object
+                      properties:
+                        total:
+                          type: integer
+                        pass:
+                          type: integer
+                        fail:
+                          type: integer
+                        manual:
+                          type: integer
+              readOnly: true
+          required:
+          - compliance_id
+          - framework
+        relationships:
+          type: object
+          properties:
+            scan:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    type:
+                      type: string
+                      enum:
+                      - scans
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
+              required:
+              - data
+              description: The identifier of the related object.
+              title: Resource Identifier
+              nullable: true
+    ComplianceOverviewFullResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/ComplianceOverviewFull'
+      required:
+      - data
     Finding:
       type: object
       required:
@@ -3439,7 +3895,7 @@ components:
                     type:
                       type: string
                       enum:
-                      - Scan
+                      - scans
                       title: Resource Type Name
                       description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
                         member is used to describe resource objects that share common
@@ -3467,7 +3923,7 @@ components:
                       type:
                         type: string
                         enum:
-                        - Resource
+                        - resources
                         title: Resource Type Name
                         description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
                           member is used to describe resource objects that share common
@@ -3477,8 +3933,8 @@ components:
                     - type
               required:
               - data
-              description: A related resource object from type Resource
-              title: Resource
+              description: A related resource object from type resources
+              title: resources
               readOnly: true
           required:
           - scan
@@ -3492,7 +3948,7 @@ components:
     FindingTypeEnum:
       type: string
       enum:
-      - Finding
+      - findings
     Invitation:
       type: object
       required:
@@ -3502,7 +3958,7 @@ components:
       properties:
         type:
           allOf:
-          - $ref: '#/components/schemas/Type4b9Enum'
+          - $ref: '#/components/schemas/TypeD4dEnum'
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
@@ -3559,7 +4015,7 @@ components:
                     type:
                       type: string
                       enum:
-                      - User
+                      - users
                       title: Resource Type Name
                       description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
                         member is used to describe resource objects that share common
@@ -3587,7 +4043,7 @@ components:
                 member is used to describe resource objects that share common attributes
                 and relationships.
               enum:
-              - Invitation
+              - invitations
             attributes:
               type: object
               properties:
@@ -3607,7 +4063,7 @@ components:
       properties:
         type:
           allOf:
-          - $ref: '#/components/schemas/Type4b9Enum'
+          - $ref: '#/components/schemas/TypeD4dEnum'
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
@@ -3656,7 +4112,7 @@ components:
                     type:
                       type: string
                       enum:
-                      - User
+                      - users
                       title: Resource Type Name
                       description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
                         member is used to describe resource objects that share common
@@ -3685,7 +4141,7 @@ components:
                 member is used to describe resource objects that share common attributes
                 and relationships.
               enum:
-              - Invitation
+              - invitations
             attributes:
               type: object
               properties:
@@ -3733,7 +4189,7 @@ components:
                         type:
                           type: string
                           enum:
-                          - User
+                          - users
                           title: Resource Type Name
                           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
                             member is used to describe resource objects that share
@@ -3772,7 +4228,7 @@ components:
       properties:
         type:
           allOf:
-          - $ref: '#/components/schemas/Type4b9Enum'
+          - $ref: '#/components/schemas/TypeD4dEnum'
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
@@ -3856,7 +4312,7 @@ components:
                     type:
                       type: string
                       enum:
-                      - User
+                      - users
                       title: Resource Type Name
                       description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
                         member is used to describe resource objects that share common
@@ -3881,7 +4337,7 @@ components:
                     type:
                       type: string
                       enum:
-                      - Tenant
+                      - tenants
                       title: Resource Type Name
                       description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
                         member is used to describe resource objects that share common
@@ -3904,7 +4360,7 @@ components:
     MembershipTypeEnum:
       type: string
       enum:
-      - Membership
+      - memberships
     OpenApiResponseResponse:
       type: object
       properties:
@@ -3912,6 +4368,29 @@ components:
           $ref: '#/components/schemas/Membership'
       required:
       - data
+    PaginatedComplianceOverviewList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page[number]=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page[number]=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ComplianceOverview'
     PaginatedFindingList:
       type: object
       properties:
@@ -4027,7 +4506,7 @@ components:
                 member is used to describe resource objects that share common attributes
                 and relationships.
               enum:
-              - Invitation
+              - invitations
             id:
               type: string
               format: uuid
@@ -4108,7 +4587,7 @@ components:
                 member is used to describe resource objects that share common attributes
                 and relationships.
               enum:
-              - ProviderSecret
+              - provider-secrets
             id:
               type: string
               format: uuid
@@ -4264,7 +4743,7 @@ components:
                         type:
                           type: string
                           enum:
-                          - Provider
+                          - providers
                           title: Resource Type Name
                           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
                             member is used to describe resource objects that share
@@ -4295,7 +4774,7 @@ components:
                 member is used to describe resource objects that share common attributes
                 and relationships.
               enum:
-              - Provider
+              - providers
             id: {}
             attributes:
               type: object
@@ -4305,7 +4784,6 @@ components:
                   nullable: true
                   maxLength: 100
                   minLength: 3
-                scanner_args: {}
       required:
       - data
     PatchedScanUpdateRequest:
@@ -4324,7 +4802,7 @@ components:
                 member is used to describe resource objects that share common attributes
                 and relationships.
               enum:
-              - Scan
+              - scans
             id:
               type: string
               format: uuid
@@ -4354,7 +4832,7 @@ components:
                 member is used to describe resource objects that share common attributes
                 and relationships.
               enum:
-              - Tenant
+              - tenants
             id:
               type: string
               format: uuid
@@ -4386,7 +4864,7 @@ components:
                           type:
                             type: string
                             enum:
-                            - Membership
+                            - memberships
                             title: Resource Type Name
                             description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
                               member is used to describe resource objects that share
@@ -4396,8 +4874,8 @@ components:
                         - type
                   required:
                   - data
-                  description: A related resource object from type Membership
-                  title: Membership
+                  description: A related resource object from type memberships
+                  title: memberships
                   readOnly: true
       required:
       - data
@@ -4417,7 +4895,7 @@ components:
                 member is used to describe resource objects that share common attributes
                 and relationships.
               enum:
-              - User
+              - users
             id:
               type: string
               format: uuid
@@ -4455,7 +4933,7 @@ components:
       properties:
         type:
           allOf:
-          - $ref: '#/components/schemas/Type4e8Enum'
+          - $ref: '#/components/schemas/Type227Enum'
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
@@ -4504,7 +4982,6 @@ components:
                   type: string
                   format: date-time
               readOnly: true
-            scanner_args: {}
           required:
           - provider
           - uid
@@ -4523,7 +5000,7 @@ components:
                     type:
                       type: string
                       enum:
-                      - ProviderSecret
+                      - provider-secrets
                       title: Resource Type Name
                       description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
                         member is used to describe resource objects that share common
@@ -4545,7 +5022,7 @@ components:
       properties:
         type:
           allOf:
-          - $ref: '#/components/schemas/Type4e8Enum'
+          - $ref: '#/components/schemas/Type227Enum'
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
@@ -4574,7 +5051,6 @@ components:
               title: Unique identifier for the provider, set by the provider
               maxLength: 63
               minLength: 3
-            scanner_args: {}
           required:
           - uid
     ProviderCreateRequest:
@@ -4592,7 +5068,7 @@ components:
                 member is used to describe resource objects that share common attributes
                 and relationships.
               enum:
-              - Provider
+              - providers
             attributes:
               type: object
               properties:
@@ -4618,7 +5094,6 @@ components:
                   minLength: 3
                   title: Unique identifier for the provider, set by the provider
                   maxLength: 63
-                scanner_args: {}
               required:
               - uid
       required:
@@ -4681,7 +5156,7 @@ components:
                       type:
                         type: string
                         enum:
-                        - Provider
+                        - providers
                         title: Resource Type Name
                         description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
                           member is used to describe resource objects that share common
@@ -4691,8 +5166,8 @@ components:
                     - type
               required:
               - data
-              description: A related resource object from type Provider
-              title: Provider
+              description: A related resource object from type providers
+              title: providers
               readOnly: true
     ProviderGroupMembershipUpdateRequest:
       type: object
@@ -4775,7 +5250,7 @@ components:
                           type:
                             type: string
                             enum:
-                            - Provider
+                            - providers
                             title: Resource Type Name
                             description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
                               member is used to describe resource objects that share
@@ -4785,8 +5260,8 @@ components:
                         - type
                   required:
                   - data
-                  description: A related resource object from type Provider
-                  title: Provider
+                  description: A related resource object from type providers
+                  title: providers
                   readOnly: true
       required:
       - data
@@ -4817,7 +5292,7 @@ components:
       properties:
         type:
           allOf:
-          - $ref: '#/components/schemas/Type374Enum'
+          - $ref: '#/components/schemas/Type049Enum'
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
@@ -4865,7 +5340,7 @@ components:
                     type:
                       type: string
                       enum:
-                      - Provider
+                      - providers
                       title: Resource Type Name
                       description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
                         member is used to describe resource objects that share common
@@ -4887,7 +5362,7 @@ components:
       properties:
         type:
           allOf:
-          - $ref: '#/components/schemas/Type374Enum'
+          - $ref: '#/components/schemas/Type049Enum'
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
@@ -5042,7 +5517,7 @@ components:
                     type:
                       type: string
                       enum:
-                      - Provider
+                      - providers
                       title: Resource Type Name
                       description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
                         member is used to describe resource objects that share common
@@ -5071,7 +5546,7 @@ components:
                 member is used to describe resource objects that share common attributes
                 and relationships.
               enum:
-              - ProviderSecret
+              - provider-secrets
             attributes:
               type: object
               properties:
@@ -5224,7 +5699,7 @@ components:
                         type:
                           type: string
                           enum:
-                          - Provider
+                          - providers
                           title: Resource Type Name
                           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
                             member is used to describe resource objects that share
@@ -5263,7 +5738,7 @@ components:
       properties:
         type:
           allOf:
-          - $ref: '#/components/schemas/Type374Enum'
+          - $ref: '#/components/schemas/Type049Enum'
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
@@ -5421,7 +5896,7 @@ components:
                     type:
                       type: string
                       enum:
-                      - Provider
+                      - providers
                       title: Resource Type Name
                       description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
                         member is used to describe resource objects that share common
@@ -5510,7 +5985,7 @@ components:
                     type:
                       type: string
                       enum:
-                      - Provider
+                      - providers
                       title: Resource Type Name
                       description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
                         member is used to describe resource objects that share common
@@ -5538,7 +6013,7 @@ components:
                       type:
                         type: string
                         enum:
-                        - Finding
+                        - findings
                         title: Resource Type Name
                         description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
                           member is used to describe resource objects that share common
@@ -5548,8 +6023,8 @@ components:
                     - type
               required:
               - data
-              description: A related resource object from type Finding
-              title: Finding
+              description: A related resource object from type findings
+              title: findings
               readOnly: true
           required:
           - provider
@@ -5563,7 +6038,7 @@ components:
     ResourceTypeEnum:
       type: string
       enum:
-      - Resource
+      - resources
     Scan:
       type: object
       required:
@@ -5573,7 +6048,7 @@ components:
       properties:
         type:
           allOf:
-          - $ref: '#/components/schemas/Type2bbEnum'
+          - $ref: '#/components/schemas/TypeE53Enum'
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
@@ -5622,7 +6097,6 @@ components:
               type: integer
               maximum: 2147483647
               minimum: -2147483648
-            scanner_args: {}
             duration:
               type: integer
               maximum: 2147483647
@@ -5655,7 +6129,7 @@ components:
                     type:
                       type: string
                       enum:
-                      - Provider
+                      - providers
                       title: Resource Type Name
                       description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
                         member is used to describe resource objects that share common
@@ -5679,7 +6153,7 @@ components:
                     type:
                       type: string
                       enum:
-                      - Task
+                      - tasks
                       title: Resource Type Name
                       description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
                         member is used to describe resource objects that share common
@@ -5709,11 +6183,10 @@ components:
                 member is used to describe resource objects that share common attributes
                 and relationships.
               enum:
-              - Scan
+              - scans
             attributes:
               type: object
               properties:
-                scanner_args: {}
                 name:
                   type: string
                   nullable: true
@@ -5734,7 +6207,7 @@ components:
                         type:
                           type: string
                           enum:
-                          - Provider
+                          - providers
                           title: Resource Type Name
                           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
                             member is used to describe resource objects that share
@@ -5766,7 +6239,7 @@ components:
       properties:
         type:
           allOf:
-          - $ref: '#/components/schemas/Type2bbEnum'
+          - $ref: '#/components/schemas/TypeE53Enum'
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
@@ -5847,7 +6320,7 @@ components:
     TaskTypeEnum:
       type: string
       enum:
-      - Task
+      - tasks
     Tenant:
       type: object
       required:
@@ -5891,7 +6364,7 @@ components:
                       type:
                         type: string
                         enum:
-                        - Membership
+                        - memberships
                         title: Resource Type Name
                         description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
                           member is used to describe resource objects that share common
@@ -5901,8 +6374,8 @@ components:
                     - type
               required:
               - data
-              description: A related resource object from type Membership
-              title: Membership
+              description: A related resource object from type memberships
+              title: memberships
               readOnly: true
     TenantRequest:
       type: object
@@ -5919,7 +6392,7 @@ components:
                 member is used to describe resource objects that share common attributes
                 and relationships.
               enum:
-              - Tenant
+              - tenants
             attributes:
               type: object
               properties:
@@ -5948,7 +6421,7 @@ components:
                           type:
                             type: string
                             enum:
-                            - Membership
+                            - memberships
                             title: Resource Type Name
                             description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
                               member is used to describe resource objects that share
@@ -5958,8 +6431,8 @@ components:
                         - type
                   required:
                   - data
-                  description: A related resource object from type Membership
-                  title: Membership
+                  description: A related resource object from type memberships
+                  title: memberships
                   readOnly: true
       required:
       - data
@@ -5973,7 +6446,7 @@ components:
     TenantTypeEnum:
       type: string
       enum:
-      - Tenant
+      - tenants
     Token:
       type: object
       required:
@@ -6047,7 +6520,7 @@ components:
                 member is used to describe resource objects that share common attributes
                 and relationships.
               enum:
-              - TokenRefresh
+              - tokens-refresh
             attributes:
               type: object
               properties:
@@ -6072,7 +6545,7 @@ components:
     TokenRefreshTypeEnum:
       type: string
       enum:
-      - TokenRefresh
+      - tokens-refresh
     TokenRequest:
       type: object
       properties:
@@ -6088,7 +6561,7 @@ components:
                 member is used to describe resource objects that share common attributes
                 and relationships.
               enum:
-              - Token
+              - tokens
             attributes:
               type: object
               properties:
@@ -6129,27 +6602,31 @@ components:
     TokenTypeEnum:
       type: string
       enum:
-      - Token
-    Type2bbEnum:
+      - tokens
+    Type049Enum:
       type: string
       enum:
-      - Scan
-    Type374Enum:
+      - provider-secrets
+    Type227Enum:
       type: string
       enum:
-      - ProviderSecret
-    Type4b9Enum:
+      - providers
+    Type7f7Enum:
       type: string
       enum:
-      - Invitation
-    Type4e8Enum:
+      - compliance-overviews
+    Type8cdEnum:
       type: string
       enum:
-      - Provider
-    TypeAddEnum:
+      - users
+    TypeD4dEnum:
       type: string
       enum:
-      - User
+      - invitations
+    TypeE53Enum:
+      type: string
+      enum:
+      - scans
     User:
       type: object
       required:
@@ -6159,7 +6636,7 @@ components:
       properties:
         type:
           allOf:
-          - $ref: '#/components/schemas/TypeAddEnum'
+          - $ref: '#/components/schemas/Type8cdEnum'
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
@@ -6207,7 +6684,7 @@ components:
                       type:
                         type: string
                         enum:
-                        - Membership
+                        - memberships
                         title: Resource Type Name
                         description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
                           member is used to describe resource objects that share common
@@ -6217,8 +6694,8 @@ components:
                     - type
               required:
               - data
-              description: A related resource object from type Membership
-              title: Membership
+              description: A related resource object from type memberships
+              title: memberships
               readOnly: true
     UserCreate:
       type: object
@@ -6228,7 +6705,7 @@ components:
       properties:
         type:
           allOf:
-          - $ref: '#/components/schemas/TypeAddEnum'
+          - $ref: '#/components/schemas/Type8cdEnum'
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
@@ -6268,7 +6745,7 @@ components:
                 member is used to describe resource objects that share common attributes
                 and relationships.
               enum:
-              - User
+              - users
             attributes:
               type: object
               properties:
@@ -6318,7 +6795,7 @@ components:
       properties:
         type:
           allOf:
-          - $ref: '#/components/schemas/TypeAddEnum'
+          - $ref: '#/components/schemas/Type8cdEnum'
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
@@ -6366,6 +6843,9 @@ tags:
     refreshing an existing token for authentication purposes.
 - name: Tenant
   description: Endpoints for managing tenants, along with their memberships.
+- name: Invitation
+  description: Endpoints for tenant invitations management, allowing retrieval and
+    filtering of invitations, creating new invitations, accepting and revoking them.
 - name: Provider
   description: Endpoints for managing providers (AWS, GCP, Azure, etc...).
 - name: Provider Group
@@ -6378,9 +6858,9 @@ tags:
 - name: Finding
   description: Endpoints for managing findings, allowing retrieval and filtering of
     findings that result from scans.
+- name: Compliance Overview
+  description: Endpoints for checking the compliance overview, allowing filtering
+    by scan, provider or compliance framework ID.
 - name: Task
   description: Endpoints for task management, allowing retrieval of task status and
     revoking tasks that have not started.
-- name: Invitation
-  description: Endpoints for tenant invitations management, allowing retrieval and
-    filtering of invitations, creating new invitations, accepting and revoking them.

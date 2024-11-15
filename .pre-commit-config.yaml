@@ -11,7 +11,8 @@ repos:
       - id: trailing-whitespace
       - id: no-commit-to-branch
       - id: pretty-format-json
-        args: ["--autofix", --no-sort-keys, --no-ensure-ascii]
+        args: ["--autofix", "--no-sort-keys", "--no-ensure-ascii"]
+        exclude: 'src/backend/api/fixtures/dev/.*\.json$'
 
   ## TOML
   - repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks

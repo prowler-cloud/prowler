@@ -161,7 +161,7 @@ class TestUserViewSet:
         new_company_name = "new company test"
         payload = {
             "data": {
-                "type": "User",
+                "type": "users",
                 "id": str(create_test_user.id),
                 "attributes": {"company_name": new_company_name},
             },
@@ -203,7 +203,7 @@ class TestUserViewSet:
         new_email = "new@example.com"
         payload = {
             "data": {
-                "type": "User",
+                "type": "users",
                 "id": str(another_user.id),
                 "attributes": {"email": new_email},
             },
@@ -241,7 +241,7 @@ class TestUserViewSet:
     ):
         payload = {
             "data": {
-                "type": "User",
+                "type": "users",
                 "id": str(create_test_user.id),
                 "attributes": {"password": password},
             },
@@ -386,7 +386,7 @@ class TestTenantViewSet:
         new_name = "This is the new name"
         payload = {
             "data": {
-                "type": "Tenant",
+                "type": "tenants",
                 "id": tenant1.id,
                 "attributes": {"name": new_name},
             },
@@ -918,7 +918,7 @@ class TestProviderViewSet:
         new_alias = "This is the new name"
         payload = {
             "data": {
-                "type": "Provider",
+                "type": "providers",
                 "id": provider1.id,
                 "attributes": {"alias": new_alias},
             },
@@ -972,7 +972,7 @@ class TestProviderViewSet:
         provider1, *_ = providers_fixture
         payload = {
             "data": {
-                "type": "Provider",
+                "type": "providers",
                 "id": provider1.id,
                 "attributes": {attribute_key: attribute_value},
             },
@@ -1477,14 +1477,14 @@ class TestProviderSecretViewSet:
 
         data = {
             "data": {
-                "type": "ProviderSecret",
+                "type": "provider-secrets",
                 "attributes": {
                     "name": "My Secret",
                     "secret_type": secret_type,
                     "secret": secret_data,
                 },
                 "relationships": {
-                    "provider": {"data": {"type": "Provider", "id": str(provider.id)}}
+                    "provider": {"data": {"type": "providers", "id": str(provider.id)}}
                 },
             }
         }
@@ -1552,10 +1552,10 @@ class TestProviderSecretViewSet:
         provider, *_ = providers_fixture
         data = {
             "data": {
-                "type": "ProviderSecret",
+                "type": "provider-secrets",
                 "attributes": attributes,
                 "relationships": {
-                    "provider": {"data": {"type": "Provider", "id": str(provider.id)}}
+                    "provider": {"data": {"type": "providers", "id": str(provider.id)}}
                 },
             }
         }
@@ -1577,7 +1577,7 @@ class TestProviderSecretViewSet:
         provider_secret, *_ = provider_secret_fixture
         data = {
             "data": {
-                "type": "ProviderSecret",
+                "type": "provider-secrets",
                 "id": str(provider_secret.id),
                 "attributes": {
                     "name": "new_name",
@@ -1590,7 +1590,7 @@ class TestProviderSecretViewSet:
                 "relationships": {
                     "provider": {
                         "data": {
-                            "type": "Provider",
+                            "type": "providers",
                             "id": str(provider_secret.provider.id),
                         }
                     }
@@ -1624,13 +1624,13 @@ class TestProviderSecretViewSet:
         provider_secret, *_ = provider_secret_fixture
         data = {
             "data": {
-                "type": "ProviderSecret",
+                "type": "provider-secrets",
                 "id": str(provider_secret.id),
                 "attributes": {"invalid_secret": "value"},
                 "relationships": {
                     "provider": {
                         "data": {
-                            "type": "Provider",
+                            "type": "providers",
                             "id": str(provider_secret.provider.id),
                         }
                     }
@@ -1758,13 +1758,13 @@ class TestScanViewSet:
             (
                 {
                     "data": {
-                        "type": "Scan",
+                        "type": "scans",
                         "attributes": {
                             "name": "New Scan",
                         },
                         "relationships": {
                             "provider": {
-                                "data": {"type": "Provider", "id": "provider-id-1"}
+                                "data": {"type": "providers", "id": "provider-id-1"}
                             }
                         },
                     }
@@ -1774,7 +1774,7 @@ class TestScanViewSet:
             (
                 {
                     "data": {
-                        "type": "Scan",
+                        "type": "scans",
                         "attributes": {
                             "name": "New Scan",
                             "scanner_args": {
@@ -1784,7 +1784,7 @@ class TestScanViewSet:
                         },
                         "relationships": {
                             "provider": {
-                                "data": {"type": "Provider", "id": "provider-id-1"}
+                                "data": {"type": "providers", "id": "provider-id-1"}
                             }
                         },
                     }
@@ -1812,6 +1812,9 @@ class TestScanViewSet:
         # Provider5 has these scanner_args
         # scanner_args={"key1": "value1", "key2": {"key21": "value21"}}
 
+        # scanner_args will be disabled in the first release
+        scan_json_payload["data"]["attributes"].pop("scanner_args", None)
+
         scan_json_payload["data"]["relationships"]["provider"]["data"]["id"] = str(
             provider5.id
         )
@@ -1829,7 +1832,7 @@ class TestScanViewSet:
         assert scan.name == scan_json_payload["data"]["attributes"]["name"]
         assert scan.provider == provider5
         assert scan.trigger == Scan.TriggerChoices.MANUAL
-        assert scan.scanner_args == expected_scanner_args
+        # assert scan.scanner_args == expected_scanner_args
 
     @pytest.mark.parametrize(
         "scan_json_payload, error_code",
@@ -1837,14 +1840,14 @@ class TestScanViewSet:
             (
                 {
                     "data": {
-                        "type": "Scan",
+                        "type": "scans",
                         "attributes": {
                             "name": "a",
                             "trigger": Scan.TriggerChoices.MANUAL,
                         },
                         "relationships": {
                             "provider": {
-                                "data": {"type": "Provider", "id": "provider-id-1"}
+                                "data": {"type": "providers", "id": "provider-id-1"}
                             }
                         },
                     }
@@ -1880,7 +1883,7 @@ class TestScanViewSet:
         new_name = "Updated Scan Name"
         payload = {
             "data": {
-                "type": "Scan",
+                "type": "scans",
                 "id": scan1.id,
                 "attributes": {"name": new_name},
             },
@@ -2073,9 +2076,9 @@ class TestResourceViewSet:
     @pytest.mark.parametrize(
         "include_values, expected_resources",
         [
-            ("provider", ["Provider"]),
-            ("findings", ["Finding"]),
-            ("provider,findings", ["Provider", "Finding"]),
+            ("provider", ["providers"]),
+            ("findings", ["findings"]),
+            ("provider,findings", ["providers", "findings"]),
         ],
     )
     def test_resources_list_include(
@@ -2259,9 +2262,9 @@ class TestFindingViewSet:
     @pytest.mark.parametrize(
         "include_values, expected_resources",
         [
-            ("resources", ["Resource"]),
-            ("scan", ["Scan"]),
-            ("resources.provider,scan", ["Resource", "Scan", "Provider"]),
+            ("resources", ["resources"]),
+            ("scan", ["scans"]),
+            ("resources.provider,scan", ["resources", "scans", "providers"]),
         ],
     )
     def test_findings_list_include(
@@ -2456,7 +2459,7 @@ class TestFindingViewSet:
 @pytest.mark.django_db
 class TestJWTFields:
     def test_jwt_fields(self, authenticated_client, create_test_user):
-        data = {"type": "Token", "email": TEST_USER, "password": TEST_PASSWORD}
+        data = {"type": "tokens", "email": TEST_USER, "password": TEST_PASSWORD}
         response = authenticated_client.post(
             reverse("token-obtain"), data, format="json"
         )
@@ -2537,7 +2540,7 @@ class TestInvitationViewSet:
         user = create_test_user
         data = {
             "data": {
-                "type": "Invitation",
+                "type": "invitations",
                 "attributes": {
                     "email": "any_email@prowler.com",
                     "expires_at": self.TOMORROW_ISO,
@@ -2582,7 +2585,7 @@ class TestInvitationViewSet:
     ):
         data = {
             "data": {
-                "type": "Invitation",
+                "type": "invitations",
                 "attributes": {
                     "email": email,
                     "expires_at": self.TOMORROW_ISO,
@@ -2606,7 +2609,7 @@ class TestInvitationViewSet:
     ):
         data = {
             "data": {
-                "type": "Invitation",
+                "type": "invitations",
                 "attributes": {
                     "email": "thisisarandomemail@prowler.com",
                     "expires_at": (
@@ -2637,7 +2640,7 @@ class TestInvitationViewSet:
         data = {
             "data": {
                 "id": str(invitation.id),
-                "type": "Invitation",
+                "type": "invitations",
                 "attributes": {
                     "email": new_email,
                     "expires_at": new_expires_at_iso,
@@ -2679,7 +2682,7 @@ class TestInvitationViewSet:
         data = {
             "data": {
                 "id": str(invitation.id),
-                "type": "Invitation",
+                "type": "invitations",
                 "attributes": {
                     "email": email,
                     "expires_at": self.TOMORROW_ISO,
@@ -2708,7 +2711,7 @@ class TestInvitationViewSet:
         data = {
             "data": {
                 "id": str(invitation.id),
-                "type": "Invitation",
+                "type": "invitations",
                 "attributes": {
                     "expires_at": (
                         datetime.now(timezone.utc) + timedelta(hours=23)
@@ -3045,3 +3048,193 @@ class TestInvitationViewSet:
             {"sort": "invalid"},
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+
+@pytest.mark.django_db
+class TestComplianceOverviewViewSet:
+    def test_compliance_overview_list_none(self, authenticated_client):
+        response = authenticated_client.get(
+            reverse("complianceoverview-list"),
+            {"filter[scan_id]": "8d20ac7d-4cbc-435e-85f4-359be37af821"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 0
+
+    def test_compliance_overview_list(
+        self, authenticated_client, compliance_overviews_fixture
+    ):
+        # List compliance overviews with existing data
+        compliance_overview1, compliance_overview2 = compliance_overviews_fixture
+        scan_id = str(compliance_overview1.scan.id)
+
+        response = authenticated_client.get(
+            reverse("complianceoverview-list"),
+            {"filter[scan_id]": scan_id},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert (
+            len(response.json()["data"]) == 1
+        )  # Due to the custom get_queryset method, only one compliance_id
+
+    def test_compliance_overview_list_missing_scan_id(self, authenticated_client):
+        # Attempt to list compliance overviews without providing filter[scan_id]
+        response = authenticated_client.get(reverse("complianceoverview-list"))
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["errors"][0]["source"]["pointer"] == "filter[scan_id]"
+        assert response.json()["errors"][0]["code"] == "required"
+
+    @pytest.mark.parametrize(
+        "filter_name, filter_value, expected_count",
+        [
+            ("compliance_id", "aws_account_security_onboarding_aws", 1),
+            ("compliance_id.icontains", "security_onboarding", 1),
+            ("framework", "AWS-Account-Security-Onboarding", 1),
+            ("framework.icontains", "security-onboarding", 1),
+            ("version", "1.0", 1),
+            ("version", "2.0", 0),
+            ("version.icontains", "0", 1),
+            ("region", "eu-west-1", 1),
+            ("region.icontains", "west-1", 1),
+            ("region.in", "eu-west-1,eu-west-2", 1),
+            ("inserted_at.date", "2024-01-01", 0),
+            ("inserted_at.date", TODAY, 1),
+            ("inserted_at.gte", "2024-01-01", 1),
+        ],
+    )
+    def test_compliance_overview_filters(
+        self,
+        authenticated_client,
+        compliance_overviews_fixture,
+        filter_name,
+        filter_value,
+        expected_count,
+    ):
+        # Test filtering compliance overviews
+        compliance_overview1 = compliance_overviews_fixture[0]
+        scan_id = str(compliance_overview1.scan.id)
+
+        response = authenticated_client.get(
+            reverse("complianceoverview-list"),
+            {
+                "filter[scan_id]": scan_id,
+                f"filter[{filter_name}]": filter_value,
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == expected_count
+
+    @pytest.mark.parametrize(
+        "filter_name",
+        ["invalid_filter", "unknown_field"],
+    )
+    def test_compliance_overview_filters_invalid(
+        self, authenticated_client, compliance_overviews_fixture, filter_name
+    ):
+        # Test handling of invalid filters
+        compliance_overview1 = compliance_overviews_fixture[0]
+        scan_id = str(compliance_overview1.scan.id)
+
+        response = authenticated_client.get(
+            reverse("complianceoverview-list"),
+            {
+                "filter[scan_id]": scan_id,
+                f"filter[{filter_name}]": "some_value",
+            },
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    @pytest.mark.parametrize(
+        "sort_field",
+        ["inserted_at", "-inserted_at", "compliance_id", "-compliance_id"],
+    )
+    def test_compliance_overview_sort(
+        self, authenticated_client, compliance_overviews_fixture, sort_field
+    ):
+        # Test sorting compliance overviews
+        compliance_overview1 = compliance_overviews_fixture[0]
+        scan_id = str(compliance_overview1.scan.id)
+
+        response = authenticated_client.get(
+            reverse("complianceoverview-list"),
+            {
+                "filter[scan_id]": scan_id,
+                "sort": sort_field,
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+
+    def test_compliance_overview_sort_invalid(
+        self, authenticated_client, compliance_overviews_fixture
+    ):
+        # Test handling of invalid sort parameters
+        compliance_overview1 = compliance_overviews_fixture[0]
+        scan_id = str(compliance_overview1.scan.id)
+
+        response = authenticated_client.get(
+            reverse("complianceoverview-list"),
+            {
+                "filter[scan_id]": scan_id,
+                "sort": "invalid_field",
+            },
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["errors"][0]["code"] == "invalid"
+        assert "invalid sort parameter" in response.json()["errors"][0]["detail"]
+
+    def test_compliance_overview_retrieve(
+        self, authenticated_client, compliance_overviews_fixture
+    ):
+        # Retrieve a specific compliance overview
+        compliance_overview1 = compliance_overviews_fixture[0]
+
+        response = authenticated_client.get(
+            reverse(
+                "complianceoverview-detail",
+                kwargs={"pk": compliance_overview1.id},
+            ),
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert data["id"] == str(compliance_overview1.id)
+        attributes = data["attributes"]
+        assert attributes["compliance_id"] == compliance_overview1.compliance_id
+        assert attributes["framework"] == compliance_overview1.framework
+        assert attributes["version"] == compliance_overview1.version
+        assert attributes["region"] == compliance_overview1.region
+        assert attributes["description"] == compliance_overview1.description
+        assert "requirements" in attributes
+
+    def test_compliance_overview_invalid_retrieve(self, authenticated_client):
+        # Attempt to retrieve a compliance overview with an invalid ID
+        response = authenticated_client.get(
+            reverse(
+                "complianceoverview-detail",
+                kwargs={"pk": "invalid-id"},
+            ),
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_compliance_overview_list_queryset(
+        self, authenticated_client, compliance_overviews_fixture
+    ):
+        compliance_overview1, compliance_overview2 = compliance_overviews_fixture
+        scan_id = str(compliance_overview1.scan.id)
+
+        response = authenticated_client.get(
+            reverse("complianceoverview-list"),
+            {"filter[scan_id]": scan_id},
+        )
+        # No filters, most fails should be returned
+        assert len(response.json()["data"]) == 1
+        assert response.json()["data"][0]["id"] == str(compliance_overview2.id)
+
+        compliance_overview1.requirements_failed = 5
+        compliance_overview1.save()
+
+        response = authenticated_client.get(
+            reverse("complianceoverview-list"),
+            {"filter[scan_id]": scan_id},
+        )
+        # No filters, now compliance_overview1 has more fails
+        assert len(response.json()["data"]) == 1
+        assert response.json()["data"][0]["id"] == str(compliance_overview1.id)

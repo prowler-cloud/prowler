@@ -27,9 +27,9 @@ from api.models import (
     Finding,
     ProviderSecret,
     Invitation,
+    ComplianceOverview,
 )
 from api.rls import Tenant
-from api.utils import merge_dicts
 
 
 # Tokens
@@ -50,7 +50,7 @@ class TokenSerializer(TokenObtainPairSerializer):
     access = serializers.CharField(read_only=True)
 
     class JSONAPIMeta:
-        resource_name = "Token"
+        resource_name = "tokens"
 
     def validate(self, attrs):
         email = attrs.get("email")
@@ -89,7 +89,8 @@ class TokenSerializer(TokenObtainPairSerializer):
         # Set the tenant_id
         refresh["tenant_id"] = tenant_id
 
-        # Set the nbf (not before) claim to the iat (issued at) claim. At this moment, simplejwt does not provide a way to set the nbf claim
+        # Set the nbf (not before) claim to the iat (issued at) claim. At this moment, simplejwt does not provide a
+        # way to set the nbf claim
         refresh.payload["nbf"] = refresh["iat"]
 
         # Get the access token
@@ -109,7 +110,7 @@ class TokenRefreshSerializer(serializers.Serializer):
     access = serializers.CharField(read_only=True)
 
     class JSONAPIMeta:
-        resource_name = "TokenRefresh"
+        resource_name = "tokens-refresh"
 
     def validate(self, attrs):
         refresh_token = attrs.get("refresh")
@@ -462,7 +463,7 @@ class ProviderSerializer(RLSSerializer):
             "uid",
             "alias",
             "connection",
-            "scanner_args",
+            # "scanner_args",
             "secret",
             "url",
         ]
@@ -486,7 +487,12 @@ class ProviderSerializer(RLSSerializer):
 class ProviderCreateSerializer(RLSSerializer, BaseWriteSerializer):
     class Meta:
         model = Provider
-        fields = ["alias", "provider", "uid", "scanner_args"]
+        fields = [
+            "alias",
+            "provider",
+            "uid",
+            # "scanner_args"
+        ]
 
 
 class ProviderUpdateSerializer(BaseWriteSerializer):
@@ -497,7 +503,10 @@ class ProviderUpdateSerializer(BaseWriteSerializer):
 
     class Meta:
         model = Provider
-        fields = ["alias", "scanner_args"]
+        fields = [
+            "alias",
+            # "scanner_args"
+        ]
 
 
 # Scans
@@ -524,7 +533,7 @@ class ScanSerializer(RLSSerializer):
             "state",
             "unique_resource_count",
             "progress",
-            "scanner_args",
+            # "scanner_args",
             "duration",
             "provider",
             "task",
@@ -539,17 +548,23 @@ class ScanCreateSerializer(RLSSerializer, BaseWriteSerializer):
     class Meta:
         model = Scan
         # TODO: add mutelist when implemented
-        fields = ["id", "provider", "scanner_args", "name"]
+        fields = [
+            "id",
+            "provider",
+            # "scanner_args",
+            "name",
+        ]
 
     def create(self, validated_data):
-        provider = validated_data.get("provider")
+        # provider = validated_data.get("provider")
 
-        if not validated_data.get("scanner_args"):
-            validated_data["scanner_args"] = provider.scanner_args
-        else:
-            validated_data["scanner_args"] = merge_dicts(
-                provider.scanner_args, validated_data["scanner_args"]
-            )
+        # scanner_args will be disabled for the user in the first release
+        # if not validated_data.get("scanner_args"):
+        #     validated_data["scanner_args"] = provider.scanner_args
+        # else:
+        #     validated_data["scanner_args"] = merge_dicts(
+        #         provider.scanner_args, validated_data["scanner_args"]
+        #     )
 
         if not validated_data.get("trigger"):
             validated_data["trigger"] = Scan.TriggerChoices.MANUAL.value
@@ -587,7 +602,7 @@ class ScanTaskSerializer(RLSSerializer):
             "state",
             "unique_resource_count",
             "progress",
-            "scanner_args",
+            # "scanner_args",
             "duration",
             "started_at",
             "completed_at",
@@ -735,7 +750,7 @@ class AwsProviderSecret(serializers.Serializer):
     aws_session_token = serializers.CharField(required=False)
 
     class Meta:
-        resource_name = "ProviderSecret"
+        resource_name = "provider-secrets"
 
 
 class AzureProviderSecret(serializers.Serializer):
@@ -744,7 +759,7 @@ class AzureProviderSecret(serializers.Serializer):
     tenant_id = serializers.CharField()
 
     class Meta:
-        resource_name = "ProviderSecret"
+        resource_name = "provider-secrets"
 
 
 class GCPProviderSecret(serializers.Serializer):
@@ -753,14 +768,14 @@ class GCPProviderSecret(serializers.Serializer):
     refresh_token = serializers.CharField()
 
     class Meta:
-        resource_name = "ProviderSecret"
+        resource_name = "provider-secrets"
 
 
 class KubernetesProviderSecret(serializers.Serializer):
     kubeconfig_content = serializers.CharField()
 
     class Meta:
-        resource_name = "ProviderSecret"
+        resource_name = "provider-secrets"
 
 
 class AWSRoleAssumptionProviderSecret(serializers.Serializer):
@@ -775,7 +790,7 @@ class AWSRoleAssumptionProviderSecret(serializers.Serializer):
     aws_session_token = serializers.CharField(required=False)
 
     class Meta:
-        resource_name = "ProviderSecret"
+        resource_name = "provider-secrets"
 
 
 @extend_schema_field(
@@ -1085,3 +1100,126 @@ class InvitationAcceptSerializer(RLSSerializer):
     class Meta:
         model = Invitation
         fields = ["invitation_token"]
+
+
+# Compliance overview
+
+
+class ComplianceOverviewSerializer(RLSSerializer):
+    """
+    Serializer for the ComplianceOverview model.
+    """
+
+    requirements_status = serializers.SerializerMethodField(
+        read_only=True, method_name="get_requirements_status"
+    )
+    provider_type = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = ComplianceOverview
+        fields = [
+            "id",
+            "inserted_at",
+            "compliance_id",
+            "framework",
+            "version",
+            "requirements_status",
+            "region",
+            "provider_type",
+            "scan",
+            "url",
+        ]
+
+    @extend_schema_field(
+        {
+            "type": "object",
+            "properties": {
+                "passed": {"type": "integer"},
+                "failed": {"type": "integer"},
+                "manual": {"type": "integer"},
+                "total": {"type": "integer"},
+            },
+        }
+    )
+    def get_requirements_status(self, obj):
+        return {
+            "passed": obj.requirements_passed,
+            "failed": obj.requirements_failed,
+            "manual": obj.requirements_manual,
+            "total": obj.total_requirements,
+        }
+
+    @extend_schema_field(serializers.CharField(allow_null=True))
+    def get_provider_type(self, obj):
+        """
+        Retrieves the provider_type from scan.provider.provider_type.
+        """
+        try:
+            return obj.scan.provider.provider
+        except AttributeError:
+            return None
+
+
+class ComplianceOverviewFullSerializer(ComplianceOverviewSerializer):
+    requirements = serializers.SerializerMethodField(read_only=True)
+
+    class Meta(ComplianceOverviewSerializer.Meta):
+        fields = ComplianceOverviewSerializer.Meta.fields + [
+            "description",
+            "requirements",
+        ]
+
+    @extend_schema_field(
+        {
+            "type": "object",
+            "properties": {
+                "requirement_id": {
+                    "type": "object",
+                    "properties": {
+                        "name": {"type": "string"},
+                        "checks": {
+                            "type": "object",
+                            "properties": {
+                                "check_name": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "enum": ["PASS", "FAIL", None],
+                                        },
+                                    },
+                                }
+                            },
+                            "description": "Each key in the 'checks' object is a check name, with values as "
+                            "'PASS', 'FAIL', or null.",
+                        },
+                        "status": {
+                            "type": "string",
+                            "enum": ["PASS", "FAIL", "MANUAL"],
+                        },
+                        "attributes": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                            },
+                        },
+                        "description": {"type": "string"},
+                        "checks_status": {
+                            "type": "object",
+                            "properties": {
+                                "total": {"type": "integer"},
+                                "pass": {"type": "integer"},
+                                "fail": {"type": "integer"},
+                                "manual": {"type": "integer"},
+                            },
+                        },
+                    },
+                }
+            },
+        }
+    )
+    def get_requirements(self, obj):
+        """
+        Returns the detailed structure of requirements.
+        """
+        return obj.requirements

@@ -1403,4 +1403,83 @@ class Migration(migrations.Migration):
                 statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
             ),
         ),
+        migrations.CreateModel(
+            name="ComplianceOverview",
+            fields=[
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("inserted_at", models.DateTimeField(auto_now_add=True)),
+                ("compliance_id", models.CharField(max_length=100)),
+                ("framework", models.CharField(max_length=100)),
+                ("version", models.CharField(blank=True, max_length=50)),
+                ("description", models.TextField(blank=True)),
+                ("region", models.CharField(blank=True, max_length=50)),
+                ("requirements", models.JSONField(default=dict)),
+                ("requirements_passed", models.IntegerField(default=0)),
+                ("requirements_failed", models.IntegerField(default=0)),
+                ("requirements_manual", models.IntegerField(default=0)),
+                ("total_requirements", models.IntegerField(default=0)),
+            ],
+            options={
+                "db_table": "compliance_overviews",
+                "abstract": False,
+            },
+        ),
+        migrations.AddField(
+            model_name="complianceoverview",
+            name="scan",
+            field=models.ForeignKey(
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="compliance_overviews",
+                related_query_name="compliance_overview",
+                to="api.scan",
+            ),
+        ),
+        migrations.AddField(
+            model_name="complianceoverview",
+            name="tenant",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, to="api.tenant"
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="complianceoverview",
+            constraint=models.UniqueConstraint(
+                fields=("tenant", "scan", "compliance_id", "region"),
+                name="unique_tenant_scan_region_compliance_by_compliance_overview",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="complianceoverview",
+            constraint=api.rls.RowLevelSecurityConstraint(
+                "tenant_id",
+                name="rls_on_complianceoverview",
+                statements=["SELECT", "INSERT", "DELETE"],
+            ),
+        ),
+        migrations.AddIndex(
+            model_name="complianceoverview",
+            index=models.Index(fields=["compliance_id"], name="comp_ov_cp_id_idx"),
+        ),
+        migrations.AddIndex(
+            model_name="complianceoverview",
+            index=models.Index(
+                fields=["requirements_failed"], name="comp_ov_req_fail_idx"
+            ),
+        ),
+        migrations.AddIndex(
+            model_name="complianceoverview",
+            index=models.Index(
+                fields=["compliance_id", "requirements_failed"],
+                name="comp_ov_cp_id_req_fail_idx",
+            ),
+        ),
     ]

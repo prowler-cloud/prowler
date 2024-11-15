@@ -36,6 +36,7 @@ from api.models import (
     StatusChoices,
     ProviderSecret,
     Invitation,
+    ComplianceOverview,
 )
 from api.rls import Tenant
 from api.uuid_utils import (
@@ -313,6 +314,7 @@ class FindingFilter(FilterSet):
     class Meta:
         model = Finding
         fields = {
+            "id": ["exact", "in"],
             "uid": ["exact", "in"],
             "scan": ["exact", "in"],
             "delta": ["exact", "in"],
@@ -462,4 +464,21 @@ class UserFilter(FilterSet):
             "company_name": ["exact", "icontains"],
             "date_joined": ["date", "gte", "lte"],
             "is_active": ["exact"],
+        }
+
+
+class ComplianceOverviewFilter(FilterSet):
+    inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
+    provider_type = ChoiceFilter(choices=Provider.ProviderChoices.choices)
+    provider_type__in = ChoiceInFilter(choices=Provider.ProviderChoices.choices)
+    scan_id = UUIDFilter(field_name="scan__id")
+
+    class Meta:
+        model = ComplianceOverview
+        fields = {
+            "inserted_at": ["date", "gte", "lte"],
+            "compliance_id": ["exact", "icontains"],
+            "framework": ["exact", "iexact", "icontains"],
+            "version": ["exact", "icontains"],
+            "region": ["exact", "icontains", "in"],
         }

@@ -23,7 +23,7 @@ def test_basic_authentication():
         reverse("user-list"),
         data={
             "data": {
-                "type": "User",
+                "type": "users",
                 "attributes": {
                     "name": "test",
                     "email": test_user,
@@ -58,7 +58,7 @@ def test_refresh_token(create_test_user, tenants_fixture):
         reverse("token-refresh"),
         data={
             "data": {
-                "type": "TokenRefresh",
+                "type": "tokens-refresh",
                 "attributes": {"refresh": refresh_token},
             }
         },
@@ -74,7 +74,7 @@ def test_refresh_token(create_test_user, tenants_fixture):
         reverse("token-refresh"),
         data={
             "data": {
-                "type": "TokenRefresh",
+                "type": "tokens-refresh",
                 "attributes": {"refresh": refresh_token},
             }
         },
@@ -87,7 +87,7 @@ def test_refresh_token(create_test_user, tenants_fixture):
         reverse("token-refresh"),
         data={
             "data": {
-                "type": "TokenRefresh",
+                "type": "tokens-refresh",
                 "attributes": {
                     "refresh": valid_refresh_response.json()["data"]["attributes"][
                         "refresh"

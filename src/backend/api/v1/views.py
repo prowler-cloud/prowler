@@ -2,18 +2,17 @@ from celery.result import AsyncResult
 from django.conf import settings as django_settings
 from django.contrib.postgres.search import SearchQuery
 from django.db import transaction
-from django.db.models import F, Q
-from django.db.models import Prefetch
+from django.db.models import F, Q, Prefetch, OuterRef, Subquery
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_control
 from drf_spectacular.settings import spectacular_settings
-from drf_spectacular.utils import OpenApiTypes
 from drf_spectacular.utils import (
     extend_schema,
     extend_schema_view,
     OpenApiParameter,
     OpenApiResponse,
+    OpenApiTypes,
 )
 from drf_spectacular.views import SpectacularAPIView
 from rest_framework import status, permissions
@@ -43,6 +42,7 @@ from api.filters import (
     ProviderSecretFilter,
     InvitationFilter,
     UserFilter,
+    ComplianceOverviewFilter,
 )
 from api.models import (
     User,
@@ -56,7 +56,9 @@ from api.models import (
     Finding,
     ProviderSecret,
     Invitation,
+    ComplianceOverview,
 )
+from api.pagination import ComplianceOverviewPagination
 from api.rls import Tenant
 from api.utils import validate_invitation
 from api.uuid_utils import datetime_to_uuid7
@@ -87,6 +89,8 @@ from api.v1.serializers import (
     InvitationCreateSerializer,
     InvitationUpdateSerializer,
     InvitationAcceptSerializer,
+    ComplianceOverviewSerializer,
+    ComplianceOverviewFullSerializer,
 )
 from tasks.tasks import (
     check_provider_connection_task,
@@ -106,7 +110,7 @@ CACHE_DECORATOR = cache_control(
     description="Obtain a token by providing valid credentials and an optional tenant ID.",
 )
 class CustomTokenObtainView(GenericAPIView):
-    resource_name = "Token"
+    resource_name = "tokens"
     serializer_class = TokenSerializer
     http_method_names = ["post"]
 
@@ -119,7 +123,7 @@ class CustomTokenObtainView(GenericAPIView):
             raise InvalidToken(e.args[0])
 
         return Response(
-            data={"type": "Token", "attributes": serializer.validated_data},
+            data={"type": "tokens", "attributes": serializer.validated_data},
             status=status.HTTP_200_OK,
         )
 
@@ -131,7 +135,7 @@ class CustomTokenObtainView(GenericAPIView):
     "when a new one is issued.",
 )
 class CustomTokenRefreshView(GenericAPIView):
-    resource_name = "TokenRefresh"
+    resource_name = "tokens-refresh"
     serializer_class = TokenRefreshSerializer
     http_method_names = ["post"]
 
@@ -144,7 +148,7 @@ class CustomTokenRefreshView(GenericAPIView):
             raise InvalidToken(e.args[0])
 
         return Response(
-            data={"type": "TokenRefresh", "attributes": serializer.validated_data},
+            data={"type": "tokens-refresh", "attributes": serializer.validated_data},
             status=status.HTTP_200_OK,
         )
 
@@ -171,6 +175,11 @@ class SchemaView(SpectacularAPIView):
                 "description": "Endpoints for managing tenants, along with their memberships.",
             },
             {
+                "name": "Invitation",
+                "description": "Endpoints for tenant invitations management, allowing retrieval and filtering of "
+                "invitations, creating new invitations, accepting and revoking them.",
+            },
+            {
                 "name": "Provider",
                 "description": "Endpoints for managing providers (AWS, GCP, Azure, etc...).",
             },
@@ -193,14 +202,14 @@ class SchemaView(SpectacularAPIView):
                 "findings that result from scans.",
             },
             {
+                "name": "Compliance Overview",
+                "description": "Endpoints for checking the compliance overview, allowing filtering by scan, provider or"
+                " compliance framework ID.",
+            },
+            {
                 "name": "Task",
                 "description": "Endpoints for task management, allowing retrieval of task status and "
                 "revoking tasks that have not started.",
-            },
-            {
-                "name": "Invitation",
-                "description": "Endpoints for tenant invitations management, allowing retrieval and filtering of "
-                "invitations, creating new invitations, accepting and revoking them.",
             },
         ]
         return super().get(request, *args, **kwargs)
@@ -208,26 +217,32 @@ class SchemaView(SpectacularAPIView):
 
 @extend_schema_view(
     list=extend_schema(
+        tags=["User"],
         summary="List all users",
         description="Retrieve a list of all users with options for filtering by various criteria.",
     ),
     retrieve=extend_schema(
+        tags=["User"],
         summary="Retrieve a user's information",
         description="Fetch detailed information about an authenticated user.",
     ),
     create=extend_schema(
+        tags=["User"],
         summary="Register a new user",
         description="Create a new user account by providing the necessary registration details.",
     ),
     partial_update=extend_schema(
+        tags=["User"],
         summary="Update user information",
         description="Partially update information about a user.",
     ),
     destroy=extend_schema(
+        tags=["User"],
         summary="Delete a user account",
         description="Remove a user account from the system.",
     ),
     me=extend_schema(
+        tags=["User"],
         summary="Retrieve the current user's information",
         description="Fetch detailed information about the authenticated user.",
     ),
@@ -322,22 +337,27 @@ class UserViewSet(BaseUserViewset):
 
 @extend_schema_view(
     list=extend_schema(
+        tags=["Tenant"],
         summary="List all tenants",
         description="Retrieve a list of all tenants with options for filtering by various criteria.",
     ),
     retrieve=extend_schema(
+        tags=["Tenant"],
         summary="Retrieve data from a tenant",
         description="Fetch detailed information about a specific tenant by their ID.",
     ),
     create=extend_schema(
+        tags=["Tenant"],
         summary="Create a new tenant",
         description="Add a new tenant to the system by providing the required tenant details.",
     ),
     partial_update=extend_schema(
+        tags=["Tenant"],
         summary="Partially update a tenant",
         description="Update certain fields of an existing tenant's information without affecting other fields.",
     ),
     destroy=extend_schema(
+        tags=["Tenant"],
         summary="Delete a tenant",
         description="Remove a tenant from the system by their ID.",
     ),
@@ -570,18 +590,22 @@ class ProviderGroupViewSet(BaseRLSViewSet):
 
 @extend_schema_view(
     list=extend_schema(
+        tags=["Provider"],
         summary="List all providers",
         description="Retrieve a list of all providers with options for filtering by various criteria.",
     ),
     retrieve=extend_schema(
+        tags=["Provider"],
         summary="Retrieve data from a provider",
         description="Fetch detailed information about a specific provider by their ID.",
     ),
     create=extend_schema(
+        tags=["Provider"],
         summary="Create a new provider",
         description="Add a new provider to the system by providing the required provider details.",
     ),
     partial_update=extend_schema(
+        tags=["Provider"],
         summary="Partially update a provider",
         description="Update certain fields of an existing provider's information without affecting other fields.",
         request=ProviderUpdateSerializer,
@@ -686,18 +710,22 @@ class ProviderViewSet(BaseRLSViewSet):
 
 @extend_schema_view(
     list=extend_schema(
+        tags=["Scan"],
         summary="List all scans",
         description="Retrieve a list of all scans with options for filtering by various criteria.",
     ),
     retrieve=extend_schema(
+        tags=["Scan"],
         summary="Retrieve data from a specific scan",
         description="Fetch detailed information about a specific scan by its ID.",
     ),
     partial_update=extend_schema(
+        tags=["Scan"],
         summary="Partially update a scan",
         description="Update certain fields of an existing scan without affecting other fields.",
     ),
     create=extend_schema(
+        tags=["Scan"],
         summary="Trigger a manual scan",
         description=(
             "Trigger a manual scan by providing the required scan details. "
@@ -717,7 +745,7 @@ class ScanViewSet(BaseRLSViewSet):
     serializer_class = ScanSerializer
     http_method_names = ["get", "post", "patch"]
     filterset_class = ScanFilter
-    ordering = ["-inserted_at"]
+    ordering = ["-id"]
     ordering_fields = [
         "name",
         "trigger",
@@ -764,7 +792,8 @@ class ScanViewSet(BaseRLSViewSet):
                 tenant_id=request.tenant_id,
                 scan_id=str(scan.id),
                 provider_id=str(scan.provider_id),
-                checks_to_execute=scan.scanner_args.get("checks_to_execute"),
+                # Disabled for now
+                # checks_to_execute=scan.scanner_args.get("checks_to_execute"),
             )
 
         scan.task_id = task.id
@@ -787,10 +816,12 @@ class ScanViewSet(BaseRLSViewSet):
 
 @extend_schema_view(
     list=extend_schema(
+        tags=["Task"],
         summary="List all tasks",
         description="Retrieve a list of all tasks with options for filtering by name, state, and other criteria.",
     ),
     retrieve=extend_schema(
+        tags=["Task"],
         summary="Retrieve data from a specific task",
         description="Fetch detailed information about a specific task by its ID.",
     ),
@@ -844,11 +875,13 @@ class TaskViewSet(BaseRLSViewSet):
 
 @extend_schema_view(
     list=extend_schema(
+        tags=["Resource"],
         summary="List all resources",
         description="Retrieve a list of all resources with options for filtering by various criteria. Resources are "
         "objects that are discovered by Prowler. They can be anything from a single host to a whole VPC.",
     ),
     retrieve=extend_schema(
+        tags=["Resource"],
         summary="Retrieve data for a resource",
         description="Fetch detailed information about a specific resource by their ID. A Resource is an object that "
         "is discovered by Prowler. It can be anything from a single host to a whole VPC.",
@@ -1169,3 +1202,76 @@ class InvitationAcceptViewSet(BaseRLSViewSet):
         self.response_serializer_class = MembershipSerializer
         membership_serializer = self.get_serializer(membership)
         return Response(data=membership_serializer.data, status=status.HTTP_201_CREATED)
+
+
+@extend_schema_view(
+    list=extend_schema(
+        tags=["Compliance Overview"],
+        summary="List compliance overviews for a scan",
+        description="Retrieve an overview of all the compliance in a given scan. If no region filters are provided, the"
+        " region with the most fails will be returned by default.",
+        parameters=[
+            OpenApiParameter(
+                name="filter[scan_id]",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.QUERY,
+                description="Related scan ID.",
+            ),
+        ],
+    ),
+    retrieve=extend_schema(
+        tags=["Compliance Overview"],
+        summary="Retrieve data from a specific compliance overview",
+        description="Fetch detailed information about a specific compliance overview by its ID, including detailed "
+        "requirement information and check's status.",
+    ),
+)
+@method_decorator(CACHE_DECORATOR, name="list")
+@method_decorator(CACHE_DECORATOR, name="retrieve")
+class ComplianceOverviewViewSet(BaseRLSViewSet):
+    pagination_class = ComplianceOverviewPagination
+    queryset = ComplianceOverview.objects.all()
+    serializer_class = ComplianceOverviewSerializer
+    filterset_class = ComplianceOverviewFilter
+    http_method_names = ["get"]
+    search_fields = ["compliance_id"]
+    ordering = ["compliance_id"]
+    ordering_fields = ["inserted_at", "compliance_id", "framework", "region"]
+
+    def get_queryset(self):
+        if self.action == "retrieve":
+            return ComplianceOverview.objects.all()
+
+        base_queryset = self.filter_queryset(ComplianceOverview.objects.all())
+
+        max_failed_ids = (
+            base_queryset.filter(compliance_id=OuterRef("compliance_id"))
+            .order_by("-requirements_failed")
+            .values("id")[:1]
+        )
+
+        queryset = base_queryset.filter(id__in=Subquery(max_failed_ids)).order_by(
+            "compliance_id"
+        )
+
+        return queryset
+
+    def get_serializer_class(self):
+        if self.action == "retrieve":
+            return ComplianceOverviewFullSerializer
+        return super().get_serializer_class()
+
+    def list(self, request, *args, **kwargs):
+        if not request.query_params.get("filter[scan_id]"):
+            raise ValidationError(
+                [
+                    {
+                        "detail": "This query parameter is required.",
+                        "status": 400,
+                        "source": {"pointer": "filter[scan_id]"},
+                        "code": "required",
+                    }
+                ]
+            )
+        return super().list(request, *args, **kwargs)

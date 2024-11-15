@@ -1,10 +1,15 @@
 import time
+from copy import deepcopy
 from datetime import datetime, timezone
 
 from celery.utils.log import get_task_logger
 from prowler.lib.outputs.finding import Finding as ProwlerFinding
 from prowler.lib.scan.scan import Scan as ProwlerScan
 
+from api.compliance import (
+    PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE,
+    generate_scan_compliance,
+)
 from api.db_utils import tenant_transaction
 from api.models import (
     Provider,
@@ -14,6 +19,7 @@ from api.models import (
     ResourceTag,
     StatusChoices as FindingStatus,
     StateChoices,
+    ComplianceOverview,
 )
 from api.utils import initialize_prowler_provider
 from api.v1.serializers import ScanTaskSerializer
@@ -40,54 +46,6 @@ def _create_finding_delta(
     if last_status is None:
         return Finding.DeltaChoices.NEW
     return Finding.DeltaChoices.CHANGED if last_status != new_status else None
-
-
-def _store_finding(
-    finding: ProwlerFinding,
-    tenant_id: str,
-    scan_instance: Scan,
-    resource_instance: Resource,
-) -> Finding:
-    """
-    Store a finding in the database, calculate its delta status, and associate it with a resource and scan.
-
-    Args:
-        finding (ProwlerFinding): The finding object obtained from the Prowler scan.
-        tenant_id (str): The ID of the tenant owning the finding.
-        scan_instance (Scan): The scan instance associated with the finding.
-        resource_instance (Resource): The resource instance associated with the finding.
-
-    Returns:
-        Finding: The newly created or updated Finding instance.
-
-    """
-    finding_uid = finding.uid
-    status = FindingStatus[finding.status]
-    with tenant_transaction(tenant_id):
-        most_recent_finding = (
-            Finding.objects.filter(uid=finding_uid)
-            .order_by("-id")
-            .values("status")
-            .first()
-        )
-        last_status = most_recent_finding["status"] if most_recent_finding else None
-    delta = _create_finding_delta(last_status, status)
-    with tenant_transaction(tenant_id):
-        finding_instance = Finding.objects.create(
-            tenant_id=tenant_id,
-            uid=finding_uid,
-            delta=delta,
-            check_metadata=finding.get_metadata(),
-            status=status,
-            status_extended=finding.status_extended,
-            severity=finding.severity,
-            impact=finding.severity,
-            raw_result=finding.raw,
-            check_id=finding.check_id,
-            scan=scan_instance,
-        )
-        finding_instance.add_resources([resource_instance])
-    return finding_instance
 
 
 def _store_resources(
@@ -154,18 +112,20 @@ def perform_prowler_scan(
         ValueError: If the provider cannot be connected.
 
     """
-    with tenant_transaction(tenant_id):
-        exception = None
-        provider_instance = Provider.objects.get(pk=provider_id)
-        start_time = time.time()
-        unique_resources = set()
+    generate_compliance = False
+    check_status_by_region = {}
+    exception = None
+    unique_resources = set()
+    start_time = time.time()
 
+    with tenant_transaction(tenant_id):
+        provider_instance = Provider.objects.get(pk=provider_id)
         scan_instance = Scan.objects.get(pk=scan_id)
         scan_instance.state = StateChoices.EXECUTING
         scan_instance.started_at = datetime.now(tz=timezone.utc)
         scan_instance.save()
-    try:
-        with tenant_transaction(tenant_id):
+
+        try:
             try:
                 prowler_provider = initialize_prowler_provider(provider_instance)
                 provider_instance.connected = True
@@ -180,30 +140,184 @@ def perform_prowler_scan(
                 )
                 provider_instance.save()
 
-        prowler_scan = ProwlerScan(provider=prowler_provider, checks=checks_to_execute)
-        for progress, findings in prowler_scan.scan():
-            for finding in findings:
-                resource_instance, resource_uid_tuple = _store_resources(
-                    finding, tenant_id, provider_instance
-                )
-                _store_finding(finding, tenant_id, scan_instance, resource_instance)
-                unique_resources.add(resource_uid_tuple)
-            with tenant_transaction(tenant_id):
+            generate_compliance = (
+                provider_instance.provider != Provider.ProviderChoices.GCP
+            )
+            prowler_scan = ProwlerScan(
+                provider=prowler_provider, checks=checks_to_execute
+            )
+
+            resource_cache = {}
+            tag_cache = {}
+            last_status_cache = {}
+
+            for progress, findings in prowler_scan.scan():
+                for finding in findings:
+                    # Process resource
+                    resource_uid = finding.resource_uid
+                    if resource_uid not in resource_cache:
+                        # Get or create the resource
+                        resource_instance, _ = Resource.objects.get_or_create(
+                            tenant_id=tenant_id,
+                            provider=provider_instance,
+                            uid=resource_uid,
+                            defaults={
+                                "region": finding.region,
+                                "service": finding.service_name,
+                                "type": finding.resource_type,
+                                "name": finding.resource_name or "",
+                            },
+                        )
+                        resource_cache[resource_uid] = resource_instance
+                    else:
+                        resource_instance = resource_cache[resource_uid]
+
+                    # Update resource fields if necessary
+                    updated_fields = []
+                    if resource_instance.region != finding.region:
+                        resource_instance.region = finding.region
+                        updated_fields.append("region")
+                    if resource_instance.service != finding.service_name:
+                        resource_instance.service = finding.service_name
+                        updated_fields.append("service")
+                    if resource_instance.type != finding.resource_type:
+                        resource_instance.type = finding.resource_type
+                        updated_fields.append("type")
+                    if updated_fields:
+                        resource_instance.save(update_fields=updated_fields)
+
+                    # Update tags
+                    tags = []
+                    for key, value in finding.resource_tags.items():
+                        tag_key = (key, value)
+                        if tag_key not in tag_cache:
+                            tag_instance, _ = ResourceTag.objects.get_or_create(
+                                tenant_id=tenant_id, key=key, value=value
+                            )
+                            tag_cache[tag_key] = tag_instance
+                        else:
+                            tag_instance = tag_cache[tag_key]
+                        tags.append(tag_instance)
+                    resource_instance.upsert_or_delete_tags(tags=tags)
+
+                    unique_resources.add(
+                        (resource_instance.uid, resource_instance.region)
+                    )
+
+                    # Process finding
+                    finding_uid = finding.uid
+                    if finding_uid not in last_status_cache:
+                        most_recent_finding = (
+                            Finding.objects.filter(uid=finding_uid)
+                            .order_by("-id")
+                            .values("status")
+                            .first()
+                        )
+                        last_status = (
+                            most_recent_finding["status"]
+                            if most_recent_finding
+                            else None
+                        )
+                        last_status_cache[finding_uid] = last_status
+                    else:
+                        last_status = last_status_cache[finding_uid]
+
+                    status = FindingStatus[finding.status]
+                    delta = _create_finding_delta(last_status, status)
+
+                    # Create the finding
+                    finding_instance = Finding.objects.create(
+                        tenant_id=tenant_id,
+                        uid=finding_uid,
+                        delta=delta,
+                        check_metadata=finding.get_metadata(),
+                        status=status,
+                        status_extended=finding.status_extended,
+                        severity=finding.severity,
+                        impact=finding.severity,
+                        raw_result=finding.raw,
+                        check_id=finding.check_id,
+                        scan=scan_instance,
+                    )
+                    finding_instance.add_resources([resource_instance])
+
+                    # Update compliance data if applicable
+                    if not generate_compliance or finding.status.value == "MUTED":
+                        continue
+
+                    region_dict = check_status_by_region.setdefault(finding.region, {})
+                    current_status = region_dict.get(finding.check_id)
+                    if current_status == "FAIL":
+                        continue
+                    region_dict[finding.check_id] = finding.status.value
+
+                # Update scan progress
                 scan_instance.progress = progress
                 scan_instance.save()
 
-        scan_instance.state = StateChoices.COMPLETED
-    except Exception as e:
-        logger.error(f"Error performing scan {scan_id}: {e}")
-        exception = e
-        scan_instance.state = StateChoices.FAILED
-    finally:
-        with tenant_transaction(tenant_id):
+            scan_instance.state = StateChoices.COMPLETED
+
+        except Exception as e:
+            logger.error(f"Error performing scan {scan_id}: {e}")
+            exception = e
+            scan_instance.state = StateChoices.FAILED
+
+        finally:
             scan_instance.duration = time.time() - start_time
             scan_instance.completed_at = datetime.now(tz=timezone.utc)
             scan_instance.unique_resource_count = len(unique_resources)
             scan_instance.save()
-        if exception is not None:
-            raise exception
-        serializer = ScanTaskSerializer(instance=scan_instance)
-        return serializer.data
+
+    if generate_compliance:
+        try:
+            regions = prowler_provider.get_regions()
+        except AttributeError:
+            regions = set()
+
+        compliance_template = PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE[
+            provider_instance.provider
+        ]
+        compliance_overview_by_region = {
+            region: deepcopy(compliance_template) for region in regions
+        }
+
+        for region, check_status in check_status_by_region.items():
+            compliance_data = compliance_overview_by_region.setdefault(
+                region, deepcopy(compliance_template)
+            )
+            for check_name, status in check_status.items():
+                generate_scan_compliance(
+                    compliance_data,
+                    provider_instance.provider,
+                    check_name,
+                    status,
+                )
+
+        # Prepare compliance overview objects
+        compliance_overview_objects = []
+        for region, compliance_data in compliance_overview_by_region.items():
+            for compliance_id, compliance in compliance_data.items():
+                compliance_overview_objects.append(
+                    ComplianceOverview(
+                        tenant_id=tenant_id,
+                        scan=scan_instance,
+                        region=region,
+                        compliance_id=compliance_id,
+                        framework=compliance["framework"],
+                        version=compliance["version"],
+                        description=compliance["description"],
+                        requirements=compliance["requirements"],
+                        requirements_passed=compliance["requirements_status"]["passed"],
+                        requirements_failed=compliance["requirements_status"]["failed"],
+                        requirements_manual=compliance["requirements_status"]["manual"],
+                        total_requirements=compliance["total_requirements"],
+                    )
+                )
+        with tenant_transaction(tenant_id):
+            ComplianceOverview.objects.bulk_create(compliance_overview_objects)
+
+    if exception is not None:
+        raise exception
+
+    serializer = ScanTaskSerializer(instance=scan_instance)
+    return serializer.data
