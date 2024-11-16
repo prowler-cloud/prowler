@@ -53,7 +53,7 @@ export function DataTableRowActions<InvitationProps>({
         isOpen={isDeleteOpen}
         onOpenChange={setIsDeleteOpen}
         title="Are you absolutely sure?"
-        description="This action cannot be undone. This will permanently delete your invitation."
+        description="This action cannot be undone. This will permanently revoke your invitation."
       >
         <DeleteForm invitationId={invitationId} setIsOpen={setIsDeleteOpen} />
       </CustomAlertModal>

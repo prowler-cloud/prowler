@@ -78,7 +78,7 @@ export const DeleteForm = ({
 
           <CustomButton
             type="submit"
-            ariaLabel="Delete"
+            ariaLabel="Revoke"
             className="w-full"
             variant="solid"
             color="danger"
@@ -86,7 +86,7 @@ export const DeleteForm = ({
             isLoading={isLoading}
             startContent={!isLoading && <DeleteIcon size={24} />}
           >
-            {isLoading ? <>Loading</> : <span>Delete</span>}
+            {isLoading ? <>Loading</> : <span>Revoke</span>}
           </CustomButton>
         </div>
       </form>
