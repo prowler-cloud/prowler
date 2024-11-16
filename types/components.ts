@@ -102,7 +102,7 @@ export interface ApiError {
 }
 
 export interface InvitationProps {
-  type: "Invitation";
+  type: "invitations";
   id: string;
   attributes: {
     inserted_at: string;
@@ -115,7 +115,7 @@ export interface InvitationProps {
   relationships: {
     inviter: {
       data: {
-        type: "User";
+        type: "users";
         id: string;
       };
     };
@@ -126,7 +126,7 @@ export interface InvitationProps {
 }
 
 export interface UserProps {
-  type: "User";
+  type: "users";
   id: string;
   attributes: {
     name: string;
@@ -140,7 +140,7 @@ export interface UserProps {
         count: number;
       };
       data: Array<{
-        type: "Membership";
+        type: "memberships";
         id: string;
       }>;
     };
@@ -175,7 +175,7 @@ export interface ProviderProps {
 }
 
 export interface ScanProps {
-  type: "Scan";
+  type: "scans";
   id: string;
   attributes: {
     name: string;
@@ -203,20 +203,20 @@ export interface ScanProps {
     provider: {
       data: {
         id: string;
-        type: "Provider";
+        type: "providers";
       };
     };
     task: {
       data: {
         id: string;
-        type: "Task";
+        type: "tasks";
       };
     };
   };
 }
 
 export interface FindingProps {
-  type: "Finding";
+  type: "findings";
   id: string;
   attributes: {
     uid: string;
@@ -264,13 +264,13 @@ export interface FindingProps {
   relationships: {
     resources: {
       data: {
-        type: "Resource";
+        type: "resources";
         id: string;
       }[];
     };
     scan: {
       data: {
-        type: "Scan";
+        type: "scans";
         id: string;
       };
       attributes: {
@@ -290,7 +290,7 @@ export interface FindingProps {
     };
     resource: {
       data: {
-        type: "Resource";
+        type: "resources";
         id: string;
       }[];
       id: string;
@@ -307,7 +307,7 @@ export interface FindingProps {
       relationships: {
         provider: {
           data: {
-            type: "Provider";
+            type: "providers";
             id: string;
           };
         };
@@ -316,7 +316,7 @@ export interface FindingProps {
             count: number;
           };
           data: {
-            type: "Finding";
+            type: "findings";
             id: string;
           }[];
         };
@@ -327,7 +327,7 @@ export interface FindingProps {
     };
     provider: {
       data: {
-        type: "Provider";
+        type: "providers";
         id: string;
       };
       attributes: {
@@ -344,7 +344,7 @@ export interface FindingProps {
       relationships: {
         secret: {
           data: {
-            type: "ProviderSecret";
+            type: "provider-secrets";
             id: string;
           };
         };

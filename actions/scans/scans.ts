@@ -91,14 +91,14 @@ export const scanOnDemand = async (formData: FormData) => {
       },
       body: JSON.stringify({
         data: {
-          type: "Scan",
+          type: "scans",
           attributes: {
             name: scanName,
           },
           relationships: {
             provider: {
               data: {
-                type: "Provider",
+                type: "providers",
                 id: providerId,
               },
             },
@@ -136,7 +136,7 @@ export const updateScan = async (formData: FormData) => {
       },
       body: JSON.stringify({
         data: {
-          type: "Scan",
+          type: "scans",
           id: scanId,
           attributes: {
             name: scanName,

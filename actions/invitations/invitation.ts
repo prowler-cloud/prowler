@@ -56,7 +56,7 @@ export const sendInvite = async (formData: FormData) => {
 
   const body = JSON.stringify({
     data: {
-      type: "Invitation",
+      type: "invitations",
       attributes: {
         email,
       },
@@ -104,7 +104,7 @@ export const updateInvite = async (formData: FormData) => {
       },
       body: JSON.stringify({
         data: {
-          type: "Invitation",
+          type: "invitations",
           id: invitationId,
           attributes: {
             email: invitationEmail,

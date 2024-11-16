@@ -16,7 +16,7 @@ const refreshAccessToken = async (token: JwtPayload) => {
 
   const bodyData = {
     data: {
-      type: "TokenRefresh",
+      type: "tokens-refresh",
       attributes: {
         refresh: (token as any).refreshToken,
       },

@@ -62,7 +62,7 @@ export const createNewUser = async (
 
   const bodyData = {
     data: {
-      type: "User",
+      type: "users",
       attributes: {
         name: formData.name,
         email: formData.email,
@@ -99,7 +99,7 @@ export const getToken = async (formData: z.infer<typeof formSchemaSignIn>) => {
 
   const bodyData = {
     data: {
-      type: "Token",
+      type: "tokens",
       attributes: {
         email: formData.email,
         password: formData.password,

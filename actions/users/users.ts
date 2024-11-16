@@ -69,7 +69,7 @@ export const updateUser = async (formData: FormData) => {
       },
       body: JSON.stringify({
         data: {
-          type: "User",
+          type: "users",
           id: userId,
           attributes: {
             name: userName,

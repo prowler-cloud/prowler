@@ -90,7 +90,7 @@ export const updateProvider = async (formData: FormData) => {
       },
       body: JSON.stringify({
         data: {
-          type: "Provider",
+          type: "providers",
           id: providerId,
           attributes: {
             alias: providerAlias,
@@ -129,7 +129,7 @@ export const addProvider = async (formData: FormData) => {
       },
       body: JSON.stringify({
         data: {
-          type: "Provider",
+          type: "providers",
           attributes: {
             provider: providerType,
             uid: providerUid,
@@ -209,7 +209,7 @@ export const addCredentialsProvider = async (formData: FormData) => {
 
   const bodyData = {
     data: {
-      type: "ProviderSecret",
+      type: "provider-secrets",
       attributes: {
         secret_type: secretType,
         secret,
@@ -219,7 +219,7 @@ export const addCredentialsProvider = async (formData: FormData) => {
         provider: {
           data: {
             id: providerId,
-            type: "Provider",
+            type: "providers",
           },
         },
       },
