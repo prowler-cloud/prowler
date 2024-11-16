@@ -40,6 +40,7 @@ export const AuthForm = ({
         company: "",
         termsAndConditions: false,
         confirmPassword: "",
+        ...(invitationToken && { invitationToken }),
       }),
     },
   });
@@ -102,7 +103,7 @@ export const AuthForm = ({
                 message: errorMessage,
               });
               break;
-            case "/data/attributes/invitation_token":
+            case "/data":
               form.setError("invitationToken", {
                 type: "server",
                 message: errorMessage,
@@ -205,6 +206,7 @@ export const AuthForm = ({
                       type="text"
                       label="Invitation Token"
                       placeholder={invitationToken}
+                      defaultValue={invitationToken}
                       isRequired={false}
                       isInvalid={!!form.formState.errors.invitationToken}
                     />
