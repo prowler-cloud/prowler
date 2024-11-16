@@ -106,7 +106,7 @@ export function DataTableRowActions<InvitationProps>({
                 }
                 onClick={() => setIsDeleteOpen(true)}
               >
-                Delete Invitation
+                Revoke Invitation
               </DropdownItem>
             </DropdownSection>
           </DropdownMenu>

@@ -25,10 +25,9 @@ interface InvitationDetailsProps {
   selfLink: string;
 }
 
-export const InvitationDetails = ({
-  attributes,
-  selfLink,
-}: InvitationDetailsProps) => {
+export const InvitationDetails = ({ attributes }: InvitationDetailsProps) => {
+  const baseURL = process.env.SITE_URL || "http://localhost:3000";
+  const invitationLink = `${baseURL}/sign-up?invitation_token=${attributes.token}`;
   return (
     <div className="flex flex-col gap-x-4 gap-y-8">
       <Card
@@ -89,7 +88,7 @@ export const InvitationDetails = ({
               className="overflow-hidden text-ellipsis whitespace-nowrap"
             >
               <p className="no-scrollbar w-96 overflow-hidden overflow-x-scroll text-ellipsis whitespace-nowrap text-sm">
-                {selfLink}
+                {invitationLink}
               </p>
             </Snippet>
           </div>
