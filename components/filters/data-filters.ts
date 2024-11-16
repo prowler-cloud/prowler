@@ -59,3 +59,11 @@ export const filterUsers = [
     values: ["true", "false"],
   },
 ];
+
+export const filterInvitations = [
+  {
+    key: "state",
+    labelCheckboxGroup: "State",
+    values: ["pending", "accepted", "expired", "revoked"],
+  },
+];

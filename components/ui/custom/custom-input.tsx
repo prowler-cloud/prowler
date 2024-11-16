@@ -18,6 +18,7 @@ interface CustomInputProps<T extends FieldValues> {
   placeholder?: string;
   password?: boolean;
   confirmPassword?: boolean;
+  defaultValue?: string;
   isRequired?: boolean;
   isInvalid?: boolean;
 }
@@ -33,6 +34,7 @@ export const CustomInput = <T extends FieldValues>({
   size = "md",
   confirmPassword = false,
   password = false,
+  defaultValue,
   isRequired = true,
   isInvalid,
 }: CustomInputProps<T>) => {
@@ -99,6 +101,7 @@ export const CustomInput = <T extends FieldValues>({
               variant={variant}
               size={size}
               isInvalid={isInvalid}
+              defaultValue={defaultValue}
               endContent={endContent}
               {...field}
             />

@@ -20,7 +20,13 @@ import {
 } from "@/components/ui/form";
 import { ApiError, authFormSchema } from "@/types";
 
-export const AuthForm = ({ type }: { type: string }) => {
+export const AuthForm = ({
+  type,
+  invitationToken,
+}: {
+  type: string;
+  invitationToken?: string | null;
+}) => {
   const formSchema = authFormSchema(type);
   const router = useRouter();
 
@@ -34,6 +40,7 @@ export const AuthForm = ({ type }: { type: string }) => {
         company: "",
         termsAndConditions: false,
         confirmPassword: "",
+        ...(invitationToken && { invitationToken }),
       }),
     },
   });
@@ -92,6 +99,12 @@ export const AuthForm = ({ type }: { type: string }) => {
               break;
             case "/data/attributes/password":
               form.setError("password", {
+                type: "server",
+                message: errorMessage,
+              });
+              break;
+            case "/data":
+              form.setError("invitationToken", {
                 type: "server",
                 message: errorMessage,
               });
@@ -186,6 +199,18 @@ export const AuthForm = ({ type }: { type: string }) => {
                     name="confirmPassword"
                     confirmPassword
                   />
+                  {invitationToken && (
+                    <CustomInput
+                      control={form.control}
+                      name="invitationToken"
+                      type="text"
+                      label="Invitation Token"
+                      placeholder={invitationToken}
+                      defaultValue={invitationToken}
+                      isRequired={false}
+                      isInvalid={!!form.formState.errors.invitationToken}
+                    />
+                  )}
                   <FormField
                     control={form.control}
                     name="termsAndConditions"

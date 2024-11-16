@@ -29,10 +29,10 @@ export const items: SidebarItem[] = [
     ),
   },
   {
-    key: "tasks",
+    key: "invitations",
     href: "#",
     icon: "solar:checklist-minimalistic-outline",
-    title: "Tasks",
+    title: "Invitations",
     endContent: (
       <Icon
         className="text-default-400"
@@ -190,17 +190,11 @@ export const sectionItemsWithTeams: SidebarItem[] = [
         icon: "ci:users",
       },
       {
-        key: "tasks",
-        href: "#",
+        key: "invitations",
+        href: "/invitations",
         icon: "solar:checklist-minimalistic-outline",
-        title: "Tasks",
+        title: "Invitations",
       },
-      // {
-      //   key: "memberships",
-      //   href: "#",
-      //   title: "Memberships",
-      //   startContent: <TeamAvatar name="Memberships" />,
-      // },
     ],
   },
 ];
