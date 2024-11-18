@@ -7,7 +7,7 @@ class iam_root_mfa_enabled(Check):
         findings = []
         # Check if the root credentials are managed by AWS Organizations
         if (
-            iam_client.organization_features
+            iam_client.organization_features is not None
             and "RootCredentialsManagement" not in iam_client.organization_features
         ):
             if iam_client.credential_report:

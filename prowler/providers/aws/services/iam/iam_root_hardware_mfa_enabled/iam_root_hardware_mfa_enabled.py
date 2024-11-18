@@ -9,7 +9,7 @@ class iam_root_hardware_mfa_enabled(Check):
         if iam_client.audited_partition == "aws":
             # Check if the root credentials are managed by AWS Organizations
             if (
-                iam_client.organization_features
+                iam_client.organization_features is not None
                 and "RootCredentialsManagement" not in iam_client.organization_features
             ):
                 if iam_client.account_summary:
