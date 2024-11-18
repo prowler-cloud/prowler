@@ -1,2 +1,2 @@
-export * from "./ComplianceCard";
-export * from "./ComplianceSkeletonGrid";
+export * from "./compliance-card";
+export * from "./compliance-skeleton-grid";

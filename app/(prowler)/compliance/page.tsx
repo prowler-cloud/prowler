@@ -2,10 +2,12 @@ import { Spacer } from "@nextui-org/react";
 import { Suspense } from "react";
 
 import { getCompliancesOverview } from "@/actions/compliances";
+import { getScans } from "@/actions/scans";
 import {
   ComplianceCard,
   ComplianceSkeletonGrid,
 } from "@/components/compliance";
+import { DataCompliance } from "@/components/compliance/data-compliance";
 import { FilterControls } from "@/components/filters";
 import { Header } from "@/components/ui";
 import { ComplianceOverviewData, SearchParamsProps } from "@/types";
@@ -15,26 +17,33 @@ export default async function Compliance({
 }: {
   searchParams: SearchParamsProps;
 }) {
-  const searchParamsKey = JSON.stringify(searchParams || {});
+  const scansData = await getScans({});
+  const scanList = scansData?.data.map((scan: any) => ({
+    id: scan.id,
+    name: scan.attributes.name || "Unnamed Scan",
+    state: scan.attributes.state,
+    progress: scan.attributes.progress,
+  }));
+  const selectedScanId = searchParams.scanId || scanList[0]?.id;
 
   return (
     <>
       <Header title="Compliance" icon="fluent-mdl2:compliance-audit" />
       <Spacer y={4} />
+      <div className="mb-6">
+        <DataCompliance scans={scanList} />
+      </div>
       <FilterControls mutedFindings={false} />
       <Spacer y={8} />
-      <Suspense key={searchParamsKey} fallback={<ComplianceSkeletonGrid />}>
-        <SSRComplianceGrid />
+      <Suspense fallback={<ComplianceSkeletonGrid />}>
+        <SSRComplianceGrid scanId={selectedScanId} />
       </Suspense>
     </>
   );
 }
 
-const SSRComplianceGrid = async () => {
-  // const scanId = "01929f57-c0ee-7553-be0b-cbde006fb6f7";
-  const scanId = "0193358c-bd7f-7eec-b13a-2d4a648b8df";
+const SSRComplianceGrid = async ({ scanId }: { scanId: string }) => {
   const compliancesData = await getCompliancesOverview({ scanId });
-  console.log(compliancesData, "compliancesData");
 
   if (compliancesData?.errors?.length > 0) {
     return (
