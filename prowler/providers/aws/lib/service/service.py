@@ -113,7 +113,4 @@ class AWSService:
             >>> service.get_unknown_arn("us-east-1")
             "arn:aws:service:us-east-1:0123456789012:unknown"
         """
-        if region:
-            return f"arn:{self.audited_partition}:{self.service}:{region}:{self.audited_account}:unknown"
-        else:
-            return f"arn:{self.audited_partition}:{self.service}::{self.audited_account}:unknown"
+        return f"arn:{self.audited_partition}:{self.service}:{f'{region}:' if region else ''}{self.audited_account}:unknown"
