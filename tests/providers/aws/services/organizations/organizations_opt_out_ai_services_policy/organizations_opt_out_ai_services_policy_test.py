@@ -15,14 +15,12 @@ class Test_organizations_tags_policies_enabled_and_attached:
     def test_organization_no_organization(self):
         organizations_client = mock.MagicMock
         organizations_client.region = AWS_REGION_EU_WEST_1
-        organizations_client.organizations = [
-            Organization(
-                arn=AWS_ACCOUNT_ARN,
-                id="AWS Organization",
-                status="NOT_AVAILABLE",
-                master_id="",
-            )
-        ]
+        organizations_client.organization = Organization(
+            arn=AWS_ACCOUNT_ARN,
+            id="AWS Organization",
+            status="NOT_AVAILABLE",
+            master_id="",
+        )
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
@@ -55,16 +53,14 @@ class Test_organizations_tags_policies_enabled_and_attached:
     def test_organization_with_AI_optout_no_policies(self):
         organizations_client = mock.MagicMock
         organizations_client.region = AWS_REGION_EU_WEST_1
-        organizations_client.organizations = [
-            Organization(
-                id="o-1234567890",
-                arn="arn:aws:organizations::1234567890:organization/o-1234567890",
-                status="ACTIVE",
-                master_id="1234567890",
-                policies={"AISERVICES_OPT_OUT_POLICY": []},
-                delegated_administrators=None,
-            )
-        ]
+        organizations_client.organization = Organization(
+            id="o-1234567890",
+            arn="arn:aws:organizations::1234567890:organization/o-1234567890",
+            status="ACTIVE",
+            master_id="1234567890",
+            policies={"AISERVICES_OPT_OUT_POLICY": []},
+            delegated_administrators=None,
+        )
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
@@ -100,33 +96,29 @@ class Test_organizations_tags_policies_enabled_and_attached:
     def test_organization_with_AI_optout_policy(self):
         organizations_client = mock.MagicMock
         organizations_client.region = AWS_REGION_EU_WEST_1
-        organizations_client.organizations = [
-            Organization(
-                id="o-1234567890",
-                arn="arn:aws:organizations::1234567890:organization/o-1234567890",
-                status="ACTIVE",
-                master_id="1234567890",
-                policies={
-                    "AISERVICES_OPT_OUT_POLICY": [
-                        Policy(
-                            id="p-1234567890",
-                            arn="arn:aws:organizations::1234567890:policy/o-1234567890/p-1234567890",
-                            type="AISERVICES_OPT_OUT_POLICY",
-                            aws_managed=False,
-                            content={
-                                "services": {
-                                    "default": {
-                                        "opt_out_policy": {"@@assign": "optOut"}
-                                    }
-                                }
-                            },
-                            targets=[],
-                        )
-                    ]
-                },
-                delegated_administrators=None,
-            )
-        ]
+        organizations_client.organization = Organization(
+            id="o-1234567890",
+            arn="arn:aws:organizations::1234567890:organization/o-1234567890",
+            status="ACTIVE",
+            master_id="1234567890",
+            policies={
+                "AISERVICES_OPT_OUT_POLICY": [
+                    Policy(
+                        id="p-1234567890",
+                        arn="arn:aws:organizations::1234567890:policy/o-1234567890/p-1234567890",
+                        type="AISERVICES_OPT_OUT_POLICY",
+                        aws_managed=False,
+                        content={
+                            "services": {
+                                "default": {"opt_out_policy": {"@@assign": "optOut"}}
+                            }
+                        },
+                        targets=[],
+                    )
+                ]
+            },
+            delegated_administrators=None,
+        )
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
@@ -162,27 +154,25 @@ class Test_organizations_tags_policies_enabled_and_attached:
     def test_organization_with_AI_optout_policy_no_content(self):
         organizations_client = mock.MagicMock
         organizations_client.region = AWS_REGION_EU_WEST_1
-        organizations_client.organizations = [
-            Organization(
-                id="o-1234567890",
-                arn="arn:aws:organizations::1234567890:organization/o-1234567890",
-                status="ACTIVE",
-                master_id="1234567890",
-                policies={
-                    "AISERVICES_OPT_OUT_POLICY": [
-                        Policy(
-                            id="p-1234567890",
-                            arn="arn:aws:organizations::1234567890:policy/o-1234567890/p-1234567890",
-                            type="AISERVICES_OPT_OUT_POLICY",
-                            aws_managed=False,
-                            content={},
-                            targets=[],
-                        )
-                    ]
-                },
-                delegated_administrators=None,
-            )
-        ]
+        organizations_client.organization = Organization(
+            id="o-1234567890",
+            arn="arn:aws:organizations::1234567890:organization/o-1234567890",
+            status="ACTIVE",
+            master_id="1234567890",
+            policies={
+                "AISERVICES_OPT_OUT_POLICY": [
+                    Policy(
+                        id="p-1234567890",
+                        arn="arn:aws:organizations::1234567890:policy/o-1234567890/p-1234567890",
+                        type="AISERVICES_OPT_OUT_POLICY",
+                        aws_managed=False,
+                        content={},
+                        targets=[],
+                    )
+                ]
+            },
+            delegated_administrators=None,
+        )
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 

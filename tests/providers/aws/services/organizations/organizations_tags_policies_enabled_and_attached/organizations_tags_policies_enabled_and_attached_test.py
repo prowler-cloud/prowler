@@ -15,14 +15,12 @@ class Test_organizations_tags_policies_enabled_and_attached:
     def test_organization_no_organization(self):
         organizations_client = mock.MagicMock
         organizations_client.region = AWS_REGION_EU_WEST_1
-        organizations_client.organizations = [
-            Organization(
-                arn=AWS_ACCOUNT_ARN,
-                id="AWS Organization",
-                status="NOT_AVAILABLE",
-                master_id="",
-            )
-        ]
+        organizations_client.organization = Organization(
+            arn=AWS_ACCOUNT_ARN,
+            id="AWS Organization",
+            status="NOT_AVAILABLE",
+            master_id="",
+        )
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
@@ -55,27 +53,25 @@ class Test_organizations_tags_policies_enabled_and_attached:
     def test_organization_with_tag_policies_not_attached(self):
         organizations_client = mock.MagicMock
         organizations_client.region = AWS_REGION_EU_WEST_1
-        organizations_client.organizations = [
-            Organization(
-                id="o-1234567890",
-                arn="arn:aws:organizations::1234567890:organization/o-1234567890",
-                status="ACTIVE",
-                master_id="1234567890",
-                policies={
-                    "TAG_POLICY": [
-                        Policy(
-                            id="p-1234567890",
-                            arn="arn:aws:organizations::1234567890:policy/o-1234567890/p-1234567890",
-                            type="TAG_POLICY",
-                            aws_managed=False,
-                            content={"tags": {"Owner": {}}},
-                            targets=[],
-                        )
-                    ]
-                },
-                delegated_administrators=None,
-            )
-        ]
+        organizations_client.organization = Organization(
+            id="o-1234567890",
+            arn="arn:aws:organizations::1234567890:organization/o-1234567890",
+            status="ACTIVE",
+            master_id="1234567890",
+            policies={
+                "TAG_POLICY": [
+                    Policy(
+                        id="p-1234567890",
+                        arn="arn:aws:organizations::1234567890:policy/o-1234567890/p-1234567890",
+                        type="TAG_POLICY",
+                        aws_managed=False,
+                        content={"tags": {"Owner": {}}},
+                        targets=[],
+                    )
+                ]
+            },
+            delegated_administrators=None,
+        )
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
@@ -111,27 +107,25 @@ class Test_organizations_tags_policies_enabled_and_attached:
     def test_organization_with_tag_policies_attached(self):
         organizations_client = mock.MagicMock
         organizations_client.region = AWS_REGION_EU_WEST_1
-        organizations_client.organizations = [
-            Organization(
-                id="o-1234567890",
-                arn="arn:aws:organizations::1234567890:organization/o-1234567890",
-                status="ACTIVE",
-                master_id="1234567890",
-                policies={
-                    "TAG_POLICY": [
-                        Policy(
-                            id="p-1234567890",
-                            arn="arn:aws:organizations::1234567890:policy/o-1234567890/p-1234567890",
-                            type="TAG_POLICY",
-                            aws_managed=False,
-                            content={"tags": {"Owner": {}}},
-                            targets=["1234567890"],
-                        )
-                    ]
-                },
-                delegated_administrators=None,
-            )
-        ]
+        organizations_client.organization = Organization(
+            id="o-1234567890",
+            arn="arn:aws:organizations::1234567890:organization/o-1234567890",
+            status="ACTIVE",
+            master_id="1234567890",
+            policies={
+                "TAG_POLICY": [
+                    Policy(
+                        id="p-1234567890",
+                        arn="arn:aws:organizations::1234567890:policy/o-1234567890/p-1234567890",
+                        type="TAG_POLICY",
+                        aws_managed=False,
+                        content={"tags": {"Owner": {}}},
+                        targets=["1234567890"],
+                    )
+                ]
+            },
+            delegated_administrators=None,
+        )
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
