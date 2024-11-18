@@ -111,3 +111,13 @@ class TestAWSService:
             service.get_unknown_arn(region="eu-west-1")
             == f"arn:{service.audited_partition}:{service_name}:eu-west-1:{AWS_ACCOUNT_NUMBER}:unknown"
         )
+
+    def test_AWSService_get_unknown_arn_no_region(self):
+        service_name = "s3"
+        provider = set_mocked_aws_provider()
+        service = AWSService(service_name, provider)
+
+        assert (
+            service.get_unknown_arn()
+            == f"arn:aws:{service_name}::{AWS_ACCOUNT_NUMBER}:unknown"
+        )
