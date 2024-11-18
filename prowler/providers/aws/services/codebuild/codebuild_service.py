@@ -80,7 +80,10 @@ class Codebuild(AWSService):
             project_info = regional_client.batch_get_projects(names=[project.name])[
                 "projects"
             ][0]
+            project.source_repo_url = project_info.get("source", {}).get("location", "")
             project.buildspec = project_info["source"].get("buildspec")
+            artifacts = project_info.get("artifacts", {})
+            project.artifact_encryption = not artifacts.get("encryptionDisabled", True)
             if project_info["source"]["type"] != "NO_SOURCE":
                 project.source = Source(
                     type=project_info["source"]["type"],
@@ -219,6 +222,8 @@ class Project(BaseModel):
     s3_logs: Optional[s3Logs]
     cloudwatch_logs: Optional[CloudWatchLogs]
     tags: Optional[list]
+    artifact_encryption: Optional[bool] = False
+    source_repo_url: Optional[str] = None
 
 
 class ExportConfig(BaseModel):

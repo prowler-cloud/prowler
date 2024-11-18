@@ -1,0 +1,32 @@
+{
+    "Provider": "aws",
+    "CheckID": "iam_no_inline_policy_check",
+    "CheckTitle": "Checks if IAM users, groups, and roles have no inline policies. The rule is NON_COMPLIANT if any IAM entity has inline policies.",
+    "CheckType": [
+        "Security"
+    ],
+    "ServiceName": "iam",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "arn:partition:iam::account-id:user/user-name",
+    "Severity": "medium",
+    "ResourceType": "AwsIamUser, AwsIamGroup, AwsIamRole",
+    "Description": "Checks if IAM users, groups, and roles have no inline policies. The rule is NON_COMPLIANT if any IAM entity has inline policies.",
+    "Risk": "Inline policies can make permission management complex and error-prone. It is recommended to use managed policies attached to groups or roles to simplify permission management and ensure the principle of least privilege.",
+    "RelatedUrl": "",
+    "Remediation": {
+        "Code": {
+            "CLI": "https://docs.aws.amazon.com/cli/latest/reference/iam/delete-user-policy.html",
+            "NativeIaC": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-iam-user.html",
+            "Other": "",
+            "Terraform": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_user_policy"
+        },
+        "Recommendation": {
+            "Text": "Ensure that IAM users, groups, and roles do not have inline policies",
+            "Url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_managed-vs-inline.html"
+        }
+    },
+    "Categories": [],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+}

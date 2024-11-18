@@ -1,0 +1,32 @@
+{
+    "Provider": "aws",
+    "CheckID": "iam_group_has_users_check",
+    "CheckTitle": "Checks if IAM groups have users associated with them. The rule is NON_COMPLIANT if an IAM group has no users associated.",
+    "CheckType": [
+        "Configuration"
+    ],
+    "ServiceName": "iam",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "arn:partition:iam::account-id:group/group-name",
+    "Severity": "low",
+    "ResourceType": "AwsIamGroup",
+    "Description": "Checks if IAM groups have users associated with them. The rule is NON_COMPLIANT if an IAM group has no users associated.",
+    "Risk": "IAM groups without users might indicate misconfiguration or unused resources that should be reviewed and cleaned up.",
+    "RelatedUrl": "",
+    "Remediation": {
+        "Code": {
+            "CLI": "https://docs.aws.amazon.com/cli/latest/reference/iam/add-user-to-group.html",
+            "NativeIaC": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-iam-group.html",
+            "Other": "",
+            "Terraform": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_group_membership"
+        },
+        "Recommendation": {
+            "Text": "Ensure that IAM groups have users associated with them",
+            "Url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_groups_manage_add-remove-users.html"
+        }
+    },
+    "Categories": [],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+}

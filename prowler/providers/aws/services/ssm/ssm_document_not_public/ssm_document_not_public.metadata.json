@@ -1,0 +1,31 @@
+{
+    "Provider": "aws",
+    "CheckID": "ssm_document_not_public",
+    "CheckTitle": "Checks if AWS SSM documents are not publicly accessible",
+    "CheckType": [],
+    "ServiceName": "ssm",
+    "SubServiceName": "document",
+    "ResourceIdTemplate": "arn:aws:ssm:{region}:{account_id}:document/{document_name}",
+    "Severity": "high",
+    "ResourceType": "AwsSsmDocument",
+    "Description": "This check ensures that AWS SSM documents are not publicly accessible.",
+    "Risk": "Publicly accessible SSM documents can be a potential security risk as they expose sensitive information.",
+    "RelatedUrl": "",
+    "Remediation": {
+      "Code": {
+        "CLI": "https://docs.aws.amazon.com/cli/latest/reference/ssm/update-document.html",
+        "Other": "",
+        "NativeIaC": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ssm-document.html",
+        "Terraform": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ssm_document"
+      },
+      "Recommendation": {
+        "Text": "Ensure that AWS SSM documents are not publicly accessible.",
+        "Url": "https://docs.aws.amazon.com/systems-manager/latest/userguide/ssm-documents-sharing.html"
+      }
+    },
+    "Categories": [],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+  }
+  

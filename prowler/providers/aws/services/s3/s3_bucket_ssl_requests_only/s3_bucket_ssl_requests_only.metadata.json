@@ -1,0 +1,32 @@
+{
+    "Provider": "aws",
+    "CheckID": "s3_bucket_ssl_requests_only",
+    "CheckTitle": "Checks if S3 buckets are configured to accept only SSL requests. The rule is NON_COMPLIANT if an S3 bucket allows non-SSL requests.",
+    "CheckType": [
+        "Security"
+    ],
+    "ServiceName": "s3",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "arn:partition:s3:::bucket_name",
+    "Severity": "high",
+    "ResourceType": "AwsS3Bucket",
+    "Description": "Checks if S3 buckets are configured to accept only SSL requests. The rule is NON_COMPLIANT if an S3 bucket allows non-SSL requests.",
+    "Risk": "Allowing non-SSL requests to S3 buckets can expose sensitive data to interception and man-in-the-middle attacks. Enforcing SSL requests ensures data is transmitted securely.",
+    "RelatedUrl": "",
+    "Remediation": {
+        "Code": {
+            "CLI": "https://docs.aws.amazon.com/cli/latest/reference/s3api/put-bucket-policy.html",
+            "NativeIaC": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-s3-bucket.html#cfn-s3-bucket-bucketencryption",
+            "Other": "",
+            "Terraform": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_policy"
+        },
+        "Recommendation": {
+            "Text": "Ensure that S3 buckets are configured to accept only SSL requests",
+            "Url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingBucketPolicies.html#example-bucket-policies"
+        }
+    },
+    "Categories": [],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+}

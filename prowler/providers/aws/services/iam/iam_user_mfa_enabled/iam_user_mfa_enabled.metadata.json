@@ -1,0 +1,33 @@
+{
+    "Provider": "aws",
+    "CheckID": "iam_user_mfa_enabled",
+    "CheckTitle": "Ensure IAM users have MFA enabled",
+    "CheckType": [],
+    "ServiceName": "iam",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "arn:aws:iam::account-id:user/user-name",
+    "Severity": "high",
+    "ResourceType": "AwsIamUser",
+    "Description": "This check verifies that IAM users have Multi-Factor Authentication (MFA) enabled. Enabling MFA for IAM users adds an extra layer of security to your AWS resources.",
+    "Risk": "IAM users without MFA are more vulnerable to compromise, which can lead to unauthorized access to AWS resources.",
+    "RelatedUrl": "",
+    "Remediation": {
+      "Code": {
+        "CLI": "",
+        "NativeIaC": "",
+        "Other": "",
+        "Terraform": ""
+      },
+      "Recommendation": {
+        "Text": "Enable MFA for all IAM users.",
+        "Url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa.html"
+      }
+    },
+    "Categories": [
+      "security"
+    ],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": "CAF Security Epic: IAM"
+  }
+  

@@ -1,0 +1,38 @@
+{
+    "Provider": "aws",
+    "CheckID": "kms_cmk_not_scheduled_for_deletion",
+    "CheckTitle": "Check if KMS CMK keys are not scheduled for deletion.",
+    "CheckType": ["Data Protection"],
+    "ServiceName": "kms",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "arn:partition:kms:region:account-id:key/resource-id",
+    "Severity": "high",
+    "ResourceType": "AwsKmsKey",
+    "Description": "Checks if AWS Key Management Service (AWS KMS) keys are not scheduled for deletion in AWS KMS. The rule is NON_COMPLIANT if KMS keys are scheduled for deletion.",
+    "Risk": "If a KMS key is scheduled for deletion, any data encrypted under this key may become inaccessible after deletion, potentially leading to data loss.",
+    "RelatedUrl": "",
+    "Remediation": {
+      "Code": {
+        "CLI": "aws kms cancel-key-deletion --key-id <key_id>",
+        "NativeIaC": "",
+        "Other": "",
+        "Terraform": ""
+      },
+      "Recommendation": {
+        "Text": "Ensure that KMS keys that should not be deleted are not scheduled for deletion.",
+        "Url": "https://docs.aws.amazon.com/kms/latest/developerguide/delete-keys.html#deleting-keys-scheduling-key-deletion"
+      }
+    },
+    "Categories": ["encryption"],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": "",
+    "Parameters": {
+      "kmsKeyIds": {
+        "Type": "String",
+        "Description": "Optional: Comma-separated list of specific customer managed key IDs not to be scheduled for deletion. If you do not specify any keys, the rule checks all the keys.",
+        "Optional": true
+      }
+    }
+  }
+  

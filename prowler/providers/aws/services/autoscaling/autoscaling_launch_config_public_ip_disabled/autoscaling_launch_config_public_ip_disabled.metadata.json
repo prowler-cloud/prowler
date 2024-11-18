@@ -1,0 +1,30 @@
+{
+    "Provider": "aws",
+    "CheckID": "autoscaling_launch_config_public_ip_disabled",
+    "CheckTitle": "Ensure Auto Scaling launch configurations do not have public IPs enabled",
+    "CheckType": [],
+    "ServiceName": "autoscaling",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "arn:aws:autoscaling:region:account-id:launchConfiguration/launchConfigurationName",
+    "Severity": "high",
+    "ResourceType": "AwsAutoScalingLaunchConfiguration",
+    "Description": "This check ensures that Auto Scaling launch configurations do not have public IPs enabled.",
+    "Risk": "Public IPs on launch configurations can expose instances to the internet, leading to potential security risks.",
+    "RelatedUrl": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/launch-configurations.html",
+    "Remediation": {
+        "Code": {
+            "CLI": "https://awscli.amazonaws.com/v2/documentation/api/latest/reference/autoscaling/create-launch-configuration.html",
+            "NativeIaC": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-as-launchconfig.html",
+            "Other": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/launch-configurations.html",
+            "Terraform": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/launch_configuration"
+        },
+        "Recommendation": {
+            "Text": "Ensure that Auto Scaling launch configurations do not have public IPs enabled to reduce security risks.",
+            "Url": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/launch-configurations.html"
+        }
+    },
+    "Categories": [],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+}
