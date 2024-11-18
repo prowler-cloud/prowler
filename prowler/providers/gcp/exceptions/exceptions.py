@@ -15,8 +15,8 @@ class GCPBaseException(ProwlerException):
             "remediation": "Check the HTTP error and ensure the request is properly formatted.",
         },
         (3002, "GCPNoAccesibleProjectsError"): {
-            "message": "No Project IDs can be accessed via Google Credentials",
-            "remediation": "Ensure the project is accessible and properly set up.",
+            "message": "No Project IDs are active or can be accessed via Google Credentials",
+            "remediation": "Ensure the project is active and accessible.",
         },
         (3003, "GCPSetUpSessionError"): {
             "message": "Error setting up session",

@@ -8,8 +8,10 @@ class organizations_opt_out_ai_services_policy(Check):
     def execute(self):
         findings = []
 
-        for org in organizations_client.organizations:
-            if org.policies is not None:  # Access Denied to list_policies
+        if organizations_client.organization:
+            if (
+                organizations_client.organization.policies is not None
+            ):  # Access Denied to list_policies
                 report = Check_Report_AWS(self.metadata())
                 report.resource_id = org.id
                 report.region = organizations_client.region
@@ -18,9 +20,11 @@ class organizations_opt_out_ai_services_policy(Check):
                 report.status_extended = (
                     "AWS Organizations is not in-use for this AWS Account."
                 )
-                if org.status == "ACTIVE":
-                    report.status_extended = f"AWS Organization {org.id} has not opted out of all AI services, granting consent for AWS to access its data."
-                    for policy in org.policies.get("AISERVICES_OPT_OUT_POLICY", []):
+                if organizations_client.organization.status == "ACTIVE":
+                    report.status_extended = f"AWS Organization {organizations_client.organization.id} has not opted out of all AI services, granting consent for AWS to access its data."
+                    for policy in organizations_client.organization.policies.get(
+                        "AISERVICES_OPT_OUT_POLICY", []
+                    ):
                         if (
                             policy.content.get("services", {})
                             .get("default", {})
@@ -29,7 +33,7 @@ class organizations_opt_out_ai_services_policy(Check):
                             == "optOut"
                         ):
                             report.status = "PASS"
-                            report.status_extended = f"AWS Organization {org.id} has opted out of all AI services, not granting consent for AWS to access its data."
+                            report.status_extended = f"AWS Organization {organizations_client.organization.id} has opted out of all AI services, not granting consent for AWS to access its data."
                             break
 
                 findings.append(report)

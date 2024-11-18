@@ -7,14 +7,12 @@ from prowler.providers.aws.services.organizations.organizations_client import (
 class organizations_account_part_of_organizations(Check):
     def execute(self):
         findings = []
-        for org in organizations_client.organizations:
+        if organizations_client.organization:
             report = Check_Report_AWS(self.metadata())
             report.resource_arn = org.arn
             if org.status == "ACTIVE":
                 report.status = "PASS"
-                report.status_extended = (
-                    f"AWS Organization {org.id} contains this AWS account."
-                )
+                report.status_extended = f"AWS Organization {organizations_client.organization.id} contains this AWS account."
             else:
                 report.status = "FAIL"
                 report.status_extended = (

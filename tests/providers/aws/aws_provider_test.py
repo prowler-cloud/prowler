@@ -9,17 +9,14 @@ from unittest import mock
 
 import botocore
 import botocore.exceptions
+import pytest
 from boto3 import client, resource, session
 from mock import patch
 from moto import mock_aws
 from pytest import raises
 from tzlocal import get_localzone
 
-from prowler.providers.aws.aws_provider import (
-    AwsProvider,
-    get_aws_available_regions,
-    get_aws_region_for_sts,
-)
+from prowler.providers.aws.aws_provider import AwsProvider, get_aws_region_for_sts
 from prowler.providers.aws.config import (
     AWS_STS_GLOBAL_ENDPOINT_REGION,
     BOTO3_USER_AGENT_EXTRA,
@@ -28,6 +25,7 @@ from prowler.providers.aws.config import (
 from prowler.providers.aws.exceptions.exceptions import (
     AWSArgumentTypeValidationError,
     AWSIAMRoleARNInvalidResourceTypeError,
+    AWSInvalidPartitionError,
     AWSInvalidProviderIdError,
     AWSNoCredentialsError,
 )
@@ -1720,7 +1718,16 @@ aws:
         )
         assert not recovered_regions
 
-    def test_get_aws_available_regions(self):
+    def test_get_regions_all_count(self):
+        assert len(AwsProvider.get_regions(partition=None)) == 34
+
+    def test_get_regions_cn_count(self):
+        assert len(AwsProvider.get_regions("aws-cn")) == 2
+
+    def test_get_regions_aws_count(self):
+        assert len(AwsProvider.get_regions(partition="aws")) == 30
+
+    def test_get_all_regions(self):
         with patch(
             "prowler.providers.aws.aws_provider.read_aws_regions_file",
             return_value={
@@ -1741,11 +1748,114 @@ aws:
                 }
             },
         ):
-            assert get_aws_available_regions() == {
+            assert AwsProvider.get_regions(partition=None) == {
                 "af-south-1",
                 "cn-north-1",
                 "us-gov-west-1",
             }
+
+    def test_get_regions_with_us_gov_partition(self):
+        with patch(
+            "prowler.providers.aws.aws_provider.read_aws_regions_file",
+            return_value={
+                "services": {
+                    "acm": {
+                        "regions": {
+                            "aws": [
+                                "af-south-1",
+                            ],
+                            "aws-cn": [
+                                "cn-north-1",
+                            ],
+                            "aws-us-gov": [
+                                "us-gov-west-1",
+                            ],
+                        }
+                    }
+                }
+            },
+        ):
+            assert AwsProvider.get_regions("aws-us-gov") == {
+                "us-gov-west-1",
+            }
+
+    def test_get_regions_with_aws_partition(self):
+        with patch(
+            "prowler.providers.aws.aws_provider.read_aws_regions_file",
+            return_value={
+                "services": {
+                    "acm": {
+                        "regions": {
+                            "aws": [
+                                "af-south-1",
+                            ],
+                            "aws-cn": [
+                                "cn-north-1",
+                            ],
+                            "aws-us-gov": [
+                                "us-gov-west-1",
+                            ],
+                        }
+                    }
+                }
+            },
+        ):
+            assert AwsProvider.get_regions("aws") == {
+                "af-south-1",
+            }
+
+    def test_get_regions_with_cn_partition(self):
+        with patch(
+            "prowler.providers.aws.aws_provider.read_aws_regions_file",
+            return_value={
+                "services": {
+                    "acm": {
+                        "regions": {
+                            "aws": [
+                                "af-south-1",
+                            ],
+                            "aws-cn": [
+                                "cn-north-1",
+                            ],
+                            "aws-us-gov": [
+                                "us-gov-west-1",
+                            ],
+                        }
+                    }
+                }
+            },
+        ):
+            assert AwsProvider.get_regions("aws-cn") == {
+                "cn-north-1",
+            }
+
+    def test_get_regions_with_unknown_partition(self):
+        with patch(
+            "prowler.providers.aws.aws_provider.read_aws_regions_file",
+            return_value={
+                "services": {
+                    "acm": {
+                        "regions": {
+                            "aws": [
+                                "af-south-1",
+                            ],
+                            "aws-cn": [
+                                "cn-north-1",
+                            ],
+                            "aws-us-gov": [
+                                "us-gov-west-1",
+                            ],
+                        }
+                    }
+                }
+            },
+        ):
+            partition = "unknown"
+            with pytest.raises(AWSInvalidPartitionError) as exception:
+                AwsProvider.get_regions(partition)
+
+            assert exception.type == AWSInvalidPartitionError
+        assert f"Invalid partition: {partition}" in exception.value.args[0]
 
     def test_get_aws_region_for_sts_input_regions_none_session_region_none(self):
         input_regions = None

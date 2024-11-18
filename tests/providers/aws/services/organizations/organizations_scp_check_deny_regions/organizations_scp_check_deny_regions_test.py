@@ -256,7 +256,7 @@ class Test_organizations_scp_check_deny_regions:
         # Create Organization
         conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
         response = conn.create_organization()
-        org_arn = response["Organization"]["Arn"]
+        response["Organization"]["Arn"]
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -271,9 +271,7 @@ class Test_organizations_scp_check_deny_regions:
                     organizations_scp_check_deny_regions,
                 )
 
-                for org in organizations_client.organizations:
-                    if org.arn == org_arn:
-                        org.policies = None
+                organizations_client.organization.policies = None
 
                 check = organizations_scp_check_deny_regions()
                 result = check.execute()

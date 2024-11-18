@@ -28,15 +28,14 @@ class Test_Organizations_Service:
             [AWS_REGION_EU_WEST_1], create_default_organization=False
         )
         organizations = Organizations(aws_provider)
-        assert len(organizations.organizations) == 1
-        assert organizations.organizations[0].arn == response["Organization"]["Arn"]
-        assert organizations.organizations[0].id == response["Organization"]["Id"]
+        assert organizations.organization.arn == response["Organization"]["Arn"]
+        assert organizations.organization.id == response["Organization"]["Id"]
         assert (
-            organizations.organizations[0].master_id
+            organizations.organization.master_id
             == response["Organization"]["MasterAccountId"]
         )
-        assert organizations.organizations[0].status == "ACTIVE"
-        assert organizations.organizations[0].delegated_administrators == []
+        assert organizations.organization.status == "ACTIVE"
+        assert organizations.organization.delegated_administrators == []
 
     @mock_aws
     def test_list_policies(self):

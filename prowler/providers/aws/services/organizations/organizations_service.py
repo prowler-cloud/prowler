@@ -20,7 +20,7 @@ class Organizations(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
-        self.organizations = []
+        self.organization = None
         self.policies = {}
         self.delegated_administrators = []
         self._describe_organization()
@@ -59,15 +59,13 @@ class Organizations(AWSService):
                 if not self.audit_resources or (
                     is_resource_filtered(organization_arn, self.audit_resources)
                 ):
-                    self.organizations.append(
-                        Organization(
-                            arn=organization_arn,
-                            id=organization_id,
-                            status="ACTIVE",
-                            master_id=organization_master_id,
-                            policies=organization_policies,
-                            delegated_administrators=organization_delegated_administrator,
-                        )
+                    self.organization = Organization(
+                        arn=organization_arn,
+                        id=organization_id,
+                        status="ACTIVE",
+                        master_id=organization_master_id,
+                        policies=organization_policies,
+                        delegated_administrators=organization_delegated_administrator,
                     )
                 else:
                     # is filtered

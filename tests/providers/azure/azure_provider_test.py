@@ -439,3 +439,34 @@ class TestAzureProvider:
 
             assert exception.type == Exception
             assert exception.value.args[0] == "Simulated Exception"
+
+    @pytest.mark.parametrize(
+        "subscription_ids, expected_regions",
+        [
+            (None, {"region1", "region2", "region3"}),
+            (["sub1", "sub2"], {"region1", "region2", "region3"}),
+            ("sub1", {"region1", "region2"}),
+            ("not_exists", set()),
+        ],
+    )
+    @patch("prowler.providers.azure.azure_provider.AzureProvider.get_locations")
+    @patch(
+        "prowler.providers.azure.azure_provider.AzureProvider.__init__",
+        return_value=None,
+    )
+    def test_get_regions(
+        self,
+        azure_provider_init_mock,  # noqa: F841
+        azure_get_locations_mock,
+        subscription_ids,
+        expected_regions,
+    ):
+        azure_get_locations_mock.return_value = {
+            "sub1": ["region1", "region2"],
+            "sub2": ["region2", "region3"],
+        }
+
+        azure_provider = AzureProvider()
+        regions = azure_provider.get_regions(subscription_ids=subscription_ids)
+
+        assert regions == expected_regions

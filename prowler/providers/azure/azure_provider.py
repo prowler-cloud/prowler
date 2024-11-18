@@ -2,7 +2,9 @@ import asyncio
 import os
 import re
 from argparse import ArgumentTypeError
+from itertools import chain
 from os import getenv
+from typing import Union
 from uuid import UUID
 
 import requests
@@ -150,6 +152,68 @@ class AzureProvider(Provider):
             AzureConfigCredentialsError: If there is an error in configuring the Azure credentials from a dictionary.
             AzureGetTokenIdentityError: If there is an error in getting the token from the Azure identity.
             AzureHTTPResponseError: If there is an HTTP response error.
+
+        Usage:
+            - Authentication: By default Prowler uses Azure Python SDK identity package authentication methods using the classes DefaultAzureCredential and InteractiveBrowserCredential.
+                - Using static credentials:
+                    >>> AzureProvider(
+                    ...     az_cli_auth=False,
+                    ...     sp_env_auth=False,
+                    ...     browser_auth=False,
+                    ...     managed_identity_auth=False,
+                    ...     tenant_id="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+                    ...     client_id="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+                    ...     client_secret="XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+                    ... )
+                - Using Azure CLI authentication:
+                    >>> AzureProvider(
+                    ...     az_cli_auth=True,
+                    ...     sp_env_auth=False,
+                    ...     browser_auth=False,
+                    ...     managed_identity_auth=False,
+                    ... )
+                - Using Service Principal environment authentication:
+                    >>> AzureProvider(
+                    ...     az_cli_auth=False,
+                    ...     sp_env_auth=True,
+                    ...     browser_auth=False,
+                    ...     managed_identity_auth=False,
+                    ... )
+                - Using interactive browser authentication:
+                    >>> AzureProvider(
+                    ...     az_cli_auth=False,
+                    ...     sp_env_auth=False,
+                    ...     browser_auth=True,
+                    ...     managed_identity_auth=False,
+                    ...     tenant_id="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+                    ... )
+                    * Note: Azure Tenant ID is required for browser authentication mode.
+                - Using managed identity authentication:
+                    >>> AzureProvider(
+                    ...     az_cli_auth=False,
+                    ...     sp_env_auth=False,
+                    ...     browser_auth=False,
+                    ...     managed_identity_auth=True,
+                    ... )
+            - Non default azure region: Microsoft provides clouds for compliance with regional laws, which are available for your use. By default, Prowler uses AzureCloud cloud which is the comercial one.
+              If you want to use a different one, you can specify it using the region parameter.
+                >>> AzureProvider(
+                ...     az_cli_auth=False,
+                ...     sp_env_auth=True,
+                ...     browser_auth=False,
+                ...     managed_identity_auth=False,
+                ...     region="AzureUSGovernment",
+                ... )
+            - Subscriptions: rowler is multisubscription, which means that is going to scan all the subscriptions is able to list. If you only assign permissions to one subscription, it is going to scan a single one.
+              Prowler also allows you to specify the subscriptions you want to scan by passing a list of subscription IDs.
+                >>> AzureProvider(
+                ...     az_cli_auth=False,
+                ...     sp_env_auth=True,
+                ...     browser_auth=False,
+                ...     managed_identity_auth=False,
+                ...     subscription_ids=["XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX", "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"],
+                ... )
+
         """
         logger.info("Setting Azure provider ...")
 
@@ -198,7 +262,7 @@ class AzureProvider(Provider):
         )
 
         # TODO: should we keep this here or within the identity?
-        self._locations = self.get_locations(self.session)
+        self._locations = self.get_locations()
 
         # Audit Config
         if config_content:
@@ -942,34 +1006,65 @@ class AzureProvider(Provider):
 
         return identity
 
-    def get_locations(self, credentials) -> dict[str, list[str]]:
+    def get_locations(self) -> dict[str, list[str]]:
         """
         Retrieves the locations available for each subscription using the provided credentials.
-
-        Args:
-            credentials: The credentials object used to authenticate the request.
 
         Returns:
             A dictionary containing the locations available for each subscription. The dictionary
             has subscription display names as keys and lists of location names as values.
+
+        Examples:
+            >>> provider = AzureProvider(...)
+            >>> provider.get_locations()
+            {
+                'Subscription 1': ['eastus', 'eastus2', 'westus', 'westus2'],
+                'Subscription 2': ['eastus', 'eastus2', 'westus', 'westus2']
+            }
         """
-        locations = None
-        if credentials:
-            locations = {}
-            token = credentials.get_token("https://management.azure.com/.default").token
-            for display_name, subscription_id in self._identity.subscriptions.items():
-                locations.update({display_name: []})
-                url = f"https://management.azure.com/subscriptions/{subscription_id}/locations?api-version=2022-12-01"
-                headers = {
-                    "Authorization": f"Bearer {token}",
-                    "Content-Type": "application/json",
-                }
-                response = requests.get(url, headers=headers)
-                if response.status_code == 200:
-                    data = response.json()
-                    for location in data["value"]:
-                        locations[display_name].append(location["name"])
+        credentials = self.session
+        subscription_client = SubscriptionClient(credentials)
+        locations = {}
+
+        for display_name, subscription_id in self._identity.subscriptions.items():
+            locations[display_name] = []
+
+            # List locations for each subscription
+            for location in subscription_client.subscriptions.list_locations(
+                subscription_id
+            ):
+                locations[display_name].append(location.name)
+
         return locations
+
+    def get_regions(self, subscription_ids: Union[list[str], None] = None) -> set:
+        """
+        Retrieves a set of regions available across all subscriptions or specific subscriptions if provided.
+
+        Args:
+            subscription_ids (List[str], optional): A list of subscription display names to filter the regions.
+                If None, regions from all subscriptions are returned.
+
+        Returns:
+            Set[str]: A set containing the unique regions available across the specified subscriptions.
+
+        Examples:
+            >>> provider = AzureProvider(...)
+            >>> provider.get_regions()
+            {'eastus', 'eastus2', 'westus', 'westus2'}
+
+            >>> provider.get_regions(subscription_ids=['Subscription 1'])
+            {'eastus', 'eastus2', 'westus', 'westus2'}
+        """
+        locations = self.get_locations()
+        if subscription_ids is not None:
+            locations = {
+                sid: regions
+                for sid, regions in locations.items()
+                if sid in subscription_ids
+            }
+
+        return set(chain.from_iterable(locations.values()))
 
     @staticmethod
     def validate_static_credentials(
