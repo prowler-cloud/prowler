@@ -10,6 +10,9 @@ class Test_securityhub_enabled:
     def test_securityhub_hub_inactive(self):
         securityhub_client = mock.MagicMock
         securityhub_client.region = AWS_REGION_EU_WEST_1
+        securityhub_client.get_unknown_arn = (
+            lambda x: f"arn:aws:securityhub:{x}:0123456789012:unknown"
+        )
         securityhub_client.securityhubs = [
             SecurityHubHub(
                 arn=AWS_ACCOUNT_ARN,
@@ -24,6 +27,9 @@ class Test_securityhub_enabled:
         with mock.patch(
             "prowler.providers.aws.services.securityhub.securityhub_service.SecurityHub",
             new=securityhub_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.securityhub.securityhub_service.SecurityHub.get_unknown_arn",
+            return_value="arn:aws:securityhub:eu-west-1:0123456789012:unknown",
         ):
             # Test Check
             from prowler.providers.aws.services.securityhub.securityhub_enabled.securityhub_enabled import (
@@ -124,6 +130,9 @@ class Test_securityhub_enabled:
         securityhub_client.region = AWS_REGION_EU_WEST_1
         securityhub_client.audited_partition = "aws"
         securityhub_client.audited_account = "0123456789012"
+        securityhub_client.get_unknown_arn = (
+            lambda x: f"arn:aws:securityhub:{x}:0123456789012:unknown"
+        )
         securityhub_client.securityhubs = [
             SecurityHubHub(
                 arn="arn:aws:securityhub:us-east-1:0123456789012:hub/default",
@@ -138,6 +147,9 @@ class Test_securityhub_enabled:
         with mock.patch(
             "prowler.providers.aws.services.securityhub.securityhub_service.SecurityHub",
             new=securityhub_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.securityhub.securityhub_service.SecurityHub.get_unknown_arn",
+            return_value="arn:aws:securityhub:eu-west-1:0123456789012:unknown",
         ):
             # Test Check
             from prowler.providers.aws.services.securityhub.securityhub_enabled.securityhub_enabled import (
@@ -166,6 +178,9 @@ class Test_securityhub_enabled:
         securityhub_client.region = AWS_REGION_EU_WEST_1
         securityhub_client.audited_partition = "aws"
         securityhub_client.audited_account = "0123456789012"
+        securityhub_client.get_unknown_arn = (
+            lambda x: f"arn:aws:securityhub:{x}:0123456789012:unknown"
+        )
         securityhub_client.securityhubs = [
             SecurityHubHub(
                 arn="arn:aws:securityhub:us-east-1:0123456789012:hub/default",
@@ -180,6 +195,9 @@ class Test_securityhub_enabled:
         with mock.patch(
             "prowler.providers.aws.services.securityhub.securityhub_service.SecurityHub",
             new=securityhub_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.securityhub.securityhub_service.SecurityHub.get_unknown_arn",
+            return_value="arn:aws:securityhub:eu-west-1:0123456789012:unknown",
         ):
             # Test Check
             from prowler.providers.aws.services.securityhub.securityhub_enabled.securityhub_enabled import (

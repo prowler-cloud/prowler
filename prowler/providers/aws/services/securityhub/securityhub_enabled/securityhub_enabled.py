@@ -20,11 +20,15 @@ class securityhub_enabled(Check):
                 elif securityhub.integrations:
                     report.status_extended = f"Security Hub is enabled without standards but with integrations: {securityhub.integrations}."
                 else:
-                    report.resource_arn = f"arn:{securityhub_client.audited_partition}:securityhub:{securityhub_client.region}:{securityhub_client.audited_account}:unknown"
+                    report.resource_arn = securityhub_client.get_unknown_arn(
+                        securityhub_client.region
+                    )
                     report.status = "FAIL"
                     report.status_extended = "Security Hub is enabled but without any standard or integration."
             else:
-                report.resource_arn = f"arn:{securityhub_client.audited_partition}:securityhub:{securityhub_client.region}:{securityhub_client.audited_account}:unknown"
+                report.resource_arn = securityhub_client.get_unknown_arn(
+                    securityhub_client.region
+                )
                 report.status = "FAIL"
                 report.status_extended = "Security Hub is not enabled."
 
