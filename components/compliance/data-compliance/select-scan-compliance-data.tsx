@@ -1,5 +1,3 @@
-"use client";
-
 import { Select, SelectItem } from "@nextui-org/react";
 
 interface SelectScanComplianceDataProps {

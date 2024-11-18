@@ -8,7 +8,6 @@ import {
   ComplianceSkeletonGrid,
 } from "@/components/compliance";
 import { DataCompliance } from "@/components/compliance/data-compliance";
-import { FilterControls } from "@/components/filters";
 import { Header } from "@/components/ui";
 import { ComplianceOverviewData, SearchParamsProps } from "@/types";
 
@@ -24,26 +23,53 @@ export default async function Compliance({
     state: scan.attributes.state,
     progress: scan.attributes.progress,
   }));
+
   const selectedScanId = searchParams.scanId || scanList[0]?.id;
+
+  // Fetch compliance data for regions
+  const compliancesData = await getCompliancesOverview({
+    scanId: selectedScanId,
+  });
+
+  // Extract unique regions
+  const regions = compliancesData?.data
+    ? Array.from(
+        new Set(
+          compliancesData.data.map(
+            (compliance: ComplianceOverviewData) =>
+              compliance.attributes.region as string,
+          ),
+        ),
+      )
+    : [];
 
   return (
     <>
       <Header title="Compliance" icon="fluent-mdl2:compliance-audit" />
       <Spacer y={4} />
-      <div className="mb-6">
-        <DataCompliance scans={scanList} />
-      </div>
-      <FilterControls mutedFindings={false} />
-      <Spacer y={8} />
+      <DataCompliance scans={scanList} regions={regions as string[]} />
+      <Spacer y={12} />
       <Suspense fallback={<ComplianceSkeletonGrid />}>
-        <SSRComplianceGrid scanId={selectedScanId} />
+        <SSRComplianceGrid searchParams={searchParams} />
       </Suspense>
     </>
   );
 }
 
-const SSRComplianceGrid = async ({ scanId }: { scanId: string }) => {
-  const compliancesData = await getCompliancesOverview({ scanId });
+const SSRComplianceGrid = async ({
+  searchParams,
+}: {
+  searchParams: SearchParamsProps;
+}) => {
+  const scanId = searchParams.scanId?.toString() || "";
+
+  const regionFilter = searchParams["filter[region__in]"]?.toString() || "";
+
+  // Fetch compliance data
+  const compliancesData = await getCompliancesOverview({
+    scanId,
+    region: regionFilter,
+  });
 
   // Check if the response contains no data
   if (!compliancesData || compliancesData?.data?.length === 0) {
@@ -66,8 +92,8 @@ const SSRComplianceGrid = async ({ scanId }: { scanId: string }) => {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-      {compliancesData?.data?.map((compliance: ComplianceOverviewData) => {
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {compliancesData.data.map((compliance: ComplianceOverviewData) => {
         const { attributes } = compliance;
         const {
           framework,
