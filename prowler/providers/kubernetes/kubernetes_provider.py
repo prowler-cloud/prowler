@@ -104,45 +104,30 @@ class KubernetesProvider(Provider):
                     ...     kubeconfig_file="~/.kube/config",
                     ...     context="my-context",
                     ...     namespace=["default"],
-                    ...     config_path="path/to/config.yaml",
-                    ...     fixer_config={},
-                    ...     mutelist_path="path/to/mutelist.yaml",
                     ... )
                 2. Using the kubeconfig content.
                     >>> provider = KubernetesProvider(
                     ...     kubeconfig_content={"kubecofig": "content"},
                     ...     context="my-context",
                     ...     namespace=["default"],
-                    ...     config_path="path/to/config.yaml",
-                    ...     fixer_config={},
-                    ...     mutelist_path="path/to/mutelist.yaml",
                     ... )
             - Namespace and context: The provider can be instantiated with or without specifying the namespace and context.
                 - Without specifying the namespace:
                     >>> provider = KubernetesProvider(
                     ...     kubeconfig_file="~/.kube/config",
                     ...     context="my-context",
-                    ...     config_path="path/to/config.yaml",
-                    ...     fixer_config={},
-                    ...     mutelist_path="path/to/mutelist.yaml",
                     ... )
                 - With specifying the namespace:
                     >>> provider = KubernetesProvider(
                     ...     kubeconfig_file="~/.kube/config",
                     ...     context="my-context",
                     ...     namespace=["default"],
-                    ...     config_path="path/to/config.yaml",
-                    ...     fixer_config={},
-                    ...     mutelist_path="path/to/mutelist.yaml",
                     ... )
                 - With specifying the context:
                     >>> provider = KubernetesProvider(
                     ...     kubeconfig_file="~/.kube/config",
                     ...     context="my-context",
                     ...     namespace=["default"],
-                    ...     config_path="path/to/config.yaml",
-                    ...     fixer_config={},
-                    ...     mutelist_path="path/to/mutelist.yaml",
                     ... )
             - Configuration: The provider can be instantiated with or without specifying the configuration.
                 - Without specifying the configuration:
@@ -150,8 +135,6 @@ class KubernetesProvider(Provider):
                     ...     kubeconfig_file="~/.kube/config",
                     ...     context="my-context",
                     ...     namespace=["default"],
-                    ...     fixer_config={},
-                    ...     mutelist_path="path/to/mutelist.yaml",
                     ... )
                 - With specifying the configuration:
                     >>> provider = KubernetesProvider(
@@ -159,8 +142,6 @@ class KubernetesProvider(Provider):
                     ...     context="my-context",
                     ...     namespace=["default"],
                     ...     config_path="path/to/config.yaml",
-                    ...     fixer_config={},
-                    ...     mutelist_path="path/to/mutelist.yaml",
                     ... )
         """
 
@@ -375,6 +356,20 @@ class KubernetesProvider(Provider):
                 ...     namespace="default",
                 ...     provider_id="my-context",
                 ...     raise_on_exception=True,
+                ... )
+            - Using the namespace:
+                >>> connection = KubernetesProvider.test_connection(
+                ...     kubeconfig_file="~/.kube/config",
+                ...     namespace="default",
+                ...     provider_id="my-context",
+                ...     raise_on_exception=True,
+                ... )
+            - Without raising an exception:
+                >>> connection = KubernetesProvider.test_connection(
+                ...     kubeconfig_file="~/.kube/config",
+                ...     namespace="default",
+                ...     provider_id="my-context",
+                ...     raise_on_exception=False,
                 ... )
         """
         try:
