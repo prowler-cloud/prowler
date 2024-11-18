@@ -50,7 +50,7 @@ class GcpProvider(Provider):
         - audit_metadata: Audit_Metadata -> The audit metadata
 
     Methods:
-        - __init__ -> GCP Provider constructora
+        - __init__ -> GCP Provider
         - setup_session -> Setup the GCP session
         - test_connection -> Test the connection to GCP
         - print_credentials -> Print the GCP credentials
@@ -123,20 +123,21 @@ class GcpProvider(Provider):
                 - gcloud auth application-default login to use the Application Default Credentials
                 - Prowler will use the Application Default Credentials if no credentials are provided
                     - Using static credentials:
-                        >>> GcpProvider(
-                        ...     client_id="client_id",
-                        ...     client_secret="client_secret",
-                        ...     refresh_token="refresh_token"
-                        ... )
-                    - Using a credentials file:
-                        >>> GcpProvider(
-                        ...     credentials_file="credentials_file"
-                        ... )
-                - Impersonating a service account: If you want to impersonate a GCP service account, you can use the impersonate_service_account parameter:
+                        - Using the client_id, client_secret and refresh_token:
+                            >>> GcpProvider(
+                            ...     client_id="client_id",
+                            ...     client_secret="client_secret",
+                            ...     refresh_token="refresh_token"
+                            ... )
+                        - Using a credentials file:
+                            >>> GcpProvider(
+                            ...     credentials_file="credentials_file"
+                            ... )
+                - Impersonating a service account: If you want to impersonate a GCP service account, you can use the impersonate_service_account parameter. For this method user must be authenticated:
                     >>> GcpProvider(
                     ...     impersonate_service_account="service_account"
                     ... )
-            - Projects: Prowler is multi-project, which means that is going to scan all the Google Cloud projects that the authenticated user has access to.
+            - Projects: The GCP provider supports multi-project, which means that is capable of scan all the Google Cloud projects the user has access to.
                 - If you want to scan a specific project(s), you can use the project-ids argument.
                     >>> GcpProvider(
                     ...     project_ids=["project_id1", "project_id2"]
@@ -421,6 +422,9 @@ class GcpProvider(Provider):
                 ... )
             - Using a service account to impersonate:
                 >>> GcpProvider.test_connection(
+                ...     client_id="client_id",
+                ...     client_secret="client_secret",
+                ...     refresh_token="refresh_token",
                 ...     service_account="service_account"
                 ... )
         """
