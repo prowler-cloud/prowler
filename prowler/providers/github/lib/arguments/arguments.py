@@ -7,17 +7,20 @@ def init_parser(self):
     github_auth_subparser = github_parser.add_argument_group("Authentication Modes")
     github_auth_modes_group = github_auth_subparser.add_mutually_exclusive_group()
     github_auth_modes_group.add_argument(
-        "--pat-auth",
+        "--personal-access-token",
         action="store_true",
         help="Use Personal Access Token to log in against GitHub",
+        default=True,
     )
     github_auth_modes_group.add_argument(
-        "--oauth-auth",
+        "--oauth-app",
         action="store_true",
         help="Use Oauth app token to log in against GitHub",
+        default=False,
     )
     github_auth_modes_group.add_argument(
-        "--app-auth",
+        "--github-app",
         action="store_true",
         help="Use GitHub app token to log in against GitHub",
+        default=False,
     )

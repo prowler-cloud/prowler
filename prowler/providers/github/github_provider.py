@@ -24,7 +24,7 @@ class GithubProvider(Provider):
         personal_access_token: bool = False,
         github_app: bool = False,
         oauth_app: bool = False,
-        config_content: dict = None,
+        # config_content: dict = None,
         config_path: str = None,
     ):
         """
@@ -49,12 +49,13 @@ class GithubProvider(Provider):
             oauth_app,
         )
         self._audit_config = {}
-        if config_content:
-            self._audit_config = config_content
-        else:
-            if not config_path:
-                config_path = default_config_file_path
-            self._audit_config = load_and_validate_config_file(self._type, config_path)
+
+        # if config_content:
+        #     self._audit_config = config_content
+        # else:
+        if not config_path:
+            config_path = default_config_file_path
+        self._audit_config = load_and_validate_config_file(self._type, config_path)
 
     @property
     def identity(self):
@@ -76,12 +77,11 @@ class GithubProvider(Provider):
         """Returns the audit configuration for the GitHub provider."""
         return self._audit_config
 
-    @staticmethod
     def setup_session(
         self,
-        personal_access_token: bool = False,
-        github_app: bool = False,
-        oauth_app: bool = False,
+        personal_access_token: bool,
+        github_app: bool,
+        oauth_app: bool,
     ) -> GithubSession:
         """
         Returns the GitHub headers responsible  authenticating API calls.
@@ -92,30 +92,29 @@ class GithubProvider(Provider):
             oauth_app (bool): Flag indicating whether to use OAuth App as authentication method.
 
         Returns:
-            GithubSession: Authenticated session for API requests.
+            GithubSession: Authenticated session token for API requests.
         """
 
         if personal_access_token:
-            token = getenv("GITHUB_PERSONAL_ACCESS_TOKEN")
+            session_token = getenv("GITHUB_PERSONAL_ACCESS_TOKEN")
         elif github_app:
-            token = getenv("GITHUB_APP_TOKEN")
+            session_token = getenv("GITHUB_APP_TOKEN")
         elif oauth_app:
-            token = getenv("GITHUB_OAUTH_TOKEN")
+            session_token = getenv("GITHUB_OAUTH_TOKEN")
         else:
             raise ValueError(
                 "A GitHub API token of some kind is required to initialize GitHub provider."
             )
 
-        credentials = GithubSession(token=Auth.Token(token=token))
+        credentials = GithubSession(token=session_token)
 
         return credentials
 
-    @staticmethod
     def setup_identity(
         self,
-        personal_access_token: bool = False,
-        github_app: bool = False,
-        oauth_app: bool = False,
+        personal_access_token: bool,
+        github_app: bool,
+        oauth_app: bool,
     ) -> GithubIdentityInfo:
         """
         Returns the GitHub identity information
@@ -129,13 +128,21 @@ class GithubProvider(Provider):
             GithubIdentityInfo: An instance of GithubIdentityInfo containing the identity information.
         """
         credentials = self.session
-        identity = GithubIdentityInfo()
 
         if personal_access_token or github_app or oauth_app:
             auth = Auth.Token(credentials.token)
             g = Github(auth=auth)
-            identity.account_name = g.get_user().login
-            identity.account_id = g.get_user().id
-            identity.account_url = g.get_user().url
+
+            identity = GithubIdentityInfo(
+                account_name=g.get_user().login,
+                account_id=g.get_user().id,
+                account_url=g.get_user().url,
+            )
 
             return identity
+
+    def print_credentials(self) -> None:
+        return super().print_credentials()
+
+    def get_global_provider(self) -> Provider:
+        return super().get_global_provider()
