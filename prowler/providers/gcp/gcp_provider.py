@@ -118,9 +118,10 @@ class GcpProvider(Provider):
 
         Usage:
             - Authentication: Prowler will use by default your User Account credentials, you can configure it using:
-                - gcloud init to use a new account
-                - gcloud config set account <account> to use a specific account
-                - gcloud auth application-default login to use the Application Default Credentials
+                - Using the gcloud command:
+                    - gcloud init to use a new account
+                    - gcloud config set account <account> to use a specific account
+                    - gcloud auth application-default login to use the Application Default Credentials
                 - Prowler will use the Application Default Credentials if no credentials are provided
                     - Using static credentials:
                         - Using the client_id, client_secret and refresh_token:
@@ -420,7 +421,7 @@ class GcpProvider(Provider):
                 >>> GcpProvider.test_connection(
                 ...     credentials_file="credentials_file"
                 ... )
-            - Using a service account to impersonate:
+            - Using a service account to impersonate, authentication is required to impersonate a service account:
                 >>> GcpProvider.test_connection(
                 ...     client_id="client_id",
                 ...     client_secret="client_secret",
