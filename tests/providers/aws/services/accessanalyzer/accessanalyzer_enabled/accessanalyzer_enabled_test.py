@@ -36,6 +36,9 @@ class Test_accessanalyzer_enabled:
         accessanalyzer_client.region = AWS_REGION_1
         accessanalyzer_client.audited_partition = "aws"
         accessanalyzer_client.audited_account = AWS_ACCOUNT_NUMBER
+        accessanalyzer_client.get_unknown_arn = (
+            lambda x: f"arn:aws:accessanalyzer:{x}:{AWS_ACCOUNT_NUMBER}:unknown"
+        )
         accessanalyzer_client.analyzers = [
             Analyzer(
                 arn=AWS_ACCOUNT_ARN,
@@ -49,6 +52,9 @@ class Test_accessanalyzer_enabled:
         with mock.patch(
             "prowler.providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer",
             accessanalyzer_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer.get_unknown_arn",
+            return_value="arn:aws:accessanalyzer:eu-west-1:123456789012:unknown",
         ):
             from prowler.providers.aws.services.accessanalyzer.accessanalyzer_enabled.accessanalyzer_enabled import (
                 accessanalyzer_enabled,
@@ -78,6 +84,9 @@ class Test_accessanalyzer_enabled:
         accessanalyzer_client.audit_config = {"mute_non_default_regions": True}
         accessanalyzer_client.audited_partition = "aws"
         accessanalyzer_client.audited_account = AWS_ACCOUNT_NUMBER
+        accessanalyzer_client.get_unknown_arn = (
+            lambda x: f"arn:aws:accessanalyzer:{x}:{AWS_ACCOUNT_NUMBER}:unknown"
+        )
         accessanalyzer_client.analyzers = [
             Analyzer(
                 arn=AWS_ACCOUNT_ARN,
@@ -91,6 +100,9 @@ class Test_accessanalyzer_enabled:
         with mock.patch(
             "prowler.providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer",
             accessanalyzer_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer.get_unknown_arn",
+            return_value="arn:aws:accessanalyzer:eu-west-1:123456789012:unknown",
         ):
             from prowler.providers.aws.services.accessanalyzer.accessanalyzer_enabled.accessanalyzer_enabled import (
                 accessanalyzer_enabled,
@@ -119,6 +131,9 @@ class Test_accessanalyzer_enabled:
         accessanalyzer_client.region = AWS_REGION_1
         accessanalyzer_client.audited_partition = "aws"
         accessanalyzer_client.audited_account = AWS_ACCOUNT_NUMBER
+        accessanalyzer_client.get_unknown_arn = (
+            lambda x: f"arn:aws:accessanalyzer:{x}:{AWS_ACCOUNT_NUMBER}:unknown"
+        )
         accessanalyzer_client.analyzers = [
             Analyzer(
                 arn=AWS_ACCOUNT_ARN,
@@ -142,6 +157,9 @@ class Test_accessanalyzer_enabled:
         with mock.patch(
             "prowler.providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer",
             new=accessanalyzer_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer.get_unknown_arn",
+            return_value="arn:aws:accessanalyzer:eu-west-1:123456789012:unknown",
         ):
             # Test Check
             from prowler.providers.aws.services.accessanalyzer.accessanalyzer_enabled.accessanalyzer_enabled import (
