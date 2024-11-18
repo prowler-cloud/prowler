@@ -28,5 +28,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "The AWS guidance recommending the use of `aws:SourceAccount` and `aws:SourceArn` condition keys to prevent cross-account confused deputy attacks does not apply to EKS. As confirmed by AWS, these condition keys are currently not supported by EKS, and there is no alternative condition available at this time to resolve this finding. Users may consider muting this finding until AWS provides a resolution."
+  "Notes": ""
 }
