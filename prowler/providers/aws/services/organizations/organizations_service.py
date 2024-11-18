@@ -202,6 +202,21 @@ class Organizations(AWSService):
         finally:
             return self.delegated_administrators
 
+    def get_unknown_arn(self, region) -> str:
+        """Return an unknown ARN for the region.
+
+        Args:
+            region (str): The region to get the unknown ARN for.
+
+        Returns:
+            str: The unknown ARN for the region.
+
+        Examples:
+            >>> organizations.get_unknown_arn("us-east-1")
+            "arn:aws-cn:organizations:us-east-1:123456789012:unknown"
+        """
+        return f"arn:{self.audited_partition}:organizations:{region}:{self.audited_account}:unknown"
+
 
 class Policy(BaseModel):
     arn: str

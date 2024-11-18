@@ -12,7 +12,9 @@ class organizations_opt_out_ai_services_policy(Check):
             if org.policies is not None:  # Access Denied to list_policies
                 report = Check_Report_AWS(self.metadata())
                 report.resource_id = org.id
-                report.resource_arn = f"arn:{organizations_client.audited_partition}:organizations:{organizations_client.region}:{organizations_client.audited_account}:unknown"
+                report.resource_arn = organizations_client.get_unknown_arn(
+                    organizations_client.region
+                )
                 report.region = organizations_client.region
                 report.status = "FAIL"
                 report.status_extended = (
