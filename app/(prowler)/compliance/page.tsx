@@ -1,15 +1,14 @@
 import { Spacer } from "@nextui-org/react";
-import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
-import { getCompliance } from "@/actions/compliance";
+import { getCompliancesOverview } from "@/actions/compliances";
 import {
   ComplianceCard,
   ComplianceSkeletonGrid,
 } from "@/components/compliance";
 import { FilterControls } from "@/components/filters";
 import { Header } from "@/components/ui";
-import { SearchParamsProps } from "@/types";
+import { ComplianceOverviewData, SearchParamsProps } from "@/types";
 
 export default async function Compliance({
   searchParams,
@@ -23,41 +22,48 @@ export default async function Compliance({
       <Header title="Compliance" icon="fluent-mdl2:compliance-audit" />
       <Spacer y={4} />
       <FilterControls mutedFindings={false} />
-      <Spacer y={4} />
+      <Spacer y={8} />
       <Suspense key={searchParamsKey} fallback={<ComplianceSkeletonGrid />}>
-        <SSRComplianceGrid searchParams={searchParams} />
+        <SSRComplianceGrid />
       </Suspense>
     </>
   );
 }
 
-const SSRComplianceGrid = async ({
-  searchParams,
-}: {
-  searchParams: SearchParamsProps;
-}) => {
-  const page = parseInt(searchParams.page?.toString() || "1", 10);
-  const compliancesData = await getCompliance({ page });
-  const [compliances] = await Promise.all([compliancesData]);
+const SSRComplianceGrid = async () => {
+  // const scanId = "01929f57-c0ee-7553-be0b-cbde006fb6f7";
+  const scanId = "0193358c-bd7f-7eec-b13a-2d4a648b8df";
+  const compliancesData = await getCompliancesOverview({ scanId });
+  console.log(compliancesData, "compliancesData");
 
-  if (compliances?.errors) redirect("/compliance");
+  if (compliancesData?.errors?.length > 0) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <div className="text-default-500">There is no compliance data.</div>
+      </div>
+    );
+  }
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 3xl:grid-cols-4">
-      {compliances.compliance?.data.map((compliance: any) => (
-        <ComplianceCard
-          key={compliance.id}
-          title={compliance.attributes.title}
-          passingRequirements={compliance.attributes.passingRequirements}
-          totalRequirements={compliance.attributes.totalRequirements}
-          prevPassingRequirements={
-            compliance.lastScan.attributes.passingRequirements
-          }
-          prevTotalRequirements={
-            compliance.lastScan.attributes.totalRequirements
-          }
-        />
-      ))}
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      {compliancesData?.data?.map((compliance: ComplianceOverviewData) => {
+        const { attributes } = compliance;
+        const {
+          framework,
+          requirements_status: { passed, total },
+        } = attributes;
+
+        return (
+          <ComplianceCard
+            key={compliance.id}
+            title={framework}
+            passingRequirements={passed}
+            totalRequirements={total}
+            prevPassingRequirements={passed}
+            prevTotalRequirements={total}
+          />
+        );
+      })}
     </div>
   );
 };

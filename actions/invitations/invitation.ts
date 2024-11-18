@@ -42,6 +42,7 @@ export const getInvitations = async ({
     revalidatePath("/invitations");
     return parsedData;
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error("Error fetching invitations:", error);
     return undefined;
   }
@@ -117,6 +118,7 @@ export const updateInvite = async (formData: FormData) => {
     revalidatePath("/invitations");
     return parseStringify(data);
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error("Error updating invitation:", error);
     return {
       error: getErrorMessage(error),
