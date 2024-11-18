@@ -11,6 +11,7 @@ class iam_root_credentials_management_enabled(Check):
         if (
             organizations_client.organization
             and organizations_client.organization.status == "ACTIVE"
+            and iam_client.organization_features is not None
         ):
             report = Check_Report_AWS(self.metadata())
             report.region = iam_client.region

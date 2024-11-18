@@ -6,7 +6,10 @@ class iam_no_root_access_key(Check):
     def execute(self) -> Check_Report_AWS:
         findings = []
         # Check if the root credentials are managed by AWS Organizations
-        if "RootCredentialsManagement" not in iam_client.organization_features:
+        if (
+            iam_client.organization_features
+            and "RootCredentialsManagement" not in iam_client.organization_features
+        ):
             for user in iam_client.credential_report:
                 if user["user"] == "<root_account>":
                     report = Check_Report_AWS(self.metadata())

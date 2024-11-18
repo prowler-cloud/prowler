@@ -8,7 +8,10 @@ class iam_root_hardware_mfa_enabled(Check):
         # This check is only available in Commercial Partition
         if iam_client.audited_partition == "aws":
             # Check if the root credentials are managed by AWS Organizations
-            if "RootCredentialsManagement" not in iam_client.organization_features:
+            if (
+                iam_client.organization_features
+                and "RootCredentialsManagement" not in iam_client.organization_features
+            ):
                 if iam_client.account_summary:
                     virtual_mfa = False
                     report = Check_Report_AWS(self.metadata())
