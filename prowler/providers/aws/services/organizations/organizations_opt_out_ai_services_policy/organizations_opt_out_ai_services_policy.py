@@ -12,10 +12,8 @@ class organizations_opt_out_ai_services_policy(Check):
             if org.policies is not None:  # Access Denied to list_policies
                 report = Check_Report_AWS(self.metadata())
                 report.resource_id = org.id
-                report.resource_arn = organizations_client.get_unknown_arn(
-                    organizations_client.region
-                )
                 report.region = organizations_client.region
+                report.resource_arn = org.arn
                 report.status = "FAIL"
                 report.status_extended = (
                     "AWS Organizations is not in-use for this AWS Account."
@@ -30,7 +28,6 @@ class organizations_opt_out_ai_services_policy(Check):
                             .get("@@assign")
                             == "optOut"
                         ):
-                            report.resource_arn = org.arn
                             report.status = "PASS"
                             report.status_extended = f"AWS Organization {org.id} has opted out of all AI services, not granting consent for AWS to access its data."
                             break

@@ -15,9 +15,7 @@ class organizations_scp_check_deny_regions(Check):
             if org.policies is not None:  # Access denied to list policies
                 report = Check_Report_AWS(self.metadata())
                 report.resource_id = org.id
-                report.resource_arn = organizations_client.get_unknown_arn(
-                    organizations_client.region
-                )
+                report.resource_arn = org.arn
                 report.region = organizations_client.region
                 report.status = "FAIL"
                 report.status_extended = (
@@ -55,7 +53,6 @@ class organizations_scp_check_deny_regions(Check):
                                     for region in organizations_enabled_regions
                                 ):
                                     # All defined regions are restricted, we exit here, no need to continue.
-                                    report.resource_arn = org.arn
                                     report.status = "PASS"
                                     report.status_extended = f"AWS Organization {org.id} has SCP policy {policy.id} restricting all configured regions found."
                                     findings.append(report)
@@ -82,7 +79,6 @@ class organizations_scp_check_deny_regions(Check):
                                     for region in organizations_enabled_regions
                                 ):
                                     # All defined regions are restricted, we exit here, no need to continue.
-                                    report.resource_arn = org.arn
                                     report.status = "PASS"
                                     report.status_extended = f"AWS Organization {org.id} has SCP policy {policy.id} restricting all configured regions found."
                                     findings.append(report)

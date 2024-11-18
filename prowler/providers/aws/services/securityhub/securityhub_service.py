@@ -73,7 +73,7 @@ class SecurityHub(AWSService):
                     # SecurityHub is filtered
                     self.securityhubs.append(
                         SecurityHubHub(
-                            arn=self.audited_account_arn,
+                            arn=self.get_unknown_arn(regional_client.region),
                             id="Security Hub",
                             status="NOT_AVAILABLE",
                             standards="",

@@ -9,19 +9,16 @@ class organizations_account_part_of_organizations(Check):
         findings = []
         for org in organizations_client.organizations:
             report = Check_Report_AWS(self.metadata())
+            report.resource_arn = org.arn
             if org.status == "ACTIVE":
                 report.status = "PASS"
                 report.status_extended = (
                     f"AWS Organization {org.id} contains this AWS account."
                 )
-                report.resource_arn = org.arn
             else:
                 report.status = "FAIL"
                 report.status_extended = (
                     "AWS Organizations is not in-use for this AWS Account."
-                )
-                report.resource_arn = organizations_client.get_unknown_arn(
-                    organizations_client.region
                 )
             report.region = organizations_client.region
             report.resource_id = org.id

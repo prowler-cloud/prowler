@@ -37,21 +37,12 @@ class bedrock_model_invocation_logs_encryption_enabled(Check):
                     ):
                         cloudwatch_encryption = False
                 if not s3_encryption and not cloudwatch_encryption:
-                    report.resource_arn = bedrock_client.get_unknown_arn(
-                        bedrock_client.region
-                    )
                     report.status = "FAIL"
                     report.status_extended = f"Bedrock Model Invocation logs are not encrypted in S3 bucket: {logging.s3_bucket} and CloudWatch Log Group: {logging.cloudwatch_log_group}."
                 elif not s3_encryption:
-                    report.resource_arn = bedrock_client.get_unknown_arn(
-                        bedrock_client.region
-                    )
                     report.status = "FAIL"
                     report.status_extended = f"Bedrock Model Invocation logs are not encrypted in S3 bucket: {logging.s3_bucket}."
                 elif not cloudwatch_encryption:
-                    report.resource_arn = bedrock_client.get_unknown_arn(
-                        bedrock_client.region
-                    )
                     report.status = "FAIL"
                     report.status_extended = f"Bedrock Model Invocation logs are not encrypted in CloudWatch Log Group: {logging.cloudwatch_log_group}."
 

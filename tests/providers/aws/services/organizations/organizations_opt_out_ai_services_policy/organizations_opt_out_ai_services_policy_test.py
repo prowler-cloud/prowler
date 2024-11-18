@@ -4,11 +4,7 @@ from prowler.providers.aws.services.organizations.organizations_service import (
     Organization,
     Policy,
 )
-from tests.providers.aws.utils import (
-    AWS_ACCOUNT_ARN,
-    AWS_REGION_EU_WEST_1,
-    set_mocked_aws_provider,
-)
+from tests.providers.aws.utils import AWS_REGION_EU_WEST_1, set_mocked_aws_provider
 
 
 class Test_organizations_tags_policies_enabled_and_attached:
@@ -19,7 +15,7 @@ class Test_organizations_tags_policies_enabled_and_attached:
         organizations_client.audited_account = "0123456789012"
         organizations_client.organizations = [
             Organization(
-                arn=AWS_ACCOUNT_ARN,
+                arn="arn:aws:organizations:eu-west-1:0123456789012:unknown",
                 id="AWS Organization",
                 status="NOT_AVAILABLE",
                 master_id="",
@@ -62,9 +58,6 @@ class Test_organizations_tags_policies_enabled_and_attached:
         organizations_client.region = AWS_REGION_EU_WEST_1
         organizations_client.audited_partition = "aws"
         organizations_client.audited_account = "0123456789012"
-        organizations_client.get_unknown_arn = (
-            lambda x: f"arn:aws:organizations:{x}:0123456789012:unknown"
-        )
         organizations_client.organizations = [
             Organization(
                 id="o-1234567890",
@@ -103,7 +96,7 @@ class Test_organizations_tags_policies_enabled_and_attached:
                 assert result[0].resource_id == "o-1234567890"
                 assert (
                     result[0].resource_arn
-                    == "arn:aws:organizations:eu-west-1:0123456789012:unknown"
+                    == "arn:aws:organizations::1234567890:organization/o-1234567890"
                 )
                 assert result[0].region == AWS_REGION_EU_WEST_1
 
@@ -182,9 +175,6 @@ class Test_organizations_tags_policies_enabled_and_attached:
         organizations_client.region = AWS_REGION_EU_WEST_1
         organizations_client.audited_partition = "aws"
         organizations_client.audited_account = "0123456789012"
-        organizations_client.get_unknown_arn = (
-            lambda x: f"arn:aws:organizations:{x}:0123456789012:unknown"
-        )
         organizations_client.organizations = [
             Organization(
                 id="o-1234567890",
@@ -216,9 +206,6 @@ class Test_organizations_tags_policies_enabled_and_attached:
             with mock.patch(
                 "prowler.providers.aws.services.organizations.organizations_opt_out_ai_services_policy.organizations_opt_out_ai_services_policy.organizations_client",
                 new=organizations_client,
-            ), mock.patch(
-                "prowler.providers.aws.services.organizations.organizations_opt_out_ai_services_policy.organizations_opt_out_ai_services_policy.organizations_client.get_unknown_arn",
-                return_value="arn:aws:organizations:eu-west-1:0123456789012:unknown",
             ):
                 # Test Check
                 from prowler.providers.aws.services.organizations.organizations_opt_out_ai_services_policy.organizations_opt_out_ai_services_policy import (
@@ -237,6 +224,6 @@ class Test_organizations_tags_policies_enabled_and_attached:
                 assert result[0].resource_id == "o-1234567890"
                 assert (
                     result[0].resource_arn
-                    == "arn:aws:organizations:eu-west-1:0123456789012:unknown"
+                    == "arn:aws:organizations::1234567890:organization/o-1234567890"
                 )
                 assert result[0].region == AWS_REGION_EU_WEST_1

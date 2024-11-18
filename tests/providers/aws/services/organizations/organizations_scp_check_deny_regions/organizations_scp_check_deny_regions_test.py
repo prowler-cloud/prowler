@@ -86,9 +86,10 @@ class Test_organizations_scp_check_deny_regions:
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
                 assert result[0].resource_id == response["Organization"]["Id"]
+                # Using this because there is no way to get the ARN of the organization
                 assert (
-                    result[0].resource_arn
-                    == "arn:aws:organizations:eu-west-1:123456789012:unknown"
+                    "arn:aws:organizations::123456789012:organization/o-"
+                    in result[0].resource_arn
                 )
                 assert (
                     result[0].status_extended
@@ -182,8 +183,8 @@ class Test_organizations_scp_check_deny_regions:
                 assert result[0].status == "FAIL"
                 assert result[0].resource_id == response["Organization"]["Id"]
                 assert (
-                    result[0].resource_arn
-                    == "arn:aws:organizations:eu-west-1:123456789012:unknown"
+                    "arn:aws:organizations::123456789012:organization/o-"
+                    in result[0].resource_arn
                 )
                 assert (
                     result[0].status_extended
