@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "vpc_endpoint_multi_az_enabled",
+  "CheckTitle": "Amazon VPC Interface Endpoints should have ENIs in more than one subnet.",
+  "CheckType": [],
+  "ServiceName": "vpc",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "medium",
+  "ResourceType": "AwsVpcEndpointService",
+  "Description": "Ensure that all vpc interface endpoints have ENIs in multiple subnets. If a VPC endpoint has an ENI in only a single subnet then this check will fail. You cannot create VPC Endpoints in 2 different subnets in the same AZ. So, for the purpose of VPC endpoints, having multiple subnets implies multiple AZs.",
+  "Risk": "Without VPC endpoints ENIs in multiple subnets an AZ impacting event could lead to increased downtime or your network traffic between your VPC and Amazon services may traverse the public internet.",
+  "RelatedUrl": "https://docs.aws.amazon.com/vpc/latest/privatelink/interface-endpoints.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "To improve the availability of your services residing in your VPC, configure multiple subnets for VPC Interface Endpoints.",
+      "Url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/interface-vpc-endpoints.html"
+    }
+  },
+  "Categories": [
+    "redundancy"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

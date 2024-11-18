@@ -57,6 +57,7 @@ The following list includes all the AWS checks with configurable variables that 
 | `rds_instance_backup_enabled`                                 | `check_rds_instance_replicas`                    | Boolean         |
 | `securityhub_enabled`                                         | `mute_non_default_regions`                       | Boolean         |
 | `secretsmanager_secret_unused`                                | `max_days_secret_unused`                         | Integer         |
+| `secretsmanager_secret_rotated_periodically`                  | `max_days_secret_unrotated`                      | Integer         |
 | `ssm_document_secrets`                                        | `secrets_ignore_patterns`                        | List of Strings |
 | `stepfunctions_statemachine_logging_enabled`                  | `statemachines_log_level`                        | String          |
 | `trustedadvisor_premium_support_plan_subscribed`              | `verify_premium_support_plans`                   | Boolean         |

@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:guardduty:region:account-id/detector-id",
   "Severity": "high",
-  "ResourceType": "",
+  "ResourceType": "AwsGuardDutyDetector",
   "Description": "GuardDuty Lambda Protection helps you identify potential security threats when an AWS Lambda function gets invoked. After you enable Lambda Protection, GuardDuty starts monitoring Lambda network activity logs associated with the Lambda functions in your AWS account.",
   "Risk": "If Lambda Protection is not enabled, GuardDuty will not be able to monitor Lambda network activity logs and may miss potential security threats.",
   "RelatedUrl": "https://docs.aws.amazon.com/guardduty/latest/ug/lambda-protection.html",

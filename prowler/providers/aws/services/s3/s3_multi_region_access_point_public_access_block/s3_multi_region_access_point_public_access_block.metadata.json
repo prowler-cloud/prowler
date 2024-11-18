@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "s3_multi_region_access_point_public_access_block",
+  "CheckTitle": "Block Public Access Settings enabled on Multi Region Access Points.",
+  "CheckType": [
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
+  ],
+  "ServiceName": "s3",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:s3:region:account-id:accesspoint/access-point-name",
+  "Severity": "high",
+  "ResourceType": "AwsS3AccessPoint",
+  "Description": "Ensures that public access is blocked on S3 Access Points.",
+  "Risk": "Leaving S3 multi region access points open to the public in AWS can lead to data exposure, breaches, compliance violations, unauthorized access, and data integrity issues.",
+  "RelatedUrl": "https://aws.amazon.com/es/getting-started/hands-on/getting-started-with-amazon-s3-multi-region-access-points/",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/s3-controls.html#s3-24",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure S3 multi region access points are private by default, applying strict access controls, and regularly auditing permissions to prevent unauthorized public access.",
+      "Url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/multi-region-access-point-block-public-access.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

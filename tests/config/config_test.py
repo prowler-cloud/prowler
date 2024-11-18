@@ -11,7 +11,6 @@ from prowler.config.config import (
     load_and_validate_config_file,
     load_and_validate_fixer_config_file,
 )
-from prowler.providers.aws.aws_provider import get_aws_available_regions
 
 MOCK_PROWLER_VERSION = "3.3.0"
 MOCK_OLD_PROWLER_VERSION = "0.0.0"
@@ -312,6 +311,7 @@ config_aws = {
     "secrets_ignore_patterns": [],
     "max_days_secret_unused": 90,
     "statemachines_log_level": "",
+    "max_days_secret_unrotated": 90,
 }
 
 config_azure = {
@@ -346,9 +346,6 @@ config_kubernetes = {
 
 
 class Test_Config:
-    def test_get_aws_available_regions(self):
-        assert len(get_aws_available_regions()) == 34
-
     @mock.patch(
         "prowler.config.config.requests.get", new=mock_prowler_get_latest_release
     )

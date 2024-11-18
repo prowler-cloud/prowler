@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 
 import botocore
@@ -146,9 +145,9 @@ class Test_elbv2_waf_acl_attached:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert search(
-                "is not protected by WAF Web ACL",
-                result[0].status_extended,
+            assert (
+                result[0].status_extended
+                == "ELBv2 ALB my-lb is not protected by WAF Web ACL."
             )
             assert result[0].resource_id == "my-lb"
             assert result[0].resource_arn == lb["LoadBalancerArn"]
@@ -233,9 +232,9 @@ class Test_elbv2_waf_acl_attached:
 
                 assert len(result) == 1
                 assert result[0].status == "PASS"
-                assert search(
-                    "is protected by WAFv2 Web ACL",
-                    result[0].status_extended,
+                assert (
+                    result[0].status_extended
+                    == "ELBv2 ALB my-lb is protected by WAFv2 Web ACL my-web-acl."
                 )
                 assert result[0].resource_id == "my-lb"
                 assert result[0].resource_arn == lb["LoadBalancerArn"]

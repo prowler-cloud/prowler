@@ -15,6 +15,7 @@ class ECS(AWSService):
         self.task_definitions = {}
         self.services = {}
         self.clusters = {}
+        self.task_sets = {}
         self.__threading_call__(self._list_task_definitions)
         self.__threading_call__(
             self._describe_task_definition, self.task_definitions.values()
@@ -77,6 +78,9 @@ class ECS(AWSService):
                         log_driver=container.get("logConfiguration", {}).get(
                             "logDriver", ""
                         ),
+                        log_option=container.get("logConfiguration", {})
+                        .get("options", {})
+                        .get("mode", ""),
                     )
                 )
             task_definition.pid_mode = response["taskDefinition"].get("pidMode", "")
@@ -124,6 +128,18 @@ class ECS(AWSService):
                         platform_family=service_desc.get("platformFamily", ""),
                         tags=service_desc.get("tags", []),
                     )
+                    for task_set in service_desc.get("taskSets", []):
+                        self.task_sets[task_set["taskSetArn"]] = TaskSet(
+                            id=task_set["id"],
+                            arn=task_set["taskSetArn"],
+                            cluster_arn=task_set["clusterArn"],
+                            service_arn=task_set["serviceArn"],
+                            assign_public_ip=task_set.get("networkConfiguration", {})
+                            .get("awsvpcConfiguration", {})
+                            .get("assignPublicIp", "DISABLED"),
+                            region=cluster.region,
+                            tags=task_set.get("tags", []),
+                        )
                     cluster.services[service_arn] = service_obj
                     self.services[service_arn] = service_obj
         except Exception as error:
@@ -180,6 +196,7 @@ class ContainerDefinition(BaseModel):
     user: str
     environment: list[ContainerEnvVariable]
     log_driver: Optional[str]
+    log_option: Optional[str]
 
 
 class TaskDefinition(BaseModel):
@@ -210,4 +227,14 @@ class Cluster(BaseModel):
     region: str
     services: dict = {}
     settings: Optional[list] = []
+    tags: Optional[list] = []
+
+
+class TaskSet(BaseModel):
+    id: str
+    arn: str
+    cluster_arn: str
+    service_arn: str
+    region: str
+    assign_public_ip: Optional[str]
     tags: Optional[list] = []

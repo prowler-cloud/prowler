@@ -12,7 +12,7 @@ from prowler.config.config import (
     default_output_directory,
 )
 from prowler.lib.check.models import Severity
-from prowler.lib.outputs.finding import Status
+from prowler.lib.outputs.common import Status
 from prowler.providers.common.arguments import (
     init_providers_parser,
     validate_provider_arguments,
@@ -177,6 +177,12 @@ Detailed documentation at https://docs.prowler.com
         common_outputs_parser.add_argument(
             "--no-banner", "-b", action="store_true", help="Hide Prowler banner"
         )
+        common_outputs_parser.add_argument(
+            "--no-color",
+            action="store_true",
+            help="Disable color codes in output",
+        )
+
         common_outputs_parser.add_argument(
             "--unix-timestamp",
             action="store_true",

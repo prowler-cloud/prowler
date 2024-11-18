@@ -79,3 +79,10 @@ output/csv:
   - changed-files:
       - any-glob-to-any-file: "prowler/lib/outputs/csv/**"
       - any-glob-to-any-file: "tests/lib/outputs/csv/**"
+
+compliance:
+  - changed-files:
+      - any-glob-to-any-file: "prowler/lib/outputs/compliance/**"
+      - any-glob-to-any-file: "tests/lib/outputs/compliance/**"
+      - any-glob-to-any-file: "prowler/compliance/**"
+

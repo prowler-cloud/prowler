@@ -34,7 +34,7 @@ class IAM(GCPService):
                             ServiceAccount(
                                 name=account["name"],
                                 email=account["email"],
-                                display_name=account["displayName"],
+                                display_name=account.get("displayName", ""),
                                 project_id=project_id,
                             )
                         )

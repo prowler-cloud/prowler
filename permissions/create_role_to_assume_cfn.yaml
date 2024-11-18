@@ -59,6 +59,8 @@ Resources:
                 - 'appstream:Describe*'
                 - 'appstream:List*'
                 - 'backup:List*'
+                - 'bedrock:List*'
+                - 'bedrock:Get*'
                 - 'cloudtrail:GetInsightSelectors'
                 - 'codeartifact:List*'
                 - 'codebuild:BatchGet*'

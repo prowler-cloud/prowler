@@ -5,6 +5,7 @@ import sys
 from os import environ
 
 from colorama import Fore, Style
+from colorama import init as colorama_init
 
 from prowler.config.config import (
     csv_file_suffix,
@@ -112,6 +113,9 @@ def prowler():
         and not checks_folder
     )
 
+    if args.no_color:
+        colorama_init(strip=True)
+
     if not args.no_banner:
         legend = args.verbose or getattr(args, "fixer", None)
         print_banner(legend)
@@ -173,15 +177,15 @@ def prowler():
 
     # Load checks to execute
     checks_to_execute = load_checks_to_execute(
-        bulk_checks_metadata,
-        bulk_compliance_frameworks,
-        checks_file,
-        checks,
-        services,
-        severities,
-        compliance_framework,
-        categories,
-        provider,
+        bulk_checks_metadata=bulk_checks_metadata,
+        bulk_compliance_frameworks=bulk_compliance_frameworks,
+        checks_file=checks_file,
+        check_list=checks,
+        service_list=services,
+        severities=severities,
+        compliance_frameworks=compliance_framework,
+        categories=categories,
+        provider=provider,
     )
 
     # if --list-checks-json, dump a json file and exit
@@ -617,7 +621,11 @@ def prowler():
             )
 
             security_hub_regions = (
-                global_provider.get_available_aws_service_regions("securityhub")
+                global_provider.get_available_aws_service_regions(
+                    "securityhub",
+                    global_provider.identity.partition,
+                    global_provider.identity.audited_regions,
+                )
                 if not global_provider.identity.audited_regions
                 else global_provider.identity.audited_regions
             )

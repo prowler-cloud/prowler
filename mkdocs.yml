@@ -65,6 +65,7 @@ nav:
       - Pentesting: tutorials/pentesting.md
       - Parallel Execution: tutorials/parallel-execution.md
       - Developer Guide: developer-guide/introduction.md
+      - Prowler Check Kreator: tutorials/prowler-check-kreator.md
       - AWS:
           - Authentication: tutorials/aws/authentication.md
           - Assume Role: tutorials/aws/role-assumption.md
@@ -87,6 +88,7 @@ nav:
       - Google Cloud:
           - Authentication: tutorials/gcp/authentication.md
           - Projects: tutorials/gcp/projects.md
+          - Organization: tutorials/gcp/organization.md
       - Kubernetes:
           - In-Cluster Execution: tutorials/kubernetes/in-cluster.md
           - Non In-Cluster Execution: tutorials/kubernetes/outside-cluster.md

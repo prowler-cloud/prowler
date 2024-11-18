@@ -6,7 +6,7 @@ LABEL maintainer="https://github.com/prowler-cloud/prowler"
 #hadolint ignore=DL3018
 RUN apk --no-cache upgrade && apk --no-cache add curl git
 
-# Create nonroot user
+# Create non-root user
 RUN mkdir -p /home/prowler && \
     echo 'prowler:x:1000:1000:prowler:/home/prowler:' > /etc/passwd && \
     echo 'prowler:x:1000:' > /etc/group && \

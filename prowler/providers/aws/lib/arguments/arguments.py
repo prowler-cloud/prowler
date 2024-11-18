@@ -1,7 +1,7 @@
 from argparse import ArgumentTypeError, Namespace
 from re import fullmatch, search
 
-from prowler.providers.aws.aws_provider import get_aws_available_regions
+from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.aws.config import ROLE_SESSION_NAME
 from prowler.providers.aws.lib.arn.arn import arn_type
 
@@ -64,7 +64,7 @@ def init_parser(self):
         "-f",
         nargs="+",
         help="AWS region names to run Prowler against",
-        choices=get_aws_available_regions(),
+        choices=AwsProvider.get_regions(partition=None),
     )
     # AWS Organizations
     aws_orgs_subparser = aws_parser.add_argument_group("AWS Organizations")

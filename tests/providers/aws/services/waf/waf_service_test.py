@@ -88,6 +88,19 @@ def mock_make_api_call(self, operation_name, kwarg):
                 },
             ]
         }
+    if operation_name == "GetLoggingConfiguration":
+        return {
+            "LoggingConfiguration": {
+                "ResourceArn": "arn:aws:waf:123456789012:webacl/my-web-acl-id",
+                "LogDestinationConfigs": [
+                    "arn:aws:firehose:us-east-1:123456789012:deliverystream/my-firehose"
+                ],
+                "RedactedFields": [],
+                "ManagedByFirewallManager": False,
+            }
+        }
+    if operation_name == "GetChangeToken":
+        return {"ChangeToken": "my-change-token"}
     return make_api_call(self, operation_name, kwarg)
 
 

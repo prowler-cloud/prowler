@@ -99,6 +99,11 @@ class GuardDuty(AWSService):
                         and feat.get("Status", "DISABLED") == "ENABLED"
                     ):
                         detector.lambda_protection = True
+                    elif (
+                        feat.get("Name", "") == "EKS_RUNTIME_MONITORING"
+                        and feat.get("Status", "DISABLED") == "ENABLED"
+                    ):
+                        detector.eks_runtime_monitoring = True
 
         except Exception as error:
             logger.error(
@@ -223,5 +228,6 @@ class Detector(BaseModel):
     s3_protection: bool = False
     rds_protection: bool = False
     eks_audit_log_protection: bool = False
+    eks_runtime_monitoring: bool = False
     lambda_protection: bool = False
     ec2_malware_protection: bool = False

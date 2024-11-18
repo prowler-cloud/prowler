@@ -113,3 +113,41 @@ class Cluster(BaseModel):
 class KafkaVersion(BaseModel):
     version: str
     status: str
+
+
+class KafkaConnect(AWSService):
+    def __init__(self, provider):
+        super().__init__(__class__.__name__, provider)
+        self.connectors = {}
+        self.__threading_call__(self._list_connectors)
+
+    def _list_connectors(self, regional_client):
+        try:
+            connector_paginator = regional_client.get_paginator("list_connectors")
+
+            for page in connector_paginator.paginate():
+                for connector in page["connectors"]:
+                    connector_arn = connector["connectorArn"]
+
+                    if not self.audit_resources or is_resource_filtered(
+                        connector_arn, self.audit_resources
+                    ):
+                        self.connectors[connector_arn] = Connector(
+                            arn=connector_arn,
+                            name=connector.get("connectorName", ""),
+                            region=regional_client.region,
+                            encryption_in_transit=connector.get(
+                                "kafkaClusterEncryptionInTransit", {}
+                            ).get("encryptionType", "PLAINTEXT"),
+                        )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+
+class Connector(BaseModel):
+    name: str
+    arn: str
+    region: str
+    encryption_in_transit: str
