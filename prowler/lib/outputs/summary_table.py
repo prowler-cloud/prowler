@@ -40,6 +40,9 @@ def display_summary_table(
         elif provider.type == "kubernetes":
             entity_type = "Context"
             audited_entities = provider.identity.context
+        elif provider.type == "github":
+            entity_type = "User Name"
+            audited_entities = provider.identity.account_name
 
         # Check if there are findings and that they are not all MANUAL
         if findings and not all(finding.status == "MANUAL" for finding in findings):

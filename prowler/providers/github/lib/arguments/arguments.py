@@ -10,7 +10,7 @@ def init_parser(self):
         "--personal-access-token",
         action="store_true",
         help="Use Personal Access Token to log in against GitHub",
-        default=True,
+        default=False,
     )
     github_auth_modes_group.add_argument(
         "--oauth-app",

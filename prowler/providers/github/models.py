@@ -24,6 +24,8 @@ class GithubOutputOptions(ProviderOutputOptions):
             not hasattr(arguments, "output_filename")
             or arguments.output_filename is None
         ):
-            self.output_filename = f"prowler-output-{identity.context.replace(':', '_').replace('/', '_')}-{output_file_timestamp}"
+            self.output_filename = (
+                f"prowler-output-{identity.account_name}-{output_file_timestamp}"
+            )
         else:
             self.output_filename = arguments.output_filename

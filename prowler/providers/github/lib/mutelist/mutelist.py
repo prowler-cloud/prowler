@@ -9,7 +9,7 @@ class GitHubMutelist(Mutelist):
         finding: Check_Report_GitHub,
     ) -> bool:
         return self.is_muted(
-            finding.subscription,
+            finding.account_name,
             finding.check_metadata.CheckID,
             finding.location,
             finding.resource_name,

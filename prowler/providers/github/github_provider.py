@@ -4,11 +4,14 @@ from github import Auth, Github
 
 from prowler.config.config import (
     default_config_file_path,
+    get_default_mute_file_path,
     load_and_validate_config_file,
 )
 from prowler.lib.logger import logger
+from prowler.lib.mutelist.mutelist import Mutelist
 from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.provider import Provider
+from prowler.providers.github.lib.mutelist.mutelist import GitHubMutelist
 from prowler.providers.github.models import GithubIdentityInfo, GithubSession
 
 
@@ -17,6 +20,7 @@ class GithubProvider(Provider):
     _session: GithubSession
     _identity: GithubIdentityInfo
     _audit_config: dict
+    _mutelist: Mutelist
     audit_metadata: Audit_Metadata
 
     def __init__(
@@ -24,8 +28,11 @@ class GithubProvider(Provider):
         personal_access_token: bool = False,
         github_app: bool = False,
         oauth_app: bool = False,
-        # config_content: dict = None,
         config_path: str = None,
+        config_content: dict = None,
+        fixer_config: dict = {},
+        mutelist_path: str = None,
+        mutelist_content: dict = None,
     ):
         """
         GitHub Provider constructor
@@ -48,14 +55,30 @@ class GithubProvider(Provider):
             github_app,
             oauth_app,
         )
-        self._audit_config = {}
 
-        # if config_content:
-        #     self._audit_config = config_content
-        # else:
-        if not config_path:
-            config_path = default_config_file_path
-        self._audit_config = load_and_validate_config_file(self._type, config_path)
+        # Audit Config
+        if config_content:
+            self._audit_config = config_content
+        else:
+            if not config_path:
+                config_path = default_config_file_path
+            self._audit_config = load_and_validate_config_file(self._type, config_path)
+
+        # Fixer Config
+        self._fixer_config = fixer_config
+
+        # Mutelist
+        if mutelist_content:
+            self._mutelist = GitHubMutelist(
+                mutelist_content=mutelist_content,
+            )
+        else:
+            if not mutelist_path:
+                mutelist_path = get_default_mute_file_path(self.type)
+            self._mutelist = GitHubMutelist(
+                mutelist_path=mutelist_path,
+            )
+        Provider.set_global_provider(self)
 
     @property
     def identity(self):
@@ -74,8 +97,18 @@ class GithubProvider(Provider):
 
     @property
     def audit_config(self):
-        """Returns the audit configuration for the GitHub provider."""
         return self._audit_config
+
+    @property
+    def fixer_config(self):
+        return self._fixer_config
+
+    @property
+    def mutelist(self) -> GitHubMutelist:
+        """
+        mutelist method returns the provider's mutelist.
+        """
+        return self._mutelist
 
     def setup_session(
         self,
@@ -141,8 +174,5 @@ class GithubProvider(Provider):
 
             return identity
 
-    def print_credentials(self) -> None:
-        return super().print_credentials()
-
-    def get_global_provider(self) -> Provider:
-        return super().get_global_provider()
+    def print_credentials(self):
+        print("Using GitHub PAT")

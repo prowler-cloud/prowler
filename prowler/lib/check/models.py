@@ -508,6 +508,7 @@ def load_check_metadata(metadata_file: str) -> CheckMetadata:
 class Check_Report_GitHub(Check_Report):
     """Contains the GitHub Check's finding information."""
 
+    account_name: str
     resource_name: str
     resource_id: str
 
