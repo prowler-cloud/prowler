@@ -171,7 +171,7 @@ class AwsProvider(Provider):
                     * Note: If you have MFA enabled you will be prompted to enter the MFA ARN and the MFA TOTP code.
                     * Note: Take into account that you can use static credentials or a profile, with the combination of MFA.
 
-                - Assume Role: *You should be authenticated to use this method* Prowler can be used against multiple accounts using IAM Assume Role features depending on each use case:
+                - Assume Role: *Requires authentication.* Prowler can be used against multiple accounts using IAM Assume Role features depending on each use case:
                     - Set up a custom profile inside your AWS CLI configuration file:
                         - [profile profile_name]
                             role_arn = arn:aws:iam::123456789012:role/role_name
