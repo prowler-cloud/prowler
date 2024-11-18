@@ -125,7 +125,7 @@ class AwsProvider(Provider):
         """
         Initializes the AWS provider.
 
-        Arguments:
+        Args:
             - retries_max_attempts: The maximum number of retries for the AWS client.
             - role_arn: The ARN of the IAM role to assume.
             - session_duration: The duration of the session in seconds, between 900 and 43200.
@@ -171,7 +171,7 @@ class AwsProvider(Provider):
                     * Note: If you have MFA enabled you will be prompted to enter the MFA ARN and the MFA TOTP code.
                     * Note: Take into account that you can use static credentials or a profile, with the combination of MFA.
 
-                - Assume Role: You can use Prowler against multiple accounts using IAM Assume Role features depending on each use case:
+                - Assume Role: *You should be authenticated to use this method* Prowler can be used against multiple accounts using IAM Assume Role features depending on each use case:
                     - Set up a custom profile inside your AWS CLI configuration file:
                         - [profile profile_name]
                             role_arn = arn:aws:iam::123456789012:role/role_name
@@ -417,7 +417,7 @@ class AwsProvider(Provider):
         """
         get_organizations_info returns a AWSOrganizationsInfo object if the account to be audited is a delegated administrator for AWS Organizations or if the AWS Organizations Role ARN (--organizations-role) is passed.
 
-        Arguments:
+        Args:
         - organizations_session: needs to be a Session object with permissions to do organizations:DescribeAccount and organizations:ListTagsForResource.
         - aws_account_id: is the AWS Account ID from which we want to get the AWS Organizations account metadata
 
@@ -477,7 +477,7 @@ class AwsProvider(Provider):
         """
         set_identity sets the AWS provider identity information.
 
-        Arguments:
+        Args:
             - caller_identity: The AWS caller identity information.
             - profile: The AWS CLI profile name.
             - regions: A set of regions to audit.
@@ -515,7 +515,7 @@ class AwsProvider(Provider):
         """
         setup_session sets up an AWS session using the provided credentials.
 
-        Arguments:
+        Args:
             - mfa: A boolean indicating whether MFA is enabled.
             - profile: The name of the AWS CLI profile to use.
             - aws_access_key_id: The AWS access key ID.
@@ -755,7 +755,7 @@ class AwsProvider(Provider):
         """
         get_available_aws_service_regions returns the available regions for the given service and partition.
 
-        Arguments:
+        Args:
             - service: The AWS service name.
             - partition: The AWS partition name. Default is "aws".
             - audited_regions: A set of regions to audit. Default is None.
@@ -849,7 +849,7 @@ class AwsProvider(Provider):
     def get_regions_from_audit_resources(self, audit_resources: list) -> set:
         """get_regions_from_audit_resources gets the regions from the audit resources arns
 
-        Arguments:
+        Args:
             - audit_resources: list of ARNs of the resources to audit
 
         Returns:
@@ -920,7 +920,7 @@ class AwsProvider(Provider):
     def get_default_region(self, service: str) -> str:
         """get_default_region returns the default region based on the profile and audited service regions
 
-        Arguments:
+        Args:
             - service: The AWS service name
 
         Returns:
@@ -985,7 +985,7 @@ class AwsProvider(Provider):
         """
         set_session_config returns a botocore Config object with the Prowler user agent and the default retrier configuration if nothing is passed as argument
 
-        Arguments:
+        Args:
             - retries_max_attempts: The maximum number of retries for the standard retrier config
 
         Returns:
@@ -1017,7 +1017,7 @@ class AwsProvider(Provider):
         """
         assume_role assumes the IAM roles passed with the given session and returns AWSCredentials
 
-        Arguments:
+        Args:
             - session: The AWS session object
             - assumed_role_info: The AWSAssumeRoleInfo object
 
@@ -1076,7 +1076,7 @@ class AwsProvider(Provider):
     def get_aws_enabled_regions(self, current_session: Session) -> set:
         """get_aws_enabled_regions returns a set of enabled AWS regions
 
-        Arguments:
+        Args:
             - current_session: The AWS session object
 
         Returns:
