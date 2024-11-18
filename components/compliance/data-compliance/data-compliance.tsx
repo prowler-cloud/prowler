@@ -11,7 +11,14 @@ interface DataComplianceProps {
 export const DataCompliance = ({ scans }: DataComplianceProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const selectedScanId = searchParams.get("scanId") || scans[0]?.id;
+  const scanIdParam = searchParams.get("scanId");
+  const selectedScanId =
+    scanIdParam === "undefined" || !scanIdParam ? scans[0]?.id : scanIdParam;
+
+  if (scanIdParam === "undefined") {
+    router.replace("/compliance");
+    return null;
+  }
 
   const handleSelectionChange = (selectedKey: string) => {
     router.push(`?scanId=${selectedKey}`);

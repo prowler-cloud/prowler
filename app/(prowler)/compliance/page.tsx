@@ -45,10 +45,22 @@ export default async function Compliance({
 const SSRComplianceGrid = async ({ scanId }: { scanId: string }) => {
   const compliancesData = await getCompliancesOverview({ scanId });
 
+  // Check if the response contains no data
+  if (!compliancesData || compliancesData?.data?.length === 0) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <div className="text-default-500">
+          No compliance data available for the selected scan.
+        </div>
+      </div>
+    );
+  }
+
+  // Handle errors returned by the API
   if (compliancesData?.errors?.length > 0) {
     return (
       <div className="flex h-full items-center justify-center">
-        <div className="text-default-500">There is no compliance data.</div>
+        <div className="text-default-500">Provide a valid scan ID.</div>
       </div>
     );
   }
