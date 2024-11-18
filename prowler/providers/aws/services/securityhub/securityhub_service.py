@@ -100,21 +100,6 @@ class SecurityHub(AWSService):
                 f"{resource.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def get_unknown_arn(self, region) -> str:
-        """Return an unknown ARN for the region.
-
-        Args:
-            region (str): The region to get the unknown ARN for.
-
-        Returns:
-            str: The unknown ARN for the region.
-
-        Examples:
-            >>> securityhub.get_unknown_arn("us-east-1")
-            "arn:aws-cn:securityhub:us-east-1:123456789012:unknown"
-        """
-        return f"arn:{self.audited_partition}:securityhub:{region}:{self.audited_account}:unknown"
-
 
 class SecurityHubHub(BaseModel):
     arn: str

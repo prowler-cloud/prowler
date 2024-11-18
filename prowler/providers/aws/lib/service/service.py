@@ -101,3 +101,16 @@ class AWSService:
             except Exception:
                 # Handle exceptions if necessary
                 pass  # Replace 'pass' with any additional exception handling logic. Currently handled within the called function
+
+    def get_unknown_arn(self, region) -> str:
+        """
+        Generate an unknown ARN for the service
+        Args:
+            region (str): The region to get the unknown ARN for.
+        Returns:
+            str: The unknown ARN for the region.
+        Examples:
+            >>> service.get_unknown_arn("us-east-1")
+            "arn:aws:service:us-east-1:0123456789012:unknown"
+        """
+        return f"arn:aws:{self.service}:{region}:{self.audited_account}:unknown"

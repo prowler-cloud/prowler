@@ -95,21 +95,6 @@ class Bedrock(AWSService):
                 f"{guardrail.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def get_unknown_arn(self, region) -> str:
-        """Return an unknown ARN for the region.
-
-        Args:
-            region (str): The region to get the unknown ARN for.
-
-        Returns:
-            str: The unknown ARN for the region.
-
-        Examples:
-            >>> bedrock.get_unknown_arn("us-east-1")
-            "arn:aws-cn:bedrock:us-east-1:123456789012:unknown"
-        """
-        return f"arn:{self.audited_partition}:bedrock:{region}:{self.audited_account}:unknown"
-
 
 class LoggingConfiguration(BaseModel):
     enabled: bool = False
