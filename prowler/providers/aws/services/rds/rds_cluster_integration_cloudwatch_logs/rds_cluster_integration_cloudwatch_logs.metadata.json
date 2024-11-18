@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "rds_cluster_integration_cloudwatch_logs",
+  "CheckTitle": "Check if RDS cluster is integrated with CloudWatch Logs.",
+  "CheckType": [],
+  "ServiceName": "rds",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-cluster",
+  "Severity": "medium",
+  "ResourceType": "AwsRdsDbCluster",
+  "Description": "Check if RDS cluster is integrated with CloudWatch Logs. The types valid are Aurora MySQL, Aurora PostgreSQL, MySQL, PostgreSQL.",
+  "Risk": "If logs are not enabled, monitoring of service use and threat analysis is not possible.",
+  "RelatedUrl": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/USER_LogAccess.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws rds modify-db-cluster --db-cluster-identifier <db_cluster_id> --cloudwatch-logs-export-configuration {'EnableLogTypes':['audit',error','general','slowquery']} --apply-immediately",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-34",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Use CloudWatch Logs to perform real-time analysis of the log data. Create alarms and view metrics.",
+      "Url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/publishing_cloudwatchlogs.html"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

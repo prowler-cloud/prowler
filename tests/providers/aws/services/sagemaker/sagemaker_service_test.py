@@ -20,6 +20,9 @@ test_training_job = "test-training-job"
 test_arn_training_job = f"arn:aws:sagemaker:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:training-job/{test_model}"
 subnet_id = "subnet-" + str(uuid4())
 kms_key_id = str(uuid4())
+endpoint_config_name = "endpoint-config-test"
+endpoint_config_arn = f"arn:aws:sagemaker:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:endpoint-config/{endpoint_config_name}"
+prod_variant_name = "Variant1"
 
 make_api_call = botocore.client.BaseClient._make_api_call
 
@@ -87,6 +90,29 @@ def mock_make_api_call(self, operation_name, kwarg):
                 {"Key": "test", "Value": "test"},
             ],
         }
+    if operation_name == "ListEndpointConfigs":
+        return {
+            "EndpointConfigs": [
+                {
+                    "EndpointConfigName": endpoint_config_name,
+                    "EndpointConfigArn": endpoint_config_arn,
+                },
+            ],
+        }
+    if operation_name == "DescribeEndpointConfig":
+        return {
+            "ProductionVariants": [
+                {
+                    "VariantName": prod_variant_name,
+                    "InitialInstanceCount": 5,
+                },
+                {
+                    "VariantName": "Variant2",
+                    "InitialInstanceCount": 2,
+                },
+            ]
+        }
+
     return make_api_call(self, operation_name, kwarg)
 
 
@@ -186,3 +212,36 @@ class Test_SageMaker_Service:
         assert sagemaker.sagemaker_training_jobs[0].network_isolation
         assert sagemaker.sagemaker_training_jobs[0].volume_kms_key_id == kms_key_id
         assert sagemaker.sagemaker_training_jobs[0].vpc_config_subnets == [subnet_id]
+
+    # Test SageMaker list endpoint configs
+    def test_list_endpoint_configs(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        sagemaker = SageMaker(aws_provider)
+        assert len(sagemaker.endpoint_configs) == 1
+        assert (
+            sagemaker.endpoint_configs[endpoint_config_arn].name == endpoint_config_name
+        )
+        assert (
+            sagemaker.endpoint_configs[endpoint_config_arn].arn == endpoint_config_arn
+        )
+        assert (
+            sagemaker.endpoint_configs[endpoint_config_arn].region
+            == AWS_REGION_EU_WEST_1
+        )
+        assert sagemaker.sagemaker_notebook_instances[0].tags == [
+            {"Key": "test", "Value": "test"},
+        ]
+
+    # Test SageMaker describe training jobs
+    def test_describe_endpoint_configs(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        sagemaker = SageMaker(aws_provider)
+        assert len(sagemaker.endpoint_configs) == 1
+        assert sagemaker.endpoint_configs[endpoint_config_arn].production_variants
+        for prod_variant in sagemaker.endpoint_configs[
+            endpoint_config_arn
+        ].production_variants:
+            if prod_variant.name == prod_variant_name:
+                assert prod_variant.initial_instance_count == 5
+            else:
+                assert prod_variant.initial_instance_count == 2

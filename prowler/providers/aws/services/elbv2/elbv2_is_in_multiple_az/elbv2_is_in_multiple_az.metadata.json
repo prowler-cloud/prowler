@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "elbv2_is_in_multiple_az",
+  "CheckTitle": "Elastic Load Balancer V2 (ELBv2) is Configured Across Multiple Availability Zones (AZs)",
+  "CheckType": [],
+  "ServiceName": "elbv2",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "medium",
+  "ResourceType": "AwsElbv2LoadBalancer",
+  "Description": "Ensure whether Elastic Load Balancer V2 (Application, Network, or Gateway Load Balancer) is configured to operate across multiple Availability Zones (AZs). Ensuring that your load balancer is spread across at least two AZs helps maintain high availability and fault tolerance in case of an AZ failure.",
+  "Risk": "If an ELBv2 is not configured across multiple AZs, there is a risk that an Availability Zone failure could lead to downtime for your application. This could result in a single point of failure, impacting the availability and reliability of your services.",
+  "RelatedUrl": "https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/how-elastic-load-balancing-works.html#availability-zones",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/elb-controls.html#elb-13",
+      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELBv2/enable-multi-az.html"
+    },
+    "Recommendation": {
+      "Text": "It is recommended to configure your ELBv2 to operate across at least two Availability Zones to enhance fault tolerance and availability.",
+      "Url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-subnets.html"
+    }
+  },
+  "Categories": [
+    "redundancy"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

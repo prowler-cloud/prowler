@@ -3,7 +3,11 @@ from boto3 import client
 from mock import patch
 from moto import mock_aws
 
-from prowler.providers.aws.services.neptune.neptune_service import Cluster, Neptune
+from prowler.providers.aws.services.neptune.neptune_service import (
+    Cluster,
+    ClusterSnapshot,
+    Neptune,
+)
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
@@ -66,6 +70,30 @@ def mock_make_api_call(self, operation_name, kwargs):
     if operation_name == "ListTagsForResource":
         return {"TagList": NEPTUNE_CLUSTER_TAGS}
 
+    if operation_name == "DescribeDBClusterSnapshots":
+        return {
+            "DBClusterSnapshots": [
+                {
+                    "DBClusterSnapshotIdentifier": "test-cluster-snapshot",
+                    "DBClusterIdentifier": NEPTUNE_CLUSTER_NAME,
+                    "Engine": "docdb",
+                    "Status": "available",
+                    "StorageEncrypted": True,
+                    "DBClusterSnapshotArn": f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:cluster-snapshot:test-cluster-snapshot",
+                    "TagList": [{"Key": "snapshot", "Value": "test"}],
+                },
+            ]
+        }
+    if operation_name == "DescribeDBClusterSnapshotAttributes":
+        return {
+            "DBClusterSnapshotAttributesResult": {
+                "DBClusterSnapshotIdentifier": "test-cluster-snapshot",
+                "DBClusterSnapshotAttributes": [
+                    {"AttributeName": "restore", "AttributeValues": ["all"]}
+                ],
+            }
+        }
+
     return make_api_call(self, operation_name, kwargs)
 
 
@@ -121,7 +149,7 @@ class Test_Neptune_Service:
         cluster = neptune_client.create_db_cluster(
             AvailabilityZones=[AWS_REGION_US_EAST_1_AZA, AWS_REGION_US_EAST_1_AZB],
             BackupRetentionPeriod=1,
-            CopyTagsToSnapshot=True,
+            CopyTagsToSnapshot=False,
             Engine=NEPTUNE_ENGINE,
             DatabaseName=NEPTUNE_CLUSTER_NAME,
             DBClusterIdentifier=NEPTUNE_CLUSTER_NAME,
@@ -155,4 +183,42 @@ class Test_Neptune_Service:
             db_subnet_group_id=SUBNET_GROUP_NAME,
             subnets=[SUBNET_1, SUBNET_2],
             tags=NEPTUNE_CLUSTER_TAGS,
+            copy_tags_to_snapshot=False,
+            cloudwatch_logs=[],
         )
+
+    def test_describe_db_cluster_snapshots(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        neptune = Neptune(aws_provider)
+
+        expected_snapshot = ClusterSnapshot(
+            id="test-cluster-snapshot",
+            arn=f"arn:aws:neptune:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:cluster-snapshot:test-cluster-snapshot",
+            cluster_id=NEPTUNE_CLUSTER_NAME,
+            encrypted=True,
+            region=AWS_REGION_US_EAST_1,
+            tags=[{"Key": "snapshot", "Value": "test"}],
+        )
+
+        neptune.db_cluster_snapshots = [expected_snapshot]
+
+        assert neptune.db_cluster_snapshots[0] == expected_snapshot
+
+    def test_describe_db_cluster_snapshot_attributes(self):
+        aws_provider = set_mocked_aws_provider()
+        neptune = Neptune(aws_provider)
+        neptune.db_cluster_snapshots = [
+            ClusterSnapshot(
+                id="test-cluster-snapshot",
+                arn=f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:cluster-snapshot:test-cluster-snapshot",
+                cluster_id=NEPTUNE_CLUSTER_NAME,
+                encrypted=True,
+                region=AWS_REGION_US_EAST_1,
+                tags=[{"Key": "snapshot", "Value": "test"}],
+            )
+        ]
+        neptune._describe_db_cluster_snapshot_attributes(
+            neptune.regional_clients[AWS_REGION_US_EAST_1]
+        )
+        assert neptune.db_cluster_snapshots[0].public is True

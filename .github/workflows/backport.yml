@@ -10,6 +10,10 @@ jobs:
     name: Backport PR
     if: github.event.pull_request.merged == true && !(contains(github.event.pull_request.labels.*.name, 'backport'))
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      pull-requests: write
+      contents: write
     steps:
       # Workaround not to fail the workflow if the PR does not need a backport
       # https://github.com/sorenlouv/backport-github-action/issues/127#issuecomment-2258561266
@@ -26,7 +30,7 @@ jobs:
         if: fromJSON(steps.check_labels.outputs.matched) > 0
         uses: sorenlouv/backport-github-action@v9.5.1
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
           auto_backport_label_prefix: backport-to-
 
       - name: Info log

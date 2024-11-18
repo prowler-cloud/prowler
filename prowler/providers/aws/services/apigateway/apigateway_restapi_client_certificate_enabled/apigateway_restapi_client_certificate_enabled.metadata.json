@@ -12,7 +12,7 @@
   "SubServiceName": "rest_api",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "AwsApiGatewayStage",
+  "ResourceType": "AwsApiGatewayRestApi",
   "Description": "Check if API Gateway Stage has client certificate enabled to access your backend endpoint.",
   "Risk": "Possible man in the middle attacks and other similar risks.",
   "RelatedUrl": "",

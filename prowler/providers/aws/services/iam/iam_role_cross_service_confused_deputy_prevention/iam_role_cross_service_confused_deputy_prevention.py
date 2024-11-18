@@ -1,8 +1,6 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
-from prowler.providers.aws.lib.policy_condition_parser.policy_condition_parser import (
-    is_condition_block_restrictive,
-)
 from prowler.providers.aws.services.iam.iam_client import iam_client
+from prowler.providers.aws.services.iam.lib.policy import is_policy_public
 
 
 class iam_role_cross_service_confused_deputy_prevention(Check):
@@ -19,25 +17,14 @@ class iam_role_cross_service_confused_deputy_prevention(Check):
                     report.resource_tags = role.tags
                     report.status = "FAIL"
                     report.status_extended = f"IAM Service Role {role.name} does not prevent against a cross-service confused deputy attack."
-                    for statement in role.assume_role_policy["Statement"]:
-                        if (
-                            statement["Effect"] == "Allow"
-                            and (
-                                "sts:AssumeRole" in statement["Action"]
-                                or "sts:*" in statement["Action"]
-                                or "*" in statement["Action"]
-                            )
-                            # Need to make sure we are checking the part of the assume role policy document that provides a service access
-                            and "Service" in statement["Principal"]
-                            # Check to see if the appropriate condition statements have been implemented
-                            and "Condition" in statement
-                            and is_condition_block_restrictive(
-                                statement["Condition"], iam_client.audited_account
-                            )
-                        ):
-                            report.status = "PASS"
-                            report.status_extended = f"IAM Service Role {role.name} prevents against a cross-service confused deputy attack."
-                            break
+                    if not is_policy_public(
+                        role.assume_role_policy,
+                        iam_client.audited_account,
+                        check_cross_service_confused_deputy=True,
+                        not_allowed_actions=["sts:AssumeRole", "sts:*"],
+                    ):
+                        report.status = "PASS"
+                        report.status_extended = f"IAM Service Role {role.name} prevents against a cross-service confused deputy attack."
 
                     findings.append(report)
 

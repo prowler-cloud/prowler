@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "directconnect_virtual_interface_redundancy",
+  "CheckTitle": "Ensure Direct Connect virtual interface(s) are providing redundant connections",
+  "CheckType": [
+    "Resilience"
+  ],
+  "ServiceName": "directconnect",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:directconnect:region:account-id:directconnect/resource-id",
+  "Severity": "medium",
+  "ResourceType": "",
+  "Description": "Checks the resilience of the AWS Direct Connect used to connect your on-premises to each Direct Connect gateway or virtual private gateway.",
+  "Risk": "This check alerts you if any Direct Connect gateway or virtual private gateway isn't configured with virtual interfaces across at least two distinct Direct Connect locations. Lack of location resiliency can result in unexpected downtime during maintenance, a fiber cut, a device failure, or a complete location failure.",
+  "RelatedUrl": "https://docs.aws.amazon.com/awssupport/latest/user/fault-tolerance-checks.html#amazon-direct-connect-location-resiliency",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "To build Direct Connect location resiliency, you can configure the Direct Connect gateway or virtual private gateway to connect to at least two distinct Direct Connect locations.",
+      "Url": "https://aws.amazon.com/directconnect/resiliency-recommendation/"
+    }
+  },
+  "Categories": [
+    "redundancy"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

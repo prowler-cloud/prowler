@@ -1,8 +1,8 @@
 import json
-from typing import Optional
+from typing import Dict, List, Optional
 
 from botocore.client import ClientError
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -15,20 +15,29 @@ class S3(AWSService):
         super().__init__(__class__.__name__, provider)
         self.account_arn_template = f"arn:{self.audited_partition}:s3:{self.region}:{self.audited_account}:account"
         self.regions_with_buckets = []
-        self.buckets = self._list_buckets(provider)
-        self.__threading_call__(self._get_bucket_versioning, self.buckets)
-        self.__threading_call__(self._get_bucket_logging, self.buckets)
-        self.__threading_call__(self._get_bucket_policy, self.buckets)
-        self.__threading_call__(self._get_bucket_acl, self.buckets)
-        self.__threading_call__(self._get_public_access_block, self.buckets)
-        self.__threading_call__(self._get_bucket_encryption, self.buckets)
-        self.__threading_call__(self._get_bucket_ownership_controls, self.buckets)
-        self.__threading_call__(self._get_object_lock_configuration, self.buckets)
-        self.__threading_call__(self._get_bucket_tagging, self.buckets)
+        self.buckets = {}
+        self._list_buckets(provider)
+        self.__threading_call__(self._get_bucket_versioning, self.buckets.values())
+        self.__threading_call__(self._get_bucket_logging, self.buckets.values())
+        self.__threading_call__(self._get_bucket_policy, self.buckets.values())
+        self.__threading_call__(self._get_bucket_acl, self.buckets.values())
+        self.__threading_call__(self._get_public_access_block, self.buckets.values())
+        self.__threading_call__(self._get_bucket_encryption, self.buckets.values())
+        self.__threading_call__(
+            self._get_bucket_ownership_controls, self.buckets.values()
+        )
+        self.__threading_call__(
+            self._get_object_lock_configuration, self.buckets.values()
+        )
+        self.__threading_call__(self._get_bucket_tagging, self.buckets.values())
+        self.__threading_call__(self._get_bucket_replication, self.buckets.values())
+        self.__threading_call__(self._get_bucket_lifecycle, self.buckets.values())
+        self.__threading_call__(
+            self._get_bucket_notification_configuration, self.buckets.values()
+        )
 
     def _list_buckets(self, provider):
         logger.info("S3 - Listing buckets...")
-        buckets = []
         try:
             list_buckets = self.client.list_buckets()
             for bucket in list_buckets["Buckets"]:
@@ -47,21 +56,17 @@ class S3(AWSService):
                     ):
                         self.regions_with_buckets.append(bucket_region)
                         # Check if there are filter regions
+                        # FIXME: what if the bucket comes from a CloudTrail bucket in another audited region
                         if provider.identity.audited_regions:
-                            # FIXME: what if the bucket comes from a CloudTrail bucket in another audited region
                             if bucket_region in provider.identity.audited_regions:
-                                buckets.append(
-                                    Bucket(
-                                        name=bucket["Name"],
-                                        arn=arn,
-                                        region=bucket_region,
-                                    )
+                                self.buckets[arn] = Bucket(
+                                    name=bucket["Name"],
+                                    region=bucket_region,
                                 )
                         else:
-                            buckets.append(
-                                Bucket(
-                                    name=bucket["Name"], arn=arn, region=bucket_region
-                                )
+                            self.buckets[arn] = Bucket(
+                                name=bucket["Name"],
+                                region=bucket_region,
                             )
                 except ClientError as error:
                     if error.response["Error"]["Code"] == "NoSuchBucket":
@@ -89,7 +94,6 @@ class S3(AWSService):
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-        return buckets
 
     def _get_bucket_versioning(self, bucket):
         logger.info("S3 - Get buckets versioning...")
@@ -379,6 +383,126 @@ class S3(AWSService):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
+    def _get_bucket_lifecycle(self, bucket):
+        logger.info("S3 - Get buckets lifecycle...")
+        try:
+            regional_client = self.regional_clients[bucket.region]
+            lifecycle_configuration = (
+                regional_client.get_bucket_lifecycle_configuration(Bucket=bucket.name)
+            )
+            for rule in lifecycle_configuration["Rules"]:
+                bucket.lifecycle.append(
+                    LifeCycleRule(
+                        id=rule["ID"],
+                        status=rule["Status"],
+                    )
+                )
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "NoSuchLifecycleConfiguration":
+                bucket.lifecycle = []
+            elif error.response["Error"]["Code"] == "NoSuchBucket":
+                logger.warning(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
+    def _get_bucket_replication(self, bucket):
+        logger.info("S3 - Get buckets replication...")
+        try:
+            regional_client = self.regional_clients[bucket.region]
+            replication_config = regional_client.get_bucket_replication(
+                Bucket=bucket.name
+            )["ReplicationConfiguration"]["Rules"]
+            if replication_config:
+                for rule in replication_config:
+                    bucket.replication_rules.append(
+                        ReplicationRule(
+                            id=rule["ID"],
+                            status=rule["Status"],
+                            destination=rule["Destination"]["Bucket"],
+                        )
+                    )
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "NoSuchBucket":
+                logger.warning(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            elif (
+                error.response["Error"]["Code"]
+                == "ReplicationConfigurationNotFoundError"
+            ):
+                bucket.replication = None
+            else:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+        except Exception as error:
+            if regional_client:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
+    def _get_bucket_notification_configuration(self, bucket):
+        logger.info("S3 - Get bucket's notification configuration...")
+        try:
+            regional_client = self.regional_clients[bucket.region]
+            bucket_notification_config = (
+                regional_client.get_bucket_notification_configuration(
+                    Bucket=bucket.name
+                )
+            )
+
+            if any(
+                key in bucket_notification_config
+                for key in (
+                    "TopicConfigurations",
+                    "QueueConfigurations",
+                    "LambdaFunctionConfigurations",
+                    "EventBridgeConfiguration",
+                )
+            ):
+                bucket.notification_config = bucket_notification_config
+            else:
+                bucket.notification_config = {}
+
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "NoSuchBucket":
+                logger.warning(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _head_bucket(self, bucket_name):
+        logger.info("S3 - Checking if bucket exists...")
+        try:
+            self.client.head_bucket(Bucket=bucket_name)
+            return True
+        except ClientError as error:
+            if error.response["Error"]["Message"] == "Not Found":
+                logger.warning(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+                return False
+            else:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+                return True
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class S3Control(AWSService):
     def __init__(self, provider):
@@ -386,8 +510,11 @@ class S3Control(AWSService):
         super().__init__(__class__.__name__, provider)
         self.account_public_access_block = self._get_public_access_block()
         self.access_points = {}
+        self.multi_region_access_points = {}
         self.__threading_call__(self._list_access_points)
         self.__threading_call__(self._get_access_point, self.access_points.values())
+        if self.audited_partition == "aws":
+            self._list_multi_region_access_points()
 
     def _get_public_access_block(self):
         logger.info("S3 - Get account public access block...")
@@ -422,23 +549,57 @@ class S3Control(AWSService):
             )["AccessPointList"]
             for ap in list_access_points:
                 self.access_points[ap["AccessPointArn"]] = AccessPoint(
+                    arn=ap["AccessPointArn"],
                     account_id=self.audited_account,
                     name=ap["Name"],
                     bucket=ap["Bucket"],
                     region=regional_client.region,
                 )
-        except ClientError as error:
-            if error.response["Error"]["Code"] == "NoSuchMultiRegionAccessPoint":
-                logger.warning(
-                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
-            else:
-                logger.error(
-                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _list_multi_region_access_points(self):
+        # NOTE: This function is restricted to the us-west-2 region due to AWS limitations on Multi-Region Access Points.
+        # For more details on region restrictions, see the AWS documentation:
+        # https://docs.aws.amazon.com/AmazonS3/latest/userguide/MultiRegionAccessPointRestrictions.html
+        logger.info("S3 - Listing account multi region access points...")
+        try:
+            region = "us-west-2"
+            client = self.session.client(self.service, region)
+            list_multi_region_access_points = client.list_multi_region_access_points(
+                AccountId=self.audited_account
+            ).get("AccessPoints", [])
+            for mr_access_point in list_multi_region_access_points:
+                mr_ap_arn = f"arn:{self.audited_partition}:s3::{self.audited_account}:accesspoint/{mr_access_point['Name']}"
+                bucket_list = []
+                for mrap_region in mr_access_point.get("Regions", []):
+                    bucket_list.append(mrap_region.get("Bucket", ""))
+                self.multi_region_access_points[mr_ap_arn] = MultiRegionAccessPoint(
+                    arn=mr_ap_arn,
+                    account_id=self.audited_account,
+                    name=mr_access_point["Name"],
+                    buckets=bucket_list,
+                    region=region,
+                    public_access_block=PublicAccessBlock(
+                        block_public_acls=mr_access_point.get(
+                            "PublicAccessBlock", {}
+                        ).get("BlockPublicAcls", False),
+                        ignore_public_acls=mr_access_point.get(
+                            "PublicAccessBlock", {}
+                        ).get("IgnorePublicAcls", False),
+                        block_public_policy=mr_access_point.get(
+                            "PublicAccessBlock", {}
+                        ).get("BlockPublicPolicy", False),
+                        restrict_public_buckets=mr_access_point.get(
+                            "PublicAccessBlock", {}
+                        ).get("RestrictPublicBuckets", False),
+                    ),
+                )
+        except Exception as error:
+            logger.error(
+                f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def _get_access_point(self, ap):
@@ -483,6 +644,7 @@ class PublicAccessBlock(BaseModel):
 
 
 class AccessPoint(BaseModel):
+    arn: str
     account_id: str
     name: str
     bucket: str
@@ -490,18 +652,40 @@ class AccessPoint(BaseModel):
     region: str
 
 
+class MultiRegionAccessPoint(BaseModel):
+    arn: str
+    account_id: str
+    name: str
+    buckets: list[str] = []
+    public_access_block: Optional[PublicAccessBlock]
+    region: str
+
+
+class LifeCycleRule(BaseModel):
+    id: str
+    status: str
+
+
+class ReplicationRule(BaseModel):
+    id: str
+    status: str
+    destination: str
+
+
 class Bucket(BaseModel):
     name: str
-    arn: str
     versioning: bool = False
     logging: bool = False
     public_access_block: Optional[PublicAccessBlock]
-    acl_grantees: list[ACL_Grantee] = []
-    policy: dict = {}
+    acl_grantees: List[ACL_Grantee] = Field(default_factory=list)
+    policy: Dict = Field(default_factory=dict)
     encryption: Optional[str]
     region: str
     logging_target_bucket: Optional[str]
     ownership: Optional[str]
     object_lock: bool = False
     mfa_delete: bool = False
-    tags: Optional[list] = []
+    tags: List[Dict[str, str]] = Field(default_factory=list)
+    lifecycle: List[LifeCycleRule] = Field(default_factory=list)
+    replication_rules: List[ReplicationRule] = Field(default_factory=list)
+    notification_config: Dict = Field(default_factory=dict)

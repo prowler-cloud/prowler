@@ -1,24 +1,23 @@
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################## Athena
 class Athena(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.workgroups = {}
-        self.__threading_call__(self.__list_workgroups__)
-        self.__get_workgroups__()
-        self.__list_query_executions__()
-        self.__list_tags_for_resource__()
+        self.__threading_call__(self._list_workgroups)
+        self.__threading_call__(self._get_workgroups, self.workgroups.values())
+        self._list_query_executions()
+        self._list_tags_for_resource()
 
-    def __list_workgroups__(self, regional_client):
+    def _list_workgroups(self, regional_client):
         logger.info("Athena - Listing WorkGroups...")
         try:
             list_workgroups = regional_client.list_work_groups()
@@ -44,51 +43,48 @@ class Athena(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_workgroups__(self):
+    def _get_workgroups(self, workgroup):
         logger.info("Athena - Getting WorkGroups...")
         try:
-            for workgroup in self.workgroups.values():
-                try:
-                    wg = self.regional_clients[workgroup.region].get_work_group(
-                        WorkGroup=workgroup.name
-                    )
+            wg = self.regional_clients[workgroup.region].get_work_group(
+                WorkGroup=workgroup.name
+            )
 
-                    wg_configuration = wg.get("WorkGroup").get("Configuration")
-                    self.workgroups[workgroup.arn].enforce_workgroup_configuration = (
-                        wg_configuration.get("EnforceWorkGroupConfiguration", False)
-                    )
+            wg_configuration = wg.get("WorkGroup").get("Configuration")
+            self.workgroups[workgroup.arn].enforce_workgroup_configuration = (
+                wg_configuration.get("EnforceWorkGroupConfiguration", False)
+            )
 
-                    # We include an empty EncryptionConfiguration to handle if the workgroup does not have encryption configured
-                    encryption = (
-                        wg_configuration.get(
-                            "ResultConfiguration",
-                            {"EncryptionConfiguration": {}},
-                        )
-                        .get(
-                            "EncryptionConfiguration",
-                            {"EncryptionOption": ""},
-                        )
-                        .get("EncryptionOption")
-                    )
+            # We include an empty EncryptionConfiguration to handle if the workgroup does not have encryption configured
+            encryption = (
+                wg_configuration.get(
+                    "ResultConfiguration",
+                    {"EncryptionConfiguration": {}},
+                )
+                .get(
+                    "EncryptionConfiguration",
+                    {"EncryptionOption": ""},
+                )
+                .get("EncryptionOption")
+            )
 
-                    if encryption in ["SSE_S3", "SSE_KMS", "CSE_KMS"]:
-                        encryption_configuration = EncryptionConfiguration(
-                            encryption_option=encryption, encrypted=True
-                        )
-                        self.workgroups[workgroup.arn].encryption_configuration = (
-                            encryption_configuration
-                        )
-                except Exception as error:
-                    logger.error(
-                        f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
+            if encryption in ["SSE_S3", "SSE_KMS", "CSE_KMS"]:
+                encryption_configuration = EncryptionConfiguration(
+                    encryption_option=encryption, encrypted=True
+                )
+                self.workgroups[workgroup.arn].encryption_configuration = (
+                    encryption_configuration
+                )
 
+            workgroup.cloudwatch_logging = wg_configuration.get(
+                "PublishCloudWatchMetricsEnabled", False
+            )
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_query_executions__(self):
+    def _list_query_executions(self):
         logger.info("Athena - Listing Queries...")
         try:
             for workgroup in self.workgroups.values():
@@ -109,7 +105,7 @@ class Athena(AWSService):
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_tags_for_resource__(self):
+    def _list_tags_for_resource(self):
         logger.info("Athena - Listing Tags...")
         try:
             for workgroup in self.workgroups.values():
@@ -117,10 +113,10 @@ class Athena(AWSService):
                     regional_client = self.regional_clients[workgroup.region]
                     workgroup.tags = regional_client.list_tags_for_resource(
                         ResourceARN=workgroup.arn
-                    )["Tags"]
+                    ).get("Tags", [])
                 except Exception as error:
                     logger.error(
-                        f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        f"{workgroup.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
         except Exception as error:
             logger.error(
@@ -143,4 +139,5 @@ class WorkGroup(BaseModel):
     enforce_workgroup_configuration: bool = False
     queries: bool = False
     region: str
-    tags: Optional[list] = []
+    cloudwatch_logging: bool = False
+    tags: Optional[list] = Field(default_factory=list)

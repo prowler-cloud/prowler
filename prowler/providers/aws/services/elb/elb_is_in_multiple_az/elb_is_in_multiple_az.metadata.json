@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "elb_is_in_multiple_az",
+  "CheckTitle": "Ensure Classic Load Balancer is Configured Across Multiple Availability Zones",
+  "CheckType": [],
+  "ServiceName": "elb",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:<partition>:elasticloadbalancing:<region>:<account-id>:loadbalancer/<load-balancer-name>",
+  "Severity": "medium",
+  "ResourceType": "AwsElbLoadBalancer",
+  "Description": "This check ensures that a Classic Load Balancer is configured to span at least the specified number of Availability Zones (AZs). The control fails if the Load Balancer does not span multiple AZs, which can lead to decreased availability and reliability in case of an AZ failure.",
+  "Risk": "A Classic Load Balancer configured in a single Availability Zone risks becoming a single point of failure. If the AZ fails, the load balancer will not be able to redirect traffic to other healthy targets, leading to potential service outages.",
+  "RelatedUrl": "https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/introduction.html#classic-load-balancer-overview",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/elb-controls.html#elb-10",
+      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELB/ec2-instances-distribution-across-availability-zones.html"
+    },
+    "Recommendation": {
+      "Text": "Distribute your Classic Load Balancer across multiple Availability Zones to improve redundancy and fault tolerance.",
+      "Url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/enable-disable-crosszone-lb.html"
+    }
+  },
+  "Categories": [
+    "redundancy"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

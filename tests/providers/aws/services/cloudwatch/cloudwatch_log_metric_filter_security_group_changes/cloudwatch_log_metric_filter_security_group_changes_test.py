@@ -30,7 +30,7 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
 
         aws_provider.audit_metadata = Audit_Metadata(
             services_scanned=0,
-            # We need to set this check to call __describe_log_groups__
+            # We need to set this check to call _describe_log_groups
             expected_checks=["cloudwatch_log_group_no_secrets_in_logs"],
             completed_checks=0,
             audit_progress=0,
@@ -94,7 +94,7 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
 
         aws_provider.audit_metadata = Audit_Metadata(
             services_scanned=0,
-            # We need to set this check to call __describe_log_groups__
+            # We need to set this check to call _describe_log_groups
             expected_checks=["cloudwatch_log_group_no_secrets_in_logs"],
             completed_checks=0,
             audit_progress=0,
@@ -164,7 +164,7 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
 
         aws_provider.audit_metadata = Audit_Metadata(
             services_scanned=0,
-            # We need to set this check to call __describe_log_groups__
+            # We need to set this check to call _describe_log_groups
             expected_checks=["cloudwatch_log_group_no_secrets_in_logs"],
             completed_checks=0,
             audit_progress=0,
@@ -246,7 +246,7 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
 
         aws_provider.audit_metadata = Audit_Metadata(
             services_scanned=0,
-            # We need to set this check to call __describe_log_groups__
+            # We need to set this check to call _describe_log_groups
             expected_checks=["cloudwatch_log_group_no_secrets_in_logs"],
             completed_checks=0,
             audit_progress=0,
@@ -282,7 +282,7 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
             assert result[0].resource_id == "/log-group/test"
             assert (
                 result[0].resource_arn
-                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:metric-filter/test-filter"
+                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
 
@@ -339,7 +339,7 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
 
         aws_provider.audit_metadata = Audit_Metadata(
             services_scanned=0,
-            # We need to set this check to call __describe_log_groups__
+            # We need to set this check to call _describe_log_groups
             expected_checks=["cloudwatch_log_group_no_secrets_in_logs"],
             completed_checks=0,
             audit_progress=0,
@@ -375,7 +375,7 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
             assert result[0].resource_id == "/log-group/test"
             assert (
                 result[0].resource_arn
-                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:metric-filter/test-filter"
+                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
 
@@ -432,7 +432,7 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
 
         aws_provider.audit_metadata = Audit_Metadata(
             services_scanned=0,
-            # We need to set this check to call __describe_log_groups__
+            # We need to set this check to call _describe_log_groups
             expected_checks=["cloudwatch_log_group_no_secrets_in_logs"],
             completed_checks=0,
             audit_progress=0,
@@ -468,7 +468,7 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
             assert result[0].resource_id == "/log-group/test"
             assert (
                 result[0].resource_arn
-                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:metric-filter/test-filter"
+                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
 
@@ -525,7 +525,7 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
 
         aws_provider.audit_metadata = Audit_Metadata(
             services_scanned=0,
-            # We need to set this check to call __describe_log_groups__
+            # We need to set this check to call _describe_log_groups
             expected_checks=["cloudwatch_log_group_no_secrets_in_logs"],
             completed_checks=0,
             audit_progress=0,
@@ -561,6 +561,6 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
             assert result[0].resource_id == "/log-group/test"
             assert (
                 result[0].resource_arn
-                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:metric-filter/test-filter"
+                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test"
             )
             assert result[0].region == AWS_REGION_US_EAST_1

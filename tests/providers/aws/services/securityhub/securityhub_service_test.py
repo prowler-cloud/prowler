@@ -37,6 +37,11 @@ def mock_make_api_call(self, operation_name, kwarg):
         return {
             "HubArn": "arn:aws:securityhub:us-east-1:0123456789012:hub/default",
         }
+    if operation_name == "ListTagsForResource":
+        return {
+            "Tags": {"test_key": "test_value"},
+        }
+
     return make_api_call(self, operation_name, kwarg)
 
 
@@ -57,7 +62,7 @@ def mock_generate_regional_clients(provider, service):
 )
 class Test_SecurityHub_Service:
     # Test SecurityHub Client
-    def test__get_client__(self):
+    def test_get_client(self):
         security_hub = SecurityHub(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
         assert (
             security_hub.regional_clients[AWS_REGION_EU_WEST_1].__class__.__name__
@@ -69,7 +74,7 @@ class Test_SecurityHub_Service:
         security_hub = SecurityHub(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
         assert security_hub.session.__class__.__name__ == "Session"
 
-    def test__describe_hub__(self):
+    def test_describe_hub(self):
         # Set partition for the service
         securityhub = SecurityHub(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
         assert len(securityhub.securityhubs) == 1
@@ -80,3 +85,9 @@ class Test_SecurityHub_Service:
         assert securityhub.securityhubs[0].id == "default"
         assert securityhub.securityhubs[0].standards == "cis-aws-foundations-benchmark "
         assert securityhub.securityhubs[0].integrations == "prowler "
+
+    def test_list_tags(self):
+        # Set partition for the service
+        securityhub = SecurityHub(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
+        assert len(securityhub.securityhubs) == 1
+        assert securityhub.securityhubs[0].tags == [{"test_key": "test_value"}]

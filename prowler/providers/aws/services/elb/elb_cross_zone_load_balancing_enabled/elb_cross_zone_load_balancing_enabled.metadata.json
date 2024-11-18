@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "elb_cross_zone_load_balancing_enabled",
+  "CheckTitle": "Ensure Cross-Zone Load Balancing is Enabled for Classic Load Balancers (CLBs)",
+  "CheckType": [],
+  "ServiceName": "elb",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "medium",
+  "ResourceType": "AwsElbLoadBalancer",
+  "Description": "Checks whether cross-zone load balancing is enabled for Classic Load Balancers (CLBs). Cross-zone load balancing ensures even distribution of traffic across all registered targets in all Availability Zones, improving fault tolerance and load distribution.",
+  "Risk": "If cross-zone load balancing is not enabled, traffic may not be evenly distributed across Availability Zones, leading to over-utilization of resources in certain zones and potential application performance degradation or outages.",
+  "RelatedUrl": "https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/enable-disable-crosszone-lb.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws elb modify-load-balancer-attributes --load-balancer-name <load-balancer-name> --load-balancer-attributes \"CrossZoneLoadBalancing={Enabled=true}\"",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/elb-controls.html#elb-9",
+      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELB/elb-cross-zone-load-balancing-enabled.html"
+    },
+    "Recommendation": {
+      "Text": "Enable cross-zone load balancing for Classic Load Balancers to ensure even traffic distribution and enhance fault tolerance across Availability Zones.",
+      "Url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/enable-disable-crosszone-lb.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

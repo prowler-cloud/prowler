@@ -5,6 +5,7 @@ from prowler.providers.aws.services.elb.elb_service import ELB
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
+    AWS_REGION_US_EAST_1_AZA,
     set_mocked_aws_provider,
 )
 
@@ -40,7 +41,8 @@ class Test_ELB_Service:
     def test_describe_load_balancers(self):
         elb = client("elb", region_name=AWS_REGION_US_EAST_1)
         ec2 = resource("ec2", region_name=AWS_REGION_US_EAST_1)
-
+        acm = client("acm", region_name=AWS_REGION_US_EAST_1)
+        certificate = acm.request_certificate(DomainName="www.example.com")
         security_group = ec2.create_security_group(
             GroupName="sg01", Description="Test security group sg01"
         )
@@ -48,10 +50,20 @@ class Test_ELB_Service:
         dns_name = elb.create_load_balancer(
             LoadBalancerName="my-lb",
             Listeners=[
-                {"Protocol": "tcp", "LoadBalancerPort": 80, "InstancePort": 8080},
-                {"Protocol": "http", "LoadBalancerPort": 81, "InstancePort": 9000},
+                {
+                    "Protocol": "tcp",
+                    "LoadBalancerPort": 80,
+                    "InstancePort": 8080,
+                    "SSLCertificateId": certificate["CertificateArn"],
+                },
+                {
+                    "Protocol": "http",
+                    "LoadBalancerPort": 81,
+                    "InstancePort": 9000,
+                    "SSLCertificateId": certificate["CertificateArn"],
+                },
             ],
-            AvailabilityZones=[f"{AWS_REGION_US_EAST_1}a"],
+            AvailabilityZones=[AWS_REGION_US_EAST_1_AZA],
             Scheme="internal",
             SecurityGroups=[security_group.id],
         )["DNSName"]
@@ -67,8 +79,18 @@ class Test_ELB_Service:
         assert len(elb.loadbalancers[elb_arn].listeners) == 2
         assert elb.loadbalancers[elb_arn].listeners[0].protocol == "TCP"
         assert elb.loadbalancers[elb_arn].listeners[0].policies == []
+        assert (
+            elb.loadbalancers[elb_arn].listeners[0].certificate_arn
+            == certificate["CertificateArn"]
+        )
         assert elb.loadbalancers[elb_arn].listeners[1].protocol == "HTTP"
         assert elb.loadbalancers[elb_arn].listeners[1].policies == []
+        assert (
+            elb.loadbalancers[elb_arn].listeners[0].certificate_arn
+            == certificate["CertificateArn"]
+        )
+        assert len(elb.loadbalancers[elb_arn].availability_zones) == 1
+        assert AWS_REGION_US_EAST_1_AZA in elb.loadbalancers[elb_arn].availability_zones
 
     # Test ELB Describe Load Balancers Attributes
     @mock_aws
@@ -99,7 +121,9 @@ class Test_ELB_Service:
                     "S3BucketName": "mb",
                     "EmitInterval": 42,
                     "S3BucketPrefix": "s3bf",
-                }
+                },
+                "CrossZoneLoadBalancing": {"Enabled": True},
+                "ConnectionDraining": {"Enabled": True, "Timeout": 60},
             },
         )
         elb_arn = f"arn:aws:elasticloadbalancing:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:loadbalancer/my-lb"
@@ -110,6 +134,9 @@ class Test_ELB_Service:
         assert elb.loadbalancers[elb_arn].region == AWS_REGION_US_EAST_1
         assert elb.loadbalancers[elb_arn].scheme == "internal"
         assert elb.loadbalancers[elb_arn].access_logs
+        assert elb.loadbalancers[elb_arn].cross_zone_load_balancing
+        assert elb.loadbalancers[elb_arn].connection_draining
+        assert elb.loadbalancers[elb_arn].desync_mitigation_mode is None
 
     # Test ELB Describe Tags
     @mock_aws

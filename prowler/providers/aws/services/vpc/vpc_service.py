@@ -21,18 +21,20 @@ class VPC(AWSService):
         self.vpc_peering_connections = []
         self.vpc_endpoints = []
         self.vpc_endpoint_services = []
-        self.__threading_call__(self.__describe_vpcs__)
-        self.__threading_call__(self.__describe_vpc_peering_connections__)
-        self.__threading_call__(self.__describe_vpc_endpoints__)
-        self.__threading_call__(self.__describe_vpc_endpoint_services__)
-        self.__describe_flow_logs__()
-        self.__describe_peering_route_tables__()
-        self.__describe_vpc_endpoint_service_permissions__()
+        self.__threading_call__(self._describe_vpcs)
+        self.__threading_call__(self._describe_vpc_peering_connections)
+        self.__threading_call__(self._describe_vpc_endpoints)
+        self.__threading_call__(self._describe_vpc_endpoint_services)
+        self._describe_flow_logs()
+        self._describe_peering_route_tables()
+        self._describe_vpc_endpoint_service_permissions()
         self.vpc_subnets = {}
-        self.__threading_call__(self.__describe_vpc_subnets__)
-        self.__describe_network_interfaces__()
+        self.__threading_call__(self._describe_vpc_subnets)
+        self._describe_network_interfaces()
+        self.vpn_connections = {}
+        self.__threading_call__(self._describe_vpn_connections)
 
-    def __describe_vpcs__(self, regional_client):
+    def _describe_vpcs(self, regional_client):
         logger.info("VPC - Describing VPCs...")
         try:
             describe_vpcs_paginator = regional_client.get_paginator("describe_vpcs")
@@ -65,7 +67,7 @@ class VPC(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_vpc_peering_connections__(self, regional_client):
+    def _describe_vpc_peering_connections(self, regional_client):
         logger.info("VPC - Describing VPC Peering Connections...")
         try:
             describe_vpc_peering_connections_paginator = regional_client.get_paginator(
@@ -104,7 +106,7 @@ class VPC(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_peering_route_tables__(self):
+    def _describe_peering_route_tables(self):
         logger.info("VPC - Describing Peering Route Tables...")
         try:
             for conn in self.vpc_peering_connections:
@@ -147,7 +149,7 @@ class VPC(AWSService):
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
-    def __describe_flow_logs__(self):
+    def _describe_flow_logs(self):
         logger.info("VPC - Describing flow logs...")
         try:
             for vpc in self.vpcs.values():
@@ -174,7 +176,7 @@ class VPC(AWSService):
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
-    def __describe_network_interfaces__(self):
+    def _describe_network_interfaces(self):
         logger.info("VPC - Describing flow logs...")
         try:
             for vpc in self.vpcs.values():
@@ -214,7 +216,7 @@ class VPC(AWSService):
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
-    def __describe_vpc_endpoints__(self, regional_client):
+    def _describe_vpc_endpoints(self, regional_client):
         logger.info("VPC - Describing VPC Endpoints...")
         try:
             describe_vpc_endpoints_paginator = regional_client.get_paginator(
@@ -238,7 +240,9 @@ class VPC(AWSService):
                                     service_name=endpoint["ServiceName"],
                                     state=endpoint["State"],
                                     policy_document=endpoint_policy,
+                                    subnet_ids=endpoint.get("SubnetIds", []),
                                     owner_id=endpoint["OwnerId"],
+                                    type=endpoint["VpcEndpointType"],
                                     region=regional_client.region,
                                     tags=endpoint.get("Tags"),
                                 )
@@ -252,7 +256,7 @@ class VPC(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_vpc_endpoint_services__(self, regional_client):
+    def _describe_vpc_endpoint_services(self, regional_client):
         logger.info("VPC - Describing VPC Endpoint Services...")
         try:
             describe_vpc_endpoint_services_paginator = regional_client.get_paginator(
@@ -285,7 +289,7 @@ class VPC(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_vpc_endpoint_service_permissions__(self):
+    def _describe_vpc_endpoint_service_permissions(self):
         logger.info("VPC - Describing VPC Endpoint service permissions...")
         try:
             for service in self.vpc_endpoint_services:
@@ -312,7 +316,7 @@ class VPC(AWSService):
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
-    def __describe_vpc_subnets__(self, regional_client):
+    def _describe_vpc_subnets(self, regional_client):
         logger.info("VPC - Describing VPC subnets...")
         try:
             describe_subnets_paginator = regional_client.get_paginator(
@@ -328,6 +332,8 @@ class VPC(AWSService):
                             regional_client_for_subnet = self.regional_clients[
                                 regional_client.region
                             ]
+                            public = False
+                            nat_gateway = False
                             route_tables_for_subnet = (
                                 regional_client_for_subnet.describe_route_tables(
                                     Filters=[
@@ -350,21 +356,20 @@ class VPC(AWSService):
                                         ]
                                     )
                                 )
-                            public = False
-                            nat_gateway = False
-                            for route in route_tables_for_subnet.get("RouteTables")[
-                                0
-                            ].get("Routes"):
-                                if (
-                                    "GatewayId" in route
-                                    and "igw" in route["GatewayId"]
-                                    and route.get("DestinationCidrBlock", "")
-                                    == "0.0.0.0/0"
-                                ):
-                                    # If the route table has a default route to an internet gateway, the subnet is public
-                                    public = True
-                                if "NatGatewayId" in route:
-                                    nat_gateway = True
+                            for route_table in route_tables_for_subnet.get(
+                                "RouteTables"
+                            ):
+                                for route in route_table.get("Routes"):
+                                    if (
+                                        "GatewayId" in route
+                                        and "igw" in route["GatewayId"]
+                                        and route.get("DestinationCidrBlock", "")
+                                        == "0.0.0.0/0"
+                                    ):
+                                        # If the route table has a default route to an internet gateway, the subnet is public
+                                        public = True
+                                    if "NatGatewayId" in route:
+                                        nat_gateway = True
                             subnet_name = ""
                             for tag in subnet.get("Tags", []):
                                 if tag["Key"] == "Name":
@@ -393,6 +398,35 @@ class VPC(AWSService):
                             logger.error(
                                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                             )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _describe_vpn_connections(self, regional_client):
+        try:
+            describe_vpn_connections = regional_client.describe_vpn_connections()
+
+            for vpn_connection in describe_vpn_connections["VpnConnections"]:
+                arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:vpn-connection/{vpn_connection['VpnConnectionId']}"
+                if not self.audit_resources or (
+                    is_resource_filtered(arn, self.audit_resources)
+                ):
+                    tunnels = []
+                    for tunnel in vpn_connection["VgwTelemetry"]:
+                        tunnels.append(
+                            VpnTunnel(
+                                status=tunnel["Status"],
+                                outside_ip_address=tunnel["OutsideIpAddress"],
+                            )
+                        )
+                    self.vpn_connections[arn] = VpnConnection(
+                        id=vpn_connection["VpnConnectionId"],
+                        tunnels=tunnels,
+                        region=regional_client.region,
+                        tags=vpn_connection.get("Tags"),
+                    )
+
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -451,8 +485,10 @@ class VpcEndpoint(BaseModel):
     vpc_id: str
     service_name: str
     state: str
+    subnet_ids: Optional[list] = []
     policy_document: Optional[dict]
     owner_id: str
+    type: str
     region: str
     tags: Optional[list] = []
 
@@ -463,5 +499,17 @@ class VpcEndpointService(BaseModel):
     service: str
     owner_id: str
     allowed_principals: list = []
+    region: str
+    tags: Optional[list] = []
+
+
+class VpnTunnel(BaseModel):
+    status: str
+    outside_ip_address: str
+
+
+class VpnConnection(BaseModel):
+    id: str
+    tunnels: list[VpnTunnel]
     region: str
     tags: Optional[list] = []

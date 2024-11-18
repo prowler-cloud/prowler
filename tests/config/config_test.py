@@ -11,10 +11,10 @@ from prowler.config.config import (
     load_and_validate_config_file,
     load_and_validate_fixer_config_file,
 )
-from prowler.providers.aws.aws_provider import get_aws_available_regions
 
 MOCK_PROWLER_VERSION = "3.3.0"
 MOCK_OLD_PROWLER_VERSION = "0.0.0"
+MOCK_PROWLER_MASTER_VERSION = "3.4.0"
 
 
 def mock_prowler_get_latest_release(_, **kwargs):
@@ -79,6 +79,21 @@ config_aws = {
     "max_ec2_instance_age_in_days": 180,
     "ec2_allowed_interface_types": ["api_gateway_managed", "vpc_endpoint"],
     "ec2_allowed_instance_owners": ["amazon-elb"],
+    "ec2_sg_high_risk_ports": [
+        25,
+        110,
+        135,
+        143,
+        445,
+        3000,
+        4333,
+        5000,
+        5500,
+        8080,
+        8088,
+    ],
+    "fargate_linux_latest_version": "1.4.0",
+    "fargate_windows_latest_version": "1.0.0",
     "trusted_account_ids": [],
     "log_group_retention_days": 365,
     "max_idle_disconnect_timeout_in_seconds": 600,
@@ -107,11 +122,12 @@ config_aws = {
         "ruby2.5",
         "ruby2.7",
     ],
+    "lambda_min_azs": 2,
     "organizations_enabled_regions": [],
     "organizations_trusted_delegated_administrators": [],
     "ecr_repository_vulnerability_minimum_severity": "MEDIUM",
     "verify_premium_support_plans": True,
-    "threat_detection_privilege_escalation_threshold": 0.1,
+    "threat_detection_privilege_escalation_threshold": 0.2,
     "threat_detection_privilege_escalation_minutes": 1440,
     "threat_detection_privilege_escalation_actions": [
         "AddPermission",
@@ -166,7 +182,7 @@ config_aws = {
         "UpdateJob",
         "UpdateLoginProfile",
     ],
-    "threat_detection_enumeration_threshold": 0.1,
+    "threat_detection_enumeration_threshold": 0.3,
     "threat_detection_enumeration_minutes": 1440,
     "threat_detection_enumeration_actions": [
         "DescribeAccessEntry",
@@ -260,6 +276,22 @@ config_aws = {
         "LookupEvents",
         "Search",
     ],
+    "threat_detection_llm_jacking_threshold": 0.4,
+    "threat_detection_llm_jacking_minutes": 1440,
+    "threat_detection_llm_jacking_actions": [
+        "PutUseCaseForModelAccess",
+        "PutFoundationModelEntitlement",
+        "PutModelInvocationLoggingConfiguration",
+        "CreateFoundationModelAgreement",
+        "InvokeModel",
+        "InvokeModelWithResponseStream",
+        "GetUseCaseForModelAccess",
+        "GetModelInvocationLoggingConfiguration",
+        "GetFoundationModelAvailability",
+        "ListFoundationModelAgreementOffers",
+        "ListFoundationModels",
+        "ListProvisionedModelThroughputs",
+    ],
     "check_rds_instance_replicas": False,
     "days_to_expire_threshold": 7,
     "insecure_key_algorithms": [
@@ -273,6 +305,12 @@ config_aws = {
         "scheduler",
     ],
     "eks_cluster_oldest_version_supported": "1.28",
+    "excluded_sensitive_environment_variables": [],
+    "elb_min_azs": 2,
+    "elbv2_min_azs": 2,
+    "secrets_ignore_patterns": [],
+    "max_days_secret_unused": 90,
+    "max_days_secret_unrotated": 90,
 }
 
 config_azure = {
@@ -307,9 +345,6 @@ config_kubernetes = {
 
 
 class Test_Config:
-    def test_get_aws_available_regions(self):
-        assert len(get_aws_available_regions()) == 33
-
     @mock.patch(
         "prowler.config.config.requests.get", new=mock_prowler_get_latest_release
     )
@@ -328,6 +363,18 @@ class Test_Config:
         assert (
             check_current_version()
             == f"Prowler {MOCK_OLD_PROWLER_VERSION} (latest is {MOCK_PROWLER_VERSION}, upgrade for the latest features)"
+        )
+
+    @mock.patch(
+        "prowler.config.config.requests.get", new=mock_prowler_get_latest_release
+    )
+    @mock.patch(
+        "prowler.config.config.prowler_version", new=MOCK_PROWLER_MASTER_VERSION
+    )
+    def test_check_current_version_with_master_version(self):
+        assert (
+            check_current_version()
+            == f"Prowler {MOCK_PROWLER_MASTER_VERSION} (You are running the latest version, yay!)"
         )
 
     def test_get_available_compliance_frameworks(self):
@@ -359,6 +406,8 @@ class Test_Config:
             "fedramp_low_revision_4_aws",
             "cis_2.0_gcp",
             "cis_1.8_kubernetes",
+            "kisa_isms-p_2023_aws",
+            "kisa_isms-p_2023-korean_aws",
         ]
         assert (
             get_available_compliance_frameworks().sort() == compliance_frameworks.sort()

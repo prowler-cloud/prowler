@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "rds_cluster_iam_authentication_enabled",
+  "CheckTitle": "Check if RDS clusters have IAM authentication enabled.",
+  "CheckType": [],
+  "ServiceName": "rds",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-cluster",
+  "Severity": "medium",
+  "ResourceType": "AwsRdsDbCluster",
+  "Description": "Check if RDS clusters have IAM authentication enabled.",
+  "Risk": "Ensure that the IAM Database Authentication feature is enabled for your RDS database clusters in order to use the Identity and Access Management (IAM) service to manage database access to your MySQL and PostgreSQL database clusters. With this feature enabled, you don't have to use a password when you connect to your MySQL/PostgreSQL database, instead you can use an authentication token. An authentication token is a unique string of characters with a lifetime of 15 minutes that Amazon RDS generates on your request. IAM Database Authentication removes the need of storing user credentials within the database configuration, because authentication is managed externally using Amazon IAM.",
+  "RelatedUrl": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.Enabling.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/iam-database-authentication.html#",
+      "NativeIaC": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/iam-database-authentication.html#",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-12",
+      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/iam-database-authentication.html#"
+    },
+    "Recommendation": {
+      "Text": "Enable IAM authentication for supported RDS clusters.",
+      "Url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.Enabling.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

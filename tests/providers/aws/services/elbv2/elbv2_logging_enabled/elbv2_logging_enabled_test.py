@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 
 from boto3 import client, resource
@@ -99,9 +98,9 @@ class Test_elbv2_logging_enabled:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert search(
-                "does not have access logs configured",
-                result[0].status_extended,
+            assert (
+                result[0].status_extended
+                == "ELBv2 ALB my-lb does not have access logs configured."
             )
             assert result[0].resource_id == "my-lb"
             assert result[0].resource_arn == lb["LoadBalancerArn"]
@@ -165,9 +164,9 @@ class Test_elbv2_logging_enabled:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert search(
-                "has access logs to S3 configured",
-                result[0].status_extended,
+            assert (
+                result[0].status_extended
+                == "ELBv2 ALB my-lb has access logs to S3 configured."
             )
             assert result[0].resource_id == "my-lb"
             assert result[0].resource_arn == lb["LoadBalancerArn"]

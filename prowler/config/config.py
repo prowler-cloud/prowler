@@ -1,16 +1,18 @@
 import os
 import pathlib
 from datetime import datetime, timezone
+from enum import Enum
 from os import getcwd
 
 import requests
 import yaml
+from packaging import version
 
 from prowler.lib.logger import logger
 
 timestamp = datetime.today()
 timestamp_utc = datetime.now(timezone.utc).replace(tzinfo=timezone.utc)
-prowler_version = "4.4.0"
+prowler_version = "4.6.0"
 html_logo_url = "https://github.com/prowler-cloud/prowler/"
 square_logo_img = "https://prowler.com/wp-content/uploads/logo-html.png"
 aws_logo = "https://user-images.githubusercontent.com/38561120/235953920-3e3fba08-0795-41dc-b480-9bea57db9f2e.png"
@@ -20,8 +22,13 @@ gcp_logo = "https://user-images.githubusercontent.com/38561120/235928332-eb4accd
 orange_color = "\033[38;5;208m"
 banner_color = "\033[1;92m"
 
-finding_statuses = ["PASS", "FAIL", "MANUAL"]
-valid_severities = ["critical", "high", "medium", "low", "informational"]
+
+class Provider(str, Enum):
+    AWS = "aws"
+    GCP = "gcp"
+    AZURE = "azure"
+    KUBERNETES = "kubernetes"
+
 
 # Compliance
 actual_directory = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
@@ -29,7 +36,7 @@ actual_directory = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
 
 def get_available_compliance_frameworks(provider=None):
     available_compliance_frameworks = []
-    providers = ["aws", "gcp", "azure", "kubernetes"]
+    providers = [p.value for p in Provider]
     if provider:
         providers = [provider]
     for provider in providers:
@@ -86,7 +93,7 @@ def check_current_version():
             "https://api.github.com/repos/prowler-cloud/prowler/tags", timeout=1
         )
         latest_version = release_response.json()[0]["name"]
-        if latest_version != prowler_version:
+        if version.parse(latest_version) > version.parse(prowler_version):
             return f"{prowler_version_string} (latest is {latest_version}, upgrade for the latest features)"
         else:
             return (

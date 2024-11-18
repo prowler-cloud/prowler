@@ -21,6 +21,9 @@ class Test_backup_vaults_exist:
         with mock.patch(
             "prowler.providers.aws.services.backup.backup_service.Backup",
             new=backup_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.backup.backup_vaults_exist.backup_vaults_exist.backup_client",
+            new=backup_client,
         ):
             # Test Check
             from prowler.providers.aws.services.backup.backup_vaults_exist.backup_vaults_exist import (
@@ -39,6 +42,7 @@ class Test_backup_vaults_exist:
                 == f"arn:aws:backup:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:backup-vault"
             )
             assert result[0].region == AWS_REGION
+            assert result[0].resource_tags == []
 
     def test_one_backup_vault(self):
         backup_client = mock.MagicMock
@@ -61,11 +65,15 @@ class Test_backup_vaults_exist:
                 locked=True,
                 min_retention_days=1,
                 max_retention_days=2,
+                tags=[],
             )
         ]
 
         with mock.patch(
             "prowler.providers.aws.services.backup.backup_service.Backup",
+            new=backup_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.backup.backup_vaults_exist.backup_vaults_exist.backup_client",
             new=backup_client,
         ):
             # Test Check
@@ -85,6 +93,7 @@ class Test_backup_vaults_exist:
             assert result[0].resource_id == "MyBackupVault"
             assert result[0].resource_arn == backup_vault_arn
             assert result[0].region == AWS_REGION
+            assert result[0].resource_tags == []
 
     def test_access_denied(self):
         backup_client = mock.MagicMock
@@ -99,6 +108,9 @@ class Test_backup_vaults_exist:
         backup_client.backup_vaults = None
         with mock.patch(
             "prowler.providers.aws.services.backup.backup_service.Backup",
+            new=backup_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.backup.backup_vaults_exist.backup_vaults_exist.backup_client",
             new=backup_client,
         ):
             # Test Check

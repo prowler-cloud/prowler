@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "mq_broker_logging_enabled",
+  "CheckTitle": "MQ brokers should stream audit logs to CloudWatch.",
+  "CheckType": [
+    "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53 Controls"
+  ],
+  "ServiceName": "mq",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:mq:region:account-id:broker:broker-id",
+  "Severity": "medium",
+  "ResourceType": "AwsAmazonMQBroker",
+  "Description": "Ensure MQ brokers are configured to stream audit logs to CloudWatch to enhance monitoring and detect security-related issues.",
+  "Risk": "Without streaming audit logs to CloudWatch, monitoring and alerting on suspicious activity or security incidents is limited. This reduces visibility into the broker's operations and potential security breaches.",
+  "RelatedUrl": "https://docs.aws.amazon.com/amazon-mq/latest/developer-guide/security-logging-monitoring.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws mq update-broker --broker-id <broker-id> --logs 'audit=true'",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/logging-policies/bc_aws_logging_10/#terraform",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/mq-controls.html#mq-2",
+      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/MQ/log-exports.html"
+    },
+    "Recommendation": {
+      "Text": "Ensure MQ brokers are configured to stream audit logs to CloudWatch to enhance monitoring and detect security-related issues.",
+      "Url": "https://docs.aws.amazon.com/amazon-mq/latest/developer-guide/configure-logging-monitoring-activemq.html"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

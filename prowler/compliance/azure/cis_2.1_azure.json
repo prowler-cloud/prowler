@@ -3043,9 +3043,7 @@
     {
       "Id": "9.4",
       "Description": "Ensure that Register with Entra ID is enabled on App Service",
-      "Checks": [
-        "app_client_certificates_on"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "9. AppService",
@@ -3066,7 +3064,7 @@
       "Id": "9.5",
       "Description": "Ensure That 'PHP version' is the Latest, If Used to Run the Web App",
       "Checks": [
-        "app_register_with_identity"
+        "app_ensure_php_version_is_latest"
       ],
       "Attributes": [
         {
@@ -3088,7 +3086,7 @@
       "Id": "9.6",
       "Description": "Ensure that 'Python version' is the Latest Stable Version, if Used to Run the Web App",
       "Checks": [
-        "app_ensure_php_version_is_latest"
+        "app_ensure_python_version_is_latest"
       ],
       "Attributes": [
         {
@@ -3110,7 +3108,7 @@
       "Id": "9.7",
       "Description": "Ensure that 'Java version' is the latest, if used to run the Web App",
       "Checks": [
-        "app_ensure_python_version_is_latest"
+        "app_ensure_java_version_is_latest"
       ],
       "Attributes": [
         {
@@ -3132,7 +3130,7 @@
       "Id": "9.8",
       "Description": "Ensure that 'HTTP Version' is the Latest, if Used to Run the Web App",
       "Checks": [
-        "app_ensure_java_version_is_latest"
+        "app_ensure_using_http20"
       ],
       "Attributes": [
         {
@@ -3154,7 +3152,7 @@
       "Id": "9.9",
       "Description": "Ensure FTP deployments are Disabled",
       "Checks": [
-        "app_ensure_using_http20"
+        "app_ftp_deployment_disabled"
       ],
       "Attributes": [
         {
@@ -3175,9 +3173,7 @@
     {
       "Id": "9.10",
       "Description": "Ensure Azure Key Vaults are Used to Store Secrets",
-      "Checks": [
-        "app_ftp_deployment_disabled"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "9. AppService",
@@ -3211,66 +3207,6 @@
           "AdditionalInformation": "",
           "DefaultValue": "By default, no locks are set.",
           "References": "https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-lock-resources:https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-manager-subscription-governance#azure-resource-locks:https://docs.microsoft.com/en-us/azure/governance/blueprints/concepts/resource-locking:https://learn.microsoft.com/en-us/security/benchmark/azure/mcsb-asset-management#am-4-limit-access-to-asset-management"
-        }
-      ]
-    },
-    {
-      "Id": "9.10",
-      "Description": "Ensure FTP deployments are Disabled",
-      "Checks": [],
-      "Attributes": [
-        {
-          "Section": "9. AppService",
-          "Profile": "Level 1",
-          "AssessmentStatus": "Automated",
-          "Description": "By default, Azure Functions, Web, and API Services  can be deployed over FTP. If FTP is required for an essential deployment workflow, FTPS should be required for FTP login for all App Service Apps and Functions.",
-          "RationaleStatement": "Azure FTP deployment endpoints are public. An attacker listening to traffic on a wifi network used by a remote employee or a corporate network could see login traffic in clear-text which would then grant them full control of the code base of the app or service. This finding is more severe if User Credentials for deployment are set at the subscription level rather than using the default Application Credentials which are unique per App.",
-          "ImpactStatement": "Any deployment workflows that rely on FTP or FTPs rather than the WebDeploy or HTTPs endpoints may be affected.",
-          "RemediationProcedure": "**From Azure Portal**  1. Go to the Azure Portal 2. Select `App Services` 3. Click on an app 4. Select `Settings` and then `Configuration` 5. Under `General Settings`, for the `Platform Settings`, the `FTP state` should be set to `Disabled` or `FTPS Only`  **From Azure CLI**  For each out of compliance application, run the following choosing either 'disabled' or 'FtpsOnly' as appropriate:  ``` az webapp config set --resource-group <resource group name> --name <app name> --ftps-state [disabled|FtpsOnly] ```  **From PowerShell**  For each out of compliance application, run the following:  ``` Set-AzWebApp -ResourceGroupName <resource group name> -Name <app name> -FtpsState <Disabled or FtpsOnly> ```",
-          "AuditProcedure": "**From Azure Portal**  1. Go to the Azure Portal 2. Select `App Services` 3. Click on an app 4. Select `Settings` and then `Configuration` 5. Under `General Settings`, for the `Platform Settings`, the `FTP state` should not be set to `All allowed`  **From Azure CLI**   List webapps to obtain the ids.  ``` az webapp list ```  List the publish profiles to obtain the username, password and ftp server url.  ``` az webapp deployment list-publishing-profiles --ids <ids> {  publishUrl: <URL_FOR_WEB_APP>,  userName: <USER_NAME>,  userPWD: <USER_PASSWORD>, } ```  **From PowerShell**  List all Web Apps:  ``` Get-AzWebApp ```  For each app:  ``` Get-AzWebApp -ResourceGroupName <resource group name> -Name <app name> | Select-Object -ExpandProperty SiteConfig ```  In the output, look for the value of **FtpsState**. If its value is **AllAllowed** the setting is out of compliance. Any other value is considered in compliance with this check.",
-          "AdditionalInformation": "",
-          "DefaultValue": "[Azure Web Service Deploy via FTP](https://docs.microsoft.com/en-us/azure/app-service/deploy-ftp):[Azure Web Service Deployment](https://docs.microsoft.com/en-us/azure/app-service/overview-security):https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-data-protection#dp-4-encrypt-sensitive-information-in-transit:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-posture-vulnerability-management#pv-7-rapidly-and-automatically-remediate-software-vulnerabilities",
-          "References": "TA0008, T1570, M1031"
-        }
-      ]
-    },
-    {
-      "Id": "9.11",
-      "Description": "Ensure Azure Key Vaults are Used to Store Secrets",
-      "Checks": [],
-      "Attributes": [
-        {
-          "Section": "9. AppService",
-          "Profile": "Level 2",
-          "AssessmentStatus": "Manual",
-          "Description": "Azure Key Vault will store multiple types of sensitive information such as encryption keys, certificate thumbprints, and Managed Identity Credentials. Access to these 'Secrets' can be controlled through granular permissions.",
-          "RationaleStatement": "The credentials given to an application have permissions to create, delete, or modify data stored within the systems they access. If these credentials are stored within the application itself, anyone with access to the application or a copy of the code has access to them. Storing within Azure Key Vault as secrets increases security by controlling access. This also allows for updates of the credentials without redeploying the entire application.",
-          "ImpactStatement": "Integrating references to secrets within the key vault are required to be specifically integrated within the application code. This will require additional configuration to be made during the writing of an application, or refactoring of an already written one. There are also additional costs that are charged per 10000 requests to the Key Vault.",
-          "RemediationProcedure": "Remediation has 2 steps 1. Setup the Key Vault 2. Setup the App Service to use the Key Vault  **Step 1: Set up the Key Vault**  **From Azure CLI**  ``` az keyvault create --name <name> --resource-group <myResourceGroup> --location myLocation ```  **From Powershell**  ``` New-AzKeyvault -name <name> -ResourceGroupName <myResourceGroup> -Location <myLocation> ```  **Step 2: Set up the App Service to use the Key Vault**  Sample JSON Template for App Service Configuration: ``` {  //...  resources: [  {  type: Microsoft.Storage/storageAccounts,  name: [variables('storageAccountName')],  //...  },  {  type: Microsoft.Insights/components,  name: [variables('appInsightsName')],  //...  },  {  type: Microsoft.Web/sites,  name: [variables('functionAppName')],  identity: {  type: SystemAssigned  },  //...  resources: [  {  type: config,  name: appsettings,  //...  dependsOn: [  [resourceId('Microsoft.Web/sites', variables('functionAppName'))],  [resourceId('Microsoft.KeyVault/vaults/', variables('keyVaultName'))],  [resourceId('Microsoft.KeyVault/vaults/secrets', variables('keyVaultName'), variables('storageConnectionStringName'))],  [resourceId('Microsoft.KeyVault/vaults/secrets', variables('keyVaultName'), variables('appInsightsKeyName'))]  ],  properties: {  AzureWebJobsStorage: [concat('@Microsoft.KeyVault(SecretUri=', reference(variables('storageConnectionStringResourceId')).secretUriWithVersion, ')')],  WEBSITE_CONTENTAZUREFILECONNECTIONSTRING: [concat('@Microsoft.KeyVault(SecretUri=', reference(variables('storageConnectionStringResourceId')).secretUriWithVersion, ')')],  APPINSIGHTS_INSTRUMENTATIONKEY: [concat('@Microsoft.KeyVault(SecretUri=', reference(variables('appInsightsKeyResourceId')).secretUriWithVersion, ')')],  WEBSITE_ENABLE_SYNC_UPDATE_SITE: true  //...  }  },  {  type: sourcecontrols,  name: web,  //...  dependsOn: [  [resourceId('Microsoft.Web/sites', variables('functionAppName'))],  [resourceId('Microsoft.Web/sites/config', variables('functionAppName'), 'appsettings')]  ],  }  ]  },  {  type: Microsoft.KeyVault/vaults,  name: [variables('keyVaultName')],  //...  dependsOn: [  [resourceId('Microsoft.Web/sites', variables('functionAppName'))]  ],  properties: {  //...  accessPolicies: [  {  tenantId: [reference(concat('Microsoft.Web/sites/', variables('functionAppName'), '/providers/Microsoft.ManagedIdentity/Identities/default'), '2015-08-31-PREVIEW').tenantId],  objectId: [reference(concat('Microsoft.Web/sites/', variables('functionAppName'), '/providers/Microsoft.ManagedIdentity/Identities/default'), '2015-08-31-PREVIEW').principalId],  permissions: {  secrets: [ get ]  }  }  ]  },  resources: [  {  type: secrets,  name: [variables('storageConnectionStringName')],  //...  dependsOn: [  [resourceId('Microsoft.KeyVault/vaults/', variables('keyVaultName'))],  [resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]  ],  properties: {  value: [concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountResourceId'),'2015-05-01-preview').key1)]  }  },  {  type: secrets,  name: [variables('appInsightsKeyName')],  //...  dependsOn: [  [resourceId('Microsoft.KeyVault/vaults/', variables('keyVaultName'))],  [resourceId('Microsoft.Insights/components', variables('appInsightsName'))]  ],  properties: {  value: [reference(resourceId('microsoft.insights/components/', variables('appInsightsName')), '2015-05-01').InstrumentationKey]  }  }  ]  }  ] } ```",
-          "AuditProcedure": "**From Azure Portal**  1. Login to Azure Portal 2. In the expandable menu on the left go to `Key Vaults` 3. View the Key Vaults listed.  **From Azure CLI**  To list key vaults within a subscription run the following command:  ``` Get-AzKeyVault ```  To list the secrets within these key vaults run the following command:  ``` Get-AzKeyVaultSecret [-VaultName] <vault name> ```  **From Powershell**  To list key vaults within a subscription run the following command:  ``` Get-AzKeyVault ```  To list all secrets in a key vault run the following command:  ``` Get-AzKeyVaultSecret -VaultName '<vaultName' ```",
-          "AdditionalInformation": "",
-          "DefaultValue": "https://docs.microsoft.com/en-us/azure/app-service/app-service-key-vault-references:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-identity-management#im-2-manage-application-identities-securely-and-automatically:https://docs.microsoft.com/en-us/cli/azure/keyvault?view=azure-cli-latest:https://docs.microsoft.com/en-us/cli/azure/keyvault?view=azure-cli-latest",
-          "References": "TA0006, T1552, M1041"
-        }
-      ]
-    },
-    {
-      "Id": "10.1",
-      "Description": "Ensure that Resource Locks are set for Mission-Critical Azure Resources",
-      "Checks": [],
-      "Attributes": [
-        {
-          "Section": "10. Miscellaneous",
-          "Profile": "Level 2",
-          "AssessmentStatus": "Manual",
-          "Description": "Resource Manager Locks provide a way for administrators to lock down Azure resources to prevent deletion of, or modifications to, a resource. These locks sit outside of the Role Based Access Controls (RBAC) hierarchy and, when applied, will place restrictions on the resource for all users. These locks are very useful when there is an important resource in a subscription that users should not be able to delete or change. Locks can help prevent accidental and malicious changes or deletion.",
-          "RationaleStatement": "As an administrator, it may be necessary to lock a subscription, resource group, or resource to prevent other users in the organization from accidentally deleting or modifying critical resources. The lock level can be set to to `CanNotDelete` or `ReadOnly` to achieve this purpose.  - `CanNotDelete` means authorized users can still read and modify a resource, but they cannot delete the resource.  - `ReadOnly` means authorized users can read a resource, but they cannot delete or update the resource. Applying this lock is similar to restricting all authorized users to the permissions granted by the Reader role.",
-          "ImpactStatement": "There can be unintended outcomes of locking a resource. Applying a lock to a parent service will cause it to be inherited by all resources within. Conversely, applying a lock to a resource may not apply to connected storage, leaving it unlocked. Please see the documentation for further information.",
-          "RemediationProcedure": "**From Azure Portal**  1. Navigate to the specific Azure Resource or Resource Group 2. For each mission critical resource, click on `Locks` 3. Click `Add` 4. Give the lock a name and a description, then select the type, `Read-only` or `Delete` as appropriate 5. Click OK  **From Azure CLI**  To lock a resource, provide the name of the resource, its resource type, and its resource group name.  ``` az lock create --name <LockName> --lock-type <CanNotDelete/Read-only> --resource-group <resourceGroupName> --resource-name <resourceName> --resource-type <resourceType> ```  **From Powershell**  ``` Get-AzResourceLock -ResourceName <Resource Name> -ResourceType <Resource Type> -ResourceGroupName <Resource Group Name> -Locktype <CanNotDelete/Read-only> ```",
-          "AuditProcedure": "**From Azure Portal**  1. Navigate to the specific Azure Resource or Resource Group 2. Click on `Locks` 3. Ensure the lock is defined with name and description, with type `Read-only` or `Delete` as appropriate.  **From Azure CLI**  Review the list of all locks set currently:  ``` az lock list --resource-group <resourcegroupname> --resource-name <resourcename> --namespace <Namespace> --resource-type <type> --parent  ```  **From Powershell**  Run the following command to list all resources.  ``` Get-AzResource ```  For each resource, run the following command to check for Resource Locks.  ``` Get-AzResourceLock -ResourceName <Resource Name> -ResourceType <Resource Type> -ResourceGroupName <Resource Group Name> ``` Review the output of the `Properties` setting. Compliant settings will have the `CanNotDelete` or `ReadOnly` value.",
-          "AdditionalInformation": "",
-          "DefaultValue": "https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-lock-resources:https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-manager-subscription-governance#azure-resource-locks:https://docs.microsoft.com/en-us/azure/governance/blueprints/concepts/resource-locking:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-asset-management#am-4-limit-access-to-asset-management",
-          "References": ""
         }
       ]
     }

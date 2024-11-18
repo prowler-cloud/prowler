@@ -1,5 +1,6 @@
 import json
 import os
+from operator import attrgetter
 
 try:
     import grp
@@ -16,11 +17,11 @@ from io import TextIOWrapper
 from ipaddress import ip_address
 from os.path import exists
 from time import mktime
-from typing import Optional
+from typing import Any, Optional
 
 from colorama import Style
 from detect_secrets import SecretsCollection
-from detect_secrets.settings import default_settings
+from detect_secrets.settings import transient_settings
 
 from prowler.config.config import encoding_format_utf_8
 from prowler.lib.logger import logger
@@ -80,20 +81,96 @@ def hash_sha512(string: str) -> str:
     return sha512(string.encode(encoding_format_utf_8)).hexdigest()[0:9]
 
 
-def detect_secrets_scan(data):
-    temp_data_file = tempfile.NamedTemporaryFile(delete=False)
-    temp_data_file.write(bytes(data, encoding="raw_unicode_escape"))
-    temp_data_file.close()
+def detect_secrets_scan(
+    data: str = None, file=None, excluded_secrets: list[str] = None
+) -> list[dict[str, str]]:
+    """detect_secrets_scan scans the data or file for secrets using the detect-secrets library.
+    Args:
+        data (str): The data to scan for secrets.
+        file (str): The file to scan for secrets.
+        excluded_secrets (list): A list of regex patterns to exclude from the scan.
+    Returns:
+        dict: The secrets found in the
+    Raises:
+        Exception: If an error occurs during the scan.
+    Examples:
+        >>> detect_secrets_scan(data="password=password")
+        [{'filename': 'data', 'hashed_secret': 'f7c3bc1d808e04732adf679965ccc34ca7ae3441', 'is_verified': False, 'line_number': 1, 'type': 'Secret Keyword'}]
+        >>> detect_secrets_scan(file="file.txt")
+        {'file.txt': [{'filename': 'file.txt', 'hashed_secret': 'f7c3bc1d808e04732adf679965ccc34ca7ae3441', 'is_verified': False, 'line_number': 1, 'type': 'Secret Keyword'}]}
+    """
+    try:
+        if not file:
+            temp_data_file = tempfile.NamedTemporaryFile(delete=False)
+            temp_data_file.write(bytes(data, encoding="raw_unicode_escape"))
+            temp_data_file.close()
 
-    secrets = SecretsCollection()
-    with default_settings():
-        secrets.scan_file(temp_data_file.name)
-    os.remove(temp_data_file.name)
+        secrets = SecretsCollection()
 
-    detect_secrets_output = secrets.json()
-    if detect_secrets_output:
-        return detect_secrets_output[temp_data_file.name]
-    else:
+        settings = {
+            "plugins_used": [
+                {"name": "ArtifactoryDetector"},
+                {"name": "AWSKeyDetector"},
+                {"name": "AzureStorageKeyDetector"},
+                {"name": "BasicAuthDetector"},
+                {"name": "CloudantDetector"},
+                {"name": "DiscordBotTokenDetector"},
+                {"name": "GitHubTokenDetector"},
+                {"name": "GitLabTokenDetector"},
+                {"name": "Base64HighEntropyString", "limit": 6.0},
+                {"name": "HexHighEntropyString", "limit": 3.0},
+                {"name": "IbmCloudIamDetector"},
+                {"name": "IbmCosHmacDetector"},
+                # {"name": "IPPublicDetector"}, https://github.com/Yelp/detect-secrets/pull/885
+                {"name": "JwtTokenDetector"},
+                {"name": "KeywordDetector"},
+                {"name": "MailchimpDetector"},
+                {"name": "NpmDetector"},
+                {"name": "OpenAIDetector"},
+                {"name": "PrivateKeyDetector"},
+                {"name": "PypiTokenDetector"},
+                {"name": "SendGridDetector"},
+                {"name": "SlackDetector"},
+                {"name": "SoftlayerDetector"},
+                {"name": "SquareOAuthDetector"},
+                {"name": "StripeDetector"},
+                # {"name": "TelegramBotTokenDetector"}, https://github.com/Yelp/detect-secrets/pull/878
+                {"name": "TwilioKeyDetector"},
+            ],
+            "filters_used": [
+                {"path": "detect_secrets.filters.common.is_invalid_file"},
+                {"path": "detect_secrets.filters.common.is_known_false_positive"},
+                {"path": "detect_secrets.filters.heuristic.is_likely_id_string"},
+                {"path": "detect_secrets.filters.heuristic.is_potential_secret"},
+            ],
+        }
+        if excluded_secrets and len(excluded_secrets) > 0:
+            settings["filters_used"].append(
+                {
+                    "path": "detect_secrets.filters.regex.should_exclude_line",
+                    "pattern": excluded_secrets,
+                }
+            )
+        with transient_settings(settings):
+            if file:
+                secrets.scan_file(file)
+            else:
+                secrets.scan_file(temp_data_file.name)
+
+        if not file:
+            os.remove(temp_data_file.name)
+
+        detect_secrets_output = secrets.json()
+
+        if detect_secrets_output:
+            if file:
+                return detect_secrets_output[file]
+            else:
+                return detect_secrets_output[temp_data_file.name]
+        else:
+            return None
+    except Exception as e:
+        logger.error(f"Error scanning for secrets: {e}")
         return None
 
 
@@ -196,3 +273,44 @@ def print_boxes(messages: list, report_title: str):
             f"{Style.BRIGHT}{Style.RESET_ALL}  · {message}{Style.BRIGHT}{Style.RESET_ALL}"
         )
     print()
+
+
+def dict_to_lowercase(d):
+    """
+    Convert all keys in a dictionary to lowercase.
+    This function takes a dictionary and returns a new dictionary
+    with all the keys converted to lowercase. If a value in the
+    dictionary is another dictionary, the function will recursively
+    convert the keys of that dictionary to lowercase as well.
+    Args:
+        d (dict): The dictionary to convert.
+    Returns:
+        dict: A new dictionary with all keys in lowercase.
+    """
+
+    new_dict = {}
+    for k, v in d.items():
+        if isinstance(v, dict):
+            v = dict_to_lowercase(v)
+        new_dict[k.lower()] = v
+    return new_dict
+
+
+def get_nested_attribute(obj: Any, attr: str) -> Any:
+    """
+    Get a nested attribute from an object.
+    Args:
+        obj (Any): The object to get the attribute from.
+        attr (str): The attribute to get.
+    Returns:
+        Any: The attribute value if present, otherwise "".
+    """
+    try:
+        return attrgetter(attr)(obj)
+    except AttributeError:
+        return ""
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
+        return ""

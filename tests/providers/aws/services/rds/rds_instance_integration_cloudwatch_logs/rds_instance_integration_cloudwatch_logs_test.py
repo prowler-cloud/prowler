@@ -135,7 +135,7 @@ class Test_rds_instance_integration_cloudwatch_logs:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == "RDS Instance db-master-1 is shipping audit error to CloudWatch Logs."
+                    == "RDS Instance db-master-1 is shipping audit, error logs to CloudWatch Logs."
                 )
                 assert result[0].resource_id == "db-master-1"
                 assert result[0].region == AWS_REGION_US_EAST_1

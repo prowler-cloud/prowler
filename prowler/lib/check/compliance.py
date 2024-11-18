@@ -1,6 +1,6 @@
 import sys
 
-from prowler.lib.check.compliance_models import ComplianceBaseModel
+from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.logger import logger
 
 
@@ -26,8 +26,8 @@ def update_checks_metadata_with_compliance(
                     if check in requirement.Checks:
                         # Include the requirement into the check's framework requirements
                         compliance_requirements.append(requirement)
-                        # Create the Compliance_Model
-                        compliance = ComplianceBaseModel(
+                        # Create the Compliance
+                        compliance = Compliance(
                             Framework=framework.Framework,
                             Provider=framework.Provider,
                             Version=framework.Version,

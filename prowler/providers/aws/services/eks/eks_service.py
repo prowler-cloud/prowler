@@ -13,10 +13,10 @@ class EKS(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.clusters = []
-        self.__threading_call__(self.__list_clusters__)
-        self.__describe_cluster__(self.regional_clients)
+        self.__threading_call__(self._list_clusters)
+        self._describe_cluster(self.regional_clients)
 
-    def __list_clusters__(self, regional_client):
+    def _list_clusters(self, regional_client):
         logger.info("EKS listing clusters...")
         try:
             list_clusters_paginator = regional_client.get_paginator("list_clusters")
@@ -39,7 +39,7 @@ class EKS(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_cluster__(self, regional_clients):
+    def _describe_cluster(self, regional_clients):
         logger.info("EKS listing clusters...")
         try:
             for cluster in self.clusters:
@@ -107,6 +107,6 @@ class EKSCluster(BaseModel):
     security_group_id: str = None
     endpoint_public_access: bool = None
     endpoint_private_access: bool = None
-    public_access_cidrs: list[str] = None
+    public_access_cidrs: list[str] = []
     encryptionConfig: bool = None
     tags: Optional[list] = []

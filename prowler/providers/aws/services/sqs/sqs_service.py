@@ -15,11 +15,11 @@ class SQS(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.queues = []
-        self.__threading_call__(self.__list_queues__)
-        self.__get_queue_attributes__()
-        self.__list_queue_tags__()
+        self.__threading_call__(self._list_queues)
+        self._get_queue_attributes()
+        self._list_queue_tags()
 
-    def __list_queues__(self, regional_client):
+    def _list_queues(self, regional_client):
         logger.info("SQS - describing queues...")
         try:
             list_queues_paginator = regional_client.get_paginator("list_queues")
@@ -49,7 +49,7 @@ class SQS(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_queue_attributes__(self):
+    def _get_queue_attributes(self):
         try:
             logger.info("SQS - describing queue attributes...")
             for queue in self.queues:
@@ -94,7 +94,7 @@ class SQS(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_queue_tags__(self):
+    def _list_queue_tags(self):
         logger.info("SQS - List Tags...")
         try:
             for queue in self.queues:

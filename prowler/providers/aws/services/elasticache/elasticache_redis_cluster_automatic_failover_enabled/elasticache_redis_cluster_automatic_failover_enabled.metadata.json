@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "elasticache_redis_cluster_automatic_failover_enabled",
+  "CheckTitle": "Ensure Elasticache Redis clusters have automatic failover enabled.",
+  "CheckType": [],
+  "ServiceName": "elasticache",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "medium",
+  "ResourceType": "Other",
+  "Description": "Ensure Elasticache Redis OSS cache clusters use automatic failover.",
+  "Risk": "If automatic failover is not enabled, a failure in the primary node could result in significant downtime, impacting the availability and resilience of your application.",
+  "RelatedUrl": "https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/AutoFailover.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/elasticache-controls.html#elasticache-3",
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/ensure-aws-elasticache-redis-cluster-with-multi-az-automatic-failover-feature-set-to-enabled/"
+    },
+    "Recommendation": {
+      "Text": "Enable automatic failover for ElastiCache (Redis OSS) clusters to ensure high availability and minimize downtime during failures.",
+      "Url": "https://redis.io/blog/highly-available-in-memory-cloud-datastores/"
+    }
+  },
+  "Categories": [
+    "redundancy"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

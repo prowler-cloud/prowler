@@ -88,6 +88,23 @@ class Test_ELBv2_Service:
             elbv2.loadbalancersv2[lb["LoadBalancerArn"]].dns
             == "my-lb-1.eu-west-1.elb.amazonaws.com"
         )
+        assert len(elbv2.loadbalancersv2[lb["LoadBalancerArn"]].availability_zones) == 2
+        assert (
+            elbv2.loadbalancersv2[lb["LoadBalancerArn"]].availability_zones[
+                AWS_REGION_EU_WEST_1_AZA
+            ]
+            == subnet1.id
+        )
+        assert (
+            elbv2.loadbalancersv2[lb["LoadBalancerArn"]].availability_zones[
+                AWS_REGION_EU_WEST_1_AZB
+            ]
+            == subnet2.id
+        )
+        assert (
+            elbv2.loadbalancersv2[lb["LoadBalancerArn"]].security_groups[0]
+            == security_group.id
+        )
 
     # Test ELBv2 Describe Listeners
     @mock_aws
@@ -193,6 +210,7 @@ class Test_ELBv2_Service:
             Attributes=[
                 {"Key": "routing.http.desync_mitigation_mode", "Value": "defensive"},
                 {"Key": "access_logs.s3.enabled", "Value": "true"},
+                {"Key": "load_balancing.cross_zone.enabled", "Value": "true"},
                 {"Key": "deletion_protection.enabled", "Value": "true"},
                 {
                     "Key": "routing.http.drop_invalid_header_fields.enabled",
@@ -213,6 +231,10 @@ class Test_ELBv2_Service:
         assert elbv2.loadbalancersv2[lb["LoadBalancerArn"]].access_logs == "true"
         assert (
             elbv2.loadbalancersv2[lb["LoadBalancerArn"]].deletion_protection == "true"
+        )
+        assert (
+            elbv2.loadbalancersv2[lb["LoadBalancerArn"]].cross_zone_load_balancing
+            == "true"
         )
         assert (
             elbv2.loadbalancersv2[lb["LoadBalancerArn"]].drop_invalid_header_fields

@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "neptune_cluster_public_snapshot",
+  "CheckTitle": "Check if NeptuneDB manual cluster snapshot is public.",
+  "CheckType": [],
+  "ServiceName": "neptune",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "critical",
+  "ResourceType": "AwsRdsDbClusterSnapshot",
+  "Description": "Check if NeptuneDB manual cluster snapshot is public.",
+  "Risk": "If you share an unencrypted manual snapshot as public, the snapshot is available to all AWS accounts. Public snapshots may result in unintended data exposure.",
+  "RelatedUrl": "https://docs.aws.amazon.com/neptune/latest/userguide/security-considerations.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws neptune modify-db-cluster-snapshot-attribute --db-cluster-snapshot-identifier <snapshot_id> --attribute-name restore --values-to-remove all",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-3",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "To remove public access from a manual snapshot, follow the AWS documentation on NeptuneDB snapshots.",
+      "Url": "https://docs.aws.amazon.com/neptune/latest/userguide/security-considerations.html"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

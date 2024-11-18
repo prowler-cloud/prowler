@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "kinesis_stream_data_retention_period",
+  "CheckTitle": "Kinesis streams should have an adequate data retention period.",
+  "CheckType": [
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
+  ],
+  "ServiceName": "kinesis",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:kinesis::account-id:stream/stream-name",
+  "Severity": "medium",
+  "ResourceType": "AwsKinesisStream",
+  "Description": "Ensure Kinesis streams have an adequate data retention period.",
+  "Risk": "An inadequate data retention period may result in data records being deleted before they can be processed or backed up, increasing the risk of data loss. This is especially critical for applications that rely on historical data availability for analysis, monitoring, and recovery in case of failures.",
+  "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/kinesis-stream-backup-retention-check.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws kinesis increase-stream-retention-period --stream-name <stream-name> --retention-period-hours <hours>",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/kinesis-controls.html#kinesis-3",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure an adequate data retention period for Kinesis streams to ensure data is available for the required timeframe. Set the retention period based on your application’s data retention requirements, and consider at least 168 hours (or customize as necessary).",
+      "Url": "https://docs.aws.amazon.com/streams/latest/dev/kinesis-extended-retention.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

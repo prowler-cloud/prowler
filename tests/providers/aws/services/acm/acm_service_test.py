@@ -15,10 +15,10 @@ from tests.providers.aws.utils import (
 # Mocking Access Analyzer Calls
 make_api_call = botocore.client.BaseClient._make_api_call
 
-certificate_arn = f"arn:aws:acm:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:certificate/{str(uuid.uuid4())}"
-certificate_name = "test-certificate.com"
-certificate_type = "AMAZON_ISSUED"
-certificate_key_algorithm = "RSA-4096"
+CERTIFICATE_ARN = f"arn:aws:acm:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:certificate/{str(uuid.uuid4())}"
+CERTIFICATE_NAME = "test-certificate.com"
+CERTIFICATE_TYPE = "AMAZON_ISSUED"
+CERTIFICATE_KEY_ALGORITHM = "RSA-4096"
 
 
 def mock_make_api_call(self, operation_name, kwargs):
@@ -33,14 +33,14 @@ def mock_make_api_call(self, operation_name, kwargs):
         return {
             "CertificateSummaryList": [
                 {
-                    "CertificateArn": certificate_arn,
-                    "DomainName": certificate_name,
+                    "CertificateArn": CERTIFICATE_ARN,
+                    "DomainName": CERTIFICATE_NAME,
                     "SubjectAlternativeNameSummaries": [
                         "test-certificate-2.com",
                     ],
                     "HasAdditionalSubjectAlternativeNames": False,
                     "Status": "ISSUED",
-                    "Type": certificate_type,
+                    "Type": CERTIFICATE_TYPE,
                     "KeyAlgorithm": "RSA-4096",
                     "KeyUsages": ["DIGITAL_SIGNATURE"],
                     "ExtendedKeyUsages": ["TLS_WEB_SERVER_AUTHENTICATION"],
@@ -57,14 +57,14 @@ def mock_make_api_call(self, operation_name, kwargs):
             ]
         }
     if operation_name == "DescribeCertificate":
-        if kwargs["CertificateArn"] == certificate_arn:
+        if kwargs["CertificateArn"] == CERTIFICATE_ARN:
             return {
                 "Certificate": {
                     "Options": {"CertificateTransparencyLoggingPreference": "DISABLED"},
                 }
             }
     if operation_name == "ListTagsForCertificate":
-        if kwargs["CertificateArn"] == certificate_arn:
+        if kwargs["CertificateArn"] == CERTIFICATE_ARN:
             return {
                 "Tags": [
                     {"Key": "test", "Value": "test"},
@@ -140,13 +140,15 @@ class Test_ACM_Service:
         aws_provider = set_mocked_aws_provider()
         acm = ACM(aws_provider)
         assert len(acm.certificates) == 1
-        assert acm.certificates[0].arn == certificate_arn
-        assert acm.certificates[0].name == certificate_name
-        assert acm.certificates[0].type == certificate_type
-        assert acm.certificates[0].key_algorithm == certificate_key_algorithm
-        assert acm.certificates[0].expiration_days == 365
-        assert acm.certificates[0].transparency_logging is False
-        assert acm.certificates[0].region == AWS_REGION_US_EAST_1
+        assert acm.certificates[CERTIFICATE_ARN].arn == CERTIFICATE_ARN
+        assert acm.certificates[CERTIFICATE_ARN].name == CERTIFICATE_NAME
+        assert acm.certificates[CERTIFICATE_ARN].type == CERTIFICATE_TYPE
+        assert (
+            acm.certificates[CERTIFICATE_ARN].key_algorithm == CERTIFICATE_KEY_ALGORITHM
+        )
+        assert acm.certificates[CERTIFICATE_ARN].expiration_days == 365
+        assert acm.certificates[CERTIFICATE_ARN].transparency_logging is False
+        assert acm.certificates[CERTIFICATE_ARN].region == AWS_REGION_US_EAST_1
 
     # Test ACM List Tags
     # @mock_acm
@@ -162,6 +164,6 @@ class Test_ACM_Service:
         aws_provider = set_mocked_aws_provider()
         acm = ACM(aws_provider)
         assert len(acm.certificates) == 1
-        assert acm.certificates[0].tags == [
+        assert acm.certificates[CERTIFICATE_ARN].tags == [
             {"Key": "test", "Value": "test"},
         ]

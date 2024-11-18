@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "neptune_cluster_integration_cloudwatch_logs",
+  "CheckTitle": "Check if Neptune Clusters have audit cloudwatch logs enabled.",
+  "CheckType": [
+    "Software and Configuration Checks, AWS Security Best Practices"
+  ],
+  "ServiceName": "neptune",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-cluster",
+  "Severity": "medium",
+  "ResourceType": "AwsRdsDbCluster",
+  "Description": "Check if Neptune Clusters have audit cloudwatch logs enabled.",
+  "Risk": "If audit logs are not enabled, it is difficult to determine the root cause of security incidents.",
+  "RelatedUrl": "https://docs.aws.amazon.com/neptune/latest/userguide/auditing.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws neptune modify-db-cluster --db-cluster-identifier <value> --cloudwatch-logs-export-configuration '{\"EnableLogTypes\":[\"audit\"]}'",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-2",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable audit logs for Neptune Clusters.",
+      "Url": "https://docs.aws.amazon.com/neptune/latest/userguide/cloudwatch-logs.html"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -2,6 +2,7 @@ import botocore
 from mock import patch
 
 from prowler.providers.aws.services.documentdb.documentdb_service import (
+    ClusterSnapshot,
     DBCluster,
     DocumentDB,
     Instance,
@@ -76,6 +77,29 @@ def mock_make_api_call(self, operation_name, kwargs):
                     "DBClusterArn": DOC_DB_CLUSTER_ARN,
                 },
             ]
+        }
+    if operation_name == "DescribeDBClusterSnapshots":
+        return {
+            "DBClusterSnapshots": [
+                {
+                    "DBClusterSnapshotIdentifier": "test-cluster-snapshot",
+                    "DBClusterIdentifier": DOC_DB_CLUSTER_ID,
+                    "Engine": "docdb",
+                    "Status": "available",
+                    "StorageEncrypted": True,
+                    "DBClusterSnapshotArn": f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:cluster-snapshot:test-cluster-snapshot",
+                    "TagList": [{"Key": "snapshot", "Value": "test"}],
+                },
+            ]
+        }
+    if operation_name == "DescribeDBClusterSnapshotAttributes":
+        return {
+            "DBClusterSnapshotAttributesResult": {
+                "DBClusterSnapshotIdentifier": "test-cluster-snapshot",
+                "DBClusterSnapshotAttributes": [
+                    {"AttributeName": "restore", "AttributeValues": ["all"]}
+                ],
+            }
         }
     return make_api_call(self, operation_name, kwargs)
 
@@ -158,3 +182,38 @@ class Test_DocumentDB_Service:
                 tags=[],
             )
         }
+
+    # Test DocumentDB Describe DB Cluster Snapshots
+    def test_describe_db_cluster_snapshots(self):
+        aws_provider = set_mocked_aws_provider()
+        docdb = DocumentDB(aws_provider)
+        assert docdb.db_cluster_snapshots == [
+            ClusterSnapshot(
+                id="test-cluster-snapshot",
+                arn=f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:cluster-snapshot:test-cluster-snapshot",
+                cluster_id=DOC_DB_CLUSTER_ID,
+                public=True,
+                encrypted=True,
+                region=AWS_REGION_US_EAST_1,
+                tags=[{"Key": "snapshot", "Value": "test"}],
+            )
+        ]
+
+    # Test DocumentDB Describe DB Snapshot Attributes
+    def test_describe_db_cluster_snapshot_attributes(self):
+        aws_provider = set_mocked_aws_provider()
+        docdb = DocumentDB(aws_provider)
+        docdb.db_cluster_snapshots = [
+            ClusterSnapshot(
+                id="test-cluster-snapshot",
+                arn=f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:cluster-snapshot:test-cluster-snapshot",
+                cluster_id=DOC_DB_CLUSTER_ID,
+                encrypted=True,
+                region=AWS_REGION_US_EAST_1,
+                tags=[{"Key": "snapshot", "Value": "test"}],
+            )
+        ]
+        docdb._describe_db_cluster_snapshot_attributes(
+            docdb.regional_clients[AWS_REGION_US_EAST_1]
+        )
+        assert docdb.db_cluster_snapshots[0].public is True

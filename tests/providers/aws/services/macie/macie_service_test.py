@@ -45,7 +45,7 @@ def mock_generate_regional_clients(provider, service):
 )
 class Test_Macie_Service:
     # Test Macie Client
-    def test__get_client__(self):
+    def test_get_client(self):
         macie = Macie(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
         assert (
             macie.regional_clients[AWS_REGION_EU_WEST_1].__class__.__name__ == "Macie2"
@@ -61,7 +61,7 @@ class Test_Macie_Service:
         macie = Macie(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
         assert macie.service == "macie2"
 
-    def test__get_macie_session__(self):
+    def test_get_macie_session(self):
         # Set partition for the service
         macie = Macie(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
         macie.sessions = [
@@ -73,3 +73,18 @@ class Test_Macie_Service:
         assert len(macie.sessions) == 1
         assert macie.sessions[0].status == "ENABLED"
         assert macie.sessions[0].region == AWS_REGION_EU_WEST_1
+
+    def test_get_automated_discovery_configuration(self):
+        # Set partition for the service
+        macie = Macie(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
+        macie.sessions = [
+            Session(
+                status="ENABLED",
+                region="eu-west-1",
+                automated_discovery_status="ENABLED",
+            )
+        ]
+        assert len(macie.sessions) == 1
+        assert macie.sessions[0].status == "ENABLED"
+        assert macie.sessions[0].region == AWS_REGION_EU_WEST_1
+        assert macie.sessions[0].automated_discovery_status == "ENABLED"

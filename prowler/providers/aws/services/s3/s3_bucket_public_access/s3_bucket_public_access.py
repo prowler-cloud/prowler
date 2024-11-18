@@ -1,10 +1,5 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
-from prowler.providers.aws.lib.policy_condition_parser.policy_condition_parser import (
-    is_condition_block_restrictive,
-)
-from prowler.providers.aws.services.iam.lib.policy import (
-    is_condition_restricting_from_private_ip,
-)
+from prowler.providers.aws.services.iam.lib.policy import is_policy_public
 from prowler.providers.aws.services.s3.s3_client import s3_client
 from prowler.providers.aws.services.s3.s3control_client import s3control_client
 
@@ -27,12 +22,12 @@ class s3_bucket_public_access(Check):
             findings.append(report)
         else:
             # 2. If public access is not blocked at account level, check it at each bucket level
-            for bucket in s3_client.buckets:
+            for arn, bucket in s3_client.buckets.items():
                 if bucket.public_access_block:
                     report = Check_Report_AWS(self.metadata())
                     report.region = bucket.region
                     report.resource_id = bucket.name
-                    report.resource_arn = bucket.arn
+                    report.resource_arn = arn
                     report.resource_tags = bucket.tags
                     report.status = "PASS"
                     report.status_extended = f"S3 Bucket {bucket.name} is not public."
@@ -51,39 +46,8 @@ class s3_bucket_public_access(Check):
                                     report.status_extended = f"S3 Bucket {bucket.name} has public access due to bucket ACL."
 
                         # 4. Check bucket policy
-                        if bucket.policy:
-                            for statement in bucket.policy.get("Statement", []):
-                                if (
-                                    "Principal" in statement
-                                    and statement["Effect"] == "Allow"
-                                    and not is_condition_block_restrictive(
-                                        statement.get("Condition", {}), "", True
-                                    )
-                                    and (
-                                        not is_condition_restricting_from_private_ip(
-                                            statement.get("Condition", {})
-                                        )
-                                        if statement.get("Condition", {}).get(
-                                            "IpAddress", {}
-                                        )
-                                        else True
-                                    )
-                                ):
-                                    if "*" == statement["Principal"]:
-                                        report.status = "FAIL"
-                                        report.status_extended = f"S3 Bucket {bucket.name} has public access due to bucket policy."
-                                    elif "AWS" in statement["Principal"]:
-                                        principals = (
-                                            statement["Principal"]["AWS"]
-                                            if isinstance(
-                                                statement["Principal"]["AWS"], list
-                                            )
-                                            else [statement["Principal"]["AWS"]]
-                                        )
-
-                                        for principal_arn in principals:
-                                            if principal_arn == "*":
-                                                report.status = "FAIL"
-                                                report.status_extended = f"S3 Bucket {bucket.name} has public access due to bucket policy."
+                        if is_policy_public(bucket.policy, s3_client.audited_account):
+                            report.status = "FAIL"
+                            report.status_extended = f"S3 Bucket {bucket.name} has public access due to bucket policy."
                     findings.append(report)
         return findings

@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "documentdb_cluster_public_snapshot",
+  "CheckTitle": "Check if DocumentDB manual cluster snapshot is public.",
+  "CheckType": [],
+  "ServiceName": "documentdb",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "critical",
+  "ResourceType": "AwsRdsDbClusterSnapshot",
+  "Description": "Check if DocumentDB manual cluster snapshot is public.",
+  "Risk": "If you share an unencrypted manual snapshot as public, the snapshot is available to all AWS accounts. Public snapshots may result in unintended data exposure.",
+  "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/docdb-cluster-snapshot-public-prohibited.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws docdb modify-db-snapshot-attribute --db-snapshot-identifier <snapshot_id> --attribute-name restore --values-to-remove all",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/documentdb-controls.html#documentdb-3",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "To remove public access from a manual snapshot, follow the Sharing a snapshot tutorial.",
+      "Url": "https://docs.aws.amazon.com/documentdb/latest/developerguide/backup_restore-share_cluster_snapshots.html#backup_restore-share_snapshots"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

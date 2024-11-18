@@ -45,7 +45,7 @@ class Test_APIGateway_Service:
 
     # Test APIGateway Get Rest APIs
     @mock_aws
-    def test__get_rest_apis__(self):
+    def test_get_rest_apis(self):
         # Generate APIGateway Client
         apigateway_client = client("apigateway", region_name=AWS_REGION_US_EAST_1)
         # Create APIGateway Rest API
@@ -61,7 +61,7 @@ class Test_APIGateway_Service:
 
     # Test APIGateway Get Authorizers
     @mock_aws
-    def test__get_authorizers__(self):
+    def test_get_authorizers(self):
         # Generate APIGateway Client
         apigateway_client = client("apigateway", region_name=AWS_REGION_US_EAST_1)
         # Create APIGateway Rest API
@@ -81,7 +81,7 @@ class Test_APIGateway_Service:
 
     # Test APIGateway Get Rest API
     @mock_aws
-    def test__get_rest_api__(self):
+    def test_get_rest_api(self):
         # Generate APIGateway Client
         apigateway_client = client("apigateway", region_name=AWS_REGION_US_EAST_1)
         # Create private APIGateway Rest API
@@ -98,7 +98,7 @@ class Test_APIGateway_Service:
 
     # Test APIGateway Get Stages
     @mock_aws
-    def test__get_stages__(self):
+    def test_get_stages(self):
         # Generate APIGateway Client
         apigateway_client = client("apigateway", region_name=AWS_REGION_US_EAST_1)
         # Create APIGateway Rest API and a deployment stage
@@ -141,15 +141,33 @@ class Test_APIGateway_Service:
                     "path": "/*/*/logging/loglevel",
                     "value": "INFO",
                 },
+                {
+                    "op": "replace",
+                    "path": "/tracingEnabled",
+                    "value": "true",
+                },
+                {
+                    "op": "replace",
+                    "path": "/*/*/caching/enabled",
+                    "value": "true",
+                },
+                {
+                    "op": "replace",
+                    "path": "/*/*/caching/dataEncrypted",
+                    "value": "false",
+                },
             ],
         )
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         apigateway = APIGateway(aws_provider)
         assert apigateway.rest_apis[0].stages[0].logging is True
+        assert apigateway.rest_apis[0].stages[0].tracing_enabled is True
+        assert apigateway.rest_apis[0].stages[0].cache_enabled is True
+        assert apigateway.rest_apis[0].stages[0].cache_data_encrypted is False
 
-    # Test APIGateway __get_resources__
+    # Test APIGateway _get_resources
     @mock_aws
-    def test__get_resources__(self):
+    def test_get_resources(self):
         apigateway_client = client("apigateway", region_name=AWS_REGION_US_EAST_1)
 
         rest_api = apigateway_client.create_rest_api(

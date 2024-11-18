@@ -19,7 +19,7 @@ class Test_networkfirewall_deletion_protection:
             [AWS_REGION_US_EAST_1]
         )
         networkfirewall_client.region = AWS_REGION_US_EAST_1
-        networkfirewall_client.network_firewalls = []
+        networkfirewall_client.network_firewalls = {}
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
@@ -41,14 +41,14 @@ class Test_networkfirewall_deletion_protection:
 
                 assert len(result) == 0
 
-    def Test_networkfirewall_deletion_protection_disabled(self):
+    def test_networkfirewall_deletion_protection_disabled(self):
         networkfirewall_client = mock.MagicMock
         networkfirewall_client.provider = set_mocked_aws_provider(
             [AWS_REGION_US_EAST_1]
         )
         networkfirewall_client.region = AWS_REGION_US_EAST_1
-        networkfirewall_client.network_firewalls = [
-            Firewall(
+        networkfirewall_client.network_firewalls = {
+            FIREWALL_ARN: Firewall(
                 arn=FIREWALL_ARN,
                 name=FIREWALL_NAME,
                 region=AWS_REGION_US_EAST_1,
@@ -58,8 +58,7 @@ class Test_networkfirewall_deletion_protection:
                 encryption_type="CUSTOMER_KMS",
                 deletion_protection=False,
             )
-        ]
-
+        }
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
@@ -89,14 +88,14 @@ class Test_networkfirewall_deletion_protection:
                 assert result[0].resource_tags == []
                 assert result[0].resource_arn == FIREWALL_ARN
 
-    def Test_networkfirewall_deletion_protection_enabled(self):
+    def test_networkfirewall_deletion_protection_enabled(self):
         networkfirewall_client = mock.MagicMock
         networkfirewall_client.provider = set_mocked_aws_provider(
             [AWS_REGION_US_EAST_1]
         )
         networkfirewall_client.region = AWS_REGION_US_EAST_1
-        networkfirewall_client.network_firewalls = [
-            Firewall(
+        networkfirewall_client.network_firewalls = {
+            FIREWALL_ARN: Firewall(
                 arn=FIREWALL_ARN,
                 name=FIREWALL_NAME,
                 region=AWS_REGION_US_EAST_1,
@@ -106,7 +105,7 @@ class Test_networkfirewall_deletion_protection:
                 encryption_type="CUSTOMER_KMS",
                 deletion_protection=True,
             )
-        ]
+        }
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 

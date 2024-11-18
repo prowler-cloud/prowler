@@ -24,7 +24,7 @@ class Test_cloudwatch_cross_account_sharing_disabled:
 
         aws_provider.audit_metadata = Audit_Metadata(
             services_scanned=0,
-            # We need to set this check to call __describe_log_groups__
+            # We need to set this check to call _describe_log_groups
             expected_checks=["cloudwatch_log_group_no_secrets_in_logs"],
             completed_checks=0,
             audit_progress=0,
@@ -52,6 +52,14 @@ class Test_cloudwatch_cross_account_sharing_disabled:
                 == "CloudWatch doesn't allow cross-account sharing."
             )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:iam:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:role"
+                or result[0].resource_arn
+                == f"arn:aws:iam:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:role"
+            )
+            assert result[0].region == AWS_REGION_EU_WEST_1
+            assert result[0].resource_tags == []
 
     @mock_aws
     def test_cloudwatch_log_group_with_cross_account_role(self):
@@ -59,7 +67,9 @@ class Test_cloudwatch_cross_account_sharing_disabled:
         iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
         # Request Logs group
         iam_client.create_role(
-            RoleName="CloudWatch-CrossAccountSharingRole", AssumeRolePolicyDocument="{}"
+            RoleName="CloudWatch-CrossAccountSharingRole",
+            AssumeRolePolicyDocument="{}",
+            Tags=[{"Key": "Name", "Value": "CloudWatch-CrossAccountSharingRole"}],
         )
         from prowler.providers.aws.services.iam.iam_service import IAM
 
@@ -71,7 +81,7 @@ class Test_cloudwatch_cross_account_sharing_disabled:
 
         aws_provider.audit_metadata = Audit_Metadata(
             services_scanned=0,
-            # We need to set this check to call __describe_log_groups__
+            # We need to set this check to call _describe_log_groups
             expected_checks=["cloudwatch_log_group_no_secrets_in_logs"],
             completed_checks=0,
             audit_progress=0,
@@ -99,6 +109,17 @@ class Test_cloudwatch_cross_account_sharing_disabled:
                 == "CloudWatch has allowed cross-account sharing."
             )
             assert result[0].resource_id == "CloudWatch-CrossAccountSharingRole"
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/CloudWatch-CrossAccountSharingRole"
+            )
+            assert (
+                result[0].region == AWS_REGION_US_EAST_1
+                or result[0].region == AWS_REGION_EU_WEST_1
+            )
+            assert result[0].resource_tags == [
+                {"Key": "Name", "Value": "CloudWatch-CrossAccountSharingRole"}
+            ]
 
     @mock_aws
     def test_access_denied(self):
@@ -112,7 +133,7 @@ class Test_cloudwatch_cross_account_sharing_disabled:
 
         aws_provider.audit_metadata = Audit_Metadata(
             services_scanned=0,
-            # We need to set this check to call __describe_log_groups__
+            # We need to set this check to call _describe_log_groups
             expected_checks=["cloudwatch_log_group_no_secrets_in_logs"],
             completed_checks=0,
             audit_progress=0,

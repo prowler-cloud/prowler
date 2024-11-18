@@ -1,7 +1,13 @@
 from unittest import mock
 
 from prowler.config.config import aws_logo, azure_logo, gcp_logo
+from prowler.lib.outputs.slack.exceptions.exceptions import (
+    SlackChannelNotFound,
+    SlackClientError,
+    SlackNoCredentialsError,
+)
 from prowler.lib.outputs.slack.slack import Slack
+from prowler.providers.common.models import Connection
 from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, set_mocked_aws_provider
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
@@ -12,6 +18,7 @@ from tests.providers.gcp.gcp_fixtures import set_mocked_gcp_provider
 
 SLACK_CHANNEL = "test-channel"
 SLACK_TOKEN = "test-token"
+NON_EXISTING_CHANNEL = "non-existing-channel"
 
 
 class TestSlackIntegration:
@@ -51,6 +58,14 @@ class TestSlackIntegration:
         stats = {}
         stats["total_pass"] = 12
         stats["total_fail"] = 10
+        stats["total_critical_severity_pass"] = 4
+        stats["total_critical_severity_fail"] = 4
+        stats["total_high_severity_fail"] = 1
+        stats["total_high_severity_pass"] = 1
+        stats["total_medium_severity_fail"] = 2
+        stats["total_medium_severity_pass"] = 1
+        stats["total_low_severity_fail"] = 3
+        stats["total_low_severity_pass"] = 3
         stats["resources_count"] = 20
         stats["findings_count"] = 22
 
@@ -70,6 +85,14 @@ class TestSlackIntegration:
         stats = {}
         stats["total_pass"] = 12
         stats["total_fail"] = 10
+        stats["total_critical_severity_pass"] = 2
+        stats["total_critical_severity_fail"] = 4
+        stats["total_high_severity_fail"] = 1
+        stats["total_high_severity_pass"] = 1
+        stats["total_medium_severity_fail"] = 2
+        stats["total_medium_severity_pass"] = 1
+        stats["total_low_severity_fail"] = 2
+        stats["total_low_severity_pass"] = 3
         stats["resources_count"] = 20
         stats["findings_count"] = 22
 
@@ -100,7 +123,33 @@ class TestSlackIntegration:
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
+                    "text": (
+                        "*Severities:*\n"
+                        "• *Critical:* 2 "
+                        "• *High:* 1 "
+                        "• *Medium:* 1 "
+                        "• *Low:* 3"
+                    ),
+                },
+            },
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
                     "text": f"\n:x: *{stats['total_fail']} Failed findings* ({round(stats['total_fail'] / stats['findings_count'] * 100 , 2)}%)\n ",
+                },
+            },
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": (
+                        "*Severities:*\n"
+                        "• *Critical:* 4 "
+                        "• *High:* 1 "
+                        "• *Medium:* 2 "
+                        "• *Low:* 2"
+                    ),
                 },
             },
             {
@@ -127,7 +176,7 @@ class TestSlackIntegration:
                 "accessory": {
                     "type": "button",
                     "text": {"type": "plain_text", "text": "Prowler :slack:"},
-                    "url": "https://join.slack.com/t/prowler-workspace/shared_invite/zt-1hix76xsl-2uq222JIXrC7Q8It~9ZNog",
+                    "url": "https://goto.prowler.com/slack",
                 },
             },
             {
@@ -157,12 +206,20 @@ class TestSlackIntegration:
         ]
 
     def test_create_message_blocks_azure(self):
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_azure_provider()
         slack = Slack(SLACK_TOKEN, SLACK_CHANNEL, aws_provider)
         args = "--slack"
         stats = {}
         stats["total_pass"] = 12
         stats["total_fail"] = 10
+        stats["total_critical_severity_pass"] = 2
+        stats["total_critical_severity_fail"] = 4
+        stats["total_high_severity_fail"] = 1
+        stats["total_high_severity_pass"] = 1
+        stats["total_medium_severity_fail"] = 2
+        stats["total_medium_severity_pass"] = 1
+        stats["total_low_severity_fail"] = 2
+        stats["total_low_severity_pass"] = 3
         stats["resources_count"] = 20
         stats["findings_count"] = 22
 
@@ -195,7 +252,33 @@ class TestSlackIntegration:
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
+                    "text": (
+                        "*Severities:*\n"
+                        "• *Critical:* 2 "
+                        "• *High:* 1 "
+                        "• *Medium:* 1 "
+                        "• *Low:* 3"
+                    ),
+                },
+            },
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
                     "text": f"\n:x: *{stats['total_fail']} Failed findings* ({round(stats['total_fail'] / stats['findings_count'] * 100 , 2)}%)\n ",
+                },
+            },
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": (
+                        "*Severities:*\n"
+                        "• *Critical:* 4 "
+                        "• *High:* 1 "
+                        "• *Medium:* 2 "
+                        "• *Low:* 2"
+                    ),
                 },
             },
             {
@@ -222,7 +305,7 @@ class TestSlackIntegration:
                 "accessory": {
                     "type": "button",
                     "text": {"type": "plain_text", "text": "Prowler :slack:"},
-                    "url": "https://join.slack.com/t/prowler-workspace/shared_invite/zt-1hix76xsl-2uq222JIXrC7Q8It~9ZNog",
+                    "url": "https://goto.prowler.com/slack",
                 },
             },
             {
@@ -252,12 +335,20 @@ class TestSlackIntegration:
         ]
 
     def test_create_message_blocks_gcp(self):
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_gcp_provider()
         slack = Slack(SLACK_TOKEN, SLACK_CHANNEL, aws_provider)
         args = "--slack"
         stats = {}
         stats["total_pass"] = 12
         stats["total_fail"] = 10
+        stats["total_critical_severity_pass"] = 2
+        stats["total_critical_severity_fail"] = 4
+        stats["total_high_severity_fail"] = 1
+        stats["total_high_severity_pass"] = 1
+        stats["total_medium_severity_fail"] = 2
+        stats["total_medium_severity_pass"] = 1
+        stats["total_low_severity_fail"] = 2
+        stats["total_low_severity_pass"] = 3
         stats["resources_count"] = 20
         stats["findings_count"] = 22
 
@@ -288,7 +379,33 @@ class TestSlackIntegration:
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
+                    "text": (
+                        "*Severities:*\n"
+                        "• *Critical:* 2 "
+                        "• *High:* 1 "
+                        "• *Medium:* 1 "
+                        "• *Low:* 3"
+                    ),
+                },
+            },
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
                     "text": f"\n:x: *{stats['total_fail']} Failed findings* ({round(stats['total_fail'] / stats['findings_count'] * 100 , 2)}%)\n ",
+                },
+            },
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": (
+                        "*Severities:*\n"
+                        "• *Critical:* 4 "
+                        "• *High:* 1 "
+                        "• *Medium:* 2 "
+                        "• *Low:* 2"
+                    ),
                 },
             },
             {
@@ -315,7 +432,7 @@ class TestSlackIntegration:
                 "accessory": {
                     "type": "button",
                     "text": {"type": "plain_text", "text": "Prowler :slack:"},
-                    "url": "https://join.slack.com/t/prowler-workspace/shared_invite/zt-1hix76xsl-2uq222JIXrC7Q8It~9ZNog",
+                    "url": "https://goto.prowler.com/slack",
                 },
             },
             {
@@ -376,3 +493,80 @@ class TestSlackIntegration:
             args = "--slack"
             response = slack.send(stats, args)
             assert response == mocked_slack_response
+
+    def test_test_connection(self):
+        mocked_auth_response = {"ok": True}
+        mocked_conversations_info = {
+            "ok": True,
+            "channels": [
+                {"id": "C87654321", "name": SLACK_CHANNEL, "is_member": True},
+            ],
+        }
+        mocked_web_client = mock.MagicMock()
+        mocked_web_client.auth_test = mock.Mock(return_value=mocked_auth_response)
+        mocked_web_client.conversations_info = mock.Mock(
+            return_value=mocked_conversations_info
+        )
+        with mock.patch(
+            "prowler.lib.outputs.slack.slack.WebClient", return_value=mocked_web_client
+        ):
+            assert Slack.test_connection(
+                token=SLACK_TOKEN, channel=SLACK_CHANNEL
+            ) == Connection(is_connected=True)
+
+    def test_slack_no_credentials_error(self):
+        mocked_auth_response = {"ok": False, "error": "invalid_auth"}
+        mocked_web_client = mock.MagicMock()
+        mocked_web_client.auth_test = mock.Mock(return_value=mocked_auth_response)
+
+        with mock.patch(
+            "prowler.lib.outputs.slack.slack.WebClient", return_value=mocked_web_client
+        ):
+            connection = Slack.test_connection(
+                token=SLACK_TOKEN,
+                channel=NON_EXISTING_CHANNEL,
+                raise_on_exception=False,
+            )
+
+            assert not connection.is_connected
+            assert isinstance(connection.error, SlackNoCredentialsError)
+            assert "invalid_auth" in str(connection.error)
+
+    def test_slack_channel_not_found(self):
+        mocked_auth_response = {"ok": True}
+        mocked_conversations_info = {"ok": False, "error": "channel_not_found"}
+        mocked_web_client = mock.MagicMock()
+        mocked_web_client.auth_test = mock.Mock(return_value=mocked_auth_response)
+        mocked_web_client.conversations_info = mock.Mock(
+            return_value=mocked_conversations_info
+        )
+
+        with mock.patch(
+            "prowler.lib.outputs.slack.slack.WebClient", return_value=mocked_web_client
+        ):
+            connection = Slack.test_connection(
+                token=SLACK_TOKEN,
+                channel=NON_EXISTING_CHANNEL,
+                raise_on_exception=False,
+            )
+
+            assert not connection.is_connected
+            assert isinstance(connection.error, SlackChannelNotFound)
+            assert "channel_not_found" in str(connection.error)
+
+    def test_slack_client_error(self):
+        mocked_web_client = mock.MagicMock()
+        mocked_web_client.auth_test = mock.Mock(side_effect=SlackClientError)
+
+        with mock.patch(
+            "prowler.lib.outputs.slack.slack.WebClient", return_value=mocked_web_client
+        ):
+            connection = Slack.test_connection(
+                token=SLACK_TOKEN,
+                channel=NON_EXISTING_CHANNEL,
+                raise_on_exception=False,
+            )
+
+            assert not connection.is_connected
+            assert isinstance(connection.error, SlackClientError)
+            assert "Slack ClientError occurred" in str(connection.error)

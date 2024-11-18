@@ -41,6 +41,11 @@ def mock_make_api_call(self, operation_name, kwargs):
                             "errorMessage": "string",
                             "status": "ENABLED",
                         },
+                        "lambdaCode": {
+                            "errorCode": "ALREADY_ENABLED",
+                            "errorMessage": "string",
+                            "status": "ENABLED",
+                        },
                     },
                     "state": {
                         "errorCode": "ALREADY_ENABLED",
@@ -84,7 +89,7 @@ def mock_generate_regional_clients(provider, service):
     new=mock_generate_regional_clients,
 )
 class Test_Inspector2_Service:
-    def test__get_client__(self):
+    def test_get_client(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         inspector2 = Inspector2(aws_provider)
         assert (
@@ -97,15 +102,19 @@ class Test_Inspector2_Service:
         inspector2 = Inspector2(aws_provider)
         assert inspector2.service == "inspector2"
 
-    def test__batch_get_account_status__(self):
+    def test_batch_get_account_status(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         inspector2 = Inspector2(aws_provider)
         assert len(inspector2.inspectors) == 1
         assert inspector2.inspectors[0].id == "Inspector2"
         assert inspector2.inspectors[0].region == AWS_REGION_EU_WEST_1
         assert inspector2.inspectors[0].status == "ENABLED"
+        assert inspector2.inspectors[0].ec2_status == "ENABLED"
+        assert inspector2.inspectors[0].ecr_status == "ENABLED"
+        assert inspector2.inspectors[0].lambda_status == "ENABLED"
+        assert inspector2.inspectors[0].lambda_code_status == "ENABLED"
 
-    def test__list_active_findings__(self):
+    def test_list_active_findings(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         inspector2 = Inspector2(aws_provider)
         assert inspector2.inspectors[0].active_findings

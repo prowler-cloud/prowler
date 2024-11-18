@@ -7,19 +7,18 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################################ Elasticache
 class ElastiCache(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.clusters = {}
         self.replication_groups = {}
-        self.__threading_call__(self.__describe_cache_clusters__)
-        self.__threading_call__(self.__describe_cache_subnet_groups__)
-        self.__threading_call__(self.__describe_replication_groups__)
-        self.__list_tags_for_resource__()
+        self.__threading_call__(self._describe_cache_clusters)
+        self.__threading_call__(self._describe_cache_subnet_groups)
+        self.__threading_call__(self._describe_replication_groups)
+        self._list_tags_for_resource()
 
-    def __describe_cache_clusters__(self, regional_client):
+    def _describe_cache_clusters(self, regional_client):
         # Memcached Clusters and Redis Nodes
         logger.info("Elasticache - Describing Cache Clusters...")
         try:
@@ -39,6 +38,13 @@ class ElastiCache(AWSService):
                             cache_subnet_group_id=cache_cluster.get(
                                 "CacheSubnetGroupName", None
                             ),
+                            auto_minor_version_upgrade=cache_cluster.get(
+                                "AutoMinorVersionUpgrade", False
+                            ),
+                            engine_version=cache_cluster.get("EngineVersion", "0.0"),
+                            auth_token_enabled=cache_cluster.get(
+                                "AuthTokenEnabled", False
+                            ),
                         )
                 except Exception as error:
                     logger.error(
@@ -49,7 +55,7 @@ class ElastiCache(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_cache_subnet_groups__(self, regional_client):
+    def _describe_cache_subnet_groups(self, regional_client):
         logger.info("Elasticache - Describing Cache Subnet Groups...")
         try:
             for cluster in self.clusters.values():
@@ -76,7 +82,7 @@ class ElastiCache(AWSService):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_replication_groups__(self, regional_client):
+    def _describe_replication_groups(self, regional_client):
         # Redis Clusters
         logger.info("Elasticache - Describing Replication Groups...")
         try:
@@ -88,6 +94,13 @@ class ElastiCache(AWSService):
                     if not self.audit_resources or (
                         is_resource_filtered(replication_arn, self.audit_resources)
                     ):
+                        # Get first cluster version as they all have the same unless an upgrade is being made
+                        member_clusters = repl_group.get("MemberClusters", [])
+                        engine_version = "0.0"
+                        if member_clusters:
+                            cluster_arn = f"arn:{self.audited_partition}:elasticache:{regional_client.region}:{self.audited_account}:cluster:{member_clusters[0]}"
+                            engine_version = self.clusters[cluster_arn].engine_version
+
                         self.replication_groups[replication_arn] = ReplicationGroup(
                             id=repl_group["ReplicationGroupId"],
                             arn=replication_arn,
@@ -101,6 +114,16 @@ class ElastiCache(AWSService):
                                 "TransitEncryptionEnabled", False
                             ),
                             multi_az=repl_group.get("MultiAZ", "disabled"),
+                            auto_minor_version_upgrade=repl_group.get(
+                                "AutoMinorVersionUpgrade", False
+                            ),
+                            automatic_failover=repl_group.get(
+                                "AutomaticFailover", "disabled"
+                            ),
+                            auth_token_enabled=repl_group.get(
+                                "AuthTokenEnabled", False
+                            ),
+                            engine_version=engine_version,
                         )
                 except Exception as error:
                     logger.error(
@@ -111,7 +134,7 @@ class ElastiCache(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_tags_for_resource__(self):
+    def _list_tags_for_resource(self):
         logger.info("Elasticache - Listing Tags...")
         try:
             for cluster in self.clusters.values():
@@ -158,6 +181,9 @@ class Cluster(BaseModel):
     cache_subnet_group_id: Optional[str]
     subnets: list = []
     tags: Optional[list]
+    auto_minor_version_upgrade: bool = False
+    engine_version: Optional[str]
+    auth_token_enabled: Optional[bool]
 
 
 class ReplicationGroup(BaseModel):
@@ -170,3 +196,7 @@ class ReplicationGroup(BaseModel):
     transit_encryption: bool
     multi_az: str
     tags: Optional[list]
+    auth_token_enabled: bool
+    auto_minor_version_upgrade: bool
+    automatic_failover: str
+    engine_version: str

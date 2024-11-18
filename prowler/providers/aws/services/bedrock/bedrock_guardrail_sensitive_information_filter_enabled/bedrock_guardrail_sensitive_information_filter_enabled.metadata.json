@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "bedrock_guardrail_sensitive_information_filter_enabled",
+  "CheckTitle": "Configure Sensitive Information Filters for Amazon Bedrock Guardrails.",
+  "CheckType": [],
+  "ServiceName": "bedrock",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:bedrock:region:account-id:guardrails/resource-id",
+  "Severity": "high",
+  "ResourceType": "Other",
+  "Description": "Ensure that sensitive information filters are enabled for Amazon Bedrock guardrails to prevent the leakage of sensitive data such as personally identifiable information (PII), financial data, or confidential corporate information.",
+  "Risk": "If sensitive information filters are not enabled, Bedrock models may inadvertently generate or expose confidential or sensitive information in responses, leading to data breaches, regulatory violations, or reputational damage.",
+  "RelatedUrl": "https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws bedrock put-guardrails-configuration --guardrails-config 'sensitiveInformationFilter=true'",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Bedrock/guardrails-with-pii-mask-block.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable sensitive information filters for Amazon Bedrock guardrails to prevent the exposure of sensitive or confidential information.",
+      "Url": "https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails-sensitive-filters.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

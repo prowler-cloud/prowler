@@ -53,7 +53,7 @@ def mock_generate_regional_clients(provider, service):
     new=mock_generate_regional_clients,
 )
 class Test_DRS_Service:
-    def test__get_client__(self):
+    def test_get_client(self):
         aws_provider = set_mocked_aws_provider()
         drs = DRS(aws_provider)
         assert drs.regional_clients[AWS_REGION_US_EAST_1].__class__.__name__ == "drs"
@@ -63,7 +63,7 @@ class Test_DRS_Service:
         drs = DRS(aws_provider)
         assert drs.service == "drs"
 
-    def test__describe_jobs__(self):
+    def test_describe_jobs(self):
         aws_provider = set_mocked_aws_provider()
         drs = DRS(aws_provider)
         assert len(drs.drs_services) == 1

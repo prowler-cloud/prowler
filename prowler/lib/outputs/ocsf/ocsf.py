@@ -9,7 +9,6 @@ from py_ocsf_models.events.findings.detection_finding import (
 from py_ocsf_models.events.findings.finding import ActivityID, FindingInformation
 from py_ocsf_models.objects.account import Account, TypeID
 from py_ocsf_models.objects.cloud import Cloud
-from py_ocsf_models.objects.container import Container
 from py_ocsf_models.objects.group import Group
 from py_ocsf_models.objects.metadata import Metadata
 from py_ocsf_models.objects.organization import Organization
@@ -37,7 +36,7 @@ class OCSF(Output):
         - transform(findings: List[Finding]) -> None: Transforms the findings into the OCSF Detection Finding format.
         - batch_write_data_to_file() -> None: Writes the findings to a file using the OCSF Detection Finding format using the `Output._file_descriptor`.
         - get_account_type_id_by_provider(provider: str) -> TypeID: Returns the TypeID based on the provider.
-        - get_finding_status_id(status: str, muted: bool) -> StatusID: Returns the StatusID based on the status and muted values.
+        - get_finding_status_id(muted: bool) -> StatusID: Returns the StatusID based on the muted value.
 
     References:
         - OCSF: https://schema.ocsf.io/1.2.0/classes/detection_finding
@@ -54,37 +53,42 @@ class OCSF(Output):
             for finding in findings:
                 finding_activity = ActivityID.Create
                 cloud_account_type = self.get_account_type_id_by_provider(
-                    finding.provider
+                    finding.metadata.Provider
                 )
                 finding_severity = getattr(
-                    SeverityID, finding.severity.capitalize(), SeverityID.Unknown
+                    SeverityID,
+                    finding.metadata.Severity.capitalize(),
+                    SeverityID.Unknown,
                 )
-                finding_status = self.get_finding_status_id(
-                    finding.status, finding.muted
-                )
+                finding_status = self.get_finding_status_id(finding.muted)
 
                 detection_finding = DetectionFinding(
+                    message=finding.status_extended,
                     activity_id=finding_activity.value,
                     activity_name=finding_activity.name,
                     finding_info=FindingInformation(
-                        created_time=finding.timestamp,
-                        desc=finding.description,
-                        title=finding.check_title,
-                        uid=finding.finding_uid,
+                        created_time_dt=finding.timestamp,
+                        created_time=int(finding.timestamp.timestamp()),
+                        desc=finding.metadata.Description,
+                        title=finding.metadata.CheckTitle,
+                        uid=finding.uid,
+                        name=finding.resource_name,
                         product_uid="prowler",
+                        types=finding.metadata.CheckType,
                     ),
-                    event_time=finding.timestamp,
+                    time_dt=finding.timestamp,
+                    time=int(finding.timestamp.timestamp()),
                     remediation=Remediation(
-                        desc=finding.remediation_recommendation_text,
+                        desc=finding.metadata.Remediation.Recommendation.Text,
                         references=list(
                             filter(
                                 None,
                                 [
-                                    finding.remediation_code_nativeiac,
-                                    finding.remediation_code_terraform,
-                                    finding.remediation_code_cli,
-                                    finding.remediation_code_other,
-                                    finding.remediation_recommendation_url,
+                                    finding.metadata.Remediation.Code.NativeIaC,
+                                    finding.metadata.Remediation.Code.Terraform,
+                                    finding.metadata.Remediation.Code.CLI,
+                                    finding.metadata.Remediation.Code.Other,
+                                    finding.metadata.Remediation.Recommendation.Url,
                                 ],
                             )
                         ),
@@ -95,60 +99,73 @@ class OCSF(Output):
                     status=finding_status.name,
                     status_code=finding.status,
                     status_detail=finding.status_extended,
-                    risk_details=finding.risk,
-                    resources=[
-                        ResourceDetails(
-                            labels=unroll_dict_to_list(finding.resource_tags),
-                            name=finding.resource_name,
-                            uid=finding.resource_uid,
-                            group=Group(name=finding.service_name),
-                            type=finding.resource_type,
-                            # TODO: this should be included only if using the Cloud profile
-                            cloud_partition=finding.partition,
-                            region=finding.region,
-                            data={"details": finding.resource_details},
-                        )
-                    ],
+                    risk_details=finding.metadata.Risk,
+                    resources=(
+                        [
+                            ResourceDetails(
+                                labels=unroll_dict_to_list(finding.resource_tags),
+                                name=finding.resource_name,
+                                uid=finding.resource_uid,
+                                group=Group(name=finding.metadata.ServiceName),
+                                type=finding.metadata.ResourceType,
+                                # TODO: this should be included only if using the Cloud profile
+                                cloud_partition=finding.partition,
+                                region=finding.region,
+                                data={"details": finding.resource_details},
+                            )
+                        ]
+                        if finding.metadata.Provider != "kubernetes"
+                        else [
+                            ResourceDetails(
+                                labels=unroll_dict_to_list(finding.resource_tags),
+                                name=finding.resource_name,
+                                uid=finding.resource_uid,
+                                group=Group(name=finding.metadata.ServiceName),
+                                type=finding.metadata.ResourceType,
+                                data={"details": finding.resource_details},
+                                namespace=finding.region.replace("namespace: ", ""),
+                            )
+                        ]
+                    ),
                     metadata=Metadata(
-                        event_code=finding.check_id,
+                        event_code=finding.metadata.CheckID,
                         product=Product(
+                            uid="prowler",
                             name="Prowler",
                             vendor_name="Prowler",
                             version=finding.prowler_version,
                         ),
+                        profiles=(
+                            ["cloud", "datetime"]
+                            if finding.metadata.Provider != "kubernetes"
+                            else ["container", "datetime"]
+                        ),
+                        tenant_uid=finding.account_organization_uid,
                     ),
                     type_uid=DetectionFindingTypeID.Create,
-                    type_name=DetectionFindingTypeID.Create.name,
+                    type_name=f"Detection Finding: {DetectionFindingTypeID.Create.name}",
                     unmapped={
-                        "check_type": finding.check_type,
-                        "related_url": finding.related_url,
-                        "categories": finding.categories,
-                        "depends_on": finding.depends_on,
-                        "related_to": finding.related_to,
-                        "notes": finding.notes,
+                        "related_url": finding.metadata.RelatedUrl,
+                        "categories": finding.metadata.Categories,
+                        "depends_on": finding.metadata.DependsOn,
+                        "related_to": finding.metadata.RelatedTo,
+                        "notes": finding.metadata.Notes,
                         "compliance": finding.compliance,
                     },
                 )
-
-                if finding.provider == "kubernetes":
-                    detection_finding.container = Container(
-                        name=finding.resource_name,
-                        uid=finding.resource_uid,
-                    )
-                    # TODO: Get the PID of the namespace (we only have the name of the namespace)
-                    # detection_finding.namespace_pid=,
-                else:
+                if finding.provider != "kubernetes":
                     detection_finding.cloud = Cloud(
                         account=Account(
                             name=finding.account_name,
                             type_id=cloud_account_type.value,
-                            type=cloud_account_type.name,
+                            type=cloud_account_type.name.replace("_", " "),
                             uid=finding.account_uid,
                             labels=unroll_dict_to_list(finding.account_tags),
                         ),
                         org=Organization(
                             uid=finding.account_organization_uid,
                             name=finding.account_organization_name,
+                            # TODO: add the org unit id and name
                         ),
                         provider=finding.provider,
                         region=finding.region,
@@ -208,20 +225,17 @@ class OCSF(Output):
         return type_id
 
     @staticmethod
-    def get_finding_status_id(status: str, muted: bool) -> StatusID:
+    def get_finding_status_id(muted: bool) -> StatusID:
         """
-        Returns the StatusID based on the status and muted values.
+        Returns the StatusID based on the muted value.
 
         Args:
-            status (str): The status value
             muted (bool): The muted value
 
         Returns:
-            StatusID: The StatusID based on the status and muted values
+            StatusID: The StatusID based on the muted value
         """
-        status_id = StatusID.Other
-        if status == "FAIL":
-            status_id = StatusID.New
+        status_id = StatusID.New
         if muted:
             status_id = StatusID.Suppressed
         return status_id

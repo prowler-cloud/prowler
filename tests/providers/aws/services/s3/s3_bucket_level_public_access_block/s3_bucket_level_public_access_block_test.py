@@ -228,6 +228,7 @@ class Test_s3_bucket_level_public_access_block:
     def test_bucket_can_not_retrieve_public_access_block(self):
         s3_client = client("s3", region_name=AWS_REGION_US_EAST_1)
         bucket_name_us = "bucket_test_us"
+        bucket_arn = f"arn:aws:s3:::{bucket_name_us}"
         s3_client.create_bucket(Bucket=bucket_name_us)
         s3_client.put_public_access_block(
             Bucket=bucket_name_us,
@@ -258,7 +259,7 @@ class Test_s3_bucket_level_public_access_block:
         ):
             # To test this behaviour we need to set public_access_block to None
             s3 = S3(aws_provider)
-            s3.buckets[0].public_access_block = None
+            s3.buckets[bucket_arn].public_access_block = None
 
             with mock.patch(
                 "prowler.providers.aws.services.s3.s3_bucket_level_public_access_block.s3_bucket_level_public_access_block.s3_client",

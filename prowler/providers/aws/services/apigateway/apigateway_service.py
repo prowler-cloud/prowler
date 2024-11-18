@@ -14,13 +14,13 @@ class APIGateway(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.rest_apis = []
-        self.__threading_call__(self.__get_rest_apis__)
-        self.__get_authorizers__()
-        self.__get_rest_api__()
-        self.__get_stages__()
-        self.__get_resources__()
+        self.__threading_call__(self._get_rest_apis)
+        self._get_authorizers()
+        self._get_rest_api()
+        self._get_stages()
+        self._get_resources()
 
-    def __get_rest_apis__(self, regional_client):
+    def _get_rest_apis(self, regional_client):
         logger.info("APIGateway - Getting Rest APIs...")
         try:
             get_rest_apis_paginator = regional_client.get_paginator("get_rest_apis")
@@ -44,7 +44,7 @@ class APIGateway(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_authorizers__(self):
+    def _get_authorizers(self):
         logger.info("APIGateway - Getting Rest APIs authorizer...")
         try:
             for rest_api in self.rest_apis:
@@ -75,7 +75,7 @@ class APIGateway(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_rest_api__(self):
+    def _get_rest_api(self):
         logger.info("APIGateway - Describing Rest API...")
         try:
             for rest_api in self.rest_apis:
@@ -103,7 +103,7 @@ class APIGateway(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_stages__(self):
+    def _get_stages(self):
         logger.info("APIGateway - Getting stages for Rest APIs...")
         try:
             for rest_api in self.rest_apis:
@@ -114,11 +114,22 @@ class APIGateway(AWSService):
                         waf = None
                         logging = False
                         client_certificate = False
+                        tracing_enabled = False
+                        if "tracingEnabled" in stage:
+                            if stage["tracingEnabled"]:
+                                tracing_enabled = True
+                        cache_enabled = False
+                        cache_data_encrypted = False
                         if "webAclArn" in stage:
                             waf = stage["webAclArn"]
                         if "methodSettings" in stage:
-                            if stage["methodSettings"]:
-                                logging = True
+                            for settings in stage["methodSettings"].values():
+                                if settings.get("loggingLevel"):
+                                    logging = True
+                                if settings.get("cachingEnabled"):
+                                    cache_enabled = True
+                                    if settings.get("cacheDataEncrypted"):
+                                        cache_data_encrypted = True
                         if "clientCertificateId" in stage:
                             client_certificate = True
                         arn = f"arn:{self.audited_partition}:apigateway:{regional_client.region}::/restapis/{rest_api.id}/stages/{stage['stageName']}"
@@ -130,6 +141,9 @@ class APIGateway(AWSService):
                                 client_certificate=client_certificate,
                                 waf=waf,
                                 tags=[stage.get("tags")],
+                                tracing_enabled=tracing_enabled,
+                                cache_enabled=cache_enabled,
+                                cache_data_encrypted=cache_data_encrypted,
                             )
                         )
                 except ClientError as error:
@@ -151,7 +165,7 @@ class APIGateway(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_resources__(self):
+    def _get_resources(self):
         logger.info("APIGateway - Getting API resources...")
         try:
             for rest_api in self.rest_apis:
@@ -213,6 +227,9 @@ class Stage(BaseModel):
     client_certificate: bool
     waf: Optional[str]
     tags: Optional[list] = []
+    tracing_enabled: Optional[bool]
+    cache_enabled: Optional[bool]
+    cache_data_encrypted: Optional[bool]
 
 
 class PathResourceMethods(BaseModel):

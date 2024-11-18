@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "cloudfront_distributions_s3_origin_non_existent_bucket",
+  "CheckTitle": "CloudFront distributions should not point to non-existent S3 origins without static website hosting.",
+  "CheckType": [
+    "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53 Controls"
+  ],
+  "ServiceName": "cloudfront",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:cloudfront:region:account-id:distribution/resource-id",
+  "Severity": "high",
+  "ResourceType": "AwsCloudFrontDistribution",
+  "Description": "This control checks whether Amazon CloudFront distributions are pointing to non-existent Amazon S3 origins without static website hosting. The control fails if the origin is configured to point to a non-existent bucket.",
+  "Risk": "Pointing a CloudFront distribution to a non-existent S3 bucket can allow malicious actors to create the bucket and potentially serve unauthorized content through your distribution, leading to security and integrity issues.",
+  "RelatedUrl": "https://docs.aws.amazon.com/whitepapers/latest/secure-content-delivery-amazon-cloudfront/s3-origin-with-cloudfront.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudfront-controls.html#cloudfront-12",
+      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/cloudfront-existing-s3-bucket.html"
+    },
+    "Recommendation": {
+      "Text": "Verify that all CloudFront distributions are configured to point to valid, existing S3 buckets. Update the origin settings as needed to ensure that your distributions are linked to appropriate and secure origins.",
+      "Url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/HowToUpdateDistribution.html"
+    }
+  },
+  "Categories": [
+    "trustboundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

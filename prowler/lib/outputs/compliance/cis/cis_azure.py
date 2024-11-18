@@ -1,4 +1,4 @@
-from prowler.lib.check.compliance_models import ComplianceBaseModel
+from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.outputs.compliance.cis.models import AzureCISModel
 from prowler.lib.outputs.compliance.compliance_output import ComplianceOutput
 from prowler.lib.outputs.finding import Finding
@@ -19,7 +19,7 @@ class AzureCIS(ComplianceOutput):
     def transform(
         self,
         findings: list[Finding],
-        compliance: ComplianceBaseModel,
+        compliance: Compliance,
         compliance_name: str,
     ) -> None:
         """
@@ -27,7 +27,7 @@ class AzureCIS(ComplianceOutput):
 
         Parameters:
             - findings (list): A list of findings.
-            - compliance (ComplianceBaseModel): A compliance model.
+            - compliance (Compliance): A compliance model.
             - compliance_name (str): The name of the compliance model.
 
         Returns:
@@ -42,7 +42,7 @@ class AzureCIS(ComplianceOutput):
                         compliance_row = AzureCISModel(
                             Provider=finding.provider,
                             Description=compliance.Description,
-                            Subscription=finding.account_name,
+                            SubscriptionId=finding.account_uid,
                             Location=finding.region,
                             AssessmentDate=str(finding.timestamp),
                             Requirements_Id=requirement.Id,
@@ -73,7 +73,7 @@ class AzureCIS(ComplianceOutput):
                     compliance_row = AzureCISModel(
                         Provider=compliance.Provider.lower(),
                         Description=compliance.Description,
-                        Subscription="",
+                        SubscriptionId="",
                         Location="",
                         AssessmentDate=str(finding.timestamp),
                         Requirements_Id=requirement.Id,

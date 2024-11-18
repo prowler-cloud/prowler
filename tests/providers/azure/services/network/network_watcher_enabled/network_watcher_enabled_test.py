@@ -78,7 +78,7 @@ class Test_network_watcher_enabled:
             assert result[0].subscription == AZURE_SUBSCRIPTION_NAME
             assert result[0].resource_name == network_watcher_name
             assert result[0].resource_id == network_watcher_id
-            assert result[0].location == "Global"
+            assert result[0].location == "global"
 
     def test_network_valid_network_watchers(self):
         network_client = mock.MagicMock
@@ -124,4 +124,4 @@ class Test_network_watcher_enabled:
             assert result[0].subscription == AZURE_SUBSCRIPTION_NAME
             assert result[0].resource_name == network_watcher_name
             assert result[0].resource_id == network_watcher_id
-            assert result[0].location == "Global"
+            assert result[0].location == "global"

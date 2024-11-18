@@ -9,7 +9,6 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################## Backup
 class Backup(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
@@ -18,13 +17,19 @@ class Backup(AWSService):
         self.report_plan_arn_template = f"arn:{self.audited_partition}:backup:{self.region}:{self.audited_account}:report-plan"
         self.backup_vault_arn_template = f"arn:{self.audited_partition}:backup:{self.region}:{self.audited_account}:backup-vault"
         self.backup_vaults = []
-        self.__threading_call__(self.__list_backup_vaults__)
+        self.__threading_call__(self._list_backup_vaults)
+        self.__threading_call__(self._list_tags, self.backup_vaults)
         self.backup_plans = []
-        self.__threading_call__(self.__list_backup_plans__)
+        self.__threading_call__(self._list_backup_plans)
+        self.__threading_call__(self._list_tags, self.backup_plans)
         self.backup_report_plans = []
-        self.__threading_call__(self.__list_backup_report_plans__)
+        self.__threading_call__(self._list_backup_report_plans)
+        self.protected_resources = []
+        self.__threading_call__(self._list_backup_selections)
+        self.recovery_points = []
+        self.__threading_call__(self._list_recovery_points)
 
-    def __list_backup_vaults__(self, regional_client):
+    def _list_backup_vaults(self, regional_client):
         logger.info("Backup - Listing Backup Vaults...")
         try:
             list_backup_vaults_paginator = regional_client.get_paginator(
@@ -70,7 +75,7 @@ class Backup(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_backup_plans__(self, regional_client):
+    def _list_backup_plans(self, regional_client):
         logger.info("Backup - Listing Backup Plans...")
         try:
             list_backup_plans_paginator = regional_client.get_paginator(
@@ -105,7 +110,7 @@ class Backup(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_backup_report_plans__(self, regional_client):
+    def _list_backup_report_plans(self, regional_client):
         logger.info("Backup - Listing Backup Report Plans...")
 
         try:
@@ -138,6 +143,70 @@ class Backup(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _list_backup_selections(self, regional_client):
+        logger.info("Backup - Listing Backup Selections...")
+        try:
+            for backup_plan in self.backup_plans:
+                paginator = regional_client.get_paginator("list_backup_selections")
+                for page in paginator.paginate(BackupPlanId=backup_plan.id):
+                    for selection in page.get("BackupSelectionsList", []):
+                        selection_id = selection.get("SelectionId")
+                        if selection_id:
+                            backup_selection = regional_client.get_backup_selection(
+                                BackupPlanId=backup_plan.id, SelectionId=selection_id
+                            )["BackupSelection"]
+
+                            self.protected_resources.extend(
+                                backup_selection.get("Resources", [])
+                            )
+
+        except ClientError as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _list_tags(self, resource):
+        try:
+            tags = self.regional_clients[resource.region].list_tags(
+                ResourceArn=resource.arn
+            )["Tags"]
+            resource.tags = [tags] if tags else []
+        except Exception as error:
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _list_recovery_points(self, regional_client):
+        logger.info("Backup - Listing Recovery Points...")
+        try:
+            for backup_vault in self.backup_vaults:
+                paginator = regional_client.get_paginator(
+                    "list_recovery_points_by_backup_vault"
+                )
+                for page in paginator.paginate(BackupVaultName=backup_vault.name):
+                    for recovery_point in page.get("RecoveryPoints", []):
+                        self.recovery_points.append(
+                            RecoveryPoint(
+                                arn=recovery_point.get("RecoveryPointArn"),
+                                backup_vault_name=backup_vault.name,
+                                encrypted=recovery_point.get("IsEncrypted", False),
+                                backup_vault_region=backup_vault.region,
+                                tags=[],
+                            )
+                        )
+        except ClientError as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class BackupVault(BaseModel):
     arn: str
@@ -148,6 +217,7 @@ class BackupVault(BaseModel):
     locked: bool
     min_retention_days: int = None
     max_retention_days: int = None
+    tags: Optional[list]
 
 
 class BackupPlan(BaseModel):
@@ -158,6 +228,7 @@ class BackupPlan(BaseModel):
     version_id: str
     last_execution_date: Optional[datetime]
     advanced_settings: list
+    tags: Optional[list]
 
 
 class BackupReportPlan(BaseModel):
@@ -166,3 +237,11 @@ class BackupReportPlan(BaseModel):
     name: str
     last_attempted_execution_date: Optional[datetime]
     last_successful_execution_date: Optional[datetime]
+
+
+class RecoveryPoint(BaseModel):
+    arn: str
+    backup_vault_name: str
+    encrypted: bool
+    backup_vault_region: str
+    tags: Optional[list]

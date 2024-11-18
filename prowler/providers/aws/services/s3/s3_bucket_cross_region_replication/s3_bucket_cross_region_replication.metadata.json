@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "s3_bucket_cross_region_replication",
+  "CheckTitle": "Check if S3 buckets use cross region replication.",
+  "CheckType": [
+    "Secure access management"
+  ],
+  "ServiceName": "s3",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:s3:::bucket_name",
+  "Severity": "low",
+  "ResourceType": "AwsS3Bucket",
+  "Description": "Verifying whether S3 buckets have cross-region replication enabled, ensuring data redundancy and availability across multiple AWS regions",
+  "Risk": "Without cross-region replication in S3 buckets, data is at risk of being lost or inaccessible if an entire region goes down, leading to potential service disruptions and data unavailability.",
+  "RelatedUrl": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/replication.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/s3-controls.html#s3-7",
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/ensure-that-s3-bucket-has-cross-region-replication-enabled#terraform"
+    },
+    "Recommendation": {
+      "Text": "Ensure that S3 buckets have cross region replication.",
+      "Url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/replication-walkthrough1.html"
+    }
+  },
+  "Categories": [
+    "redundancy"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

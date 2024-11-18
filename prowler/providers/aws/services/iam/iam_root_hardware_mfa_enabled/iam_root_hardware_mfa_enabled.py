@@ -15,9 +15,9 @@ class iam_root_hardware_mfa_enabled(Check):
                 report.resource_arn = iam_client.mfa_arn_template
 
                 if iam_client.account_summary["SummaryMap"]["AccountMFAEnabled"] > 0:
-                    virtual_mfas = iam_client.virtual_mfa_devices
-                    for mfa in virtual_mfas:
-                        if "root" in mfa["SerialNumber"]:
+                    for mfa in iam_client.virtual_mfa_devices:
+                        # If the ARN of the associated IAM user of the Virtual MFA device is "arn:aws:iam::[aws-account-id]:root", your AWS root account is not using a hardware-based MFA device for MFA protection.
+                        if "root" in mfa.get("User", {}).get("Arn", ""):
                             virtual_mfa = True
                             report.status = "FAIL"
                             report.status_extended = "Root account has a virtual MFA instead of a hardware MFA device enabled."

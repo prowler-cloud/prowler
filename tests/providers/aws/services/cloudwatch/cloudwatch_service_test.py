@@ -97,7 +97,7 @@ class Test_CloudWatch_Service:
 
     # Test CloudWatch Alarms
     @mock_aws
-    def test__describe_alarms__(self):
+    def test_describe_alarms(self):
         # CloudWatch client for this test class
         cw_client = client("cloudwatch", region_name=AWS_REGION_US_EAST_1)
         cw_client.put_metric_alarm(
@@ -116,6 +116,7 @@ class Test_CloudWatch_Service:
             Threshold=2,
             Unit="Seconds",
             Tags=[{"Key": "key-1", "Value": "value-1"}],
+            ActionsEnabled=True,
         )
         aws_provider = set_mocked_aws_provider(
             expected_checks=["cloudwatch_log_group_no_secrets_in_logs"]
@@ -133,10 +134,12 @@ class Test_CloudWatch_Service:
         assert cloudwatch.metric_alarms[0].tags == [
             {"Key": "key-1", "Value": "value-1"}
         ]
+        assert cloudwatch.metric_alarms[0].alarm_actions == ["arn:alarm"]
+        assert cloudwatch.metric_alarms[0].actions_enabled
 
     # Test Logs Filters
     @mock_aws
-    def test__describe_metric_filters__(self):
+    def test_describe_metric_filters(self):
         # Logs client for this test class
         logs_client = client("logs", region_name=AWS_REGION_US_EAST_1)
         logs_client.put_metric_filter(
@@ -156,7 +159,7 @@ class Test_CloudWatch_Service:
         )
         logs = Logs(aws_provider)
         assert len(logs.metric_filters) == 1
-        assert logs.metric_filters[0].log_group == "/log-group/test"
+        assert logs.metric_filters[0].log_group is None
         assert logs.metric_filters[0].name == "test-filter"
         assert logs.metric_filters[0].metric == "my-metric"
         assert logs.metric_filters[0].pattern == "test-pattern"
@@ -164,7 +167,7 @@ class Test_CloudWatch_Service:
 
     # Test Logs Filters
     @mock_aws
-    def test__describe_log_groups__(self):
+    def test_describe_log_groups(self):
         # Logs client for this test class
         logs_client = client("logs", region_name=AWS_REGION_US_EAST_1)
         logs_client.create_log_group(
@@ -178,23 +181,21 @@ class Test_CloudWatch_Service:
         aws_provider = set_mocked_aws_provider(
             expected_checks=["cloudwatch_log_group_no_secrets_in_logs"]
         )
+        arn = f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test"
         logs = Logs(aws_provider)
         assert len(logs.log_groups) == 1
-        assert (
-            logs.log_groups[0].arn
-            == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test"
-        )
-        assert logs.log_groups[0].name == "/log-group/test"
-        assert logs.log_groups[0].retention_days == 400
-        assert logs.log_groups[0].kms_id == "test_kms_id"
-        assert not logs.log_groups[0].never_expire
-        assert logs.log_groups[0].region == AWS_REGION_US_EAST_1
-        assert logs.log_groups[0].tags == [
+        assert arn in logs.log_groups
+        assert logs.log_groups[arn].name == "/log-group/test"
+        assert logs.log_groups[arn].retention_days == 400
+        assert logs.log_groups[arn].kms_id == "test_kms_id"
+        assert not logs.log_groups[arn].never_expire
+        assert logs.log_groups[arn].region == AWS_REGION_US_EAST_1
+        assert logs.log_groups[arn].tags == [
             {"tag_key_1": "tag_value_1", "tag_key_2": "tag_value_2"}
         ]
 
     @mock_aws
-    def test__describe_log_groups__never_expire(self):
+    def test_describe_log_groupsnever_expire(self):
         # Logs client for this test class
         logs_client = client("logs", region_name=AWS_REGION_US_EAST_1)
         logs_client.create_log_group(
@@ -206,18 +207,16 @@ class Test_CloudWatch_Service:
         aws_provider = set_mocked_aws_provider(
             expected_checks=["cloudwatch_log_group_no_secrets_in_logs"]
         )
+        arn = f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test"
         logs = Logs(aws_provider)
         assert len(logs.log_groups) == 1
-        assert (
-            logs.log_groups[0].arn
-            == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test"
-        )
-        assert logs.log_groups[0].name == "/log-group/test"
-        assert logs.log_groups[0].never_expire
+        assert arn in logs.log_groups
+        assert logs.log_groups[arn].name == "/log-group/test"
+        assert logs.log_groups[arn].never_expire
         # Since it never expires we don't use the retention_days
-        assert logs.log_groups[0].retention_days == 9999
-        assert logs.log_groups[0].kms_id == "test_kms_id"
-        assert logs.log_groups[0].region == AWS_REGION_US_EAST_1
-        assert logs.log_groups[0].tags == [
+        assert logs.log_groups[arn].retention_days == 9999
+        assert logs.log_groups[arn].kms_id == "test_kms_id"
+        assert logs.log_groups[arn].region == AWS_REGION_US_EAST_1
+        assert logs.log_groups[arn].tags == [
             {"tag_key_1": "tag_value_1", "tag_key_2": "tag_value_2"}
         ]
