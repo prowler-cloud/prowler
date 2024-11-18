@@ -17,7 +17,7 @@
     "Code": {
       "CLI": "aws stepfunctions update-state-machine --state-machine-arn <state-machine-arn> --logging-configuration file://logging-config.json",
       "NativeIaC": "",
-      "Other": "https://docs.aws.amazon.com/step-functions/latest/dg/logging.html",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/stepfunctions-controls.html#stepfunctions-1",
       "Terraform": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sfn_state_machine#logging_configuration"
     },
     "Recommendation": {
