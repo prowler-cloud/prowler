@@ -99,7 +99,7 @@ class WAFv2(AWSService):
     def _list_resources_for_web_acl(self, acl):
         logger.info("WAFv2 - Describing resources...")
         try:
-            if acl.scope == Scope.REGIONAL or acl.region in self.regional_clients:
+            if acl.scope == Scope.REGIONAL:
                 for resource in self.regional_clients[
                     acl.region
                 ].list_resources_for_web_acl(
