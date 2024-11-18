@@ -13,9 +13,9 @@ class organizations_opt_out_ai_services_policy(Check):
                 organizations_client.organization.policies is not None
             ):  # Access Denied to list_policies
                 report = Check_Report_AWS(self.metadata())
-                report.resource_id = org.id
+                report.resource_id = organizations_client.organization.id
+                report.resource_arn = organizations_client.organization.arn
                 report.region = organizations_client.region
-                report.resource_arn = org.arn
                 report.status = "FAIL"
                 report.status_extended = (
                     "AWS Organizations is not in-use for this AWS Account."
