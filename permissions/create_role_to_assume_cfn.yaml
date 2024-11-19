@@ -91,6 +91,8 @@ Resources:
                 - 'shield:GetSubscriptionState'
                 - 'securityhub:BatchImportFindings'
                 - 'securityhub:GetFindings'
+                - 'servicecatalog:Describe*'
+                - 'servicecatalog:List*'
                 - 'ssm:GetDocument'
                 - 'ssm-incidents:List*'
                 - 'support:Describe*'
