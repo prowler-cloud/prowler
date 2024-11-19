@@ -38,9 +38,9 @@ def mock_make_api_call_error(self, operation_name, kwarg):
     return mock_make_api_call(self, operation_name, kwarg)
 
 
-class Test_rds_snapshots_public_access_fixer:
+class Test_ec2_ebs_public_snapshot_fixer_test:
     @mock_aws
-    def test_rds_public_snapshot(self):
+    def test_ebs_public_snapshot(self):
         with mock.patch(
             "botocore.client.BaseClient._make_api_call",
             new=mock_make_api_call_public_snapshot,
@@ -67,7 +67,7 @@ class Test_rds_snapshots_public_access_fixer:
                 assert fixer("testsnap", AWS_REGION_US_EAST_1)
 
     @mock_aws
-    def test_rds_public_snapshot_error(self):
+    def test_ebs_public_snapshot_error(self):
         with mock.patch(
             "botocore.client.BaseClient._make_api_call", new=mock_make_api_call_error
         ):
