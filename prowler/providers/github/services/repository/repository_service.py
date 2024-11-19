@@ -32,9 +32,6 @@ class Repository(GithubService):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def get_repositories(self):
-        return self.repositories
-
 
 class Repo(BaseModel):
     """Model for Github Repository"""

@@ -9,11 +9,11 @@ from prowler.providers.github.services.repository.repository_client import (
 class repository_public_has_securitymd_file(Check):
     """Check if a public repository has a SECURITY.md file
 
-    This class verifies wheter each public repository has a SECURITY.md file.
+    This class verifies whether each public repository has a SECURITY.md file.
     """
 
     def execute(self) -> List[Check_Report_Github]:
-        """Execute the Github Repository Public Has Securitymd File check
+        """Execute the Github Repository Public Has SECURITY.md File check
 
         Iterates over all public repositories and checks if they have a SECURITY.md file.
 
@@ -22,15 +22,15 @@ class repository_public_has_securitymd_file(Check):
         """
         findings = []
         for repo in repository_client.repositories.values():
-            report = Check_Report_Github(self.metadata())
-            report.resource_id = repo.id
-            report.resource_name = repo.name
-            report.status = "PASS"
-            report.status_extended = (
-                f"Repository {repo.name} does have a SECURITY.md file."
-            )
-
             if not repo.private:
+                report = Check_Report_Github(self.metadata())
+                report.resource_id = repo.id
+                report.resource_name = repo.name
+                report.status = "PASS"
+                report.status_extended = (
+                    f"Repository {repo.name} does have a SECURITY.md file."
+                )
+
                 if not repo.securitymd:
                     report.status = "FAIL"
                     report.status_extended = (
