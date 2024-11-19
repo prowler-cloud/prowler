@@ -9,14 +9,12 @@ class bedrock_model_invocation_logging_enabled(Check):
             report = Check_Report_AWS(self.metadata())
             report.region = region
             report.resource_id = "unknown"
-            report.resource_arn = bedrock_client.get_unknown_arn(region)
+            report.resource_arn = bedrock_client._get_guardrail_arn_template(region)
             report.status = "FAIL"
             report.status_extended = "Bedrock Model Invocation Logging is disabled."
             if logging.enabled:
                 report.status = "PASS"
                 report.status_extended = "Bedrock Model Invocation Logging is enabled"
-                report.resource_arn = bedrock_client.audited_account_arn
-                report.resource_id = bedrock_client.audited_account
                 if logging.cloudwatch_log_group and logging.s3_bucket:
                     report.status_extended += f" in CloudWatch Log Group: {logging.cloudwatch_log_group} and S3 Bucket: {logging.s3_bucket}."
                 elif logging.cloudwatch_log_group:

@@ -43,8 +43,8 @@ class AccessAnalyzer(AWSService):
             if analyzer_count == 0:
                 self.analyzers.append(
                     Analyzer(
-                        arn=self.audited_account_arn,
-                        name=self.audited_account,
+                        arn=self.get_unknown_arn(),
+                        name="unknown",
                         status="NOT_AVAILABLE",
                         tags=[],
                         type="",

@@ -119,10 +119,7 @@ nTTxU4a7x1naFxzYXK1iQ1vMARKMjDb19QEJIEJKZlDK4uS7yMlf1nFS
                 check = iam_check_saml_providers_sts()
                 result = check.execute()
                 assert result[0].status == "FAIL"
-                assert result[0].resource_id == "unknown"
-                assert (
-                    result[0].resource_arn
-                    == "arn:aws:iam:us-east-1:123456789012:unknown"
-                )
+                assert result[0].resource_id == "123456789012"
+                assert result[0].resource_arn == "arn:aws:iam::123456789012:root"
                 assert result[0].region == AWS_REGION_US_EAST_1
                 assert result[0].status_extended == "No SAML Providers found."

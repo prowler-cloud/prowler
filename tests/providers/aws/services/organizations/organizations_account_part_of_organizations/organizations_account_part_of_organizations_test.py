@@ -38,7 +38,7 @@ class Test_organizations_account_part_of_organizations:
                     result[0].status_extended
                     == "AWS Organizations is not in-use for this AWS Account."
                 )
-                assert result[0].resource_id == "AWS Organization"
+                assert result[0].resource_id == "unknown"
                 assert (
                     result[0].resource_arn
                     == "arn:aws:organizations::123456789012:unknown"

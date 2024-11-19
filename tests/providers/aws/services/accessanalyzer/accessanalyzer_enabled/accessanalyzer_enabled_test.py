@@ -69,11 +69,8 @@ class Test_accessanalyzer_enabled:
                 result[0].status_extended
                 == f"IAM Access Analyzer in account {AWS_ACCOUNT_NUMBER} is not enabled."
             )
-            assert result[0].resource_id == "unknown"
-            assert (
-                result[0].resource_arn
-                == "arn:aws:accessanalyzer:eu-west-1:123456789012:unknown"
-            )
+            assert result[0].resource_id == "123456789012"
+            assert result[0].resource_arn == "arn:aws:iam::123456789012:root"
             assert result[0].region == AWS_REGION_1
             assert result[0].resource_tags == []
 
@@ -118,11 +115,8 @@ class Test_accessanalyzer_enabled:
                 result[0].status_extended
                 == f"IAM Access Analyzer in account {AWS_ACCOUNT_NUMBER} is not enabled."
             )
-            assert result[0].resource_id == "unknown"
-            assert (
-                result[0].resource_arn
-                == "arn:aws:accessanalyzer:eu-west-1:123456789012:unknown"
-            )
+            assert result[0].resource_id == "123456789012"
+            assert result[0].resource_arn == "arn:aws:iam::123456789012:root"
             assert result[0].region == AWS_REGION_1
             assert result[0].resource_tags == []
 
@@ -176,11 +170,8 @@ class Test_accessanalyzer_enabled:
                 result[0].status_extended
                 == f"IAM Access Analyzer in account {AWS_ACCOUNT_NUMBER} is not enabled."
             )
-            assert result[0].resource_id == "unknown"
-            assert (
-                result[0].resource_arn
-                == "arn:aws:accessanalyzer:eu-west-1:123456789012:unknown"
-            )
+            assert result[0].resource_id == "123456789012"
+            assert result[0].resource_arn == "arn:aws:iam::123456789012:root"
             assert result[0].resource_tags == []
             assert result[0].region == AWS_REGION_1
 

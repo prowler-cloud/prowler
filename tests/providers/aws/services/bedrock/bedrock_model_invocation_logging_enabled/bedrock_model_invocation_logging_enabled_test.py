@@ -4,8 +4,6 @@ from boto3 import client
 from moto import mock_aws
 
 from tests.providers.aws.utils import (
-    AWS_ACCOUNT_ARN,
-    AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
     set_mocked_aws_provider,
@@ -44,7 +42,7 @@ class Test_bedrock_model_invocation_logging_enabled:
             assert result[0].resource_id == "unknown"
             assert (
                 result[0].resource_arn
-                == "arn:aws:bedrock:us-east-1:123456789012:unknown"
+                == "arn:aws:bedrock:us-east-1:123456789012:guardrail"
             )
             assert result[0].resource_tags == []
             assert result[1].status == "FAIL"
@@ -55,7 +53,7 @@ class Test_bedrock_model_invocation_logging_enabled:
             assert result[1].resource_id == "unknown"
             assert (
                 result[1].resource_arn
-                == "arn:aws:bedrock:eu-west-1:123456789012:unknown"
+                == "arn:aws:bedrock:eu-west-1:123456789012:guardrail"
             )
             assert result[1].resource_tags == []
 
@@ -101,8 +99,11 @@ class Test_bedrock_model_invocation_logging_enabled:
                 result[0].status_extended
                 == "Bedrock Model Invocation Logging is enabled in CloudWatch Log Group: Test and S3 Bucket: testconfigbucket."
             )
-            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-            assert result[0].resource_arn == AWS_ACCOUNT_ARN
+            assert result[0].resource_id == "unknown"
+            assert (
+                result[0].resource_arn
+                == "arn:aws:bedrock:us-east-1:123456789012:guardrail"
+            )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
 
@@ -141,8 +142,11 @@ class Test_bedrock_model_invocation_logging_enabled:
                 result[0].status_extended
                 == "Bedrock Model Invocation Logging is enabled in S3 Bucket: testconfigbucket."
             )
-            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-            assert result[0].resource_arn == AWS_ACCOUNT_ARN
+            assert result[0].resource_id == "unknown"
+            assert (
+                result[0].resource_arn
+                == "arn:aws:bedrock:us-east-1:123456789012:guardrail"
+            )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
 
@@ -182,7 +186,10 @@ class Test_bedrock_model_invocation_logging_enabled:
                 result[0].status_extended
                 == "Bedrock Model Invocation Logging is enabled in CloudWatch Log Group: Test."
             )
-            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-            assert result[0].resource_arn == AWS_ACCOUNT_ARN
+            assert result[0].resource_id == "unknown"
+            assert (
+                result[0].resource_arn
+                == "arn:aws:bedrock:us-east-1:123456789012:guardrail"
+            )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []

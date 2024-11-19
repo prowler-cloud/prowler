@@ -45,7 +45,7 @@ class Organizations(AWSService):
                 ):
                     self.organization = Organization(
                         arn=self.get_unknown_arn(),
-                        id="AWS Organization",
+                        id="unknown",
                         status="NOT_AVAILABLE",
                         master_id="",
                     )
@@ -68,7 +68,7 @@ class Organizations(AWSService):
                 else:
                     self.organization = Organization(
                         arn=self.get_unknown_arn(),
-                        id="AWS Organization",
+                        id="unknown",
                         status="NOT_AVAILABLE",
                         master_id="",
                     )
