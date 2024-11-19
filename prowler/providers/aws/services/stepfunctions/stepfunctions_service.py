@@ -204,15 +204,6 @@ class StepFunctions(AWSService):
                             creation_date=state_machine_data.get("creationDate"),
                             region=regional_client.region,
                             status=StateMachineStatus.ACTIVE,
-                            definition="",
-                            role_arn="",
-                            logging_configuration=None,
-                            tracing_configuration=None,
-                            encryption_configuration=None,
-                            label=None,
-                            revision_id=None,
-                            description=None,
-                            tags=[],
                         )
 
                         self.state_machines[arn] = state_machine
