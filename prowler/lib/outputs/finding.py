@@ -232,6 +232,14 @@ class Finding(BaseModel):
                 )
                 output_data["region"] = f"namespace: {check_output.namespace}"
 
+            elif provider.type == "github":
+                output_data["auth_method"] = provider.auth_method
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_uid"] = check_output.resource_id
+                output_data["account_name"] = provider.identity.account_name
+                output_data["account_uid"] = provider.identity.account_id
+                output_data["region"] = "global"
+
             # check_output Unique ID
             # TODO: move this to a function
             # TODO: in Azure, GCP and K8s there are fidings without resource_name

@@ -17,6 +17,7 @@ from prowler.providers.github.models import GithubIdentityInfo, GithubSession
 
 class GithubProvider(Provider):
     _type: str = "github"
+    _auth_method: str
     _session: GithubSession
     _identity: GithubIdentityInfo
     _audit_config: dict
@@ -81,14 +82,19 @@ class GithubProvider(Provider):
         Provider.set_global_provider(self)
 
     @property
-    def identity(self):
-        """Returns the identity information for the GitHub provider."""
-        return self._identity
+    def auth_method(self):
+        """Returns the authentication method for the GitHub provider."""
+        return self._auth_method
 
     @property
     def session(self):
         """Returns the session object for the GitHub provider."""
         return self._session
+
+    @property
+    def identity(self):
+        """Returns the identity information for the GitHub provider."""
+        return self._identity
 
     @property
     def type(self):
@@ -130,10 +136,13 @@ class GithubProvider(Provider):
 
         if personal_access_token:
             session_token = getenv("GITHUB_PERSONAL_ACCESS_TOKEN")
+            self._auth_method = "personal_access_token"
         elif github_app:
             session_token = getenv("GITHUB_APP_TOKEN")
+            self._auth_method = "github_app"
         elif oauth_app:
             session_token = getenv("GITHUB_OAUTH_TOKEN")
+            self._auth_method = "oauth_app"
         else:
             raise ValueError(
                 "A GitHub API token of some kind is required to initialize GitHub provider."
@@ -175,4 +184,4 @@ class GithubProvider(Provider):
             return identity
 
     def print_credentials(self):
-        print("Using GitHub PAT")
+        print(f"You are using a {self.auth_method} as authentication method.")

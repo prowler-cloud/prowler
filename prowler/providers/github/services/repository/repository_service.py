@@ -10,19 +10,22 @@ class Repository(GithubService):
     def __init__(self, provider):
         super().__init__(__class__.__name__, provider)
         self.repositories = {}
-        self.__threading_call__(self._list_repositories)
+        self._list_repositories()
 
     def _list_repositories(self):
         logger.info("Repository - Listing Repositories...")
         try:
             for repo in self.client.get_user().get_repos():
+                try:
+                    securitymd_exists = repo.get_contents("SECURITY.md") is not None
+                except Exception:
+                    securitymd_exists = False
                 self.repositories[repo.id] = Repo(
                     id=repo.id,
                     name=repo.name,
                     full_name=repo.full_name,
                     private=repo.private,
-                    description=repo.description,
-                    securitymd=repo.get_contents("SECURITY.md") is not None,
+                    securitymd=securitymd_exists,
                 )
         except Exception as error:
             logger.error(
@@ -40,5 +43,4 @@ class Repo(BaseModel):
     name: str
     full_name: str
     private: bool
-    description: Optional[str]
     securitymd: Optional[bool] = False

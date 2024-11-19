@@ -11,9 +11,7 @@ class GithubService:
         provider: GithubProvider,
     ):
         self.client = self.__set_client__(
-            provider.identity,
             provider.session,
-            service,
         )
 
         self.audit_config = provider.audit_config

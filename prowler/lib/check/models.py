@@ -505,7 +505,7 @@ def load_check_metadata(metadata_file: str) -> CheckMetadata:
 
 
 @dataclass
-class Check_Report_GitHub(Check_Report):
+class Check_Report_Github(Check_Report):
     """Contains the GitHub Check's finding information."""
 
     account_name: str
