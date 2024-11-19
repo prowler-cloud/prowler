@@ -164,10 +164,12 @@ All the checks MUST fill the `report.resource_id` and `report.resource_arn` with
         - AWS Account --> Account Number `123456789012`
         - AWS Resource --> Resource ID / Name
         - Root resource --> `<root_account>`
+        - Unknown resource --> `unknown`
     - Resource ARN -- `report.resource_arn`
         - AWS Account --> Root ARN `arn:aws:iam::123456789012:root`
         - AWS Resource --> Resource ARN
         - Root resource --> Resource Type ARN `f"arn:{service_client.audited_partition}:<service_name>:{service_client.region}:{service_client.audited_account}:<resource_type>"`
+        - Unknown Resource --> `arn:{service_client.audited_partition}:{service_name}:{service_client.region}:{service_client.audited_account}:unknown`
 - GCP
     - Resource ID -- `report.resource_id`
         - GCP Resource --> Resource ID
