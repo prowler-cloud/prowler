@@ -6,7 +6,7 @@ from moto import mock_aws
 from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
 
 
-class Test_rds_instance_no_public_access:
+class Test_rds_instance_no_public_access_fixer:
     @mock_aws
     def test_rds_private(self):
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
