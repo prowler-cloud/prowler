@@ -364,7 +364,6 @@ aws:
   # Maximum number of days a secret should be rotated
   max_days_secret_unrotated: 90
 
-
 # Azure Configuration
 azure:
   # Azure Network Configuration
