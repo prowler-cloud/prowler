@@ -25,7 +25,9 @@
       "Url": "https://aws.amazon.com/blogs/security/how-to-get-ready-for-certificate-transparency/"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
