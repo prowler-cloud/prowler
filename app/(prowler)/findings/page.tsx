@@ -53,9 +53,9 @@ const SSRDataTable = async ({
   const findingsData = await getFindings({ query, page, sort, filters });
 
   // Create dictionaries for resources, scans, and providers
-  const resourceDict = createDict("Resource", findingsData);
-  const scanDict = createDict("Scan", findingsData);
-  const providerDict = createDict("Provider", findingsData);
+  const resourceDict = createDict("resources", findingsData);
+  const scanDict = createDict("scans", findingsData);
+  const providerDict = createDict("providers", findingsData);
 
   // Expand each finding with its corresponding resource, scan, and provider
   const expandedFindings = findingsData?.data
