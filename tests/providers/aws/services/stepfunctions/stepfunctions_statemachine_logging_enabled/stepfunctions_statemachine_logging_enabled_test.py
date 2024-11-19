@@ -81,7 +81,7 @@ class Test_stepfunctions_statemachine_logging_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Step Functions state machine 'TestStateMachine' does not have logging enabled."
+                == "Step Functions state machine TestStateMachine does not have logging enabled."
             )
             assert result[0].resource_id == STATE_MACHINE_ID
             assert result[0].resource_arn == STATE_MACHINE_ARN
@@ -115,7 +115,7 @@ class Test_stepfunctions_statemachine_logging_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Step Functions state machine 'TestStateMachine' has logging enabled."
+                == "Step Functions state machine TestStateMachine has logging enabled."
             )
             assert result[0].resource_id == STATE_MACHINE_ID
             assert result[0].resource_arn == STATE_MACHINE_ARN

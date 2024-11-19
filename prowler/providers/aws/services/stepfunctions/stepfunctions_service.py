@@ -130,8 +130,8 @@ class StateMachine(BaseModel):
     arn: str
     name: Optional[str] = None
     status: StateMachineStatus
-    definition: str
-    role_arn: str
+    definition: Optional[str] = None
+    role_arn: Optional[str] = None
     type: StateMachineType
     creation_date: datetime
     region: str
@@ -187,38 +187,31 @@ class StepFunctions(AWSService):
 
             for page in list_state_machines_paginator.paginate():
                 for state_machine_data in page.get("stateMachines", []):
-                    arn = state_machine_data.get("stateMachineArn")
-                    state_machine_id = (
-                        arn.split(":")[-1].split("/")[-1] if arn else None
-                    )
-                    if not self.audit_resources or is_resource_filtered(
-                        arn, self.audit_resources
-                    ):
-                        state_machine = StateMachine(
-                            id=state_machine_id,
-                            arn=arn,
-                            name=state_machine_data.get("name"),
-                            type=StateMachineType(
-                                state_machine_data.get("type", "STANDARD")
-                            ),
-                            creation_date=state_machine_data.get("creationDate"),
-                            region=regional_client.region,
-                            status=StateMachineStatus.ACTIVE,
+                    try:
+                        arn = state_machine_data.get("stateMachineArn")
+                        state_machine_id = (
+                            arn.split(":")[-1].split("/")[-1] if arn else None
                         )
+                        if not self.audit_resources or is_resource_filtered(
+                            arn, self.audit_resources
+                        ):
+                            state_machine = StateMachine(
+                                id=state_machine_id,
+                                arn=arn,
+                                name=state_machine_data.get("name"),
+                                type=StateMachineType(
+                                    state_machine_data.get("type", "STANDARD")
+                                ),
+                                creation_date=state_machine_data.get("creationDate"),
+                                region=regional_client.region,
+                                status=StateMachineStatus.ACTIVE,
+                            )
 
-                        self.state_machines[arn] = state_machine
-
-        except ClientError as error:
-            error_code = error.response["Error"]["Code"]
-
-            if error_code == "AccessDeniedException":
-                logger.error(
-                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: Access denied when listing state machines."
-                )
-            else:
-                logger.error(
-                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
+                            self.state_machines[arn] = state_machine
+                    except Exception as error:
+                        logger.error(
+                            f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -281,8 +274,7 @@ class StepFunctions(AWSService):
                 )
 
         except ClientError as error:
-            error_code = error.response["Error"]["Code"]
-            if error_code == "ResourceNotFoundException":
+            if error.response["Error"]["Code"] == "ResourceNotFoundException":
                 logger.warning(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
@@ -314,9 +306,7 @@ class StepFunctions(AWSService):
 
             state_machine.tags = response.get("tags", [])
         except ClientError as error:
-            error_code = error.response["Error"]["Code"]
-
-            if error_code == "ResourceNotFoundException":
+            if error.response["Error"]["Code"] == "ResourceNotFoundException":
                 logger.warning(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
