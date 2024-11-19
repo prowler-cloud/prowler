@@ -13,7 +13,7 @@ class bedrock_model_invocation_logs_encryption_enabled(Check):
                 cloudwatch_encryption = True
                 report = Check_Report_AWS(self.metadata())
                 report.region = region
-                report.resource_id = bedrock_client.audited_account
+                report.resource_id = "unknown"
                 report.resource_arn = bedrock_client.get_unknown_arn(region)
                 report.status = "PASS"
                 report.status_extended = "Bedrock Model Invocation logs are encrypted."

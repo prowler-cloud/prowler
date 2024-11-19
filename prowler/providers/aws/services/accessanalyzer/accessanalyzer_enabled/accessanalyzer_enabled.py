@@ -23,6 +23,7 @@ class accessanalyzer_enabled(Check):
                 report.resource_arn = accessanalyzer_client.get_unknown_arn(
                     analyzer.region
                 )
+                report.resource_id = "unknown"
                 if analyzer.status == "NOT_AVAILABLE":
                     report.status = "FAIL"
                     report.status_extended = f"IAM Access Analyzer in account {analyzer.name} is not enabled."

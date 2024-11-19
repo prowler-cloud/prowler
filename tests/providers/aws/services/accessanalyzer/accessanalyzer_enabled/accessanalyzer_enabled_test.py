@@ -69,7 +69,7 @@ class Test_accessanalyzer_enabled:
                 result[0].status_extended
                 == f"IAM Access Analyzer in account {AWS_ACCOUNT_NUMBER} is not enabled."
             )
-            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert result[0].resource_id == "unknown"
             assert (
                 result[0].resource_arn
                 == "arn:aws:accessanalyzer:eu-west-1:123456789012:unknown"
@@ -118,7 +118,7 @@ class Test_accessanalyzer_enabled:
                 result[0].status_extended
                 == f"IAM Access Analyzer in account {AWS_ACCOUNT_NUMBER} is not enabled."
             )
-            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert result[0].resource_id == "unknown"
             assert (
                 result[0].resource_arn
                 == "arn:aws:accessanalyzer:eu-west-1:123456789012:unknown"
@@ -176,7 +176,7 @@ class Test_accessanalyzer_enabled:
                 result[0].status_extended
                 == f"IAM Access Analyzer in account {AWS_ACCOUNT_NUMBER} is not enabled."
             )
-            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert result[0].resource_id == "unknown"
             assert (
                 result[0].resource_arn
                 == "arn:aws:accessanalyzer:eu-west-1:123456789012:unknown"

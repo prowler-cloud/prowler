@@ -3,11 +3,7 @@ from unittest import mock
 from boto3 import client
 from moto import mock_aws
 
-from tests.providers.aws.utils import (
-    AWS_ACCOUNT_NUMBER,
-    AWS_REGION_US_EAST_1,
-    set_mocked_aws_provider,
-)
+from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
 
 
 class Test_bedrock_model_invocation_logs_encryption_enabled:
@@ -95,7 +91,7 @@ class Test_bedrock_model_invocation_logs_encryption_enabled:
                 result[0].status_extended
                 == "Bedrock Model Invocation logs are not encrypted in S3 bucket: testconfigbucket and CloudWatch Log Group: Test."
             )
-            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert result[0].resource_id == "unknown"
             assert (
                 result[0].resource_arn
                 == "arn:aws:bedrock:us-east-1:123456789012:unknown"
@@ -148,7 +144,7 @@ class Test_bedrock_model_invocation_logs_encryption_enabled:
                 result[0].status_extended
                 == "Bedrock Model Invocation logs are not encrypted in S3 bucket: testconfigbucket."
             )
-            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert result[0].resource_id == "unknown"
             assert (
                 result[0].resource_arn
                 == "arn:aws:bedrock:us-east-1:123456789012:unknown"
@@ -203,7 +199,7 @@ class Test_bedrock_model_invocation_logs_encryption_enabled:
                 result[0].status_extended
                 == "Bedrock Model Invocation logs are not encrypted in CloudWatch Log Group: Test."
             )
-            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert result[0].resource_id == "unknown"
             assert (
                 result[0].resource_arn
                 == "arn:aws:bedrock:us-east-1:123456789012:unknown"
@@ -278,7 +274,7 @@ class Test_bedrock_model_invocation_logs_encryption_enabled:
                 result[0].status_extended
                 == "Bedrock Model Invocation logs are encrypted."
             )
-            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert result[0].resource_id == "unknown"
             assert (
                 result[0].resource_arn
                 == "arn:aws:bedrock:us-east-1:123456789012:unknown"
@@ -344,7 +340,7 @@ class Test_bedrock_model_invocation_logs_encryption_enabled:
                 result[0].status_extended
                 == "Bedrock Model Invocation logs are encrypted."
             )
-            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert result[0].resource_id == "unknown"
             assert (
                 result[0].resource_arn
                 == "arn:aws:bedrock:us-east-1:123456789012:unknown"
@@ -399,7 +395,7 @@ class Test_bedrock_model_invocation_logs_encryption_enabled:
                 result[0].status_extended
                 == "Bedrock Model Invocation logs are encrypted."
             )
-            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert result[0].resource_id == "unknown"
             assert (
                 result[0].resource_arn
                 == "arn:aws:bedrock:us-east-1:123456789012:unknown"

@@ -41,7 +41,7 @@ class Test_bedrock_model_invocation_logging_enabled:
                 result[0].status_extended
                 == "Bedrock Model Invocation Logging is disabled."
             )
-            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert result[0].resource_id == "unknown"
             assert (
                 result[0].resource_arn
                 == "arn:aws:bedrock:us-east-1:123456789012:unknown"
@@ -52,7 +52,7 @@ class Test_bedrock_model_invocation_logging_enabled:
                 result[1].status_extended
                 == "Bedrock Model Invocation Logging is disabled."
             )
-            assert result[1].resource_id == AWS_ACCOUNT_NUMBER
+            assert result[1].resource_id == "unknown"
             assert (
                 result[1].resource_arn
                 == "arn:aws:bedrock:eu-west-1:123456789012:unknown"

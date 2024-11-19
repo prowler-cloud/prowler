@@ -7,8 +7,7 @@ class iam_check_saml_providers_sts(Check):
         findings = []
         if not iam_client.saml_providers and iam_client.saml_providers is not None:
             report = Check_Report_AWS(self.metadata())
-            report.resource_id = iam_client.audited_account
-            report.resource_arn = iam_client.audited_account_arn
+            report.resource_id = "unknown"
             report.resource_arn = iam_client.get_unknown_arn(iam_client.region)
             report.region = iam_client.region
             report.status = "FAIL"

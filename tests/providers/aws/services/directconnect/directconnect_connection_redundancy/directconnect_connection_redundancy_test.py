@@ -64,7 +64,7 @@ class Test_directconnect_connection_redundancy:
                 result[0].status_extended
                 == "There is only one Direct Connect connection."
             )
-            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert result[0].resource_id == "unknown"
             assert (
                 result[0].resource_arn
                 == f"arn:aws:directconnect:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:unknown"
@@ -117,7 +117,7 @@ class Test_directconnect_connection_redundancy:
                 result[0].status_extended
                 == "There is only one location Ashburn used by all the Direct Connect connections."
             )
-            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert result[0].resource_id == "unknown"
             assert (
                 result[0].resource_arn
                 == f"arn:aws:directconnect:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:unknown"
@@ -170,7 +170,7 @@ class Test_directconnect_connection_redundancy:
                 result[0].status_extended
                 == "There are 2 Direct Connect connections across 2 locations."
             )
-            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert result[0].resource_id == "unknown"
             assert (
                 result[0].resource_arn
                 == f"arn:aws:directconnect:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:unknown"
