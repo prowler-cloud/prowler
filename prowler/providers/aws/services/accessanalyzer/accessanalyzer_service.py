@@ -43,7 +43,7 @@ class AccessAnalyzer(AWSService):
             if analyzer_count == 0:
                 self.analyzers.append(
                     Analyzer(
-                        arn=self.get_unknown_arn(),
+                        arn=self.get_unknown_arn(regional_client.region),
                         name="unknown",
                         status="NOT_AVAILABLE",
                         tags=[],
