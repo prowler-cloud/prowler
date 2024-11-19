@@ -51,7 +51,7 @@ class Test_organizations_scp_check_deny_regions:
                 assert result[0].resource_id == "AWS Organization"
                 assert (
                     result[0].resource_arn
-                    == "arn:aws:organizations:eu-west-1:123456789012:unknown"
+                    == "arn:aws:organizations::123456789012:unknown"
                 )
                 assert result[0].region == AWS_REGION_EU_WEST_1
 

@@ -43,13 +43,11 @@ class Organizations(AWSService):
                     error.response["Error"]["Code"]
                     == "AWSOrganizationsNotInUseException"
                 ):
-                    self.organizations.append(
-                        Organization(
-                            arn=self.get_unknown_arn(),
-                            id="AWS Organization",
-                            status="NOT_AVAILABLE",
-                            master_id="",
-                        )
+                    self.organization = Organization(
+                        arn=self.get_unknown_arn(),
+                        id="AWS Organization",
+                        status="NOT_AVAILABLE",
+                        master_id="",
                     )
                 else:
                     logger.error(
@@ -68,14 +66,11 @@ class Organizations(AWSService):
                         delegated_administrators=organization_delegated_administrator,
                     )
                 else:
-                    # is filtered
-                    self.organizations.append(
-                        Organization(
-                            arn=self.get_unknown_arn(),
-                            id="AWS Organization",
-                            status="NOT_AVAILABLE",
-                            master_id="",
-                        )
+                    self.organization = Organization(
+                        arn=self.get_unknown_arn(),
+                        id="AWS Organization",
+                        status="NOT_AVAILABLE",
+                        master_id="",
                     )
 
         except Exception as error:

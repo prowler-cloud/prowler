@@ -4,7 +4,6 @@ from boto3 import client
 from moto import mock_aws
 
 from tests.providers.aws.utils import (
-    AWS_ACCOUNT_ARN,
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
     set_mocked_aws_provider,
@@ -280,7 +279,10 @@ class Test_bedrock_model_invocation_logs_encryption_enabled:
                 == "Bedrock Model Invocation logs are encrypted."
             )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-            assert result[0].resource_arn == AWS_ACCOUNT_ARN
+            assert (
+                result[0].resource_arn
+                == "arn:aws:bedrock:us-east-1:123456789012:unknown"
+            )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
 
@@ -343,7 +345,10 @@ class Test_bedrock_model_invocation_logs_encryption_enabled:
                 == "Bedrock Model Invocation logs are encrypted."
             )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-            assert result[0].resource_arn == AWS_ACCOUNT_ARN
+            assert (
+                result[0].resource_arn
+                == "arn:aws:bedrock:us-east-1:123456789012:unknown"
+            )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
 
@@ -395,6 +400,9 @@ class Test_bedrock_model_invocation_logs_encryption_enabled:
                 == "Bedrock Model Invocation logs are encrypted."
             )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-            assert result[0].resource_arn == AWS_ACCOUNT_ARN
+            assert (
+                result[0].resource_arn
+                == "arn:aws:bedrock:us-east-1:123456789012:unknown"
+            )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
