@@ -100,6 +100,13 @@ def init_parser(self):
         action="store_true",
         help="Run Prowler Quick Inventory. The inventory will be stored in an output csv by default",
     )
+    # AWS Scan Inventory
+    aws_scan_inventory_subparser = aws_parser.add_argument_group("Scan Inventory")
+    aws_scan_inventory_subparser.add_argument(
+        "--scan-inventory",
+        action="store_true",
+        help="Run Prowler Scan Inventory. The inventory will be stored in an output json file.",
+    )
     # AWS Outputs
     aws_outputs_subparser = aws_parser.add_argument_group("AWS Outputs to S3")
     aws_outputs_bucket_parser = aws_outputs_subparser.add_mutually_exclusive_group()
