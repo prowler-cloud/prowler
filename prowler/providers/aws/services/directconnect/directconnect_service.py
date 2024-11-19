@@ -20,9 +20,9 @@ class DirectConnect(AWSService):
 
     def _get_connection_arn_template(self, region):
         return (
-            f"arn:{self.audited_partition}:bedrock:{region}:{self.audited_account}:connection"
+            f"arn:{self.audited_partition}:directconnect:{region}:{self.audited_account}:dxcon"
             if region
-            else f"arn:{self.audited_partition}:bedrock:{self.region}:{self.audited_account}:connection"
+            else f"arn:{self.audited_partition}:directconnect:{self.region}:{self.audited_account}:dxcon"
         )
 
     def _describe_connections(self, regional_client):
