@@ -371,10 +371,6 @@ aws:
   # Minimum retention period in hours for Kinesis streams
   min_kinesis_stream_retention_hours: 168 # 7 days
 
-  # AWS Step Functions Configuration
-  # aws.stepfunctions_statemachine_logging_enabled
-  # Defines which category of execution history events are logged. Valid ones: ALL, ERROR, FATAL
-  statemachines_log_level: ""
 
 # Azure Configuration
 azure:

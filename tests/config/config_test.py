@@ -310,7 +310,6 @@ config_aws = {
     "elbv2_min_azs": 2,
     "secrets_ignore_patterns": [],
     "max_days_secret_unused": 90,
-    "statemachines_log_level": "",
     "max_days_secret_unrotated": 90,
 }
 

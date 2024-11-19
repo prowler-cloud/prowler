@@ -40,24 +40,6 @@ class stepfunctions_statemachine_logging_enabled(Check):
             if state_machine.logging_configuration.level == LoggingLevel.OFF:
                 report.status = "FAIL"
                 report.status_extended = f"Step Functions state machine '{state_machine.name}' does not have logging enabled."
-            elif (
-                stepfunctions_client.audit_config.get("statemachines_log_level")
-                and stepfunctions_client.audit_config.get("statemachines_log_level")
-                != state_machine.logging_configuration.level
-            ):
-                valid_config_value = any(
-                    [
-                        stepfunctions_client.audit_config.get("statemachines_log_level")
-                        == e.value
-                        for e in LoggingLevel
-                    ]
-                )
-
-                if valid_config_value:
-                    report.status = "FAIL"
-                    report.status_extended = f"Step Functions state machine '{state_machine.name}' have the log level '{state_machine.logging_configuration.level.value}' which does not match the one specified in the configuration '{stepfunctions_client.audit_config.get('statemachines_log_level')}'."
-                else:
-                    report.status_extended = f"Invalid value found for statemachines_log_level parameter: {stepfunctions_client.audit_config.get('statemachines_log_level')}."
-
             findings.append(report)
+
         return findings

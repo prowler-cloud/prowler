@@ -289,8 +289,6 @@ class StepFunctions(AWSService):
                     type=EncryptionType(encryption_config.get("type")),
                 )
 
-            state_machine.tags = response.get("tags", [])
-
         except ClientError as error:
             error_code = error.response["Error"]["Code"]
             if error_code == "ResourceNotFoundException":

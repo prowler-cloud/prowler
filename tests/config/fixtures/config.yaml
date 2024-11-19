@@ -364,10 +364,6 @@ aws:
   # Maximum number of days a secret should be rotated
   max_days_secret_unrotated: 90
 
-  # AWS Step Functions Configuration
-  # aws.stepfunctions_statemachine_logging_enabled
-  # Defines which category of execution history events are logged. Valid ones: ALL, ERROR, FATAL
-  statemachines_log_level: ""
 
 # Azure Configuration
 azure:
