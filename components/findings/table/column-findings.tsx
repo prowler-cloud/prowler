@@ -1,9 +1,10 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import { useSearchParams } from "next/navigation";
 
 import { DataTableRowDetails } from "@/components/findings/table";
-import { PlusIcon } from "@/components/icons";
+import { InfoIcon } from "@/components/icons";
 import { TriggerSheet } from "@/components/ui/sheet";
 import {
   DataTableColumnHeader,
@@ -15,7 +16,6 @@ import { FindingProps } from "@/types";
 import { DataTableRowActions } from "./data-table-row-actions";
 
 const getFindingsData = (row: { original: FindingProps }) => {
-  console.log(row.original, "finding");
   return row.original;
 };
 
@@ -27,7 +27,6 @@ const getResourceData = (
   row: { original: FindingProps },
   field: keyof FindingProps["relationships"]["resource"]["attributes"],
 ) => {
-  // console.log(row.original, "resource");
   return (
     row.original.relationships?.resource?.attributes?.[field] ||
     `No ${field} found in resource`
@@ -38,7 +37,6 @@ const getProviderData = (
   row: { original: FindingProps },
   field: keyof FindingProps["relationships"]["provider"]["attributes"],
 ) => {
-  // console.log(row.original, "provider");
   return (
     row.original.relationships?.provider?.attributes?.[field] ||
     `No ${field} found in provider`
@@ -49,7 +47,6 @@ const getScanData = (
   row: { original: FindingProps },
   field: keyof FindingProps["relationships"]["scan"]["attributes"],
 ) => {
-  // console.log(row.original, "scan");
   return (
     row.original.relationships?.scan?.attributes?.[field] ||
     `No ${field} found in scan`
@@ -151,14 +148,23 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
     id: "moreInfo",
     header: "Details",
     cell: ({ row }) => {
+      const searchParams = useSearchParams();
+      const findingId = searchParams.get("id");
+      const isOpen = findingId === row.original.id;
       return (
-        <TriggerSheet
-          triggerComponent={<PlusIcon />}
-          title="Finding Details"
-          description="View the finding details"
-        >
-          <DataTableRowDetails finding={getFindingsData(row)} />
-        </TriggerSheet>
+        <div className="flex justify-center">
+          <TriggerSheet
+            triggerComponent={<InfoIcon className="text-primary" size={16} />}
+            title="Finding Details"
+            description="View the finding details"
+            defaultOpen={isOpen}
+          >
+            <DataTableRowDetails
+              entityId={row.original.id}
+              findingDetails={row.original}
+            />
+          </TriggerSheet>
+        </div>
       );
     },
   },

@@ -46,7 +46,7 @@ export default function RootLayout({
         <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
           <div className="flex h-dvh items-center justify-center overflow-hidden">
             <SidebarWrap />
-            <main className="no-scrollbar container mb-auto h-full flex-1 flex-col overflow-y-auto p-4">
+            <main className="no-scrollbar mb-auto h-full flex-1 flex-col overflow-y-auto px-6 py-4 xl:px-10">
               {children}
               <Toaster />
             </main>
