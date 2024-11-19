@@ -5,19 +5,17 @@ import { ColumnDef } from "@tanstack/react-table";
 import { DataTableRowDetails } from "@/components/findings/table";
 import { PlusIcon } from "@/components/icons";
 import { TriggerSheet } from "@/components/ui/sheet";
-import { SeverityBadge, Status, StatusBadge } from "@/components/ui/table";
+import {
+  DataTableColumnHeader,
+  SeverityBadge,
+  StatusFindingBadge,
+} from "@/components/ui/table";
 import { FindingProps } from "@/types";
 
 import { DataTableRowActions } from "./data-table-row-actions";
 
-const statusMap: Record<"PASS" | "FAIL" | "MANUAL" | "MUTED", Status> = {
-  PASS: "completed",
-  FAIL: "failed",
-  MANUAL: "completed",
-  MUTED: "cancelled",
-};
-
 const getFindingsData = (row: { original: FindingProps }) => {
+  console.log(row.original, "finding");
   return row.original;
 };
 
@@ -29,6 +27,7 @@ const getResourceData = (
   row: { original: FindingProps },
   field: keyof FindingProps["relationships"]["resource"]["attributes"],
 ) => {
+  // console.log(row.original, "resource");
   return (
     row.original.relationships?.resource?.attributes?.[field] ||
     `No ${field} found in resource`
@@ -39,6 +38,7 @@ const getProviderData = (
   row: { original: FindingProps },
   field: keyof FindingProps["relationships"]["provider"]["attributes"],
 ) => {
+  // console.log(row.original, "provider");
   return (
     row.original.relationships?.provider?.attributes?.[field] ||
     `No ${field} found in provider`
@@ -49,6 +49,7 @@ const getScanData = (
   row: { original: FindingProps },
   field: keyof FindingProps["relationships"]["scan"]["attributes"],
 ) => {
+  // console.log(row.original, "scan");
   return (
     row.original.relationships?.scan?.attributes?.[field] ||
     `No ${field} found in scan`
@@ -58,30 +59,23 @@ const getScanData = (
 export const ColumnFindings: ColumnDef<FindingProps>[] = [
   {
     accessorKey: "check",
-    header: "Check",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={"Check"} param="check_id" />
+    ),
     cell: ({ row }) => {
       const { checktitle } = getFindingsMetadata(row);
-      return <p className="max-w-96 truncate text-medium">{checktitle}</p>;
-    },
-  },
-  {
-    accessorKey: "scanName",
-    header: "Scan Name",
-    cell: ({ row }) => {
-      const name = getScanData(row, "name");
-
-      return (
-        <p className="max-w-96 truncate text-medium">
-          {typeof name === "string" || typeof name === "number"
-            ? name
-            : "Invalid data"}
-        </p>
-      );
+      return <p className="max-w-96 truncate text-small">{checktitle}</p>;
     },
   },
   {
     accessorKey: "severity",
-    header: "Severity",
+    header: ({ column }) => (
+      <DataTableColumnHeader
+        column={column}
+        title={"Severity"}
+        param="severity"
+      />
+    ),
     cell: ({ row }) => {
       const {
         attributes: { severity },
@@ -91,15 +85,30 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
   },
   {
     accessorKey: "status",
-    header: "Status",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={"Status"} param="status" />
+    ),
     cell: ({ row }) => {
       const {
         attributes: { status },
       } = getFindingsData(row);
 
-      const mappedStatus = statusMap[status];
+      return <StatusFindingBadge size="sm" status={status} />;
+    },
+  },
+  {
+    accessorKey: "scanName",
+    header: "Scan Name",
+    cell: ({ row }) => {
+      const name = getScanData(row, "name");
 
-      return <StatusBadge status={mappedStatus} />;
+      return (
+        <p className="text-small">
+          {typeof name === "string" || typeof name === "number"
+            ? name
+            : "Invalid data"}
+        </p>
+      );
     },
   },
   {
@@ -120,7 +129,7 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
     header: "Service",
     cell: ({ row }) => {
       const { servicename } = getFindingsMetadata(row);
-      return <p className="max-w-96 truncate text-medium">{servicename}</p>;
+      return <p className="max-w-96 truncate text-small">{servicename}</p>;
     },
   },
   {
@@ -131,7 +140,9 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
 
       return (
         <>
-          <div>{typeof account === "string" ? account : "Invalid account"}</div>
+          <p className="max-w-96 truncate text-small">
+            {typeof account === "string" ? account : "Invalid account"}
+          </p>
         </>
       );
     },

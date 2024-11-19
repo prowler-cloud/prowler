@@ -42,16 +42,16 @@ export const CustomSelectProvider: React.FC = () => {
     (value: string) => {
       const params = new URLSearchParams(searchParams.toString());
       if (value) {
-        params.set("filter[provider__in]", value);
+        params.set("filter[provider_type]", value);
       } else {
-        params.delete("filter[provider__in]");
+        params.delete("filter[provider_type]");
       }
       router.push(`?${params.toString()}`, { scroll: false });
     },
     [router, searchParams],
   );
 
-  const currentProvider = searchParams.get("filter[provider__in]") || "";
+  const currentProvider = searchParams.get("filter[provider_type]") || "";
 
   const selectedKeys = useMemo(() => {
     return dataInputsProvider.some(
