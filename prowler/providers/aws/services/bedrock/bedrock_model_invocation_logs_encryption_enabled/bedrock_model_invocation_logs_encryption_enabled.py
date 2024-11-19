@@ -15,7 +15,7 @@ class bedrock_model_invocation_logs_encryption_enabled(Check):
                 report.region = region
                 report.resource_id = "unknown"
                 report.resource_arn = (
-                    bedrock_client._get_model_invocation_logs_arn_template(region)
+                    bedrock_client._get_model_invocation_logging_arn_template(region)
                 )
                 report.status = "PASS"
                 report.status_extended = "Bedrock Model Invocation logs are encrypted."

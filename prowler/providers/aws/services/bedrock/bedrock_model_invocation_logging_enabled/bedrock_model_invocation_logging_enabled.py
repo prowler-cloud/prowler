@@ -10,7 +10,7 @@ class bedrock_model_invocation_logging_enabled(Check):
             report.region = region
             report.resource_id = "unknown"
             report.resource_arn = (
-                bedrock_client._get_model_invocation_logs_arn_template(region)
+                bedrock_client._get_model_invocation_logging_arn_template(region)
             )
             report.status = "FAIL"
             report.status_extended = "Bedrock Model Invocation Logging is disabled."

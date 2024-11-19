@@ -42,7 +42,7 @@ class Test_bedrock_model_invocation_logging_enabled:
             assert result[0].resource_id == "unknown"
             assert (
                 result[0].resource_arn
-                == "arn:aws:bedrock:us-east-1:123456789012:guardrail"
+                == f"arn:aws:bedrock:{result[0].region}:123456789012:model-invocation-logging"
             )
             assert result[0].resource_tags == []
             assert result[1].status == "FAIL"
@@ -53,7 +53,7 @@ class Test_bedrock_model_invocation_logging_enabled:
             assert result[1].resource_id == "unknown"
             assert (
                 result[1].resource_arn
-                == "arn:aws:bedrock:eu-west-1:123456789012:guardrail"
+                == f"arn:aws:bedrock:{result[1].region}:123456789012:model-invocation-logging"
             )
             assert result[1].resource_tags == []
 
@@ -102,7 +102,7 @@ class Test_bedrock_model_invocation_logging_enabled:
             assert result[0].resource_id == "unknown"
             assert (
                 result[0].resource_arn
-                == "arn:aws:bedrock:us-east-1:123456789012:guardrail"
+                == "arn:aws:bedrock:us-east-1:123456789012:model-invocation-logging"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
@@ -145,7 +145,7 @@ class Test_bedrock_model_invocation_logging_enabled:
             assert result[0].resource_id == "unknown"
             assert (
                 result[0].resource_arn
-                == "arn:aws:bedrock:us-east-1:123456789012:guardrail"
+                == "arn:aws:bedrock:us-east-1:123456789012:model-invocation-logging"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
@@ -189,7 +189,7 @@ class Test_bedrock_model_invocation_logging_enabled:
             assert result[0].resource_id == "unknown"
             assert (
                 result[0].resource_arn
-                == "arn:aws:bedrock:us-east-1:123456789012:guardrail"
+                == "arn:aws:bedrock:us-east-1:123456789012:model-invocation-logging"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []

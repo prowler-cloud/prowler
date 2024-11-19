@@ -94,7 +94,7 @@ class Test_bedrock_model_invocation_logs_encryption_enabled:
             assert result[0].resource_id == "unknown"
             assert (
                 result[0].resource_arn
-                == "arn:aws:bedrock:us-east-1:123456789012:guardrail"
+                == "arn:aws:bedrock:us-east-1:123456789012:model-invocation-logging"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
@@ -147,7 +147,7 @@ class Test_bedrock_model_invocation_logs_encryption_enabled:
             assert result[0].resource_id == "unknown"
             assert (
                 result[0].resource_arn
-                == "arn:aws:bedrock:us-east-1:123456789012:guardrail"
+                == "arn:aws:bedrock:us-east-1:123456789012:model-invocation-logging"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
@@ -202,7 +202,7 @@ class Test_bedrock_model_invocation_logs_encryption_enabled:
             assert result[0].resource_id == "unknown"
             assert (
                 result[0].resource_arn
-                == "arn:aws:bedrock:us-east-1:123456789012:guardrail"
+                == "arn:aws:bedrock:us-east-1:123456789012:model-invocation-logging"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
@@ -277,7 +277,7 @@ class Test_bedrock_model_invocation_logs_encryption_enabled:
             assert result[0].resource_id == "unknown"
             assert (
                 result[0].resource_arn
-                == "arn:aws:bedrock:us-east-1:123456789012:guardrail"
+                == "arn:aws:bedrock:us-east-1:123456789012:model-invocation-logging"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
@@ -343,7 +343,7 @@ class Test_bedrock_model_invocation_logs_encryption_enabled:
             assert result[0].resource_id == "unknown"
             assert (
                 result[0].resource_arn
-                == "arn:aws:bedrock:us-east-1:123456789012:guardrail"
+                == "arn:aws:bedrock:us-east-1:123456789012:model-invocation-logging"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
@@ -398,7 +398,7 @@ class Test_bedrock_model_invocation_logs_encryption_enabled:
             assert result[0].resource_id == "unknown"
             assert (
                 result[0].resource_arn
-                == "arn:aws:bedrock:us-east-1:123456789012:guardrail"
+                == "arn:aws:bedrock:us-east-1:123456789012:model-invocation-logging"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []

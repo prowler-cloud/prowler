@@ -18,11 +18,11 @@ class Bedrock(AWSService):
         self.__threading_call__(self._get_guardrail, self.guardrails.values())
         self.__threading_call__(self._list_tags_for_resource, self.guardrails.values())
 
-    def _get_model_invocation_logs_arn_template(self, region):
+    def _get_model_invocation_logging_arn_template(self, region):
         return (
-            f"arn:{self.audited_partition}:bedrock:{region}:{self.audited_account}:model-invocation-logs"
+            f"arn:{self.audited_partition}:bedrock:{region}:{self.audited_account}:model-invocation-logging"
             if region
-            else f"arn:{self.audited_partition}:bedrock:{self.region}:{self.audited_account}:model-invocation-logs"
+            else f"arn:{self.audited_partition}:bedrock:{self.region}:{self.audited_account}:model-invocation-logging"
         )
 
     def _get_model_invocation_logging_configuration(self, regional_client):
