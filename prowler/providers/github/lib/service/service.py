@@ -10,7 +10,7 @@ class GithubService:
         service: str,
         provider: GithubProvider,
     ):
-        self.clients = self.__set_clients__(
+        self.client = self.__set_client__(
             provider.identity,
             provider.session,
             service,
@@ -19,8 +19,7 @@ class GithubService:
         self.audit_config = provider.audit_config
         self.fixer_config = provider.fixer_config
 
-    def __set_clients__(self, session):
-        client = {}
+    def __set_client__(self, session):
         try:
             auth = Auth.Token(session.token)
             client = Github(auth=auth)
@@ -28,5 +27,4 @@ class GithubService:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-        else:
-            return client
+        return client
