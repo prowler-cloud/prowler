@@ -42,8 +42,10 @@ class GuardDuty(AWSService):
             if not detectors:
                 self.detectors.append(
                     Detector(
-                        id="unknown",
-                        arn=self.get_unknown_arn(regional_client.region),
+                        id="detector/unknown",
+                        arn=self.get_unknown_arn(
+                            region=regional_client.region, resource_type="detector"
+                        ),
                         region=regional_client.region,
                         enabled_in_account=False,
                     )

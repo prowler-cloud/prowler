@@ -11,12 +11,12 @@ class Test_securityhub_enabled:
         securityhub_client = mock.MagicMock
         securityhub_client.region = AWS_REGION_EU_WEST_1
         securityhub_client.get_unknown_arn = (
-            lambda x: f"arn:aws:securityhub:{x}:0123456789012:unknown"
+            lambda x: f"arn:aws:securityhub:{x}:0123456789012:hub/unknown"
         )
         securityhub_client.securityhubs = [
             SecurityHubHub(
-                arn=f"arn:aws:securityhub:{AWS_REGION_EU_WEST_1}:0123456789012:unknown",
-                id="Security Hub",
+                arn=f"arn:aws:securityhub:{AWS_REGION_EU_WEST_1}:0123456789012:hub/unknown",
+                id="hub/unknown",
                 status="NOT_AVAILABLE",
                 standards="",
                 integrations="",
@@ -29,7 +29,7 @@ class Test_securityhub_enabled:
             new=securityhub_client,
         ), mock.patch(
             "prowler.providers.aws.services.securityhub.securityhub_service.SecurityHub.get_unknown_arn",
-            return_value="arn:aws:securityhub:eu-west-1:0123456789012:unknown",
+            return_value="arn:aws:securityhub:eu-west-1:0123456789012:hub/unknown",
         ):
             # Test Check
             from prowler.providers.aws.services.securityhub.securityhub_enabled.securityhub_enabled import (
@@ -41,10 +41,10 @@ class Test_securityhub_enabled:
 
             assert result[0].status == "FAIL"
             assert result[0].status_extended == "Security Hub is not enabled."
-            assert result[0].resource_id == "Security Hub"
+            assert result[0].resource_id == "hub/unknown"
             assert (
                 result[0].resource_arn
-                == "arn:aws:securityhub:eu-west-1:0123456789012:unknown"
+                == "arn:aws:securityhub:eu-west-1:0123456789012:hub/unknown"
             )
             assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_tags == [{"test_key": "test_value"}]
