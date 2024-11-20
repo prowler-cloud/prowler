@@ -165,16 +165,15 @@ All the checks MUST fill the `report.resource_id` and `report.resource_arn` with
             - `resource_id` -> AWS Account Number
             - `resource_arn` -> AWS Account Root ARN
         - If we can’t get the ARN from the resource audited, we create a valid ARN with the `resource_id` part as the resource audited. Examples:
-                - Bedrock -> `arn:<partition>:bedrock:<region>:<account-id>:model-invocation-logging`
-                - DirectConnect -> `arn:<partition>:directconnect:<region>:<account-id>:dxcon`
+            - Bedrock -> `arn:<partition>:bedrock:<region>:<account-id>:model-invocation-logging`
+            - DirectConnect -> `arn:<partition>:directconnect:<region>:<account-id>:dxcon`
         - If there is no real resource to audit we do the following:
             - resource_id -> `resource_type/unknown`
             - resource_arn -> `arn:<partition>:<service>:<region>:<account-id>:<resource_type>/unknown`
-
-            This replaces having the Account ID and the Account ID ARN as the values if the above happens. Examples:
-            - AWS Security Hub -> `arn:<partition>:security-hub:<region>:<account-id>:hub/unknown`
-            - Access Analyzer -> `arn:<partition>:access-analyzer:<region>:<account-id>:analyzer/unknown`
-            - GuardDuty -> `arn:<partition>:guardduty:<region>:<account-id>:detector/unknown`
+            - Examples:
+                - AWS Security Hub -> `arn:<partition>:security-hub:<region>:<account-id>:hub/unknown`
+                - Access Analyzer -> `arn:<partition>:access-analyzer:<region>:<account-id>:analyzer/unknown`
+                - GuardDuty -> `arn:<partition>:guardduty:<region>:<account-id>:detector/unknown`
 - GCP
     - Resource ID -- `report.resource_id`
         - GCP Resource --> Resource ID
