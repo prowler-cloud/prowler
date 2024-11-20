@@ -4,11 +4,13 @@ import React from "react";
 interface DateWithTimeProps {
   dateTime: string | null; // e.g., "2024-07-17T09:55:14.191475Z"
   showTime?: boolean;
+  inline?: boolean;
 }
 
 export const DateWithTime: React.FC<DateWithTimeProps> = ({
   dateTime,
   showTime = true,
+  inline = false,
 }) => {
   if (!dateTime) return <span>--</span>;
   const date = parseISO(dateTime);
@@ -17,7 +19,9 @@ export const DateWithTime: React.FC<DateWithTimeProps> = ({
 
   return (
     <div className="max-w-fit">
-      <div className="flex flex-col items-start">
+      <div
+        className={`flex ${inline ? "flex-row items-center gap-2" : "flex-col"}`}
+      >
         <span className="text-md font-semibold">{formattedDate}</span>
         {showTime && (
           <span className="text-sm text-gray-500">{formattedTime}</span>

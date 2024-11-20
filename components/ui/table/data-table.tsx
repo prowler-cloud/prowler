@@ -14,7 +14,6 @@ import {
 import { useState } from "react";
 
 import {
-  DataTableFilterCustom,
   Table,
   TableBody,
   TableCell,
@@ -36,7 +35,6 @@ export function DataTable<TData, TValue>({
   columns,
   data,
   metadata,
-  customFilters,
 }: DataTableProviderProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -58,12 +56,7 @@ export function DataTable<TData, TValue>({
 
   return (
     <>
-      {customFilters && (
-        <div className="mb-6">
-          <DataTableFilterCustom filters={customFilters || []} />
-        </div>
-      )}
-      <div className="relative z-0 flex w-full flex-col justify-between gap-4 overflow-auto rounded-large bg-content1 p-4 shadow-small">
+      <div className="relative z-0 flex w-full flex-col justify-between gap-4 overflow-auto rounded-large p-4 shadow-small dark:bg-prowler-blue-400">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (

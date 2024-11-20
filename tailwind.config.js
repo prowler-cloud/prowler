@@ -31,6 +31,7 @@ module.exports = {
           },
           blue: {
             800: "#1e293bff",
+            400: "#1A202C",
           },
           grey: {
             medium: "#353a4d",

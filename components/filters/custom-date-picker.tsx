@@ -63,7 +63,7 @@ export const CustomDatePicker = () => {
         CalendarTopContent={
           <ButtonGroup
             fullWidth
-            className="bg-content1 px-3 pb-2 pt-3 [&>button]:border-default-200/60 [&>button]:text-default-500"
+            className="bg-content1 px-3 pb-2 pt-3 dark:bg-prowler-blue-400 [&>button]:border-default-200/60 [&>button]:text-default-500"
             radius="full"
             size="sm"
             variant="bordered"

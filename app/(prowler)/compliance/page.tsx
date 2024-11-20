@@ -17,12 +17,18 @@ export default async function Compliance({
   searchParams: SearchParamsProps;
 }) {
   const scansData = await getScans({});
-  const scanList = scansData?.data.map((scan: any) => ({
-    id: scan.id,
-    name: scan.attributes.name || "Unnamed Scan",
-    state: scan.attributes.state,
-    progress: scan.attributes.progress,
-  }));
+  const scanList = scansData?.data
+    .filter(
+      (scan: any) =>
+        scan.attributes.state === "completed" &&
+        scan.attributes.progress === 100,
+    )
+    .map((scan: any) => ({
+      id: scan.id,
+      name: scan.attributes.name || "Unnamed Scan",
+      state: scan.attributes.state,
+      progress: scan.attributes.progress,
+    }));
 
   const selectedScanId = searchParams.scanId || scanList[0]?.id;
 
@@ -92,7 +98,7 @@ const SSRComplianceGrid = async ({
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
       {compliancesData.data.map((compliance: ComplianceOverviewData) => {
         const { attributes } = compliance;
         const {

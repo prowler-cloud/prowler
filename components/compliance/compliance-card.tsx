@@ -16,27 +16,25 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
   title,
   passingRequirements,
   totalRequirements,
-  prevPassingRequirements,
-  prevTotalRequirements,
 }) => {
   const ratingPercentage = Math.floor(
     (passingRequirements / totalRequirements) * 100,
   );
 
-  const prevRatingPercentage = Math.floor(
-    (prevPassingRequirements / prevTotalRequirements) * 100,
-  );
+  // const prevRatingPercentage = Math.floor(
+  //   (prevPassingRequirements / prevTotalRequirements) * 100,
+  // );
 
-  const getScanChange = () => {
-    const scanDifference = ratingPercentage - prevRatingPercentage;
-    if (scanDifference < 0 && scanDifference <= -1) {
-      return `${scanDifference}% from last scan`;
-    }
-    if (scanDifference > 0 && scanDifference >= 1) {
-      return `+${scanDifference}% from last scan`;
-    }
-    return "No change from last scan";
-  };
+  // const getScanChange = () => {
+  //   const scanDifference = ratingPercentage - prevRatingPercentage;
+  //   if (scanDifference < 0 && scanDifference <= -1) {
+  //     return `${scanDifference}% from last scan`;
+  //   }
+  //   if (scanDifference > 0 && scanDifference >= 1) {
+  //     return `+${scanDifference}% from last scan`;
+  //   }
+  //   return "No changes from last scan";
+  // };
 
   const getRatingColor = (ratingPercentage: number) => {
     if (ratingPercentage <= 10) {
@@ -50,7 +48,7 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
 
   return (
     <Card fullWidth isPressable isHoverable shadow="sm">
-      <CardBody className="flex flex-row items-center justify-between space-x-4">
+      <CardBody className="flex flex-row items-center justify-between space-x-4 dark:bg-prowler-blue-800">
         <div className="flex w-full items-center space-x-4">
           <Image
             src={getComplianceIcon(title)}
@@ -75,7 +73,7 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
                 </span>
                 Passing Requirements
               </small>
-              <small>{getScanChange()}</small>
+              {/* <small>{getScanChange()}</small> */}
             </div>
           </div>
         </div>

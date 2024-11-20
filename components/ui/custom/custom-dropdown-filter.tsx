@@ -10,20 +10,21 @@ import {
   PopoverTrigger,
   ScrollShadow,
 } from "@nextui-org/react";
-import _ from "lodash";
-import { useSearchParams } from "next/navigation";
+import { XCircle } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 
 import { PlusCircleIcon } from "@/components/icons";
 import { CustomDropdownFilterProps } from "@/types";
 
 const filterSelectedClass =
-  "inline-flex items-center border py-0.5 text-xs transition-colors border-transparent bg-default-500 text-secondary-foreground hover:bg-default-500/80 rounded-md px-2 font-normal";
+  "inline-flex items-center border py-1 text-xs transition-colors border-transparent bg-default-500 text-secondary-foreground hover:bg-default-500/80 rounded-md px-2 font-normal";
 
 export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
   filter,
   onFilterChange,
 }) => {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [groupSelected, setGroupSelected] = useState(new Set<string>());
 
@@ -92,14 +93,24 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
       setGroupSelected(new Set(["all", ...allFilterKeys]));
     }
   }, [groupSelected, allFilterKeys]);
+
+  const onClearFilter = useCallback(
+    (filterKey: string) => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete(`filter[${filterKey}]`);
+      router.push(`?${params.toString()}`, { scroll: false });
+    },
+    [router, searchParams],
+  );
+
   return (
     <div className="flex w-full flex-col gap-2">
       <Popover backdrop="transparent" placement="bottom-start">
         <PopoverTrigger>
           <Button
-            className="border-input hover:bg-accent hover:text-accent-foreground inline-flex h-8 items-center justify-center whitespace-nowrap rounded-md border border-dashed bg-background px-3 text-xs font-medium shadow-sm transition-colors focus-visible:outline-none disabled:opacity-50"
+            className="border-input hover:bg-accent hover:text-accent-foreground inline-flex h-10 items-center justify-center whitespace-nowrap rounded-md border border-dashed bg-background px-3 text-xs font-medium shadow-sm transition-colors focus-visible:outline-none disabled:opacity-50 dark:bg-prowler-blue-800"
             startContent={<PlusCircleIcon size={16} />}
-            size="sm"
+            size="md"
           >
             <h3 className="text-small">{filter?.labelCheckboxGroup}</h3>
 
@@ -107,26 +118,38 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
               <>
                 <Divider orientation="vertical" className="mx-2 h-4" />
 
-                <div className="no-scrollbar hidden max-w-24 space-x-1 overflow-x-auto lg:flex">
-                  {groupSelected.size > 3 ? (
-                    <span
-                      className={filterSelectedClass}
-                    >{`+${groupSelected.size - 2} selected`}</span>
-                  ) : (
-                    Array.from(groupSelected)
-                      .filter((value) => value !== "all")
-                      .map((value) => (
-                        <div key={value} className={filterSelectedClass}>
-                          {_.capitalize(value)}
-                        </div>
-                      ))
-                  )}
+                <div className="flex items-center gap-2">
+                  <div className="no-scrollbar hidden max-w-24 space-x-1 overflow-x-auto lg:flex">
+                    {groupSelected.size > 3 ? (
+                      <span className={filterSelectedClass}>
+                        {`+${groupSelected.size - 2} selected`}
+                      </span>
+                    ) : (
+                      Array.from(groupSelected)
+                        .filter((value) => value !== "all")
+                        .map((value) => (
+                          <div key={value} className={filterSelectedClass}>
+                            {value}
+                          </div>
+                        ))
+                    )}
+                  </div>
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onClearFilter(filter.key);
+                    }}
+                    className="absolute right-0 top-1/2 z-40 h-10 w-10 -translate-y-1/2 focus:outline-none"
+                  >
+                    <XCircle className="h-4 w-4 text-default-400" />
+                  </button>
                 </div>
               </>
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-80">
+        <PopoverContent className="w-80 dark:bg-prowler-blue-800">
           <div className="flex w-full flex-col gap-6 p-2">
             <CheckboxGroup
               color="default"
@@ -149,7 +172,7 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
               >
                 {allFilterKeys.map((value) => (
                   <Checkbox className="font-normal" key={value} value={value}>
-                    {_.capitalize(value)}
+                    {value}
                   </Checkbox>
                 ))}
               </ScrollShadow>

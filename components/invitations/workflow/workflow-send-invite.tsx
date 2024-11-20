@@ -55,7 +55,7 @@ export const WorkflowSendInvite = () => {
       <VerticalSteps
         hideProgressBars
         currentStep={currentStep}
-        stepClassName="border border-default-200 dark:border-default-50 aria-[current]:bg-default-100 dark:aria-[current]:bg-default-50 cursor-default"
+        stepClassName="border border-default-200 dark:border-default-50 aria-[current]:bg-default-100 dark:aria-[current]:bg-prowler-blue-800 cursor-default"
         steps={steps}
       />
       <Spacer y={4} />

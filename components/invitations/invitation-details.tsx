@@ -32,7 +32,7 @@ export const InvitationDetails = ({ attributes }: InvitationDetailsProps) => {
     <div className="flex flex-col gap-x-4 gap-y-8">
       <Card
         isBlurred
-        className="border-none bg-background/60 dark:bg-default-100/50"
+        className="border-none bg-background/60 dark:bg-prowler-blue-800"
         shadow="sm"
       >
         <CardBody>

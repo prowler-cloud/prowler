@@ -1,14 +1,11 @@
 "use client";
 
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableColumn,
-  TableHeader,
-  TableRow,
-} from "@nextui-org/react";
+import { Snippet } from "@nextui-org/react";
+import Link from "next/link";
 
+import { SnippetId } from "@/components/ui/entities";
+import { DateWithTime } from "@/components/ui/entities/date-with-time";
+import { SeverityBadge } from "@/components/ui/table/severity-badge";
 import { FindingProps } from "@/types";
 
 export const FindingDetail = ({
@@ -17,108 +14,205 @@ export const FindingDetail = ({
   findingDetails: FindingProps;
 }) => {
   const finding = findingDetails;
+  const attributes = finding.attributes;
+  const resource = finding.relationships.resource.attributes;
+
+  const remediation = attributes.check_metadata.remediation;
+
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-6 rounded-lg">
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <Table aria-label="Example static collection table">
-          <TableHeader>
-            <TableColumn>Name </TableColumn>
-            <TableColumn>Value</TableColumn>
-          </TableHeader>
-          <TableBody>
-            <TableRow key="1">
-              <TableCell>Resource ID</TableCell>
-              <TableCell>{finding.relationships.resource.id}</TableCell>
-            </TableRow>
-            <TableRow key="2">
-              <TableCell>Resource ARN</TableCell>
-              <TableCell>
-                {finding.relationships.resource.attributes.uid}
-              </TableCell>
-            </TableRow>
-            <TableRow key="3">
-              <TableCell>Check ID</TableCell>
-              <TableCell>{finding.attributes.check_id}</TableCell>
-            </TableRow>
-            <TableRow key="4">
-              <TableCell>Types</TableCell>
-              <TableCell>
-                {finding.attributes.check_metadata.checktype}
-              </TableCell>
-            </TableRow>
-            <TableRow key="5">
-              <TableCell>Scan time</TableCell>
-              <TableCell>{finding.attributes.inserted_at}</TableCell>
-            </TableRow>
-            <TableRow key="6">
-              <TableCell>Prowler Finding ID</TableCell>
-              <TableCell>
-                {finding.relationships.resource.attributes.uid}
-              </TableCell>
-            </TableRow>
-            <TableRow key="7">
-              <TableCell>Severity</TableCell>
-              <TableCell>{finding.id}</TableCell>
-            </TableRow>
-            <TableRow key="8">
-              <TableCell>Status</TableCell>
-              <TableCell>{finding.attributes.status}</TableCell>
-            </TableRow>
-            <TableRow key="9">
-              <TableCell>Region</TableCell>
-              <TableCell>
-                {finding.relationships.resource.attributes.region}
-              </TableCell>
-            </TableRow>
-            <TableRow key="10">
-              <TableCell>Service</TableCell>
-              <TableCell>
-                {finding.relationships.resource.attributes.service}
-              </TableCell>
-            </TableRow>
-            <TableRow key="11">
-              <TableCell>Account</TableCell>
-              <TableCell>
-                {finding.relationships.provider.attributes.uid}
-              </TableCell>
-            </TableRow>
-            <TableRow key="12">
-              <TableCell>Details</TableCell>
-              <TableCell>{finding.attributes.status_extended}</TableCell>
-            </TableRow>
-            <TableRow key="13">
-              <TableCell>Risk</TableCell>
-              <TableCell>{finding.attributes.check_metadata.risk}</TableCell>
-            </TableRow>
-            <TableRow key="14">
-              <TableCell>Recommendation</TableCell>
-              <TableCell>
-                {
-                  finding.attributes.check_metadata.remediation.recommendation
-                    .text
-                }
-              </TableCell>
-            </TableRow>
-            <TableRow key="15">
-              <TableCell>CLI</TableCell>
-              <TableCell>
-                {finding.attributes.check_metadata.remediation.code.cli}
-              </TableCell>
-            </TableRow>
-            <TableRow key="16">
-              <TableCell>Other</TableCell>
-              <TableCell>
-                {finding.attributes.check_metadata.remediation.code.other}
-              </TableCell>
-            </TableRow>
-            <TableRow key="17">
-              <TableCell>Terraform</TableCell>
-              <TableCell>
-                {finding.attributes.check_metadata.remediation.code.terraform}
-              </TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
+        <div>
+          <h2 className="line-clamp-2 text-xl font-bold leading-tight text-gray-800 dark:text-prowler-theme-pale/90">
+            {attributes.check_metadata.checktitle}
+          </h2>
+          <p className="text-sm text-gray-500 dark:text-prowler-theme-pale/70">
+            {resource.service}
+          </p>
+        </div>
+        <div
+          className={`rounded-lg px-3 py-1 text-sm font-semibold ${
+            attributes.status === "PASS"
+              ? "bg-green-100 text-green-600"
+              : attributes.status === "MANUAL"
+                ? "bg-gray-100 text-gray-600"
+                : "bg-red-100 text-red-600"
+          }`}
+        >
+          {attributes.status}
+        </div>
+      </div>
+
+      {/* Check Metadata */}
+      <div className="flex flex-col gap-4 rounded-lg p-4 shadow dark:bg-prowler-blue-400">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-bold text-gray-800 dark:text-prowler-theme-pale/90">
+            Check Metadata
+          </h3>
+          <SeverityBadge severity={attributes.severity} />
+        </div>
+        {attributes.status === "FAIL" && (
+          <Snippet
+            className="max-w-full py-4"
+            color="danger"
+            hideCopyButton
+            hideSymbol
+          >
+            <p className="text-sm font-semibold dark:text-prowler-theme-pale">
+              Risk
+            </p>
+            <p className="whitespace-pre-line text-gray-800 dark:text-prowler-theme-pale/90">
+              {attributes.check_metadata.risk}
+            </p>
+          </Snippet>
+        )}
+
+        <div className="flex flex-col gap-2">
+          <p className="text-sm font-semibold dark:text-prowler-theme-pale">
+            Description
+          </p>
+          <p className="text-gray-800 dark:text-prowler-theme-pale/90">
+            {attributes.check_metadata.description}
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <h3 className="text-sm font-semibold dark:text-prowler-theme-pale">
+            Remediation
+          </h3>
+          <div className="text-gray-800 dark:text-prowler-theme-pale/90">
+            {remediation.recommendation && (
+              <>
+                <p className="text-sm font-semibold">Recommendation:</p>
+                <p>{remediation.recommendation.text}</p>
+                <Link
+                  target="_blank"
+                  href={remediation.recommendation.url}
+                  className="mt-2 inline-block text-sm text-blue-500 underline"
+                >
+                  Learn more
+                </Link>
+              </>
+            )}
+            {remediation.code &&
+              Object.values(remediation.code).some(Boolean) && (
+                <div className="flex flex-col gap-2">
+                  <p className="mt-4 text-sm font-semibold">
+                    Check these links:
+                  </p>
+                  <div className="flex flex-col gap-2">
+                    {remediation.code.cli && (
+                      <div>
+                        <p className="text-sm font-semibold">CLI Command:</p>
+                        <Snippet hideSymbol size="sm" className="max-w-full">
+                          <p className="whitespace-pre-line">
+                            {remediation.code.cli}
+                          </p>
+                        </Snippet>
+                      </div>
+                    )}
+                    <div className="flex flex-row gap-4">
+                      {Object.entries(remediation.code)
+                        .filter(([key]) => key !== "cli")
+                        .map(([key, value]) =>
+                          value ? (
+                            <Link
+                              key={key}
+                              href={value}
+                              target="_blank"
+                              className="text-sm font-medium text-blue-500"
+                            >
+                              {key === "other"
+                                ? "External doc"
+                                : key.charAt(0).toUpperCase() +
+                                  key.slice(1).toLowerCase()}
+                            </Link>
+                          ) : null,
+                        )}
+                    </div>
+                  </div>
+                </div>
+              )}
+          </div>
+        </div>
+      </div>
+
+      {/* Resources Section */}
+      <div className="flex flex-col gap-4 rounded-lg p-4 shadow dark:bg-prowler-blue-400">
+        <h3 className="text-lg font-bold text-gray-800 dark:text-prowler-theme-pale/90">
+          Resource Details
+        </h3>
+        <div className="grid grid-cols-2 gap-6">
+          <div className="col-span-2">
+            <p className="text-sm font-semibold dark:text-prowler-theme-pale">
+              Resource ID
+            </p>
+            <Snippet size="sm" hideSymbol className="max-w-full">
+              <p className="whitespace-pre-line">{resource.uid}</p>
+            </Snippet>
+          </div>
+          <div>
+            <p className="text-sm font-semibold dark:text-prowler-theme-pale">
+              Resource Name
+            </p>
+            <p className="text-gray-800 dark:text-prowler-theme-pale/90">
+              {resource.name}
+            </p>
+          </div>
+          <div>
+            <p className="text-sm font-semibold dark:text-prowler-theme-pale">
+              Region
+            </p>
+            <p className="text-gray-800 dark:text-prowler-theme-pale/90">
+              {resource.region}
+            </p>
+          </div>
+          <div>
+            <p className="text-sm font-semibold dark:text-prowler-theme-pale">
+              Resource Type
+            </p>
+            <p className="text-gray-800 dark:text-prowler-theme-pale/90">
+              {resource.type}
+            </p>
+          </div>
+          <div>
+            <p className="text-sm font-semibold dark:text-prowler-theme-pale">
+              Severity
+            </p>
+            <SeverityBadge severity={attributes.severity} />
+          </div>
+          {resource.tags &&
+            Object.entries(resource.tags).map(([key, value]) => (
+              <div key={key}>
+                <p className="text-sm font-semibold dark:text-prowler-theme-pale">
+                  Tag: {key}
+                </p>
+                <SnippetId
+                  entityId={value}
+                  hideSymbol
+                  size="sm"
+                  className="max-w-full"
+                >
+                  <p className="whitespace-pre-line">{value}</p>
+                </SnippetId>
+              </div>
+            ))}
+          <div className="col-span-2 grid grid-cols-2 gap-6">
+            <div>
+              <p className="text-sm font-semibold dark:text-prowler-theme-pale">
+                Inserted At
+              </p>
+              <DateWithTime inline dateTime={resource.inserted_at} />
+            </div>
+            <div>
+              <p className="text-sm font-semibold dark:text-prowler-theme-pale">
+                Updated At
+              </p>
+              <DateWithTime inline dateTime={resource.updated_at} />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

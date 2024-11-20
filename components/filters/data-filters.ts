@@ -35,19 +35,24 @@ export const filterScans = [
 
 export const filterFindings = [
   {
-    key: "severity",
+    key: "severity__in",
     labelCheckboxGroup: "Severity",
     values: ["critical", "high", "medium", "low", "informational"],
   },
   {
-    key: "status",
+    key: "status__in",
     labelCheckboxGroup: "Status",
     values: ["PASS", "FAIL", "MANUAL", "MUTED"],
   },
   {
-    key: "delta",
+    key: "delta__in",
     labelCheckboxGroup: "Delta",
     values: ["new", "changed"],
+  },
+  {
+    key: "provider_type__in",
+    labelCheckboxGroup: "Provider",
+    values: ["aws", "azure", "gcp", "kubernetes"],
   },
   // Add more filter categories as needed
 ];

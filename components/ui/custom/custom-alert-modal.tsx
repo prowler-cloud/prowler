@@ -21,6 +21,7 @@ export const CustomAlertModal: React.FC<CustomAlertModalProps> = ({
       isOpen={isOpen}
       onOpenChange={onOpenChange}
       size="xl"
+      className="dark:bg-prowler-blue-800"
       backdrop="blur"
     >
       <ModalContent className="py-4">

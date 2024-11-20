@@ -61,7 +61,10 @@ export function DataTableRowActions<ProviderProps>({
       </CustomAlertModal>
 
       <div className="relative flex items-center justify-end gap-2">
-        <Dropdown className="shadow-xl" placement="bottom">
+        <Dropdown
+          className="shadow-xl dark:bg-prowler-blue-800"
+          placement="bottom"
+        >
           <DropdownTrigger>
             <Button isIconOnly radius="full" size="sm" variant="light">
               <VerticalDotsIcon className="text-default-400" />
