@@ -65,6 +65,7 @@ from prowler.lib.outputs.csv.csv import CSV
 from prowler.lib.outputs.finding import Finding
 from prowler.lib.outputs.html.html import HTML
 from prowler.lib.outputs.ocsf.ocsf import OCSF
+from prowler.lib.outputs.back2code.back2code import BACK2CODE
 from prowler.lib.outputs.outputs import extract_findings_statistics
 from prowler.lib.outputs.slack.slack import Slack
 from prowler.lib.outputs.summary_table import display_summary_table
@@ -376,6 +377,14 @@ def prowler():
                 html_output.batch_write_data_to_file(
                     provider=global_provider, stats=stats
                 )
+            if mode == "back2code":
+                back2codeOutput = BACK2CODE(
+                    findings=finding_outputs,
+                    create_file_descriptor=True,
+                    file_path=f"{filename}{html_file_suffix}",
+                )
+                back2codeOutput.transform(findings)
+                generated_outputs["regular"].append(html_output)
 
     # Compliance Frameworks
     input_compliance_frameworks = set(output_options.output_modes).intersection(
