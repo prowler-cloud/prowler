@@ -1,0 +1,30 @@
+{
+  "Framework": "CIS",
+  "Version": "4.0",
+  "Provider": "Microsoft365",
+  "Description": "The CIS Microsoft 365 Foundations Benchmark provides prescriptive guidance for establishing a secure configuration posture for Microsoft 365 Cloud offerings running on any OS.",
+  "Requirements": [
+    {
+      "Id": "1.1.1",
+      "Description": "Ensure that 'Administrative accounts' are 'cloud-only'",
+      "Checks": [
+        "entra_policy_ensure_default_user_cannot_create_tenants"
+      ],
+      "Attributes": [
+        {
+          "Section": "1.Microsoft 365 admin center",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "",
+          "RationaleStatement": "",
+          "ImpactStatement": "",
+          "RemediationProcedure": "",
+          "AuditProcedure": "",
+          "AdditionalInformation": "",
+          "DefaultValue": "",
+          "References": ""
+        }
+      ]
+    }
+  ]
+}

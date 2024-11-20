@@ -1,0 +1,30 @@
+{
+  "Provider": "microsoft365",
+  "CheckID": "users_administrative_accounts_cloud_only",
+  "CheckTitle": "Ensure Administrative accounts are cloud-only",
+  "CheckType": [],
+  "ServiceName": "users",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "AdministrativeAccount",
+  "Description": "Administrative accounts must be cloud-only and separated from on-premises accounts. These accounts should not have applications assigned to them and should be used exclusively for administrative tasks.",
+  "Risk": "Failing to separate administrative accounts can lead to compromised security in hybrid environments. A breach in the cloud could potentially impact the on-premises environment and vice versa.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/microsoft-365/security/identity-protection?view=o365-worldwide",
+  "Remediation": {
+    "Code": {
+      "CLI": "Get-MsolUser -Admin | Where-Object {$_.ImmutableId -ne $null} | Remove-MsolUser",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Create cloud-only administrative accounts and ensure they are not synchronized from on-premises directories. Remove any unnecessary application assignments.",
+      "Url": "https://learn.microsoft.com/en-us/azure/active-directory/roles/security-design-administrative-accounts"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Administrative accounts should be strictly cloud-only and dedicated to admin tasks. Migrate all necessary permissions, including M365 and Azure RBAC roles, to these accounts."
+}
