@@ -11,7 +11,7 @@ from prowler.lib.logger import logger
 from prowler.lib.mutelist.mutelist import Mutelist
 from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.provider import Provider
-from prowler.providers.github.lib.mutelist.mutelist import GitHubMutelist
+from prowler.providers.github.lib.mutelist.mutelist import GithubMutelist
 from prowler.providers.github.models import GithubIdentityInfo, GithubSession
 
 
@@ -70,13 +70,13 @@ class GithubProvider(Provider):
 
         # Mutelist
         if mutelist_content:
-            self._mutelist = GitHubMutelist(
+            self._mutelist = GithubMutelist(
                 mutelist_content=mutelist_content,
             )
         else:
             if not mutelist_path:
                 mutelist_path = get_default_mute_file_path(self.type)
-            self._mutelist = GitHubMutelist(
+            self._mutelist = GithubMutelist(
                 mutelist_path=mutelist_path,
             )
         Provider.set_global_provider(self)
@@ -110,7 +110,7 @@ class GithubProvider(Provider):
         return self._fixer_config
 
     @property
-    def mutelist(self) -> GitHubMutelist:
+    def mutelist(self) -> GithubMutelist:
         """
         mutelist method returns the provider's mutelist.
         """

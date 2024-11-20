@@ -9,18 +9,18 @@ from prowler.providers.github.lib.service.service import GithubService
 class Repository(GithubService):
     def __init__(self, provider):
         super().__init__(__class__.__name__, provider)
-        self.repositories = {}
-        self._list_repositories()
+        self.repositories = self._list_repositories()
 
     def _list_repositories(self):
         logger.info("Repository - Listing Repositories...")
+        repos = {}
         try:
             for repo in self.client.get_user().get_repos():
                 try:
                     securitymd_exists = repo.get_contents("SECURITY.md") is not None
                 except Exception:
                     securitymd_exists = False
-                self.repositories[repo.id] = Repo(
+                repos[repo.id] = Repo(
                     id=repo.id,
                     name=repo.name,
                     full_name=repo.full_name,
@@ -31,6 +31,7 @@ class Repository(GithubService):
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+        return repos
 
 
 class Repo(BaseModel):
