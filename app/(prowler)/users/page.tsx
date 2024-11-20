@@ -24,6 +24,7 @@ export default async function Users({
       <FilterControls search />
       <Spacer y={8} />
       <AddUserButton />
+      <Spacer y={4} />
       <DataTableFilterCustom filters={filterUsers || []} />
       <Spacer y={8} />
 

@@ -27,6 +27,7 @@ export default async function Providers({
       <FilterControls search providers />
       <Spacer y={8} />
       <AddProvider />
+      <Spacer y={4} />
       <DataTableFilterCustom filters={filterProviders || []} />
       <Spacer y={8} />
 

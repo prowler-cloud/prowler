@@ -27,6 +27,7 @@ export default async function Invitations({
       <FilterControls search />
       <Spacer y={8} />
       <SendInvitationButton />
+      <Spacer y={4} />
       <DataTableFilterCustom filters={filterInvitations || []} />
       <Spacer y={8} />
 
