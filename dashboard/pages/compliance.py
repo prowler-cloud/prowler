@@ -148,6 +148,7 @@ else:
     select_account_dropdown_list = ["All"]
     # Append to the list the unique values of the columns ACCOUNTID, PROJECTID and SUBSCRIPTIONID if they exist
     if "ACCOUNTID" in data.columns:
+        data["ACCOUNTID"] = data["ACCOUNTID"].astype(str)
         select_account_dropdown_list = select_account_dropdown_list + list(
             data["ACCOUNTID"].unique()
         )
@@ -246,9 +247,11 @@ def display_data(
         dfs = []
         for file in files:
             df = pd.read_csv(
-                file, sep=";", on_bad_lines="skip", encoding=encoding_format
+                file, sep=";", on_bad_lines="skip", encoding=encoding_format, dtype=str
             )
-            dfs.append(df.astype(str))
+            df = df.astype(str).fillna("nan")
+            df.columns = df.columns.astype(str)
+            dfs.append(df)
         return pd.concat(dfs, ignore_index=True)
 
     data = load_csv_files(files)
@@ -274,17 +277,24 @@ def display_data(
         data.rename(columns={"PROJECTID": "ACCOUNTID"}, inplace=True)
         data["REGION"] = "-"
     # Rename the column SUBSCRIPTIONID to ACCOUNTID for Azure
-    if data.columns.str.contains("SUBSCRIPTIONID").any():
+    if (
+        data.columns.str.contains("SUBSCRIPTIONID").any()
+        and not data.columns.str.contains("ACCOUNTID").any()
+    ):
         data.rename(columns={"SUBSCRIPTIONID": "ACCOUNTID"}, inplace=True)
         data["REGION"] = "-"
     # Handle v3 azure cis compliance
-    if data.columns.str.contains("SUBSCRIPTION").any():
+    if (
+        data.columns.str.contains("SUBSCRIPTION").any()
+        and not data.columns.str.contains("ACCOUNTID").any()
+    ):
         data.rename(columns={"SUBSCRIPTION": "ACCOUNTID"}, inplace=True)
         data["REGION"] = "-"
 
     # Filter ACCOUNT
     if account_filter == ["All"]:
         updated_cloud_account_values = data["ACCOUNTID"].unique()
+
     elif "All" in account_filter and len(account_filter) > 1:
         # Remove 'All' from the list
         account_filter.remove("All")
@@ -299,9 +309,11 @@ def display_data(
 
     account_filter_options = list(data["ACCOUNTID"].unique())
     account_filter_options = account_filter_options + ["All"]
-    for item in account_filter_options:
-        if "nan" in item or item.__class__.__name__ != "str" or item is None:
-            account_filter_options.remove(item)
+    account_filter_options = [
+        item
+        for item in account_filter_options
+        if isinstance(item, str) and item.lower() != "nan"
+    ]
 
     # Filter REGION
     if region_filter_analytics == ["All"]:

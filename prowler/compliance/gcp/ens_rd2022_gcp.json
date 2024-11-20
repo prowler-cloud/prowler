@@ -2003,7 +2003,7 @@
           "Nivel": "alto",
           "Tipo": "requisito",
           "Dimensiones": [
-            "conficencialidad"
+            "confidencialidad"
           ],
           "ModoEjecucion": "manual",
           "Dependencias": []
