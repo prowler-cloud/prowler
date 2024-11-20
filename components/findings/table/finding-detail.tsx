@@ -97,7 +97,7 @@ export const FindingDetail = ({
             )}
             {remediation.code &&
               Object.values(remediation.code).some(Boolean) && (
-                <>
+                <div className="flex flex-col gap-2">
                   <p className="mt-4 text-sm font-semibold">
                     Check these links:
                   </p>
@@ -112,25 +112,27 @@ export const FindingDetail = ({
                         </Snippet>
                       </div>
                     )}
-                    {Object.entries(remediation.code)
-                      .filter(([key]) => key !== "cli")
-                      .map(([key, value]) =>
-                        value ? (
-                          <Link
-                            key={key}
-                            href={value}
-                            target="_blank"
-                            className="text-sm font-medium text-blue-500"
-                          >
-                            {key === "other"
-                              ? "External doc"
-                              : key.charAt(0).toUpperCase() +
-                                key.slice(1).toLowerCase()}
-                          </Link>
-                        ) : null,
-                      )}
+                    <div className="flex flex-row gap-4">
+                      {Object.entries(remediation.code)
+                        .filter(([key]) => key !== "cli")
+                        .map(([key, value]) =>
+                          value ? (
+                            <Link
+                              key={key}
+                              href={value}
+                              target="_blank"
+                              className="text-sm font-medium text-blue-500"
+                            >
+                              {key === "other"
+                                ? "External doc"
+                                : key.charAt(0).toUpperCase() +
+                                  key.slice(1).toLowerCase()}
+                            </Link>
+                          ) : null,
+                        )}
+                    </div>
                   </div>
-                </>
+                </div>
               )}
           </div>
         </div>
