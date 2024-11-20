@@ -10,14 +10,16 @@ import { FilterOption } from "@/types";
 
 export interface DataTableFilterCustomProps {
   filters: FilterOption[];
+  defaultOpen?: boolean;
 }
 
 export const DataTableFilterCustom = ({
   filters,
+  defaultOpen = false,
 }: DataTableFilterCustomProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [showFilters, setShowFilters] = useState(false);
+  const [showFilters, setShowFilters] = useState(defaultOpen);
 
   const pushDropdownFilter = useCallback(
     (key: string, values: string[]) => {
@@ -36,14 +38,19 @@ export const DataTableFilterCustom = ({
   );
 
   return (
-    <div className="flex flex-col gap-4 md:flex-row md:items-start">
+    <div
+      className={`flex ${
+        filters.length > 4 ? "flex-col" : "flex-col md:flex-row"
+      } gap-4`}
+    >
       <CustomButton
         ariaLabel={showFilters ? "Hide Filters" : "Show Filters"}
         variant="flat"
         color={showFilters ? "action" : "primary"}
-        size="sm"
+        size="md"
         startContent={<CustomFilterIcon size={16} />}
         onPress={() => setShowFilters(!showFilters)}
+        className="w-fit"
       >
         <h3 className="text-small">
           {showFilters ? "Hide Filters" : "Show Filters"}
@@ -53,11 +60,17 @@ export const DataTableFilterCustom = ({
       <div
         className={`transition-all duration-700 ease-in-out ${
           showFilters
-            ? "max-h-96 w-full translate-x-0 overflow-visible opacity-100 md:max-w-80"
+            ? "max-h-96 w-full translate-x-0 overflow-visible opacity-100"
             : "max-h-0 -translate-x-full overflow-hidden opacity-0"
         }`}
       >
-        <div className="flex flex-col gap-4 md:flex-row">
+        <div
+          className={`grid gap-4 ${
+            filters.length > 4
+              ? "grid-cols-1 md:grid-cols-4"
+              : "grid-cols-1 md:grid-cols-3"
+          }`}
+        >
           {filters.map((filter) => (
             <CustomDropdownFilter
               key={filter.key}

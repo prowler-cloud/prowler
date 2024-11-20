@@ -31,7 +31,6 @@ export function DataTableRowActions<FindingProps>({
   row,
 }: DataTableRowActionsProps<FindingProps>) {
   const findingId = (row.original as { id: string }).id;
-  console.log(findingId);
   return (
     <>
       {/* <CustomAlertModal
@@ -79,6 +78,7 @@ export function DataTableRowActions<FindingProps>({
                 startContent={<EditDocumentBulkIcon className={iconClasses} />}
                 // onClick={() => setIsEditOpen(true)}
               >
+                <span className="hidden text-sm">{findingId}</span>
                 Send to Jira
               </DropdownItem>
               <DropdownItem

@@ -18,7 +18,7 @@ import { PlusCircleIcon } from "@/components/icons";
 import { CustomDropdownFilterProps } from "@/types";
 
 const filterSelectedClass =
-  "inline-flex items-center border py-0.5 text-xs transition-colors border-transparent bg-default-500 text-secondary-foreground hover:bg-default-500/80 rounded-md px-2 font-normal";
+  "inline-flex items-center border py-1 text-xs transition-colors border-transparent bg-default-500 text-secondary-foreground hover:bg-default-500/80 rounded-md px-2 font-normal";
 
 export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
   filter,
@@ -97,9 +97,9 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
       <Popover backdrop="transparent" placement="bottom-start">
         <PopoverTrigger>
           <Button
-            className="border-input hover:bg-accent hover:text-accent-foreground inline-flex h-8 items-center justify-center whitespace-nowrap rounded-md border border-dashed bg-background px-3 text-xs font-medium shadow-sm transition-colors focus-visible:outline-none disabled:opacity-50 dark:bg-prowler-blue-800"
+            className="border-input hover:bg-accent hover:text-accent-foreground inline-flex h-10 items-center justify-center whitespace-nowrap rounded-md border border-dashed bg-background px-3 text-xs font-medium shadow-sm transition-colors focus-visible:outline-none disabled:opacity-50 dark:bg-prowler-blue-800"
             startContent={<PlusCircleIcon size={16} />}
-            size="sm"
+            size="md"
           >
             <h3 className="text-small">{filter?.labelCheckboxGroup}</h3>
 
