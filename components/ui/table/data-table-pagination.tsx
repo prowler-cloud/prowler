@@ -49,7 +49,7 @@ export function DataTablePagination({ metadata }: DataTablePaginationProps) {
         <div className="flex items-center space-x-2">
           <Link
             aria-label="Go to first page"
-            className="page-link relative block rounded border-0 bg-transparent px-3 py-1.5 text-gray-800 outline-none transition-all duration-300 hover:bg-gray-200 hover:text-gray-800 focus:shadow-none"
+            className="page-link relative block rounded border-0 bg-transparent px-3 py-1.5 text-gray-800 outline-none transition-all duration-300 hover:bg-gray-200 hover:text-gray-800 focus:shadow-none dark:text-prowler-theme-green"
             href={createPageUrl(1)}
             aria-disabled="true"
           >
@@ -57,7 +57,7 @@ export function DataTablePagination({ metadata }: DataTablePaginationProps) {
           </Link>
           <Link
             aria-label="Go to previous page"
-            className="page-link relative block rounded border-0 bg-transparent px-3 py-1.5 text-gray-800 outline-none transition-all duration-300 hover:bg-gray-200 hover:text-gray-800 focus:shadow-none"
+            className="page-link relative block rounded border-0 bg-transparent px-3 py-1.5 text-gray-800 outline-none transition-all duration-300 hover:bg-gray-200 hover:text-gray-800 focus:shadow-none dark:text-prowler-theme-green"
             href={createPageUrl(currentPage - 1)}
             aria-disabled="true"
           >
@@ -65,14 +65,14 @@ export function DataTablePagination({ metadata }: DataTablePaginationProps) {
           </Link>
           <Link
             aria-label="Go to next page"
-            className="page-link relative block rounded border-0 bg-transparent px-3 py-1.5 text-gray-800 outline-none transition-all duration-300 hover:bg-gray-200 hover:text-gray-800 focus:shadow-none"
+            className="page-link relative block rounded border-0 bg-transparent px-3 py-1.5 text-gray-800 outline-none transition-all duration-300 hover:bg-gray-200 hover:text-gray-800 focus:shadow-none dark:text-prowler-theme-green"
             href={createPageUrl(currentPage + 1)}
           >
             <ChevronRightIcon className="size-4" aria-hidden="true" />
           </Link>
           <Link
             aria-label="Go to last page"
-            className="page-link relative block rounded border-0 bg-transparent px-3 py-1.5 text-gray-800 outline-none transition-all duration-300 hover:bg-gray-200 hover:text-gray-800 focus:shadow-none"
+            className="page-link relative block rounded border-0 bg-transparent px-3 py-1.5 text-gray-800 outline-none transition-all duration-300 hover:bg-gray-200 hover:text-gray-800 focus:shadow-none dark:text-prowler-theme-green"
             href={createPageUrl(totalPages)}
           >
             <DoubleArrowRightIcon className="size-4" aria-hidden="true" />

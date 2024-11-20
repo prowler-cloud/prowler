@@ -63,7 +63,7 @@ export function DataTable<TData, TValue>({
           <DataTableFilterCustom filters={customFilters || []} />
         </div>
       )}
-      <div className="relative z-0 flex w-full flex-col justify-between gap-4 overflow-auto rounded-large bg-content1 p-4 shadow-small">
+      <div className="relative z-0 flex w-full flex-col justify-between gap-4 overflow-auto rounded-large bg-content1 p-4 shadow-small dark:bg-prowler-blue-400">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (

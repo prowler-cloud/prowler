@@ -17,22 +17,25 @@ export const ScanDetail = ({ scanDetails }: ScanDetailsProps) => {
   const taskDetails = scanDetails.taskDetails;
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-6 rounded-lg">
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex flex-col items-baseline md:flex-row md:gap-x-4">
-          <h2 className="text-2xl font-bold">Scan Details</h2>
-        </div>
-
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-prowler-theme-pale/90">
+          Scan Details
+        </h2>
         <StatusBadge
           size="lg"
           status={scanOnDemand.state}
           loadingProgress={scanOnDemand.progress}
         />
       </div>
-      <Divider />
-      <div className="relative z-0 flex w-full flex-col justify-between gap-4 overflow-auto rounded-large bg-content1 p-4 shadow-small">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div className="space-y-4">
+
+      <Divider className="border-gray-300 dark:border-gray-600" />
+
+      {/* Details Section */}
+      <div className="flex flex-col gap-4 rounded-lg p-4 shadow dark:bg-prowler-blue-400">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div className="flex flex-col gap-4">
             <DetailItem label="Scan Name" value={scanOnDemand.name} />
             <DetailItem
               label="ID"
@@ -49,7 +52,7 @@ export const ScanDetail = ({ scanDetails }: ScanDetailsProps) => {
               value={`${scanOnDemand.duration} seconds`}
             />
           </div>
-          <div className="space-y-4">
+          <div className="flex flex-col gap-4">
             <DateItem
               label="Started At"
               value={
@@ -68,7 +71,7 @@ export const ScanDetail = ({ scanDetails }: ScanDetailsProps) => {
                     dateTime={scanOnDemand.completed_at.toString()}
                   />
                 ) : (
-                  "Not Started"
+                  "Not Completed"
                 )
               }
             />
@@ -109,17 +112,21 @@ export const ScanDetail = ({ scanDetails }: ScanDetailsProps) => {
           </div>
         </div>
       </div>
-      <Card className="relative w-full border-small border-default-100 p-3 shadow-lg">
-        <CardHeader className="py-2">
-          <h2 className="text-2xl font-bold">Scan arguments</h2>
+
+      {/* Scan Arguments Section */}
+      <Card className="rounded-lg p-4 shadow dark:bg-prowler-blue-400">
+        <CardHeader className="pb-4">
+          <h3 className="text-lg font-bold text-gray-800 dark:text-prowler-theme-pale/90">
+            Scan Arguments
+          </h3>
         </CardHeader>
-
-        <Divider />
-
-        <CardBody className="p-4">
+        <Divider className="border-gray-300 dark:border-gray-600" />
+        <CardBody className="pt-4">
           <div className="flex flex-col gap-2">
-            <span className="font-semibold text-default-500">Checks</span>
-            <span className="text-default-700">
+            <span className="text-sm font-semibold text-gray-600 dark:text-gray-300">
+              Checks
+            </span>
+            <span className="text-gray-800 dark:text-prowler-theme-pale/90">
               {(scanOnDemand.scanner_args as any)?.checks_to_execute?.join(
                 ", ",
               ) || "N/A"}
@@ -127,25 +134,28 @@ export const ScanDetail = ({ scanDetails }: ScanDetailsProps) => {
           </div>
         </CardBody>
       </Card>
+
+      {/* Task Details Section */}
       {taskDetails && (
-        <Card className="relative w-full border-small border-default-100 p-3 shadow-lg">
-          <CardHeader className="py-2">
-            <h2 className="text-2xl font-bold">State details</h2>
+        <Card className="rounded-lg p-4 shadow dark:bg-prowler-blue-400">
+          <CardHeader className="pb-4">
+            <h3 className="text-lg font-bold text-gray-800 dark:text-prowler-theme-pale/90">
+              State Details
+            </h3>
           </CardHeader>
-          <Divider />
-          <CardBody className="p-4">
-            <div className="flex flex-col gap-2">
+          <Divider className="border-gray-300 dark:border-gray-600" />
+          <CardBody className="pt-4">
+            <div className="flex flex-col gap-4">
               <DetailItem label="State" value={taskDetails.attributes.state} />
               <DetailItem
                 label="Completed At"
-                value={taskDetails.attributes.completed_at}
+                value={taskDetails.attributes.completed_at || "N/A"}
               />
-
               {taskDetails.attributes.result && (
                 <>
                   <DetailItem
                     label="Error Type"
-                    value={taskDetails.attributes.result.exc_type}
+                    value={taskDetails.attributes.result.exc_type || "N/A"}
                   />
                   {taskDetails.attributes.result.exc_message && (
                     <DetailItem
@@ -157,12 +167,13 @@ export const ScanDetail = ({ scanDetails }: ScanDetailsProps) => {
                   )}
                 </>
               )}
-
               <DetailItem
                 label="Checks to Execute"
-                value={taskDetails.attributes.task_args.checks_to_execute?.join(
-                  ", ",
-                )}
+                value={
+                  taskDetails.attributes.task_args.checks_to_execute?.join(
+                    ", ",
+                  ) || "N/A"
+                }
               />
             </div>
           </CardBody>
@@ -180,8 +191,10 @@ const DateItem = ({
   value: React.ReactNode;
 }) => (
   <div className="flex items-center justify-between">
-    <span className="font-semibold text-default-500">{label}:</span>
-    <span className="text-default-700">{value}</span>
+    <p className="text-sm font-semibold text-gray-600 dark:text-gray-300">
+      {label}:
+    </p>
+    <p className="text-gray-800 dark:text-prowler-theme-pale/90">{value}</p>
   </div>
 );
 
@@ -193,7 +206,9 @@ const DetailItem = ({
   value: React.ReactNode;
 }) => (
   <div className="flex items-center justify-between">
-    <span className="font-semibold text-default-500">{label}:</span>
-    <span className="text-default-700">{value}</span>
+    <p className="text-sm font-semibold text-gray-600 dark:text-gray-300">
+      {label}:
+    </p>
+    <p className="text-gray-800 dark:text-prowler-theme-pale/90">{value}</p>
   </div>
 );
