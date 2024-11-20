@@ -6,7 +6,7 @@ from prowler.providers.github.services.repository.repository_client import (
 )
 
 
-class repository_public_has_securitymd_file(Check):
+class public_repository_has_securitymd_file(Check):
     """Check if a public repository has a SECURITY.md file
 
     This class verifies whether each public repository has a SECURITY.md file.
