@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "memorydb_minor_version_upgrade_enabled",
+  "CheckTitle": "Ensure Memory DB clusters have minor version upgrade enabled.",
+  "CheckType": [],
+  "ServiceName": "rds",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:memorydb:region:account-id:db-cluster",
+  "Severity": "medium",
+  "ResourceType": "AwsMemoryDb",
+  "Description": "Ensure Memory DB clusters have minor version upgrade enabled.",
+  "Risk": "Auto Minor Version Upgrade is a feature that you can enable to have your database automatically upgraded when a new minor database engine version is available. Minor version upgrades often patch security vulnerabilities and fix bugs and therefore should be applied.",
+  "RelatedUrl": "https://docs.aws.amazon.com/memorydb/latest/devguide/engine-versions.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws memorydb update-cluster --cluster-name <cluster-name> --auto-minor-version-upgrade ",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/memorydb/latest/devguide/engine-versions.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable auto minor version upgrade for all Memory DB clusters.",
+      "Url": "https://docs.aws.amazon.com/memorydb/latest/devguide/engine-versions.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
