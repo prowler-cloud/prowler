@@ -91,7 +91,7 @@ class Test_bedrock_model_invocation_logs_encryption_enabled:
                 result[0].status_extended
                 == "Bedrock Model Invocation logs are not encrypted in S3 bucket: testconfigbucket and CloudWatch Log Group: Test."
             )
-            assert result[0].resource_id == "unknown"
+            assert result[0].resource_id == "model-invocation-logging"
             assert (
                 result[0].resource_arn
                 == "arn:aws:bedrock:us-east-1:123456789012:model-invocation-logging"
@@ -144,7 +144,7 @@ class Test_bedrock_model_invocation_logs_encryption_enabled:
                 result[0].status_extended
                 == "Bedrock Model Invocation logs are not encrypted in S3 bucket: testconfigbucket."
             )
-            assert result[0].resource_id == "unknown"
+            assert result[0].resource_id == "model-invocation-logging"
             assert (
                 result[0].resource_arn
                 == "arn:aws:bedrock:us-east-1:123456789012:model-invocation-logging"
@@ -199,7 +199,7 @@ class Test_bedrock_model_invocation_logs_encryption_enabled:
                 result[0].status_extended
                 == "Bedrock Model Invocation logs are not encrypted in CloudWatch Log Group: Test."
             )
-            assert result[0].resource_id == "unknown"
+            assert result[0].resource_id == "model-invocation-logging"
             assert (
                 result[0].resource_arn
                 == "arn:aws:bedrock:us-east-1:123456789012:model-invocation-logging"
@@ -274,7 +274,7 @@ class Test_bedrock_model_invocation_logs_encryption_enabled:
                 result[0].status_extended
                 == "Bedrock Model Invocation logs are encrypted."
             )
-            assert result[0].resource_id == "unknown"
+            assert result[0].resource_id == "model-invocation-logging"
             assert (
                 result[0].resource_arn
                 == "arn:aws:bedrock:us-east-1:123456789012:model-invocation-logging"
@@ -340,7 +340,7 @@ class Test_bedrock_model_invocation_logs_encryption_enabled:
                 result[0].status_extended
                 == "Bedrock Model Invocation logs are encrypted."
             )
-            assert result[0].resource_id == "unknown"
+            assert result[0].resource_id == "model-invocation-logging"
             assert (
                 result[0].resource_arn
                 == "arn:aws:bedrock:us-east-1:123456789012:model-invocation-logging"
@@ -395,7 +395,7 @@ class Test_bedrock_model_invocation_logs_encryption_enabled:
                 result[0].status_extended
                 == "Bedrock Model Invocation logs are encrypted."
             )
-            assert result[0].resource_id == "unknown"
+            assert result[0].resource_id == "model-invocation-logging"
             assert (
                 result[0].resource_arn
                 == "arn:aws:bedrock:us-east-1:123456789012:model-invocation-logging"

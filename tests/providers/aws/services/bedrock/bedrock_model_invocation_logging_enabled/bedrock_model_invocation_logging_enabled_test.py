@@ -39,7 +39,7 @@ class Test_bedrock_model_invocation_logging_enabled:
                 result[0].status_extended
                 == "Bedrock Model Invocation Logging is disabled."
             )
-            assert result[0].resource_id == "unknown"
+            assert result[0].resource_id == "model-invocation-logging"
             assert (
                 result[0].resource_arn
                 == f"arn:aws:bedrock:{result[0].region}:123456789012:model-invocation-logging"
@@ -50,7 +50,7 @@ class Test_bedrock_model_invocation_logging_enabled:
                 result[1].status_extended
                 == "Bedrock Model Invocation Logging is disabled."
             )
-            assert result[1].resource_id == "unknown"
+            assert result[1].resource_id == "model-invocation-logging"
             assert (
                 result[1].resource_arn
                 == f"arn:aws:bedrock:{result[1].region}:123456789012:model-invocation-logging"
@@ -99,7 +99,7 @@ class Test_bedrock_model_invocation_logging_enabled:
                 result[0].status_extended
                 == "Bedrock Model Invocation Logging is enabled in CloudWatch Log Group: Test and S3 Bucket: testconfigbucket."
             )
-            assert result[0].resource_id == "unknown"
+            assert result[0].resource_id == "model-invocation-logging"
             assert (
                 result[0].resource_arn
                 == "arn:aws:bedrock:us-east-1:123456789012:model-invocation-logging"
@@ -142,7 +142,7 @@ class Test_bedrock_model_invocation_logging_enabled:
                 result[0].status_extended
                 == "Bedrock Model Invocation Logging is enabled in S3 Bucket: testconfigbucket."
             )
-            assert result[0].resource_id == "unknown"
+            assert result[0].resource_id == "model-invocation-logging"
             assert (
                 result[0].resource_arn
                 == "arn:aws:bedrock:us-east-1:123456789012:model-invocation-logging"
@@ -186,7 +186,7 @@ class Test_bedrock_model_invocation_logging_enabled:
                 result[0].status_extended
                 == "Bedrock Model Invocation Logging is enabled in CloudWatch Log Group: Test."
             )
-            assert result[0].resource_id == "unknown"
+            assert result[0].resource_id == "model-invocation-logging"
             assert (
                 result[0].resource_arn
                 == "arn:aws:bedrock:us-east-1:123456789012:model-invocation-logging"

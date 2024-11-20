@@ -8,7 +8,7 @@ class bedrock_model_invocation_logging_enabled(Check):
         for region, logging in bedrock_client.logging_configurations.items():
             report = Check_Report_AWS(self.metadata())
             report.region = region
-            report.resource_id = "unknown"
+            report.resource_id = "model-invocation-logging"
             report.resource_arn = (
                 bedrock_client._get_model_invocation_logging_arn_template(region)
             )
