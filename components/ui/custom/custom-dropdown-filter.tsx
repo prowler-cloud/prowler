@@ -97,7 +97,7 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
       <Popover backdrop="transparent" placement="bottom-start">
         <PopoverTrigger>
           <Button
-            className="border-input hover:bg-accent hover:text-accent-foreground inline-flex h-8 items-center justify-center whitespace-nowrap rounded-md border border-dashed bg-background px-3 text-xs font-medium shadow-sm transition-colors focus-visible:outline-none disabled:opacity-50"
+            className="border-input hover:bg-accent hover:text-accent-foreground inline-flex h-8 items-center justify-center whitespace-nowrap rounded-md border border-dashed bg-background px-3 text-xs font-medium shadow-sm transition-colors focus-visible:outline-none disabled:opacity-50 dark:bg-prowler-blue-800"
             startContent={<PlusCircleIcon size={16} />}
             size="sm"
           >
@@ -126,7 +126,7 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-80">
+        <PopoverContent className="w-80 dark:bg-prowler-blue-800">
           <div className="flex w-full flex-col gap-6 p-2">
             <CheckboxGroup
               color="default"
