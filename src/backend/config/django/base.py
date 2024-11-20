@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     "django_guid",
     "rest_framework_json_api",
     "django_celery_results",
+    "django_celery_beat",
     "rest_framework_simplejwt.token_blacklist",
 ]
 

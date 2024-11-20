@@ -31,6 +31,12 @@ start_worker() {
   poetry run python -m celery -A config.celery worker -l "${DJANGO_LOGGING_LEVEL:-info}" -Q celery,scans -E
 }
 
+start_worker_beat() {
+  echo "Starting the worker-beat..."
+  sleep 15
+  poetry run python -m celery -A config.celery beat -l "${DJANGO_LOGGING_LEVEL:-info}" --scheduler django_celery_beat.schedulers:DatabaseScheduler
+}
+
 manage_db_partitions() {
   if [ "${DJANGO_MANAGE_DB_PARTITIONS}" = "True" ]; then
     echo "Managing DB partitions..."
@@ -55,8 +61,11 @@ case "$1" in
   worker)
     start_worker
     ;;
+  beat)
+    start_worker_beat
+    ;;
   *)
-    echo "Usage: $0 {dev|prod|worker}"
+    echo "Usage: $0 {dev|prod|worker|beat}"
     exit 1
     ;;
 esac

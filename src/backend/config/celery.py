@@ -34,9 +34,13 @@ class RLSTask(Task):
             **options,
         )
         task_result_instance = TaskResult.objects.get(task_id=result.task_id)
-        APITask.objects.create(
-            id=task_result_instance.task_id,
-            tenant_id=kwargs.get("tenant_id"),
-            task_runner_task=task_result_instance,
-        )
+        from api.db_utils import tenant_transaction
+
+        tenant_id = kwargs.get("tenant_id")
+        with tenant_transaction(tenant_id):
+            APITask.objects.create(
+                id=task_result_instance.task_id,
+                tenant_id=tenant_id,
+                task_runner_task=task_result_instance,
+            )
         return result

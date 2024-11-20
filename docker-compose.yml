@@ -87,7 +87,7 @@ services:
       dockerfile: Dockerfile
     image: prowler-worker
     environment:
-      - DJANGO_SETTINGS_MODULE=config.django.production
+      - DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE:-config.django.production}
     env_file:
       - path: ./.env
         required: false
@@ -102,3 +102,24 @@ services:
     entrypoint:
       - "../docker-entrypoint.sh"
       - "worker"
+
+  worker-beat:
+    build:
+      dockerfile: Dockerfile
+    image: prowler-worker
+    environment:
+      - DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE:-config.django.production}
+    env_file:
+      - path: ./.env
+        required: false
+    profiles:
+      - dev
+      - prod
+    depends_on:
+      valkey:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    entrypoint:
+      - "../docker-entrypoint.sh"
+      - "beat"

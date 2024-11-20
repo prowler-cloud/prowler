@@ -1,12 +1,18 @@
+from unittest.mock import patch
+
 import pytest
 from django.urls import reverse
 
 from conftest import TEST_USER, TEST_PASSWORD, get_api_tokens, get_authorization_header
 
 
+@patch("tasks.beat.schedule_provider_scan")
 @pytest.mark.django_db
 def test_check_resources_between_different_tenants(
-    enforce_test_user_db_connection, authenticated_api_client, tenants_fixture
+    schedule_mock,
+    enforce_test_user_db_connection,
+    authenticated_api_client,
+    tenants_fixture,
 ):
     client = authenticated_api_client
 

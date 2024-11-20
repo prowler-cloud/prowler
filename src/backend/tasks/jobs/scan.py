@@ -125,7 +125,8 @@ def perform_prowler_scan(
         scan_instance.started_at = datetime.now(tz=timezone.utc)
         scan_instance.save()
 
-        try:
+    try:
+        with tenant_transaction(tenant_id):
             try:
                 prowler_provider = initialize_prowler_provider(provider_instance)
                 provider_instance.connected = True
@@ -140,18 +141,15 @@ def perform_prowler_scan(
                 )
                 provider_instance.save()
 
-            generate_compliance = (
-                provider_instance.provider != Provider.ProviderChoices.GCP
-            )
-            prowler_scan = ProwlerScan(
-                provider=prowler_provider, checks=checks_to_execute
-            )
+        generate_compliance = provider_instance.provider != Provider.ProviderChoices.GCP
+        prowler_scan = ProwlerScan(provider=prowler_provider, checks=checks_to_execute)
 
-            resource_cache = {}
-            tag_cache = {}
-            last_status_cache = {}
+        resource_cache = {}
+        tag_cache = {}
+        last_status_cache = {}
 
-            for progress, findings in prowler_scan.scan():
+        for progress, findings in prowler_scan.scan():
+            with tenant_transaction(tenant_id):
                 for finding in findings:
                     # Process resource
                     resource_uid = finding.resource_uid
@@ -165,7 +163,7 @@ def perform_prowler_scan(
                                 "region": finding.region,
                                 "service": finding.service_name,
                                 "type": finding.resource_type,
-                                "name": finding.resource_name or "",
+                                "name": finding.resource_name,
                             },
                         )
                         resource_cache[resource_uid] = resource_instance
@@ -251,18 +249,20 @@ def perform_prowler_scan(
                         continue
                     region_dict[finding.check_id] = finding.status.value
 
-                # Update scan progress
+            # Update scan progress
+            with tenant_transaction(tenant_id):
                 scan_instance.progress = progress
                 scan_instance.save()
 
-            scan_instance.state = StateChoices.COMPLETED
+        scan_instance.state = StateChoices.COMPLETED
 
-        except Exception as e:
-            logger.error(f"Error performing scan {scan_id}: {e}")
-            exception = e
-            scan_instance.state = StateChoices.FAILED
+    except Exception as e:
+        logger.error(f"Error performing scan {scan_id}: {e}")
+        exception = e
+        scan_instance.state = StateChoices.FAILED
 
-        finally:
+    finally:
+        with tenant_transaction(tenant_id):
             scan_instance.duration = time.time() - start_time
             scan_instance.completed_at = datetime.now(tz=timezone.utc)
             scan_instance.unique_resource_count = len(unique_resources)

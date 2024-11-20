@@ -92,6 +92,7 @@ from api.v1.serializers import (
     ComplianceOverviewSerializer,
     ComplianceOverviewFullSerializer,
 )
+from tasks.beat import schedule_provider_scan
 from tasks.tasks import (
     check_provider_connection_task,
     delete_provider_task,
@@ -707,6 +708,14 @@ class ProviderViewSet(BaseRLSViewSet):
             },
         )
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        provider = serializer.save()
+        # Schedule a daily scan for the new provider
+        schedule_provider_scan(provider)
+        return Response(data=serializer.data, status=status.HTTP_201_CREATED)
+
 
 @extend_schema_view(
     list=extend_schema(
@@ -745,7 +754,7 @@ class ScanViewSet(BaseRLSViewSet):
     serializer_class = ScanSerializer
     http_method_names = ["get", "post", "patch"]
     filterset_class = ScanFilter
-    ordering = ["-id"]
+    ordering = ["-inserted_at"]
     ordering_fields = [
         "name",
         "trigger",

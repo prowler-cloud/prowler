@@ -681,6 +681,8 @@ class ResourceFindingMapping(PostgresPartitionedModel, RowLevelSecurityProtected
 
     class Meta(RowLevelSecurityProtectedModel.Meta):
         db_table = "resource_finding_mappings"
+        base_manager_name = "objects"
+        abstract = False
 
         # django will automatically create indexes for:
         #   - resource_id
