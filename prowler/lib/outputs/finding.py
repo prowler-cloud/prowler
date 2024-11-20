@@ -42,6 +42,7 @@ class Finding(BaseModel):
     region: str
     compliance: dict
     prowler_version: str = prowler_version
+    back2code: object = None
     raw: dict = Field(default_factory=dict)
 
     @property

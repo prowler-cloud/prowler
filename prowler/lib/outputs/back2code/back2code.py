@@ -16,56 +16,27 @@ import openai
 
 class BACK2CODE(Output):
     """
-    ASFF class represents a transformation of findings into AWS Security Finding Format (ASFF).
 
-    This class provides methods to transform a list of findings into the ASFF format required by AWS Security Hub. It includes operations such as generating unique identifiers, formatting timestamps, handling compliance frameworks, and ensuring the status values match the allowed values in ASFF.
-
-    Attributes:
-        - _data: A list to store the transformed findings.
-        - _file_descriptor: A file descriptor to write to file.
-
-    Methods:
-        - transform(findings: list[Finding]) -> None: Transforms a list of findings into ASFF format.
-        - batch_write_data_to_file() -> None: Writes the findings data to a file in JSON ASFF format.
-        - generate_status(status: str, muted: bool = False) -> str: Generates the ASFF status based on the provided status and muted flag.
-
-    References:
-        - AWS Security Hub API Reference: https://docs.aws.amazon.com/securityhub/1.0/APIReference/API_Compliance.html
-        - AWS Security Finding Format Syntax: https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format-syntax.html
     """
 
     def transform(self, findings: list[Finding]) -> None:
         """
-        Transforms a list of findings into AWS Security Finding Format (ASFF).
-
-        This method iterates over the list of findings provided as input and transforms each finding into the ASFF format required by AWS Security Hub. It performs several operations for each finding, including generating unique identifiers, formatting timestamps, handling compliance frameworks, and ensuring the status values match the allowed values in ASFF.
-
-        Parameters:
-            - findings (list[Finding]): A list of Finding objects representing the findings to be transformed.
-
-        Returns:
-            - None
-
-        Notes:
-            - The method skips findings with a status of "MANUAL" as it is not valid in SecurityHub.
-            - It generates unique identifiers for each finding based on specific attributes.
-            - It formats timestamps in the required ASFF format.
-            - It handles compliance frameworks and associated standards for each finding.
-            - It ensures that the finding status matches the allowed values in ASFF.
-
-        References:
-            - AWS Security Hub API Reference: https://docs.aws.amazon.com/securityhub/1.0/APIReference/API_Compliance.html
-            - AWS Security Finding Format Syntax: https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format-syntax.html
+  
         """
 
-        #No point if we have no OpenAI key currently:
-
+        #No point if we have no OpenAI key currently - Although this may change so we can just give Source Repo file pointers and have AI suggestions optional.
         # Get the API key from the environment variable
         openai_key = getenv("OPENAI_API_KEY")
 
         if not openai_key:
             raise ValueError("OpenAI API key not found. Please set the OPENAI_API_KEY environment variable.")
-                
+
+        # It makes no sense to delay while openAI writes fixes for the same check potentially hundreds of times,
+        # Our output for this module will be cleaner and quicker if we sort by Check and Resource.
+        # Do this while we're looping through our failed findings anyway.
+        findingsByResource = {}
+        findingsByCheck = {} 
+        
         try:
             for finding in findings:
                 # No point digging for code if the finding is not a failed one.
@@ -81,33 +52,61 @@ class BACK2CODE(Output):
                         if enough_breadcrumbs:
                                 # Only call github&gitlab finder if we have enough breadcrumbs.
                                 filesFromCommit = self.finder_public_scm_runner(self, finding.resource_tags)
-                        
-                    # If we found files from a commit, Output some useful info and have AI try to suggest fixes.
-                    if filesFromCommit:
-                        terraform_file_globs = ""
-                        for file in filesFromCommit.files:
-                            if ".tf" in file.fileNameWithPath:
-                                terraform_file_globs = terraform_file_globs + file.fileRawContent
-                        
-                        improved_output = self.improve_terraform(terraform_file_globs, finding.metadata.Description)
-                        if improved_output:
+                                # If we found files from a commit, append to the finding so we can sort|filter|group|uniqie for our AI recommendations
+                                # otherwise we churn generating the same recommendations for potentially multiple resources.
+                                finding.back2code = filesFromCommit
 
-                            print(f"AI Generated suggestions for failed finding: {finding.metadata.CheckTitle}")
-                            print(f"Prowler located the original code at: {filesFromCommit.git_repo}/{filesFromCommit.git_org} at commit: {filesFromCommit.git_commit} \n ")
-                            print(improved_output)
-                            print("--------------------------------------------------------------------------------------------------\n")
-                            print("--------------------------------------------------------------------------------------------------\n")
-                        
-                        else:
-                            print("No improvements suggested by OpenAI. However, the following source code commits locations may be relevant to permenantly fixing your failed finding!:\n") 
-
-
+                # Sort findings by check and Resource
+                                
+                if finding.metadata.CheckID not in findingsByCheck:
+                    findingsByCheck[finding.metadata.CheckID] = []
+                    findingsByCheck[finding.metadata.CheckID].append(finding)
+                else:
+                    findingsByCheck[finding.metadata.CheckID].append(finding)
+                
+                if finding.resource_uid not in findingsByResource:
+                    findingsByResource[finding.resource_uid] = []
+                    findingsByResource[finding.resource_uid].append(finding)
+                else:
+                    findingsByResource[finding.resource_uid].append(finding)
 
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+        # Now we have our findings sorted by check and resource, we can loop through and generate our AI suggestions.
+        ## TEMP - Display Unique Failed checks and resources 
+        for check in findingsByCheck:
+             print(f"Check: {check}")
+             for resource in findingsByCheck[check]:
+                 print(f">> Resource: {resource.resource_uid}")
+        for resource in findingsByResource:
+             print(f"Resource: {resource}") 
+             for check in findingsByResource[resource]:
+                 print(f">> Check: { check.metadata.CheckID}")
+
+        # if filesFromCommit:
+        #     terraform_file_globs = ""
+        #     for file in filesFromCommit.files:
+        #         if ".tf" in file.fileNameWithPath:
+        #             terraform_file_globs = terraform_file_globs + file.fileRawContent
+            
+        #     #improved_output = self.improve_terraform(terraform_file_globs, finding.metadata.Description)
+        #     improved_output = None
+        #     if improved_output:
+
+        #         print(f"AI Generated suggestions for failed finding: {finding.metadata.CheckTitle}")
+        #         print(f"Prowler located the original code at: {filesFromCommit.scmSourceName}, repository: {filesFromCommit.git_repo}/{filesFromCommit.git_org},  commit: {filesFromCommit.git_commit} \n ")
+        #         print(improved_output)
+        #         print("--------------------------------------------------------------------------------------------------\n")
+        #         print("--------------------------------------------------------------------------------------------------\n")
+            
+        #     else:
+        #         print("No improvements suggested by OpenAI. However, the following source code commits locations may be relevant to permenantly fixing your failed finding!:\n") 
+        #         print(f"Prowler located the original code at: {filesFromCommit.scmSourceName}, repository: {filesFromCommit.git_repo}/{filesFromCommit.git_org},  commit: {filesFromCommit.git_commit} \n ")
+
+      
     def improve_terraform(self, terraform_file_globs: str, failed_finding_description: str) -> str:
         
         # Create a prompt to ask OpenAI for suggestions
@@ -187,7 +186,7 @@ class BACK2CODE(Output):
         REPO_OWNER = scmFinderMetadata.git_org
         REPO_NAME = scmFinderMetadata.git_repo
         COMMIT_HASH = scmFinderMetadata.git_commit
-        GITHUB_TOKEN = ""  # Optional: For private repos or higher rate limits
+        GITHUB_TOKEN = getenv("GITHUB_TOKEN") # Optional: For private repos or higher rate limits
 
         # GitHub API URL for the specific commit
         url = f"https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/commits/{COMMIT_HASH}"
@@ -257,6 +256,7 @@ class ScmFinderFoundSourceCodeCollection(BaseModel):
     git_repo: str = None
     git_org: str = None
     files: list[ScmFinderFoundSourceCodeFile] = []
+    scmSourceName: str = None
 
     def github_normalize(dict, scmFinderMetadata):
         # Normalize GitHub data into ScmFinderFoundSourceCodeCollection
@@ -265,10 +265,12 @@ class ScmFinderFoundSourceCodeCollection(BaseModel):
         scmFinderFoundSourceCodeCollection.commit_msg = dict["commit"]["message"]
         scmFinderFoundSourceCodeCollection.git_repo = scmFinderMetadata.git_repo
         scmFinderFoundSourceCodeCollection.git_org = scmFinderMetadata.git_org
+        scmFinderFoundSourceCodeCollection.scmSourceName = "github.com"
         for file in dict["files"]:
             scmFinderFoundSourceCodeFile = ScmFinderFoundSourceCodeFile()
             scmFinderFoundSourceCodeFile.fileNameWithPath = file["filename"]
             scmFinderFoundSourceCodeFile.fileRawURL = file["raw_url"]
+            #TODO Error handling. API Limits will cause checks not to be reported back upwards as we're still in try/except.
             scmFinderFoundSourceCodeFile.fileRawContent = requests.get(file["raw_url"]).text
             scmFinderFoundSourceCodeFile.fileCommitDiff = file["patch"]
             scmFinderFoundSourceCodeFile.fileHash = file["sha"]
