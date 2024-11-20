@@ -1,4 +1,4 @@
-import json  # Necesario para decodificar la política si es una cadena JSON
+import json
 
 from prowler.lib.logger import logger
 from prowler.providers.aws.services.awslambda.awslambda_client import awslambda_client
@@ -32,28 +32,19 @@ def fixer(resource_id: str, region: str) -> bool:
     try:
         regional_client = awslambda_client.regional_clients[region]
 
-        # Get the current policy attached to the Lambda function
         policy_response = regional_client.get_policy(FunctionName=resource_id)
 
-        # Check if the policy exists
         policy = policy_response.get("Policy")
         if policy:
-            # If the policy is a string (JSON format), decode it into a dictionary
             if isinstance(policy, str):
-                policy = json.loads(
-                    policy
-                )  # Decoding the JSON string into a Python dict
+                policy = json.loads(policy)
 
-            # Loop through the policy to find the public permission
             statement_id = None
             for statement in policy.get("Statement", []):
                 if "Principal" in statement and "*" in statement["Principal"]:
-                    statement_id = statement.get(
-                        "Sid"
-                    )  # Use Sid for unique statement identification
+                    statement_id = statement.get("Sid")
                     break
 
-            # If a public permission is found, remove it
             if statement_id:
                 regional_client.remove_permission(
                     FunctionName=resource_id, StatementId=statement_id
