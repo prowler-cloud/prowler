@@ -80,11 +80,17 @@ class BACK2CODE(Output):
         for check in findingsByCheck:
              print(f"Check: {check}")
              for resource in findingsByCheck[check]:
-                 print(f">> Resource: {resource.resource_uid}")
+                 print(f">> Resource: {resource.resource_uid}.")
         for resource in findingsByResource:
              print(f"Resource: {resource}") 
              for check in findingsByResource[resource]:
                  print(f">> Check: { check.metadata.CheckID}")
+                 if check.back2code is not None:
+                    print(f">>>> Infrastructure as Code available! {check.back2code.scmSourceName}::{check.back2code.git_repo}/{check.back2code.git_org}@{check.back2code.git_commit}")
+                 else:
+                     pass
+
+
 
         # if filesFromCommit:
         #     terraform_file_globs = ""
