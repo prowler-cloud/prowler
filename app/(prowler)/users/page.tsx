@@ -5,7 +5,7 @@ import { getUsers } from "@/actions/users/users";
 import { FilterControls } from "@/components/filters";
 import { filterUsers } from "@/components/filters/data-filters";
 import { Header } from "@/components/ui";
-import { DataTable } from "@/components/ui/table";
+import { DataTable, DataTableFilterCustom } from "@/components/ui/table";
 import { AddUserButton } from "@/components/users";
 import { ColumnsUser, SkeletonTableUser } from "@/components/users/table";
 import { SearchParamsProps } from "@/types";
@@ -22,9 +22,10 @@ export default async function Users({
       <Header title="Users" icon="ci:users" />
       <Spacer y={4} />
       <FilterControls search />
-      <Spacer y={4} />
+      <Spacer y={8} />
       <AddUserButton />
-      <Spacer y={4} />
+      <DataTableFilterCustom filters={filterUsers || []} />
+      <Spacer y={8} />
 
       <Suspense key={searchParamsKey} fallback={<SkeletonTableUser />}>
         <SSRDataTable searchParams={searchParams} />
@@ -56,7 +57,6 @@ const SSRDataTable = async ({
       columns={ColumnsUser}
       data={usersData?.data || []}
       metadata={usersData?.meta}
-      customFilters={filterUsers}
     />
   );
 };

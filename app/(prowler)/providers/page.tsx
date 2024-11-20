@@ -9,7 +9,7 @@ import {
   SkeletonTableProviders,
 } from "@/components/providers/table";
 import { Header } from "@/components/ui";
-import { DataTable } from "@/components/ui/table";
+import { DataTable, DataTableFilterCustom } from "@/components/ui/table";
 import { SearchParamsProps } from "@/types";
 
 export default async function Providers({
@@ -25,9 +25,10 @@ export default async function Providers({
 
       <Spacer y={4} />
       <FilterControls search providers />
-      <Spacer y={4} />
+      <Spacer y={8} />
       <AddProvider />
-      <Spacer y={4} />
+      <DataTableFilterCustom filters={filterProviders || []} />
+      <Spacer y={8} />
 
       <Suspense key={searchParamsKey} fallback={<SkeletonTableProviders />}>
         <SSRDataTable searchParams={searchParams} />
@@ -58,7 +59,6 @@ const SSRDataTable = async ({
       columns={ColumnProviders}
       data={providersData?.data || []}
       metadata={providersData?.meta}
-      customFilters={filterProviders}
     />
   );
 };

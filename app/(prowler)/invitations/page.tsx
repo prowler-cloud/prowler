@@ -10,7 +10,7 @@ import {
   SkeletonTableInvitation,
 } from "@/components/invitations/table";
 import { Header } from "@/components/ui";
-import { DataTable } from "@/components/ui/table";
+import { DataTable, DataTableFilterCustom } from "@/components/ui/table";
 import { SearchParamsProps } from "@/types";
 
 export default async function Invitations({
@@ -25,9 +25,10 @@ export default async function Invitations({
       <Header title="Invitations" icon="ci:users" />
       <Spacer y={4} />
       <FilterControls search />
-      <Spacer y={4} />
+      <Spacer y={8} />
       <SendInvitationButton />
-      <Spacer y={4} />
+      <DataTableFilterCustom filters={filterInvitations || []} />
+      <Spacer y={8} />
 
       <Suspense key={searchParamsKey} fallback={<SkeletonTableInvitation />}>
         <SSRDataTable searchParams={searchParams} />
@@ -59,7 +60,6 @@ const SSRDataTable = async ({
       columns={ColumnsInvitation}
       data={invitationsData?.data || []}
       metadata={invitationsData?.meta}
-      customFilters={filterInvitations}
     />
   );
 };

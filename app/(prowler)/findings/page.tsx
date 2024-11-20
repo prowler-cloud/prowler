@@ -9,7 +9,7 @@ import {
   SkeletonTableFindings,
 } from "@/components/findings/table";
 import { Header } from "@/components/ui";
-import { DataTable } from "@/components/ui/table";
+import { DataTable, DataTableFilterCustom } from "@/components/ui/table";
 import { createDict } from "@/lib";
 import { FindingProps, SearchParamsProps } from "@/types/components";
 
@@ -26,7 +26,9 @@ export default async function Findings({
       <Spacer />
       <Spacer y={4} />
       <FilterControls search providers date />
-      <Spacer y={4} />
+      <Spacer y={8} />
+      <DataTableFilterCustom filters={filterFindings || []} />
+      <Spacer y={8} />
       <Suspense key={searchParamsKey} fallback={<SkeletonTableFindings />}>
         <SSRDataTable searchParams={searchParams} />
       </Suspense>
@@ -84,7 +86,6 @@ const SSRDataTable = async ({
       columns={ColumnFindings}
       data={expandedResponse?.data || []}
       metadata={findingsData?.meta}
-      customFilters={filterFindings}
     />
   );
 };

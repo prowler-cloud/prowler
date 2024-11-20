@@ -8,7 +8,7 @@ import { LaunchScanWorkflow } from "@/components/scans/launch-workflow";
 import { SkeletonTableScans } from "@/components/scans/table";
 import { ColumnGetScans } from "@/components/scans/table/scans";
 import { Header } from "@/components/ui";
-import { DataTable } from "@/components/ui/table";
+import { DataTable, DataTableFilterCustom } from "@/components/ui/table";
 import { ProviderProps, SearchParamsProps } from "@/types";
 
 export default async function Scans({
@@ -38,6 +38,8 @@ export default async function Scans({
 
       <Spacer y={4} />
       <LaunchScanWorkflow providers={providerInfo} />
+      <Spacer y={8} />
+      <DataTableFilterCustom filters={filterScans || []} />
       <Spacer y={8} />
 
       <div className="grid grid-cols-12 items-start gap-4">
@@ -76,7 +78,6 @@ const SSRDataTableScans = async ({
       columns={ColumnGetScans}
       data={scansData?.data || []}
       metadata={scansData?.meta}
-      customFilters={filterScans}
     />
   );
 };
