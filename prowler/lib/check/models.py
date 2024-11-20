@@ -482,6 +482,24 @@ class Check_Report_Kubernetes(Check_Report):
         self.namespace = ""
 
 
+@dataclass
+class Check_Report_Microsoft365(Check_Report):
+    # TODO change class name to CheckReportMicrosoft365
+    """Contains the Microsoft365 Check's finding information."""
+
+    resource_name: str
+    resource_id: str
+    subscription: str
+    location: str
+
+    def __init__(self, metadata):
+        super().__init__(metadata)
+        self.resource_name = ""
+        self.resource_id = ""
+        self.subscription = ""
+        self.location = "global"
+
+
 # Testing Pending
 def load_check_metadata(metadata_file: str) -> CheckMetadata:
     """
