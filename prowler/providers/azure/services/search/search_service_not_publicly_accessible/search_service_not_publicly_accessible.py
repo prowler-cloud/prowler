@@ -1,7 +1,5 @@
 from prowler.lib.check.models import Check, Check_Report_Azure
-from prowler.providers.azure.services.search.search_client import (
-    search_client,
-)
+from prowler.providers.azure.services.search.search_client import search_client
 
 
 class search_service_not_publicly_accessible(Check):
@@ -18,10 +16,7 @@ class search_service_not_publicly_accessible(Check):
                 report.status = "FAIL"
                 report.status_extended = f"Search Service {search_service_info.name} from subscription {subscription} allows public access."
 
-                if (
-                    search_service_info.public_network_access.lower()
-                    == "disabled"
-                ):
+                if search_service_info.public_network_access.lower() == "disabled":
                     report.status = "PASS"
                     report.status_extended = f"Search Service {search_service_info.name} from subscription {subscription} does not allows public access."
 

@@ -27,7 +27,7 @@ class Test_search_service_not_publicly_accessible:
             check = search_service_not_publicly_accessible()
             result = check.execute()
             assert len(result) == 0
-    
+
     def test_search_service_not_publicly_accessible_enabled(self):
         search_service_id = str(uuid4())
         search_service_name = "Test Search Service"

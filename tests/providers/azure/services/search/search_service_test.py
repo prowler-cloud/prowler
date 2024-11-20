@@ -1,9 +1,6 @@
 from unittest.mock import patch
 
-from prowler.providers.azure.services.search.search_service import (
-    Search, 
-    SearchService,
-)
+from prowler.providers.azure.services.search.search_service import Search, SearchService
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
     set_mocked_azure_provider,
@@ -17,7 +14,7 @@ def mock_storage_get_search_services(_):
                 id="id",
                 name="name",
                 location="westeurope",
-                public_network_access="Enabled"
+                public_network_access="Enabled",
             )
         ]
     }
@@ -43,10 +40,8 @@ class Test_Search_Service:
         )
         assert search.search_services[AZURE_SUBSCRIPTION_ID][0].id == "id"
         assert search.search_services[AZURE_SUBSCRIPTION_ID][0].name == "name"
+        assert search.search_services[AZURE_SUBSCRIPTION_ID][0].location == "westeurope"
         assert (
-            search.search_services[AZURE_SUBSCRIPTION_ID][0].location == "westeurope"
+            search.search_services[AZURE_SUBSCRIPTION_ID][0].public_network_access
+            == "Enabled"
         )
-        assert (
-            search.search_services[AZURE_SUBSCRIPTION_ID][0].public_network_access == "Enabled"
-        )
-        

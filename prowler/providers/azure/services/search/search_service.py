@@ -26,7 +26,7 @@ class Search(AzureService):
                             id=search_service.id,
                             name=search_service.name,
                             location=search_service.location,
-                            public_network_access=search_service.public_network_access
+                            public_network_access=search_service.public_network_access,
                         )
                     )
             except Exception as error:
@@ -42,4 +42,3 @@ class SearchService:
     name: str
     location: str
     public_network_access: str
-    
