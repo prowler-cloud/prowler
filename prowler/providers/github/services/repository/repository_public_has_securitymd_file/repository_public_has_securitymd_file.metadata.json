@@ -1,6 +1,6 @@
 {
   "Provider": "github",
-  "CheckID": "public_repository_has_securitymd_file",
+  "CheckID": "repository_public_has_securitymd_file",
   "CheckTitle": "Check if public repositories have a SECURITY.md file",
   "CheckType": [
     "CIS GitHub Benchmark v1.0.0"
