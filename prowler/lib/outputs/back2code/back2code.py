@@ -24,20 +24,18 @@ class BACK2CODE(Output):
   
         """
 
-        #Create our SCM cache object.
+        #Create our SCM cache object. This prevents us from making the same API calls (currently only to github.com) multiple times.
         global scmFinderLookupCache 
         scmFinderLookupCache = ScmFinderLookupCache()
 
-        #No point if we have no OpenAI key currently - Although this may change so we can just give Source Repo file pointers and have AI suggestions optional.
         # Get the API key from the environment variable
         openai_key = getenv("OPENAI_API_KEY")
 
         if not openai_key:
-            raise ValueError("OpenAI API key not found. Please set the OPENAI_API_KEY environment variable.")
+            openai_key = None # We can still run the code without an API key, but we won't get AI suggestions.
 
-        # It makes no sense to delay while openAI writes fixes for the same check potentially hundreds of times,
         # Our output for this module will be cleaner and quicker if we sort by Check and Resource.
-        # Do this while we're looping through our failed findings anyway.
+        # We can then generate our AI suggestions for each unique check, vs each unique finding.
         findingsByResource = {}
         findingsByCheck = {} 
         
@@ -46,7 +44,7 @@ class BACK2CODE(Output):
                 # No point digging for code if the finding is not a failed one.
                 if finding.status.value == 'FAIL':
                     filesFromCommit = []
-                    # Try to find a maching PUBLIC commit, github.com
+                    # Try to find a maching public source code commit for the finding based on tags (from yor.io)
                     if finding.resource_tags.__len__() > 0:
                         enough_breadcrumbs = False
                         if "yor_trace" in finding.resource_tags:
@@ -54,14 +52,13 @@ class BACK2CODE(Output):
                         if "git_commit" in finding.resource_tags:
                             enough_breadcrumbs = True
                         if enough_breadcrumbs:
-                                # Only call github&gitlab finder if we have enough breadcrumbs.
-                                filesFromCommit = self.finder_public_scm_runner(self, finding.resource_tags)
-                                # If we found files from a commit, append to the finding so we can sort|filter|group|uniqie for our AI recommendations
-                                # otherwise we churn generating the same recommendations for potentially multiple resources.
-                                finding.back2code = filesFromCommit
+                            # Only call github&gitlab finder if we have enough breadcrumbs.
+                            filesFromCommit = self.finder_public_scm_runner(self, finding.resource_tags)
+                            # If we found files from a commit, append to the finding so we can sort|filter|group|uniqie for our AI recommendations
+                            # otherwise we churn generating the same recommendations for potentially multiple resources.
+                            finding.back2code = filesFromCommit
 
-                # Sort findings by check and Resource
-                                
+                # Sort findings by check and Resource                
                 if finding.metadata.CheckID not in findingsByCheck:
                     findingsByCheck[finding.metadata.CheckID] = []
                     findingsByCheck[finding.metadata.CheckID].append(finding)
@@ -76,25 +73,40 @@ class BACK2CODE(Output):
 
         except Exception as error:
             logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"Errors in Back2Code output. Do not rely on results without confirming this error. report goto.prowler.com/slack \n Error is: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-        # Now we have our findings sorted by check and resource, we can loop through and generate our AI suggestions.
-        ## TEMP - Display Unique Failed checks and resources 
+        # Pick a single finding per check to generate AI suggestions for.
+        # Add to check metadata before finally rendering outputs.
+
         for check in findingsByCheck:
-             print(f"Check: {check}")
-             for resource in findingsByCheck[check]:
-                 print(f">> Resource: {resource.resource_uid}.")
-                 if resource.back2code is not None:
-                    print(f">>>> Infrastructure as Code available! {resource.back2code.scmSourceName}::{resource.back2code.git_repo}/{resource.back2code.git_org}@{resource.back2code.git_commit}")
-        for resource in findingsByResource:
-             print(f"Resource: {resource}") 
-             for check in findingsByResource[resource]:
-                 print(f">> Check: { check.metadata.CheckID}")
-                 if check.back2code is not None:
-                    print(f">>>> Infrastructure as Code available! {check.back2code.scmSourceName}::{check.back2code.git_repo}/{check.back2code.git_org}@{check.back2code.git_commit}")
-                 else:
-                     pass
+            for resource in findingsByCheck[check]:
+                if resource.back2code is not None:
+                    terraform_file_globs = ""
+                    if openai_key is not None: #We have openAI creds. Generate additional fix/info.
+                        for file in resource.back2code.files:
+                            if ".tf" in file.fileNameWithPath:
+                                    terraform_file_globs = terraform_file_globs + file.fileRawContent
+                                    improved_output = self.improve_terraform(terraform_file_globs, finding.metadata.Description)
+                                    if improved_output:
+                                        #print(f"AI Generated suggestions for failed finding: {finding.metadata.CheckTitle}")
+                                        print(f"Prowler located the original code at: {filesFromCommit.scmSourceName}, repository: {filesFromCommit.git_repo}/{filesFromCommit.git_org},  commit: {filesFromCommit.git_commit} \n ")
+                                        resource.back2code_aisuggestions = improved_output
+                                    else:
+                                        #print("No improvements suggested by OpenAI. However, the following source code commits locations may be relevant to permenantly fixing your failed finding!:\n") 
+                                        #print(f"Prowler located the original code at: {filesFromCommit.scmSourceName}, repository: {filesFromCommit.git_repo}/{filesFromCommit.git_org},  commit: {filesFromCommit.git_commit} \n ")
+                                        continue
+
+                        break  # Skip the rest of the loop after the first if statement. We only need one finding per check to generate AI suggestions for.
+            
+        # for resource in findingsByResource:
+        #      print(f"Resource: {resource}") 
+        #      for check in findingsByResource[resource]:
+        #          print(f">> Check: { check.metadata.CheckID}")
+        #          if check.back2code is not None:
+        #             print(f">>>> Infrastructure as Code available! {check.back2code.scmSourceName}::{check.back2code.git_repo}/{check.back2code.git_org}@{check.back2code.git_commit}")
+        #          else:
+        #              pass
 
 
 

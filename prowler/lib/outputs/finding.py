@@ -43,6 +43,7 @@ class Finding(BaseModel):
     compliance: dict
     prowler_version: str = prowler_version
     back2code: object = None
+    back2code_aisuggestions: object = None
     raw: dict = Field(default_factory=dict)
 
     @property
