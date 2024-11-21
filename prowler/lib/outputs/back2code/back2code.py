@@ -98,39 +98,7 @@ class BACK2CODE(Output):
                                         continue
 
                         break  # Skip the rest of the loop after the first if statement. We only need one finding per check to generate AI suggestions for.
-            
-        # for resource in findingsByResource:
-        #      print(f"Resource: {resource}") 
-        #      for check in findingsByResource[resource]:
-        #          print(f">> Check: { check.metadata.CheckID}")
-        #          if check.back2code is not None:
-        #             print(f">>>> Infrastructure as Code available! {check.back2code.scmSourceName}::{check.back2code.git_repo}/{check.back2code.git_org}@{check.back2code.git_commit}")
-        #          else:
-        #              pass
 
-
-
-        # if filesFromCommit:
-        #     terraform_file_globs = ""
-        #     for file in filesFromCommit.files:
-        #         if ".tf" in file.fileNameWithPath:
-        #             terraform_file_globs = terraform_file_globs + file.fileRawContent
-            
-        #     #improved_output = self.improve_terraform(terraform_file_globs, finding.metadata.Description)
-        #     improved_output = None
-        #     if improved_output:
-
-        #         print(f"AI Generated suggestions for failed finding: {finding.metadata.CheckTitle}")
-        #         print(f"Prowler located the original code at: {filesFromCommit.scmSourceName}, repository: {filesFromCommit.git_repo}/{filesFromCommit.git_org},  commit: {filesFromCommit.git_commit} \n ")
-        #         print(improved_output)
-        #         print("--------------------------------------------------------------------------------------------------\n")
-        #         print("--------------------------------------------------------------------------------------------------\n")
-            
-        #     else:
-        #         print("No improvements suggested by OpenAI. However, the following source code commits locations may be relevant to permenantly fixing your failed finding!:\n") 
-        #         print(f"Prowler located the original code at: {filesFromCommit.scmSourceName}, repository: {filesFromCommit.git_repo}/{filesFromCommit.git_org},  commit: {filesFromCommit.git_commit} \n ")
-
-      
     def improve_terraform(self, terraform_file_globs: str, failed_finding_description: str) -> str:
         
         # Create a prompt to ask OpenAI for suggestions
