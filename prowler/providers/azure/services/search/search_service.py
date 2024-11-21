@@ -7,8 +7,7 @@ from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.azure.lib.service.service import AzureService
 
 
-########################## Search
-class Search(AzureService):
+class AISearch(AzureService):
     def __init__(self, provider: AzureProvider):
         super().__init__(SearchManagementClient, provider)
         self.search_services = self._get_search_services()
