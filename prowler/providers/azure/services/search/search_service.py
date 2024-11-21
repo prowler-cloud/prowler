@@ -17,7 +17,7 @@ class AISearch(AzureService):
         search_services = {}
         for subscription, client in self.clients.items():
             try:
-                search_services.update({subscription: []})
+                search_services.update({subscription: {}})
                 search_services_list = client.services.list_by_subscription()
                 for search_service in search_services_list:
                     search_services[subscription].append(
