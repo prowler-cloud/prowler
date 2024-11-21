@@ -1223,3 +1223,50 @@ class ComplianceOverviewFullSerializer(ComplianceOverviewSerializer):
         Returns the detailed structure of requirements.
         """
         return obj.requirements
+
+
+# Overviews
+
+
+class OverviewProviderSerializer(serializers.Serializer):
+    id = serializers.CharField(source="provider")
+    findings = serializers.SerializerMethodField(read_only=True)
+    resources = serializers.SerializerMethodField(read_only=True)
+
+    class JSONAPIMeta:
+        resource_name = "provider-overviews"
+
+    def get_root_meta(self, _resource, _many):
+        return {"version": "v1"}
+
+    @extend_schema_field(
+        {
+            "type": "object",
+            "properties": {
+                "pass": {"type": "integer"},
+                "fail": {"type": "integer"},
+                "manual": {"type": "integer"},
+                "total": {"type": "integer"},
+            },
+        }
+    )
+    def get_findings(self, obj):
+        return {
+            "pass": obj["findings_passed"],
+            "fail": obj["findings_failed"],
+            "manual": obj["findings_manual"],
+            "total": obj["total_findings"],
+        }
+
+    @extend_schema_field(
+        {
+            "type": "object",
+            "properties": {
+                "total": {"type": "integer"},
+            },
+        }
+    )
+    def get_resources(self, obj):
+        return {
+            "total": obj["total_resources"],
+        }

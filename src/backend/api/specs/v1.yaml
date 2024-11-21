@@ -780,6 +780,38 @@ paths:
               schema:
                 $ref: '#/components/schemas/OpenApiResponseResponse'
           description: ''
+  /api/v1/overviews/providers:
+    get:
+      operationId: overviews_providers_retrieve
+      description: Fetch aggregated summaries of the latest findings and resources
+        for each provider. This includes counts of passed, failed, and manual findings,
+        as well as the total number of resources managed by each provider.
+      summary: List aggregated overview data for providers
+      parameters:
+      - in: query
+        name: fields[provider-overviews]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - findings
+            - resources
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      tags:
+      - Overview
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/OverviewProviderResponse'
+          description: ''
   /api/v1/provider_groups:
     get:
       operationId: provider_groups_list
@@ -4368,6 +4400,56 @@ components:
           $ref: '#/components/schemas/Membership'
       required:
       - data
+    OverviewProvider:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/OverviewProviderTypeEnum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        id: {}
+        attributes:
+          type: object
+          properties:
+            id:
+              type: string
+            findings:
+              type: object
+              properties:
+                pass:
+                  type: integer
+                fail:
+                  type: integer
+                manual:
+                  type: integer
+                total:
+                  type: integer
+              readOnly: true
+            resources:
+              type: object
+              properties:
+                total:
+                  type: integer
+              readOnly: true
+          required:
+          - id
+    OverviewProviderResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/OverviewProvider'
+      required:
+      - data
+    OverviewProviderTypeEnum:
+      type: string
+      enum:
+      - provider-overviews
     PaginatedComplianceOverviewList:
       type: object
       required:
@@ -6858,6 +6940,9 @@ tags:
 - name: Finding
   description: Endpoints for managing findings, allowing retrieval and filtering of
     findings that result from scans.
+- name: Overview
+  description: Endpoints for retrieving aggregated summaries of resources from the
+    system.
 - name: Compliance Overview
   description: Endpoints for checking the compliance overview, allowing filtering
     by scan, provider or compliance framework ID.

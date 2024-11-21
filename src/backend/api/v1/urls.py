@@ -19,6 +19,7 @@ from api.v1.views import (
     ProviderSecretViewSet,
     InvitationViewSet,
     InvitationAcceptViewSet,
+    OverviewViewSet,
     ComplianceOverviewViewSet,
 )
 
@@ -35,6 +36,7 @@ router.register(r"findings", FindingViewSet, basename="finding")
 router.register(
     r"compliance-overviews", ComplianceOverviewViewSet, basename="complianceoverview"
 )
+router.register(r"overviews", OverviewViewSet, basename="overview")
 
 tenants_router = routers.NestedSimpleRouter(router, r"tenants", lookup="tenant")
 tenants_router.register(

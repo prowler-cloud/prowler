@@ -2,7 +2,7 @@ from celery.result import AsyncResult
 from django.conf import settings as django_settings
 from django.contrib.postgres.search import SearchQuery
 from django.db import transaction
-from django.db.models import F, Q, Prefetch, OuterRef, Subquery
+from django.db.models import Prefetch, Subquery, OuterRef, Count, Q, F
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_control
@@ -45,6 +45,7 @@ from api.filters import (
     ComplianceOverviewFilter,
 )
 from api.models import (
+    StatusChoices,
     User,
     Membership,
     Provider,
@@ -91,6 +92,7 @@ from api.v1.serializers import (
     InvitationAcceptSerializer,
     ComplianceOverviewSerializer,
     ComplianceOverviewFullSerializer,
+    OverviewProviderSerializer,
 )
 from tasks.beat import schedule_provider_scan
 from tasks.tasks import (
@@ -201,6 +203,10 @@ class SchemaView(SpectacularAPIView):
                 "name": "Finding",
                 "description": "Endpoints for managing findings, allowing retrieval and filtering of "
                 "findings that result from scans.",
+            },
+            {
+                "name": "Overview",
+                "description": "Endpoints for retrieving aggregated summaries of resources from the system.",
             },
             {
                 "name": "Compliance Overview",
@@ -1284,3 +1290,95 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
                 ]
             )
         return super().list(request, *args, **kwargs)
+
+
+@extend_schema(tags=["Overview"])
+@extend_schema_view(
+    providers=extend_schema(
+        summary="List aggregated overview data for providers",
+        description="Fetch aggregated summaries of the latest findings and resources for each provider. "
+        "This includes counts of passed, failed, and manual findings, as well as the total number "
+        "of resources managed by each provider.",
+    ),
+)
+@method_decorator(CACHE_DECORATOR, name="list")
+class OverviewViewSet(BaseRLSViewSet):
+    queryset = ComplianceOverview.objects.all()
+    http_method_names = ["get"]
+    ordering = ["compliance_id"]
+
+    def get_queryset(self):
+        return Finding.objects.all()
+
+    def get_serializer_class(self):
+        if self.action == "providers":
+            return OverviewProviderSerializer
+        return super().get_serializer_class()
+
+    @extend_schema(exclude=True)
+    def list(self, request, *args, **kwargs):
+        raise MethodNotAllowed(method="GET")
+
+    @extend_schema(exclude=True)
+    def retrieve(self, request, *args, **kwargs):
+        raise MethodNotAllowed(method="GET")
+
+    @action(detail=False, methods=["get"], url_name="providers")
+    def providers(self, request):
+        # Subquery to get the most recent finding for each uid
+        latest_finding_ids = (
+            Finding.objects.filter(
+                uid=OuterRef("uid"), scan__provider=OuterRef("scan__provider")
+            )
+            .order_by("-id")  # Most recent by id
+            .values("id")[:1]
+        )
+
+        # Filter findings to only include the most recent for each uid
+        recent_findings = Finding.objects.filter(id__in=Subquery(latest_finding_ids))
+
+        # Aggregate findings by provider
+        findings_aggregated = (
+            recent_findings.values("scan__provider__provider")
+            .annotate(
+                findings_passed=Count("id", filter=Q(status=StatusChoices.PASS.value)),
+                findings_failed=Count("id", filter=Q(status=StatusChoices.FAIL.value)),
+                findings_manual=Count(
+                    "id", filter=Q(status=StatusChoices.MANUAL.value)
+                ),
+                total_findings=Count("id"),
+            )
+            .order_by("-findings_failed")
+        )
+
+        # Aggregate total resources by provider
+        resources_aggregated = Resource.objects.values("provider__provider").annotate(
+            total_resources=Count("id")
+        )
+
+        # Combine findings and resources data
+        overview = []
+        for findings in findings_aggregated:
+            provider = findings["scan__provider__provider"]
+            total_resources = next(
+                (
+                    res["total_resources"]
+                    for res in resources_aggregated
+                    if res["provider__provider"] == provider
+                ),
+                0,  # Default to 0 if no resources are found
+            )
+            overview.append(
+                {
+                    "provider": provider,
+                    "total_resources": total_resources,
+                    "total_findings": findings["total_findings"],
+                    "findings_passed": findings["findings_passed"],
+                    "findings_failed": findings["findings_failed"],
+                    "findings_manual": findings["findings_manual"],
+                }
+            )
+
+        serializer = OverviewProviderSerializer(overview, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
