@@ -25,8 +25,11 @@ class AISearch(AzureService):
                             aisearch_service.id: AISearchService(
                                 name=aisearch_service.name,
                                 location=aisearch_service.location,
-                                public_network_access=getattr(
-                                    aisearch_service, "public_network_access", True
+                                public_network_access=(
+                                    False
+                                    if aisearch_service.public_network_access
+                                    == "Disabled"
+                                    else True
                                 ),
                             )
                         }
