@@ -14,7 +14,7 @@ def mock_storage_get_search_services(_):
                 id="id",
                 name="name",
                 location="westeurope",
-                public_network_access="Enabled",
+                public_network_access=True,
             )
         ]
     }
@@ -41,7 +41,4 @@ class Test_Search_Service:
         assert search.search_services[AZURE_SUBSCRIPTION_ID][0].id == "id"
         assert search.search_services[AZURE_SUBSCRIPTION_ID][0].name == "name"
         assert search.search_services[AZURE_SUBSCRIPTION_ID][0].location == "westeurope"
-        assert (
-            search.search_services[AZURE_SUBSCRIPTION_ID][0].public_network_access
-            == "Enabled"
-        )
+        assert search.search_services[AZURE_SUBSCRIPTION_ID][0].public_network_access

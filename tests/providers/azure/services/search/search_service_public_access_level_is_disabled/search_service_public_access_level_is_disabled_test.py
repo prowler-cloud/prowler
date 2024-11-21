@@ -38,7 +38,7 @@ class Test_search_service_not_publicly_accessible:
                     id=search_service_id,
                     name=search_service_name,
                     location="westeurope",
-                    public_network_access="Enabled",
+                    public_network_access=True,
                 )
             ]
         }
@@ -77,7 +77,7 @@ class Test_search_service_not_publicly_accessible:
                     id=search_service_id,
                     name=search_service_name,
                     location="westeurope",
-                    public_network_access="Disabled",
+                    public_network_access=False,
                 )
             ]
         }

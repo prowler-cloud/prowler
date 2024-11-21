@@ -16,7 +16,7 @@ class search_service_not_publicly_accessible(Check):
                 report.status = "FAIL"
                 report.status_extended = f"Search Service {search_service_info.name} from subscription {subscription} allows public access."
 
-                if search_service_info.public_network_access.lower() == "disabled":
+                if not search_service_info.public_network_access:
                     report.status = "PASS"
                     report.status_extended = f"Search Service {search_service_info.name} from subscription {subscription} does not allows public access."
 
