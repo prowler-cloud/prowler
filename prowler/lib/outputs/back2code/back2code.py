@@ -11,18 +11,22 @@ from prowler.lib.outputs.finding import Finding
 from prowler.lib.outputs.output import Output
 from prowler.lib.utils.utils import hash_sha512
 
+
 import openai
 
 
 class BACK2CODE(Output):
     """
-
     """
 
     def transform(self, findings: list[Finding]) -> None:
         """
   
         """
+
+        #Create our SCM cache object.
+        global scmFinderLookupCache 
+        scmFinderLookupCache = ScmFinderLookupCache()
 
         #No point if we have no OpenAI key currently - Although this may change so we can just give Source Repo file pointers and have AI suggestions optional.
         # Get the API key from the environment variable
@@ -81,6 +85,8 @@ class BACK2CODE(Output):
              print(f"Check: {check}")
              for resource in findingsByCheck[check]:
                  print(f">> Resource: {resource.resource_uid}.")
+                 if resource.back2code is not None:
+                    print(f">>>> Infrastructure as Code available! {resource.back2code.scmSourceName}::{resource.back2code.git_repo}/{resource.back2code.git_org}@{resource.back2code.git_commit}")
         for resource in findingsByResource:
              print(f"Resource: {resource}") 
              for check in findingsByResource[resource]:
@@ -154,6 +160,7 @@ class BACK2CODE(Output):
 
     @staticmethod
     def finder_public_scm_runner(self, tags: dict) -> dict:
+
         # Try to complete missing information from tags into a usable GitHub API request for the code within the commit.
         # We need: 
         # - The repository name.
@@ -169,7 +176,7 @@ class BACK2CODE(Output):
         #NOT IMPLIMENTED YET
             # We're working off a yor_trace
             # We may find a code resource, not a specific commit.
-            # TODO: FOCUS ON COMMIT FIRST.
+            # TODO: work on yor trace after we have a working commit+repo+org finder.
             return None
         
         if scmFinderMetadata.git_commit is not None:
@@ -177,8 +184,17 @@ class BACK2CODE(Output):
                 if scmFinderMetadata.git_org is not None and scmFinderMetadata.git_repo is not None:
                     # We have enough information to query the GitHub API.
                     # We can now find the code.
-                    filesFromCommit = self.finder_public_scm_github(scmFinderMetadata)
-                    return filesFromCommit
+                    # Check the cache first.
+                    cacheHash = hash_sha512(f"{scmFinderMetadata.git_org}{scmFinderMetadata.git_repo}{scmFinderMetadata.git_commit}")
+                    cacheResult = scmFinderLookupCache.cacheLookup(cacheHash)
+                    if cacheResult is not None:
+                        logger.info(f"Cache hit for {scmFinderMetadata.git_org}/{scmFinderMetadata.git_repo}@{scmFinderMetadata.git_commit}")
+                        return cacheResult
+                    else:
+                        logger.info(f"Cache miss for {scmFinderMetadata.git_org}/{scmFinderMetadata.git_repo}@{scmFinderMetadata.git_commit}")
+                        filesFromCommit = self.finder_public_scm_github(scmFinderMetadata)
+                        scmFinderLookupCache.cacheWrite(cacheHash, filesFromCommit)
+                        return filesFromCommit
                 
         return None
 
@@ -263,6 +279,7 @@ class ScmFinderFoundSourceCodeCollection(BaseModel):
     git_org: str = None
     files: list[ScmFinderFoundSourceCodeFile] = []
     scmSourceName: str = None
+    cacheHash: str = None #Hash of repo/org/comit for cacheing results from SCA's.
 
     def github_normalize(dict, scmFinderMetadata):
         # Normalize GitHub data into ScmFinderFoundSourceCodeCollection
@@ -282,4 +299,23 @@ class ScmFinderFoundSourceCodeCollection(BaseModel):
             scmFinderFoundSourceCodeFile.fileHash = file["sha"]
             scmFinderFoundSourceCodeCollection.files.append(scmFinderFoundSourceCodeFile)
         return scmFinderFoundSourceCodeCollection
-    
+
+     
+class ScmFinderLookupCache(BaseModel):
+    """
+    Class used to store and retrieve SCM data from the cache.
+    Takes a hash of the SCM provider, repo, org and commit hash as a key.
+    Responds with the Object if already stored.
+    Returns a cache miss if not.
+    """
+    cache: dict[str, ScmFinderFoundSourceCodeCollection] = {}
+
+    def cacheLookup(self, hash: str):
+        if hash in self.cache:
+            return self.cache[hash]
+        else:
+            return None
+      
+    def cacheWrite(self, hash: str, data: ScmFinderFoundSourceCodeCollection):
+        self.cache[hash] = data
+        return data
