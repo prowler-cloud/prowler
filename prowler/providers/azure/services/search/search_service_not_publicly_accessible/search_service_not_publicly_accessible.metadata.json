@@ -1,7 +1,7 @@
 {
   "Provider": "azure",
   "CheckID": "aisearch_service_not_publicly_accessible",
-  "CheckTitle": "Restrict public network access to the Search Service",
+  "CheckTitle": "Restrict public network access to the AI Search Service",
   "CheckType": [],
   "ServiceName": "search",
   "SubServiceName": "",
