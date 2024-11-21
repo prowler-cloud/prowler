@@ -1,9 +1,9 @@
 from prowler.lib.check.models import Check, Check_Report_Azure
 from prowler.providers.azure.services.search.search_client import search_client
+form typing import List
 
-
-class search_service_not_publicly_accessible(Check):
-    def execute(self) -> list[Check_Report_Azure]:
+class aisearch_service_not_publicly_accessible(Check):
+    def execute(self) -> List[Check_Report_Azure]:
         findings = []
 
         for subscription, search_services in search_client.search_services.items():
