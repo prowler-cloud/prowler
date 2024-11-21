@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "storagegateway_gateway_fault_tolerant",
+  "CheckTitle": "Check if AWS StorageGateway Gateways are hosted in a fault-tolerant environment.",
+  "CheckType": [
+    "Resilience"
+  ],
+  "ServiceName": "storagegateway",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:storagegateway:region:account-id:share",
+  "Severity": "low",
+  "ResourceType": "Other",
+  "Description": "Storage Gateway, when hosted on an EC2 environment, runs on a single EC2 instance. This is a single-point of failure for any applications expecting highly available access to application storage.",
+  "Risk": "Running Storage Gateway as a mechanism for providing file-based application storage that require high-availability increases the risk of application outages if any AZ outages occur.",
+  "RelatedUrl": "https://docs.aws.amazon.com/filegateway/latest/files3/disaster-recovery-resiliency.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Migrating workloads to Amazon EFS, FSx, or other storage services can provide higher availability architectures if required.",
+      "Url": "https://docs.aws.amazon.com/filegateway/latest/files3/resource-vm-setup.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

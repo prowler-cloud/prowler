@@ -7,6 +7,7 @@ def fixer(resource_id: str, region: str) -> bool:
     Modify the attributes of an RDS instance to disable public accessibility.
     Specifically, this fixer sets the 'PubliclyAccessible' attribute to False
     to prevent the RDS instance from being publicly accessible.
+
     Requires the rds:ModifyDBInstance permission:
     {
         "Version": "2012-10-17",
@@ -18,9 +19,11 @@ def fixer(resource_id: str, region: str) -> bool:
             }
         ]
     }
+
     Args:
         resource_id (str): The DB instance identifier.
         region (str): AWS region where the DB instance exists.
+
     Returns:
         bool: True if the operation is successful (public access is disabled), False otherwise.
     """

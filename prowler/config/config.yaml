@@ -368,6 +368,11 @@ aws:
   # Maximum number of days a secret should be rotated
   max_days_secret_unrotated: 90
 
+  # AWS Kinesis Configuration
+  # Minimum retention period in hours for Kinesis streams
+  min_kinesis_stream_retention_hours: 168 # 7 days
+
+
 # Azure Configuration
 azure:
   # Azure Network Configuration
