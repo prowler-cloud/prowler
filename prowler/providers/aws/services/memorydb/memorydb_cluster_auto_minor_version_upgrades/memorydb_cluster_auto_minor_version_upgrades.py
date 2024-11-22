@@ -2,7 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.memorydb.memorydb_client import memorydb_client
 
 
-class memorydb_minor_version_upgrade_enabled(Check):
+class memorydb_cluster_auto_minor_version_upgrades(Check):
     def execute(self):
         findings = []
         for cluster in memorydb_client.clusters.values():

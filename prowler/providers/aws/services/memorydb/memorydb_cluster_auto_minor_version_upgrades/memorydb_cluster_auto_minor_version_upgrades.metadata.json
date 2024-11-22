@@ -1,9 +1,9 @@
 {
   "Provider": "aws",
-  "CheckID": "memorydb_minor_version_upgrade_enabled",
+  "CheckID": "memorydb_cluster_auto_minor_version_upgrades",
   "CheckTitle": "Ensure Memory DB clusters have minor version upgrade enabled.",
   "CheckType": [],
-  "ServiceName": "rds",
+  "ServiceName": "memorydb",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:memorydb:region:account-id:db-cluster",
   "Severity": "medium",
@@ -15,12 +15,12 @@
     "Code": {
       "CLI": "aws memorydb update-cluster --cluster-name <cluster-name> --auto-minor-version-upgrade ",
       "NativeIaC": "",
-      "Other": "https://docs.aws.amazon.com/memorydb/latest/devguide/engine-versions.html",
+      "Other": "",
       "Terraform": ""
     },
     "Recommendation": {
       "Text": "Enable auto minor version upgrade for all Memory DB clusters.",
-      "Url": "https://docs.aws.amazon.com/memorydb/latest/devguide/engine-versions.html"
+      "Url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_UpgradeDBInstance.Upgrading.html#USER_UpgradeDBInstance.Upgrading.AutoMinorVersionUpgrades"
     }
   },
   "Categories": [],

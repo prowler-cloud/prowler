@@ -8,7 +8,7 @@ memorydb_arn = (
 )
 
 
-class Test_memorydb_minor_version_upgrade_enabled:
+class Test_memorydb_cluster_auto_minor_version_upgrades:
     def test_no_memorydb(self):
         memorydb_client = mock.MagicMock
         memorydb_client.clusters = {}
@@ -17,14 +17,14 @@ class Test_memorydb_minor_version_upgrade_enabled:
             "prowler.providers.aws.services.memorydb.memorydb_service.MemoryDB",
             new=memorydb_client,
         ), mock.patch(
-            "prowler.providers.aws.services.memorydb.memorydb_minor_version_upgrade_enabled.memorydb_minor_version_upgrade_enabled.memorydb_client",
+            "prowler.providers.aws.services.memorydb.memorydb_cluster_auto_minor_version_upgrades.memorydb_cluster_auto_minor_version_upgrades.memorydb_client",
             new=memorydb_client,
         ):
-            from prowler.providers.aws.services.memorydb.memorydb_minor_version_upgrade_enabled.memorydb_minor_version_upgrade_enabled import (
-                memorydb_minor_version_upgrade_enabled,
+            from prowler.providers.aws.services.memorydb.memorydb_cluster_auto_minor_version_upgrades.memorydb_cluster_auto_minor_version_upgrades import (
+                memorydb_cluster_auto_minor_version_upgrades,
             )
 
-            check = memorydb_minor_version_upgrade_enabled()
+            check = memorydb_cluster_auto_minor_version_upgrades()
             result = check.execute()
 
             assert len(result) == 0
@@ -56,14 +56,14 @@ class Test_memorydb_minor_version_upgrade_enabled:
             "prowler.providers.aws.services.memorydb.memorydb_service.MemoryDB",
             new=memorydb_client,
         ), mock.patch(
-            "prowler.providers.aws.services.memorydb.memorydb_minor_version_upgrade_enabled.memorydb_minor_version_upgrade_enabled.memorydb_client",
+            "prowler.providers.aws.services.memorydb.memorydb_cluster_auto_minor_version_upgrades.memorydb_cluster_auto_minor_version_upgrades.memorydb_client",
             new=memorydb_client,
         ):
-            from prowler.providers.aws.services.memorydb.memorydb_minor_version_upgrade_enabled.memorydb_minor_version_upgrade_enabled import (
-                memorydb_minor_version_upgrade_enabled,
+            from prowler.providers.aws.services.memorydb.memorydb_cluster_auto_minor_version_upgrades.memorydb_cluster_auto_minor_version_upgrades import (
+                memorydb_cluster_auto_minor_version_upgrades,
             )
 
-            check = memorydb_minor_version_upgrade_enabled()
+            check = memorydb_cluster_auto_minor_version_upgrades()
             result = check.execute()
 
             assert len(result) == 1
@@ -107,14 +107,14 @@ class Test_memorydb_minor_version_upgrade_enabled:
             "prowler.providers.aws.services.memorydb.memorydb_service.MemoryDB",
             new=memorydb_client,
         ), mock.patch(
-            "prowler.providers.aws.services.memorydb.memorydb_minor_version_upgrade_enabled.memorydb_minor_version_upgrade_enabled.memorydb_client",
+            "prowler.providers.aws.services.memorydb.memorydb_cluster_auto_minor_version_upgrades.memorydb_cluster_auto_minor_version_upgrades.memorydb_client",
             new=memorydb_client,
         ):
-            from prowler.providers.aws.services.memorydb.memorydb_minor_version_upgrade_enabled.memorydb_minor_version_upgrade_enabled import (
-                memorydb_minor_version_upgrade_enabled,
+            from prowler.providers.aws.services.memorydb.memorydb_cluster_auto_minor_version_upgrades.memorydb_cluster_auto_minor_version_upgrades import (
+                memorydb_cluster_auto_minor_version_upgrades,
             )
 
-            check = memorydb_minor_version_upgrade_enabled()
+            check = memorydb_cluster_auto_minor_version_upgrades()
             result = check.execute()
 
             assert len(result) == 1
