@@ -13,7 +13,7 @@
   "RelatedUrl": "https://learn.microsoft.com/en-us/azure/search/service-configure-firewall#configure-network-access-in-azure-portal",
   "Remediation": {
     "Code": {
-      "CLI": "az search service update --name <service_name> --public-access disabled",
+      "CLI": "az search service update --resource-group <resource_group_name> --name <service_name> --public-access disabled",
       "NativeIaC": "",
       "Other": "",
       "Terraform": ""
