@@ -5,7 +5,6 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################## MemoryDB
 class MemoryDB(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
@@ -21,29 +20,34 @@ class MemoryDB(AWSService):
             )
             for page in describe_clusters_paginator.paginate():
                 for cluster in page["Clusters"]:
-                    arn = cluster["ARN"]
-                    if not self.audit_resources or (
-                        is_resource_filtered(arn, self.audit_resources)
-                    ):
-                        self.clusters[arn] = Cluster(
-                            name=cluster["Name"],
-                            arn=arn,
-                            number_of_shards=cluster["NumberOfShards"],
-                            engine=cluster["Engine"],
-                            engine_version=cluster["EngineVersion"],
-                            engine_patch_version=cluster["EnginePatchVersion"],
-                            multi_az=cluster.get("AvailabilityMode", "singleaz"),
-                            region=regional_client.region,
-                            security_groups=[
-                                sg["SecurityGroupId"]
-                                for sg in cluster["SecurityGroups"]
-                                if sg["Status"] == "active"
-                            ],
-                            tls_enabled=cluster["TLSEnabled"],
-                            auto_minor_version_upgrade=cluster[
-                                "AutoMinorVersionUpgrade"
-                            ],
-                            snapshot_limit=cluster["SnapshotRetentionLimit"],
+                    try:
+                        arn = cluster["ARN"]
+                        if not self.audit_resources or (
+                            is_resource_filtered(arn, self.audit_resources)
+                        ):
+                            self.clusters[arn] = Cluster(
+                                name=cluster["Name"],
+                                arn=arn,
+                                number_of_shards=cluster["NumberOfShards"],
+                                engine=cluster["Engine"],
+                                engine_version=cluster["EngineVersion"],
+                                engine_patch_version=cluster["EnginePatchVersion"],
+                                multi_az=cluster.get("AvailabilityMode", "singleaz"),
+                                region=regional_client.region,
+                                security_groups=[
+                                    sg["SecurityGroupId"]
+                                    for sg in cluster["SecurityGroups"]
+                                    if sg["Status"] == "active"
+                                ],
+                                tls_enabled=cluster["TLSEnabled"],
+                                auto_minor_version_upgrade=cluster[
+                                    "AutoMinorVersionUpgrade"
+                                ],
+                                snapshot_limit=cluster["SnapshotRetentionLimit"],
+                            )
+                    except Exception as error:
+                        logger.error(
+                            f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
         except Exception as error:
             logger.error(
