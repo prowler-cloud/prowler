@@ -1,6 +1,14 @@
 **Prowler** is an Open Source security tool to perform AWS, Azure, Google Cloud and Kubernetes security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness, and also remediations! We have Prowler CLI (Command Line Interface) that we call Prowler Open Source and a service on top of it that we call <a href="https://prowler.com">Prowler SaaS</a>.
 
-## Prowler CLI
+## Prowler App
+
+![Prowler App](img/compliance-app.png)
+
+Prowler App is a web application that allows you to run Prowler in a simple way, without the need to install any dependencies. It is a containerized application that can be run in any environment that supports Docker Compose.
+
+See how to install the Prowler App in the [Quick Start](#prowler-app-installation) section.
+
+## Prowler CLI
 
 ```console
 prowler <provider>
@@ -17,7 +25,73 @@ prowler dashboard
 It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, FedRAMP, PCI-DSS, GDPR, HIPAA, FFIEC, SOC2, GXP, AWS Well-Architected Framework Security Pillar, AWS Foundational Technical Review (FTR), ENS (Spanish National Security Scheme) and your custom security frameworks.
 
 ## Quick Start
-### Installation
+### Prowler App Installation
+
+=== "Docker"
+
+    _Requirements_:
+
+    * `Docker Compose` installed: https://docs.docker.com/compose/install/.
+
+    _Commands_:
+
+    ``` bash
+    curl -Lo https://github.com/prowler-cloud/prowler/blob/master/docker-compose.yml \
+    curl -Lo https://github.com/prowler-cloud/prowler/blob/master/.env \
+    docker compose up -d
+    ```
+
+    Enjoy Prowler App at http://localhost:3000 by signing up with your email and password.
+
+    ???+ note
+        You can change the environment variables in the `.env` file. Note that it is not recommended to use the default values in production environments.
+
+    ???+ note
+        There is a development mode available, you can use the file https://github.com/prowler-cloud/prowler/blob/master/docker-compose.dev.yml to run the app in development mode.
+
+    ???+ warning
+        Google and GitHub authentication are not available in the Prowler App Open Source version. If you want to use these authentication methods, you can use the [Prowler App](https://prowler.com).
+
+=== "GitHub"
+
+    _Requirements_:
+
+    * `git` installed.
+    * `poetry` installed: [poetry installation](https://python-poetry.org/docs/#installation).
+    * `npm` installed: [npm installation](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm).
+    * `Docker Compose` installed: https://docs.docker.com/compose/install/.
+
+    _Commands to run the API_:
+
+    ``` bash
+    git clone https://github.com/prowler-cloud/prowler \
+    cd prowler/api \
+    poetry install \
+    poetry shell \
+    docker compose up postgres valkey -d \
+    cd src/backend \
+    python -m celery -A config.celery worker -l info -E \
+    gunicorn -c config/guniconf.py config.wsgi:application
+    ```
+
+    _Commands to run the UI_:
+
+    ``` bash
+    git clone https://github.com/prowler-cloud/prowler \
+    cd prowler/ui \
+    npm run build \
+    npm start
+    ```
+
+    Enjoy Prowler App at http://localhost:3000 by signing up with your email and password.
+
+    ???+ warning
+        Make sure to have `api/.env` and `ui/.env.local` files with the required environment variables. You can find the required environment variables in the `api/.env.template` and `ui/.env.template` files.
+
+    ???+ warning
+        Google and GitHub authentication are not available in the Prowler App Open Source version. If you want to use these authentication methods, you can use the [Prowler App](https://prowler.com).
+
+### Prowler CLI Installation
 
 Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), thus can be installed as Python package with `Python >= 3.9`:
 
