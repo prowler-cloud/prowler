@@ -645,7 +645,7 @@
         {
           "Section": "2.4 Elastic File System (EFS)",
           "Profile": "Level 1",
-          "AssessmentStatus": "Automated",
+          "AssessmentStatus": "Manual",
           "Description": "EFS data should be encrypted at rest using AWS KMS (Key Management Service).",
           "RationaleStatement": "Data should be encrypted at rest to reduce the risk of a data breach via direct access to the storage device.",
           "ImpactStatement": "",
