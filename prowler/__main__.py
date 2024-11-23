@@ -13,6 +13,7 @@ from prowler.config.config import (
     html_file_suffix,
     json_asff_file_suffix,
     json_ocsf_file_suffix,
+    back2code_file_suffix
 )
 from prowler.lib.banner import print_banner
 from prowler.lib.check.check import (
@@ -381,10 +382,12 @@ def prowler():
                 back2codeOutput = BACK2CODE(
                     findings=finding_outputs,
                     create_file_descriptor=True,
-                    file_path=f"{filename}{html_file_suffix}",
+                    file_path=f"{filename}{back2code_file_suffix}",
                 )
                 back2codeOutput.transform(findings)
-                generated_outputs["regular"].append(html_output)
+                generated_outputs["regular"].append(back2codeOutput)
+                back2codeOutput.batch_write_data_to_file(
+                    provider=global_provider, stats=stats)
 
     # Compliance Frameworks
     input_compliance_frameworks = set(output_options.output_modes).intersection(
