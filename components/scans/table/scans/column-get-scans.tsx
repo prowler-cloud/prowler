@@ -127,9 +127,11 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
       const {
         attributes: { name },
       } = getScanData(row);
-      if (name.length === 0) {
+
+      if (!name || name.length === 0) {
         return <span className="font-medium">-</span>;
       }
+
       return <span className="font-medium">{name}</span>;
     },
   },
