@@ -26,6 +26,27 @@ export type NextUIColors =
   | "danger"
   | "default";
 
+export interface ProviderOverviewProps {
+  data: {
+    type: "provider-overviews";
+    id: "aws" | "gcp" | "azure" | "kubernetes";
+    attributes: {
+      findings: {
+        pass: number;
+        fail: number;
+        manual: number;
+        total: number;
+      };
+      resources: {
+        total: number;
+      };
+    };
+  }[];
+  meta: {
+    version: string;
+  };
+}
+
 export interface TaskDetails {
   attributes: {
     state: string;
