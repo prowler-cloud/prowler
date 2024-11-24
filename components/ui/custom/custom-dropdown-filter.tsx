@@ -44,55 +44,57 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
     return currentFilters;
   }, [searchParams, filter]);
 
+  const memoizedFilterValues = useMemo(
+    () => filter?.values || [],
+    [filter?.values],
+  );
+
   useEffect(() => {
     if (filter && getActiveFilter[filter.key]) {
       const activeValues = getActiveFilter[filter.key].split(",");
       const newSelection = new Set(activeValues);
-      if (newSelection.size === allFilterKeys.length) {
+      if (newSelection.size === memoizedFilterValues.length) {
         newSelection.add("all");
       }
       setGroupSelected(newSelection);
     } else {
       setGroupSelected(new Set());
     }
-  }, [getActiveFilter, filter, allFilterKeys]);
+  }, [getActiveFilter, filter?.key, memoizedFilterValues]);
 
   const onSelectionChange = useCallback(
     (keys: string[]) => {
-      const newSelection = new Set(keys);
+      setGroupSelected((prevGroupSelected) => {
+        const newSelection = new Set(keys);
 
-      if (
-        newSelection.size === allFilterKeys.length &&
-        !newSelection.has("all")
-      ) {
-        setGroupSelected(new Set(["all", ...allFilterKeys]));
-      } else if (groupSelected.has("all")) {
-        newSelection.delete("all");
-        const remainingValues = allFilterKeys.filter((key) =>
-          newSelection.has(key),
-        );
-        setGroupSelected(new Set(remainingValues));
-      } else {
-        setGroupSelected(newSelection);
-      }
+        if (
+          newSelection.size === allFilterKeys.length &&
+          !newSelection.has("all")
+        ) {
+          return new Set(["all", ...allFilterKeys]);
+        } else if (prevGroupSelected.has("all")) {
+          newSelection.delete("all");
+          return new Set(allFilterKeys.filter((key) => newSelection.has(key)));
+        }
+        return newSelection;
+      });
 
       if (onFilterChange && filter) {
-        const selectedValues = Array.from(newSelection).filter(
-          (key) => key !== "all",
-        );
+        const selectedValues = keys.filter((key) => key !== "all");
         onFilterChange(filter.key, selectedValues);
       }
     },
-    [allFilterKeys, groupSelected, onFilterChange, filter],
+    [allFilterKeys, onFilterChange, filter],
   );
 
   const handleSelectAllClick = useCallback(() => {
-    if (groupSelected.has("all")) {
-      setGroupSelected(new Set());
-    } else {
-      setGroupSelected(new Set(["all", ...allFilterKeys]));
-    }
-  }, [groupSelected, allFilterKeys]);
+    setGroupSelected((prevGroupSelected) => {
+      if (prevGroupSelected.has("all")) {
+        return new Set();
+      }
+      return new Set(["all", ...allFilterKeys]);
+    });
+  }, [allFilterKeys]);
 
   const onClearFilter = useCallback(
     (filterKey: string) => {
@@ -170,7 +172,7 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
                 hideScrollBar
                 className="flex max-h-96 max-w-56 flex-col gap-y-2 py-2"
               >
-                {allFilterKeys.map((value) => (
+                {memoizedFilterValues.map((value) => (
                   <Checkbox className="font-normal" key={value} value={value}>
                     {value}
                   </Checkbox>
