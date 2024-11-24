@@ -42,7 +42,7 @@ interface CustomButtonProps {
     | "danger"
     | "transparent";
   onPress?: (e: PressEvent) => void;
-  children: React.ReactNode;
+  children?: React.ReactNode;
   startContent?: React.ReactNode;
   endContent?: React.ReactNode;
   size?: "sm" | "md" | "lg";

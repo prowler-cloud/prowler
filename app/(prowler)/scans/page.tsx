@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { getProviders } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
 import { filterScans } from "@/components/filters";
+import { ButtonRefreshData } from "@/components/scans";
 import { LaunchScanWorkflow } from "@/components/scans/launch-workflow";
 import { SkeletonTableScans } from "@/components/scans/table";
 import { ColumnGetScans } from "@/components/scans/table/scans";
@@ -32,6 +33,8 @@ export default async function Scans({
       }))
     : [];
 
+  // const executingScans = await getExecutingScans();
+
   return (
     <>
       <Header title="Scans" icon="lucide:scan-search" />
@@ -39,7 +42,16 @@ export default async function Scans({
       <Spacer y={4} />
       <LaunchScanWorkflow providers={providerInfo} />
       <Spacer y={8} />
-      <DataTableFilterCustom filters={filterScans || []} />
+      <div className="flex flex-row justify-between">
+        <DataTableFilterCustom filters={filterScans || []} />
+        <ButtonRefreshData
+          onPress={async () => {
+            "use server";
+            await getScans({});
+          }}
+        />
+      </div>
+
       <Spacer y={8} />
 
       <div className="grid grid-cols-12 items-start gap-4">
@@ -81,3 +93,12 @@ const SSRDataTableScans = async ({
     />
   );
 };
+
+// const getExecutingScans = async () => {
+//   const scansData = await getScans({});
+
+//   return scansData?.data?.some(
+//     (scan: ScanProps) =>
+//       scan.attributes.state === "executing" && scan.attributes.progress < 100,
+//   );
+// };
