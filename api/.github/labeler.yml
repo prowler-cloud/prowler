@@ -1,0 +1,15 @@
+documentation:
+  - changed-files:
+      - any-glob-to-any-file: "docs/**"
+
+backend/api:
+  - changed-files:
+      - any-glob-to-any-file: "src/backend/api/**"
+
+backend/backend:
+  - changed-files:
+      - any-glob-to-any-file: "src/backend/backend/**"
+
+github_actions:
+  - changed-files:
+      - any-glob-to-any-file: ".github/workflows/*"
