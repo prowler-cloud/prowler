@@ -40,6 +40,13 @@ export const ProvidersOverview = ({
     }
   };
 
+  const providers = [
+    { id: "aws", name: "AWS" },
+    { id: "azure", name: "Azure" },
+    { id: "gcp", name: "GCP" },
+    { id: "kubernetes", name: "Kubernetes" },
+  ];
+
   return (
     <Card className="dark:bg-prowler-blue-400">
       <CardHeader>
@@ -63,46 +70,78 @@ export const ProvidersOverview = ({
             </span>
           </div>
 
-          {providersOverview.data.length === 0 ? (
-            <div className="grid grid-cols-4 items-center border-b py-2 text-sm">
-              <span className="flex items-center justify-center px-4">-</span>
-              <span className="text-center">-</span>
-              <span className="text-center">-</span>
-              <span className="text-center">-</span>
-            </div>
-          ) : (
-            providersOverview.data.map((provider) => {
-              const { pass, fail, total } = provider.attributes.findings;
-              const resourcesTotal = provider.attributes.resources.total;
+          {providers.map((providerTemplate) => {
+            const providerData = providersOverview.data.find(
+              (p) => p.id === providerTemplate.id,
+            );
 
-              return (
-                <div
-                  key={provider.id}
-                  className="grid grid-cols-4 items-center border-b py-2 text-sm"
-                >
-                  <span className="flex items-center justify-center px-4">
-                    {renderProviderBadge(provider.id)}
-                  </span>
-                  <span className="text-center">
-                    {calculatePassingPercentage(pass, total)}%
-                  </span>
-                  <span className="text-center">{fail}</span>
-                  <span className="text-center">{resourcesTotal}</span>
-                </div>
-              );
-            })
-          )}
+            return (
+              <div
+                key={providerTemplate.id}
+                className="grid grid-cols-4 items-center border-b py-2 text-sm"
+              >
+                <span className="flex items-center justify-center px-4">
+                  {renderProviderBadge(providerTemplate.id)}
+                </span>
+                <span className="text-center">
+                  {providerData
+                    ? calculatePassingPercentage(
+                        providerData.attributes.findings.pass,
+                        providerData.attributes.findings.total,
+                      )
+                    : "0.00"}
+                  %
+                </span>
+                <span className="text-center">
+                  {providerData ? providerData.attributes.findings.fail : "-"}
+                </span>
+                <span className="text-center">
+                  {providerData ? providerData.attributes.resources.total : "-"}
+                </span>
+              </div>
+            );
+          })}
+
+          {/* Totals row */}
+          <div className="grid grid-cols-4 items-center border-b py-2 text-sm font-semibold">
+            <span className="flex items-center justify-center px-4">Total</span>
+            <span className="text-center">
+              {calculatePassingPercentage(
+                providersOverview.data.reduce(
+                  (sum, provider) => sum + provider.attributes.findings.pass,
+                  0,
+                ),
+                providersOverview.data.reduce(
+                  (sum, provider) => sum + provider.attributes.findings.total,
+                  0,
+                ),
+              )}
+              %
+            </span>
+            <span className="text-center">
+              {providersOverview.data.reduce(
+                (sum, provider) => sum + provider.attributes.findings.fail,
+                0,
+              )}
+            </span>
+            <span className="text-center">
+              {providersOverview.data.reduce(
+                (sum, provider) => sum + provider.attributes.resources.total,
+                0,
+              )}
+            </span>
+          </div>
         </div>
         <div className="mt-4 flex w-full items-center justify-end">
           <CustomButton
-            asLink="/providers"
+            asLink="/providers/connect-account"
             ariaLabel="Go to Providers page"
             variant="solid"
             color="action"
             size="sm"
             endContent={<AddIcon size={20} />}
           >
-            Go to Providers
+            Add Provider
           </CustomButton>
         </div>
       </CardBody>
