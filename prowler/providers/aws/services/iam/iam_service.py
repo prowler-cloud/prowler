@@ -982,6 +982,21 @@ class IAM(AWSService):
                 logger.warning(
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
+            elif (
+                error.response["Error"]["Code"]
+                == "OrganizationNotInAllFeaturesModeException"
+            ):
+                logger.warning(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            elif (
+                error.response["Error"]["Code"]
+                == "AccountNotManagementOrDelegatedAdministratorException"
+            ):
+                logger.warning(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+                self.organization_features = None
             else:
                 logger.error(
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
