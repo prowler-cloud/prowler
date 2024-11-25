@@ -17,6 +17,8 @@ class Repository(GithubService):
         try:
             for repo in self.client.get_user().get_repos():
                 try:
+                    securitymd_exists = repo.get_contents("SECURITY.md") is not None
+                    """
                     securitymd_exists = False
                     contents = repo.get_contents("")
                     while contents:
@@ -26,6 +28,7 @@ class Repository(GithubService):
                         elif file_content.path.endswith("SECURITY.md"):
                             securitymd_exists = True
                             break
+                    """
                 except Exception:
                     securitymd_exists = False
                 repos[repo.id] = Repo(

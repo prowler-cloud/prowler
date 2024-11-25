@@ -24,3 +24,27 @@ def init_parser(self):
         help="Use GitHub app token to log in against GitHub",
         default=False,
     )
+    github_auth_modes_group.add_argument(
+        "--user-password",
+        action="store_true",
+        help="Use user login and password to log in against GitHub",
+        default=False,
+    ),
+    github_auth_subparser.add_argument(
+        "--pat",
+        nargs="?",
+        default=None,
+        help="Personal access token to log in against GitHub",
+    ),
+    github_auth_subparser.add_argument(
+        "--user",
+        nargs="?",
+        default=None,
+        help="User to log in against GitHub",
+    ),
+    github_auth_subparser.add_argument(
+        "--password",
+        nargs="?",
+        default=None,
+        help="Password to log in against GitHub",
+    ),
