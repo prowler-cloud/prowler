@@ -16,9 +16,11 @@ on:
 env:
   POSTGRES_HOST: localhost
   POSTGRES_PORT: 5432
+  POSTGRES_ADMIN_USER: prowler_admin
+  POSTGRES_ADMIN_PASSWORD: postgres
   POSTGRES_USER: postgres
   POSTGRES_PASSWORD: postgres
-  POSTGRES_DB: prowler_db_test
+  POSTGRES_DB: prowler_db
   VALKEY_HOST: localhost
   VALKEY_PORT: 6379
   VALKEY_DB: 0

@@ -1,4 +1,4 @@
-name: build-lint-push-containers
+name: Build and Push containers
 
 on:
   push:
