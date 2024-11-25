@@ -26,6 +26,10 @@ class GithubBaseException(ProwlerException):
             "message": "Github identity setup error due to bad credentials",
             "remediation": "Check credentials and ensure they are properly set up for Github and the identity provider.",
         },
+        (5005, "GithubInvalidCredentialsError"): {
+            "message": "Github invalid user or password for basic login",
+            "remediation": "Check user and password and ensure they are properly set up as in your Github account.",
+        },
     }
 
     def __init__(self, code, file=None, original_exception=None, message=None):
@@ -81,4 +85,11 @@ class GithubSetUpIdentityError(GithubCredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             5004, file=file, original_exception=original_exception, message=message
+        )
+
+
+class GithubInvalidCredentialsError(GithubCredentialsError):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            5005, file=file, original_exception=original_exception, message=message
         )

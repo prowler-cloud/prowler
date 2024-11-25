@@ -214,9 +214,10 @@ class Provider(ABC):
                 elif "github" in provider_class_name.lower():
                     provider_class(
                         personal_access_token=arguments.personal_access_token,
+                        oauth_app_token=arguments.oauth_app_token,
                         github_app=arguments.github_app,
-                        oauth_app=arguments.oauth_app,
-                        pat=arguments.pat,
+                        user=arguments.user,
+                        password=arguments.password,
                         config_path=arguments.config_file,
                     )
 
