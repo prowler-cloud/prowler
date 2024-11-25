@@ -44,8 +44,8 @@ class Organizations(AWSService):
                     == "AWSOrganizationsNotInUseException"
                 ):
                     self.organization = Organization(
-                        arn=self.audited_account_arn,
-                        id="AWS Organization",
+                        arn=self.get_unknown_arn(),
+                        id="unknown",
                         status="NOT_AVAILABLE",
                         master_id="",
                     )
@@ -67,8 +67,8 @@ class Organizations(AWSService):
                     )
                 else:
                     self.organization = Organization(
-                        arn=self.audited_account_arn,
-                        id="AWS Organization",
+                        arn=self.get_unknown_arn(),
+                        id="unknown",
                         status="NOT_AVAILABLE",
                         master_id="",
                     )

@@ -1,0 +1,2222 @@
+{
+  "Framework": "ENS",
+  "Version": "RD2022",
+  "Provider": "GCP",
+  "Description": "The accreditation scheme of the ENS (National Security Scheme) has been developed by the Ministry of Finance and Public Administrations and the CCN (National Cryptological Center). This includes the basic principles and minimum requirements necessary for the adequate protection of information.",
+  "Requirements": [
+    {
+      "Id": "op.acc.1.gcp.iam.1",
+      "Description": "Identificación",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.1",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Utilizar las credenciales de acceso de la organización en lugar de las cuentas personales, como las de Gmail.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "iam_organization_essential_contacts_configured"
+      ]
+    },
+    {
+      "Id": "op.acc.1.r1.gcp.iam.1",
+      "Description": "Identificacion Avanzada",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.1.r1",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "El usuario deberá ser identificado de manera singular asociada a una persona en particular permitiendo al responsable del sistema, al responsable de la seguirdad o a los administradores determinar sus responsabilidades dentro del sistema con GCP Cloud Identity.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "iam_no_service_roles_at_project_level",
+        "apikeys_api_restrictions_configured"
+      ]
+    },
+    {
+      "Id": "opc.acc.1.r1.gcp.iam.2",
+      "Description": "Identificacion Avanzada",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.1.r1",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "El administrador del sistema será el responsable de mantener la lista de usuarios autorizados a través de los distintos tipos de cuentas que gestiona GCP.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+        "iam_audit_logs_enabled"
+      ]
+    },
+    {
+      "Id": "op.acc.2.gcp.rbak.1",
+      "Description": "Requisitos de acceso",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.2",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "El acceso a los recursos del sistema se progerá utilizando un mecanismo que impida su utilización a través del uso de políticas administradas por el responsible del sistema o el responsible de la seguridad.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "apikeys_key_exists",
+        "iam_sa_no_user_managed_keys"
+      ]
+    },
+    {
+      "Id": "opc.acc.2.gcp.iap.1",
+      "Description": "Privilegios de acceso",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.2.r1",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Identity-Aware Proxy (IAP, permite definir un conjunto de atributos de seguridad que puedan ser gestionados por separado, restringiendo el tipo de acceso que cada usuario deba tener.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "iam_organization_essential_contacts_configured"
+      ]
+    },
+    {
+      "Id": "op.acc.3.gcp.org.1",
+      "Description": "Segregación de funciones y tareas",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.3",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Se deberá aplicar el principio de separación de obligaciones al asignar funciones relacionadas con las cuentas de servicio a los usuarios. La separación de obligaciones es el concepto de asegurar que un individuo no tenga todos los permisos necesarios para poder completar una acción maliciosa. En GCP IAM podría ser una acción como el uso de una cuenta de servicio para acceder a recursos a los que el usuario no debería tener acceso normalmente.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "iam_role_sa_enforce_separation_of_duties",
+        "iam_role_kms_enforce_separation_of_duties"
+      ]
+    },
+    {
+      "Id": "op.acc.3.gcp.iam.1",
+      "Description": "Cuentas de servicio",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.3",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Las cuentas de servicio no pueden tener privilegios de administrador. GCP IAM.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "iam_sa_no_user_managed_keys",
+        "iam_sa_no_administrative_privileges",
+        "compute_instance_default_service_account_in_use"
+      ]
+    },
+    {
+      "Id": "op.acc.3.r1.gcp.iam.1",
+      "Description": "Segregación rigurosa",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.3.r1",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Las actividades de configuración, mantenimiento, auditoría o supervisión, no debe ser realizada por la misma persona, para lo cual se deberá configurar un rol específico para cada función y gestionarlo con GCP IAM.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled"
+      ]
+    },
+    {
+      "Id": "opc.acc.4.gcp.iam.1",
+      "Description": "Proceso de gestión de derechos de acceso",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.4",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "La limitación del acceso a los usuarios será aplicando los principios del mínimo privilegio, negando de forma predeterminada, el acceso al sistema para el usuario en GCP IAM.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "iam_sa_no_administrative_privileges",
+        "gke_cluster_no_default_service_account"
+      ]
+    },
+    {
+      "Id": "op.acc.6.gcp.ip.1",
+      "Description": "Mecanismo de autenticación (usuarios de la organización)",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "El control de acceso será gestionado desde Identity Platform para administrar las identidades y acceso.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "iam_account_access_approval_enabled"
+      ]
+    },
+    {
+      "Id": "op.acc.6.r1.gcp.ip.1",
+      "Description": "Contraseñas",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6.r1",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "El uso de políticas de contraseñas debe ser aplicado según lo defina la organización.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "apikeys_key_rotated_in_90_days",
+        "kms_key_rotation_enabled",
+        "iam_sa_user_managed_key_rotate_90_days"
+      ]
+    },
+    {
+      "Id": "op.acc.6.r2.gcp.iam.1",
+      "Description": "Contraseña + otro factor de autenticación",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6.r2",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Se deberá activar el doble factor de autenticación para todas las cuentas que no sean cuentas de servicios.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.acc.6.r3.gcp.iam.2",
+      "Description": "Certificados",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6.r3",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Se requiere el uso de conexiones SSL para instancias de base de datos",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "cloudsql_instance_ssl_connections"
+      ]
+    },
+    {
+      "Id": "op.acc.6.r4.gcp.ip.1",
+      "Description": "Certificados en dispositivo físico",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6.r4",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Uso de certificados cualificados para la identificación en soporte físico usando algoritmos, parámetros y dispositivos autorizados protegidos por un segundo factor a través de PIN o biométrico.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.acc.6.r5.gcp.cl.1",
+      "Description": "Registro de la actividad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6.r5",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Es necesario registrar la actividad de acceso tanto exitoso como fallido de los usuarios.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "iam_audit_logs_enabled"
+      ]
+    },
+    {
+      "Id": "op.acc.6.r8.gcp.iam.1",
+      "Description": "Doble factor para acceso desde o através de zonas no controladas",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6.r8",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Para las cuentas que son administradores, se deberá activar el factor de autenticación más fuerte: Llaves de seguridad. Las llaves de seguridad son llaves físicas reales que se utilizan para acceder a las cuentas de administrador de la organización de Google.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.acc.6.r9.gcp.api.1",
+      "Description": "Acceso remoto",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6.r9",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Se debe de considerar la autorización por la autoridad correspondiente, siendo el tráfico cifrado, recogiendo los registros de auditoría.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "apikeys_api_restrictions_configured",
+        "iam_audit_logs_enabled"
+      ]
+    },
+    {
+      "Id": "op.exp.1.gcp.scc.1",
+      "Description": "Inventario de activos",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.1",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Se requiere mantener la identificación de recursos y servicios de todos los elementos del sistema teniendo la capacidad para evaluar el cumplimiento normativo del ENS en GCP y conociendo las propiedades del recurso.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "iam_cloud_asset_inventory_enabled"
+      ]
+    },
+    {
+      "Id": "op.exp.1.r1.gcp.cai.1",
+      "Description": "Inventario de etiquetado",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.1.r1",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "",
+          "Nivel": "alto",
+          "Tipo": "recomendacion",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.exp.1.r2.gcp.cai.1",
+      "Description": "Identificación periódica de activos",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.1.r2",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Permitir visualizar de forma contínua el estado de todos los activos del sistema.Cloud Asset Inventory  proporciona una base de datos con un histórico de los recursos de GCP.",
+          "Nivel": "alto",
+          "Tipo": "recomendacion",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "iam_cloud_asset_inventory_enabled",
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled"
+      ]
+    },
+    {
+      "Id": "op.exp.1.r3.gcp.cai.1",
+      "Description": "Identificación de activos críticos",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.1.r3",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "",
+          "Nivel": "alto",
+          "Tipo": "recomendacion",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "iam_cloud_asset_inventory_enabled"
+      ]
+    },
+    {
+      "Id": "op.exp.1.r4.gcp.cai.1",
+      "Description": "Lista de componentes software",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.1.r4",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "",
+          "Nivel": "alto",
+          "Tipo": "recomendacion",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.exp.4.gcp.ma.1",
+      "Description": "Mantenimiento y actualizaciones de seguridad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.4",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Se debe de disponer de un procedimiento para analizar, priorizar y determinar la aplicación de las actulalizaciones de seguridad, incluyendo los parches, mejoras y nuevas versiones, realizado por personal debidamente autorizado.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.exp.4.r1.gcp.ci.1",
+      "Description": "Pruebas en preproducción",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.4.r1",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Se deberá habilitar un entorno paralelo controlado y consistente en configuración al entorno de producción.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.exp.4.r2.gcp",
+      "Description": "Prevención de fallos",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.4.r2",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Habilitar la protección de las instancias para la prevención de fallos.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "compute_instance_shielded_vm_enabled"
+      ]
+    },
+    {
+      "Id": "op.exp.4.r4.gcp.log.1",
+      "Description": "Monitorización contínua",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.4.r4",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Habilitar la configuración de auditoría para la monitorización de los cambios en los servicios de GCP",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "artifacts_container_analysis_enabled"
+      ]
+    },
+    {
+      "Id": "op.exp.6.gcp.ci.1",
+      "Description": "Protección frente a código dañino",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.6",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "compute_instance_confidential_computing_enabled"
+      ]
+    },
+    {
+      "Id": "op.exp.6.r1.gcp.scc.1",
+      "Description": "Escaneo periódico",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.6.r1",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.exp.6.r2.gcp.scc.1",
+      "Description": "Revisión preventiva del sistema",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.6.r2",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.exp.6.gcp.app.1",
+      "Description": "Lista blanca",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.6.r3",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.exp.6.r4.gcp.nt.1",
+      "Description": "Capacidad de respuesta en caso de incidente",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.6.r4",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "compute_loadbalancer_logging_enabled",
+        "compute_subnet_flow_logs_enabled"
+      ]
+    },
+    {
+      "Id": "op.exp.8.gcp.nt.1",
+      "Description": "Registro de la actividad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.8",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Configuración de las reglas de actividad de red para registrar los cambios",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "trazabilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
+        "compute_network_dns_logging_enabled"
+      ]
+    },
+    {
+      "Id": "op.exp.8.r1.gcp.nt.1",
+      "Description": "Revisión de los registros",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.8.r1",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Configuración de las reglas de actividad de red para registrar los cambios y alertar sobre posibles situaciones extraordinarias",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "trazabilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled"
+      ]
+    },
+    {
+      "Id": "op.exp.8.r2.gcp.wc.1",
+      "Description": "Sincronización del reloj del sistema",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.8.r2",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "trazabilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.exp.8.r3.gcp.cs.1",
+      "Description": "Retención de registros",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.8.r3",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "La configuración de los registros debe estar configurada con un período de retención.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "trazabilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "cloudstorage_bucket_log_retention_policy_lock"
+      ]
+    },
+    {
+      "Id": "op.exp.8.r4.gcp.cp.1",
+      "Description": "Control de acceso",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.8.r4",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Configuración del control de acceso a las instancias",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "trazabilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "compute_instance_default_service_account_in_use_with_full_api_access",
+        "compute_instance_encryption_with_csek_enabled"
+      ]
+    },
+    {
+      "Id": "op.exp.8.r5.gcp.cl.1",
+      "Description": "Revisión automática y correlación de eventos",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.8.r5",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Habilitar log sink para el correcto registro de logging para administrarlos para cada receptor de manera automática",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "trazabilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "logging_sink_created"
+      ]
+    },
+    {
+      "Id": "op.exp.10.gcp.kms.1",
+      "Description": "Protección de claves criptográficas",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.10",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Las claves criptográficas no deben estar expuestas, deben ser protegidas por el administrador.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "kms_key_not_publicly_accessible"
+      ]
+    },
+    {
+      "Id": "op.exp.10.r1.gcp.key.1",
+      "Description": "Algoritmos autorizados",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.10.r1",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Asegurar que los algoritmos utilizados estén aprobados por el CCN",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.ext.3.gcp.log.1",
+      "Description": "Protección de la cadena de suministro",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.ext.3",
+          "Marco": "operacional",
+          "Categoria": "recursos externos",
+          "DescripcionControl": "Habilitar el acceso al sistema operativo",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "compute_project_os_login_enabled"
+      ]
+    },
+    {
+      "Id": "op.ext.3.gcp.log.2",
+      "Description": "Protección de la cadena de suministro",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.ext.3",
+          "Marco": "operacional",
+          "Categoria": "recursos externos",
+          "DescripcionControl": "Asegurar que el logging sink esté configurado",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "logging_sink_created"
+      ]
+    },
+    {
+      "Id": "op.ext.4.gcp.acc.1",
+      "Description": "Interconexión de sistemas",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.ext.4",
+          "Marco": "operacional",
+          "Categoria": "recursos externos",
+          "DescripcionControl": "Asegurar que el acceso a los servicios de bases de datos estén deshabilitados por defecto",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "cloudsql_instance_sqlserver_cross_db_ownership_chaining_flag",
+        "cloudsql_instance_sqlserver_external_scripts_enabled_flag",
+        "cloudsql_instance_sqlserver_remote_access_flag",
+        "cloudsql_instance_postgres_log_connections_flag",
+        "cloudsql_instance_postgres_log_disconnections_flag"
+      ]
+    },
+    {
+      "Id": "op.ext.4.r1.gcp.acc.1",
+      "Description": "Coordinación de actividades",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.ext.4.r1",
+          "Marco": "operacional",
+          "Categoria": "recursos externos",
+          "DescripcionControl": "La autenticación de SQL server debe estar correctamente autenticada",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "cloudsql_instance_sqlserver_contained_database_authentication_flag"
+      ]
+    },
+    {
+      "Id": "op.cont.2.gcp.cp.1",
+      "Description": "Plan de continuidad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.cont.2",
+          "Marco": "operacional",
+          "Categoria": "continuidad del servicio",
+          "DescripcionControl": "",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.mon.1.gcp.scc.1",
+      "Description": "Detección de intrusión",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.mon.1",
+          "Marco": "operacional",
+          "Categoria": "monitorización del sistema",
+          "DescripcionControl": "",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.mon.1.r1.gcp.scc.1",
+      "Description": "Detección basada en reglas",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.mon.1.r1",
+          "Marco": "operacional",
+          "Categoria": "monitorización del sistema",
+          "DescripcionControl": "Habilitación del contenedor GCR para el escaneo de repositorios Docker",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "gcr_container_scanning_enabled"
+      ]
+    },
+    {
+      "Id": "op.mon.1.r2.gcp.scc.1",
+      "Description": "Procedimientos de respuesta",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.mon.1.r2",
+          "Marco": "operacional",
+          "Categoria": "monitorización del sistema",
+          "DescripcionControl": "Habilitar el scan de vulnerabilidades para GCR y terceros.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "gcr_container_scanning_enabled"
+      ]
+    },
+    {
+      "Id": "op.mon.1.r3.gc.scc.1",
+      "Description": "Acciones predeterminadas",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.mon.1.r3",
+          "Marco": "operacional",
+          "Categoria": "monitorización del sistema",
+          "DescripcionControl": "",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.mon.3.gcp.scc.1",
+      "Description": "Vigilancia",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.mon.3",
+          "Marco": "operacional",
+          "Categoria": "monitorización del sistema",
+          "DescripcionControl": "Se deberá habilitar la verificación de vulnerabilidades para los servicios de GCP",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "gcr_container_scanning_enabled",
+        "artifacts_container_analysis_enabled",
+        "compute_public_address_shodan"
+      ]
+    },
+    {
+      "Id": "op.mon.3.r1.gcp.scc.1",
+      "Description": "Correlación de eventos",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.mon.3.r1",
+          "Marco": "operacional",
+          "Categoria": "monitorización del sistema",
+          "DescripcionControl": "",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.mon.3.r2.gcp.scc.1",
+      "Description": "Análisis dinámico",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.mon.3.r2",
+          "Marco": "operacional",
+          "Categoria": "monitorización del sistema",
+          "DescripcionControl": "",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.mon.3.r3.gcp.scc.1",
+      "Description": "Ciberamenazas avanzadas",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.mon.3.r3",
+          "Marco": "operacional",
+          "Categoria": "monitorización del sistema",
+          "DescripcionControl": "",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.mon.3.r4.gcp.scc.1",
+      "Description": "Observatorios digitales",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.mon.3.r4",
+          "Marco": "operacional",
+          "Categoria": "monitorización del sistema",
+          "DescripcionControl": "",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.mon.3.r5.gcp.dm.1",
+      "Description": "Minería de datos",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.mon.3.r5",
+          "Marco": "operacional",
+          "Categoria": "monitorización del sistema",
+          "DescripcionControl": "Aplicación de medidas para restringir el acceso a datos sin autorización en los servicios de la nube",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "bigquery_dataset_public_access",
+        "cloudsql_instance_public_access",
+        "cloudstorage_bucket_public_access"
+      ]
+    },
+    {
+      "Id": "op.mon.3.r6.gcp.scc.1",
+      "Description": "Inspecciones de seguridad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.mon.3.r6",
+          "Marco": "operacional",
+          "Categoria": "monitorización del sistema",
+          "DescripcionControl": "Monitoreo de las alertas por cambios en la configuración",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled"
+      ]
+    },
+    {
+      "Id": "mp.com.1.gcp.fw.1",
+      "Description": "Perímetro seguro",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.1",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Habilitar la restricción de acceso para el tráfico por internet a través de RDP",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "compute_firewall_rdp_access_from_the_internet_allowed"
+      ]
+    },
+    {
+      "Id": "mp.com.1.gcp.fw.2",
+      "Description": "Perímetro seguro",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.1",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Habilitar la restricción de acceso para el tráfico por internet a través de SSH",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "compute_firewall_ssh_access_from_the_internet_allowed"
+      ]
+    },
+    {
+      "Id": "mp.com.2.gcp.lb.1",
+      "Description": "Protección de la confidencialidad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.2",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Se deberá asegurar que los balanceadores de carga HTTPS o SSL no permiten políticas poco seguras.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "compute_loadbalancer_logging_enabled"
+      ]
+    },
+    {
+      "Id": "mp.com.2.r1.gcp.scc.1",
+      "Description": "Algoritmos y parámetros autorizados",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.2.r1",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Se emplearán algoritmos y parámetros autorizados por el CCN",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "mp.com.2.r2.gcp.scc.1",
+      "Description": "Dispositivos hardware",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.2.r2",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Los dispositivos de hardware deberán ser configurados dentro de la red privada virtual",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "compute_network_dns_logging_enabled"
+      ]
+    },
+    {
+      "Id": "mp.com.2.r3.gcp.key.1",
+      "Description": "Productos certificados",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.2.r3",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Se usarán productos certificados que cumplan los requisitos del CCN",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "mp.com.2.r4.gcp.key.1",
+      "Description": "Cifradores",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.2.r4",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Se usarán productos de cifrado que cumplan los requisitos del CCN",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "mp.com.2.r5.gcp.key.1",
+      "Description": "Cifrado de la información especialmente sensible",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.2.r5",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Se utilizará cifrado de la información para los servicios sencibles de GCP",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "dataproc_encrypted_with_cmks_disabled",
+        "bigquery_dataset_cmk_encryption",
+        "bigquery_table_cmk_encryption",
+        "compute_instance_encryption_with_csek_enabled"
+      ]
+    },
+    {
+      "Id": "mp.com.3.gcp.net.1",
+      "Description": "Protección de la integridad y de la autenticidad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.3",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Habilitar Secret Manager para la protección de la integridad",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "integridad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "mp.com.3.r1.gcp.net.1",
+      "Description": "Redes privadas virtuales",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.3.r1",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "La configuración de red por defecto debe estar deshabilitada",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "integridad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "compute_network_default_in_use"
+      ]
+    },
+    {
+      "Id": "mp.com.3.r2.gcp.key.1",
+      "Description": "Algoritmos y parámetros autorizados",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.3.r2",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Se emplearán algoritmos y parámetros autorizados por el CCN",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "integridad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "mp.com.3.r3.gcp.scc.1",
+      "Description": "Dispositivos hardware",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.3.r3",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Los dispositivos de hardware deberán ser configurados dentro de la red privada virtual",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "integridad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "compute_network_dns_logging_enabled"
+      ]
+    },
+    {
+      "Id": "mp.com.3.r4.gcp.scc.1",
+      "Description": "Productos certificados",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.3.r4",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Se usarán productos certificados que cumplan los requisitos del CCN",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "integridad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "mp.com.4.gcp.vpc.1",
+      "Description": "Separación de flujos de información en la red",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.4",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Se deberá eliminar la red por defecto del proyecto (default).",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "compute_network_default_in_use"
+      ]
+    },
+    {
+      "Id": "mp.com.4.gcp.vpc.1",
+      "Description": "Separación de flujos de información en la red",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.4",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Evitar el uso de subnets con acceso a IPs públicas",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "compute_instance_public_ip",
+        "cloudsql_instance_public_ip",
+        "cloudsql_instance_private_ip_assignment"
+      ]
+    },
+    {
+      "Id": "mp.com.4.r1.gcp.net.1",
+      "Description": "Segmentación lógica básica",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.4.r1",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Se deberá eliminar la red por defecto del proyecto (default).",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "compute_network_default_in_use"
+      ]
+    },
+    {
+      "Id": "mp.com.4.r2.gcp.net.1",
+      "Description": "Segmentación lógica avanzada",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.4.r2",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "mp.com.4.r3.gcp.net.1",
+      "Description": "Segmentación física",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.4.r3",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Los segmentos de red se implementarán con medios físicos separados.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "mp.com.4.r4.gcp.net.1",
+      "Description": "Puntos de interconexión",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.4.r4",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Asegurarse de que el acceso a la conexión de red esté protegida.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled"
+      ]
+    },
+    {
+      "Id": "mp.si.2.gcp.key.1",
+      "Description": "Criptografía",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.si.2",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de los soportes de información",
+          "DescripcionControl": "",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "mp.si.2.r1.gcp.key.1",
+      "Description": "Productos certificados",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.si.2.r1",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de los soportes de información",
+          "DescripcionControl": "Se emplearán productos certificados conforme a lo establecido por el CCN",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "compute_instance_block_project_wide_ssh_keys_disabled"
+      ]
+    },
+    {
+      "Id": "mp.si.2.r2.gcp.key.1",
+      "Description": "Copias de seguridad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.si.2.r2",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de los soportes de información",
+          "DescripcionControl": "Cifrado de las copias de seguridad",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "mp.info.3.gcp.key.1",
+      "Description": "Firma electrónica",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.info.3",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de la información",
+          "DescripcionControl": "",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "integridad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "mp.info.3.r1.gcp.crt.1",
+      "Description": "Certificados cualificados",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.info.3.r1",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de la información",
+          "DescripcionControl": "Habilitar el funcionamiento adecuado de los certificados para los recursos.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "integridad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "dns_rsasha1_in_use_to_key_sign_in_dnssec",
+        "dns_rsasha1_in_use_to_zone_sign_in_dnssec"
+      ]
+    },
+    {
+      "Id": "mp.info.3.r2.gcp.key.1",
+      "Description": "Algoritmos y parámetros autorizados",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.info.3.r2",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de la información",
+          "DescripcionControl": "",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "integridad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "mp.info.3.r3.gcp.key.1",
+      "Description": "Verificación y validación de firma",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.info.3.r3",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de la información",
+          "DescripcionControl": "",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "integridad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "mp.info.3.r4.gcp.key.1",
+      "Description": "Firma electrónica avanzada basada en certificados cualificados",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.info.3.r4",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de la información",
+          "DescripcionControl": "",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "integridad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "mp.info.5.gcp.mp.1",
+      "Description": "Limpieza de documentos",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.info.5",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de la información",
+          "DescripcionControl": "",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "mp.info.6.gcp.bk.1",
+      "Description": "Copias de seguridad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.info.6",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de la información",
+          "DescripcionControl": "Se debe configurar las copias de seguridad de los recursos de almacenamiento de GCP",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "cloudsql_instance_automated_backups"
+      ]
+    },
+    {
+      "Id": "mp.info.6.r1.gcp.scc.1",
+      "Description": "Pruebas de recuperación",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.info.6.r1",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de la información",
+          "DescripcionControl": "",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "mp.info.6.r2.gcp.bk.1",
+      "Description": "Protección de las copias de seguridad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.info.6.r2",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de la información",
+          "DescripcionControl": "Se debe configurar las copias de seguridad de los recursos de almacenamiento de GCP",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "cloudsql_instance_automated_backups"
+      ]
+    },
+    {
+      "Id": "mp.s.1.gcp.app.1",
+      "Description": "Protección del correo electrónico",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.s.1",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de los servicios",
+          "DescripcionControl": "",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "mp.s.2.gcp.app.1",
+      "Description": "Protección de servicios y aplicaciones web",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.s.2",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de los servicios",
+          "DescripcionControl": "Habilitar el registro del load balancer para protección de aplicaciones web",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "compute_loadbalancer_logging_enabled",
+        "dns_dnssec_disabled"
+      ]
+    },
+    {
+      "Id": "mp.s.2.r2.gcp.app.1",
+      "Description": "Auditorías de seguirdad avanzada",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.s.2.r2",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de los servicios",
+          "DescripcionControl": "",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "compute_instance_default_service_account_in_use_with_full_api_access"
+      ]
+    },
+    {
+      "Id": "mp.s.2.r3.gcp.app.1",
+      "Description": "Protección de cachés",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.s.2.r3",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de los servicios",
+          "DescripcionControl": "",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "mp.s.4.gcp.app.1",
+      "Description": "Protección frente a denegación de servicio",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.s.4",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de los servicios",
+          "DescripcionControl": "",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "mp.s.4.r1.gcp.app.1",
+      "Description": "Detección y reacción",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.s.4.r1",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de los servicios",
+          "DescripcionControl": "",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled"
+      ]
+    }
+  ]
+}

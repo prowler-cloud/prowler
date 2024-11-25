@@ -8,8 +8,10 @@ class bedrock_model_invocation_logging_enabled(Check):
         for region, logging in bedrock_client.logging_configurations.items():
             report = Check_Report_AWS(self.metadata())
             report.region = region
-            report.resource_id = bedrock_client.audited_account
-            report.resource_arn = bedrock_client.audited_account_arn
+            report.resource_id = "model-invocation-logging"
+            report.resource_arn = (
+                bedrock_client._get_model_invocation_logging_arn_template(region)
+            )
             report.status = "FAIL"
             report.status_extended = "Bedrock Model Invocation Logging is disabled."
             if logging.enabled:

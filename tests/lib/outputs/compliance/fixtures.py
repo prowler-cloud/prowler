@@ -8,11 +8,11 @@ from prowler.lib.check.compliance_models import (
     ENS_Requirement_Attribute_Tipos,
     Generic_Compliance_Requirement_Attribute,
     ISO27001_2013_Requirement_Attribute,
+    KISA_ISMSP_Requirement_Attribute,
     Mitre_Requirement,
     Mitre_Requirement_Attribute_AWS,
     Mitre_Requirement_Attribute_Azure,
     Mitre_Requirement_Attribute_GCP,
-    KISA_ISMSP_Requirement_Attribute,
 )
 
 CIS_1_4_AWS_NAME = "cis_1.4_aws"
@@ -450,6 +450,100 @@ ENS_RD2022_AWS = Compliance(
         ),
         Compliance_Requirement(
             Id="op.exp.8.aws.ct.4",
+            Description="Registro de actividad",
+            Name=None,
+            Attributes=[
+                ENS_Requirement_Attribute(
+                    IdGrupoControl="op.exp.8",
+                    Marco="operacional",
+                    Categoria="explotación",
+                    DescripcionControl="Habilitar la validación de archivos en todos los trails, evitando así que estos se vean modificados o eliminados.",
+                    Tipo=ENS_Requirement_Attribute_Tipos.requisito,
+                    Nivel=ENS_Requirement_Attribute_Nivel.alto,
+                    Dimensiones=["trazabilidad"],
+                    ModoEjecucion="automático",
+                    Dependencias=[],
+                )
+            ],
+            Checks=[],
+        ),
+    ],
+)
+ENS_RD2022_AZURE_NAME = "ens_rd2022_azure"
+ENS_RD2022_AZURE = Compliance(
+    Framework="ENS",
+    Provider="Azure",
+    Version="RD2022",
+    Description="The accreditation scheme of the ENS (National Security Scheme) has been developed by the Ministry of Finance and Public Administrations and the CCN (National Cryptological Center). This includes the basic principles and minimum requirements necessary for the adequate protection of information.",
+    Requirements=[
+        Compliance_Requirement(
+            Id="op.exp.8.azure.ct.3",
+            Description="Registro de actividad",
+            Name=None,
+            Attributes=[
+                ENS_Requirement_Attribute(
+                    IdGrupoControl="op.exp.8",
+                    Marco="operacional",
+                    Categoria="explotación",
+                    DescripcionControl="Habilitar la validación de archivos en todos los trails, evitando así que estos se vean modificados o eliminados.",
+                    Tipo=ENS_Requirement_Attribute_Tipos.requisito,
+                    Nivel=ENS_Requirement_Attribute_Nivel.alto,
+                    Dimensiones=["trazabilidad"],
+                    ModoEjecucion="automático",
+                    Dependencias=[],
+                )
+            ],
+            Checks=["cloudtrail_log_file_validation_enabled"],
+        ),
+        Compliance_Requirement(
+            Id="op.exp.8.azure.ct.4",
+            Description="Registro de actividad",
+            Name=None,
+            Attributes=[
+                ENS_Requirement_Attribute(
+                    IdGrupoControl="op.exp.8",
+                    Marco="operacional",
+                    Categoria="explotación",
+                    DescripcionControl="Habilitar la validación de archivos en todos los trails, evitando así que estos se vean modificados o eliminados.",
+                    Tipo=ENS_Requirement_Attribute_Tipos.requisito,
+                    Nivel=ENS_Requirement_Attribute_Nivel.alto,
+                    Dimensiones=["trazabilidad"],
+                    ModoEjecucion="automático",
+                    Dependencias=[],
+                )
+            ],
+            Checks=[],
+        ),
+    ],
+)
+ENS_RD2022_GCP_NAME = "ens_rd2022_gcp"
+ENS_RD2022_GCP = Compliance(
+    Framework="ENS",
+    Provider="GCP",
+    Version="RD2022",
+    Description="The accreditation scheme of the ENS (National Security Scheme) has been developed by the Ministry of Finance and Public Administrations and the CCN (National Cryptological Center). This includes the basic principles and minimum requirements necessary for the adequate protection of information.",
+    Requirements=[
+        Compliance_Requirement(
+            Id="op.exp.8.gcp.ct.3",
+            Description="Registro de actividad",
+            Name=None,
+            Attributes=[
+                ENS_Requirement_Attribute(
+                    IdGrupoControl="op.exp.8",
+                    Marco="operacional",
+                    Categoria="explotación",
+                    DescripcionControl="Habilitar la validación de archivos en todos los trails, evitando así que estos se vean modificados o eliminados.",
+                    Tipo=ENS_Requirement_Attribute_Tipos.requisito,
+                    Nivel=ENS_Requirement_Attribute_Nivel.alto,
+                    Dimensiones=["trazabilidad"],
+                    ModoEjecucion="automático",
+                    Dependencias=[],
+                )
+            ],
+            Checks=["cloudtrail_log_file_validation_enabled"],
+        ),
+        Compliance_Requirement(
+            Id="op.exp.8.gcp.ct.4",
             Description="Registro de actividad",
             Name=None,
             Attributes=[

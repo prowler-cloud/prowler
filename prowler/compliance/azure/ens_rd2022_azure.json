@@ -1,0 +1,2105 @@
+{
+  "Framework": "ENS",
+  "Version": "RD2022",
+  "Provider": "AZURE",
+  "Description": "The accreditation scheme of the ENS (National Security Scheme) has been developed by the Ministry of Finance and Public Administrations and the CCN (National Cryptological Center). This includes the basic principles and minimum requirements necessary for the adequate protection of information.",
+  "Requirements": [
+    {
+      "Id": "op.acc.1.az.eid.1",
+      "Description": "Identificación",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.1",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Se deberá utilizar las credenciales de acceso de la organización configurando el uso de cuentas de usuario y grupos con Microsoft Entra.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "app_ensure_auth_is_set_up"
+      ]
+    },
+    {
+      "Id": "op.acc.1.az.eid.2",
+      "Description": "Identificación",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.1",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Se deberá utilizar el acceso a través del directorio habilitado en el App Service",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "app_register_with_identity"
+      ]
+    },
+    {
+      "Id": "op.acc.1.az.r1.eid.1",
+      "Description": "Identificacion Avanzada",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.1.r1",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "La asignación del usuario deberá realizarse de manera única, singularizando a la persona asociada a cada identificador en Microsoft Entra",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "entra_global_admin_in_less_than_five_users"
+      ]
+    },
+    {
+      "Id": "op.acc.2.az.rbac.1",
+      "Description": "Requisitos de acceso",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.2",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Se debe aplicar la restricción de acceso al portal de Azure y la habilitación de Microsoft Entra Protection para minimizar los riesgos de inicio de sesión y comportamientos inusuales.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "entra_policy_default_users_cannot_create_security_groups",
+        "entra_policy_ensure_default_user_cannot_create_tenants",
+        "iam_subscription_roles_owner_custom_not_created"
+      ]
+    },
+    {
+      "Id": "op.acc.2.az.r1.eid.1",
+      "Description": "Privilegios de acceso",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.2.r1",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Requisito de la configuración a través de la aplicación de roles RBAC",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "aks_cluster_rbac_enabled",
+        "entra_policy_restricts_user_consent_for_apps",
+        "entra_users_cannot_create_microsoft_365_groups",
+        "entra_policy_user_consent_for_verified_apps",
+        "keyvault_rbac_enabled"
+      ]
+    },
+    {
+      "Id": "op.acc.3.az.eid.1",
+      "Description": "Segregación de funciones y tareas",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.3",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Se deberá separar las funciones según el entorno de trabajo, y según las obligaciones, asegurándo que un usuario no pueda tener funciones de desarrollo y operación. ",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "iam_custom_role_has_permissions_to_administer_resource_locks"
+      ]
+    },
+    {
+      "Id": "op.acc.3.r1.az.eid.1",
+      "Description": "Segregación rigurosa",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.3.r1",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "La configuración, manenimiento, auditoría o supervisión no debe ser realizada por la misma persona, se deberá asignar roles específicos para cada usuario o grupo en el directorio de roles de Microsoft Entra.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "opc.acc.5.az.eid.1",
+      "Description": "Mecanismo de autenticación (usuarios externos)",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.5",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "El usuario externo deberá contar con un usuario de la organización creado y gestionado para sus actividades de colaboración durante el período de tiempo definido en el contrato, de igual manera que el mecanismo de autenticación (usuarios de la organización) y será gestionado en la organización con Microsoft Entra.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "entra_policy_guest_users_access_restrictions",
+        "entra_policy_guest_invite_only_for_admin_roles"
+      ]
+    },
+    {
+      "Id": "op.acc.5.r2.az.eid.1",
+      "Description": "Contraseña + OTP",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.5.r2",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Proteger el acceso a los datos y aplicaciones a travez de la autenticación multifactor (MFA) de Microsoft Entra",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "entra_privileged_user_has_mfa",
+        "entra_security_defaults_enabled"
+      ]
+    },
+    {
+      "Id": "op.acc.5.r3.az.kv.1",
+      "Description": "Certificados",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.5.r3",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Utilizar el servicio KEY Vault para la gestión de certificados asociados a Cloud Services",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "keyvault_logging_enabled",
+        "keyvault_rbac_enabled",
+        "app_client_certificates_on"
+      ]
+    },
+    {
+      "Id": "op.acc.5.r4.az.eid.1",
+      "Description": "Certificados en dispositivo físico",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.5.r4",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Habilitación de autenticación MFA para usuarios externos",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "entra_conditional_access_policy_require_mfa_for_management_api"
+      ]
+    },
+    {
+      "Id": "op.acc.5.r5.az.eid.1",
+      "Description": "Registro",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.5.r5",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Habilitar los valores de seguridad de Entra Id por defecto",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "entra_security_defaults_enabled"
+      ]
+    },
+    {
+      "Id": "op.acc.6.az.eid.1",
+      "Description": "Mecanismo de autenticación (usuarios de la organización)",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "El acceso del usuario será gestionado desde Microsoft Entra",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "entra_conditional_access_policy_require_mfa_for_management_api"
+      ]
+    },
+    {
+      "Id": "op.acc.6.r1.az.eid.1",
+      "Description": "Contraseñas",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6.r1",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Deberá habilitarse el vencimiento de las credenciales de los usuarios",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "keyvault_key_expiration_set_in_non_rbac"
+      ]
+    },
+    {
+      "Id": "op.acc.6.r1.az.eid.2",
+      "Description": "Contraseñas",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6.r1",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Las credenciales deberan rotarse cada 90 días o menos",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "storage_key_rotation_90_days",
+        "keyvault_rbac_key_expiration_set",
+        "keyvault_rbac_secret_expiration_set"
+      ]
+    },
+    {
+      "Id": "op.acc.6.r1.az.eid.3",
+      "Description": "Contraseñas",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6.r1",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Habilitar la protección de Defender para los KEY Vault",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "defender_ensure_defender_for_keyvault_is_on"
+      ]
+    },
+    {
+      "Id": "op.acc.6.r2.az.eid.1",
+      "Description": "Contraseña + otro factor de autenticación",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6.r2",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Proteger el acceso a los datos y aplicaciones a travez de la autenticación multifactor (MFA) de Microsoft Entra",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "entra_privileged_user_has_mfa",
+        "entra_security_defaults_enabled"
+      ]
+    },
+    {
+      "Id": "op.acc.6.r3.az.kv.1",
+      "Description": "Certificados",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6.r3",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Utilizar el servicio KEY Vault para la gestión de certificados asociados a Cloud Services",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "keyvault_logging_enabled",
+        "keyvault_rbac_enabled",
+        "app_client_certificates_on"
+      ]
+    },
+    {
+      "Id": "op.acc.6.r4.az.mfa.1",
+      "Description": "Certificados en dispositivo físico",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6.r4",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Habilitación de autenticación MFA para usuarios de la organización",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "entra_conditional_access_policy_require_mfa_for_management_api"
+      ]
+    },
+    {
+      "Id": "op.acc.6.r5.az.eid.1",
+      "Description": "Registro de la actividad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6.r5",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Registro de la actividad en la sesión del usuario configurando los valores de seguridad por defecto.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "entra_security_defaults_enabled",
+        "iam_custom_role_has_permissions_to_administer_resource_locks"
+      ]
+    },
+    {
+      "Id": "op.acc.6.r5.az.eid.2",
+      "Description": "Registro de la actividad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6.r5",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "El registro de actividad de eliminación en los servicios de la nube debe de estar habilitado.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "monitor_alert_delete_nsg",
+        "monitor_alert_delete_policy_assignment",
+        "monitor_alert_delete_public_ip_address_rule",
+        "monitor_alert_delete_security_solution",
+        "monitor_alert_delete_sqlserver_fr"
+      ]
+    },
+    {
+      "Id": "op.acc.6.r5.az.eid.3",
+      "Description": "Registro de la actividad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6.r5",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "El registro de actividad en los servicios de PostgreSQL debe de estar habilitado.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "postgresql_flexible_server_log_connections_on",
+        "postgresql_flexible_server_log_disconnections_on",
+        "postgresql_flexible_server_log_checkpoints_on"
+      ]
+    },
+    {
+      "Id": "op.acc.6.r5.az.eid.4",
+      "Description": "Registro de la actividad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6.r5",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "El registro de actividad en los servicios de SQL Server debe de estar habilitado.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "sqlserver_auditing_enabled"
+      ]
+    },
+    {
+      "Id": "op.acc.6.r5.az.eid.5",
+      "Description": "Registro de la actividad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6.r5",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "El registro de actividad en los servicios de MySQL debe de estar habilitado.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "mysql_flexible_server_audit_log_connection_activated",
+        "mysql_flexible_server_audit_log_enabled"
+      ]
+    },
+    {
+      "Id": "op.acc.6.r5.az.eid.6",
+      "Description": "Registro de la actividad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6.r5",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "El registro de actividad en los servicios de aplicación debe de estar habilitado.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        " app_http_logs_enabled"
+      ]
+    },
+    {
+      "Id": "op.acc.6.r8.az.eid.1",
+      "Description": "Doble factor para acceso desde o através de zonas no controladas",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6.r8",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Se utilizará como mecanismo de autenticación adicional a la contraseña, un factor de autenticación.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "entra_non_privileged_user_has_mfa",
+        "entra_user_with_vm_access_has_mfa"
+      ]
+    },
+    {
+      "Id": "op.acc.6.r9.az",
+      "Description": "Acceso remoto",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.6.r9",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.exp.8.az.md.1",
+      "Description": "Registro de la actividad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.8",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Se habilitará el monitor de diagnóstico para cada categoría usada dentro de la subscripción.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "trazabilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "entra_trusted_named_locations_exists",
+        "monitor_diagnostic_setting_with_appropriate_categories"
+      ]
+    },
+    {
+      "Id": "op.exp.8.r1.az.sa.1",
+      "Description": "Revisión de los registros",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.8.r1",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Registro de la actividad en las cuentas de almacenamiento",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "trazabilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "monitor_storage_account_with_activity_logs_is_private"
+      ]
+    },
+    {
+      "Id": "op.exp8.r2.az.wc.1",
+      "Description": "Sincronización del reloj del sistema",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.8.r2",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "trazabilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.exp.8.r3.az.nt.1",
+      "Description": "Retención de registros",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.8.r3",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "La configuración de los registros debe estar configurada con un período de retención.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "trazabilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "network_flow_log_more_than_90_days",
+        "sqlserver_auditing_retention_90_days",
+        "postgresql_flexible_server_log_retention_days_greater_3"
+      ]
+    },
+    {
+      "Id": "op.exp.8.r4.az.sa.1",
+      "Description": "Control de acceso",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.8.r4",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Configuración de la actividad de las cuentas de almacenamiento.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "trazabilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "monitor_storage_account_with_activity_logs_cmk_encrypted"
+      ]
+    },
+    {
+      "Id": "op.exp.8.r4.az.sa.2",
+      "Description": "Control de acceso",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.8.r4",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Configuración del acceso por defecto a las cuentas de almacenamiento definida como denegada",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "trazabilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "storage_default_network_access_rule_is_denied"
+      ]
+    },
+    {
+      "Id": "op.exp.8.r4.az.sa.3",
+      "Description": "Control de acceso",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.8.r4",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "trazabilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "postgresql_flexible_server_allow_access_services_disabled"
+      ]
+    },
+    {
+      "Id": "op.exp.8.r5.az.ds.1",
+      "Description": "Revisión automática y correlación de eventos",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.8.r5",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Activación del monitor de diagnóstico para la revisión automática de eventos.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "trazabilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "monitor_diagnostic_settings_exists"
+      ]
+    },
+    {
+      "Id": "op.exp.10.az.kv.1",
+      "Description": "Protección de claves criptográficas",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.10 ",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Configuración de KEY Vault, limitando el acceso a administradores.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "keyvault_key_expiration_set_in_non_rbac",
+        "keyvault_recoverable"
+      ]
+    },
+    {
+      "Id": "op.exp.10.az.kv.2",
+      "Description": "Protección de claves criptográficas",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.10 ",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Habilitación de las claves criptográficas para las cuentas de almacenamiento",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "storage_infrastructure_encryption_is_enabled",
+        "storage_ensure_encryption_with_customer_managed_keys",
+        "keyvault_private_endpoints"
+      ]
+    },
+    {
+      "Id": "op.exp.10.r1.az.key.1",
+      "Description": "Algoritmos autorizados",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.10.r1 ",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Asegurar que los algoritmos utilizados estén aprobados por el CCN",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.cont.2.az.con.1",
+      "Description": "Plan de continuidad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.cont.2 ",
+          "Marco": "operacional",
+          "Categoria": "continuidad del servicio",
+          "DescripcionControl": "Garantizar la resiliencia y la continuidad a través de planes de recuperación de desastres",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "op.con.3.az.pd.1",
+      "Description": "Pruebas periódicas",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.cont.3 ",
+          "Marco": "operacional",
+          "Categoria": "continuidad del servicio",
+          "DescripcionControl": "Habilitar las pruebas periodicas para los servicios de GCP",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "sqlserver_va_periodic_recurring_scans_enabled"
+      ]
+    },
+    {
+      "Id": "op.mon.1.az.nw.1",
+      "Description": "Detección de intrusión",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.mon.1 ",
+          "Marco": "operacional",
+          "Categoria": "monitorización del sistema",
+          "DescripcionControl": "Activación del Network Watcher para la captura de paquetes y detección del tráfico de la red.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "entra_security_defaults_enabled",
+        "network_watcher_enabled"
+      ]
+    },
+    {
+      "Id": "op.mon.1.r1.az.nf.1",
+      "Description": "Detección basada en reglas",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.mon.1.r1 ",
+          "Marco": "operacional",
+          "Categoria": "monitorización del sistema",
+          "DescripcionControl": "Activación del Network Flow Log para la identificación del tráfico de la red.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "network_flow_log_captured_sent"
+      ]
+    },
+    {
+      "Id": "op.mon.1.r2.az.de.1",
+      "Description": "Procedimientos de respuesta",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.mon.1.r2 ",
+          "Marco": "operacional",
+          "Categoria": "monitorización del sistema",
+          "DescripcionControl": "Utilizar Defender para el análisis y verificación de vulnerabilidades detectadas.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "defender_container_images_resolved_vulnerabilities"
+      ]
+    },
+    {
+      "Id": "op.mon.2.az.md.1",
+      "Description": "Sistema de métricas",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.mon.2 ",
+          "Marco": "operacional",
+          "Categoria": "monitorización del sistema",
+          "DescripcionControl": "Configurar el monitor de diagnóstico para los elementos habilitados de la nube.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "monitor_diagnostic_setting_with_appropriate_categories"
+      ]
+    },
+    {
+      "Id": "op.mon.2.r1.az.ma.1",
+      "Description": "Efectividad del sistema de incidentes",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.mon.2.r1 ",
+          "Marco": "operacional",
+          "Categoria": "monitorización del sistema",
+          "DescripcionControl": "Configurar el monitor de alerta para los cambios en los elementos de seguridad habilitados.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "monitor_alert_create_policy_assignment",
+        "monitor_alert_create_update_nsg",
+        "monitor_alert_create_update_public_ip_address_rule",
+        "monitor_alert_create_update_security_solution",
+        "monitor_alert_create_update_sqlserver_fr"
+      ]
+    },
+    {
+      "Id": "op.mon.2.r2.az.ma.1",
+      "Description": "Eficiencia del sistema de gestión de la seguridad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.mon.2.r2 ",
+          "Marco": "operacional",
+          "Categoria": "monitorización del sistema",
+          "DescripcionControl": "Asegurar que el monitor de diagnóstico de la actividad de la subscrición esté activa.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "monitor_diagnostic_settings_exists",
+        "network_watcher_enabled",
+        "sqlserver_va_emails_notifications_admins_enabled"
+      ]
+    },
+    {
+      "Id": "op.mon.3.az.nw.1",
+      "Description": "Vigilancia",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.mon.3 ",
+          "Marco": "operacional",
+          "Categoria": "monitorización del sistema",
+          "DescripcionControl": "Habilitar Network Watcher para registrar y mantener la información de seguridad centralizada.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "network_watcher_enabled",
+        "defender_ensure_notify_alerts_severity_is_high",
+        "network_public_ip_shodan",
+        "app_http_logs_enabled"
+      ]
+    },
+    {
+      "Id": "op.mon.3.az.nw.1",
+      "Description": "Vigilancia",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.mon.3 ",
+          "Marco": "operacional",
+          "Categoria": "monitorización del sistema",
+          "DescripcionControl": "Auditoría delos registros de los servicios de GCP con la suficiente retención para la vigilancia de la información",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "network_flow_log_captured_sent",
+        "sqlserver_auditing_retention_90_days",
+        "postgresql_flexible_server_log_retention_days_greater_3",
+        "network_flow_log_more_than_90_days"
+      ]
+    },
+    {
+      "Id": "op.mon.3.r1.az.ev.1",
+      "Description": "Correlación de eventos",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.mon.3.r1 ",
+          "Marco": "operacional",
+          "Categoria": "monitorización del sistema",
+          "DescripcionControl": "Habilitar el monitoreo del servidor en defender",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "defender_ensure_defender_for_server_is_on"
+      ]
+    },
+    {
+      "Id": "op.mon.3.r2.az.de.1",
+      "Description": "Análisis dinámico",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.mon.3.r2 ",
+          "Marco": "operacional",
+          "Categoria": "monitorización del sistema",
+          "DescripcionControl": "Activar log analícs de Defender para la detección automática de eventos de seguridad.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "defender_auto_provisioning_log_analytics_agent_vms_on"
+      ]
+    },
+    {
+      "Id": "op.mon.3.r3.az.de.1",
+      "Description": "Ciberamenazas avanzadas",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.mon.3.r3 ",
+          "Marco": "operacional",
+          "Categoria": "monitorización del sistema",
+          "DescripcionControl": "Se deberá utilizar la evaluación de vulnerabilidades con Defender y el aseguramiento de la notificación de alertas de severidad alta.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "defender_auto_provisioning_vulnerabilty_assessments_machines_on",
+        "defender_ensure_notify_alerts_severity_is_high",
+        "defender_additional_email_configured_with_a_security_contact"
+      ]
+    },
+    {
+      "Id": "op.mon.3.r3.az.de.2",
+      "Description": "Ciberamenazas avanzadas",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.mon.3.r3 ",
+          "Marco": "operacional",
+          "Categoria": "monitorización del sistema",
+          "DescripcionControl": "Habilitar la protección de amenazas avanzadas para la detección de ciberamenazas en la nube.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "defender_ensure_wdatp_is_enabled"
+      ]
+    },
+    {
+      "Id": "op.mon.3.r3.az.de.3",
+      "Description": "Ciberamenazas avanzadas",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.mon.3.r3 ",
+          "Marco": "operacional",
+          "Categoria": "monitorización del sistema",
+          "DescripcionControl": "Detección de vulnerabilidades en los sistemas de bases de datos",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "sqlserver_va_scan_reports_configured",
+        "sqlserver_vulnerability_assessment_enabled"
+      ]
+    },
+    {
+      "Id": "op.mon.3.r4.az.de.1",
+      "Description": "Observatorios digitales",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.mon.3.r4 ",
+          "Marco": "operacional",
+          "Categoria": "monitorización del sistema",
+          "DescripcionControl": "Se deberá asegurar las notificaciones por correo a los propietarios a través de Defender.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "defender_ensure_notify_emails_to_owners"
+      ]
+    },
+    {
+      "Id": "op.mon.3.r5.az.1",
+      "Description": "Minería de datos",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.mon.3.r5 ",
+          "Marco": "operacional",
+          "Categoria": "monitorización del sistema",
+          "DescripcionControl": "Aplicación de medidas para restringir el acceso a datos sin autorización en los servicios de la nube",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "sqlserver_unrestricted_inbound_access",
+        "storage_blob_public_access_level_is_disabled"
+      ]
+    },
+    {
+      "Id": "op.mon.3.r6.az.ma.1",
+      "Description": "Inspecciones de seguridad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.mon.3.r6 ",
+          "Marco": "operacional",
+          "Categoria": "monitorización del sistema",
+          "DescripcionControl": "Utilizar las alertas para las inspecciones de seguridad",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "monitor_alert_create_update_security_solution"
+      ]
+    },
+    {
+      "Id": "mp.com.1.az.nw.1",
+      "Description": "Perímetro seguro",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.1",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Habilitar la restricción de acceso para el tráfico por internet a través de RDP",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "network_watcher_enabled",
+        "network_rdp_internet_access_restricted"
+      ]
+    },
+    {
+      "Id": "mp.com.1.az.nw.2",
+      "Description": "Perímetro seguro",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.1",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Habilitar la restricción de acceso para el tráfico por internet a través de SSH",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "network_watcher_enabled",
+        "network_ssh_internet_access_restricted"
+      ]
+    },
+    {
+      "Id": "mp.com.1.az.nw.3",
+      "Description": "Perímetro seguro",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.1",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Habilitar la restricción de acceso para el tráfico por internet a través de UDP.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "network_watcher_enabled",
+        "network_udp_internet_access_restricted"
+      ]
+    },
+    {
+      "Id": "mp.com.3.az.nw.1",
+      "Description": "Protección de la integridad y de la autenticidad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.3 ",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Asegurarse de que la comunicación del frontal sea a través de HTTPS.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "integridad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "network_watcher_enabled",
+        "defender_ensure_notify_alerts_severity_is_high",
+        "app_ensure_http_is_redirected_to_https"
+      ]
+    },
+    {
+      "Id": "mp.com.3.az.sa.1",
+      "Description": "Protección de la integridad y de la autenticidad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.3 ",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Asegurarse que la seguridad en transferencia de datos para  las cuentas de almacenamiento esté habilitada",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "integridad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "storage_secure_transfer_required_is_enabled"
+      ]
+    },
+    {
+      "Id": "mp.com.3.r1.az.nt.1",
+      "Description": "Redes privadas virtuales",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.3.r1 ",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Habilitar la integración de las redes privadas virtuales para las funciones de aplicación",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "integridad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "app_function_vnet_integration_enabled"
+      ]
+    },
+    {
+      "Id": "mp.com.3.r2.az.tls.1",
+      "Description": "Algoritmos y parámetros autorizados",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.3.r2 ",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "La versión de TLS para las aplicaciones debe de ser como mínimo versión 1.2",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "integridad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "app_minimum_tls_version_12",
+        "network_http_internet_access_restricted"
+      ]
+    },
+    {
+      "Id": "mp.com.3.r2.az.tls.2",
+      "Description": "Algoritmos y parámetros autorizados",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.3.r2 ",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "La versión de TLS para MYSQL debe ser como mínimo versión 1.2",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "integridad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "mysql_flexible_server_minimum_tls_version_12"
+      ]
+    },
+    {
+      "Id": "mp.com.3.r2.az.tls.3",
+      "Description": "Algoritmos y parámetros autorizados",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.3.r2 ",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "La versión de TLS para las cuentas de almacenamiento deben ser como mínimo versión 1.2",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "integridad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "storage_ensure_minimum_tls_version_12"
+      ]
+    },
+    {
+      "Id": "mp.com.3.r3.az.1",
+      "Description": "Dispositivos hardware",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.3.r3 ",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Protección de los dispositivos de hardware",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "integridad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "mp.com.3.r4.az.1",
+      "Description": "Productos certificados",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.3.r4 ",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Se utilizará productos certificados CPSTIC del CCN.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "integridad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "mp.com.4.az.nt.1",
+      "Description": "Separación de flujos de información en la red",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.4",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Evitar el uso de subnets con acceso a IPs públicas.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "app_function_vnet_integration_enabled",
+        "app_function_not_publicly_accessible"
+      ]
+    },
+    {
+      "Id": "mp.com.4.az.aks.2",
+      "Description": "Separación de flujos de información en la red",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.4",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Evitar el uso de subnets con acceso a IPs públicas, para AKS",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "aks_clusters_public_access_disabled"
+      ]
+    },
+    {
+      "Id": "mp.com.4.r1.az.nt.1",
+      "Description": "Segmentación lógica básica",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.4.r1",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Implementación de la segmentación de VNET en diferentes ubicaciones",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "app_function_vnet_integration_enabled"
+      ]
+    },
+    {
+      "Id": "mp.com.4.r2.az.aks.1",
+      "Description": "Segmentación lógica avanzada",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.4.r2",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Habilitar las políticas de red para AKS",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "aks_network_policy_enabled",
+        "aks_clusters_created_with_private_nodes",
+        "keyvault_private_endpoints"
+      ]
+    },
+    {
+      "Id": "mp.com.4.r2..az.sa.1",
+      "Description": "Segmentación lógica avanzada",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.4.r2",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Habilitar los endpoints privados en cuentas de almacenamiento",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "storage_ensure_private_endpoints_in_storage_accounts"
+      ]
+    },
+    {
+      "Id": "mp.com.4.r3.az.1",
+      "Description": "Segmentación física",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.4.r3",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Configuración de VNETs para el aislamiento de redes",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "network_http_internet_access_restricted"
+      ]
+    },
+    {
+      "Id": "mp.com.4.r4.az.nt.1",
+      "Description": "Puntos de interconexión",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.4.r4",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de las comunicaciones",
+          "DescripcionControl": "Asegurarse de que el acceso a la red de conexión con  internet esté protegida.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "network_http_internet_access_restricted",
+        "network_bastion_host_exists"
+      ]
+    },
+    {
+      "Id": "mp.info.2.az.1",
+      "Description": "Calificación de la información",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.info.2",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de la información",
+          "DescripcionControl": "Configuración de etiquetas para todos los servicios de Azure",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "mp.info.6.az.1",
+      "Description": "Copias de seguridad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.info.6",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de la información",
+          "DescripcionControl": "Creación de plan de backup para los servicios de Azure",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "mp.info.6.r1.az.1",
+      "Description": "Pruebas de recuperación",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.info.6.r1",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de la información",
+          "DescripcionControl": "Creación del plan de recuperación para los servicios de Azure",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "manual",
+          "Dependencias": []
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "mp.info.6.r2.az.sa.1",
+      "Description": "Protección de las copias de seguridad",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.info.6.r2",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de la información",
+          "DescripcionControl": "Asegurarse que los servicios de almacenamiento tenga acceso de confianza.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "storage_ensure_azure_services_are_trusted_to_access_is_enabled"
+      ]
+    },
+    {
+      "Id": "mp.s.4.az.nt.1",
+      "Description": "Protección frente a denegación de servicio",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.s.4",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de los servicios",
+          "DescripcionControl": "El acceso a la red de conexión con internet debe estar restringida.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "network_http_internet_access_restricted"
+      ]
+    },
+    {
+      "Id": "mp.s.4.r1.az.nt.1",
+      "Description": "Detección y reacción",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.s.4.r1",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de los servicios",
+          "DescripcionControl": "Habilitar el flujo de logs de la red para la captura de los datos enviados",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "network_flow_log_captured_sent"
+      ]
+    },
+    {
+      "Id": "mp.s.4.r1.az.nt.2",
+      "Description": "Detección y reacción",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.s.4.r1",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de los servicios",
+          "DescripcionControl": "Habilitar la supervisión del rendimiento de aplicaciones para los servicios en la nube",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "appinsights_ensure_is_configured",
+        "app_function_application_insights_enabled"
+      ]
+    },
+    {
+      "Id": "mp.s.4.r1.az.nt.3",
+      "Description": "Detección y reacción",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.s.4.r1",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de los servicios",
+          "DescripcionControl": "Habilitar defender para los servicios de aplicaciones en la nube",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "defender_ensure_defender_for_app_services_is_on",
+        "defender_ensure_defender_for_arm_is_on",
+        "defender_ensure_defender_for_containers_is_on",
+        "defender_ensure_iot_hub_defender_is_on",
+        "defender_ensure_mcas_is_enabled",
+        "defender_ensure_defender_for_dns_is_on",
+        "defender_ensure_defender_for_server_is_on"
+      ]
+    },
+    {
+      "Id": "mp.s.4.r1.az.nt.4",
+      "Description": "Detección y reacción",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.s.4.r1",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de los servicios",
+          "DescripcionControl": "Habilitar defender para los servicios de bases de datos en la nube",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "defender_ensure_defender_for_azure_sql_databases_is_on",
+        "defender_ensure_defender_for_cosmosdb_is_on",
+        "defender_ensure_defender_for_databases_is_on",
+        "defender_ensure_defender_for_os_relational_databases_is_on",
+        "defender_ensure_defender_for_sql_servers_is_on",
+        "sqlserver_microsoft_defender_enabled"
+      ]
+    },
+    {
+      "Id": "mp.s.4.r1.az.nt.5",
+      "Description": "Detección y reacción",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.s.4.r1",
+          "Marco": "medidas de protección",
+          "Categoria": "protección de los servicios",
+          "DescripcionControl": "Habilitar defender para los servicios de almacenamiento en la nube",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático",
+          "Dependencias": []
+        }
+      ],
+      "Checks": [
+        "defender_ensure_defender_for_storage_is_on",
+        "defender_auto_provisioning_log_analytics_agent_vms_on"
+      ]
+    }
+  ]
+}

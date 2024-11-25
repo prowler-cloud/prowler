@@ -18,6 +18,13 @@ class DirectConnect(AWSService):
         self.__threading_call__(self._describe_connections)
         self.__threading_call__(self._describe_vifs)
 
+    def _get_connection_arn_template(self, region):
+        return (
+            f"arn:{self.audited_partition}:directconnect:{region}:{self.audited_account}:dxcon"
+            if region
+            else f"arn:{self.audited_partition}:directconnect:{self.region}:{self.audited_account}:dxcon"
+        )
+
     def _describe_connections(self, regional_client):
         """List DirectConnect(s) in the given region.
 

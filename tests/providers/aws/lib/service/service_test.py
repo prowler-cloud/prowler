@@ -90,3 +90,65 @@ class TestAWSService:
             check_id,
             "arn:aws:ec2:eu-central-1:123456789:security-group/sg-87654321",
         )
+
+    def test_AWSService_get_unknown_arn(self):
+        service_name = "s3"
+        provider = set_mocked_aws_provider()
+        service = AWSService(service_name, provider)
+
+        assert (
+            service.get_unknown_arn(region="eu-west-1")
+            == f"arn:aws:{service_name}:eu-west-1:{AWS_ACCOUNT_NUMBER}:unknown"
+        )
+
+    def test_AWSService_get_unknown_arn_cn_partition(self):
+        service_name = "s3"
+        provider = set_mocked_aws_provider()
+        service = AWSService(service_name, provider)
+        service.audited_partition = "aws-cn"
+
+        assert (
+            service.get_unknown_arn(region="eu-west-1")
+            == f"arn:{service.audited_partition}:{service_name}:eu-west-1:{AWS_ACCOUNT_NUMBER}:unknown"
+        )
+
+    def test_AWSService_get_unknown_arn_no_region(self):
+        service_name = "s3"
+        provider = set_mocked_aws_provider()
+        service = AWSService(service_name, provider)
+
+        assert (
+            service.get_unknown_arn()
+            == f"arn:aws:{service_name}::{AWS_ACCOUNT_NUMBER}:unknown"
+        )
+
+    def test_AWSService_get_unknown_arn_resource_type_set(self):
+        service_name = "s3"
+        provider = set_mocked_aws_provider()
+        service = AWSService(service_name, provider)
+
+        assert (
+            service.get_unknown_arn(resource_type="bucket")
+            == f"arn:aws:{service_name}::{AWS_ACCOUNT_NUMBER}:bucket/unknown"
+        )
+
+    def test_AWSService_get_unknown_arn_resource_type_set_cn_partition(self):
+        service_name = "s3"
+        provider = set_mocked_aws_provider()
+        service = AWSService(service_name, provider)
+        service.audited_partition = "aws-cn"
+
+        assert (
+            service.get_unknown_arn(resource_type="bucket")
+            == f"arn:{service.audited_partition}:{service_name}::{AWS_ACCOUNT_NUMBER}:bucket/unknown"
+        )
+
+    def test_AWSService_get_unknown_arn_resource_type_set_region(self):
+        service_name = "s3"
+        provider = set_mocked_aws_provider()
+        service = AWSService(service_name, provider)
+
+        assert (
+            service.get_unknown_arn(region="eu-west-1", resource_type="bucket")
+            == f"arn:aws:{service_name}:eu-west-1:{AWS_ACCOUNT_NUMBER}:bucket/unknown"
+        )

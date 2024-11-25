@@ -15,6 +15,7 @@ from prowler.providers.common.provider import Provider
 from prowler.providers.github.exceptions.exceptions import (
     GithubEnvironmentVariableError,
     GithubInvalidTokenError,
+    GithubNonExistentTokenError,
     GithubSetUpIdentityError,
     GithubSetUpSessionError,
 )
@@ -25,7 +26,6 @@ from prowler.providers.github.models import GithubIdentityInfo, GithubSession
 class GithubProvider(Provider):
     _type: str = "github"
     _auth_method: str
-    _pat: str
     _session: GithubSession
     _identity: GithubIdentityInfo
     _audit_config: dict
@@ -100,11 +100,6 @@ class GithubProvider(Provider):
         return self._auth_method
 
     @property
-    def pat(self):
-        """Returns the personal access token for the GitHub provider."""
-        return self._pat
-
-    @property
     def session(self):
         """Returns the session object for the GitHub provider."""
         return self._session
@@ -139,6 +134,7 @@ class GithubProvider(Provider):
         personal_access_token: bool,
         github_app: bool,
         oauth_app: bool,
+        pat: str = None,
     ) -> GithubSession:
         """
         Returns the GitHub headers responsible  authenticating API calls.
@@ -157,9 +153,11 @@ class GithubProvider(Provider):
                     "GitHub provider: No authentication method selected. Prowler will try to use GITHUB_PERSONAL_ACCESS_TOKEN enviroment variable to log in by default."
                 )
                 personal_access_token = True
-            if self.pat:
-                session_token = self.pat
+
+            if pat:
+                session_token = pat
                 self._auth_method = "personal_access_token"
+
             elif personal_access_token:
                 if not getenv("GITHUB_PERSONAL_ACCESS_TOKEN"):
                     logger.critical(
@@ -171,6 +169,7 @@ class GithubProvider(Provider):
                     )
                 session_token = getenv("GITHUB_PERSONAL_ACCESS_TOKEN")
                 self._auth_method = "personal_access_token"
+
             elif github_app:
                 if not getenv("GITHUB_APP_TOKEN"):
                     logger.critical(
@@ -182,6 +181,7 @@ class GithubProvider(Provider):
                     )
                 session_token = getenv("GITHUB_APP_TOKEN")
                 self._auth_method = "github_app"
+
             elif oauth_app:
                 if not getenv("GITHUB_OAUTH_APP_TOKEN"):
                     logger.critical(
@@ -193,9 +193,14 @@ class GithubProvider(Provider):
                     )
                 session_token = getenv("GITHUB_OAUTH_APP_TOKEN")
                 self._auth_method = "oauth_app"
+
             else:
                 logger.critical(
                     "GitHub provider: A Github token is required to authenticate against Github."
+                )
+                raise GithubNonExistentTokenError(
+                    file=os.path.basename(__file__),
+                    message="A Github token is required to authenticate against Github.",
                 )
 
             credentials = GithubSession(token=session_token)
@@ -216,6 +221,7 @@ class GithubProvider(Provider):
         personal_access_token: bool,
         github_app: bool,
         oauth_app: bool,
+        pat: str = None,
     ) -> GithubIdentityInfo:
         """
         Returns the GitHub identity information
@@ -231,8 +237,8 @@ class GithubProvider(Provider):
         credentials = self.session
 
         try:
-            if (self.pat or personal_access_token or github_app or oauth_app) or (
-                not self.pat
+            if (pat or personal_access_token or github_app or oauth_app) or (
+                not pat
                 and not personal_access_token
                 and not github_app
                 and not oauth_app
