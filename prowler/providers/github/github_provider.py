@@ -15,7 +15,6 @@ from prowler.providers.common.provider import Provider
 from prowler.providers.github.exceptions.exceptions import (
     GithubEnvironmentVariableError,
     GithubInvalidTokenError,
-    GithubNonExistentTokenError,
     GithubSetUpIdentityError,
     GithubSetUpSessionError,
 )
@@ -26,6 +25,7 @@ from prowler.providers.github.models import GithubIdentityInfo, GithubSession
 class GithubProvider(Provider):
     _type: str = "github"
     _auth_method: str
+    _pat: str
     _session: GithubSession
     _identity: GithubIdentityInfo
     _audit_config: dict
@@ -98,6 +98,11 @@ class GithubProvider(Provider):
     def auth_method(self):
         """Returns the authentication method for the GitHub provider."""
         return self._auth_method
+
+    @property
+    def pat(self):
+        """Returns the personal access token for the GitHub provider."""
+        return self._pat
 
     @property
     def session(self):
@@ -197,10 +202,6 @@ class GithubProvider(Provider):
             else:
                 logger.critical(
                     "GitHub provider: A Github token is required to authenticate against Github."
-                )
-                raise GithubNonExistentTokenError(
-                    file=os.path.basename(__file__),
-                    message="A Github token is required to authenticate against Github.",
                 )
 
             credentials = GithubSession(token=session_token)
