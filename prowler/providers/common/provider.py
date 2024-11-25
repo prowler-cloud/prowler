@@ -218,9 +218,8 @@ class Provider(ABC):
                         github_app=arguments.github_app,
                         personal_access_token=arguments.personal_access_token,
                         oauth_app_token=arguments.oauth_app_token,
-                        github_app_token=arguments.github_app_token,
-                        user=arguments.user,
-                        password=arguments.password,
+                        github_app_key=arguments.github_app_key,
+                        github_app_id=arguments.github_app_id,
                         config_path=arguments.config_file,
                     )
 

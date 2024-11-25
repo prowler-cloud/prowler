@@ -12,8 +12,8 @@ class GithubIdentityInfo(BaseModel):
 
 class GithubSession(BaseModel):
     token: str
-    user: str
-    password: str
+    key: str
+    id: str
 
 
 class GithubOutputOptions(ProviderOutputOptions):
