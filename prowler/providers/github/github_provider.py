@@ -1,3 +1,4 @@
+import os
 from os import getenv
 
 from github import Auth, Github
@@ -11,6 +12,13 @@ from prowler.lib.logger import logger
 from prowler.lib.mutelist.mutelist import Mutelist
 from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.provider import Provider
+from prowler.providers.github.exceptions.exceptions import (
+    GithubEnvironmentVariableError,
+    GithubInvalidTokenError,
+    GithubNonExistentTokenError,
+    GithubSetUpIdentityError,
+    GithubSetUpSessionError,
+)
 from prowler.providers.github.lib.mutelist.mutelist import GithubMutelist
 from prowler.providers.github.models import GithubIdentityInfo, GithubSession
 
@@ -46,11 +54,13 @@ class GithubProvider(Provider):
             config_path (str): Configuration path
         """
         logger.info("Instantiating GitHub Provider...")
+
         self._session = self.setup_session(
             personal_access_token,
             github_app,
             oauth_app,
         )
+
         self._identity = self.setup_identity(
             personal_access_token,
             github_app,
@@ -133,24 +143,61 @@ class GithubProvider(Provider):
         Returns:
             GithubSession: Authenticated session token for API requests.
         """
+        try:
+            if personal_access_token:
+                if not getenv("GITHUB_PERSONAL_ACCESS_TOKEN"):
+                    logger.critical(
+                        "GitHub provider: Missing enviroment variable GITHUB_PERSONAL_ACCESS_TOKEN needed to authenticate against GitHub."
+                    )
+                    raise GithubEnvironmentVariableError(
+                        file=os.path.basename(__file__),
+                        message="Missing Github environment variable GITHUB_PERSONAL_ACCESS_TOKEN required to authenticate.",
+                    )
+                session_token = getenv("GITHUB_PERSONAL_ACCESS_TOKEN")
+                self._auth_method = "personal_access_token"
+            elif github_app:
+                if not getenv("GITHUB_APP_TOKEN"):
+                    logger.critical(
+                        "GitHub provider: Missing enviroment variable GITHUB_APP_TOKEN needed to authenticate against GitHub."
+                    )
+                    raise GithubEnvironmentVariableError(
+                        file=os.path.basename(__file__),
+                        message="Missing Github environment variable GITHUB_APP_TOKEN required to authenticate.",
+                    )
+                session_token = getenv("GITHUB_APP_TOKEN")
+                self._auth_method = "github_app"
+            elif oauth_app:
+                if not getenv("GITHUB_OAUTH_APP_TOKEN"):
+                    logger.critical(
+                        "GitHub provider: Missing enviroment variable GITHUB_OAUTH_APP_TOKEN needed to authenticate against GitHub."
+                    )
+                    raise GithubEnvironmentVariableError(
+                        file=os.path.basename(__file__),
+                        message="Missing Github environment variable GITHUB_OAUTH_APP_TOKEN required to authenticate.",
+                    )
+                session_token = getenv("GITHUB_OAUTH_APP_TOKEN")
+                self._auth_method = "oauth_app"
+            else:
+                logger.critical(
+                    "GitHub provider: A Github token is required to authenticate against Github."
+                )
+                raise GithubNonExistentTokenError(
+                    file=os.path.basename(__file__),
+                    message="A Github token is required to authenticate against Github.",
+                )
 
-        if personal_access_token:
-            session_token = getenv("GITHUB_PERSONAL_ACCESS_TOKEN")
-            self._auth_method = "personal_access_token"
-        elif github_app:
-            session_token = getenv("GITHUB_APP_TOKEN")
-            self._auth_method = "github_app"
-        elif oauth_app:
-            session_token = getenv("GITHUB_OAUTH_TOKEN")
-            self._auth_method = "oauth_app"
-        else:
-            raise ValueError(
-                "A GitHub API token of some kind is required to initialize GitHub provider."
+            credentials = GithubSession(token=session_token)
+
+            return credentials
+
+        except Exception as error:
+            logger.critical("GitHub provider: Error setting up session.")
+            logger.critical(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
             )
-
-        credentials = GithubSession(token=session_token)
-
-        return credentials
+            raise GithubSetUpSessionError(
+                original_exception=error,
+            )
 
     def setup_identity(
         self,
@@ -171,17 +218,33 @@ class GithubProvider(Provider):
         """
         credentials = self.session
 
-        if personal_access_token or github_app or oauth_app:
-            auth = Auth.Token(credentials.token)
-            g = Github(auth=auth)
+        try:
+            if personal_access_token or github_app or oauth_app:
+                auth = Auth.Token(credentials.token)
+                g = Github(auth=auth)
 
-            identity = GithubIdentityInfo(
-                account_name=g.get_user().login,
-                account_id=g.get_user().id,
-                account_url=g.get_user().url,
+                try:
+                    identity = GithubIdentityInfo(
+                        account_name=g.get_user().login,
+                        account_id=g.get_user().id,
+                        account_url=g.get_user().url,
+                    )
+                    return identity
+
+                except Exception as error:
+                    logger.critical("GitHub provider: Given credentials are not valid.")
+                    raise GithubInvalidTokenError(
+                        original_exception=error,
+                    )
+
+        except Exception as error:
+            logger.critical("GitHub provider: Error setting up identity.")
+            logger.critical(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
             )
-
-            return identity
+            raise GithubSetUpIdentityError(
+                original_exception=error,
+            )
 
     def print_credentials(self):
         print(f"You are using a {self.auth_method} as authentication method.")
