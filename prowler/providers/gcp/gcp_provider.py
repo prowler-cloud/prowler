@@ -417,17 +417,17 @@ class GcpProvider(Provider):
             GCPTestConnectionError if an error occurs during the test connection
 
         Usage:
-            - Using static credentials:
+            - Using ADC credentials from `/Users/<user>/.config/gcloud/application_default_credentials.json`:
                 >>> GcpProvider.test_connection(
                 ...     client_id="client_id",
                 ...     client_secret="client_secret",
                 ...     refresh_token="refresh_token"
                 ... )
-            - Using a credentials file:
+            - Using a Service Account credentials file path:
                 >>> GcpProvider.test_connection(
                 ...     credentials_file="credentials_file"
                 ... )
-            - Using a service account to impersonate, authentication is required to impersonate a service account:
+            - Using ADC credentials with a Service Account to impersonate:
                 >>> GcpProvider.test_connection(
                 ...     client_id="client_id",
                 ...     client_secret="client_secret",
@@ -436,7 +436,7 @@ class GcpProvider(Provider):
                 ... )
         """
         try:
-            # Set the GCP credentials using the provided client_id, client_secret and refresh_token
+            # Set the GCP credentials using the provided client_id, client_secret and refresh_token from ADC
             gcp_credentials = None
             if any([client_id, client_secret, refresh_token]):
                 gcp_credentials = GcpProvider.validate_static_arguments(
@@ -738,7 +738,7 @@ class GcpProvider(Provider):
         client_id: str = None, client_secret: str = None, refresh_token: str = None
     ) -> dict:
         """
-        Validate the static arguments client_id, client_secret and refresh_token
+        Validate the static arguments client_id, client_secret and refresh_token of ADC credentials
 
         Args:
             client_id: str
@@ -749,7 +749,7 @@ class GcpProvider(Provider):
             dict
 
         Raises:
-            GCPStaticCredentialsError if any of the static arguments is missing
+            GCPStaticCredentialsError if any of the static arguments is missing from the ADC credentials
 
         Usage:
             >>> GcpProvider.validate_static_arguments(client_id, client_secret, refresh_token)
