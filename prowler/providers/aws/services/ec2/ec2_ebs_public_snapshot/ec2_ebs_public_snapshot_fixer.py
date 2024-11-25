@@ -6,8 +6,8 @@ def fixer(resource_id: str, region: str) -> bool:
     """
     Modify the attributes of an EBS snapshot to remove public access.
     Specifically, this fixer removes the 'all' value from the 'createVolumePermission' attribute to
-    prevent the snapshot from being publicly accessible.
-    Requires the ec2:ModifySnapshotAttribute permission.
+    prevent the snapshot from being publicly accessible. Requires the ec2:ModifySnapshotAttribute permission.
+    Permissions:
     {
         "Version": "2012-10-17",
         "Statement": [
