@@ -9,7 +9,6 @@ def fixer(resource_id: str, region: str) -> bool:
     Modify the Lambda function's resource-based policy to remove public access.
     Specifically, this fixer removes the public permission statement from the function's policy.
     Requires the lambda:RemovePermission permission.
-
     Permissions:
     {
         "Version": "2012-10-17",
@@ -21,11 +20,9 @@ def fixer(resource_id: str, region: str) -> bool:
             }
         ]
     }
-
     Args:
         resource_id (str): The Lambda function name or ARN.
         region (str): AWS region where the Lambda function exists.
-
     Returns:
         bool: True if the operation is successful (public access is removed), False otherwise.
     """
