@@ -1,0 +1,34 @@
+name: "UI - Pull Request"
+
+on:
+  pull_request:
+    branches:
+      - master
+    paths:
+      - 'ui/**'
+
+jobs:
+  test-and-coverage:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        node-version: [20.x]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Install dependencies
+        working-directory: ./ui
+        run: npm install
+      - name: Run Healthcheck
+        working-directory: ./ui
+        run: npm run healthcheck
+      - name: Build the application
+        working-directory: ./ui
+        run: npm run build

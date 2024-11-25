@@ -1,0 +1,125 @@
+services:
+  api:
+    build:
+      dockerfile: Dockerfile
+    image: prowler-api
+    env_file:
+      - path: ./.env
+        required: false
+    ports:
+      - "${DJANGO_PORT:-8000}:${DJANGO_PORT:-8000}"
+    profiles:
+      - prod
+    depends_on:
+      postgres:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+    entrypoint:
+      - "../docker-entrypoint.sh"
+      - "prod"
+
+  api-dev:
+    build:
+      dockerfile: Dockerfile
+      target: dev
+    image: prowler-api-dev
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.django.devel
+      - DJANGO_LOGGING_FORMATTER=human_readable
+    env_file:
+      - path: ./.env
+        required: false
+    ports:
+      - "${DJANGO_PORT:-8080}:${DJANGO_PORT:-8080}"
+    volumes:
+      - "./src/backend:/home/prowler/backend"
+      - "./pyproject.toml:/home/prowler/pyproject.toml"
+    profiles:
+      - dev
+    depends_on:
+      postgres:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+    entrypoint:
+      - "../docker-entrypoint.sh"
+      - "dev"
+
+  postgres:
+    image: postgres:16.3-alpine
+    ports:
+      - "${POSTGRES_PORT:-5432}:${POSTGRES_PORT:-5432}"
+    hostname: "postgres-db"
+    volumes:
+      - ./_data/postgres:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=${POSTGRES_ADMIN_USER:-prowler}
+      - POSTGRES_PASSWORD=${POSTGRES_ADMIN_PASSWORD:-S3cret}
+      - POSTGRES_DB=${POSTGRES_DB:-prowler_db}
+    env_file:
+      - path: ./.env
+        required: false
+    healthcheck:
+      test: ["CMD-SHELL", "sh -c 'pg_isready -U ${POSTGRES_ADMIN_USER:-prowler} -d ${POSTGRES_DB:-prowler_db}'"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  valkey:
+    image: valkey/valkey:7-alpine3.19
+    ports:
+      - "${VALKEY_PORT:-6379}:6379"
+    hostname: "valkey"
+    volumes:
+      - ./_data/valkey:/data
+    env_file:
+      - path: ./.env
+        required: false
+    healthcheck:
+      test: ["CMD-SHELL", "sh -c 'valkey-cli ping'"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  worker:
+    build:
+      dockerfile: Dockerfile
+    image: prowler-worker
+    environment:
+      - DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE:-config.django.production}
+    env_file:
+      - path: ./.env
+        required: false
+    profiles:
+      - dev
+      - prod
+    depends_on:
+      valkey:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    entrypoint:
+      - "../docker-entrypoint.sh"
+      - "worker"
+
+  worker-beat:
+    build:
+      dockerfile: Dockerfile
+    image: prowler-worker
+    environment:
+      - DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE:-config.django.production}
+    env_file:
+      - path: ./.env
+        required: false
+    profiles:
+      - dev
+      - prod
+    depends_on:
+      valkey:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    entrypoint:
+      - "../docker-entrypoint.sh"
+      - "beat"
