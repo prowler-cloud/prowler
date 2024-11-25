@@ -25,7 +25,6 @@ from prowler.providers.github.models import GithubIdentityInfo, GithubSession
 class GithubProvider(Provider):
     _type: str = "github"
     _auth_method: str
-    _pat: str
     _session: GithubSession
     _identity: GithubIdentityInfo
     _audit_config: dict
@@ -55,8 +54,6 @@ class GithubProvider(Provider):
             config_path (str): Configuration path
         """
         logger.info("Instantiating GitHub Provider...")
-
-        self._pat = pat
 
         self._session = self.setup_session(
             personal_access_token,
