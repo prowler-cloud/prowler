@@ -7774,6 +7774,15 @@
         "aws-us-gov": []
       }
     },
+    "partnercentral-selling": {
+      "regions": {
+        "aws": [
+          "us-east-1"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
     "payment-cryptography": {
       "regions": {
         "aws": [
