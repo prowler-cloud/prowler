@@ -34,11 +34,17 @@ class GithubProvider(Provider):
 
     def __init__(
         self,
-        personal_access_token: bool = False,
-        oauth_app_token: str = None,
+        # Authentication methods
+        personal_access: bool = False,
+        oauth_app: bool = False,
         github_app: bool = False,
-        user: str = None,
-        password: str = None,
+        # Authentication credentials
+        personal_access_token: str = "",
+        oauth_app_token: str = "",
+        github_app_token: str = "",
+        user: str = "",
+        password: str = "",
+        # Provider configuration
         config_path: str = None,
         config_content: dict = None,
         fixer_config: dict = {},
@@ -49,7 +55,7 @@ class GithubProvider(Provider):
         GitHub Provider constructor
 
         Args:
-            personal_access_token (str): GitHub token as authentication method
+            personal_access (str): GitHub token as authentication method
             github_app (bool): GitHub App as authentication method
             oauth_app (bool): OAuth App as authentication method
             config_content (dict): Configuration content
@@ -58,17 +64,23 @@ class GithubProvider(Provider):
         logger.info("Instantiating GitHub Provider...")
 
         self._session = self.setup_session(
+            personal_access,
+            oauth_app,
+            github_app,
             personal_access_token,
             oauth_app_token,
-            github_app,
+            github_app_token,
             user,
             password,
         )
 
         self._identity = self.setup_identity(
+            personal_access,
+            oauth_app,
+            github_app,
             personal_access_token,
             oauth_app_token,
-            github_app,
+            github_app_token,
             user,
             password,
         )
@@ -139,9 +151,12 @@ class GithubProvider(Provider):
 
     def setup_session(
         self,
-        personal_access_token: bool,
-        oauth_app_token: str = None,
+        personal_access: bool,
+        oauth_app: bool = False,
         github_app: bool = False,
+        personal_access_token: str = None,
+        oauth_app_token: str = None,
+        github_app_token: str = None,
         user: str = None,
         password: str = None,
     ) -> GithubSession:
@@ -149,7 +164,7 @@ class GithubProvider(Provider):
         Returns the GitHub headers responsible  authenticating API calls.
 
         Args:
-            personal_access_token (str): Flag indicating whether to use GitHub personal access token as authentication method.
+            personal_access (str): Flag indicating whether to use GitHub personal access token as authentication method.
             github_app (bool): Flag indicating whether to use GitHub App as authentication method.
             oauth_app (bool): Flag indicating whether to use OAuth App as authentication method.
 
@@ -162,20 +177,27 @@ class GithubProvider(Provider):
         login_password = ""
 
         try:
-            # Ensure that at least one authentication method is selected. Default to environment variable PAT if none is provided.
+            # Ensure that at least one authentication method is selected. Default to environment variable for PAT if none is provided.
             if (
-                not personal_access_token
-                and not oauth_app_token
+                not personal_access
+                and not oauth_app
                 and not github_app
+                and not personal_access_token
+                and not oauth_app_token
+                and not github_app_token
                 and not user
                 and not password
             ):
                 logger.error(
                     "GitHub provider: No authentication method selected. Prowler will try to use GITHUB_PERSONAL_ACCESS_TOKEN enviroment variable to log in by default."
                 )
-                personal_access_token = True
+                personal_access = True
 
             if personal_access_token:
+                session_token = personal_access_token
+                self._auth_method = "Enviroment Variable for Personal Access Token"
+
+            elif personal_access:
                 if not getenv("GITHUB_PERSONAL_ACCESS_TOKEN"):
                     logger.critical(
                         "GitHub provider: Missing enviroment variable GITHUB_PERSONAL_ACCESS_TOKEN needed to authenticate against GitHub."
@@ -185,10 +207,13 @@ class GithubProvider(Provider):
                         message="Missing Github environment variable GITHUB_PERSONAL_ACCESS_TOKEN required to authenticate.",
                     )
                 session_token = getenv("GITHUB_PERSONAL_ACCESS_TOKEN")
-                self._auth_method = "personal_access_token"
+                self._auth_method = "Personal Access Token"
 
             elif oauth_app_token:
-                """
+                session_token = oauth_app_token
+                self._auth_method = "OAuth App token"
+
+            elif oauth_app:
                 if not getenv("GITHUB_OAUTH_APP_TOKEN"):
                     logger.critical(
                         "GitHub provider: Missing enviroment variable GITHUB_OAUTH_APP_TOKEN needed to authenticate against GitHub."
@@ -197,9 +222,11 @@ class GithubProvider(Provider):
                         file=os.path.basename(__file__),
                         message="Missing Github environment variable GITHUB_OAUTH_APP_TOKEN required to authenticate.",
                     )
-                """
-                session_token = oauth_app_token
-                self._auth_method = "oauth_app"
+                self._auth_method = "Enviroment Variable for OAuth App Token"
+
+            elif github_app_token:
+                session_token = github_app_token
+                self._auth_method = "GitHub App Token"
 
             elif github_app:
                 if not getenv("GITHUB_APP_TOKEN"):
@@ -211,12 +238,12 @@ class GithubProvider(Provider):
                         message="Missing Github environment variable GITHUB_APP_TOKEN required to authenticate.",
                     )
                 session_token = getenv("GITHUB_APP_TOKEN")
-                self._auth_method = "github_app"
+                self._auth_method = "Enviroment Variable for GitHub App Token"
 
             elif user and password:
                 login_user = user
                 login_password = password
-                self._auth_method = "login_auth"
+                self._auth_method = "User-Password login"
 
             else:
                 logger.critical(
@@ -240,17 +267,20 @@ class GithubProvider(Provider):
 
     def setup_identity(
         self,
-        personal_access_token: bool,
-        oauth_app_token: str = None,
-        github_app: bool = False,
-        user: str = None,
-        password: str = None,
+        personal_access,
+        oauth_app,
+        github_app,
+        personal_access_token,
+        oauth_app_token,
+        github_app_token,
+        user,
+        password,
     ) -> GithubIdentityInfo:
         """
         Returns the GitHub identity information
 
         Args:
-            personal_access_token (str): Flag indicating whether to use GitHub personal access token as authentication method.
+            personal_access (str): Flag indicating whether to use GitHub personal access token as authentication method.
             github_app (bool): Flag indicating whether to use GitHub App as authentication method.
             oauth_app (bool): Flag indicating whether to use OAuth App as authentication method.
 
@@ -260,12 +290,18 @@ class GithubProvider(Provider):
         credentials = self.session
 
         try:
-            if (personal_access_token or github_app or oauth_app_token) or (
-                not personal_access_token
-                and not oauth_app_token
-                and not github_app
-                and not user
-                and not password
+            if (
+                (personal_access or personal_access_token)
+                or (oauth_app or oauth_app_token)
+                or (
+                    not personal_access
+                    and not github_app
+                    and not oauth_app
+                    and not oauth_app_token
+                    and not github_app_token
+                    and not user
+                    and not password
+                )
             ):
                 auth = Auth.Token(credentials.token)
                 g = Github(auth=auth)

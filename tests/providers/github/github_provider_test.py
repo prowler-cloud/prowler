@@ -17,7 +17,7 @@ from tests.providers.github.github_fixtures import (
 class TestGitHubProvider:
     def test_github_provider(self):
         # We need to set exactly one auth method
-        personal_access_token = True
+        personal_access = True
         oauth_app = False
         github_app = False
         fixer_config = load_and_validate_config_file(
@@ -36,7 +36,7 @@ class TestGitHubProvider:
             ),
         ):
             provider = GithubProvider(
-                personal_access_token,
+                personal_access,
                 github_app,
                 oauth_app,
             )

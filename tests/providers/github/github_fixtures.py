@@ -14,7 +14,7 @@ TOKEN = "github-token"
 
 # Mocked GitHub Provider
 def set_mocked_github_provider(
-    auth_method: str = "personal_access_token",
+    auth_method: str = "personal_access",
     credentials: GithubSession = GithubSession(token=TOKEN),
     identity: GithubIdentityInfo = GithubIdentityInfo(
         account_name=ACCOUNT_NAME,

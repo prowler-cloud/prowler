@@ -7,9 +7,27 @@ def init_parser(self):
     github_auth_subparser = github_parser.add_argument_group("Authentication Modes")
     github_auth_modes_group = github_auth_subparser.add_mutually_exclusive_group()
     github_auth_modes_group.add_argument(
+        "--personal-access",
+        action="store_true",
+        help="Use enviroment variable for Personal Access Token to log in against GitHub",
+        default=False,
+    )
+    github_auth_modes_group.add_argument(
+        "--oauth-app",
+        action="store_true",
+        default=False,
+        help="Use enviroment variable for Oauth App Token to log in against GitHub",
+    ),
+    github_auth_modes_group.add_argument(
+        "--github-app",
+        action="store_true",
+        help="Use enviroment variable for GitHub App Token to log in against GitHub",
+        default=False,
+    ),
+    github_auth_subparser.add_argument(
         "--personal-access-token",
         action="store_true",
-        help="Use Personal Access Token to log in against GitHub",
+        help="Personal Access Token to log in against GitHub",
         default=False,
     )
     github_auth_subparser.add_argument(
@@ -19,10 +37,10 @@ def init_parser(self):
         help="Oauth app token to log in against GitHub",
     ),
     github_auth_modes_group.add_argument(
-        "--github-app",
-        action="store_true",
-        help="Use GitHub app token to log in against GitHub",
-        default=False,
+        "--github-app-token",
+        nargs="?",
+        default=None,
+        help="GitHub app token to log in against GitHub",
     ),
     github_auth_subparser.add_argument(
         "--user",
