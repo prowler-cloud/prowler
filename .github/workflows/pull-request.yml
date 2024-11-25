@@ -1,4 +1,4 @@
-name: pr-lint-test
+name: "Pull Request" 
 
 on:
   push:
@@ -6,11 +6,13 @@ on:
       - "master"
       - "v3"
       - "v4.*"
+      - "v5.*"
   pull_request:
     branches:
       - "master"
       - "v3"
       - "v4.*"
+      - "v5.*"
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -27,9 +29,11 @@ jobs:
           files: ./**
           files_ignore: |
             .github/**
-            README.md
             docs/**
             permissions/**
+            api/**
+            ui/**
+            README.md
             mkdocs.yml
             .backportrc.json
       - name: Install poetry
@@ -60,11 +64,11 @@ jobs:
       - name: Lint with flake8
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
-          poetry run flake8 . --ignore=E266,W503,E203,E501,W605,E128 --exclude contrib
+          poetry run flake8 . --ignore=E266,W503,E203,E501,W605,E128 --exclude contrib,ui,api
       - name: Checking format with black
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
-          poetry run black --check .
+          poetry run black --exclude api ui --check .
       - name: Lint with pylint
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
@@ -72,15 +76,15 @@ jobs:
       - name: Bandit
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
-          poetry run bandit -q -lll -x '*_test.py,./contrib/' -r .
+          poetry run bandit -q -lll -x '*_test.py,./contrib/,./api/,./ui' -r .
       - name: Safety
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
-          poetry run safety check --ignore 70612
+          poetry run safety check --ignore 70612 -r pyproject.toml
       - name: Vulture
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
-          poetry run vulture --exclude "contrib" --min-confidence 100 .
+          poetry run vulture --exclude "contrib,api,ui" --min-confidence 100 .
       - name: Hadolint
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
@@ -91,6 +95,6 @@ jobs:
           poetry run pytest -n auto --cov=./prowler --cov-report=xml tests
       - name: Upload coverage reports to Codecov
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v4
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

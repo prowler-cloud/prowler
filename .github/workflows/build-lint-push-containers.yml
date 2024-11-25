@@ -9,6 +9,8 @@ on:
       - ".github/**"
       - "README.md"
       - "docs/**"
+      - "ui/**"
+      - "api/**"
 
   release:
     types: [published]

@@ -1,9 +1,11 @@
-name: CI - Code Quality and Health Check
+name: "UI/CI - Code Quality and Health Check"
 
 on:
   pull_request:
     branches:
-      - main
+      - master
+    paths:
+      - 'ui/**'
 
 jobs:
   test-and-coverage:
@@ -22,8 +24,11 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - name: Install dependencies
+        working-directory: ./ui
         run: npm install
       - name: Run Healthcheck
+        working-directory: ./ui
         run: npm run healthcheck
       - name: Build the application
+        working-directory: ./ui
         run: npm run build

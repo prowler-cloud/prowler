@@ -1,0 +1,5 @@
+name: "Custom CodeQL Config"
+paths:
+  paths-ignore:
+    - 'api/'
+    - 'ui/'
