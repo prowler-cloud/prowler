@@ -16,11 +16,11 @@ on:
 env:
   POSTGRES_HOST: localhost
   POSTGRES_PORT: 5432
-  POSTGRES_ADMIN_USER: prowler_admin
-  POSTGRES_ADMIN_PASSWORD: postgres
-  POSTGRES_USER: postgres
-  POSTGRES_PASSWORD: postgres
-  POSTGRES_DB: prowler_db
+  POSTGRES_ADMIN_USER: prowler
+  POSTGRES_ADMIN_PASSWORD: S3cret
+  POSTGRES_USER: prowler_user
+  POSTGRES_PASSWORD: prowler
+  POSTGRES_DB: postgres-db
   VALKEY_HOST: localhost
   VALKEY_PORT: 6379
   VALKEY_DB: 0
@@ -41,8 +41,8 @@ jobs:
         env:
           POSTGRES_HOST: ${{ env.POSTGRES_HOST }}
           POSTGRES_PORT: ${{ env.POSTGRES_PORT }}
-          POSTGRES_USER: ${{ env.POSTGRES_ADMIN_USER }}
-          POSTGRES_PASSWORD: ${{ env.POSTGRES_ADMIN_PASSWORD }}
+          POSTGRES_USER: ${{ env.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
           POSTGRES_DB: ${{ env.POSTGRES_DB }}
         # Set health checks to wait until postgres has started
         ports:
