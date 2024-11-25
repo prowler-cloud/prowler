@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { scanOnDemand } from "@/actions/scans/scans";
-import { RocketIcon, ScheduleIcon } from "@/components/icons";
+import { AddIcon } from "@/components/icons";
 import { CustomButton } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
 import { ProviderProps } from "@/types"; // Asegúrate de importar la interfaz correcta
@@ -51,7 +51,7 @@ export const LaunchScanForm = ({
     },
   });
 
-  const isLoading = form.formState.isSubmitting;
+  // const isLoading = form.formState.isSubmitting;
 
   const onSubmitClient = async (values: FormValues) => {
     const formData = new FormData();
@@ -94,10 +94,11 @@ export const LaunchScanForm = ({
       >
         <div className="text-left">
           <div className="text-2xl font-bold leading-9 text-default-foreground">
-            Launch scan
+            Scan started
           </div>
           <div className="py-2 text-default-500">
-            Launch the scan now or schedule it for a later date and time.
+            The scan has just started. From now on, a new scan will be launched
+            every 24 hours, starting from this moment.
           </div>
         </div>
 
@@ -116,7 +117,7 @@ export const LaunchScanForm = ({
         <input type="hidden" name="providerId" value={providerId} />
         <input type="hidden" name="providerType" value={providerType} />
 
-        <div className="flex w-full justify-end sm:space-x-6">
+        {/* <div className="flex w-full justify-end sm:space-x-6">
           <CustomButton
             type="submit"
             ariaLabel={"Save"}
@@ -141,6 +142,18 @@ export const LaunchScanForm = ({
             endContent={!isLoading && <RocketIcon size={24} />}
           >
             {isLoading ? <>Loading</> : <span>Start now</span>}
+          </CustomButton>
+        </div> */}
+        <div className="flex w-full items-center justify-end">
+          <CustomButton
+            asLink="/scans"
+            ariaLabel="Go to Scans page"
+            variant="solid"
+            color="action"
+            size="md"
+            endContent={<AddIcon size={20} />}
+          >
+            Go to Scans
           </CustomButton>
         </div>
       </form>

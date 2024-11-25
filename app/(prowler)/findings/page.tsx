@@ -51,29 +51,30 @@ export default async function Findings({
   const resourceDict = createDict("resources", findingsData);
 
   // Get unique regions and services
-  const allRegionsAndServices = findingsData?.data
-    ?.flatMap((finding: FindingProps) => {
-      const resource =
-        resourceDict[finding.relationships?.resources?.data?.[0]?.id];
-      return {
-        region: resource?.attributes?.region,
-        service: resource?.attributes?.service,
-      };
-    })
-    .filter(Boolean);
+  const allRegionsAndServices =
+    findingsData?.data
+      ?.flatMap((finding: FindingProps) => {
+        const resource =
+          resourceDict[finding.relationships?.resources?.data?.[0]?.id];
+        return {
+          region: resource?.attributes?.region,
+          service: resource?.attributes?.service,
+        };
+      })
+      .filter(Boolean) || [];
 
   const uniqueRegions = Array.from(
     new Set<string>(
       allRegionsAndServices
         .map((item: { region: string }) => item.region)
-        .filter(Boolean),
+        .filter(Boolean) || [],
     ),
   );
   const uniqueServices = Array.from(
     new Set<string>(
       allRegionsAndServices
         .map((item: { service: string }) => item.service)
-        .filter(Boolean),
+        .filter(Boolean) || [],
     ),
   );
 

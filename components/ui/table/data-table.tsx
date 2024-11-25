@@ -106,9 +106,11 @@ export function DataTable<TData, TValue>({
           </TableBody>
         </Table>
       </div>
-      <div className="flex w-full items-center space-x-2 py-4">
-        <DataTablePagination metadata={metadata} />
-      </div>
+      {metadata && (
+        <div className="flex w-full items-center space-x-2 py-4">
+          <DataTablePagination metadata={metadata} />
+        </div>
+      )}
     </>
   );
 }

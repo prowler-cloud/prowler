@@ -12,6 +12,7 @@ import {
   checkConnectionProvider,
   deleteCredentials,
 } from "@/actions/providers";
+import { scanOnDemand } from "@/actions/scans";
 import { getTask } from "@/actions/task/tasks";
 import { CheckIcon, SaveIcon } from "@/components/icons";
 import { useToast } from "@/components/ui";
@@ -115,9 +116,26 @@ export const TestConnectionForm = ({
         });
 
         if (connected) {
-          router.push(
-            `/providers/launch-scan?type=${providerType}&id=${providerId}`,
-          );
+          try {
+            const data = await scanOnDemand(formData);
+
+            if (data.error) {
+              setApiErrorMessage(data.error);
+              form.setError("providerId", {
+                type: "server",
+                message: data.error,
+              });
+            } else {
+              router.push(
+                `/providers/launch-scan?type=${providerType}&id=${providerId}`,
+              );
+            }
+          } catch (error) {
+            form.setError("providerId", {
+              type: "server",
+              message: "An unexpected error occurred. Please try again.",
+            });
+          }
         } else {
           setConnectionStatus({
             connected: false,
