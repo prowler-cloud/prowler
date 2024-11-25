@@ -71,7 +71,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Test if changes are in not ignored paths
         id: are-non-ignored-files-changed
-        uses: tj-actions/changed-files@v42
+        uses: tj-actions/changed-files@v45
         with:
           files: api/**
           files_ignore: |
