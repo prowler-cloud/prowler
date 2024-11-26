@@ -46,7 +46,8 @@ junit-reports/
 *.tfstate
 
 # .env
-.env*
+ui/.env*
+api/.env*
 
 # Coverage
 .coverage*
