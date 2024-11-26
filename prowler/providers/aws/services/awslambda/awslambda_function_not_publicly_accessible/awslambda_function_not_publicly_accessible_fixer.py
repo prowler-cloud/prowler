@@ -1,14 +1,27 @@
 import json
 
+import boto3
+
 from prowler.lib.logger import logger
 from prowler.providers.aws.services.awslambda.awslambda_client import awslambda_client
 
 
+def get_account_id() -> str:
+    """
+    Retrieve the AWS account ID using STS get_caller_identity.
+    Returns:
+        str: The AWS account ID.
+    """
+    sts_client = boto3.client("sts")
+    identity = sts_client.get_caller_identity()
+    return identity["Account"]
+
+
 def fixer(resource_id: str, region: str) -> bool:
     """
-    Remove the Lambda function's resource-based policy to prevent public access.
-    Specifically, this fixer deletes all permission statements associated with the Lambda function's policy.
-    Requires the lambda:RemovePermission permission.
+    Remove the Lambda function's resource-based policy to prevent public access and add a new permission for the account.
+    Specifically, this fixer deletes all permission statements associated with the Lambda function's policy and then adds a new permission.
+    Requires the lambda:RemovePermission and lambda:AddPermission permissions.
     Permissions:
     {
         "Version": "2012-10-17",
@@ -17,6 +30,11 @@ def fixer(resource_id: str, region: str) -> bool:
                 "Effect": "Allow",
                 "Action": "lambda:RemovePermission",
                 "Resource": "*"
+            },
+            {
+                "Effect": "Allow",
+                "Action": "lambda:AddPermission",
+                "Resource": "*"
             }
         ]
     }
@@ -24,12 +42,15 @@ def fixer(resource_id: str, region: str) -> bool:
         resource_id (str): The Lambda function name or ARN.
         region (str): AWS region where the Lambda function exists.
     Returns:
-        bool: True if the operation is successful (policy removed), False otherwise.
+        bool: True if the operation is successful (policy removed and permission added), False otherwise.
     """
     try:
+        account_id = get_account_id()
+
         regional_client = awslambda_client.regional_clients[region]
         policy_response = regional_client.get_policy(FunctionName=resource_id)
         policy = policy_response.get("Policy")
+
         if policy:
             if isinstance(policy, str):
                 policy = json.loads(policy)
@@ -40,6 +61,13 @@ def fixer(resource_id: str, region: str) -> bool:
                     regional_client.remove_permission(
                         FunctionName=resource_id, StatementId=statement_id
                     )
+
+            regional_client.add_permission(
+                FunctionName=resource_id,
+                StatementId="ProwlerFixerStatement",
+                Principal=account_id,
+                Action="lambda:InvokeFunction",
+            )
 
     except Exception as error:
         logger.error(
