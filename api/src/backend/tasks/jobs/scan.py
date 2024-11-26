@@ -3,8 +3,7 @@ from copy import deepcopy
 from datetime import datetime, timezone
 
 from celery.utils.log import get_task_logger
-from prowler.lib.outputs.finding import Finding as ProwlerFinding
-from prowler.lib.scan.scan import Scan as ProwlerScan
+from django.db.models import Case, Count, IntegerField, Sum, When
 
 from api.compliance import (
     PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE,
@@ -12,17 +11,20 @@ from api.compliance import (
 )
 from api.db_utils import tenant_transaction
 from api.models import (
-    Provider,
-    Scan,
+    ComplianceOverview,
     Finding,
+    Provider,
     Resource,
     ResourceTag,
-    StatusChoices as FindingStatus,
+    Scan,
+    ScanSummary,
     StateChoices,
-    ComplianceOverview,
 )
+from api.models import StatusChoices as FindingStatus
 from api.utils import initialize_prowler_provider
 from api.v1.serializers import ScanTaskSerializer
+from prowler.lib.outputs.finding import Finding as ProwlerFinding
+from prowler.lib.scan.scan import Scan as ProwlerScan
 
 logger = get_task_logger(__name__)
 
@@ -268,7 +270,7 @@ def perform_prowler_scan(
             scan_instance.unique_resource_count = len(unique_resources)
             scan_instance.save()
 
-    if generate_compliance:
+    if exception is None and generate_compliance:
         try:
             regions = prowler_provider.get_regions()
         except AttributeError:
@@ -321,3 +323,128 @@ def perform_prowler_scan(
 
     serializer = ScanTaskSerializer(instance=scan_instance)
     return serializer.data
+
+
+def aggregate_findings(tenant_id: str, scan_id: str):
+    with tenant_transaction(tenant_id):
+        findings = Finding.objects.filter(scan_id=scan_id)
+
+        aggregation = findings.values(
+            "check_id",
+            "resources__service",
+            "severity",
+            "resources__region",
+        ).annotate(
+            fail=Sum(
+                Case(
+                    When(status="FAIL", then=1),
+                    default=0,
+                    output_field=IntegerField(),
+                )
+            ),
+            _pass=Sum(
+                Case(
+                    When(status="PASS", then=1),
+                    default=0,
+                    output_field=IntegerField(),
+                )
+            ),
+            muted=Sum(
+                Case(
+                    When(status="MUTED", then=1),
+                    default=0,
+                    output_field=IntegerField(),
+                )
+            ),
+            total=Count("id"),
+            new=Sum(
+                Case(
+                    When(delta="new", then=1),
+                    default=0,
+                    output_field=IntegerField(),
+                )
+            ),
+            changed=Sum(
+                Case(
+                    When(delta="changed", then=1),
+                    default=0,
+                    output_field=IntegerField(),
+                )
+            ),
+            unchanged=Sum(
+                Case(
+                    When(delta__isnull=True, then=1),
+                    default=0,
+                    output_field=IntegerField(),
+                )
+            ),
+            fail_new=Sum(
+                Case(
+                    When(delta="new", status="FAIL", then=1),
+                    default=0,
+                    output_field=IntegerField(),
+                )
+            ),
+            fail_changed=Sum(
+                Case(
+                    When(delta="changed", status="FAIL", then=1),
+                    default=0,
+                    output_field=IntegerField(),
+                )
+            ),
+            pass_new=Sum(
+                Case(
+                    When(delta="new", status="PASS", then=1),
+                    default=0,
+                    output_field=IntegerField(),
+                )
+            ),
+            pass_changed=Sum(
+                Case(
+                    When(delta="changed", status="PASS", then=1),
+                    default=0,
+                    output_field=IntegerField(),
+                )
+            ),
+            muted_new=Sum(
+                Case(
+                    When(delta="new", status="MUTED", then=1),
+                    default=0,
+                    output_field=IntegerField(),
+                )
+            ),
+            muted_changed=Sum(
+                Case(
+                    When(delta="changed", status="MUTED", then=1),
+                    default=0,
+                    output_field=IntegerField(),
+                )
+            ),
+        )
+
+    with tenant_transaction(tenant_id):
+        scan_aggregations = {
+            ScanSummary(
+                tenant_id=tenant_id,
+                scan_id=scan_id,
+                check_id=agg["check_id"],
+                service=agg["resources__service"],
+                severity=agg["severity"],
+                region=agg["resources__region"],
+                fail=agg["fail"],
+                _pass=agg["_pass"],
+                muted=agg["muted"],
+                total=agg["total"],
+                new=agg["new"],
+                changed=agg["changed"],
+                unchanged=agg["unchanged"],
+                fail_new=agg["fail_new"],
+                fail_changed=agg["fail_changed"],
+                pass_new=agg["pass_new"],
+                pass_changed=agg["pass_changed"],
+                muted_new=agg["muted_new"],
+                muted_changed=agg["muted_changed"],
+            )
+            for agg in aggregation
+        }
+        ScanSummary.objects.bulk_create(scan_aggregations, batch_size=3000)

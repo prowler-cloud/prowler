@@ -1,12 +1,12 @@
 from celery import shared_task
+from config.celery import RLSTask
+from tasks.jobs.connection import check_provider_connection
+from tasks.jobs.deletion import delete_instance
+from tasks.jobs.scan import aggregate_findings, perform_prowler_scan
 
 from api.db_utils import tenant_transaction
 from api.decorators import set_tenant
 from api.models import Provider, Scan
-from config.celery import RLSTask
-from tasks.jobs.connection import check_provider_connection
-from tasks.jobs.deletion import delete_instance
-from tasks.jobs.scan import perform_prowler_scan
 
 
 @shared_task(base=RLSTask, name="provider-connection-check")
@@ -110,3 +110,8 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
         scan_id=str(scan_instance.id),
         provider_id=provider_id,
     )
+
+
+@shared_task(name="scan-summary")
+def perform_scan_summary_task(tenant_id: str, scan_id: str):
+    return aggregate_findings(tenant_id=tenant_id, scan_id=scan_id)
