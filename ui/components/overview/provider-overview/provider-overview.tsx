@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, CardBody, CardHeader } from "@nextui-org/react";
+import { Card, CardBody } from "@nextui-org/react";
 
 import { AddIcon } from "@/components/icons/Icons";
 import {
@@ -17,11 +17,6 @@ export const ProvidersOverview = ({
 }: {
   providersOverview: ProviderOverviewProps;
 }) => {
-  console.log(providersOverview);
-  if (!providersOverview || !Array.isArray(providersOverview.data)) {
-    return <p>No provider data available</p>;
-  }
-
   const calculatePassingPercentage = (pass: number, total: number) =>
     total > 0 ? ((pass / total) * 100).toFixed(2) : "0.00";
 
@@ -47,11 +42,57 @@ export const ProvidersOverview = ({
     { id: "kubernetes", name: "Kubernetes" },
   ];
 
+  if (!providersOverview || !Array.isArray(providersOverview.data)) {
+    return (
+      <Card className="dark:bg-prowler-blue-400">
+        <CardBody>
+          <div className="grid grid-cols-1 gap-3">
+            <div className="grid grid-cols-4 border-b pb-2 text-xs font-semibold">
+              <span className="text-center">Provider</span>
+              <span className="flex flex-col items-center text-center">
+                <span>Percent</span>
+                <span>Passing</span>
+              </span>
+              <span className="flex flex-col items-center text-center">
+                <span>Failing</span>
+                <span>Checks</span>
+              </span>
+              <span className="flex flex-col items-center text-center">
+                <span>Total</span>
+                <span>Resources</span>
+              </span>
+            </div>
+
+            {providers.map((providerTemplate) => (
+              <div
+                key={providerTemplate.id}
+                className="grid grid-cols-4 items-center border-b py-2 text-sm"
+              >
+                <span className="flex items-center justify-center px-4">
+                  {renderProviderBadge(providerTemplate.id)}
+                </span>
+                <span className="text-center">0.00%</span>
+                <span className="text-center">-</span>
+                <span className="text-center">-</span>
+              </div>
+            ))}
+
+            <div className="grid grid-cols-4 items-center border-b py-2 text-sm font-semibold">
+              <span className="flex items-center justify-center px-4">
+                Total
+              </span>
+              <span className="text-center">0.00%</span>
+              <span className="text-center">-</span>
+              <span className="text-center">-</span>
+            </div>
+          </div>
+        </CardBody>
+      </Card>
+    );
+  }
+
   return (
     <Card className="dark:bg-prowler-blue-400">
-      <CardHeader>
-        <h3 className="text-sm font-bold">Providers Overview</h3>
-      </CardHeader>
       <CardBody>
         <div className="grid grid-cols-1 gap-3">
           <div className="grid grid-cols-4 border-b pb-2 text-xs font-semibold">

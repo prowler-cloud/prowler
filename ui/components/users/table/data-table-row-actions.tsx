@@ -41,8 +41,8 @@ export function DataTableRowActions<ProviderProps>({
       <CustomAlertModal
         isOpen={isEditOpen}
         onOpenChange={setIsEditOpen}
-        title="Edit Provider"
-        description={"Edit the provider details"}
+        title="Edit user"
+        description={"Edit the user details"}
       >
         <EditForm
           userId={userId}
@@ -56,7 +56,7 @@ export function DataTableRowActions<ProviderProps>({
         isOpen={isDeleteOpen}
         onOpenChange={setIsDeleteOpen}
         title="Are you absolutely sure?"
-        description="This action cannot be undone. This will permanently delete your provider account and remove your data from the server."
+        description="This action cannot be undone. This will permanently delete your user account and remove your data from the server."
       >
         <DeleteForm userId={userId} setIsOpen={setIsDeleteOpen} />
       </CustomAlertModal>
