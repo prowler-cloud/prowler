@@ -14,6 +14,7 @@ class admincenter_users_between_two_and_four_global_admins(Check):
         ) in admincenter_client.directory_roles.items():
             report = Check_Report_Microsoft365(self.metadata())
             report.status = "FAIL"
+            report.tenant_id = tenant_domain
             report.resource_name = "Global Administrator"
 
             if "Global Administrator" in directory_roles:
@@ -33,7 +34,7 @@ class admincenter_users_between_two_and_four_global_admins(Check):
                         f"There are {num_global_admins} global administrators."
                     )
                 else:
-                    report.status_extended = f"There are {num_global_admins} global administrators. It should be less more than two and less than five."
+                    report.status_extended = f"There are {num_global_admins} global administrators. It should be more than two and less than five."
 
                 findings.append(report)
 

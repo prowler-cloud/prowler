@@ -56,14 +56,12 @@ class AdminCenter(Microsoft365Service):
                             user.id: User(
                                 id=user.id,
                                 name=user.display_name,
-                                on_premises_sync_enabled=user.on_premises_sync_enabled,
                                 license=(
                                     license_details.value[0].sku_part_number
                                     if license_details.value
                                     else None
                                 ),
                                 user_type=user_type,
-                                account_enabled=user.account_enabled,
                             )
                         }
                     )
@@ -89,14 +87,14 @@ class AdminCenter(Microsoft365Service):
                     )
                     members_with_roles = []
                     for member in directory_role_members.value:
-                        user = self.users[tenant].get(member.user_principal_name, None)
+                        user = self.users[tenant].get(member.id, None)
                         if user:
                             user.directory_roles.append(directory_role.display_name)
                             members_with_roles.append(user)
 
                     directory_roles_with_members[tenant].update(
                         {
-                            directory_role.id: DirectoryRole(
+                            directory_role.display_name: DirectoryRole(
                                 id=directory_role.id,
                                 name=directory_role.display_name,
                                 members=members_with_roles,
@@ -116,7 +114,7 @@ class AdminCenter(Microsoft365Service):
         try:
             for tenant, client in self.clients.items():
                 groups_list = await client.groups.get()
-                groups.update((tenant, {}))
+                groups.update({tenant: {}})
                 for group in groups_list.value:
                     groups[tenant].update(
                         {
@@ -141,7 +139,6 @@ class User(BaseModel):
     directory_roles: List[str] = []
     license: Optional[str] = None
     user_type: Optional[str] = None
-    account_enabled: Optional[bool] = None
 
 
 class DirectoryRole(BaseModel):

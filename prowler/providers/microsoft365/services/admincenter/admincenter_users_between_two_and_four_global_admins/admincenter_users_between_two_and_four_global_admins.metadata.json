@@ -1,16 +1,16 @@
 {
   "Provider": "microsoft365",
   "CheckID": "admincenter_users_between_two_and_four_global_admins",
-  "CheckTitle": "Ensure Administrative accounts are cloud-only",
+  "CheckTitle": "Ensure that between two and four global admins are designated",
   "CheckType": [],
-  "ServiceName": "users",
+  "ServiceName": "Admin Center",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AdministrativeAccount",
-  "Description": "Administrative accounts must be cloud-only and separated from on-premises accounts. These accounts should not have applications assigned to them and should be used exclusively for administrative tasks.",
-  "Risk": "Failing to separate administrative accounts can lead to compromised security in hybrid environments. A breach in the cloud could potentially impact the on-premises environment and vice versa.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/microsoft-365/security/identity-protection?view=o365-worldwide",
+  "ResourceType": "AdministrativeRole",
+  "Description": "Ensure that there are between two and four global administrators designated in your tenant. This ensures monitoring, redundancy, and reduces the risk associated with having too many privileged accounts.",
+  "Risk": "Having only one global administrator increases the risk of unmonitored actions and operational disruptions if that administrator is unavailable. Having more than four increases the likelihood of a breach through one of these highly privileged accounts.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/best-practices#5-limit-the-number-of-global-administrators-to-less-than-5",
   "Remediation": {
     "Code": {
       "CLI": "",
@@ -19,12 +19,15 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Create cloud-only administrative accounts and ensure they are not synchronized from on-premises directories. Remove any unnecessary application assignments.",
-      "Url": "https://learn.microsoft.com/en-us/azure/active-directory/roles/security-design-administrative-accounts"
+      "Text": "Review the number of global administrators in your tenant. Add or remove global admins as necessary to ensure compliance with the recommended range of two to four.",
+      "Url": "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/manage-roles-portal"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-management",
+    "privilege-management"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "Administrative accounts should be strictly cloud-only and dedicated to admin tasks. Migrate all necessary permissions, including M365 and Azure RBAC roles, to these accounts."
+  "Notes": ""
 }

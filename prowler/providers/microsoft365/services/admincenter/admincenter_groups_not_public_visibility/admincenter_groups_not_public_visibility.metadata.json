@@ -1,29 +1,28 @@
 {
   "Provider": "microsoft365",
-  "CheckID": "admincenter_users_admins_reduced_license_footprint",
-  "CheckTitle": "Ensure administrative accounts use licenses with a reduced application footprint",
+  "CheckID": "admincenter_groups_not_public_visibility",
+  "CheckTitle": "Ensure that only organizationally managed/approved public groups exist",
   "CheckType": [
-    "Identity",
-    "LicenseManagement"
+    "Users"
   ],
-  "ServiceName": "Microsoft Entra ID",
+  "ServiceName": "Admin Center",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "AdministrativeAccount",
-  "Description": "Administrative accounts must use licenses with a reduced application footprint, such as Microsoft Entra ID P1 or P2, or avoid licenses entirely when possible. This minimizes the attack surface associated with privileged identities.",
-  "Risk": "Licensing administrative accounts with applications like email or collaborative tools increases their exposure to social engineering attacks and malicious content, putting privileged accounts at risk.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/active-directory/privileged-identity-management/pim-get-started",
+  "Severity": "high",
+  "ResourceType": "Microsoft365Group",
+  "Description": "Ensure that only organizationally managed and approved public groups exist to prevent unauthorized access to sensitive group resources like SharePoint, Teams, or other shared assets.",
+  "Risk": "Unmanaged public groups can allow unauthorized access to organizational resources, posing a risk of data leakage or misuse through easily guessable SharePoint URLs or self-adding to groups via the Azure portal.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/microsoft-365/admin/create-groups/manage-groups?view=o365-worldwide",
   "Remediation": {
     "Code": {
-      "CLI": "Set-MsolUserLicense -UserPrincipalName <AdminUPN> -RemoveLicenses <LicenseType>",
+      "CLI": "",
       "NativeIaC": "",
       "Other": "",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Assign Microsoft Entra ID P1 or P2 licenses to administrative accounts to participate in essential security services without enabling access to vulnerable applications.",
-      "Url": "https://learn.microsoft.com/en-us/microsoft-365/security/identity-protection?view=o365-worldwide"
+      "Text": "Review and adjust the privacy settings of Microsoft 365 Groups to ensure only organizationally managed and approved public groups exist.",
+      "Url": "https://learn.microsoft.com/en-us/microsoft-365/security/office-365-security/microsoft-365-groups-governance"
     }
   },
   "Categories": [],

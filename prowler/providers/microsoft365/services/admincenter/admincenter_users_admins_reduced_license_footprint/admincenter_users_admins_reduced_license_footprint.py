@@ -20,6 +20,7 @@ class admincenter_users_admins_reduced_license_footprint(Check):
                     report = Check_Report_Microsoft365(self.metadata())
                     report.resource_id = user.id
                     report.resource_name = user.name
+                    report.tenant_id = tenant_domain
                     report.status = "FAIL"
                     report.status_extended = f"User {user.name} has administrative roles {admin_roles} and license {user.license}."
 
