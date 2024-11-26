@@ -10,28 +10,32 @@ class GithubService:
         service: str,
         provider: GithubProvider,
     ):
-        self.client = self.__set_client__(
+        self.clients = self.__set_clients__(
             provider.session,
         )
 
         self.audit_config = provider.audit_config
         self.fixer_config = provider.fixer_config
 
-    def __set_client__(self, session):
+    def __set_clients__(self, session):
+        clients = []
         try:
             if session.token:
                 auth = Auth.Token(session.token)
-                client = Github(auth=auth)
+                clients = [Github(auth=auth)]
 
             elif session.key and session.id:
-                auth = Auth.GithubApp(
-                    session.github_app_id,
-                    session.github_app_key,
+                auth = Auth.AppAuth(
+                    session.id,
+                    session.key,
                 )
-                client = GithubIntegration(auth=auth)
+                gi = GithubIntegration(auth=auth)
+
+                for installation in gi.get_installations():
+                    clients.append(installation.get_github_for_installation())
 
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-        return client
+        return clients

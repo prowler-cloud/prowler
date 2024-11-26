@@ -1,7 +1,7 @@
 import os
 from os import getenv
 
-from github import Auth, Github, GithubIntegration
+from github import Auth, Github
 
 from prowler.config.config import (
     default_config_file_path,
@@ -20,7 +20,11 @@ from prowler.providers.github.exceptions.exceptions import (
     GithubSetUpSessionError,
 )
 from prowler.providers.github.lib.mutelist.mutelist import GithubMutelist
-from prowler.providers.github.models import GithubIdentityInfo, GithubSession
+from prowler.providers.github.models import (
+    GithubAppIdentityInfo,
+    GithubIdentityInfo,
+    GithubSession,
+)
 
 
 class GithubProvider(Provider):
@@ -216,6 +220,7 @@ class GithubProvider(Provider):
                         file=os.path.basename(__file__),
                         message="Missing Github environment variable GITHUB_OAUTH_APP_TOKEN required to authenticate.",
                     )
+                session_token = getenv("GITHUB_OAUTH_APP_TOKEN")
                 self._auth_method = "Enviroment Variable for OAuth App Token"
 
             elif github_app_key and github_app_id:
@@ -224,16 +229,17 @@ class GithubProvider(Provider):
                 self._auth_method = "GitHub App Token"
 
             elif github_app:
-                if not getenv("github_app_key"):
+                if not getenv("GITHUB_APP_KEY") or not getenv("GITHUB_APP_ID"):
                     logger.critical(
-                        "GitHub provider: Missing enviroment variable github_app_key needed to authenticate against GitHub."
+                        "GitHub provider: Missing enviroment variables GITHUB_APP_KEY or GITHUB_APP_ID needed to authenticate against GitHub."
                     )
                     raise GithubEnvironmentVariableError(
                         file=os.path.basename(__file__),
-                        message="Missing Github environment variable github_app_key required to authenticate.",
+                        message="Missing enviroment variables GITHUB_APP_KEY or GITHUB_APP_ID required to authenticate.",
                     )
-                session_token = getenv("github_app_key")
-                self._auth_method = "Enviroment Variable for GitHub App Token"
+                app_key = getenv("GITHUB_APP_KEY")
+                app_id = getenv("GITHUB_APP_ID")
+                self._auth_method = "Enviroment Variables for GitHub App Key and ID"
 
             else:
                 logger.critical(
@@ -266,7 +272,7 @@ class GithubProvider(Provider):
         oauth_app_token,
         github_app_key,
         github_app_id: int = 0,
-    ) -> GithubIdentityInfo:
+    ) -> GithubIdentityInfo | GithubAppIdentityInfo:
         """
         Returns the GitHub identity information
 
@@ -276,7 +282,7 @@ class GithubProvider(Provider):
             oauth_app (bool): Flag indicating whether to use OAuth App as authentication method.
 
         Returns:
-            GithubIdentityInfo: An instance of GithubIdentityInfo containing the identity information.
+            GithubIdentityInfo | GithubAppIdentityInfo: An instance of GithubIdentityInfo or GithubAppIdentityInfo containing the identity information.
         """
         credentials = self.session
 
@@ -296,8 +302,8 @@ class GithubProvider(Provider):
 
                 try:
                     identity = GithubIdentityInfo(
-                        account_name=g.get_user().login,
                         account_id=g.get_user().id,
+                        account_name=g.get_user().login,
                         account_url=g.get_user().url,
                     )
                     return identity
@@ -308,16 +314,11 @@ class GithubProvider(Provider):
                         original_exception=error,
                     )
 
-            elif github_app_key and github_app_id:
-                auth = Auth.AppAuth(credentials.key, credentials.id)
-                gi = GithubIntegration(auth=auth)
+            elif (github_app_key and github_app_id) or github_app:
+                auth = Auth.AppAuth(credentials.id, credentials.key)
 
                 try:
-                    identity = GithubIdentityInfo(
-                        account_name=gi.get_user().login,
-                        account_id=gi.get_user().id,
-                        account_url=gi.get_user().url,
-                    )
+                    identity = GithubAppIdentityInfo(app_id=auth.app_id)
                     return identity
 
                 except Exception as error:

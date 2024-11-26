@@ -11,6 +11,7 @@ from prowler.config.config import (
     orange_color,
 )
 from prowler.lib.logger import logger
+from prowler.providers.github.models import GithubAppIdentityInfo, GithubIdentityInfo
 
 
 def display_summary_table(
@@ -41,8 +42,12 @@ def display_summary_table(
             entity_type = "Context"
             audited_entities = provider.identity.context
         elif provider.type == "github":
-            entity_type = "User Name"
-            audited_entities = provider.identity.account_name
+            if isinstance(provider.identity, GithubIdentityInfo):
+                entity_type = "User Name"
+                audited_entities = provider.identity.account_name
+            elif isinstance(provider.identity, GithubAppIdentityInfo):
+                entity_type = "App ID"
+                audited_entities = provider.identity.app_id
 
         # Check if there are findings and that they are not all MANUAL
         if findings and not all(finding.status == "MANUAL" for finding in findings):

@@ -27,7 +27,7 @@ class GithubBaseException(ProwlerException):
             "remediation": "Check credentials and ensure they are properly set up for Github and the identity provider.",
         },
         (5005, "GithubInvalidCredentialsError"): {
-            "message": "Github invalid user or password for basic login",
+            "message": "Github invalid App Key or App ID for GitHub APP login",
             "remediation": "Check user and password and ensure they are properly set up as in your Github account.",
         },
     }
