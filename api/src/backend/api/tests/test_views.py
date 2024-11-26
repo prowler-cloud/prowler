@@ -1789,7 +1789,7 @@ class TestScanViewSet:
         ],
     )
     @patch("api.v1.views.Task.objects.get")
-    @patch("api.v1.views.perform_scan_task.delay")
+    @patch("api.v1.views.perform_scan_task.apply_async")
     def test_scans_create_valid(
         self,
         mock_perform_scan_task,
