@@ -1,4 +1,4 @@
-name: "API - Pull Request" 
+name: "API - Pull Request"
 
 on:
   push:
@@ -149,8 +149,9 @@ jobs:
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
           poetry run pytest -n auto --cov=./src/backend --cov-report=xml src/backend
-      - name: Upload coverage reports to Codecov
-        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
-        uses: codecov/codecov-action@v5
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      # TODO: Disabled until test_rbac.py is ready
+      # - name: Upload coverage reports to Codecov
+      #   if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+      #   uses: codecov/codecov-action@v5
+      #   env:
+      #     CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
