@@ -1,29 +1,24 @@
 import json
-from datetime import datetime
-from datetime import timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest.mock import ANY, Mock, patch
 
 import jwt
 import pytest
+from conftest import API_JSON_CONTENT_TYPE, TEST_PASSWORD, TEST_USER
 from django.urls import reverse
 from rest_framework import status
 
 from api.models import (
-    User,
+    Invitation,
     Membership,
     Provider,
     ProviderGroup,
     ProviderGroupMembership,
-    Scan,
     ProviderSecret,
-    Invitation,
+    Scan,
+    User,
 )
 from api.rls import Tenant
-from conftest import (
-    API_JSON_CONTENT_TYPE,
-    TEST_PASSWORD,
-    TEST_USER,
-)
 
 TODAY = str(datetime.today().date())
 
@@ -3009,9 +3004,9 @@ class TestInvitationViewSet:
         response = authenticated_client.get(
             reverse("invitation-list"),
             {
-                f"filter[{filter_name}]": filter_value
-                if filter_name != "inviter"
-                else str(user.id)
+                f"filter[{filter_name}]": (
+                    filter_value if filter_name != "inviter" else str(user.id)
+                )
             },
         )
 
@@ -3262,3 +3257,5 @@ class TestOverviewViewSet:
         assert response.json()["data"][0]["attributes"]["resources"]["total"] == len(
             resources_fixture
         )
+
+    # TODO Add more tests for the rest of overviews

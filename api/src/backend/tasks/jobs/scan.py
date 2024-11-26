@@ -326,6 +326,33 @@ def perform_prowler_scan(
 
 
 def aggregate_findings(tenant_id: str, scan_id: str):
+    """
+    Aggregates findings for a given scan and stores the results in the ScanSummary table.
+
+    This function retrieves all findings associated with a given `scan_id` and calculates various
+    metrics such as counts of failed, passed, and muted findings, as well as their deltas (new,
+    changed, unchanged). The results are grouped by `check_id`, `service`, `severity`, and `region`.
+    These aggregated metrics are then stored in the `ScanSummary` table.
+
+    Args:
+        tenant_id (str): The ID of the tenant to which the scan belongs.
+        scan_id (str): The ID of the scan for which findings need to be aggregated.
+
+    Aggregated Metrics:
+        - fail: Total number of failed findings.
+        - _pass: Total number of passed findings.
+        - muted: Total number of muted findings.
+        - total: Total number of findings.
+        - new: Total number of new findings.
+        - changed: Total number of changed findings.
+        - unchanged: Total number of unchanged findings.
+        - fail_new: Failed findings with a delta of 'new'.
+        - fail_changed: Failed findings with a delta of 'changed'.
+        - pass_new: Passed findings with a delta of 'new'.
+        - pass_changed: Passed findings with a delta of 'changed'.
+        - muted_new: Muted findings with a delta of 'new'.
+        - muted_changed: Muted findings with a delta of 'changed'.
+    """
     with tenant_transaction(tenant_id):
         findings = Finding.objects.filter(scan_id=scan_id)
 

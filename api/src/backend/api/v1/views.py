@@ -1306,19 +1306,32 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
 @extend_schema(tags=["Overview"])
 @extend_schema_view(
     providers=extend_schema(
-        summary="List aggregated overview data for providers",
-        description="Fetch aggregated summaries of the latest findings and resources for each provider. "
-        "This includes counts of passed, failed, and manual findings, as well as the total number "
-        "of resources managed by each provider.",
+        summary="Get aggregated provider data",
+        description=(
+            "Retrieve an aggregated overview of findings and resources grouped by providers. "
+            "The response includes the count of passed, failed, and manual findings, along with "
+            "the total number of resources managed by each provider. Only the latest findings for "
+            "each provider are considered in the aggregation to ensure accurate and up-to-date insights."
+        ),
     ),
     findings=extend_schema(
-        summary="List aggregated overview data for findings",
-        description="TODO",
+        summary="Get aggregated findings data",
+        description=(
+            "Fetch aggregated findings data across all providers, grouped by various metrics such as "
+            "passed, failed, muted, and total findings. This endpoint calculates summary statistics "
+            "based on the latest scans for each provider and applies any provided filters, such as "
+            "region, provider type, and scan date."
+        ),
         filters=True,
     ),
     findings_severity=extend_schema(
-        summary="List aggregated overview data for findings' severity",
-        description="TODO",
+        summary="Get findings data by severity",
+        description=(
+            "Retrieve an aggregated summary of findings grouped by severity levels, such as low, medium, "
+            "high, and critical. The response includes the total count of findings for each severity, "
+            "considering only the latest scans for each provider. Additional filters can be applied to "
+            "narrow down results by region, provider type, or other attributes."
+        ),
         filters=True,
     ),
 )
@@ -1405,7 +1418,7 @@ class OverviewViewSet(BaseRLSViewSet):
                     for res in resources_aggregated
                     if res["provider__provider"] == provider
                 ),
-                0,  # Default to 0 if no resources are found
+                0,
             )
             overview.append(
                 {
