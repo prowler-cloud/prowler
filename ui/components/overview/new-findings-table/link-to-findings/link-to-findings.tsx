@@ -3,7 +3,7 @@
 import { AddIcon } from "@/components/icons";
 import { CustomButton } from "@/components/ui/custom";
 
-export const ButtonGoToFindings = () => {
+export const LinkToFindings = () => {
   return (
     <div className="mt-4 flex w-full items-center justify-end">
       <CustomButton
