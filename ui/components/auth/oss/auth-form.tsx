@@ -1,8 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Icon } from "@iconify/react";
-import { Button, Checkbox, Divider, Link } from "@nextui-org/react";
+import { Checkbox, Link } from "@nextui-org/react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -236,7 +235,7 @@ export const AuthForm = ({
             </form>
           </Form>
 
-          {type === "sign-in" && (
+          {/* {type === "sign-in" && (
             <>
               <div className="flex items-center gap-4 py-2">
                 <Divider className="flex-1" />
@@ -266,7 +265,7 @@ export const AuthForm = ({
                 </Button>
               </div>
             </>
-          )}
+          )} */}
           {type === "sign-in" ? (
             <p className="text-center text-small">
               Need to create an account?&nbsp;

@@ -142,11 +142,11 @@ export const sectionItems: SidebarItem[] = [
         href: "/compliance",
         icon: "fluent-mdl2:compliance-audit",
         title: "Compliance",
-        endContent: (
-          <Chip size="sm" variant="flat">
-            New
-          </Chip>
-        ),
+        // endContent: (
+        //   <Chip size="sm" variant="flat">
+        //     New
+        //   </Chip>
+        // ),
       },
       // {
       //   key: "services",
