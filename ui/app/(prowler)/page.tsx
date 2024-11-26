@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { getFindings } from "@/actions/findings/findings";
 import { getProvidersOverview } from "@/actions/overview/overview";
 import {
+  ButtonGoToFindings,
   ProvidersOverview,
   SkeletonProvidersOverview,
 } from "@/components/overview";
@@ -106,7 +107,12 @@ const SSRDataNewFindingsTable = async ({
 
   return (
     <>
-      <h3 className="mb-4 text-sm font-bold">New failing findings to date</h3>
+      <div className="flex items-baseline justify-between">
+        <h3 className="mb-4 w-full text-sm font-bold">
+          New failing findings to date
+        </h3>
+        <ButtonGoToFindings />
+      </div>
       <DataTable
         columns={ColumnNewFindingsToDate}
         data={findingsData?.data || []}
