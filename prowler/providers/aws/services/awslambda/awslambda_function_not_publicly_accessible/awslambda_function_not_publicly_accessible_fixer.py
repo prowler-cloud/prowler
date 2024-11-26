@@ -1,20 +1,7 @@
 import json
 
-import boto3
-
 from prowler.lib.logger import logger
 from prowler.providers.aws.services.awslambda.awslambda_client import awslambda_client
-
-
-def get_account_id() -> str:
-    """
-    Retrieve the AWS account ID using STS get_caller_identity.
-    Returns:
-        str: The AWS account ID.
-    """
-    sts_client = boto3.client("sts")
-    identity = sts_client.get_caller_identity()
-    return identity["Account"]
 
 
 def fixer(resource_id: str, region: str) -> bool:
@@ -45,29 +32,25 @@ def fixer(resource_id: str, region: str) -> bool:
         bool: True if the operation is successful (policy removed and permission added), False otherwise.
     """
     try:
-        account_id = get_account_id()
+        account_id = awslambda_client.audited_account
 
         regional_client = awslambda_client.regional_clients[region]
         policy_response = regional_client.get_policy(FunctionName=resource_id)
-        policy = policy_response.get("Policy")
+        policy = json.loads(policy_response.get("Policy"))
 
-        if policy:
-            if isinstance(policy, str):
-                policy = json.loads(policy)
+        for statement in policy.get("Statement", []):
+            statement_id = statement.get("Sid")
+            if statement_id:
+                regional_client.remove_permission(
+                    FunctionName=resource_id, StatementId=statement_id
+                )
 
-            for statement in policy.get("Statement", []):
-                statement_id = statement.get("Sid")
-                if statement_id:
-                    regional_client.remove_permission(
-                        FunctionName=resource_id, StatementId=statement_id
-                    )
-
-            regional_client.add_permission(
-                FunctionName=resource_id,
-                StatementId="ProwlerFixerStatement",
-                Principal=account_id,
-                Action="lambda:InvokeFunction",
-            )
+        regional_client.add_permission(
+            FunctionName=resource_id,
+            StatementId="ProwlerFixerStatement",
+            Principal=account_id,
+            Action="lambda:InvokeFunction",
+        )
 
     except Exception as error:
         logger.error(
