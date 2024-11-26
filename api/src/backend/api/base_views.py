@@ -1,5 +1,6 @@
 import uuid
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction, connection
 from rest_framework import permissions
 from rest_framework.exceptions import NotAuthenticated
@@ -10,6 +11,8 @@ from rest_framework_json_api.views import ModelViewSet
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from api.filters import CustomDjangoFilterBackend
+from api.models import Role, Tenant
+from api.db_router import MainRouter
 
 
 class BaseViewSet(ModelViewSet):
@@ -66,7 +69,39 @@ class BaseRLSViewSet(BaseViewSet):
 class BaseTenantViewset(BaseViewSet):
     def dispatch(self, request, *args, **kwargs):
         with transaction.atomic():
-            return super().dispatch(request, *args, **kwargs)
+            tenant = super().dispatch(request, *args, **kwargs)
+
+        try:
+            # If the request is a POST, create the admin role
+            if request.method == "POST":
+                isinstance(tenant, dict) and self._create_admin_role(tenant.data["id"])
+        except Exception as e:
+            self._handle_creation_error(e, tenant)
+            raise
+
+        return tenant
+
+    def _create_admin_role(self, tenant_id):
+        Role.objects.using(MainRouter.admin_db).create(
+            name="admin",
+            tenant_id=tenant_id,
+            manage_users=True,
+            manage_account=True,
+            manage_billing=True,
+            manage_providers=True,
+            manage_integrations=True,
+            manage_scans=True,
+            unlimited_visibility=True,
+        )
+
+    def _handle_creation_error(self, error, tenant):
+        if tenant.data.get("id"):
+            try:
+                Tenant.objects.using(MainRouter.admin_db).filter(
+                    id=tenant.data["id"]
+                ).delete()
+            except ObjectDoesNotExist:
+                pass  # Tenant might not exist, handle gracefully
 
     def initial(self, request, *args, **kwargs):
         user_id = str(request.user.id)

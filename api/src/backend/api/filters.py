@@ -36,6 +36,7 @@ from api.models import (
     StatusChoices,
     ProviderSecret,
     Invitation,
+    Role,
     ComplianceOverview,
 )
 from api.rls import Tenant
@@ -464,6 +465,20 @@ class UserFilter(FilterSet):
             "company_name": ["exact", "icontains"],
             "date_joined": ["date", "gte", "lte"],
             "is_active": ["exact"],
+        }
+
+
+class RoleFilter(FilterSet):
+    inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
+    updated_at = DateFilter(field_name="updated_at", lookup_expr="date")
+
+    class Meta:
+        model = Role
+        fields = {
+            "id": ["exact", "in"],
+            "name": ["exact", "in"],
+            "inserted_at": ["gte", "lte"],
+            "updated_at": ["gte", "lte"],
         }
 
 

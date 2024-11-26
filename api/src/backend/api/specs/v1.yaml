@@ -820,7 +820,7 @@ paths:
       summary: List all provider groups
       parameters:
       - in: query
-        name: fields[provider-groups]
+        name: fields[provider-group]
         schema:
           type: array
           items:
@@ -830,6 +830,7 @@ paths:
             - inserted_at
             - updated_at
             - providers
+            - roles
             - url
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
@@ -929,6 +930,8 @@ paths:
             - -updated_at
             - providers
             - -providers
+            - roles
+            - -roles
             - url
             - -url
         explode: false
@@ -979,7 +982,7 @@ paths:
       summary: Retrieve data from a provider group
       parameters:
       - in: query
-        name: fields[provider-groups]
+        name: fields[provider-group]
         schema:
           type: array
           items:
@@ -989,6 +992,7 @@ paths:
             - inserted_at
             - updated_at
             - providers
+            - roles
             - url
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
@@ -1123,6 +1127,7 @@ paths:
             - alias
             - connection
             - secret
+            - provider_groups
             - url
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
@@ -1332,6 +1337,7 @@ paths:
             - alias
             - connection
             - secret
+            - provider_groups
             - url
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
@@ -2000,6 +2006,357 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResourceResponse'
           description: ''
+  /api/v1/roles:
+    get:
+      operationId: roles_list
+      description: Retrieve a list of all roles with options for filtering by various
+        criteria.
+      summary: List all roles
+      parameters:
+      - in: query
+        name: fields[role]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - name
+            - manage_users
+            - manage_account
+            - manage_billing
+            - manage_providers
+            - manage_integrations
+            - manage_scans
+            - unlimited_visibility
+            - inserted_at
+            - updated_at
+            - provider_groups
+            - users
+            - invitations
+            - url
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[inserted_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[inserted_at__lte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[name]
+        schema:
+          type: string
+      - in: query
+        name: filter[name__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: filter[updated_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[updated_at__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[updated_at__lte]
+        schema:
+          type: string
+          format: date-time
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page[size]
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - -id
+            - name
+            - -name
+            - manage_users
+            - -manage_users
+            - manage_account
+            - -manage_account
+            - manage_billing
+            - -manage_billing
+            - manage_providers
+            - -manage_providers
+            - manage_integrations
+            - -manage_integrations
+            - manage_scans
+            - -manage_scans
+            - unlimited_visibility
+            - -unlimited_visibility
+            - inserted_at
+            - -inserted_at
+            - updated_at
+            - -updated_at
+            - provider_groups
+            - -provider_groups
+            - users
+            - -users
+            - invitations
+            - -invitations
+            - url
+            - -url
+        explode: false
+      tags:
+      - Role
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedRoleList'
+          description: ''
+    post:
+      operationId: roles_create
+      description: Add a new role to the system by providing the required role details.
+      summary: Create a new role
+      tags:
+      - Role
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/RoleCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RoleCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RoleCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/RoleCreateResponse'
+          description: ''
+  /api/v1/roles/{id}:
+    get:
+      operationId: roles_retrieve
+      description: Fetch detailed information about a specific role by their ID.
+      summary: Retrieve data from a role
+      parameters:
+      - in: query
+        name: fields[role]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - name
+            - manage_users
+            - manage_account
+            - manage_billing
+            - manage_providers
+            - manage_integrations
+            - manage_scans
+            - unlimited_visibility
+            - inserted_at
+            - updated_at
+            - provider_groups
+            - users
+            - invitations
+            - url
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this role.
+        required: true
+      tags:
+      - Role
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/RoleResponse'
+          description: ''
+    patch:
+      operationId: roles_partial_update
+      description: Update certain fields of an existing role's information without
+        affecting other fields.
+      summary: Partially update a role
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this role.
+        required: true
+      tags:
+      - Role
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/PatchedRoleUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedRoleUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedRoleUpdateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/SerializerMetaclassResponse'
+          description: ''
+    delete:
+      operationId: roles_destroy
+      description: Remove a role from the system by their ID.
+      summary: Delete a role
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this role.
+        required: true
+      tags:
+      - Role
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/roles/{id}/relationships/provider_groups:
+    post:
+      operationId: roles_relationships_provider_groups_create
+      description: Add a new role-provider_groups relationship to the system by providing
+        the required role-provider_groups details.
+      summary: Create a new role-provider_groups relationship
+      tags:
+      - Role
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/RoleProviderGroupRelationshipRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RoleProviderGroupRelationshipRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RoleProviderGroupRelationshipRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: Relationship created successfully
+        '400':
+          description: Bad request (e.g., relationship already exists)
+    patch:
+      operationId: roles_relationships_provider_groups_partial_update
+      description: Update the role-provider_groups relationship information without
+        affecting other fields.
+      summary: Partially update a role-provider_groups relationship
+      tags:
+      - Role
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/PatchedRoleProviderGroupRelationshipRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedRoleProviderGroupRelationshipRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedRoleProviderGroupRelationshipRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: Relationship updated successfully
+    delete:
+      operationId: roles_relationships_provider_groups_destroy
+      description: Remove the role-provider_groups relationship from the system by
+        their ID.
+      summary: Delete a role-provider_groups relationship
+      tags:
+      - Role
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: Relationship deleted successfully
   /api/v1/scans:
     get:
       operationId: scans_list
@@ -2362,7 +2719,6 @@ paths:
         name: filter[state]
         schema:
           type: string
-          title: Task State
           enum:
           - available
           - cancelled
@@ -2371,8 +2727,6 @@ paths:
           - failed
           - scheduled
         description: |-
-          Current state of the task being run
-
           * `available` - Available
           * `scheduled` - Scheduled
           * `executing` - Executing
@@ -2835,6 +3189,7 @@ paths:
             - email
             - state
             - token
+            - roles
             - expires_at
             - inviter
             - url
@@ -3044,6 +3399,7 @@ paths:
             - email
             - state
             - token
+            - roles
             - expires_at
             - inviter
             - url
@@ -3199,6 +3555,7 @@ paths:
             - company_name
             - date_joined
             - memberships
+            - roles
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
@@ -3256,6 +3613,17 @@ paths:
         description: A search term.
         schema:
           type: string
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - roles
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
       - name: page[number]
         required: false
         in: query
@@ -3353,6 +3721,7 @@ paths:
             - company_name
             - date_joined
             - memberships
+            - roles
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
@@ -3363,6 +3732,17 @@ paths:
           format: uuid
         description: A UUID string identifying this user.
         required: true
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - roles
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
       tags:
       - User
       security:
@@ -3428,6 +3808,68 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/users/{id}/relationships/roles:
+    post:
+      operationId: users_relationships_roles_create
+      description: Add a new user-roles relationship to the system by providing the
+        required user-roles details.
+      summary: Create a new user-roles relationship
+      tags:
+      - User
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/UserRoleRelationshipRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserRoleRelationshipRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserRoleRelationshipRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: Relationship created successfully
+        '400':
+          description: Bad request (e.g., relationship already exists)
+    patch:
+      operationId: users_relationships_roles_partial_update
+      description: Update the user-roles relationship information without affecting
+        other fields.
+      summary: Partially update a user-roles relationship
+      tags:
+      - User
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/PatchedUserRoleRelationshipRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUserRoleRelationshipRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUserRoleRelationshipRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: Relationship updated successfully
+    delete:
+      operationId: users_relationships_roles_destroy
+      description: Remove the user-roles relationship from the system by their ID.
+      summary: Delete a user-roles relationship
+      tags:
+      - User
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: Relationship deleted successfully
   /api/v1/users/{user_pk}/memberships:
     get:
       operationId: users_memberships_list
@@ -3598,8 +4040,20 @@ paths:
             - company_name
             - date_joined
             - memberships
+            - roles
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - roles
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
         explode: false
       tags:
       - User
@@ -4035,6 +4489,34 @@ components:
         relationships:
           type: object
           properties:
+            roles:
+              type: object
+              properties:
+                data:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        title: Resource Identifier
+                        description: The identifier of the related object.
+                      type:
+                        type: string
+                        enum:
+                        - role
+                        title: Resource Type Name
+                        description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                          member is used to describe resource objects that share common
+                          attributes and relationships.
+                    required:
+                    - id
+                    - type
+              required:
+              - data
+              description: A related resource object from type role
+              title: role
             inviter:
               type: object
               properties:
@@ -4060,6 +4542,8 @@ components:
               description: The identifier of the related object.
               title: Resource Identifier
               nullable: true
+          required:
+          - roles
     InvitationAcceptRequest:
       type: object
       properties:
@@ -4158,6 +4642,36 @@ components:
               title: Resource Identifier
               readOnly: true
               nullable: true
+            roles:
+              type: object
+              properties:
+                data:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        title: Resource Identifier
+                        description: The identifier of the related object.
+                      type:
+                        type: string
+                        enum:
+                        - role
+                        title: Resource Type Name
+                        description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                          member is used to describe resource objects that share common
+                          attributes and relationships.
+                    required:
+                    - id
+                    - type
+              required:
+              - data
+              description: A related resource object from type role
+              title: role
+          required:
+          - roles
     InvitationCreateRequest:
       type: object
       properties:
@@ -4235,6 +4749,36 @@ components:
                   title: Resource Identifier
                   readOnly: true
                   nullable: true
+                roles:
+                  type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                            title: Resource Identifier
+                            description: The identifier of the related object.
+                          type:
+                            type: string
+                            enum:
+                            - role
+                            title: Resource Type Name
+                            description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                              member is used to describe resource objects that share
+                              common attributes and relationships.
+                        required:
+                        - id
+                        - type
+                  required:
+                  - data
+                  description: A related resource object from type role
+                  title: role
+              required:
+              - roles
       required:
       - data
     InvitationCreateResponse:
@@ -4293,6 +4837,39 @@ components:
             token:
               type: string
               readOnly: true
+        relationships:
+          type: object
+          properties:
+            roles:
+              type: object
+              properties:
+                data:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        title: Resource Identifier
+                        description: The identifier of the related object.
+                      type:
+                        type: string
+                        enum:
+                        - role
+                        title: Resource Type Name
+                        description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                          member is used to describe resource objects that share common
+                          attributes and relationships.
+                    required:
+                    - id
+                    - type
+              required:
+              - data
+              description: A related resource object from type role
+              title: role
+          required:
+          - roles
     InvitationUpdateResponse:
       type: object
       properties:
@@ -4536,6 +5113,15 @@ components:
             $ref: '#/components/schemas/Resource'
       required:
       - data
+    PaginatedRoleList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Role'
+      required:
+      - data
     PaginatedScanList:
       type: object
       properties:
@@ -4620,6 +5206,39 @@ components:
                   type: string
                   readOnly: true
                   minLength: 1
+            relationships:
+              type: object
+              properties:
+                roles:
+                  type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                            title: Resource Identifier
+                            description: The identifier of the related object.
+                          type:
+                            type: string
+                            enum:
+                            - role
+                            title: Resource Type Name
+                            description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                              member is used to describe resource objects that share
+                              common attributes and relationships.
+                        required:
+                        - id
+                        - type
+                  required:
+                  - data
+                  description: A related resource object from type role
+                  title: role
+              required:
+              - roles
       required:
       - data
     PatchedProviderGroupUpdateRequest:
@@ -4638,7 +5257,7 @@ components:
                 member is used to describe resource objects that share common attributes
                 and relationships.
               enum:
-              - provider-groups
+              - provider-group
             id:
               type: string
               format: uuid
@@ -4868,6 +5487,84 @@ components:
                   minLength: 3
       required:
       - data
+    PatchedRoleProviderGroupRelationshipRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          - id
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - role-provider_groups
+            id:
+              type: string
+              format: uuid
+            attributes:
+              type: object
+              properties:
+                provider_groups:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ProviderGroupResourceIdentifierRequest'
+                  description: List of resource identifier objects representing provider
+                    groups.
+              required:
+              - provider_groups
+      required:
+      - data
+    PatchedRoleUpdateRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          - id
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - role
+            id:
+              type: string
+              format: uuid
+            attributes:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                manage_users:
+                  type: boolean
+                manage_account:
+                  type: boolean
+                manage_billing:
+                  type: boolean
+                manage_providers:
+                  type: boolean
+                manage_integrations:
+                  type: boolean
+                manage_scans:
+                  type: boolean
+                unlimited_visibility:
+                  type: boolean
+              required:
+              - name
+      required:
+      - data
     PatchedScanUpdateRequest:
       type: object
       properties:
@@ -4959,6 +5656,38 @@ components:
                   description: A related resource object from type memberships
                   title: memberships
                   readOnly: true
+      required:
+      - data
+    PatchedUserRoleRelationshipRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          - id
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - user-roles
+            id:
+              type: string
+              format: uuid
+            attributes:
+              type: object
+              properties:
+                roles:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/RoleResourceIdentifierRequest'
+                  description: List of resource identifier objects representing roles.
+              required:
+              - roles
       required:
       - data
     PatchedUserUpdateRequest:
@@ -5094,6 +5823,35 @@ components:
               - data
               description: The identifier of the related object.
               title: Resource Identifier
+            provider_groups:
+              type: object
+              properties:
+                data:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        title: Resource Identifier
+                        description: The identifier of the related object.
+                      type:
+                        type: string
+                        enum:
+                        - provider-group
+                        title: Resource Type Name
+                        description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                          member is used to describe resource objects that share common
+                          attributes and relationships.
+                    required:
+                    - id
+                    - type
+              required:
+              - data
+              description: A related resource object from type provider-group
+              title: provider-group
+              readOnly: true
           required:
           - secret
     ProviderCreate:
@@ -5251,6 +6009,35 @@ components:
               description: A related resource object from type providers
               title: providers
               readOnly: true
+            roles:
+              type: object
+              properties:
+                data:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        title: Resource Identifier
+                        description: The identifier of the related object.
+                      type:
+                        type: string
+                        enum:
+                        - role
+                        title: Resource Type Name
+                        description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                          member is used to describe resource objects that share common
+                          attributes and relationships.
+                    required:
+                    - id
+                    - type
+              required:
+              - data
+              description: A related resource object from type role
+              title: role
+              readOnly: true
     ProviderGroupMembershipUpdateRequest:
       type: object
       properties:
@@ -5295,7 +6082,7 @@ components:
                 member is used to describe resource objects that share common attributes
                 and relationships.
               enum:
-              - provider-groups
+              - provider-group
             attributes:
               type: object
               properties:
@@ -5345,6 +6132,65 @@ components:
                   description: A related resource object from type providers
                   title: providers
                   readOnly: true
+                roles:
+                  type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                            title: Resource Identifier
+                            description: The identifier of the related object.
+                          type:
+                            type: string
+                            enum:
+                            - role
+                            title: Resource Type Name
+                            description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                              member is used to describe resource objects that share
+                              common attributes and relationships.
+                        required:
+                        - id
+                        - type
+                  required:
+                  - data
+                  description: A related resource object from type role
+                  title: role
+                  readOnly: true
+      required:
+      - data
+    ProviderGroupResourceIdentifierRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - provider-group-identifier
+            attributes:
+              type: object
+              properties:
+                resource_type:
+                  type: string
+                  minLength: 1
+                id:
+                  type: string
+                  format: uuid
+              required:
+              - resource_type
+              - id
       required:
       - data
     ProviderGroupResponse:
@@ -5357,7 +6203,7 @@ components:
     ProviderGroupTypeEnum:
       type: string
       enum:
-      - provider-groups
+      - provider-group
     ProviderResponse:
       type: object
       properties:
@@ -6121,6 +6967,489 @@ components:
       type: string
       enum:
       - resources
+    Role:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/Type1aaEnum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        id:
+          type: string
+          format: uuid
+        attributes:
+          type: object
+          properties:
+            name:
+              type: string
+              maxLength: 255
+            manage_users:
+              type: boolean
+            manage_account:
+              type: boolean
+            manage_billing:
+              type: boolean
+            manage_providers:
+              type: boolean
+            manage_integrations:
+              type: boolean
+            manage_scans:
+              type: boolean
+            unlimited_visibility:
+              type: boolean
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
+            updated_at:
+              type: string
+              format: date-time
+              readOnly: true
+          required:
+          - name
+        relationships:
+          type: object
+          properties:
+            provider_groups:
+              type: object
+              properties:
+                data:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        title: Resource Identifier
+                        description: The identifier of the related object.
+                      type:
+                        type: string
+                        enum:
+                        - provider-group
+                        title: Resource Type Name
+                        description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                          member is used to describe resource objects that share common
+                          attributes and relationships.
+                    required:
+                    - id
+                    - type
+              required:
+              - data
+              description: A related resource object from type provider-group
+              title: provider-group
+            users:
+              type: object
+              properties:
+                data:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        title: Resource Identifier
+                        description: The identifier of the related object.
+                      type:
+                        type: string
+                        enum:
+                        - users
+                        title: Resource Type Name
+                        description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                          member is used to describe resource objects that share common
+                          attributes and relationships.
+                    required:
+                    - id
+                    - type
+              required:
+              - data
+              description: A related resource object from type users
+              title: users
+              readOnly: true
+            invitations:
+              type: object
+              properties:
+                data:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        title: Resource Identifier
+                        description: The identifier of the related object.
+                      type:
+                        type: string
+                        enum:
+                        - invitations
+                        title: Resource Type Name
+                        description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                          member is used to describe resource objects that share common
+                          attributes and relationships.
+                    required:
+                    - id
+                    - type
+              required:
+              - data
+              description: A related resource object from type invitations
+              title: invitations
+              readOnly: true
+          required:
+          - provider_groups
+    RoleCreate:
+      type: object
+      required:
+      - type
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/Type1aaEnum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        attributes:
+          type: object
+          properties:
+            name:
+              type: string
+              maxLength: 255
+            manage_users:
+              type: boolean
+            manage_account:
+              type: boolean
+            manage_billing:
+              type: boolean
+            manage_providers:
+              type: boolean
+            manage_integrations:
+              type: boolean
+            manage_scans:
+              type: boolean
+            unlimited_visibility:
+              type: boolean
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
+            updated_at:
+              type: string
+              format: date-time
+              readOnly: true
+          required:
+          - name
+        relationships:
+          type: object
+          properties:
+            provider_groups:
+              type: object
+              properties:
+                data:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        title: Resource Identifier
+                        description: The identifier of the related object.
+                      type:
+                        type: string
+                        enum:
+                        - provider-group
+                        title: Resource Type Name
+                        description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                          member is used to describe resource objects that share common
+                          attributes and relationships.
+                    required:
+                    - id
+                    - type
+              required:
+              - data
+              description: A related resource object from type provider-group
+              title: provider-group
+            users:
+              type: object
+              properties:
+                data:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        title: Resource Identifier
+                        description: The identifier of the related object.
+                      type:
+                        type: string
+                        enum:
+                        - users
+                        title: Resource Type Name
+                        description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                          member is used to describe resource objects that share common
+                          attributes and relationships.
+                    required:
+                    - id
+                    - type
+              required:
+              - data
+              description: A related resource object from type users
+              title: users
+              readOnly: true
+            invitations:
+              type: object
+              properties:
+                data:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        title: Resource Identifier
+                        description: The identifier of the related object.
+                      type:
+                        type: string
+                        enum:
+                        - invitations
+                        title: Resource Type Name
+                        description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                          member is used to describe resource objects that share common
+                          attributes and relationships.
+                    required:
+                    - id
+                    - type
+              required:
+              - data
+              description: A related resource object from type invitations
+              title: invitations
+              readOnly: true
+          required:
+          - provider_groups
+    RoleCreateRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - role
+            attributes:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                manage_users:
+                  type: boolean
+                manage_account:
+                  type: boolean
+                manage_billing:
+                  type: boolean
+                manage_providers:
+                  type: boolean
+                manage_integrations:
+                  type: boolean
+                manage_scans:
+                  type: boolean
+                unlimited_visibility:
+                  type: boolean
+                inserted_at:
+                  type: string
+                  format: date-time
+                  readOnly: true
+                updated_at:
+                  type: string
+                  format: date-time
+                  readOnly: true
+              required:
+              - name
+            relationships:
+              type: object
+              properties:
+                provider_groups:
+                  type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                            title: Resource Identifier
+                            description: The identifier of the related object.
+                          type:
+                            type: string
+                            enum:
+                            - provider-group
+                            title: Resource Type Name
+                            description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                              member is used to describe resource objects that share
+                              common attributes and relationships.
+                        required:
+                        - id
+                        - type
+                  required:
+                  - data
+                  description: A related resource object from type provider-group
+                  title: provider-group
+                users:
+                  type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                            title: Resource Identifier
+                            description: The identifier of the related object.
+                          type:
+                            type: string
+                            enum:
+                            - users
+                            title: Resource Type Name
+                            description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                              member is used to describe resource objects that share
+                              common attributes and relationships.
+                        required:
+                        - id
+                        - type
+                  required:
+                  - data
+                  description: A related resource object from type users
+                  title: users
+                  readOnly: true
+                invitations:
+                  type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                            title: Resource Identifier
+                            description: The identifier of the related object.
+                          type:
+                            type: string
+                            enum:
+                            - invitations
+                            title: Resource Type Name
+                            description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                              member is used to describe resource objects that share
+                              common attributes and relationships.
+                        required:
+                        - id
+                        - type
+                  required:
+                  - data
+                  description: A related resource object from type invitations
+                  title: invitations
+                  readOnly: true
+              required:
+              - provider_groups
+      required:
+      - data
+    RoleCreateResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/RoleCreate'
+      required:
+      - data
+    RoleProviderGroupRelationshipRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - role-provider_groups
+            attributes:
+              type: object
+              properties:
+                provider_groups:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ProviderGroupResourceIdentifierRequest'
+                  description: List of resource identifier objects representing provider
+                    groups.
+              required:
+              - provider_groups
+      required:
+      - data
+    RoleResourceIdentifierRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - role-identifier
+            attributes:
+              type: object
+              properties:
+                resource_type:
+                  type: string
+                  minLength: 1
+                id:
+                  type: string
+                  format: uuid
+              required:
+              - resource_type
+              - id
+      required:
+      - data
+    RoleResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Role'
+      required:
+      - data
     Scan:
       type: object
       required:
@@ -6689,6 +8018,10 @@ components:
       type: string
       enum:
       - provider-secrets
+    Type1aaEnum:
+      type: string
+      enum:
+      - role
     Type227Enum:
       type: string
       enum:
@@ -6779,6 +8112,35 @@ components:
               description: A related resource object from type memberships
               title: memberships
               readOnly: true
+            roles:
+              type: object
+              properties:
+                data:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        title: Resource Identifier
+                        description: The identifier of the related object.
+                      type:
+                        type: string
+                        enum:
+                        - role
+                        title: Resource Type Name
+                        description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                          member is used to describe resource objects that share common
+                          attributes and relationships.
+                    required:
+                    - id
+                    - type
+              required:
+              - data
+              description: A related resource object from type role
+              title: role
+              readOnly: true
     UserCreate:
       type: object
       required:
@@ -6866,6 +8228,34 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/User'
+      required:
+      - data
+    UserRoleRelationshipRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - user-roles
+            attributes:
+              type: object
+              properties:
+                roles:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/RoleResourceIdentifierRequest'
+                  description: List of resource identifier objects representing roles.
+              required:
+              - roles
       required:
       - data
     UserUpdate:
