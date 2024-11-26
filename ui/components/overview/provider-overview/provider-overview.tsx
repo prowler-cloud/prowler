@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, CardBody, CardHeader } from "@nextui-org/react";
+import { Card, CardBody } from "@nextui-org/react";
 
 import { AddIcon } from "@/components/icons/Icons";
 import {
@@ -45,9 +45,6 @@ export const ProvidersOverview = ({
   if (!providersOverview || !Array.isArray(providersOverview.data)) {
     return (
       <Card className="dark:bg-prowler-blue-400">
-        <CardHeader>
-          <h3 className="text-sm font-bold">Providers Overview</h3>
-        </CardHeader>
         <CardBody>
           <div className="grid grid-cols-1 gap-3">
             <div className="grid grid-cols-4 border-b pb-2 text-xs font-semibold">
@@ -96,9 +93,6 @@ export const ProvidersOverview = ({
 
   return (
     <Card className="dark:bg-prowler-blue-400">
-      <CardHeader>
-        <h3 className="text-sm font-bold">Providers Overview</h3>
-      </CardHeader>
       <CardBody>
         <div className="grid grid-cols-1 gap-3">
           <div className="grid grid-cols-4 border-b pb-2 text-xs font-semibold">
