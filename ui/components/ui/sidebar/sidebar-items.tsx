@@ -148,12 +148,12 @@ export const sectionItems: SidebarItem[] = [
           </Chip>
         ),
       },
-      {
-        key: "services",
-        href: "/services",
-        icon: "material-symbols:linked-services-outline",
-        title: "Services",
-      },
+      // {
+      //   key: "services",
+      //   href: "/services",
+      //   icon: "material-symbols:linked-services-outline",
+      //   title: "Services",
+      // },
     ],
   },
 
@@ -167,12 +167,12 @@ export const sectionItems: SidebarItem[] = [
         icon: "fluent:cloud-sync-24-regular",
         title: "Providers",
       },
-      {
-        key: "integrations",
-        href: "/integrations",
-        icon: "tabler:puzzle",
-        title: "Integrations",
-      },
+      // {
+      //   key: "integrations",
+      //   href: "/integrations",
+      //   icon: "tabler:puzzle",
+      //   title: "Integrations",
+      // },
     ],
   },
 ];
