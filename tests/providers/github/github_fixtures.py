@@ -9,13 +9,16 @@ ACCOUNT_ID = "account-id"
 ACCOUNT_URL = "/user"
 
 # GitHub Credentials
-TOKEN = "github-token"
+PAT_TOKEN = "github-token"
+OAUTH_TOKEN = "oauth-token"
+APP_ID = "app-id"
+APP_KEY = "app-key"
 
 
 # Mocked GitHub Provider
 def set_mocked_github_provider(
     auth_method: str = "personal_access",
-    credentials: GithubSession = GithubSession(token=TOKEN),
+    credentials: GithubSession = GithubSession(token=PAT_TOKEN, id=APP_ID, key=APP_KEY),
     identity: GithubIdentityInfo = GithubIdentityInfo(
         account_name=ACCOUNT_NAME,
         account_id=ACCOUNT_ID,
