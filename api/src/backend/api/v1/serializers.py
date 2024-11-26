@@ -27,6 +27,10 @@ from api.models import (
     Finding,
     ProviderSecret,
     Invitation,
+    InvitationRoleRelationship,
+    Role,
+    RoleProviderGroupRelationship,
+    UserRoleRelationship,
     ComplianceOverview,
 )
 from api.rls import Tenant
@@ -177,10 +181,26 @@ class UserSerializer(BaseSerializerV1):
     """
 
     memberships = serializers.ResourceRelatedField(many=True, read_only=True)
+    roles = serializers.ResourceRelatedField(many=True, read_only=True)
 
     class Meta:
         model = User
-        fields = ["id", "name", "email", "company_name", "date_joined", "memberships"]
+        fields = [
+            "id",
+            "name",
+            "email",
+            "company_name",
+            "date_joined",
+            "memberships",
+            "roles",
+        ]
+        extra_kwargs = {
+            "roles": {"read_only": True},
+        }
+
+    included_serializers = {
+        "roles": "api.v1.serializers.RoleSerializer",
+    }
 
 
 class UserCreateSerializer(BaseWriteSerializer):
@@ -234,6 +254,73 @@ class UserUpdateSerializer(BaseWriteSerializer):
             validate_password(password, user=instance)
             instance.set_password(password)
         return super().update(instance, validated_data)
+
+
+class RoleResourceIdentifierSerializer(serializers.Serializer):
+    resource_type = serializers.CharField(source="type")
+    id = serializers.UUIDField()
+
+    class JSONAPIMeta:
+        resource_name = "role-identifier"
+
+    def to_representation(self, instance):
+        """
+        Ensure 'type' is used in the output instead of 'resource_type'.
+        """
+        representation = super().to_representation(instance)
+        representation["type"] = representation.pop("resource_type", None)
+        return representation
+
+    def to_internal_value(self, data):
+        """
+        Map 'type' back to 'resource_type' during input.
+        """
+        data["resource_type"] = data.pop("type", None)
+        return super().to_internal_value(data)
+
+
+class UserRoleRelationshipSerializer(RLSSerializer, BaseWriteSerializer):
+    """
+    Serializer for modifying user memberships
+    """
+
+    roles = serializers.ListField(
+        child=RoleResourceIdentifierSerializer(),
+        help_text="List of resource identifier objects representing roles.",
+    )
+
+    def create(self, validated_data):
+        role_ids = [item["id"] for item in validated_data["roles"]]
+        roles = Role.objects.filter(id__in=role_ids)
+        tenant_id = self.context.get("tenant_id")
+
+        new_relationships = [
+            UserRoleRelationship(
+                user=self.context.get("user"), role=r, tenant_id=tenant_id
+            )
+            for r in roles
+        ]
+        UserRoleRelationship.objects.bulk_create(new_relationships)
+
+        return self.context.get("user")
+
+    def update(self, instance, validated_data):
+        role_ids = [item["id"] for item in validated_data["roles"]]
+        roles = Role.objects.filter(id__in=role_ids)
+        tenant_id = self.context.get("tenant_id")
+
+        instance.roles.clear()
+        new_relationships = [
+            UserRoleRelationship(user=instance, role=r, tenant_id=tenant_id)
+            for r in roles
+        ]
+        UserRoleRelationship.objects.bulk_create(new_relationships)
+
+        return instance
+
+    class Meta:
+        model = UserRoleRelationship
+        fields = ["id", "roles"]
 
 
 # Tasks
@@ -362,31 +449,30 @@ class ProviderGroupSerializer(RLSSerializer, BaseWriteSerializer):
     providers = serializers.ResourceRelatedField(many=True, read_only=True)
 
     def validate(self, attrs):
-        tenant = self.context["tenant_id"]
-        name = attrs.get("name", self.instance.name if self.instance else None)
-
-        # Exclude the current instance when checking for uniqueness during updates
-        queryset = ProviderGroup.objects.filter(tenant=tenant, name=name)
-        if self.instance:
-            queryset = queryset.exclude(pk=self.instance.pk)
-
-        if queryset.exists():
+        if ProviderGroup.objects.filter(name=attrs.get("name")).exists():
             raise serializers.ValidationError(
-                {
-                    "name": "A provider group with this name already exists for this tenant."
-                }
+                {"name": "A provider group with this name already exists."}
             )
 
         return super().validate(attrs)
 
     class Meta:
         model = ProviderGroup
-        fields = ["id", "name", "inserted_at", "updated_at", "providers", "url"]
-        read_only_fields = ["id", "inserted_at", "updated_at"]
+        fields = [
+            "id",
+            "name",
+            "inserted_at",
+            "updated_at",
+            "providers",
+            "roles",
+            "url",
+        ]
         extra_kwargs = {
             "id": {"read_only": True},
             "inserted_at": {"read_only": True},
             "updated_at": {"read_only": True},
+            "roles": {"read_only": True},
+            "url": {"read_only": True},
         }
 
 
@@ -465,6 +551,7 @@ class ProviderSerializer(RLSSerializer):
             "connection",
             # "scanner_args",
             "secret",
+            "provider_groups",
             "url",
         ]
 
@@ -1014,6 +1101,8 @@ class InvitationSerializer(RLSSerializer):
     Serializer for the Invitation model.
     """
 
+    roles = serializers.ResourceRelatedField(many=True, queryset=Role.objects.all())
+
     class Meta:
         model = Invitation
         fields = [
@@ -1023,6 +1112,7 @@ class InvitationSerializer(RLSSerializer):
             "email",
             "state",
             "token",
+            "roles",
             "expires_at",
             "inviter",
             "url",
@@ -1030,6 +1120,8 @@ class InvitationSerializer(RLSSerializer):
 
 
 class InvitationBaseWriteSerializer(BaseWriteSerializer):
+    roles = serializers.ResourceRelatedField(many=True, queryset=Role.objects.all())
+
     def validate_email(self, value):
         user = User.objects.filter(email=value).first()
         tenant_id = self.context["tenant_id"]
@@ -1066,30 +1158,53 @@ class InvitationCreateSerializer(InvitationBaseWriteSerializer, RLSSerializer):
 
     class Meta:
         model = Invitation
-        fields = ["email", "expires_at", "state", "token", "inviter"]
+        fields = ["email", "expires_at", "state", "token", "inviter", "roles"]
         extra_kwargs = {
             "token": {"read_only": True},
             "state": {"read_only": True},
             "inviter": {"read_only": True},
             "expires_at": {"required": False},
+            "roles": {"required": False},
         }
 
     def create(self, validated_data):
         inviter = self.context.get("request").user
+        tenant_id = self.context.get("tenant_id")
         validated_data["inviter"] = inviter
-        return super().create(validated_data)
+        roles = validated_data.pop("roles", [])
+        invitation = super().create(validated_data)
+        for role in roles:
+            InvitationRoleRelationship.objects.create(
+                role=role, invitation=invitation, tenant_id=tenant_id
+            )
+
+        return invitation
 
 
 class InvitationUpdateSerializer(InvitationBaseWriteSerializer):
     class Meta:
         model = Invitation
-        fields = ["id", "email", "expires_at", "state", "token"]
+        fields = ["id", "email", "expires_at", "state", "token", "roles"]
         extra_kwargs = {
             "token": {"read_only": True},
             "state": {"read_only": True},
             "expires_at": {"required": False},
             "email": {"required": False},
+            "roles": {"required": False},
         }
+
+    def update(self, instance, validated_data):
+        roles = validated_data.pop("roles", [])
+        tenant_id = self.context.get("tenant_id")
+        invitation = super().update(instance, validated_data)
+        if roles:
+            instance.roles.clear()
+            for role in roles:
+                InvitationRoleRelationship.objects.create(
+                    role=role, invitation=invitation, tenant_id=tenant_id
+                )
+
+        return invitation
 
 
 class InvitationAcceptSerializer(RLSSerializer):
@@ -1100,6 +1215,174 @@ class InvitationAcceptSerializer(RLSSerializer):
     class Meta:
         model = Invitation
         fields = ["invitation_token"]
+
+
+# Roles
+
+
+class RoleSerializer(RLSSerializer, BaseWriteSerializer):
+    provider_groups = serializers.ResourceRelatedField(
+        many=True, queryset=ProviderGroup.objects.all()
+    )
+
+    def validate(self, attrs):
+        if Role.objects.filter(name=attrs.get("name")).exists():
+            raise serializers.ValidationError(
+                {"name": "A role with this name already exists."}
+            )
+
+        if attrs.get("manage_providers"):
+            attrs["unlimited_visibility"] = True
+
+        # Prevent updates to the admin role
+        if getattr(self.instance, "name", None) == "admin":
+            raise serializers.ValidationError(
+                {"name": "The admin role cannot be updated."}
+            )
+
+        return super().validate(attrs)
+
+    class Meta:
+        model = Role
+        fields = [
+            "id",
+            "name",
+            "manage_users",
+            "manage_account",
+            "manage_billing",
+            "manage_providers",
+            "manage_integrations",
+            "manage_scans",
+            "unlimited_visibility",
+            "inserted_at",
+            "updated_at",
+            "provider_groups",
+            "users",
+            "invitations",
+            "url",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "inserted_at": {"read_only": True},
+            "updated_at": {"read_only": True},
+            "users": {"read_only": True},
+            "url": {"read_only": True},
+        }
+
+
+class RoleCreateSerializer(RoleSerializer):
+    def create(self, validated_data):
+        provider_groups = validated_data.pop("provider_groups", [])
+        users = validated_data.pop("users", [])
+        tenant_id = self.context.get("tenant_id")
+        role = Role.objects.create(tenant_id=tenant_id, **validated_data)
+
+        through_model_instances = [
+            RoleProviderGroupRelationship(
+                role=role,
+                provider_group=provider_group,
+                tenant_id=tenant_id,
+            )
+            for provider_group in provider_groups
+        ]
+        RoleProviderGroupRelationship.objects.bulk_create(through_model_instances)
+
+        through_model_instances = [
+            UserRoleRelationship(
+                role=user,
+                user=user,
+                tenant_id=tenant_id,
+            )
+            for user in users
+        ]
+        UserRoleRelationship.objects.bulk_create(through_model_instances)
+
+        return role
+
+
+class RoleUpdateSerializer(RoleSerializer):
+    class Meta:
+        model = Role
+        fields = [
+            "id",
+            "name",
+            "manage_users",
+            "manage_account",
+            "manage_billing",
+            "manage_providers",
+            "manage_integrations",
+            "manage_scans",
+            "unlimited_visibility",
+        ]
+
+
+class ProviderGroupResourceIdentifierSerializer(serializers.Serializer):
+    resource_type = serializers.CharField(source="type")
+    id = serializers.UUIDField()
+
+    class JSONAPIMeta:
+        resource_name = "provider-group-identifier"
+
+    def to_representation(self, instance):
+        """
+        Ensure 'type' is used in the output instead of 'resource_type'.
+        """
+        representation = super().to_representation(instance)
+        representation["type"] = representation.pop("resource_type", None)
+        return representation
+
+    def to_internal_value(self, data):
+        """
+        Map 'type' back to 'resource_type' during input.
+        """
+        data["resource_type"] = data.pop("type", None)
+        return super().to_internal_value(data)
+
+
+class RoleProviderGroupRelationshipSerializer(RLSSerializer, BaseWriteSerializer):
+    """
+    Serializer for modifying role memberships
+    """
+
+    provider_groups = serializers.ListField(
+        child=ProviderGroupResourceIdentifierSerializer(),
+        help_text="List of resource identifier objects representing provider groups.",
+    )
+
+    def create(self, validated_data):
+        provider_group_ids = [item["id"] for item in validated_data["provider_groups"]]
+        provider_groups = ProviderGroup.objects.filter(id__in=provider_group_ids)
+        tenant_id = self.context.get("tenant_id")
+
+        new_relationships = [
+            RoleProviderGroupRelationship(
+                role=self.context.get("role"), provider_group=pg, tenant_id=tenant_id
+            )
+            for pg in provider_groups
+        ]
+        RoleProviderGroupRelationship.objects.bulk_create(new_relationships)
+
+        return self.context.get("role")
+
+    def update(self, instance, validated_data):
+        provider_group_ids = [item["id"] for item in validated_data["provider_groups"]]
+        provider_groups = ProviderGroup.objects.filter(id__in=provider_group_ids)
+        tenant_id = self.context.get("tenant_id")
+
+        instance.provider_groups.clear()
+        new_relationships = [
+            RoleProviderGroupRelationship(
+                role=instance, provider_group=pg, tenant_id=tenant_id
+            )
+            for pg in provider_groups
+        ]
+        RoleProviderGroupRelationship.objects.bulk_create(new_relationships)
+
+        return instance
+
+    class Meta:
+        model = RoleProviderGroupRelationship
+        fields = ["id", "provider_groups"]
 
 
 # Compliance overview
