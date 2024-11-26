@@ -57,10 +57,6 @@ export default function Home({
 const SSRProvidersOverview = async () => {
   const providersOverview = await getProvidersOverview({});
 
-  if (!providersOverview) {
-    return <p>There is no providers overview info available</p>;
-  }
-
   return (
     <>
       <h3 className="mb-4 text-sm font-bold">Providers Overview</h3>
