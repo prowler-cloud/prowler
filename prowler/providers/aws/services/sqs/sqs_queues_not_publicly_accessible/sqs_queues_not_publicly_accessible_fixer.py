@@ -1,20 +1,7 @@
 import json
 
-import boto3
-
 from prowler.lib.logger import logger
 from prowler.providers.aws.services.sqs.sqs_client import sqs_client
-
-
-def get_account_id() -> str:
-    """
-    Retrieve the AWS account ID using STS get_caller_identity.
-    Returns:
-        str: The AWS account ID.
-    """
-    sts_client = boto3.client("sts")
-    identity = sts_client.get_caller_identity()
-    return identity["Account"]
 
 
 def fixer(resource_id: str, region: str) -> bool:
@@ -41,7 +28,7 @@ def fixer(resource_id: str, region: str) -> bool:
         bool: True if the operation is successful (policy updated), False otherwise.
     """
     try:
-        account_id = get_account_id()
+        account_id = sqs_client.audited_account
 
         regional_client = sqs_client.regional_clients[region]
 
@@ -49,34 +36,30 @@ def fixer(resource_id: str, region: str) -> bool:
             QueueUrl=resource_id, AttributeNames=["Policy"]
         )
 
-        policy = policy_response.get("Attributes", {}).get("Policy")
+        policy = json.loads(policy_response.get("Attributes", {}).get("Policy"))
 
-        if policy:
-            if isinstance(policy, str):
-                policy = json.loads(policy)
+        for statement in policy.get("Statement", []):
+            if "Principal" in statement and (
+                "*" in statement["Principal"]
+                or (
+                    "AWS" in statement["Principal"]
+                    and "*" in statement["Principal"]["AWS"]
+                )
+                or (
+                    "CanonicalUser" in statement["Principal"]
+                    and "*" in statement["Principal"]["CanonicalUser"]
+                )
+            ):
+                statement["Principal"] = {"AWS": f"arn:aws:iam::{account_id}:root"}
+                statement["Action"] = "sqs:*"
+                statement["Resource"] = (
+                    f"arn:aws:sqs:{region}:{account_id}:{resource_id}"
+                )
 
-            for statement in policy.get("Statement", []):
-                if "Principal" in statement and (
-                    "*" in statement["Principal"]
-                    or (
-                        "AWS" in statement["Principal"]
-                        and "*" in statement["Principal"]["AWS"]
-                    )
-                    or (
-                        "CanonicalUser" in statement["Principal"]
-                        and "*" in statement["Principal"]["CanonicalUser"]
-                    )
-                ):
-                    statement["Principal"] = {"AWS": f"arn:aws:iam::{account_id}:root"}
-                    statement["Action"] = "sqs:*"
-                    statement["Resource"] = (
-                        f"arn:aws:sqs:{region}:{account_id}:{resource_id}"
-                    )
-
-            regional_client.set_queue_attributes(
-                QueueUrl=resource_id,
-                Attributes={"Policy": json.dumps(policy)},
-            )
+        regional_client.set_queue_attributes(
+            QueueUrl=resource_id,
+            Attributes={"Policy": json.dumps(policy)},
+        )
 
     except Exception as error:
         logger.error(
