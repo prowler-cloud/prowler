@@ -142,18 +142,18 @@ export const sectionItems: SidebarItem[] = [
         href: "/compliance",
         icon: "fluent-mdl2:compliance-audit",
         title: "Compliance",
-        endContent: (
-          <Chip size="sm" variant="flat">
-            New
-          </Chip>
-        ),
+        // endContent: (
+        //   <Chip size="sm" variant="flat">
+        //     New
+        //   </Chip>
+        // ),
       },
-      {
-        key: "services",
-        href: "/services",
-        icon: "material-symbols:linked-services-outline",
-        title: "Services",
-      },
+      // {
+      //   key: "services",
+      //   href: "/services",
+      //   icon: "material-symbols:linked-services-outline",
+      //   title: "Services",
+      // },
     ],
   },
 
@@ -167,12 +167,12 @@ export const sectionItems: SidebarItem[] = [
         icon: "fluent:cloud-sync-24-regular",
         title: "Providers",
       },
-      {
-        key: "integrations",
-        href: "/integrations",
-        icon: "tabler:puzzle",
-        title: "Integrations",
-      },
+      // {
+      //   key: "integrations",
+      //   href: "/integrations",
+      //   icon: "tabler:puzzle",
+      //   title: "Integrations",
+      // },
     ],
   },
 ];

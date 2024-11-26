@@ -1,8 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Icon } from "@iconify/react";
-import { Button, Checkbox, Divider, Link } from "@nextui-org/react";
+import { Checkbox, Link } from "@nextui-org/react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -12,12 +11,7 @@ import { NotificationIcon, ProwlerExtended } from "@/components/icons";
 import { ThemeSwitch } from "@/components/ThemeSwitch";
 import { useToast } from "@/components/ui";
 import { CustomButton, CustomInput } from "@/components/ui/custom";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormMessage,
-} from "@/components/ui/form";
+import { Form } from "@/components/ui/form";
 import { ApiError, authFormSchema } from "@/types";
 
 export const AuthForm = ({
@@ -38,7 +32,6 @@ export const AuthForm = ({
       ...(type === "sign-up" && {
         name: "",
         company: "",
-        termsAndConditions: false,
         confirmPassword: "",
         ...(invitationToken && { invitationToken }),
       }),
@@ -211,33 +204,6 @@ export const AuthForm = ({
                       isInvalid={!!form.formState.errors.invitationToken}
                     />
                   )}
-                  <FormField
-                    control={form.control}
-                    name="termsAndConditions"
-                    render={({ field }) => (
-                      <>
-                        <FormControl>
-                          <Checkbox
-                            isRequired
-                            className="py-4"
-                            size="sm"
-                            checked={field.value}
-                            onChange={(e) => field.onChange(e.target.checked)}
-                          >
-                            I agree with the&nbsp;
-                            <Link href="#" size="sm">
-                              Terms
-                            </Link>
-                            &nbsp; and&nbsp;
-                            <Link href="#" size="sm">
-                              Privacy Policy
-                            </Link>
-                          </Checkbox>
-                        </FormControl>
-                        <FormMessage className="text-system-error dark:text-system-error" />
-                      </>
-                    )}
-                  />
                 </>
               )}
 
@@ -269,7 +235,7 @@ export const AuthForm = ({
             </form>
           </Form>
 
-          {type === "sign-in" && (
+          {/* {type === "sign-in" && (
             <>
               <div className="flex items-center gap-4 py-2">
                 <Divider className="flex-1" />
@@ -299,7 +265,7 @@ export const AuthForm = ({
                 </Button>
               </div>
             </>
-          )}
+          )} */}
           {type === "sign-in" ? (
             <p className="text-center text-small">
               Need to create an account?&nbsp;
