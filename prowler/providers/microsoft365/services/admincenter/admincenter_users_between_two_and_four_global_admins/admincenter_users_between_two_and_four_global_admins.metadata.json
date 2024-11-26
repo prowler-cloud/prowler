@@ -1,6 +1,6 @@
 {
   "Provider": "microsoft365",
-  "CheckID": "users_administrative_accounts_cloud_only",
+  "CheckID": "admincenter_users_between_two_and_four_global_admins",
   "CheckTitle": "Ensure Administrative accounts are cloud-only",
   "CheckType": [],
   "ServiceName": "users",
@@ -13,7 +13,7 @@
   "RelatedUrl": "https://learn.microsoft.com/en-us/microsoft-365/security/identity-protection?view=o365-worldwide",
   "Remediation": {
     "Code": {
-      "CLI": "Get-MsolUser -Admin | Where-Object {$_.ImmutableId -ne $null} | Remove-MsolUser",
+      "CLI": "",
       "NativeIaC": "",
       "Other": "",
       "Terraform": ""

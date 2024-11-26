@@ -1,0 +1,156 @@
+from asyncio import gather, get_event_loop
+from typing import List, Optional
+
+from msgraph.generated.models.o_data_errors.o_data_error import ODataError
+from pydantic import BaseModel
+
+from prowler.lib.logger import logger
+from prowler.providers.microsoft365.lib.service.service import Microsoft365Service
+from prowler.providers.microsoft365.microsoft365_provider import Microsoft365Provider
+
+
+class AdminCenter(Microsoft365Service):
+    def __init__(self, provider: Microsoft365Provider):
+        super().__init__(provider)
+
+        loop = get_event_loop()
+
+        # Get users first alone because it is a dependency for other attributes
+        self.users = loop.run_until_complete(self._get_users())
+
+        attributes = loop.run_until_complete(
+            gather(
+                self._get_directory_roles(),
+                self._get_groups(),
+            )
+        )
+
+        self.directory_roles = attributes[0]
+        self.groups = attributes[1]
+
+    async def _get_users(self):
+        logger.info("Microsoft365 - Getting users...")
+        users = {}
+        try:
+            for tenant, client in self.clients.items():
+                users_list = await client.users.get()
+                users.update({tenant: {}})
+                for user in users_list.value:
+                    license_details = await client.users.by_user_id(
+                        user.id
+                    ).license_details.get()
+                    try:
+                        mailbox_settings = await client.users.by_user_id(
+                            user.id
+                        ).mailbox_settings.get()
+                        user_type = mailbox_settings.user_purpose
+                    except ODataError as error:
+                        if error.error.code == "MailboxNotEnabledForRESTAPI":
+                            user_type = "inactive"
+                        else:
+                            logger.error(
+                                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                            )
+                    users[tenant].update(
+                        {
+                            user.id: User(
+                                id=user.id,
+                                name=user.display_name,
+                                on_premises_sync_enabled=user.on_premises_sync_enabled,
+                                license=(
+                                    license_details.value[0].sku_part_number
+                                    if license_details.value
+                                    else None
+                                ),
+                                user_type=user_type,
+                                account_enabled=user.account_enabled,
+                            )
+                        }
+                    )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+        return users
+
+    async def _get_directory_roles(self):
+        logger.info("Microsoft365 - Getting directory roles...")
+        directory_roles_with_members = {}
+        try:
+            for tenant, client in self.clients.items():
+                directory_roles_with_members.update({tenant: {}})
+                directory_roles = await client.directory_roles.get()
+                for directory_role in directory_roles.value:
+                    directory_role_members = (
+                        await client.directory_roles.by_directory_role_id(
+                            directory_role.id
+                        ).members.get()
+                    )
+                    members_with_roles = []
+                    for member in directory_role_members.value:
+                        user = self.users[tenant].get(member.user_principal_name, None)
+                        if user:
+                            user.directory_roles.append(directory_role.display_name)
+                            members_with_roles.append(user)
+
+                    directory_roles_with_members[tenant].update(
+                        {
+                            directory_role.id: DirectoryRole(
+                                id=directory_role.id,
+                                name=directory_role.display_name,
+                                members=members_with_roles,
+                            )
+                        }
+                    )
+
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return directory_roles_with_members
+
+    async def _get_groups(self):
+        logger.info("Microsoft365 - Getting groups...")
+        groups = {}
+        try:
+            for tenant, client in self.clients.items():
+                groups_list = await client.groups.get()
+                groups.update((tenant, {}))
+                for group in groups_list.value:
+                    groups[tenant].update(
+                        {
+                            group.id: Group(
+                                id=group.id,
+                                name=group.display_name,
+                                visibility=group.visibility,
+                            )
+                        }
+                    )
+
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return groups
+
+
+class User(BaseModel):
+    id: str
+    name: str
+    directory_roles: List[str] = []
+    license: Optional[str] = None
+    user_type: Optional[str] = None
+    account_enabled: Optional[bool] = None
+
+
+class DirectoryRole(BaseModel):
+    id: str
+    name: str
+    members: List[User]
+
+
+class Group(BaseModel):
+    id: str
+    name: str
+    visibility: str
