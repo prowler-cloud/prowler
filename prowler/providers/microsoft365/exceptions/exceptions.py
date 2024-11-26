@@ -1,16 +1,16 @@
 from prowler.exceptions.exceptions import ProwlerException
 
 
-# Exceptions codes from 2000 to 2999 are reserved for Microsoft365 exceptions
+# Exceptions codes from 5000 to 5999 are reserved for Microsoft365 exceptions
 class Microsoft365BaseException(ProwlerException):
     """Base class for Microsoft365 Errors."""
 
-    AZURE_ERROR_CODES = {
-        (2000, "Microsoft365EnvironmentVariableError"): {
+    MICROSOFT365_ERROR_CODES = {
+        (5000, "Microsoft365EnvironmentVariableError"): {
             "message": "Microsoft365 environment variable error",
             "remediation": "Check the Microsoft365 environment variables and ensure they are properly set.",
         },
-        (2001, "Microsoft365NoSubscriptionsError"): {
+        (5001, "Microsoft365NoSubscriptionsError"): {
             "message": "No Microsoft365 subscriptions found",
             "remediation": "Check the Microsoft365 subscriptions and ensure they are properly set up.",
         },
@@ -21,14 +21,6 @@ class Microsoft365BaseException(ProwlerException):
         (2003, "Microsoft365NoAuthenticationMethodError"): {
             "message": "No Microsoft365 authentication method found",
             "remediation": "Check that any authentication method is properly set up for Microsoft365.",
-        },
-        (2004, "Microsoft365BrowserAuthNoTenantIDError"): {
-            "message": "Microsoft365 browser authentication error: no tenant ID found",
-            "remediation": "To use browser authentication, ensure the tenant ID is properly set.",
-        },
-        (2005, "Microsoft365TenantIDNoBrowserAuthError"): {
-            "message": "Microsoft365 tenant ID error: browser authentication not found",
-            "remediation": "To use browser authentication, both the tenant ID and browser authentication must be properly set.",
         },
         (2006, "Microsoft365ArgumentTypeValidationError"): {
             "message": "Microsoft365 argument type validation error",
@@ -106,7 +98,7 @@ class Microsoft365BaseException(ProwlerException):
 
     def __init__(self, code, file=None, original_exception=None, message=None):
         provider = "Microsoft365"
-        error_info = self.AZURE_ERROR_CODES.get((code, self.__class__.__name__))
+        error_info = self.MICROSOFT365_ERROR_CODES.get((code, self.__class__.__name__))
         if message:
             error_info["message"] = message
         super().__init__(

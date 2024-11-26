@@ -20,13 +20,6 @@ class Microsoft365RegionConfig(BaseModel):
     credential_scopes: list = []
 
 
-class Microsoft365Subscription(BaseModel):
-    id: str
-    subscription_id: str
-    display_name: str
-    state: str
-
-
 class Microsoft365OutputOptions(ProviderOutputOptions):
     def __init__(self, arguments, bulk_checks_metadata, identity):
         # First call Provider_Output_Options init

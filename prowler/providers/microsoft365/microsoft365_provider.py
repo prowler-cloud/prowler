@@ -1,7 +1,9 @@
 import asyncio
 import os
+import re
 from argparse import ArgumentTypeError
 from os import getenv
+from uuid import UUID
 
 import requests
 from azure.core.exceptions import ClientAuthenticationError, HttpResponseError
@@ -20,11 +22,17 @@ from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.provider import Provider
 from prowler.providers.microsoft365.exceptions.exceptions import (
     Microsoft365ArgumentTypeValidationError,
+    Microsoft365ClientIdAndClientSecretNotBelongingToTenantIdError,
     Microsoft365CredentialsUnavailableError,
     Microsoft365EnvironmentVariableError,
     Microsoft365GetTokenIdentityError,
     Microsoft365HTTPResponseError,
+    Microsoft365NotValidClientIdError,
+    Microsoft365NotValidClientSecretError,
+    Microsoft365NotValidTenantIdError,
     Microsoft365SetUpRegionConfigError,
+    Microsoft365TenantIdAndClientIdNotBelongingToClientSecretError,
+    Microsoft365TenantIdAndClientSecretNotBelongingToClientIdError,
 )
 from prowler.providers.microsoft365.lib.arguments.arguments import (
     validate_microsoft365_region,
@@ -267,7 +275,7 @@ class Microsoft365Provider(Provider):
             f"Microsoft365 Identity Type: {Fore.YELLOW}{self._identity.identity_type}{Style.RESET_ALL} Microsoft365 Identity ID: {Fore.YELLOW}{self._identity.identity_id}{Style.RESET_ALL}",
         ]
         report_title = (
-            f"{Style.BRIGHT}Using the Azure credentials below:{Style.RESET_ALL}"
+            f"{Style.BRIGHT}Using the Microsoft365 credentials below:{Style.RESET_ALL}"
         )
         print_boxes(report_lines, report_title)
 
@@ -317,7 +325,7 @@ class Microsoft365Provider(Provider):
     @staticmethod
     def check_application_creds_env_vars():
         """
-        Checks the presence of required environment variables for application authentication against Azure.
+        Checks the presence of required environment variables for application authentication against Microsoft365.
 
         This method checks for the presence of the following environment variables:
         - APP_CLIENT_ID: Microsoft365 client ID
@@ -453,3 +461,132 @@ class Microsoft365Provider(Provider):
                     for location in data["value"]:
                         locations[display_name].append(location["name"])
         return locations
+
+    @staticmethod
+    def validate_static_credentials(
+        tenant_id: str = None, client_id: str = None, client_secret: str = None
+    ) -> dict:
+        """
+        Validates the static credentials for the Microsoft365 provider.
+
+        Args:
+            tenant_id (str): The Microsoft365 Active Directory tenant ID.
+            client_id (str): The Microsoft365 client ID.
+            client_secret (str): The Microsoft365 client secret.
+
+        Raises:
+            Microsoft365NotValidTenantIdError: If the provided Microsoft365 Tenant ID is not valid.
+            Microsoft365NotValidClientIdError: If the provided Microsoft365 Client ID is not valid.
+            Microsoft365NotValidClientSecretError: If the provided Microsoft365 Client Secret is not valid.
+            Microsoft365ClientIdAndClientSecretNotBelongingToTenantIdError: If the provided Microsoft365 Client ID and Client Secret do not belong to the specified Tenant ID.
+            Microsoft365TenantIdAndClientSecretNotBelongingToClientIdError: If the provided Microsoft365 Tenant ID and Client Secret do not belong to the specified Client ID.
+            Microsoft365TenantIdAndClientIdNotBelongingToClientSecretError: If the provided Microsoft365 Tenant ID and Client ID do not belong to the specified Client Secret.
+
+        Returns:
+            dict: A dictionary containing the validated static credentials.
+        """
+        # Validate the Tenant ID
+        try:
+            UUID(tenant_id)
+        except ValueError:
+            raise Microsoft365NotValidTenantIdError(
+                file=os.path.basename(__file__),
+                message="The provided Microsoft365 Tenant ID is not valid.",
+            )
+
+        # Validate the Client ID
+        try:
+            UUID(client_id)
+        except ValueError:
+            raise Microsoft365NotValidClientIdError(
+                file=os.path.basename(__file__),
+                message="The provided Microsoft365 Client ID is not valid.",
+            )
+        # Validate the Client Secret
+        if not re.match("^[a-zA-Z0-9._~-]+$", client_secret):
+            raise Microsoft365NotValidClientSecretError(
+                file=os.path.basename(__file__),
+                message="The provided Microsoft365 Client Secret is not valid.",
+            )
+
+        try:
+            Microsoft365Provider.verify_client(tenant_id, client_id, client_secret)
+            return {
+                "tenant_id": tenant_id,
+                "client_id": client_id,
+                "client_secret": client_secret,
+            }
+        except Microsoft365NotValidTenantIdError as tenant_id_error:
+            logger.error(
+                f"{tenant_id_error.__class__.__name__}[{tenant_id_error.__traceback__.tb_lineno}]: {tenant_id_error}"
+            )
+            raise Microsoft365ClientIdAndClientSecretNotBelongingToTenantIdError(
+                file=os.path.basename(__file__),
+                message="The provided Microsoft365 Client ID and Client Secret do not belong to the specified Tenant ID.",
+            )
+        except Microsoft365NotValidClientIdError as client_id_error:
+            logger.error(
+                f"{client_id_error.__class__.__name__}[{client_id_error.__traceback__.tb_lineno}]: {client_id_error}"
+            )
+            raise Microsoft365TenantIdAndClientSecretNotBelongingToClientIdError(
+                file=os.path.basename(__file__),
+                message="The provided Microsoft365 Tenant ID and Client Secret do not belong to the specified Client ID.",
+            )
+        except Microsoft365NotValidClientSecretError as client_secret_error:
+            logger.error(
+                f"{client_secret_error.__class__.__name__}[{client_secret_error.__traceback__.tb_lineno}]: {client_secret_error}"
+            )
+            raise Microsoft365TenantIdAndClientIdNotBelongingToClientSecretError(
+                file=os.path.basename(__file__),
+                message="The provided Microsoft365 Tenant ID and Client ID do not belong to the specified Client Secret.",
+            )
+
+    @staticmethod
+    def verify_client(tenant_id, client_id, client_secret) -> None:
+        """
+        Verifies the Microsoft365 client credentials using the specified tenant ID, client ID, and client secret.
+
+        Args:
+            tenant_id (str): The Microsoft365 Active Directory tenant ID.
+            client_id (str): The Microsoft365 client ID.
+            client_secret (str): The Microsoft365 client secret.
+
+        Raises:
+            Microsoft365NotValidTenantIdError: If the provided Microsoft365 Tenant ID is not valid.
+            Microsoft365NotValidClientIdError: If the provided Microsoft365 Client ID is not valid.
+            Microsoft365NotValidClientSecretError: If the provided Microsoft365 Client Secret is not valid.
+
+        Returns:
+            None
+        """
+        url = f"https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token"
+        headers = {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Accept": "application/json",
+        }
+        data = {
+            "grant_type": "client_credentials",
+            "client_id": client_id,
+            "client_secret": client_secret,
+            "scope": "https://graph.microsoft.com/.default",
+        }
+        response = requests.post(url, headers=headers, data=data).json()
+        if "access_token" not in response.keys() and "error_codes" in response.keys():
+            if f"Tenant '{tenant_id}'" in response["error_description"]:
+                raise Microsoft365NotValidTenantIdError(
+                    file=os.path.basename(__file__),
+                    message="The provided Microsoft 365 Tenant ID is not valid for the specified Client ID and Client Secret.",
+                )
+            if (
+                f"Application with identifier '{client_id}'"
+                in response["error_description"]
+            ):
+                raise Microsoft365NotValidClientIdError(
+                    file=os.path.basename(__file__),
+                    message="The provided Microsoft 365 Client ID is not valid for the specified Tenant ID and Client Secret.",
+                )
+            if "Invalid client secret provided" in response["error_description"]:
+                raise Microsoft365NotValidClientSecretError(
+                    file=os.path.basename(__file__),
+                    message="The provided Microsoft 365 Client Secret is not valid for the specified Tenant ID and Client ID.",
+                )
