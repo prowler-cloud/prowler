@@ -10065,6 +10065,15 @@
         ]
       }
     },
+    "socialmessaging": {
+      "regions": {
+        "aws": [
+          "eu-central-1"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
     "sqs": {
       "regions": {
         "aws": [
