@@ -45,6 +45,14 @@
 
 **Prowler** is an Open Source security tool to perform AWS, Azure, Google Cloud and Kubernetes security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness, and also remediations! We have Prowler CLI (Command Line Interface) that we call Prowler Open Source and a service on top of it that we call <a href="https://prowler.com">Prowler SaaS</a>.
 
+## Prowler App
+
+Prowler App is a web application that allows you to run Prowler in your cloud provider accounts and visualize the results in a user-friendly interface.
+
+![Prowler App](docs/img/compliance-app.png)
+
+>More details at [https://docs.prowler.com](https://docs.prowler.com/projects/prowler-open-source/en/latest/#prowler-app-installation)
+
 ## Prowler CLI
 
 ```console
@@ -69,17 +77,68 @@ It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, Fe
 | Kubernetes | 83 | 7 -> `prowler kubernetes --list-services` | 1 -> `prowler kubernetes --list-compliance` | 7 -> `prowler kubernetes --list-categories` |
 
 # 💻 Installation
+## Prowler App
 
-## Pip package
-Prowler is available as a project in [PyPI](https://pypi.org/project/prowler-cloud/), thus can be installed using pip with Python >= 3.9, < 3.13:
+### Docker Compose
+
+**Requirements**
+
+* `Docker Compose` installed: https://docs.docker.com/compose/install/.
+
+**Commands**
+
+``` bash
+curl -Lo https://github.com/prowler-cloud/prowler/blob/master/docker-compose.yml \
+curl -Lo https://github.com/prowler-cloud/prowler/blob/master/.env \
+docker compose up -d
+```
+
+Enjoy Prowler App at http://localhost:3000 by signing up with your email and password.
+
+### From GitHub
+
+**Requirements**
+
+* `git` installed.
+* `poetry` installed: [poetry installation](https://python-poetry.org/docs/#installation).
+* `npm` installed: [npm installation](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm).
+* `Docker Compose` installed: https://docs.docker.com/compose/install/.
+
+**Commands to run the API**
+
+``` bash
+git clone https://github.com/prowler-cloud/prowler \
+cd prowler/api \
+poetry install \
+poetry shell \
+docker compose up postgres valkey -d \
+cd src/backend \
+python -m celery -A config.celery worker -l info -E \
+gunicorn -c config/guniconf.py config.wsgi:application
+```
+
+**Commands to run the UI**
+
+``` bash
+git clone https://github.com/prowler-cloud/prowler \
+cd prowler/ui \
+npm run build \
+npm start
+```
+
+Enjoy Prowler App at http://localhost:3000 by signing up with your email and password.
+
+## Prowler CLI
+### Pip package
+Prowler CLI is available as a project in [PyPI](https://pypi.org/project/prowler-cloud/), thus can be installed using pip with Python >= 3.9, < 3.13:
 
 ```console
 pip install prowler
 prowler -v
 ```
->More details at [https://docs.prowler.com](https://docs.prowler.com/projects/prowler-open-source/en/latest/)
+>More details at [https://docs.prowler.com](https://docs.prowler.com/projects/prowler-open-source/en/latest/#prowler-cli-installation)
 
-## Containers
+### Containers
 
 The available versions of Prowler are the following:
 
@@ -94,7 +153,7 @@ The container images are available here:
 - [DockerHub](https://hub.docker.com/r/toniblyx/prowler/tags)
 - [AWS Public ECR](https://gallery.ecr.aws/prowler-cloud/prowler)
 
-## From GitHub
+### From GitHub
 
 Python >= 3.9, < 3.13 is required with pip and poetry:
 
@@ -108,6 +167,16 @@ python prowler.py -v
 > If you want to clone Prowler from Windows, use `git config core.longpaths true` to allow long file paths.
 # 📐✏️ High level architecture
 
+## Prowler App
+The **Prowler App** consists of three main components:
+
+- **Prowler UI**: A user-friendly web interface for running Prowler and viewing results, powered by Next.js.
+- **Prowler API**: The backend API that executes Prowler scans and stores the results, built with Django REST Framework.
+- **Prowler SDK**: A Python SDK that integrates with the Prowler CLI for advanced functionality.
+
+![Prowler App Architecture](docs/img/prowler-app-architecture.png)
+
+## Prowler CLI
 You can run Prowler from your workstation, a Kubernetes Job, a Google Compute Engine, an Azure VM, an EC2 instance, Fargate or any other container, CloudShell and many more.
 
 ![Architecture](docs/img/architecture.png)
