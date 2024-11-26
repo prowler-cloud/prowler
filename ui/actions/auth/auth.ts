@@ -89,7 +89,7 @@ export const createNewUser = async (
 
     return parsedResponse;
   } catch (error) {
-    return { errors: [{ detail: "Network error or server is unreachable" }] };
+    return { errors: [{ source: {pointer: ""}, detail: "Network error or server is unreachable" }] };
   }
 };
 
