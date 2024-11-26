@@ -1,6 +1,6 @@
 import json
 import re
-from uuid import uuid4, UUID
+from uuid import UUID, uuid4
 
 from cryptography.fernet import Fernet
 from django.conf import settings
@@ -11,35 +11,33 @@ from django.core.validators import MinLengthValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django_celery_results.models import TaskResult
-from prowler.lib.check.models import Severity
 from psqlextra.models import PostgresPartitionedModel
 from psqlextra.types import PostgresPartitioningMethod
 from uuid6 import uuid7
 
 from api.db_utils import (
-    MemberRoleEnumField,
-    enum_to_choices,
-    ProviderEnumField,
-    StateEnumField,
-    ScanTriggerEnumField,
-    FindingDeltaEnumField,
-    SeverityEnumField,
-    StatusEnumField,
     CustomUserManager,
-    ProviderSecretTypeEnumField,
+    FindingDeltaEnumField,
     InvitationStateEnumField,
-    one_week_from_now,
+    MemberRoleEnumField,
+    ProviderEnumField,
+    ProviderSecretTypeEnumField,
+    ScanTriggerEnumField,
+    SeverityEnumField,
+    StateEnumField,
+    StatusEnumField,
+    enum_to_choices,
     generate_random_token,
+    one_week_from_now,
 )
 from api.exceptions import ModelValidationError
 from api.rls import (
-    RowLevelSecurityProtectedModel,
-)
-from api.rls import (
-    Tenant,
-    RowLevelSecurityConstraint,
     BaseSecurityConstraint,
+    RowLevelSecurityConstraint,
+    RowLevelSecurityProtectedModel,
+    Tenant,
 )
+from prowler.lib.check.models import Severity
 
 fernet = Fernet(settings.SECRETS_ENCRYPTION_KEY.encode())
 
@@ -856,3 +854,51 @@ class ComplianceOverview(RowLevelSecurityProtectedModel):
 
     class JSONAPIMeta:
         resource_name = "compliance-overviews"
+
+
+class ScanSummary(RowLevelSecurityProtectedModel):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+    check_id = models.CharField(max_length=100, blank=False, null=False)
+    service = models.TextField(blank=False)
+    severity = SeverityEnumField(choices=SeverityChoices)
+    region = models.TextField(blank=False)
+    _pass = models.IntegerField(db_column="pass", default=0)
+    fail = models.IntegerField(default=0)
+    muted = models.IntegerField(default=0)
+    total = models.IntegerField(default=0)
+    new = models.IntegerField(default=0)
+    changed = models.IntegerField(default=0)
+    unchanged = models.IntegerField(default=0)
+
+    fail_new = models.IntegerField(default=0)
+    fail_changed = models.IntegerField(default=0)
+    pass_new = models.IntegerField(default=0)
+    pass_changed = models.IntegerField(default=0)
+    muted_new = models.IntegerField(default=0)
+    muted_changed = models.IntegerField(default=0)
+
+    scan = models.ForeignKey(
+        Scan,
+        on_delete=models.CASCADE,
+        related_name="aggregations",
+        related_query_name="aggregation",
+    )
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "scan_summaries"
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=("tenant", "scan", "check_id", "service", "severity", "region"),
+                name="unique_scan_summary",
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "scan-summaries"
