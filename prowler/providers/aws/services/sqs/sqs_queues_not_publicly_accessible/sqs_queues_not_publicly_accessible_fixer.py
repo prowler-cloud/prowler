@@ -29,36 +29,27 @@ def fixer(resource_id: str, region: str) -> bool:
     """
     try:
         account_id = sqs_client.audited_account
+        audited_partition = sqs_client.audited_partition
 
         regional_client = sqs_client.regional_clients[region]
 
-        policy_response = regional_client.get_queue_attributes(
-            QueueUrl=resource_id, AttributeNames=["Policy"]
-        )
-
-        policy = json.loads(policy_response.get("Attributes", {}).get("Policy"))
-
-        for statement in policy.get("Statement", []):
-            if "Principal" in statement and (
-                "*" in statement["Principal"]
-                or (
-                    "AWS" in statement["Principal"]
-                    and "*" in statement["Principal"]["AWS"]
-                )
-                or (
-                    "CanonicalUser" in statement["Principal"]
-                    and "*" in statement["Principal"]["CanonicalUser"]
-                )
-            ):
-                statement["Principal"] = {"AWS": f"arn:aws:iam::{account_id}:root"}
-                statement["Action"] = "sqs:*"
-                statement["Resource"] = (
-                    f"arn:aws:sqs:{region}:{account_id}:{resource_id}"
-                )
+        trusted_policy = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Sid": "ProwlerFixerStatement",
+                    "Effect": "Allow",
+                    "Principal": {
+                        "AWS": f"arn:{audited_partition}:iam::{account_id}:root"
+                    },
+                    "Action": "sqs:*",
+                }
+            ],
+        }
 
         regional_client.set_queue_attributes(
             QueueUrl=resource_id,
-            Attributes={"Policy": json.dumps(policy)},
+            Attributes={"Policy": json.dumps(trusted_policy)},
         )
 
     except Exception as error:
