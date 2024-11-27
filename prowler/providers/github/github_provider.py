@@ -1,6 +1,7 @@
 import os
 
 import environ
+from colorama import Fore, Style
 from github import Auth, Github, GithubIntegration
 
 from prowler.config.config import (
@@ -10,6 +11,7 @@ from prowler.config.config import (
 )
 from prowler.lib.logger import logger
 from prowler.lib.mutelist.mutelist import Mutelist
+from prowler.lib.utils.utils import print_boxes
 from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.provider import Provider
 from prowler.providers.github.exceptions.exceptions import (
@@ -89,12 +91,7 @@ class GithubProvider(Provider):
             github_app_key,
         )
 
-        self._identity = self.setup_identity(
-            personal_access_token,
-            oauth_app_token,
-            github_app_id,
-            github_app_key,
-        )
+        self._identity = self.setup_identity()
 
         # Audit Config
         if config_content:
@@ -246,8 +243,6 @@ class GithubProvider(Provider):
                 id=app_id,
             )
 
-            logger.error(credentials)
-
             return credentials
 
         except Exception as error:
@@ -261,10 +256,6 @@ class GithubProvider(Provider):
 
     def setup_identity(
         self,
-        personal_access_token: str = None,
-        oauth_app_token: str = None,
-        github_app_id: int = 0,
-        github_app_key: str = None,
     ) -> GithubIdentityInfo | GithubAppIdentityInfo:
         """
         Returns the GitHub identity information
@@ -281,7 +272,7 @@ class GithubProvider(Provider):
         credentials = self.session
 
         try:
-            if personal_access_token or oauth_app_token:
+            if credentials.token:
                 auth = Auth.Token(credentials.token)
                 g = Github(auth=auth)
                 try:
@@ -298,7 +289,7 @@ class GithubProvider(Provider):
                         original_exception=error,
                     )
 
-            elif github_app_id and github_app_key:
+            elif credentials.id != 0 and credentials.key:
                 auth = Auth.AppAuth(credentials.id, credentials.key)
                 gi = GithubIntegration(auth=auth)
                 try:
@@ -321,4 +312,24 @@ class GithubProvider(Provider):
             )
 
     def print_credentials(self):
-        print(f"You are using a {self.auth_method} as authentication method.")
+        """
+        Prints the GitHub credentials.
+
+        Usage:
+            >>> self.print_credentials()
+        """
+        if isinstance(self.identity, GithubIdentityInfo):
+            report_lines = [
+                f"GitHub Account: {Fore.YELLOW}{self.identity.account_name}{Style.RESET_ALL}",
+                f"GitHub Account ID: {Fore.YELLOW}{self.identity.account_id}{Style.RESET_ALL}",
+                f"Authentication Method: {Fore.YELLOW}{self.auth_method}{Style.RESET_ALL}",
+            ]
+        elif isinstance(self.identity, GithubAppIdentityInfo):
+            report_lines = [
+                f"GitHub App ID: {Fore.YELLOW}{self.identity.app_id}{Style.RESET_ALL}",
+                f"Authentication Method: {Fore.YELLOW}{self.auth_method}{Style.RESET_ALL}",
+            ]
+        report_title = (
+            f"{Style.BRIGHT}Using the GitHub credentials below:{Style.RESET_ALL}"
+        )
+        print_boxes(report_lines, report_title)
