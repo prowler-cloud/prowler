@@ -213,7 +213,6 @@ class Provider(ABC):
                     )
                 elif "microsoft365" in provider_class_name.lower():
                     provider_class(
-                        app_env_auth=arguments.app_env_auth,
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,

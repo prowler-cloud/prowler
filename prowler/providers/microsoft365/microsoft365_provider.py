@@ -18,15 +18,20 @@ from prowler.config.config import (
 )
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import print_boxes
-from prowler.providers.common.models import Audit_Metadata
+from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
 from prowler.providers.microsoft365.exceptions.exceptions import (
     Microsoft365ArgumentTypeValidationError,
+    Microsoft365ClientAuthenticationError,
     Microsoft365ClientIdAndClientSecretNotBelongingToTenantIdError,
+    Microsoft365ConfigCredentialsError,
     Microsoft365CredentialsUnavailableError,
+    Microsoft365DefaultMicrosoft365CredentialError,
     Microsoft365EnvironmentVariableError,
     Microsoft365GetTokenIdentityError,
     Microsoft365HTTPResponseError,
+    Microsoft365InteractiveBrowserCredentialError,
+    Microsoft365InvalidProviderIdError,
     Microsoft365NotValidClientIdError,
     Microsoft365NotValidClientSecretError,
     Microsoft365NotValidTenantIdError,
@@ -59,7 +64,6 @@ class Microsoft365Provider(Provider):
         _identity (Microsoft365IdentityInfo): The identity information for the Microsoft365 provider.
         _audit_config (dict): The audit configuration for the Microsoft365 provider.
         _region_config (Microsoft365RegionConfig): The region configuration for the Microsoft365 provider.
-        _locations (dict): A dictionary containing the available locations for the Microsoft365 provider.
         _mutelist (Microsoft365Mutelist): The mutelist object associated with the Microsoft365 provider.
         audit_metadata (Audit_Metadata): The audit metadata for the Microsoft365 provider.
 
@@ -69,12 +73,10 @@ class Microsoft365Provider(Provider):
         type(self): Returns the type of the Microsoft365 provider.
         session(self): Returns the session object associated with the Microsoft365 provider.
         region_config(self): Returns the region configuration for the Microsoft365 provider.
-        locations(self): Returns a list of available locations for the Microsoft365 provider.
         audit_config(self): Returns the audit configuration for the Microsoft365 provider.
         fixer_config(self): Returns the fixer configuration.
         output_options(self, options: tuple): Sets the output options for the Microsoft365 provider.
         mutelist(self) -> Microsoft365Mutelist: Returns the mutelist object associated with the Microsoft365 provider.
-        validate_arguments(cls, az_cli_auth, app_env_auth, browser_auth, managed_identity_auth, tenant_id): Validates the authentication arguments for the Microsoft365 provider.
         setup_region_config(cls, region): Sets up the region configuration for the Microsoft365 provider.
         print_credentials(self): Prints the Microsoft365 credentials information.
         setup_session(cls, az_cli_auth, app_env_auth, browser_auth, managed_identity_auth, tenant_id, region_config): Set up the Microsoft365 session with the specified authentication method.
@@ -85,14 +87,12 @@ class Microsoft365Provider(Provider):
     _identity: Microsoft365IdentityInfo
     _audit_config: dict
     _region_config: Microsoft365RegionConfig
-    _locations: dict
     _mutelist: Microsoft365Mutelist
     # TODO: this is not optional, enforce for all providers
     audit_metadata: Audit_Metadata
 
     def __init__(
         self,
-        app_env_auth: bool = False,
         tenant_id: str = None,
         region: str = "AzureCloud",
         client_id: str = None,
@@ -132,23 +132,14 @@ class Microsoft365Provider(Provider):
         """
         logger.info("Setting Microsoft365 provider ...")
 
-        logger.info("Checking if any credentials mode is set ...")
-
         logger.info("Checking if region is different than default one")
         self._region_config = self.setup_region_config(region)
 
         # Set up the Microsoft365 session
-        self._session = self.setup_session(
-            app_env_auth,
-        )
+        self._session = self.setup_session()
 
         # Set up the identity
-        self._identity = self.setup_identity(
-            app_env_auth,
-        )
-
-        # TODO: should we keep this here or within the identity?
-        self._locations = self.get_locations(self.session)
+        self._identity = self.setup_identity()
 
         # Audit Config
         if config_content:
@@ -194,11 +185,6 @@ class Microsoft365Provider(Provider):
     def region_config(self):
         """Returns the region configuration for the Microsoft365 provider."""
         return self._region_config
-
-    @property
-    def locations(self):
-        """Returns a list of available locations for the Microsoft365 provider."""
-        return self._locations
 
     @property
     def audit_config(self):
@@ -266,10 +252,6 @@ class Microsoft365Provider(Provider):
         Returns:
             None
         """
-        printed_subscriptions = []
-        for key, value in self._identity.subscriptions.items():
-            intermediate = key + ": " + value
-            printed_subscriptions.append(intermediate)
         report_lines = [
             f"Microsoft365 Region: {Fore.YELLOW}{self.region_config.name}{Style.RESET_ALL}",
             f"Microsoft365 Identity Type: {Fore.YELLOW}{self._identity.identity_type}{Style.RESET_ALL} Microsoft365 Identity ID: {Fore.YELLOW}{self._identity.identity_id}{Style.RESET_ALL}",
@@ -282,9 +264,7 @@ class Microsoft365Provider(Provider):
     # TODO: setup_session or setup_credentials?
     # This should be setup_credentials, since it is setting up the credentials for the provider
     @staticmethod
-    def setup_session(
-        app_env_auth: bool,
-    ):
+    def setup_session():
         """Returns the Microsoft365 credentials object.
 
         Set up the Microsoft365 session with the specified authentication method.
@@ -299,28 +279,225 @@ class Microsoft365Provider(Provider):
             Exception: If failed to retrieve Microsoft365 credentials.
 
         """
-        # Browser auth creds cannot be set with DefaultMicrosoft365Credentials()
-        if app_env_auth:
-            try:
-                Microsoft365Provider.check_application_creds_env_vars()
-                credentials = ClientSecretCredential(
-                    client_id=getenv("APP_CLIENT_ID"),
-                    tenant_id=getenv("APP_TENANT_ID"),
-                    client_secret=getenv("APP_CLIENT_SECRET"),
-                )
-            except (
-                Microsoft365EnvironmentVariableError
-            ) as environment_credentials_error:
-                logger.critical(
-                    f"{environment_credentials_error.__class__.__name__}[{environment_credentials_error.__traceback__.tb_lineno}] -- {environment_credentials_error}"
-                )
-                raise environment_credentials_error
+        try:
+            Microsoft365Provider.check_application_creds_env_vars()
+            credentials = ClientSecretCredential(
+                client_id=getenv("APP_CLIENT_ID"),
+                tenant_id=getenv("APP_TENANT_ID"),
+                client_secret=getenv("APP_CLIENT_SECRET"),
+            )
+        except Microsoft365EnvironmentVariableError as environment_credentials_error:
+            logger.critical(
+                f"{environment_credentials_error.__class__.__name__}[{environment_credentials_error.__traceback__.tb_lineno}] -- {environment_credentials_error}"
+            )
+            raise environment_credentials_error
         if not credentials:
             raise Microsoft365CredentialsUnavailableError(
                 file=os.path.basename(__file__),
                 message="Failed to retrieve Microsoft365 credentials.",
             )
         return credentials
+
+    @staticmethod
+    def test_connection(
+        tenant_id=None,
+        region="AzureCloud",
+        raise_on_exception=True,
+        client_id=None,
+        client_secret=None,
+        provider_id=None,
+    ) -> Connection:
+        """Test connection to Azure subscription.
+
+        Test the connection to an Azure subscription using the provided credentials.
+
+        Args:
+
+            tenant_id (str): The Azure Active Directory tenant ID.
+            region (str): The Azure region.
+            raise_on_exception (bool): Flag indicating whether to raise an exception if the connection fails.
+            client_id (str): The Azure client ID.
+            client_secret (str): The Azure client secret.
+            provider_id (str): The provider ID, in this case it's the Azure subscription ID.
+
+        Returns:
+            bool: True if the connection is successful, False otherwise.
+
+        Raises:
+            Exception: If failed to test the connection to Azure subscription.
+            AzureArgumentTypeValidationError: If there is an error in the argument type validation.
+            AzureSetUpRegionConfigError: If there is an error in setting up the region configuration.
+            AzureDefaultAzureCredentialError: If there is an error in retrieving the Azure credentials.
+            AzureInteractiveBrowserCredentialError: If there is an error in retrieving the Azure credentials using browser authentication.
+            AzureHTTPResponseError: If there is an HTTP response error.
+            AzureConfigCredentialsError: If there is an error in configuring the Azure credentials from a dictionary.
+
+
+        Examples:
+            >>> AzureProvider.test_connection(az_cli_auth=True)
+            True
+            >>> AzureProvider.test_connection(sp_env_auth=False, browser_auth=True, tenant_id=None)
+            False, ArgumentTypeError: Azure Tenant ID is required only for browser authentication mode
+            >>> AzureProvider.test_connection(tenant_id="XXXXXXXXXX", client_id="XXXXXXXXXX", client_secret="XXXXXXXXXX")
+            True
+        """
+        try:
+            Microsoft365Provider.validate_arguments(
+                tenant_id,
+                client_id,
+                client_secret,
+            )
+            region_config = Microsoft365Provider.setup_region_config(region)
+
+            # Get the dict from the static credentials
+            Microsoft365_credentials = None
+            if tenant_id and client_id and client_secret:
+                Microsoft365_credentials = (
+                    Microsoft365Provider.validate_static_credentials(
+                        tenant_id=tenant_id,
+                        client_id=client_id,
+                        client_secret=client_secret,
+                    )
+                )
+
+            # Set up the Microsoft365 session
+            Microsoft365Provider.setup_session(
+                tenant_id,
+                Microsoft365_credentials,
+                region_config,
+            )
+
+            logger.info(
+                "Microsoft365 provider: Connection to Microsoft365 subscription successful"
+            )
+
+            return Connection(is_connected=True)
+
+        # Exceptions from setup_region_config
+        except Microsoft365ArgumentTypeValidationError as type_validation_error:
+            logger.error(
+                f"{type_validation_error.__class__.__name__}[{type_validation_error.__traceback__.tb_lineno}]: {type_validation_error}"
+            )
+            if raise_on_exception:
+                raise type_validation_error
+            return Connection(error=type_validation_error)
+        except Microsoft365SetUpRegionConfigError as region_config_error:
+            logger.error(
+                f"{region_config_error.__class__.__name__}[{region_config_error.__traceback__.tb_lineno}]: {region_config_error}"
+            )
+            if raise_on_exception:
+                raise region_config_error
+            return Connection(error=region_config_error)
+        # Exceptions from setup_session
+        except Microsoft365EnvironmentVariableError as environment_credentials_error:
+            logger.error(
+                f"{environment_credentials_error.__class__.__name__}[{environment_credentials_error.__traceback__.tb_lineno}]: {environment_credentials_error}"
+            )
+            if raise_on_exception:
+                raise environment_credentials_error
+            return Connection(error=environment_credentials_error)
+        except (
+            Microsoft365DefaultMicrosoft365CredentialError
+        ) as default_credentials_error:
+            logger.error(
+                f"{default_credentials_error.__class__.__name__}[{default_credentials_error.__traceback__.tb_lineno}]: {default_credentials_error}"
+            )
+            if raise_on_exception:
+                raise default_credentials_error
+            return Connection(error=default_credentials_error)
+        except (
+            Microsoft365InteractiveBrowserCredentialError
+        ) as interactive_browser_error:
+            logger.error(
+                f"{interactive_browser_error.__class__.__name__}[{interactive_browser_error.__traceback__.tb_lineno}]: {interactive_browser_error}"
+            )
+            if raise_on_exception:
+                raise interactive_browser_error
+            return Connection(error=interactive_browser_error)
+        except Microsoft365ConfigCredentialsError as config_credentials_error:
+            logger.error(
+                f"{config_credentials_error.__class__.__name__}[{config_credentials_error.__traceback__.tb_lineno}]: {config_credentials_error}"
+            )
+            if raise_on_exception:
+                raise config_credentials_error
+            return Connection(error=config_credentials_error)
+        except Microsoft365ClientAuthenticationError as client_auth_error:
+            logger.error(
+                f"{client_auth_error.__class__.__name__}[{client_auth_error.__traceback__.tb_lineno}]: {client_auth_error}"
+            )
+            if raise_on_exception:
+                raise client_auth_error
+            return Connection(error=client_auth_error)
+        except Microsoft365CredentialsUnavailableError as credential_unavailable_error:
+            logger.error(
+                f"{credential_unavailable_error.__class__.__name__}[{credential_unavailable_error.__traceback__.tb_lineno}]: {credential_unavailable_error}"
+            )
+            if raise_on_exception:
+                raise credential_unavailable_error
+            return Connection(error=credential_unavailable_error)
+        except (
+            Microsoft365DefaultMicrosoft365CredentialError
+        ) as default_credentials_error:
+            logger.error(
+                f"{default_credentials_error.__class__.__name__}[{default_credentials_error.__traceback__.tb_lineno}]: {default_credentials_error}"
+            )
+            if raise_on_exception:
+                raise default_credentials_error
+            return Connection(error=default_credentials_error)
+        except (
+            Microsoft365ClientIdAndClientSecretNotBelongingToTenantIdError
+        ) as tenant_id_error:
+            logger.error(
+                f"{tenant_id_error.__class__.__name__}[{tenant_id_error.__traceback__.tb_lineno}]: {tenant_id_error}"
+            )
+            if raise_on_exception:
+                raise tenant_id_error
+            return Connection(error=tenant_id_error)
+        except (
+            Microsoft365TenantIdAndClientSecretNotBelongingToClientIdError
+        ) as client_id_error:
+            logger.error(
+                f"{client_id_error.__class__.__name__}[{client_id_error.__traceback__.tb_lineno}]: {client_id_error}"
+            )
+            if raise_on_exception:
+                raise client_id_error
+            return Connection(error=client_id_error)
+        except (
+            Microsoft365TenantIdAndClientIdNotBelongingToClientSecretError
+        ) as client_secret_error:
+            logger.error(
+                f"{client_secret_error.__class__.__name__}[{client_secret_error.__traceback__.tb_lineno}]: {client_secret_error}"
+            )
+            if raise_on_exception:
+                raise client_secret_error
+            return Connection(error=client_secret_error)
+        # Exceptions from provider_id validation
+        except Microsoft365InvalidProviderIdError as invalid_credentials_error:
+            logger.error(
+                f"{invalid_credentials_error.__class__.__name__}[{invalid_credentials_error.__traceback__.tb_lineno}]: {invalid_credentials_error}"
+            )
+            if raise_on_exception:
+                raise invalid_credentials_error
+            return Connection(error=invalid_credentials_error)
+        # Exceptions from SubscriptionClient
+        except HttpResponseError as http_response_error:
+            logger.error(
+                f"{http_response_error.__class__.__name__}[{http_response_error.__traceback__.tb_lineno}]: {http_response_error}"
+            )
+            if raise_on_exception:
+                raise Microsoft365HTTPResponseError(
+                    file=os.path.basename(__file__),
+                    original_exception=http_response_error,
+                )
+            return Connection(error=http_response_error)
+        except Exception as error:
+            logger.critical(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            if raise_on_exception:
+                # Raise directly the exception
+                raise error
+            return Connection(error=error)
 
     @staticmethod
     def check_application_creds_env_vars():
@@ -349,7 +526,6 @@ class Microsoft365Provider(Provider):
 
     def setup_identity(
         self,
-        app_env_auth,
     ):
         """
         Sets up the identity for the Microsoft365 provider.
@@ -368,99 +544,48 @@ class Microsoft365Provider(Provider):
         # the identity can access AAD and retrieve the tenant domain name.
         # With cli also should be possible but right now it does not work, microsoft365 python package issue is coming
         # At the time of writting this with az cli creds is not working, despite that is included
-        if app_env_auth:
 
-            async def get_microsoft365_identity():
-                # Trying to recover tenant domain info
-                try:
-                    logger.info(
-                        "Trying to retrieve tenant domain from AAD to populate identity structure ..."
-                    )
-                    client = GraphServiceClient(credentials=credentials)
+        async def get_microsoft365_identity():
+            # Trying to recover tenant domain info
+            try:
+                logger.info(
+                    "Trying to retrieve tenant domain from AAD to populate identity structure ..."
+                )
+                client = GraphServiceClient(credentials=credentials)
 
-                    domain_result = await client.domains.get()
-                    if getattr(domain_result, "value"):
-                        if getattr(domain_result.value[0], "id"):
-                            identity.tenant_domain = domain_result.value[0].id
+                domain_result = await client.domains.get()
+                if getattr(domain_result, "value"):
+                    if getattr(domain_result.value[0], "id"):
+                        identity.tenant_domain = domain_result.value[0].id
 
-                except HttpResponseError as error:
-                    logger.error(
-                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
-                    )
-                    raise Microsoft365HTTPResponseError(
-                        file=os.path.basename(__file__),
-                        original_exception=error,
-                    )
-                except ClientAuthenticationError as error:
-                    logger.error(
-                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
-                    )
-                    raise Microsoft365GetTokenIdentityError(
-                        file=os.path.basename(__file__),
-                        original_exception=error,
-                    )
-                except Exception as error:
-                    logger.error(
-                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
-                    )
-                # since that exception is not considered as critical, we keep filling another identity fields
-                if app_env_auth:
-                    # The id of the sp can be retrieved from environment variables
-                    identity.identity_id = getenv("APP_CLIENT_ID")
-                    identity.identity_type = "Application"
-                # Same here, if user can access AAD, some fields are retrieved if not, default value, for az cli
-                # should work but it doesn't, pending issue
-                else:
-                    identity.identity_id = "Unknown user id (Missing AAD permissions)"
-                    identity.identity_type = "User"
-                    try:
-                        logger.info(
-                            "Trying to retrieve user information from AAD to populate identity structure ..."
-                        )
-                        client = GraphServiceClient(credentials=credentials)
+            except HttpResponseError as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+                )
+                raise Microsoft365HTTPResponseError(
+                    file=os.path.basename(__file__),
+                    original_exception=error,
+                )
+            except ClientAuthenticationError as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+                )
+                raise Microsoft365GetTokenIdentityError(
+                    file=os.path.basename(__file__),
+                    original_exception=error,
+                )
+            except Exception as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+                )
+            # since that exception is not considered as critical, we keep filling another identity fields
+            # The id of the sp can be retrieved from environment variables
+            identity.identity_id = getenv("APP_CLIENT_ID")
+            identity.identity_type = "Application"
 
-                        me = await client.me.get()
-                        if me:
-                            if getattr(me, "user_principal_name"):
-                                identity.identity_id = me.user_principal_name
-
-                    except Exception as error:
-                        logger.error(
-                            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
-                        )
-
-            asyncio.get_event_loop().run_until_complete(get_microsoft365_identity())
+        asyncio.get_event_loop().run_until_complete(get_microsoft365_identity())
 
         return identity
-
-    def get_locations(self, credentials) -> dict[str, list[str]]:
-        """
-        Retrieves the locations available for each subscription using the provided credentials.
-
-        Args:
-            credentials: The credentials object used to authenticate the request.
-
-        Returns:
-            A dictionary containing the locations available for each subscription. The dictionary
-            has subscription display names as keys and lists of location names as values.
-        """
-        locations = None
-        if credentials:
-            locations = {}
-            token = credentials.get_token("https://management.azure.com/.default").token
-            for display_name, subscription_id in self._identity.subscriptions.items():
-                locations.update({display_name: []})
-                url = f"https://management.azure.com/subscriptions/{subscription_id}/locations?api-version=2022-12-01"
-                headers = {
-                    "Authorization": f"Bearer {token}",
-                    "Content-Type": "application/json",
-                }
-                response = requests.get(url, headers=headers)
-                if response.status_code == 200:
-                    data = response.json()
-                    for location in data["value"]:
-                        locations[display_name].append(location["name"])
-        return locations
 
     @staticmethod
     def validate_static_credentials(

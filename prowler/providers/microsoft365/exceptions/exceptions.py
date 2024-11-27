@@ -6,91 +6,91 @@ class Microsoft365BaseException(ProwlerException):
     """Base class for Microsoft365 Errors."""
 
     MICROSOFT365_ERROR_CODES = {
-        (5000, "Microsoft365EnvironmentVariableError"): {
+        (6000, "Microsoft365EnvironmentVariableError"): {
             "message": "Microsoft365 environment variable error",
             "remediation": "Check the Microsoft365 environment variables and ensure they are properly set.",
         },
-        (5001, "Microsoft365NoSubscriptionsError"): {
+        (6001, "Microsoft365NoSubscriptionsError"): {
             "message": "No Microsoft365 subscriptions found",
             "remediation": "Check the Microsoft365 subscriptions and ensure they are properly set up.",
         },
-        (2002, "Microsoft365SetUpIdentityError"): {
+        (6002, "Microsoft365SetUpIdentityError"): {
             "message": "Microsoft365 identity setup error related with credentials",
             "remediation": "Check credentials and ensure they are properly set up for Microsoft365 and the identity provider.",
         },
-        (2003, "Microsoft365NoAuthenticationMethodError"): {
+        (6003, "Microsoft365NoAuthenticationMethodError"): {
             "message": "No Microsoft365 authentication method found",
             "remediation": "Check that any authentication method is properly set up for Microsoft365.",
         },
-        (2006, "Microsoft365ArgumentTypeValidationError"): {
+        (6006, "Microsoft365ArgumentTypeValidationError"): {
             "message": "Microsoft365 argument type validation error",
             "remediation": "Check the provided argument types specific to Microsoft365 and ensure they meet the required format.",
         },
-        (2007, "Microsoft365SetUpRegionConfigError"): {
+        (6007, "Microsoft365SetUpRegionConfigError"): {
             "message": "Microsoft365 region configuration setup error",
             "remediation": "Check the Microsoft365 region configuration and ensure it is properly set up.",
         },
-        (2008, "Microsoft365DefaultMicrosoft365CredentialError"): {
+        (6008, "Microsoft365DefaultMicrosoft365CredentialError"): {
             "message": "Error in DefaultMicrosoft365Credential",
             "remediation": "Check that all the attributes are properly set up for the DefaultMicrosoft365Credential.",
         },
-        (2009, "Microsoft365InteractiveBrowserCredentialError"): {
+        (6009, "Microsoft365InteractiveBrowserCredentialError"): {
             "message": "Error retrieving InteractiveBrowserCredential",
             "remediation": "Check your browser and ensure that the tenant ID and browser authentication are properly set.",
         },
-        (2010, "Microsoft365HTTPResponseError"): {
+        (6010, "Microsoft365HTTPResponseError"): {
             "message": "Error in HTTP response from Microsoft365",
             "remediation": "",
         },
-        (2011, "Microsoft365CredentialsUnavailableError"): {
+        (6011, "Microsoft365CredentialsUnavailableError"): {
             "message": "Error trying to configure Microsoft365 credentials because they are unavailable",
             "remediation": "Check the dictionary and ensure it is properly set up for Microsoft365 credentials. TENANT_ID, CLIENT_ID and CLIENT_SECRET are required.",
         },
-        (2012, "Microsoft365GetTokenIdentityError"): {
+        (6012, "Microsoft365GetTokenIdentityError"): {
             "message": "Error trying to get token from Microsoft365 Identity",
             "remediation": "Check the Microsoft365 Identity and ensure it is properly set up.",
         },
-        (2013, "Microsoft365NotTenantIdButClientIdAndClienSecretError"): {
+        (6013, "Microsoft365NotTenantIdButClientIdAndClienSecretError"): {
             "message": "The provided credentials are not a tenant ID but a client ID and client secret",
             "remediation": "Tenant Id, Client Id and Client Secret are required for Microsoft365 credentials. Make sure you are using the correct credentials.",
         },
-        (2014, "Microsoft365ClientAuthenticationError"): {
+        (6014, "Microsoft365ClientAuthenticationError"): {
             "message": "Error in client authentication",
             "remediation": "Check the client authentication and ensure it is properly set up.",
         },
-        (2015, "Microsoft365SetUpSessionError"): {
+        (6015, "Microsoft365SetUpSessionError"): {
             "message": "Error setting up session",
             "remediation": "Check the session setup and ensure it is properly set up.",
         },
-        (2016, "Microsoft365NotValidTenantIdError"): {
+        (6016, "Microsoft365NotValidTenantIdError"): {
             "message": "The provided tenant ID is not valid",
             "remediation": "Check the tenant ID and ensure it is a valid ID.",
         },
-        (2017, "Microsoft365NotValidClientIdError"): {
+        (6017, "Microsoft365NotValidClientIdError"): {
             "message": "The provided client ID is not valid",
             "remediation": "Check the client ID and ensure it is a valid ID.",
         },
-        (2018, "Microsoft365NotValidClientSecretError"): {
+        (6018, "Microsoft365NotValidClientSecretError"): {
             "message": "The provided client secret is not valid",
             "remediation": "Check the client secret and ensure it is a valid secret.",
         },
-        (2019, "Microsoft365ConfigCredentialsError"): {
+        (6019, "Microsoft365ConfigCredentialsError"): {
             "message": "Error in configuration of Microsoft365 credentials",
             "remediation": "Check the configuration of Microsoft365 credentials and ensure it is properly set up.",
         },
-        (2020, "Microsoft365ClientIdAndClientSecretNotBelongingToTenantIdError"): {
+        (6020, "Microsoft365ClientIdAndClientSecretNotBelongingToTenantIdError"): {
             "message": "The provided client ID and client secret do not belong to the provided tenant ID",
             "remediation": "Check the client ID and client secret and ensure they belong to the provided tenant ID.",
         },
-        (2021, "Microsoft365TenantIdAndClientSecretNotBelongingToClientIdError"): {
+        (6021, "Microsoft365TenantIdAndClientSecretNotBelongingToClientIdError"): {
             "message": "The provided tenant ID and client secret do not belong to the provided client ID",
             "remediation": "Check the tenant ID and client secret and ensure they belong to the provided client ID.",
         },
-        (2022, "Microsoft365TenantIdAndClientIdNotBelongingToClientSecretError"): {
+        (6022, "Microsoft365TenantIdAndClientIdNotBelongingToClientSecretError"): {
             "message": "The provided tenant ID and client ID do not belong to the provided client secret",
             "remediation": "Check the tenant ID and client ID and ensure they belong to the provided client secret.",
         },
-        (2023, "Microsoft365InvalidProviderIdError"): {
+        (6023, "Microsoft365InvalidProviderIdError"): {
             "message": "The provided provider_id does not match with the available subscriptions",
             "remediation": "Check the provider_id and ensure it is a valid subscription for the given credentials.",
         },

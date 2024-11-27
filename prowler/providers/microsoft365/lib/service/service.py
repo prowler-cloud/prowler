@@ -15,7 +15,7 @@ class Microsoft365Service:
             provider.region_config,
         )
 
-        self.locations = provider.locations
+        # self.locations = provider.locations
         self.audit_config = provider.audit_config
         self.fixer_config = provider.fixer_config
 

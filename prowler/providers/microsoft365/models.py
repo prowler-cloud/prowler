@@ -7,10 +7,8 @@ from prowler.providers.common.models import ProviderOutputOptions
 class Microsoft365IdentityInfo(BaseModel):
     identity_id: str = ""
     identity_type: str = ""
-    tenant_ids: list[str] = []
+    tenant_id: str = ""
     tenant_domain: str = "Unknown tenant domain (missing AAD permissions)"
-    subscriptions: dict = {}
-    locations: dict = {}
 
 
 class Microsoft365RegionConfig(BaseModel):
@@ -38,6 +36,8 @@ class Microsoft365OutputOptions(ProviderOutputOptions):
                     f"prowler-output-{identity.tenant_domain}-{output_file_timestamp}"
                 )
             else:
-                self.output_filename = f"prowler-output-{'-'.join(identity.tenant_ids)}-{output_file_timestamp}"
+                self.output_filename = (
+                    f"prowler-output-{identity.tenant_id}-{output_file_timestamp}"
+                )
         else:
             self.output_filename = arguments.output_filename
