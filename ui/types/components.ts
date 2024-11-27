@@ -26,6 +26,41 @@ export type NextUIColors =
   | "danger"
   | "default";
 
+export interface FindingsByStatusData {
+  data: {
+    type: "findings-overview";
+    id: string;
+    attributes: {
+      fail: number;
+      pass: number;
+      total: number;
+      fail_new: number;
+      pass_new: number;
+      [key: string]: number;
+    };
+  };
+  meta: {
+    version: string;
+  };
+}
+
+export interface FindingsSeverityOverview {
+  data: {
+    type: "findings-severity-overview";
+    id: string;
+    attributes: {
+      critical: number;
+      high: number;
+      medium: number;
+      low: number;
+      informational: number;
+    };
+  };
+  meta: {
+    version: string;
+  };
+}
+
 export interface ProviderOverviewProps {
   data: {
     type: "provider-overviews";

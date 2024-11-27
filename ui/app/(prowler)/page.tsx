@@ -2,10 +2,16 @@ import { Spacer } from "@nextui-org/react";
 import { Suspense } from "react";
 
 import { getFindings } from "@/actions/findings/findings";
-import { getProvidersOverview } from "@/actions/overview/overview";
 import {
+  getFindingsByStatus,
+  getProvidersOverview,
+} from "@/actions/overview/overview";
+import { FilterControls } from "@/components/filters";
+import {
+  FindingsByStatusChart,
   LinkToFindings,
   ProvidersOverview,
+  SkeletonFindingsByStatusChart,
   SkeletonProvidersOverview,
 } from "@/components/overview";
 import { ColumnNewFindingsToDate } from "@/components/overview/new-findings-table/table/column-new-findings-to-date";
@@ -24,6 +30,7 @@ export default function Home({
     <>
       <Header title="Scan Overview" icon="solar:pie-chart-2-outline" />
       <Spacer y={4} />
+      <FilterControls providers regions date />
       <div className="min-h-screen">
         <div className="container mx-auto space-y-8 px-0 py-6">
           {/* Providers Overview, Chart and New Findings Table */}
@@ -34,9 +41,11 @@ export default function Home({
               </Suspense>
             </div>
 
-            {/* Space for future chart */}
+            {/* Findings by Status */}
             <div className="col-span-12 lg:col-span-4">
-              {/* Future chart */}
+              <Suspense fallback={<SkeletonFindingsByStatusChart />}>
+                <SSRFindingsByStatus searchParams={searchParams} />
+              </Suspense>
             </div>
 
             <div className="col-span-12 lg:col-span-5">
@@ -44,7 +53,7 @@ export default function Home({
                 key={searchParamsKey}
                 fallback={<SkeletonTableNewFindings />}
               >
-                <SSRDataNewFindingsTable searchParams={searchParams} />
+                <SSRDataNewFindingsTable />
               </Suspense>
             </div>
           </div>
@@ -65,34 +74,58 @@ const SSRProvidersOverview = async () => {
   );
 };
 
-const SSRDataNewFindingsTable = async ({
+const SSRFindingsByStatus = async ({
   searchParams,
 }: {
-  searchParams: SearchParamsProps;
+  searchParams: SearchParamsProps | undefined | null;
 }) => {
-  const page = parseInt(searchParams.page?.toString() || "1", 10);
-  const sort = searchParams.sort?.toString();
+  const filters = searchParams
+    ? Object.fromEntries(
+        Object.entries(searchParams).filter(([key]) =>
+          key.startsWith("filter["),
+        ),
+      )
+    : {};
+
+  const findingsByStatus = await getFindingsByStatus({ filters });
+
+  return (
+    <>
+      <h3 className="mb-4 text-sm font-bold">Findings by Status</h3>
+      <FindingsByStatusChart findingsByStatus={findingsByStatus} />
+    </>
+  );
+};
+
+const SSRDataNewFindingsTable = async () => {
+  // Temporarily disabled search params handling
+  // const page = parseInt(searchParams.page?.toString() || "1", 10);
+  // const sort = searchParams.sort?.toString();
+  const page = 1;
+  const sort = undefined;
 
   // Extract all filter parameters
-  const filters = Object.fromEntries(
-    Object.entries(searchParams).filter(([key]) => key.startsWith("filter[")),
-  );
+  // const filters = Object.fromEntries(
+  //   Object.entries(searchParams).filter(([key]) => key.startsWith("filter[")),
+  // );
 
-  const defaultFilters =
-    Object.keys(filters).length === 0
-      ? {
-          "filter[severity]": "critical",
-          "filter[delta__in]": "new",
-          "filter[status__in]": "FAIL",
-        }
-      : {};
+  // const defaultFilters =
+  //   Object.keys(filters).length === 0
+  //     ? {
+  const defaultFilters = {
+    "filter[severity]": "critical",
+    "filter[delta__in]": "new",
+    "filter[status__in]": "FAIL",
+  };
+  // : {};
 
   const finalFilters = {
     ...defaultFilters,
-    ...filters,
+    // ...filters,  // Temporarily disabled additional filters
   } as Record<string, string>;
 
-  const query = finalFilters["filter[search]"];
+  // const query = finalFilters["filter[search]"];
+  const query = undefined;
 
   const findingsData = await getFindings({
     query,
@@ -103,11 +136,13 @@ const SSRDataNewFindingsTable = async ({
 
   return (
     <>
-      <div className="flex items-baseline justify-between">
+      <div className="relative flex items-start justify-between">
         <h3 className="mb-4 w-full text-sm font-bold">
           New failing findings to date
         </h3>
-        <LinkToFindings />
+        <div className="absolute -top-6 right-0">
+          <LinkToFindings />
+        </div>
       </div>
       <DataTable
         columns={ColumnNewFindingsToDate}
