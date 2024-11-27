@@ -30,8 +30,26 @@ from prowler.providers.github.models import (
 
 
 def format_rsa_key(key):
-    if key.startswith("-----BEGIN RSA PRIVATE KEY-----") and key.endswith(
-        "-----END RSA PRIVATE KEY-----"
+    """
+    Format an RSA private key by adding line breaks to the key body.
+    This function takes an RSA private key in PEM format as input and formats it by inserting line breaks every 64 characters in the key body. This formatting is necessary for the GitHub SDK Parser to correctly process the key.
+    Args:
+        key (str): The RSA private key in PEM format as a string. The key should start with "-----BEGIN RSA PRIVATE KEY-----" and end with "-----END RSA PRIVATE KEY-----".
+    Returns:
+        str: The formatted RSA private key with line breaks added to the key body. If the input key does not have the correct headers, it is returned unchanged.
+    Example:
+        >>> key = "-----BEGIN RSA PRIVATE KEY-----MIIBOgIBAAJBAK1...-----END RSA PRIVATE KEY-----"
+        >>> formatted_key = format_rsa_key(key)
+        >>> print(formatted_key)
+        -----BEGIN RSA PRIVATE KEY-----
+        MIIBOgIBAAJBAK1...
+        -----END RSA PRIVATE KEY-----
+
+    """
+    if (
+        key.startswith("-----BEGIN RSA PRIVATE KEY-----")
+        and key.endswith("-----END RSA PRIVATE KEY-----")
+        and "\n" not in key
     ):
         # Extract the key body (excluding the headers)
         key_body = key[
@@ -261,7 +279,6 @@ class GithubProvider(Provider):
                 key=app_key,
                 id=app_id,
             )
-            logger.critical(credentials)
 
             return credentials
 
@@ -279,12 +296,6 @@ class GithubProvider(Provider):
     ) -> GithubIdentityInfo | GithubAppIdentityInfo:
         """
         Returns the GitHub identity information
-
-        Args:
-            personal_access_token (str): GitHub personal access token.
-            oauth_app_token (str): GitHub OAuth App token.
-            github_app_id (int): GitHub App ID.
-            github_app_key (str): GitHub App key.
 
         Returns:
             GithubIdentityInfo | GithubAppIdentityInfo: An instance of GithubIdentityInfo or GithubAppIdentityInfo containing the identity information.
