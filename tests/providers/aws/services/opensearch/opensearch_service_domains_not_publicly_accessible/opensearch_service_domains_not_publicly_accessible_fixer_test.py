@@ -49,7 +49,7 @@ policy_data_not_restricted_principal = {
 }
 
 
-class Test_opensearch_service_domains_not_publicly_accessible:
+class Test_opensearch_service_domains_not_publicly_accessible_fixer:
     @mock_aws
     def test_policy_data_restricted_error(self):
         opensearch_client = client("opensearch", region_name=AWS_REGION_US_WEST_2)
