@@ -10,7 +10,7 @@ services:
       - DJANGO_SETTINGS_MODULE=config.django.devel
       - DJANGO_LOGGING_FORMATTER=${LOGGING_FORMATTER:-human_readable}
     env_file:
-      - path: ./api/.env
+      - path: .env
         required: false
     ports:
       - "${DJANGO_PORT:-8080}:${DJANGO_PORT:-8080}"
@@ -32,7 +32,7 @@ services:
       dockerfile: Dockerfile
       target: dev
     env_file:
-      - path: ./ui/.env.local
+      - path: .env
         required: false
     ports:
       - 3000:3000
@@ -47,7 +47,7 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_ADMIN_PASSWORD:-S3cret}
       - POSTGRES_DB=${POSTGRES_DB:-prowler_db}
     env_file:
-      - path: ./api/.env
+      - path: .env
         required: false
     ports:
       - "${POSTGRES_PORT:-5432}:${POSTGRES_PORT:-5432}"
@@ -63,7 +63,7 @@ services:
     volumes:
       - ./api/_data/valkey:/data
     env_file:
-      - path: ./api/.env
+      - path: .env
         required: false
     ports:
       - "${VALKEY_PORT:-6379}:6379"
@@ -82,7 +82,7 @@ services:
     environment:
       - DJANGO_SETTINGS_MODULE=config.django.devel
     env_file:
-      - path: ./api/.env
+      - path: .env
         required: false
     depends_on:
       valkey:
@@ -92,3 +92,23 @@ services:
     entrypoint:
       - "/home/prowler/docker-entrypoint.sh"
       - "worker"
+
+  worker-beat:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+      target: dev
+    image: prowler-worker-dev
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.django.devel
+    env_file:
+      - path: ./.env
+        required: false
+    depends_on:
+      valkey:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    entrypoint:
+      - "../docker-entrypoint.sh"
+      - "beat"

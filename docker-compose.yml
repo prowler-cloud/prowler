@@ -27,6 +27,8 @@ services:
   postgres:
     image: postgres:16.3-alpine
     hostname: "postgres-db"
+    volumes:
+      - _data/postgres:/var/lib/postgresql/data
     environment:
       - POSTGRES_USER=${POSTGRES_ADMIN_USER}
       - POSTGRES_PASSWORD=${POSTGRES_ADMIN_PASSWORD}
@@ -45,6 +47,8 @@ services:
   valkey:
     image: valkey/valkey:7-alpine3.19
     hostname: "valkey"
+    volumes:
+      - _data/valkey:/data
     env_file:
       - path: .env
         required: false
@@ -69,3 +73,17 @@ services:
     entrypoint:
       - "/home/prowler/docker-entrypoint.sh"
       - "worker"
+
+  worker-beat:
+    image: prowlercloud/prowler-api:${PROWLER_API_VERSION:-latest}
+    env_file:
+      - path: ./.env
+        required: false
+    depends_on:
+      valkey:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    entrypoint:
+      - "../docker-entrypoint.sh"
+      - "beat"
