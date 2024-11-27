@@ -1,4 +1,4 @@
-name: build-lint-push-containers
+name: Build and Push containers
 
 on:
   push:
@@ -9,6 +9,8 @@ on:
       - ".github/**"
       - "README.md"
       - "docs/**"
+      - "ui/**"
+      - "api/**"
 
   release:
     types: [published]

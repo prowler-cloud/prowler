@@ -1,0 +1,322 @@
+[
+  {
+    "model": "api.resource",
+    "pk": "0234477d-0b8e-439f-87d3-ce38dff3a434",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T10:46:04.772Z",
+      "updated_at": "2024-10-18T11:16:24.466Z",
+      "provider": "15fce1fa-ecaa-433f-a9dc-62553f3a2555",
+      "uid": "arn:aws:iam::112233445566:root",
+      "name": "",
+      "region": "eu-south-2",
+      "service": "accessanalyzer",
+      "type": "Other",
+      "text_search": "'2':9C '112233445566':4A 'accessanalyzer':10 'arn':1A 'aws':2A 'eu':7C 'eu-south':6C 'iam':3A 'other':11 'root':5A 'south':8C"
+    }
+  },
+  {
+    "model": "api.resource",
+    "pk": "17ce30a3-6e77-42a5-bb08-29dfcad7396a",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T10:46:04.882Z",
+      "updated_at": "2024-10-18T11:16:24.533Z",
+      "provider": "15fce1fa-ecaa-433f-a9dc-62553f3a2555",
+      "uid": "arn:aws:iam::112233445566:root2",
+      "name": "",
+      "region": "eu-west-1",
+      "service": "accessanalyzer",
+      "type": "Other",
+      "text_search": "'1':9C '112233445566':4A 'accessanalyzer':10 'arn':1A 'aws':2A 'eu':7C 'eu-west':6C 'iam':3A 'other':11 'root':5A 'west':8C"
+    }
+  },
+  {
+    "model": "api.resource",
+    "pk": "1f9de587-ba5b-415a-b9b0-ceed4c6c9f32",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T10:46:05.091Z",
+      "updated_at": "2024-10-18T11:16:24.637Z",
+      "provider": "15fce1fa-ecaa-433f-a9dc-62553f3a2555",
+      "uid": "arn:aws:iam::112233445566:root3",
+      "name": "",
+      "region": "ap-northeast-2",
+      "service": "accessanalyzer",
+      "type": "Other",
+      "text_search": "'2':9C '112233445566':4A 'accessanalyzer':10 'ap':7C 'ap-northeast':6C 'arn':1A 'aws':2A 'iam':3A 'northeast':8C 'other':11 'root':5A"
+    }
+  },
+  {
+    "model": "api.resource",
+    "pk": "29b35668-6dad-411d-bfec-492311889892",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T10:46:05.008Z",
+      "updated_at": "2024-10-18T11:16:24.600Z",
+      "provider": "15fce1fa-ecaa-433f-a9dc-62553f3a2555",
+      "uid": "arn:aws:iam::112233445566:root4",
+      "name": "",
+      "region": "us-west-2",
+      "service": "accessanalyzer",
+      "type": "Other",
+      "text_search": "'2':9C '112233445566':4A 'accessanalyzer':10 'arn':1A 'aws':2A 'iam':3A 'other':11 'root':5A 'us':7C 'us-west':6C 'west':8C"
+    }
+  },
+  {
+    "model": "api.resource",
+    "pk": "30505514-01d4-42bb-8b0c-471bbab27460",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T11:16:26.014Z",
+      "updated_at": "2024-10-18T11:16:26.023Z",
+      "provider": "15fce1fa-ecaa-433f-a9dc-62553f3a2555",
+      "uid": "arn:aws:iam::112233445566:root5",
+      "name": "",
+      "region": "us-east-1",
+      "service": "account",
+      "type": "Other",
+      "text_search": "'1':9C '112233445566':4A 'account':10 'arn':1A 'aws':2A 'east':8C 'iam':3A 'other':11 'root':5A 'us':7C 'us-east':6C"
+    }
+  },
+  {
+    "model": "api.resource",
+    "pk": "372932f0-e4df-4968-9721-bb4f6236fae4",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T10:46:04.848Z",
+      "updated_at": "2024-10-18T11:16:24.516Z",
+      "provider": "15fce1fa-ecaa-433f-a9dc-62553f3a2555",
+      "uid": "arn:aws:iam::112233445566:root6",
+      "name": "",
+      "region": "eu-west-3",
+      "service": "accessanalyzer",
+      "type": "Other",
+      "text_search": "'3':9C '112233445566':4A 'accessanalyzer':10 'arn':1A 'aws':2A 'eu':7C 'eu-west':6C 'iam':3A 'other':11 'root':5A 'west':8C"
+    }
+  },
+  {
+    "model": "api.resource",
+    "pk": "3a37d124-7637-43f6-9df7-e9aa7ef98c53",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T10:46:04.979Z",
+      "updated_at": "2024-10-18T11:16:24.585Z",
+      "provider": "15fce1fa-ecaa-433f-a9dc-62553f3a2555",
+      "uid": "arn:aws:iam::112233445566:root7",
+      "name": "",
+      "region": "sa-east-1",
+      "service": "accessanalyzer",
+      "type": "Other",
+      "text_search": "'1':9C '112233445566':4A 'accessanalyzer':10 'arn':1A 'aws':2A 'east':8C 'iam':3A 'other':11 'root':5A 'sa':7C 'sa-east':6C"
+    }
+  },
+  {
+    "model": "api.resource",
+    "pk": "3c49318e-03c6-4f12-876f-40451ce7de3d",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T10:46:05.072Z",
+      "updated_at": "2024-10-18T11:16:24.630Z",
+      "provider": "15fce1fa-ecaa-433f-a9dc-62553f3a2555",
+      "uid": "arn:aws:iam::112233445566:root8",
+      "name": "",
+      "region": "ap-southeast-2",
+      "service": "accessanalyzer",
+      "type": "Other",
+      "text_search": "'2':9C '112233445566':4A 'accessanalyzer':10 'ap':7C 'ap-southeast':6C 'arn':1A 'aws':2A 'iam':3A 'other':11 'root':5A 'southeast':8C"
+    }
+  },
+  {
+    "model": "api.resource",
+    "pk": "430bf313-8733-4bc5-ac70-5402adfce880",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T10:46:04.994Z",
+      "updated_at": "2024-10-18T11:16:24.593Z",
+      "provider": "15fce1fa-ecaa-433f-a9dc-62553f3a2555",
+      "uid": "arn:aws:iam::112233445566:root9",
+      "name": "",
+      "region": "eu-north-1",
+      "service": "accessanalyzer",
+      "type": "Other",
+      "text_search": "'1':9C '112233445566':4A 'accessanalyzer':10 'arn':1A 'aws':2A 'eu':7C 'eu-north':6C 'iam':3A 'north':8C 'other':11 'root':5A"
+    }
+  },
+  {
+    "model": "api.resource",
+    "pk": "78bd2a52-82f9-45df-90a9-4ad78254fdc4",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T10:46:05.055Z",
+      "updated_at": "2024-10-18T11:16:24.622Z",
+      "provider": "15fce1fa-ecaa-433f-a9dc-62553f3a2555",
+      "uid": "arn:aws:iam::112233445566:root10",
+      "name": "",
+      "region": "ap-northeast-1",
+      "service": "accessanalyzer",
+      "type": "Other",
+      "text_search": "'1':9C '112233445566':4A 'accessanalyzer':10 'ap':7C 'ap-northeast':6C 'arn':1A 'aws':2A 'iam':3A 'northeast':8C 'other':11 'root':5A"
+    }
+  },
+  {
+    "model": "api.resource",
+    "pk": "7973e332-795e-4a74-b4d4-a53a21c98c80",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T10:46:04.896Z",
+      "updated_at": "2024-10-18T11:16:24.542Z",
+      "provider": "15fce1fa-ecaa-433f-a9dc-62553f3a2555",
+      "uid": "arn:aws:iam::112233445566:root11",
+      "name": "",
+      "region": "us-east-2",
+      "service": "accessanalyzer",
+      "type": "Other",
+      "text_search": "'2':9C '112233445566':4A 'accessanalyzer':10 'arn':1A 'aws':2A 'east':8C 'iam':3A 'other':11 'root':5A 'us':7C 'us-east':6C"
+    }
+  },
+  {
+    "model": "api.resource",
+    "pk": "8ca0a188-5699-436e-80fd-e566edaeb259",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T10:46:04.938Z",
+      "updated_at": "2024-10-18T11:16:24.565Z",
+      "provider": "15fce1fa-ecaa-433f-a9dc-62553f3a2555",
+      "uid": "arn:aws:iam::112233445566:root12",
+      "name": "",
+      "region": "ca-central-1",
+      "service": "accessanalyzer",
+      "type": "Other",
+      "text_search": "'1':9C '112233445566':4A 'accessanalyzer':10 'arn':1A 'aws':2A 'ca':7C 'ca-central':6C 'central':8C 'iam':3A 'other':11 'root':5A"
+    }
+  },
+  {
+    "model": "api.resource",
+    "pk": "8fe4514f-71d7-46ab-b0dc-70cef23b4d13",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T10:46:04.965Z",
+      "updated_at": "2024-10-18T11:16:24.578Z",
+      "provider": "15fce1fa-ecaa-433f-a9dc-62553f3a2555",
+      "uid": "arn:aws:iam::112233445566:root13",
+      "name": "",
+      "region": "eu-west-2",
+      "service": "accessanalyzer",
+      "type": "Other",
+      "text_search": "'2':9C '112233445566':4A 'accessanalyzer':10 'arn':1A 'aws':2A 'eu':7C 'eu-west':6C 'iam':3A 'other':11 'root':5A 'west':8C"
+    }
+  },
+  {
+    "model": "api.resource",
+    "pk": "9ab35225-dc7c-4ebd-bbc0-d81fb5d9de77",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T10:46:04.909Z",
+      "updated_at": "2024-10-18T11:16:24.549Z",
+      "provider": "15fce1fa-ecaa-433f-a9dc-62553f3a2555",
+      "uid": "arn:aws:iam::112233445566:root14",
+      "name": "",
+      "region": "ap-south-1",
+      "service": "accessanalyzer",
+      "type": "Other",
+      "text_search": "'1':9C '112233445566':4A 'accessanalyzer':10 'ap':7C 'ap-south':6C 'arn':1A 'aws':2A 'iam':3A 'other':11 'root':5A 'south':8C"
+    }
+  },
+  {
+    "model": "api.resource",
+    "pk": "9be26c1d-adf0-4ba8-9ca9-c740f4a0dc4e",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T10:46:04.863Z",
+      "updated_at": "2024-10-18T11:16:24.524Z",
+      "provider": "15fce1fa-ecaa-433f-a9dc-62553f3a2555",
+      "uid": "arn:aws:iam::112233445566:root15",
+      "name": "",
+      "region": "eu-central-2",
+      "service": "accessanalyzer",
+      "type": "Other",
+      "text_search": "'2':9C '112233445566':4A 'accessanalyzer':10 'arn':1A 'aws':2A 'central':8C 'eu':7C 'eu-central':6C 'iam':3A 'other':11 'root':5A"
+    }
+  },
+  {
+    "model": "api.resource",
+    "pk": "ba108c01-bcad-44f1-b211-c1d8985da89d",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T10:46:05.110Z",
+      "updated_at": "2024-10-18T11:16:24.644Z",
+      "provider": "15fce1fa-ecaa-433f-a9dc-62553f3a2555",
+      "uid": "arn:aws:iam::112233445566:root16",
+      "name": "",
+      "region": "ap-northeast-3",
+      "service": "accessanalyzer",
+      "type": "Other",
+      "text_search": "'3':9C '112233445566':4A 'accessanalyzer':10 'ap':7C 'ap-northeast':6C 'arn':1A 'aws':2A 'iam':3A 'northeast':8C 'other':11 'root':5A"
+    }
+  },
+  {
+    "model": "api.resource",
+    "pk": "dc6cfb5d-6835-4c7b-9152-c18c734a6eaa",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T10:46:05.038Z",
+      "updated_at": "2024-10-18T11:16:24.615Z",
+      "provider": "15fce1fa-ecaa-433f-a9dc-62553f3a2555",
+      "uid": "arn:aws:iam::112233445566:root17",
+      "name": "",
+      "region": "eu-central-1",
+      "service": "accessanalyzer",
+      "type": "Other",
+      "text_search": "'1':9C '112233445566':4A 'accessanalyzer':10 'arn':1A 'aws':2A 'central':8C 'eu':7C 'eu-central':6C 'iam':3A 'other':11 'root':5A"
+    }
+  },
+  {
+    "model": "api.resource",
+    "pk": "e0664164-cfda-44a4-b743-acee1c69386c",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T10:46:04.924Z",
+      "updated_at": "2024-10-18T11:16:24.557Z",
+      "provider": "15fce1fa-ecaa-433f-a9dc-62553f3a2555",
+      "uid": "arn:aws:iam::112233445566:root18",
+      "name": "",
+      "region": "us-west-1",
+      "service": "accessanalyzer",
+      "type": "Other",
+      "text_search": "'1':9C '112233445566':4A 'accessanalyzer':10 'arn':1A 'aws':2A 'iam':3A 'other':11 'root':5A 'us':7C 'us-west':6C 'west':8C"
+    }
+  },
+  {
+    "model": "api.resource",
+    "pk": "e1929daa-a984-4116-8131-492a48321dba",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T10:46:05.023Z",
+      "updated_at": "2024-10-18T11:16:24.607Z",
+      "provider": "15fce1fa-ecaa-433f-a9dc-62553f3a2555",
+      "uid": "arn:aws:iam::112233445566:root19",
+      "name": "",
+      "region": "ap-southeast-1",
+      "service": "accessanalyzer",
+      "type": "Other",
+      "text_search": "'1':9C '112233445566':4A 'accessanalyzer':10 'ap':7C 'ap-southeast':6C 'arn':1A 'aws':2A 'iam':3A 'other':11 'root':5A 'southeast':8C"
+    }
+  },
+  {
+    "model": "api.resource",
+    "pk": "e37bb1f1-1669-4bb3-be86-e3378ddfbcba",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T10:46:04.952Z",
+      "updated_at": "2024-10-18T11:16:24.571Z",
+      "provider": "15fce1fa-ecaa-433f-a9dc-62553f3a2555",
+      "uid": "arn:aws:access-analyzer:us-east-1:112233445566:analyzer/ConsoleAnalyzer-83b66ad7-d024-454e-b851-52d11cc1cf7c",
+      "name": "",
+      "region": "us-east-1",
+      "service": "accessanalyzer",
+      "type": "Other",
+      "text_search": "'1':9A,15C '112233445566':10A 'access':4A 'access-analyzer':3A 'accessanalyzer':16 'analyzer':5A 'analyzer/consoleanalyzer-83b66ad7-d024-454e-b851-52d11cc1cf7c':11A 'arn':1A 'aws':2A 'east':8A,14C 'other':17 'us':7A,13C 'us-east':6A,12C"
+    }
+  }
+]

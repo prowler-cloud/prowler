@@ -29,6 +29,24 @@ from prowler.providers.github.models import (
 )
 
 
+def format_rsa_key(key):
+    if key.startswith("-----BEGIN RSA PRIVATE KEY-----") and key.endswith(
+        "-----END RSA PRIVATE KEY-----"
+    ):
+        # Extract the key body (excluding the headers)
+        key_body = key[
+            len("-----BEGIN RSA PRIVATE KEY-----") : len(key)
+            - len("-----END RSA PRIVATE KEY-----")
+        ].strip()
+        # Add line breaks to the body
+        formatted_key_body = "\n".join(
+            [key_body[i : i + 64] for i in range(0, len(key_body), 64)]
+        )
+        # Reconstruct the key with headers and formatted body
+        return f"-----BEGIN RSA PRIVATE KEY-----\n{formatted_key_body}\n-----END RSA PRIVATE KEY-----"
+    return key
+
+
 class GithubProvider(Provider):
     """
     GitHub Provider class
@@ -198,7 +216,6 @@ class GithubProvider(Provider):
 
             else:
                 env = environ.Env()
-                environ.Env.read_env()
                 # PAT
                 logger.error(
                     "GitHub provider: We will look for GITHUB_PERSONAL_ACCESS_TOKEN enviroment variable as you have not provided any token."
@@ -222,7 +239,9 @@ class GithubProvider(Provider):
                             "GitHub provider: We will look for GITHUB_APP_ID and GITHUB_APP_KEY enviroment variables as you have not provided any."
                         )
                         app_id = env.str("GITHUB_APP_ID", "")
-                        app_key = env.str("GITHUB_APP_KEY", "")
+                        app_key = format_rsa_key(env.str(r"GITHUB_APP_KEY", ""))
+
+                        logger.critical(app_key)
                         if app_id and app_key:
                             self._auth_method = (
                                 "Environment Variables for GitHub App Key and ID"
@@ -242,6 +261,7 @@ class GithubProvider(Provider):
                 key=app_key,
                 id=app_id,
             )
+            logger.critical(credentials)
 
             return credentials
 
