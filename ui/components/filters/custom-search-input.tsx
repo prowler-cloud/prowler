@@ -39,8 +39,9 @@ export const CustomSearchInput: React.FC = () => {
     <Input
       variant="flat"
       aria-label="Search"
+      label="Search"
       placeholder="Search..."
-      labelPlacement="outside"
+      labelPlacement="inside"
       value={searchQuery}
       startContent={<SearchIcon className="text-default-400" width={16} />}
       onChange={(e) => {

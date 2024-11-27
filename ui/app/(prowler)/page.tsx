@@ -3,14 +3,17 @@ import { Suspense } from "react";
 
 import { getFindings } from "@/actions/findings/findings";
 import {
+  getFindingsBySeverity,
   getFindingsByStatus,
   getProvidersOverview,
 } from "@/actions/overview/overview";
 import { FilterControls } from "@/components/filters";
 import {
+  FindingsBySeverityChart,
   FindingsByStatusChart,
   LinkToFindings,
   ProvidersOverview,
+  SkeletonFindingsBySeverityChart,
   SkeletonFindingsByStatusChart,
   SkeletonProvidersOverview,
 } from "@/components/overview";
@@ -33,7 +36,6 @@ export default function Home({
       <FilterControls providers regions date />
       <div className="min-h-screen">
         <div className="container mx-auto space-y-8 px-0 py-6">
-          {/* Providers Overview, Chart and New Findings Table */}
           <div className="grid grid-cols-12 gap-6">
             <div className="col-span-12 lg:col-span-3">
               <Suspense fallback={<SkeletonProvidersOverview />}>
@@ -41,11 +43,18 @@ export default function Home({
               </Suspense>
             </div>
 
-            {/* Findings by Status */}
-            <div className="col-span-12 lg:col-span-4">
-              <Suspense fallback={<SkeletonFindingsByStatusChart />}>
-                <SSRFindingsByStatus searchParams={searchParams} />
-              </Suspense>
+            <div className="col-span-12 space-y-6 lg:col-span-4">
+              <div>
+                <Suspense fallback={<SkeletonFindingsByStatusChart />}>
+                  <SSRFindingsByStatus searchParams={searchParams} />
+                </Suspense>
+              </div>
+
+              <div>
+                <Suspense fallback={<SkeletonFindingsBySeverityChart />}>
+                  <SSRFindingsBySeverity searchParams={searchParams} />
+                </Suspense>
+              </div>
             </div>
 
             <div className="col-span-12 lg:col-span-5">
@@ -97,6 +106,29 @@ const SSRFindingsByStatus = async ({
   );
 };
 
+const SSRFindingsBySeverity = async ({
+  searchParams,
+}: {
+  searchParams: SearchParamsProps | undefined | null;
+}) => {
+  const filters = searchParams
+    ? Object.fromEntries(
+        Object.entries(searchParams).filter(([key]) =>
+          key.startsWith("filter["),
+        ),
+      )
+    : {};
+
+  const findingsBySeverity = await getFindingsBySeverity({ filters });
+
+  return (
+    <>
+      <h3 className="mb-4 text-sm font-bold">Findings by Severity</h3>
+      <FindingsBySeverityChart findingsBySeverity={findingsBySeverity} />
+    </>
+  );
+};
+
 const SSRDataNewFindingsTable = async () => {
   // Temporarily disabled search params handling
   // const page = parseInt(searchParams.page?.toString() || "1", 10);
@@ -113,7 +145,6 @@ const SSRDataNewFindingsTable = async () => {
   //   Object.keys(filters).length === 0
   //     ? {
   const defaultFilters = {
-    "filter[severity]": "critical",
     "filter[delta__in]": "new",
     "filter[status__in]": "FAIL",
   };
@@ -147,7 +178,7 @@ const SSRDataNewFindingsTable = async () => {
       <DataTable
         columns={ColumnNewFindingsToDate}
         data={findingsData?.data || []}
-        metadata={findingsData?.meta}
+        // metadata={findingsData?.meta}
       />
     </>
   );
