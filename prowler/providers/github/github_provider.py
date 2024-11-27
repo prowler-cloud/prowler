@@ -1,7 +1,7 @@
 import os
-from os import getenv
 
-from github import Auth, Github
+import environ
+from github import Auth, Github, GithubIntegration
 
 from prowler.config.config import (
     default_config_file_path,
@@ -28,8 +28,24 @@ from prowler.providers.github.models import (
 
 
 class GithubProvider(Provider):
+    """
+    GitHub Provider class
+
+    This class is responsible for setting up the GitHub provider, including the session, identity, audit configuration, fixer configuration, and mutelist.
+
+    Attributes:
+        _type (str): The type of the provider.
+        _auth_method (str): The authentication method used by the provider.
+        _session (GithubSession): The session object for the provider.
+        _identity (GithubIdentityInfo): The identity information for the provider.
+        _audit_config (dict): The audit configuration for the provider.
+        _fixer_config (dict): The fixer configuration for the provider.
+        _mutelist (Mutelist): The mutelist for the provider.
+        audit_metadata (Audit_Metadata): The audit metadata for the provider.
+    """
+
     _type: str = "github"
-    _auth_method: str
+    _auth_method: str = None
     _session: GithubSession
     _identity: GithubIdentityInfo
     _audit_config: dict
@@ -38,10 +54,6 @@ class GithubProvider(Provider):
 
     def __init__(
         self,
-        # Env Vars Authentication methods
-        personal_access: bool = False,
-        oauth_app: bool = False,
-        github_app: bool = False,
         # Authentication credentials
         personal_access_token: str = "",
         oauth_app_token: str = "",
@@ -58,32 +70,30 @@ class GithubProvider(Provider):
         GitHub Provider constructor
 
         Args:
-            personal_access (str): GitHub token as authentication method
-            github_app (bool): GitHub App as authentication method
-            oauth_app (bool): OAuth App as authentication method
-            config_content (dict): Configuration content
-            config_path (str): Configuration path
+            personal_access_token (str): GitHub personal access token.
+            oauth_app_token (str): GitHub OAuth App token.
+            github_app_key (str): GitHub App key.
+            github_app_id (int): GitHub App ID.
+            config_path (str): Path to the audit configuration file.
+            config_content (dict): Audit configuration content.
+            fixer_config (dict): Fixer configuration content.
+            mutelist_path (str): Path to the mutelist file.
+            mutelist_content (dict): Mutelist content.
         """
         logger.info("Instantiating GitHub Provider...")
 
         self._session = self.setup_session(
-            personal_access,
-            oauth_app,
-            github_app,
             personal_access_token,
             oauth_app_token,
-            github_app_key,
             github_app_id,
+            github_app_key,
         )
 
         self._identity = self.setup_identity(
-            personal_access,
-            oauth_app,
-            github_app,
             personal_access_token,
             oauth_app_token,
-            github_app_key,
             github_app_id,
+            github_app_key,
         )
 
         # Audit Config
@@ -152,21 +162,19 @@ class GithubProvider(Provider):
 
     def setup_session(
         self,
-        personal_access: bool,
-        oauth_app: bool = False,
-        github_app: bool = False,
         personal_access_token: str = None,
         oauth_app_token: str = None,
-        github_app_key: str = None,
         github_app_id: int = 0,
+        github_app_key: str = None,
     ) -> GithubSession:
         """
         Returns the GitHub headers responsible  authenticating API calls.
 
         Args:
-            personal_access (str): Flag indicating whether to use GitHub personal access token as authentication method.
-            github_app (bool): Flag indicating whether to use GitHub App as authentication method.
-            oauth_app (bool): Flag indicating whether to use OAuth App as authentication method.
+            personal_access_token (str): GitHub personal access token.
+            oauth_app_token (str): GitHub OAuth App token.
+            github_app_id (int): GitHub App ID.
+            github_app_key (str): GitHub App key.
 
         Returns:
             GithubSession: Authenticated session token for API requests.
@@ -178,72 +186,58 @@ class GithubProvider(Provider):
 
         try:
             # Ensure that at least one authentication method is selected. Default to environment variable for PAT if none is provided.
-            if (
-                not personal_access
-                and not oauth_app
-                and not github_app
-                and not personal_access_token
-                and not oauth_app_token
-                and not github_app_key
-            ):
-                logger.error(
-                    "GitHub provider: No authentication method selected. Prowler will try to use GITHUB_PERSONAL_ACCESS_TOKEN enviroment variable to log in by default."
-                )
-                personal_access = True
-
             if personal_access_token:
                 session_token = personal_access_token
-                self._auth_method = "Enviroment Variable for Personal Access Token"
-
-            elif personal_access:
-                if not getenv("GITHUB_PERSONAL_ACCESS_TOKEN"):
-                    logger.critical(
-                        "GitHub provider: Missing enviroment variable GITHUB_PERSONAL_ACCESS_TOKEN needed to authenticate against GitHub."
-                    )
-                    raise GithubEnvironmentVariableError(
-                        file=os.path.basename(__file__),
-                        message="Missing Github environment variable GITHUB_PERSONAL_ACCESS_TOKEN required to authenticate.",
-                    )
-                session_token = getenv("GITHUB_PERSONAL_ACCESS_TOKEN")
                 self._auth_method = "Personal Access Token"
 
             elif oauth_app_token:
                 session_token = oauth_app_token
-                self._auth_method = "OAuth App token"
+                self._auth_method = "OAuth App Token"
 
-            elif oauth_app:
-                if not getenv("GITHUB_OAUTH_APP_TOKEN"):
-                    logger.critical(
-                        "GitHub provider: Missing enviroment variable GITHUB_OAUTH_APP_TOKEN needed to authenticate against GitHub."
-                    )
-                    raise GithubEnvironmentVariableError(
-                        file=os.path.basename(__file__),
-                        message="Missing Github environment variable GITHUB_OAUTH_APP_TOKEN required to authenticate.",
-                    )
-                session_token = getenv("GITHUB_OAUTH_APP_TOKEN")
-                self._auth_method = "Enviroment Variable for OAuth App Token"
-
-            elif github_app_key and github_app_id:
-                app_key = github_app_key
+            elif github_app_id and github_app_key:
                 app_id = github_app_id
+                app_key = github_app_key
                 self._auth_method = "GitHub App Token"
 
-            elif github_app:
-                if not getenv("GITHUB_APP_KEY") or not getenv("GITHUB_APP_ID"):
-                    logger.critical(
-                        "GitHub provider: Missing enviroment variables GITHUB_APP_KEY or GITHUB_APP_ID needed to authenticate against GitHub."
-                    )
-                    raise GithubEnvironmentVariableError(
-                        file=os.path.basename(__file__),
-                        message="Missing enviroment variables GITHUB_APP_KEY or GITHUB_APP_ID required to authenticate.",
-                    )
-                app_key = getenv("GITHUB_APP_KEY")
-                app_id = getenv("GITHUB_APP_ID")
-                self._auth_method = "Enviroment Variables for GitHub App Key and ID"
-
             else:
+                env = environ.Env()
+                environ.Env.read_env()
+                # PAT
+                logger.error(
+                    "GitHub provider: We will look for GITHUB_PERSONAL_ACCESS_TOKEN enviroment variable as you have not provided any token."
+                )
+                session_token = env.str("GITHUB_PERSONAL_ACCESS_TOKEN", "")
+                if session_token:
+                    self._auth_method = "Environment Variable for Personal App Token"
+
+                if not session_token:
+                    # OAUTH
+                    logger.error(
+                        "GitHub provider: We will look for GITHUB_OAUTH_TOKEN enviroment variable as you have not provided any token."
+                    )
+                    session_token = env.str("GITHUB_OAUTH_APP_TOKEN", "")
+                    if session_token:
+                        self._auth_method = "Environment Variable for OAuth App Token"
+
+                    if not session_token:
+                        # APP
+                        logger.error(
+                            "GitHub provider: We will look for GITHUB_APP_ID and GITHUB_APP_KEY enviroment variables as you have not provided any."
+                        )
+                        app_id = env.str("GITHUB_APP_ID", "")
+                        app_key = env.str("GITHUB_APP_KEY", "")
+                        if app_id and app_key:
+                            self._auth_method = (
+                                "Environment Variables for GitHub App Key and ID"
+                            )
+
+            if not self._auth_method:
                 logger.critical(
-                    "GitHub provider: A Github token is required to authenticate against Github."
+                    "GitHub provider: No authentication method selected and not enviroment variables were found."
+                )
+                raise GithubEnvironmentVariableError(
+                    file=os.path.basename(__file__),
+                    message="No authentication method selected.",
                 )
 
             credentials = GithubSession(
@@ -251,6 +245,8 @@ class GithubProvider(Provider):
                 key=app_key,
                 id=app_id,
             )
+
+            logger.error(credentials)
 
             return credentials
 
@@ -265,21 +261,19 @@ class GithubProvider(Provider):
 
     def setup_identity(
         self,
-        personal_access,
-        oauth_app,
-        github_app,
-        personal_access_token,
-        oauth_app_token,
-        github_app_key,
+        personal_access_token: str = None,
+        oauth_app_token: str = None,
         github_app_id: int = 0,
+        github_app_key: str = None,
     ) -> GithubIdentityInfo | GithubAppIdentityInfo:
         """
         Returns the GitHub identity information
 
         Args:
-            personal_access (str): Flag indicating whether to use GitHub personal access token as authentication method.
-            github_app (bool): Flag indicating whether to use GitHub App as authentication method.
-            oauth_app (bool): Flag indicating whether to use OAuth App as authentication method.
+            personal_access_token (str): GitHub personal access token.
+            oauth_app_token (str): GitHub OAuth App token.
+            github_app_id (int): GitHub App ID.
+            github_app_key (str): GitHub App key.
 
         Returns:
             GithubIdentityInfo | GithubAppIdentityInfo: An instance of GithubIdentityInfo or GithubAppIdentityInfo containing the identity information.
@@ -287,19 +281,9 @@ class GithubProvider(Provider):
         credentials = self.session
 
         try:
-            if (
-                (personal_access or personal_access_token)
-                or (oauth_app or oauth_app_token)
-                or (
-                    not personal_access
-                    and not github_app
-                    and not oauth_app
-                    and not oauth_app_token
-                )
-            ):
+            if personal_access_token or oauth_app_token:
                 auth = Auth.Token(credentials.token)
                 g = Github(auth=auth)
-
                 try:
                     identity = GithubIdentityInfo(
                         account_id=g.get_user().id,
@@ -314,15 +298,15 @@ class GithubProvider(Provider):
                         original_exception=error,
                     )
 
-            elif (github_app_key and github_app_id) or github_app:
+            elif github_app_id and github_app_key:
                 auth = Auth.AppAuth(credentials.id, credentials.key)
-
+                gi = GithubIntegration(auth=auth)
                 try:
-                    identity = GithubAppIdentityInfo(app_id=auth.app_id)
+                    identity = GithubAppIdentityInfo(app_id=gi.get_app().id)
                     return identity
 
                 except Exception as error:
-                    logger.critical("GitHub provider: Given token is not valid.")
+                    logger.critical("GitHub provider: Given credentials are not valid.")
                     raise GithubInvalidCredentialsError(
                         original_exception=error,
                     )
