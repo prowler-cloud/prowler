@@ -22,36 +22,36 @@ from uuid6 import uuid7
 
 import api.rls
 from api.db_utils import (
-    PostgresEnumMigration,
-    MemberRoleEnumField,
+    DB_PROWLER_PASSWORD,
+    DB_PROWLER_USER,
+    POSTGRES_TENANT_VAR,
+    POSTGRES_USER_VAR,
+    TASK_RUNNER_DB_TABLE,
+    InvitationStateEnum,
+    InvitationStateEnumField,
     MemberRoleEnum,
+    MemberRoleEnumField,
+    PostgresEnumMigration,
     ProviderEnum,
     ProviderEnumField,
     ProviderSecretTypeEnum,
     ProviderSecretTypeEnumField,
     ScanTriggerEnum,
-    StateEnumField,
-    StateEnum,
     ScanTriggerEnumField,
-    InvitationStateEnum,
-    InvitationStateEnumField,
+    StateEnum,
+    StateEnumField,
     register_enum,
-    DB_PROWLER_USER,
-    DB_PROWLER_PASSWORD,
-    TASK_RUNNER_DB_TABLE,
-    POSTGRES_TENANT_VAR,
-    POSTGRES_USER_VAR,
 )
 from api.models import (
-    Provider,
-    Scan,
-    StateChoices,
     Finding,
-    StatusChoices,
-    SeverityChoices,
-    Membership,
-    ProviderSecret,
     Invitation,
+    Membership,
+    Provider,
+    ProviderSecret,
+    Scan,
+    SeverityChoices,
+    StateChoices,
+    StatusChoices,
 )
 
 DB_NAME = settings.DATABASES["default"]["NAME"]
@@ -289,7 +289,8 @@ class Migration(migrations.Migration):
             ),
         ),
         # Enable tenants RLS based on memberships
-        migrations.RunSQL(f"""
+        migrations.RunSQL(
+            f"""
         ALTER TABLE tenants ENABLE ROW LEVEL SECURITY;
 
         -- Policy for SELECT
@@ -364,7 +365,8 @@ class Migration(migrations.Migration):
         FOR INSERT
         TO {DB_PROWLER_USER}
         WITH CHECK (true);
-                """),
+                """
+        ),
         # Create and register ProviderEnum type
         migrations.RunPython(
             ProviderEnumMigration.create_enum_type,
@@ -1480,6 +1482,83 @@ class Migration(migrations.Migration):
             index=models.Index(
                 fields=["compliance_id", "requirements_failed"],
                 name="comp_ov_cp_id_req_fail_idx",
+            ),
+        ),
+        migrations.CreateModel(
+            name="ScanSummary",
+            fields=[
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("inserted_at", models.DateTimeField(auto_now_add=True)),
+                ("check_id", models.CharField(max_length=100)),
+                ("service", models.TextField()),
+                (
+                    "severity",
+                    api.db_utils.SeverityEnumField(
+                        choices=[
+                            ("critical", "Critical"),
+                            ("high", "High"),
+                            ("medium", "Medium"),
+                            ("low", "Low"),
+                            ("informational", "Informational"),
+                        ]
+                    ),
+                ),
+                ("region", models.TextField()),
+                ("_pass", models.IntegerField(db_column="pass", default=0)),
+                ("fail", models.IntegerField(default=0)),
+                ("muted", models.IntegerField(default=0)),
+                ("total", models.IntegerField(default=0)),
+                ("new", models.IntegerField(default=0)),
+                ("changed", models.IntegerField(default=0)),
+                ("unchanged", models.IntegerField(default=0)),
+                ("fail_new", models.IntegerField(default=0)),
+                ("fail_changed", models.IntegerField(default=0)),
+                ("pass_new", models.IntegerField(default=0)),
+                ("pass_changed", models.IntegerField(default=0)),
+                ("muted_new", models.IntegerField(default=0)),
+                ("muted_changed", models.IntegerField(default=0)),
+                (
+                    "scan",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="aggregations",
+                        related_query_name="aggregation",
+                        to="api.scan",
+                    ),
+                ),
+                (
+                    "tenant",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="api.tenant"
+                    ),
+                ),
+            ],
+            options={
+                "db_table": "scan_summaries",
+                "abstract": False,
+            },
+        ),
+        migrations.AddConstraint(
+            model_name="scansummary",
+            constraint=api.rls.RowLevelSecurityConstraint(
+                "tenant_id",
+                name="rls_on_scansummary",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="scansummary",
+            constraint=models.UniqueConstraint(
+                fields=("tenant", "scan", "check_id", "service", "severity", "region"),
+                name="unique_scan_summary",
             ),
         ),
     ]
