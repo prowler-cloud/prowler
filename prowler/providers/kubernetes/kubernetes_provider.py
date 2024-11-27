@@ -246,8 +246,11 @@ class KubernetesProvider(Provider):
         try:
             if kubeconfig_content:
                 logger.info("Using kubeconfig content...")
-                logger.info(f"kubeconfig content: {kubeconfig_content}")
+                logger.info(
+                    f"kubeconfig content: {type(kubeconfig_content)}{kubeconfig_content}"
+                )
                 config_data = safe_load(kubeconfig_content)
+                logger.info(f"config_data: {type(config_data)}{config_data}")
                 config.load_kube_config_from_dict(config_data, context=context)
                 if context:
                     contexts = config_data.get("contexts", [])
