@@ -30,33 +30,27 @@ def fixer(resource_id: str, region: str) -> bool:
     """
     try:
         account_id = opensearch_client.audited_account
+        audited_partition = opensearch_client.audited_partition
 
         regional_client = opensearch_client.regional_clients[region]
 
-        domain_config = regional_client.describe_domain_config(DomainName=resource_id)
-        policy = json.loads(domain_config["DomainConfig"]["AccessPolicies"]["Options"])
-
-        for statement in policy.get("Statement", []):
-            if "Principal" in statement and (
-                "*" in statement["Principal"]
-                or (
-                    "AWS" in statement["Principal"]
-                    and "*" in statement["Principal"]["AWS"]
-                )
-                or (
-                    "CanonicalUser" in statement["Principal"]
-                    and "*" in statement["Principal"]["CanonicalUser"]
-                )
-            ):
-                statement["Principal"] = {"AWS": f"arn:aws:iam::{account_id}:root"}
-                statement["Action"] = "es:*"
-                statement["Resource"] = (
-                    f"arn:aws:es:{region}:{account_id}:domain/{resource_id}/*"
-                )
+        trusted_policy = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": {
+                        "AWS": f"arn:{audited_partition}:iam::{account_id}:root"
+                    },
+                    "Action": "es:*",
+                    "Resource": f"arn:aws:es:{region}:{account_id}:domain/{resource_id}/*",
+                }
+            ],
+        }
 
         regional_client.update_domain_config(
             DomainName=resource_id,
-            AccessPolicies=json.dumps(policy),
+            AccessPolicies=json.dumps(trusted_policy),
         )
 
     except Exception as error:
