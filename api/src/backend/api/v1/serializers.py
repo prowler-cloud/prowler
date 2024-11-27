@@ -1,5 +1,5 @@
 import json
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 
 from django.conf import settings
 from django.contrib.auth import authenticate
@@ -14,23 +14,22 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from api.models import (
-    StateChoices,
-    User,
+    ComplianceOverview,
+    Finding,
+    Invitation,
     Membership,
     Provider,
     ProviderGroup,
     ProviderGroupMembership,
-    Scan,
-    Task,
+    ProviderSecret,
     Resource,
     ResourceTag,
-    Finding,
-    ProviderSecret,
-    Invitation,
-    ComplianceOverview,
+    Scan,
+    StateChoices,
+    Task,
+    User,
 )
 from api.rls import Tenant
-
 
 # Tokens
 
@@ -1234,7 +1233,7 @@ class OverviewProviderSerializer(serializers.Serializer):
     resources = serializers.SerializerMethodField(read_only=True)
 
     class JSONAPIMeta:
-        resource_name = "provider-overviews"
+        resource_name = "providers-overview"
 
     def get_root_meta(self, _resource, _many):
         return {"version": "v1"}
@@ -1270,3 +1269,45 @@ class OverviewProviderSerializer(serializers.Serializer):
         return {
             "total": obj["total_resources"],
         }
+
+
+class OverviewFindingSerializer(serializers.Serializer):
+    id = serializers.CharField(default="n/a")
+    new = serializers.IntegerField()
+    changed = serializers.IntegerField()
+    unchanged = serializers.IntegerField()
+    fail_new = serializers.IntegerField()
+    fail_changed = serializers.IntegerField()
+    pass_new = serializers.IntegerField()
+    pass_changed = serializers.IntegerField()
+    muted_new = serializers.IntegerField()
+    muted_changed = serializers.IntegerField()
+    total = serializers.IntegerField()
+    _pass = serializers.IntegerField()
+    fail = serializers.IntegerField()
+    muted = serializers.IntegerField()
+
+    class JSONAPIMeta:
+        resource_name = "findings-overview"
+
+    def get_root_meta(self, _resource, _many):
+        return {"version": "v1"}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["pass"] = self.fields.pop("_pass")
+
+
+class OverviewSeveritySerializer(serializers.Serializer):
+    id = serializers.CharField(default="n/a")
+    critical = serializers.IntegerField()
+    high = serializers.IntegerField()
+    medium = serializers.IntegerField()
+    low = serializers.IntegerField()
+    informational = serializers.IntegerField()
+
+    class JSONAPIMeta:
+        resource_name = "findings-severity-overview"
+
+    def get_root_meta(self, _resource, _many):
+        return {"version": "v1"}

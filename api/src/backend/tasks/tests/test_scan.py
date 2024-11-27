@@ -1,19 +1,19 @@
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
-
-from api.models import (
-    StateChoices,
-    Severity,
-    Finding,
-    Resource,
-    StatusChoices,
-    Provider,
-)
 from tasks.jobs.scan import (
-    perform_prowler_scan,
     _create_finding_delta,
     _store_resources,
+    perform_prowler_scan,
+)
+
+from api.models import (
+    Finding,
+    Provider,
+    Resource,
+    Severity,
+    StateChoices,
+    StatusChoices,
 )
 
 
@@ -358,3 +358,6 @@ class TestPerformScan:
 
         assert resource == resource_instance
         assert resource_uid_tuple == (resource_instance.uid, resource_instance.region)
+
+
+# TODO Add tests for aggregations

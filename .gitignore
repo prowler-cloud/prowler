@@ -12,6 +12,7 @@ build/
 /dist/
 *.egg-info/
 */__pycache__/*.pyc
+.idea/
 
 # Session
 Session.vim
