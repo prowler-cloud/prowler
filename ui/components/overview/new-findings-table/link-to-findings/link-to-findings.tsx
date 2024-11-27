@@ -7,7 +7,7 @@ export const LinkToFindings = () => {
   return (
     <div className="mt-4 flex w-full items-center justify-end">
       <CustomButton
-        asLink="/findings?filter[severity]=critical&filter[delta__in]=new&filter[status__in]=FAIL"
+        asLink="/findings?filter[delta__in]=new&filter[status__in]=FAIL"
         ariaLabel="Go to Findings page"
         variant="solid"
         color="action"
