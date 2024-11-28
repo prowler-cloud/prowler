@@ -1,7 +1,7 @@
 import { Spacer } from "@nextui-org/react";
 import React, { Suspense } from "react";
 
-import { getProfileInfo } from "@/actions/auth";
+import { getProfileInfo } from "@/actions/users/users";
 import { Header } from "@/components/ui";
 import { SkeletonUserInfo } from "@/components/users/profile";
 import { UserInfo } from "@/components/users/profile/user-info";
