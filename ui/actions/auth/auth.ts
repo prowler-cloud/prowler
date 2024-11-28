@@ -142,7 +142,7 @@ export const getToken = async (formData: z.infer<typeof formSchemaSignIn>) => {
   }
 };
 
-export const getUserByMe = async () => {
+export const getProfileInfo = async () => {
   const session = await auth();
   const keyServer = process.env.API_BASE_URL;
   const url = new URL(`${keyServer}/users/me`);
@@ -167,6 +167,38 @@ export const getUserByMe = async () => {
   } catch (error) {
     console.error("Error fetching profile:", error);
     return undefined;
+  }
+};
+
+export const getUserByMe = async (accessToken: string) => {
+  const keyServer = process.env.API_BASE_URL;
+  const url = new URL(`${keyServer}/users/me`);
+
+  try {
+    const response = await fetch(url.toString(), {
+      method: "GET",
+      headers: {
+        Accept: "application/vnd.api+json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    if (!response.ok) throw new Error("Error in trying to get user by me");
+
+    const parsedResponse = await response.json();
+
+    const name = parsedResponse.data.attributes.name;
+    const email = parsedResponse.data.attributes.email;
+    const company = parsedResponse.data.attributes.company_name;
+    const dateJoined = parsedResponse.data.attributes.date_joined;
+    return {
+      name,
+      email,
+      company,
+      dateJoined,
+    };
+  } catch (error) {
+    throw new Error("Error in trying to get user by me");
   }
 };
 

@@ -1,7 +1,7 @@
 import { Spacer } from "@nextui-org/react";
 import React, { Suspense } from "react";
 
-import { getUserByMe } from "@/actions/auth";
+import { getProfileInfo } from "@/actions/auth";
 import { Header } from "@/components/ui";
 import { SkeletonUserInfo } from "@/components/users/profile";
 import { UserInfo } from "@/components/users/profile/user-info";
@@ -28,7 +28,7 @@ export default async function Profile() {
 }
 
 const SSRDataUser = async () => {
-  const userProfile: UserProfileProps = await getUserByMe();
+  const userProfile: UserProfileProps = await getProfileInfo();
 
   return (
     <>
