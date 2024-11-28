@@ -9,8 +9,10 @@ from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVector, SearchVectorField
 from django.core.validators import MinLengthValidator
 from django.db import models
+from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 from django_celery_results.models import TaskResult
+from psqlextra.manager import PostgresManager
 from psqlextra.models import PostgresPartitionedModel
 from psqlextra.types import PostgresPartitioningMethod
 from uuid6 import uuid7
@@ -65,6 +67,24 @@ class StateChoices(models.TextChoices):
     COMPLETED = "completed", _("Completed")
     FAILED = "failed", _("Failed")
     CANCELLED = "cancelled", _("Cancelled")
+
+
+class ActiveProviderManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(self.active_provider_filter())
+
+    def active_provider_filter(self):
+        if self.model is Provider:
+            return Q(is_deleted=False)
+        elif self.model in [Finding, ComplianceOverview, ScanSummary]:
+            return Q(scan__provider__is_deleted=False)
+        else:
+            return Q(provider__is_deleted=False)
+
+
+class ActiveProviderPartitionedManager(PostgresManager, ActiveProviderManager):
+    def get_queryset(self):
+        return super().get_queryset().filter(self.active_provider_filter())
 
 
 class User(AbstractBaseUser):
@@ -147,6 +167,10 @@ class Membership(models.Model):
 
 
 class Provider(RowLevelSecurityProtectedModel):
+
+    objects = ActiveProviderManager()
+    all_objects = models.Manager()
+
     class ProviderChoices(models.TextChoices):
         AWS = "aws", _("AWS")
         AZURE = "azure", _("Azure")
@@ -198,6 +222,7 @@ class Provider(RowLevelSecurityProtectedModel):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
+    is_deleted = models.BooleanField(default=False)
     provider = ProviderEnumField(
         choices=ProviderChoices.choices, default=ProviderChoices.AWS
     )
@@ -270,6 +295,9 @@ class ProviderGroup(RowLevelSecurityProtectedModel):
 
 
 class ProviderGroupMembership(RowLevelSecurityProtectedModel):
+    objects = ActiveProviderManager()
+    all_objects = models.Manager()
+
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     provider = models.ForeignKey(
         Provider,
@@ -334,6 +362,9 @@ class Task(RowLevelSecurityProtectedModel):
 
 
 class Scan(RowLevelSecurityProtectedModel):
+    objects = ActiveProviderManager()
+    all_objects = models.Manager()
+
     class TriggerChoices(models.TextChoices):
         SCHEDULED = "scheduled", _("Scheduled")
         MANUAL = "manual", _("Manual")
@@ -431,6 +462,9 @@ class ResourceTag(RowLevelSecurityProtectedModel):
 
 
 class Resource(RowLevelSecurityProtectedModel):
+    objects = ActiveProviderManager()
+    all_objects = models.Manager()
+
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
@@ -556,6 +590,9 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
 
     Note when creating migrations, you must use `python manage.py pgmakemigrations` to create the migrations.
     """
+
+    objects = ActiveProviderPartitionedManager()
+    all_objects = models.Manager()
 
     class PartitioningMeta:
         method = PostgresPartitioningMethod.RANGE
@@ -708,6 +745,9 @@ class ResourceFindingMapping(PostgresPartitionedModel, RowLevelSecurityProtected
 
 
 class ProviderSecret(RowLevelSecurityProtectedModel):
+    objects = ActiveProviderManager()
+    all_objects = models.Manager()
+
     class TypeChoices(models.TextChoices):
         STATIC = "static", _("Key-value pairs")
         ROLE = "role", _("Role assumption")
@@ -808,6 +848,9 @@ class Invitation(RowLevelSecurityProtectedModel):
 
 
 class ComplianceOverview(RowLevelSecurityProtectedModel):
+    objects = ActiveProviderManager()
+    all_objects = models.Manager()
+
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
     compliance_id = models.CharField(max_length=100, blank=False, null=False)
@@ -857,6 +900,9 @@ class ComplianceOverview(RowLevelSecurityProtectedModel):
 
 
 class ScanSummary(RowLevelSecurityProtectedModel):
+    objects = ActiveProviderManager()
+    all_objects = models.Manager()
+
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
     check_id = models.CharField(max_length=100, blank=False, null=False)
