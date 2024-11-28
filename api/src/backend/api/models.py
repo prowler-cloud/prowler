@@ -191,7 +191,7 @@ class Provider(RowLevelSecurityProtectedModel):
             r"(^[a-z0-9]([-a-z0-9]{1,61}[a-z0-9])?$)|(^arn:aws(-cn|-us-gov|-iso|-iso-b)?:[a-zA-Z0-9\-]+:([a-z]{2}-[a-z]+-\d{1})?:(\d{12})?:[a-zA-Z0-9\-_\/:\.\*]+(:\d+)?$)",
             value,
         ):
-            raise ValueError(
+            raise ModelValidationError(
                 "The value must either be a valid Kubernetes UID (up to 63 characters, "
                 "starting and ending with a lowercase letter or number, containing only "
                 "lowercase alphanumeric characters and hyphens) or a valid EKS ARN."
