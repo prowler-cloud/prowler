@@ -702,7 +702,10 @@ class ProviderViewSet(BaseRLSViewSet):
         )
 
     def destroy(self, request, *args, pk=None, **kwargs):
-        get_object_or_404(Provider, pk=pk)
+        provider = get_object_or_404(Provider, pk=pk)
+        provider.is_deleted = True
+        provider.save()
+
         with transaction.atomic():
             task = delete_provider_task.delay(
                 provider_id=pk, tenant_id=request.tenant_id
