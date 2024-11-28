@@ -288,6 +288,8 @@ class KubernetesProvider(Provider):
                         if context_item["name"] == context:
                             context = context_item
                 else:
+                    # If no context is provided, use the active context in the kubeconfig file
+                    # The first element is the list of contexts, the second is the active context
                     context = config.list_kube_config_contexts(
                         config_file=kubeconfig_file
                     )[1]
