@@ -33,34 +33,6 @@ from prowler.providers.kubernetes.models import (
 )
 
 
-def fix_yaml_indentation(yaml_string):
-    """
-    Fixes basic indentation issues in YAML strings.
-    This assumes common patterns like missing newlines and improper indentation.
-
-    Args:
-        yaml_string (str): The input YAML string.
-
-    Returns:
-        str: The corrected YAML string.
-    """
-    # Split into lines to process each line individually
-    lines = yaml_string.splitlines()
-    fixed_lines = []
-
-    for line in lines:
-        # Add newlines for top-level keys
-        if ":" in line and not line.startswith("  "):
-            fixed_lines.append("\n" + line.strip())
-        # Maintain proper indentation for nested elements
-        elif "- " in line:
-            fixed_lines.append("  " + line.strip())
-        else:
-            fixed_lines.append(line.strip())
-
-    return "\n".join(fixed_lines).strip()
-
-
 class KubernetesProvider(Provider):
     """
     Represents the Kubernetes provider.
@@ -278,13 +250,12 @@ class KubernetesProvider(Provider):
                 logger.info(
                     f"kubeconfig content: {type(kubeconfig_content)}{kubeconfig_content}"
                 )
-                # Fix Yaml indentation
-                try:
-                    config_data = safe_load(kubeconfig_content)
-                except Exception:
-                    # Try to fix the indentation
-                    fix_yaml_indentation(kubeconfig_content)
-                    config_data = safe_load(kubeconfig_content)
+                if "\n" not in kubeconfig_content and ":" in kubeconfig_content:
+                    # Try to reformat it as YAML by inserting line breaks
+                    kubeconfig_content = kubeconfig_content.replace(
+                        " ", "\n  "
+                    ).replace(":", ":\n")
+                config_data = safe_load(kubeconfig_content)
                 logger.info(f"config_data: {type(config_data)}{config_data}")
                 config.load_kube_config_from_dict(config_data, context=context)
                 if context:
