@@ -103,7 +103,7 @@ def batch_delete(queryset, batch_size=5000):
     total_deleted = 0
     deletion_summary = {}
 
-    paginator = Paginator(queryset.only("id"), batch_size)
+    paginator = Paginator(queryset.order_by("id").only("id"), batch_size)
 
     for page_num in paginator.page_range:
         batch_ids = [obj.id for obj in paginator.page(page_num).object_list]
