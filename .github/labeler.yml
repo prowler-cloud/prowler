@@ -80,9 +80,10 @@ output/csv:
       - any-glob-to-any-file: "prowler/lib/outputs/csv/**"
       - any-glob-to-any-file: "tests/lib/outputs/csv/**"
 
-compliance:
+component/api:
   - changed-files:
-      - any-glob-to-any-file: "prowler/lib/outputs/compliance/**"
-      - any-glob-to-any-file: "tests/lib/outputs/compliance/**"
-      - any-glob-to-any-file: "prowler/compliance/**"
+      - any-glob-to-any-file: "api/**"
 
+component/ui:
+  - changed-files:
+      - any-glob-to-any-file: "ui/**"

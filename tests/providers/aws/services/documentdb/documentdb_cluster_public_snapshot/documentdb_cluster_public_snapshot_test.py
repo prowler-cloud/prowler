@@ -22,6 +22,9 @@ class Test_documentdb_cluster_public_snapshot:
         with mock.patch(
             "prowler.providers.aws.services.documentdb.documentdb_service.DocumentDB",
             new=documentdb_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.documentdb.documentdb_client.documentdb_client",
+            new=documentdb_client,
         ):
             from prowler.providers.aws.services.documentdb.documentdb_cluster_public_snapshot.documentdb_cluster_public_snapshot import (
                 documentdb_cluster_public_snapshot,
@@ -62,6 +65,9 @@ class Test_documentdb_cluster_public_snapshot:
 
         with mock.patch(
             "prowler.providers.aws.services.documentdb.documentdb_service.DocumentDB",
+            new=documentdb_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.documentdb.documentdb_client.documentdb_client",
             new=documentdb_client,
         ):
             from prowler.providers.aws.services.documentdb.documentdb_cluster_public_snapshot.documentdb_cluster_public_snapshot import (
@@ -115,6 +121,9 @@ class Test_documentdb_cluster_public_snapshot:
         ]
         with mock.patch(
             "prowler.providers.aws.services.documentdb.documentdb_service.DocumentDB",
+            new=documentdb_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.documentdb.documentdb_client.documentdb_client",
             new=documentdb_client,
         ):
             from prowler.providers.aws.services.documentdb.documentdb_cluster_public_snapshot.documentdb_cluster_public_snapshot import (
