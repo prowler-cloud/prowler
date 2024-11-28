@@ -167,7 +167,6 @@ class Membership(models.Model):
 
 
 class Provider(RowLevelSecurityProtectedModel):
-
     objects = ActiveProviderManager()
     all_objects = models.Manager()
 
