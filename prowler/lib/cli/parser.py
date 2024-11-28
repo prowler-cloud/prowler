@@ -207,11 +207,6 @@ Detailed documentation at https://docs.prowler.com
             nargs="?",
             help="Set log file name",
         )
-        common_logging_parser.add_argument(
-            "--only-logs",
-            action="store_true",
-            help="Print only Prowler logs by the stdout. This option sets --no-banner.",
-        )
 
     def __init_exclude_checks_parser__(self):
         # Exclude checks options
