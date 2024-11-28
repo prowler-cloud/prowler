@@ -192,9 +192,11 @@ class Provider(RowLevelSecurityProtectedModel):
             value,
         ):
             raise ModelValidationError(
-                "The value must either be a valid Kubernetes UID (up to 63 characters, "
+                detail="The value must either be a valid Kubernetes UID (up to 63 characters, "
                 "starting and ending with a lowercase letter or number, containing only "
-                "lowercase alphanumeric characters and hyphens) or a valid EKS ARN."
+                "lowercase alphanumeric characters and hyphens) or a valid EKS ARN.",
+                code="kubernetes-uid",
+                pointer="/data/attributes/uid",
             )
 
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
