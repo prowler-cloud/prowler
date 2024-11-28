@@ -47,11 +47,11 @@ def fixer(resource_id: str, region: str) -> bool:
         regional_client.set_repository_policy(
             repositoryName=resource_id, policyText=json.dumps(trusted_policy)
         )
-        logger.info(f"{region} -- Updated policy for ECR repository {resource_id}")
-        return True
 
     except Exception as error:
         logger.error(
             f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
         return False
+    else:
+        return True
