@@ -23,7 +23,7 @@ def fixer(resource_id: str, region: str) -> bool:
         ]
     }
     Args:
-        resource_id (str): The OpenSearch domain name or ARN.
+        resource_id (str): The OpenSearch domain name.
         region (str): AWS region where the OpenSearch domain exists.
     Returns:
         bool: True if the operation is successful (policy updated), False otherwise.
@@ -43,7 +43,7 @@ def fixer(resource_id: str, region: str) -> bool:
                         "AWS": f"arn:{audited_partition}:iam::{account_id}:root"
                     },
                     "Action": "es:*",
-                    "Resource": f"arn:aws:es:{region}:{account_id}:domain/{resource_id}/*",
+                    "Resource": f"arn:{audited_partition}:es:{region}:{account_id}:domain/{resource_id}/*",
                 }
             ],
         }
