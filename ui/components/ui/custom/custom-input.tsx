@@ -91,20 +91,33 @@ export const CustomInput = <T extends FieldValues>({
       render={({ field }) => (
         <>
           <FormControl>
-            <Input
-              id={name}
-              isRequired={inputIsRequired}
-              label={inputLabel}
-              labelPlacement={labelPlacement}
-              placeholder={inputPlaceholder}
-              type={inputType}
-              variant={variant}
-              size={size}
-              isInvalid={isInvalid}
-              defaultValue={defaultValue}
-              endContent={endContent}
-              {...field}
-            />
+            {type === "textarea" ? (
+              <textarea
+                id={name}
+                required={inputIsRequired}
+                placeholder={inputPlaceholder}
+                defaultValue={defaultValue}
+                className={`textarea-class ${variant} ${size} ${
+                  isInvalid ? "error-class" : ""
+                }`}
+                {...field}
+              />
+            ) : (
+              <Input
+                id={name}
+                isRequired={inputIsRequired}
+                label={inputLabel}
+                labelPlacement={labelPlacement}
+                placeholder={inputPlaceholder}
+                type={inputType}
+                variant={variant}
+                size={size}
+                isInvalid={isInvalid}
+                defaultValue={defaultValue}
+                endContent={endContent}
+                {...field}
+              />
+            )}
           </FormControl>
           <FormMessage className="text-system-error dark:text-system-error" />
         </>
