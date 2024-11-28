@@ -1,30 +1,39 @@
 import { Spacer } from "@nextui-org/react";
-import { redirect } from "next/navigation";
-import React from "react";
+import React, { Suspense } from "react";
 
-// import { getUserByMe } from "@/actions/auth/auth";
-import { auth } from "@/auth.config";
+import { getProfileInfo } from "@/actions/auth";
 import { Header } from "@/components/ui";
+import { SkeletonUserInfo } from "@/components/users/profile";
+import { UserInfo } from "@/components/users/profile/user-info";
+import { UserProfileProps } from "@/types";
 
 export default async function Profile() {
-  const session = await auth();
-
-  if (!session?.user) {
-    // redirect("/sign-in?returnTo=/profile");
-    redirect("/sign-in");
-  }
-
-  // const user = await getUserByMe();
-
   return (
     <>
       <Header title="User Profile" icon="ci:users" />
       <Spacer y={4} />
-      <Spacer y={6} />
-      <pre>{JSON.stringify(session.user, null, 2)}</pre>
-      <pre>{JSON.stringify(session.userId, null, 2)}</pre>
-      <pre>{JSON.stringify(session.tenantId, null, 2)}</pre>
-      <pre>{JSON.stringify(session, null, 2)}</pre>
+      <div className="min-h-screen">
+        <div className="container mx-auto space-y-8 px-0 py-6">
+          <div className="grid grid-cols-12 gap-6">
+            <div className="col-span-12 lg:col-span-3">
+              <Suspense fallback={<SkeletonUserInfo />}>
+                <SSRDataUser />
+              </Suspense>
+            </div>
+          </div>
+        </div>
+      </div>
     </>
   );
 }
+
+const SSRDataUser = async () => {
+  const userProfile: UserProfileProps = await getProfileInfo();
+
+  return (
+    <>
+      <h3 className="mb-4 text-sm font-bold">User Info</h3>
+      <UserInfo user={userProfile?.data} />
+    </>
+  );
+};
