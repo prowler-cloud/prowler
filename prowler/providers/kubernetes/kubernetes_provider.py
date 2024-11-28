@@ -1,4 +1,5 @@
 import os
+from typing import Union
 
 from colorama import Fore, Style
 from kubernetes.client.exceptions import ApiException
@@ -30,6 +31,34 @@ from prowler.providers.kubernetes.models import (
     KubernetesIdentityInfo,
     KubernetesSession,
 )
+
+
+def fix_yaml_indentation(yaml_string):
+    """
+    Fixes basic indentation issues in YAML strings.
+    This assumes common patterns like missing newlines and improper indentation.
+
+    Args:
+        yaml_string (str): The input YAML string.
+
+    Returns:
+        str: The corrected YAML string.
+    """
+    # Split into lines to process each line individually
+    lines = yaml_string.splitlines()
+    fixed_lines = []
+
+    for line in lines:
+        # Add newlines for top-level keys
+        if ":" in line and not line.startswith("  "):
+            fixed_lines.append("\n" + line.strip())
+        # Maintain proper indentation for nested elements
+        elif "- " in line:
+            fixed_lines.append("  " + line.strip())
+        else:
+            fixed_lines.append(line.strip())
+
+    return "\n".join(fixed_lines).strip()
 
 
 class KubernetesProvider(Provider):
@@ -74,7 +103,7 @@ class KubernetesProvider(Provider):
         fixer_config: dict = {},
         mutelist_path: str = None,
         mutelist_content: dict = {},
-        kubeconfig_content: str = None,
+        kubeconfig_content: Union[dict, str] = None,
     ):
         """
         Initializes the KubernetesProvider instance.
@@ -249,7 +278,13 @@ class KubernetesProvider(Provider):
                 logger.info(
                     f"kubeconfig content: {type(kubeconfig_content)}{kubeconfig_content}"
                 )
-                config_data = safe_load(kubeconfig_content)
+                # Fix Yaml indentation
+                try:
+                    config_data = safe_load(kubeconfig_content)
+                except Exception:
+                    # Try to fix the indentation
+                    fix_yaml_indentation(kubeconfig_content)
+                    config_data = safe_load(kubeconfig_content)
                 logger.info(f"config_data: {type(config_data)}{config_data}")
                 config.load_kube_config_from_dict(config_data, context=context)
                 if context:
