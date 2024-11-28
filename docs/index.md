@@ -50,7 +50,7 @@ It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, Fe
         There is a development mode available, you can use the file https://github.com/prowler-cloud/prowler/blob/master/docker-compose.dev.yml to run the app in development mode.
 
     ???+ warning
-        Google and GitHub authentication are not available in the Prowler App Open Source version. If you want to use these authentication methods, you can use the [Prowler App](https://prowler.com).
+        Google and GitHub authentication is only available in [Prowler Cloud](https://prowler.com).
 
 === "GitHub"
 
@@ -89,7 +89,7 @@ It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, Fe
         Make sure to have `api/.env` and `ui/.env.local` files with the required environment variables. You can find the required environment variables in the `api/.env.template` and `ui/.env.template` files.
 
     ???+ warning
-        Google and GitHub authentication are not available in the Prowler App Open Source version. If you want to use these authentication methods, you can use the [Prowler App](https://prowler.com).
+        Google and GitHub authentication is only available in [Prowler Cloud](https://prowler.com).
 
 ### Prowler CLI Installation
 
