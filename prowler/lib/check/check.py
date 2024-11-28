@@ -422,11 +422,39 @@ def execute_checks(
     elif hasattr(output_options, "fixer"):
         verbose = output_options.fixer
 
-    # Execution with the --only-logs flag
-    if output_options.only_logs:
+    # Prepare your messages
+    messages = [f"Config File: {Fore.YELLOW}{config_file}{Style.RESET_ALL}"]
+    if global_provider.mutelist.mutelist_file_path:
+        messages.append(
+            f"Mutelist File: {Fore.YELLOW}{global_provider.mutelist.mutelist_file_path}{Style.RESET_ALL}"
+        )
+    if global_provider.type == "aws":
+        messages.append(
+            f"Scanning unused services and resources: {Fore.YELLOW}{global_provider.scan_unused_services}{Style.RESET_ALL}"
+        )
+    report_title = f"{Style.BRIGHT}Using the following configuration:{Style.RESET_ALL}"
+    print_boxes(messages, report_title)
+    # Default execution
+    checks_num = len(checks_to_execute)
+    plural_string = "checks"
+    singular_string = "check"
+
+    check_noun = plural_string if checks_num > 1 else singular_string
+    print(
+        f"{Style.BRIGHT}Executing {checks_num} {check_noun}, please wait...{Style.RESET_ALL}"
+    )
+    with alive_bar(
+        total=len(checks_to_execute),
+        ctrl_c=False,
+        bar="blocks",
+        spinner="classic",
+        stats=False,
+        enrich_print=False,
+    ) as bar:
         for check_name in checks_to_execute:
             # Recover service from check name
             service = check_name.split("_")[0]
+            bar.title = f"-> Scanning {orange_color}{service}{Style.RESET_ALL} service"
             try:
                 try:
                     # Import check module
@@ -450,111 +478,31 @@ def execute_checks(
                     custom_checks_metadata,
                     output_options,
                 )
-                report(check_findings, global_provider, output_options)
-                all_findings.extend(check_findings)
 
-                # Update Audit Status
+                report(check_findings, global_provider, output_options)
+
+                all_findings.extend(check_findings)
                 services_executed.add(service)
                 checks_executed.add(check_name)
                 global_provider.audit_metadata = update_audit_metadata(
-                    global_provider.audit_metadata, services_executed, checks_executed
+                    global_provider.audit_metadata,
+                    services_executed,
+                    checks_executed,
                 )
 
             # If check does not exists in the provider or is from another provider
             except ModuleNotFoundError:
+                # TODO: add more loggin here, we need the original exception -- traceback.print_last()
                 logger.error(
                     f"Check '{check_name}' was not found for the {global_provider.type.upper()} provider"
                 )
             except Exception as error:
+                # TODO: add more loggin here, we need the original exception -- traceback.print_last()
                 logger.error(
                     f"{check_name} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
-    else:
-        # Prepare your messages
-        messages = [f"Config File: {Fore.YELLOW}{config_file}{Style.RESET_ALL}"]
-        if global_provider.mutelist.mutelist_file_path:
-            messages.append(
-                f"Mutelist File: {Fore.YELLOW}{global_provider.mutelist.mutelist_file_path}{Style.RESET_ALL}"
-            )
-        if global_provider.type == "aws":
-            messages.append(
-                f"Scanning unused services and resources: {Fore.YELLOW}{global_provider.scan_unused_services}{Style.RESET_ALL}"
-            )
-        report_title = (
-            f"{Style.BRIGHT}Using the following configuration:{Style.RESET_ALL}"
-        )
-        print_boxes(messages, report_title)
-        # Default execution
-        checks_num = len(checks_to_execute)
-        plural_string = "checks"
-        singular_string = "check"
-
-        check_noun = plural_string if checks_num > 1 else singular_string
-        print(
-            f"{Style.BRIGHT}Executing {checks_num} {check_noun}, please wait...{Style.RESET_ALL}"
-        )
-        with alive_bar(
-            total=len(checks_to_execute),
-            ctrl_c=False,
-            bar="blocks",
-            spinner="classic",
-            stats=False,
-            enrich_print=False,
-        ) as bar:
-            for check_name in checks_to_execute:
-                # Recover service from check name
-                service = check_name.split("_")[0]
-                bar.title = (
-                    f"-> Scanning {orange_color}{service}{Style.RESET_ALL} service"
-                )
-                try:
-                    try:
-                        # Import check module
-                        check_module_path = f"prowler.providers.{global_provider.type}.services.{service}.{check_name}.{check_name}"
-                        lib = import_check(check_module_path)
-                        # Recover functions from check
-                        check_to_execute = getattr(lib, check_name)
-                        check = check_to_execute()
-                    except ModuleNotFoundError:
-                        logger.error(
-                            f"Check '{check_name}' was not found for the {global_provider.type.upper()} provider"
-                        )
-                        continue
-                    if verbose:
-                        print(
-                            f"\nCheck ID: {check.CheckID} - {Fore.MAGENTA}{check.ServiceName}{Fore.YELLOW} [{check.Severity.value}]{Style.RESET_ALL}"
-                        )
-                    check_findings = execute(
-                        check,
-                        global_provider,
-                        custom_checks_metadata,
-                        output_options,
-                    )
-
-                    report(check_findings, global_provider, output_options)
-
-                    all_findings.extend(check_findings)
-                    services_executed.add(service)
-                    checks_executed.add(check_name)
-                    global_provider.audit_metadata = update_audit_metadata(
-                        global_provider.audit_metadata,
-                        services_executed,
-                        checks_executed,
-                    )
-
-                # If check does not exists in the provider or is from another provider
-                except ModuleNotFoundError:
-                    # TODO: add more loggin here, we need the original exception -- traceback.print_last()
-                    logger.error(
-                        f"Check '{check_name}' was not found for the {global_provider.type.upper()} provider"
-                    )
-                except Exception as error:
-                    # TODO: add more loggin here, we need the original exception -- traceback.print_last()
-                    logger.error(
-                        f"{check_name} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
-                bar()
-            bar.title = f"-> {Fore.GREEN}Scan completed!{Style.RESET_ALL}"
+            bar()
+        bar.title = f"-> {Fore.GREEN}Scan completed!{Style.RESET_ALL}"
 
     # Custom report interface
     if os.environ.get("PROWLER_REPORT_LIB_PATH"):
@@ -600,20 +548,15 @@ def execute(
                 check, custom_checks_metadata["Checks"][check.CheckID]
             )
 
-        only_logs = False
-        if hasattr(output_options, "only_logs"):
-            only_logs = output_options.only_logs
-
         # Execute the check
         check_findings = []
         logger.debug(f"Executing check: {check.CheckID}")
         try:
             check_findings = check.execute()
         except Exception as error:
-            if not only_logs:
-                print(
-                    f"Something went wrong in {check.CheckID}, please use --log-level ERROR"
-                )
+            print(
+                f"Something went wrong in {check.CheckID}, please use --log-level ERROR"
+            )
             logger.error(
                 f"{check.CheckID} -- {error.__class__.__name__}[{traceback.extract_tb(error.__traceback__)[-1].lineno}]: {error}"
             )

@@ -112,7 +112,7 @@ Detailed documentation at https://docs.prowler.com
             )
 
         # Only Logging Configuration
-        if args.provider != "dashboard" and (args.only_logs or args.list_checks_json):
+        if args.provider != "dashboard" and args.list_checks_json:
             args.no_banner = True
 
         # Extra validation for provider arguments

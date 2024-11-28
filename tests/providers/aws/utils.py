@@ -164,7 +164,6 @@ def set_default_provider_arguments(
     arguments.output_formats = []
     arguments.output_directory = ""
     arguments.verbose = False
-    arguments.only_logs = False
     arguments.unix_timestamp = False
     arguments.shodan = None
     arguments.security_hub = False
