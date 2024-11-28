@@ -22,7 +22,7 @@ class admincenter_users_admins_reduced_license_footprint(Check):
                     report.resource_name = user.name
                     report.tenant_id = tenant_domain
                     report.status = "FAIL"
-                    report.status_extended = f"User {user.name} has administrative roles {admin_roles} and license {user.license}."
+                    report.status_extended = f"User {user.name} has administrative roles {admin_roles} and an invalid license {user.license}."
 
                     if user.license in allowed_licenses:
                         report.status = "PASS"

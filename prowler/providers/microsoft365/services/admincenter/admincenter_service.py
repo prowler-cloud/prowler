@@ -43,10 +43,10 @@ class AdminCenter(Microsoft365Service):
                         mailbox_settings = await client.users.by_user_id(
                             user.id
                         ).mailbox_settings.get()
-                        user_type = mailbox_settings.user_purpose
+                        mailbox_settings.user_purpose
                     except ODataError as error:
                         if error.error.code == "MailboxNotEnabledForRESTAPI":
-                            user_type = "inactive"
+                            pass
                         else:
                             logger.error(
                                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -61,7 +61,6 @@ class AdminCenter(Microsoft365Service):
                                     if license_details.value
                                     else None
                                 ),
-                                user_type=user_type,
                             )
                         }
                     )

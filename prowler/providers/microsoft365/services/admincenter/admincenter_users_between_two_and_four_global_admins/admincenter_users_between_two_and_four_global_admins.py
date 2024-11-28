@@ -34,7 +34,7 @@ class admincenter_users_between_two_and_four_global_admins(Check):
                         f"There are {num_global_admins} global administrators."
                     )
                 else:
-                    report.status_extended = f"There are {num_global_admins} global administrators. It should be more than two and less than five."
+                    report.status_extended = f"There are {num_global_admins} global administrators. It should be more than one and less than five."
 
                 findings.append(report)
 
