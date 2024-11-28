@@ -33,7 +33,7 @@ const SSRDataUser = async () => {
   return (
     <>
       <h3 className="mb-4 text-sm font-bold">User Info</h3>
-      <UserInfo user={userProfile.data} />
+      <UserInfo user={userProfile?.data} />
     </>
   );
 };
