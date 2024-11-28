@@ -1,9 +1,12 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { AuthError } from "next-auth";
 import { z } from "zod";
 
 import { signIn, signOut } from "@/auth.config";
+import { auth } from "@/auth.config";
+import { parseStringify } from "@/lib";
 import { authFormSchema } from "@/types";
 
 const formSchemaSignIn = authFormSchema("sign-in");
@@ -139,7 +142,8 @@ export const getToken = async (formData: z.infer<typeof formSchemaSignIn>) => {
   }
 };
 
-export const getUserByMe = async (accessToken: string) => {
+export const getUserByMe = async () => {
+  const session = await auth();
   const keyServer = process.env.API_BASE_URL;
   const url = new URL(`${keyServer}/users/me`);
 
@@ -148,26 +152,21 @@ export const getUserByMe = async (accessToken: string) => {
       method: "GET",
       headers: {
         Accept: "application/vnd.api+json",
-        Authorization: `Bearer ${accessToken}`,
+        Authorization: `Bearer ${session?.accessToken}`,
       },
     });
 
-    if (!response.ok) throw new Error("Error in trying to get user by me");
+    if (!response.ok) {
+      throw new Error(`Failed to fetch user data: ${response.statusText}`);
+    }
 
-    const parsedResponse = await response.json();
-
-    const name = parsedResponse.data.attributes.name;
-    const email = parsedResponse.data.attributes.email;
-    const company = parsedResponse.data.attributes.company_name;
-    const dateJoined = parsedResponse.data.attributes.date_joined;
-    return {
-      name,
-      email,
-      company,
-      dateJoined,
-    };
+    const data = await response.json();
+    const parsedData = parseStringify(data);
+    revalidatePath("/profile");
+    return parsedData;
   } catch (error) {
-    throw new Error("Error in trying to get user by me");
+    console.error("Error fetching profile:", error);
+    return undefined;
   }
 };
 
