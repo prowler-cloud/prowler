@@ -82,7 +82,7 @@ class KubernetesProvider(Provider):
 
         Args:
             kubeconfig_file (str): Path to the kubeconfig file.
-            kubeconfig_content (dict): Content of the kubeconfig file.
+            kubeconfig_content (str or dict): Content of the kubeconfig file.
             context (str): Context name.
             namespace (list): List of namespaces.
             config_content (dict): Audit configuration.
@@ -225,7 +225,7 @@ class KubernetesProvider(Provider):
     @staticmethod
     def setup_session(
         kubeconfig_file: str = None,
-        kubeconfig_content: str = None,
+        kubeconfig_content: Union[dict, str] = None,
         context: str = None,
     ) -> KubernetesSession:
         """
@@ -233,7 +233,7 @@ class KubernetesProvider(Provider):
 
         Args:
             kubeconfig_file (str): Path to the kubeconfig file.
-            kubeconfig_content (str): Content of the kubeconfig file.
+            kubeconfig_content (str or dict): Content of the kubeconfig file.
             context (str): Context name.
 
         Returns:
@@ -325,7 +325,7 @@ class KubernetesProvider(Provider):
     @staticmethod
     def test_connection(
         kubeconfig_file: str = "~/.kube/config",
-        kubeconfig_content: str = None,
+        kubeconfig_content: Union[dict, str] = None,
         namespace: str = None,
         provider_id: str = None,
         raise_on_exception: bool = True,
@@ -335,7 +335,7 @@ class KubernetesProvider(Provider):
 
         Args:
             kubeconfig_file (str): Path to the kubeconfig file.
-            kubeconfig_content (str): Content of the kubeconfig file.
+            kubeconfig_content (str or dict): Content of the kubeconfig file.
             namespace (str): Namespace name.
             provider_id (str): Provider ID to use, in this case, the Kubernetes context.
             raise_on_exception (bool): Whether to raise an exception on error.
