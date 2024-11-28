@@ -250,12 +250,7 @@ class KubernetesProvider(Provider):
                 logger.info(
                     f"kubeconfig content: {type(kubeconfig_content)}{kubeconfig_content}"
                 )
-                if "\n" not in kubeconfig_content and ":" in kubeconfig_content:
-                    # Try to reformat it as YAML by inserting line breaks
-                    kubeconfig_content = kubeconfig_content.replace(
-                        " ", "\n  "
-                    ).replace(":", ":\n")
-                config_data = safe_load(kubeconfig_content)
+                config_data = safe_load(open(kubeconfig_content))
                 logger.info(f"config_data: {type(config_data)}{config_data}")
                 config.load_kube_config_from_dict(config_data, context=context)
                 if context:
