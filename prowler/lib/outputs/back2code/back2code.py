@@ -2,6 +2,7 @@ from json import dump
 from os import SEEK_SET, getenv
 from typing import Optional
 import requests
+import sys
 from io import TextIOWrapper
 
 from pydantic import BaseModel, validator
@@ -101,7 +102,7 @@ class BACK2CODE(Output):
 
                 .float-left {{ float: left !important; max-width: 100%; }}
             </style>
-            <title>Prowler - The Handy Cloud Security Tool</title>
+            <title>Prowler - Back2Code Results</title>
             </head>
             <body>
             <div class="container-fluid">
@@ -113,7 +114,7 @@ class BACK2CODE(Output):
                                 style="width: 15rem; height:auto;"/></a>
                     <div class="card">
                     <div class="card-header">
-                        Report Information
+                        Failed Resources with Available Source Code
                     </div>
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item">
@@ -131,33 +132,7 @@ class BACK2CODE(Output):
                         </li>
                     </ul>
                     </div>
-                </div>{HTML.get_assessment_summary(provider)}
-                    <div class="col-md-2">
-                    <div class="card">
-                        <div class="card-header">
-                            Assessment Overview
-                        </div>
-                        <ul class="list-group list-group-flush">
-                            <li class="list-group-item">
-                                <b>Total Findings:</b> {str(stats.get("findings_count", 0))}
-                            </li>
-                            <li class="list-group-item">
-                                <b>Passed:</b> {str(stats.get("total_pass", 0))}
-                            </li>
-                            <li class="list-group-item">
-                                <b>Passed (Muted):</b> {str(stats.get("total_muted_pass", 0))}
-                            </li>
-                            <li class="list-group-item">
-                                <b>Failed:</b> {str(stats.get("total_fail", 0))}
-                            </li>
-                            <li class="list-group-item">
-                                <b>Failed (Muted):</b> {str(stats.get("total_muted_fail", 0))}
-                            </li>
-                            <li class="list-group-item">
-                                <b>Total Resources:</b> {str(stats.get("resources_count", 0))}
-                            </li>
-                        </ul>
-                    </div>
+                </div>
                 </div>
                 </div>
                 </div>
@@ -166,18 +141,17 @@ class BACK2CODE(Output):
                     <table class="table compact stripe row-border ordering" id="findingsTable" data-order='[[ 5, "asc" ]]' data-page-length='100'>
                     <thead class="thead-light">
                         <tr>
+                            <th scope="col">Service Name</th>
+                            <th style="width:20%" scope="col">Check ID</th>
+                            <th style="width:20%" scope="col">Check Title</th>
+                            <th scope="col">Region</th>
                             <th scope="col">Status</th>
                             <th scope="col">Severity</th>
                             <th scope="col">Service Name</th>
-                            <th scope="col">Region</th>
-                            <th style="width:20%" scope="col">Check ID</th>
-                            <th style="width:20%" scope="col">Check Title</th>
                             <th scope="col">Resource ID</th>
-                            <th scope="col">Resource Tags</th>
-                            <th scope="col">Status Extended</th>
+                            <th scope="col">AI Remediation Advice</th>
+                            <th scope="col">Source Code References</th>
                             <th scope="col">Risk</th>
-                            <th scope="col">Recomendation</th>
-                            <th scope="col">Compliance</th>
                         </tr>
                     </thead>
                     <tbody>"""
@@ -257,7 +231,7 @@ class BACK2CODE(Output):
                                 }
                             ]
                         });
-                        var maxLength = 30;
+                        var maxLength = 60;
                         // ReadMore ReadLess
                         $(".show-read-more").each(function () {
                             var myStr = $(this).text();
@@ -304,12 +278,17 @@ class BACK2CODE(Output):
         # Our output for this module will be cleaner and quicker if we sort by Check and Resource.
         # We can then generate our AI suggestions for each unique check, vs each unique finding.
         findingsByResource = {}
-        findingsByCheck = {} 
+        findingsByCheck = {}
+        findingsByCheckExampleAISolution = {} 
         
         try:
             for finding in findings:
                 # No point digging for code if the finding is not a failed one.
-                if finding.status.value == 'FAIL':
+                if type(finding.status) is not str:
+                    normalizeFindingStatus = finding.status.value
+                else:
+                    normalizeFindingStatus = finding.status
+                if normalizeFindingStatus == 'FAIL':
                     filesFromCommit = []
                     # Try to find a maching public source code commit for the finding based on tags (from yor.io)
                     if finding.resource_tags.__len__() > 0:
@@ -325,18 +304,19 @@ class BACK2CODE(Output):
                             # otherwise we churn generating the same recommendations for potentially multiple resources.
                             finding.back2code = filesFromCommit
 
-                # Sort findings by check and Resource                
-                if finding.metadata.CheckID not in findingsByCheck:
-                    findingsByCheck[finding.metadata.CheckID] = []
-                    findingsByCheck[finding.metadata.CheckID].append(finding)
-                else:
-                    findingsByCheck[finding.metadata.CheckID].append(finding)
-                
-                if finding.resource_uid not in findingsByResource:
-                    findingsByResource[finding.resource_uid] = []
-                    findingsByResource[finding.resource_uid].append(finding)
-                else:
-                    findingsByResource[finding.resource_uid].append(finding)
+                # Sort findings by check and Resource
+                if isinstance(finding, Finding): # We do not want account-specific checks in our data as they have a different data model for metadata.
+                    if finding.metadata.CheckID not in findingsByCheck:
+                        findingsByCheck[finding.metadata.CheckID] = []
+                        findingsByCheck[finding.metadata.CheckID].append(finding)
+                    else:
+                        findingsByCheck[finding.metadata.CheckID].append(finding)
+                    
+                    if finding.resource_uid not in findingsByResource:
+                        findingsByResource[finding.resource_uid] = []
+                        findingsByResource[finding.resource_uid].append(finding)
+                    else:
+                        findingsByResource[finding.resource_uid].append(finding)
 
         except Exception as error:
             logger.error(
@@ -345,81 +325,93 @@ class BACK2CODE(Output):
 
         # Pick a single finding per check to generate AI suggestions for.
         # Add to check metadata before finally rendering outputs.
+        try:
 
-        for check in findingsByCheck:
-            for resource in findingsByCheck[check]:
-                if resource.back2code is not None:
-                    terraform_file_globs = ""
-                    if openai_key is not None: #We have openAI creds. Generate additional fix/info.
-                        for file in resource.back2code.files:
-                            if ".tf" in file.fileNameWithPath:
-                                    terraform_file_globs = terraform_file_globs + file.fileRawContent
-                                    improved_output = self.improve_terraform(terraform_file_globs, finding.metadata.Description)
-                                    if improved_output:
-                                        #print(f"AI Generated suggestions for failed finding: {finding.metadata.CheckTitle}")
-                                        #print(f"Prowler located the original code at: {filesFromCommit.scmSourceName}, repository: {filesFromCommit.git_repo}/{filesFromCommit.git_org},  commit: {filesFromCommit.git_commit} \n ")
-                                        resource.back2code_aisuggestions = improved_output
-                                    else:
-                                        #print("No improvements suggested by OpenAI. However, the following source code commits locations may be relevant to permenantly fixing your failed finding!:\n") 
-                                        #print(f"Prowler located the original code at: {filesFromCommit.scmSourceName}, repository: {filesFromCommit.git_repo}/{filesFromCommit.git_org},  commit: {filesFromCommit.git_commit} \n ")
-                                        continue
+            for check in findingsByCheck:
+                if check in findingsByCheckExampleAISolution:
+                    continue # We've already generated one AI suggestion for this check, point others to the example. May expose option to generate more in the future (using more OpenAI credits and taking longer).
+                for resource in findingsByCheck[check]:
+                    if resource.back2code is not None:
+                        terraform_file_globs = ""
+                        if openai_key is not None: #We have openAI creds. Generate additional fix/info.
+                            for file in resource.back2code.files:
+                                if ".tf" in file.fileNameWithPath:
+                                        terraform_file_globs = terraform_file_globs + file.fileRawContent
+                            improved_output = self.improve_terraform(terraform_file_globs, finding.metadata.Description)
+                            if improved_output:
+                                #print(f"AI Generated suggestions for failed finding: {finding.metadata.CheckTitle}")
+                                #print(f"Prowler located the original code at: {filesFromCommit.scmSourceName}, repository: {filesFromCommit.git_repo}/{filesFromCommit.git_org},  commit: {filesFromCommit.git_commit} \n ")
+                                resource.back2code_aisuggestions = improved_output
+                                findingsByCheckExampleAISolution[check] = [resource,improved_output]
+                            else:
+                                #print("No improvements suggested by OpenAI. However, the following source code commits locations may be relevant to permenantly fixing your failed finding!:\n") 
+                                #print(f"Prowler located the original code at: {filesFromCommit.scmSourceName}, repository: {filesFromCommit.git_repo}/{filesFromCommit.git_org},  commit: {filesFromCommit.git_commit} \n ")
+                                continue
 
-                        break  # Skip the rest of the loop after the first if statement. We only need one finding per check to generate AI suggestions for.
+        
+                    if resource.status.value == 'FAIL':   
+                        backtoCodeResource = ""        
+                        row_class = "p-3 mb-2 bg-success-custom"
+                        finding_status = resource.status.value
+                        # Change the status of the finding if it's muted
+                        if resource.muted:
+                            finding_status = f"MUTED ({finding_status})"
+                            row_class = "table-warning"
+                        if resource.status == "MANUAL":
+                            row_class = "table-info"
+                        elif resource.status == "FAIL":
+                            row_class = "table-info" # Made this blue for now. We can change back to red if we want, but ALL results on this page will be the same colour.
+                        #if finding.resource_tags is not None:
+                        #    for tag in finding.resource_tags:
+                        #        if tag == "yor_trace":
+                        #            finding.resource_tags[tag] = f'<a class="{finding.resource_tags[tag]}" href="https://github.com/search?q={finding.resource_tags[tag]}&type=code">{finding.resource_tags[tag]}</a>'
+                        #        if tag == "git_commit":
+                        #            finding.resource_tags[tag] = f'<a class="{finding.resource_tags[tag]}" href="https://github.com/search?q={finding.resource_tags[tag]}&type=commits">{finding.resource_tags[tag]}</a>'
+                        if resource.back2code is not None:
+                            if resource == findingsByCheckExampleAISolution[check][0]:
+                                backtoCodeResource = html.escape(parse_html_string(resource.back2code_aisuggestions))
+                            else:
+                                backtoCodeResource = f"Source code found, however AI generated recommendations already exist for this check type. See {findingsByCheckExampleAISolution[check][0]} for more information."
 
+                        else:
+                            backtoCodeResource = "No Source Code Found or OpenAI API Key not set."
 
-                row_class = "p-3 mb-2 bg-success-custom"
-                finding_status = finding.status.value
-                # Change the status of the finding if it's muted
-                if finding.muted:
-                    finding_status = f"MUTED ({finding_status})"
-                    row_class = "table-warning"
-                if finding.status == "MANUAL":
-                    row_class = "table-info"
-                elif finding.status == "FAIL":
-                    row_class = "table-danger"
-                #if finding.resource_tags is not None:
-                #    for tag in finding.resource_tags:
-                #        if tag == "yor_trace":
-                #            finding.resource_tags[tag] = f'<a class="{finding.resource_tags[tag]}" href="https://github.com/search?q={finding.resource_tags[tag]}&type=code">{finding.resource_tags[tag]}</a>'
-                #        if tag == "git_commit":
-                #            finding.resource_tags[tag] = f'<a class="{finding.resource_tags[tag]}" href="https://github.com/search?q={finding.resource_tags[tag]}&type=commits">{finding.resource_tags[tag]}</a>'
- 
-                self._data.append(
-                    # f"""
-                    #     <tr class="{row_class}">
-                    #         <td>{finding_status}</td>
-                    #         <td>{finding.metadata.Severity.value}</td>
-                    #         <td>{finding.metadata.ServiceName}</td>
-                    #         <td>{finding.region.lower()}</td>
-                    #         <td>{finding.metadata.CheckID.replace("_", "<wbr />_")}</td>
-                    #         <td>{finding.metadata.CheckTitle}</td>
-                    #         <td>{finding.resource_uid.replace("<", "&lt;").replace(">", "&gt;").replace("_", "<wbr />_")}</td>
-                    #         <td>{parse_html_string(unroll_dict(finding.resource_tags))}</td>
-                    #         <td>{finding.status_extended.replace("<", "&lt;").replace(">", "&gt;").replace("_", "<wbr />_")}</td>
-                    #         <td><p class="show-read-more">{html.escape(finding.metadata.Risk)}</p></td>
-                    #         <td><p class="show-read-more">{html.escape(finding.metadata.Remediation.Recommendation.Text)}</p> <a class="read-more" href="{finding.metadata.Remediation.Recommendation.Url}"><i class="fas fa-external-link-alt"></i></a></td>
-                    #         <td><p class="show-read-more">{parse_html_string(unroll_dict(finding.compliance, separator=": "))}</p></td>
-                    #     </tr>
-                    #     """
-                   f"""
-                        <tr class="{row_class}">
-                            <td>{finding_status}</td>
-                            <td>{finding.metadata.Severity.value}</td>
-                            <td>{finding.metadata.ServiceName}</td>
-                            <td>{finding.region.lower()}</td>
-                            <td>{finding.metadata.CheckID.replace("_", "<wbr />_")}</td>
-                            <td>{finding.metadata.CheckTitle}</td>
-                            <td>{finding.resource_uid.replace("<", "&lt;").replace(">", "&gt;").replace("_", "<wbr />_")}</td>
-                            <td>{parse_html_string(unroll_dict(finding.resource_tags))}</td>
-                            <td>{finding.status_extended.replace("<", "&lt;").replace(">", "&gt;").replace("_", "<wbr />_")}</td>
-                            <td><p class="show-read-more">{html.escape(finding.metadata.Risk)}</p></td>
-                            <td><p class="show-read-more">{html.escape(finding.metadata.Remediation.Recommendation.Text)}</p> <a class="read-more" href="{finding.metadata.Remediation.Recommendation.Url}"><i class="fas fa-external-link-alt"></i></a></td>
-                            <td><p class="show-read-more">{parse_html_string(unroll_dict(finding.compliance, separator=": "))}</p></td>
-                        </tr>
-                        """
-                    
-                )
+                        self._data.append(
+                            #<tr>
+                            #        1 <th scope="col">Service Name</th>
+                            #        2 <th style="width:20%" scope="col">Check ID</th>
+                            #        3 <th style="width:20%" scope="col">Check Title</th>
+                            #        4 <th scope="col">Region</th>
+                            #        5 <th scope="col">Status</th>
+                            #        6 <th scope="col">Severity</th>
+                            #        7 <th scope="col">Service Name</th>
+                            #        8 <th scope="col">Resource ID</th>
+                            #        9 <th scope="col">AI Remediation Advice</th>       
+                            #        10 <th scope="col">Source Code References</th>
+                            #        11 <th scope="col">Risk</th>
+                            # </tr>
+                        f"""
+                                <tr class="{row_class}">
+                                    <td>{resource.metadata.ServiceName}</td> 
+                                    <td>{resource.metadata.CheckID.replace("_", "<wbr />_")}</td>
+                                    <td>{resource.metadata.CheckTitle}</td>
+                                    <td>{resource.region.lower()}</td>
+                                    <td>{finding_status}</td>
+                                    <td>{resource.metadata.Severity.value}</td>
+                                    <td>{resource.metadata.ServiceName}</td>
+                                    <td>{resource.resource_uid.replace("<", "&lt;").replace(">", "&gt;").replace("_", "<wbr />_")}</td>
+                                    <td>{parse_html_string(unroll_dict(resource.resource_tags))}</td>
+                                    <td><p class="show-read-more">{backtoCodeResource}</p></td>
+                                    <td><p class="show-read-more">{html.escape(resource.metadata.Risk)}</p></td>
+                                </tr>
+                                """
+                            
+                        )
 
+        except Exception as error:
+            logger.error(
+                f"Errors in Back2Code output. Do not rely on results without confirming this error. report goto.prowler.com/slack \n Error is: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
     def improve_terraform(self, terraform_file_globs: str, failed_finding_description: str) -> str:
         """
@@ -444,7 +436,7 @@ class BACK2CODE(Output):
             messages= [
                 {
                     "role": "system",
-                    "content": "You are a Terraform expert."
+                    "content": "You are a Terraform expert, your output should be in HTML format including a diff for code changes, with the largest header font used being H3."
                 },
                 {
                     "role": "user",
