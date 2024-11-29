@@ -57,7 +57,11 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
   {
     accessorKey: "check",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={"Check"} param="check_id" />
+      <DataTableColumnHeader
+        column={column}
+        title={"Finding"}
+        param="check_id"
+      />
     ),
     cell: ({ row }) => {
       const { checktitle } = getFindingsMetadata(row);

@@ -90,9 +90,34 @@ export const items: SidebarItem[] = [
 ];
 
 export const sectionItems: SidebarItem[] = [
+  // {
+  //   key: "dashboards",
+  //   title: "Dashboard",
+  //   items: [
+  //     {
+  //       key: "overview",
+  //       href: "/",
+  //       icon: "solar:pie-chart-2-outline",
+  //       title: "Overview",
+  //     },
+  //     {
+  //       key: "projects",
+  //       href: "#",
+  //       icon: "solar:widget-2-outline",
+  //       title: "Projects",
+  //       endContent: (
+  //         <Icon
+  //           className="text-default-400"
+  //           icon="solar:add-circle-line-duotone"
+  //           width={24}
+  //         />
+  //       ),
+  //     },
+  //   ],
+  // },
   {
-    key: "dashboards",
-    title: "Dashboard",
+    key: "analytics",
+    title: "Analytics",
     items: [
       {
         key: "overview",
@@ -100,43 +125,6 @@ export const sectionItems: SidebarItem[] = [
         icon: "solar:pie-chart-2-outline",
         title: "Overview",
       },
-      // {
-      //   key: "projects",
-      //   href: "#",
-      //   icon: "solar:widget-2-outline",
-      //   title: "Projects",
-      //   endContent: (
-      //     <Icon
-      //       className="text-default-400"
-      //       icon="solar:add-circle-line-duotone"
-      //       width={24}
-      //     />
-      //   ),
-      // },
-    ],
-  },
-  {
-    key: "scans",
-    title: "Scans",
-    items: [
-      {
-        key: "scans",
-        href: "/scans",
-        icon: "lucide:scan-search",
-        title: "Scans",
-      },
-      {
-        key: "findings",
-        href: "/findings",
-        title: "Findings",
-        icon: "ph:list-checks-duotone",
-      },
-    ],
-  },
-  {
-    key: "analytics",
-    title: "Analytics",
-    items: [
       {
         key: "compliance",
         href: "/compliance",
@@ -156,6 +144,18 @@ export const sectionItems: SidebarItem[] = [
       // },
     ],
   },
+  {
+    key: "scans",
+    title: "Scans",
+    items: [
+      {
+        key: "findings",
+        href: "/findings",
+        title: "Findings",
+        icon: "ph:list-checks-duotone",
+      },
+    ],
+  },
 
   {
     key: "settings",
@@ -165,7 +165,13 @@ export const sectionItems: SidebarItem[] = [
         key: "providers",
         href: "/providers",
         icon: "fluent:cloud-sync-24-regular",
-        title: "Providers",
+        title: "Cloud Providers",
+      },
+      {
+        key: "scans",
+        href: "/scans",
+        icon: "lucide:scan-search",
+        title: "Scans Jobs",
       },
       // {
       //   key: "integrations",

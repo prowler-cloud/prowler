@@ -48,7 +48,7 @@ export const FindingDetail = ({
       <div className="flex flex-col gap-4 rounded-lg p-4 shadow dark:bg-prowler-blue-400">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-bold text-gray-800 dark:text-prowler-theme-pale/90">
-            Check Metadata
+            Finding details
           </h3>
           <SeverityBadge severity={attributes.severity} />
         </div>
@@ -99,7 +99,7 @@ export const FindingDetail = ({
               Object.values(remediation.code).some(Boolean) && (
                 <div className="flex flex-col gap-2">
                   <p className="mt-4 text-sm font-semibold">
-                    Check these links:
+                    Reference Information:
                   </p>
                   <div className="flex flex-col gap-2">
                     {remediation.code.cli && (
@@ -201,13 +201,13 @@ export const FindingDetail = ({
           <div className="col-span-2 grid grid-cols-2 gap-6">
             <div>
               <p className="text-sm font-semibold dark:text-prowler-theme-pale">
-                Inserted At
+                First seen
               </p>
               <DateWithTime inline dateTime={resource.inserted_at} />
             </div>
             <div>
               <p className="text-sm font-semibold dark:text-prowler-theme-pale">
-                Updated At
+                Last seen
               </p>
               <DateWithTime inline dateTime={resource.updated_at} />
             </div>
