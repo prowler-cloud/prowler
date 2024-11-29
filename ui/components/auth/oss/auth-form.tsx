@@ -17,9 +17,11 @@ import { ApiError, authFormSchema } from "@/types";
 export const AuthForm = ({
   type,
   invitationToken,
+  isCloudEnv,
 }: {
   type: string;
   invitationToken?: string | null;
+  isCloudEnv?: boolean;
 }) => {
   const formSchema = authFormSchema(type);
   const router = useRouter();
@@ -47,7 +49,6 @@ export const AuthForm = ({
         email: data.email.toLowerCase(),
         password: data.password,
       });
-
       if (result?.message === "Success") {
         router.push("/");
       } else if (result?.errors && "credentials" in result.errors) {
@@ -55,6 +56,8 @@ export const AuthForm = ({
           type: "server",
           message: result.errors.credentials ?? "Incorrect email or password",
         });
+      } else if (result?.message === "User email is not verified") {
+        router.push("/email-verification");
       } else {
         toast({
           variant: "destructive",
@@ -73,7 +76,12 @@ export const AuthForm = ({
           description: "The user was registered successfully.",
         });
         form.reset();
-        router.push("/sign-in");
+
+        if (isCloudEnv) {
+          router.push("/email-verification");
+        } else {
+          router.push("/sign-in");
+        }
       } else {
         newUser.errors.forEach((error: ApiError) => {
           const errorMessage = error.detail;
