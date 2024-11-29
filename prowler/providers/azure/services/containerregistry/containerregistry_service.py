@@ -37,8 +37,13 @@ class ContainerRegistry(AzureService):
                                 resource_group=resource_group,
                                 sku=getattr(registry.sku, "name", ""),
                                 login_server=getattr(registry, "login_server", ""),
-                                public_network_access=getattr(
-                                    registry, "public_network_access", ""
+                                public_network_access=(
+                                    False
+                                    if getattr(
+                                        registry, "public_network_access" "Enabled"
+                                    )
+                                    == "Disabled"
+                                    else True
                                 ),
                                 admin_user_enabled=getattr(
                                     registry, "admin_user_enabled", False
@@ -93,7 +98,7 @@ class ContainerRegistryInfo:
     resource_group: str
     sku: str
     login_server: str
-    public_network_access: str
+    public_network_access: bool
     admin_user_enabled: bool
     network_rule_set: NetworkRuleSet
     monitor_diagnostic_settings: list[DiagnosticSetting]
