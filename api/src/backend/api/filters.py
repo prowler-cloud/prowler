@@ -4,47 +4,48 @@ from django.conf import settings
 from django.db.models import Q
 from django_filters.rest_framework import (
     BaseInFilter,
-    FilterSet,
     BooleanFilter,
     CharFilter,
-    UUIDFilter,
-    DateFilter,
     ChoiceFilter,
+    DateFilter,
+    FilterSet,
+    UUIDFilter,
 )
 from rest_framework_json_api.django_filters.backends import DjangoFilterBackend
 from rest_framework_json_api.serializers import ValidationError
 
 from api.db_utils import (
-    ProviderEnumField,
     FindingDeltaEnumField,
-    StatusEnumField,
-    SeverityEnumField,
     InvitationStateEnumField,
+    ProviderEnumField,
+    SeverityEnumField,
+    StatusEnumField,
 )
 from api.models import (
-    User,
+    ComplianceOverview,
+    Finding,
+    Invitation,
     Membership,
     Provider,
     ProviderGroup,
+    ProviderSecret,
     Resource,
     ResourceTag,
     Scan,
-    Task,
-    StateChoices,
-    Finding,
+    ScanSummary,
     SeverityChoices,
+    StateChoices,
     StatusChoices,
-    ProviderSecret,
-    Invitation,
-    ComplianceOverview,
+    Task,
+    User,
 )
 from api.rls import Tenant
 from api.uuid_utils import (
     datetime_to_uuid7,
-    uuid7_start,
+    transform_into_uuid7,
     uuid7_end,
     uuid7_range,
-    transform_into_uuid7,
+    uuid7_start,
 )
 from api.v1.serializers import TaskBase
 
@@ -56,6 +57,13 @@ class CustomDjangoFilterBackend(DjangoFilterBackend):
         This disables the HTML render for the default filter.
         """
         return None
+
+    def get_filterset_class(self, view, queryset=None):
+        # Check if the view has 'get_filterset_class' method
+        if hasattr(view, "get_filterset_class"):
+            return view.get_filterset_class()
+        # Fallback to the default implementation
+        return super().get_filterset_class(view, queryset)
 
 
 class UUIDInFilter(BaseInFilter, UUIDFilter):
@@ -480,5 +488,30 @@ class ComplianceOverviewFilter(FilterSet):
             "compliance_id": ["exact", "icontains"],
             "framework": ["exact", "iexact", "icontains"],
             "version": ["exact", "icontains"],
+            "region": ["exact", "icontains", "in"],
+        }
+
+
+class ScanSummaryFilter(FilterSet):
+    inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
+    provider_id = UUIDFilter(field_name="scan__provider__id", lookup_expr="exact")
+    provider_type = ChoiceFilter(
+        field_name="scan__provider__provider", choices=Provider.ProviderChoices.choices
+    )
+    provider_type__in = ChoiceInFilter(
+        field_name="scan__provider__provider", choices=Provider.ProviderChoices.choices
+    )
+    region = CharFilter(field_name="region")
+    muted_findings = BooleanFilter(method="filter_muted_findings")
+
+    def filter_muted_findings(self, queryset, name, value):
+        if not value:
+            return queryset.exclude(muted__gt=0)
+        return queryset
+
+    class Meta:
+        model = ScanSummary
+        fields = {
+            "inserted_at": ["date", "gte", "lte"],
             "region": ["exact", "icontains", "in"],
         }

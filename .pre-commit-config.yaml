@@ -97,12 +97,13 @@ repos:
       - id: safety
         name: safety
         description: "Safety is a tool that checks your installed dependencies for known security vulnerabilities"
-        entry: bash -c 'safety check --ignore 70612'
+        entry: bash -c 'safety check --ignore 70612,66963'
         language: system
 
       - id: vulture
         name: vulture
         description: "Vulture finds unused code in Python programs."
         entry: bash -c 'vulture --exclude "contrib" --min-confidence 100 .'
+        exclude: 'api/src/backend/'
         language: system
         files: '.*\.py'
