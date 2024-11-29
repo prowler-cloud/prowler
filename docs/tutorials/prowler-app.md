@@ -62,7 +62,7 @@ For AWS, Prowler App can use either IAM Access Keys or assume an IAM Role. Hereâ
 
 2. Enter the `Role ARN` and any optional field like the AWS Access Keys to assume the role, the `External ID`, the `Role Session Name` or the `Session Duration`:
 
-    <img src="../../img/aws-role.png" alt="AWS Role" width="350"/>
+    <img src="../../img/aws-role.png" alt="AWS Role" width="700"/>
 
 ---
 
@@ -99,6 +99,8 @@ After successfully adding and testing your credentials, click the `Start Now` bu
 
 <img src="../../img/start-now.png" alt="Start Now" width="700"/>
 
+???+ note
+    Prowler will automatically scan all configured providers every **24 hours**, ensuring your cloud environment stays continuously monitored.
 ---
 
 ## **Step 7: Monitor Scan Progress**
@@ -116,5 +118,3 @@ While the scan is running, start exploring the findings in these sections:
 - **Compliance**: Insights into compliance status. <img src="../../img/compliance.png" alt="Compliance" width="700"/>
 - **Services**: Breakdown of services scanned. <img src="../../img/services.png" alt="Services" width="700"/>
 
-???+ note
-    Prowler will automatically scan all configured providers every **24 hours**, ensuring your cloud environment stays continuously monitored.
