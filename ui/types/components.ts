@@ -227,6 +227,32 @@ export interface InvitationProps {
     self: string;
   };
 }
+export interface UserProfileProps {
+  data: {
+    type: "users";
+    id: string;
+    attributes: {
+      name: string;
+      email: string;
+      company_name: string;
+      date_joined: string;
+    };
+    relationships: {
+      memberships: {
+        meta: {
+          count: number;
+        };
+        data: Array<{
+          type: "memberships";
+          id: string;
+        }>;
+      };
+    };
+  };
+  meta: {
+    version: string;
+  };
+}
 
 export interface UserProps {
   type: "users";

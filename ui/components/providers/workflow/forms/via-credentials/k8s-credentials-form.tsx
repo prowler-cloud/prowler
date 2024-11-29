@@ -1,6 +1,6 @@
 import { Control } from "react-hook-form";
 
-import { CustomInput } from "@/components/ui/custom";
+import { CustomTextarea } from "@/components/ui/custom";
 import { KubernetesCredentials } from "@/types";
 
 export const KubernetesCredentialsForm = ({
@@ -18,14 +18,14 @@ export const KubernetesCredentialsForm = ({
           Please provide the kubeconfig content for your Kubernetes credentials.
         </div>
       </div>
-      <CustomInput
+      <CustomTextarea
         control={control}
         name="kubeconfig_content"
-        type="textarea"
         label="Kubeconfig Content"
         labelPlacement="inside"
         placeholder="Paste your Kubeconfig YAML content here"
         variant="bordered"
+        minRows={10}
         isRequired
         isInvalid={!!control._formState.errors.kubeconfig_content}
       />

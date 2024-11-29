@@ -140,6 +140,7 @@ const SSRComplianceGrid = async ({
         const { attributes } = compliance;
         const {
           framework,
+          version,
           requirements_status: { passed, total },
         } = attributes;
 
@@ -147,6 +148,7 @@ const SSRComplianceGrid = async ({
           <ComplianceCard
             key={compliance.id}
             title={framework}
+            version={version}
             passingRequirements={passed}
             totalRequirements={total}
             prevPassingRequirements={passed}

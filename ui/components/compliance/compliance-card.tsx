@@ -6,6 +6,7 @@ import { getComplianceIcon } from "../icons";
 
 interface ComplianceCardProps {
   title: string;
+  version: string;
   passingRequirements: number;
   totalRequirements: number;
   prevPassingRequirements: number;
@@ -14,9 +15,14 @@ interface ComplianceCardProps {
 
 export const ComplianceCard: React.FC<ComplianceCardProps> = ({
   title,
+  version,
   passingRequirements,
   totalRequirements,
 }) => {
+  const formatTitle = (title: string) => {
+    return title.split("-").join(" ");
+  };
+
   const ratingPercentage = Math.floor(
     (passingRequirements / totalRequirements) * 100,
   );
@@ -47,7 +53,7 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
   };
 
   return (
-    <Card fullWidth isPressable isHoverable shadow="sm">
+    <Card fullWidth isHoverable shadow="sm">
       <CardBody className="flex flex-row items-center justify-between space-x-4 dark:bg-prowler-blue-800">
         <div className="flex w-full items-center space-x-4">
           <Image
@@ -56,7 +62,10 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
             className="h-10 w-10 min-w-10 rounded-md border-1 border-gray-300 bg-white object-contain p-1"
           />
           <div className="flex w-full flex-col">
-            <h4 className="text-md font-bold leading-5 3xl:text-lg">{title}</h4>
+            <h4 className="text-md font-bold leading-5 3xl:text-lg">
+              {formatTitle(title)}
+              {version ? ` - ${version}` : ""}
+            </h4>
             <Progress
               label="Your Rating:"
               size="sm"
