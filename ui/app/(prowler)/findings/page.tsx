@@ -80,7 +80,7 @@ export default async function Findings({
 
   return (
     <>
-      <Header title="Findings" icon="ph:list-checks-duotone" />
+      <Header title="Findings" icon="carbon:data-view-alt" />
       <Spacer />
       <Spacer y={4} />
       <FilterControls search date />

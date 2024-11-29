@@ -31,9 +31,13 @@ export default async function Providers({
       <DataTableFilterCustom filters={filterProviders || []} />
       <Spacer y={8} />
 
-      <Suspense key={searchParamsKey} fallback={<SkeletonTableProviders />}>
-        <SSRDataTable searchParams={searchParams} />
-      </Suspense>
+      <div className="grid grid-cols-12 gap-4">
+        <div className="col-span-6">
+          <Suspense key={searchParamsKey} fallback={<SkeletonTableProviders />}>
+            <SSRDataTable searchParams={searchParams} />
+          </Suspense>
+        </div>
+      </div>
     </>
   );
 }

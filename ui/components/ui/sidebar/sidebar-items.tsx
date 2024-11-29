@@ -115,6 +115,7 @@ export const sectionItems: SidebarItem[] = [
   //     },
   //   ],
   // },
+
   {
     key: "analytics",
     title: "Analytics",
@@ -144,15 +145,52 @@ export const sectionItems: SidebarItem[] = [
       // },
     ],
   },
+
   {
-    key: "scans",
-    title: "Scans",
+    key: "issues",
+    title: "Issues",
     items: [
       {
-        key: "findings",
+        key: "cloud-misconfigurations",
+        href: "/findings?filter[status__in]=FAIL&sort=severity",
+        icon: "solar:danger-triangle-linear",
+        title: "Cloud Misconfigurations",
+      },
+      {
+        key: "iam-issues",
+        href: "/findings?filter[status__in]=FAIL&filter[severity__in]=critical%2Chigh%2Cmedium&filter[provider_type__in]=aws%2Cazure%2Cgcp%2Ckubernetes&filter[service__in]=iam%2Crbac",
+        icon: "solar:shield-user-linear",
+        title: "IAM Issues",
+      },
+      {
+        key: "aws-findings",
+        href: "/findings?filter[status__in]=FAIL&filter[severity__in]=critical%2Chigh%2Cmedium&filter[provider_type__in]=aws&sort=severity",
+        icon: "ri:amazon-line",
+        title: "AWS Top Failed Findings",
+      },
+      {
+        key: "azure-findings",
+        href: "/findings?filter[status__in]=FAIL&filter[severity__in]=critical%2Chigh%2Cmedium&filter[provider_type__in]=azure&sort=severity",
+        icon: "ri:microsoft-line",
+        title: "Azure Top Failed Findings",
+      },
+      {
+        key: "gcp-findings",
+        href: "/findings?filter[status__in]=FAIL&filter[severity__in]=critical%2Chigh%2Cmedium&filter[provider_type__in]=gcp&sort=severity",
+        icon: "ri:google-line",
+        title: "GCP Top Failed Findings",
+      },
+      {
+        key: "kubernetes-findings",
+        href: "/findings?filter[status__in]=FAIL&filter[severity__in]=critical%2Chigh%2Cmedium&filter[provider_type__in]=kubernetes&sort=severity",
+        icon: "ri:steering-2-line",
+        title: "Kubernetes Top Failed Findings",
+      },
+      {
+        key: "all-findings",
         href: "/findings",
-        title: "Findings",
-        icon: "ph:list-checks-duotone",
+        icon: "solar:document-text-linear",
+        title: "Browse All Findings",
       },
     ],
   },
