@@ -100,10 +100,10 @@ After adding your credentials of your cloud account, click the `Test Connection`
 <img src="../../img/test-connection-button.png" alt="Test Connection" width="700"/>
 
 
-## **Step 6: Start Your First Scan**
-After successfully adding and testing your credentials, click the `Start Now` button to initiate your first scan:
+## **Step 6: Scan Started**
+After successfully adding and testing your credentials, Prowler will automatically launch a scan of your cloud environment, click `Go to Scans` to view the scan progress:
 
-<img src="../../img/start-now.png" alt="Start Now" width="700"/>
+<img src="../../img/go-to-scans.png" alt="Go to Scans" width="700"/>
 
 ???+ note
     Prowler will automatically scan all configured providers every **24 hours**, ensuring your cloud environment stays continuously monitored.
