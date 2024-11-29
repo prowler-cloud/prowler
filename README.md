@@ -92,9 +92,9 @@ Prowler App can be installed in different ways, depending on your environment:
 
 **Commands**
 
-``` bash
-curl -Lo https://github.com/prowler-cloud/prowler/blob/master/docker-compose.yml \
-curl -Lo https://github.com/prowler-cloud/prowler/blob/master/.env \
+``` console
+curl -Lo https://github.com/prowler-cloud/prowler/blob/master/docker-compose.yml
+curl -Lo https://github.com/prowler-cloud/prowler/blob/master/.env
 docker compose up -d
 ```
 
@@ -111,16 +111,16 @@ docker compose up -d
 
 **Commands to run the API**
 
-``` bash
-git clone https://github.com/prowler-cloud/prowler \
-cd prowler/api \
-poetry install \
-poetry shell \
-set -a \
-source .env \
-docker compose up postgres valkey -d \
-cd src/backend \
-python manage.py migrate --database admin \
+``` console
+git clone https://github.com/prowler-cloud/prowler
+cd prowler/api
+poetry install
+poetry shell
+set -a
+source .env
+docker compose up postgres valkey -d
+cd src/backend
+python manage.py migrate --database admin
 gunicorn -c config/guniconf.py config.wsgi:application
 ```
 
@@ -128,24 +128,24 @@ gunicorn -c config/guniconf.py config.wsgi:application
 
 **Commands to run the API Worker**
 
-``` bash
-git clone https://github.com/prowler-cloud/prowler \
-cd prowler/api \
-poetry install \
-poetry shell \
-set -a \
-source .env \
-cd src/backend \
+``` console
+git clone https://github.com/prowler-cloud/prowler
+cd prowler/api
+poetry install
+poetry shell
+set -a
+source .env
+cd src/backend
 python -m celery -A config.celery worker -l info -E
 ```
 
 **Commands to run the UI**
 
-``` bash
-git clone https://github.com/prowler-cloud/prowler \
-cd prowler/ui \
-npm install \
-npm run build \
+``` console
+git clone https://github.com/prowler-cloud/prowler
+cd prowler/ui
+npm install
+npm run build
 npm start
 ```
 
@@ -185,7 +185,7 @@ The container images are available here:
 
 Python >= 3.9, < 3.13 is required with pip and poetry:
 
-```
+``` console
 git clone https://github.com/prowler-cloud/prowler
 cd prowler
 poetry shell
