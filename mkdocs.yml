@@ -11,6 +11,7 @@ theme:
   name: material
   favicon: favicon.ico
   features:
+    - content.code.copy
     - navigation.tabs
     - navigation.tabs.sticky
     - navigation.sections
