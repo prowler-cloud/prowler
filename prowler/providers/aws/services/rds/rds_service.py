@@ -446,7 +446,7 @@ class RDS(AWSService):
                                     arn=arn,
                                     sns_topic_arn=event["SnsTopicArn"],
                                     status=event["Status"],
-                                    source_type=event["SourceType"],
+                                    source_type=event.get("SourceType", ""),
                                     source_id=event.get("SourceIdsList", []),
                                     event_list=event.get("EventCategoriesList", []),
                                     enabled=event["Enabled"],
