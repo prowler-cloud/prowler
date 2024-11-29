@@ -4,7 +4,7 @@
 
 ![Prowler App](img/compliance-app.png)
 
-Prowler App is a web application that allows you to run Prowler in a simple way, without the need to install any dependencies. It is a containerized application that can be run in any environment that supports Docker Compose.
+Prowler App is a web application that allows you to run Prowler in a simple way. It provides a user-friendly interface to configure and run scans, view results, and manage your security findings.
 
 See how to install the Prowler App in the [Quick Start](#prowler-app-installation) section.
 
@@ -27,6 +27,10 @@ It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, Fe
 ## Quick Start
 ### Prowler App Installation
 
+Prowler App can be installed in different ways, depending on your environment:
+
+> See how to use Prowler App in the [Prowler App](tutorials/prowler-app.md) section.
+
 === "Docker"
 
     _Requirements_:
@@ -41,7 +45,7 @@ It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, Fe
     docker compose up -d
     ```
 
-    Enjoy Prowler App at http://localhost:3000 by signing up with your email and password.
+    > Enjoy Prowler App at http://localhost:3000 by signing up with your email and password.
 
     ???+ note
         You can change the environment variables in the `.env` file. Note that it is not recommended to use the default values in production environments.
@@ -68,10 +72,26 @@ It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, Fe
     cd prowler/api \
     poetry install \
     poetry shell \
+    set -a \
+    source .env \
     docker compose up postgres valkey -d \
     cd src/backend \
-    python -m celery -A config.celery worker -l info -E \
     gunicorn -c config/guniconf.py config.wsgi:application
+    ```
+
+    > Now, you can access the API documentation at http://localhost:8080/api/v1/docs.
+
+    _Commands to run the API Worker_:
+
+    ``` bash
+    git clone https://github.com/prowler-cloud/prowler \
+    cd prowler/api \
+    poetry install \
+    poetry shell \
+    set -a \
+    source .env \
+    cd src/backend \
+    python -m celery -A config.celery worker -l info -E
     ```
 
     _Commands to run the UI_:
@@ -79,14 +99,15 @@ It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, Fe
     ``` bash
     git clone https://github.com/prowler-cloud/prowler \
     cd prowler/ui \
+    npm install \
     npm run build \
     npm start
     ```
 
-    Enjoy Prowler App at http://localhost:3000 by signing up with your email and password.
+    > Enjoy Prowler App at http://localhost:3000 by signing up with your email and password.
 
     ???+ warning
-        Make sure to have `api/.env` and `ui/.env.local` files with the required environment variables. You can find the required environment variables in the `api/.env.template` and `ui/.env.template` files.
+        Make sure to have `api/.env` and `ui/.env.local` files with the required environment variables. You can find the required environment variables in the [`api/.env.template`](https://github.com/prowler-cloud/prowler/blob/master/api/.env.example) and [`ui/.env.template`](https://github.com/prowler-cloud/prowler/blob/master/ui/.env.template) files.
 
     ???+ warning
         Google and GitHub authentication is only available in [Prowler Cloud](https://prowler.com).
@@ -269,18 +290,23 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
 
 ## Prowler container versions
 
-The available versions of Prowler are the following:
+The available versions of Prowler CLI are the following:
 
 - `latest`: in sync with `master` branch (bear in mind that it is not a stable version)
+- `v4-latest`: in sync with `v4` branch (bear in mind that it is not a stable version)
 - `v3-latest`: in sync with `v3` branch (bear in mind that it is not a stable version)
 - `<x.y.z>` (release): you can find the releases [here](https://github.com/prowler-cloud/prowler/releases), those are stable releases.
 - `stable`: this tag always point to the latest release.
+- `v4-stable`: this tag always point to the latest release for v4.
 - `v3-stable`: this tag always point to the latest release for v3.
 
 The container images are available here:
-
-- [DockerHub](https://hub.docker.com/r/toniblyx/prowler/tags)
-- [AWS Public ECR](https://gallery.ecr.aws/prowler-cloud/prowler)
+- Prowler CLI:
+    - [DockerHub](https://hub.docker.com/r/toniblyx/prowler/tags)
+    - [AWS Public ECR](https://gallery.ecr.aws/prowler-cloud/prowler)
+- Prowler App:
+    - [DockerHub - Prowler UI](https://hub.docker.com/r/prowlercloud/prowler-ui/tags)
+    - [DockerHub - Prowler API](https://hub.docker.com/r/prowlercloud/prowler-api/tags)
 
 ## High level architecture
 
