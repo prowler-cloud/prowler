@@ -94,7 +94,7 @@ By default, the `kubeconfig` file is located at `~/.kube/config`.
 
 ---
 
-### **Step 5: Test Connection**
+## **Step 5: Test Connection**
 After adding your credentials of your cloud account, click the `Test Connection` button to verify that the Prowler App can successfully connect to your provider:
 
 <img src="../../img/test-connection-button.png" alt="Test Connection" width="700"/>
