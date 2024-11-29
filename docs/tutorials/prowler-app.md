@@ -69,6 +69,8 @@ For AWS, Prowler App can use either IAM Access Keys or assume an IAM Role. Here�
 ### **Step 4.2: Azure Credentials**
 For Azure, Prowler App uses a Service Principal to authenticate. See the steps in https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/azure/create-prowler-service-principal/ to create a Service Principal. Then, enter the `Tenant ID`, `Client ID` and `Client Secret` of the Service Principal.
 
+<img src="../../img/azure-credentials.png" alt="Azure Credentials" width="700"/>
+
 ---
 ### **Step 4.3: GCP Credentials**
 To connect your GCP Project, you need to use the Application Default Credentials (ADC) returned by the `gcloud` CLI. Here’s how to set up:
@@ -80,11 +82,15 @@ gcloud auth application-default login
 2. Once authenticated, get the `Client ID`, `Client Secret` and `Refresh Token` from `~/.config/gcloud/application_default_credentials`.
 3. Paste the `Client ID`, `Client Secret` and `Refresh Token` into the Prowler App.
 
+<img src="../../img/gcp-credentials.png" alt="GCP Credentials" width="700"/>
+
 ---
 ### **Step 4.4: Kubernetes Credentials**
 For Kubernetes, Prowler App uses a `kubeconfig` file to authenticate, paste the contents of your `kubeconfig` file into the `Kubeconfig content` field.
 
 By default, the `kubeconfig` file is located at `~/.kube/config`.
+
+<img src="../../img/kubernetes-credentials.png" alt="Kubernetes Credentials" width="700"/>
 
 ---
 
@@ -117,4 +123,3 @@ While the scan is running, start exploring the findings in these sections:
 - **Findings**: Detailed list of issues detected. <img src="../../img/findings.png" alt="Findings" width="700"/>
 - **Compliance**: Insights into compliance status. <img src="../../img/compliance.png" alt="Compliance" width="700"/>
 - **Services**: Breakdown of services scanned. <img src="../../img/services.png" alt="Services" width="700"/>
-
