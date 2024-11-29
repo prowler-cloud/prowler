@@ -51,7 +51,7 @@ Prowler App is a web application that allows you to run Prowler in your cloud pr
 
 ![Prowler App](docs/img/compliance-app.png)
 
->More details at [https://docs.prowler.com](https://docs.prowler.com/projects/prowler-open-source/en/latest/#prowler-app-installation)
+>More details at [Prowler App Documentation](https://docs.prowler.com/projects/prowler-open-source/en/latest/#prowler-app-installation)
 
 ## Prowler CLI
 
