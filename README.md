@@ -78,7 +78,7 @@ It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, Fe
 
 # 💻 Installation
 
-## Prowler App
+## Prowler App
 
 Prowler App can be installed in different ways, depending on your environment:
 
