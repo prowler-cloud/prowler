@@ -76,6 +76,7 @@ Prowler App can be installed in different ways, depending on your environment:
     source .env \
     docker compose up postgres valkey -d \
     cd src/backend \
+    python manage.py migrate --database admin \
     gunicorn -c config/guniconf.py config.wsgi:application
     ```
 
