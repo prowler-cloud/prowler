@@ -171,7 +171,7 @@ export const sectionItems: SidebarItem[] = [
         key: "scans",
         href: "/scans",
         icon: "lucide:scan-search",
-        title: "Scans Jobs",
+        title: "Scan Jobs",
       },
       // {
       //   key: "integrations",

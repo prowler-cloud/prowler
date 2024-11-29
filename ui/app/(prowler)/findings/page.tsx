@@ -125,15 +125,22 @@ const SSRDataTable = async ({
   searchParams: SearchParamsProps;
 }) => {
   const page = parseInt(searchParams.page?.toString() || "1", 10);
-  const sort = searchParams.sort?.toString();
+  const sort = searchParams.sort?.toString() || "severity,updated_at";
 
-  // Extract all filter parameters
-  const filters = Object.fromEntries(
-    Object.entries(searchParams).filter(([key]) => key.startsWith("filter[")),
-  );
+  // Extract all filter parameters and combine with default filters
+  const defaultFilters = {
+    "filter[status__in]": "FAIL",
+    "filter[delta__in]": "new",
+  };
 
-  // Extract query from filters
-  const query = (filters["filter[search]"] as string) || "";
+  const filters: Record<string, string> = {
+    ...defaultFilters,
+    ...Object.fromEntries(
+      Object.entries(searchParams).filter(([key]) => key.startsWith("filter[")),
+    ),
+  };
+
+  const query = filters["filter[search]"] || "";
 
   const findingsData = await getFindings({ query, page, sort, filters });
 

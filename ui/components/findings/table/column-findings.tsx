@@ -13,8 +13,6 @@ import {
 } from "@/components/ui/table";
 import { FindingProps } from "@/types";
 
-import { DataTableRowActions } from "./data-table-row-actions";
-
 const getFindingsData = (row: { original: FindingProps }) => {
   return row.original;
 };
@@ -43,17 +41,41 @@ const getProviderData = (
   );
 };
 
-const getScanData = (
-  row: { original: FindingProps },
-  field: keyof FindingProps["relationships"]["scan"]["attributes"],
-) => {
-  return (
-    row.original.relationships?.scan?.attributes?.[field] ||
-    `No ${field} found in scan`
-  );
-};
+// const getScanData = (
+//   row: { original: FindingProps },
+//   field: keyof FindingProps["relationships"]["scan"]["attributes"],
+// ) => {
+//   return (
+//     row.original.relationships?.scan?.attributes?.[field] ||
+//     `No ${field} found in scan`
+//   );
+// };
 
 export const ColumnFindings: ColumnDef<FindingProps>[] = [
+  {
+    id: "moreInfo",
+    header: "Details",
+    cell: ({ row }) => {
+      const searchParams = useSearchParams();
+      const findingId = searchParams.get("id");
+      const isOpen = findingId === row.original.id;
+      return (
+        <div className="flex justify-center">
+          <TriggerSheet
+            triggerComponent={<InfoIcon className="text-primary" size={16} />}
+            title="Finding Details"
+            description="View the finding details"
+            defaultOpen={isOpen}
+          >
+            <DataTableRowDetails
+              entityId={row.original.id}
+              findingDetails={row.original}
+            />
+          </TriggerSheet>
+        </div>
+      );
+    },
+  },
   {
     accessorKey: "check",
     header: ({ column }) => (
@@ -97,21 +119,21 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
       return <StatusFindingBadge size="sm" status={status} />;
     },
   },
-  {
-    accessorKey: "scanName",
-    header: "Scan Name",
-    cell: ({ row }) => {
-      const name = getScanData(row, "name");
+  // {
+  //   accessorKey: "scanName",
+  //   header: "Scan Name",
+  //   cell: ({ row }) => {
+  //     const name = getScanData(row, "name");
 
-      return (
-        <p className="text-small">
-          {typeof name === "string" || typeof name === "number"
-            ? name
-            : "Invalid data"}
-        </p>
-      );
-    },
-  },
+  //     return (
+  //       <p className="text-small">
+  //         {typeof name === "string" || typeof name === "number"
+  //           ? name
+  //           : "Invalid data"}
+  //       </p>
+  //     );
+  //   },
+  // },
   {
     accessorKey: "region",
     header: "Region",
@@ -146,36 +168,6 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
           </p>
         </>
       );
-    },
-  },
-  {
-    id: "moreInfo",
-    header: "Details",
-    cell: ({ row }) => {
-      const searchParams = useSearchParams();
-      const findingId = searchParams.get("id");
-      const isOpen = findingId === row.original.id;
-      return (
-        <div className="flex justify-center">
-          <TriggerSheet
-            triggerComponent={<InfoIcon className="text-primary" size={16} />}
-            title="Finding Details"
-            description="View the finding details"
-            defaultOpen={isOpen}
-          >
-            <DataTableRowDetails
-              entityId={row.original.id}
-              findingDetails={row.original}
-            />
-          </TriggerSheet>
-        </div>
-      );
-    },
-  },
-  {
-    id: "actions",
-    cell: ({ row }) => {
-      return <DataTableRowActions row={row} />;
     },
   },
 ];
