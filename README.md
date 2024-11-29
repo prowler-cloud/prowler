@@ -144,6 +144,7 @@ python -m celery -A config.celery worker -l info -E
 ``` bash
 git clone https://github.com/prowler-cloud/prowler \
 cd prowler/ui \
+npm install \
 npm run build \
 npm start
 ```
