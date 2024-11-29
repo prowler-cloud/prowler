@@ -305,6 +305,42 @@ We have deprecated some of our outputs formats:
 - To send only FAILS to AWS Security Hub, now use either `--send-sh-only-fails` or `--security-hub --status FAIL`.
 
 ## Basic Usage
+### Prowler App
+
+#### **Access the App**
+Go to [http://localhost:3000](http://localhost:3000) after installing the app (see [Quick Start](#prowler-app-installation)). Sign up with your email and password.
+
+<img src="img/sign-up-button.png" alt="Sign Up Button" width="320"/>
+<img src="img/sign-up.png" alt="Sign Up" width="285"/>
+
+#### **Log In**
+Log in with your email and password to start using the Prowler App.
+
+<img src="img/log-in.png" alt="Log In" width="285"/>
+
+#### **Add a Provider**
+- Go to `Settings > Providers` and click `Add Account`.
+- Select the provider you want to scan (AWS, GCP, Azure, Kubernetes).
+- Enter the provider's ID (AWS Account ID, GCP Project ID, Azure Subscription ID, Kubernetes Cluster) and optional alias.
+- Follow the instructions to add your credentials.
+
+#### **Start a Scan**
+Once your credentials are added and tested, click `Start Now` to run your first scan.
+
+#### **View Results**
+Monitor your scan's progress in the `Scans` section and analyze the findings in:
+
+- **Overview**: High-level summary of the scan.
+- **Findings**: Detailed list of issues detected. <img src="img/findings.png" alt="Findings" width="700"/>
+- **Compliance**: Insights into compliance status. <img src="img/compliance.png" alt="Compliance" width="700"/>
+- **Services**: Breakdown of services scanned. <img src="img/services.png" alt="Services" width="700"/>
+
+> See more details about the Prowler App usage in the [Prowler App](tutorials/prowler-app.md) section.
+
+???+ note
+    Prowler will automatically scan all configured providers every **24 hours**, ensuring your cloud environment stays continuously monitored.
+
+### Prowler CLI
 
 To run Prowler, you will need to specify the provider (e.g `aws`, `gcp`, `azure` or `kubernetes`):
 
@@ -363,7 +399,7 @@ You can always use `-h`/`--help` to access to the usage information and all the 
 prowler --help
 ```
 
-### AWS
+#### AWS
 
 Use a custom AWS profile with `-p`/`--profile` and/or AWS regions which you want to audit with `-f`/`--filter-region`:
 
@@ -376,7 +412,7 @@ prowler aws --profile custom-profile -f us-east-1 eu-south-2
 
 See more details about AWS Authentication in [Requirements](getting-started/requirements.md#aws)
 
-### Azure
+#### Azure
 
 With Azure you need to specify which auth method is going to be used:
 
@@ -401,7 +437,7 @@ Prowler by default scans all the subscriptions that is allowed to scan, if you w
 prowler azure --az-cli-auth --subscription-ids <subscription ID 1> <subscription ID 2> ... <subscription ID N>
 ```
 
-### Google Cloud
+#### Google Cloud
 
 Prowler will use by default your User Account credentials, you can configure it using:
 
@@ -423,7 +459,7 @@ prowler gcp --project-ids <Project ID 1> <Project ID 2> ... <Project ID N>
 
 See more details about GCP Authentication in [Requirements](getting-started/requirements.md#google-cloud)
 
-### Kubernetes
+#### Kubernetes
 
 Prowler allows you to scan your Kubernetes Cluster either from within the cluster or from outside the cluster.
 

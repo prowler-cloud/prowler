@@ -7,7 +7,6 @@ def fixer(resource_id: str, region: str) -> bool:
     Cancel the scheduled deletion of a KMS key.
     Specifically, this fixer calls the 'cancel_key_deletion' method to restore the KMS key's availability if it is marked for deletion.
     Requires the kms:CancelKeyDeletion permission.
-
     Permissions:
     {
         "Version": "2012-10-17",
@@ -19,11 +18,9 @@ def fixer(resource_id: str, region: str) -> bool:
             }
         ]
     }
-
     Args:
         resource_id (str): The ID of the KMS key to cancel the deletion for.
         region (str): AWS region where the KMS key exists.
-
     Returns:
         bool: True if the operation is successful (deletion cancellation is completed), False otherwise.
     """
