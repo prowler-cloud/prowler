@@ -31,7 +31,7 @@ Prowler App can be installed in different ways, depending on your environment:
 
 > See how to use Prowler App in the [Prowler App](tutorials/prowler-app.md) section.
 
-=== "Docker"
+=== "Docker Compose"
 
     _Requirements_:
 
