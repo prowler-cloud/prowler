@@ -80,6 +80,10 @@ It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, Fe
 
 ## Prowler App
 
+Prowler App can be installed in different ways, depending on your environment:
+
+> See how to use Prowler App in the [Prowler App Usage Guide](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app/).
+
 ### Docker Compose
 
 **Requirements**
