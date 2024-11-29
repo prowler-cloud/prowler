@@ -93,7 +93,7 @@ curl -Lo https://github.com/prowler-cloud/prowler/blob/master/.env \
 docker compose up -d
 ```
 
-Enjoy Prowler App at http://localhost:3000 by signing up with your email and password.
+> Enjoy Prowler App at http://localhost:3000 by signing up with your email and password.
 
 ### From GitHub
 
@@ -111,10 +111,27 @@ git clone https://github.com/prowler-cloud/prowler \
 cd prowler/api \
 poetry install \
 poetry shell \
+set -a \
+source .env \
 docker compose up postgres valkey -d \
 cd src/backend \
-python -m celery -A config.celery worker -l info -E \
+python manage.py migrate --database admin \
 gunicorn -c config/guniconf.py config.wsgi:application
+```
+
+> Now, you can access the API documentation at http://localhost:8080/api/v1/docs.
+
+**Commands to run the API Worker**
+
+``` bash
+git clone https://github.com/prowler-cloud/prowler \
+cd prowler/api \
+poetry install \
+poetry shell \
+set -a \
+source .env \
+cd src/backend \
+python -m celery -A config.celery worker -l info -E
 ```
 
 **Commands to run the UI**
@@ -126,7 +143,7 @@ npm run build \
 npm start
 ```
 
-Enjoy Prowler App at http://localhost:3000 by signing up with your email and password.
+> Enjoy Prowler App at http://localhost:3000 by signing up with your email and password.
 
 ## Prowler CLI
 ### Pip package
@@ -140,18 +157,23 @@ prowler -v
 
 ### Containers
 
-The available versions of Prowler are the following:
+The available versions of Prowler CLI are the following:
 
 - `latest`: in sync with `master` branch (bear in mind that it is not a stable version)
+- `v4-latest`: in sync with `v4` branch (bear in mind that it is not a stable version)
 - `v3-latest`: in sync with `v3` branch (bear in mind that it is not a stable version)
 - `<x.y.z>` (release): you can find the releases [here](https://github.com/prowler-cloud/prowler/releases), those are stable releases.
 - `stable`: this tag always point to the latest release.
+- `v4-stable`: this tag always point to the latest release for v4.
 - `v3-stable`: this tag always point to the latest release for v3.
 
 The container images are available here:
-
-- [DockerHub](https://hub.docker.com/r/toniblyx/prowler/tags)
-- [AWS Public ECR](https://gallery.ecr.aws/prowler-cloud/prowler)
+- Prowler CLI:
+    - [DockerHub](https://hub.docker.com/r/toniblyx/prowler/tags)
+    - [AWS Public ECR](https://gallery.ecr.aws/prowler-cloud/prowler)
+- Prowler App:
+    - [DockerHub - Prowler UI](https://hub.docker.com/r/prowlercloud/prowler-ui/tags)
+    - [DockerHub - Prowler API](https://hub.docker.com/r/prowlercloud/prowler-api/tags)
 
 ### From GitHub
 
