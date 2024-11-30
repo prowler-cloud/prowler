@@ -4,7 +4,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { useSearchParams } from "next/navigation";
 
 import { InfoIcon } from "@/components/icons";
-import { DateWithTime } from "@/components/ui/entities";
+import { DateWithTime, EntityInfoShort } from "@/components/ui/entities";
 import { TriggerSheet } from "@/components/ui/sheet";
 import { DataTableColumnHeader, StatusBadge } from "@/components/ui/table";
 import { ScanProps } from "@/types";
@@ -22,11 +22,24 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
     accessorKey: "accountName",
     header: () => <p className="pr-8">Account name</p>,
     cell: ({ row }) => {
-      console.log(row.original);
+      const providerInfo = row.original.providerInfo;
 
-      return <span className="font-medium">providerinfo</span>;
+      if (!providerInfo) {
+        return <span className="font-medium">No provider info</span>;
+      }
+
+      const { provider, uid, alias } = providerInfo;
+
+      return (
+        <EntityInfoShort
+          cloudProvider={provider as "aws" | "azure" | "gcp" | "kubernetes"}
+          entityAlias={alias}
+          entityId={uid}
+        />
+      );
     },
   },
+
   {
     accessorKey: "started_at",
     header: () => <p className="pr-8">Started at</p>,
@@ -88,19 +101,19 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
     },
   },
   {
-    accessorKey: "scheduled_at",
+    accessorKey: "next_scan_at",
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
-        title={"Scheduled at"}
-        param="scheduled_at"
+        title={"Next scan scheduled at"}
+        param="next_scan_at"
       />
     ),
     cell: ({ row }) => {
       const {
-        attributes: { scheduled_at },
+        attributes: { next_scan_at },
       } = getScanData(row);
-      return <DateWithTime dateTime={scheduled_at} />;
+      return <DateWithTime dateTime={next_scan_at} />;
     },
   },
 
@@ -129,7 +142,7 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
       const {
         attributes: { trigger },
       } = getScanData(row);
-      return <p>{trigger}</p>;
+      return <p className="text-tiny font-medium uppercase">{trigger}</p>;
     },
   },
   // {

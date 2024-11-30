@@ -327,6 +327,7 @@ export interface ScanProps {
     started_at: string;
     completed_at: string;
     scheduled_at: string;
+    next_scan_at: string;
   };
   relationships: {
     provider: {
@@ -341,6 +342,11 @@ export interface ScanProps {
         type: "tasks";
       };
     };
+  };
+  providerInfo?: {
+    provider: "aws" | "azure" | "gcp" | "kubernetes";
+    uid: string;
+    alias: string;
   };
 }
 

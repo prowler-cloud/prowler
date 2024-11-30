@@ -45,6 +45,7 @@ export const getFindings = async ({
     revalidatePath("/findings");
     return parsedData;
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error("Error fetching findings:", error);
     return undefined;
   }

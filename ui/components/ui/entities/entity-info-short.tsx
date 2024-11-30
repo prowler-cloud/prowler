@@ -2,7 +2,6 @@ import React from "react";
 
 import { getProviderLogo } from "./get-provider-logo";
 import { SnippetId } from "./snippet-id";
-import { SnippetLabel } from "./snippet-label";
 
 interface EntityInfoProps {
   cloudProvider: "aws" | "azure" | "gcp" | "kubernetes";
@@ -16,11 +15,13 @@ export const EntityInfoShort: React.FC<EntityInfoProps> = ({
   entityId,
 }) => {
   return (
-    <div className="flex w-full items-center justify-between space-x-4">
+    <div className="flex w-full items-center justify-between space-x-2">
       <div className="flex items-center gap-x-4">
         <div className="flex-shrink-0">{getProviderLogo(cloudProvider)}</div>
-        <div className="flex flex-col">
-          <SnippetLabel label={entityAlias ?? ""} />
+        <div className="flex flex-col space-y-1">
+          {entityAlias && (
+            <span className="text-tiny text-default-500">{entityAlias}</span>
+          )}
           <SnippetId entityId={entityId ?? ""} />
         </div>
       </div>

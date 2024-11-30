@@ -1,7 +1,7 @@
 import { Spacer } from "@nextui-org/react";
 import { Suspense } from "react";
 
-import { getProviders } from "@/actions/providers";
+import { getProvider, getProviders } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
 import { FilterControls, filterScans } from "@/components/filters";
 import { ButtonRefreshData } from "@/components/scans";
@@ -85,22 +85,47 @@ const SSRDataTableScans = async ({
   // Extract query from filters
   const query = (filters["filter[search]"] as string) || "";
 
+  // Fetch scans data
   const scansData = await getScans({ query, page, sort, filters });
+
+  if (!scansData?.data) {
+    return (
+      <div>
+        <p>No scans available.</p>
+      </div>
+    );
+  }
+
+  const expandedScansData = await Promise.all(
+    scansData.data.map(async (scan: any) => {
+      const providerId = scan.relationships?.provider?.data?.id;
+
+      if (!providerId) {
+        return { ...scan, providerInfo: null };
+      }
+
+      const formData = new FormData();
+      formData.append("id", providerId);
+
+      const providerData = await getProvider(formData);
+
+      if (providerData?.data) {
+        const { provider, uid, alias } = providerData.data.attributes;
+        return {
+          ...scan,
+          providerInfo: { provider, uid, alias },
+        };
+      }
+
+      return { ...scan, providerInfo: null };
+    }),
+  );
 
   return (
     <DataTable
       columns={ColumnGetScans}
-      data={scansData?.data || []}
+      data={expandedScansData || []}
       metadata={scansData?.meta}
     />
   );
 };
-
-// const getExecutingScans = async () => {
-//   const scansData = await getScans({});
-
-//   return scansData?.data?.some(
-//     (scan: ScanProps) =>
-//       scan.attributes.state === "executing" && scan.attributes.progress < 100,
-//   );
-// };

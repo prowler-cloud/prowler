@@ -42,8 +42,7 @@ export function DataTableRowActions<ProviderProps>({
       <CustomAlertModal
         isOpen={isEditOpen}
         onOpenChange={setIsEditOpen}
-        title="Edit Provider"
-        description={"Edit the provider details"}
+        title="Edit Provider Alias"
       >
         <EditForm
           providerId={providerId}
