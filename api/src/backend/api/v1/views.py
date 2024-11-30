@@ -65,6 +65,7 @@ from api.models import (
     Scan,
     ScanSummary,
     SeverityChoices,
+    StateChoices,
     StatusChoices,
     Task,
     User,
@@ -76,8 +77,8 @@ from api.uuid_utils import datetime_to_uuid7
 from api.v1.serializers import (
     ComplianceOverviewFullSerializer,
     ComplianceOverviewSerializer,
-    FindingSerializer,
     FindingDynamicFilterSerializer,
+    FindingSerializer,
     InvitationAcceptSerializer,
     InvitationCreateSerializer,
     InvitationSerializer,
@@ -1480,7 +1481,9 @@ class OverviewViewSet(BaseRLSViewSet):
         filtered_queryset = self.filter_queryset(queryset)
 
         latest_scan_subquery = (
-            Scan.objects.filter(provider_id=OuterRef("scan__provider_id"))
+            Scan.objects.filter(
+                state=StateChoices.COMPLETED, provider_id=OuterRef("scan__provider_id")
+            )
             .order_by("-id")
             .values("id")[:1]
         )
@@ -1520,7 +1523,9 @@ class OverviewViewSet(BaseRLSViewSet):
         filtered_queryset = self.filter_queryset(queryset)
 
         latest_scan_subquery = (
-            Scan.objects.filter(provider_id=OuterRef("scan__provider_id"))
+            Scan.objects.filter(
+                state=StateChoices.COMPLETED, provider_id=OuterRef("scan__provider_id")
+            )
             .order_by("-id")
             .values("id")[:1]
         )
