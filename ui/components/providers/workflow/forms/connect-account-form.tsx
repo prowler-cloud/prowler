@@ -9,6 +9,11 @@ import * as z from "zod";
 
 import { useToast } from "@/components/ui";
 import { CustomButton, CustomInput } from "@/components/ui/custom";
+import {
+  getProviderLogo,
+  getProviderName,
+  ProviderType,
+} from "@/components/ui/entities";
 import { Form } from "@/components/ui/form";
 
 import { addProvider } from "../../../../actions/providers/providers";
@@ -120,10 +125,17 @@ export const ConnectAccountForm = () => {
             errorMessage={form.formState.errors.providerType?.message}
           />
         )}
-
         {/* Step 2: UID, alias, and credentials (if AWS) */}
         {prevStep === 2 && (
           <>
+            <div className="mb-4 flex items-center space-x-4">
+              {providerType && getProviderLogo(providerType as ProviderType)}
+              <span className="text-lg font-semibold">
+                {providerType
+                  ? getProviderName(providerType as ProviderType)
+                  : "Unknown Provider"}
+              </span>
+            </div>
             <CustomInput
               control={form.control}
               name="providerUid"
@@ -155,7 +167,6 @@ export const ConnectAccountForm = () => {
             )}
           </>
         )}
-
         {/* Navigation buttons */}
         <div className="flex w-full justify-end sm:space-x-6">
           {/* Show "Back" button only in Step 2 */}
