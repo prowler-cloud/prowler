@@ -2,7 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 
-import { DateWithTime } from "@/components/ui/entities";
+import { DateWithTime, SnippetId } from "@/components/ui/entities";
 import { DataTableColumnHeader } from "@/components/ui/table";
 import { ProviderProps } from "@/types";
 
@@ -36,7 +36,18 @@ export const ColumnProviders: ColumnDef<ProviderProps>[] = [
       );
     },
   },
-
+  {
+    accessorKey: "uid",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={"Id"} param="uid" />
+    ),
+    cell: ({ row }) => {
+      const {
+        attributes: { uid },
+      } = getProviderData(row);
+      return <SnippetId className="h-7 max-w-48" entityId={uid} />;
+    },
+  },
   {
     accessorKey: "added",
     header: ({ column }) => (

@@ -93,10 +93,10 @@ export const FindingsByStatusChart: React.FC<FindingsByStatusChartProps> = ({
   return (
     <Card className="dark:bg-prowler-blue-400">
       <CardBody>
-        <div className="flex items-center gap-6">
+        <div className="flex flex-col items-center gap-6">
           <ChartContainer
             config={chartConfig}
-            className="aspect-square w-[150px] min-w-[150px]"
+            className="aspect-square w-[250px] min-w-[250px]"
           >
             <PieChart>
               <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
@@ -104,8 +104,8 @@ export const FindingsByStatusChart: React.FC<FindingsByStatusChartProps> = ({
                 data={totalFindings > 0 ? chartData : emptyChartData}
                 dataKey="number"
                 nameKey="findings"
-                innerRadius={40}
-                strokeWidth={35}
+                innerRadius={65}
+                strokeWidth={55}
               >
                 <Label
                   content={({ viewBox }) => {
@@ -141,7 +141,8 @@ export const FindingsByStatusChart: React.FC<FindingsByStatusChartProps> = ({
               </Pie>
             </PieChart>
           </ChartContainer>
-          <div className="flex flex-col gap-4">
+
+          <div className="grid w-full grid-cols-2 justify-items-center gap-6">
             <div className="flex flex-col gap-2">
               <div className="flex items-center space-x-2">
                 <Chip
@@ -169,6 +170,7 @@ export const FindingsByStatusChart: React.FC<FindingsByStatusChartProps> = ({
                 )}
               </div>
             </div>
+
             <div className="flex flex-col gap-2">
               <div className="flex items-center space-x-2">
                 <Chip

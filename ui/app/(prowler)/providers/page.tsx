@@ -3,7 +3,7 @@ import { Suspense } from "react";
 
 import { getProviders } from "@/actions/providers";
 import { FilterControls, filterProviders } from "@/components/filters";
-import { AddProvider } from "@/components/providers";
+import { AddProvider, LinkToScans } from "@/components/providers";
 import {
   ColumnProviders,
   SkeletonTableProviders,
@@ -32,11 +32,12 @@ export default async function Providers({
       <Spacer y={8} />
 
       <div className="grid grid-cols-12 gap-4">
-        <div className="col-span-6">
+        <div className="col-span-12">
           <Suspense key={searchParamsKey} fallback={<SkeletonTableProviders />}>
             <SSRDataTable searchParams={searchParams} />
           </Suspense>
         </div>
+        {/* <LinkToScans /> */}
       </div>
     </>
   );
