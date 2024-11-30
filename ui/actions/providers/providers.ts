@@ -245,6 +245,7 @@ export const addCredentialsProvider = async (formData: FormData) => {
     revalidatePath("/providers");
     return parseStringify(data);
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error(error);
     return {
       error: getErrorMessage(error),
