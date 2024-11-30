@@ -4,11 +4,12 @@ import { ColumnDef } from "@tanstack/react-table";
 import { useSearchParams } from "next/navigation";
 
 import { InfoIcon } from "@/components/icons";
-import { DateWithTime, SnippetId } from "@/components/ui/entities";
+import { DateWithTime } from "@/components/ui/entities";
 import { TriggerSheet } from "@/components/ui/sheet";
 import { DataTableColumnHeader, StatusBadge } from "@/components/ui/table";
 import { ScanProps } from "@/types";
 
+import { LinkToFindingsFromScan } from "../../link-to-findings-from-scan";
 import { DataTableRowActions } from "./data-table-row-actions";
 import { DataTableRowDetails } from "./data-table-row-details";
 
@@ -18,6 +19,15 @@ const getScanData = (row: { original: ScanProps }) => {
 
 export const ColumnGetScans: ColumnDef<ScanProps>[] = [
   {
+    accessorKey: "accountName",
+    header: () => <p className="pr-8">Account name</p>,
+    cell: ({ row }) => {
+      console.log(row.original);
+
+      return <span className="font-medium">providerinfo</span>;
+    },
+  },
+  {
     accessorKey: "started_at",
     header: () => <p className="pr-8">Started at</p>,
     cell: ({ row }) => {
@@ -25,7 +35,11 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
         attributes: { started_at },
       } = getScanData(row);
 
-      return <DateWithTime dateTime={started_at} />;
+      return (
+        <div className="w-[100px]">
+          <DateWithTime dateTime={started_at} />
+        </div>
+      );
     },
   },
   {
@@ -43,6 +57,14 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
           loadingProgress={row.original.attributes.progress}
         />
       );
+    },
+  },
+  {
+    accessorKey: "findings",
+    header: "Findings",
+    cell: ({ row }) => {
+      const { id } = getScanData(row);
+      return <LinkToFindingsFromScan scanId={id} />;
     },
   },
   // {
@@ -110,18 +132,17 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
       return <p>{trigger}</p>;
     },
   },
-
+  // {
+  //   accessorKey: "id",
+  //   header: () => <span>ID</span>,
+  //   cell: ({ row }) => {
+  //     return <SnippetId entityId={row.original.id} />;
+  //   },
+  // },
   {
-    accessorKey: "id",
-    header: () => <span>ID</span>,
-    cell: ({ row }) => {
-      return <SnippetId entityId={row.original.id} />;
-    },
-  },
-  {
-    accessorKey: "name",
+    accessorKey: "scanName",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={"Name"} param="name" />
+      <DataTableColumnHeader column={column} title={"Scan name"} param="name" />
     ),
     cell: ({ row }) => {
       const {

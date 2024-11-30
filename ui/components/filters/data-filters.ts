@@ -8,11 +8,11 @@ export const filterProviders = [
 ];
 
 export const filterScans = [
-  {
-    key: "provider_type__in",
-    labelCheckboxGroup: "Provider",
-    values: ["aws", "azure", "gcp", "kubernetes"],
-  },
+  // {
+  //   key: "provider_type__in",
+  //   labelCheckboxGroup: "Provider",
+  //   values: ["aws", "azure", "gcp", "kubernetes"],
+  // },
   {
     key: "state",
     labelCheckboxGroup: "State",

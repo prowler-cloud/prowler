@@ -1,5 +1,6 @@
 from celery.result import AsyncResult
 from django.conf import settings as django_settings
+from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.search import SearchQuery
 from django.db import transaction
 from django.db.models import Count, F, OuterRef, Prefetch, Q, Subquery, Sum
@@ -64,6 +65,7 @@ from api.models import (
     Scan,
     ScanSummary,
     SeverityChoices,
+    StateChoices,
     StatusChoices,
     Task,
     User,
@@ -75,6 +77,7 @@ from api.uuid_utils import datetime_to_uuid7
 from api.v1.serializers import (
     ComplianceOverviewFullSerializer,
     ComplianceOverviewSerializer,
+    FindingDynamicFilterSerializer,
     FindingSerializer,
     InvitationAcceptSerializer,
     InvitationCreateSerializer,
@@ -978,6 +981,13 @@ class ResourceViewSet(BaseRLSViewSet):
         summary="Retrieve data from a specific finding",
         description="Fetch detailed information about a specific finding by its ID.",
     ),
+    findings_services_regions=extend_schema(
+        tags=["Finding"],
+        summary="Retrieve the services and regions that are impacted by findings",
+        description="Fetch services and regions affected in findings.",
+        responses={201: OpenApiResponse(response=MembershipSerializer)},
+        filters=True,
+    ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 @method_decorator(CACHE_DECORATOR, name="retrieve")
@@ -1007,6 +1017,12 @@ class FindingViewSet(BaseRLSViewSet):
         if inserted_at is None:
             return None
         return datetime_to_uuid7(inserted_at)
+
+    def get_serializer_class(self):
+        if self.action == "findings_services_regions":
+            return FindingDynamicFilterSerializer
+
+        return super().get_serializer_class()
 
     def get_queryset(self):
         queryset = Finding.objects.all()
@@ -1038,6 +1054,27 @@ class FindingViewSet(BaseRLSViewSet):
             ).distinct()
 
         return queryset
+
+    @action(detail=False, methods=["get"], url_name="findings_services_regions")
+    def findings_services_regions(self, request):
+        queryset = self.get_queryset()
+        filtered_queryset = self.filter_queryset(queryset)
+
+        result = filtered_queryset.aggregate(
+            services=ArrayAgg("resources__service", flat=True, distinct=True),
+            regions=ArrayAgg("resources__region", flat=True, distinct=True),
+        )
+        if result["services"] is None:
+            result["services"] = []
+        if result["regions"] is None:
+            result["regions"] = []
+
+        serializer = self.get_serializer(
+            data=result,
+        )
+        serializer.is_valid(raise_exception=True)
+
+        return Response(data=serializer.data, status=status.HTTP_200_OK)
 
 
 @extend_schema_view(
@@ -1444,7 +1481,9 @@ class OverviewViewSet(BaseRLSViewSet):
         filtered_queryset = self.filter_queryset(queryset)
 
         latest_scan_subquery = (
-            Scan.objects.filter(provider_id=OuterRef("scan__provider_id"))
+            Scan.objects.filter(
+                state=StateChoices.COMPLETED, provider_id=OuterRef("scan__provider_id")
+            )
             .order_by("-id")
             .values("id")[:1]
         )
@@ -1484,7 +1523,9 @@ class OverviewViewSet(BaseRLSViewSet):
         filtered_queryset = self.filter_queryset(queryset)
 
         latest_scan_subquery = (
-            Scan.objects.filter(provider_id=OuterRef("scan__provider_id"))
+            Scan.objects.filter(
+                state=StateChoices.COMPLETED, provider_id=OuterRef("scan__provider_id")
+            )
             .order_by("-id")
             .values("id")[:1]
         )
