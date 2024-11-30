@@ -751,6 +751,49 @@ paths:
               schema:
                 $ref: '#/components/schemas/FindingResponse'
           description: ''
+  /api/v1/findings/findings_services_regions:
+    get:
+      operationId: findings_findings_services_regions_retrieve
+      description: Fetch services and regions affected in a finding by date.
+      summary: Retrieve the services and regions that are impacted by a finding in
+        a specific date
+      parameters:
+      - in: query
+        name: fields[findings-services-regions]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - services
+            - regions
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: filter[updated_at]
+        schema:
+          type: string
+          format: date
+        description: Date in the format YYYY-MM-DD
+        required: true
+      tags:
+      - Finding
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/OpenApiResponseResponse'
+          description: ''
   /api/v1/invitations/accept:
     post:
       operationId: invitations_accept_create
@@ -4620,6 +4663,7 @@ components:
       type: object
       required:
       - type
+      - id
       additionalProperties: false
       properties:
         type:
@@ -4628,6 +4672,9 @@ components:
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
+        id:
+          type: string
+          format: uuid
         attributes:
           type: object
           properties:

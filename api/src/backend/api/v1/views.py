@@ -1,5 +1,7 @@
 from celery.result import AsyncResult
+from datetime import date, datetime
 from django.conf import settings as django_settings
+from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.search import SearchQuery
 from django.db import transaction
 from django.db.models import Count, F, OuterRef, Prefetch, Q, Subquery, Sum
@@ -39,6 +41,7 @@ from api.db_router import MainRouter
 from api.filters import (
     ComplianceOverviewFilter,
     FindingFilter,
+    FindingDynamicFilter,
     InvitationFilter,
     MembershipFilter,
     ProviderFilter,
@@ -76,6 +79,7 @@ from api.v1.serializers import (
     ComplianceOverviewFullSerializer,
     ComplianceOverviewSerializer,
     FindingSerializer,
+    FindingDynamicFilterSerializer,
     InvitationAcceptSerializer,
     InvitationCreateSerializer,
     InvitationSerializer,
@@ -978,6 +982,22 @@ class ResourceViewSet(BaseRLSViewSet):
         summary="Retrieve data from a specific finding",
         description="Fetch detailed information about a specific finding by its ID.",
     ),
+    findings_services_regions=extend_schema(
+        tags=["Finding"],
+        summary="Retrieve the services and regions that are impacted by a finding in a specific date",
+        description="Fetch services and regions affected in a finding by date.",
+        parameters=[
+            OpenApiParameter(
+                name="filter[updated_at]",
+                required=True,
+                type=OpenApiTypes.DATE,
+                location=OpenApiParameter.QUERY,
+                description="Date in the format YYYY-MM-DD",
+            ),
+        ],
+        responses={201: OpenApiResponse(response=MembershipSerializer)},
+        filters=True,
+    ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 @method_decorator(CACHE_DECORATOR, name="retrieve")
@@ -992,7 +1012,6 @@ class FindingViewSet(BaseRLSViewSet):
         "scan": [Prefetch("scan", queryset=Scan.objects.select_related("findings"))],
     }
     http_method_names = ["get"]
-    filterset_class = FindingFilter
     ordering = ["-id"]
     ordering_fields = [
         "id",
@@ -1007,6 +1026,24 @@ class FindingViewSet(BaseRLSViewSet):
         if inserted_at is None:
             return None
         return datetime_to_uuid7(inserted_at)
+
+    def get_serializer_class(self):
+        if self.action == "findings_services_regions":
+            return FindingDynamicFilterSerializer
+
+        return super().get_serializer_class()
+
+    def get_filterset_class(self):
+        if self.action in ["findings_services_regions"]:
+            self.ordering_fields = []
+            return FindingDynamicFilter
+
+        return FindingFilter
+
+    def get_ordering_fields(self):
+        if self.action == "findings_services_regions":
+            return None
+        return self.ordering_fields
 
     def get_queryset(self):
         queryset = Finding.objects.all()
@@ -1038,6 +1075,32 @@ class FindingViewSet(BaseRLSViewSet):
             ).distinct()
 
         return queryset
+
+    @action(detail=False, methods=["get"], url_name="findings_services_regions")
+    def findings_services_regions(self, request):
+        try:
+            updated_at = datetime.strptime(
+                request.query_params["filter[updated_at]"], "%Y-%m-%d"
+            ).date()
+            if updated_at > date.today():
+                raise ValidationError(detail="The date must be a date in the past.")
+        except ValueError:
+            raise ValidationError(detail="Invalid date format.")
+
+        queryset = self.get_queryset()
+        filtered_queryset = self.filter_queryset(queryset)
+
+        result = filtered_queryset.aggregate(
+            services=ArrayAgg("resources__service", flat=True, distinct=True),
+            regions=ArrayAgg("resources__region", flat=True, distinct=True),
+        )
+
+        serializer = self.get_serializer(
+            data=result,
+        )
+        serializer.is_valid(raise_exception=True)
+
+        return Response(data=serializer.data, status=status.HTTP_200_OK)
 
 
 @extend_schema_view(

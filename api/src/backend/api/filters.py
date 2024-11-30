@@ -426,6 +426,16 @@ class FindingFilter(FilterSet):
         return dt
 
 
+class FindingDynamicFilter(FilterSet):
+    updated_at = DateFilter(field_name="updated_at", lookup_expr="date")
+
+    class Meta:
+        model = Finding
+        fields = {
+            "updated_at": ["exact"],
+        }
+
+
 class ProviderSecretFilter(FilterSet):
     inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
     updated_at = DateFilter(field_name="updated_at", lookup_expr="date")
