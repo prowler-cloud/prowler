@@ -84,7 +84,6 @@ export const ViaCredentialsForm = ({
   const isLoading = form.formState.isSubmitting;
 
   const onSubmitClient = async (values: FormType) => {
-    console.log("via credentials form", values);
     const formData = new FormData();
 
     Object.entries(values).forEach(
