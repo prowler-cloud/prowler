@@ -93,8 +93,8 @@ Prowler App can be installed in different ways, depending on your environment:
 **Commands**
 
 ``` console
-curl -Lo https://github.com/prowler-cloud/prowler/blob/master/docker-compose.yml
-curl -Lo https://github.com/prowler-cloud/prowler/blob/master/.env
+curl -LO https://raw.githubusercontent.com/prowler-cloud/prowler/refs/heads/master/docker-compose.yml
+curl -LO https://raw.githubusercontent.com/prowler-cloud/prowler/refs/heads/master/.env
 docker compose up -d
 ```
 
