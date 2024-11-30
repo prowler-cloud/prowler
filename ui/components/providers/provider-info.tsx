@@ -1,12 +1,7 @@
 import React from "react";
 
 import { ConnectionFalse, ConnectionPending, ConnectionTrue } from "../icons";
-import {
-  AWSProviderBadge,
-  AzureProviderBadge,
-  GCPProviderBadge,
-  KS8ProviderBadge,
-} from "../icons/providers-badge";
+import { getProviderLogo } from "../ui/entities";
 
 interface ProviderInfoProps {
   connected: boolean | null;
@@ -44,30 +39,14 @@ export const ProviderInfo: React.FC<ProviderInfoProps> = ({
     }
   };
 
-  const getProviderLogo = () => {
-    switch (provider) {
-      case "aws":
-        return <AWSProviderBadge width={35} height={35} />;
-      case "azure":
-        return <AzureProviderBadge width={35} height={35} />;
-      case "gcp":
-        return <GCPProviderBadge width={35} height={35} />;
-      case "kubernetes":
-        return <KS8ProviderBadge width={35} height={35} />;
-      default:
-        return null;
-    }
-  };
-
   return (
     <div className="max-w-48">
       <div className="flex items-center justify-between space-x-4">
         <div className="flex items-center space-x-4">
-          <div className="flex-shrink-0">{getProviderLogo()}</div>
+          <div className="flex-shrink-0">{getProviderLogo(provider)}</div>
           <div className="flex-shrink-0">{getIcon()}</div>
           <div className="flex flex-col">
             <span className="text-small font-semibold">{providerAlias}</span>
-            {/* <CustomLoader size="small" /> */}
           </div>
         </div>
       </div>
