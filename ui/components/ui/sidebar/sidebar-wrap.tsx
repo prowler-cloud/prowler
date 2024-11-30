@@ -77,7 +77,7 @@ export const SidebarWrap = () => {
             <ProwlerExtended />
           </div>
         </Link>
-        <Link href={"/profile"}>
+        <Link href={"/users"}>
           <Suspense fallback={<p>Loading...</p>}>
             <UserAvatar
               userName={session?.user.name ?? "Guest"}
