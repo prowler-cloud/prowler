@@ -1,5 +1,4 @@
 from celery.result import AsyncResult
-from datetime import datetime
 from django.conf import settings as django_settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.search import SearchQuery
@@ -41,7 +40,6 @@ from api.db_router import MainRouter
 from api.filters import (
     ComplianceOverviewFilter,
     FindingFilter,
-    FindingDynamicFilter,
     InvitationFilter,
     MembershipFilter,
     ProviderFilter,
@@ -984,8 +982,8 @@ class ResourceViewSet(BaseRLSViewSet):
     ),
     findings_services_regions=extend_schema(
         tags=["Finding"],
-        summary="Retrieve the services and regions that are impacted by findings in a specific date",
-        description="Fetch services and regions affected in findings by date.",
+        summary="Retrieve the services and regions that are impacted by findings",
+        description="Fetch services and regions affected in findings.",
         responses={201: OpenApiResponse(response=MembershipSerializer)},
         filters=True,
     ),
@@ -1003,6 +1001,7 @@ class FindingViewSet(BaseRLSViewSet):
         "scan": [Prefetch("scan", queryset=Scan.objects.select_related("findings"))],
     }
     http_method_names = ["get"]
+    filterset_class = FindingFilter
     ordering = ["-id"]
     ordering_fields = [
         "id",
@@ -1023,13 +1022,6 @@ class FindingViewSet(BaseRLSViewSet):
             return FindingDynamicFilterSerializer
 
         return super().get_serializer_class()
-
-    def get_filterset_class(self):
-        if self.action in ["findings_services_regions"]:
-            self.ordering_fields = []
-            return FindingDynamicFilter
-
-        return FindingFilter
 
     def get_queryset(self):
         queryset = Finding.objects.all()
@@ -1064,13 +1056,6 @@ class FindingViewSet(BaseRLSViewSet):
 
     @action(detail=False, methods=["get"], url_name="findings_services_regions")
     def findings_services_regions(self, request):
-        try:
-            datetime.strptime(
-                request.query_params["filter[inserted_at]"], "%Y-%m-%d"
-            ).date()
-        except ValueError:
-            raise ValidationError(detail="Invalid date format.")
-
         queryset = self.get_queryset()
         filtered_queryset = self.filter_queryset(queryset)
 

@@ -2468,6 +2468,27 @@ class TestFindingViewSet:
         assert set(data["data"]["attributes"]["services"]) == expected_services
         assert set(data["data"]["attributes"]["regions"]) == expected_regions
 
+    def test_findings_services_regions_severity_retrieve(
+        self, authenticated_client, findings_fixture
+    ):
+        finding_1, *_ = findings_fixture
+        response = authenticated_client.get(
+            reverse("finding-findings_services_regions"),
+            {
+                "filter[severity__in]": ["low", "medium"],
+                "filter[inserted_at]": finding_1.updated_at.strftime("%Y-%m-%d"),
+            },
+        )
+        data = response.json()
+
+        expected_services = {"s3"}
+        expected_regions = {"eu-west-1"}
+
+        assert data["data"]["type"] == "finding-dynamic-filters"
+        assert data["data"]["id"] is None
+        assert set(data["data"]["attributes"]["services"]) == expected_services
+        assert set(data["data"]["attributes"]["regions"]) == expected_regions
+
     def test_findings_services_regions_future_date(self, authenticated_client):
         response = authenticated_client.get(
             reverse("finding-findings_services_regions"),
@@ -2487,9 +2508,9 @@ class TestFindingViewSet:
         assert response.json() == {
             "errors": [
                 {
-                    "detail": "Invalid date format.",
+                    "detail": "Enter a valid date.",
                     "status": "400",
-                    "source": {"pointer": "/data"},
+                    "source": {"pointer": "/data/attributes/inserted_at"},
                     "code": "invalid",
                 }
             ]
