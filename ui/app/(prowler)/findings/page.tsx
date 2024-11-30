@@ -106,7 +106,7 @@ export default async function Findings({
           {
             key: "scan__in",
             labelCheckboxGroup: "Scans",
-            values: completedScanIds, // Use UUIDs in the filter
+            values: completedScanIds,
           },
         ]}
         defaultOpen={true}
@@ -125,11 +125,15 @@ const SSRDataTable = async ({
   searchParams: SearchParamsProps;
 }) => {
   const page = parseInt(searchParams.page?.toString() || "1", 10);
-  const sort = searchParams.sort?.toString() || "severity,updated_at";
+  const defaultSort = "severity,status";
+  const sort = searchParams.sort?.toString() || defaultSort;
+
+  // Make sure the sort is correctly encoded
+  const encodedSort = sort.replace(/^\+/, "");
 
   // Extract all filter parameters and combine with default filters
   const defaultFilters = {
-    "filter[status__in]": "FAIL",
+    "filter[status__in]": "FAIL, PASS",
     "filter[delta__in]": "new",
   };
 
@@ -144,7 +148,7 @@ const SSRDataTable = async ({
   const findingsData = await getFindings({
     query,
     page,
-    sort,
+    sort: encodedSort,
     filters,
     pageSize: 10,
   });

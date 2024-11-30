@@ -9,6 +9,7 @@ import { TriggerSheet } from "@/components/ui/sheet";
 import { DataTableColumnHeader, StatusBadge } from "@/components/ui/table";
 import { ScanProps } from "@/types";
 
+import { LinkToFindingsFromScan } from "../../link-to-findings-from-scan";
 import { DataTableRowActions } from "./data-table-row-actions";
 import { DataTableRowDetails } from "./data-table-row-details";
 
@@ -25,7 +26,11 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
         attributes: { started_at },
       } = getScanData(row);
 
-      return <DateWithTime dateTime={started_at} />;
+      return (
+        <div className="w-[100px]">
+          <DateWithTime dateTime={started_at} />
+        </div>
+      );
     },
   },
   {
@@ -43,6 +48,14 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
           loadingProgress={row.original.attributes.progress}
         />
       );
+    },
+  },
+  {
+    accessorKey: "findings",
+    header: "Findings",
+    cell: ({ row }) => {
+      const { id } = getScanData(row);
+      return <LinkToFindingsFromScan scanId={id} />;
     },
   },
   // {

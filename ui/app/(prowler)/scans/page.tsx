@@ -3,7 +3,7 @@ import { Suspense } from "react";
 
 import { getProviders } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
-import { filterScans } from "@/components/filters";
+import { FilterControls, filterScans } from "@/components/filters";
 import { ButtonRefreshData } from "@/components/scans";
 import { LaunchScanWorkflow } from "@/components/scans/launch-workflow";
 import { SkeletonTableScans } from "@/components/scans/table";
@@ -40,6 +40,8 @@ export default async function Scans({
       <Header title="Scans" icon="lucide:scan-search" />
 
       <Spacer y={4} />
+      <FilterControls search providers />
+      <Spacer y={8} />
       <LaunchScanWorkflow providers={providerInfo} />
       <Spacer y={8} />
       <div className="flex flex-row justify-between">
