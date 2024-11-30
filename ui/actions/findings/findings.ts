@@ -8,6 +8,7 @@ import { parseStringify } from "@/lib";
 
 export const getFindings = async ({
   page = 1,
+  pageSize = 10,
   query = "",
   sort = "",
   filters = {},
@@ -21,10 +22,11 @@ export const getFindings = async ({
   const url = new URL(`${keyServer}/findings?include=resources.provider,scan`);
 
   if (page) url.searchParams.append("page[number]", page.toString());
+  if (pageSize) url.searchParams.append("page[size]", pageSize.toString());
+
   if (query) url.searchParams.append("filter[search]", query);
   if (sort) url.searchParams.append("sort", sort);
 
-  // Handle multiple filters
   Object.entries(filters).forEach(([key, value]) => {
     if (key !== "filter[search]") {
       url.searchParams.append(key, String(value));

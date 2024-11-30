@@ -141,8 +141,13 @@ const SSRDataTable = async ({
   };
 
   const query = filters["filter[search]"] || "";
-
-  const findingsData = await getFindings({ query, page, sort, filters });
+  const findingsData = await getFindings({
+    query,
+    page,
+    sort,
+    filters,
+    pageSize: 10,
+  });
 
   // Create dictionaries for resources, scans, and providers
   const resourceDict = createDict("resources", findingsData);
