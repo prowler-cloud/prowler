@@ -2,18 +2,20 @@
 
 import { CustomButton } from "@/components/ui/custom";
 
-export const LinkToScans = () => {
+interface LinkToScansProps {
+  providerUid?: string;
+}
+
+export const LinkToScans = ({ providerUid }: LinkToScansProps) => {
   return (
-    <div className="mt-4 flex w-full items-center justify-end">
-      <CustomButton
-        asLink="/scans"
-        ariaLabel="Go to Scans page"
-        variant="solid"
-        color="action"
-        size="md"
-      >
-        View Scan Jobs
-      </CustomButton>
-    </div>
+    <CustomButton
+      asLink={`/scans?filter[provider_uid]=${providerUid}`}
+      ariaLabel="Go to Scans page"
+      variant="solid"
+      color="action"
+      size="sm"
+    >
+      View Scan Jobs
+    </CustomButton>
   );
 };

@@ -6,6 +6,7 @@ import { DateWithTime, SnippetId } from "@/components/ui/entities";
 import { DataTableColumnHeader } from "@/components/ui/table";
 import { ProviderProps } from "@/types";
 
+import { LinkToScans } from "../link-to-scans";
 import { ProviderInfo } from "../provider-info";
 import { DataTableRowActions } from "./data-table-row-actions";
 
@@ -14,10 +15,6 @@ const getProviderData = (row: { original: ProviderProps }) => {
 };
 
 export const ColumnProviders: ColumnDef<ProviderProps>[] = [
-  // {
-  //   header: " ",
-  //   cell: ({ row }) => <p className="text-medium">{row.index + 1}</p>,
-  // },
   {
     accessorKey: "account",
     header: ({ column }) => (
@@ -35,6 +32,16 @@ export const ColumnProviders: ColumnDef<ProviderProps>[] = [
           providerUID={uid}
         />
       );
+    },
+  },
+  {
+    accessorKey: "scanJobs",
+    header: "Scan Jobs",
+    cell: ({ row }) => {
+      const {
+        attributes: { uid },
+      } = getProviderData(row);
+      return <LinkToScans providerUid={uid} />;
     },
   },
   {

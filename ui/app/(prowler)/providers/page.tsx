@@ -37,7 +37,6 @@ export default async function Providers({
             <SSRDataTable searchParams={searchParams} />
           </Suspense>
         </div>
-        {/* <LinkToScans /> */}
       </div>
     </>
   );
