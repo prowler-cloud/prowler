@@ -7,12 +7,14 @@ interface ProviderInfoProps {
   connected: boolean | null;
   provider: "aws" | "azure" | "gcp" | "kubernetes";
   providerAlias: string;
+  providerUID?: string;
 }
 
 export const ProviderInfo: React.FC<ProviderInfoProps> = ({
   connected,
   provider,
   providerAlias,
+  providerUID,
 }) => {
   const getIcon = () => {
     switch (connected) {
@@ -40,13 +42,19 @@ export const ProviderInfo: React.FC<ProviderInfoProps> = ({
   };
 
   return (
-    <div className="max-w-48">
-      <div className="flex items-center justify-between space-x-4">
-        <div className="flex items-center space-x-4">
-          <div className="flex-shrink-0">{getProviderLogo(provider)}</div>
-          <div className="flex-shrink-0">{getIcon()}</div>
-          <div className="flex flex-col">
-            <span className="text-small font-semibold">{providerAlias}</span>
+    <div className="dark:bg-prowler-blue-400">
+      <div className="grid grid-cols-1">
+        <div className="flex items-center text-sm">
+          <div className="flex items-center">
+            <span className="flex items-center justify-center px-4">
+              {getProviderLogo(provider)}
+            </span>
+            <div className="flex items-center space-x-4">
+              <div className="flex-shrink-0">{getIcon()}</div>
+              <span className="font-medium">
+                {providerAlias || providerUID}
+              </span>
+            </div>
           </div>
         </div>
       </div>

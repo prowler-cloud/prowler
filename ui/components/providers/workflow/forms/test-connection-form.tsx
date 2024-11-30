@@ -14,7 +14,7 @@ import {
 } from "@/actions/providers";
 import { scanOnDemand } from "@/actions/scans";
 import { getTask } from "@/actions/task/tasks";
-import { CheckIcon, SaveIcon } from "@/components/icons";
+import { CheckIcon, RocketIcon } from "@/components/icons";
 import { useToast } from "@/components/ui";
 import { CustomButton } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
@@ -35,6 +35,7 @@ export const TestConnectionForm = ({
       id: string;
       type: string;
       attributes: {
+        uid: string;
         connection: {
           connected: boolean | null;
           last_checked_at: string | null;
@@ -58,7 +59,6 @@ export const TestConnectionForm = ({
   const router = useRouter();
   const providerType = searchParams.type;
   const providerId = searchParams.id;
-  console.log({ providerData }, "providerData from test connection form");
   const formSchema = testConnectionFormSchema;
   const [apiErrorMessage, setApiErrorMessage] = useState<string | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<{
@@ -77,7 +77,6 @@ export const TestConnectionForm = ({
   const isLoading = form.formState.isSubmitting;
 
   const onSubmitClient = async (values: FormValues) => {
-    console.log({ values }, "values from test connection form");
     const formData = new FormData();
     formData.append("providerId", values.providerId);
 
@@ -175,6 +174,7 @@ export const TestConnectionForm = ({
         `/providers/add-credentials?type=${providerType}&id=${providerId}`,
       );
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error("Failed to delete credentials:", error);
     } finally {
       setIsResettingCredentials(false);
@@ -230,7 +230,14 @@ export const TestConnectionForm = ({
           connected={providerData.data.attributes.connection.connected}
           provider={providerData.data.attributes.provider}
           providerAlias={providerData.data.attributes.alias}
+          providerUID={providerData.data.attributes.uid}
         />
+
+        {!isResettingCredentials && !connectionStatus?.error && (
+          <p className="py-2 text-default-500">
+            Test connection and launch scan
+          </p>
+        )}
 
         <input type="hidden" name="providerId" value={providerId} />
 
@@ -274,9 +281,9 @@ export const TestConnectionForm = ({
               color="action"
               size="lg"
               isLoading={isLoading}
-              startContent={!isLoading && <SaveIcon size={24} />}
+              endContent={!isLoading && <RocketIcon size={24} />}
             >
-              {isLoading ? <>Loading</> : <span>Test connection</span>}
+              {isLoading ? <>Loading</> : <span>Launch</span>}
             </CustomButton>
           )}
         </div>

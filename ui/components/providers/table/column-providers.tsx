@@ -25,13 +25,14 @@ export const ColumnProviders: ColumnDef<ProviderProps>[] = [
     ),
     cell: ({ row }) => {
       const {
-        attributes: { connection, provider, alias },
+        attributes: { connection, provider, alias, uid },
       } = getProviderData(row);
       return (
         <ProviderInfo
           connected={connection.connected}
           provider={provider}
           providerAlias={alias}
+          providerUID={uid}
         />
       );
     },
