@@ -25,9 +25,9 @@ const steps = [
     href: "/providers/test-connection",
   },
   {
-    title: "Launch scan",
+    title: "Success",
     description:
-      "Launch the scan now or schedule it for a later date and time.",
+      "Your cloud account has been successfully connected and the scan has been launched.",
     href: "/providers/launch-scan",
   },
 ];
