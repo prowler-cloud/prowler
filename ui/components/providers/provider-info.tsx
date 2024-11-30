@@ -66,9 +66,7 @@ export const ProviderInfo: React.FC<ProviderInfoProps> = ({
           <div className="flex-shrink-0">{getProviderLogo()}</div>
           <div className="flex-shrink-0">{getIcon()}</div>
           <div className="flex flex-col">
-            <span className="text-md max-w-24 overflow-hidden text-ellipsis font-semibold lg:max-w-36">
-              {providerAlias}
-            </span>
+            <span className="text-small font-semibold">{providerAlias}</span>
             {/* <CustomLoader size="small" /> */}
           </div>
         </div>

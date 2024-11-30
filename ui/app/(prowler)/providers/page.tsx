@@ -3,7 +3,7 @@ import { Suspense } from "react";
 
 import { getProviders } from "@/actions/providers";
 import { FilterControls, filterProviders } from "@/components/filters";
-import { AddProvider, LinkToScans } from "@/components/providers";
+import { AddProvider } from "@/components/providers";
 import {
   ColumnProviders,
   SkeletonTableProviders,

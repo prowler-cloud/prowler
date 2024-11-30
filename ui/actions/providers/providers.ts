@@ -102,6 +102,7 @@ export const updateProvider = async (formData: FormData) => {
     revalidatePath("/providers");
     return parseStringify(data);
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error(error);
     return {
       error: getErrorMessage(error),
@@ -113,13 +114,24 @@ export const addProvider = async (formData: FormData) => {
   const session = await auth();
   const keyServer = process.env.API_BASE_URL;
 
-  const providerType = formData.get("providerType");
-  const providerUid = formData.get("providerUid");
-  const providerAlias = formData.get("providerAlias");
+  const providerType = formData.get("providerType") as string;
+  const providerUid = formData.get("providerUid") as string;
+  const providerAlias = formData.get("providerAlias") as string;
 
   const url = new URL(`${keyServer}/providers`);
 
   try {
+    const bodyData = {
+      data: {
+        type: "providers",
+        attributes: {
+          provider: providerType,
+          uid: providerUid,
+          ...(providerAlias?.trim() && { alias: providerAlias.trim() }),
+        },
+      },
+    };
+
     const response = await fetch(url.toString(), {
       method: "POST",
       headers: {
@@ -127,21 +139,14 @@ export const addProvider = async (formData: FormData) => {
         Accept: "application/vnd.api+json",
         Authorization: `Bearer ${session?.accessToken}`,
       },
-      body: JSON.stringify({
-        data: {
-          type: "providers",
-          attributes: {
-            provider: providerType,
-            uid: providerUid,
-            alias: providerAlias,
-          },
-        },
-      }),
+      body: JSON.stringify(bodyData),
     });
+
     const data = await response.json();
     revalidatePath("/providers");
     return parseStringify(data);
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error(error);
     return {
       error: getErrorMessage(error),
