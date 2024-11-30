@@ -708,11 +708,11 @@ class FindingSerializer(RLSSerializer):
 
 
 class FindingDynamicFilterSerializer(serializers.Serializer):
-    services = serializers.ListField(child=serializers.CharField())
-    regions = serializers.ListField(child=serializers.CharField())
+    services = serializers.ListField(child=serializers.CharField(), allow_empty=True)
+    regions = serializers.ListField(child=serializers.CharField(), allow_empty=True)
 
     class Meta:
-        resource_name = "findings-services-regions"
+        resource_name = "finding-dynamic-filters"
 
 
 # Provider secrets

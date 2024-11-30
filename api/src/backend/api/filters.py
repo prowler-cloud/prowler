@@ -427,13 +427,28 @@ class FindingFilter(FilterSet):
 
 
 class FindingDynamicFilter(FilterSet):
-    updated_at = DateFilter(field_name="updated_at", lookup_expr="date")
+    inserted_at = DateFilter(
+        method="filter_inserted_at", lookup_expr="date", required=True
+    )
 
     class Meta:
         model = Finding
         fields = {
-            "updated_at": ["exact"],
+            "inserted_at": ["exact"],
         }
+
+    def filter_inserted_at(self, queryset, name, value):
+        value = self.maybe_date_to_datetime(value)
+        start = uuid7_start(datetime_to_uuid7(value))
+
+        return queryset.filter(id__gte=start).filter(inserted_at__date=value)
+
+    @staticmethod
+    def maybe_date_to_datetime(value):
+        dt = value
+        if isinstance(value, date):
+            dt = datetime.combine(value, datetime.min.time(), tzinfo=timezone.utc)
+        return dt
 
 
 class ProviderSecretFilter(FilterSet):

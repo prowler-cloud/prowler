@@ -1,5 +1,5 @@
 from celery.result import AsyncResult
-from datetime import date, datetime
+from datetime import datetime
 from django.conf import settings as django_settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.search import SearchQuery
@@ -984,17 +984,8 @@ class ResourceViewSet(BaseRLSViewSet):
     ),
     findings_services_regions=extend_schema(
         tags=["Finding"],
-        summary="Retrieve the services and regions that are impacted by a finding in a specific date",
-        description="Fetch services and regions affected in a finding by date.",
-        parameters=[
-            OpenApiParameter(
-                name="filter[updated_at]",
-                required=True,
-                type=OpenApiTypes.DATE,
-                location=OpenApiParameter.QUERY,
-                description="Date in the format YYYY-MM-DD",
-            ),
-        ],
+        summary="Retrieve the services and regions that are impacted by findings in a specific date",
+        description="Fetch services and regions affected in findings by date.",
         responses={201: OpenApiResponse(response=MembershipSerializer)},
         filters=True,
     ),
@@ -1040,11 +1031,6 @@ class FindingViewSet(BaseRLSViewSet):
 
         return FindingFilter
 
-    def get_ordering_fields(self):
-        if self.action == "findings_services_regions":
-            return None
-        return self.ordering_fields
-
     def get_queryset(self):
         queryset = Finding.objects.all()
         search_value = self.request.query_params.get("filter[search]", None)
@@ -1079,11 +1065,9 @@ class FindingViewSet(BaseRLSViewSet):
     @action(detail=False, methods=["get"], url_name="findings_services_regions")
     def findings_services_regions(self, request):
         try:
-            updated_at = datetime.strptime(
-                request.query_params["filter[updated_at]"], "%Y-%m-%d"
+            datetime.strptime(
+                request.query_params["filter[inserted_at]"], "%Y-%m-%d"
             ).date()
-            if updated_at > date.today():
-                raise ValidationError(detail="The date must be a date in the past.")
         except ValueError:
             raise ValidationError(detail="Invalid date format.")
 
@@ -1094,6 +1078,10 @@ class FindingViewSet(BaseRLSViewSet):
             services=ArrayAgg("resources__service", flat=True, distinct=True),
             regions=ArrayAgg("resources__region", flat=True, distinct=True),
         )
+        if result["services"] is None:
+            result["services"] = []
+        if result["regions"] is None:
+            result["regions"] = []
 
         serializer = self.get_serializer(
             data=result,

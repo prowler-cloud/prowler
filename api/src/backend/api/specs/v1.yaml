@@ -754,12 +754,12 @@ paths:
   /api/v1/findings/findings_services_regions:
     get:
       operationId: findings_findings_services_regions_retrieve
-      description: Fetch services and regions affected in a finding by date.
-      summary: Retrieve the services and regions that are impacted by a finding in
+      description: Fetch services and regions affected in findings by date.
+      summary: Retrieve the services and regions that are impacted by findings in
         a specific date
       parameters:
       - in: query
-        name: fields[findings-services-regions]
+        name: fields[finding-dynamic-filters]
         schema:
           type: array
           items:
@@ -770,19 +770,18 @@ paths:
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
+      - in: query
+        name: filter[inserted_at]
+        schema:
+          type: string
+          format: date
+        required: true
       - name: filter[search]
         required: false
         in: query
         description: A search term.
         schema:
           type: string
-      - in: query
-        name: filter[updated_at]
-        schema:
-          type: string
-          format: date
-        description: Date in the format YYYY-MM-DD
-        required: true
       tags:
       - Finding
       security:
