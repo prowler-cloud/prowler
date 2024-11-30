@@ -66,7 +66,8 @@ export const CustomSelectProvider: React.FC = () => {
       items={dataInputsProvider}
       aria-label="Select a Provider"
       placeholder="Select a provider"
-      labelPlacement="outside"
+      label="Provider"
+      labelPlacement="inside"
       size="sm"
       onChange={(e) => {
         const value = e.target.value;

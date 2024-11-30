@@ -23,12 +23,6 @@ export const authFormSchema = (type: string) =>
             }),
       invitationToken:
         type === "sign-in" ? z.string().optional() : z.string().optional(),
-      termsAndConditions:
-        type === "sign-in"
-          ? z.boolean().optional()
-          : z.boolean().refine((value) => value === true, {
-              message: "You must accept the terms and conditions.",
-            }),
 
       // Fields for Sign In and Sign Up
       email: z.string().email(),

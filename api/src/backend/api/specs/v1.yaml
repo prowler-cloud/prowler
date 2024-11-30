@@ -780,16 +780,332 @@ paths:
               schema:
                 $ref: '#/components/schemas/OpenApiResponseResponse'
           description: ''
+  /api/v1/overviews/findings:
+    get:
+      operationId: overviews_findings_retrieve
+      description: Fetch aggregated findings data across all providers, grouped by
+        various metrics such as passed, failed, muted, and total findings. This endpoint
+        calculates summary statistics based on the latest scans for each provider
+        and applies any provided filters, such as region, provider type, and scan
+        date.
+      summary: Get aggregated findings data
+      parameters:
+      - in: query
+        name: fields[findings-overview]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - new
+            - changed
+            - unchanged
+            - fail_new
+            - fail_changed
+            - pass_new
+            - pass_changed
+            - muted_new
+            - muted_changed
+            - total
+            - fail
+            - muted
+            - pass
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[inserted_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__date]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[inserted_at__lte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[muted_findings]
+        schema:
+          type: boolean
+      - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          enum:
+          - aws
+          - azure
+          - gcp
+          - kubernetes
+        description: |-
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - aws
+            - azure
+            - gcp
+            - kubernetes
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+        explode: false
+        style: form
+      - in: query
+        name: filter[region]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - -id
+            - new
+            - -new
+            - changed
+            - -changed
+            - unchanged
+            - -unchanged
+            - fail_new
+            - -fail_new
+            - fail_changed
+            - -fail_changed
+            - pass_new
+            - -pass_new
+            - pass_changed
+            - -pass_changed
+            - muted_new
+            - -muted_new
+            - muted_changed
+            - -muted_changed
+            - total
+            - -total
+            - fail
+            - -fail
+            - muted
+            - -muted
+            - pass
+            - -pass
+        explode: false
+      tags:
+      - Overview
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/OverviewFindingResponse'
+          description: ''
+  /api/v1/overviews/findings_severity:
+    get:
+      operationId: overviews_findings_severity_retrieve
+      description: Retrieve an aggregated summary of findings grouped by severity
+        levels, such as low, medium, high, and critical. The response includes the
+        total count of findings for each severity, considering only the latest scans
+        for each provider. Additional filters can be applied to narrow down results
+        by region, provider type, or other attributes.
+      summary: Get findings data by severity
+      parameters:
+      - in: query
+        name: fields[findings-severity-overview]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - critical
+            - high
+            - medium
+            - low
+            - informational
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[inserted_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__date]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[inserted_at__lte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[muted_findings]
+        schema:
+          type: boolean
+      - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          enum:
+          - aws
+          - azure
+          - gcp
+          - kubernetes
+        description: |-
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - aws
+            - azure
+            - gcp
+            - kubernetes
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+        explode: false
+        style: form
+      - in: query
+        name: filter[region]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - -id
+            - critical
+            - -critical
+            - high
+            - -high
+            - medium
+            - -medium
+            - low
+            - -low
+            - informational
+            - -informational
+        explode: false
+      tags:
+      - Overview
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/OverviewSeverityResponse'
+          description: ''
   /api/v1/overviews/providers:
     get:
       operationId: overviews_providers_retrieve
-      description: Fetch aggregated summaries of the latest findings and resources
-        for each provider. This includes counts of passed, failed, and manual findings,
-        as well as the total number of resources managed by each provider.
-      summary: List aggregated overview data for providers
+      description: Retrieve an aggregated overview of findings and resources grouped
+        by providers. The response includes the count of passed, failed, and manual
+        findings, along with the total number of resources managed by each provider.
+        Only the latest findings for each provider are considered in the aggregation
+        to ensure accurate and up-to-date insights.
+      summary: Get aggregated provider data
       parameters:
       - in: query
-        name: fields[provider-overviews]
+        name: fields[providers-overview]
         schema:
           type: array
           items:
@@ -4400,6 +4716,77 @@ components:
           $ref: '#/components/schemas/Membership'
       required:
       - data
+    OverviewFinding:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/OverviewFindingTypeEnum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        id: {}
+        attributes:
+          type: object
+          properties:
+            id:
+              type: string
+              default: n/a
+            new:
+              type: integer
+            changed:
+              type: integer
+            unchanged:
+              type: integer
+            fail_new:
+              type: integer
+            fail_changed:
+              type: integer
+            pass_new:
+              type: integer
+            pass_changed:
+              type: integer
+            muted_new:
+              type: integer
+            muted_changed:
+              type: integer
+            total:
+              type: integer
+            fail:
+              type: integer
+            muted:
+              type: integer
+            pass:
+              type: integer
+          required:
+          - new
+          - changed
+          - unchanged
+          - fail_new
+          - fail_changed
+          - pass_new
+          - pass_changed
+          - muted_new
+          - muted_changed
+          - total
+          - fail
+          - muted
+          - pass
+    OverviewFindingResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/OverviewFinding'
+      required:
+      - data
+    OverviewFindingTypeEnum:
+      type: string
+      enum:
+      - findings-overview
     OverviewProvider:
       type: object
       required:
@@ -4449,7 +4836,54 @@ components:
     OverviewProviderTypeEnum:
       type: string
       enum:
-      - provider-overviews
+      - providers-overview
+    OverviewSeverity:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/OverviewSeverityTypeEnum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        id: {}
+        attributes:
+          type: object
+          properties:
+            id:
+              type: string
+              default: n/a
+            critical:
+              type: integer
+            high:
+              type: integer
+            medium:
+              type: integer
+            low:
+              type: integer
+            informational:
+              type: integer
+          required:
+          - critical
+          - high
+          - medium
+          - low
+          - informational
+    OverviewSeverityResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/OverviewSeverity'
+      required:
+      - data
+    OverviewSeverityTypeEnum:
+      type: string
+      enum:
+      - findings-severity-overview
     PaginatedComplianceOverviewList:
       type: object
       required:

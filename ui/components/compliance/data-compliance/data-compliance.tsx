@@ -17,7 +17,15 @@ export const DataCompliance = ({ scans, regions }: DataComplianceProps) => {
   const searchParams = useSearchParams();
   const [showClearButton, setShowClearButton] = useState(false);
   const scanIdParam = searchParams.get("scanId");
-  const selectedScanId = scanIdParam || scans[0]?.id;
+  const selectedScanId = scanIdParam || (scans.length > 0 ? scans[0].id : "");
+
+  useEffect(() => {
+    if (!scanIdParam && scans.length > 0) {
+      const params = new URLSearchParams(searchParams);
+      params.set("scanId", scans[0].id);
+      router.push(`?${params.toString()}`);
+    }
+  }, [scans, scanIdParam, searchParams, router]);
 
   useEffect(() => {
     const hasFilters = Array.from(searchParams.keys()).some(

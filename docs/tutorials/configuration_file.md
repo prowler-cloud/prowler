@@ -41,7 +41,7 @@ The following list includes all the AWS checks with configurable variables that 
 | `ec2_launch_template_no_secrets`                              | `secrets_ignore_patterns`                        | List of Strings |
 | `ec2_securitygroup_allow_ingress_from_internet_to_any_port`   | `ec2_allowed_instance_owners`                    | List of Strings |
 | `ec2_securitygroup_allow_ingress_from_internet_to_any_port`   | `ec2_allowed_interface_types`                    | List of Strings |
-| `ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports`| `ec2_sg_high_risk_ports`                 | List of Integer |
+| `ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports`| `ec2_high_risk_ports`                    | List of Integer |
 | `ec2_securitygroup_with_many_ingress_egress_rules`            | `max_security_group_rules`                       | Integer         |
 | `ecs_task_definitions_no_environment_secrets`                 | `secrets_ignore_patterns`                        | List of Strings |
 | `ecr_repositories_scan_vulnerabilities_in_latest_image`       | `ecr_repository_vulnerability_minimum_severity`  | String          |
@@ -144,7 +144,7 @@ aws:
         "amazon-elb"
     ]
   # aws.ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports
-  ec2_sg_high_risk_ports:
+  ec2_high_risk_ports:
     [
         25,
         110,
