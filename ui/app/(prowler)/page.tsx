@@ -34,7 +34,7 @@ export default function Home({
     <>
       <Header title="Scan Overview" icon="solar:pie-chart-2-outline" />
       <Spacer y={4} />
-      <FilterControls providers regions />
+      <FilterControls providers />
       <div className="mx-auto space-y-8 px-0 py-6">
         <div className="grid grid-cols-12 gap-6">
           <div className="col-span-12 lg:col-span-4">

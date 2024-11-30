@@ -1,7 +1,7 @@
 import { Spacer } from "@nextui-org/react";
 import React, { Suspense } from "react";
 
-import { getFindings } from "@/actions/findings";
+import { getFindings, getServicesRegions } from "@/actions/findings";
 import { getProviders } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
 import { filterFindings } from "@/components/filters/data-filters";
@@ -21,9 +21,37 @@ export default async function Findings({
   searchParams: SearchParamsProps;
 }) {
   const searchParamsKey = JSON.stringify(searchParams || {});
+  const defaultSort = "severity,status";
+  const sort = searchParams.sort?.toString() || defaultSort;
 
+  // Make sure the sort is correctly encoded
+  const encodedSort = sort.replace(/^\+/, "");
+
+  // Extract all filter parameters and combine with default filters
+  const defaultFilters = {
+    "filter[status__in]": "FAIL, PASS",
+    "filter[delta__in]": "new",
+  };
+
+  const filters: Record<string, string> = {
+    ...defaultFilters,
+    ...Object.fromEntries(
+      Object.entries(searchParams).filter(([key]) => key.startsWith("filter[")),
+    ),
+  };
+
+  const query = filters["filter[search]"] || "";
+
+  const servicesRegionsData = await getServicesRegions({
+    query,
+    sort: encodedSort,
+    filters,
+  });
+
+  // Extract unique regions and services from the new endpoint
+  const uniqueRegions = servicesRegionsData?.data?.attributes?.regions || [];
+  const uniqueServices = servicesRegionsData?.data?.attributes?.services || [];
   // Get findings data
-  const findingsData = await getFindings({});
   const providersData = await getProviders({});
   const scansData = await getScans({});
 
@@ -46,37 +74,6 @@ export default async function Findings({
     }));
 
   const completedScanIds = completedScans?.map((scan: any) => scan.id) || [];
-
-  // Create resource dictionary
-  const resourceDict = createDict("resources", findingsData);
-
-  // Get unique regions and services
-  const allRegionsAndServices =
-    findingsData?.data
-      ?.flatMap((finding: FindingProps) => {
-        const resource =
-          resourceDict[finding.relationships?.resources?.data?.[0]?.id];
-        return {
-          region: resource?.attributes?.region,
-          service: resource?.attributes?.service,
-        };
-      })
-      .filter(Boolean) || [];
-
-  const uniqueRegions = Array.from(
-    new Set<string>(
-      allRegionsAndServices
-        .map((item: { region: string }) => item.region)
-        .filter(Boolean) || [],
-    ),
-  );
-  const uniqueServices = Array.from(
-    new Set<string>(
-      allRegionsAndServices
-        .map((item: { service: string }) => item.service)
-        .filter(Boolean) || [],
-    ),
-  );
 
   return (
     <>
@@ -145,6 +142,7 @@ const SSRDataTable = async ({
   };
 
   const query = filters["filter[search]"] || "";
+
   const findingsData = await getFindings({
     query,
     page,
