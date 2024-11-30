@@ -707,6 +707,14 @@ class FindingSerializer(RLSSerializer):
     }
 
 
+class FindingDynamicFilterSerializer(serializers.Serializer):
+    services = serializers.ListField(child=serializers.CharField(), allow_empty=True)
+    regions = serializers.ListField(child=serializers.CharField(), allow_empty=True)
+
+    class Meta:
+        resource_name = "finding-dynamic-filters"
+
+
 # Provider secrets
 class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
     @staticmethod
