@@ -754,9 +754,8 @@ paths:
   /api/v1/findings/findings_services_regions:
     get:
       operationId: findings_findings_services_regions_retrieve
-      description: Fetch services and regions affected in findings by date.
-      summary: Retrieve the services and regions that are impacted by findings in
-        a specific date
+      description: Fetch services and regions affected in findings.
+      summary: Retrieve the services and regions that are impacted by findings
       parameters:
       - in: query
         name: fields[finding-dynamic-filters]
@@ -1863,6 +1862,7 @@ paths:
             - alias
             - connection
             - secret
+            - provider_groups
             - url
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
@@ -1979,6 +1979,17 @@ paths:
         schema:
           type: string
           format: date-time
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - provider_groups
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
       - name: page[number]
         required: false
         in: query
@@ -2072,6 +2083,7 @@ paths:
             - alias
             - connection
             - secret
+            - provider_groups
             - url
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
@@ -2083,6 +2095,17 @@ paths:
           format: uuid
         description: A UUID string identifying this provider.
         required: true
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - provider_groups
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
       tags:
       - Provider
       security:
@@ -5956,6 +5979,35 @@ components:
               - data
               description: The identifier of the related object.
               title: Resource Identifier
+            provider_groups:
+              type: object
+              properties:
+                data:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        title: Resource Identifier
+                        description: The identifier of the related object.
+                      type:
+                        type: string
+                        enum:
+                        - provider-groups
+                        title: Resource Type Name
+                        description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                          member is used to describe resource objects that share common
+                          attributes and relationships.
+                    required:
+                    - id
+                    - type
+              required:
+              - data
+              description: A related resource object from type provider-groups
+              title: provider-groups
+              readOnly: true
           required:
           - secret
     ProviderCreate:
