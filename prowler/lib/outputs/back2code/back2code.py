@@ -348,7 +348,14 @@ class BACK2CODE(Output):
                                 #print(f"Prowler located the original code at: {filesFromCommit.scmSourceName}, repository: {filesFromCommit.git_repo}/{filesFromCommit.git_org},  commit: {filesFromCommit.git_commit} \n ")
                                 continue
 
+        except Exception as error:
+            logger.error(
+                f"Errors in Back2Code output. Do not rely on results without confirming this error. report goto.prowler.com/slack \n Error is: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
         
+        try: 
+            for check in findingsByCheck:
+                for resource in findingsByCheck[check]:
                     if resource.status.value == 'FAIL':   
                         backtoCodeResource = ""        
                         row_class = "p-3 mb-2 bg-success-custom"
@@ -367,14 +374,25 @@ class BACK2CODE(Output):
                         #            finding.resource_tags[tag] = f'<a class="{finding.resource_tags[tag]}" href="https://github.com/search?q={finding.resource_tags[tag]}&type=code">{finding.resource_tags[tag]}</a>'
                         #        if tag == "git_commit":
                         #            finding.resource_tags[tag] = f'<a class="{finding.resource_tags[tag]}" href="https://github.com/search?q={finding.resource_tags[tag]}&type=commits">{finding.resource_tags[tag]}</a>'
+                       
                         if resource.back2code is not None:
-                            if resource == findingsByCheckExampleAISolution[check][0]:
-                                backtoCodeResource = html.escape(parse_html_string(resource.back2code_aisuggestions))
+                            if resource is findingsByCheckExampleAISolution[check][0]:
+                                backtoCodeResource = parse_html_string(resource.back2code_aisuggestions[24:])
                             else:
-                                backtoCodeResource = f"Source code found, however AI generated recommendations already exist for this check type. See {findingsByCheckExampleAISolution[check][0]} for more information."
+                                backtoCodeResource = f"Source code found, however AI generated recommendations already exist for this check type. See {findingsByCheckExampleAISolution[check][0].resource_name} for more information."
 
                         else:
-                            backtoCodeResource = "No Source Code Found or OpenAI API Key not set."
+                            if openai_key == None:
+                                backtoCodeResource = "OpenAPI API Key not set. Finding references to code only."
+                            backtoCodeResource = "No Source Code Found, please check you are tagging your cloud resources. See https://yor.io for more information."
+
+                        if 'git_commit' in resource.resource_tags:
+                            annotatedTagOutput = f"""Located Code from Commit tag: <a href="https://github.com/search?q={resource.resource_tags['git_commit']}&type=commits">{resource.resource_tags['git_commit']}</a>"""
+                        else:  
+                            if resource.resource_tags == {}:
+                                annotatedTagOutput = "No tags found."
+                            else:
+                                annotatedTagOutput = f'Raw resource Tags: {unroll_dict(resource.resource_tags)}'
 
                         self._data.append(
                             #<tr>
@@ -400,12 +418,16 @@ class BACK2CODE(Output):
                                     <td>{resource.metadata.Severity.value}</td>
                                     <td>{resource.metadata.ServiceName}</td>
                                     <td>{resource.resource_uid.replace("<", "&lt;").replace(">", "&gt;").replace("_", "<wbr />_")}</td>
-                                    <td>{parse_html_string(unroll_dict(resource.resource_tags))}</td>
                                     <td><p class="show-read-more">{backtoCodeResource}</p></td>
+                                    <td>{annotatedTagOutput}</td>
                                     <td><p class="show-read-more">{html.escape(resource.metadata.Risk)}</p></td>
                                 </tr>
                                 """
-                            
+                                
+                        #            finding.resource_tags[tag] = f'<a class="{finding.resource_tags[tag]}" href="https://github.com/search?q={finding.resource_tags[tag]}&type=code">{finding.resource_tags[tag]}</a>'
+                        #        if tag == "git_commit":
+                        #            finding.resource_tags[tag] = f'<a class="{finding.resource_tags[tag]}" href="https://github.com/search?q={finding.resource_tags[tag]}&type=commits">{finding.resource_tags[tag]}</a>'
+                       
                         )
 
         except Exception as error:
@@ -436,7 +458,7 @@ class BACK2CODE(Output):
             messages= [
                 {
                     "role": "system",
-                    "content": "You are a Terraform expert, your output should be in HTML format including a diff for code changes, with the largest header font used being H3."
+                    "content": "You are a Terraform expert, your output should be in HTML format, include a diff for code changes. Do not re-explain the problem statement in the output."
                 },
                 {
                     "role": "user",
