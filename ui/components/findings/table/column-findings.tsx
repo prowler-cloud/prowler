@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 
 import { DataTableRowDetails } from "@/components/findings/table";
 import { InfoIcon } from "@/components/icons";
+import { DateWithTime } from "@/components/ui/entities";
 import { TriggerSheet } from "@/components/ui/sheet";
 import {
   DataTableColumnHeader,
@@ -87,7 +88,11 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
     ),
     cell: ({ row }) => {
       const { checktitle } = getFindingsMetadata(row);
-      return <p className="max-w-96 truncate text-small">{checktitle}</p>;
+      return (
+        <p className="max-w-[450px] whitespace-normal break-words text-small">
+          {checktitle}
+        </p>
+      );
     },
   },
   {
@@ -119,6 +124,26 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
       return <StatusFindingBadge size="sm" status={status} />;
     },
   },
+  {
+    accessorKey: "updated_at",
+    header: ({ column }) => (
+      <DataTableColumnHeader
+        column={column}
+        title={"Last seen"}
+        param="updated_at"
+      />
+    ),
+    cell: ({ row }) => {
+      const {
+        attributes: { updated_at },
+      } = getFindingsData(row);
+      return (
+        <div className="w-[100px]">
+          <DateWithTime dateTime={updated_at} />
+        </div>
+      );
+    },
+  },
   // {
   //   accessorKey: "scanName",
   //   header: "Scan Name",
@@ -141,9 +166,9 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
       const region = getResourceData(row, "region");
 
       return (
-        <>
-          <div>{typeof region === "string" ? region : "Invalid region"}</div>
-        </>
+        <div className="w-[80px]">
+          {typeof region === "string" ? region : "Invalid region"}
+        </div>
       );
     },
   },
