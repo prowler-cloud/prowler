@@ -1,7 +1,8 @@
 import json
 
-from django.utils import timezone
-from django_celery_beat.models import PeriodicTask, IntervalSchedule
+from django_celery_beat.models import IntervalSchedule, PeriodicTask
+from rest_framework_json_api.serializers import ValidationError
+from tasks.tasks import perform_scheduled_scan_task
 
 from api.models import Provider
 
@@ -16,7 +17,7 @@ def schedule_provider_scan(provider_instance: Provider):
     task_name = f"scan-perform-scheduled-{provider_instance.id}"
 
     # Schedule the task
-    PeriodicTask.objects.create(
+    _, created = PeriodicTask.objects.get_or_create(
         interval=schedule,
         name=task_name,
         task="scan-perform-scheduled",
@@ -26,6 +27,23 @@ def schedule_provider_scan(provider_instance: Provider):
                 "provider_id": str(provider_instance.id),
             }
         ),
-        start_time=provider_instance.inserted_at + timezone.timedelta(hours=24),
         one_off=False,
+    )
+    if not created:
+        raise ValidationError(
+            [
+                {
+                    "detail": "There is already a scheduled scan for this provider.",
+                    "status": 400,
+                    "source": {"pointer": "/data/attributes/provider_id"},
+                    "code": "invalid",
+                }
+            ]
+        )
+
+    return perform_scheduled_scan_task.apply_async(
+        kwargs={
+            "tenant_id": str(provider_instance.tenant_id),
+            "provider_id": str(provider_instance.id),
+        },
     )

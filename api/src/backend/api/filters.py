@@ -164,6 +164,7 @@ class ScanFilter(ProviderRelationshipFilterSet):
     inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
     completed_at = DateFilter(field_name="completed_at", lookup_expr="date")
     started_at = DateFilter(field_name="started_at", lookup_expr="date")
+    next_scan_at = DateFilter(field_name="next_scan_at", lookup_expr="date")
     trigger = ChoiceFilter(choices=Scan.TriggerChoices.choices)
 
     class Meta:
@@ -172,6 +173,7 @@ class ScanFilter(ProviderRelationshipFilterSet):
             "provider": ["exact", "in"],
             "name": ["exact", "icontains"],
             "started_at": ["gte", "lte"],
+            "next_scan_at": ["gte", "lte"],
             "trigger": ["exact"],
         }
 

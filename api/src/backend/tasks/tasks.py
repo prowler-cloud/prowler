@@ -1,5 +1,8 @@
+from datetime import timedelta
+
 from celery import shared_task
 from config.celery import RLSTask
+from django_celery_beat.models import PeriodicTask
 from tasks.jobs.connection import check_provider_connection
 from tasks.jobs.deletion import delete_provider
 from tasks.jobs.scan import aggregate_findings, perform_prowler_scan
@@ -98,12 +101,17 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
 
     with tenant_transaction(tenant_id):
         provider_instance = Provider.objects.get(pk=provider_id)
+        periodic_task_instance = PeriodicTask.objects.get(
+            name=f"scan-perform-scheduled-{provider_id}"
+        )
+        next_scan_date = periodic_task_instance.date_changed + timedelta(hours=24)
 
         scan_instance = Scan.objects.create(
             tenant_id=tenant_id,
             name="Daily scheduled scan",
             provider=provider_instance,
             trigger=Scan.TriggerChoices.SCHEDULED,
+            next_scan_at=next_scan_date,
             task_id=task_id,
         )
 
