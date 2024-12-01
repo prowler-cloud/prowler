@@ -117,11 +117,18 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
             task_id=task_id,
         )
 
-    return perform_prowler_scan(
+    result = perform_prowler_scan(
         tenant_id=tenant_id,
         scan_id=str(scan_instance.id),
         provider_id=provider_id,
     )
+    perform_scan_summary_task.apply_async(
+        kwargs={
+            "tenant_id": tenant_id,
+            "scan_id": str(scan_instance.id),
+        }
+    ),
+    return result
 
 
 @shared_task(name="scan-summary")
