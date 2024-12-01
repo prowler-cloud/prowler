@@ -8,7 +8,7 @@ import { CustomButton } from "../ui/custom";
 export const NoProvidersConnected = () => {
   return (
     <div className="flex items-center justify-center">
-      <Card shadow="sm" className="w-full max-w-md">
+      <Card shadow="sm" className="w-full max-w-md dark:bg-prowler-blue-400">
         <CardBody className="space-y-6 p-6 text-center">
           <h2 className="text-xl font-bold">No Cloud Accounts Connected</h2>
           <p className="text-md text-gray-600">
