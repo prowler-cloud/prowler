@@ -12,7 +12,7 @@ import {
   checkConnectionProvider,
   deleteCredentials,
 } from "@/actions/providers";
-import { scanOnDemand } from "@/actions/scans";
+import { scheduleDaily } from "@/actions/scans";
 import { getTask } from "@/actions/task/tasks";
 import { CheckIcon, RocketIcon } from "@/components/icons";
 import { useToast } from "@/components/ui";
@@ -116,8 +116,7 @@ export const TestConnectionForm = ({
 
         if (connected) {
           try {
-            const data = await scanOnDemand(formData);
-
+            const data = await scheduleDaily(formData);
             if (data.error) {
               setApiErrorMessage(data.error);
               form.setError("providerId", {
@@ -200,7 +199,7 @@ export const TestConnectionForm = ({
 
         {apiErrorMessage && (
           <div className="mt-4 rounded-md bg-red-100 p-3 text-danger">
-            <p>{`Provider ID ${apiErrorMessage.toLowerCase()}. Please check and try again.`}</p>
+            <p>{`Provider ID ${apiErrorMessage?.toLowerCase()}. Please check and try again.`}</p>
           </div>
         )}
 
