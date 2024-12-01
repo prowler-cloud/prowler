@@ -1,27 +1,28 @@
 "use client";
+
 import { Card, CardBody } from "@nextui-org/react";
 import React from "react";
 
 import { CustomButton } from "../ui/custom";
 
-export const NoProvidersAdded = () => {
+export const NoProvidersConnected = () => {
   return (
-    <div className="flex h-screen items-center justify-center">
+    <div className="flex items-center justify-center">
       <Card shadow="sm" className="w-full max-w-md">
         <CardBody className="space-y-6 p-6 text-center">
-          <h2 className="text-xl font-bold">No Cloud Accounts Configured</h2>
+          <h2 className="text-xl font-bold">No Cloud Accounts Connected</h2>
           <p className="text-md text-gray-600">
-            You don't have any cloud accounts configured yet. This is the first
-            step to get started.
+            All your cloud accounts are currently disconnected. Please review
+            their configuration to proceed.
           </p>
           <CustomButton
-            asLink="/providers/connect-account"
-            ariaLabel="Go to Add Cloud Account page"
+            asLink="/providers"
+            ariaLabel="Go to Cloud accounts page"
             variant="solid"
             color="action"
             size="lg"
           >
-            Add Cloud Account
+            Review Cloud Accounts
           </CustomButton>
         </CardBody>
       </Card>

@@ -119,27 +119,29 @@ export const LaunchScanWorkflow = ({
                   transition={{ duration: 0.3 }}
                   className="col-span-4 flex items-end gap-4"
                 >
-                  <CustomButton
-                    type="submit"
-                    ariaLabel="Start scan now"
-                    variant="solid"
-                    color="action"
-                    size="lg"
-                    isLoading={isLoading}
-                    startContent={!isLoading && <RocketIcon size={24} />}
-                  >
-                    {isLoading ? <>Loading</> : <span>Start now</span>}
-                  </CustomButton>
-                  <CustomButton
-                    onPress={() => form.reset()}
-                    className="w-fit border-gray-200 bg-transparent"
-                    ariaLabel="Clear form"
-                    variant="bordered"
-                    size="md"
-                    radius="lg"
-                  >
-                    Cancel
-                  </CustomButton>
+                  <div className="flex flex-row items-center gap-4">
+                    <CustomButton
+                      type="submit"
+                      ariaLabel="Start scan now"
+                      variant="solid"
+                      color="action"
+                      size="lg"
+                      isLoading={isLoading}
+                      startContent={!isLoading && <RocketIcon size={24} />}
+                    >
+                      {isLoading ? <>Loading</> : <span>Start now</span>}
+                    </CustomButton>
+                    <CustomButton
+                      onPress={() => form.reset()}
+                      className="w-fit border-gray-200 bg-transparent"
+                      ariaLabel="Clear form"
+                      variant="bordered"
+                      size="md"
+                      radius="lg"
+                    >
+                      Cancel
+                    </CustomButton>
+                  </div>
                 </motion.div>
               </>
             )}
