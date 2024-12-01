@@ -536,9 +536,11 @@ class ScanSerializer(RLSSerializer):
             "duration",
             "provider",
             "task",
+            "inserted_at",
             "started_at",
             "completed_at",
             "scheduled_at",
+            "next_scan_at",
             "url",
         ]
 
@@ -1319,3 +1321,22 @@ class OverviewSeveritySerializer(serializers.Serializer):
 
     def get_root_meta(self, _resource, _many):
         return {"version": "v1"}
+
+
+# Schedules
+
+
+class ScheduleDailyCreateSerializer(serializers.Serializer):
+    provider_id = serializers.UUIDField(required=True)
+
+    class JSONAPIMeta:
+        resource_name = "daily-schedules"
+
+    # TODO: DRY this when we have more time
+    def validate(self, data):
+        if hasattr(self, "initial_data"):
+            initial_data = set(self.initial_data.keys()) - {"id", "type"}
+            unknown_keys = initial_data - set(self.fields.keys())
+            if unknown_keys:
+                raise ValidationError(f"Invalid fields: {unknown_keys}")
+        return data

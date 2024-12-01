@@ -1,26 +1,27 @@
-from django.urls import path, include
+from django.urls import include, path
 from drf_spectacular.views import SpectacularRedocView
 from rest_framework_nested import routers
 
 from api.v1.views import (
+    ComplianceOverviewViewSet,
     CustomTokenObtainView,
     CustomTokenRefreshView,
-    SchemaView,
-    UserViewSet,
-    TenantViewSet,
-    TenantMembersViewSet,
-    MembershipViewSet,
-    ProviderViewSet,
-    ScanViewSet,
-    TaskViewSet,
-    ResourceViewSet,
     FindingViewSet,
+    InvitationAcceptViewSet,
+    InvitationViewSet,
+    MembershipViewSet,
+    OverviewViewSet,
     ProviderGroupViewSet,
     ProviderSecretViewSet,
-    InvitationViewSet,
-    InvitationAcceptViewSet,
-    OverviewViewSet,
-    ComplianceOverviewViewSet,
+    ProviderViewSet,
+    ResourceViewSet,
+    ScanViewSet,
+    ScheduleViewSet,
+    SchemaView,
+    TaskViewSet,
+    TenantMembersViewSet,
+    TenantViewSet,
+    UserViewSet,
 )
 
 router = routers.DefaultRouter(trailing_slash=False)
@@ -37,6 +38,7 @@ router.register(
     r"compliance-overviews", ComplianceOverviewViewSet, basename="complianceoverview"
 )
 router.register(r"overviews", OverviewViewSet, basename="overview")
+router.register(r"schedules", ScheduleViewSet, basename="schedule")
 
 tenants_router = routers.NestedSimpleRouter(router, r"tenants", lookup="tenant")
 tenants_router.register(

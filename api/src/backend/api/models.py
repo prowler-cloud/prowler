@@ -403,6 +403,7 @@ class Scan(RowLevelSecurityProtectedModel):
     updated_at = models.DateTimeField(auto_now=True, editable=False)
     started_at = models.DateTimeField(null=True, blank=True)
     completed_at = models.DateTimeField(null=True, blank=True)
+    next_scan_at = models.DateTimeField(null=True, blank=True)
     # TODO: mutelist foreign key
 
     class Meta(RowLevelSecurityProtectedModel.Meta):

@@ -100,6 +100,7 @@ from api.v1.serializers import (
     ScanCreateSerializer,
     ScanSerializer,
     ScanUpdateSerializer,
+    ScheduleDailyCreateSerializer,
     TaskSerializer,
     TenantSerializer,
     TokenRefreshSerializer,
@@ -724,14 +725,6 @@ class ProviderViewSet(BaseRLSViewSet):
                 )
             },
         )
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        provider = serializer.save()
-        # Schedule a daily scan for the new provider
-        schedule_provider_scan(provider)
-        return Response(data=serializer.data, status=status.HTTP_201_CREATED)
 
 
 @extend_schema_view(
@@ -1549,3 +1542,57 @@ class OverviewViewSet(BaseRLSViewSet):
 
         serializer = OverviewSeveritySerializer(severity_data)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@extend_schema(tags=["Schedule"])
+@extend_schema_view(
+    daily=extend_schema(
+        summary="Create a daily schedule scan for a given provider",
+        description="Schedules a daily scan for the specified provider. This endpoint creates a periodic task "
+        "that will execute a scan every 24 hours.",
+        request=ScheduleDailyCreateSerializer,
+        responses={202: OpenApiResponse(response=TaskSerializer)},
+    )
+)
+class ScheduleViewSet(BaseRLSViewSet):
+    # TODO: change to Schedule when implemented
+    queryset = Task.objects.none()
+    http_method_names = ["post"]
+
+    def get_queryset(self):
+        return super().get_queryset()
+
+    def get_serializer_class(self):
+        if self.action == "daily":
+            if hasattr(self, "response_serializer_class"):
+                return self.response_serializer_class
+            return ScheduleDailyCreateSerializer
+        return super().get_serializer_class()
+
+    @extend_schema(exclude=True)
+    def create(self, request, *args, **kwargs):
+        raise MethodNotAllowed(method="POST")
+
+    @action(detail=False, methods=["post"], url_name="daily")
+    def daily(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        provider_id = serializer.validated_data["provider_id"]
+
+        provider_instance = get_object_or_404(Provider, pk=provider_id)
+        with transaction.atomic():
+            task = schedule_provider_scan(provider_instance)
+
+        prowler_task = Task.objects.get(id=task.id)
+        self.response_serializer_class = TaskSerializer
+        output_serializer = self.get_serializer(prowler_task)
+
+        return Response(
+            data=output_serializer.data,
+            status=status.HTTP_202_ACCEPTED,
+            headers={
+                "Content-Location": reverse(
+                    "task-detail", kwargs={"pk": prowler_task.id}
+                )
+            },
+        )

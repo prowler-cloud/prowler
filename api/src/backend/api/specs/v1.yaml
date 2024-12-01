@@ -754,9 +754,8 @@ paths:
   /api/v1/findings/findings_services_regions:
     get:
       operationId: findings_findings_services_regions_retrieve
-      description: Fetch services and regions affected in findings by date.
-      summary: Retrieve the services and regions that are impacted by findings in
-        a specific date
+      description: Fetch services and regions affected in findings.
+      summary: Retrieve the services and regions that are impacted by findings
       parameters:
       - in: query
         name: fields[finding-dynamic-filters]
@@ -2765,6 +2764,7 @@ paths:
             - started_at
             - completed_at
             - scheduled_at
+            - next_scan_at
             - url
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
@@ -2787,6 +2787,21 @@ paths:
         name: filter[name__icontains]
         schema:
           type: string
+      - in: query
+        name: filter[next_scan_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[next_scan_at__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[next_scan_at__lte]
+        schema:
+          type: string
+          format: date-time
       - in: query
         name: filter[provider]
         schema:
@@ -3002,6 +3017,7 @@ paths:
             - started_at
             - completed_at
             - scheduled_at
+            - next_scan_at
             - url
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
@@ -3059,6 +3075,35 @@ paths:
             application/vnd.api+json:
               schema:
                 $ref: '#/components/schemas/ScanUpdateResponse'
+          description: ''
+  /api/v1/schedules/daily:
+    post:
+      operationId: schedules_daily_create
+      description: Schedules a daily scan for the specified provider. This endpoint
+        creates a periodic task that will execute a scan every 24 hours.
+      summary: Create a daily schedule scan for a given provider
+      tags:
+      - Schedule
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/ScheduleDailyCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ScheduleDailyCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ScheduleDailyCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '202':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/OpenApiResponseResponse'
           description: ''
   /api/v1/tasks:
     get:
@@ -7058,6 +7103,10 @@ components:
               type: string
               format: date-time
               nullable: true
+            next_scan_at:
+              type: string
+              format: date-time
+              nullable: true
         relationships:
           type: object
           properties:
@@ -7203,6 +7252,32 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/ScanUpdate'
+      required:
+      - data
+    ScheduleDailyCreateRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - daily-schedules
+            attributes:
+              type: object
+              properties:
+                provider_id:
+                  type: string
+                  format: uuid
+              required:
+              - provider_id
       required:
       - data
     SerializerMetaclassResponse:
