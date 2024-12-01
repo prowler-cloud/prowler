@@ -1548,7 +1548,10 @@ class OverviewViewSet(BaseRLSViewSet):
 @extend_schema_view(
     daily=extend_schema(
         summary="Create a daily schedule scan for a given provider",
-        description=("TODO"),
+        description="Schedules a daily scan for the specified provider. This endpoint creates a periodic task "
+        "that will execute a scan every 24 hours.",
+        request=ScheduleDailyCreateSerializer,
+        responses={202: OpenApiResponse(response=TaskSerializer)},
     )
 )
 class ScheduleViewSet(BaseRLSViewSet):
