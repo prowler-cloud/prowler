@@ -131,7 +131,7 @@ export const SidebarWrap = () => {
             ariaLabel="Documentation"
             variant="flat"
             className={clsx(
-              "justify-start truncate bg-transparent text-default-500 data-[hover=true]:text-foreground",
+              "justify-start truncate bg-transparent text-default-500 data-[hover=true]:text-foreground dark:bg-transparent",
               {
                 "justify-center": isCompact,
               },
@@ -168,7 +168,7 @@ export const SidebarWrap = () => {
             ariaLabel="Support"
             variant="flat"
             className={clsx(
-              "justify-start truncate bg-transparent text-default-500 data-[hover=true]:text-foreground",
+              "justify-start truncate bg-transparent text-default-500 data-[hover=true]:text-foreground dark:bg-transparent",
               {
                 "justify-center": isCompact,
               },

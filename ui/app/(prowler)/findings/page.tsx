@@ -61,13 +61,13 @@ export default async function Findings({
   const scansData = await getScans({});
 
   // Extract provider UIDs
-  const providerUIDs = [
-    ...new Set(
+  const providerUIDs = Array.from(
+    new Set(
       providersData?.data
         ?.map((provider: ProviderProps) => provider.attributes.uid)
         .filter(Boolean),
     ),
-  ];
+  );
 
   // Extract scan UUIDs with "completed" state and more than one resource
   const completedScans = scansData?.data
