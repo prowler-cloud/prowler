@@ -4,7 +4,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { useSearchParams } from "next/navigation";
 
 import { InfoIcon } from "@/components/icons";
-import { DateWithTime } from "@/components/ui/entities";
+import { DateWithTime, EntityInfoShort } from "@/components/ui/entities";
 import { TriggerSheet } from "@/components/ui/sheet";
 import { DataTableColumnHeader, StatusBadge } from "@/components/ui/table";
 import { ScanProps } from "@/types";
@@ -19,14 +19,49 @@ const getScanData = (row: { original: ScanProps }) => {
 
 export const ColumnGetScans: ColumnDef<ScanProps>[] = [
   {
-    accessorKey: "accountName",
-    header: () => <p className="pr-8">Account name</p>,
+    id: "moreInfo",
+    header: "Details",
     cell: ({ row }) => {
-      console.log(row.original);
+      const searchParams = useSearchParams();
+      const scanId = searchParams.get("scanId");
+      const isOpen = scanId === row.original.id;
 
-      return <span className="font-medium">providerinfo</span>;
+      return (
+        <div className="flex w-9 items-center justify-center">
+          <TriggerSheet
+            triggerComponent={<InfoIcon className="text-primary" size={16} />}
+            title="Scan Details"
+            description="View the scan details"
+            defaultOpen={isOpen}
+          >
+            <DataTableRowDetails entityId={row.original.id} />
+          </TriggerSheet>
+        </div>
+      );
     },
   },
+  {
+    accessorKey: "cloudProvider",
+    header: () => <p className="pr-8">Cloud provider</p>,
+    cell: ({ row }) => {
+      const providerInfo = row.original.providerInfo;
+
+      if (!providerInfo) {
+        return <span className="font-medium">No provider info</span>;
+      }
+
+      const { provider, uid, alias } = providerInfo;
+
+      return (
+        <EntityInfoShort
+          cloudProvider={provider as "aws" | "azure" | "gcp" | "kubernetes"}
+          entityAlias={alias}
+          entityId={uid}
+        />
+      );
+    },
+  },
+
   {
     accessorKey: "started_at",
     header: () => <p className="pr-8">Started at</p>,
@@ -88,22 +123,21 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
     },
   },
   {
-    accessorKey: "scheduled_at",
+    accessorKey: "next_scan_at",
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
-        title={"Scheduled at"}
-        param="scheduled_at"
+        title={"Next execution"}
+        param="next_scan_at"
       />
     ),
     cell: ({ row }) => {
       const {
-        attributes: { scheduled_at },
+        attributes: { next_scan_at },
       } = getScanData(row);
-      return <DateWithTime dateTime={scheduled_at} />;
+      return <DateWithTime dateTime={next_scan_at} />;
     },
   },
-
   {
     accessorKey: "completed_at",
     header: ({ column }) => (
@@ -129,16 +163,9 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
       const {
         attributes: { trigger },
       } = getScanData(row);
-      return <p>{trigger}</p>;
+      return <p className="text-tiny font-medium uppercase">{trigger}</p>;
     },
   },
-  // {
-  //   accessorKey: "id",
-  //   header: () => <span>ID</span>,
-  //   cell: ({ row }) => {
-  //     return <SnippetId entityId={row.original.id} />;
-  //   },
-  // },
   {
     accessorKey: "scanName",
     header: ({ column }) => (
@@ -153,30 +180,9 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
         return <span className="font-medium">-</span>;
       }
 
-      return <span className="font-medium">{name}</span>;
+      return <span className="text-xs font-medium">{name}</span>;
     },
   },
-  {
-    id: "moreInfo",
-    header: "Details",
-    cell: ({ row }) => {
-      const searchParams = useSearchParams();
-      const scanId = searchParams.get("scanId");
-      const isOpen = scanId === row.original.id;
-
-      return (
-        <TriggerSheet
-          triggerComponent={<InfoIcon className="text-primary" size={16} />}
-          title="Scan Details"
-          description="View the scan details"
-          defaultOpen={isOpen}
-        >
-          <DataTableRowDetails entityId={row.original.id} />
-        </TriggerSheet>
-      );
-    },
-  },
-
   {
     id: "actions",
     cell: ({ row }) => {

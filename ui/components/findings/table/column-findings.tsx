@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 
 import { DataTableRowDetails } from "@/components/findings/table";
 import { InfoIcon } from "@/components/icons";
-import { DateWithTime } from "@/components/ui/entities";
+import { DateWithTime, EntityInfoShort } from "@/components/ui/entities";
 import { TriggerSheet } from "@/components/ui/sheet";
 import {
   DataTableColumnHeader,
@@ -181,16 +181,20 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
     },
   },
   {
-    accessorKey: "account",
-    header: "Account",
+    accessorKey: "cloudProvider",
+    header: "Cloud provider",
     cell: ({ row }) => {
-      const account = getProviderData(row, "uid");
+      const provider = getProviderData(row, "provider");
+      const alias = getProviderData(row, "alias");
+      const uid = getProviderData(row, "uid");
 
       return (
         <>
-          <p className="max-w-96 truncate text-small">
-            {typeof account === "string" ? account : "Invalid account"}
-          </p>
+          <EntityInfoShort
+            cloudProvider={provider as "aws" | "azure" | "gcp" | "kubernetes"}
+            entityAlias={alias as string}
+            entityId={uid as string}
+          />
         </>
       );
     },

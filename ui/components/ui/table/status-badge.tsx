@@ -35,7 +35,7 @@ export const StatusBadge = ({
 
   return (
     <Chip
-      className="gap-1 border-none px-2 py-4 capitalize text-default-600"
+      className="gap-1 border-none px-2 py-2 capitalize text-default-600"
       size={size}
       variant="flat"
       color={color}

@@ -56,7 +56,7 @@ export const FindingsBySeverityChart = ({
   }));
 
   return (
-    <Card className="dark:bg-prowler-blue-400">
+    <Card className="h-full dark:bg-prowler-blue-400">
       <CardBody>
         <div className="my-auto">
           <ChartContainer config={chartConfig}>
