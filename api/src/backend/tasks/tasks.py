@@ -127,7 +127,7 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
             "tenant_id": tenant_id,
             "scan_id": str(scan_instance.id),
         }
-    ),
+    )
     return result
 
 

@@ -166,6 +166,10 @@ class ScanFilter(ProviderRelationshipFilterSet):
     started_at = DateFilter(field_name="started_at", lookup_expr="date")
     next_scan_at = DateFilter(field_name="next_scan_at", lookup_expr="date")
     trigger = ChoiceFilter(choices=Scan.TriggerChoices.choices)
+    state = ChoiceFilter(choices=StateChoices.choices)
+    state__in = ChoiceInFilter(
+        field_name="state", choices=StateChoices.choices, lookup_expr="in"
+    )
 
     class Meta:
         model = Scan

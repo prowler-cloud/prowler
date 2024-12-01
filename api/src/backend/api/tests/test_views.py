@@ -16,6 +16,7 @@ from api.models import (
     ProviderGroupMembership,
     ProviderSecret,
     Scan,
+    StateChoices,
     User,
 )
 from api.rls import Tenant
@@ -1932,6 +1933,10 @@ class TestScanViewSet:
                 ("started_at", "2024-01-02", 3),
                 ("started_at.gte", "2024-01-01", 3),
                 ("started_at.lte", "2024-01-01", 0),
+                ("trigger", Scan.TriggerChoices.MANUAL, 1),
+                ("state", StateChoices.AVAILABLE, 2),
+                ("state", StateChoices.FAILED, 1),
+                ("state.in", f"{StateChoices.FAILED},{StateChoices.AVAILABLE}", 3),
                 ("trigger", Scan.TriggerChoices.MANUAL, 1),
             ]
         ),

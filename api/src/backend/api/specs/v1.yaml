@@ -2761,6 +2761,7 @@ paths:
             - duration
             - provider
             - task
+            - inserted_at
             - started_at
             - completed_at
             - scheduled_at
@@ -2907,6 +2908,48 @@ paths:
           type: string
           format: date-time
       - in: query
+        name: filter[state]
+        schema:
+          type: string
+          enum:
+          - available
+          - cancelled
+          - completed
+          - executing
+          - failed
+          - scheduled
+        description: |-
+          * `available` - Available
+          * `scheduled` - Scheduled
+          * `executing` - Executing
+          * `completed` - Completed
+          * `failed` - Failed
+          * `cancelled` - Cancelled
+      - in: query
+        name: filter[state__in]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - available
+            - cancelled
+            - completed
+            - executing
+            - failed
+            - scheduled
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `available` - Available
+          * `scheduled` - Scheduled
+          * `executing` - Executing
+          * `completed` - Completed
+          * `failed` - Failed
+          * `cancelled` - Cancelled
+        explode: false
+        style: form
+      - in: query
         name: filter[trigger]
         schema:
           type: string
@@ -3014,6 +3057,7 @@ paths:
             - duration
             - provider
             - task
+            - inserted_at
             - started_at
             - completed_at
             - scheduled_at
@@ -7091,6 +7135,10 @@ components:
               maximum: 2147483647
               minimum: -2147483648
               nullable: true
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
             started_at:
               type: string
               format: date-time
