@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 
 from celery import shared_task
 from config.celery import RLSTask
@@ -104,7 +104,9 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
         periodic_task_instance = PeriodicTask.objects.get(
             name=f"scan-perform-scheduled-{provider_id}"
         )
-        next_scan_date = periodic_task_instance.date_changed + timedelta(hours=24)
+        next_scan_date = datetime.combine(
+            datetime.now(timezone.utc), periodic_task_instance.date_changed.time()
+        ) + timedelta(hours=24)
 
         scan_instance = Scan.objects.create(
             tenant_id=tenant_id,

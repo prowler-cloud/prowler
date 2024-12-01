@@ -536,6 +536,7 @@ class ScanSerializer(RLSSerializer):
             "duration",
             "provider",
             "task",
+            "inserted_at",
             "started_at",
             "completed_at",
             "scheduled_at",
