@@ -19,6 +19,28 @@ const getScanData = (row: { original: ScanProps }) => {
 
 export const ColumnGetScans: ColumnDef<ScanProps>[] = [
   {
+    id: "moreInfo",
+    header: "Details",
+    cell: ({ row }) => {
+      const searchParams = useSearchParams();
+      const scanId = searchParams.get("scanId");
+      const isOpen = scanId === row.original.id;
+
+      return (
+        <div className="flex w-9 items-center justify-center">
+          <TriggerSheet
+            triggerComponent={<InfoIcon className="text-primary" size={16} />}
+            title="Scan Details"
+            description="View the scan details"
+            defaultOpen={isOpen}
+          >
+            <DataTableRowDetails entityId={row.original.id} />
+          </TriggerSheet>
+        </div>
+      );
+    },
+  },
+  {
     accessorKey: "accountName",
     header: () => <p className="pr-8">Account name</p>,
     cell: ({ row }) => {
@@ -105,7 +127,7 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
-        title={"Next scan scheduled at"}
+        title={"Next execution"}
         param="next_scan_at"
       />
     ),
@@ -116,7 +138,6 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
       return <DateWithTime dateTime={next_scan_at} />;
     },
   },
-
   {
     accessorKey: "completed_at",
     header: ({ column }) => (
@@ -145,13 +166,6 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
       return <p className="text-tiny font-medium uppercase">{trigger}</p>;
     },
   },
-  // {
-  //   accessorKey: "id",
-  //   header: () => <span>ID</span>,
-  //   cell: ({ row }) => {
-  //     return <SnippetId entityId={row.original.id} />;
-  //   },
-  // },
   {
     accessorKey: "scanName",
     header: ({ column }) => (
@@ -166,30 +180,9 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
         return <span className="font-medium">-</span>;
       }
 
-      return <span className="font-medium">{name}</span>;
+      return <span className="text-xs font-medium">{name}</span>;
     },
   },
-  {
-    id: "moreInfo",
-    header: "Details",
-    cell: ({ row }) => {
-      const searchParams = useSearchParams();
-      const scanId = searchParams.get("scanId");
-      const isOpen = scanId === row.original.id;
-
-      return (
-        <TriggerSheet
-          triggerComponent={<InfoIcon className="text-primary" size={16} />}
-          title="Scan Details"
-          description="View the scan details"
-          defaultOpen={isOpen}
-        >
-          <DataTableRowDetails entityId={row.original.id} />
-        </TriggerSheet>
-      );
-    },
-  },
-
   {
     id: "actions",
     cell: ({ row }) => {

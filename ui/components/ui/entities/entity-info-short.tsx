@@ -16,7 +16,7 @@ export const EntityInfoShort: React.FC<EntityInfoProps> = ({
 }) => {
   return (
     <div className="flex w-full items-center justify-between space-x-2">
-      <div className="flex items-center gap-x-4">
+      <div className="flex items-center gap-x-2">
         <div className="flex-shrink-0">{getProviderLogo(cloudProvider)}</div>
         <div className="flex flex-col space-y-1">
           {entityAlias && (
