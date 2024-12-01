@@ -3,6 +3,7 @@
 import { Card, CardBody } from "@nextui-org/react";
 import { Chip } from "@nextui-org/react";
 import { TrendingUp } from "lucide-react";
+import Link from "next/link";
 import React, { useMemo } from "react";
 import { Label, Pie, PieChart } from "recharts";
 
@@ -144,18 +145,23 @@ export const FindingsByStatusChart: React.FC<FindingsByStatusChartProps> = ({
 
           <div className="grid w-full grid-cols-2 justify-items-center gap-6">
             <div className="flex flex-col gap-2">
-              <div className="flex items-center space-x-2">
-                <Chip
-                  className="h-5"
-                  variant="flat"
-                  startContent={<SuccessIcon size={18} />}
-                  color="success"
-                  radius="lg"
-                  size="md"
+              <div className="flex items-center space-x-2 self-end">
+                <Link
+                  href="/findings?filter[status]=PASS"
+                  className="flex items-center space-x-2"
                 >
-                  {chartData[0].number}
-                </Chip>
-                <span>{updatedChartData[0].percent}</span>
+                  <Chip
+                    className="h-5"
+                    variant="flat"
+                    startContent={<SuccessIcon size={18} />}
+                    color="success"
+                    radius="lg"
+                    size="md"
+                  >
+                    {chartData[0].number}
+                  </Chip>
+                  <span>{updatedChartData[0].percent}</span>
+                </Link>
               </div>
               <div className="text-muted-foreground flex items-center gap-1 text-xs font-medium leading-none">
                 {pass_new > 0 ? (
@@ -172,18 +178,23 @@ export const FindingsByStatusChart: React.FC<FindingsByStatusChartProps> = ({
             </div>
 
             <div className="flex flex-col gap-2">
-              <div className="flex items-center space-x-2">
-                <Chip
-                  className="h-5"
-                  variant="flat"
-                  startContent={<NotificationIcon size={18} />}
-                  color="danger"
-                  radius="lg"
-                  size="md"
+              <div className="flex items-center align-middle">
+                <Link
+                  href="/findings?filter[status]=FAIL"
+                  className="flex items-center space-x-2"
                 >
-                  {chartData[1].number}
-                </Chip>
-                <span>{updatedChartData[1].percent}</span>
+                  <Chip
+                    className="h-5"
+                    variant="flat"
+                    startContent={<NotificationIcon size={18} />}
+                    color="danger"
+                    radius="lg"
+                    size="md"
+                  >
+                    {chartData[1].number}
+                  </Chip>
+                  <span>{updatedChartData[1].percent}</span>
+                </Link>
               </div>
               <div className="text-muted-foreground flex items-center gap-1 text-xs font-medium leading-none">
                 +{fail_new} fail findings from last day{" "}
