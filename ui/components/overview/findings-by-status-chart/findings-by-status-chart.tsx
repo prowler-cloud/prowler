@@ -91,7 +91,7 @@ export const FindingsByStatusChart: React.FC<FindingsByStatusChartProps> = ({
   ];
 
   return (
-    <Card className="dark:bg-prowler-blue-400">
+    <Card className="h-full dark:bg-prowler-blue-400">
       <CardBody>
         <div className="flex flex-col items-center gap-6">
           <ChartContainer

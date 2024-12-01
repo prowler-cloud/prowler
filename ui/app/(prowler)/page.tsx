@@ -56,6 +56,7 @@ export default function Home({
           </div>
 
           <div className="col-span-12">
+            <Spacer y={16} />
             <Suspense
               key={searchParamsKey}
               fallback={<SkeletonTableNewFindings />}
