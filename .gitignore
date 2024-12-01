@@ -57,3 +57,6 @@ coverage*
 
 # Node
 node_modules
+
+# Persistent data
+_data/

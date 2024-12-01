@@ -2,7 +2,7 @@
 
 ## Prowler App
 
-![Prowler App](img/compliance-app.png)
+![Prowler App](img/overview.png)
 
 Prowler App is a web application that allows you to run Prowler in a simple way. It provides a user-friendly interface to configure and run scans, view results, and manage your security findings.
 
@@ -362,21 +362,19 @@ Log in with your email and password to start using the Prowler App.
 <img src="img/log-in.png" alt="Log In" width="285"/>
 
 #### **Add a Provider**
-- Go to `Settings > Providers` and click `Add Account`.
+- Go to `Settings > Cloud Providers` and click `Add Account`.
 - Select the provider you want to scan (AWS, GCP, Azure, Kubernetes).
 - Enter the provider's ID (AWS Account ID, GCP Project ID, Azure Subscription ID, Kubernetes Cluster) and optional alias.
 - Follow the instructions to add your credentials.
 
 #### **Start a Scan**
-Once your credentials are added and tested, click `Start Now` to run your first scan.
+After successfully adding and testing your credentials, Prowler will start scanning your cloud environment, click on the `Go to Scans` button to see the progress.
 
 #### **View Results**
-Monitor your scan's progress in the `Scans` section and analyze the findings in:
+While the scan is running, start exploring the findings in these sections:
 
-- **Overview**: High-level summary of the scan.
-- **Findings**: Detailed list of issues detected. <img src="img/findings.png" alt="Findings" width="700"/>
-- **Compliance**: Insights into compliance status. <img src="img/compliance.png" alt="Compliance" width="700"/>
-- **Services**: Breakdown of services scanned. <img src="img/services.png" alt="Services" width="700"/>
+- **Overview**: High-level summary of the scans. <img src="../../img/overview.png" alt="Overview" width="700"/>
+- **Compliance**: Insights into compliance status. <img src="../../img/compliance.png" alt="Compliance" width="700"/>
 
 > See more details about the Prowler App usage in the [Prowler App](tutorials/prowler-app.md) section.
 

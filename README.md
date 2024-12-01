@@ -49,7 +49,7 @@
 
 Prowler App is a web application that allows you to run Prowler in your cloud provider accounts and visualize the results in a user-friendly interface.
 
-![Prowler App](docs/img/compliance-app.png)
+![Prowler App](docs/img/overview.png)
 
 >More details at [Prowler App Documentation](https://docs.prowler.com/projects/prowler-open-source/en/latest/#prowler-app-installation)
 
