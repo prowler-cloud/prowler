@@ -389,6 +389,12 @@ class ProviderGroupSerializer(RLSSerializer, BaseWriteSerializer):
         }
 
 
+class ProviderGroupIncludedSerializer(RLSSerializer, BaseWriteSerializer):
+    class Meta:
+        model = ProviderGroup
+        fields = ["id", "name"]
+
+
 class ProviderGroupUpdateSerializer(RLSSerializer, BaseWriteSerializer):
     """
     Serializer for updating the ProviderGroup model.
@@ -452,6 +458,10 @@ class ProviderSerializer(RLSSerializer):
     provider = ProviderEnumSerializerField()
     connection = serializers.SerializerMethodField(read_only=True)
 
+    included_serializers = {
+        "provider_groups": "api.v1.serializers.ProviderGroupIncludedSerializer",
+    }
+
     class Meta:
         model = Provider
         fields = [
@@ -464,6 +474,7 @@ class ProviderSerializer(RLSSerializer):
             "connection",
             # "scanner_args",
             "secret",
+            "provider_groups",
             "url",
         ]
 

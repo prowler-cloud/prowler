@@ -784,10 +784,49 @@ class TestMembershipViewSet:
 
 @pytest.mark.django_db
 class TestProviderViewSet:
+    @pytest.fixture(scope="function")
+    def create_provider_group_relationship(
+        self, tenants_fixture, providers_fixture, provider_groups_fixture
+    ):
+        tenant, *_ = tenants_fixture
+        provider1, *_ = providers_fixture
+        provider_group1, *_ = provider_groups_fixture
+        provider_group_membership = ProviderGroupMembership.objects.create(
+            tenant=tenant, provider=provider1, provider_group=provider_group1
+        )
+        return provider_group_membership
+
     def test_providers_list(self, authenticated_client, providers_fixture):
         response = authenticated_client.get(reverse("provider-list"))
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == len(providers_fixture)
+
+    @pytest.mark.parametrize(
+        "include_values, expected_resources",
+        [
+            ("provider_groups", ["provider-groups"]),
+        ],
+    )
+    def test_providers_list_include(
+        self,
+        include_values,
+        expected_resources,
+        authenticated_client,
+        providers_fixture,
+        create_provider_group_relationship,
+    ):
+        response = authenticated_client.get(
+            reverse("provider-list"), {"include": include_values}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == len(providers_fixture)
+        assert "included" in response.json()
+
+        included_data = response.json()["included"]
+        for expected_type in expected_resources:
+            assert any(
+                d.get("type") == expected_type for d in included_data
+            ), f"Expected type '{expected_type}' not found in included data"
 
     def test_providers_retrieve(self, authenticated_client, providers_fixture):
         provider1, *_ = providers_fixture
