@@ -175,7 +175,7 @@ export const ProvidersOverview = ({
         </div>
         <div className="mt-4 flex w-full items-center justify-end">
           <CustomButton
-            asLink="/providers/connect-account"
+            asLink="/providers"
             ariaLabel="Go to Providers page"
             variant="solid"
             color="action"
