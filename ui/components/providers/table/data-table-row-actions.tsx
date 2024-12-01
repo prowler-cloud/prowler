@@ -92,7 +92,7 @@ export function DataTableRowActions<ProviderProps>({
                 startContent={<EditDocumentBulkIcon className={iconClasses} />}
                 onClick={() => setIsEditOpen(true)}
               >
-                Edit Provider
+                Edit Provider Alias
               </DropdownItem>
             </DropdownSection>
             <DropdownSection title="Danger zone">
