@@ -31,13 +31,14 @@ export default async function Scans({
     },
   });
 
-  const providerInfo = providersData.data.map((provider: ProviderProps) => ({
-    providerId: provider.id,
-    alias: provider.attributes.alias,
-    providerType: provider.attributes.provider,
-    uid: provider.attributes.uid,
-    connected: provider.attributes.connection.connected,
-  }));
+  const providerInfo =
+    providersData?.data.map((provider: ProviderProps) => ({
+      providerId: provider.id,
+      alias: provider.attributes.alias,
+      providerType: provider.attributes.provider,
+      uid: provider.attributes.uid,
+      connected: provider.attributes.connection.connected,
+    })) || [];
 
   const providersCountConnected = await getProviders({});
   const thereIsNoProviders =
