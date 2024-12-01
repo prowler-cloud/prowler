@@ -13,7 +13,12 @@ import {
 import { Header } from "@/components/ui";
 import { DataTable, DataTableFilterCustom } from "@/components/ui/table";
 import { createDict } from "@/lib";
-import { FindingProps, SearchParamsProps } from "@/types/components";
+import {
+  FindingProps,
+  ProviderProps,
+  ScanProps,
+  SearchParamsProps,
+} from "@/types/components";
 
 export default async function Findings({
   searchParams,
@@ -57,7 +62,7 @@ export default async function Findings({
 
   // Extract provider UIDs
   const providerUIDs = providersData?.data
-    ?.map((provider: any) => provider.attributes.uid)
+    ?.map((provider: ProviderProps) => provider.attributes.uid)
     .filter(Boolean);
 
   // Extract scan UUIDs with "completed" state and more than one resource
@@ -65,15 +70,15 @@ export default async function Findings({
     ?.filter(
       (scan: any) =>
         scan.attributes.state === "completed" &&
-        scan.attributes.unique_resource_count > 1 &&
-        scan.attributes.name, // Ensure it has a name
+        scan.attributes.unique_resource_count > 1,
     )
-    .map((scan: any) => ({
+    .map((scan: ScanProps) => ({
       id: scan.id,
       name: scan.attributes.name,
     }));
 
-  const completedScanIds = completedScans?.map((scan: any) => scan.id) || [];
+  const completedScanIds =
+    completedScans?.map((scan: ScanProps) => scan.id) || [];
 
   return (
     <>

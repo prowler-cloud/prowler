@@ -41,8 +41,8 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
     },
   },
   {
-    accessorKey: "accountName",
-    header: () => <p className="pr-8">Account name</p>,
+    accessorKey: "cloudProvider",
+    header: () => <p className="pr-8">Cloud provider</p>,
     cell: ({ row }) => {
       const providerInfo = row.original.providerInfo;
 
