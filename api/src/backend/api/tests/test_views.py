@@ -3325,3 +3325,42 @@ class TestOverviewViewSet:
         )
 
     # TODO Add more tests for the rest of overviews
+
+
+@pytest.mark.django_db
+class TestScheduleViewSet:
+    @pytest.mark.parametrize("method", ["get", "post"])
+    def test_schedule_invalid_method_list(self, method, authenticated_client):
+        response = getattr(authenticated_client, method)(reverse("schedule-list"))
+        assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+
+    @patch("api.v1.views.Task.objects.get")
+    @patch("api.v1.views.schedule_provider_scan")
+    def test_schedule_daily(
+        self,
+        mock_schedule_scan,
+        mock_task_get,
+        authenticated_client,
+        providers_fixture,
+        tasks_fixture,
+    ):
+        provider, *_ = providers_fixture
+        prowler_task = tasks_fixture[0]
+        mock_schedule_scan.return_value.id = prowler_task.id
+        mock_task_get.return_value = prowler_task
+        json_payload = {
+            "provider_id": str(provider.id),
+        }
+        response = authenticated_client.post(
+            reverse("schedule-daily"), data=json_payload, format="json"
+        )
+        assert response.status_code == status.HTTP_202_ACCEPTED
+
+    def test_schedule_daily_provider_does_not_exist(self, authenticated_client):
+        json_payload = {
+            "provider_id": "4846c2f9-84b2-442b-94dd-3082e8eb9584",
+        }
+        response = authenticated_client.post(
+            reverse("schedule-daily"), data=json_payload, format="json"
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
