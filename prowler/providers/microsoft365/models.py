@@ -9,6 +9,7 @@ class Microsoft365IdentityInfo(BaseModel):
     identity_type: str = ""
     tenant_id: str = ""
     tenant_domain: str = "Unknown tenant domain (missing AAD permissions)"
+    location: str = ""
 
 
 class Microsoft365RegionConfig(BaseModel):

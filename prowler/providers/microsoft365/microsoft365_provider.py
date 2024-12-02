@@ -5,10 +5,10 @@ from argparse import ArgumentTypeError
 from os import getenv
 from uuid import UUID
 
-import requests
 from azure.core.exceptions import ClientAuthenticationError, HttpResponseError
 from azure.identity import ClientSecretCredential, DefaultAzureCredential
 from colorama import Fore, Style
+from msal import ConfidentialClientApplication
 from msgraph import GraphServiceClient
 
 from prowler.config.config import (
@@ -26,11 +26,10 @@ from prowler.providers.microsoft365.exceptions.exceptions import (
     Microsoft365ClientIdAndClientSecretNotBelongingToTenantIdError,
     Microsoft365ConfigCredentialsError,
     Microsoft365CredentialsUnavailableError,
-    Microsoft365DefaultMicrosoft365CredentialError,
+    Microsoft365DefaultAzureCredentialError,
     Microsoft365EnvironmentVariableError,
     Microsoft365GetTokenIdentityError,
     Microsoft365HTTPResponseError,
-    Microsoft365InteractiveBrowserCredentialError,
     Microsoft365InvalidProviderIdError,
     Microsoft365NotValidClientIdError,
     Microsoft365NotValidClientSecretError,
@@ -107,7 +106,6 @@ class Microsoft365Provider(Provider):
         Initializes the Microsoft365 provider.
 
         Args:
-            app_env_auth (bool): Flag indicating whether to use application authentication with environment variables.
             tenant_id (str): The Microsoft365 Active Directory tenant ID.
             region (str): The Microsoft365 region.
             client_id (str): The Microsoft365 client ID.
@@ -124,8 +122,7 @@ class Microsoft365Provider(Provider):
         Raises:
             Microsoft365ArgumentTypeValidationError: If there is an error in the argument type validation.
             Microsoft365SetUpRegionConfigError: If there is an error in setting up the region configuration.
-            Microsoft365DefaultMicrosoft365CredentialError: If there is an error in retrieving the Microsoft365 credentials.
-            Microsoft365InteractiveBrowserCredentialError: If there is an error in retrieving the Microsoft365 credentials using browser authentication.
+            Microsoft365DefaultAzureCredentialError: If there is an error in retrieving the Microsoft365 credentials.
             Microsoft365ConfigCredentialsError: If there is an error in configuring the Microsoft365 credentials from a dictionary.
             Microsoft365GetTokenIdentityError: If there is an error in getting the token from the Microsoft365 identity.
             Microsoft365HTTPResponseError: If there is an HTTP response error.
@@ -135,8 +132,17 @@ class Microsoft365Provider(Provider):
         logger.info("Checking if region is different than default one")
         self._region_config = self.setup_region_config(region)
 
+        # Get the dict from the static credentials
+        microsoft365_credentials = None
+        if tenant_id and client_id and client_secret:
+            microsoft365_credentials = self.validate_static_credentials(
+                tenant_id=tenant_id, client_id=client_id, client_secret=client_secret
+            )
+
         # Set up the Microsoft365 session
-        self._session = self.setup_session()
+        self._session = self.setup_session(
+            microsoft365_credentials,
+        )
 
         # Set up the identity
         self._identity = self.setup_identity()
@@ -202,6 +208,30 @@ class Microsoft365Provider(Provider):
         return self._mutelist
 
     @staticmethod
+    def validate_arguments(
+        tenant_id: str,
+        client_id: str,
+        client_secret: str,
+    ):
+        """
+        Validates the authentication arguments for the Azure provider.
+
+        Args:
+            tenant_id (str): The Azure Tenant ID.
+            client_id (str): The Azure Client ID.
+            client_secret (str): The Azure Client Secret.
+
+        Raises:
+            AzureBrowserAuthNoTenantIDError: If browser authentication is enabled but the tenant ID is not found.
+        """
+
+        if not client_id or not client_secret or not tenant_id:
+            raise Microsoft365IdentityInfo(
+                file=os.path.basename(__file__),
+                message="Tenant Id is required for Azure static credentials. Make sure you are using the correct credentials.",
+            )
+
+    @staticmethod
     def setup_region_config(region):
         """
         Sets up the region configuration for the Microsoft365 provider.
@@ -254,6 +284,7 @@ class Microsoft365Provider(Provider):
         """
         report_lines = [
             f"Microsoft365 Region: {Fore.YELLOW}{self.region_config.name}{Style.RESET_ALL}",
+            f"Microsoft365 Tenant Domain: {Fore.YELLOW}{self.identity.tenant_domain}{Style.RESET_ALL} Microsoft365 Tenant ID: {Fore.YELLOW}{self._identity.tenant_id}{Style.RESET_ALL}",
             f"Microsoft365 Identity Type: {Fore.YELLOW}{self._identity.identity_type}{Style.RESET_ALL} Microsoft365 Identity ID: {Fore.YELLOW}{self._identity.identity_id}{Style.RESET_ALL}",
         ]
         report_title = (
@@ -264,7 +295,9 @@ class Microsoft365Provider(Provider):
     # TODO: setup_session or setup_credentials?
     # This should be setup_credentials, since it is setting up the credentials for the provider
     @staticmethod
-    def setup_session():
+    def setup_session(
+        microsoft365_credentials: dict,
+    ):
         """Returns the Microsoft365 credentials object.
 
         Set up the Microsoft365 session with the specified authentication method.
@@ -305,54 +338,48 @@ class Microsoft365Provider(Provider):
         raise_on_exception=True,
         client_id=None,
         client_secret=None,
-        provider_id=None,
     ) -> Connection:
-        """Test connection to Azure subscription.
+        """Test connection to Microsoft365 subscription.
 
-        Test the connection to an Azure subscription using the provided credentials.
+        Test the connection to an Microsoft365 subscription using the provided credentials.
 
         Args:
 
-            tenant_id (str): The Azure Active Directory tenant ID.
-            region (str): The Azure region.
+            tenant_id (str): The Microsoft365 Active Directory tenant ID.
+            region (str): The Microsoft365 region.
             raise_on_exception (bool): Flag indicating whether to raise an exception if the connection fails.
-            client_id (str): The Azure client ID.
-            client_secret (str): The Azure client secret.
-            provider_id (str): The provider ID, in this case it's the Azure subscription ID.
+            client_id (str): The Microsoft365 client ID.
+            client_secret (str): The Microsoft365 client secret.
+            provider_id (str): The provider ID, in this case it's the Microsoft365 subscription ID.
 
         Returns:
             bool: True if the connection is successful, False otherwise.
 
         Raises:
-            Exception: If failed to test the connection to Azure subscription.
-            AzureArgumentTypeValidationError: If there is an error in the argument type validation.
-            AzureSetUpRegionConfigError: If there is an error in setting up the region configuration.
-            AzureDefaultAzureCredentialError: If there is an error in retrieving the Azure credentials.
-            AzureInteractiveBrowserCredentialError: If there is an error in retrieving the Azure credentials using browser authentication.
-            AzureHTTPResponseError: If there is an HTTP response error.
-            AzureConfigCredentialsError: If there is an error in configuring the Azure credentials from a dictionary.
+            Exception: If failed to test the connection to Microsoft365 subscription.
+            Microsoft365ArgumentTypeValidationError: If there is an error in the argument type validation.
+            Microsoft365SetUpRegionConfigError: If there is an error in setting up the region configuration.
+            Microsoft365DefaultAzureCredentialError: If there is an error in retrieving the Microsoft365 credentials.
+            Microsoft365InteractiveBrowserCredentialError: If there is an error in retrieving the Microsoft365 credentials using browser authentication.
+            Microsoft365HTTPResponseError: If there is an HTTP response error.
+            Microsoft365ConfigCredentialsError: If there is an error in configuring the Microsoft365 credentials from a dictionary.
 
 
         Examples:
-            >>> AzureProvider.test_connection(az_cli_auth=True)
+            >>> Microsoft365Provider.test_connection(az_cli_auth=True)
             True
-            >>> AzureProvider.test_connection(sp_env_auth=False, browser_auth=True, tenant_id=None)
-            False, ArgumentTypeError: Azure Tenant ID is required only for browser authentication mode
-            >>> AzureProvider.test_connection(tenant_id="XXXXXXXXXX", client_id="XXXXXXXXXX", client_secret="XXXXXXXXXX")
+            >>> Microsoft365Provider.test_connection(sp_env_auth=False, browser_auth=True, tenant_id=None)
+            False, ArgumentTypeError: Microsoft365 Tenant ID is required only for browser authentication mode
+            >>> Microsoft365Provider.test_connection(tenant_id="XXXXXXXXXX", client_id="XXXXXXXXXX", client_secret="XXXXXXXXXX")
             True
         """
         try:
-            Microsoft365Provider.validate_arguments(
-                tenant_id,
-                client_id,
-                client_secret,
-            )
-            region_config = Microsoft365Provider.setup_region_config(region)
+            Microsoft365Provider.setup_region_config(region)
 
             # Get the dict from the static credentials
-            Microsoft365_credentials = None
+            microsoft365_credentials = None
             if tenant_id and client_id and client_secret:
-                Microsoft365_credentials = (
+                microsoft365_credentials = (
                     Microsoft365Provider.validate_static_credentials(
                         tenant_id=tenant_id,
                         client_id=client_id,
@@ -362,14 +389,10 @@ class Microsoft365Provider(Provider):
 
             # Set up the Microsoft365 session
             Microsoft365Provider.setup_session(
-                tenant_id,
-                Microsoft365_credentials,
-                region_config,
+                microsoft365_credentials,
             )
 
-            logger.info(
-                "Microsoft365 provider: Connection to Microsoft365 subscription successful"
-            )
+            logger.info("Microsoft365 provider: Connection to Microsoft365 successful")
 
             return Connection(is_connected=True)
 
@@ -396,24 +419,13 @@ class Microsoft365Provider(Provider):
             if raise_on_exception:
                 raise environment_credentials_error
             return Connection(error=environment_credentials_error)
-        except (
-            Microsoft365DefaultMicrosoft365CredentialError
-        ) as default_credentials_error:
+        except Microsoft365DefaultAzureCredentialError as default_credentials_error:
             logger.error(
                 f"{default_credentials_error.__class__.__name__}[{default_credentials_error.__traceback__.tb_lineno}]: {default_credentials_error}"
             )
             if raise_on_exception:
                 raise default_credentials_error
             return Connection(error=default_credentials_error)
-        except (
-            Microsoft365InteractiveBrowserCredentialError
-        ) as interactive_browser_error:
-            logger.error(
-                f"{interactive_browser_error.__class__.__name__}[{interactive_browser_error.__traceback__.tb_lineno}]: {interactive_browser_error}"
-            )
-            if raise_on_exception:
-                raise interactive_browser_error
-            return Connection(error=interactive_browser_error)
         except Microsoft365ConfigCredentialsError as config_credentials_error:
             logger.error(
                 f"{config_credentials_error.__class__.__name__}[{config_credentials_error.__traceback__.tb_lineno}]: {config_credentials_error}"
@@ -435,9 +447,7 @@ class Microsoft365Provider(Provider):
             if raise_on_exception:
                 raise credential_unavailable_error
             return Connection(error=credential_unavailable_error)
-        except (
-            Microsoft365DefaultMicrosoft365CredentialError
-        ) as default_credentials_error:
+        except Microsoft365DefaultAzureCredentialError as default_credentials_error:
             logger.error(
                 f"{default_credentials_error.__class__.__name__}[{default_credentials_error.__traceback__.tb_lineno}]: {default_credentials_error}"
             )
@@ -531,7 +541,7 @@ class Microsoft365Provider(Provider):
         Sets up the identity for the Microsoft365 provider.
 
         Args:
-            app_env_auth (bool): Flag indicating if Service Principal environment authentication is used.
+            None
 
         Returns:
             Microsoft365IdentityInfo: An instance of Microsoft365IdentityInfo containing the identity information.
@@ -582,6 +592,7 @@ class Microsoft365Provider(Provider):
             # The id of the sp can be retrieved from environment variables
             identity.identity_id = getenv("APP_CLIENT_ID")
             identity.identity_type = "Application"
+            identity.tenant_id = getenv("APP_TENANT_ID")
 
         asyncio.get_event_loop().run_until_complete(get_microsoft365_identity())
 
@@ -684,34 +695,40 @@ class Microsoft365Provider(Provider):
         Returns:
             None
         """
-        url = f"https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token"
-        headers = {
-            "Content-Type": "application/x-www-form-urlencoded",
-            "Accept": "application/json",
-        }
-        data = {
-            "grant_type": "client_credentials",
-            "client_id": client_id,
-            "client_secret": client_secret,
-            "scope": "https://graph.microsoft.com/.default",
-        }
-        response = requests.post(url, headers=headers, data=data).json()
-        if "access_token" not in response.keys() and "error_codes" in response.keys():
-            if f"Tenant '{tenant_id}'" in response["error_description"]:
-                raise Microsoft365NotValidTenantIdError(
-                    file=os.path.basename(__file__),
-                    message="The provided Microsoft 365 Tenant ID is not valid for the specified Client ID and Client Secret.",
-                )
-            if (
-                f"Application with identifier '{client_id}'"
-                in response["error_description"]
-            ):
-                raise Microsoft365NotValidClientIdError(
-                    file=os.path.basename(__file__),
-                    message="The provided Microsoft 365 Client ID is not valid for the specified Tenant ID and Client Secret.",
-                )
-            if "Invalid client secret provided" in response["error_description"]:
-                raise Microsoft365NotValidClientSecretError(
-                    file=os.path.basename(__file__),
-                    message="The provided Microsoft 365 Client Secret is not valid for the specified Tenant ID and Client ID.",
-                )
+        authority = f"https://login.microsoftonline.com/{tenant_id}"
+        try:
+            # Create a ConfidentialClientApplication instance
+            app = ConfidentialClientApplication(
+                client_id=client_id,
+                client_credential=client_secret,
+                authority=authority,
+            )
+
+            # Attempt to acquire a token
+            result = app.acquire_token_for_client(
+                scopes=["https://graph.microsoft.com/.default"]
+            )
+
+            # Check if token acquisition was successful
+            if "access_token" not in result:
+                # Handle specific errors based on the MSAL response
+                error_description = result.get("error_description", "")
+                if f"Tenant '{tenant_id}'" in error_description:
+                    raise Microsoft365NotValidTenantIdError(
+                        file=os.path.basename(__file__),
+                        message="The provided Microsoft 365 Tenant ID is not valid for the specified Client ID and Client Secret.",
+                    )
+                if f"Application with identifier '{client_id}'" in error_description:
+                    raise Microsoft365NotValidClientIdError(
+                        file=os.path.basename(__file__),
+                        message="The provided Microsoft 365 Client ID is not valid for the specified Tenant ID and Client Secret.",
+                    )
+                if "Invalid client secret provided" in error_description:
+                    raise Microsoft365NotValidClientSecretError(
+                        file=os.path.basename(__file__),
+                        message="The provided Microsoft 365 Client Secret is not valid for the specified Tenant ID and Client ID.",
+                    )
+
+        except Exception as e:
+            # Generic exception handling (if needed)
+            raise RuntimeError(f"An unexpected error occurred: {str(e)}")
