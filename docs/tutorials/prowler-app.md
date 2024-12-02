@@ -2,7 +2,7 @@
 
 The **Prowler App** is a user-friendly interface for the Prowler CLI, providing a visual dashboard to monitor your cloud security posture. This tutorial will guide you through setting up and using the Prowler App.
 
-After installing the **Prowler App**, access it at [http://localhost:3000](http://localhost:3000).
+After [installing][./index.md] the **Prowler App**, access it at [http://localhost:3000](http://localhost:3000).
 You can also access to the auto-generated **Prowler API** documentation at [http://localhost:8080/api/v1/docs](http://localhost:8080/api/v1/docs) to see all the available endpoints, parameters and responses.
 
 ## **Step 1: Sign Up**
