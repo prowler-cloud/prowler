@@ -259,7 +259,6 @@ class GithubProvider(Provider):
                         app_id = env.str("GITHUB_APP_ID", "")
                         app_key = format_rsa_key(env.str(r"GITHUB_APP_KEY", ""))
 
-                        logger.critical(app_key)
                         if app_id and app_key:
                             self._auth_method = (
                                 "Environment Variables for GitHub App Key and ID"
