@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Checkbox, Link } from "@nextui-org/react";
+import { Link } from "@nextui-org/react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -183,7 +183,7 @@ export const AuthForm = ({
                 isInvalid={!!form.formState.errors.password}
               />
 
-              {type === "sign-in" && (
+              {/* {type === "sign-in" && (
                 <div className="flex items-center justify-between px-1 py-2">
                   <Checkbox name="remember" size="sm">
                     Remember me
@@ -192,7 +192,7 @@ export const AuthForm = ({
                     Forgot password?
                   </Link>
                 </div>
-              )}
+              )} */}
               {type === "sign-up" && (
                 <>
                   <CustomInput
