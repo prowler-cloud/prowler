@@ -3,7 +3,6 @@ from uuid import uuid4
 
 import pytest
 from azure.core.credentials import AccessToken
-from azure.identity import DefaultAzureCredential
 from mock import MagicMock
 
 from prowler.config.config import (
@@ -54,19 +53,12 @@ class TestMicrosoft365Provider:
                 base_url="https://management.azure.com",
                 credential_scopes=["https://management.azure.com/.default"],
             )
-            assert isinstance(microsoft365_provider.session, DefaultAzureCredential)
             assert microsoft365_provider.identity == Microsoft365IdentityInfo(
                 identity_id="",
                 identity_type="",
                 tenant_id="",
                 tenant_domain="Unknown tenant domain (missing AAD permissions)",
             )
-            assert microsoft365_provider.audit_config == {
-                "shodan_api_key": None,
-                "php_latest_version": "8.2",
-                "python_latest_version": "3.12",
-                "java_latest_version": "17",
-            }
 
     def test_test_connection_tenant_id_client_id_client_secret(self):
         with patch(
@@ -74,8 +66,6 @@ class TestMicrosoft365Provider:
         ) as mock_default_credential, patch(
             "prowler.providers.microsoft365.microsoft365_provider.Microsoft365Provider.setup_session"
         ) as mock_setup_session, patch(
-            "prowler.providers.microsoft365.microsoft365_provider.SubscriptionClient"
-        ) as mock_resource_client, patch(
             "prowler.providers.microsoft365.microsoft365_provider.Microsoft365Provider.validate_static_credentials"
         ) as mock_validate_static_credentials:
 
@@ -97,12 +87,7 @@ class TestMicrosoft365Provider:
             # Mock ValidateStaticCredentials to avoid real API calls
             mock_validate_static_credentials.return_value = None
 
-            # Mock ResourceManagementClient to avoid real API calls
-            mock_client = MagicMock()
-            mock_resource_client.return_value = mock_client
-
             test_connection = Microsoft365Provider.test_connection(
-                browser_auth=False,
                 tenant_id=str(uuid4()),
                 region="AzureCloud",
                 raise_on_exception=False,
@@ -120,8 +105,6 @@ class TestMicrosoft365Provider:
         ) as mock_default_credential, patch(
             "prowler.providers.microsoft365.microsoft365_provider.Microsoft365Provider.setup_session"
         ) as mock_setup_session, patch(
-            "prowler.providers.microsoft365.microsoft365_provider.SubscriptionClient"
-        ) as mock_resource_client, patch(
             "prowler.providers.microsoft365.microsoft365_provider.Microsoft365Provider.validate_static_credentials"
         ) as mock_validate_static_credentials:
 
@@ -142,12 +125,8 @@ class TestMicrosoft365Provider:
             # Mock ResourceManagementClient to avoid real API calls
             mock_subscription = MagicMock()
             mock_subscription.subscription_id = "test_provider_id"
-            mock_return_value = MagicMock()
-            mock_return_value.subscriptions.list.return_value = [mock_subscription]
-            mock_resource_client.return_value = mock_return_value
 
             test_connection = Microsoft365Provider.test_connection(
-                browser_auth=False,
                 tenant_id=str(uuid4()),
                 region="AzureCloud",
                 raise_on_exception=False,

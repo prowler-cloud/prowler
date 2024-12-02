@@ -5,7 +5,7 @@ from prowler.providers.microsoft365.lib.mutelist.mutelist import Microsoft365Mut
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 
 MUTELIST_FIXTURE_PATH = (
-    "tests/providers/microsoft365/lib/mutelist/fixtures/azure_mutelist.yaml"
+    "tests/providers/microsoft365/lib/mutelist/fixtures/microsoft365_mutelist.yaml"
 )
 
 
@@ -58,10 +58,12 @@ class TestMicrosoft365Mutelist:
         mutelist = Microsoft365Mutelist(mutelist_content=mutelist_content)
 
         finding = MagicMock
+        finding.tenant_id = "subscription_1"
         finding.check_metadata = MagicMock
         finding.check_metadata.CheckID = "check_test"
         finding.status = "FAIL"
         finding.resource_name = "test_resource"
+        finding.tenant_domain = "test_domain"
         finding.resource_tags = []
 
         assert mutelist.is_finding_muted(finding)
