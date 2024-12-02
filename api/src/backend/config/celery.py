@@ -3,7 +3,7 @@ from celery import Celery, Task
 celery_app = Celery("tasks")
 
 celery_app.config_from_object("django.conf:settings", namespace="CELERY")
-celery_app.conf.update(result_extended=True)
+celery_app.conf.update(result_extended=True, result_expires=None)
 
 celery_app.autodiscover_tasks(["api"])
 
@@ -20,8 +20,9 @@ class RLSTask(Task):
         shadow=None,
         **options,
     ):
-        from api.models import Task as APITask
         from django_celery_results.models import TaskResult
+
+        from api.models import Task as APITask
 
         result = super().apply_async(
             args=args,
