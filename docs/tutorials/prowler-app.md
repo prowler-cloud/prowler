@@ -18,12 +18,14 @@ Once you’ve signed up, log in with your email and password to start using the 
 
 <img src="../../img/log-in.png" alt="Log In" width="350"/>
 
+You will see the Overview page with no data yet, so let's start adding a provider to scan your cloud environment.
+
 ---
 
 ## **Step 3: Add a Provider**
-To run your first scan:
+To run your first scan, you need to add a cloud provider account. Prowler App supports AWS, Azure, GCP, and Kubernetes.
 
-1. Navigate to `Settings > Providers`.
+1. Navigate to `Settings > Cloud Providers`.
 2. Click `Add Account` to set up a new provider and provide your credentials:
 
 <img src="../../img/add-provider.png" alt="Add Provider" width="700"/>
@@ -33,6 +35,10 @@ To run your first scan:
 ## **Step 4: Configure the Provider**
 Choose the provider you want to scan from the following options:
 
+<img src="../../img/select-provider.png" alt="Select a Provider" width="700"/>
+
+Once you’ve selected a provider, you need to provide the Provider UID:
+
 - **AWS**: Enter your AWS Account ID.
 - **GCP**: Enter your GCP Project ID.
 - **Azure**: Enter your Azure Subscription ID.
@@ -40,11 +46,9 @@ Choose the provider you want to scan from the following options:
 
 Optionally, provide a **Provider Alias** for easier identification. Follow the instructions provided to add your credentials:
 
-<img src="../../img/add-account.png" alt="Add Account" width="700"/>
-
 ---
 ### **Step 4.1: AWS Credentials**
-For AWS, Prowler App can use either IAM Access Keys or assume an IAM Role. Here’s how to set up each:
+For AWS, enter your `AWS Account ID` and choose one of the following methods to connect:
 
 #### **Step 4.1.1: IAM Access Keys**
 1. Select `Connect via Credentials`.
@@ -95,15 +99,15 @@ By default, the `kubeconfig` file is located at `~/.kube/config`.
 ---
 
 ## **Step 5: Test Connection**
-After adding your credentials of your cloud account, click the `Test Connection` button to verify that the Prowler App can successfully connect to your provider:
+After adding your credentials of your cloud account, click the `Launch` button to verify that the Prowler App can successfully connect to your provider:
 
 <img src="../../img/test-connection-button.png" alt="Test Connection" width="700"/>
 
 
-## **Step 6: Start Your First Scan**
-After successfully adding and testing your credentials, click the `Start Now` button to initiate your first scan:
+## **Step 6: Scan started**
+After successfully adding and testing your credentials, Prowler will start scanning your cloud environment, click on the `Go to Scans` button to see the progress:
 
-<img src="../../img/start-now.png" alt="Start Now" width="700"/>
+<img src="../../img/provider-added.png" alt="Start Now" width="700"/>
 
 ???+ note
     Prowler will automatically scan all configured providers every **24 hours**, ensuring your cloud environment stays continuously monitored.
@@ -119,7 +123,10 @@ Track the progress of your scan in the `Scans` section:
 ## **Step 8: Analyze the Findings**
 While the scan is running, start exploring the findings in these sections:
 
-- **Overview**: High-level summary of the scan.
-- **Findings**: Detailed list of issues detected. <img src="../../img/findings.png" alt="Findings" width="700"/>
+- **Overview**: High-level summary of the scans. <img src="../../img/overview.png" alt="Overview" width="700"/>
 - **Compliance**: Insights into compliance status. <img src="../../img/compliance.png" alt="Compliance" width="700"/>
-- **Services**: Breakdown of services scanned. <img src="../../img/services.png" alt="Services" width="700"/>
+- **Issues**: Types of issues detected.
+
+<img src="../../img/issues.png" alt="Issues" width="300" style="text-align: center;"/>
+
+- **Browse All Findings**: Detailed list of findings detected, where you can filter by severity, service, and more. <img src="../../img/findings.png" alt="Findings" width="700"/>

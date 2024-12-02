@@ -5,7 +5,6 @@ services:
       context: ./api
       dockerfile: Dockerfile
       target: dev
-    image: prowler-api-dev
     environment:
       - DJANGO_SETTINGS_MODULE=config.django.devel
       - DJANGO_LOGGING_FORMATTER=${LOGGING_FORMATTER:-human_readable}
@@ -41,18 +40,18 @@ services:
     image: postgres:16.3-alpine
     hostname: "postgres-db"
     volumes:
-      - ./api/_data/postgres:/var/lib/postgresql/data
+      - ./_data/postgres:/var/lib/postgresql/data
     environment:
-      - POSTGRES_USER=${POSTGRES_ADMIN_USER:-prowler}
-      - POSTGRES_PASSWORD=${POSTGRES_ADMIN_PASSWORD:-S3cret}
-      - POSTGRES_DB=${POSTGRES_DB:-prowler_db}
+      - POSTGRES_USER=${POSTGRES_ADMIN_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_ADMIN_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
     env_file:
       - path: .env
         required: false
     ports:
       - "${POSTGRES_PORT:-5432}:${POSTGRES_PORT:-5432}"
     healthcheck:
-      test: ["CMD-SHELL", "sh -c 'pg_isready -U ${POSTGRES_ADMIN_USER:-prowler} -d ${POSTGRES_DB:-prowler_db}'"]
+      test: ["CMD-SHELL", "sh -c 'pg_isready -U ${POSTGRES_ADMIN_USER} -d ${POSTGRES_DB}'"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -78,7 +77,6 @@ services:
       context: ./api
       dockerfile: Dockerfile
       target: dev
-    image: prowler-worker-dev
     environment:
       - DJANGO_SETTINGS_MODULE=config.django.devel
     env_file:
@@ -98,7 +96,6 @@ services:
       context: ./api
       dockerfile: Dockerfile
       target: dev
-    image: prowler-worker-dev
     environment:
       - DJANGO_SETTINGS_MODULE=config.django.devel
     env_file:
