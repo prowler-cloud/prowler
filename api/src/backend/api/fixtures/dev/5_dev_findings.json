@@ -1,0 +1,2498 @@
+[
+  {
+    "model": "api.finding",
+    "pk": "01929f3c-0917-75ff-ba43-08b857227015",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T10:46:04.823Z",
+      "updated_at": "2024-10-18T10:46:04.841Z",
+      "uid": "prowler-aws-accessanalyzer_enabled-112233445566-eu-south-2-112233445566",
+      "delta": "new",
+      "status": "FAIL",
+      "status_extended": "IAM Access Analyzer in account 112233445566 is not enabled.",
+      "severity": "low",
+      "impact": "low",
+      "impact_extended": null,
+      "raw_result": {},
+      "tags": {},
+      "check_id": "accessanalyzer_enabled",
+      "check_metadata": {
+        "risk": "AWS IAM Access Analyzer helps you identify the resources in your organization and accounts, such as Amazon S3 buckets or IAM roles, that are shared with an external entity. This lets you identify unintended access to your resources and data, which is a security risk. IAM Access Analyzer uses a form of mathematical analysis called automated reasoning, which applies logic and mathematical inference to determine all possible access paths allowed by a resource policy.",
+        "notes": "",
+        "checkid": "accessanalyzer_enabled",
+        "provider": "aws",
+        "severity": "low",
+        "checktype": [
+          "IAM"
+        ],
+        "dependson": [],
+        "relatedto": [],
+        "categories": [],
+        "checktitle": "Check if IAM Access Analyzer is enabled",
+        "compliance": null,
+        "relatedurl": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+        "description": "Check if IAM Access Analyzer is enabled",
+        "remediation": {
+          "code": {
+            "cli": "aws accessanalyzer create-analyzer --analyzer-name <NAME> --type <ACCOUNT|ORGANIZATION>",
+            "other": "",
+            "nativeiac": "",
+            "terraform": ""
+          },
+          "recommendation": {
+            "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+            "text": "Enable IAM Access Analyzer for all accounts, create analyzer and take action over it is recommendations (IAM Access Analyzer is available at no additional cost)."
+          }
+        },
+        "servicename": "accessanalyzer",
+        "checkaliases": [],
+        "resourcetype": "Other",
+        "subservicename": "",
+        "resourceidtemplate": "arn:partition:access-analyzer:region:account-id:analyzer/resource-id"
+      },
+      "scan": "01929f3b-ed2e-7623-ad63-7c37cd37828f",
+      "text_search": "'/iam/latest/userguide/what-is-access-analyzer.html':104,128 '112233445566':6B 'a':52,59,81 'access':2B,12,44,56,77,97,109,132,147,163 'access-analyzer':162 'accessanalyzer':85,115,156 'account':5B,123,167 'account-id':166 'accounts':23,136 'action':141 'additional':153 'all':75,135 'allowed':79 'amazon':26 'an':36 'analysis':63 'analyz':3B 'analyzer':13,57,98,110,118,120,133,138,148,164 'analyzer-name':119 'analyzer/resource-id':169 'and':22,48,70,139 'applies':68 'are':33 'arn':160 'as':25 'at':151 'automated':65 'available':150 'aws':10,88,114 'buckets':28 'by':80 'called':64 'check':94,106 'cost':154 'create':117,137 'create-analyzer':116 'data':49 'determine':74 'docs.aws.amazon.com':103,127 'docs.aws.amazon.com/iam/latest/userguide/what-is-access-analyzer.html':102,126 'enabl':9B 'enable':130 'enabled':86,100,112 'entity':38 'external':37 'for':134 'form':60 'helps':14 'iam':1B,11,30,55,92,96,108,131,146 'id':168 'identify':16,42 'if':95,107 'in':19 'inference':72 'is':51,99,111,144,149 'it':143 'lets':40 'logic':69 'low':90 'mathematical':62,71 'name':121 'no':152 'of':61 'or':29 'organization':21,124 'other':158 'over':142 'partition':161 'paths':78 'policy':83 'possible':76 'reasoning':66 'recommendations':145 'region':165 'resource':82 'resources':18,47 'risk':54 'roles':31 's3':27 'security':53 'shared':34 'such':24 'take':140 'that':32 'the':17 'this':39 'to':45,73 'type':122 'unintended':43 'uses':58 'which':50,67 'with':35 'you':15,41 'your':20,46"
+    }
+  },
+  {
+    "model": "api.finding",
+    "pk": "01929f3c-0936-7cef-b923-55639a76763a",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T10:46:04.855Z",
+      "updated_at": "2024-10-18T10:46:04.858Z",
+      "uid": "prowler-aws-accessanalyzer_enabled-112233445566-eu-west-3-112233445566",
+      "delta": "new",
+      "status": "FAIL",
+      "status_extended": "IAM Access Analyzer in account 112233445566 is not enabled.",
+      "severity": "low",
+      "impact": "low",
+      "impact_extended": null,
+      "raw_result": {},
+      "tags": {},
+      "check_id": "accessanalyzer_enabled",
+      "check_metadata": {
+        "risk": "AWS IAM Access Analyzer helps you identify the resources in your organization and accounts, such as Amazon S3 buckets or IAM roles, that are shared with an external entity. This lets you identify unintended access to your resources and data, which is a security risk. IAM Access Analyzer uses a form of mathematical analysis called automated reasoning, which applies logic and mathematical inference to determine all possible access paths allowed by a resource policy.",
+        "notes": "",
+        "checkid": "accessanalyzer_enabled",
+        "provider": "aws",
+        "severity": "low",
+        "checktype": [
+          "IAM"
+        ],
+        "dependson": [],
+        "relatedto": [],
+        "categories": [],
+        "checktitle": "Check if IAM Access Analyzer is enabled",
+        "compliance": null,
+        "relatedurl": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+        "description": "Check if IAM Access Analyzer is enabled",
+        "remediation": {
+          "code": {
+            "cli": "aws accessanalyzer create-analyzer --analyzer-name <NAME> --type <ACCOUNT|ORGANIZATION>",
+            "other": "",
+            "nativeiac": "",
+            "terraform": ""
+          },
+          "recommendation": {
+            "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+            "text": "Enable IAM Access Analyzer for all accounts, create analyzer and take action over it is recommendations (IAM Access Analyzer is available at no additional cost)."
+          }
+        },
+        "servicename": "accessanalyzer",
+        "checkaliases": [],
+        "resourcetype": "Other",
+        "subservicename": "",
+        "resourceidtemplate": "arn:partition:access-analyzer:region:account-id:analyzer/resource-id"
+      },
+      "scan": "01929f3b-ed2e-7623-ad63-7c37cd37828f",
+      "text_search": "'/iam/latest/userguide/what-is-access-analyzer.html':104,128 '112233445566':6B 'a':52,59,81 'access':2B,12,44,56,77,97,109,132,147,163 'access-analyzer':162 'accessanalyzer':85,115,156 'account':5B,123,167 'account-id':166 'accounts':23,136 'action':141 'additional':153 'all':75,135 'allowed':79 'amazon':26 'an':36 'analysis':63 'analyz':3B 'analyzer':13,57,98,110,118,120,133,138,148,164 'analyzer-name':119 'analyzer/resource-id':169 'and':22,48,70,139 'applies':68 'are':33 'arn':160 'as':25 'at':151 'automated':65 'available':150 'aws':10,88,114 'buckets':28 'by':80 'called':64 'check':94,106 'cost':154 'create':117,137 'create-analyzer':116 'data':49 'determine':74 'docs.aws.amazon.com':103,127 'docs.aws.amazon.com/iam/latest/userguide/what-is-access-analyzer.html':102,126 'enabl':9B 'enable':130 'enabled':86,100,112 'entity':38 'external':37 'for':134 'form':60 'helps':14 'iam':1B,11,30,55,92,96,108,131,146 'id':168 'identify':16,42 'if':95,107 'in':19 'inference':72 'is':51,99,111,144,149 'it':143 'lets':40 'logic':69 'low':90 'mathematical':62,71 'name':121 'no':152 'of':61 'or':29 'organization':21,124 'other':158 'over':142 'partition':161 'paths':78 'policy':83 'possible':76 'reasoning':66 'recommendations':145 'region':165 'resource':82 'resources':18,47 'risk':54 'roles':31 's3':27 'security':53 'shared':34 'such':24 'take':140 'that':32 'the':17 'this':39 'to':45,73 'type':122 'unintended':43 'uses':58 'which':50,67 'with':35 'you':15,41 'your':20,46"
+    }
+  },
+  {
+    "model": "api.finding",
+    "pk": "01929f3c-0944-7bcf-8fe4-65df82f0de3a",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T10:46:04.869Z",
+      "updated_at": "2024-10-18T10:46:04.876Z",
+      "uid": "prowler-aws-accessanalyzer_enabled-112233445566-eu-central-2-112233445566",
+      "delta": "new",
+      "status": "FAIL",
+      "status_extended": "IAM Access Analyzer in account 112233445566 is not enabled.",
+      "severity": "low",
+      "impact": "low",
+      "impact_extended": null,
+      "raw_result": {},
+      "tags": {},
+      "check_id": "accessanalyzer_enabled",
+      "check_metadata": {
+        "risk": "AWS IAM Access Analyzer helps you identify the resources in your organization and accounts, such as Amazon S3 buckets or IAM roles, that are shared with an external entity. This lets you identify unintended access to your resources and data, which is a security risk. IAM Access Analyzer uses a form of mathematical analysis called automated reasoning, which applies logic and mathematical inference to determine all possible access paths allowed by a resource policy.",
+        "notes": "",
+        "checkid": "accessanalyzer_enabled",
+        "provider": "aws",
+        "severity": "low",
+        "checktype": [
+          "IAM"
+        ],
+        "dependson": [],
+        "relatedto": [],
+        "categories": [],
+        "checktitle": "Check if IAM Access Analyzer is enabled",
+        "compliance": null,
+        "relatedurl": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+        "description": "Check if IAM Access Analyzer is enabled",
+        "remediation": {
+          "code": {
+            "cli": "aws accessanalyzer create-analyzer --analyzer-name <NAME> --type <ACCOUNT|ORGANIZATION>",
+            "other": "",
+            "nativeiac": "",
+            "terraform": ""
+          },
+          "recommendation": {
+            "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+            "text": "Enable IAM Access Analyzer for all accounts, create analyzer and take action over it is recommendations (IAM Access Analyzer is available at no additional cost)."
+          }
+        },
+        "servicename": "accessanalyzer",
+        "checkaliases": [],
+        "resourcetype": "Other",
+        "subservicename": "",
+        "resourceidtemplate": "arn:partition:access-analyzer:region:account-id:analyzer/resource-id"
+      },
+      "scan": "01929f3b-ed2e-7623-ad63-7c37cd37828f",
+      "text_search": "'/iam/latest/userguide/what-is-access-analyzer.html':104,128 '112233445566':6B 'a':52,59,81 'access':2B,12,44,56,77,97,109,132,147,163 'access-analyzer':162 'accessanalyzer':85,115,156 'account':5B,123,167 'account-id':166 'accounts':23,136 'action':141 'additional':153 'all':75,135 'allowed':79 'amazon':26 'an':36 'analysis':63 'analyz':3B 'analyzer':13,57,98,110,118,120,133,138,148,164 'analyzer-name':119 'analyzer/resource-id':169 'and':22,48,70,139 'applies':68 'are':33 'arn':160 'as':25 'at':151 'automated':65 'available':150 'aws':10,88,114 'buckets':28 'by':80 'called':64 'check':94,106 'cost':154 'create':117,137 'create-analyzer':116 'data':49 'determine':74 'docs.aws.amazon.com':103,127 'docs.aws.amazon.com/iam/latest/userguide/what-is-access-analyzer.html':102,126 'enabl':9B 'enable':130 'enabled':86,100,112 'entity':38 'external':37 'for':134 'form':60 'helps':14 'iam':1B,11,30,55,92,96,108,131,146 'id':168 'identify':16,42 'if':95,107 'in':19 'inference':72 'is':51,99,111,144,149 'it':143 'lets':40 'logic':69 'low':90 'mathematical':62,71 'name':121 'no':152 'of':61 'or':29 'organization':21,124 'other':158 'over':142 'partition':161 'paths':78 'policy':83 'possible':76 'reasoning':66 'recommendations':145 'region':165 'resource':82 'resources':18,47 'risk':54 'roles':31 's3':27 'security':53 'shared':34 'such':24 'take':140 'that':32 'the':17 'this':39 'to':45,73 'type':122 'unintended':43 'uses':58 'which':50,67 'with':35 'you':15,41 'your':20,46"
+    }
+  },
+  {
+    "model": "api.finding",
+    "pk": "01929f3c-0958-7e15-8cac-0df0a67fd3a6",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T10:46:04.888Z",
+      "updated_at": "2024-10-18T10:46:04.892Z",
+      "uid": "prowler-aws-accessanalyzer_enabled-112233445566-eu-west-1-112233445566",
+      "delta": "new",
+      "status": "FAIL",
+      "status_extended": "IAM Access Analyzer in account 112233445566 is not enabled.",
+      "severity": "low",
+      "impact": "low",
+      "impact_extended": null,
+      "raw_result": {},
+      "tags": {},
+      "check_id": "accessanalyzer_enabled",
+      "check_metadata": {
+        "risk": "AWS IAM Access Analyzer helps you identify the resources in your organization and accounts, such as Amazon S3 buckets or IAM roles, that are shared with an external entity. This lets you identify unintended access to your resources and data, which is a security risk. IAM Access Analyzer uses a form of mathematical analysis called automated reasoning, which applies logic and mathematical inference to determine all possible access paths allowed by a resource policy.",
+        "notes": "",
+        "checkid": "accessanalyzer_enabled",
+        "provider": "aws",
+        "severity": "low",
+        "checktype": [
+          "IAM"
+        ],
+        "dependson": [],
+        "relatedto": [],
+        "categories": [],
+        "checktitle": "Check if IAM Access Analyzer is enabled",
+        "compliance": null,
+        "relatedurl": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+        "description": "Check if IAM Access Analyzer is enabled",
+        "remediation": {
+          "code": {
+            "cli": "aws accessanalyzer create-analyzer --analyzer-name <NAME> --type <ACCOUNT|ORGANIZATION>",
+            "other": "",
+            "nativeiac": "",
+            "terraform": ""
+          },
+          "recommendation": {
+            "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+            "text": "Enable IAM Access Analyzer for all accounts, create analyzer and take action over it is recommendations (IAM Access Analyzer is available at no additional cost)."
+          }
+        },
+        "servicename": "accessanalyzer",
+        "checkaliases": [],
+        "resourcetype": "Other",
+        "subservicename": "",
+        "resourceidtemplate": "arn:partition:access-analyzer:region:account-id:analyzer/resource-id"
+      },
+      "scan": "01929f3b-ed2e-7623-ad63-7c37cd37828f",
+      "text_search": "'/iam/latest/userguide/what-is-access-analyzer.html':104,128 '112233445566':6B 'a':52,59,81 'access':2B,12,44,56,77,97,109,132,147,163 'access-analyzer':162 'accessanalyzer':85,115,156 'account':5B,123,167 'account-id':166 'accounts':23,136 'action':141 'additional':153 'all':75,135 'allowed':79 'amazon':26 'an':36 'analysis':63 'analyz':3B 'analyzer':13,57,98,110,118,120,133,138,148,164 'analyzer-name':119 'analyzer/resource-id':169 'and':22,48,70,139 'applies':68 'are':33 'arn':160 'as':25 'at':151 'automated':65 'available':150 'aws':10,88,114 'buckets':28 'by':80 'called':64 'check':94,106 'cost':154 'create':117,137 'create-analyzer':116 'data':49 'determine':74 'docs.aws.amazon.com':103,127 'docs.aws.amazon.com/iam/latest/userguide/what-is-access-analyzer.html':102,126 'enabl':9B 'enable':130 'enabled':86,100,112 'entity':38 'external':37 'for':134 'form':60 'helps':14 'iam':1B,11,30,55,92,96,108,131,146 'id':168 'identify':16,42 'if':95,107 'in':19 'inference':72 'is':51,99,111,144,149 'it':143 'lets':40 'logic':69 'low':90 'mathematical':62,71 'name':121 'no':152 'of':61 'or':29 'organization':21,124 'other':158 'over':142 'partition':161 'paths':78 'policy':83 'possible':76 'reasoning':66 'recommendations':145 'region':165 'resource':82 'resources':18,47 'risk':54 'roles':31 's3':27 'security':53 'shared':34 'such':24 'take':140 'that':32 'the':17 'this':39 'to':45,73 'type':122 'unintended':43 'uses':58 'which':50,67 'with':35 'you':15,41 'your':20,46"
+    }
+  },
+  {
+    "model": "api.finding",
+    "pk": "01929f3c-0965-7290-9b5d-f4a84e26feb0",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T10:46:04.901Z",
+      "updated_at": "2024-10-18T10:46:04.905Z",
+      "uid": "prowler-aws-accessanalyzer_enabled-112233445566-us-east-2-112233445566",
+      "delta": "new",
+      "status": "FAIL",
+      "status_extended": "IAM Access Analyzer in account 112233445566 is not enabled.",
+      "severity": "low",
+      "impact": "low",
+      "impact_extended": null,
+      "raw_result": {},
+      "tags": {},
+      "check_id": "accessanalyzer_enabled",
+      "check_metadata": {
+        "risk": "AWS IAM Access Analyzer helps you identify the resources in your organization and accounts, such as Amazon S3 buckets or IAM roles, that are shared with an external entity. This lets you identify unintended access to your resources and data, which is a security risk. IAM Access Analyzer uses a form of mathematical analysis called automated reasoning, which applies logic and mathematical inference to determine all possible access paths allowed by a resource policy.",
+        "notes": "",
+        "checkid": "accessanalyzer_enabled",
+        "provider": "aws",
+        "severity": "low",
+        "checktype": [
+          "IAM"
+        ],
+        "dependson": [],
+        "relatedto": [],
+        "categories": [],
+        "checktitle": "Check if IAM Access Analyzer is enabled",
+        "compliance": null,
+        "relatedurl": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+        "description": "Check if IAM Access Analyzer is enabled",
+        "remediation": {
+          "code": {
+            "cli": "aws accessanalyzer create-analyzer --analyzer-name <NAME> --type <ACCOUNT|ORGANIZATION>",
+            "other": "",
+            "nativeiac": "",
+            "terraform": ""
+          },
+          "recommendation": {
+            "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+            "text": "Enable IAM Access Analyzer for all accounts, create analyzer and take action over it is recommendations (IAM Access Analyzer is available at no additional cost)."
+          }
+        },
+        "servicename": "accessanalyzer",
+        "checkaliases": [],
+        "resourcetype": "Other",
+        "subservicename": "",
+        "resourceidtemplate": "arn:partition:access-analyzer:region:account-id:analyzer/resource-id"
+      },
+      "scan": "01929f3b-ed2e-7623-ad63-7c37cd37828f",
+      "text_search": "'/iam/latest/userguide/what-is-access-analyzer.html':104,128 '112233445566':6B 'a':52,59,81 'access':2B,12,44,56,77,97,109,132,147,163 'access-analyzer':162 'accessanalyzer':85,115,156 'account':5B,123,167 'account-id':166 'accounts':23,136 'action':141 'additional':153 'all':75,135 'allowed':79 'amazon':26 'an':36 'analysis':63 'analyz':3B 'analyzer':13,57,98,110,118,120,133,138,148,164 'analyzer-name':119 'analyzer/resource-id':169 'and':22,48,70,139 'applies':68 'are':33 'arn':160 'as':25 'at':151 'automated':65 'available':150 'aws':10,88,114 'buckets':28 'by':80 'called':64 'check':94,106 'cost':154 'create':117,137 'create-analyzer':116 'data':49 'determine':74 'docs.aws.amazon.com':103,127 'docs.aws.amazon.com/iam/latest/userguide/what-is-access-analyzer.html':102,126 'enabl':9B 'enable':130 'enabled':86,100,112 'entity':38 'external':37 'for':134 'form':60 'helps':14 'iam':1B,11,30,55,92,96,108,131,146 'id':168 'identify':16,42 'if':95,107 'in':19 'inference':72 'is':51,99,111,144,149 'it':143 'lets':40 'logic':69 'low':90 'mathematical':62,71 'name':121 'no':152 'of':61 'or':29 'organization':21,124 'other':158 'over':142 'partition':161 'paths':78 'policy':83 'possible':76 'reasoning':66 'recommendations':145 'region':165 'resource':82 'resources':18,47 'risk':54 'roles':31 's3':27 'security':53 'shared':34 'such':24 'take':140 'that':32 'the':17 'this':39 'to':45,73 'type':122 'unintended':43 'uses':58 'which':50,67 'with':35 'you':15,41 'your':20,46"
+    }
+  },
+  {
+    "model": "api.finding",
+    "pk": "01929f3c-0973-75c7-8bb3-d7f73491dbd2",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T10:46:04.915Z",
+      "updated_at": "2024-10-18T10:46:04.919Z",
+      "uid": "prowler-aws-accessanalyzer_enabled-112233445566-ap-south-1-112233445566",
+      "delta": "new",
+      "status": "FAIL",
+      "status_extended": "IAM Access Analyzer in account 112233445566 is not enabled.",
+      "severity": "low",
+      "impact": "low",
+      "impact_extended": null,
+      "raw_result": {},
+      "tags": {},
+      "check_id": "accessanalyzer_enabled",
+      "check_metadata": {
+        "risk": "AWS IAM Access Analyzer helps you identify the resources in your organization and accounts, such as Amazon S3 buckets or IAM roles, that are shared with an external entity. This lets you identify unintended access to your resources and data, which is a security risk. IAM Access Analyzer uses a form of mathematical analysis called automated reasoning, which applies logic and mathematical inference to determine all possible access paths allowed by a resource policy.",
+        "notes": "",
+        "checkid": "accessanalyzer_enabled",
+        "provider": "aws",
+        "severity": "low",
+        "checktype": [
+          "IAM"
+        ],
+        "dependson": [],
+        "relatedto": [],
+        "categories": [],
+        "checktitle": "Check if IAM Access Analyzer is enabled",
+        "compliance": null,
+        "relatedurl": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+        "description": "Check if IAM Access Analyzer is enabled",
+        "remediation": {
+          "code": {
+            "cli": "aws accessanalyzer create-analyzer --analyzer-name <NAME> --type <ACCOUNT|ORGANIZATION>",
+            "other": "",
+            "nativeiac": "",
+            "terraform": ""
+          },
+          "recommendation": {
+            "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+            "text": "Enable IAM Access Analyzer for all accounts, create analyzer and take action over it is recommendations (IAM Access Analyzer is available at no additional cost)."
+          }
+        },
+        "servicename": "accessanalyzer",
+        "checkaliases": [],
+        "resourcetype": "Other",
+        "subservicename": "",
+        "resourceidtemplate": "arn:partition:access-analyzer:region:account-id:analyzer/resource-id"
+      },
+      "scan": "01929f3b-ed2e-7623-ad63-7c37cd37828f",
+      "text_search": "'/iam/latest/userguide/what-is-access-analyzer.html':104,128 '112233445566':6B 'a':52,59,81 'access':2B,12,44,56,77,97,109,132,147,163 'access-analyzer':162 'accessanalyzer':85,115,156 'account':5B,123,167 'account-id':166 'accounts':23,136 'action':141 'additional':153 'all':75,135 'allowed':79 'amazon':26 'an':36 'analysis':63 'analyz':3B 'analyzer':13,57,98,110,118,120,133,138,148,164 'analyzer-name':119 'analyzer/resource-id':169 'and':22,48,70,139 'applies':68 'are':33 'arn':160 'as':25 'at':151 'automated':65 'available':150 'aws':10,88,114 'buckets':28 'by':80 'called':64 'check':94,106 'cost':154 'create':117,137 'create-analyzer':116 'data':49 'determine':74 'docs.aws.amazon.com':103,127 'docs.aws.amazon.com/iam/latest/userguide/what-is-access-analyzer.html':102,126 'enabl':9B 'enable':130 'enabled':86,100,112 'entity':38 'external':37 'for':134 'form':60 'helps':14 'iam':1B,11,30,55,92,96,108,131,146 'id':168 'identify':16,42 'if':95,107 'in':19 'inference':72 'is':51,99,111,144,149 'it':143 'lets':40 'logic':69 'low':90 'mathematical':62,71 'name':121 'no':152 'of':61 'or':29 'organization':21,124 'other':158 'over':142 'partition':161 'paths':78 'policy':83 'possible':76 'reasoning':66 'recommendations':145 'region':165 'resource':82 'resources':18,47 'risk':54 'roles':31 's3':27 'security':53 'shared':34 'such':24 'take':140 'that':32 'the':17 'this':39 'to':45,73 'type':122 'unintended':43 'uses':58 'which':50,67 'with':35 'you':15,41 'your':20,46"
+    }
+  },
+  {
+    "model": "api.finding",
+    "pk": "01929f3c-0981-71ff-8b66-1b23f7cdd1f8",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T10:46:04.929Z",
+      "updated_at": "2024-10-18T10:46:04.934Z",
+      "uid": "prowler-aws-accessanalyzer_enabled-112233445566-us-west-1-112233445566",
+      "delta": "new",
+      "status": "FAIL",
+      "status_extended": "IAM Access Analyzer in account 112233445566 is not enabled.",
+      "severity": "low",
+      "impact": "low",
+      "impact_extended": null,
+      "raw_result": {},
+      "tags": {},
+      "check_id": "accessanalyzer_enabled",
+      "check_metadata": {
+        "risk": "AWS IAM Access Analyzer helps you identify the resources in your organization and accounts, such as Amazon S3 buckets or IAM roles, that are shared with an external entity. This lets you identify unintended access to your resources and data, which is a security risk. IAM Access Analyzer uses a form of mathematical analysis called automated reasoning, which applies logic and mathematical inference to determine all possible access paths allowed by a resource policy.",
+        "notes": "",
+        "checkid": "accessanalyzer_enabled",
+        "provider": "aws",
+        "severity": "low",
+        "checktype": [
+          "IAM"
+        ],
+        "dependson": [],
+        "relatedto": [],
+        "categories": [],
+        "checktitle": "Check if IAM Access Analyzer is enabled",
+        "compliance": null,
+        "relatedurl": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+        "description": "Check if IAM Access Analyzer is enabled",
+        "remediation": {
+          "code": {
+            "cli": "aws accessanalyzer create-analyzer --analyzer-name <NAME> --type <ACCOUNT|ORGANIZATION>",
+            "other": "",
+            "nativeiac": "",
+            "terraform": ""
+          },
+          "recommendation": {
+            "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+            "text": "Enable IAM Access Analyzer for all accounts, create analyzer and take action over it is recommendations (IAM Access Analyzer is available at no additional cost)."
+          }
+        },
+        "servicename": "accessanalyzer",
+        "checkaliases": [],
+        "resourcetype": "Other",
+        "subservicename": "",
+        "resourceidtemplate": "arn:partition:access-analyzer:region:account-id:analyzer/resource-id"
+      },
+      "scan": "01929f3b-ed2e-7623-ad63-7c37cd37828f",
+      "text_search": "'/iam/latest/userguide/what-is-access-analyzer.html':104,128 '112233445566':6B 'a':52,59,81 'access':2B,12,44,56,77,97,109,132,147,163 'access-analyzer':162 'accessanalyzer':85,115,156 'account':5B,123,167 'account-id':166 'accounts':23,136 'action':141 'additional':153 'all':75,135 'allowed':79 'amazon':26 'an':36 'analysis':63 'analyz':3B 'analyzer':13,57,98,110,118,120,133,138,148,164 'analyzer-name':119 'analyzer/resource-id':169 'and':22,48,70,139 'applies':68 'are':33 'arn':160 'as':25 'at':151 'automated':65 'available':150 'aws':10,88,114 'buckets':28 'by':80 'called':64 'check':94,106 'cost':154 'create':117,137 'create-analyzer':116 'data':49 'determine':74 'docs.aws.amazon.com':103,127 'docs.aws.amazon.com/iam/latest/userguide/what-is-access-analyzer.html':102,126 'enabl':9B 'enable':130 'enabled':86,100,112 'entity':38 'external':37 'for':134 'form':60 'helps':14 'iam':1B,11,30,55,92,96,108,131,146 'id':168 'identify':16,42 'if':95,107 'in':19 'inference':72 'is':51,99,111,144,149 'it':143 'lets':40 'logic':69 'low':90 'mathematical':62,71 'name':121 'no':152 'of':61 'or':29 'organization':21,124 'other':158 'over':142 'partition':161 'paths':78 'policy':83 'possible':76 'reasoning':66 'recommendations':145 'region':165 'resource':82 'resources':18,47 'risk':54 'roles':31 's3':27 'security':53 'shared':34 'such':24 'take':140 'that':32 'the':17 'this':39 'to':45,73 'type':122 'unintended':43 'uses':58 'which':50,67 'with':35 'you':15,41 'your':20,46"
+    }
+  },
+  {
+    "model": "api.finding",
+    "pk": "01929f3c-0990-7a50-a72e-e6686cd74116",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T10:46:04.944Z",
+      "updated_at": "2024-10-18T10:46:04.947Z",
+      "uid": "prowler-aws-accessanalyzer_enabled-112233445566-ca-central-1-112233445566",
+      "delta": "new",
+      "status": "FAIL",
+      "status_extended": "IAM Access Analyzer in account 112233445566 is not enabled.",
+      "severity": "low",
+      "impact": "low",
+      "impact_extended": null,
+      "raw_result": {},
+      "tags": {},
+      "check_id": "accessanalyzer_enabled",
+      "check_metadata": {
+        "risk": "AWS IAM Access Analyzer helps you identify the resources in your organization and accounts, such as Amazon S3 buckets or IAM roles, that are shared with an external entity. This lets you identify unintended access to your resources and data, which is a security risk. IAM Access Analyzer uses a form of mathematical analysis called automated reasoning, which applies logic and mathematical inference to determine all possible access paths allowed by a resource policy.",
+        "notes": "",
+        "checkid": "accessanalyzer_enabled",
+        "provider": "aws",
+        "severity": "low",
+        "checktype": [
+          "IAM"
+        ],
+        "dependson": [],
+        "relatedto": [],
+        "categories": [],
+        "checktitle": "Check if IAM Access Analyzer is enabled",
+        "compliance": null,
+        "relatedurl": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+        "description": "Check if IAM Access Analyzer is enabled",
+        "remediation": {
+          "code": {
+            "cli": "aws accessanalyzer create-analyzer --analyzer-name <NAME> --type <ACCOUNT|ORGANIZATION>",
+            "other": "",
+            "nativeiac": "",
+            "terraform": ""
+          },
+          "recommendation": {
+            "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+            "text": "Enable IAM Access Analyzer for all accounts, create analyzer and take action over it is recommendations (IAM Access Analyzer is available at no additional cost)."
+          }
+        },
+        "servicename": "accessanalyzer",
+        "checkaliases": [],
+        "resourcetype": "Other",
+        "subservicename": "",
+        "resourceidtemplate": "arn:partition:access-analyzer:region:account-id:analyzer/resource-id"
+      },
+      "scan": "01929f3b-ed2e-7623-ad63-7c37cd37828f",
+      "text_search": "'/iam/latest/userguide/what-is-access-analyzer.html':104,128 '112233445566':6B 'a':52,59,81 'access':2B,12,44,56,77,97,109,132,147,163 'access-analyzer':162 'accessanalyzer':85,115,156 'account':5B,123,167 'account-id':166 'accounts':23,136 'action':141 'additional':153 'all':75,135 'allowed':79 'amazon':26 'an':36 'analysis':63 'analyz':3B 'analyzer':13,57,98,110,118,120,133,138,148,164 'analyzer-name':119 'analyzer/resource-id':169 'and':22,48,70,139 'applies':68 'are':33 'arn':160 'as':25 'at':151 'automated':65 'available':150 'aws':10,88,114 'buckets':28 'by':80 'called':64 'check':94,106 'cost':154 'create':117,137 'create-analyzer':116 'data':49 'determine':74 'docs.aws.amazon.com':103,127 'docs.aws.amazon.com/iam/latest/userguide/what-is-access-analyzer.html':102,126 'enabl':9B 'enable':130 'enabled':86,100,112 'entity':38 'external':37 'for':134 'form':60 'helps':14 'iam':1B,11,30,55,92,96,108,131,146 'id':168 'identify':16,42 'if':95,107 'in':19 'inference':72 'is':51,99,111,144,149 'it':143 'lets':40 'logic':69 'low':90 'mathematical':62,71 'name':121 'no':152 'of':61 'or':29 'organization':21,124 'other':158 'over':142 'partition':161 'paths':78 'policy':83 'possible':76 'reasoning':66 'recommendations':145 'region':165 'resource':82 'resources':18,47 'risk':54 'roles':31 's3':27 'security':53 'shared':34 'such':24 'take':140 'that':32 'the':17 'this':39 'to':45,73 'type':122 'unintended':43 'uses':58 'which':50,67 'with':35 'you':15,41 'your':20,46"
+    }
+  },
+  {
+    "model": "api.finding",
+    "pk": "01929f3c-099d-7d97-8c57-34ee4740c9e5",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T10:46:04.957Z",
+      "updated_at": "2024-10-18T10:46:04.962Z",
+      "uid": "prowler-aws-accessanalyzer_enabled-112233445566-us-east-1-ConsoleAnalyzer-83b66ad7-d024-454e-b851-52d11cc1cf7c",
+      "delta": "new",
+      "status": "PASS",
+      "status_extended": "IAM Access Analyzer ConsoleAnalyzer-83b66ad7-d024-454e-b851-52d11cc1cf7c is enabled.",
+      "severity": "low",
+      "impact": "low",
+      "impact_extended": null,
+      "raw_result": {},
+      "tags": {},
+      "check_id": "accessanalyzer_enabled",
+      "check_metadata": {
+        "risk": "AWS IAM Access Analyzer helps you identify the resources in your organization and accounts, such as Amazon S3 buckets or IAM roles, that are shared with an external entity. This lets you identify unintended access to your resources and data, which is a security risk. IAM Access Analyzer uses a form of mathematical analysis called automated reasoning, which applies logic and mathematical inference to determine all possible access paths allowed by a resource policy.",
+        "notes": "",
+        "checkid": "accessanalyzer_enabled",
+        "provider": "aws",
+        "severity": "low",
+        "checktype": [
+          "IAM"
+        ],
+        "dependson": [],
+        "relatedto": [],
+        "categories": [],
+        "checktitle": "Check if IAM Access Analyzer is enabled",
+        "compliance": null,
+        "relatedurl": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+        "description": "Check if IAM Access Analyzer is enabled",
+        "remediation": {
+          "code": {
+            "cli": "aws accessanalyzer create-analyzer --analyzer-name <NAME> --type <ACCOUNT|ORGANIZATION>",
+            "other": "",
+            "nativeiac": "",
+            "terraform": ""
+          },
+          "recommendation": {
+            "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+            "text": "Enable IAM Access Analyzer for all accounts, create analyzer and take action over it is recommendations (IAM Access Analyzer is available at no additional cost)."
+          }
+        },
+        "servicename": "accessanalyzer",
+        "checkaliases": [],
+        "resourcetype": "Other",
+        "subservicename": "",
+        "resourceidtemplate": "arn:partition:access-analyzer:region:account-id:analyzer/resource-id"
+      },
+      "scan": "01929f3b-ed2e-7623-ad63-7c37cd37828f",
+      "text_search": "'/iam/latest/userguide/what-is-access-analyzer.html':107,131 '454e':8B '52d11cc1cf7c':10B '83b66ad7':6B 'a':55,62,84 'access':2B,15,47,59,80,100,112,135,150,166 'access-analyzer':165 'accessanalyzer':88,118,159 'account':126,170 'account-id':169 'accounts':26,139 'action':144 'additional':156 'all':78,138 'allowed':82 'amazon':29 'an':39 'analysis':66 'analyz':3B 'analyzer':16,60,101,113,121,123,136,141,151,167 'analyzer-name':122 'analyzer/resource-id':172 'and':25,51,73,142 'applies':71 'are':36 'arn':163 'as':28 'at':154 'automated':68 'available':153 'aws':13,91,117 'b851':9B 'buckets':31 'by':83 'called':67 'check':97,109 'consoleanalyz':5B 'consoleanalyzer-83b66ad7-d024-454e-b851-52d11cc1cf7c':4B 'cost':157 'create':120,140 'create-analyzer':119 'd024':7B 'data':52 'determine':77 'docs.aws.amazon.com':106,130 'docs.aws.amazon.com/iam/latest/userguide/what-is-access-analyzer.html':105,129 'enabl':12B 'enable':133 'enabled':89,103,115 'entity':41 'external':40 'for':137 'form':63 'helps':17 'iam':1B,14,33,58,95,99,111,134,149 'id':171 'identify':19,45 'if':98,110 'in':22 'inference':75 'is':54,102,114,147,152 'it':146 'lets':43 'logic':72 'low':93 'mathematical':65,74 'name':124 'no':155 'of':64 'or':32 'organization':24,127 'other':161 'over':145 'partition':164 'paths':81 'policy':86 'possible':79 'reasoning':69 'recommendations':148 'region':168 'resource':85 'resources':21,50 'risk':57 'roles':34 's3':30 'security':56 'shared':37 'such':27 'take':143 'that':35 'the':20 'this':42 'to':48,76 'type':125 'unintended':46 'uses':61 'which':53,70 'with':38 'you':18,44 'your':23,49"
+    }
+  },
+  {
+    "model": "api.finding",
+    "pk": "01929f3c-09ab-728a-a4a9-5a9a0693b0c1",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T10:46:04.971Z",
+      "updated_at": "2024-10-18T10:46:04.975Z",
+      "uid": "prowler-aws-accessanalyzer_enabled-112233445566-eu-west-2-112233445566",
+      "delta": "new",
+      "status": "FAIL",
+      "status_extended": "IAM Access Analyzer in account 112233445566 is not enabled.",
+      "severity": "low",
+      "impact": "low",
+      "impact_extended": null,
+      "raw_result": {},
+      "tags": {},
+      "check_id": "accessanalyzer_enabled",
+      "check_metadata": {
+        "risk": "AWS IAM Access Analyzer helps you identify the resources in your organization and accounts, such as Amazon S3 buckets or IAM roles, that are shared with an external entity. This lets you identify unintended access to your resources and data, which is a security risk. IAM Access Analyzer uses a form of mathematical analysis called automated reasoning, which applies logic and mathematical inference to determine all possible access paths allowed by a resource policy.",
+        "notes": "",
+        "checkid": "accessanalyzer_enabled",
+        "provider": "aws",
+        "severity": "low",
+        "checktype": [
+          "IAM"
+        ],
+        "dependson": [],
+        "relatedto": [],
+        "categories": [],
+        "checktitle": "Check if IAM Access Analyzer is enabled",
+        "compliance": null,
+        "relatedurl": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+        "description": "Check if IAM Access Analyzer is enabled",
+        "remediation": {
+          "code": {
+            "cli": "aws accessanalyzer create-analyzer --analyzer-name <NAME> --type <ACCOUNT|ORGANIZATION>",
+            "other": "",
+            "nativeiac": "",
+            "terraform": ""
+          },
+          "recommendation": {
+            "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+            "text": "Enable IAM Access Analyzer for all accounts, create analyzer and take action over it is recommendations (IAM Access Analyzer is available at no additional cost)."
+          }
+        },
+        "servicename": "accessanalyzer",
+        "checkaliases": [],
+        "resourcetype": "Other",
+        "subservicename": "",
+        "resourceidtemplate": "arn:partition:access-analyzer:region:account-id:analyzer/resource-id"
+      },
+      "scan": "01929f3b-ed2e-7623-ad63-7c37cd37828f",
+      "text_search": "'/iam/latest/userguide/what-is-access-analyzer.html':104,128 '112233445566':6B 'a':52,59,81 'access':2B,12,44,56,77,97,109,132,147,163 'access-analyzer':162 'accessanalyzer':85,115,156 'account':5B,123,167 'account-id':166 'accounts':23,136 'action':141 'additional':153 'all':75,135 'allowed':79 'amazon':26 'an':36 'analysis':63 'analyz':3B 'analyzer':13,57,98,110,118,120,133,138,148,164 'analyzer-name':119 'analyzer/resource-id':169 'and':22,48,70,139 'applies':68 'are':33 'arn':160 'as':25 'at':151 'automated':65 'available':150 'aws':10,88,114 'buckets':28 'by':80 'called':64 'check':94,106 'cost':154 'create':117,137 'create-analyzer':116 'data':49 'determine':74 'docs.aws.amazon.com':103,127 'docs.aws.amazon.com/iam/latest/userguide/what-is-access-analyzer.html':102,126 'enabl':9B 'enable':130 'enabled':86,100,112 'entity':38 'external':37 'for':134 'form':60 'helps':14 'iam':1B,11,30,55,92,96,108,131,146 'id':168 'identify':16,42 'if':95,107 'in':19 'inference':72 'is':51,99,111,144,149 'it':143 'lets':40 'logic':69 'low':90 'mathematical':62,71 'name':121 'no':152 'of':61 'or':29 'organization':21,124 'other':158 'over':142 'partition':161 'paths':78 'policy':83 'possible':76 'reasoning':66 'recommendations':145 'region':165 'resource':82 'resources':18,47 'risk':54 'roles':31 's3':27 'security':53 'shared':34 'such':24 'take':140 'that':32 'the':17 'this':39 'to':45,73 'type':122 'unintended':43 'uses':58 'which':50,67 'with':35 'you':15,41 'your':20,46"
+    }
+  },
+  {
+    "model": "api.finding",
+    "pk": "01929f3c-09b8-757a-89c2-411e0c7309d4",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T10:46:04.984Z",
+      "updated_at": "2024-10-18T10:46:04.989Z",
+      "uid": "prowler-aws-accessanalyzer_enabled-112233445566-sa-east-1-112233445566",
+      "delta": "new",
+      "status": "FAIL",
+      "status_extended": "IAM Access Analyzer in account 112233445566 is not enabled.",
+      "severity": "low",
+      "impact": "low",
+      "impact_extended": null,
+      "raw_result": {},
+      "tags": {},
+      "check_id": "accessanalyzer_enabled",
+      "check_metadata": {
+        "risk": "AWS IAM Access Analyzer helps you identify the resources in your organization and accounts, such as Amazon S3 buckets or IAM roles, that are shared with an external entity. This lets you identify unintended access to your resources and data, which is a security risk. IAM Access Analyzer uses a form of mathematical analysis called automated reasoning, which applies logic and mathematical inference to determine all possible access paths allowed by a resource policy.",
+        "notes": "",
+        "checkid": "accessanalyzer_enabled",
+        "provider": "aws",
+        "severity": "low",
+        "checktype": [
+          "IAM"
+        ],
+        "dependson": [],
+        "relatedto": [],
+        "categories": [],
+        "checktitle": "Check if IAM Access Analyzer is enabled",
+        "compliance": null,
+        "relatedurl": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+        "description": "Check if IAM Access Analyzer is enabled",
+        "remediation": {
+          "code": {
+            "cli": "aws accessanalyzer create-analyzer --analyzer-name <NAME> --type <ACCOUNT|ORGANIZATION>",
+            "other": "",
+            "nativeiac": "",
+            "terraform": ""
+          },
+          "recommendation": {
+            "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+            "text": "Enable IAM Access Analyzer for all accounts, create analyzer and take action over it is recommendations (IAM Access Analyzer is available at no additional cost)."
+          }
+        },
+        "servicename": "accessanalyzer",
+        "checkaliases": [],
+        "resourcetype": "Other",
+        "subservicename": "",
+        "resourceidtemplate": "arn:partition:access-analyzer:region:account-id:analyzer/resource-id"
+      },
+      "scan": "01929f3b-ed2e-7623-ad63-7c37cd37828f",
+      "text_search": "'/iam/latest/userguide/what-is-access-analyzer.html':104,128 '112233445566':6B 'a':52,59,81 'access':2B,12,44,56,77,97,109,132,147,163 'access-analyzer':162 'accessanalyzer':85,115,156 'account':5B,123,167 'account-id':166 'accounts':23,136 'action':141 'additional':153 'all':75,135 'allowed':79 'amazon':26 'an':36 'analysis':63 'analyz':3B 'analyzer':13,57,98,110,118,120,133,138,148,164 'analyzer-name':119 'analyzer/resource-id':169 'and':22,48,70,139 'applies':68 'are':33 'arn':160 'as':25 'at':151 'automated':65 'available':150 'aws':10,88,114 'buckets':28 'by':80 'called':64 'check':94,106 'cost':154 'create':117,137 'create-analyzer':116 'data':49 'determine':74 'docs.aws.amazon.com':103,127 'docs.aws.amazon.com/iam/latest/userguide/what-is-access-analyzer.html':102,126 'enabl':9B 'enable':130 'enabled':86,100,112 'entity':38 'external':37 'for':134 'form':60 'helps':14 'iam':1B,11,30,55,92,96,108,131,146 'id':168 'identify':16,42 'if':95,107 'in':19 'inference':72 'is':51,99,111,144,149 'it':143 'lets':40 'logic':69 'low':90 'mathematical':62,71 'name':121 'no':152 'of':61 'or':29 'organization':21,124 'other':158 'over':142 'partition':161 'paths':78 'policy':83 'possible':76 'reasoning':66 'recommendations':145 'region':165 'resource':82 'resources':18,47 'risk':54 'roles':31 's3':27 'security':53 'shared':34 'such':24 'take':140 'that':32 'the':17 'this':39 'to':45,73 'type':122 'unintended':43 'uses':58 'which':50,67 'with':35 'you':15,41 'your':20,46"
+    }
+  },
+  {
+    "model": "api.finding",
+    "pk": "01929f3c-09c7-71c9-a483-4d207cd464b7",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T10:46:04.999Z",
+      "updated_at": "2024-10-18T10:46:05.003Z",
+      "uid": "prowler-aws-accessanalyzer_enabled-112233445566-eu-north-1-112233445566",
+      "delta": "new",
+      "status": "FAIL",
+      "status_extended": "IAM Access Analyzer in account 112233445566 is not enabled.",
+      "severity": "low",
+      "impact": "low",
+      "impact_extended": null,
+      "raw_result": {},
+      "tags": {},
+      "check_id": "accessanalyzer_enabled",
+      "check_metadata": {
+        "risk": "AWS IAM Access Analyzer helps you identify the resources in your organization and accounts, such as Amazon S3 buckets or IAM roles, that are shared with an external entity. This lets you identify unintended access to your resources and data, which is a security risk. IAM Access Analyzer uses a form of mathematical analysis called automated reasoning, which applies logic and mathematical inference to determine all possible access paths allowed by a resource policy.",
+        "notes": "",
+        "checkid": "accessanalyzer_enabled",
+        "provider": "aws",
+        "severity": "low",
+        "checktype": [
+          "IAM"
+        ],
+        "dependson": [],
+        "relatedto": [],
+        "categories": [],
+        "checktitle": "Check if IAM Access Analyzer is enabled",
+        "compliance": null,
+        "relatedurl": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+        "description": "Check if IAM Access Analyzer is enabled",
+        "remediation": {
+          "code": {
+            "cli": "aws accessanalyzer create-analyzer --analyzer-name <NAME> --type <ACCOUNT|ORGANIZATION>",
+            "other": "",
+            "nativeiac": "",
+            "terraform": ""
+          },
+          "recommendation": {
+            "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+            "text": "Enable IAM Access Analyzer for all accounts, create analyzer and take action over it is recommendations (IAM Access Analyzer is available at no additional cost)."
+          }
+        },
+        "servicename": "accessanalyzer",
+        "checkaliases": [],
+        "resourcetype": "Other",
+        "subservicename": "",
+        "resourceidtemplate": "arn:partition:access-analyzer:region:account-id:analyzer/resource-id"
+      },
+      "scan": "01929f3b-ed2e-7623-ad63-7c37cd37828f",
+      "text_search": "'/iam/latest/userguide/what-is-access-analyzer.html':104,128 '112233445566':6B 'a':52,59,81 'access':2B,12,44,56,77,97,109,132,147,163 'access-analyzer':162 'accessanalyzer':85,115,156 'account':5B,123,167 'account-id':166 'accounts':23,136 'action':141 'additional':153 'all':75,135 'allowed':79 'amazon':26 'an':36 'analysis':63 'analyz':3B 'analyzer':13,57,98,110,118,120,133,138,148,164 'analyzer-name':119 'analyzer/resource-id':169 'and':22,48,70,139 'applies':68 'are':33 'arn':160 'as':25 'at':151 'automated':65 'available':150 'aws':10,88,114 'buckets':28 'by':80 'called':64 'check':94,106 'cost':154 'create':117,137 'create-analyzer':116 'data':49 'determine':74 'docs.aws.amazon.com':103,127 'docs.aws.amazon.com/iam/latest/userguide/what-is-access-analyzer.html':102,126 'enabl':9B 'enable':130 'enabled':86,100,112 'entity':38 'external':37 'for':134 'form':60 'helps':14 'iam':1B,11,30,55,92,96,108,131,146 'id':168 'identify':16,42 'if':95,107 'in':19 'inference':72 'is':51,99,111,144,149 'it':143 'lets':40 'logic':69 'low':90 'mathematical':62,71 'name':121 'no':152 'of':61 'or':29 'organization':21,124 'other':158 'over':142 'partition':161 'paths':78 'policy':83 'possible':76 'reasoning':66 'recommendations':145 'region':165 'resource':82 'resources':18,47 'risk':54 'roles':31 's3':27 'security':53 'shared':34 'such':24 'take':140 'that':32 'the':17 'this':39 'to':45,73 'type':122 'unintended':43 'uses':58 'which':50,67 'with':35 'you':15,41 'your':20,46"
+    }
+  },
+  {
+    "model": "api.finding",
+    "pk": "01929f3c-09d5-7fe3-bb36-19e0c1b90a9d",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T10:46:05.013Z",
+      "updated_at": "2024-10-18T10:46:05.018Z",
+      "uid": "prowler-aws-accessanalyzer_enabled-112233445566-us-west-2-112233445566",
+      "delta": "new",
+      "status": "FAIL",
+      "status_extended": "IAM Access Analyzer in account 112233445566 is not enabled.",
+      "severity": "low",
+      "impact": "low",
+      "impact_extended": null,
+      "raw_result": {},
+      "tags": {},
+      "check_id": "accessanalyzer_enabled",
+      "check_metadata": {
+        "risk": "AWS IAM Access Analyzer helps you identify the resources in your organization and accounts, such as Amazon S3 buckets or IAM roles, that are shared with an external entity. This lets you identify unintended access to your resources and data, which is a security risk. IAM Access Analyzer uses a form of mathematical analysis called automated reasoning, which applies logic and mathematical inference to determine all possible access paths allowed by a resource policy.",
+        "notes": "",
+        "checkid": "accessanalyzer_enabled",
+        "provider": "aws",
+        "severity": "low",
+        "checktype": [
+          "IAM"
+        ],
+        "dependson": [],
+        "relatedto": [],
+        "categories": [],
+        "checktitle": "Check if IAM Access Analyzer is enabled",
+        "compliance": null,
+        "relatedurl": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+        "description": "Check if IAM Access Analyzer is enabled",
+        "remediation": {
+          "code": {
+            "cli": "aws accessanalyzer create-analyzer --analyzer-name <NAME> --type <ACCOUNT|ORGANIZATION>",
+            "other": "",
+            "nativeiac": "",
+            "terraform": ""
+          },
+          "recommendation": {
+            "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+            "text": "Enable IAM Access Analyzer for all accounts, create analyzer and take action over it is recommendations (IAM Access Analyzer is available at no additional cost)."
+          }
+        },
+        "servicename": "accessanalyzer",
+        "checkaliases": [],
+        "resourcetype": "Other",
+        "subservicename": "",
+        "resourceidtemplate": "arn:partition:access-analyzer:region:account-id:analyzer/resource-id"
+      },
+      "scan": "01929f3b-ed2e-7623-ad63-7c37cd37828f",
+      "text_search": "'/iam/latest/userguide/what-is-access-analyzer.html':104,128 '112233445566':6B 'a':52,59,81 'access':2B,12,44,56,77,97,109,132,147,163 'access-analyzer':162 'accessanalyzer':85,115,156 'account':5B,123,167 'account-id':166 'accounts':23,136 'action':141 'additional':153 'all':75,135 'allowed':79 'amazon':26 'an':36 'analysis':63 'analyz':3B 'analyzer':13,57,98,110,118,120,133,138,148,164 'analyzer-name':119 'analyzer/resource-id':169 'and':22,48,70,139 'applies':68 'are':33 'arn':160 'as':25 'at':151 'automated':65 'available':150 'aws':10,88,114 'buckets':28 'by':80 'called':64 'check':94,106 'cost':154 'create':117,137 'create-analyzer':116 'data':49 'determine':74 'docs.aws.amazon.com':103,127 'docs.aws.amazon.com/iam/latest/userguide/what-is-access-analyzer.html':102,126 'enabl':9B 'enable':130 'enabled':86,100,112 'entity':38 'external':37 'for':134 'form':60 'helps':14 'iam':1B,11,30,55,92,96,108,131,146 'id':168 'identify':16,42 'if':95,107 'in':19 'inference':72 'is':51,99,111,144,149 'it':143 'lets':40 'logic':69 'low':90 'mathematical':62,71 'name':121 'no':152 'of':61 'or':29 'organization':21,124 'other':158 'over':142 'partition':161 'paths':78 'policy':83 'possible':76 'reasoning':66 'recommendations':145 'region':165 'resource':82 'resources':18,47 'risk':54 'roles':31 's3':27 'security':53 'shared':34 'such':24 'take':140 'that':32 'the':17 'this':39 'to':45,73 'type':122 'unintended':43 'uses':58 'which':50,67 'with':35 'you':15,41 'your':20,46"
+    }
+  },
+  {
+    "model": "api.finding",
+    "pk": "01929f3c-09e4-70a7-949d-aba3a0f93fb1",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T10:46:05.029Z",
+      "updated_at": "2024-10-18T10:46:05.033Z",
+      "uid": "prowler-aws-accessanalyzer_enabled-112233445566-ap-southeast-1-112233445566",
+      "delta": "new",
+      "status": "FAIL",
+      "status_extended": "IAM Access Analyzer in account 112233445566 is not enabled.",
+      "severity": "low",
+      "impact": "low",
+      "impact_extended": null,
+      "raw_result": {},
+      "tags": {},
+      "check_id": "accessanalyzer_enabled",
+      "check_metadata": {
+        "risk": "AWS IAM Access Analyzer helps you identify the resources in your organization and accounts, such as Amazon S3 buckets or IAM roles, that are shared with an external entity. This lets you identify unintended access to your resources and data, which is a security risk. IAM Access Analyzer uses a form of mathematical analysis called automated reasoning, which applies logic and mathematical inference to determine all possible access paths allowed by a resource policy.",
+        "notes": "",
+        "checkid": "accessanalyzer_enabled",
+        "provider": "aws",
+        "severity": "low",
+        "checktype": [
+          "IAM"
+        ],
+        "dependson": [],
+        "relatedto": [],
+        "categories": [],
+        "checktitle": "Check if IAM Access Analyzer is enabled",
+        "compliance": null,
+        "relatedurl": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+        "description": "Check if IAM Access Analyzer is enabled",
+        "remediation": {
+          "code": {
+            "cli": "aws accessanalyzer create-analyzer --analyzer-name <NAME> --type <ACCOUNT|ORGANIZATION>",
+            "other": "",
+            "nativeiac": "",
+            "terraform": ""
+          },
+          "recommendation": {
+            "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+            "text": "Enable IAM Access Analyzer for all accounts, create analyzer and take action over it is recommendations (IAM Access Analyzer is available at no additional cost)."
+          }
+        },
+        "servicename": "accessanalyzer",
+        "checkaliases": [],
+        "resourcetype": "Other",
+        "subservicename": "",
+        "resourceidtemplate": "arn:partition:access-analyzer:region:account-id:analyzer/resource-id"
+      },
+      "scan": "01929f3b-ed2e-7623-ad63-7c37cd37828f",
+      "text_search": "'/iam/latest/userguide/what-is-access-analyzer.html':104,128 '112233445566':6B 'a':52,59,81 'access':2B,12,44,56,77,97,109,132,147,163 'access-analyzer':162 'accessanalyzer':85,115,156 'account':5B,123,167 'account-id':166 'accounts':23,136 'action':141 'additional':153 'all':75,135 'allowed':79 'amazon':26 'an':36 'analysis':63 'analyz':3B 'analyzer':13,57,98,110,118,120,133,138,148,164 'analyzer-name':119 'analyzer/resource-id':169 'and':22,48,70,139 'applies':68 'are':33 'arn':160 'as':25 'at':151 'automated':65 'available':150 'aws':10,88,114 'buckets':28 'by':80 'called':64 'check':94,106 'cost':154 'create':117,137 'create-analyzer':116 'data':49 'determine':74 'docs.aws.amazon.com':103,127 'docs.aws.amazon.com/iam/latest/userguide/what-is-access-analyzer.html':102,126 'enabl':9B 'enable':130 'enabled':86,100,112 'entity':38 'external':37 'for':134 'form':60 'helps':14 'iam':1B,11,30,55,92,96,108,131,146 'id':168 'identify':16,42 'if':95,107 'in':19 'inference':72 'is':51,99,111,144,149 'it':143 'lets':40 'logic':69 'low':90 'mathematical':62,71 'name':121 'no':152 'of':61 'or':29 'organization':21,124 'other':158 'over':142 'partition':161 'paths':78 'policy':83 'possible':76 'reasoning':66 'recommendations':145 'region':165 'resource':82 'resources':18,47 'risk':54 'roles':31 's3':27 'security':53 'shared':34 'such':24 'take':140 'that':32 'the':17 'this':39 'to':45,73 'type':122 'unintended':43 'uses':58 'which':50,67 'with':35 'you':15,41 'your':20,46"
+    }
+  },
+  {
+    "model": "api.finding",
+    "pk": "01929f3c-09f5-79f9-9ee7-17c87e43d87b",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T10:46:05.045Z",
+      "updated_at": "2024-10-18T10:46:05.050Z",
+      "uid": "prowler-aws-accessanalyzer_enabled-112233445566-eu-central-1-112233445566",
+      "delta": "new",
+      "status": "FAIL",
+      "status_extended": "IAM Access Analyzer in account 112233445566 is not enabled.",
+      "severity": "low",
+      "impact": "low",
+      "impact_extended": null,
+      "raw_result": {},
+      "tags": {},
+      "check_id": "accessanalyzer_enabled",
+      "check_metadata": {
+        "risk": "AWS IAM Access Analyzer helps you identify the resources in your organization and accounts, such as Amazon S3 buckets or IAM roles, that are shared with an external entity. This lets you identify unintended access to your resources and data, which is a security risk. IAM Access Analyzer uses a form of mathematical analysis called automated reasoning, which applies logic and mathematical inference to determine all possible access paths allowed by a resource policy.",
+        "notes": "",
+        "checkid": "accessanalyzer_enabled",
+        "provider": "aws",
+        "severity": "low",
+        "checktype": [
+          "IAM"
+        ],
+        "dependson": [],
+        "relatedto": [],
+        "categories": [],
+        "checktitle": "Check if IAM Access Analyzer is enabled",
+        "compliance": null,
+        "relatedurl": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+        "description": "Check if IAM Access Analyzer is enabled",
+        "remediation": {
+          "code": {
+            "cli": "aws accessanalyzer create-analyzer --analyzer-name <NAME> --type <ACCOUNT|ORGANIZATION>",
+            "other": "",
+            "nativeiac": "",
+            "terraform": ""
+          },
+          "recommendation": {
+            "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+            "text": "Enable IAM Access Analyzer for all accounts, create analyzer and take action over it is recommendations (IAM Access Analyzer is available at no additional cost)."
+          }
+        },
+        "servicename": "accessanalyzer",
+        "checkaliases": [],
+        "resourcetype": "Other",
+        "subservicename": "",
+        "resourceidtemplate": "arn:partition:access-analyzer:region:account-id:analyzer/resource-id"
+      },
+      "scan": "01929f3b-ed2e-7623-ad63-7c37cd37828f",
+      "text_search": "'/iam/latest/userguide/what-is-access-analyzer.html':104,128 '112233445566':6B 'a':52,59,81 'access':2B,12,44,56,77,97,109,132,147,163 'access-analyzer':162 'accessanalyzer':85,115,156 'account':5B,123,167 'account-id':166 'accounts':23,136 'action':141 'additional':153 'all':75,135 'allowed':79 'amazon':26 'an':36 'analysis':63 'analyz':3B 'analyzer':13,57,98,110,118,120,133,138,148,164 'analyzer-name':119 'analyzer/resource-id':169 'and':22,48,70,139 'applies':68 'are':33 'arn':160 'as':25 'at':151 'automated':65 'available':150 'aws':10,88,114 'buckets':28 'by':80 'called':64 'check':94,106 'cost':154 'create':117,137 'create-analyzer':116 'data':49 'determine':74 'docs.aws.amazon.com':103,127 'docs.aws.amazon.com/iam/latest/userguide/what-is-access-analyzer.html':102,126 'enabl':9B 'enable':130 'enabled':86,100,112 'entity':38 'external':37 'for':134 'form':60 'helps':14 'iam':1B,11,30,55,92,96,108,131,146 'id':168 'identify':16,42 'if':95,107 'in':19 'inference':72 'is':51,99,111,144,149 'it':143 'lets':40 'logic':69 'low':90 'mathematical':62,71 'name':121 'no':152 'of':61 'or':29 'organization':21,124 'other':158 'over':142 'partition':161 'paths':78 'policy':83 'possible':76 'reasoning':66 'recommendations':145 'region':165 'resource':82 'resources':18,47 'risk':54 'roles':31 's3':27 'security':53 'shared':34 'such':24 'take':140 'that':32 'the':17 'this':39 'to':45,73 'type':122 'unintended':43 'uses':58 'which':50,67 'with':35 'you':15,41 'your':20,46"
+    }
+  },
+  {
+    "model": "api.finding",
+    "pk": "01929f3c-0a05-7426-980d-bdfeeb70a008",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T10:46:05.061Z",
+      "updated_at": "2024-10-18T10:46:05.065Z",
+      "uid": "prowler-aws-accessanalyzer_enabled-112233445566-ap-northeast-1-112233445566",
+      "delta": "new",
+      "status": "FAIL",
+      "status_extended": "IAM Access Analyzer in account 112233445566 is not enabled.",
+      "severity": "low",
+      "impact": "low",
+      "impact_extended": null,
+      "raw_result": {},
+      "tags": {},
+      "check_id": "accessanalyzer_enabled",
+      "check_metadata": {
+        "risk": "AWS IAM Access Analyzer helps you identify the resources in your organization and accounts, such as Amazon S3 buckets or IAM roles, that are shared with an external entity. This lets you identify unintended access to your resources and data, which is a security risk. IAM Access Analyzer uses a form of mathematical analysis called automated reasoning, which applies logic and mathematical inference to determine all possible access paths allowed by a resource policy.",
+        "notes": "",
+        "checkid": "accessanalyzer_enabled",
+        "provider": "aws",
+        "severity": "low",
+        "checktype": [
+          "IAM"
+        ],
+        "dependson": [],
+        "relatedto": [],
+        "categories": [],
+        "checktitle": "Check if IAM Access Analyzer is enabled",
+        "compliance": null,
+        "relatedurl": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+        "description": "Check if IAM Access Analyzer is enabled",
+        "remediation": {
+          "code": {
+            "cli": "aws accessanalyzer create-analyzer --analyzer-name <NAME> --type <ACCOUNT|ORGANIZATION>",
+            "other": "",
+            "nativeiac": "",
+            "terraform": ""
+          },
+          "recommendation": {
+            "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+            "text": "Enable IAM Access Analyzer for all accounts, create analyzer and take action over it is recommendations (IAM Access Analyzer is available at no additional cost)."
+          }
+        },
+        "servicename": "accessanalyzer",
+        "checkaliases": [],
+        "resourcetype": "Other",
+        "subservicename": "",
+        "resourceidtemplate": "arn:partition:access-analyzer:region:account-id:analyzer/resource-id"
+      },
+      "scan": "01929f3b-ed2e-7623-ad63-7c37cd37828f",
+      "text_search": "'/iam/latest/userguide/what-is-access-analyzer.html':104,128 '112233445566':6B 'a':52,59,81 'access':2B,12,44,56,77,97,109,132,147,163 'access-analyzer':162 'accessanalyzer':85,115,156 'account':5B,123,167 'account-id':166 'accounts':23,136 'action':141 'additional':153 'all':75,135 'allowed':79 'amazon':26 'an':36 'analysis':63 'analyz':3B 'analyzer':13,57,98,110,118,120,133,138,148,164 'analyzer-name':119 'analyzer/resource-id':169 'and':22,48,70,139 'applies':68 'are':33 'arn':160 'as':25 'at':151 'automated':65 'available':150 'aws':10,88,114 'buckets':28 'by':80 'called':64 'check':94,106 'cost':154 'create':117,137 'create-analyzer':116 'data':49 'determine':74 'docs.aws.amazon.com':103,127 'docs.aws.amazon.com/iam/latest/userguide/what-is-access-analyzer.html':102,126 'enabl':9B 'enable':130 'enabled':86,100,112 'entity':38 'external':37 'for':134 'form':60 'helps':14 'iam':1B,11,30,55,92,96,108,131,146 'id':168 'identify':16,42 'if':95,107 'in':19 'inference':72 'is':51,99,111,144,149 'it':143 'lets':40 'logic':69 'low':90 'mathematical':62,71 'name':121 'no':152 'of':61 'or':29 'organization':21,124 'other':158 'over':142 'partition':161 'paths':78 'policy':83 'possible':76 'reasoning':66 'recommendations':145 'region':165 'resource':82 'resources':18,47 'risk':54 'roles':31 's3':27 'security':53 'shared':34 'such':24 'take':140 'that':32 'the':17 'this':39 'to':45,73 'type':122 'unintended':43 'uses':58 'which':50,67 'with':35 'you':15,41 'your':20,46"
+    }
+  },
+  {
+    "model": "api.finding",
+    "pk": "01929f3c-0a17-7694-9920-7233a71fcdbe",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T10:46:05.080Z",
+      "updated_at": "2024-10-18T10:46:05.085Z",
+      "uid": "prowler-aws-accessanalyzer_enabled-112233445566-ap-southeast-2-112233445566",
+      "delta": "new",
+      "status": "FAIL",
+      "status_extended": "IAM Access Analyzer in account 112233445566 is not enabled.",
+      "severity": "low",
+      "impact": "low",
+      "impact_extended": null,
+      "raw_result": {},
+      "tags": {},
+      "check_id": "accessanalyzer_enabled",
+      "check_metadata": {
+        "risk": "AWS IAM Access Analyzer helps you identify the resources in your organization and accounts, such as Amazon S3 buckets or IAM roles, that are shared with an external entity. This lets you identify unintended access to your resources and data, which is a security risk. IAM Access Analyzer uses a form of mathematical analysis called automated reasoning, which applies logic and mathematical inference to determine all possible access paths allowed by a resource policy.",
+        "notes": "",
+        "checkid": "accessanalyzer_enabled",
+        "provider": "aws",
+        "severity": "low",
+        "checktype": [
+          "IAM"
+        ],
+        "dependson": [],
+        "relatedto": [],
+        "categories": [],
+        "checktitle": "Check if IAM Access Analyzer is enabled",
+        "compliance": null,
+        "relatedurl": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+        "description": "Check if IAM Access Analyzer is enabled",
+        "remediation": {
+          "code": {
+            "cli": "aws accessanalyzer create-analyzer --analyzer-name <NAME> --type <ACCOUNT|ORGANIZATION>",
+            "other": "",
+            "nativeiac": "",
+            "terraform": ""
+          },
+          "recommendation": {
+            "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+            "text": "Enable IAM Access Analyzer for all accounts, create analyzer and take action over it is recommendations (IAM Access Analyzer is available at no additional cost)."
+          }
+        },
+        "servicename": "accessanalyzer",
+        "checkaliases": [],
+        "resourcetype": "Other",
+        "subservicename": "",
+        "resourceidtemplate": "arn:partition:access-analyzer:region:account-id:analyzer/resource-id"
+      },
+      "scan": "01929f3b-ed2e-7623-ad63-7c37cd37828f",
+      "text_search": "'/iam/latest/userguide/what-is-access-analyzer.html':104,128 '112233445566':6B 'a':52,59,81 'access':2B,12,44,56,77,97,109,132,147,163 'access-analyzer':162 'accessanalyzer':85,115,156 'account':5B,123,167 'account-id':166 'accounts':23,136 'action':141 'additional':153 'all':75,135 'allowed':79 'amazon':26 'an':36 'analysis':63 'analyz':3B 'analyzer':13,57,98,110,118,120,133,138,148,164 'analyzer-name':119 'analyzer/resource-id':169 'and':22,48,70,139 'applies':68 'are':33 'arn':160 'as':25 'at':151 'automated':65 'available':150 'aws':10,88,114 'buckets':28 'by':80 'called':64 'check':94,106 'cost':154 'create':117,137 'create-analyzer':116 'data':49 'determine':74 'docs.aws.amazon.com':103,127 'docs.aws.amazon.com/iam/latest/userguide/what-is-access-analyzer.html':102,126 'enabl':9B 'enable':130 'enabled':86,100,112 'entity':38 'external':37 'for':134 'form':60 'helps':14 'iam':1B,11,30,55,92,96,108,131,146 'id':168 'identify':16,42 'if':95,107 'in':19 'inference':72 'is':51,99,111,144,149 'it':143 'lets':40 'logic':69 'low':90 'mathematical':62,71 'name':121 'no':152 'of':61 'or':29 'organization':21,124 'other':158 'over':142 'partition':161 'paths':78 'policy':83 'possible':76 'reasoning':66 'recommendations':145 'region':165 'resource':82 'resources':18,47 'risk':54 'roles':31 's3':27 'security':53 'shared':34 'such':24 'take':140 'that':32 'the':17 'this':39 'to':45,73 'type':122 'unintended':43 'uses':58 'which':50,67 'with':35 'you':15,41 'your':20,46"
+    }
+  },
+  {
+    "model": "api.finding",
+    "pk": "01929f3c-0a2a-7ba7-8e43-26cb937c8df7",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T10:46:05.099Z",
+      "updated_at": "2024-10-18T10:46:05.104Z",
+      "uid": "prowler-aws-accessanalyzer_enabled-112233445566-ap-northeast-2-112233445566",
+      "delta": "new",
+      "status": "FAIL",
+      "status_extended": "IAM Access Analyzer in account 112233445566 is not enabled.",
+      "severity": "low",
+      "impact": "low",
+      "impact_extended": null,
+      "raw_result": {},
+      "tags": {},
+      "check_id": "accessanalyzer_enabled",
+      "check_metadata": {
+        "risk": "AWS IAM Access Analyzer helps you identify the resources in your organization and accounts, such as Amazon S3 buckets or IAM roles, that are shared with an external entity. This lets you identify unintended access to your resources and data, which is a security risk. IAM Access Analyzer uses a form of mathematical analysis called automated reasoning, which applies logic and mathematical inference to determine all possible access paths allowed by a resource policy.",
+        "notes": "",
+        "checkid": "accessanalyzer_enabled",
+        "provider": "aws",
+        "severity": "low",
+        "checktype": [
+          "IAM"
+        ],
+        "dependson": [],
+        "relatedto": [],
+        "categories": [],
+        "checktitle": "Check if IAM Access Analyzer is enabled",
+        "compliance": null,
+        "relatedurl": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+        "description": "Check if IAM Access Analyzer is enabled",
+        "remediation": {
+          "code": {
+            "cli": "aws accessanalyzer create-analyzer --analyzer-name <NAME> --type <ACCOUNT|ORGANIZATION>",
+            "other": "",
+            "nativeiac": "",
+            "terraform": ""
+          },
+          "recommendation": {
+            "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+            "text": "Enable IAM Access Analyzer for all accounts, create analyzer and take action over it is recommendations (IAM Access Analyzer is available at no additional cost)."
+          }
+        },
+        "servicename": "accessanalyzer",
+        "checkaliases": [],
+        "resourcetype": "Other",
+        "subservicename": "",
+        "resourceidtemplate": "arn:partition:access-analyzer:region:account-id:analyzer/resource-id"
+      },
+      "scan": "01929f3b-ed2e-7623-ad63-7c37cd37828f",
+      "text_search": "'/iam/latest/userguide/what-is-access-analyzer.html':104,128 '112233445566':6B 'a':52,59,81 'access':2B,12,44,56,77,97,109,132,147,163 'access-analyzer':162 'accessanalyzer':85,115,156 'account':5B,123,167 'account-id':166 'accounts':23,136 'action':141 'additional':153 'all':75,135 'allowed':79 'amazon':26 'an':36 'analysis':63 'analyz':3B 'analyzer':13,57,98,110,118,120,133,138,148,164 'analyzer-name':119 'analyzer/resource-id':169 'and':22,48,70,139 'applies':68 'are':33 'arn':160 'as':25 'at':151 'automated':65 'available':150 'aws':10,88,114 'buckets':28 'by':80 'called':64 'check':94,106 'cost':154 'create':117,137 'create-analyzer':116 'data':49 'determine':74 'docs.aws.amazon.com':103,127 'docs.aws.amazon.com/iam/latest/userguide/what-is-access-analyzer.html':102,126 'enabl':9B 'enable':130 'enabled':86,100,112 'entity':38 'external':37 'for':134 'form':60 'helps':14 'iam':1B,11,30,55,92,96,108,131,146 'id':168 'identify':16,42 'if':95,107 'in':19 'inference':72 'is':51,99,111,144,149 'it':143 'lets':40 'logic':69 'low':90 'mathematical':62,71 'name':121 'no':152 'of':61 'or':29 'organization':21,124 'other':158 'over':142 'partition':161 'paths':78 'policy':83 'possible':76 'reasoning':66 'recommendations':145 'region':165 'resource':82 'resources':18,47 'risk':54 'roles':31 's3':27 'security':53 'shared':34 'such':24 'take':140 'that':32 'the':17 'this':39 'to':45,73 'type':122 'unintended':43 'uses':58 'which':50,67 'with':35 'you':15,41 'your':20,46"
+    }
+  },
+  {
+    "model": "api.finding",
+    "pk": "01929f3c-0a3b-784a-930e-e363d60f3586",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T10:46:05.115Z",
+      "updated_at": "2024-10-18T10:46:05.121Z",
+      "uid": "prowler-aws-accessanalyzer_enabled-112233445566-ap-northeast-3-112233445566",
+      "delta": "new",
+      "status": "FAIL",
+      "status_extended": "IAM Access Analyzer in account 112233445566 is not enabled.",
+      "severity": "low",
+      "impact": "low",
+      "impact_extended": null,
+      "raw_result": {},
+      "tags": {},
+      "check_id": "accessanalyzer_enabled",
+      "check_metadata": {
+        "risk": "AWS IAM Access Analyzer helps you identify the resources in your organization and accounts, such as Amazon S3 buckets or IAM roles, that are shared with an external entity. This lets you identify unintended access to your resources and data, which is a security risk. IAM Access Analyzer uses a form of mathematical analysis called automated reasoning, which applies logic and mathematical inference to determine all possible access paths allowed by a resource policy.",
+        "notes": "",
+        "checkid": "accessanalyzer_enabled",
+        "provider": "aws",
+        "severity": "low",
+        "checktype": [
+          "IAM"
+        ],
+        "dependson": [],
+        "relatedto": [],
+        "categories": [],
+        "checktitle": "Check if IAM Access Analyzer is enabled",
+        "compliance": null,
+        "relatedurl": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+        "description": "Check if IAM Access Analyzer is enabled",
+        "remediation": {
+          "code": {
+            "cli": "aws accessanalyzer create-analyzer --analyzer-name <NAME> --type <ACCOUNT|ORGANIZATION>",
+            "other": "",
+            "nativeiac": "",
+            "terraform": ""
+          },
+          "recommendation": {
+            "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+            "text": "Enable IAM Access Analyzer for all accounts, create analyzer and take action over it is recommendations (IAM Access Analyzer is available at no additional cost)."
+          }
+        },
+        "servicename": "accessanalyzer",
+        "checkaliases": [],
+        "resourcetype": "Other",
+        "subservicename": "",
+        "resourceidtemplate": "arn:partition:access-analyzer:region:account-id:analyzer/resource-id"
+      },
+      "scan": "01929f3b-ed2e-7623-ad63-7c37cd37828f",
+      "text_search": "'/iam/latest/userguide/what-is-access-analyzer.html':104,128 '112233445566':6B 'a':52,59,81 'access':2B,12,44,56,77,97,109,132,147,163 'access-analyzer':162 'accessanalyzer':85,115,156 'account':5B,123,167 'account-id':166 'accounts':23,136 'action':141 'additional':153 'all':75,135 'allowed':79 'amazon':26 'an':36 'analysis':63 'analyz':3B 'analyzer':13,57,98,110,118,120,133,138,148,164 'analyzer-name':119 'analyzer/resource-id':169 'and':22,48,70,139 'applies':68 'are':33 'arn':160 'as':25 'at':151 'automated':65 'available':150 'aws':10,88,114 'buckets':28 'by':80 'called':64 'check':94,106 'cost':154 'create':117,137 'create-analyzer':116 'data':49 'determine':74 'docs.aws.amazon.com':103,127 'docs.aws.amazon.com/iam/latest/userguide/what-is-access-analyzer.html':102,126 'enabl':9B 'enable':130 'enabled':86,100,112 'entity':38 'external':37 'for':134 'form':60 'helps':14 'iam':1B,11,30,55,92,96,108,131,146 'id':168 'identify':16,42 'if':95,107 'in':19 'inference':72 'is':51,99,111,144,149 'it':143 'lets':40 'logic':69 'low':90 'mathematical':62,71 'name':121 'no':152 'of':61 'or':29 'organization':21,124 'other':158 'over':142 'partition':161 'paths':78 'policy':83 'possible':76 'reasoning':66 'recommendations':145 'region':165 'resource':82 'resources':18,47 'risk':54 'roles':31 's3':27 'security':53 'shared':34 'such':24 'take':140 'that':32 'the':17 'this':39 'to':45,73 'type':122 'unintended':43 'uses':58 'which':50,67 'with':35 'you':15,41 'your':20,46"
+    }
+  },
+  {
+    "model": "api.finding",
+    "pk": "01929f57-cd29-7499-80c3-18cfa227c7b6",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T11:16:24.489Z",
+      "updated_at": "2024-10-18T11:16:24.506Z",
+      "uid": "prowler-aws-accessanalyzer_enabled-112233445566-eu-south-2-112233445566",
+      "delta": null,
+      "status": "FAIL",
+      "status_extended": "IAM Access Analyzer in account 112233445566 is not enabled.",
+      "severity": "low",
+      "impact": "low",
+      "impact_extended": null,
+      "raw_result": {},
+      "tags": {},
+      "check_id": "accessanalyzer_enabled",
+      "check_metadata": {
+        "risk": "AWS IAM Access Analyzer helps you identify the resources in your organization and accounts, such as Amazon S3 buckets or IAM roles, that are shared with an external entity. This lets you identify unintended access to your resources and data, which is a security risk. IAM Access Analyzer uses a form of mathematical analysis called automated reasoning, which applies logic and mathematical inference to determine all possible access paths allowed by a resource policy.",
+        "notes": "",
+        "checkid": "accessanalyzer_enabled",
+        "provider": "aws",
+        "severity": "low",
+        "checktype": [
+          "IAM"
+        ],
+        "dependson": [],
+        "relatedto": [],
+        "categories": [],
+        "checktitle": "Check if IAM Access Analyzer is enabled",
+        "compliance": null,
+        "relatedurl": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+        "description": "Check if IAM Access Analyzer is enabled",
+        "remediation": {
+          "code": {
+            "cli": "aws accessanalyzer create-analyzer --analyzer-name <NAME> --type <ACCOUNT|ORGANIZATION>",
+            "other": "",
+            "nativeiac": "",
+            "terraform": ""
+          },
+          "recommendation": {
+            "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+            "text": "Enable IAM Access Analyzer for all accounts, create analyzer and take action over it is recommendations (IAM Access Analyzer is available at no additional cost)."
+          }
+        },
+        "servicename": "accessanalyzer",
+        "checkaliases": [],
+        "resourcetype": "Other",
+        "subservicename": "",
+        "resourceidtemplate": "arn:partition:access-analyzer:region:account-id:analyzer/resource-id"
+      },
+      "scan": "01929f57-c0ee-7553-be0b-cbde006fb6f7",
+      "text_search": "'/iam/latest/userguide/what-is-access-analyzer.html':104,128 '112233445566':6B 'a':52,59,81 'access':2B,12,44,56,77,97,109,132,147,163 'access-analyzer':162 'accessanalyzer':85,115,156 'account':5B,123,167 'account-id':166 'accounts':23,136 'action':141 'additional':153 'all':75,135 'allowed':79 'amazon':26 'an':36 'analysis':63 'analyz':3B 'analyzer':13,57,98,110,118,120,133,138,148,164 'analyzer-name':119 'analyzer/resource-id':169 'and':22,48,70,139 'applies':68 'are':33 'arn':160 'as':25 'at':151 'automated':65 'available':150 'aws':10,88,114 'buckets':28 'by':80 'called':64 'check':94,106 'cost':154 'create':117,137 'create-analyzer':116 'data':49 'determine':74 'docs.aws.amazon.com':103,127 'docs.aws.amazon.com/iam/latest/userguide/what-is-access-analyzer.html':102,126 'enabl':9B 'enable':130 'enabled':86,100,112 'entity':38 'external':37 'for':134 'form':60 'helps':14 'iam':1B,11,30,55,92,96,108,131,146 'id':168 'identify':16,42 'if':95,107 'in':19 'inference':72 'is':51,99,111,144,149 'it':143 'lets':40 'logic':69 'low':90 'mathematical':62,71 'name':121 'no':152 'of':61 'or':29 'organization':21,124 'other':158 'over':142 'partition':161 'paths':78 'policy':83 'possible':76 'reasoning':66 'recommendations':145 'region':165 'resource':82 'resources':18,47 'risk':54 'roles':31 's3':27 'security':53 'shared':34 'such':24 'take':140 'that':32 'the':17 'this':39 'to':45,73 'type':122 'unintended':43 'uses':58 'which':50,67 'with':35 'you':15,41 'your':20,46"
+    }
+  },
+  {
+    "model": "api.finding",
+    "pk": "01929f57-cd46-7ff5-800f-483b7ee71cd6",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T11:16:24.518Z",
+      "updated_at": "2024-10-18T11:16:24.521Z",
+      "uid": "prowler-aws-accessanalyzer_enabled-112233445566-eu-west-3-112233445566",
+      "delta": null,
+      "status": "FAIL",
+      "status_extended": "IAM Access Analyzer in account 112233445566 is not enabled.",
+      "severity": "low",
+      "impact": "low",
+      "impact_extended": null,
+      "raw_result": {},
+      "tags": {},
+      "check_id": "accessanalyzer_enabled",
+      "check_metadata": {
+        "risk": "AWS IAM Access Analyzer helps you identify the resources in your organization and accounts, such as Amazon S3 buckets or IAM roles, that are shared with an external entity. This lets you identify unintended access to your resources and data, which is a security risk. IAM Access Analyzer uses a form of mathematical analysis called automated reasoning, which applies logic and mathematical inference to determine all possible access paths allowed by a resource policy.",
+        "notes": "",
+        "checkid": "accessanalyzer_enabled",
+        "provider": "aws",
+        "severity": "low",
+        "checktype": [
+          "IAM"
+        ],
+        "dependson": [],
+        "relatedto": [],
+        "categories": [],
+        "checktitle": "Check if IAM Access Analyzer is enabled",
+        "compliance": null,
+        "relatedurl": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+        "description": "Check if IAM Access Analyzer is enabled",
+        "remediation": {
+          "code": {
+            "cli": "aws accessanalyzer create-analyzer --analyzer-name <NAME> --type <ACCOUNT|ORGANIZATION>",
+            "other": "",
+            "nativeiac": "",
+            "terraform": ""
+          },
+          "recommendation": {
+            "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+            "text": "Enable IAM Access Analyzer for all accounts, create analyzer and take action over it is recommendations (IAM Access Analyzer is available at no additional cost)."
+          }
+        },
+        "servicename": "accessanalyzer",
+        "checkaliases": [],
+        "resourcetype": "Other",
+        "subservicename": "",
+        "resourceidtemplate": "arn:partition:access-analyzer:region:account-id:analyzer/resource-id"
+      },
+      "scan": "01929f57-c0ee-7553-be0b-cbde006fb6f7",
+      "text_search": "'/iam/latest/userguide/what-is-access-analyzer.html':104,128 '112233445566':6B 'a':52,59,81 'access':2B,12,44,56,77,97,109,132,147,163 'access-analyzer':162 'accessanalyzer':85,115,156 'account':5B,123,167 'account-id':166 'accounts':23,136 'action':141 'additional':153 'all':75,135 'allowed':79 'amazon':26 'an':36 'analysis':63 'analyz':3B 'analyzer':13,57,98,110,118,120,133,138,148,164 'analyzer-name':119 'analyzer/resource-id':169 'and':22,48,70,139 'applies':68 'are':33 'arn':160 'as':25 'at':151 'automated':65 'available':150 'aws':10,88,114 'buckets':28 'by':80 'called':64 'check':94,106 'cost':154 'create':117,137 'create-analyzer':116 'data':49 'determine':74 'docs.aws.amazon.com':103,127 'docs.aws.amazon.com/iam/latest/userguide/what-is-access-analyzer.html':102,126 'enabl':9B 'enable':130 'enabled':86,100,112 'entity':38 'external':37 'for':134 'form':60 'helps':14 'iam':1B,11,30,55,92,96,108,131,146 'id':168 'identify':16,42 'if':95,107 'in':19 'inference':72 'is':51,99,111,144,149 'it':143 'lets':40 'logic':69 'low':90 'mathematical':62,71 'name':121 'no':152 'of':61 'or':29 'organization':21,124 'other':158 'over':142 'partition':161 'paths':78 'policy':83 'possible':76 'reasoning':66 'recommendations':145 'region':165 'resource':82 'resources':18,47 'risk':54 'roles':31 's3':27 'security':53 'shared':34 'such':24 'take':140 'that':32 'the':17 'this':39 'to':45,73 'type':122 'unintended':43 'uses':58 'which':50,67 'with':35 'you':15,41 'your':20,46"
+    }
+  },
+  {
+    "model": "api.finding",
+    "pk": "01929f57-cd4e-75db-a9f5-1c95776cead6",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T11:16:24.526Z",
+      "updated_at": "2024-10-18T11:16:24.529Z",
+      "uid": "prowler-aws-accessanalyzer_enabled-112233445566-eu-central-2-112233445566",
+      "delta": null,
+      "status": "FAIL",
+      "status_extended": "IAM Access Analyzer in account 112233445566 is not enabled.",
+      "severity": "low",
+      "impact": "low",
+      "impact_extended": null,
+      "raw_result": {},
+      "tags": {},
+      "check_id": "accessanalyzer_enabled",
+      "check_metadata": {
+        "risk": "AWS IAM Access Analyzer helps you identify the resources in your organization and accounts, such as Amazon S3 buckets or IAM roles, that are shared with an external entity. This lets you identify unintended access to your resources and data, which is a security risk. IAM Access Analyzer uses a form of mathematical analysis called automated reasoning, which applies logic and mathematical inference to determine all possible access paths allowed by a resource policy.",
+        "notes": "",
+        "checkid": "accessanalyzer_enabled",
+        "provider": "aws",
+        "severity": "low",
+        "checktype": [
+          "IAM"
+        ],
+        "dependson": [],
+        "relatedto": [],
+        "categories": [],
+        "checktitle": "Check if IAM Access Analyzer is enabled",
+        "compliance": null,
+        "relatedurl": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+        "description": "Check if IAM Access Analyzer is enabled",
+        "remediation": {
+          "code": {
+            "cli": "aws accessanalyzer create-analyzer --analyzer-name <NAME> --type <ACCOUNT|ORGANIZATION>",
+            "other": "",
+            "nativeiac": "",
+            "terraform": ""
+          },
+          "recommendation": {
+            "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+            "text": "Enable IAM Access Analyzer for all accounts, create analyzer and take action over it is recommendations (IAM Access Analyzer is available at no additional cost)."
+          }
+        },
+        "servicename": "accessanalyzer",
+        "checkaliases": [],
+        "resourcetype": "Other",
+        "subservicename": "",
+        "resourceidtemplate": "arn:partition:access-analyzer:region:account-id:analyzer/resource-id"
+      },
+      "scan": "01929f57-c0ee-7553-be0b-cbde006fb6f7",
+      "text_search": "'/iam/latest/userguide/what-is-access-analyzer.html':104,128 '112233445566':6B 'a':52,59,81 'access':2B,12,44,56,77,97,109,132,147,163 'access-analyzer':162 'accessanalyzer':85,115,156 'account':5B,123,167 'account-id':166 'accounts':23,136 'action':141 'additional':153 'all':75,135 'allowed':79 'amazon':26 'an':36 'analysis':63 'analyz':3B 'analyzer':13,57,98,110,118,120,133,138,148,164 'analyzer-name':119 'analyzer/resource-id':169 'and':22,48,70,139 'applies':68 'are':33 'arn':160 'as':25 'at':151 'automated':65 'available':150 'aws':10,88,114 'buckets':28 'by':80 'called':64 'check':94,106 'cost':154 'create':117,137 'create-analyzer':116 'data':49 'determine':74 'docs.aws.amazon.com':103,127 'docs.aws.amazon.com/iam/latest/userguide/what-is-access-analyzer.html':102,126 'enabl':9B 'enable':130 'enabled':86,100,112 'entity':38 'external':37 'for':134 'form':60 'helps':14 'iam':1B,11,30,55,92,96,108,131,146 'id':168 'identify':16,42 'if':95,107 'in':19 'inference':72 'is':51,99,111,144,149 'it':143 'lets':40 'logic':69 'low':90 'mathematical':62,71 'name':121 'no':152 'of':61 'or':29 'organization':21,124 'other':158 'over':142 'partition':161 'paths':78 'policy':83 'possible':76 'reasoning':66 'recommendations':145 'region':165 'resource':82 'resources':18,47 'risk':54 'roles':31 's3':27 'security':53 'shared':34 'such':24 'take':140 'that':32 'the':17 'this':39 'to':45,73 'type':122 'unintended':43 'uses':58 'which':50,67 'with':35 'you':15,41 'your':20,46"
+    }
+  },
+  {
+    "model": "api.finding",
+    "pk": "01929f57-cd57-7560-b55e-ad2e7d660509",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T11:16:24.535Z",
+      "updated_at": "2024-10-18T11:16:24.538Z",
+      "uid": "prowler-aws-accessanalyzer_enabled-112233445566-eu-west-1-112233445566",
+      "delta": null,
+      "status": "FAIL",
+      "status_extended": "IAM Access Analyzer in account 112233445566 is not enabled.",
+      "severity": "low",
+      "impact": "low",
+      "impact_extended": null,
+      "raw_result": {},
+      "tags": {},
+      "check_id": "accessanalyzer_enabled",
+      "check_metadata": {
+        "risk": "AWS IAM Access Analyzer helps you identify the resources in your organization and accounts, such as Amazon S3 buckets or IAM roles, that are shared with an external entity. This lets you identify unintended access to your resources and data, which is a security risk. IAM Access Analyzer uses a form of mathematical analysis called automated reasoning, which applies logic and mathematical inference to determine all possible access paths allowed by a resource policy.",
+        "notes": "",
+        "checkid": "accessanalyzer_enabled",
+        "provider": "aws",
+        "severity": "low",
+        "checktype": [
+          "IAM"
+        ],
+        "dependson": [],
+        "relatedto": [],
+        "categories": [],
+        "checktitle": "Check if IAM Access Analyzer is enabled",
+        "compliance": null,
+        "relatedurl": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+        "description": "Check if IAM Access Analyzer is enabled",
+        "remediation": {
+          "code": {
+            "cli": "aws accessanalyzer create-analyzer --analyzer-name <NAME> --type <ACCOUNT|ORGANIZATION>",
+            "other": "",
+            "nativeiac": "",
+            "terraform": ""
+          },
+          "recommendation": {
+            "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+            "text": "Enable IAM Access Analyzer for all accounts, create analyzer and take action over it is recommendations (IAM Access Analyzer is available at no additional cost)."
+          }
+        },
+        "servicename": "accessanalyzer",
+        "checkaliases": [],
+        "resourcetype": "Other",
+        "subservicename": "",
+        "resourceidtemplate": "arn:partition:access-analyzer:region:account-id:analyzer/resource-id"
+      },
+      "scan": "01929f57-c0ee-7553-be0b-cbde006fb6f7",
+      "text_search": "'/iam/latest/userguide/what-is-access-analyzer.html':104,128 '112233445566':6B 'a':52,59,81 'access':2B,12,44,56,77,97,109,132,147,163 'access-analyzer':162 'accessanalyzer':85,115,156 'account':5B,123,167 'account-id':166 'accounts':23,136 'action':141 'additional':153 'all':75,135 'allowed':79 'amazon':26 'an':36 'analysis':63 'analyz':3B 'analyzer':13,57,98,110,118,120,133,138,148,164 'analyzer-name':119 'analyzer/resource-id':169 'and':22,48,70,139 'applies':68 'are':33 'arn':160 'as':25 'at':151 'automated':65 'available':150 'aws':10,88,114 'buckets':28 'by':80 'called':64 'check':94,106 'cost':154 'create':117,137 'create-analyzer':116 'data':49 'determine':74 'docs.aws.amazon.com':103,127 'docs.aws.amazon.com/iam/latest/userguide/what-is-access-analyzer.html':102,126 'enabl':9B 'enable':130 'enabled':86,100,112 'entity':38 'external':37 'for':134 'form':60 'helps':14 'iam':1B,11,30,55,92,96,108,131,146 'id':168 'identify':16,42 'if':95,107 'in':19 'inference':72 'is':51,99,111,144,149 'it':143 'lets':40 'logic':69 'low':90 'mathematical':62,71 'name':121 'no':152 'of':61 'or':29 'organization':21,124 'other':158 'over':142 'partition':161 'paths':78 'policy':83 'possible':76 'reasoning':66 'recommendations':145 'region':165 'resource':82 'resources':18,47 'risk':54 'roles':31 's3':27 'security':53 'shared':34 'such':24 'take':140 'that':32 'the':17 'this':39 'to':45,73 'type':122 'unintended':43 'uses':58 'which':50,67 'with':35 'you':15,41 'your':20,46"
+    }
+  },
+  {
+    "model": "api.finding",
+    "pk": "01929f57-cd60-7a7d-ba1b-37affc11176a",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T11:16:24.544Z",
+      "updated_at": "2024-10-18T11:16:24.546Z",
+      "uid": "prowler-aws-accessanalyzer_enabled-112233445566-us-east-2-112233445566",
+      "delta": null,
+      "status": "FAIL",
+      "status_extended": "IAM Access Analyzer in account 112233445566 is not enabled.",
+      "severity": "low",
+      "impact": "low",
+      "impact_extended": null,
+      "raw_result": {},
+      "tags": {},
+      "check_id": "accessanalyzer_enabled",
+      "check_metadata": {
+        "risk": "AWS IAM Access Analyzer helps you identify the resources in your organization and accounts, such as Amazon S3 buckets or IAM roles, that are shared with an external entity. This lets you identify unintended access to your resources and data, which is a security risk. IAM Access Analyzer uses a form of mathematical analysis called automated reasoning, which applies logic and mathematical inference to determine all possible access paths allowed by a resource policy.",
+        "notes": "",
+        "checkid": "accessanalyzer_enabled",
+        "provider": "aws",
+        "severity": "low",
+        "checktype": [
+          "IAM"
+        ],
+        "dependson": [],
+        "relatedto": [],
+        "categories": [],
+        "checktitle": "Check if IAM Access Analyzer is enabled",
+        "compliance": null,
+        "relatedurl": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+        "description": "Check if IAM Access Analyzer is enabled",
+        "remediation": {
+          "code": {
+            "cli": "aws accessanalyzer create-analyzer --analyzer-name <NAME> --type <ACCOUNT|ORGANIZATION>",
+            "other": "",
+            "nativeiac": "",
+            "terraform": ""
+          },
+          "recommendation": {
+            "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+            "text": "Enable IAM Access Analyzer for all accounts, create analyzer and take action over it is recommendations (IAM Access Analyzer is available at no additional cost)."
+          }
+        },
+        "servicename": "accessanalyzer",
+        "checkaliases": [],
+        "resourcetype": "Other",
+        "subservicename": "",
+        "resourceidtemplate": "arn:partition:access-analyzer:region:account-id:analyzer/resource-id"
+      },
+      "scan": "01929f57-c0ee-7553-be0b-cbde006fb6f7",
+      "text_search": "'/iam/latest/userguide/what-is-access-analyzer.html':104,128 '112233445566':6B 'a':52,59,81 'access':2B,12,44,56,77,97,109,132,147,163 'access-analyzer':162 'accessanalyzer':85,115,156 'account':5B,123,167 'account-id':166 'accounts':23,136 'action':141 'additional':153 'all':75,135 'allowed':79 'amazon':26 'an':36 'analysis':63 'analyz':3B 'analyzer':13,57,98,110,118,120,133,138,148,164 'analyzer-name':119 'analyzer/resource-id':169 'and':22,48,70,139 'applies':68 'are':33 'arn':160 'as':25 'at':151 'automated':65 'available':150 'aws':10,88,114 'buckets':28 'by':80 'called':64 'check':94,106 'cost':154 'create':117,137 'create-analyzer':116 'data':49 'determine':74 'docs.aws.amazon.com':103,127 'docs.aws.amazon.com/iam/latest/userguide/what-is-access-analyzer.html':102,126 'enabl':9B 'enable':130 'enabled':86,100,112 'entity':38 'external':37 'for':134 'form':60 'helps':14 'iam':1B,11,30,55,92,96,108,131,146 'id':168 'identify':16,42 'if':95,107 'in':19 'inference':72 'is':51,99,111,144,149 'it':143 'lets':40 'logic':69 'low':90 'mathematical':62,71 'name':121 'no':152 'of':61 'or':29 'organization':21,124 'other':158 'over':142 'partition':161 'paths':78 'policy':83 'possible':76 'reasoning':66 'recommendations':145 'region':165 'resource':82 'resources':18,47 'risk':54 'roles':31 's3':27 'security':53 'shared':34 'such':24 'take':140 'that':32 'the':17 'this':39 'to':45,73 'type':122 'unintended':43 'uses':58 'which':50,67 'with':35 'you':15,41 'your':20,46"
+    }
+  },
+  {
+    "model": "api.finding",
+    "pk": "01929f57-cd67-79ba-af2f-ce6d0fd3c846",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T11:16:24.551Z",
+      "updated_at": "2024-10-18T11:16:24.554Z",
+      "uid": "prowler-aws-accessanalyzer_enabled-112233445566-ap-south-1-112233445566",
+      "delta": null,
+      "status": "FAIL",
+      "status_extended": "IAM Access Analyzer in account 112233445566 is not enabled.",
+      "severity": "low",
+      "impact": "low",
+      "impact_extended": null,
+      "raw_result": {},
+      "tags": {},
+      "check_id": "accessanalyzer_enabled",
+      "check_metadata": {
+        "risk": "AWS IAM Access Analyzer helps you identify the resources in your organization and accounts, such as Amazon S3 buckets or IAM roles, that are shared with an external entity. This lets you identify unintended access to your resources and data, which is a security risk. IAM Access Analyzer uses a form of mathematical analysis called automated reasoning, which applies logic and mathematical inference to determine all possible access paths allowed by a resource policy.",
+        "notes": "",
+        "checkid": "accessanalyzer_enabled",
+        "provider": "aws",
+        "severity": "low",
+        "checktype": [
+          "IAM"
+        ],
+        "dependson": [],
+        "relatedto": [],
+        "categories": [],
+        "checktitle": "Check if IAM Access Analyzer is enabled",
+        "compliance": null,
+        "relatedurl": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+        "description": "Check if IAM Access Analyzer is enabled",
+        "remediation": {
+          "code": {
+            "cli": "aws accessanalyzer create-analyzer --analyzer-name <NAME> --type <ACCOUNT|ORGANIZATION>",
+            "other": "",
+            "nativeiac": "",
+            "terraform": ""
+          },
+          "recommendation": {
+            "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+            "text": "Enable IAM Access Analyzer for all accounts, create analyzer and take action over it is recommendations (IAM Access Analyzer is available at no additional cost)."
+          }
+        },
+        "servicename": "accessanalyzer",
+        "checkaliases": [],
+        "resourcetype": "Other",
+        "subservicename": "",
+        "resourceidtemplate": "arn:partition:access-analyzer:region:account-id:analyzer/resource-id"
+      },
+      "scan": "01929f57-c0ee-7553-be0b-cbde006fb6f7",
+      "text_search": "'/iam/latest/userguide/what-is-access-analyzer.html':104,128 '112233445566':6B 'a':52,59,81 'access':2B,12,44,56,77,97,109,132,147,163 'access-analyzer':162 'accessanalyzer':85,115,156 'account':5B,123,167 'account-id':166 'accounts':23,136 'action':141 'additional':153 'all':75,135 'allowed':79 'amazon':26 'an':36 'analysis':63 'analyz':3B 'analyzer':13,57,98,110,118,120,133,138,148,164 'analyzer-name':119 'analyzer/resource-id':169 'and':22,48,70,139 'applies':68 'are':33 'arn':160 'as':25 'at':151 'automated':65 'available':150 'aws':10,88,114 'buckets':28 'by':80 'called':64 'check':94,106 'cost':154 'create':117,137 'create-analyzer':116 'data':49 'determine':74 'docs.aws.amazon.com':103,127 'docs.aws.amazon.com/iam/latest/userguide/what-is-access-analyzer.html':102,126 'enabl':9B 'enable':130 'enabled':86,100,112 'entity':38 'external':37 'for':134 'form':60 'helps':14 'iam':1B,11,30,55,92,96,108,131,146 'id':168 'identify':16,42 'if':95,107 'in':19 'inference':72 'is':51,99,111,144,149 'it':143 'lets':40 'logic':69 'low':90 'mathematical':62,71 'name':121 'no':152 'of':61 'or':29 'organization':21,124 'other':158 'over':142 'partition':161 'paths':78 'policy':83 'possible':76 'reasoning':66 'recommendations':145 'region':165 'resource':82 'resources':18,47 'risk':54 'roles':31 's3':27 'security':53 'shared':34 'such':24 'take':140 'that':32 'the':17 'this':39 'to':45,73 'type':122 'unintended':43 'uses':58 'which':50,67 'with':35 'you':15,41 'your':20,46"
+    }
+  },
+  {
+    "model": "api.finding",
+    "pk": "01929f57-cd70-79ec-a176-9d606bdf68fb",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T11:16:24.560Z",
+      "updated_at": "2024-10-18T11:16:24.562Z",
+      "uid": "prowler-aws-accessanalyzer_enabled-112233445566-us-west-1-112233445566",
+      "delta": null,
+      "status": "FAIL",
+      "status_extended": "IAM Access Analyzer in account 112233445566 is not enabled.",
+      "severity": "low",
+      "impact": "low",
+      "impact_extended": null,
+      "raw_result": {},
+      "tags": {},
+      "check_id": "accessanalyzer_enabled",
+      "check_metadata": {
+        "risk": "AWS IAM Access Analyzer helps you identify the resources in your organization and accounts, such as Amazon S3 buckets or IAM roles, that are shared with an external entity. This lets you identify unintended access to your resources and data, which is a security risk. IAM Access Analyzer uses a form of mathematical analysis called automated reasoning, which applies logic and mathematical inference to determine all possible access paths allowed by a resource policy.",
+        "notes": "",
+        "checkid": "accessanalyzer_enabled",
+        "provider": "aws",
+        "severity": "low",
+        "checktype": [
+          "IAM"
+        ],
+        "dependson": [],
+        "relatedto": [],
+        "categories": [],
+        "checktitle": "Check if IAM Access Analyzer is enabled",
+        "compliance": null,
+        "relatedurl": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+        "description": "Check if IAM Access Analyzer is enabled",
+        "remediation": {
+          "code": {
+            "cli": "aws accessanalyzer create-analyzer --analyzer-name <NAME> --type <ACCOUNT|ORGANIZATION>",
+            "other": "",
+            "nativeiac": "",
+            "terraform": ""
+          },
+          "recommendation": {
+            "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+            "text": "Enable IAM Access Analyzer for all accounts, create analyzer and take action over it is recommendations (IAM Access Analyzer is available at no additional cost)."
+          }
+        },
+        "servicename": "accessanalyzer",
+        "checkaliases": [],
+        "resourcetype": "Other",
+        "subservicename": "",
+        "resourceidtemplate": "arn:partition:access-analyzer:region:account-id:analyzer/resource-id"
+      },
+      "scan": "01929f57-c0ee-7553-be0b-cbde006fb6f7",
+      "text_search": "'/iam/latest/userguide/what-is-access-analyzer.html':104,128 '112233445566':6B 'a':52,59,81 'access':2B,12,44,56,77,97,109,132,147,163 'access-analyzer':162 'accessanalyzer':85,115,156 'account':5B,123,167 'account-id':166 'accounts':23,136 'action':141 'additional':153 'all':75,135 'allowed':79 'amazon':26 'an':36 'analysis':63 'analyz':3B 'analyzer':13,57,98,110,118,120,133,138,148,164 'analyzer-name':119 'analyzer/resource-id':169 'and':22,48,70,139 'applies':68 'are':33 'arn':160 'as':25 'at':151 'automated':65 'available':150 'aws':10,88,114 'buckets':28 'by':80 'called':64 'check':94,106 'cost':154 'create':117,137 'create-analyzer':116 'data':49 'determine':74 'docs.aws.amazon.com':103,127 'docs.aws.amazon.com/iam/latest/userguide/what-is-access-analyzer.html':102,126 'enabl':9B 'enable':130 'enabled':86,100,112 'entity':38 'external':37 'for':134 'form':60 'helps':14 'iam':1B,11,30,55,92,96,108,131,146 'id':168 'identify':16,42 'if':95,107 'in':19 'inference':72 'is':51,99,111,144,149 'it':143 'lets':40 'logic':69 'low':90 'mathematical':62,71 'name':121 'no':152 'of':61 'or':29 'organization':21,124 'other':158 'over':142 'partition':161 'paths':78 'policy':83 'possible':76 'reasoning':66 'recommendations':145 'region':165 'resource':82 'resources':18,47 'risk':54 'roles':31 's3':27 'security':53 'shared':34 'such':24 'take':140 'that':32 'the':17 'this':39 'to':45,73 'type':122 'unintended':43 'uses':58 'which':50,67 'with':35 'you':15,41 'your':20,46"
+    }
+  },
+  {
+    "model": "api.finding",
+    "pk": "01929f57-cd76-7817-aab2-c283b44082ec",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T11:16:24.567Z",
+      "updated_at": "2024-10-18T11:16:24.569Z",
+      "uid": "prowler-aws-accessanalyzer_enabled-112233445566-ca-central-1-112233445566",
+      "delta": null,
+      "status": "FAIL",
+      "status_extended": "IAM Access Analyzer in account 112233445566 is not enabled.",
+      "severity": "low",
+      "impact": "low",
+      "impact_extended": null,
+      "raw_result": {},
+      "tags": {},
+      "check_id": "accessanalyzer_enabled",
+      "check_metadata": {
+        "risk": "AWS IAM Access Analyzer helps you identify the resources in your organization and accounts, such as Amazon S3 buckets or IAM roles, that are shared with an external entity. This lets you identify unintended access to your resources and data, which is a security risk. IAM Access Analyzer uses a form of mathematical analysis called automated reasoning, which applies logic and mathematical inference to determine all possible access paths allowed by a resource policy.",
+        "notes": "",
+        "checkid": "accessanalyzer_enabled",
+        "provider": "aws",
+        "severity": "low",
+        "checktype": [
+          "IAM"
+        ],
+        "dependson": [],
+        "relatedto": [],
+        "categories": [],
+        "checktitle": "Check if IAM Access Analyzer is enabled",
+        "compliance": null,
+        "relatedurl": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+        "description": "Check if IAM Access Analyzer is enabled",
+        "remediation": {
+          "code": {
+            "cli": "aws accessanalyzer create-analyzer --analyzer-name <NAME> --type <ACCOUNT|ORGANIZATION>",
+            "other": "",
+            "nativeiac": "",
+            "terraform": ""
+          },
+          "recommendation": {
+            "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+            "text": "Enable IAM Access Analyzer for all accounts, create analyzer and take action over it is recommendations (IAM Access Analyzer is available at no additional cost)."
+          }
+        },
+        "servicename": "accessanalyzer",
+        "checkaliases": [],
+        "resourcetype": "Other",
+        "subservicename": "",
+        "resourceidtemplate": "arn:partition:access-analyzer:region:account-id:analyzer/resource-id"
+      },
+      "scan": "01929f57-c0ee-7553-be0b-cbde006fb6f7",
+      "text_search": "'/iam/latest/userguide/what-is-access-analyzer.html':104,128 '112233445566':6B 'a':52,59,81 'access':2B,12,44,56,77,97,109,132,147,163 'access-analyzer':162 'accessanalyzer':85,115,156 'account':5B,123,167 'account-id':166 'accounts':23,136 'action':141 'additional':153 'all':75,135 'allowed':79 'amazon':26 'an':36 'analysis':63 'analyz':3B 'analyzer':13,57,98,110,118,120,133,138,148,164 'analyzer-name':119 'analyzer/resource-id':169 'and':22,48,70,139 'applies':68 'are':33 'arn':160 'as':25 'at':151 'automated':65 'available':150 'aws':10,88,114 'buckets':28 'by':80 'called':64 'check':94,106 'cost':154 'create':117,137 'create-analyzer':116 'data':49 'determine':74 'docs.aws.amazon.com':103,127 'docs.aws.amazon.com/iam/latest/userguide/what-is-access-analyzer.html':102,126 'enabl':9B 'enable':130 'enabled':86,100,112 'entity':38 'external':37 'for':134 'form':60 'helps':14 'iam':1B,11,30,55,92,96,108,131,146 'id':168 'identify':16,42 'if':95,107 'in':19 'inference':72 'is':51,99,111,144,149 'it':143 'lets':40 'logic':69 'low':90 'mathematical':62,71 'name':121 'no':152 'of':61 'or':29 'organization':21,124 'other':158 'over':142 'partition':161 'paths':78 'policy':83 'possible':76 'reasoning':66 'recommendations':145 'region':165 'resource':82 'resources':18,47 'risk':54 'roles':31 's3':27 'security':53 'shared':34 'such':24 'take':140 'that':32 'the':17 'this':39 'to':45,73 'type':122 'unintended':43 'uses':58 'which':50,67 'with':35 'you':15,41 'your':20,46"
+    }
+  },
+  {
+    "model": "api.finding",
+    "pk": "01929f57-cd7d-740c-921d-9400d1fde3e2",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T11:16:24.573Z",
+      "updated_at": "2024-10-18T11:16:24.575Z",
+      "uid": "prowler-aws-accessanalyzer_enabled-112233445566-us-east-1-ConsoleAnalyzer-83b66ad7-d024-454e-b851-52d11cc1cf7c",
+      "delta": null,
+      "status": "PASS",
+      "status_extended": "IAM Access Analyzer ConsoleAnalyzer-83b66ad7-d024-454e-b851-52d11cc1cf7c is enabled.",
+      "severity": "low",
+      "impact": "low",
+      "impact_extended": null,
+      "raw_result": {},
+      "tags": {},
+      "check_id": "accessanalyzer_enabled",
+      "check_metadata": {
+        "risk": "AWS IAM Access Analyzer helps you identify the resources in your organization and accounts, such as Amazon S3 buckets or IAM roles, that are shared with an external entity. This lets you identify unintended access to your resources and data, which is a security risk. IAM Access Analyzer uses a form of mathematical analysis called automated reasoning, which applies logic and mathematical inference to determine all possible access paths allowed by a resource policy.",
+        "notes": "",
+        "checkid": "accessanalyzer_enabled",
+        "provider": "aws",
+        "severity": "low",
+        "checktype": [
+          "IAM"
+        ],
+        "dependson": [],
+        "relatedto": [],
+        "categories": [],
+        "checktitle": "Check if IAM Access Analyzer is enabled",
+        "compliance": null,
+        "relatedurl": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+        "description": "Check if IAM Access Analyzer is enabled",
+        "remediation": {
+          "code": {
+            "cli": "aws accessanalyzer create-analyzer --analyzer-name <NAME> --type <ACCOUNT|ORGANIZATION>",
+            "other": "",
+            "nativeiac": "",
+            "terraform": ""
+          },
+          "recommendation": {
+            "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+            "text": "Enable IAM Access Analyzer for all accounts, create analyzer and take action over it is recommendations (IAM Access Analyzer is available at no additional cost)."
+          }
+        },
+        "servicename": "accessanalyzer",
+        "checkaliases": [],
+        "resourcetype": "Other",
+        "subservicename": "",
+        "resourceidtemplate": "arn:partition:access-analyzer:region:account-id:analyzer/resource-id"
+      },
+      "scan": "01929f57-c0ee-7553-be0b-cbde006fb6f7",
+      "text_search": "'/iam/latest/userguide/what-is-access-analyzer.html':107,131 '454e':8B '52d11cc1cf7c':10B '83b66ad7':6B 'a':55,62,84 'access':2B,15,47,59,80,100,112,135,150,166 'access-analyzer':165 'accessanalyzer':88,118,159 'account':126,170 'account-id':169 'accounts':26,139 'action':144 'additional':156 'all':78,138 'allowed':82 'amazon':29 'an':39 'analysis':66 'analyz':3B 'analyzer':16,60,101,113,121,123,136,141,151,167 'analyzer-name':122 'analyzer/resource-id':172 'and':25,51,73,142 'applies':71 'are':36 'arn':163 'as':28 'at':154 'automated':68 'available':153 'aws':13,91,117 'b851':9B 'buckets':31 'by':83 'called':67 'check':97,109 'consoleanalyz':5B 'consoleanalyzer-83b66ad7-d024-454e-b851-52d11cc1cf7c':4B 'cost':157 'create':120,140 'create-analyzer':119 'd024':7B 'data':52 'determine':77 'docs.aws.amazon.com':106,130 'docs.aws.amazon.com/iam/latest/userguide/what-is-access-analyzer.html':105,129 'enabl':12B 'enable':133 'enabled':89,103,115 'entity':41 'external':40 'for':137 'form':63 'helps':17 'iam':1B,14,33,58,95,99,111,134,149 'id':171 'identify':19,45 'if':98,110 'in':22 'inference':75 'is':54,102,114,147,152 'it':146 'lets':43 'logic':72 'low':93 'mathematical':65,74 'name':124 'no':155 'of':64 'or':32 'organization':24,127 'other':161 'over':145 'partition':164 'paths':81 'policy':86 'possible':79 'reasoning':69 'recommendations':148 'region':168 'resource':85 'resources':21,50 'risk':57 'roles':34 's3':30 'security':56 'shared':37 'such':27 'take':143 'that':35 'the':20 'this':42 'to':48,76 'type':125 'unintended':46 'uses':61 'which':53,70 'with':38 'you':18,44 'your':23,49"
+    }
+  },
+  {
+    "model": "api.finding",
+    "pk": "01929f57-cd84-7154-aaf3-3d57bc9fec6c",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T11:16:24.580Z",
+      "updated_at": "2024-10-18T11:16:24.582Z",
+      "uid": "prowler-aws-accessanalyzer_enabled-112233445566-eu-west-2-112233445566",
+      "delta": null,
+      "status": "FAIL",
+      "status_extended": "IAM Access Analyzer in account 112233445566 is not enabled.",
+      "severity": "low",
+      "impact": "low",
+      "impact_extended": null,
+      "raw_result": {},
+      "tags": {},
+      "check_id": "accessanalyzer_enabled",
+      "check_metadata": {
+        "risk": "AWS IAM Access Analyzer helps you identify the resources in your organization and accounts, such as Amazon S3 buckets or IAM roles, that are shared with an external entity. This lets you identify unintended access to your resources and data, which is a security risk. IAM Access Analyzer uses a form of mathematical analysis called automated reasoning, which applies logic and mathematical inference to determine all possible access paths allowed by a resource policy.",
+        "notes": "",
+        "checkid": "accessanalyzer_enabled",
+        "provider": "aws",
+        "severity": "low",
+        "checktype": [
+          "IAM"
+        ],
+        "dependson": [],
+        "relatedto": [],
+        "categories": [],
+        "checktitle": "Check if IAM Access Analyzer is enabled",
+        "compliance": null,
+        "relatedurl": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+        "description": "Check if IAM Access Analyzer is enabled",
+        "remediation": {
+          "code": {
+            "cli": "aws accessanalyzer create-analyzer --analyzer-name <NAME> --type <ACCOUNT|ORGANIZATION>",
+            "other": "",
+            "nativeiac": "",
+            "terraform": ""
+          },
+          "recommendation": {
+            "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+            "text": "Enable IAM Access Analyzer for all accounts, create analyzer and take action over it is recommendations (IAM Access Analyzer is available at no additional cost)."
+          }
+        },
+        "servicename": "accessanalyzer",
+        "checkaliases": [],
+        "resourcetype": "Other",
+        "subservicename": "",
+        "resourceidtemplate": "arn:partition:access-analyzer:region:account-id:analyzer/resource-id"
+      },
+      "scan": "01929f57-c0ee-7553-be0b-cbde006fb6f7",
+      "text_search": "'/iam/latest/userguide/what-is-access-analyzer.html':104,128 '112233445566':6B 'a':52,59,81 'access':2B,12,44,56,77,97,109,132,147,163 'access-analyzer':162 'accessanalyzer':85,115,156 'account':5B,123,167 'account-id':166 'accounts':23,136 'action':141 'additional':153 'all':75,135 'allowed':79 'amazon':26 'an':36 'analysis':63 'analyz':3B 'analyzer':13,57,98,110,118,120,133,138,148,164 'analyzer-name':119 'analyzer/resource-id':169 'and':22,48,70,139 'applies':68 'are':33 'arn':160 'as':25 'at':151 'automated':65 'available':150 'aws':10,88,114 'buckets':28 'by':80 'called':64 'check':94,106 'cost':154 'create':117,137 'create-analyzer':116 'data':49 'determine':74 'docs.aws.amazon.com':103,127 'docs.aws.amazon.com/iam/latest/userguide/what-is-access-analyzer.html':102,126 'enabl':9B 'enable':130 'enabled':86,100,112 'entity':38 'external':37 'for':134 'form':60 'helps':14 'iam':1B,11,30,55,92,96,108,131,146 'id':168 'identify':16,42 'if':95,107 'in':19 'inference':72 'is':51,99,111,144,149 'it':143 'lets':40 'logic':69 'low':90 'mathematical':62,71 'name':121 'no':152 'of':61 'or':29 'organization':21,124 'other':158 'over':142 'partition':161 'paths':78 'policy':83 'possible':76 'reasoning':66 'recommendations':145 'region':165 'resource':82 'resources':18,47 'risk':54 'roles':31 's3':27 'security':53 'shared':34 'such':24 'take':140 'that':32 'the':17 'this':39 'to':45,73 'type':122 'unintended':43 'uses':58 'which':50,67 'with':35 'you':15,41 'your':20,46"
+    }
+  },
+  {
+    "model": "api.finding",
+    "pk": "01929f57-cd8b-79ee-97a2-66fb8d53bcfc",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T11:16:24.587Z",
+      "updated_at": "2024-10-18T11:16:24.589Z",
+      "uid": "prowler-aws-accessanalyzer_enabled-112233445566-sa-east-1-112233445566",
+      "delta": null,
+      "status": "FAIL",
+      "status_extended": "IAM Access Analyzer in account 112233445566 is not enabled.",
+      "severity": "low",
+      "impact": "low",
+      "impact_extended": null,
+      "raw_result": {},
+      "tags": {},
+      "check_id": "accessanalyzer_enabled",
+      "check_metadata": {
+        "risk": "AWS IAM Access Analyzer helps you identify the resources in your organization and accounts, such as Amazon S3 buckets or IAM roles, that are shared with an external entity. This lets you identify unintended access to your resources and data, which is a security risk. IAM Access Analyzer uses a form of mathematical analysis called automated reasoning, which applies logic and mathematical inference to determine all possible access paths allowed by a resource policy.",
+        "notes": "",
+        "checkid": "accessanalyzer_enabled",
+        "provider": "aws",
+        "severity": "low",
+        "checktype": [
+          "IAM"
+        ],
+        "dependson": [],
+        "relatedto": [],
+        "categories": [],
+        "checktitle": "Check if IAM Access Analyzer is enabled",
+        "compliance": null,
+        "relatedurl": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+        "description": "Check if IAM Access Analyzer is enabled",
+        "remediation": {
+          "code": {
+            "cli": "aws accessanalyzer create-analyzer --analyzer-name <NAME> --type <ACCOUNT|ORGANIZATION>",
+            "other": "",
+            "nativeiac": "",
+            "terraform": ""
+          },
+          "recommendation": {
+            "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+            "text": "Enable IAM Access Analyzer for all accounts, create analyzer and take action over it is recommendations (IAM Access Analyzer is available at no additional cost)."
+          }
+        },
+        "servicename": "accessanalyzer",
+        "checkaliases": [],
+        "resourcetype": "Other",
+        "subservicename": "",
+        "resourceidtemplate": "arn:partition:access-analyzer:region:account-id:analyzer/resource-id"
+      },
+      "scan": "01929f57-c0ee-7553-be0b-cbde006fb6f7",
+      "text_search": "'/iam/latest/userguide/what-is-access-analyzer.html':104,128 '112233445566':6B 'a':52,59,81 'access':2B,12,44,56,77,97,109,132,147,163 'access-analyzer':162 'accessanalyzer':85,115,156 'account':5B,123,167 'account-id':166 'accounts':23,136 'action':141 'additional':153 'all':75,135 'allowed':79 'amazon':26 'an':36 'analysis':63 'analyz':3B 'analyzer':13,57,98,110,118,120,133,138,148,164 'analyzer-name':119 'analyzer/resource-id':169 'and':22,48,70,139 'applies':68 'are':33 'arn':160 'as':25 'at':151 'automated':65 'available':150 'aws':10,88,114 'buckets':28 'by':80 'called':64 'check':94,106 'cost':154 'create':117,137 'create-analyzer':116 'data':49 'determine':74 'docs.aws.amazon.com':103,127 'docs.aws.amazon.com/iam/latest/userguide/what-is-access-analyzer.html':102,126 'enabl':9B 'enable':130 'enabled':86,100,112 'entity':38 'external':37 'for':134 'form':60 'helps':14 'iam':1B,11,30,55,92,96,108,131,146 'id':168 'identify':16,42 'if':95,107 'in':19 'inference':72 'is':51,99,111,144,149 'it':143 'lets':40 'logic':69 'low':90 'mathematical':62,71 'name':121 'no':152 'of':61 'or':29 'organization':21,124 'other':158 'over':142 'partition':161 'paths':78 'policy':83 'possible':76 'reasoning':66 'recommendations':145 'region':165 'resource':82 'resources':18,47 'risk':54 'roles':31 's3':27 'security':53 'shared':34 'such':24 'take':140 'that':32 'the':17 'this':39 'to':45,73 'type':122 'unintended':43 'uses':58 'which':50,67 'with':35 'you':15,41 'your':20,46"
+    }
+  },
+  {
+    "model": "api.finding",
+    "pk": "01929f57-cd93-72a1-82bb-6247e5b05f5c",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T11:16:24.595Z",
+      "updated_at": "2024-10-18T11:16:24.597Z",
+      "uid": "prowler-aws-accessanalyzer_enabled-112233445566-eu-north-1-112233445566",
+      "delta": null,
+      "status": "FAIL",
+      "status_extended": "IAM Access Analyzer in account 112233445566 is not enabled.",
+      "severity": "low",
+      "impact": "low",
+      "impact_extended": null,
+      "raw_result": {},
+      "tags": {},
+      "check_id": "accessanalyzer_enabled",
+      "check_metadata": {
+        "risk": "AWS IAM Access Analyzer helps you identify the resources in your organization and accounts, such as Amazon S3 buckets or IAM roles, that are shared with an external entity. This lets you identify unintended access to your resources and data, which is a security risk. IAM Access Analyzer uses a form of mathematical analysis called automated reasoning, which applies logic and mathematical inference to determine all possible access paths allowed by a resource policy.",
+        "notes": "",
+        "checkid": "accessanalyzer_enabled",
+        "provider": "aws",
+        "severity": "low",
+        "checktype": [
+          "IAM"
+        ],
+        "dependson": [],
+        "relatedto": [],
+        "categories": [],
+        "checktitle": "Check if IAM Access Analyzer is enabled",
+        "compliance": null,
+        "relatedurl": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+        "description": "Check if IAM Access Analyzer is enabled",
+        "remediation": {
+          "code": {
+            "cli": "aws accessanalyzer create-analyzer --analyzer-name <NAME> --type <ACCOUNT|ORGANIZATION>",
+            "other": "",
+            "nativeiac": "",
+            "terraform": ""
+          },
+          "recommendation": {
+            "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+            "text": "Enable IAM Access Analyzer for all accounts, create analyzer and take action over it is recommendations (IAM Access Analyzer is available at no additional cost)."
+          }
+        },
+        "servicename": "accessanalyzer",
+        "checkaliases": [],
+        "resourcetype": "Other",
+        "subservicename": "",
+        "resourceidtemplate": "arn:partition:access-analyzer:region:account-id:analyzer/resource-id"
+      },
+      "scan": "01929f57-c0ee-7553-be0b-cbde006fb6f7",
+      "text_search": "'/iam/latest/userguide/what-is-access-analyzer.html':104,128 '112233445566':6B 'a':52,59,81 'access':2B,12,44,56,77,97,109,132,147,163 'access-analyzer':162 'accessanalyzer':85,115,156 'account':5B,123,167 'account-id':166 'accounts':23,136 'action':141 'additional':153 'all':75,135 'allowed':79 'amazon':26 'an':36 'analysis':63 'analyz':3B 'analyzer':13,57,98,110,118,120,133,138,148,164 'analyzer-name':119 'analyzer/resource-id':169 'and':22,48,70,139 'applies':68 'are':33 'arn':160 'as':25 'at':151 'automated':65 'available':150 'aws':10,88,114 'buckets':28 'by':80 'called':64 'check':94,106 'cost':154 'create':117,137 'create-analyzer':116 'data':49 'determine':74 'docs.aws.amazon.com':103,127 'docs.aws.amazon.com/iam/latest/userguide/what-is-access-analyzer.html':102,126 'enabl':9B 'enable':130 'enabled':86,100,112 'entity':38 'external':37 'for':134 'form':60 'helps':14 'iam':1B,11,30,55,92,96,108,131,146 'id':168 'identify':16,42 'if':95,107 'in':19 'inference':72 'is':51,99,111,144,149 'it':143 'lets':40 'logic':69 'low':90 'mathematical':62,71 'name':121 'no':152 'of':61 'or':29 'organization':21,124 'other':158 'over':142 'partition':161 'paths':78 'policy':83 'possible':76 'reasoning':66 'recommendations':145 'region':165 'resource':82 'resources':18,47 'risk':54 'roles':31 's3':27 'security':53 'shared':34 'such':24 'take':140 'that':32 'the':17 'this':39 'to':45,73 'type':122 'unintended':43 'uses':58 'which':50,67 'with':35 'you':15,41 'your':20,46"
+    }
+  },
+  {
+    "model": "api.finding",
+    "pk": "01929f57-cd9a-7574-a8bd-2eb085c1c1d4",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T11:16:24.602Z",
+      "updated_at": "2024-10-18T11:16:24.604Z",
+      "uid": "prowler-aws-accessanalyzer_enabled-112233445566-us-west-2-112233445566",
+      "delta": null,
+      "status": "FAIL",
+      "status_extended": "IAM Access Analyzer in account 112233445566 is not enabled.",
+      "severity": "low",
+      "impact": "low",
+      "impact_extended": null,
+      "raw_result": {},
+      "tags": {},
+      "check_id": "accessanalyzer_enabled",
+      "check_metadata": {
+        "risk": "AWS IAM Access Analyzer helps you identify the resources in your organization and accounts, such as Amazon S3 buckets or IAM roles, that are shared with an external entity. This lets you identify unintended access to your resources and data, which is a security risk. IAM Access Analyzer uses a form of mathematical analysis called automated reasoning, which applies logic and mathematical inference to determine all possible access paths allowed by a resource policy.",
+        "notes": "",
+        "checkid": "accessanalyzer_enabled",
+        "provider": "aws",
+        "severity": "low",
+        "checktype": [
+          "IAM"
+        ],
+        "dependson": [],
+        "relatedto": [],
+        "categories": [],
+        "checktitle": "Check if IAM Access Analyzer is enabled",
+        "compliance": null,
+        "relatedurl": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+        "description": "Check if IAM Access Analyzer is enabled",
+        "remediation": {
+          "code": {
+            "cli": "aws accessanalyzer create-analyzer --analyzer-name <NAME> --type <ACCOUNT|ORGANIZATION>",
+            "other": "",
+            "nativeiac": "",
+            "terraform": ""
+          },
+          "recommendation": {
+            "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+            "text": "Enable IAM Access Analyzer for all accounts, create analyzer and take action over it is recommendations (IAM Access Analyzer is available at no additional cost)."
+          }
+        },
+        "servicename": "accessanalyzer",
+        "checkaliases": [],
+        "resourcetype": "Other",
+        "subservicename": "",
+        "resourceidtemplate": "arn:partition:access-analyzer:region:account-id:analyzer/resource-id"
+      },
+      "scan": "01929f57-c0ee-7553-be0b-cbde006fb6f7",
+      "text_search": "'/iam/latest/userguide/what-is-access-analyzer.html':104,128 '112233445566':6B 'a':52,59,81 'access':2B,12,44,56,77,97,109,132,147,163 'access-analyzer':162 'accessanalyzer':85,115,156 'account':5B,123,167 'account-id':166 'accounts':23,136 'action':141 'additional':153 'all':75,135 'allowed':79 'amazon':26 'an':36 'analysis':63 'analyz':3B 'analyzer':13,57,98,110,118,120,133,138,148,164 'analyzer-name':119 'analyzer/resource-id':169 'and':22,48,70,139 'applies':68 'are':33 'arn':160 'as':25 'at':151 'automated':65 'available':150 'aws':10,88,114 'buckets':28 'by':80 'called':64 'check':94,106 'cost':154 'create':117,137 'create-analyzer':116 'data':49 'determine':74 'docs.aws.amazon.com':103,127 'docs.aws.amazon.com/iam/latest/userguide/what-is-access-analyzer.html':102,126 'enabl':9B 'enable':130 'enabled':86,100,112 'entity':38 'external':37 'for':134 'form':60 'helps':14 'iam':1B,11,30,55,92,96,108,131,146 'id':168 'identify':16,42 'if':95,107 'in':19 'inference':72 'is':51,99,111,144,149 'it':143 'lets':40 'logic':69 'low':90 'mathematical':62,71 'name':121 'no':152 'of':61 'or':29 'organization':21,124 'other':158 'over':142 'partition':161 'paths':78 'policy':83 'possible':76 'reasoning':66 'recommendations':145 'region':165 'resource':82 'resources':18,47 'risk':54 'roles':31 's3':27 'security':53 'shared':34 'such':24 'take':140 'that':32 'the':17 'this':39 'to':45,73 'type':122 'unintended':43 'uses':58 'which':50,67 'with':35 'you':15,41 'your':20,46"
+    }
+  },
+  {
+    "model": "api.finding",
+    "pk": "01929f57-cda2-7bb6-b303-ccf5c68e3b7e",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T11:16:24.610Z",
+      "updated_at": "2024-10-18T11:16:24.612Z",
+      "uid": "prowler-aws-accessanalyzer_enabled-112233445566-ap-southeast-1-112233445566",
+      "delta": null,
+      "status": "FAIL",
+      "status_extended": "IAM Access Analyzer in account 112233445566 is not enabled.",
+      "severity": "low",
+      "impact": "low",
+      "impact_extended": null,
+      "raw_result": {},
+      "tags": {},
+      "check_id": "accessanalyzer_enabled",
+      "check_metadata": {
+        "risk": "AWS IAM Access Analyzer helps you identify the resources in your organization and accounts, such as Amazon S3 buckets or IAM roles, that are shared with an external entity. This lets you identify unintended access to your resources and data, which is a security risk. IAM Access Analyzer uses a form of mathematical analysis called automated reasoning, which applies logic and mathematical inference to determine all possible access paths allowed by a resource policy.",
+        "notes": "",
+        "checkid": "accessanalyzer_enabled",
+        "provider": "aws",
+        "severity": "low",
+        "checktype": [
+          "IAM"
+        ],
+        "dependson": [],
+        "relatedto": [],
+        "categories": [],
+        "checktitle": "Check if IAM Access Analyzer is enabled",
+        "compliance": null,
+        "relatedurl": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+        "description": "Check if IAM Access Analyzer is enabled",
+        "remediation": {
+          "code": {
+            "cli": "aws accessanalyzer create-analyzer --analyzer-name <NAME> --type <ACCOUNT|ORGANIZATION>",
+            "other": "",
+            "nativeiac": "",
+            "terraform": ""
+          },
+          "recommendation": {
+            "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+            "text": "Enable IAM Access Analyzer for all accounts, create analyzer and take action over it is recommendations (IAM Access Analyzer is available at no additional cost)."
+          }
+        },
+        "servicename": "accessanalyzer",
+        "checkaliases": [],
+        "resourcetype": "Other",
+        "subservicename": "",
+        "resourceidtemplate": "arn:partition:access-analyzer:region:account-id:analyzer/resource-id"
+      },
+      "scan": "01929f57-c0ee-7553-be0b-cbde006fb6f7",
+      "text_search": "'/iam/latest/userguide/what-is-access-analyzer.html':104,128 '112233445566':6B 'a':52,59,81 'access':2B,12,44,56,77,97,109,132,147,163 'access-analyzer':162 'accessanalyzer':85,115,156 'account':5B,123,167 'account-id':166 'accounts':23,136 'action':141 'additional':153 'all':75,135 'allowed':79 'amazon':26 'an':36 'analysis':63 'analyz':3B 'analyzer':13,57,98,110,118,120,133,138,148,164 'analyzer-name':119 'analyzer/resource-id':169 'and':22,48,70,139 'applies':68 'are':33 'arn':160 'as':25 'at':151 'automated':65 'available':150 'aws':10,88,114 'buckets':28 'by':80 'called':64 'check':94,106 'cost':154 'create':117,137 'create-analyzer':116 'data':49 'determine':74 'docs.aws.amazon.com':103,127 'docs.aws.amazon.com/iam/latest/userguide/what-is-access-analyzer.html':102,126 'enabl':9B 'enable':130 'enabled':86,100,112 'entity':38 'external':37 'for':134 'form':60 'helps':14 'iam':1B,11,30,55,92,96,108,131,146 'id':168 'identify':16,42 'if':95,107 'in':19 'inference':72 'is':51,99,111,144,149 'it':143 'lets':40 'logic':69 'low':90 'mathematical':62,71 'name':121 'no':152 'of':61 'or':29 'organization':21,124 'other':158 'over':142 'partition':161 'paths':78 'policy':83 'possible':76 'reasoning':66 'recommendations':145 'region':165 'resource':82 'resources':18,47 'risk':54 'roles':31 's3':27 'security':53 'shared':34 'such':24 'take':140 'that':32 'the':17 'this':39 'to':45,73 'type':122 'unintended':43 'uses':58 'which':50,67 'with':35 'you':15,41 'your':20,46"
+    }
+  },
+  {
+    "model": "api.finding",
+    "pk": "01929f57-cda9-716d-9824-9bdaf894ba46",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T11:16:24.617Z",
+      "updated_at": "2024-10-18T11:16:24.620Z",
+      "uid": "prowler-aws-accessanalyzer_enabled-112233445566-eu-central-1-112233445566",
+      "delta": null,
+      "status": "FAIL",
+      "status_extended": "IAM Access Analyzer in account 112233445566 is not enabled.",
+      "severity": "low",
+      "impact": "low",
+      "impact_extended": null,
+      "raw_result": {},
+      "tags": {},
+      "check_id": "accessanalyzer_enabled",
+      "check_metadata": {
+        "risk": "AWS IAM Access Analyzer helps you identify the resources in your organization and accounts, such as Amazon S3 buckets or IAM roles, that are shared with an external entity. This lets you identify unintended access to your resources and data, which is a security risk. IAM Access Analyzer uses a form of mathematical analysis called automated reasoning, which applies logic and mathematical inference to determine all possible access paths allowed by a resource policy.",
+        "notes": "",
+        "checkid": "accessanalyzer_enabled",
+        "provider": "aws",
+        "severity": "low",
+        "checktype": [
+          "IAM"
+        ],
+        "dependson": [],
+        "relatedto": [],
+        "categories": [],
+        "checktitle": "Check if IAM Access Analyzer is enabled",
+        "compliance": null,
+        "relatedurl": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+        "description": "Check if IAM Access Analyzer is enabled",
+        "remediation": {
+          "code": {
+            "cli": "aws accessanalyzer create-analyzer --analyzer-name <NAME> --type <ACCOUNT|ORGANIZATION>",
+            "other": "",
+            "nativeiac": "",
+            "terraform": ""
+          },
+          "recommendation": {
+            "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+            "text": "Enable IAM Access Analyzer for all accounts, create analyzer and take action over it is recommendations (IAM Access Analyzer is available at no additional cost)."
+          }
+        },
+        "servicename": "accessanalyzer",
+        "checkaliases": [],
+        "resourcetype": "Other",
+        "subservicename": "",
+        "resourceidtemplate": "arn:partition:access-analyzer:region:account-id:analyzer/resource-id"
+      },
+      "scan": "01929f57-c0ee-7553-be0b-cbde006fb6f7",
+      "text_search": "'/iam/latest/userguide/what-is-access-analyzer.html':104,128 '112233445566':6B 'a':52,59,81 'access':2B,12,44,56,77,97,109,132,147,163 'access-analyzer':162 'accessanalyzer':85,115,156 'account':5B,123,167 'account-id':166 'accounts':23,136 'action':141 'additional':153 'all':75,135 'allowed':79 'amazon':26 'an':36 'analysis':63 'analyz':3B 'analyzer':13,57,98,110,118,120,133,138,148,164 'analyzer-name':119 'analyzer/resource-id':169 'and':22,48,70,139 'applies':68 'are':33 'arn':160 'as':25 'at':151 'automated':65 'available':150 'aws':10,88,114 'buckets':28 'by':80 'called':64 'check':94,106 'cost':154 'create':117,137 'create-analyzer':116 'data':49 'determine':74 'docs.aws.amazon.com':103,127 'docs.aws.amazon.com/iam/latest/userguide/what-is-access-analyzer.html':102,126 'enabl':9B 'enable':130 'enabled':86,100,112 'entity':38 'external':37 'for':134 'form':60 'helps':14 'iam':1B,11,30,55,92,96,108,131,146 'id':168 'identify':16,42 'if':95,107 'in':19 'inference':72 'is':51,99,111,144,149 'it':143 'lets':40 'logic':69 'low':90 'mathematical':62,71 'name':121 'no':152 'of':61 'or':29 'organization':21,124 'other':158 'over':142 'partition':161 'paths':78 'policy':83 'possible':76 'reasoning':66 'recommendations':145 'region':165 'resource':82 'resources':18,47 'risk':54 'roles':31 's3':27 'security':53 'shared':34 'such':24 'take':140 'that':32 'the':17 'this':39 'to':45,73 'type':122 'unintended':43 'uses':58 'which':50,67 'with':35 'you':15,41 'your':20,46"
+    }
+  },
+  {
+    "model": "api.finding",
+    "pk": "01929f57-cdb0-7eef-84d9-13ff9bd5405d",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T11:16:24.625Z",
+      "updated_at": "2024-10-18T11:16:24.627Z",
+      "uid": "prowler-aws-accessanalyzer_enabled-112233445566-ap-northeast-1-112233445566",
+      "delta": null,
+      "status": "FAIL",
+      "status_extended": "IAM Access Analyzer in account 112233445566 is not enabled.",
+      "severity": "low",
+      "impact": "low",
+      "impact_extended": null,
+      "raw_result": {},
+      "tags": {},
+      "check_id": "accessanalyzer_enabled",
+      "check_metadata": {
+        "risk": "AWS IAM Access Analyzer helps you identify the resources in your organization and accounts, such as Amazon S3 buckets or IAM roles, that are shared with an external entity. This lets you identify unintended access to your resources and data, which is a security risk. IAM Access Analyzer uses a form of mathematical analysis called automated reasoning, which applies logic and mathematical inference to determine all possible access paths allowed by a resource policy.",
+        "notes": "",
+        "checkid": "accessanalyzer_enabled",
+        "provider": "aws",
+        "severity": "low",
+        "checktype": [
+          "IAM"
+        ],
+        "dependson": [],
+        "relatedto": [],
+        "categories": [],
+        "checktitle": "Check if IAM Access Analyzer is enabled",
+        "compliance": null,
+        "relatedurl": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+        "description": "Check if IAM Access Analyzer is enabled",
+        "remediation": {
+          "code": {
+            "cli": "aws accessanalyzer create-analyzer --analyzer-name <NAME> --type <ACCOUNT|ORGANIZATION>",
+            "other": "",
+            "nativeiac": "",
+            "terraform": ""
+          },
+          "recommendation": {
+            "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+            "text": "Enable IAM Access Analyzer for all accounts, create analyzer and take action over it is recommendations (IAM Access Analyzer is available at no additional cost)."
+          }
+        },
+        "servicename": "accessanalyzer",
+        "checkaliases": [],
+        "resourcetype": "Other",
+        "subservicename": "",
+        "resourceidtemplate": "arn:partition:access-analyzer:region:account-id:analyzer/resource-id"
+      },
+      "scan": "01929f57-c0ee-7553-be0b-cbde006fb6f7",
+      "text_search": "'/iam/latest/userguide/what-is-access-analyzer.html':104,128 '112233445566':6B 'a':52,59,81 'access':2B,12,44,56,77,97,109,132,147,163 'access-analyzer':162 'accessanalyzer':85,115,156 'account':5B,123,167 'account-id':166 'accounts':23,136 'action':141 'additional':153 'all':75,135 'allowed':79 'amazon':26 'an':36 'analysis':63 'analyz':3B 'analyzer':13,57,98,110,118,120,133,138,148,164 'analyzer-name':119 'analyzer/resource-id':169 'and':22,48,70,139 'applies':68 'are':33 'arn':160 'as':25 'at':151 'automated':65 'available':150 'aws':10,88,114 'buckets':28 'by':80 'called':64 'check':94,106 'cost':154 'create':117,137 'create-analyzer':116 'data':49 'determine':74 'docs.aws.amazon.com':103,127 'docs.aws.amazon.com/iam/latest/userguide/what-is-access-analyzer.html':102,126 'enabl':9B 'enable':130 'enabled':86,100,112 'entity':38 'external':37 'for':134 'form':60 'helps':14 'iam':1B,11,30,55,92,96,108,131,146 'id':168 'identify':16,42 'if':95,107 'in':19 'inference':72 'is':51,99,111,144,149 'it':143 'lets':40 'logic':69 'low':90 'mathematical':62,71 'name':121 'no':152 'of':61 'or':29 'organization':21,124 'other':158 'over':142 'partition':161 'paths':78 'policy':83 'possible':76 'reasoning':66 'recommendations':145 'region':165 'resource':82 'resources':18,47 'risk':54 'roles':31 's3':27 'security':53 'shared':34 'such':24 'take':140 'that':32 'the':17 'this':39 'to':45,73 'type':122 'unintended':43 'uses':58 'which':50,67 'with':35 'you':15,41 'your':20,46"
+    }
+  },
+  {
+    "model": "api.finding",
+    "pk": "01929f57-cdb8-72c4-923a-13dbebc6347b",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T11:16:24.632Z",
+      "updated_at": "2024-10-18T11:16:24.634Z",
+      "uid": "prowler-aws-accessanalyzer_enabled-112233445566-ap-southeast-2-112233445566",
+      "delta": null,
+      "status": "FAIL",
+      "status_extended": "IAM Access Analyzer in account 112233445566 is not enabled.",
+      "severity": "low",
+      "impact": "low",
+      "impact_extended": null,
+      "raw_result": {},
+      "tags": {},
+      "check_id": "accessanalyzer_enabled",
+      "check_metadata": {
+        "risk": "AWS IAM Access Analyzer helps you identify the resources in your organization and accounts, such as Amazon S3 buckets or IAM roles, that are shared with an external entity. This lets you identify unintended access to your resources and data, which is a security risk. IAM Access Analyzer uses a form of mathematical analysis called automated reasoning, which applies logic and mathematical inference to determine all possible access paths allowed by a resource policy.",
+        "notes": "",
+        "checkid": "accessanalyzer_enabled",
+        "provider": "aws",
+        "severity": "low",
+        "checktype": [
+          "IAM"
+        ],
+        "dependson": [],
+        "relatedto": [],
+        "categories": [],
+        "checktitle": "Check if IAM Access Analyzer is enabled",
+        "compliance": null,
+        "relatedurl": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+        "description": "Check if IAM Access Analyzer is enabled",
+        "remediation": {
+          "code": {
+            "cli": "aws accessanalyzer create-analyzer --analyzer-name <NAME> --type <ACCOUNT|ORGANIZATION>",
+            "other": "",
+            "nativeiac": "",
+            "terraform": ""
+          },
+          "recommendation": {
+            "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+            "text": "Enable IAM Access Analyzer for all accounts, create analyzer and take action over it is recommendations (IAM Access Analyzer is available at no additional cost)."
+          }
+        },
+        "servicename": "accessanalyzer",
+        "checkaliases": [],
+        "resourcetype": "Other",
+        "subservicename": "",
+        "resourceidtemplate": "arn:partition:access-analyzer:region:account-id:analyzer/resource-id"
+      },
+      "scan": "01929f57-c0ee-7553-be0b-cbde006fb6f7",
+      "text_search": "'/iam/latest/userguide/what-is-access-analyzer.html':104,128 '112233445566':6B 'a':52,59,81 'access':2B,12,44,56,77,97,109,132,147,163 'access-analyzer':162 'accessanalyzer':85,115,156 'account':5B,123,167 'account-id':166 'accounts':23,136 'action':141 'additional':153 'all':75,135 'allowed':79 'amazon':26 'an':36 'analysis':63 'analyz':3B 'analyzer':13,57,98,110,118,120,133,138,148,164 'analyzer-name':119 'analyzer/resource-id':169 'and':22,48,70,139 'applies':68 'are':33 'arn':160 'as':25 'at':151 'automated':65 'available':150 'aws':10,88,114 'buckets':28 'by':80 'called':64 'check':94,106 'cost':154 'create':117,137 'create-analyzer':116 'data':49 'determine':74 'docs.aws.amazon.com':103,127 'docs.aws.amazon.com/iam/latest/userguide/what-is-access-analyzer.html':102,126 'enabl':9B 'enable':130 'enabled':86,100,112 'entity':38 'external':37 'for':134 'form':60 'helps':14 'iam':1B,11,30,55,92,96,108,131,146 'id':168 'identify':16,42 'if':95,107 'in':19 'inference':72 'is':51,99,111,144,149 'it':143 'lets':40 'logic':69 'low':90 'mathematical':62,71 'name':121 'no':152 'of':61 'or':29 'organization':21,124 'other':158 'over':142 'partition':161 'paths':78 'policy':83 'possible':76 'reasoning':66 'recommendations':145 'region':165 'resource':82 'resources':18,47 'risk':54 'roles':31 's3':27 'security':53 'shared':34 'such':24 'take':140 'that':32 'the':17 'this':39 'to':45,73 'type':122 'unintended':43 'uses':58 'which':50,67 'with':35 'you':15,41 'your':20,46"
+    }
+  },
+  {
+    "model": "api.finding",
+    "pk": "01929f57-cdbf-7d43-b0f0-c82b8c0f6bca",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T11:16:24.639Z",
+      "updated_at": "2024-10-18T11:16:24.642Z",
+      "uid": "prowler-aws-accessanalyzer_enabled-112233445566-ap-northeast-2-112233445566",
+      "delta": null,
+      "status": "FAIL",
+      "status_extended": "IAM Access Analyzer in account 112233445566 is not enabled.",
+      "severity": "low",
+      "impact": "low",
+      "impact_extended": null,
+      "raw_result": {},
+      "tags": {},
+      "check_id": "accessanalyzer_enabled",
+      "check_metadata": {
+        "risk": "AWS IAM Access Analyzer helps you identify the resources in your organization and accounts, such as Amazon S3 buckets or IAM roles, that are shared with an external entity. This lets you identify unintended access to your resources and data, which is a security risk. IAM Access Analyzer uses a form of mathematical analysis called automated reasoning, which applies logic and mathematical inference to determine all possible access paths allowed by a resource policy.",
+        "notes": "",
+        "checkid": "accessanalyzer_enabled",
+        "provider": "aws",
+        "severity": "low",
+        "checktype": [
+          "IAM"
+        ],
+        "dependson": [],
+        "relatedto": [],
+        "categories": [],
+        "checktitle": "Check if IAM Access Analyzer is enabled",
+        "compliance": null,
+        "relatedurl": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+        "description": "Check if IAM Access Analyzer is enabled",
+        "remediation": {
+          "code": {
+            "cli": "aws accessanalyzer create-analyzer --analyzer-name <NAME> --type <ACCOUNT|ORGANIZATION>",
+            "other": "",
+            "nativeiac": "",
+            "terraform": ""
+          },
+          "recommendation": {
+            "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+            "text": "Enable IAM Access Analyzer for all accounts, create analyzer and take action over it is recommendations (IAM Access Analyzer is available at no additional cost)."
+          }
+        },
+        "servicename": "accessanalyzer",
+        "checkaliases": [],
+        "resourcetype": "Other",
+        "subservicename": "",
+        "resourceidtemplate": "arn:partition:access-analyzer:region:account-id:analyzer/resource-id"
+      },
+      "scan": "01929f57-c0ee-7553-be0b-cbde006fb6f7",
+      "text_search": "'/iam/latest/userguide/what-is-access-analyzer.html':104,128 '112233445566':6B 'a':52,59,81 'access':2B,12,44,56,77,97,109,132,147,163 'access-analyzer':162 'accessanalyzer':85,115,156 'account':5B,123,167 'account-id':166 'accounts':23,136 'action':141 'additional':153 'all':75,135 'allowed':79 'amazon':26 'an':36 'analysis':63 'analyz':3B 'analyzer':13,57,98,110,118,120,133,138,148,164 'analyzer-name':119 'analyzer/resource-id':169 'and':22,48,70,139 'applies':68 'are':33 'arn':160 'as':25 'at':151 'automated':65 'available':150 'aws':10,88,114 'buckets':28 'by':80 'called':64 'check':94,106 'cost':154 'create':117,137 'create-analyzer':116 'data':49 'determine':74 'docs.aws.amazon.com':103,127 'docs.aws.amazon.com/iam/latest/userguide/what-is-access-analyzer.html':102,126 'enabl':9B 'enable':130 'enabled':86,100,112 'entity':38 'external':37 'for':134 'form':60 'helps':14 'iam':1B,11,30,55,92,96,108,131,146 'id':168 'identify':16,42 'if':95,107 'in':19 'inference':72 'is':51,99,111,144,149 'it':143 'lets':40 'logic':69 'low':90 'mathematical':62,71 'name':121 'no':152 'of':61 'or':29 'organization':21,124 'other':158 'over':142 'partition':161 'paths':78 'policy':83 'possible':76 'reasoning':66 'recommendations':145 'region':165 'resource':82 'resources':18,47 'risk':54 'roles':31 's3':27 'security':53 'shared':34 'such':24 'take':140 'that':32 'the':17 'this':39 'to':45,73 'type':122 'unintended':43 'uses':58 'which':50,67 'with':35 'you':15,41 'your':20,46"
+    }
+  },
+  {
+    "model": "api.finding",
+    "pk": "01929f57-cdc6-70e9-b025-30f1f8b5efbe",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T11:16:24.646Z",
+      "updated_at": "2024-10-18T11:16:24.648Z",
+      "uid": "prowler-aws-accessanalyzer_enabled-112233445566-ap-northeast-3-112233445566",
+      "delta": null,
+      "status": "FAIL",
+      "status_extended": "IAM Access Analyzer in account 112233445566 is not enabled.",
+      "severity": "low",
+      "impact": "low",
+      "impact_extended": null,
+      "raw_result": {},
+      "tags": {},
+      "check_id": "accessanalyzer_enabled",
+      "check_metadata": {
+        "risk": "AWS IAM Access Analyzer helps you identify the resources in your organization and accounts, such as Amazon S3 buckets or IAM roles, that are shared with an external entity. This lets you identify unintended access to your resources and data, which is a security risk. IAM Access Analyzer uses a form of mathematical analysis called automated reasoning, which applies logic and mathematical inference to determine all possible access paths allowed by a resource policy.",
+        "notes": "",
+        "checkid": "accessanalyzer_enabled",
+        "provider": "aws",
+        "severity": "low",
+        "checktype": [
+          "IAM"
+        ],
+        "dependson": [],
+        "relatedto": [],
+        "categories": [],
+        "checktitle": "Check if IAM Access Analyzer is enabled",
+        "compliance": null,
+        "relatedurl": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+        "description": "Check if IAM Access Analyzer is enabled",
+        "remediation": {
+          "code": {
+            "cli": "aws accessanalyzer create-analyzer --analyzer-name <NAME> --type <ACCOUNT|ORGANIZATION>",
+            "other": "",
+            "nativeiac": "",
+            "terraform": ""
+          },
+          "recommendation": {
+            "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
+            "text": "Enable IAM Access Analyzer for all accounts, create analyzer and take action over it is recommendations (IAM Access Analyzer is available at no additional cost)."
+          }
+        },
+        "servicename": "accessanalyzer",
+        "checkaliases": [],
+        "resourcetype": "Other",
+        "subservicename": "",
+        "resourceidtemplate": "arn:partition:access-analyzer:region:account-id:analyzer/resource-id"
+      },
+      "scan": "01929f57-c0ee-7553-be0b-cbde006fb6f7",
+      "text_search": "'/iam/latest/userguide/what-is-access-analyzer.html':104,128 '112233445566':6B 'a':52,59,81 'access':2B,12,44,56,77,97,109,132,147,163 'access-analyzer':162 'accessanalyzer':85,115,156 'account':5B,123,167 'account-id':166 'accounts':23,136 'action':141 'additional':153 'all':75,135 'allowed':79 'amazon':26 'an':36 'analysis':63 'analyz':3B 'analyzer':13,57,98,110,118,120,133,138,148,164 'analyzer-name':119 'analyzer/resource-id':169 'and':22,48,70,139 'applies':68 'are':33 'arn':160 'as':25 'at':151 'automated':65 'available':150 'aws':10,88,114 'buckets':28 'by':80 'called':64 'check':94,106 'cost':154 'create':117,137 'create-analyzer':116 'data':49 'determine':74 'docs.aws.amazon.com':103,127 'docs.aws.amazon.com/iam/latest/userguide/what-is-access-analyzer.html':102,126 'enabl':9B 'enable':130 'enabled':86,100,112 'entity':38 'external':37 'for':134 'form':60 'helps':14 'iam':1B,11,30,55,92,96,108,131,146 'id':168 'identify':16,42 'if':95,107 'in':19 'inference':72 'is':51,99,111,144,149 'it':143 'lets':40 'logic':69 'low':90 'mathematical':62,71 'name':121 'no':152 'of':61 'or':29 'organization':21,124 'other':158 'over':142 'partition':161 'paths':78 'policy':83 'possible':76 'reasoning':66 'recommendations':145 'region':165 'resource':82 'resources':18,47 'risk':54 'roles':31 's3':27 'security':53 'shared':34 'such':24 'take':140 'that':32 'the':17 'this':39 'to':45,73 'type':122 'unintended':43 'uses':58 'which':50,67 'with':35 'you':15,41 'your':20,46"
+    }
+  },
+  {
+    "model": "api.finding",
+    "pk": "01929f57-d331-73f2-b5c2-8e75148b99e7",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "inserted_at": "2024-10-18T11:16:26.033Z",
+      "updated_at": "2024-10-18T11:16:26.045Z",
+      "uid": "prowler-aws-account_security_contact_information_is_registered-112233445566-us-east-1-112233445566",
+      "delta": "new",
+      "status": "MANUAL",
+      "status_extended": "Login to the AWS Console. Choose your account name on the top right of the window -> My Account -> Alternate Contacts -> Security Section.",
+      "severity": "medium",
+      "impact": "medium",
+      "impact_extended": null,
+      "raw_result": {},
+      "tags": {},
+      "check_id": "account_security_contact_information_is_registered",
+      "check_metadata": {
+        "risk": "AWS provides customers with the option of specifying the contact information for accounts security team. It is recommended that this information be provided. Specifying security-specific contact information will help ensure that security advisories sent by AWS reach the team in your organization that is best equipped to respond to them.",
+        "notes": "",
+        "checkid": "account_security_contact_information_is_registered",
+        "provider": "aws",
+        "severity": "medium",
+        "checktype": [
+          "IAM"
+        ],
+        "dependson": [],
+        "relatedto": [],
+        "categories": [],
+        "checktitle": "Ensure security contact information is registered.",
+        "compliance": null,
+        "relatedurl": "",
+        "description": "Ensure security contact information is registered.",
+        "remediation": {
+          "code": {
+            "cli": "No command available.",
+            "other": "https://docs.prowler.com/checks/aws/iam-policies/iam_19#aws-console",
+            "nativeiac": "",
+            "terraform": ""
+          },
+          "recommendation": {
+            "url": "https://docs.aws.amazon.com/accounts/latest/reference/manage-acct-update-contact.html",
+            "text": "Go to the My Account section and complete alternate contacts."
+          }
+        },
+        "servicename": "account",
+        "checkaliases": [],
+        "resourcetype": "Other",
+        "subservicename": "",
+        "resourceidtemplate": "arn:partition:access-recorder:region:account-id:recorder/resource-id"
+      },
+      "scan": "01929f57-c0ee-7553-be0b-cbde006fb6f7",
+      "text_search": "'/accounts/latest/reference/manage-acct-update-contact.html':113 '/checks/aws/iam-policies/iam_19#aws-console':109 'access':133 'access-recorder':132 'account':8B,18B,76,119,126,137 'account-id':136 'accounts':35 'advisories':57 'altern':19B 'alternate':123 'and':121 'arn':130 'available':105 'aw':4B 'aws':23,60,83 'be':44 'best':69 'by':59 'choos':6B 'command':104 'complete':122 'consol':5B 'contact':20B,32,50,78,91,98 'contacts':124 'customers':25 'docs.aws.amazon.com':112 'docs.aws.amazon.com/accounts/latest/reference/manage-acct-update-contact.html':111 'docs.prowler.com':108 'docs.prowler.com/checks/aws/iam-policies/iam_19#aws-console':107 'ensure':54,89,96 'equipped':70 'for':34 'go':115 'help':53 'iam':87 'id':138 'in':64 'information':33,43,51,79,92,99 'is':39,68,80,93,100 'it':38 'login':1B 'medium':85 'my':118 'name':9B 'no':103 'of':29 'option':28 'organization':66 'other':128 'partition':131 'provided':45 'provides':24 'reach':61 'recommended':40 'recorder':134 'recorder/resource-id':139 'region':135 'registered':81,94,101 'respond':72 'right':13B 'section':22B,120 'secur':21B 'security':36,48,56,77,90,97 'security-specific':47 'sent':58 'specific':49 'specifying':30,46 'team':37,63 'that':41,55,67 'the':27,31,62,117 'them':74 'this':42 'to':71,73,116 'top':12B 'will':52 'window':16B 'with':26 'your':65"
+    }
+  },
+  {
+    "model": "api.resourcefindingmapping",
+    "pk": "00841d38-1319-4fe4-b38e-4f00bf6246d5",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "resource": "372932f0-e4df-4968-9721-bb4f6236fae4",
+      "finding": "01929f57-cd46-7ff5-800f-483b7ee71cd6"
+    }
+  },
+  {
+    "model": "api.resourcefindingmapping",
+    "pk": "013595e9-0388-4a65-950b-fab01c2a4c68",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "resource": "78bd2a52-82f9-45df-90a9-4ad78254fdc4",
+      "finding": "01929f3c-0a05-7426-980d-bdfeeb70a008"
+    }
+  },
+  {
+    "model": "api.resourcefindingmapping",
+    "pk": "0943d22d-db70-47a1-b8a2-0a1f6925b16b",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "resource": "8ca0a188-5699-436e-80fd-e566edaeb259",
+      "finding": "01929f57-cd76-7817-aab2-c283b44082ec"
+    }
+  },
+  {
+    "model": "api.resourcefindingmapping",
+    "pk": "0f508071-6989-41da-aec9-23934eb4d9b0",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "resource": "372932f0-e4df-4968-9721-bb4f6236fae4",
+      "finding": "01929f3c-0936-7cef-b923-55639a76763a"
+    }
+  },
+  {
+    "model": "api.resourcefindingmapping",
+    "pk": "0fbc8dd3-c505-4804-887c-16026632c8e7",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "resource": "ba108c01-bcad-44f1-b211-c1d8985da89d",
+      "finding": "01929f3c-0a3b-784a-930e-e363d60f3586"
+    }
+  },
+  {
+    "model": "api.resourcefindingmapping",
+    "pk": "214b1027-292b-4e04-93f9-72acb2784345",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "resource": "3a37d124-7637-43f6-9df7-e9aa7ef98c53",
+      "finding": "01929f3c-09b8-757a-89c2-411e0c7309d4"
+    }
+  },
+  {
+    "model": "api.resourcefindingmapping",
+    "pk": "24496c6f-b0ee-4dd5-b566-77283c3d625c",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "resource": "e37bb1f1-1669-4bb3-be86-e3378ddfbcba",
+      "finding": "01929f57-cd7d-740c-921d-9400d1fde3e2"
+    }
+  },
+  {
+    "model": "api.resourcefindingmapping",
+    "pk": "24a5a1bc-f211-4074-b687-61c994d48ea3",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "resource": "8fe4514f-71d7-46ab-b0dc-70cef23b4d13",
+      "finding": "01929f57-cd84-7154-aaf3-3d57bc9fec6c"
+    }
+  },
+  {
+    "model": "api.resourcefindingmapping",
+    "pk": "25161d3f-bf2c-43ce-821b-237456f1846b",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "resource": "17ce30a3-6e77-42a5-bb08-29dfcad7396a",
+      "finding": "01929f57-cd57-7560-b55e-ad2e7d660509"
+    }
+  },
+  {
+    "model": "api.resourcefindingmapping",
+    "pk": "254d9f93-cae5-4aee-a063-9c30e9e1fce5",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "resource": "9ab35225-dc7c-4ebd-bbc0-d81fb5d9de77",
+      "finding": "01929f57-cd67-79ba-af2f-ce6d0fd3c846"
+    }
+  },
+  {
+    "model": "api.resourcefindingmapping",
+    "pk": "2d492826-662d-4f0b-8545-ac374d433399",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "resource": "dc6cfb5d-6835-4c7b-9152-c18c734a6eaa",
+      "finding": "01929f3c-09f5-79f9-9ee7-17c87e43d87b"
+    }
+  },
+  {
+    "model": "api.resourcefindingmapping",
+    "pk": "2e6d8623-5656-4118-ad85-128ed9f22edb",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "resource": "3c49318e-03c6-4f12-876f-40451ce7de3d",
+      "finding": "01929f3c-0a17-7694-9920-7233a71fcdbe"
+    }
+  },
+  {
+    "model": "api.resourcefindingmapping",
+    "pk": "324d5b45-7975-4792-a8f2-3a66c87d2542",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "resource": "0234477d-0b8e-439f-87d3-ce38dff3a434",
+      "finding": "01929f3c-0917-75ff-ba43-08b857227015"
+    }
+  },
+  {
+    "model": "api.resourcefindingmapping",
+    "pk": "55c94cc1-65db-4e6d-b4ae-9461d067e73c",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "resource": "3c49318e-03c6-4f12-876f-40451ce7de3d",
+      "finding": "01929f57-cdb8-72c4-923a-13dbebc6347b"
+    }
+  },
+  {
+    "model": "api.resourcefindingmapping",
+    "pk": "596ac4dd-f10f-4dfb-b1d3-47a5f9a831c8",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "resource": "8ca0a188-5699-436e-80fd-e566edaeb259",
+      "finding": "01929f3c-0990-7a50-a72e-e6686cd74116"
+    }
+  },
+  {
+    "model": "api.resourcefindingmapping",
+    "pk": "61e8d4c2-a043-47cc-b959-3d412830b637",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "resource": "e37bb1f1-1669-4bb3-be86-e3378ddfbcba",
+      "finding": "01929f3c-099d-7d97-8c57-34ee4740c9e5"
+    }
+  },
+  {
+    "model": "api.resourcefindingmapping",
+    "pk": "62e9ed60-c79d-44fa-b2ea-357185b1ef26",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "resource": "dc6cfb5d-6835-4c7b-9152-c18c734a6eaa",
+      "finding": "01929f57-cda9-716d-9824-9bdaf894ba46"
+    }
+  },
+  {
+    "model": "api.resourcefindingmapping",
+    "pk": "6946200f-10b5-469b-95df-bee6369a38ef",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "resource": "78bd2a52-82f9-45df-90a9-4ad78254fdc4",
+      "finding": "01929f57-cdb0-7eef-84d9-13ff9bd5405d"
+    }
+  },
+  {
+    "model": "api.resourcefindingmapping",
+    "pk": "6ab286d0-e155-4ca1-a6eb-696abb240014",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "resource": "e1929daa-a984-4116-8131-492a48321dba",
+      "finding": "01929f3c-09e4-70a7-949d-aba3a0f93fb1"
+    }
+  },
+  {
+    "model": "api.resourcefindingmapping",
+    "pk": "6fda097d-0541-4dfc-b966-7a83346e1b73",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "resource": "430bf313-8733-4bc5-ac70-5402adfce880",
+      "finding": "01929f57-cd93-72a1-82bb-6247e5b05f5c"
+    }
+  },
+  {
+    "model": "api.resourcefindingmapping",
+    "pk": "71d037ac-9fc6-44d3-8684-3e561b3161a8",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "resource": "7973e332-795e-4a74-b4d4-a53a21c98c80",
+      "finding": "01929f3c-0965-7290-9b5d-f4a84e26feb0"
+    }
+  },
+  {
+    "model": "api.resourcefindingmapping",
+    "pk": "738db92d-87bb-4f44-b00c-111308327167",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "resource": "0234477d-0b8e-439f-87d3-ce38dff3a434",
+      "finding": "01929f57-cd29-7499-80c3-18cfa227c7b6"
+    }
+  },
+  {
+    "model": "api.resourcefindingmapping",
+    "pk": "746abf14-2c00-41c5-9017-9f9c63596a0d",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "resource": "1f9de587-ba5b-415a-b9b0-ceed4c6c9f32",
+      "finding": "01929f57-cdbf-7d43-b0f0-c82b8c0f6bca"
+    }
+  },
+  {
+    "model": "api.resourcefindingmapping",
+    "pk": "7513f701-68b2-4737-8781-9bff9fee83aa",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "resource": "e1929daa-a984-4116-8131-492a48321dba",
+      "finding": "01929f57-cda2-7bb6-b303-ccf5c68e3b7e"
+    }
+  },
+  {
+    "model": "api.resourcefindingmapping",
+    "pk": "7f044f9f-f665-4d58-a3f3-c21388221653",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "resource": "430bf313-8733-4bc5-ac70-5402adfce880",
+      "finding": "01929f3c-09c7-71c9-a483-4d207cd464b7"
+    }
+  },
+  {
+    "model": "api.resourcefindingmapping",
+    "pk": "81b13739-f130-4617-b944-1fcc4e319c1a",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "resource": "9ab35225-dc7c-4ebd-bbc0-d81fb5d9de77",
+      "finding": "01929f3c-0973-75c7-8bb3-d7f73491dbd2"
+    }
+  },
+  {
+    "model": "api.resourcefindingmapping",
+    "pk": "99d3ad31-0f49-4a97-8c1e-4d57a8cb284b",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "resource": "ba108c01-bcad-44f1-b211-c1d8985da89d",
+      "finding": "01929f57-cdc6-70e9-b025-30f1f8b5efbe"
+    }
+  },
+  {
+    "model": "api.resourcefindingmapping",
+    "pk": "b2285b6f-8b1b-44f3-b4b2-c1e15dd72fa9",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "resource": "1f9de587-ba5b-415a-b9b0-ceed4c6c9f32",
+      "finding": "01929f3c-0a2a-7ba7-8e43-26cb937c8df7"
+    }
+  },
+  {
+    "model": "api.resourcefindingmapping",
+    "pk": "b97a46b3-a1a5-4c00-a9fc-d7788b1b977d",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "resource": "8fe4514f-71d7-46ab-b0dc-70cef23b4d13",
+      "finding": "01929f3c-09ab-728a-a4a9-5a9a0693b0c1"
+    }
+  },
+  {
+    "model": "api.resourcefindingmapping",
+    "pk": "d07f4f57-4a98-4ee0-82ed-c6f22499ea2d",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "resource": "29b35668-6dad-411d-bfec-492311889892",
+      "finding": "01929f57-cd9a-7574-a8bd-2eb085c1c1d4"
+    }
+  },
+  {
+    "model": "api.resourcefindingmapping",
+    "pk": "d6ae9224-4197-48ec-bdef-c8c8b1d5d0b0",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "resource": "9be26c1d-adf0-4ba8-9ca9-c740f4a0dc4e",
+      "finding": "01929f3c-0944-7bcf-8fe4-65df82f0de3a"
+    }
+  },
+  {
+    "model": "api.resourcefindingmapping",
+    "pk": "d7375f9d-2741-42c1-841e-daf8d777fb57",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "resource": "e0664164-cfda-44a4-b743-acee1c69386c",
+      "finding": "01929f3c-0981-71ff-8b66-1b23f7cdd1f8"
+    }
+  },
+  {
+    "model": "api.resourcefindingmapping",
+    "pk": "dca80342-2431-4eda-b083-58aa7627b2c7",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "resource": "29b35668-6dad-411d-bfec-492311889892",
+      "finding": "01929f3c-09d5-7fe3-bb36-19e0c1b90a9d"
+    }
+  },
+  {
+    "model": "api.resourcefindingmapping",
+    "pk": "dd37c0f2-174c-4b41-8655-67f70ad1f77b",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "resource": "9be26c1d-adf0-4ba8-9ca9-c740f4a0dc4e",
+      "finding": "01929f57-cd4e-75db-a9f5-1c95776cead6"
+    }
+  },
+  {
+    "model": "api.resourcefindingmapping",
+    "pk": "e185e5bc-31cf-4a1e-b587-1ed909721590",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "resource": "17ce30a3-6e77-42a5-bb08-29dfcad7396a",
+      "finding": "01929f3c-0958-7e15-8cac-0df0a67fd3a6"
+    }
+  },
+  {
+    "model": "api.resourcefindingmapping",
+    "pk": "e7c09b00-a6c4-4f9a-a685-d5f5bc586d94",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "resource": "30505514-01d4-42bb-8b0c-471bbab27460",
+      "finding": "01929f57-d331-73f2-b5c2-8e75148b99e7"
+    }
+  },
+  {
+    "model": "api.resourcefindingmapping",
+    "pk": "eab724f9-bca4-4ed2-81e9-470bcf735c7e",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "resource": "3a37d124-7637-43f6-9df7-e9aa7ef98c53",
+      "finding": "01929f57-cd8b-79ee-97a2-66fb8d53bcfc"
+    }
+  },
+  {
+    "model": "api.resourcefindingmapping",
+    "pk": "f159cb58-10df-4b9d-88d4-09de62888e14",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "resource": "e0664164-cfda-44a4-b743-acee1c69386c",
+      "finding": "01929f57-cd70-79ec-a176-9d606bdf68fb"
+    }
+  },
+  {
+    "model": "api.resourcefindingmapping",
+    "pk": "f3d0d704-78e1-4329-af60-ade4dac73a8d",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "resource": "7973e332-795e-4a74-b4d4-a53a21c98c80",
+      "finding": "01929f57-cd60-7a7d-ba1b-37affc11176a"
+    }
+  }
+]

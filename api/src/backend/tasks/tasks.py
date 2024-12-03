@@ -1,14 +1,15 @@
 from datetime import datetime, timedelta, timezone
 
-from api.db_utils import tenant_transaction
-from api.decorators import set_tenant
-from api.models import Provider, Scan
 from celery import shared_task
 from config.celery import RLSTask
 from django_celery_beat.models import PeriodicTask
 from tasks.jobs.connection import check_provider_connection
 from tasks.jobs.deletion import delete_provider
 from tasks.jobs.scan import aggregate_findings, perform_prowler_scan
+
+from api.db_utils import tenant_transaction
+from api.decorators import set_tenant
+from api.models import Provider, Scan
 
 
 @shared_task(base=RLSTask, name="provider-connection-check")
@@ -104,7 +105,7 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
             name=f"scan-perform-scheduled-{provider_id}"
         )
         next_scan_date = datetime.combine(
-            datetime.now(timezone.utc), periodic_task_instance.start_time.time()
+            datetime.now(timezone.utc), periodic_task_instance.date_changed.time()
         ) + timedelta(hours=24)
 
         scan_instance = Scan.objects.create(

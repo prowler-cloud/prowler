@@ -1,0 +1,62 @@
+[
+  {
+    "model": "api.providergroup",
+    "pk": "3fe28fb8-e545-424c-9b8f-69aff638f430",
+    "fields": {
+      "name": "first_group",
+      "inserted_at": "2024-11-13T11:36:19.503Z",
+      "updated_at": "2024-11-13T11:36:19.503Z",
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362"
+    }
+  },
+  {
+    "model": "api.providergroup",
+    "pk": "525e91e7-f3f3-4254-bbc3-27ce1ade86b1",
+    "fields": {
+      "name": "second_group",
+      "inserted_at": "2024-11-13T11:36:25.421Z",
+      "updated_at": "2024-11-13T11:36:25.421Z",
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362"
+    }
+  },
+  {
+    "model": "api.providergroup",
+    "pk": "481769f5-db2b-447b-8b00-1dee18db90ec",
+    "fields": {
+      "name": "third_group",
+      "inserted_at": "2024-11-13T11:36:37.603Z",
+      "updated_at": "2024-11-13T11:36:37.603Z",
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362"
+    }
+  },
+  {
+    "model": "api.providergroupmembership",
+    "pk": "13625bd3-f428-4021-ac1b-b0bd41b6e02f",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "provider": "1b59e032-3eb6-4694-93a5-df84cd9b3ce2",
+      "provider_group": "3fe28fb8-e545-424c-9b8f-69aff638f430",
+      "inserted_at": "2024-11-13T11:55:17.138Z"
+    }
+  },
+  {
+    "model": "api.providergroupmembership",
+    "pk": "54784ebe-42d2-4937-aa6a-e21c62879567",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "provider": "15fce1fa-ecaa-433f-a9dc-62553f3a2555",
+      "provider_group": "3fe28fb8-e545-424c-9b8f-69aff638f430",
+      "inserted_at": "2024-11-13T11:55:17.138Z"
+    }
+  },
+  {
+    "model": "api.providergroupmembership",
+    "pk": "c8bd52d5-42a5-48fe-8e0a-3eef154b8ebe",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "provider": "15fce1fa-ecaa-433f-a9dc-62553f3a2555",
+      "provider_group": "525e91e7-f3f3-4254-bbc3-27ce1ade86b1",
+      "inserted_at": "2024-11-13T11:55:41.237Z"
+    }
+  }
+]
