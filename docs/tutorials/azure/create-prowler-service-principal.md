@@ -11,7 +11,7 @@ To allow Prowler assume an identity to start the scan with the required privileg
 7. Fill the "Description" and "Expires" fields and click on "Add"
 8. Copy the value of the secret, it is going to be used as `AZURE_CLIENT_SECRET` environment variable.
 
-![Register an Application page](../../img/create-sp.gif)
+![Register an Application page](../img/create-sp.gif)
 
 ## Assigning the proper permissions
 
