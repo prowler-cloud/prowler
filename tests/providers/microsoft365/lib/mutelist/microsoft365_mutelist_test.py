@@ -62,6 +62,7 @@ class TestMicrosoft365Mutelist:
         finding.check_metadata = MagicMock
         finding.check_metadata.CheckID = "check_test"
         finding.status = "FAIL"
+        finding.location = "global"
         finding.resource_name = "test_resource"
         finding.tenant_domain = "test_domain"
         finding.resource_tags = []
