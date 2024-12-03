@@ -38,6 +38,10 @@ env:
   # Python configuration
   PYTHON_VERSION: 3.12
 
+  # Container Registries
+  PROWLERCLOUD_DOCKERHUB_REPOSITORY: prowlercloud
+  PROWLERCLOUD_DOCKERHUB_IMAGE: prowler
+
 jobs:
   # Build Prowler OSS container
   container-build-push:
@@ -81,7 +85,13 @@ jobs:
               echo "STABLE_TAG=v3-stable" >> "${GITHUB_ENV}"
               ;;
 
-          4)
+          # Next latest and stable releases will be v5.Y.Z
+          # 4)
+          #     echo "LATEST_TAG=latest" >> "${GITHUB_ENV}"
+          #     echo "STABLE_TAG=stable" >> "${GITHUB_ENV}"
+          #     ;;
+
+          5)
               echo "LATEST_TAG=latest" >> "${GITHUB_ENV}"
               echo "STABLE_TAG=stable" >> "${GITHUB_ENV}"
               ;;
@@ -119,6 +129,7 @@ jobs:
           tags: |
             ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.LATEST_TAG }}
             ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.LATEST_TAG }}
+            ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ env.LATEST_TAG }}
           file: ${{ env.DOCKERFILE_PATH }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -136,6 +147,8 @@ jobs:
             ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.STABLE_TAG }}
             ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.PROWLER_VERSION }}
             ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.STABLE_TAG }}
+            ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ env.PROWLER_VERSION }}
+            ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ env.STABLE_TAG }}
           file: ${{ env.DOCKERFILE_PATH }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
