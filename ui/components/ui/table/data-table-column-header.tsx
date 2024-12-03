@@ -80,10 +80,20 @@ export const DataTableColumnHeader = <TData, TValue>({
 
   return (
     <Button
-      className="h-10 w-full justify-between whitespace-nowrap bg-transparent px-0 text-left align-middle text-tiny font-semibold text-foreground-500 outline-none dark:text-slate-400"
+      className="h-10 w-fit max-w-[110px] whitespace-nowrap bg-transparent px-0 text-left align-middle text-tiny font-semibold text-foreground-500 outline-none dark:text-slate-400"
       onClick={getToggleSortingHandler}
     >
-      <span>{title}</span>
+      <span
+        className="block whitespace-normal break-normal"
+        style={{
+          display: "-webkit-box",
+          WebkitBoxOrient: "vertical",
+          WebkitLineClamp: 2,
+          width: "90px",
+        }}
+      >
+        {title}
+      </span>
       {renderSortIcon()}
     </Button>
   );

@@ -1,25 +1,24 @@
 from datetime import datetime, timedelta, timezone
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
+from rest_framework.exceptions import NotFound, ValidationError
+
+from api.db_router import MainRouter
+from api.exceptions import InvitationTokenExpiredException
+from api.models import Invitation, Provider
+from api.utils import (
+    get_prowler_provider_kwargs,
+    initialize_prowler_provider,
+    merge_dicts,
+    prowler_provider_connection_test,
+    return_prowler_provider,
+    validate_invitation,
+)
 from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
-from rest_framework.exceptions import ValidationError, NotFound
-
-from api.db_router import MainRouter
-from api.exceptions import InvitationTokenExpiredException
-from api.models import Invitation
-from api.models import Provider
-from api.utils import (
-    merge_dicts,
-    return_prowler_provider,
-    initialize_prowler_provider,
-    prowler_provider_connection_test,
-    get_prowler_provider_kwargs,
-)
-from api.utils import validate_invitation
 
 
 class TestMergeDicts:

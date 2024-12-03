@@ -1,15 +1,15 @@
 from datetime import datetime, timezone
 
+from rest_framework.exceptions import NotFound, ValidationError
+
+from api.db_router import MainRouter
+from api.exceptions import InvitationTokenExpiredException
+from api.models import Invitation, Provider
 from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.common.models import Connection
 from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
-from rest_framework.exceptions import ValidationError, NotFound
-
-from api.db_router import MainRouter
-from api.exceptions import InvitationTokenExpiredException
-from api.models import Provider, Invitation
 
 
 def merge_dicts(default_dict: dict, replacement_dict: dict) -> dict:

@@ -1,6 +1,6 @@
 import json
 import re
-from uuid import uuid4, UUID
+from uuid import UUID, uuid4
 
 from cryptography.fernet import Fernet
 from django.conf import settings
@@ -9,37 +9,37 @@ from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVector, SearchVectorField
 from django.core.validators import MinLengthValidator
 from django.db import models
+from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 from django_celery_results.models import TaskResult
-from prowler.lib.check.models import Severity
+from psqlextra.manager import PostgresManager
 from psqlextra.models import PostgresPartitionedModel
 from psqlextra.types import PostgresPartitioningMethod
 from uuid6 import uuid7
 
 from api.db_utils import (
-    MemberRoleEnumField,
-    enum_to_choices,
-    ProviderEnumField,
-    StateEnumField,
-    ScanTriggerEnumField,
-    FindingDeltaEnumField,
-    SeverityEnumField,
-    StatusEnumField,
     CustomUserManager,
-    ProviderSecretTypeEnumField,
+    FindingDeltaEnumField,
     InvitationStateEnumField,
-    one_week_from_now,
+    MemberRoleEnumField,
+    ProviderEnumField,
+    ProviderSecretTypeEnumField,
+    ScanTriggerEnumField,
+    SeverityEnumField,
+    StateEnumField,
+    StatusEnumField,
+    enum_to_choices,
     generate_random_token,
+    one_week_from_now,
 )
 from api.exceptions import ModelValidationError
 from api.rls import (
-    RowLevelSecurityProtectedModel,
-)
-from api.rls import (
-    Tenant,
-    RowLevelSecurityConstraint,
     BaseSecurityConstraint,
+    RowLevelSecurityConstraint,
+    RowLevelSecurityProtectedModel,
+    Tenant,
 )
+from prowler.lib.check.models import Severity
 
 fernet = Fernet(settings.SECRETS_ENCRYPTION_KEY.encode())
 
@@ -67,6 +67,24 @@ class StateChoices(models.TextChoices):
     COMPLETED = "completed", _("Completed")
     FAILED = "failed", _("Failed")
     CANCELLED = "cancelled", _("Cancelled")
+
+
+class ActiveProviderManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(self.active_provider_filter())
+
+    def active_provider_filter(self):
+        if self.model is Provider:
+            return Q(is_deleted=False)
+        elif self.model in [Finding, ComplianceOverview, ScanSummary]:
+            return Q(scan__provider__is_deleted=False)
+        else:
+            return Q(provider__is_deleted=False)
+
+
+class ActiveProviderPartitionedManager(PostgresManager, ActiveProviderManager):
+    def get_queryset(self):
+        return super().get_queryset().filter(self.active_provider_filter())
 
 
 class User(AbstractBaseUser):
@@ -149,6 +167,9 @@ class Membership(models.Model):
 
 
 class Provider(RowLevelSecurityProtectedModel):
+    objects = ActiveProviderManager()
+    all_objects = models.Manager()
+
     class ProviderChoices(models.TextChoices):
         AWS = "aws", _("AWS")
         AZURE = "azure", _("Azure")
@@ -189,10 +210,14 @@ class Provider(RowLevelSecurityProtectedModel):
 
     @staticmethod
     def validate_kubernetes_uid(value):
-        if not re.match(r"^[a-z0-9]([-a-z0-9]{1,61}[a-z0-9])?$", value):
+        if not re.match(
+            r"(^[a-z0-9]([-a-z0-9]{1,61}[a-z0-9])?$)|(^arn:aws(-cn|-us-gov|-iso|-iso-b)?:[a-zA-Z0-9\-]+:([a-z]{2}-[a-z]+-\d{1})?:(\d{12})?:[a-zA-Z0-9\-_\/:\.\*]+(:\d+)?$)",
+            value,
+        ):
             raise ModelValidationError(
-                detail="K8s provider ID must be up to 63 characters, start and end with a lowercase letter or number, "
-                "and contain only lowercase alphanumeric characters and hyphens.",
+                detail="The value must either be a valid Kubernetes UID (up to 63 characters, "
+                "starting and ending with a lowercase letter or number, containing only "
+                "lowercase alphanumeric characters and hyphens) or a valid EKS ARN.",
                 code="kubernetes-uid",
                 pointer="/data/attributes/uid",
             )
@@ -200,6 +225,7 @@ class Provider(RowLevelSecurityProtectedModel):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
+    is_deleted = models.BooleanField(default=False)
     provider = ProviderEnumField(
         choices=ProviderChoices.choices, default=ProviderChoices.AWS
     )
@@ -272,6 +298,9 @@ class ProviderGroup(RowLevelSecurityProtectedModel):
 
 
 class ProviderGroupMembership(RowLevelSecurityProtectedModel):
+    objects = ActiveProviderManager()
+    all_objects = models.Manager()
+
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     provider = models.ForeignKey(
         Provider,
@@ -336,6 +365,9 @@ class Task(RowLevelSecurityProtectedModel):
 
 
 class Scan(RowLevelSecurityProtectedModel):
+    objects = ActiveProviderManager()
+    all_objects = models.Manager()
+
     class TriggerChoices(models.TextChoices):
         SCHEDULED = "scheduled", _("Scheduled")
         MANUAL = "manual", _("Manual")
@@ -371,6 +403,7 @@ class Scan(RowLevelSecurityProtectedModel):
     updated_at = models.DateTimeField(auto_now=True, editable=False)
     started_at = models.DateTimeField(null=True, blank=True)
     completed_at = models.DateTimeField(null=True, blank=True)
+    next_scan_at = models.DateTimeField(null=True, blank=True)
     # TODO: mutelist foreign key
 
     class Meta(RowLevelSecurityProtectedModel.Meta):
@@ -433,6 +466,9 @@ class ResourceTag(RowLevelSecurityProtectedModel):
 
 
 class Resource(RowLevelSecurityProtectedModel):
+    objects = ActiveProviderManager()
+    all_objects = models.Manager()
+
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
@@ -558,6 +594,9 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
 
     Note when creating migrations, you must use `python manage.py pgmakemigrations` to create the migrations.
     """
+
+    objects = ActiveProviderPartitionedManager()
+    all_objects = models.Manager()
 
     class PartitioningMeta:
         method = PostgresPartitioningMethod.RANGE
@@ -710,6 +749,9 @@ class ResourceFindingMapping(PostgresPartitionedModel, RowLevelSecurityProtected
 
 
 class ProviderSecret(RowLevelSecurityProtectedModel):
+    objects = ActiveProviderManager()
+    all_objects = models.Manager()
+
     class TypeChoices(models.TextChoices):
         STATIC = "static", _("Key-value pairs")
         ROLE = "role", _("Role assumption")
@@ -810,6 +852,9 @@ class Invitation(RowLevelSecurityProtectedModel):
 
 
 class ComplianceOverview(RowLevelSecurityProtectedModel):
+    objects = ActiveProviderManager()
+    all_objects = models.Manager()
+
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
     compliance_id = models.CharField(max_length=100, blank=False, null=False)
@@ -856,3 +901,54 @@ class ComplianceOverview(RowLevelSecurityProtectedModel):
 
     class JSONAPIMeta:
         resource_name = "compliance-overviews"
+
+
+class ScanSummary(RowLevelSecurityProtectedModel):
+    objects = ActiveProviderManager()
+    all_objects = models.Manager()
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+    check_id = models.CharField(max_length=100, blank=False, null=False)
+    service = models.TextField(blank=False)
+    severity = SeverityEnumField(choices=SeverityChoices)
+    region = models.TextField(blank=False)
+    _pass = models.IntegerField(db_column="pass", default=0)
+    fail = models.IntegerField(default=0)
+    muted = models.IntegerField(default=0)
+    total = models.IntegerField(default=0)
+    new = models.IntegerField(default=0)
+    changed = models.IntegerField(default=0)
+    unchanged = models.IntegerField(default=0)
+
+    fail_new = models.IntegerField(default=0)
+    fail_changed = models.IntegerField(default=0)
+    pass_new = models.IntegerField(default=0)
+    pass_changed = models.IntegerField(default=0)
+    muted_new = models.IntegerField(default=0)
+    muted_changed = models.IntegerField(default=0)
+
+    scan = models.ForeignKey(
+        Scan,
+        on_delete=models.CASCADE,
+        related_name="aggregations",
+        related_query_name="aggregation",
+    )
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "scan_summaries"
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=("tenant", "scan", "check_id", "service", "severity", "region"),
+                name="unique_scan_summary",
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "scan-summaries"

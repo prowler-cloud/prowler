@@ -439,13 +439,13 @@ azure-core = ">=1.26.2,<2.0.0"
 
 [[package]]
 name = "azure-mgmt-cosmosdb"
-version = "9.6.0"
+version = "9.7.0"
 description = "Microsoft Azure Cosmos DB Management Client Library for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "azure_mgmt_cosmosdb-9.6.0-py3-none-any.whl", hash = "sha256:02b4108867de58e0b89a206ee7b7588b439e1f6fef2377ce1979b803a0d02d5a"},
-    {file = "azure_mgmt_cosmosdb-9.6.0.tar.gz", hash = "sha256:667c7d8a8f542b0e7972e63274af536ad985187e24a6cc2e3c8eef35560881fc"},
+    {file = "azure_mgmt_cosmosdb-9.7.0-py3-none-any.whl", hash = "sha256:be735a554d16995c8cefe413e62119985f8fabae1cb45a6f6ad2c3958bed14da"},
+    {file = "azure_mgmt_cosmosdb-9.7.0.tar.gz", hash = "sha256:b5072d319f11953d8f12e22459aded1912d5f27e442e1d8b49596a85005410a1"},
 ]
 
 [package.dependencies]
@@ -536,6 +536,22 @@ azure-common = ">=1.1"
 azure-mgmt-core = ">=1.3.2"
 isodate = ">=0.6.1"
 typing-extensions = ">=4.6.0"
+
+[[package]]
+name = "azure-mgmt-search"
+version = "9.1.0"
+description = "Microsoft Azure Search Management Client Library for Python"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "azure-mgmt-search-9.1.0.tar.gz", hash = "sha256:53bc6eeadb0974d21f120bb21bb5e6827df6d650e17347460fd83e2d68883599"},
+    {file = "azure_mgmt_search-9.1.0-py3-none-any.whl", hash = "sha256:488ff81477e980e2b7abf0b857387c74ebbad419e6f6126044e3e6fad2da72b6"},
+]
+
+[package.dependencies]
+azure-common = ">=1.1,<2.0"
+azure-mgmt-core = ">=1.3.2,<2.0.0"
+isodate = ">=0.6.1,<1.0.0"
 
 [[package]]
 name = "azure-mgmt-security"
@@ -686,17 +702,17 @@ files = [
 
 [[package]]
 name = "boto3"
-version = "1.35.60"
+version = "1.35.66"
 description = "The AWS SDK for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "boto3-1.35.60-py3-none-any.whl", hash = "sha256:a34d28de1a1f6ca6ec3edd05c26db16e422293d8f9dcd94f308059a434596753"},
-    {file = "boto3-1.35.60.tar.gz", hash = "sha256:e573504c67c3e438fd4b0222119ed1a73b644c78eb3b6dee0b36a6c70ecf7677"},
+    {file = "boto3-1.35.66-py3-none-any.whl", hash = "sha256:09a610f8cf4d3c22d4ca69c1f89079e3a1c82805ce94fa0eb4ecdd4d2ba6c4bc"},
+    {file = "boto3-1.35.66.tar.gz", hash = "sha256:c392b9168b65e9c23483eaccb5b68d1f960232d7f967a1e00a045ba065ce050d"},
 ]
 
 [package.dependencies]
-botocore = ">=1.35.60,<1.36.0"
+botocore = ">=1.35.66,<1.36.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.10.0,<0.11.0"
 
@@ -705,13 +721,13 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "botocore"
-version = "1.35.60"
+version = "1.35.69"
 description = "Low-level, data-driven core of boto 3."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "botocore-1.35.60-py3-none-any.whl", hash = "sha256:ddccfc39a0a55ac0321191a36d29c2ea9be2c96ceefb3928dd3c91c79c494d50"},
-    {file = "botocore-1.35.60.tar.gz", hash = "sha256:378f53037d817bed2c04a006b7319745e664030182211429c924647273b29bc9"},
+    {file = "botocore-1.35.69-py3-none-any.whl", hash = "sha256:cad8d9305f873404eee4b197d84e60a40975d43cbe1ab63abe893420ddfe6e3c"},
+    {file = "botocore-1.35.69.tar.gz", hash = "sha256:f9f23dd76fb247d9b0e8d411d2995e6f847fc451c026f1e58e300f815b0b36eb"},
 ]
 
 [package.dependencies]
@@ -1891,13 +1907,13 @@ grpcio-gcp = ["grpcio-gcp (>=0.2.2,<1.0.dev0)"]
 
 [[package]]
 name = "google-api-python-client"
-version = "2.153.0"
+version = "2.154.0"
 description = "Google API Client Library for Python"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "google_api_python_client-2.153.0-py2.py3-none-any.whl", hash = "sha256:6ff13bbfa92a57972e33ec3808e18309e5981b8ca1300e5da23bf2b4d6947384"},
-    {file = "google_api_python_client-2.153.0.tar.gz", hash = "sha256:35cce8647f9c163fc04fb4d811fc91aae51954a2bdd74918decbe0e65d791dd2"},
+    {file = "google_api_python_client-2.154.0-py2.py3-none-any.whl", hash = "sha256:a521bbbb2ec0ba9d6f307cdd64ed6e21eeac372d1bd7493a4ab5022941f784ad"},
+    {file = "google_api_python_client-2.154.0.tar.gz", hash = "sha256:1b420062e03bfcaa1c79e2e00a612d29a6a934151ceb3d272fe150a656dc8f17"},
 ]
 
 [package.dependencies]
@@ -3275,7 +3291,7 @@ files = [
 
 [[package]]
 name = "prowler"
-version = "4.6.0"
+version = "5.0.0"
 description = "Prowler is an Open Source security tool to perform AWS, GCP and Azure security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness. It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, FedRAMP, PCI-DSS, GDPR, HIPAA, FFIEC, SOC2, GXP, AWS Well-Architected Framework Security Pillar, AWS Foundational Technical Review (FTR), ENS (Spanish National Security Scheme) and your custom security frameworks."
 optional = false
 python-versions = ">=3.9,<3.13"
@@ -3292,26 +3308,27 @@ azure-mgmt-authorization = "4.0.0"
 azure-mgmt-compute = "33.0.0"
 azure-mgmt-containerregistry = "10.3.0"
 azure-mgmt-containerservice = "33.0.0"
-azure-mgmt-cosmosdb = "9.6.0"
+azure-mgmt-cosmosdb = "9.7.0"
 azure-mgmt-keyvault = "10.3.1"
 azure-mgmt-monitor = "6.0.2"
 azure-mgmt-network = "28.0.0"
 azure-mgmt-rdbms = "10.1.0"
 azure-mgmt-resource = "23.2.0"
+azure-mgmt-search = "9.1.0"
 azure-mgmt-security = "7.0.0"
 azure-mgmt-sql = "3.0.1"
 azure-mgmt-storage = "21.2.1"
 azure-mgmt-subscription = "3.1.1"
 azure-mgmt-web = "7.3.1"
 azure-storage-blob = "12.24.0"
-boto3 = "1.35.60"
-botocore = "1.35.60"
+boto3 = "1.35.66"
+botocore = "1.35.69"
 colorama = "0.4.6"
 cryptography = "43.0.1"
 dash = "2.18.2"
 dash-bootstrap-components = "1.6.0"
 detect-secrets = "1.5.0"
-google-api-python-client = "2.153.0"
+google-api-python-client = "2.154.0"
 google-auth-httplib2 = ">=0.1,<0.3"
 jsonschema = "4.23.0"
 kubernetes = "31.0.0"
@@ -3325,7 +3342,7 @@ python-dateutil = "^2.9.0.post0"
 pytz = "2024.2"
 schema = "0.7.7"
 shodan = "1.31.0"
-slack-sdk = "3.33.3"
+slack-sdk = "3.33.4"
 tabulate = "0.9.0"
 tzlocal = "5.2"
 
@@ -3333,7 +3350,7 @@ tzlocal = "5.2"
 type = "git"
 url = "https://github.com/prowler-cloud/prowler.git"
 reference = "master"
-resolved_reference = "8be83fc632445cd25eeb90ed20257716b673cead"
+resolved_reference = "9c383baff309d868b37934b694df9aacba397fad"
 
 [[package]]
 name = "psutil"
@@ -4458,13 +4475,13 @@ files = [
 
 [[package]]
 name = "slack-sdk"
-version = "3.33.3"
+version = "3.33.4"
 description = "The Slack API Platform SDK for Python"
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "slack_sdk-3.33.3-py2.py3-none-any.whl", hash = "sha256:0515fb93cd03b18de61f876a8304c4c3cef4dd3c2a3bad62d7394d2eb5a3c8e6"},
-    {file = "slack_sdk-3.33.3.tar.gz", hash = "sha256:4cc44c9ffe4bb28a01fbe3264c2f466c783b893a4eca62026ab845ec7c176ff1"},
+    {file = "slack_sdk-3.33.4-py2.py3-none-any.whl", hash = "sha256:9f30cb3c9c07b441c49d53fc27f9f1837ad1592a7e9d4ca431f53cdad8826cc6"},
+    {file = "slack_sdk-3.33.4.tar.gz", hash = "sha256:5e109847f6b6a22d227609226ba4ed936109dc00675bddeb7e0bee502d3ee7e0"},
 ]
 
 [package.extras]

@@ -2,8 +2,7 @@ from typing import Any
 from uuid import uuid4
 
 from django.core.exceptions import ValidationError
-from django.db import DEFAULT_DB_ALIAS
-from django.db import models
+from django.db import DEFAULT_DB_ALIAS, models
 from django.db.backends.ddl_references import Statement, Table
 
 from api.db_utils import DB_USER, POSTGRES_TENANT_VAR
@@ -131,7 +130,9 @@ class RowLevelSecurityConstraint(models.BaseConstraint):
         path, _, kwargs = super().deconstruct()
         return (path, (self.target_field,), kwargs)
 
-    def validate(self, model, instance, exclude=None, using=DEFAULT_DB_ALIAS):  # noqa: F841
+    def validate(
+        self, model, instance, exclude=None, using=DEFAULT_DB_ALIAS
+    ):  # noqa: F841
         if not hasattr(instance, "tenant_id"):
             raise ValidationError(f"{model.__name__} does not have a tenant_id field.")
 

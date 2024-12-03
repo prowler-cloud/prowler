@@ -1,11 +1,11 @@
 import pytest
+from config.django.base import DATABASE_ROUTERS as PROD_DATABASE_ROUTERS
 from django.conf import settings
 from django.db.migrations.recorder import MigrationRecorder
 from django.db.utils import ConnectionRouter
 
 from api.db_router import MainRouter
 from api.rls import Tenant
-from config.django.base import DATABASE_ROUTERS as PROD_DATABASE_ROUTERS
 
 
 class TestMainDatabaseRouter:

@@ -21,6 +21,7 @@ export const buttonClasses = {
 
 interface CustomButtonProps {
   type?: "button" | "submit" | "reset";
+  target?: "_self" | "_blank";
   ariaLabel: string;
   ariaDisabled?: boolean;
   className?: string;
@@ -62,6 +63,7 @@ export const CustomButton = React.forwardRef<
   (
     {
       type = "button",
+      target = "_self",
       ariaLabel,
       ariaDisabled,
       className,
@@ -84,6 +86,7 @@ export const CustomButton = React.forwardRef<
     <Button
       as={asLink ? Link : undefined}
       href={asLink}
+      target={target}
       type={type}
       aria-label={ariaLabel}
       aria-disabled={ariaDisabled}

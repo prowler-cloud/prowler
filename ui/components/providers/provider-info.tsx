@@ -1,23 +1,20 @@
 import React from "react";
 
 import { ConnectionFalse, ConnectionPending, ConnectionTrue } from "../icons";
-import {
-  AWSProviderBadge,
-  AzureProviderBadge,
-  GCPProviderBadge,
-  KS8ProviderBadge,
-} from "../icons/providers-badge";
+import { getProviderLogo } from "../ui/entities";
 
 interface ProviderInfoProps {
   connected: boolean | null;
   provider: "aws" | "azure" | "gcp" | "kubernetes";
   providerAlias: string;
+  providerUID?: string;
 }
 
 export const ProviderInfo: React.FC<ProviderInfoProps> = ({
   connected,
   provider,
   providerAlias,
+  providerUID,
 }) => {
   const getIcon = () => {
     switch (connected) {
@@ -44,32 +41,20 @@ export const ProviderInfo: React.FC<ProviderInfoProps> = ({
     }
   };
 
-  const getProviderLogo = () => {
-    switch (provider) {
-      case "aws":
-        return <AWSProviderBadge width={35} height={35} />;
-      case "azure":
-        return <AzureProviderBadge width={35} height={35} />;
-      case "gcp":
-        return <GCPProviderBadge width={35} height={35} />;
-      case "kubernetes":
-        return <KS8ProviderBadge width={35} height={35} />;
-      default:
-        return null;
-    }
-  };
-
   return (
-    <div className="max-w-48">
-      <div className="flex items-center justify-between space-x-4">
-        <div className="flex items-center space-x-4">
-          <div className="flex-shrink-0">{getProviderLogo()}</div>
-          <div className="flex-shrink-0">{getIcon()}</div>
-          <div className="flex flex-col">
-            <span className="text-md max-w-24 overflow-hidden text-ellipsis font-semibold lg:max-w-36">
-              {providerAlias}
+    <div className="dark:bg-prowler-blue-400">
+      <div className="grid grid-cols-1">
+        <div className="flex items-center text-sm">
+          <div className="flex items-center">
+            <span className="flex items-center justify-center px-4">
+              {getProviderLogo(provider)}
             </span>
-            {/* <CustomLoader size="small" /> */}
+            <div className="flex items-center space-x-4">
+              <div className="flex-shrink-0">{getIcon()}</div>
+              <span className="font-medium">
+                {providerAlias || providerUID}
+              </span>
+            </div>
           </div>
         </div>
       </div>

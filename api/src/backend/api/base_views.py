@@ -1,6 +1,6 @@
 import uuid
 
-from django.db import transaction, connection
+from django.db import connection, transaction
 from rest_framework import permissions
 from rest_framework.exceptions import NotAuthenticated
 from rest_framework.filters import SearchFilter

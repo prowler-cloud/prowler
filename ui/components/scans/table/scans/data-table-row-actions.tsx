@@ -38,8 +38,7 @@ export function DataTableRowActions<ScanProps>({
       <CustomAlertModal
         isOpen={isEditOpen}
         onOpenChange={setIsEditOpen}
-        title="Edit Scan"
-        description={"Edit the scan details"}
+        title="Edit Scan Name"
       >
         <EditScanForm
           scanId={scanId}
@@ -67,12 +66,12 @@ export function DataTableRowActions<ScanProps>({
             <DropdownSection title="Actions">
               <DropdownItem
                 key="edit"
-                description="Allows you to edit the scan"
-                textValue="Edit Scan"
+                description="Allows you to edit the scan name"
+                textValue="Edit Scan Name"
                 startContent={<EditDocumentBulkIcon className={iconClasses} />}
                 onClick={() => setIsEditOpen(true)}
               >
-                Edit Scan
+                Edit scan name
               </DropdownItem>
             </DropdownSection>
           </DropdownMenu>

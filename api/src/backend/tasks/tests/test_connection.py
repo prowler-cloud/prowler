@@ -1,10 +1,10 @@
 from datetime import datetime, timezone
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
+from tasks.jobs.connection import check_provider_connection
 
 from api.models import Provider
-from tasks.jobs.connection import check_provider_connection
 
 
 @pytest.mark.parametrize(

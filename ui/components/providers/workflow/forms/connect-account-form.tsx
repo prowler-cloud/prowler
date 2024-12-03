@@ -1,14 +1,19 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ChevronLeftIcon, ChevronRightIcon, SaveIcon } from "lucide-react";
+import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
 import { useToast } from "@/components/ui";
 import { CustomButton, CustomInput } from "@/components/ui/custom";
+import {
+  getProviderLogo,
+  getProviderName,
+  ProviderType,
+} from "@/components/ui/entities";
 import { Form } from "@/components/ui/form";
 
 import { addProvider } from "../../../../actions/providers/providers";
@@ -34,23 +39,14 @@ export const ConnectAccountForm = () => {
       awsCredentialsType: "",
     },
   });
+
   const providerType = form.watch("providerType");
   const isLoading = form.formState.isSubmitting;
 
   const onSubmitClient = async (values: FormValues) => {
     const formValues = { ...values };
 
-    // If providerAlias is empty, set default value
-    if (!formValues.providerAlias.trim()) {
-      const date = new Date();
-      const month = (date.getMonth() + 1).toString().padStart(2, "0");
-      const day = date.getDate().toString().padStart(2, "0");
-      const year = date.getFullYear();
-      formValues.providerAlias = `${formValues.providerType}:${month}/${day}/${year}`;
-    }
-
     const formData = new FormData();
-
     Object.entries(formValues).forEach(
       ([key, value]) => value !== undefined && formData.append(key, value),
     );
@@ -58,6 +54,7 @@ export const ConnectAccountForm = () => {
     const data = await addProvider(formData);
 
     if (data?.errors && data.errors.length > 0) {
+      // Handle server-side validation errors
       data.errors.forEach((error: ApiError) => {
         const errorMessage = error.detail;
         const pointer = error.source?.pointer;
@@ -90,8 +87,9 @@ export const ConnectAccountForm = () => {
             });
         }
       });
-      setPrevStep(1);
+      return;
     } else {
+      // Navigate to the next step after successful submission
       const {
         id,
         attributes: { provider: providerType },
@@ -105,13 +103,13 @@ export const ConnectAccountForm = () => {
     }
   };
 
-  const handleNextStep = () => {
-    setPrevStep((prev) => prev + 1);
-  };
+  const handleBackStep = () => setPrevStep((prev) => prev - 1);
 
-  const handleBackStep = () => {
-    setPrevStep((prev) => prev - 1);
-  };
+  useEffect(() => {
+    if (providerType) {
+      setPrevStep(2);
+    }
+  }, [providerType]);
 
   return (
     <Form {...form}>
@@ -119,53 +117,59 @@ export const ConnectAccountForm = () => {
         onSubmit={form.handleSubmit(onSubmitClient)}
         className="flex flex-col space-y-4"
       >
+        {/* Step 1: Provider selection */}
         {prevStep === 1 && (
+          <RadioGroupProvider
+            control={form.control}
+            isInvalid={!!form.formState.errors.providerType}
+            errorMessage={form.formState.errors.providerType?.message}
+          />
+        )}
+        {/* Step 2: UID, alias, and credentials (if AWS) */}
+        {prevStep === 2 && (
           <>
-            {/* Select a provider */}
-            <RadioGroupProvider
-              control={form.control}
-              isInvalid={!!form.formState.errors.providerType}
-              errorMessage={form.formState.errors.providerType?.message}
-            />
-            {/* Provider UID */}
+            <div className="mb-4 flex items-center space-x-4">
+              {providerType && getProviderLogo(providerType as ProviderType)}
+              <span className="text-lg font-semibold">
+                {providerType
+                  ? getProviderName(providerType as ProviderType)
+                  : "Unknown Provider"}
+              </span>
+            </div>
             <CustomInput
               control={form.control}
               name="providerUid"
               type="text"
               label="Provider UID"
               labelPlacement="inside"
-              placeholder={"Enter the provider UID"}
+              placeholder="Enter the provider UID"
               variant="bordered"
               isRequired
               isInvalid={!!form.formState.errors.providerUid}
             />
-            {/* Provider alias */}
             <CustomInput
               control={form.control}
               name="providerAlias"
               type="text"
               label="Provider alias (optional)"
               labelPlacement="inside"
-              placeholder={"Enter the provider alias"}
+              placeholder="Enter the provider alias"
               variant="bordered"
               isRequired={false}
               isInvalid={!!form.formState.errors.providerAlias}
             />
+            {providerType === "aws" && (
+              <RadioGroupAWSViaCredentialsForm
+                control={form.control}
+                isInvalid={!!form.formState.errors.awsCredentialsType}
+                errorMessage={form.formState.errors.awsCredentialsType?.message}
+              />
+            )}
           </>
         )}
-
-        {prevStep === 2 && (
-          <>
-            {/* Select AWS credentials type */}
-            <RadioGroupAWSViaCredentialsForm
-              control={form.control}
-              isInvalid={!!form.formState.errors.awsCredentialsType}
-              errorMessage={form.formState.errors.awsCredentialsType?.message}
-            />
-          </>
-        )}
-
+        {/* Navigation buttons */}
         <div className="flex w-full justify-end sm:space-x-6">
+          {/* Show "Back" button only in Step 2 */}
           {prevStep === 2 && (
             <CustomButton
               type="button"
@@ -181,44 +185,21 @@ export const ConnectAccountForm = () => {
               <span>Back</span>
             </CustomButton>
           )}
-
-          <CustomButton
-            type="button"
-            ariaLabel={
-              prevStep === 1 && providerType === "aws" ? "Next" : "Save"
-            }
-            className="w-1/2"
-            variant="solid"
-            color="action"
-            size="lg"
-            isLoading={isLoading}
-            startContent={
-              !isLoading &&
-              !(prevStep === 1 && providerType === "aws") && (
-                <SaveIcon size={24} />
-              )
-            }
-            endContent={
-              !isLoading &&
-              prevStep === 1 &&
-              providerType === "aws" && <ChevronRightIcon size={24} />
-            }
-            onPress={() => {
-              if (prevStep === 1 && providerType === "aws") {
-                handleNextStep();
-              } else {
-                form.handleSubmit(onSubmitClient)();
-              }
-            }}
-          >
-            {isLoading ? (
-              <>Loading</>
-            ) : (
-              <span>
-                {prevStep === 1 && providerType === "aws" ? "Next" : "Save"}
-              </span>
-            )}
-          </CustomButton>
+          {/* Show "Next" button in Step 2 */}
+          {prevStep === 2 && (
+            <CustomButton
+              type="submit"
+              ariaLabel="Next"
+              className="w-1/2"
+              variant="solid"
+              color="action"
+              size="lg"
+              isLoading={isLoading}
+              endContent={!isLoading && <ChevronRightIcon size={24} />}
+            >
+              {isLoading ? <>Loading</> : <span>Next</span>}
+            </CustomButton>
+          )}
         </div>
       </form>
     </Form>

@@ -1,7 +1,7 @@
 import { Spacer } from "@nextui-org/react";
 import React, { Suspense } from "react";
 
-import { getFindings } from "@/actions/findings";
+import { getFindings, getServicesRegions } from "@/actions/findings";
 import { getProviders } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
 import { filterFindings } from "@/components/filters/data-filters";
@@ -13,7 +13,12 @@ import {
 import { Header } from "@/components/ui";
 import { DataTable, DataTableFilterCustom } from "@/components/ui/table";
 import { createDict } from "@/lib";
-import { FindingProps, SearchParamsProps } from "@/types/components";
+import {
+  FindingProps,
+  ProviderProps,
+  ScanProps,
+  SearchParamsProps,
+} from "@/types/components";
 
 export default async function Findings({
   searchParams,
@@ -21,66 +26,67 @@ export default async function Findings({
   searchParams: SearchParamsProps;
 }) {
   const searchParamsKey = JSON.stringify(searchParams || {});
+  const defaultSort = "severity,status";
+  const sort = searchParams.sort?.toString() || defaultSort;
 
+  // Make sure the sort is correctly encoded
+  const encodedSort = sort.replace(/^\+/, "");
+
+  // Extract all filter parameters and combine with default filters
+  const defaultFilters = {
+    "filter[status__in]": "FAIL, PASS",
+    "filter[delta__in]": "new",
+  };
+
+  const filters: Record<string, string> = {
+    ...defaultFilters,
+    ...Object.fromEntries(
+      Object.entries(searchParams).filter(([key]) => key.startsWith("filter[")),
+    ),
+  };
+
+  const query = filters["filter[search]"] || "";
+
+  const servicesRegionsData = await getServicesRegions({
+    query,
+    sort: encodedSort,
+    filters,
+  });
+
+  // Extract unique regions and services from the new endpoint
+  const uniqueRegions = servicesRegionsData?.data?.attributes?.regions || [];
+  const uniqueServices = servicesRegionsData?.data?.attributes?.services || [];
   // Get findings data
-  const findingsData = await getFindings({});
   const providersData = await getProviders({});
   const scansData = await getScans({});
 
   // Extract provider UIDs
-  const providerUIDs = providersData?.data
-    ?.map((provider: any) => provider.attributes.uid)
-    .filter(Boolean);
+  const providerUIDs = Array.from(
+    new Set(
+      providersData?.data
+        ?.map((provider: ProviderProps) => provider.attributes.uid)
+        .filter(Boolean),
+    ),
+  );
 
   // Extract scan UUIDs with "completed" state and more than one resource
   const completedScans = scansData?.data
     ?.filter(
       (scan: any) =>
         scan.attributes.state === "completed" &&
-        scan.attributes.unique_resource_count > 1 &&
-        scan.attributes.name, // Ensure it has a name
+        scan.attributes.unique_resource_count > 1,
     )
-    .map((scan: any) => ({
+    .map((scan: ScanProps) => ({
       id: scan.id,
       name: scan.attributes.name,
     }));
 
-  const completedScanIds = completedScans?.map((scan: any) => scan.id) || [];
-
-  // Create resource dictionary
-  const resourceDict = createDict("resources", findingsData);
-
-  // Get unique regions and services
-  const allRegionsAndServices =
-    findingsData?.data
-      ?.flatMap((finding: FindingProps) => {
-        const resource =
-          resourceDict[finding.relationships?.resources?.data?.[0]?.id];
-        return {
-          region: resource?.attributes?.region,
-          service: resource?.attributes?.service,
-        };
-      })
-      .filter(Boolean) || [];
-
-  const uniqueRegions = Array.from(
-    new Set<string>(
-      allRegionsAndServices
-        .map((item: { region: string }) => item.region)
-        .filter(Boolean) || [],
-    ),
-  );
-  const uniqueServices = Array.from(
-    new Set<string>(
-      allRegionsAndServices
-        .map((item: { service: string }) => item.service)
-        .filter(Boolean) || [],
-    ),
-  );
+  const completedScanIds =
+    completedScans?.map((scan: ScanProps) => scan.id) || [];
 
   return (
     <>
-      <Header title="Findings" icon="ph:list-checks-duotone" />
+      <Header title="Findings" icon="carbon:data-view-alt" />
       <Spacer />
       <Spacer y={4} />
       <FilterControls search date />
@@ -100,13 +106,13 @@ export default async function Findings({
           },
           {
             key: "provider_uid__in",
-            labelCheckboxGroup: "Account",
+            labelCheckboxGroup: "Provider UID",
             values: providerUIDs,
           },
           {
             key: "scan__in",
-            labelCheckboxGroup: "Scans",
-            values: completedScanIds, // Use UUIDs in the filter
+            labelCheckboxGroup: "Scan ID",
+            values: completedScanIds,
           },
         ]}
         defaultOpen={true}
@@ -125,17 +131,34 @@ const SSRDataTable = async ({
   searchParams: SearchParamsProps;
 }) => {
   const page = parseInt(searchParams.page?.toString() || "1", 10);
-  const sort = searchParams.sort?.toString();
+  const defaultSort = "severity,status";
+  const sort = searchParams.sort?.toString() || defaultSort;
 
-  // Extract all filter parameters
-  const filters = Object.fromEntries(
-    Object.entries(searchParams).filter(([key]) => key.startsWith("filter[")),
-  );
+  // Make sure the sort is correctly encoded
+  const encodedSort = sort.replace(/^\+/, "");
 
-  // Extract query from filters
-  const query = (filters["filter[search]"] as string) || "";
+  // Extract all filter parameters and combine with default filters
+  const defaultFilters = {
+    "filter[status__in]": "FAIL, PASS",
+    "filter[delta__in]": "new",
+  };
 
-  const findingsData = await getFindings({ query, page, sort, filters });
+  const filters: Record<string, string> = {
+    ...defaultFilters,
+    ...Object.fromEntries(
+      Object.entries(searchParams).filter(([key]) => key.startsWith("filter[")),
+    ),
+  };
+
+  const query = filters["filter[search]"] || "";
+
+  const findingsData = await getFindings({
+    query,
+    page,
+    sort: encodedSort,
+    filters,
+    pageSize: 10,
+  });
 
   // Create dictionaries for resources, scans, and providers
   const resourceDict = createDict("resources", findingsData);

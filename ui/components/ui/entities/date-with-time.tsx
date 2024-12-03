@@ -18,13 +18,13 @@ export const DateWithTime: React.FC<DateWithTimeProps> = ({
   const formattedTime = format(date, "p 'UTC'");
 
   return (
-    <div className="max-w-fit">
+    <div className="mw-fit">
       <div
         className={`flex ${inline ? "flex-row items-center gap-2" : "flex-col"}`}
       >
-        <span className="text-md font-semibold">{formattedDate}</span>
+        <span className="text-xs font-semibold">{formattedDate}</span>
         {showTime && (
-          <span className="text-sm text-gray-500">{formattedTime}</span>
+          <span className="text-tiny text-gray-500">{formattedTime}</span>
         )}
       </div>
     </div>

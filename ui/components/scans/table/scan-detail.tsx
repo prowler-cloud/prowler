@@ -114,7 +114,7 @@ export const ScanDetail = ({ scanDetails }: ScanDetailsProps) => {
       </div>
 
       {/* Scan Arguments Section */}
-      <Card className="rounded-lg p-4 shadow dark:bg-prowler-blue-400">
+      {/* <Card className="rounded-lg p-4 shadow dark:bg-prowler-blue-400">
         <CardHeader className="pb-4">
           <h3 className="text-lg font-bold text-gray-800 dark:text-prowler-theme-pale/90">
             Scan Arguments
@@ -133,7 +133,7 @@ export const ScanDetail = ({ scanDetails }: ScanDetailsProps) => {
             </span>
           </div>
         </CardBody>
-      </Card>
+      </Card> */}
 
       {/* Task Details Section */}
       {taskDetails && (

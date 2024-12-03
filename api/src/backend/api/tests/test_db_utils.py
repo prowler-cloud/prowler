@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from enum import Enum
 from unittest.mock import patch
 
-from api.db_utils import enum_to_choices, one_week_from_now, generate_random_token
+from api.db_utils import enum_to_choices, generate_random_token, one_week_from_now
 
 
 class TestEnumToChoices:

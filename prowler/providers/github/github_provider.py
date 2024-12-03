@@ -240,7 +240,7 @@ class GithubProvider(Provider):
                 )
                 session_token = env.str("GITHUB_PERSONAL_ACCESS_TOKEN", "")
                 if session_token:
-                    self._auth_method = "Environment Variable for Personal App Token"
+                    self._auth_method = "Environment Variable for Personal Access Token"
 
                 if not session_token:
                     # OAUTH

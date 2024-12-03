@@ -4,33 +4,47 @@ import { Card, CardBody } from "@nextui-org/react";
 import { Bar, BarChart, LabelList, XAxis, YAxis } from "recharts";
 
 import {
-  ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart/Chart";
 import { FindingsSeverityOverview } from "@/types/components";
 
+export interface ChartConfig {
+  [key: string]: {
+    label?: React.ReactNode;
+    icon?: React.ComponentType<object>;
+    color?: string;
+    theme?: string;
+    link?: string;
+  };
+}
+
 const chartConfig = {
   critical: {
     label: "Critical",
     color: "hsl(var(--chart-critical))",
+    link: "/findings?filter%5Bseverity__in%5D=critical",
   },
   high: {
     label: "High",
     color: "hsl(var(--chart-fail))",
+    link: "/findings?filter%5Bseverity__in%5D=high",
   },
   medium: {
     label: "Medium",
     color: "hsl(var(--chart-medium))",
+    link: "/findings?filter%5Bseverity__in%5D=medium",
   },
   low: {
     label: "Low",
     color: "hsl(var(--chart-low))",
+    link: "/findings?filter%5Bseverity__in%5D=low",
   },
   informational: {
     label: "Informational",
     color: "hsl(var(--chart-informational))",
+    link: "/findings?filter%5Bseverity__in%5D=informational",
   },
 } satisfies ChartConfig;
 
@@ -56,7 +70,7 @@ export const FindingsBySeverityChart = ({
   }));
 
   return (
-    <Card className="dark:bg-prowler-blue-400">
+    <Card className="h-full dark:bg-prowler-blue-400">
       <CardBody>
         <div className="my-auto">
           <ChartContainer config={chartConfig}>
@@ -91,6 +105,14 @@ export const FindingsBySeverityChart = ({
                 layout="vertical"
                 radius={12}
                 barSize={20}
+                onClick={(data) => {
+                  const severity = data.severity as keyof typeof chartConfig;
+                  const link = chartConfig[severity]?.link;
+                  if (link) {
+                    window.location.href = link;
+                  }
+                }}
+                style={{ cursor: "pointer" }}
               >
                 <LabelList
                   position="insideRight"

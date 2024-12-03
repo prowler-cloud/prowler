@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { SaveIcon } from "lucide-react";
+import { ChevronRightIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Control, useForm } from "react-hook-form";
 import * as z from "zod";
@@ -9,6 +9,9 @@ import * as z from "zod";
 import { addCredentialsProvider } from "@/actions/providers/providers";
 import { useToast } from "@/components/ui";
 import { CustomButton } from "@/components/ui/custom";
+import { getProviderLogo } from "@/components/ui/entities";
+import { getProviderName } from "@/components/ui/entities";
+import { ProviderType } from "@/components/ui/entities";
 import { Form } from "@/components/ui/form";
 import {
   addCredentialsFormSchema,
@@ -81,7 +84,6 @@ export const ViaCredentialsForm = ({
   const isLoading = form.formState.isSubmitting;
 
   const onSubmitClient = async (values: FormType) => {
-    console.log("via credentials form", values);
     const formData = new FormData();
 
     Object.entries(values).forEach(
@@ -166,6 +168,15 @@ export const ViaCredentialsForm = ({
         <input type="hidden" name="providerId" value={providerId} />
         <input type="hidden" name="providerType" value={providerType} />
 
+        <div className="mb-4 flex items-center space-x-4">
+          {providerType && getProviderLogo(providerType as ProviderType)}
+          <span className="text-lg font-semibold">
+            {providerType
+              ? getProviderName(providerType as ProviderType)
+              : "Unknown Provider"}
+          </span>
+        </div>
+
         {providerType === "aws" && (
           <AWScredentialsForm
             control={form.control as unknown as Control<AWSCredentials>}
@@ -196,9 +207,9 @@ export const ViaCredentialsForm = ({
             color="action"
             size="lg"
             isLoading={isLoading}
-            startContent={!isLoading && <SaveIcon size={24} />}
+            endContent={!isLoading && <ChevronRightIcon size={24} />}
           >
-            {isLoading ? <>Loading</> : <span>Save</span>}
+            {isLoading ? <>Loading</> : <span>Next</span>}
           </CustomButton>
         </div>
       </form>

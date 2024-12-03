@@ -27,6 +27,9 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [groupSelected, setGroupSelected] = useState(new Set<string>());
+  const [pendingClearFilter, setPendingClearFilter] = useState<string | null>(
+    null,
+  );
 
   const allFilterKeys = filter?.values || [];
 
@@ -88,25 +91,52 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
   );
 
   const handleSelectAllClick = useCallback(() => {
-    setGroupSelected((prevGroupSelected) => {
-      if (prevGroupSelected.has("all")) {
-        return new Set();
-      }
-      return new Set(["all", ...allFilterKeys]);
-    });
-  }, [allFilterKeys]);
+    setGroupSelected((prevGroupSelected: Set<string>) => {
+      const newSelection: Set<string> = prevGroupSelected.has("all")
+        ? new Set()
+        : new Set(["all", ...allFilterKeys]);
 
-  const onClearFilter = useCallback(
-    (filterKey: string) => {
+      if (onFilterChange && filter) {
+        const selectedValues = Array.from(newSelection).filter(
+          (key) => key !== "all",
+        );
+        onFilterChange(filter.key, selectedValues);
+      }
+
+      return newSelection;
+    });
+  }, [allFilterKeys, onFilterChange, filter]);
+
+  // Update the pending clear filter
+  const onClearFilter = useCallback((filterKey: string) => {
+    setPendingClearFilter(filterKey);
+  }, []);
+
+  // Execute the update in the router after the render
+  useEffect(() => {
+    if (pendingClearFilter) {
       const params = new URLSearchParams(searchParams.toString());
-      params.delete(`filter[${filterKey}]`);
+      params.delete(`filter[${pendingClearFilter}]`);
       router.push(`?${params.toString()}`, { scroll: false });
-    },
-    [router, searchParams],
-  );
+      setPendingClearFilter(null); // Reset the state
+    }
+  }, [pendingClearFilter, searchParams, router]);
 
   return (
-    <div className="flex w-full flex-col gap-2">
+    <div className="relative flex w-full flex-col gap-2">
+      <Button
+        isIconOnly
+        variant="light"
+        onClick={(e) => {
+          e.stopPropagation();
+          onClearFilter(filter.key);
+        }}
+        className={`absolute right-2 top-1/2 z-40 -translate-y-1/2 ${
+          groupSelected.size === 0 ? "hidden" : ""
+        }`}
+      >
+        <XCircle className="h-4 w-4 text-default-400" />
+      </Button>
       <Popover backdrop="transparent" placement="bottom-start">
         <PopoverTrigger>
           <Button
@@ -136,16 +166,6 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
                         ))
                     )}
                   </div>
-
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onClearFilter(filter.key);
-                    }}
-                    className="absolute right-0 top-1/2 z-40 h-10 w-10 -translate-y-1/2 focus:outline-none"
-                  >
-                    <XCircle className="h-4 w-4 text-default-400" />
-                  </button>
                 </div>
               </>
             )}
@@ -163,7 +183,8 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
               <Checkbox
                 className="font-normal"
                 value="all"
-                onValueChange={handleSelectAllClick}
+                isSelected={groupSelected.has("all")}
+                onClick={handleSelectAllClick}
               >
                 Select All
               </Checkbox>

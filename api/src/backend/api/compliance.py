@@ -1,9 +1,8 @@
 from types import MappingProxyType
 
+from api.models import Provider
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.check.models import CheckMetadata
-
-from api.models import Provider
 
 PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE = {}
 PROWLER_CHECKS = {}

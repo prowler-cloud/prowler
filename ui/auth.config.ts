@@ -105,6 +105,7 @@ export const authConfig = {
       const isLoggedIn = !!auth?.user;
       const isOnDashboard = nextUrl.pathname.startsWith("/");
       const isSignUpPage = nextUrl.pathname === "/sign-up";
+      //CLOUD API CHANGES
 
       // Allow access to sign-up page
       if (isSignUpPage) return true;

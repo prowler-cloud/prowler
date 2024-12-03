@@ -42,8 +42,7 @@ export function DataTableRowActions<ProviderProps>({
       <CustomAlertModal
         isOpen={isEditOpen}
         onOpenChange={setIsEditOpen}
-        title="Edit Provider"
-        description={"Edit the provider details"}
+        title="Edit Provider Alias"
       >
         <EditForm
           providerId={providerId}
@@ -93,7 +92,7 @@ export function DataTableRowActions<ProviderProps>({
                 startContent={<EditDocumentBulkIcon className={iconClasses} />}
                 onClick={() => setIsEditOpen(true)}
               >
-                Edit Provider
+                Edit Provider Alias
               </DropdownItem>
             </DropdownSection>
             <DropdownSection title="Danger zone">

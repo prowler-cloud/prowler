@@ -114,3 +114,31 @@ export const deleteUser = async (formData: FormData) => {
     };
   }
 };
+
+export const getProfileInfo = async () => {
+  const session = await auth();
+  const keyServer = process.env.API_BASE_URL;
+  const url = new URL(`${keyServer}/users/me`);
+
+  try {
+    const response = await fetch(url.toString(), {
+      method: "GET",
+      headers: {
+        Accept: "application/vnd.api+json",
+        Authorization: `Bearer ${session?.accessToken}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch user data: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    const parsedData = parseStringify(data);
+    revalidatePath("/profile");
+    return parsedData;
+  } catch (error) {
+    console.error("Error fetching profile:", error);
+    return undefined;
+  }
+};

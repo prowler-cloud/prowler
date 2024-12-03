@@ -1,9 +1,9 @@
-import pytest
-from django.urls import reverse
 from unittest.mock import patch
-from rest_framework.test import APIClient
 
+import pytest
 from conftest import TEST_PASSWORD, get_api_tokens, get_authorization_header
+from django.urls import reverse
+from rest_framework.test import APIClient
 
 
 @patch("api.v1.views.MainRouter.admin_db", new="default")

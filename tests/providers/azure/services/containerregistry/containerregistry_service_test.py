@@ -32,7 +32,7 @@ class TestContainerRegistryService:
                         resource_group="mock_resource_group",
                         sku="Basic",
                         login_server="mock_login_server.azurecr.io",
-                        public_network_access="Enabled",
+                        public_network_access=False,
                         admin_user_enabled=True,
                         network_rule_set=None,
                         private_endpoint_connections=[],
@@ -71,7 +71,7 @@ class TestContainerRegistryService:
             assert registry_info.resource_group == "mock_resource_group"
             assert registry_info.sku == "Basic"
             assert registry_info.login_server == "mock_login_server.azurecr.io"
-            assert registry_info.public_network_access == "Enabled"
+            assert not registry_info.public_network_access
             assert registry_info.admin_user_enabled is True
             assert isinstance(registry_info.monitor_diagnostic_settings, list)
 

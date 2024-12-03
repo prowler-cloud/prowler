@@ -52,7 +52,8 @@ export const SidebarWrap = () => {
       )}
     >
       <div className="flex flex-col gap-y-8">
-        <div
+        <Link
+          href="/"
           className={clsx(
             "flex w-full flex-col items-center justify-center gap-y-8 px-3",
             {
@@ -75,8 +76,8 @@ export const SidebarWrap = () => {
           >
             <ProwlerExtended />
           </div>
-        </div>
-        <Link href={"/profile"}>
+        </Link>
+        <Link href={"/users"}>
           <Suspense fallback={<p>Loading...</p>}>
             <UserAvatar
               userName={session?.user.name ?? "Guest"}
@@ -119,16 +120,55 @@ export const SidebarWrap = () => {
           "items-center": isCompact,
         })}
       >
-        {/* <Tooltip
-          content="Feedback & Support"
+        <Tooltip
+          content="Documentation"
           isDisabled={!isCompact}
           placement="right"
         >
-          <Button
-            aria-label="Feedback & Support"
-            fullWidth
+          <CustomButton
+            asLink="https://docs.prowler.com/"
+            target="_blank"
+            ariaLabel="Documentation"
+            variant="flat"
             className={clsx(
-              "justify-start truncate text-default-500 data-[hover=true]:text-foreground",
+              "justify-start truncate bg-transparent text-default-500 data-[hover=true]:text-foreground dark:bg-transparent",
+              {
+                "justify-center": isCompact,
+              },
+            )}
+            isIconOnly={isCompact}
+            startContent={
+              isCompact ? null : (
+                <Icon
+                  className="flex-none text-default-500"
+                  icon="tabler:file-type-doc"
+                  width={24}
+                  aria-hidden="true"
+                />
+              )
+            }
+          >
+            {isCompact ? (
+              <Icon
+                className="text-default-500"
+                icon="tabler:file-type-doc"
+                width={24}
+                aria-hidden="true"
+              />
+            ) : (
+              "Documentation"
+            )}
+          </CustomButton>
+        </Tooltip>
+
+        <Tooltip content="Support" isDisabled={!isCompact} placement="right">
+          <CustomButton
+            asLink="https://support.prowler.com/"
+            target="_blank"
+            ariaLabel="Support"
+            variant="flat"
+            className={clsx(
+              "justify-start truncate bg-transparent text-default-500 data-[hover=true]:text-foreground dark:bg-transparent",
               {
                 "justify-center": isCompact,
               },
@@ -144,7 +184,6 @@ export const SidebarWrap = () => {
                 />
               )
             }
-            variant="light"
           >
             {isCompact ? (
               <Icon
@@ -154,93 +193,48 @@ export const SidebarWrap = () => {
                 aria-hidden="true"
               />
             ) : (
-              "Feedback & Support"
+              "Support"
             )}
-          </Button>
-        </Tooltip> */}
-
-        <Tooltip
-          content="Documentation"
-          isDisabled={!isCompact}
-          placement="right"
-        >
-          <Link
-            href="https://docs.prowler.com/projects/prowler-saas/en/latest/"
-            target="_blank"
-          >
-            <Button
-              aria-label="Documentation"
-              className={clsx(
-                "justify-start text-default-500 data-[hover=true]:text-foreground",
-                {
-                  "justify-center": isCompact,
-                },
-              )}
-              isIconOnly={isCompact}
-              startContent={
-                isCompact ? null : (
-                  <Icon
-                    className="flex-none text-default-500"
-                    icon="tabler:file-type-doc"
-                    width={24}
-                    aria-hidden="true"
-                  />
-                )
-              }
-              variant="light"
-            >
-              {isCompact ? (
-                <Icon
-                  className="text-default-500"
-                  icon="tabler:file-type-doc"
-                  width={24}
-                  aria-hidden="true"
-                />
-              ) : (
-                "Documentation"
-              )}
-            </Button>
-          </Link>
+          </CustomButton>
         </Tooltip>
-
         {/* <Tooltip
-          content="Product Updates"
-          isDisabled={!isCompact}
-          placement="right"
-        >
-          <Button
-            aria-label="Product Updates"
-            className={clsx(
-              "justify-start text-default-500 data-[hover=true]:text-foreground",
-              {
-                "justify-center": isCompact,
-              },
-            )}
-            isIconOnly={isCompact}
-            startContent={
-              isCompact ? null : (
-                <Icon
-                  className="flex-none text-default-500"
-                  icon="mdi:update"
-                  width={24}
-                  aria-hidden="true"
-                />
-              )
-            }
-            variant="light"
-          >
-            {isCompact ? (
-              <Icon
-                className="text-default-500"
-                icon="mdi:update"
-                width={24}
-                aria-hidden="true"
-              />
-            ) : (
-              "Product Updates"
-            )}
-          </Button>
-        </Tooltip> */}
+      content="Product Updates"
+      isDisabled={!isCompact}
+      placement="right"
+    >
+      <Button
+        aria-label="Product Updates"
+        className={clsx(
+          "justify-start text-default-500 data-[hover=true]:text-foreground",
+          {
+            "justify-center": isCompact,
+          },
+        )}
+        isIconOnly={isCompact}
+        startContent={
+          isCompact ? null : (
+            <Icon
+              className="flex-none text-default-500"
+              icon="mdi:update"
+              width={24}
+              aria-hidden="true"
+            />
+          )
+        }
+        variant="light"
+      >
+        {isCompact ? (
+          <Icon
+            className="text-default-500"
+            icon="mdi:update"
+            width={24}
+            aria-hidden="true"
+          />
+        ) : (
+          "Product Updates"
+        )}
+      </Button>
+    </Tooltip> */}
 
         <Tooltip content="Log Out" isDisabled={!isCompact} placement="right">
           <Button
