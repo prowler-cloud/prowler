@@ -85,11 +85,11 @@ jobs:
               echo "STABLE_TAG=v3-stable" >> "${GITHUB_ENV}"
               ;;
 
-          # Next latest and stable releases will be v5.Y.Z
-          # 4)
-          #     echo "LATEST_TAG=latest" >> "${GITHUB_ENV}"
-          #     echo "STABLE_TAG=stable" >> "${GITHUB_ENV}"
-          #     ;;
+          
+          4) 
+              echo "LATEST_TAG=v4-latest" >> "${GITHUB_ENV}"
+              echo "STABLE_TAG=v4-stable" >> "${GITHUB_ENV}"
+              ;;
 
           5)
               echo "LATEST_TAG=latest" >> "${GITHUB_ENV}"
