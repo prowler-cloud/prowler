@@ -19,10 +19,9 @@ class app_minimum_tls_version_12(Check):
                 report.location = app.location
                 report.status_extended = f"Minimum TLS version is not set to 1.2 for app '{app_name}' in subscription '{subscription_name}'."
 
-                if (
-                    app.configurations
-                    and getattr(app.configurations, "min_tls_version", "") == "1.2"
-                ):
+                if app.configurations and getattr(
+                    app.configurations, "min_tls_version", ""
+                ) in ["1.2", "1.3"]:
                     report.status = "PASS"
                     report.status_extended = f"Minimum TLS version is set to 1.2 for app '{app_name}' in subscription '{subscription_name}'."
 
