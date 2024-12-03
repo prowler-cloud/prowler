@@ -1,8 +1,8 @@
 import React from "react";
 
 import {
-  ViaCredentialsForm,
-  ViaRoleForm,
+  UpdateViaCredentialsForm,
+  UpdateViaRoleForm,
 } from "@/components/providers/workflow/forms";
 import { SelectViaAWS } from "@/components/providers/workflow/forms/select-via-aws/select-via-aws";
 
@@ -10,7 +10,7 @@ interface Props {
   searchParams: { type: string; id: string; via?: string };
 }
 
-export default function AddCredentialsPage({ searchParams }: Props) {
+export default function UpdateCredentialsPage({ searchParams }: Props) {
   return (
     <>
       {searchParams.type === "aws" && !searchParams.via && (
@@ -19,11 +19,11 @@ export default function AddCredentialsPage({ searchParams }: Props) {
 
       {((searchParams.type === "aws" && searchParams.via === "credentials") ||
         searchParams.type !== "aws") && (
-        <ViaCredentialsForm searchParams={searchParams} />
+        <UpdateViaCredentialsForm searchParams={searchParams} />
       )}
 
       {searchParams.type === "aws" && searchParams.via === "role" && (
-        <ViaRoleForm searchParams={searchParams} />
+        <UpdateViaRoleForm searchParams={searchParams} />
       )}
     </>
   );

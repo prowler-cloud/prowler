@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Control, useForm } from "react-hook-form";
 import * as z from "zod";
 
-import { addCredentialsProvider } from "@/actions/providers/providers";
+import { updateCredentialsProvider } from "@/actions/providers/providers";
 import { useToast } from "@/components/ui";
 import { CustomButton } from "@/components/ui/custom";
 import { getProviderLogo } from "@/components/ui/entities";
@@ -38,10 +38,10 @@ type FormType = CredentialsFormSchema &
   GCPCredentials &
   KubernetesCredentials;
 
-export const ViaCredentialsForm = ({
+export const UpdateViaCredentialsForm = ({
   searchParams,
 }: {
-  searchParams: { type: string; id: string };
+  searchParams: { type: string; id: string; secretId?: string };
 }) => {
   const router = useRouter();
   const { toast } = useToast();
@@ -57,6 +57,7 @@ export const ViaCredentialsForm = ({
 
   const providerType = searchParams.type;
   const providerId = searchParams.id;
+  const providerSecretId = searchParams.secretId || "";
   const formSchema = addCredentialsFormSchema(providerType);
 
   const form = useForm<FormType>({
@@ -99,7 +100,7 @@ export const ViaCredentialsForm = ({
       ([key, value]) => value !== undefined && formData.append(key, value),
     );
 
-    const data = await addCredentialsProvider(formData);
+    const data = await updateCredentialsProvider(providerSecretId, formData);
 
     if (data?.errors && data.errors.length > 0) {
       data.errors.forEach((error: ApiError) => {
@@ -163,7 +164,7 @@ export const ViaCredentialsForm = ({
       });
     } else {
       router.push(
-        `/providers/test-connection?type=${providerType}&id=${providerId}`,
+        `/providers/test-connection?type=${providerType}&id=${providerId}&updated=true`,
       );
     }
   };
