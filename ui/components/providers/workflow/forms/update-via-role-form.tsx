@@ -21,7 +21,7 @@ import { AWSCredentialsRoleForm } from "./via-role/aws-role-form";
 export const UpdateViaRoleForm = ({
   searchParams,
 }: {
-  searchParams: { type: string; id: string };
+  searchParams: { type: string; id: string; secretId?: string };
 }) => {
   const router = useRouter();
   const { toast } = useToast();
@@ -37,6 +37,7 @@ export const UpdateViaRoleForm = ({
 
   const providerType = searchParams.type;
   const providerId = searchParams.id;
+  const providerSecretId = searchParams.secretId || "";
 
   const formSchema = addCredentialsRoleFormSchema(providerType);
   type FormSchemaType = z.infer<typeof formSchema>;
@@ -70,7 +71,7 @@ export const UpdateViaRoleForm = ({
         value !== undefined && formData.append(key, String(value)),
     );
 
-    const data = await updateCredentialsProvider(providerId, formData);
+    const data = await updateCredentialsProvider(providerSecretId, formData);
 
     if (data?.errors && data.errors.length > 0) {
       data.errors.forEach((error: ApiError) => {
