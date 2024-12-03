@@ -751,6 +751,429 @@ paths:
               schema:
                 $ref: '#/components/schemas/FindingResponse'
           description: ''
+  /api/v1/findings/findings_services_regions:
+    get:
+      operationId: findings_findings_services_regions_retrieve
+      description: Fetch services and regions affected in findings.
+      summary: Retrieve the services and regions that are impacted by findings
+      parameters:
+      - in: query
+        name: fields[finding-dynamic-filters]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - services
+            - regions
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[check_id]
+        schema:
+          type: string
+      - in: query
+        name: filter[check_id__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[check_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[delta]
+        schema:
+          type: string
+          nullable: true
+          enum:
+          - changed
+          - new
+        description: |-
+          * `new` - New
+          * `changed` - Changed
+      - in: query
+        name: filter[delta__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[impact]
+        schema:
+          type: string
+          enum:
+          - critical
+          - high
+          - informational
+          - low
+          - medium
+        description: |-
+          * `critical` - Critical
+          * `high` - High
+          * `medium` - Medium
+          * `low` - Low
+          * `informational` - Informational
+      - in: query
+        name: filter[impact__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[inserted_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__date]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__gte]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__lte]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[provider]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_alias]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          enum:
+          - aws
+          - azure
+          - gcp
+          - kubernetes
+        description: |-
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - aws
+            - azure
+            - gcp
+            - kubernetes
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[region]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_name]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_name__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_name__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_type]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_type__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_uid__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_uid__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resources]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[scan]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[scan__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: filter[service]
+        schema:
+          type: string
+      - in: query
+        name: filter[service__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[service__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[severity]
+        schema:
+          type: string
+          enum:
+          - critical
+          - high
+          - informational
+          - low
+          - medium
+        description: |-
+          * `critical` - Critical
+          * `high` - High
+          * `medium` - Medium
+          * `low` - Low
+          * `informational` - Informational
+      - in: query
+        name: filter[severity__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[status]
+        schema:
+          type: string
+          enum:
+          - FAIL
+          - MANUAL
+          - MUTED
+          - PASS
+        description: |-
+          * `FAIL` - Fail
+          * `PASS` - Pass
+          * `MANUAL` - Manual
+          * `MUTED` - Muted
+      - in: query
+        name: filter[status__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[uid__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[updated_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[updated_at__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[updated_at__lte]
+        schema:
+          type: string
+          format: date-time
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - -id
+            - status
+            - -status
+            - severity
+            - -severity
+            - check_id
+            - -check_id
+            - inserted_at
+            - -inserted_at
+            - updated_at
+            - -updated_at
+        explode: false
+      tags:
+      - Finding
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/OpenApiResponseResponse'
+          description: ''
   /api/v1/invitations/accept:
     post:
       operationId: invitations_accept_create
@@ -780,16 +1203,332 @@ paths:
               schema:
                 $ref: '#/components/schemas/OpenApiResponseResponse'
           description: ''
+  /api/v1/overviews/findings:
+    get:
+      operationId: overviews_findings_retrieve
+      description: Fetch aggregated findings data across all providers, grouped by
+        various metrics such as passed, failed, muted, and total findings. This endpoint
+        calculates summary statistics based on the latest scans for each provider
+        and applies any provided filters, such as region, provider type, and scan
+        date.
+      summary: Get aggregated findings data
+      parameters:
+      - in: query
+        name: fields[findings-overview]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - new
+            - changed
+            - unchanged
+            - fail_new
+            - fail_changed
+            - pass_new
+            - pass_changed
+            - muted_new
+            - muted_changed
+            - total
+            - fail
+            - muted
+            - pass
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[inserted_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__date]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[inserted_at__lte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[muted_findings]
+        schema:
+          type: boolean
+      - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          enum:
+          - aws
+          - azure
+          - gcp
+          - kubernetes
+        description: |-
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - aws
+            - azure
+            - gcp
+            - kubernetes
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+        explode: false
+        style: form
+      - in: query
+        name: filter[region]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - -id
+            - new
+            - -new
+            - changed
+            - -changed
+            - unchanged
+            - -unchanged
+            - fail_new
+            - -fail_new
+            - fail_changed
+            - -fail_changed
+            - pass_new
+            - -pass_new
+            - pass_changed
+            - -pass_changed
+            - muted_new
+            - -muted_new
+            - muted_changed
+            - -muted_changed
+            - total
+            - -total
+            - fail
+            - -fail
+            - muted
+            - -muted
+            - pass
+            - -pass
+        explode: false
+      tags:
+      - Overview
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/OverviewFindingResponse'
+          description: ''
+  /api/v1/overviews/findings_severity:
+    get:
+      operationId: overviews_findings_severity_retrieve
+      description: Retrieve an aggregated summary of findings grouped by severity
+        levels, such as low, medium, high, and critical. The response includes the
+        total count of findings for each severity, considering only the latest scans
+        for each provider. Additional filters can be applied to narrow down results
+        by region, provider type, or other attributes.
+      summary: Get findings data by severity
+      parameters:
+      - in: query
+        name: fields[findings-severity-overview]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - critical
+            - high
+            - medium
+            - low
+            - informational
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[inserted_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__date]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[inserted_at__lte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[muted_findings]
+        schema:
+          type: boolean
+      - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          enum:
+          - aws
+          - azure
+          - gcp
+          - kubernetes
+        description: |-
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - aws
+            - azure
+            - gcp
+            - kubernetes
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+        explode: false
+        style: form
+      - in: query
+        name: filter[region]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - -id
+            - critical
+            - -critical
+            - high
+            - -high
+            - medium
+            - -medium
+            - low
+            - -low
+            - informational
+            - -informational
+        explode: false
+      tags:
+      - Overview
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/OverviewSeverityResponse'
+          description: ''
   /api/v1/overviews/providers:
     get:
       operationId: overviews_providers_retrieve
-      description: Fetch aggregated summaries of the latest findings and resources
-        for each provider. This includes counts of passed, failed, and manual findings,
-        as well as the total number of resources managed by each provider.
-      summary: List aggregated overview data for providers
+      description: Retrieve an aggregated overview of findings and resources grouped
+        by providers. The response includes the count of passed, failed, and manual
+        findings, along with the total number of resources managed by each provider.
+        Only the latest findings for each provider are considered in the aggregation
+        to ensure accurate and up-to-date insights.
+      summary: Get aggregated provider data
       parameters:
       - in: query
-        name: fields[provider-overviews]
+        name: fields[providers-overview]
         schema:
           type: array
           items:
@@ -1123,6 +1862,7 @@ paths:
             - alias
             - connection
             - secret
+            - provider_groups
             - url
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
@@ -1239,6 +1979,17 @@ paths:
         schema:
           type: string
           format: date-time
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - provider_groups
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
       - name: page[number]
         required: false
         in: query
@@ -1332,6 +2083,7 @@ paths:
             - alias
             - connection
             - secret
+            - provider_groups
             - url
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
@@ -1343,6 +2095,17 @@ paths:
           format: uuid
         description: A UUID string identifying this provider.
         required: true
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - provider_groups
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
       tags:
       - Provider
       security:
@@ -2022,9 +2785,11 @@ paths:
             - duration
             - provider
             - task
+            - inserted_at
             - started_at
             - completed_at
             - scheduled_at
+            - next_scan_at
             - url
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
@@ -2047,6 +2812,21 @@ paths:
         name: filter[name__icontains]
         schema:
           type: string
+      - in: query
+        name: filter[next_scan_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[next_scan_at__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[next_scan_at__lte]
+        schema:
+          type: string
+          format: date-time
       - in: query
         name: filter[provider]
         schema:
@@ -2151,6 +2931,48 @@ paths:
         schema:
           type: string
           format: date-time
+      - in: query
+        name: filter[state]
+        schema:
+          type: string
+          enum:
+          - available
+          - cancelled
+          - completed
+          - executing
+          - failed
+          - scheduled
+        description: |-
+          * `available` - Available
+          * `scheduled` - Scheduled
+          * `executing` - Executing
+          * `completed` - Completed
+          * `failed` - Failed
+          * `cancelled` - Cancelled
+      - in: query
+        name: filter[state__in]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - available
+            - cancelled
+            - completed
+            - executing
+            - failed
+            - scheduled
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `available` - Available
+          * `scheduled` - Scheduled
+          * `executing` - Executing
+          * `completed` - Completed
+          * `failed` - Failed
+          * `cancelled` - Cancelled
+        explode: false
+        style: form
       - in: query
         name: filter[trigger]
         schema:
@@ -2259,9 +3081,11 @@ paths:
             - duration
             - provider
             - task
+            - inserted_at
             - started_at
             - completed_at
             - scheduled_at
+            - next_scan_at
             - url
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
@@ -2319,6 +3143,35 @@ paths:
             application/vnd.api+json:
               schema:
                 $ref: '#/components/schemas/ScanUpdateResponse'
+          description: ''
+  /api/v1/schedules/daily:
+    post:
+      operationId: schedules_daily_create
+      description: Schedules a daily scan for the specified provider. This endpoint
+        creates a periodic task that will execute a scan every 24 hours.
+      summary: Create a daily schedule scan for a given provider
+      tags:
+      - Schedule
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/ScheduleDailyCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ScheduleDailyCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ScheduleDailyCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '202':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/OpenApiResponseResponse'
           description: ''
   /api/v1/tasks:
     get:
@@ -4304,6 +5157,7 @@ components:
       type: object
       required:
       - type
+      - id
       additionalProperties: false
       properties:
         type:
@@ -4312,6 +5166,9 @@ components:
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
+        id:
+          type: string
+          format: uuid
         attributes:
           type: object
           properties:
@@ -4400,6 +5257,77 @@ components:
           $ref: '#/components/schemas/Membership'
       required:
       - data
+    OverviewFinding:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/OverviewFindingTypeEnum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        id: {}
+        attributes:
+          type: object
+          properties:
+            id:
+              type: string
+              default: n/a
+            new:
+              type: integer
+            changed:
+              type: integer
+            unchanged:
+              type: integer
+            fail_new:
+              type: integer
+            fail_changed:
+              type: integer
+            pass_new:
+              type: integer
+            pass_changed:
+              type: integer
+            muted_new:
+              type: integer
+            muted_changed:
+              type: integer
+            total:
+              type: integer
+            fail:
+              type: integer
+            muted:
+              type: integer
+            pass:
+              type: integer
+          required:
+          - new
+          - changed
+          - unchanged
+          - fail_new
+          - fail_changed
+          - pass_new
+          - pass_changed
+          - muted_new
+          - muted_changed
+          - total
+          - fail
+          - muted
+          - pass
+    OverviewFindingResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/OverviewFinding'
+      required:
+      - data
+    OverviewFindingTypeEnum:
+      type: string
+      enum:
+      - findings-overview
     OverviewProvider:
       type: object
       required:
@@ -4449,7 +5377,54 @@ components:
     OverviewProviderTypeEnum:
       type: string
       enum:
-      - provider-overviews
+      - providers-overview
+    OverviewSeverity:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/OverviewSeverityTypeEnum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        id: {}
+        attributes:
+          type: object
+          properties:
+            id:
+              type: string
+              default: n/a
+            critical:
+              type: integer
+            high:
+              type: integer
+            medium:
+              type: integer
+            low:
+              type: integer
+            informational:
+              type: integer
+          required:
+          - critical
+          - high
+          - medium
+          - low
+          - informational
+    OverviewSeverityResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/OverviewSeverity'
+      required:
+      - data
+    OverviewSeverityTypeEnum:
+      type: string
+      enum:
+      - findings-severity-overview
     PaginatedComplianceOverviewList:
       type: object
       required:
@@ -5094,6 +6069,35 @@ components:
               - data
               description: The identifier of the related object.
               title: Resource Identifier
+            provider_groups:
+              type: object
+              properties:
+                data:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        title: Resource Identifier
+                        description: The identifier of the related object.
+                      type:
+                        type: string
+                        enum:
+                        - provider-groups
+                        title: Resource Type Name
+                        description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                          member is used to describe resource objects that share common
+                          attributes and relationships.
+                    required:
+                    - id
+                    - type
+              required:
+              - data
+              description: A related resource object from type provider-groups
+              title: provider-groups
+              readOnly: true
           required:
           - secret
     ProviderCreate:
@@ -6184,6 +7188,10 @@ components:
               maximum: 2147483647
               minimum: -2147483648
               nullable: true
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
             started_at:
               type: string
               format: date-time
@@ -6193,6 +7201,10 @@ components:
               format: date-time
               nullable: true
             scheduled_at:
+              type: string
+              format: date-time
+              nullable: true
+            next_scan_at:
               type: string
               format: date-time
               nullable: true
@@ -6341,6 +7353,32 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/ScanUpdate'
+      required:
+      - data
+    ScheduleDailyCreateRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - daily-schedules
+            attributes:
+              type: object
+              properties:
+                provider_id:
+                  type: string
+                  format: uuid
+              required:
+              - provider_id
       required:
       - data
     SerializerMetaclassResponse:

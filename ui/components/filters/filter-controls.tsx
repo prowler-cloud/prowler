@@ -61,11 +61,11 @@ export const FilterControls: React.FC<FilterControlsProps> = ({
             className="w-full md:w-fit"
             onPress={clearAllFilters}
             variant="dashed"
-            size="sm"
+            size="md"
             endContent={<CrossIcon size={24} />}
             radius="sm"
           >
-            Reset
+            Clear all filters
           </CustomButton>
         )}
       </div>

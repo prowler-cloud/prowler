@@ -55,8 +55,8 @@ export const SelectScanProvider = <
         <>
           <FormControl>
             <Select
-              aria-label="Select a Provider"
-              placeholder="Choose a provider"
+              aria-label="Select a scan job"
+              placeholder="Choose a scan job"
               labelPlacement="outside"
               size="md"
               selectedKeys={field.value ? new Set([field.value]) : new Set()}
@@ -74,7 +74,7 @@ export const SelectScanProvider = <
                     {selectedItem.alias}
                   </div>
                 ) : (
-                  "Choose a provider"
+                  "Choose a scan job"
                 );
               }}
             >

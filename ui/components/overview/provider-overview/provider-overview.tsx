@@ -44,9 +44,9 @@ export const ProvidersOverview = ({
 
   if (!providersOverview || !Array.isArray(providersOverview.data)) {
     return (
-      <Card className="dark:bg-prowler-blue-400">
+      <Card className="h-full dark:bg-prowler-blue-400">
         <CardBody>
-          <div className="grid grid-cols-1 gap-3">
+          <div className="my-auto grid grid-cols-1 gap-3">
             <div className="grid grid-cols-4 border-b pb-2 text-xs font-semibold">
               <span className="text-center">Provider</span>
               <span className="flex flex-col items-center text-center">
@@ -92,9 +92,9 @@ export const ProvidersOverview = ({
   }
 
   return (
-    <Card className="dark:bg-prowler-blue-400">
+    <Card className="h-full dark:bg-prowler-blue-400">
       <CardBody>
-        <div className="grid grid-cols-1 gap-3">
+        <div className="my-auto grid grid-cols-1 gap-3">
           <div className="grid grid-cols-4 border-b pb-2 text-xs font-semibold">
             <span className="text-center">Provider</span>
             <span className="flex flex-col items-center text-center">
@@ -175,7 +175,7 @@ export const ProvidersOverview = ({
         </div>
         <div className="mt-4 flex w-full items-center justify-end">
           <CustomButton
-            asLink="/providers/connect-account"
+            asLink="/providers"
             ariaLabel="Go to Providers page"
             variant="solid"
             color="action"

@@ -227,6 +227,32 @@ export interface InvitationProps {
     self: string;
   };
 }
+export interface UserProfileProps {
+  data: {
+    type: "users";
+    id: string;
+    attributes: {
+      name: string;
+      email: string;
+      company_name: string;
+      date_joined: string;
+    };
+    relationships: {
+      memberships: {
+        meta: {
+          count: number;
+        };
+        data: Array<{
+          type: "memberships";
+          id: string;
+        }>;
+      };
+    };
+  };
+  meta: {
+    version: string;
+  };
+}
 
 export interface UserProps {
   type: "users";
@@ -301,6 +327,7 @@ export interface ScanProps {
     started_at: string;
     completed_at: string;
     scheduled_at: string;
+    next_scan_at: string;
   };
   relationships: {
     provider: {
@@ -315,6 +342,11 @@ export interface ScanProps {
         type: "tasks";
       };
     };
+  };
+  providerInfo?: {
+    provider: "aws" | "azure" | "gcp" | "kubernetes";
+    uid: string;
+    alias: string;
   };
 }
 

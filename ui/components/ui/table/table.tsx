@@ -75,7 +75,7 @@ const TableHead = React.forwardRef<
   <th
     ref={ref}
     className={cn(
-      "h-10 whitespace-nowrap bg-default-100 px-4 text-left align-middle text-tiny font-semibold text-foreground-500 outline-none first:rounded-l-lg last:rounded-r-lg data-[focus-visible=true]:z-10 data-[hover=true]:text-foreground-400 data-[focus-visible=true]:outline-2 data-[focus-visible=true]:outline-offset-2 data-[focus-visible=true]:outline-focus dark:bg-prowler-blue-800 dark:text-slate-400 rtl:text-right rtl:first:rounded-l-[unset] rtl:first:rounded-r-lg rtl:last:rounded-l-lg rtl:last:rounded-r-[unset] [&:has([role=checkbox])]:pr-0",
+      "h-10 whitespace-nowrap bg-default-100 px-2 text-left align-middle text-tiny font-semibold text-foreground-500 outline-none first:rounded-l-lg last:rounded-r-lg data-[focus-visible=true]:z-10 data-[hover=true]:text-foreground-400 data-[focus-visible=true]:outline-2 data-[focus-visible=true]:outline-offset-2 data-[focus-visible=true]:outline-focus dark:bg-prowler-blue-800 dark:text-slate-400 rtl:text-right rtl:first:rounded-l-[unset] rtl:first:rounded-r-lg rtl:last:rounded-l-lg rtl:last:rounded-r-[unset] [&:has([role=checkbox])]:pr-0",
       className,
     )}
     {...props}
@@ -90,7 +90,7 @@ const TableCell = React.forwardRef<
   <td
     ref={ref}
     className={cn(
-      "px-4 py-2.5 align-middle [&:has([role=checkbox])]:pr-0",
+      "px-2 py-2.5 align-middle [&:has([role=checkbox])]:pr-0",
       className,
     )}
     {...props}

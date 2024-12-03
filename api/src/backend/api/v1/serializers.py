@@ -1,5 +1,5 @@
 import json
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 
 from django.conf import settings
 from django.contrib.auth import authenticate
@@ -14,23 +14,22 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from api.models import (
-    StateChoices,
-    User,
+    ComplianceOverview,
+    Finding,
+    Invitation,
     Membership,
     Provider,
     ProviderGroup,
     ProviderGroupMembership,
-    Scan,
-    Task,
+    ProviderSecret,
     Resource,
     ResourceTag,
-    Finding,
-    ProviderSecret,
-    Invitation,
-    ComplianceOverview,
+    Scan,
+    StateChoices,
+    Task,
+    User,
 )
 from api.rls import Tenant
-
 
 # Tokens
 
@@ -390,6 +389,12 @@ class ProviderGroupSerializer(RLSSerializer, BaseWriteSerializer):
         }
 
 
+class ProviderGroupIncludedSerializer(RLSSerializer, BaseWriteSerializer):
+    class Meta:
+        model = ProviderGroup
+        fields = ["id", "name"]
+
+
 class ProviderGroupUpdateSerializer(RLSSerializer, BaseWriteSerializer):
     """
     Serializer for updating the ProviderGroup model.
@@ -453,6 +458,10 @@ class ProviderSerializer(RLSSerializer):
     provider = ProviderEnumSerializerField()
     connection = serializers.SerializerMethodField(read_only=True)
 
+    included_serializers = {
+        "provider_groups": "api.v1.serializers.ProviderGroupIncludedSerializer",
+    }
+
     class Meta:
         model = Provider
         fields = [
@@ -465,6 +474,7 @@ class ProviderSerializer(RLSSerializer):
             "connection",
             # "scanner_args",
             "secret",
+            "provider_groups",
             "url",
         ]
 
@@ -537,9 +547,11 @@ class ScanSerializer(RLSSerializer):
             "duration",
             "provider",
             "task",
+            "inserted_at",
             "started_at",
             "completed_at",
             "scheduled_at",
+            "next_scan_at",
             "url",
         ]
 
@@ -706,6 +718,14 @@ class FindingSerializer(RLSSerializer):
         "scan": ScanSerializer,
         "resources": ResourceSerializer,
     }
+
+
+class FindingDynamicFilterSerializer(serializers.Serializer):
+    services = serializers.ListField(child=serializers.CharField(), allow_empty=True)
+    regions = serializers.ListField(child=serializers.CharField(), allow_empty=True)
+
+    class Meta:
+        resource_name = "finding-dynamic-filters"
 
 
 # Provider secrets
@@ -1234,7 +1254,7 @@ class OverviewProviderSerializer(serializers.Serializer):
     resources = serializers.SerializerMethodField(read_only=True)
 
     class JSONAPIMeta:
-        resource_name = "provider-overviews"
+        resource_name = "providers-overview"
 
     def get_root_meta(self, _resource, _many):
         return {"version": "v1"}
@@ -1270,3 +1290,64 @@ class OverviewProviderSerializer(serializers.Serializer):
         return {
             "total": obj["total_resources"],
         }
+
+
+class OverviewFindingSerializer(serializers.Serializer):
+    id = serializers.CharField(default="n/a")
+    new = serializers.IntegerField()
+    changed = serializers.IntegerField()
+    unchanged = serializers.IntegerField()
+    fail_new = serializers.IntegerField()
+    fail_changed = serializers.IntegerField()
+    pass_new = serializers.IntegerField()
+    pass_changed = serializers.IntegerField()
+    muted_new = serializers.IntegerField()
+    muted_changed = serializers.IntegerField()
+    total = serializers.IntegerField()
+    _pass = serializers.IntegerField()
+    fail = serializers.IntegerField()
+    muted = serializers.IntegerField()
+
+    class JSONAPIMeta:
+        resource_name = "findings-overview"
+
+    def get_root_meta(self, _resource, _many):
+        return {"version": "v1"}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["pass"] = self.fields.pop("_pass")
+
+
+class OverviewSeveritySerializer(serializers.Serializer):
+    id = serializers.CharField(default="n/a")
+    critical = serializers.IntegerField()
+    high = serializers.IntegerField()
+    medium = serializers.IntegerField()
+    low = serializers.IntegerField()
+    informational = serializers.IntegerField()
+
+    class JSONAPIMeta:
+        resource_name = "findings-severity-overview"
+
+    def get_root_meta(self, _resource, _many):
+        return {"version": "v1"}
+
+
+# Schedules
+
+
+class ScheduleDailyCreateSerializer(serializers.Serializer):
+    provider_id = serializers.UUIDField(required=True)
+
+    class JSONAPIMeta:
+        resource_name = "daily-schedules"
+
+    # TODO: DRY this when we have more time
+    def validate(self, data):
+        if hasattr(self, "initial_data"):
+            initial_data = set(self.initial_data.keys()) - {"id", "type"}
+            unknown_keys = initial_data - set(self.fields.keys())
+            if unknown_keys:
+                raise ValidationError(f"Invalid fields: {unknown_keys}")
+        return data
