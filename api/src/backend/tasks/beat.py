@@ -1,4 +1,5 @@
 import json
+from datetime import datetime, timedelta, timezone
 
 from django_celery_beat.models import IntervalSchedule, PeriodicTask
 from rest_framework_json_api.serializers import ValidationError
@@ -28,6 +29,9 @@ def schedule_provider_scan(provider_instance: Provider):
             }
         ),
         one_off=False,
+        defaults={
+            "start_time": datetime.now(timezone.utc) + timedelta(hours=24),
+        },
     )
     if not created:
         raise ValidationError(
