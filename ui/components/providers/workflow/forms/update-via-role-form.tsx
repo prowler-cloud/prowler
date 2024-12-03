@@ -93,7 +93,7 @@ export const UpdateViaRoleForm = ({
       });
     } else {
       router.push(
-        `/providers/test-connection?type=${providerType}&id=${providerId}`,
+        `/providers/test-connection?type=${providerType}&id=${providerId}&updated=true`,
       );
     }
   };
