@@ -18,61 +18,61 @@ class Microsoft365BaseException(ProwlerException):
             "message": "Microsoft365 region configuration setup error",
             "remediation": "Check the Microsoft365 region configuration and ensure it is properly set up.",
         },
-        (6003, "Microsoft365DefaultAzureCredentialError"): {
-            "message": "Error in DefaultAzureCredential",
-            "remediation": "Check that all the attributes are properly set up for the DefaultAzureCredential.",
-        },
-        (6004, "Microsoft365HTTPResponseError"): {
+        (6003, "Microsoft365HTTPResponseError"): {
             "message": "Error in HTTP response from Microsoft365",
             "remediation": "",
         },
-        (6005, "Microsoft365CredentialsUnavailableError"): {
+        (6004, "Microsoft365CredentialsUnavailableError"): {
             "message": "Error trying to configure Microsoft365 credentials because they are unavailable",
             "remediation": "Check the dictionary and ensure it is properly set up for Microsoft365 credentials. TENANT_ID, CLIENT_ID and CLIENT_SECRET are required.",
         },
-        (6006, "Microsoft365GetTokenIdentityError"): {
+        (6005, "Microsoft365GetTokenIdentityError"): {
             "message": "Error trying to get token from Microsoft365 Identity",
             "remediation": "Check the Microsoft365 Identity and ensure it is properly set up.",
         },
-        (6007, "Microsoft365ClientAuthenticationError"): {
+        (6006, "Microsoft365ClientAuthenticationError"): {
             "message": "Error in client authentication",
             "remediation": "Check the client authentication and ensure it is properly set up.",
         },
-        (6008, "Microsoft365NotValidTenantIdError"): {
+        (6007, "Microsoft365NotValidTenantIdError"): {
             "message": "The provided tenant ID is not valid",
             "remediation": "Check the tenant ID and ensure it is a valid ID.",
         },
-        (6009, "Microsoft365NotValidClientIdError"): {
+        (6008, "Microsoft365NotValidClientIdError"): {
             "message": "The provided client ID is not valid",
             "remediation": "Check the client ID and ensure it is a valid ID.",
         },
-        (6010, "Microsoft365NotValidClientSecretError"): {
+        (6009, "Microsoft365NotValidClientSecretError"): {
             "message": "The provided client secret is not valid",
             "remediation": "Check the client secret and ensure it is a valid secret.",
         },
-        (6011, "Microsoft365ConfigCredentialsError"): {
+        (6010, "Microsoft365ConfigCredentialsError"): {
             "message": "Error in configuration of Microsoft365 credentials",
             "remediation": "Check the configuration of Microsoft365 credentials and ensure it is properly set up.",
         },
-        (6012, "Microsoft365ClientIdAndClientSecretNotBelongingToTenantIdError"): {
+        (6011, "Microsoft365ClientIdAndClientSecretNotBelongingToTenantIdError"): {
             "message": "The provided client ID and client secret do not belong to the provided tenant ID",
             "remediation": "Check the client ID and client secret and ensure they belong to the provided tenant ID.",
         },
-        (6013, "Microsoft365TenantIdAndClientSecretNotBelongingToClientIdError"): {
+        (6012, "Microsoft365TenantIdAndClientSecretNotBelongingToClientIdError"): {
             "message": "The provided tenant ID and client secret do not belong to the provided client ID",
             "remediation": "Check the tenant ID and client secret and ensure they belong to the provided client ID.",
         },
-        (6014, "Microsoft365TenantIdAndClientIdNotBelongingToClientSecretError"): {
+        (6013, "Microsoft365TenantIdAndClientIdNotBelongingToClientSecretError"): {
             "message": "The provided tenant ID and client ID do not belong to the provided client secret",
             "remediation": "Check the tenant ID and client ID and ensure they belong to the provided client secret.",
         },
-        (6015, "Microsoft365InvalidProviderIdError"): {
+        (6014, "Microsoft365InvalidProviderIdError"): {
             "message": "The provided provider_id does not match with the available subscriptions",
             "remediation": "Check the provider_id and ensure it is a valid subscription for the given credentials.",
         },
-        (6016, "Microsoft365NoAuthenticationMethodError"): {
-            "message": "No Azure authentication method found",
-            "remediation": "Check that any authentication method is properly set up for Azure.",
+        (6015, "Microsoft365NoAuthenticationMethodError"): {
+            "message": "No Microsoft365 authentication method found",
+            "remediation": "Check that any authentication method is properly set up for Microsoft365.",
+        },
+        (6016, "Microsoft365SetUpSessionError"): {
+            "message": "Error setting up session",
+            "remediation": "Check the session setup and ensure it is properly set up.",
         },
     }
 
@@ -114,70 +114,63 @@ class Microsoft365ArgumentTypeValidationError(Microsoft365BaseException):
 class Microsoft365SetUpRegionConfigError(Microsoft365BaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            6003, file=file, original_exception=original_exception, message=message
-        )
-
-
-class Microsoft365DefaultAzureCredentialError(Microsoft365CredentialsError):
-    def __init__(self, file=None, original_exception=None, message=None):
-        super().__init__(
-            6003, file=file, original_exception=original_exception, message=message
+            6002, file=file, original_exception=original_exception, message=message
         )
 
 
 class Microsoft365HTTPResponseError(Microsoft365BaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            6004, file=file, original_exception=original_exception, message=message
+            6003, file=file, original_exception=original_exception, message=message
         )
 
 
 class Microsoft365CredentialsUnavailableError(Microsoft365CredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            6005, file=file, original_exception=original_exception, message=message
+            6004, file=file, original_exception=original_exception, message=message
         )
 
 
 class Microsoft365GetTokenIdentityError(Microsoft365BaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            6006, file=file, original_exception=original_exception, message=message
+            6005, file=file, original_exception=original_exception, message=message
         )
 
 
 class Microsoft365ClientAuthenticationError(Microsoft365CredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            6007, file=file, original_exception=original_exception, message=message
+            6006, file=file, original_exception=original_exception, message=message
         )
 
 
 class Microsoft365NotValidTenantIdError(Microsoft365CredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            6008, file=file, original_exception=original_exception, message=message
+            6007, file=file, original_exception=original_exception, message=message
         )
 
 
 class Microsoft365NotValidClientIdError(Microsoft365CredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            6009, file=file, original_exception=original_exception, message=message
+            6008, file=file, original_exception=original_exception, message=message
         )
 
 
 class Microsoft365NotValidClientSecretError(Microsoft365CredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            6010, file=file, original_exception=original_exception, message=message
+            6009, file=file, original_exception=original_exception, message=message
         )
 
 
 class Microsoft365ConfigCredentialsError(Microsoft365CredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            6011, file=file, original_exception=original_exception, message=message
+            6010, file=file, original_exception=original_exception, message=message
         )
 
 
@@ -186,7 +179,7 @@ class Microsoft365ClientIdAndClientSecretNotBelongingToTenantIdError(
 ):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            6012, file=file, original_exception=original_exception, message=message
+            6011, file=file, original_exception=original_exception, message=message
         )
 
 
@@ -195,7 +188,7 @@ class Microsoft365TenantIdAndClientSecretNotBelongingToClientIdError(
 ):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            6013, file=file, original_exception=original_exception, message=message
+            6012, file=file, original_exception=original_exception, message=message
         )
 
 
@@ -204,18 +197,25 @@ class Microsoft365TenantIdAndClientIdNotBelongingToClientSecretError(
 ):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            6014, file=file, original_exception=original_exception, message=message
+            6013, file=file, original_exception=original_exception, message=message
         )
 
 
 class Microsoft365InvalidProviderIdError(Microsoft365BaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            6015, file=file, original_exception=original_exception, message=message
+            6014, file=file, original_exception=original_exception, message=message
         )
 
 
 class Microsoft365NoAuthenticationMethodError(Microsoft365CredentialsError):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            6015, file=file, original_exception=original_exception, message=message
+        )
+
+
+class Microsoft365SetUpSessionError(Microsoft365CredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             6016, file=file, original_exception=original_exception, message=message

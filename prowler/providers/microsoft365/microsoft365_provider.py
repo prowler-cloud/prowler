@@ -6,7 +6,7 @@ from os import getenv
 from uuid import UUID
 
 from azure.core.exceptions import ClientAuthenticationError, HttpResponseError
-from azure.identity import ClientSecretCredential, DefaultAzureCredential
+from azure.identity import ClientSecretCredential, CredentialUnavailableError
 from colorama import Fore, Style
 from msal import ConfidentialClientApplication
 from msgraph import GraphServiceClient
@@ -26,7 +26,6 @@ from prowler.providers.microsoft365.exceptions.exceptions import (
     Microsoft365ClientIdAndClientSecretNotBelongingToTenantIdError,
     Microsoft365ConfigCredentialsError,
     Microsoft365CredentialsUnavailableError,
-    Microsoft365DefaultAzureCredentialError,
     Microsoft365EnvironmentVariableError,
     Microsoft365GetTokenIdentityError,
     Microsoft365HTTPResponseError,
@@ -35,6 +34,7 @@ from prowler.providers.microsoft365.exceptions.exceptions import (
     Microsoft365NotValidClientSecretError,
     Microsoft365NotValidTenantIdError,
     Microsoft365SetUpRegionConfigError,
+    Microsoft365SetUpSessionError,
     Microsoft365TenantIdAndClientIdNotBelongingToClientSecretError,
     Microsoft365TenantIdAndClientSecretNotBelongingToClientIdError,
 )
@@ -82,7 +82,7 @@ class Microsoft365Provider(Provider):
     """
 
     _type: str = "microsoft365"
-    _session: DefaultAzureCredential
+    _session: ClientSecretCredential
     _identity: Microsoft365IdentityInfo
     _audit_config: dict
     _region_config: Microsoft365RegionConfig
@@ -93,7 +93,7 @@ class Microsoft365Provider(Provider):
     def __init__(
         self,
         tenant_id: str = None,
-        region: str = "AzureCloud",
+        region: str = "Microsoft365Global",
         client_id: str = None,
         client_secret: str = None,
         config_content: dict = None,
@@ -122,7 +122,6 @@ class Microsoft365Provider(Provider):
         Raises:
             Microsoft365ArgumentTypeValidationError: If there is an error in the argument type validation.
             Microsoft365SetUpRegionConfigError: If there is an error in setting up the region configuration.
-            Microsoft365DefaultAzureCredentialError: If there is an error in retrieving the Microsoft365 credentials.
             Microsoft365ConfigCredentialsError: If there is an error in configuring the Microsoft365 credentials from a dictionary.
             Microsoft365GetTokenIdentityError: If there is an error in getting the token from the Microsoft365 identity.
             Microsoft365HTTPResponseError: If there is an HTTP response error.
@@ -142,6 +141,7 @@ class Microsoft365Provider(Provider):
         # Set up the Microsoft365 session
         self._session = self.setup_session(
             microsoft365_credentials,
+            self._region_config,
         )
 
         # Set up the identity
@@ -214,21 +214,21 @@ class Microsoft365Provider(Provider):
         client_secret: str,
     ):
         """
-        Validates the authentication arguments for the Azure provider.
+        Validates the authentication arguments for the Microsoft365 provider.
 
         Args:
-            tenant_id (str): The Azure Tenant ID.
-            client_id (str): The Azure Client ID.
-            client_secret (str): The Azure Client Secret.
+            tenant_id (str): The Microsoft365 Tenant ID.
+            client_id (str): The Microsoft365 Client ID.
+            client_secret (str): The Microsoft365 Client Secret.
 
         Raises:
-            AzureBrowserAuthNoTenantIDError: If browser authentication is enabled but the tenant ID is not found.
+
         """
 
         if not client_id or not client_secret or not tenant_id:
             raise Microsoft365IdentityInfo(
                 file=os.path.basename(__file__),
-                message="Tenant Id is required for Azure static credentials. Make sure you are using the correct credentials.",
+                message="Tenant Id is required for Microsoft365 static credentials. Make sure you are using the correct credentials.",
             )
 
     @staticmethod
@@ -297,6 +297,7 @@ class Microsoft365Provider(Provider):
     @staticmethod
     def setup_session(
         microsoft365_credentials: dict,
+        region_config: Microsoft365RegionConfig,
     ):
         """Returns the Microsoft365 credentials object.
 
@@ -324,17 +325,50 @@ class Microsoft365Provider(Provider):
                 f"{environment_credentials_error.__class__.__name__}[{environment_credentials_error.__traceback__.tb_lineno}] -- {environment_credentials_error}"
             )
             raise environment_credentials_error
-        if not credentials:
-            raise Microsoft365CredentialsUnavailableError(
-                file=os.path.basename(__file__),
-                message="Failed to retrieve Microsoft365 credentials.",
+        try:
+            if microsoft365_credentials:
+                try:
+                    credentials = ClientSecretCredential(
+                        tenant_id=microsoft365_credentials["tenant_id"],
+                        client_id=microsoft365_credentials["client_id"],
+                        client_secret=microsoft365_credentials["client_secret"],
+                    )
+                    return credentials
+                except ClientAuthenticationError as error:
+                    logger.error(
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+                    )
+                    raise Microsoft365ClientAuthenticationError(
+                        file=os.path.basename(__file__), original_exception=error
+                    )
+                except CredentialUnavailableError as error:
+                    logger.error(
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+                    )
+                    raise Microsoft365CredentialsUnavailableError(
+                        file=os.path.basename(__file__), original_exception=error
+                    )
+                except Exception as error:
+                    logger.error(
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+                    )
+                    raise Microsoft365ConfigCredentialsError(
+                        file=os.path.basename(__file__), original_exception=error
+                    )
+        except Exception as error:
+            logger.critical("Failed to retrieve Microsoft365 credentials")
+            logger.critical(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            raise Microsoft365SetUpSessionError(
+                file=os.path.basename(__file__), original_exception=error
             )
         return credentials
 
     @staticmethod
     def test_connection(
         tenant_id=None,
-        region="AzureCloud",
+        region="Microsoft365Global",
         raise_on_exception=True,
         client_id=None,
         client_secret=None,
@@ -350,7 +384,6 @@ class Microsoft365Provider(Provider):
             raise_on_exception (bool): Flag indicating whether to raise an exception if the connection fails.
             client_id (str): The Microsoft365 client ID.
             client_secret (str): The Microsoft365 client secret.
-            provider_id (str): The provider ID, in this case it's the Microsoft365 subscription ID.
 
         Returns:
             bool: True if the connection is successful, False otherwise.
@@ -359,7 +392,6 @@ class Microsoft365Provider(Provider):
             Exception: If failed to test the connection to Microsoft365 subscription.
             Microsoft365ArgumentTypeValidationError: If there is an error in the argument type validation.
             Microsoft365SetUpRegionConfigError: If there is an error in setting up the region configuration.
-            Microsoft365DefaultAzureCredentialError: If there is an error in retrieving the Microsoft365 credentials.
             Microsoft365InteractiveBrowserCredentialError: If there is an error in retrieving the Microsoft365 credentials using browser authentication.
             Microsoft365HTTPResponseError: If there is an HTTP response error.
             Microsoft365ConfigCredentialsError: If there is an error in configuring the Microsoft365 credentials from a dictionary.
@@ -374,7 +406,7 @@ class Microsoft365Provider(Provider):
             True
         """
         try:
-            Microsoft365Provider.setup_region_config(region)
+            region_config = Microsoft365Provider.setup_region_config(region)
 
             # Get the dict from the static credentials
             microsoft365_credentials = None
@@ -388,9 +420,12 @@ class Microsoft365Provider(Provider):
                 )
 
             # Set up the Microsoft365 session
-            Microsoft365Provider.setup_session(
+            credentials = Microsoft365Provider.setup_session(
                 microsoft365_credentials,
+                region_config,
             )
+
+            GraphServiceClient(credentials=credentials)
 
             logger.info("Microsoft365 provider: Connection to Microsoft365 successful")
 
@@ -419,13 +454,6 @@ class Microsoft365Provider(Provider):
             if raise_on_exception:
                 raise environment_credentials_error
             return Connection(error=environment_credentials_error)
-        except Microsoft365DefaultAzureCredentialError as default_credentials_error:
-            logger.error(
-                f"{default_credentials_error.__class__.__name__}[{default_credentials_error.__traceback__.tb_lineno}]: {default_credentials_error}"
-            )
-            if raise_on_exception:
-                raise default_credentials_error
-            return Connection(error=default_credentials_error)
         except Microsoft365ConfigCredentialsError as config_credentials_error:
             logger.error(
                 f"{config_credentials_error.__class__.__name__}[{config_credentials_error.__traceback__.tb_lineno}]: {config_credentials_error}"
@@ -447,13 +475,6 @@ class Microsoft365Provider(Provider):
             if raise_on_exception:
                 raise credential_unavailable_error
             return Connection(error=credential_unavailable_error)
-        except Microsoft365DefaultAzureCredentialError as default_credentials_error:
-            logger.error(
-                f"{default_credentials_error.__class__.__name__}[{default_credentials_error.__traceback__.tb_lineno}]: {default_credentials_error}"
-            )
-            if raise_on_exception:
-                raise default_credentials_error
-            return Connection(error=default_credentials_error)
         except (
             Microsoft365ClientIdAndClientSecretNotBelongingToTenantIdError
         ) as tenant_id_error:

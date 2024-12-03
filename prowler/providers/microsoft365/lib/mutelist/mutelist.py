@@ -11,7 +11,6 @@ class Microsoft365Mutelist(Mutelist):
         return self.is_muted(
             finding.tenant_id,
             finding.check_metadata.CheckID,
-            finding.tenant_domain,
             finding.location,
             finding.resource_name,
             unroll_dict(unroll_tags(finding.resource_tags)),
