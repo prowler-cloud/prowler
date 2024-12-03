@@ -189,15 +189,17 @@ class Backup(AWSService):
                 )
                 for page in paginator.paginate(BackupVaultName=backup_vault.name):
                     for recovery_point in page.get("RecoveryPoints", []):
-                        self.recovery_points.append(
-                            RecoveryPoint(
-                                arn=recovery_point.get("RecoveryPointArn"),
-                                backup_vault_name=backup_vault.name,
-                                encrypted=recovery_point.get("IsEncrypted", False),
-                                backup_vault_region=backup_vault.region,
-                                tags=[],
+                        arn = recovery_point.get("RecoveryPointArn")
+                        if arn:
+                            self.recovery_points.append(
+                                RecoveryPoint(
+                                    arn=arn,
+                                    backup_vault_name=backup_vault.name,
+                                    encrypted=recovery_point.get("IsEncrypted", False),
+                                    backup_vault_region=backup_vault.region,
+                                    tags=[],
+                                )
                             )
-                        )
         except ClientError as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
