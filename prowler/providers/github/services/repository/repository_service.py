@@ -17,45 +17,41 @@ class Repository(GithubService):
         try:
             for client in self.clients:
                 for repo in client.get_user().get_repos():
-                    if not repo.private:
-                        default_branch = repo.get_branch(repo.default_branch).name
-                        try:
-                            securitymd_exists = (
-                                repo.get_contents("SECURITY.md") is not None
-                            )
-                        except Exception:
-                            securitymd_exists = False
+                    default_branch = repo.default_branch
+                    try:
+                        securitymd_exists = repo.get_contents("SECURITY.md") is not None
+                    except Exception:
+                        securitymd_exists = False
 
-                        require_pr = False
+                    branch = repo.get_branch(default_branch)
+                    require_pr = False
+                    approval_cnt = 0
+                    if branch.protected:
                         try:
-                            branch = repo.get_branch(default_branch)
                             protection = branch.get_protection()
-                            require_pr = protection.required_pull_request_reviews
-                            approval_cnt = (
-                                protection.required_pull_request_reviews.required_approving_review_count
-                                if require_pr
-                                else 0
-                            )
-                            print(
-                                f"Protección de rama encontrada para {branch.name}: {approval_cnt} aprobaciones requeridas."
-                            )
-                        except Exception as e:
-                            logger.error(
-                                f"Error getting branch protection for {repo.name}: {e}"
-                            )
+                            if protection:
+                                require_pr = (
+                                    protection.required_pull_request_reviews is not None
+                                )
+                                approval_cnt = (
+                                    protection.required_pull_request_reviews.required_approving_review_count
+                                    if require_pr
+                                    else 0
+                                )
+                        except Exception:
                             require_pr = False
                             approval_cnt = 0
 
-                        repos[repo.id] = Repo(
-                            id=repo.id,
-                            name=repo.name,
-                            full_name=repo.full_name,
-                            default_branch=repo.default_branch,
-                            private=repo.private,
-                            securitymd=securitymd_exists,
-                            require_pull_request=require_pr,
-                            approval_count=approval_cnt,
-                        )
+                    repos[repo.id] = Repo(
+                        id=repo.id,
+                        name=repo.name,
+                        full_name=repo.full_name,
+                        default_branch=repo.default_branch,
+                        private=repo.private,
+                        securitymd=securitymd_exists,
+                        require_pull_request=require_pr,
+                        approval_count=approval_cnt,
+                    )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
