@@ -31,6 +31,12 @@ export const scheduleScanFormSchema = () =>
     scheduleDate: z.string(),
   });
 
+export const awsCredentialsTypeSchema = z.object({
+  awsCredentialsType: z.string().min(1, {
+    message: "Please select the type of credentials you want to use",
+  }),
+});
+
 export const addProviderFormSchema = z
   .object({
     providerType: z.enum(["aws", "azure", "gcp", "kubernetes"], {
@@ -43,9 +49,6 @@ export const addProviderFormSchema = z
         providerType: z.literal("aws"),
         providerAlias: z.string(),
         providerUid: z.string(),
-        awsCredentialsType: z.string().min(1, {
-          message: "Please select the type of credentials you want to use",
-        }),
       }),
       z.object({
         providerType: z.literal("azure"),
