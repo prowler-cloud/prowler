@@ -1,8 +1,9 @@
 from celery.utils.log import get_task_logger
 from django.db import transaction
 
-from api.db_utils import batch_delete
-from api.models import Finding, Provider, Resource, Scan, ScanSummary
+from api.db_router import MainRouter
+from api.db_utils import batch_delete, tenant_transaction
+from api.models import Finding, Provider, Resource, Scan, ScanSummary, Tenant
 
 logger = get_task_logger(__name__)
 
@@ -47,5 +48,31 @@ def delete_provider(pk: str):
 
         provider_deleted_count, provider_summary = instance.delete()
         deletion_summary.update(provider_summary)
+
+    return deletion_summary
+
+
+def delete_tenant(pk: str):
+    """
+    Gracefully deletes an instance of a tenant along with its related data.
+
+    Args:
+        pk (str): The primary key of the Tenant instance to delete.
+
+    Returns:
+        dict: A dictionary with the count of deleted objects per model,
+              including related models.
+
+    Raises:
+        Tenant.DoesNotExist: If no instance with the provided primary key exists.
+    """
+    deletion_summary = {}
+
+    for provider in Provider.objects.using(MainRouter.admin_db).filter(tenant_id=pk):
+        with tenant_transaction(pk):
+            summary = delete_provider(provider.id)
+            deletion_summary.update(summary)
+
+    Tenant.objects.using(MainRouter.admin_db).filter(id=pk).delete()
 
     return deletion_summary
