@@ -11,6 +11,9 @@ class Test_glacier_vaults_policy_public_access:
         with mock.patch(
             "prowler.providers.aws.services.glacier.glacier_service.Glacier",
             new=glacier_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.glacier.glacier_client.glacier_client",
+            new=glacier_client,
         ):
             # Test Check
             from prowler.providers.aws.services.glacier.glacier_vaults_policy_public_access.glacier_vaults_policy_public_access import (
@@ -36,6 +39,9 @@ class Test_glacier_vaults_policy_public_access:
         }
         with mock.patch(
             "prowler.providers.aws.services.glacier.glacier_service.Glacier",
+            new=glacier_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.glacier.glacier_client.glacier_client",
             new=glacier_client,
         ):
             # Test Check
@@ -89,6 +95,9 @@ class Test_glacier_vaults_policy_public_access:
         with mock.patch(
             "prowler.providers.aws.services.glacier.glacier_service.Glacier",
             new=glacier_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.glacier.glacier_client.glacier_client",
+            new=glacier_client,
         ):
             # Test Check
             from prowler.providers.aws.services.glacier.glacier_vaults_policy_public_access.glacier_vaults_policy_public_access import (
@@ -141,6 +150,9 @@ class Test_glacier_vaults_policy_public_access:
         with mock.patch(
             "prowler.providers.aws.services.glacier.glacier_service.Glacier",
             new=glacier_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.glacier.glacier_client.glacier_client",
+            new=glacier_client,
         ):
             # Test Check
             from prowler.providers.aws.services.glacier.glacier_vaults_policy_public_access.glacier_vaults_policy_public_access import (
@@ -192,6 +204,9 @@ class Test_glacier_vaults_policy_public_access:
         }
         with mock.patch(
             "prowler.providers.aws.services.glacier.glacier_service.Glacier",
+            new=glacier_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.glacier.glacier_client.glacier_client",
             new=glacier_client,
         ):
             # Test Check
@@ -248,6 +263,9 @@ class Test_glacier_vaults_policy_public_access:
         }
         with mock.patch(
             "prowler.providers.aws.services.glacier.glacier_service.Glacier",
+            new=glacier_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.glacier.glacier_client.glacier_client",
             new=glacier_client,
         ):
             # Test Check
