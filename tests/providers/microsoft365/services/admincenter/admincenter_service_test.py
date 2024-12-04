@@ -1,6 +1,6 @@
 from unittest.mock import patch
 
-from prowler.providers.azure.models import AzureIdentityInfo
+from prowler.providers.microsoft365.models import Microsoft365IdentityInfo
 from prowler.providers.microsoft365.services.admincenter.admincenter_service import (
     AdminCenter,
     DirectoryRole,
@@ -15,33 +15,27 @@ from tests.providers.microsoft365.microsoft365_fixtures import (
 
 async def mock_admincenter_get_users(_):
     return {
-        DOMAIN: {
-            "user-1@tenant1.es": User(
-                id="id-1",
-                name="User 1",
-                directory_roles=[],
-            ),
-        }
+        "user-1@tenant1.es": User(
+            id="id-1",
+            name="User 1",
+            directory_roles=[],
+        ),
     }
 
 
 async def mock_admincenter_get_directory_roles(_):
     return {
-        DOMAIN: {
-            "GlobalAdministrator": DirectoryRole(
-                id="id-directory-role",
-                name="GlobalAdministrator",
-                members=[],
-            )
-        }
+        "GlobalAdministrator": DirectoryRole(
+            id="id-directory-role",
+            name="GlobalAdministrator",
+            members=[],
+        )
     }
 
 
 async def mock_admincenter_get_groups(_):
     return {
-        DOMAIN: {
-            "id-1": Group(id="id-1", name="Test", visibility="Public"),
-        }
+        "id-1": Group(id="id-1", name="Test", visibility="Public"),
     }
 
 
@@ -61,38 +55,30 @@ class Test_AdminCenter_Service:
     def test_get_client(self):
         admincenter_client = AdminCenter(
             set_mocked_microsoft365_provider(
-                identity=AzureIdentityInfo(tenant_domain=DOMAIN)
+                identity=Microsoft365IdentityInfo(tenant_domain=DOMAIN)
             )
         )
-        assert (
-            admincenter_client.clients[DOMAIN].__class__.__name__
-            == "GraphServiceClient"
-        )
+        assert admincenter_client.client.__class__.__name__ == "GraphServiceClient"
 
     def test_get_users(self):
         admincenter_client = AdminCenter(set_mocked_microsoft365_provider())
         assert len(admincenter_client.users) == 1
-        assert admincenter_client.users[DOMAIN]["user-1@tenant1.es"].id == "id-1"
-        assert admincenter_client.users[DOMAIN]["user-1@tenant1.es"].name == "User 1"
+        assert admincenter_client.users["user-1@tenant1.es"].id == "id-1"
+        assert admincenter_client.users["user-1@tenant1.es"].name == "User 1"
 
     def test_get_group_settings(self):
         admincenter_client = AdminCenter(set_mocked_microsoft365_provider())
         assert len(admincenter_client.groups) == 1
-        assert admincenter_client.groups[DOMAIN]["id-1"].id == "id-1"
-        assert admincenter_client.groups[DOMAIN]["id-1"].name == "Test"
-        assert admincenter_client.groups[DOMAIN]["id-1"].visibility == "Public"
+        assert admincenter_client.groups["id-1"].id == "id-1"
+        assert admincenter_client.groups["id-1"].name == "Test"
+        assert admincenter_client.groups["id-1"].visibility == "Public"
 
     def test_get_directory_roles(self):
         admincenter_client = AdminCenter(set_mocked_microsoft365_provider())
         assert (
-            admincenter_client.directory_roles[DOMAIN]["GlobalAdministrator"].id
+            admincenter_client.directory_roles["GlobalAdministrator"].id
             == "id-directory-role"
         )
         assert (
-            len(
-                admincenter_client.directory_roles[DOMAIN][
-                    "GlobalAdministrator"
-                ].members
-            )
-            == 0
+            len(admincenter_client.directory_roles["GlobalAdministrator"].members) == 0
         )

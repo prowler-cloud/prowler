@@ -8,8 +8,10 @@ from tests.providers.microsoft365.microsoft365_fixtures import (
 
 
 class Test_admincenter_users_between_two_and_four_global_admins:
-    def test_admincenter_no_tenants(self):
+    def test_admincenter_no_directory_roles(self):
         admincenter_client = mock.MagicMock
+        admincenter_client.audited_tenant = "audited_tenant"
+        admincenter_client.audited_domain = DOMAIN
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -28,28 +30,10 @@ class Test_admincenter_users_between_two_and_four_global_admins:
             result = check.execute()
             assert len(result) == 0
 
-    def test_admincenter_tenant_empty(self):
-        admincenter_client = mock.MagicMock
-
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_microsoft365_provider(),
-        ), mock.patch(
-            "prowler.providers.microsoft365.services.admincenter.admincenter_users_between_two_and_four_global_admins.admincenter_users_between_two_and_four_global_admins.admincenter_client",
-            new=admincenter_client,
-        ):
-            from prowler.providers.microsoft365.services.admincenter.admincenter_users_between_two_and_four_global_admins.admincenter_users_between_two_and_four_global_admins import (
-                admincenter_users_between_two_and_four_global_admins,
-            )
-
-            admincenter_client.directory_roles = {DOMAIN: {}}
-
-            check = admincenter_users_between_two_and_four_global_admins()
-            result = check.execute()
-            assert len(result) == 0
-
     def test_admincenter_less_than_five_global_admins(self):
         admincenter_client = mock.MagicMock
+        admincenter_client.audited_tenant = "audited_tenant"
+        admincenter_client.audited_domain = DOMAIN
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -71,16 +55,14 @@ class Test_admincenter_users_between_two_and_four_global_admins:
             id_user2 = str(uuid4())
 
             admincenter_client.directory_roles = {
-                DOMAIN: {
-                    "Global Administrator": DirectoryRole(
-                        id=id,
-                        name="Global Administrator",
-                        members=[
-                            User(id=id_user1, name="User1"),
-                            User(id=id_user2, name="User2"),
-                        ],
-                    )
-                }
+                "Global Administrator": DirectoryRole(
+                    id=id,
+                    name="Global Administrator",
+                    members=[
+                        User(id=id_user1, name="User1"),
+                        User(id=id_user2, name="User2"),
+                    ],
+                )
             }
 
             check = admincenter_users_between_two_and_four_global_admins()
@@ -93,6 +75,8 @@ class Test_admincenter_users_between_two_and_four_global_admins:
 
     def test_admincenter_more_than_five_global_admins(self):
         admincenter_client = mock.MagicMock
+        admincenter_client.audited_tenant = "audited_tenant"
+        admincenter_client.audited_domain = DOMAIN
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -118,20 +102,18 @@ class Test_admincenter_users_between_two_and_four_global_admins:
             id_user6 = str(uuid4())
 
             admincenter_client.directory_roles = {
-                DOMAIN: {
-                    "Global Administrator": DirectoryRole(
-                        id=id,
-                        name="Global Administrator",
-                        members=[
-                            User(id=id_user1, name="User1"),
-                            User(id=id_user2, name="User2"),
-                            User(id=id_user3, name="User3"),
-                            User(id=id_user4, name="User4"),
-                            User(id=id_user5, name="User5"),
-                            User(id=id_user6, name="User6"),
-                        ],
-                    )
-                }
+                "Global Administrator": DirectoryRole(
+                    id=id,
+                    name="Global Administrator",
+                    members=[
+                        User(id=id_user1, name="User1"),
+                        User(id=id_user2, name="User2"),
+                        User(id=id_user3, name="User3"),
+                        User(id=id_user4, name="User4"),
+                        User(id=id_user5, name="User5"),
+                        User(id=id_user6, name="User6"),
+                    ],
+                )
             }
 
             check = admincenter_users_between_two_and_four_global_admins()
@@ -147,6 +129,8 @@ class Test_admincenter_users_between_two_and_four_global_admins:
 
     def test_admincenter_one_global_admin(self):
         admincenter_client = mock.MagicMock
+        admincenter_client.audited_tenant = "audited_tenant"
+        admincenter_client.audited_domain = DOMAIN
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -167,15 +151,13 @@ class Test_admincenter_users_between_two_and_four_global_admins:
             id_user1 = str(uuid4())
 
             admincenter_client.directory_roles = {
-                DOMAIN: {
-                    "Global Administrator": DirectoryRole(
-                        id=id,
-                        name="Global Administrator",
-                        members=[
-                            User(id=id_user1, name="User1"),
-                        ],
-                    )
-                }
+                "Global Administrator": DirectoryRole(
+                    id=id,
+                    name="Global Administrator",
+                    members=[
+                        User(id=id_user1, name="User1"),
+                    ],
+                )
             }
 
             check = admincenter_users_between_two_and_four_global_admins()
