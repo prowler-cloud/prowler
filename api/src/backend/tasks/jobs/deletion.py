@@ -62,9 +62,6 @@ def delete_tenant(pk: str):
     Returns:
         dict: A dictionary with the count of deleted objects per model,
               including related models.
-
-    Raises:
-        Tenant.DoesNotExist: If no instance with the provided primary key exists.
     """
     deletion_summary = {}
 
