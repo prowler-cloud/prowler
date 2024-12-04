@@ -524,5 +524,36 @@ kubectl logs prowler-XXXXX --namespace prowler-ns
 ???+ note
     By default, `prowler` will scan all namespaces in your active Kubernetes context. Use the flag `--context` to specify the context to be scanned and `--namespaces` to specify the namespaces to be scanned.
 
+#### GitHub
+
+Prowler allows allows you to scan your GitHub account, including your repositories, organizations or applicatons.
+
+There are several supported login methods:
+
+Personal Access Token (PAT):
+```console
+prowler github --personal-access-token pat
+```
+
+OAuth App Token:
+```console
+prowler github --oauth-app-token oauth_token
+```
+
+GitHub App Credentials:
+```console
+prowler github --github-app-id app_id --github-app-key app_key
+```
+
+
+Prowler enables you to scan your GitHub account, including repositories, organizations, and applications.
+
+???+ note
+    If no token is explicitly provided, Prowler will automatically search for environment variables corresponding to these tokens, in the following order:
+    1. `GITHUB_PERSONAL_ACCESS_TOKEN`
+    2. `OAUTH_APP_TOKEN`
+    3. `GITHUB_APP_ID and GITHUB_APP_KEY`
+
+
 ## Prowler v2 Documentation
 For **Prowler v2 Documentation**, please check it out [here](https://github.com/prowler-cloud/prowler/blob/8818f47333a0c1c1a457453c87af0ea5b89a385f/README.md).
