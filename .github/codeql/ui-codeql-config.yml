@@ -1,3 +1,0 @@
-name: "Custom CodeQL Config for UI"
-paths:
-  - "ui/"
