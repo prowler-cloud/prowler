@@ -32,38 +32,37 @@ class AdminCenter(Microsoft365Service):
         logger.info("Microsoft365 - Getting users...")
         users = {}
         try:
-            for tenant, client in self.clients.items():
-                users_list = await client.users.get()
-                users.update({tenant: {}})
-                for user in users_list.value:
-                    license_details = await client.users.by_user_id(
+            users_list = await self.client.users.get()
+            users.update({})
+            for user in users_list.value:
+                license_details = await self.client.users.by_user_id(
+                    user.id
+                ).license_details.get()
+                try:
+                    mailbox_settings = await self.client.users.by_user_id(
                         user.id
-                    ).license_details.get()
-                    try:
-                        mailbox_settings = await client.users.by_user_id(
-                            user.id
-                        ).mailbox_settings.get()
-                        mailbox_settings.user_purpose
-                    except ODataError as error:
-                        if error.error.code == "MailboxNotEnabledForRESTAPI":
-                            pass
-                        else:
-                            logger.error(
-                                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                            )
-                    users[tenant].update(
-                        {
-                            user.id: User(
-                                id=user.id,
-                                name=user.display_name,
-                                license=(
-                                    license_details.value[0].sku_part_number
-                                    if license_details.value
-                                    else None
-                                ),
-                            )
-                        }
-                    )
+                    ).mailbox_settings.get()
+                    mailbox_settings.user_purpose
+                except ODataError as error:
+                    if error.error.code == "MailboxNotEnabledForRESTAPI":
+                        pass
+                    else:
+                        logger.error(
+                            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                users.update(
+                    {
+                        user.id: User(
+                            id=user.id,
+                            name=user.display_name,
+                            license=(
+                                license_details.value[0].sku_part_number
+                                if license_details.value
+                                else None
+                            ),
+                        )
+                    }
+                )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -75,31 +74,30 @@ class AdminCenter(Microsoft365Service):
         logger.info("Microsoft365 - Getting directory roles...")
         directory_roles_with_members = {}
         try:
-            for tenant, client in self.clients.items():
-                directory_roles_with_members.update({tenant: {}})
-                directory_roles = await client.directory_roles.get()
-                for directory_role in directory_roles.value:
-                    directory_role_members = (
-                        await client.directory_roles.by_directory_role_id(
-                            directory_role.id
-                        ).members.get()
-                    )
-                    members_with_roles = []
-                    for member in directory_role_members.value:
-                        user = self.users[tenant].get(member.id, None)
-                        if user:
-                            user.directory_roles.append(directory_role.display_name)
-                            members_with_roles.append(user)
+            directory_roles_with_members.update({})
+            directory_roles = await self.client.directory_roles.get()
+            for directory_role in directory_roles.value:
+                directory_role_members = (
+                    await self.client.directory_roles.by_directory_role_id(
+                        directory_role.id
+                    ).members.get()
+                )
+                members_with_roles = []
+                for member in directory_role_members.value:
+                    user = self.users.get(member.id, None)
+                    if user:
+                        user.directory_roles.append(directory_role.display_name)
+                        members_with_roles.append(user)
 
-                    directory_roles_with_members[tenant].update(
-                        {
-                            directory_role.display_name: DirectoryRole(
-                                id=directory_role.id,
-                                name=directory_role.display_name,
-                                members=members_with_roles,
-                            )
-                        }
-                    )
+                directory_roles_with_members.update(
+                    {
+                        directory_role.display_name: DirectoryRole(
+                            id=directory_role.id,
+                            name=directory_role.display_name,
+                            members=members_with_roles,
+                        )
+                    }
+                )
 
         except Exception as error:
             logger.error(
@@ -111,19 +109,18 @@ class AdminCenter(Microsoft365Service):
         logger.info("Microsoft365 - Getting groups...")
         groups = {}
         try:
-            for tenant, client in self.clients.items():
-                groups_list = await client.groups.get()
-                groups.update({tenant: {}})
-                for group in groups_list.value:
-                    groups[tenant].update(
-                        {
-                            group.id: Group(
-                                id=group.id,
-                                name=group.display_name,
-                                visibility=group.visibility,
-                            )
-                        }
-                    )
+            groups_list = await self.client.groups.get()
+            groups.update({})
+            for group in groups_list.value:
+                groups.update(
+                    {
+                        group.id: Group(
+                            id=group.id,
+                            name=group.display_name,
+                            visibility=group.visibility,
+                        )
+                    }
+                )
 
         except Exception as error:
             logger.error(

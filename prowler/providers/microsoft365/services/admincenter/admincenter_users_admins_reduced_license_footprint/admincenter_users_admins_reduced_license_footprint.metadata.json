@@ -2,10 +2,7 @@
   "Provider": "microsoft365",
   "CheckID": "admincenter_users_admins_reduced_license_footprint",
   "CheckTitle": "Ensure administrative accounts use licenses with a reduced application footprint",
-  "CheckType": [
-    "Identity",
-    "LicenseManagement"
-  ],
+  "CheckType": [],
   "ServiceName": "Admin Center",
   "SubServiceName": "",
   "ResourceIdTemplate": "",

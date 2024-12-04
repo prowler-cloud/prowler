@@ -2,9 +2,7 @@
   "Provider": "microsoft365",
   "CheckID": "admincenter_groups_not_public_visibility",
   "CheckTitle": "Ensure that only organizationally managed/approved public groups exist",
-  "CheckType": [
-    "Users"
-  ],
+  "CheckType": [],
   "ServiceName": "Admin Center",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
