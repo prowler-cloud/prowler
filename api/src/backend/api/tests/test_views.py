@@ -1,32 +1,28 @@
 import json
-from datetime import datetime
-from datetime import timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest.mock import ANY, Mock, patch
 
 import jwt
 import pytest
+from conftest import API_JSON_CONTENT_TYPE, TEST_PASSWORD, TEST_USER
 from django.urls import reverse
 from rest_framework import status
 
 from api.models import (
-    User,
     Membership,
     Provider,
     ProviderGroup,
     ProviderGroupMembership,
     Role,
     RoleProviderGroupRelationship,
-    Scan,
-    ProviderSecret,
     Invitation,
     UserRoleRelationship,
+    ProviderSecret,
+    Scan,
+    StateChoices,
+    User,
 )
 from api.rls import Tenant
-from conftest import (
-    API_JSON_CONTENT_TYPE,
-    TEST_PASSWORD,
-    TEST_USER,
-)
 
 TODAY = str(datetime.today().date())
 
@@ -799,10 +795,49 @@ class TestMembershipViewSet:
 
 @pytest.mark.django_db
 class TestProviderViewSet:
+    @pytest.fixture(scope="function")
+    def create_provider_group_relationship(
+        self, tenants_fixture, providers_fixture, provider_groups_fixture
+    ):
+        tenant, *_ = tenants_fixture
+        provider1, *_ = providers_fixture
+        provider_group1, *_ = provider_groups_fixture
+        provider_group_membership = ProviderGroupMembership.objects.create(
+            tenant=tenant, provider=provider1, provider_group=provider_group1
+        )
+        return provider_group_membership
+
     def test_providers_list(self, authenticated_client, providers_fixture):
         response = authenticated_client.get(reverse("provider-list"))
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == len(providers_fixture)
+
+    @pytest.mark.parametrize(
+        "include_values, expected_resources",
+        [
+            ("provider_groups", ["provider-groups"]),
+        ],
+    )
+    def test_providers_list_include(
+        self,
+        include_values,
+        expected_resources,
+        authenticated_client,
+        providers_fixture,
+        create_provider_group_relationship,
+    ):
+        response = authenticated_client.get(
+            reverse("provider-list"), {"include": include_values}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == len(providers_fixture)
+        assert "included" in response.json()
+
+        included_data = response.json()["included"]
+        for expected_type in expected_resources:
+            assert any(
+                d.get("type") == expected_type for d in included_data
+            ), f"Expected type '{expected_type}' not found in included data"
 
     def test_providers_retrieve(self, authenticated_client, providers_fixture):
         provider1, *_ = providers_fixture
@@ -1805,7 +1840,7 @@ class TestScanViewSet:
         ],
     )
     @patch("api.v1.views.Task.objects.get")
-    @patch("api.v1.views.perform_scan_task.delay")
+    @patch("api.v1.views.perform_scan_task.apply_async")
     def test_scans_create_valid(
         self,
         mock_perform_scan_task,
@@ -1948,6 +1983,10 @@ class TestScanViewSet:
                 ("started_at", "2024-01-02", 3),
                 ("started_at.gte", "2024-01-01", 3),
                 ("started_at.lte", "2024-01-01", 0),
+                ("trigger", Scan.TriggerChoices.MANUAL, 1),
+                ("state", StateChoices.AVAILABLE, 2),
+                ("state", StateChoices.FAILED, 1),
+                ("state.in", f"{StateChoices.FAILED},{StateChoices.AVAILABLE}", 3),
                 ("trigger", Scan.TriggerChoices.MANUAL, 1),
             ]
         ),
@@ -2465,6 +2504,72 @@ class TestFindingViewSet:
             reverse("finding-detail", kwargs={"pk": "random_id"}),
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_findings_services_regions_retrieve(
+        self, authenticated_client, findings_fixture
+    ):
+        finding_1, *_ = findings_fixture
+        response = authenticated_client.get(
+            reverse("finding-findings_services_regions"),
+            {"filter[inserted_at]": finding_1.updated_at.strftime("%Y-%m-%d")},
+        )
+        data = response.json()
+
+        expected_services = {"ec2", "s3"}
+        expected_regions = {"eu-west-1", "us-east-1"}
+
+        assert data["data"]["type"] == "finding-dynamic-filters"
+        assert data["data"]["id"] is None
+        assert set(data["data"]["attributes"]["services"]) == expected_services
+        assert set(data["data"]["attributes"]["regions"]) == expected_regions
+
+    def test_findings_services_regions_severity_retrieve(
+        self, authenticated_client, findings_fixture
+    ):
+        finding_1, *_ = findings_fixture
+        response = authenticated_client.get(
+            reverse("finding-findings_services_regions"),
+            {
+                "filter[severity__in]": ["low", "medium"],
+                "filter[inserted_at]": finding_1.updated_at.strftime("%Y-%m-%d"),
+            },
+        )
+        data = response.json()
+
+        expected_services = {"s3"}
+        expected_regions = {"eu-west-1"}
+
+        assert data["data"]["type"] == "finding-dynamic-filters"
+        assert data["data"]["id"] is None
+        assert set(data["data"]["attributes"]["services"]) == expected_services
+        assert set(data["data"]["attributes"]["regions"]) == expected_regions
+
+    def test_findings_services_regions_future_date(self, authenticated_client):
+        response = authenticated_client.get(
+            reverse("finding-findings_services_regions"),
+            {"filter[inserted_at]": "2048-01-01"},
+        )
+        data = response.json()
+        assert data["data"]["type"] == "finding-dynamic-filters"
+        assert data["data"]["id"] is None
+        assert data["data"]["attributes"]["services"] == []
+        assert data["data"]["attributes"]["regions"] == []
+
+    def test_findings_services_regions_invalid_date(self, authenticated_client):
+        response = authenticated_client.get(
+            reverse("finding-findings_services_regions"),
+            {"filter[inserted_at]": "2048-01-011"},
+        )
+        assert response.json() == {
+            "errors": [
+                {
+                    "detail": "Enter a valid date.",
+                    "status": "400",
+                    "source": {"pointer": "/data/attributes/inserted_at"},
+                    "code": "invalid",
+                }
+            ]
+        }
 
 
 @pytest.mark.django_db
@@ -3036,9 +3141,9 @@ class TestInvitationViewSet:
         response = authenticated_client.get(
             reverse("invitation-list"),
             {
-                f"filter[{filter_name}]": filter_value
-                if filter_name != "inviter"
-                else str(user.id)
+                f"filter[{filter_name}]": (
+                    filter_value if filter_name != "inviter" else str(user.id)
+                )
             },
         )
 
@@ -3717,3 +3822,44 @@ class TestOverviewViewSet:
         assert response.json()["data"][0]["attributes"]["resources"]["total"] == len(
             resources_fixture
         )
+
+    # TODO Add more tests for the rest of overviews
+
+
+@pytest.mark.django_db
+class TestScheduleViewSet:
+    @pytest.mark.parametrize("method", ["get", "post"])
+    def test_schedule_invalid_method_list(self, method, authenticated_client):
+        response = getattr(authenticated_client, method)(reverse("schedule-list"))
+        assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+
+    @patch("api.v1.views.Task.objects.get")
+    @patch("api.v1.views.schedule_provider_scan")
+    def test_schedule_daily(
+        self,
+        mock_schedule_scan,
+        mock_task_get,
+        authenticated_client,
+        providers_fixture,
+        tasks_fixture,
+    ):
+        provider, *_ = providers_fixture
+        prowler_task = tasks_fixture[0]
+        mock_schedule_scan.return_value.id = prowler_task.id
+        mock_task_get.return_value = prowler_task
+        json_payload = {
+            "provider_id": str(provider.id),
+        }
+        response = authenticated_client.post(
+            reverse("schedule-daily"), data=json_payload, format="json"
+        )
+        assert response.status_code == status.HTTP_202_ACCEPTED
+
+    def test_schedule_daily_provider_does_not_exist(self, authenticated_client):
+        json_payload = {
+            "provider_id": "4846c2f9-84b2-442b-94dd-3082e8eb9584",
+        }
+        response = authenticated_client.post(
+            reverse("schedule-daily"), data=json_payload, format="json"
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND

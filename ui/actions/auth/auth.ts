@@ -37,6 +37,10 @@ export async function authenticate(
               credentials: "Incorrect email or password",
             },
           };
+        case "CallbackRouteError":
+          return {
+            message: error.cause?.err?.message,
+          };
         default:
           return {
             message: "Unknown error",
@@ -89,7 +93,14 @@ export const createNewUser = async (
 
     return parsedResponse;
   } catch (error) {
-    return { errors: [{ detail: "Network error or server is unreachable" }] };
+    return {
+      errors: [
+        {
+          source: { pointer: "" },
+          detail: "Network error or server is unreachable",
+        },
+      ],
+    };
   }
 };
 
@@ -145,22 +156,31 @@ export const getUserByMe = async (accessToken: string) => {
       },
     });
 
-    if (!response.ok) throw new Error("Error in trying to get user by me");
-
     const parsedResponse = await response.json();
+    if (!response.ok) {
+      // Handle different HTTP error codes
+      switch (response.status) {
+        case 401:
+          throw new Error("Invalid or expired token");
+        case 403:
+          throw new Error(parsedResponse.errors?.[0]?.detail);
+        case 404:
+          throw new Error("User not found");
+        default:
+          throw new Error(
+            parsedResponse.errors?.[0]?.detail || "Unknown error",
+          );
+      }
+    }
 
-    const name = parsedResponse.data.attributes.name;
-    const email = parsedResponse.data.attributes.email;
-    const company = parsedResponse.data.attributes.company_name;
-    const dateJoined = parsedResponse.data.attributes.date_joined;
     return {
-      name,
-      email,
-      company,
-      dateJoined,
+      name: parsedResponse.data.attributes.name,
+      email: parsedResponse.data.attributes.email,
+      company: parsedResponse.data.attributes.company_name,
+      dateJoined: parsedResponse.data.attributes.date_joined,
     };
-  } catch (error) {
-    throw new Error("Error in trying to get user by me");
+  } catch (error: any) {
+    throw new Error(error.message || "Network error or server unreachable");
   }
 };
 

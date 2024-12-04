@@ -14,9 +14,11 @@ import React, { useCallback, useEffect, useRef } from "react";
 export const CustomDatePicker = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const defaultDate = today(getLocalTimeZone());
 
-  const [value, setValue] = React.useState(defaultDate);
+  const [value, setValue] = React.useState(() => {
+    const dateParam = searchParams.get("filter[updated_at]");
+    return dateParam ? today(getLocalTimeZone()) : null;
+  });
 
   const { locale } = useLocale();
 
@@ -46,8 +48,7 @@ export const CustomDatePicker = () => {
     }
     const params = new URLSearchParams(searchParams.toString());
     if (params.size === 0) {
-      // If all params are cleared, reset to default date
-      setValue(defaultDate);
+      setValue(null);
     }
   }, [searchParams]);
 
@@ -60,6 +61,8 @@ export const CustomDatePicker = () => {
     <div className="flex w-full flex-col md:gap-2">
       <DatePicker
         aria-label="Select a Date"
+        label="Date"
+        labelPlacement="inside"
         CalendarTopContent={
           <ButtonGroup
             fullWidth
@@ -78,7 +81,7 @@ export const CustomDatePicker = () => {
           </ButtonGroup>
         }
         calendarProps={{
-          focusedValue: value,
+          focusedValue: value || undefined,
           onFocusChange: setValue,
           nextButtonProps: {
             variant: "bordered",

@@ -1,8 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Icon } from "@iconify/react";
-import { Button, Checkbox, Divider, Link } from "@nextui-org/react";
+import { Link } from "@nextui-org/react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -12,20 +11,17 @@ import { NotificationIcon, ProwlerExtended } from "@/components/icons";
 import { ThemeSwitch } from "@/components/ThemeSwitch";
 import { useToast } from "@/components/ui";
 import { CustomButton, CustomInput } from "@/components/ui/custom";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormMessage,
-} from "@/components/ui/form";
+import { Form } from "@/components/ui/form";
 import { ApiError, authFormSchema } from "@/types";
 
 export const AuthForm = ({
   type,
   invitationToken,
+  isCloudEnv,
 }: {
   type: string;
   invitationToken?: string | null;
+  isCloudEnv?: boolean;
 }) => {
   const formSchema = authFormSchema(type);
   const router = useRouter();
@@ -38,7 +34,6 @@ export const AuthForm = ({
       ...(type === "sign-up" && {
         name: "",
         company: "",
-        termsAndConditions: false,
         confirmPassword: "",
         ...(invitationToken && { invitationToken }),
       }),
@@ -54,7 +49,6 @@ export const AuthForm = ({
         email: data.email.toLowerCase(),
         password: data.password,
       });
-
       if (result?.message === "Success") {
         router.push("/");
       } else if (result?.errors && "credentials" in result.errors) {
@@ -62,6 +56,8 @@ export const AuthForm = ({
           type: "server",
           message: result.errors.credentials ?? "Incorrect email or password",
         });
+      } else if (result?.message === "User email is not verified") {
+        router.push("/email-verification");
       } else {
         toast({
           variant: "destructive",
@@ -80,7 +76,12 @@ export const AuthForm = ({
           description: "The user was registered successfully.",
         });
         form.reset();
-        router.push("/sign-in");
+
+        if (isCloudEnv) {
+          router.push("/email-verification");
+        } else {
+          router.push("/sign-in");
+        }
       } else {
         newUser.errors.forEach((error: ApiError) => {
           const errorMessage = error.detail;
@@ -182,7 +183,7 @@ export const AuthForm = ({
                 isInvalid={!!form.formState.errors.password}
               />
 
-              {type === "sign-in" && (
+              {/* {type === "sign-in" && (
                 <div className="flex items-center justify-between px-1 py-2">
                   <Checkbox name="remember" size="sm">
                     Remember me
@@ -191,7 +192,7 @@ export const AuthForm = ({
                     Forgot password?
                   </Link>
                 </div>
-              )}
+              )} */}
               {type === "sign-up" && (
                 <>
                   <CustomInput
@@ -211,33 +212,6 @@ export const AuthForm = ({
                       isInvalid={!!form.formState.errors.invitationToken}
                     />
                   )}
-                  <FormField
-                    control={form.control}
-                    name="termsAndConditions"
-                    render={({ field }) => (
-                      <>
-                        <FormControl>
-                          <Checkbox
-                            isRequired
-                            className="py-4"
-                            size="sm"
-                            checked={field.value}
-                            onChange={(e) => field.onChange(e.target.checked)}
-                          >
-                            I agree with the&nbsp;
-                            <Link href="#" size="sm">
-                              Terms
-                            </Link>
-                            &nbsp; and&nbsp;
-                            <Link href="#" size="sm">
-                              Privacy Policy
-                            </Link>
-                          </Checkbox>
-                        </FormControl>
-                        <FormMessage className="text-system-error dark:text-system-error" />
-                      </>
-                    )}
-                  />
                 </>
               )}
 
@@ -269,7 +243,7 @@ export const AuthForm = ({
             </form>
           </Form>
 
-          {type === "sign-in" && (
+          {/* {type === "sign-in" && (
             <>
               <div className="flex items-center gap-4 py-2">
                 <Divider className="flex-1" />
@@ -299,7 +273,7 @@ export const AuthForm = ({
                 </Button>
               </div>
             </>
-          )}
+          )} */}
           {type === "sign-in" ? (
             <p className="text-center text-small">
               Need to create an account?&nbsp;

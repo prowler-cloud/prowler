@@ -110,6 +110,49 @@ export const scanOnDemand = async (formData: FormData) => {
     revalidatePath("/scans");
     return parseStringify(data);
   } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error(error);
+    return {
+      error: getErrorMessage(error),
+    };
+  }
+};
+
+export const scheduleDaily = async (formData: FormData) => {
+  const session = await auth();
+  const keyServer = process.env.API_BASE_URL;
+
+  const providerId = formData.get("providerId");
+
+  const url = new URL(`${keyServer}/schedules/daily`);
+
+  try {
+    const response = await fetch(url.toString(), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/vnd.api+json",
+        Accept: "application/vnd.api+json",
+        Authorization: `Bearer ${session?.accessToken}`,
+      },
+      body: JSON.stringify({
+        data: {
+          type: "daily-schedules",
+          attributes: {
+            provider_id: providerId,
+          },
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to schedule daily: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    revalidatePath("/scans");
+    return parseStringify(data);
+  } catch (error) {
+    // eslint-disable-next-line no-console
     console.error(error);
     return {
       error: getErrorMessage(error),
@@ -148,6 +191,7 @@ export const updateScan = async (formData: FormData) => {
     revalidatePath("/scans");
     return parseStringify(data);
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error(error);
     return {
       error: getErrorMessage(error),

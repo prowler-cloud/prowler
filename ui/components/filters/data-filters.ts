@@ -10,7 +10,7 @@ export const filterProviders = [
 export const filterScans = [
   {
     key: "provider_type__in",
-    labelCheckboxGroup: "Provider",
+    labelCheckboxGroup: "Cloud Provider",
     values: ["aws", "azure", "gcp", "kubernetes"],
   },
   {
@@ -51,7 +51,7 @@ export const filterFindings = [
   },
   {
     key: "provider_type__in",
-    labelCheckboxGroup: "Provider",
+    labelCheckboxGroup: "Cloud Provider",
     values: ["aws", "azure", "gcp", "kubernetes"],
   },
   // Add more filter categories as needed

@@ -1,22 +1,23 @@
 from celery.result import AsyncResult
 from django.conf import settings as django_settings
+from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.search import SearchQuery
 from django.db import transaction
-from django.db.models import Prefetch, Subquery, OuterRef, Count, Q, F
+from django.db.models import Count, F, OuterRef, Prefetch, Q, Subquery, Sum
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_control
 from drf_spectacular.settings import spectacular_settings
 from drf_spectacular_jsonapi.schemas.openapi import JsonApiAutoSchema
 from drf_spectacular.utils import (
-    extend_schema,
-    extend_schema_view,
     OpenApiParameter,
     OpenApiResponse,
     OpenApiTypes,
+    extend_schema,
+    extend_schema_view,
 )
 from drf_spectacular.views import SpectacularAPIView
-from rest_framework import status, permissions
+from rest_framework import permissions, status
 from rest_framework.decorators import action
 from rest_framework.exceptions import (
     MethodNotAllowed,
@@ -24,46 +25,57 @@ from rest_framework.exceptions import (
     PermissionDenied,
     ValidationError,
 )
-from rest_framework.generics import get_object_or_404, GenericAPIView
+from rest_framework.generics import GenericAPIView, get_object_or_404
 from rest_framework_json_api.views import RelationshipView, Response
-from rest_framework_simplejwt.exceptions import InvalidToken
-from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from rest_framework.permissions import SAFE_METHODS
 
-from api.base_views import BaseTenantViewset, BaseRLSViewSet, BaseUserViewset
+from tasks.beat import schedule_provider_scan
+from tasks.tasks import (
+    check_provider_connection_task,
+    delete_provider_task,
+    perform_scan_summary_task,
+    perform_scan_task,
+)
+
+from api.base_views import BaseRLSViewSet, BaseTenantViewset, BaseUserViewset
 from api.db_router import MainRouter
 from api.filters import (
+    ComplianceOverviewFilter,
+    FindingFilter,
+    InvitationFilter,
+    MembershipFilter,
     ProviderFilter,
     ProviderGroupFilter,
-    TenantFilter,
-    MembershipFilter,
-    ScanFilter,
-    TaskFilter,
-    ResourceFilter,
-    FindingFilter,
     ProviderSecretFilter,
-    InvitationFilter,
+    ResourceFilter,
+    ScanFilter,
+    ScanSummaryFilter,
+    TaskFilter,
+    TenantFilter,
     UserFilter,
     RoleFilter,
-    ComplianceOverviewFilter,
 )
 from api.models import (
     StatusChoices,
     User,
     UserRoleRelationship,
+    ComplianceOverview,
+    Finding,
+    Invitation,
     Membership,
     Provider,
     ProviderGroup,
     ProviderGroupMembership,
-    Scan,
-    Task,
-    Resource,
-    Finding,
     ProviderSecret,
-    Invitation,
     Role,
     RoleProviderGroupRelationship,
-    ComplianceOverview,
+    Resource,
+    Scan,
+    ScanSummary,
+    SeverityChoices,
+    StateChoices,
+    Task,
 )
 from api.pagination import ComplianceOverviewPagination
 from api.rbac.permissions import DISABLE_RBAC, HasPermissions, Permissions
@@ -77,13 +89,24 @@ from api.v1.serializers import (
     UserCreateSerializer,
     UserUpdateSerializer,
     UserRoleRelationshipSerializer,
+    ComplianceOverviewFullSerializer,
+    ComplianceOverviewSerializer,
+    FindingDynamicFilterSerializer,
+    FindingSerializer,
+    InvitationAcceptSerializer,
+    InvitationCreateSerializer,
+    InvitationSerializer,
+    InvitationUpdateSerializer,
     MembershipSerializer,
+    OverviewFindingSerializer,
+    OverviewProviderSerializer,
+    OverviewSeveritySerializer,
+    ProviderCreateSerializer,
+    ProviderGroupMembershipUpdateSerializer,
     ProviderGroupSerializer,
     ProviderGroupUpdateSerializer,
-    ProviderGroupMembershipUpdateSerializer,
     RoleProviderGroupRelationshipSerializer,
     ProviderSerializer,
-    ProviderCreateSerializer,
     ProviderUpdateSerializer,
     TenantSerializer,
     TaskSerializer,
@@ -91,27 +114,15 @@ from api.v1.serializers import (
     ScanCreateSerializer,
     ScanUpdateSerializer,
     ResourceSerializer,
-    FindingSerializer,
     ProviderSecretSerializer,
     ProviderSecretUpdateSerializer,
     ProviderSecretCreateSerializer,
-    InvitationSerializer,
-    InvitationCreateSerializer,
-    InvitationUpdateSerializer,
-    InvitationAcceptSerializer,
     RoleSerializer,
     RoleCreateSerializer,
     RoleUpdateSerializer,
-    ComplianceOverviewSerializer,
-    ComplianceOverviewFullSerializer,
-    OverviewProviderSerializer,
+    ScheduleDailyCreateSerializer,
 )
-from tasks.beat import schedule_provider_scan
-from tasks.tasks import (
-    check_provider_connection_task,
-    delete_provider_task,
-    perform_scan_task,
-)
+
 
 CACHE_DECORATOR = cache_control(
     max_age=django_settings.CACHE_MAX_AGE,
@@ -920,7 +931,10 @@ class ProviderViewSet(BaseRLSViewSet):
         )
 
     def destroy(self, request, *args, pk=None, **kwargs):
-        get_object_or_404(Provider, pk=pk)
+        provider = get_object_or_404(Provider, pk=pk)
+        provider.is_deleted = True
+        provider.save()
+
         with transaction.atomic():
             task = delete_provider_task.delay(
                 provider_id=pk, tenant_id=request.tenant_id
@@ -936,14 +950,6 @@ class ProviderViewSet(BaseRLSViewSet):
                 )
             },
         )
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        provider = serializer.save()
-        # Schedule a daily scan for the new provider
-        schedule_provider_scan(provider)
-        return Response(data=serializer.data, status=status.HTTP_201_CREATED)
 
 
 @extend_schema_view(
@@ -1059,12 +1065,18 @@ class ScanViewSet(BaseRLSViewSet):
         with transaction.atomic():
             scan = input_serializer.save()
         with transaction.atomic():
-            task = perform_scan_task.delay(
-                tenant_id=request.tenant_id,
-                scan_id=str(scan.id),
-                provider_id=str(scan.provider_id),
-                # Disabled for now
-                # checks_to_execute=scan.scanner_args.get("checks_to_execute"),
+            task = perform_scan_task.apply_async(
+                kwargs={
+                    "tenant_id": request.tenant_id,
+                    "scan_id": str(scan.id),
+                    "provider_id": str(scan.provider_id),
+                    # Disabled for now
+                    # checks_to_execute=scan.scanner_args.get("checks_to_execute"),
+                },
+                link=perform_scan_summary_task.si(
+                    tenant_id=request.tenant_id,
+                    scan_id=str(scan.id),
+                ),
             )
 
         scan.task_id = task.id
@@ -1259,6 +1271,13 @@ class ResourceViewSet(BaseRLSViewSet):
         summary="Retrieve data from a specific finding",
         description="Fetch detailed information about a specific finding by its ID.",
     ),
+    findings_services_regions=extend_schema(
+        tags=["Finding"],
+        summary="Retrieve the services and regions that are impacted by findings",
+        description="Fetch services and regions affected in findings.",
+        responses={201: OpenApiResponse(response=MembershipSerializer)},
+        filters=True,
+    ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 @method_decorator(CACHE_DECORATOR, name="retrieve")
@@ -1292,6 +1311,12 @@ class FindingViewSet(BaseRLSViewSet):
         """
         self.required_permissions = ResourceViewSet.required_permissions
         super().initial(request, *args, **kwargs)
+
+    def get_serializer_class(self):
+        if self.action == "findings_services_regions":
+            return FindingDynamicFilterSerializer
+
+        return super().get_serializer_class()
 
     def get_queryset(self):
         user = self.request.user
@@ -1342,6 +1367,27 @@ class FindingViewSet(BaseRLSViewSet):
         if inserted_at is None:
             return None
         return datetime_to_uuid7(inserted_at)
+
+    @action(detail=False, methods=["get"], url_name="findings_services_regions")
+    def findings_services_regions(self, request):
+        queryset = self.get_queryset()
+        filtered_queryset = self.filter_queryset(queryset)
+
+        result = filtered_queryset.aggregate(
+            services=ArrayAgg("resources__service", flat=True, distinct=True),
+            regions=ArrayAgg("resources__region", flat=True, distinct=True),
+        )
+        if result["services"] is None:
+            result["services"] = []
+        if result["regions"] is None:
+            result["regions"] = []
+
+        serializer = self.get_serializer(
+            data=result,
+        )
+        serializer.is_valid(raise_exception=True)
+
+        return Response(data=serializer.data, status=status.HTTP_200_OK)
 
 
 @extend_schema_view(
@@ -1770,25 +1816,66 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
 @extend_schema(tags=["Overview"])
 @extend_schema_view(
     providers=extend_schema(
-        summary="List aggregated overview data for providers",
-        description="Fetch aggregated summaries of the latest findings and resources for each provider. "
-        "This includes counts of passed, failed, and manual findings, as well as the total number "
-        "of resources managed by each provider.",
+        summary="Get aggregated provider data",
+        description=(
+            "Retrieve an aggregated overview of findings and resources grouped by providers. "
+            "The response includes the count of passed, failed, and manual findings, along with "
+            "the total number of resources managed by each provider. Only the latest findings for "
+            "each provider are considered in the aggregation to ensure accurate and up-to-date insights."
+        ),
+    ),
+    findings=extend_schema(
+        summary="Get aggregated findings data",
+        description=(
+            "Fetch aggregated findings data across all providers, grouped by various metrics such as "
+            "passed, failed, muted, and total findings. This endpoint calculates summary statistics "
+            "based on the latest scans for each provider and applies any provided filters, such as "
+            "region, provider type, and scan date."
+        ),
+        filters=True,
+    ),
+    findings_severity=extend_schema(
+        summary="Get findings data by severity",
+        description=(
+            "Retrieve an aggregated summary of findings grouped by severity levels, such as low, medium, "
+            "high, and critical. The response includes the total count of findings for each severity, "
+            "considering only the latest scans for each provider. Additional filters can be applied to "
+            "narrow down results by region, provider type, or other attributes."
+        ),
+        filters=True,
     ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 class OverviewViewSet(BaseRLSViewSet):
     queryset = ComplianceOverview.objects.all()
     http_method_names = ["get"]
-    ordering = ["compliance_id"]
+    ordering = ["-id"]
 
     def get_queryset(self):
-        return Finding.objects.all()
+        if self.action == "providers":
+            return Finding.objects.all()
+        elif self.action == "findings":
+            return ScanSummary.objects.all()
+        elif self.action == "findings_severity":
+            return ScanSummary.objects.all()
+        else:
+            return super().get_queryset()
 
     def get_serializer_class(self):
         if self.action == "providers":
             return OverviewProviderSerializer
+        elif self.action == "findings":
+            return OverviewFindingSerializer
+        elif self.action == "findings_severity":
+            return OverviewSeveritySerializer
         return super().get_serializer_class()
+
+    def get_filterset_class(self):
+        if self.action == "providers":
+            return None
+        elif self.action in ["findings", "findings_severity"]:
+            return ScanSummaryFilter
+        return None
 
     @extend_schema(exclude=True)
     def list(self, request, *args, **kwargs):
@@ -1841,7 +1928,7 @@ class OverviewViewSet(BaseRLSViewSet):
                     for res in resources_aggregated
                     if res["provider__provider"] == provider
                 ),
-                0,  # Default to 0 if no resources are found
+                0,
             )
             overview.append(
                 {
@@ -1857,3 +1944,132 @@ class OverviewViewSet(BaseRLSViewSet):
         serializer = OverviewProviderSerializer(overview, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"], url_name="findings")
+    def findings(self, request):
+        queryset = self.get_queryset()
+        filtered_queryset = self.filter_queryset(queryset)
+
+        latest_scan_subquery = (
+            Scan.objects.filter(
+                state=StateChoices.COMPLETED, provider_id=OuterRef("scan__provider_id")
+            )
+            .order_by("-id")
+            .values("id")[:1]
+        )
+
+        annotated_queryset = filtered_queryset.annotate(
+            latest_scan_id=Subquery(latest_scan_subquery)
+        )
+
+        filtered_queryset = annotated_queryset.filter(scan_id=F("latest_scan_id"))
+
+        aggregated_totals = filtered_queryset.aggregate(
+            _pass=Sum("_pass") or 0,
+            fail=Sum("fail") or 0,
+            muted=Sum("muted") or 0,
+            total=Sum("total") or 0,
+            new=Sum("new") or 0,
+            changed=Sum("changed") or 0,
+            unchanged=Sum("unchanged") or 0,
+            fail_new=Sum("fail_new") or 0,
+            fail_changed=Sum("fail_changed") or 0,
+            pass_new=Sum("pass_new") or 0,
+            pass_changed=Sum("pass_changed") or 0,
+            muted_new=Sum("muted_new") or 0,
+            muted_changed=Sum("muted_changed") or 0,
+        )
+
+        for key in aggregated_totals:
+            if aggregated_totals[key] is None:
+                aggregated_totals[key] = 0
+
+        serializer = self.get_serializer(aggregated_totals)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"], url_name="findings_severity")
+    def findings_severity(self, request):
+        queryset = self.get_queryset()
+        filtered_queryset = self.filter_queryset(queryset)
+
+        latest_scan_subquery = (
+            Scan.objects.filter(
+                state=StateChoices.COMPLETED, provider_id=OuterRef("scan__provider_id")
+            )
+            .order_by("-id")
+            .values("id")[:1]
+        )
+
+        annotated_queryset = filtered_queryset.annotate(
+            latest_scan_id=Subquery(latest_scan_subquery)
+        )
+
+        filtered_queryset = annotated_queryset.filter(scan_id=F("latest_scan_id"))
+
+        severity_counts = (
+            filtered_queryset.values("severity")
+            .annotate(count=Sum("total"))
+            .order_by("severity")
+        )
+
+        severity_data = {sev[0]: 0 for sev in SeverityChoices}
+
+        for item in severity_counts:
+            severity_data[item["severity"]] = item["count"]
+
+        serializer = OverviewSeveritySerializer(severity_data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@extend_schema(tags=["Schedule"])
+@extend_schema_view(
+    daily=extend_schema(
+        summary="Create a daily schedule scan for a given provider",
+        description="Schedules a daily scan for the specified provider. This endpoint creates a periodic task "
+        "that will execute a scan every 24 hours.",
+        request=ScheduleDailyCreateSerializer,
+        responses={202: OpenApiResponse(response=TaskSerializer)},
+    )
+)
+class ScheduleViewSet(BaseRLSViewSet):
+    # TODO: change to Schedule when implemented
+    queryset = Task.objects.none()
+    http_method_names = ["post"]
+
+    def get_queryset(self):
+        return super().get_queryset()
+
+    def get_serializer_class(self):
+        if self.action == "daily":
+            if hasattr(self, "response_serializer_class"):
+                return self.response_serializer_class
+            return ScheduleDailyCreateSerializer
+        return super().get_serializer_class()
+
+    @extend_schema(exclude=True)
+    def create(self, request, *args, **kwargs):
+        raise MethodNotAllowed(method="POST")
+
+    @action(detail=False, methods=["post"], url_name="daily")
+    def daily(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        provider_id = serializer.validated_data["provider_id"]
+
+        provider_instance = get_object_or_404(Provider, pk=provider_id)
+        with transaction.atomic():
+            task = schedule_provider_scan(provider_instance)
+
+        prowler_task = Task.objects.get(id=task.id)
+        self.response_serializer_class = TaskSerializer
+        output_serializer = self.get_serializer(prowler_task)
+
+        return Response(
+            data=output_serializer.data,
+            status=status.HTTP_202_ACCEPTED,
+            headers={
+                "Content-Location": reverse(
+                    "task-detail", kwargs={"pk": prowler_task.id}
+                )
+            },
+        )

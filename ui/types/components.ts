@@ -26,6 +26,41 @@ export type NextUIColors =
   | "danger"
   | "default";
 
+export interface FindingsByStatusData {
+  data: {
+    type: "findings-overview";
+    id: string;
+    attributes: {
+      fail: number;
+      pass: number;
+      total: number;
+      fail_new: number;
+      pass_new: number;
+      [key: string]: number;
+    };
+  };
+  meta: {
+    version: string;
+  };
+}
+
+export interface FindingsSeverityOverview {
+  data: {
+    type: "findings-severity-overview";
+    id: string;
+    attributes: {
+      critical: number;
+      high: number;
+      medium: number;
+      low: number;
+      informational: number;
+    };
+  };
+  meta: {
+    version: string;
+  };
+}
+
 export interface ProviderOverviewProps {
   data: {
     type: "provider-overviews";
@@ -192,6 +227,32 @@ export interface InvitationProps {
     self: string;
   };
 }
+export interface UserProfileProps {
+  data: {
+    type: "users";
+    id: string;
+    attributes: {
+      name: string;
+      email: string;
+      company_name: string;
+      date_joined: string;
+    };
+    relationships: {
+      memberships: {
+        meta: {
+          count: number;
+        };
+        data: Array<{
+          type: "memberships";
+          id: string;
+        }>;
+      };
+    };
+  };
+  meta: {
+    version: string;
+  };
+}
 
 export interface UserProps {
   type: "users";
@@ -266,6 +327,7 @@ export interface ScanProps {
     started_at: string;
     completed_at: string;
     scheduled_at: string;
+    next_scan_at: string;
   };
   relationships: {
     provider: {
@@ -280,6 +342,11 @@ export interface ScanProps {
         type: "tasks";
       };
     };
+  };
+  providerInfo?: {
+    provider: "aws" | "azure" | "gcp" | "kubernetes";
+    uid: string;
+    alias: string;
   };
 }
 

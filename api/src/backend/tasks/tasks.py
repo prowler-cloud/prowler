@@ -1,12 +1,15 @@
+from datetime import datetime, timedelta, timezone
+
 from celery import shared_task
+from config.celery import RLSTask
+from django_celery_beat.models import PeriodicTask
+from tasks.jobs.connection import check_provider_connection
+from tasks.jobs.deletion import delete_provider
+from tasks.jobs.scan import aggregate_findings, perform_prowler_scan
 
 from api.db_utils import tenant_transaction
 from api.decorators import set_tenant
 from api.models import Provider, Scan
-from config.celery import RLSTask
-from tasks.jobs.connection import check_provider_connection
-from tasks.jobs.deletion import delete_instance
-from tasks.jobs.scan import perform_prowler_scan
 
 
 @shared_task(base=RLSTask, name="provider-connection-check")
@@ -32,6 +35,8 @@ def delete_provider_task(provider_id: str):
     """
     Task to delete a specific Provider instance.
 
+    It will delete in batches all the related resources first.
+
     Args:
         provider_id (str): The primary key of the `Provider` instance to be deleted.
 
@@ -41,7 +46,7 @@ def delete_provider_task(provider_id: str):
             - A dictionary with the count of deleted instances per model,
               including related models if cascading deletes were triggered.
     """
-    return delete_instance(model=Provider, pk=provider_id)
+    return delete_provider(pk=provider_id)
 
 
 @shared_task(base=RLSTask, name="scan-perform", queue="scans")
@@ -96,17 +101,36 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
 
     with tenant_transaction(tenant_id):
         provider_instance = Provider.objects.get(pk=provider_id)
+        periodic_task_instance = PeriodicTask.objects.get(
+            name=f"scan-perform-scheduled-{provider_id}"
+        )
+        next_scan_date = datetime.combine(
+            datetime.now(timezone.utc), periodic_task_instance.start_time.time()
+        ) + timedelta(hours=24)
 
         scan_instance = Scan.objects.create(
             tenant_id=tenant_id,
             name="Daily scheduled scan",
             provider=provider_instance,
             trigger=Scan.TriggerChoices.SCHEDULED,
+            next_scan_at=next_scan_date,
             task_id=task_id,
         )
 
-    return perform_prowler_scan(
+    result = perform_prowler_scan(
         tenant_id=tenant_id,
         scan_id=str(scan_instance.id),
         provider_id=provider_id,
     )
+    perform_scan_summary_task.apply_async(
+        kwargs={
+            "tenant_id": tenant_id,
+            "scan_id": str(scan_instance.id),
+        }
+    )
+    return result
+
+
+@shared_task(name="scan-summary")
+def perform_scan_summary_task(tenant_id: str, scan_id: str):
+    return aggregate_findings(tenant_id=tenant_id, scan_id=scan_id)

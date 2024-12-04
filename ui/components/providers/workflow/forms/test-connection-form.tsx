@@ -12,9 +12,9 @@ import {
   checkConnectionProvider,
   deleteCredentials,
 } from "@/actions/providers";
-import { scanOnDemand } from "@/actions/scans";
+import { scheduleDaily } from "@/actions/scans";
 import { getTask } from "@/actions/task/tasks";
-import { CheckIcon, SaveIcon } from "@/components/icons";
+import { CheckIcon, RocketIcon } from "@/components/icons";
 import { useToast } from "@/components/ui";
 import { CustomButton } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
@@ -29,12 +29,13 @@ export const TestConnectionForm = ({
   searchParams,
   providerData,
 }: {
-  searchParams: { type: string; id: string };
+  searchParams: { type: string; id: string; updated: string };
   providerData: {
     data: {
       id: string;
       type: string;
       attributes: {
+        uid: string;
         connection: {
           connected: boolean | null;
           last_checked_at: string | null;
@@ -58,7 +59,6 @@ export const TestConnectionForm = ({
   const router = useRouter();
   const providerType = searchParams.type;
   const providerId = searchParams.id;
-  console.log({ providerData }, "providerData from test connection form");
   const formSchema = testConnectionFormSchema;
   const [apiErrorMessage, setApiErrorMessage] = useState<string | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<{
@@ -75,9 +75,9 @@ export const TestConnectionForm = ({
   });
 
   const isLoading = form.formState.isSubmitting;
+  const isUpdated = searchParams?.updated === "true";
 
   const onSubmitClient = async (values: FormValues) => {
-    console.log({ values }, "values from test connection form");
     const formData = new FormData();
     formData.append("providerId", values.providerId);
 
@@ -117,8 +117,7 @@ export const TestConnectionForm = ({
 
         if (connected) {
           try {
-            const data = await scanOnDemand(formData);
-
+            const data = await scheduleDaily(formData);
             if (data.error) {
               setApiErrorMessage(data.error);
               form.setError("providerId", {
@@ -126,9 +125,19 @@ export const TestConnectionForm = ({
                 message: data.error,
               });
             } else {
-              router.push(
-                `/providers/launch-scan?type=${providerType}&id=${providerId}`,
-              );
+              const urlParams = new URLSearchParams(window.location.search);
+              const isUpdated = urlParams.get("updated") === "true";
+
+              if (!isUpdated) {
+                router.push(
+                  `/providers/launch-scan?type=${providerType}&id=${providerId}`,
+                );
+              } else {
+                setConnectionStatus({
+                  connected: true,
+                  error: null,
+                });
+              }
             }
           } catch (error) {
             form.setError("providerId", {
@@ -175,6 +184,7 @@ export const TestConnectionForm = ({
         `/providers/add-credentials?type=${providerType}&id=${providerId}`,
       );
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error("Failed to delete credentials:", error);
     } finally {
       setIsResettingCredentials(false);
@@ -200,7 +210,7 @@ export const TestConnectionForm = ({
 
         {apiErrorMessage && (
           <div className="mt-4 rounded-md bg-red-100 p-3 text-danger">
-            <p>{`Provider ID ${apiErrorMessage.toLowerCase()}. Please check and try again.`}</p>
+            <p>{`Provider ID ${apiErrorMessage?.toLowerCase()}. Please check and try again.`}</p>
           </div>
         )}
 
@@ -230,7 +240,14 @@ export const TestConnectionForm = ({
           connected={providerData.data.attributes.connection.connected}
           provider={providerData.data.attributes.provider}
           providerAlias={providerData.data.attributes.alias}
+          providerUID={providerData.data.attributes.uid}
         />
+
+        {!isResettingCredentials && !connectionStatus?.error && (
+          <p className="py-2 text-default-500">
+            Test connection and launch scan
+          </p>
+        )}
 
         <input type="hidden" name="providerId" value={providerId} />
 
@@ -248,7 +265,7 @@ export const TestConnectionForm = ({
             </Link>
           ) : connectionStatus?.error ? (
             <CustomButton
-              onPress={onResetCredentials}
+              onPress={isUpdated ? () => router.back() : onResetCredentials}
               type="button"
               ariaLabel={"Save"}
               className="w-1/2"
@@ -262,21 +279,38 @@ export const TestConnectionForm = ({
               {isResettingCredentials ? (
                 <>Loading</>
               ) : (
-                <span>Reset credentials</span>
+                <span>
+                  {isUpdated ? "Update credentials" : "Reset credentials"}
+                </span>
               )}
             </CustomButton>
           ) : (
             <CustomButton
-              type="submit"
+              type={
+                isUpdated && connectionStatus?.connected ? "button" : "submit"
+              }
+              onPress={
+                isUpdated && connectionStatus?.connected
+                  ? () => router.push("/providers")
+                  : undefined
+              }
               ariaLabel={"Save"}
               className="w-1/2"
               variant="solid"
               color="action"
               size="lg"
               isLoading={isLoading}
-              startContent={!isLoading && <SaveIcon size={24} />}
+              endContent={!isLoading && <RocketIcon size={24} />}
             >
-              {isLoading ? <>Loading</> : <span>Test connection</span>}
+              {isLoading ? (
+                <>Loading</>
+              ) : (
+                <span>
+                  {isUpdated && connectionStatus?.connected
+                    ? "Go to providers"
+                    : "Launch"}
+                </span>
+              )}
             </CustomButton>
           )}
         </div>
