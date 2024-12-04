@@ -429,13 +429,24 @@ class TestTenantViewSet:
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_tenants_delete(self, authenticated_client, tenants_fixture):
+    @patch("api.db_router.MainRouter.admin_db", new="default")
+    @patch("api.v1.views.delete_tenant_task.apply_async")
+    def test_tenants_delete(
+        self, delete_tenant_mock, authenticated_client, tenants_fixture
+    ):
+        def _delete_tenant(kwargs):
+            Tenant.objects.filter(pk=kwargs.get("tenant_id")).delete()
+
+        delete_tenant_mock.side_effect = _delete_tenant
         tenant1, *_ = tenants_fixture
         response = authenticated_client.delete(
             reverse("tenant-detail", kwargs={"pk": tenant1.id})
         )
         assert response.status_code == status.HTTP_204_NO_CONTENT
         assert Tenant.objects.count() == len(tenants_fixture) - 1
+        assert Membership.objects.filter(tenant_id=tenant1.id).count() == 0
+        # User is not deleted because it has another membership
+        assert User.objects.count() == 1
 
     def test_tenants_delete_invalid(self, authenticated_client):
         response = authenticated_client.delete(

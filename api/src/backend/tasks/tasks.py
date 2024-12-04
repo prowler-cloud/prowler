@@ -4,7 +4,7 @@ from celery import shared_task
 from config.celery import RLSTask
 from django_celery_beat.models import PeriodicTask
 from tasks.jobs.connection import check_provider_connection
-from tasks.jobs.deletion import delete_provider
+from tasks.jobs.deletion import delete_provider, delete_tenant
 from tasks.jobs.scan import aggregate_findings, perform_prowler_scan
 
 from api.db_utils import tenant_transaction
@@ -134,3 +134,8 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
 @shared_task(name="scan-summary")
 def perform_scan_summary_task(tenant_id: str, scan_id: str):
     return aggregate_findings(tenant_id=tenant_id, scan_id=scan_id)
+
+
+@shared_task(name="tenant-deletion")
+def delete_tenant_task(tenant_id: str):
+    return delete_tenant(pk=tenant_id)

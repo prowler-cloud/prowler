@@ -34,6 +34,7 @@ from tasks.beat import schedule_provider_scan
 from tasks.tasks import (
     check_provider_connection_task,
     delete_provider_task,
+    delete_tenant_task,
     perform_scan_summary_task,
     perform_scan_task,
 )
@@ -190,7 +191,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.0.0"
+        spectacular_settings.VERSION = "1.0.1"
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -554,6 +555,25 @@ class TenantViewSet(BaseTenantViewset):
             user=self.request.user, tenant=tenant, role=Membership.RoleChoices.OWNER
         )
         return Response(data=serializer.data, status=status.HTTP_201_CREATED)
+
+    def destroy(self, request, *args, **kwargs):
+        # This will perform validation and raise a 404 if the tenant does not exist
+        tenant_id = kwargs.get("pk")
+        get_object_or_404(Tenant, id=tenant_id)
+
+        with transaction.atomic():
+            # Delete memberships
+            Membership.objects.using(MainRouter.admin_db).filter(
+                tenant_id=tenant_id
+            ).delete()
+
+            # Delete users without memberships
+            User.objects.using(MainRouter.admin_db).filter(
+                membership__isnull=True
+            ).delete()
+        # Delete tenant in batches
+        delete_tenant_task.apply_async(kwargs={"tenant_id": tenant_id})
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 @extend_schema_view(
