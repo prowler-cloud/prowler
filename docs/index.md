@@ -552,7 +552,7 @@ Prowler enables you to scan your GitHub account, including repositories, organiz
     If no token is explicitly provided, Prowler will automatically search for environment variables corresponding to these tokens, in the following order:
     1. `GITHUB_PERSONAL_ACCESS_TOKEN`
     2. `OAUTH_APP_TOKEN`
-    3. `GITHUB_APP_ID and GITHUB_APP_KEY`
+    3. `GITHUB_APP_ID` and `GITHUB_APP_KEY`
 
 
 ## Prowler v2 Documentation
