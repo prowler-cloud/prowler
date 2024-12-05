@@ -49,6 +49,7 @@ from api.filters import (
     ResourceFilter,
     ScanFilter,
     ScanSummaryFilter,
+    ServiceOverviewFilter,
     TaskFilter,
     TenantFilter,
     UserFilter,
@@ -87,6 +88,7 @@ from api.v1.serializers import (
     MembershipSerializer,
     OverviewFindingSerializer,
     OverviewProviderSerializer,
+    OverviewServiceSerializer,
     OverviewSeveritySerializer,
     ProviderCreateSerializer,
     ProviderGroupMembershipUpdateSerializer,
@@ -1387,6 +1389,15 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
         ),
         filters=True,
     ),
+    services=extend_schema(
+        summary="Get findings data by service",
+        description=(
+            "Retrieve an aggregated summary of findings grouped by service. The response includes the total count "
+            "of findings for each service, as long as there are at least one finding for that service. At least "
+            "one of the `inserted_at` filters must be provided."
+        ),
+        filters=True,
+    ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 class OverviewViewSet(BaseRLSViewSet):
@@ -1401,6 +1412,8 @@ class OverviewViewSet(BaseRLSViewSet):
             return ScanSummary.objects.all()
         elif self.action == "findings_severity":
             return ScanSummary.objects.all()
+        elif self.action == "services":
+            return ScanSummary.objects.all()
         else:
             return super().get_queryset()
 
@@ -1411,6 +1424,8 @@ class OverviewViewSet(BaseRLSViewSet):
             return OverviewFindingSerializer
         elif self.action == "findings_severity":
             return OverviewSeveritySerializer
+        elif self.action == "services":
+            return OverviewServiceSerializer
         return super().get_serializer_class()
 
     def get_filterset_class(self):
@@ -1418,6 +1433,8 @@ class OverviewViewSet(BaseRLSViewSet):
             return None
         elif self.action in ["findings", "findings_severity"]:
             return ScanSummaryFilter
+        elif self.action == "services":
+            return ServiceOverviewFilter
         return None
 
     @extend_schema(exclude=True)
@@ -1561,6 +1578,38 @@ class OverviewViewSet(BaseRLSViewSet):
             severity_data[item["severity"]] = item["count"]
 
         serializer = OverviewSeveritySerializer(severity_data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"], url_name="services")
+    def services(self, request):
+        queryset = self.get_queryset()
+        filtered_queryset = self.filter_queryset(queryset)
+
+        latest_scan_subquery = (
+            Scan.objects.filter(
+                state=StateChoices.COMPLETED, provider_id=OuterRef("scan__provider_id")
+            )
+            .order_by("-id")
+            .values("id")[:1]
+        )
+
+        annotated_queryset = filtered_queryset.annotate(
+            latest_scan_id=Subquery(latest_scan_subquery)
+        )
+
+        filtered_queryset = annotated_queryset.filter(scan_id=F("latest_scan_id"))
+
+        services_data = (
+            filtered_queryset.values("service")
+            .annotate(_pass=Sum("_pass"))
+            .annotate(fail=Sum("fail"))
+            .annotate(muted=Sum("muted"))
+            .annotate(total=Sum("total"))
+            .order_by("service")
+        )
+
+        serializer = OverviewServiceSerializer(services_data, many=True)
+
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
