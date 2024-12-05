@@ -211,6 +211,12 @@ export const sectionItems: SidebarItem[] = [
         icon: "lucide:scan-search",
         title: "Scan Jobs",
       },
+      {
+        key: "roles",
+        href: "/roles",
+        icon: "mdi:account-key-outline",
+        title: "Roles",
+      },
       // {
       //   key: "integrations",
       //   href: "/integrations",
