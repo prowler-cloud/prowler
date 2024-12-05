@@ -373,8 +373,8 @@ After successfully adding and testing your credentials, Prowler will start scann
 #### **View Results**
 While the scan is running, start exploring the findings in these sections:
 
-- **Overview**: High-level summary of the scans. <img src="../../img/overview.png" alt="Overview" width="700"/>
-- **Compliance**: Insights into compliance status. <img src="../../img/compliance.png" alt="Compliance" width="700"/>
+- **Overview**: High-level summary of the scans. <img src="img/overview.png" alt="Overview" width="700"/>
+- **Compliance**: Insights into compliance status. <img src="img/compliance.png" alt="Compliance" width="700"/>
 
 > See more details about the Prowler App usage in the [Prowler App](tutorials/prowler-app.md) section.
 
