@@ -8,6 +8,7 @@ from api.v1.views import (
     FindingViewSet,
     MembershipViewSet,
     ProviderGroupViewSet,
+    ProviderGroupProvidersRelationshipView,
     ProviderSecretViewSet,
     InvitationViewSet,
     InvitationAcceptViewSet,
@@ -32,7 +33,7 @@ router = routers.DefaultRouter(trailing_slash=False)
 router.register(r"users", UserViewSet, basename="user")
 router.register(r"tenants", TenantViewSet, basename="tenant")
 router.register(r"providers", ProviderViewSet, basename="provider")
-router.register(r"provider_groups", ProviderGroupViewSet, basename="providergroup")
+router.register(r"provider-groups", ProviderGroupViewSet, basename="providergroup")
 router.register(r"scans", ScanViewSet, basename="scan")
 router.register(r"tasks", TaskViewSet, basename="task")
 router.register(r"resources", ResourceViewSet, basename="resource")
@@ -97,6 +98,13 @@ urlpatterns = [
             {"post": "create", "patch": "partial_update", "delete": "destroy"}
         ),
         name="user-roles-relationship",
+    ),
+    path(
+        "provider-groups/<uuid:pk>/relationships/providers",
+        ProviderGroupProvidersRelationshipView.as_view(
+            {"post": "create", "patch": "partial_update", "delete": "destroy"}
+        ),
+        name="provider_group-providers-relationship",
     ),
     path("", include(router.urls)),
     path("", include(tenants_router.urls)),

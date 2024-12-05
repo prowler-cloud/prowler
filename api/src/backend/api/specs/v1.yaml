@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Prowler API
-  version: 1.0.0
+  version: 1.0.1
   description: |-
     Prowler API specification.
 
@@ -1551,7 +1551,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/OverviewProviderResponse'
           description: ''
-  /api/v1/provider_groups:
+  /api/v1/provider-groups:
     get:
       operationId: provider_groups_list
       description: Retrieve a list of all provider groups with options for filtering
@@ -1713,7 +1713,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProviderGroupResponse'
           description: ''
-  /api/v1/provider_groups/{id}:
+  /api/v1/provider-groups/{id}:
     get:
       operationId: provider_groups_retrieve
       description: Fetch detailed information about a specific provider group by their
@@ -1809,42 +1809,69 @@ paths:
       responses:
         '204':
           description: No response body
-  /api/v1/provider_groups/{id}/providers:
-    put:
-      operationId: provider_groups_providers_update
-      description: Add one or more providers to an existing provider group.
-      summary: Add providers to a provider group
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this provider group.
-        required: true
+  /api/v1/provider-groups/{id}/relationships/providers:
+    post:
+      operationId: provider_groups_relationships_providers_create
+      description: Add a new provider_group-providers relationship to the system by
+        providing the required provider_group-providers details.
+      summary: Create a new provider_group-providers relationship
       tags:
       - Provider Group
       requestBody:
         content:
           application/vnd.api+json:
             schema:
-              $ref: '#/components/schemas/ProviderGroupMembershipUpdateRequest'
+              $ref: '#/components/schemas/ProviderGroupMembershipRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/ProviderGroupMembershipUpdateRequest'
+              $ref: '#/components/schemas/ProviderGroupMembershipRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/ProviderGroupMembershipUpdateRequest'
+              $ref: '#/components/schemas/ProviderGroupMembershipRequest'
         required: true
       security:
       - jwtAuth: []
       responses:
-        '200':
-          content:
-            application/vnd.api+json:
-              schema:
-                $ref: '#/components/schemas/OpenApiResponseResponse'
-          description: ''
+        '204':
+          description: Relationship created successfully
+        '400':
+          description: Bad request (e.g., relationship already exists)
+    patch:
+      operationId: provider_groups_relationships_providers_partial_update
+      description: Update the provider_group-providers relationship information without
+        affecting other fields.
+      summary: Partially update a provider_group-providers relationship
+      tags:
+      - Provider Group
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/PatchedProviderGroupMembershipRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedProviderGroupMembershipRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedProviderGroupMembershipRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: Relationship updated successfully
+    delete:
+      operationId: provider_groups_relationships_providers_destroy
+      description: Remove the provider_group-providers relationship from the system
+        by their ID.
+      summary: Delete a provider_group-providers relationship
+      tags:
+      - Provider Group
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: Relationship deleted successfully
   /api/v1/providers:
     get:
       operationId: providers_list
@@ -6214,6 +6241,38 @@ components:
               - roles
       required:
       - data
+    PatchedProviderGroupMembershipRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          - id
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - provider_groups-provider
+            id:
+              type: string
+              format: uuid
+            attributes:
+              type: object
+              properties:
+                providers:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ProviderResourceIdentifierRequest'
+                  description: List of resource identifier objects representing providers.
+              required:
+              - providers
+      required:
+      - data
     PatchedProviderGroupUpdateRequest:
       type: object
       properties:
@@ -6812,7 +6871,7 @@ components:
                       type:
                         type: string
                         enum:
-                        - provider-groups
+                        - provider-group
                         title: Resource Type Name
                         description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
                           member is used to describe resource objects that share common
@@ -6822,8 +6881,8 @@ components:
                     - type
               required:
               - data
-              description: A related resource object from type provider-groups
-              title: provider-groups
+              description: A related resource object from type provider-group
+              title: provider-group
               readOnly: true
           required:
           - secret
@@ -7011,7 +7070,7 @@ components:
               description: A related resource object from type role
               title: role
               readOnly: true
-    ProviderGroupMembershipUpdateRequest:
+    ProviderGroupMembershipRequest:
       type: object
       properties:
         data:
@@ -7026,18 +7085,17 @@ components:
                 member is used to describe resource objects that share common attributes
                 and relationships.
               enum:
-              - provider-group-memberships
+              - provider_groups-provider
             attributes:
               type: object
               properties:
-                provider_ids:
+                providers:
                   type: array
                   items:
-                    type: string
-                    format: uuid
-                  description: List of provider UUIDs to add to the group
+                    $ref: '#/components/schemas/ProviderResourceIdentifierRequest'
+                  description: List of resource identifier objects representing providers.
               required:
-              - provider_ids
+              - providers
       required:
       - data
     ProviderGroupRequest:
@@ -7177,6 +7235,36 @@ components:
       type: string
       enum:
       - provider-group
+    ProviderResourceIdentifierRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - provider-identifier
+            attributes:
+              type: object
+              properties:
+                resource_type:
+                  type: string
+                  minLength: 1
+                id:
+                  type: string
+                  format: uuid
+              required:
+              - resource_type
+              - id
+      required:
+      - data
     ProviderResponse:
       type: object
       properties:

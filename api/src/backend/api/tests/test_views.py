@@ -1305,100 +1305,6 @@ class TestProviderGroupViewSet:
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_provider_group_providers_update(
-        self, authenticated_client, provider_groups_fixture, providers_fixture
-    ):
-        provider_group = provider_groups_fixture[0]
-        provider_ids = [str(provider.id) for provider in providers_fixture]
-
-        data = {
-            "data": {
-                "type": "provider-group-memberships",
-                "id": str(provider_group.id),
-                "attributes": {"provider_ids": provider_ids},
-            }
-        }
-
-        response = authenticated_client.put(
-            reverse("providergroup-providers", kwargs={"pk": provider_group.id}),
-            data=json.dumps(data),
-            content_type="application/vnd.api+json",
-        )
-        assert response.status_code == status.HTTP_200_OK
-        memberships = ProviderGroupMembership.objects.filter(
-            provider_group=provider_group
-        )
-        assert memberships.count() == len(provider_ids)
-        for membership in memberships:
-            assert str(membership.provider_id) in provider_ids
-
-    def test_provider_group_providers_update_non_existent_provider(
-        self, authenticated_client, provider_groups_fixture, providers_fixture
-    ):
-        provider_group = provider_groups_fixture[0]
-        provider_ids = [str(provider.id) for provider in providers_fixture]
-        provider_ids[-1] = "1b59e032-3eb6-4694-93a5-df84cd9b3ce2"
-
-        data = {
-            "data": {
-                "type": "provider-group-memberships",
-                "id": str(provider_group.id),
-                "attributes": {"provider_ids": provider_ids},
-            }
-        }
-
-        response = authenticated_client.put(
-            reverse("providergroup-providers", kwargs={"pk": provider_group.id}),
-            data=json.dumps(data),
-            content_type="application/vnd.api+json",
-        )
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-        errors = response.json()["errors"]
-        assert (
-            errors[0]["detail"]
-            == f"The following provider IDs do not exist: {provider_ids[-1]}"
-        )
-
-    def test_provider_group_providers_update_invalid_provider(
-        self, authenticated_client, provider_groups_fixture
-    ):
-        provider_group = provider_groups_fixture[1]
-        invalid_provider_id = "non-existent-id"
-        data = {
-            "data": {
-                "type": "provider-group-memberships",
-                "id": str(provider_group.id),
-                "attributes": {"provider_ids": [invalid_provider_id]},
-            }
-        }
-
-        response = authenticated_client.put(
-            reverse("providergroup-providers", kwargs={"pk": provider_group.id}),
-            data=json.dumps(data),
-            content_type="application/vnd.api+json",
-        )
-
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-        errors = response.json()["errors"]
-        assert errors[0]["detail"] == "Must be a valid UUID."
-
-    def test_provider_group_providers_update_invalid_payload(
-        self, authenticated_client, provider_groups_fixture
-    ):
-        provider_group = provider_groups_fixture[2]
-        data = {
-            # Missing "provider_ids"
-        }
-
-        response = authenticated_client.put(
-            reverse("providergroup-providers", kwargs={"pk": provider_group.id}),
-            data=json.dumps(data),
-            content_type="application/vnd.api+json",
-        )
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-        errors = response.json()["errors"]
-        assert errors[0]["detail"] == "Received document does not contain primary data"
-
     def test_provider_group_retrieve_not_found(self, authenticated_client):
         response = authenticated_client.get(
             reverse("providergroup-detail", kwargs={"pk": "non-existent-id"})
@@ -3612,6 +3518,168 @@ class TestRoleProviderGroupRelationshipViewSet:
         response = authenticated_client.post(
             reverse(
                 "role-provider-groups-relationship", kwargs={"pk": roles_fixture[1].id}
+            ),
+            data=data,
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        errors = response.json()["errors"][0]["detail"]
+        assert "valid UUID" in errors
+
+
+@pytest.mark.django_db
+class TestProviderGroupMembershipViewSet:
+    def test_create_relationship(
+        self, authenticated_client, providers_fixture, provider_groups_fixture
+    ):
+        provider_group, *_ = provider_groups_fixture
+        data = {
+            "data": [
+                {"type": "provider", "id": str(provider.id)}
+                for provider in providers_fixture[:2]
+            ]
+        }
+        response = authenticated_client.post(
+            reverse(
+                "provider_group-providers-relationship",
+                kwargs={"pk": provider_group.id},
+            ),
+            data=data,
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        relationships = ProviderGroupMembership.objects.filter(
+            provider_group=provider_group.id
+        )
+        assert relationships.count() == 2
+        for relationship in relationships:
+            assert relationship.provider.id in [p.id for p in providers_fixture[:2]]
+
+    def test_create_relationship_already_exists(
+        self, authenticated_client, providers_fixture, provider_groups_fixture
+    ):
+        provider_group, *_ = provider_groups_fixture
+        data = {
+            "data": [
+                {"type": "provider", "id": str(provider.id)}
+                for provider in providers_fixture[:2]
+            ]
+        }
+        authenticated_client.post(
+            reverse(
+                "provider_group-providers-relationship",
+                kwargs={"pk": provider_group.id},
+            ),
+            data=data,
+            content_type="application/vnd.api+json",
+        )
+
+        data = {
+            "data": [
+                {"type": "provider", "id": str(providers_fixture[0].id)},
+            ]
+        }
+        response = authenticated_client.post(
+            reverse(
+                "provider_group-providers-relationship",
+                kwargs={"pk": provider_group.id},
+            ),
+            data=data,
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        errors = response.json()["errors"]["detail"]
+        assert "already associated" in errors
+
+    def test_partial_update_relationship(
+        self, authenticated_client, providers_fixture, provider_groups_fixture
+    ):
+        provider_group, *_ = provider_groups_fixture
+        data = {
+            "data": [
+                {"type": "provider", "id": str(providers_fixture[1].id)},
+            ]
+        }
+        response = authenticated_client.patch(
+            reverse(
+                "provider_group-providers-relationship",
+                kwargs={"pk": provider_group.id},
+            ),
+            data=data,
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        relationships = ProviderGroupMembership.objects.filter(
+            provider_group=provider_group.id
+        )
+        assert relationships.count() == 1
+        assert {rel.provider.id for rel in relationships} == {providers_fixture[1].id}
+
+        data = {
+            "data": [
+                {"type": "provider", "id": str(providers_fixture[1].id)},
+                {"type": "provider", "id": str(providers_fixture[2].id)},
+            ]
+        }
+        response = authenticated_client.patch(
+            reverse(
+                "provider_group-providers-relationship",
+                kwargs={"pk": provider_group.id},
+            ),
+            data=data,
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        relationships = ProviderGroupMembership.objects.filter(
+            provider_group=provider_group.id
+        )
+        assert relationships.count() == 2
+        assert {rel.provider.id for rel in relationships} == {
+            providers_fixture[1].id,
+            providers_fixture[2].id,
+        }
+
+    def test_destroy_relationship(
+        self, authenticated_client, providers_fixture, provider_groups_fixture
+    ):
+        provider_group, *_ = provider_groups_fixture
+        data = {
+            "data": [
+                {"type": "provider", "id": str(provider.id)}
+                for provider in providers_fixture[:2]
+            ]
+        }
+        response = authenticated_client.post(
+            reverse(
+                "provider_group-providers-relationship",
+                kwargs={"pk": provider_group.id},
+            ),
+            data=data,
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        response = authenticated_client.delete(
+            reverse(
+                "provider_group-providers-relationship",
+                kwargs={"pk": provider_group.id},
+            ),
+        )
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        relationships = ProviderGroupMembership.objects.filter(
+            provider_group=providers_fixture[0].id
+        )
+        assert relationships.count() == 0
+
+    def test_invalid_provider_group_id(
+        self, authenticated_client, provider_groups_fixture
+    ):
+        provider_group, *_ = provider_groups_fixture
+        invalid_id = "non-existent-id"
+        data = {"data": [{"type": "provider-group", "id": invalid_id}]}
+        response = authenticated_client.post(
+            reverse(
+                "provider_group-providers-relationship",
+                kwargs={"pk": provider_group.id},
             ),
             data=data,
             content_type="application/vnd.api+json",
