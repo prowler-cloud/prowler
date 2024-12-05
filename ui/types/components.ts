@@ -227,6 +227,71 @@ export interface InvitationProps {
     self: string;
   };
 }
+
+export interface RolesProps {
+  links: {
+    first: string;
+    last: string;
+    next: string | null;
+    prev: string | null;
+  };
+  data: {
+    type: "role";
+    id: string;
+    attributes: {
+      name: string;
+      manage_users: boolean;
+      manage_account: boolean;
+      manage_billing: boolean;
+      manage_providers: boolean;
+      manage_integrations: boolean;
+      manage_scans: boolean;
+      unlimited_visibility: boolean;
+      inserted_at: string;
+      updated_at: string;
+    };
+    relationships: {
+      provider_groups: {
+        meta: {
+          count: number;
+        };
+        data: {
+          type: string;
+          id: string;
+        }[];
+      };
+      users: {
+        meta: {
+          count: number;
+        };
+        data: {
+          type: string;
+          id: string;
+        }[];
+      };
+      invitations: {
+        meta: {
+          count: number;
+        };
+        data: {
+          type: string;
+          id: string;
+        }[];
+      };
+    };
+    links: {
+      self: string;
+    };
+  }[];
+  meta: {
+    pagination: {
+      page: number;
+      pages: number;
+      count: number;
+    };
+    version: string;
+  };
+}
 export interface UserProfileProps {
   data: {
     type: "users";
