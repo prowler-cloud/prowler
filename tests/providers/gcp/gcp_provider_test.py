@@ -739,7 +739,6 @@ class TestGCPProvider:
         ), patch(
             "prowler.providers.gcp.gcp_provider.GcpProvider.validate_project_id"
         ) as mock_validate_project_id:
-
             mock_validate_project_id.side_effect = GCPInvalidProviderIdError(
                 "Invalid project ID"
             )
