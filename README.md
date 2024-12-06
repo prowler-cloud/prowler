@@ -35,6 +35,7 @@
   <a href="https://github.com/prowler-cloud/prowler"><img alt="License" src="https://img.shields.io/github/license/prowler-cloud/prowler"></a>
   <a href="https://twitter.com/ToniBlyx"><img alt="Twitter" src="https://img.shields.io/twitter/follow/toniblyx?style=social"></a>
   <a href="https://twitter.com/prowlercloud"><img alt="Twitter" src="https://img.shields.io/twitter/follow/prowlercloud?style=social"></a>
+  <a href="https://gurubase.io/g/prowler"><img alt="Gurubase" src="https://img.shields.io/badge/Gurubase-Ask%20Prowler%20Guru-006BFF"></a>
 </p>
 <hr>
 <p align="center">
