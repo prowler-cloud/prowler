@@ -78,7 +78,7 @@ moto = {extras = ["all"], version = "5.0.16"}
 openapi-schema-validator = "0.6.2"
 openapi-spec-validator = "0.7.1"
 pylint = "3.3.2"
-pytest = "8.3.3"
+pytest = "8.3.4"
 pytest-cov = "6.0.0"
 pytest-env = "1.1.5"
 pytest-randomly = "3.16.0"
