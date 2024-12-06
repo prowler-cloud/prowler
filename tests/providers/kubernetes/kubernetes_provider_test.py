@@ -50,7 +50,6 @@ class TestKubernetesProvider:
             arguments = Namespace()
             arguments.kubeconfig_file = "dummy_path"
             arguments.context = None
-            arguments.only_logs = False
             arguments.namespace = None
             fixer_config = load_and_validate_config_file(
                 "kubernetes", default_fixer_config_file_path

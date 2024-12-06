@@ -22,7 +22,6 @@ class Test_Output_Options:
         arguments.verbose = True
         arguments.security_hub = True
         arguments.shodan = None
-        arguments.only_logs = False
         arguments.unix_timestamp = False
         arguments.send_sh_only_fails = True
 
@@ -37,7 +36,6 @@ class Test_Output_Options:
         assert output_options.verbose
         assert output_options.security_hub_enabled
         assert not output_options.shodan_api_key
-        assert not output_options.only_logs
         assert not output_options.unix_timestamp
         assert output_options.send_sh_only_fails
         assert (
@@ -59,7 +57,6 @@ class Test_Output_Options:
         arguments.output_filename = "output_test_filename"
         arguments.security_hub = True
         arguments.shodan = None
-        arguments.only_logs = False
         arguments.unix_timestamp = False
         arguments.send_sh_only_fails = True
 
@@ -90,7 +87,6 @@ class Test_Output_Options:
         output_directory = arguments.output_directory
         arguments.status = []
         arguments.verbose = True
-        arguments.only_logs = False
         arguments.unix_timestamp = False
         arguments.shodan = None
 
@@ -127,7 +123,6 @@ class Test_Output_Options:
         arguments.output_formats = ["csv"]
         arguments.output_directory = "output_test_directory"
         arguments.verbose = True
-        arguments.only_logs = False
         arguments.unix_timestamp = False
         arguments.shodan = None
 
@@ -160,7 +155,6 @@ class Test_Output_Options:
         arguments.output_directory = "output_test_directory"
         arguments.verbose = True
         arguments.output_filename = "output_test_filename"
-        arguments.only_logs = False
         arguments.unix_timestamp = False
         arguments.shodan = None
 
