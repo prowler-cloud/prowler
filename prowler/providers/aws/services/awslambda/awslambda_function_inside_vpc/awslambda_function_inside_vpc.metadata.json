@@ -3,7 +3,7 @@
   "CheckID": "awslambda_function_inside_vpc",
   "CheckTitle": "Ensure AWS Lambda Functions Are Deployed Inside a VPC",
   "CheckType": [],
-  "ServiceName": "lambda",
+  "ServiceName": "awslambda",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:lambda:region:account-id:function/function-name",
   "Severity": "low",

@@ -3,7 +3,7 @@
   "CheckID": "awslambda_function_using_supported_runtimes",
   "CheckTitle": "Find obsolete Lambda runtimes.",
   "CheckType": [],
-  "ServiceName": "lambda",
+  "ServiceName": "awslambda",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:lambda:region:account-id:function/function-name",
   "Severity": "medium",

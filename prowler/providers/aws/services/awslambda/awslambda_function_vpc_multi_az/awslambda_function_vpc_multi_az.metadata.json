@@ -3,7 +3,7 @@
   "CheckID": "awslambda_function_vpc_multi_az",
   "CheckTitle": "Check if AWS Lambda Function VPC is deployed Across Multiple Availability Zones",
   "CheckType": [],
-  "ServiceName": "lambda",
+  "ServiceName": "awslambda",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:lambda:region:account-id:function/function-name",
   "Severity": "medium",
