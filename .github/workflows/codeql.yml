@@ -9,11 +9,11 @@
 # the `language` matrix defined below to confirm you have the correct set of
 # supported CodeQL languages.
 #
-name: "CodeQL"
+name: SDK - CodeQL
 
 on:
   push:
-    branches: 
+    branches:
       - "master"
       - "v3"
       - "v4.*"
@@ -21,7 +21,7 @@ on:
       - 'ui/**'
       - 'api/**'
   pull_request:
-    branches: 
+    branches:
       - "master"
       - "v3"
       - "v4.*"

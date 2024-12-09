@@ -1,4 +1,4 @@
-name: "Pull Request" 
+name: SDK - Pull Request
 
 on:
   push:
