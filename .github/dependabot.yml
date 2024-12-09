@@ -22,10 +22,47 @@ updates:
       - "dependencies"
       - "github_actions"
 
-  - package-ecosystem: "pip"
+<<<<<<< HEAD
+=======
+  - package-ecosystem: "npm"
     directory: "/"
     schedule:
       interval: "daily"
+    open-pull-requests-limit: 10
+    target-branch: master
+    labels:
+      - "dependencies"
+      - "npm"
+
+  # v4.6
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    target-branch: v4.6
+    labels:
+      - "dependencies"
+      - "pip"
+      - "v4"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    target-branch: v4.6
+    labels:
+      - "dependencies"
+      - "github_actions"
+      - "v4"
+
+  # v3
+>>>>>>> f1efc1456 (chore(dependabot): change interval of PRs (#6086))
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "monthly"
     open-pull-requests-limit: 10
     target-branch: v3
     labels:
@@ -35,7 +72,7 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: "monthly"
     open-pull-requests-limit: 10
     target-branch: v3
     labels:
