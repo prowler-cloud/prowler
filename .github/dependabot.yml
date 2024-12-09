@@ -5,6 +5,7 @@
 
 version: 2
 updates:
+  # v5
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
@@ -24,7 +25,7 @@ updates:
     labels:
       - "dependencies"
       - "github_actions"
-
+  
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
@@ -34,7 +35,7 @@ updates:
     labels:
       - "dependencies"
       - "npm"
-
+  
   # v4.6
   - package-ecosystem: "pip"
     directory: "/"
@@ -46,18 +47,19 @@ updates:
       - "dependencies"
       - "pip"
       - "v4"
-
+  
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "daily"
     open-pull-requests-limit: 10
-    target-branch: v4.6
+    target-branch: v3
     labels:
       - "dependencies"
       - "github_actions"
       - "v4"
 
+  # v3
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
