@@ -1,4 +1,4 @@
-name: Build and Push containers
+name: SDK - Build and Push containers
 
 on:
   push:
@@ -85,8 +85,8 @@ jobs:
               echo "STABLE_TAG=v3-stable" >> "${GITHUB_ENV}"
               ;;
 
-          
-          4) 
+
+          4)
               echo "LATEST_TAG=v4-latest" >> "${GITHUB_ENV}"
               echo "STABLE_TAG=v4-stable" >> "${GITHUB_ENV}"
               ;;

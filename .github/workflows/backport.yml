@@ -1,4 +1,4 @@
-name: Automatic Backport
+name: Prowler - Automatic Backport
 
 on:
   pull_request_target:
