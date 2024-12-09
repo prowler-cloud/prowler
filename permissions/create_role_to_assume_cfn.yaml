@@ -95,6 +95,7 @@ Resources:
                 - 'servicecatalog:List*'
                 - 'ssm:GetDocument'
                 - 'ssm-incidents:List*'
+                - 'states:ListTagsForResource'
                 - 'support:Describe*'
                 - 'tag:GetTagKeys'
                 - 'wellarchitected:List*'
