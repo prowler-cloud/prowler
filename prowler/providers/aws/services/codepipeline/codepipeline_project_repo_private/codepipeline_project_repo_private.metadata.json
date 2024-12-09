@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "codepipeline_project_repo_private",
+  "CheckTitle": "Check if CodePipeline projects use public Git repositories",
+  "CheckType": [],
+  "ServiceName": "codepipeline",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "medium",
+  "ResourceType": "Other",
+  "Description": "Ensure that CodePipeline projects do not use public GitHub or GitLab repositories as source.",
+  "Risk": "Using public Git repositories in CodePipeline projects could expose sensitive deployment configurations and increase the risk of supply chain attacks.",
+  "RelatedUrl": "https://docs.aws.amazon.com/codepipeline/latest/userguide/connections-github.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws codestar-connections create-connection --provider-type GitHub|GitLab --connection-name <connection-name>",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Use private Git repositories for CodePipeline sources and ensure proper authentication is configured using AWS CodeStar Connections. Consider using AWS CodeCommit or other private repository solutions for sensitive code.",
+      "Url": "https://docs.aws.amazon.com/codepipeline/latest/userguide/connections"
+    }
+  },
+  "Categories": [
+    "security-best-practices"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check supports both GitHub and GitLab repositories through CodeStar Connections"
+}
