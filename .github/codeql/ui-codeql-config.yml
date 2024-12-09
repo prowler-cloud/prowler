@@ -1,3 +1,5 @@
 name: "UI - CodeQL Config"
 paths:
   - "ui/"
+queries:
+  - javascript-security-and-quality.qls
