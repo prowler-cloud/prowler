@@ -3,7 +3,11 @@ name: SDK - Build and Push containers
 on:
   push:
     branches:
+      # For `v3-latest`
       - "v3"
+      # For `v4-latest`
+      - "v4.6"
+      # For `latest`
       - "master"
     paths-ignore:
       - ".github/**"
