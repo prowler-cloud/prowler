@@ -1,8 +1,4 @@
-<<<<<<< HEAD:.github/workflows/pull-request.yml
-name: "Pull Request" 
-=======
 name: SDK - Pull Request
->>>>>>> 213a793fb (chore(actions): standardize names (#6059)):.github/workflows/sdk-pull-request.yml
 
 on:
   push:
