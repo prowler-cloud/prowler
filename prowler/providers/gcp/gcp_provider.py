@@ -181,8 +181,6 @@ class GcpProvider(Provider):
                 message="No Project IDs can be accessed via Google Credentials.",
             )
         if project_ids:
-            if self._default_project_id not in project_ids:
-                self._default_project_id = project_ids[0]
             for input_project in project_ids:
                 for (
                     accessible_project_id,
@@ -202,6 +200,10 @@ class GcpProvider(Provider):
                 if project.lifecycle_state == "ACTIVE":
                     self._projects[project_id] = project
                     self._project_ids.append(project_id)
+
+        # Change default project if not in active projects
+        if self._default_project_id not in self._project_ids:
+            self._default_project_id = self._project_ids[0]
 
         # Remove excluded projects if any input
         if excluded_project_ids:
