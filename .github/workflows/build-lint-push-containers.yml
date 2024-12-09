@@ -3,7 +3,11 @@ name: Build and Push containers
 on:
   push:
     branches:
+      # For `v3-latest`
       - "v3"
+      # For `v4-latest`
+      - "v4.6"
+      # For `latest`
       - "master"
     paths-ignore:
       - ".github/**"
@@ -85,8 +89,8 @@ jobs:
               echo "STABLE_TAG=v3-stable" >> "${GITHUB_ENV}"
               ;;
 
-          
-          4) 
+
+          4)
               echo "LATEST_TAG=v4-latest" >> "${GITHUB_ENV}"
               echo "STABLE_TAG=v4-stable" >> "${GITHUB_ENV}"
               ;;
