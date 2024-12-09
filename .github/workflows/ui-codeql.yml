@@ -41,7 +41,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: ["javascript"]
+        language: ["javascript-all"]
         # Learn more about CodeQL language support at https://aka.ms/codeql-docs/language-support
 
     steps:
