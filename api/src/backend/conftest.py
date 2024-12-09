@@ -1,35 +1,35 @@
 import logging
+from datetime import datetime, timedelta, timezone
 
 import pytest
 from django.conf import settings
-from datetime import datetime, timezone, timedelta
-from django.db import connections as django_connections, connection as django_connection
+from django.db import connection as django_connection
+from django.db import connections as django_connections
 from django.urls import reverse
 from django_celery_results.models import TaskResult
-from prowler.lib.check.models import Severity
-from prowler.lib.outputs.finding import Status
 from rest_framework import status
 from rest_framework.test import APIClient
 
 from api.models import (
+    ComplianceOverview,
     Finding,
-)
-from api.models import (
-    User,
+    Invitation,
+    Membership,
     Provider,
     ProviderGroup,
+    ProviderSecret,
     Resource,
     ResourceTag,
     Scan,
+    ScanSummary,
     StateChoices,
     Task,
-    Membership,
-    ProviderSecret,
-    Invitation,
-    ComplianceOverview,
+    User,
 )
 from api.rls import Tenant
 from api.v1.serializers import TokenSerializer
+from prowler.lib.check.models import Severity
+from prowler.lib.outputs.finding import Status
 
 API_JSON_CONTENT_TYPE = "application/vnd.api+json"
 NO_TENANT_HTTP_STATUS = status.HTTP_401_UNAUTHORIZED
@@ -537,9 +537,89 @@ def get_api_tokens(
         data=json_body,
         format="vnd.api+json",
     )
-    return response.json()["data"]["attributes"]["access"], response.json()["data"][
-        "attributes"
-    ]["refresh"]
+    return (
+        response.json()["data"]["attributes"]["access"],
+        response.json()["data"]["attributes"]["refresh"],
+    )
+
+
+@pytest.fixture
+def scan_summaries_fixture(tenants_fixture, providers_fixture):
+    tenant = tenants_fixture[0]
+    provider = providers_fixture[0]
+    scan = Scan.objects.create(
+        name="overview scan",
+        provider=provider,
+        trigger=Scan.TriggerChoices.MANUAL,
+        state=StateChoices.COMPLETED,
+        tenant=tenant,
+    )
+
+    ScanSummary.objects.create(
+        tenant=tenant,
+        check_id="check1",
+        service="service1",
+        severity="high",
+        region="region1",
+        _pass=1,
+        fail=0,
+        muted=0,
+        total=1,
+        new=1,
+        changed=0,
+        unchanged=0,
+        fail_new=0,
+        fail_changed=0,
+        pass_new=1,
+        pass_changed=0,
+        muted_new=0,
+        muted_changed=0,
+        scan=scan,
+    )
+
+    ScanSummary.objects.create(
+        tenant=tenant,
+        check_id="check1",
+        service="service1",
+        severity="high",
+        region="region2",
+        _pass=0,
+        fail=1,
+        muted=1,
+        total=2,
+        new=2,
+        changed=0,
+        unchanged=0,
+        fail_new=1,
+        fail_changed=0,
+        pass_new=0,
+        pass_changed=0,
+        muted_new=1,
+        muted_changed=0,
+        scan=scan,
+    )
+
+    ScanSummary.objects.create(
+        tenant=tenant,
+        check_id="check2",
+        service="service2",
+        severity="critical",
+        region="region1",
+        _pass=1,
+        fail=0,
+        muted=0,
+        total=1,
+        new=1,
+        changed=0,
+        unchanged=0,
+        fail_new=0,
+        fail_changed=0,
+        pass_new=1,
+        pass_changed=0,
+        muted_new=0,
+        muted_changed=0,
+        scan=scan,
+    )
 
 
 def get_authorization_header(access_token: str) -> dict:
