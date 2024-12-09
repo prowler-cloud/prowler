@@ -15,7 +15,6 @@ DATABASES = {
         "HOST": env("POSTGRES_HOST"),
         "PORT": env("POSTGRES_PORT"),
         "CONN_MAX_AGE": 3600,
-        "CONN_HEALTH_CHECKS": True,
     },
     "admin": {
         "ENGINE": "psqlextra.backend",
@@ -25,7 +24,6 @@ DATABASES = {
         "HOST": env("POSTGRES_HOST"),
         "PORT": env("POSTGRES_PORT"),
         "CONN_MAX_AGE": 3600,
-        "CONN_HEALTH_CHECKS": True,
     },
 }
 DATABASES["default"] = DATABASES["prowler_user"]
