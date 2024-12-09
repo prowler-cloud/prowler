@@ -25,7 +25,7 @@ jobs:
         with:
           allow_failure: true
           prefix_mode: true
-          one_of: ${{ env.BACKPORT_LABEL_PREFIX}}
+          any_of: ${{ env.BACKPORT_LABEL_PREFIX}}
           none_of: ${{ env.BACKPORT_LABEL_IGNORE}}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
 
