@@ -47,7 +47,12 @@ def psycopg_connection(database_alias: str):
 def tenant_transaction(tenant_id: str):
     with transaction.atomic():
         with connection.cursor() as cursor:
-            cursor.execute(f"SELECT set_config('api.tenant_id', '{tenant_id}', TRUE);")
+            # TODO
+            # try:
+            #     uuid.UUID(tenant_id)
+            # except ValueError:
+            #     raise ValidationError("Tenant ID must be a valid UUID")
+            cursor.execute("SELECT set_config('api.tenant_id', %s, TRUE);", [tenant_id])
             yield cursor
 
 

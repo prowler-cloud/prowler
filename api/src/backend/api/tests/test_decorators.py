@@ -1,4 +1,4 @@
-from unittest.mock import patch, call
+from unittest.mock import call, patch
 
 import pytest
 
@@ -20,7 +20,7 @@ class TestSetTenantDecorator:
         result = random_func("test_arg", tenant_id=tenant_id)
 
         assert (
-            call(f"SELECT set_config('api.tenant_id', '{tenant_id}', TRUE);")
+            call("SELECT set_config('api.tenant_id', %s, TRUE);", [tenant_id])
             in mock_cursor.execute.mock_calls
         )
         assert result == "test_arg"
