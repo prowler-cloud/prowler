@@ -84,8 +84,8 @@ jobs:
               ;;
 
           4)
-              echo "LATEST_TAG=latest" >> "${GITHUB_ENV}"
-              echo "STABLE_TAG=stable" >> "${GITHUB_ENV}"
+              echo "LATEST_TAG=v4-latest" >> "${GITHUB_ENV}"
+              echo "STABLE_TAG=v4-stable" >> "${GITHUB_ENV}"
               ;;
 
           *)
