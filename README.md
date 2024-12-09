@@ -139,6 +139,19 @@ cd src/backend
 python -m celery -A config.celery worker -l info -E
 ```
 
+**Commands to run the API Scheduler**
+
+``` console
+git clone https://github.com/prowler-cloud/prowler
+cd prowler/api
+poetry install
+poetry shell
+set -a
+source .env
+cd src/backend
+python -m celery -A config.celery beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+```
+
 **Commands to run the UI**
 
 ``` console
