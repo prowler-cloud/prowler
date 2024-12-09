@@ -1,4 +1,4 @@
-name: Build and Push containers
+name: SDK - Build and Push containers
 
 on:
   push:

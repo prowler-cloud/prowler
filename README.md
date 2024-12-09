@@ -3,7 +3,7 @@
   <img align="center" src="https://github.com/prowler-cloud/prowler/blob/master/docs/img/prowler-logo-white.png#gh-dark-mode-only" width="50%" height="50%">
 </p>
 <p align="center">
-  <b><i>Prowler SaaS </b> and <b>Prowler Open Source</b> are as dynamic and adaptable as the environment they’re meant to protect. Trusted by the leaders in security.
+  <b><i>Prowler Open Source</b> is as dynamic and adaptable as the environment they’re meant to protect. Trusted by the leaders in security.
 </p>
 <p align="center">
 <b>Learn more at <a href="https://prowler.com">prowler.com</i></b>
@@ -43,7 +43,7 @@
 
 # Description
 
-**Prowler** is an Open Source security tool to perform AWS, Azure, Google Cloud and Kubernetes security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness, and also remediations! We have Prowler CLI (Command Line Interface) that we call Prowler Open Source and a service on top of it that we call <a href="https://prowler.com">Prowler SaaS</a>.
+**Prowler** is an Open Source security tool to perform AWS, Azure, Google Cloud and Kubernetes security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness, and also remediations! We have Prowler CLI (Command Line Interface) that we call Prowler Open Source and a service on top of it that we call <a href="https://prowler.com">Prowler Cloud</a>.
 
 ## Prowler App
 

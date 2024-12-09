@@ -1,4 +1,4 @@
-name: PyPI release
+name: SDK - PyPI release
 
 on:
   release:
