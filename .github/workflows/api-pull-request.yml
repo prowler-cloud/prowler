@@ -1,4 +1,4 @@
-name: "API - Pull Request"
+name: API - Pull Request
 
 on:
   push:
