@@ -22,7 +22,8 @@ In order to see which compliance frameworks are cover by Prowler, you can use op
 ```sh
 prowler <provider> --list-compliance
 ```
-Currently, the available frameworks are:
+
+### AWS
 
 - `aws_account_security_onboarding_aws`
 - `aws_audit_manager_control_tower_guardrails_aws`
@@ -54,6 +55,23 @@ Currently, the available frameworks are:
 - `pci_3.2.1_aws`
 - `rbi_cyber_security_framework_aws`
 - `soc2_aws`
+
+### Azure
+
+- `cis_2.0_azure`
+- `cis_2.1_azure`
+- `ens_rd2022_azure`
+- `mitre_attack_azure`
+
+### GCP
+
+- `cis_2.0_gcp`
+- `ens_rd2022_gcp`
+- `mitre_attack_gcp`
+
+### Kubernetes
+
+- `cis_1.8_kubernetes`
 
 ## List Requirements of Compliance Frameworks
 For each compliance framework, you can use option `--list-compliance-requirements` to list its requirements:
