@@ -1,4 +1,5 @@
 import secrets
+import uuid
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 
@@ -8,6 +9,7 @@ from django.core.paginator import Paginator
 from django.db import connection, models, transaction
 from psycopg2 import connect as psycopg2_connect
 from psycopg2.extensions import AsIs, new_type, register_adapter, register_type
+from rest_framework_json_api.serializers import ValidationError
 
 DB_USER = settings.DATABASES["default"]["USER"] if not settings.TESTING else "test"
 DB_PASSWORD = (
@@ -47,11 +49,10 @@ def psycopg_connection(database_alias: str):
 def tenant_transaction(tenant_id: str):
     with transaction.atomic():
         with connection.cursor() as cursor:
-            # TODO
-            # try:
-            #     uuid.UUID(tenant_id)
-            # except ValueError:
-            #     raise ValidationError("Tenant ID must be a valid UUID")
+            try:
+                uuid.UUID(tenant_id)
+            except ValueError:
+                raise ValidationError("Tenant ID must be a valid UUID")
             cursor.execute("SELECT set_config('api.tenant_id', %s, TRUE);", [tenant_id])
             yield cursor
 

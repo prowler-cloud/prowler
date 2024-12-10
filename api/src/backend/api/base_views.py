@@ -75,6 +75,11 @@ class BaseTenantViewset(BaseViewSet):
         ):
             user_id = str(request.user.id)
 
+            try:
+                uuid.UUID(user_id)
+            except ValueError:
+                raise ValidationError("User ID must be a valid UUID")
+
             with connection.cursor() as cursor:
                 cursor.execute("SELECT set_config('api.user_id', %s, TRUE);", [user_id])
                 return super().initial(request, *args, **kwargs)
