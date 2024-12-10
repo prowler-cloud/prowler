@@ -826,7 +826,7 @@ class TestProviderViewSet:
     @pytest.mark.parametrize(
         "include_values, expected_resources",
         [
-            ("provider_groups", ["provider-groups"]),
+            ("provider_groups", ["provider-group"]),
         ],
     )
     def test_providers_list_include(
