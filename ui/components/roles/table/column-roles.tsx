@@ -60,24 +60,32 @@ export const ColumnsRoles: ColumnDef<RolesProps["data"][number]>[] = [
     cell: ({ row }) => {
       const relationships = getRoleRelationships(row);
       return (
-        <p className="font-semibold">{relationships.invitations.meta.count}</p>
+        <p className="font-semibold">
+          {relationships.invitations.meta.count === 0
+            ? "No Invitations"
+            : `${relationships.invitations.meta.count} ${
+                relationships.invitations.meta.count === 1
+                  ? "Invitation"
+                  : "Invitations"
+              }`}
+        </p>
       );
     },
   },
-  {
-    accessorKey: "updated_at",
-    header: ({ column }) => (
-      <DataTableColumnHeader
-        column={column}
-        title={"Updated At"}
-        param="updated_at"
-      />
-    ),
-    cell: ({ row }) => {
-      const { updated_at } = getRoleAttributes(row);
-      return <DateWithTime dateTime={updated_at} showTime={false} />;
-    },
-  },
+  // {
+  //   accessorKey: "updated_at",
+  //   header: ({ column }) => (
+  //     <DataTableColumnHeader
+  //       column={column}
+  //       title={"Updated At"}
+  //       param="updated_at"
+  //     />
+  //   ),
+  //   cell: ({ row }) => {
+  //     const { updated_at } = getRoleAttributes(row);
+  //     return <DateWithTime dateTime={updated_at} showTime={false} />;
+  //   },
+  // },
   {
     accessorKey: "inserted_at",
     header: ({ column }) => (
