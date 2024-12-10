@@ -11,6 +11,7 @@ from conftest import TEST_USER, TEST_PASSWORD, get_api_tokens, get_authorization
 def test_check_resources_between_different_tenants(
     schedule_mock,
     enforce_test_user_db_connection,
+    patch_testing_flag,
     authenticated_api_client,
     tenants_fixture,
 ):

@@ -3,16 +3,19 @@ from drf_spectacular.views import SpectacularRedocView
 from rest_framework_nested import routers
 
 from api.v1.views import (
-    ComplianceOverviewViewSet,
     CustomTokenObtainView,
     CustomTokenRefreshView,
     FindingViewSet,
-    InvitationAcceptViewSet,
-    InvitationViewSet,
     MembershipViewSet,
-    OverviewViewSet,
     ProviderGroupViewSet,
     ProviderSecretViewSet,
+    InvitationViewSet,
+    InvitationAcceptViewSet,
+    RoleViewSet,
+    RoleProviderGroupRelationshipView,
+    UserRoleRelationshipView,
+    OverviewViewSet,
+    ComplianceOverviewViewSet,
     ProviderViewSet,
     ResourceViewSet,
     ScanViewSet,
@@ -34,6 +37,7 @@ router.register(r"scans", ScanViewSet, basename="scan")
 router.register(r"tasks", TaskViewSet, basename="task")
 router.register(r"resources", ResourceViewSet, basename="resource")
 router.register(r"findings", FindingViewSet, basename="finding")
+router.register(r"roles", RoleViewSet, basename="role")
 router.register(
     r"compliance-overviews", ComplianceOverviewViewSet, basename="complianceoverview"
 )
@@ -79,6 +83,20 @@ urlpatterns = [
         "invitations/accept",
         InvitationAcceptViewSet.as_view({"post": "accept"}),
         name="invitation-accept",
+    ),
+    path(
+        "roles/<uuid:pk>/relationships/provider_groups",
+        RoleProviderGroupRelationshipView.as_view(
+            {"post": "create", "patch": "partial_update", "delete": "destroy"}
+        ),
+        name="role-provider-groups-relationship",
+    ),
+    path(
+        "users/<uuid:pk>/relationships/roles",
+        UserRoleRelationshipView.as_view(
+            {"post": "create", "patch": "partial_update", "delete": "destroy"}
+        ),
+        name="user-roles-relationship",
     ),
     path("", include(router.urls)),
     path("", include(tenants_router.urls)),
