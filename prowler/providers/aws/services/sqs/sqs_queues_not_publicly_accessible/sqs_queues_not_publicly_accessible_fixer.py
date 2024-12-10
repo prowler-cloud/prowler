@@ -42,10 +42,10 @@ def fixer(resource_id: str, region: str) -> bool:
                     "Sid": "ProwlerFixerStatement",
                     "Effect": "Allow",
                     "Principal": {
-                        "AWS": f"arn:{audited_partition}:iam::{account_id}:root"
+                        "AWS": account_id,
                     },
                     "Action": "sqs:*",
-                    "Resource": account_id,
+                    "Resource": f"arn:{audited_partition}:sqs:{region}:{account_id}:{queue_name}",
                 }
             ],
         }
