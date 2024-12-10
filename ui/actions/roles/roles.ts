@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/auth.config";
-import { parseStringify } from "@/lib";
+import { getErrorMessage, parseStringify } from "@/lib";
 
 export const getRoles = async ({
   page = 1,
@@ -48,127 +48,118 @@ export const getRoles = async ({
   }
 };
 
-// export const sendInvite = async (formData: FormData) => {
-//   const session = await auth();
-//   const keyServer = process.env.API_BASE_URL;
+export const addRole = async (formData: FormData) => {
+  const session = await auth();
+  const keyServer = process.env.API_BASE_URL;
 
-//   const email = formData.get("email");
-//   const url = new URL(`${keyServer}/tenants/invitations`);
+  const url = new URL(`${keyServer}/roles`);
+  const body = JSON.stringify({
+    data: {
+      type: "role",
+      attributes: {
+        name: formData.get("name"),
+        manage_users: formData.get("manage_users") === "true",
+        manage_account: formData.get("manage_account") === "true",
+        manage_billing: formData.get("manage_billing") === "true",
+        manage_providers: formData.get("manage_providers") === "true",
+        manage_integrations: formData.get("manage_integrations") === "true",
+        manage_scans: formData.get("manage_scans") === "true",
+        unlimited_visibility: formData.get("unlimited_visibility") === "true",
+      },
+      relationships: {
+        provider_groups: {
+          data: [],
+        },
+      },
+    },
+  });
 
-//   const body = JSON.stringify({
-//     data: {
-//       type: "invitations",
-//       attributes: {
-//         email,
-//       },
-//       relationships: {},
-//     },
-//   });
+  try {
+    const response = await fetch(url.toString(), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/vnd.api+json",
+        Accept: "application/vnd.api+json",
+        Authorization: `Bearer ${session?.accessToken}`,
+      },
+      body,
+    });
+    const data = await response.json();
+    revalidatePath("/roles");
+    return data;
+  } catch (error) {
+    return {
+      error: getErrorMessage(error),
+    };
+  }
+};
 
-//   try {
-//     const response = await fetch(url.toString(), {
-//       method: "POST",
-//       headers: {
-//         "Content-Type": "application/vnd.api+json",
-//         Accept: "application/vnd.api+json",
-//         Authorization: `Bearer ${session?.accessToken}`,
-//       },
-//       body,
-//     });
-//     const data = await response.json();
+export const updateRole = async (formData: FormData, roleId: string) => {
+  const session = await auth();
+  const keyServer = process.env.API_BASE_URL;
 
-//     return parseStringify(data);
-//   } catch (error) {
-//     return {
-//       error: getErrorMessage(error),
-//     };
-//   }
-// };
+  const url = new URL(`${keyServer}/roles/${roleId}`);
+  const body = JSON.stringify({
+    data: {
+      type: "role",
+      id: roleId,
+      attributes: {
+        name: formData.get("name"),
+        manage_users: formData.get("manage_users") === "true",
+        manage_account: formData.get("manage_account") === "true",
+        manage_billing: formData.get("manage_billing") === "true",
+        manage_providers: formData.get("manage_providers") === "true",
+        manage_integrations: formData.get("manage_integrations") === "true",
+        manage_scans: formData.get("manage_scans") === "true",
+        unlimited_visibility: formData.get("unlimited_visibility") === "true",
+      },
+    },
+  });
 
-// export const updateInvite = async (formData: FormData) => {
-//   const session = await auth();
-//   const keyServer = process.env.API_BASE_URL;
+  try {
+    const response = await fetch(url.toString(), {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/vnd.api+json",
+        Accept: "application/vnd.api+json",
+        Authorization: `Bearer ${session?.accessToken}`,
+      },
+      body,
+    });
+    const data = await response.json();
+    revalidatePath("/roles");
+    return data;
+  } catch (error) {
+    return {
+      error: getErrorMessage(error),
+    };
+  }
+};
 
-//   const invitationId = formData.get("invitationId");
-//   const invitationEmail = formData.get("invitationEmail");
-//   const expiresAt = formData.get("expires_at");
+export const deleteRole = async (roleId: string) => {
+  const session = await auth();
+  const keyServer = process.env.API_BASE_URL;
 
-//   const url = new URL(`${keyServer}/tenants/invitations/${invitationId}`);
+  const url = new URL(`${keyServer}/roles/${roleId}`);
+  try {
+    const response = await fetch(url.toString(), {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${session?.accessToken}`,
+      },
+    });
 
-//   try {
-//     const response = await fetch(url.toString(), {
-//       method: "PATCH",
-//       headers: {
-//         "Content-Type": "application/vnd.api+json",
-//         Accept: "application/vnd.api+json",
-//         Authorization: `Bearer ${session?.accessToken}`,
-//       },
-//       body: JSON.stringify({
-//         data: {
-//           type: "invitations",
-//           id: invitationId,
-//           attributes: {
-//             email: invitationEmail,
-//             ...(expiresAt && { expires_at: expiresAt }),
-//           },
-//         },
-//       }),
-//     });
-//     const data = await response.json();
-//     revalidatePath("/invitations");
-//     return parseStringify(data);
-//   } catch (error) {
-//     // eslint-disable-next-line no-console
-//     console.error("Error updating invitation:", error);
-//     return {
-//       error: getErrorMessage(error),
-//     };
-//   }
-// };
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData?.message || "Failed to delete the role");
+    }
 
-// export const getInvitationInfoById = async (invitationId: string) => {
-//   const session = await auth();
-//   const keyServer = process.env.API_BASE_URL;
-//   const url = new URL(`${keyServer}/tenants/invitations/${invitationId}`);
-
-//   try {
-//     const response = await fetch(url.toString(), {
-//       method: "GET",
-//       headers: {
-//         Accept: "application/vnd.api+json",
-//         Authorization: `Bearer ${session?.accessToken}`,
-//       },
-//     });
-
-//     const data = await response.json();
-//     return parseStringify(data);
-//   } catch (error) {
-//     return {
-//       error: getErrorMessage(error),
-//     };
-//   }
-// };
-
-// export const revokeInvite = async (formData: FormData) => {
-//   const session = await auth();
-//   const keyServer = process.env.API_BASE_URL;
-
-//   const invitationId = formData.get("invitationId");
-//   const url = new URL(`${keyServer}/tenants/invitations/${invitationId}`);
-//   try {
-//     const response = await fetch(url.toString(), {
-//       method: "DELETE",
-//       headers: {
-//         Authorization: `Bearer ${session?.accessToken}`,
-//       },
-//     });
-//     const data = await response.json();
-//     await wait(1000);
-//     revalidatePath("/invitations");
-//     return parseStringify(data);
-//   } catch (error) {
-//     return {
-//       error: getErrorMessage(error),
-//     };
-//   }
-// };
+    const data = await response.json();
+    revalidatePath("/roles");
+    return data;
+  } catch (error) {
+    return {
+      error: getErrorMessage(error),
+    };
+  }
+};

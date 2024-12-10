@@ -3,48 +3,46 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Checkbox } from "@nextui-org/react";
 import { SaveIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { addRole } from "@/actions/roles/roles";
+import { updateRole } from "@/actions/roles/roles";
 import { useToast } from "@/components/ui";
 import { CustomButton, CustomInput } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
-import { addRoleFormSchema, ApiError } from "@/types";
+import { ApiError, editRoleFormSchema } from "@/types";
 
-export type FormValues = z.infer<typeof addRoleFormSchema>;
+export type FormValues = z.infer<typeof editRoleFormSchema>;
 
-export const AddRoleForm = () => {
+export const EditRoleForm = ({ roleId }: { roleId: string }) => {
   const { toast } = useToast();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const searchRoleId = searchParams.get("roleId") || roleId;
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(addRoleFormSchema),
+    resolver: zodResolver(editRoleFormSchema),
     defaultValues: {
-      name: "",
-      manage_users: false,
-      manage_account: false,
-      manage_billing: false,
-      manage_providers: false,
-      manage_integrations: false,
-      manage_scans: false,
-      unlimited_visibility: false,
+      roleId: roleId,
     },
   });
 
-  const manageProviders = form.watch("manage_providers");
+  const { watch, setValue } = form;
+
+  const manageProviders = watch("manage_providers");
+  const unlimitedVisibility = watch("unlimited_visibility");
 
   useEffect(() => {
-    if (manageProviders) {
-      form.setValue("unlimited_visibility", true, {
+    if (manageProviders && !unlimitedVisibility) {
+      setValue("unlimited_visibility", true, {
         shouldValidate: true,
         shouldDirty: true,
         shouldTouch: true,
       });
     }
-  }, [manageProviders, form]);
+  }, [manageProviders, unlimitedVisibility, setValue]);
 
   const isLoading = form.formState.isSubmitting;
 
@@ -68,6 +66,15 @@ export const AddRoleForm = () => {
   };
 
   const onSubmitClient = async (values: FormValues) => {
+    if (!searchRoleId) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Role ID is missing.",
+      });
+      return;
+    }
+
     const formData = new FormData();
     formData.append("name", values.name);
     formData.append("manage_users", String(values.manage_users));
@@ -82,7 +89,7 @@ export const AddRoleForm = () => {
     );
 
     try {
-      const data = await addRole(formData);
+      const data = await updateRole(formData, searchRoleId);
 
       if (data?.errors && data.errors.length > 0) {
         data.errors.forEach((error: ApiError) => {
@@ -104,8 +111,8 @@ export const AddRoleForm = () => {
         });
       } else {
         toast({
-          title: "Role Added",
-          description: "The role was added successfully.",
+          title: "Role Updated",
+          description: "The role was updated successfully.",
         });
         router.push("/roles");
       }
@@ -182,7 +189,7 @@ export const AddRoleForm = () => {
         <div className="flex w-full justify-end sm:space-x-6">
           <CustomButton
             type="submit"
-            ariaLabel="Add Role"
+            ariaLabel="Update Role"
             className="w-1/2"
             variant="solid"
             color="action"
@@ -190,7 +197,7 @@ export const AddRoleForm = () => {
             isLoading={isLoading}
             startContent={!isLoading && <SaveIcon size={24} />}
           >
-            {isLoading ? <>Loading</> : <span>Add Role</span>}
+            {isLoading ? <>Loading</> : <span>Update Role</span>}
           </CustomButton>
         </div>
       </form>
