@@ -502,7 +502,7 @@ class RoleFilter(FilterSet):
 
         if value == "unlimited":
             return queryset.filter(q_all_true)
-        elif value == "nopermissions":
+        elif value == "none":
             return queryset.filter(q_all_false)
         elif value == "limited":
             return queryset.exclude(q_all_true | q_all_false)
