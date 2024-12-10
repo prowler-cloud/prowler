@@ -33,6 +33,8 @@ def fixer(resource_id: str, region: str) -> bool:
 
         regional_client = sqs_client.regional_clients[region]
 
+        queue_name = resource_id.split("/")[-1]
+
         trusted_policy = {
             "Version": "2012-10-17",
             "Statement": [
@@ -43,6 +45,7 @@ def fixer(resource_id: str, region: str) -> bool:
                         "AWS": f"arn:{audited_partition}:iam::{account_id}:root"
                     },
                     "Action": "sqs:*",
+                    "Resource": f"arn:{audited_partition}:sqs:{region}:{queue_name}",
                 }
             ],
         }
