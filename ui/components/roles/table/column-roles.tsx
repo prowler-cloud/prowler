@@ -42,7 +42,7 @@ export const ColumnsRoles: ColumnDef<RolesProps["data"][number]>[] = [
       const relationships = getRoleRelationships(row);
       const count = relationships.users.meta.count;
       return (
-        <p className="font-semibold">
+        <p className="text-xs font-semibold">
           {count === 0
             ? "No Users"
             : `${count} ${count === 1 ? "User" : "Users"}`}
@@ -62,7 +62,7 @@ export const ColumnsRoles: ColumnDef<RolesProps["data"][number]>[] = [
     cell: ({ row }) => {
       const relationships = getRoleRelationships(row);
       return (
-        <p className="font-semibold">
+        <p className="text-xs font-semibold">
           {relationships.invitations.meta.count === 0
             ? "No Invitations"
             : `${relationships.invitations.meta.count} ${
@@ -74,26 +74,31 @@ export const ColumnsRoles: ColumnDef<RolesProps["data"][number]>[] = [
       );
     },
   },
-  // {
-  //   accessorKey: "updated_at",
-  //   header: ({ column }) => (
-  //     <DataTableColumnHeader
-  //       column={column}
-  //       title={"Updated At"}
-  //       param="updated_at"
-  //     />
-  //   ),
-  //   cell: ({ row }) => {
-  //     const { updated_at } = getRoleAttributes(row);
-  //     return <DateWithTime dateTime={updated_at} showTime={false} />;
-  //   },
-  // },
+  {
+    accessorKey: "permission_state",
+    header: ({ column }) => (
+      <DataTableColumnHeader
+        column={column}
+        title={"Permissions"}
+        param="permission_state"
+      />
+    ),
+    cell: ({ row }) => {
+      const { permission_state } = getRoleAttributes(row);
+      return (
+        <p className="text-xs font-semibold">
+          {permission_state[0].toUpperCase() +
+            permission_state.slice(1).toLowerCase()}
+        </p>
+      );
+    },
+  },
   {
     accessorKey: "inserted_at",
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
-        title={"Added At"}
+        title={"Added"}
         param="inserted_at"
       />
     ),

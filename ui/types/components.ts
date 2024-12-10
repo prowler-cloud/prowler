@@ -247,6 +247,7 @@ export interface RolesProps {
       manage_integrations: boolean;
       manage_scans: boolean;
       unlimited_visibility: boolean;
+      permission_state: "unlimited" | "limited" | "none";
       inserted_at: string;
       updated_at: string;
     };
