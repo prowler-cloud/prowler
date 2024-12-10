@@ -24,6 +24,7 @@ from api.db_utils import (
 from api.models import (
     Finding,
     Membership,
+    PermissionChoices,
     Provider,
     ProviderGroup,
     Resource,
@@ -485,6 +486,12 @@ class UserFilter(FilterSet):
 class RoleFilter(FilterSet):
     inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
     updated_at = DateFilter(field_name="updated_at", lookup_expr="date")
+    permission_state = ChoiceFilter(
+        choices=PermissionChoices.choices, method="filter_permission_state"
+    )
+
+    def filter_permission_state(self, queryset, name, value):
+        return Role.filter_by_permission_state(queryset, value)
 
     class Meta:
         model = Role

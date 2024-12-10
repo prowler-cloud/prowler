@@ -826,7 +826,7 @@ class TestProviderViewSet:
     @pytest.mark.parametrize(
         "include_values, expected_resources",
         [
-            ("provider_groups", ["provider-groups"]),
+            ("provider_groups", ["provider-group"]),
         ],
     )
     def test_providers_list_include(
@@ -3115,6 +3115,18 @@ class TestRoleViewSet:
         data = response.json()["data"]
         assert data["id"] == str(role.id)
         assert data["attributes"]["name"] == role.name
+
+    def test_role_retrieve_permission_state(self, authenticated_client, roles_fixture):
+        role = roles_fixture[0]
+        response = authenticated_client.get(
+            reverse("role-detail", kwargs={"pk": role.id}),
+            {"filter[permission_state]": "limited"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert data["id"] == str(role.id)
+        assert data["attributes"]["name"] == role.name
+        assert data["attributes"]["permission_state"] == "limited"
 
     def test_role_create(self, authenticated_client):
         data = {

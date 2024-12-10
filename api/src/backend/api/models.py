@@ -69,6 +69,21 @@ class StateChoices(models.TextChoices):
     CANCELLED = "cancelled", _("Cancelled")
 
 
+class PermissionChoices(models.TextChoices):
+    """
+    Represents the different permission states that a role can have.
+
+    Attributes:
+        UNLIMITED: Indicates that the role possesses all permissions.
+        LIMITED: Indicates that the role has some permissions but not all.
+        NONE: Indicates that the role does not have any permissions.
+    """
+
+    UNLIMITED = "unlimited", _("Unlimited permissions")
+    LIMITED = "limited", _("Limited permissions")
+    NONE = "none", _("No permissions")
+
+
 class ActiveProviderManager(models.Manager):
     def get_queryset(self):
         return super().get_queryset().filter(self.active_provider_filter())
@@ -863,6 +878,40 @@ class Role(RowLevelSecurityProtectedModel):
     invitations = models.ManyToManyField(
         Invitation, through="InvitationRoleRelationship", related_name="roles"
     )
+
+    # Filter permission_state
+    PERMISSION_FIELDS = [
+        "manage_users",
+        "manage_account",
+        "manage_billing",
+        "manage_providers",
+        "manage_integrations",
+        "manage_scans",
+    ]
+
+    @property
+    def permission_state(self):
+        values = [getattr(self, field) for field in self.PERMISSION_FIELDS]
+        if all(values):
+            return PermissionChoices.UNLIMITED
+        elif not any(values):
+            return PermissionChoices.NONE
+        else:
+            return PermissionChoices.LIMITED
+
+    @classmethod
+    def filter_by_permission_state(cls, queryset, value):
+        q_all_true = Q(**{field: True for field in cls.PERMISSION_FIELDS})
+        q_all_false = Q(**{field: False for field in cls.PERMISSION_FIELDS})
+
+        if value == PermissionChoices.UNLIMITED:
+            return queryset.filter(q_all_true)
+        elif value == PermissionChoices.NONE:
+            return queryset.filter(q_all_false)
+        elif value == PermissionChoices.LIMITED:
+            return queryset.exclude(q_all_true | q_all_false)
+        else:
+            return queryset.none()
 
     class Meta:
         db_table = "roles"

@@ -1277,6 +1277,10 @@ class RoleSerializer(RLSSerializer, BaseWriteSerializer):
     provider_groups = serializers.ResourceRelatedField(
         many=True, queryset=ProviderGroup.objects.all()
     )
+    permission_state = serializers.SerializerMethodField()
+
+    def get_permission_state(self, obj):
+        return obj.permission_state
 
     def validate(self, attrs):
         if Role.objects.filter(name=attrs.get("name")).exists():
@@ -1306,6 +1310,7 @@ class RoleSerializer(RLSSerializer, BaseWriteSerializer):
             "manage_providers",
             "manage_integrations",
             "manage_scans",
+            "permission_state",
             "unlimited_visibility",
             "inserted_at",
             "updated_at",
