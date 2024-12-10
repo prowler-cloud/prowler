@@ -19,10 +19,10 @@ def mock_get_trail_arn_template(region=None, *_) -> str:
 def mock__get_lookup_events__(trail=None, event_name=None, minutes=None, *_) -> list:
     return [
         {
-            "CloudTrailEvent": '{"eventName": "DescribeAccessEntry", "userIdentity": {"type": "IAMUser", "principalId": "EXAMPLE6E4XEGITWATV6R", "arn": "arn:aws:iam::123456789012:user/Mateo", "accountId": "123456789012", "accessKeyId": "AKIAIOSFODNN7EXAMPLE", "userName": "Mateo", "sessionContext": {"sessionIssuer": {}, "webIdFederationData": {}, "attributes": {"creationDate": "2023-07-19T21:11:57Z", "mfaAuthenticated": "false"}}}}'
+            "CloudTrailEvent": '{"eventName": "DescribeAccessEntry", "userIdentity": {"type": "IAMUser", "principalId": "EXAMPLE6E4XEGITWATV6R", "arn": "arn:aws:iam::123456789012:user/Attacker", "accountId": "123456789012", "accessKeyId": "AKIAIOSFODNN7EXAMPLE", "userName": "Attacker", "sessionContext": {"sessionIssuer": {}, "webIdFederationData": {}, "attributes": {"creationDate": "2023-07-19T21:11:57Z", "mfaAuthenticated": "false"}}}}'
         },
         {
-            "CloudTrailEvent": '{"eventName": "DescribeAccountAttributes", "userIdentity": {"type": "IAMUser", "principalId": "EXAMPLE6E4XEGITWATV6R", "arn": "arn:aws:iam::123456789012:user/Mateo", "accountId": "123456789012", "accessKeyId": "AKIAIOSFODNN7EXAMPLE", "userName": "Mateo", "sessionContext": {"sessionIssuer": {}, "webIdFederationData": {}, "attributes": {"creationDate": "2023-07-19T21:11:57Z", "mfaAuthenticated": "false"}}}}'
+            "CloudTrailEvent": '{"eventName": "DescribeAccountAttributes", "userIdentity": {"type": "IAMUser", "principalId": "EXAMPLE6E4XEGITWATV6R", "arn": "arn:aws:iam::123456789012:user/Attacker", "accountId": "123456789012", "accessKeyId": "AKIAIOSFODNN7EXAMPLE", "userName": "Attacker", "sessionContext": {"sessionIssuer": {}, "webIdFederationData": {}, "attributes": {"creationDate": "2023-07-19T21:11:57Z", "mfaAuthenticated": "false"}}}}'
         },
     ]
 
@@ -50,12 +50,15 @@ class Test_cloudtrail_threat_detection_enumeration:
         cloudtrail_client.audited_account = AWS_ACCOUNT_NUMBER
         cloudtrail_client.region = AWS_REGION_US_EAST_1
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider(),
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudtrail.cloudtrail_threat_detection_enumeration.cloudtrail_threat_detection_enumeration.cloudtrail_client",
-            new=cloudtrail_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudtrail.cloudtrail_threat_detection_enumeration.cloudtrail_threat_detection_enumeration.cloudtrail_client",
+                new=cloudtrail_client,
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudtrail.cloudtrail_threat_detection_enumeration.cloudtrail_threat_detection_enumeration import (
@@ -99,12 +102,15 @@ class Test_cloudtrail_threat_detection_enumeration:
         cloudtrail_client._lookup_events = mock__get_lookup_events__
         cloudtrail_client._get_trail_arn_template = mock_get_trail_arn_template
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider(),
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudtrail.cloudtrail_threat_detection_enumeration.cloudtrail_threat_detection_enumeration.cloudtrail_client",
-            new=cloudtrail_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudtrail.cloudtrail_threat_detection_enumeration.cloudtrail_threat_detection_enumeration.cloudtrail_client",
+                new=cloudtrail_client,
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudtrail.cloudtrail_threat_detection_enumeration.cloudtrail_threat_detection_enumeration import (
@@ -148,12 +154,15 @@ class Test_cloudtrail_threat_detection_enumeration:
         cloudtrail_client._lookup_events = mock__get_lookup_events__
         cloudtrail_client._get_trail_arn_template = mock_get_trail_arn_template
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider(),
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudtrail.cloudtrail_threat_detection_enumeration.cloudtrail_threat_detection_enumeration.cloudtrail_client",
-            new=cloudtrail_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudtrail.cloudtrail_threat_detection_enumeration.cloudtrail_threat_detection_enumeration.cloudtrail_client",
+                new=cloudtrail_client,
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudtrail.cloudtrail_threat_detection_enumeration.cloudtrail_threat_detection_enumeration import (
@@ -167,13 +176,13 @@ class Test_cloudtrail_threat_detection_enumeration:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Potential enumeration attack detected from AWS IAMUser Mateo with an threshold of 1.0."
+                == "Potential enumeration attack detected from AWS IAMUser Attacker with an threshold of 1.0."
             )
-            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert result[0].resource_id == "Attacker"
             assert result[0].region == AWS_REGION_US_EAST_1
             assert (
                 result[0].resource_arn
-                == f"arn:aws:cloudtrail:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:trail"
+                == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:user/Attacker"
             )
 
     @mock_aws
@@ -198,12 +207,15 @@ class Test_cloudtrail_threat_detection_enumeration:
         cloudtrail_client._lookup_events = mock__get_lookup_events__
         cloudtrail_client._get_trail_arn_template = mock_get_trail_arn_template
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider(),
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudtrail.cloudtrail_threat_detection_enumeration.cloudtrail_threat_detection_enumeration.cloudtrail_client",
-            new=cloudtrail_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudtrail.cloudtrail_threat_detection_enumeration.cloudtrail_threat_detection_enumeration.cloudtrail_client",
+                new=cloudtrail_client,
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudtrail.cloudtrail_threat_detection_enumeration.cloudtrail_threat_detection_enumeration import (
@@ -247,12 +259,15 @@ class Test_cloudtrail_threat_detection_enumeration:
         cloudtrail_client._lookup_events = mock__get_lookup_events_aws_service__
         cloudtrail_client._get_trail_arn_template = mock_get_trail_arn_template
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_aws_provider(),
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudtrail.cloudtrail_threat_detection_enumeration.cloudtrail_threat_detection_enumeration.cloudtrail_client",
-            new=cloudtrail_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudtrail.cloudtrail_threat_detection_enumeration.cloudtrail_threat_detection_enumeration.cloudtrail_client",
+                new=cloudtrail_client,
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudtrail.cloudtrail_threat_detection_enumeration.cloudtrail_threat_detection_enumeration import (
