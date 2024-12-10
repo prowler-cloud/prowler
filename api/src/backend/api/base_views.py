@@ -1,6 +1,6 @@
 import uuid
 
-from django.db import transaction, connection
+from django.db import connection, transaction
 from rest_framework import permissions
 from rest_framework.exceptions import NotAuthenticated
 from rest_framework.filters import SearchFilter
@@ -69,10 +69,32 @@ class BaseTenantViewset(BaseViewSet):
             return super().dispatch(request, *args, **kwargs)
 
     def initial(self, request, *args, **kwargs):
-        user_id = str(request.user.id)
+        if (
+            request.resolver_match.url_name != "tenant-detail"
+            and request.method != "DELETE"
+        ):
+            user_id = str(request.user.id)
+
+            with connection.cursor() as cursor:
+                cursor.execute(f"SELECT set_config('api.user_id', '{user_id}', TRUE);")
+                return super().initial(request, *args, **kwargs)
+
+        # TODO: DRY this when we have time
+        if request.auth is None:
+            raise NotAuthenticated
+
+        tenant_id = request.auth.get("tenant_id")
+        if tenant_id is None:
+            raise NotAuthenticated("Tenant ID is not present in token")
+
+        try:
+            uuid.UUID(tenant_id)
+        except ValueError:
+            raise ValidationError("Tenant ID must be a valid UUID")
 
         with connection.cursor() as cursor:
-            cursor.execute(f"SELECT set_config('api.user_id', '{user_id}', TRUE);")
+            cursor.execute(f"SELECT set_config('api.tenant_id', '{tenant_id}', TRUE);")
+            self.request.tenant_id = tenant_id
             return super().initial(request, *args, **kwargs)
 
 
