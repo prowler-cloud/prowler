@@ -103,7 +103,7 @@ from api.v1.serializers import (
     OverviewProviderSerializer,
     OverviewSeveritySerializer,
     ProviderCreateSerializer,
-    ProviderGroupMembershipUpdateSerializer,
+    ProviderGroupMembershipSerializer,
     ProviderGroupSerializer,
     ProviderGroupUpdateSerializer,
     RoleProviderGroupRelationshipSerializer,
@@ -716,7 +716,7 @@ class ProviderGroupViewSet(BaseRLSViewSet):
     queryset = ProviderGroup.objects.all()
     serializer_class = ProviderGroupSerializer
     filterset_class = ProviderGroupFilter
-    http_method_names = ["get", "post", "patch", "put", "delete"]
+    http_method_names = ["get", "post", "patch", "delete"]
     ordering = ["inserted_at"]
     required_permissions = []
     permission_classes = BaseRLSViewSet.permission_classes + [HasPermissions]
@@ -762,57 +762,95 @@ class ProviderGroupViewSet(BaseRLSViewSet):
     def get_serializer_class(self):
         if self.action == "partial_update":
             return ProviderGroupUpdateSerializer
-        elif self.action == "providers":
-            if hasattr(self, "response_serializer_class"):
-                return self.response_serializer_class
-            return ProviderGroupMembershipUpdateSerializer
         return super().get_serializer_class()
 
-    @extend_schema(
-        tags=["Provider Group"],
-        summary="Add providers to a provider group",
-        description="Add one or more providers to an existing provider group.",
-        request=ProviderGroupMembershipUpdateSerializer,
-        responses={200: OpenApiResponse(response=ProviderGroupSerializer)},
-    )
-    @action(detail=True, methods=["put"], url_name="providers")
-    def providers(self, request, pk=None):
+
+@extend_schema(tags=["Provider Group"])
+@extend_schema_view(
+    create=extend_schema(
+        summary="Create a new provider_group-providers relationship",
+        description="Add a new provider_group-providers relationship to the system by providing the required provider_group-providers details.",
+        responses={
+            204: OpenApiResponse(description="Relationship created successfully"),
+            400: OpenApiResponse(
+                description="Bad request (e.g., relationship already exists)"
+            ),
+        },
+    ),
+    partial_update=extend_schema(
+        summary="Partially update a provider_group-providers relationship",
+        description="Update the provider_group-providers relationship information without affecting other fields.",
+        responses={
+            204: OpenApiResponse(
+                response=None, description="Relationship updated successfully"
+            )
+        },
+    ),
+    destroy=extend_schema(
+        summary="Delete a provider_group-providers relationship",
+        description="Remove the provider_group-providers relationship from the system by their ID.",
+        responses={
+            204: OpenApiResponse(
+                response=None, description="Relationship deleted successfully"
+            )
+        },
+    ),
+)
+class ProviderGroupProvidersRelationshipView(RelationshipView, BaseRLSViewSet):
+    queryset = ProviderGroup.objects.all()
+    serializer_class = ProviderGroupMembershipSerializer
+    resource_name = "providers"
+    http_method_names = ["post", "patch", "delete"]
+    schema = RelationshipViewSchema()
+
+    def get_queryset(self):
+        return ProviderGroup.objects.all()
+
+    def create(self, request, *args, **kwargs):
         provider_group = self.get_object()
 
-        # Validate input data
-        serializer = self.get_serializer_class()(
-            data=request.data,
-            context=self.get_serializer_context(),
+        provider_ids = [item["id"] for item in request.data]
+        existing_relationships = ProviderGroupMembership.objects.filter(
+            provider_group=provider_group, provider_id__in=provider_ids
+        )
+
+        if existing_relationships.exists():
+            return Response(
+                {
+                    "detail": "One or more providers are already associated with the provider_group."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        serializer = self.get_serializer(
+            data={"providers": request.data},
+            context={
+                "provider_group": provider_group,
+                "tenant_id": self.request.tenant_id,
+                "request": request,
+            },
         )
         serializer.is_valid(raise_exception=True)
+        serializer.save()
 
-        provider_ids = serializer.validated_data["provider_ids"]
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
-        # Update memberships
-        ProviderGroupMembership.objects.filter(
-            provider_group=provider_group, tenant_id=request.tenant_id
-        ).delete()
-
-        provider_group_memberships = [
-            ProviderGroupMembership(
-                tenant_id=self.request.tenant_id,
-                provider_group=provider_group,
-                provider_id=provider_id,
-            )
-            for provider_id in provider_ids
-        ]
-
-        ProviderGroupMembership.objects.bulk_create(
-            provider_group_memberships, ignore_conflicts=True
+    def partial_update(self, request, *args, **kwargs):
+        provider_group = self.get_object()
+        serializer = self.get_serializer(
+            instance=provider_group,
+            data={"providers": request.data},
+            context={"tenant_id": self.request.tenant_id, "request": request},
         )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
-        # Return the updated provider group with providers
-        provider_group.refresh_from_db()
-        self.response_serializer_class = ProviderGroupSerializer
-        response_serializer = ProviderGroupSerializer(
-            provider_group, context=self.get_serializer_context()
-        )
-        return Response(data=response_serializer.data, status=status.HTTP_200_OK)
+    def destroy(self, request, *args, **kwargs):
+        provider_group = self.get_object()
+        provider_group.providers.clear()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 @extend_schema_view(

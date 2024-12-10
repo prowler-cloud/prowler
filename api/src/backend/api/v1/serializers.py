@@ -492,41 +492,75 @@ class ProviderGroupUpdateSerializer(RLSSerializer, BaseWriteSerializer):
         fields = ["id", "name"]
 
 
-class ProviderGroupMembershipUpdateSerializer(RLSSerializer, BaseWriteSerializer):
+class ProviderResourceIdentifierSerializer(serializers.Serializer):
+    resource_type = serializers.CharField(source="type")
+    id = serializers.UUIDField()
+
+    class JSONAPIMeta:
+        resource_name = "provider-identifier"
+
+    def to_representation(self, instance):
+        """
+        Ensure 'type' is used in the output instead of 'resource_type'.
+        """
+        representation = super().to_representation(instance)
+        representation["type"] = representation.pop("resource_type", None)
+        return representation
+
+    def to_internal_value(self, data):
+        """
+        Map 'type' back to 'resource_type' during input.
+        """
+        data["resource_type"] = data.pop("type", None)
+        return super().to_internal_value(data)
+
+
+class ProviderGroupMembershipSerializer(RLSSerializer, BaseWriteSerializer):
     """
-    Serializer for modifying provider group memberships
+    Serializer for modifying provider_group memberships
     """
 
-    provider_ids = serializers.ListField(
-        child=serializers.UUIDField(),
-        help_text="List of provider UUIDs to add to the group",
+    providers = serializers.ListField(
+        child=ProviderResourceIdentifierSerializer(),
+        help_text="List of resource identifier objects representing providers.",
     )
 
-    def validate(self, attrs):
-        tenant_id = self.context["tenant_id"]
-        provider_ids = attrs.get("provider_ids", [])
+    def create(self, validated_data):
+        provider_ids = [item["id"] for item in validated_data["providers"]]
+        providers = Provider.objects.filter(id__in=provider_ids)
+        tenant_id = self.context.get("tenant_id")
 
-        existing_provider_ids = set(
-            Provider.objects.filter(
-                id__in=provider_ids, tenant_id=tenant_id
-            ).values_list("id", flat=True)
-        )
-        provided_provider_ids = set(provider_ids)
-
-        missing_provider_ids = provided_provider_ids - existing_provider_ids
-
-        if missing_provider_ids:
-            raise serializers.ValidationError(
-                {
-                    "provider_ids": f"The following provider IDs do not exist: {', '.join(str(id) for id in missing_provider_ids)}"
-                }
+        new_relationships = [
+            ProviderGroupMembership(
+                provider_group=self.context.get("provider_group"),
+                provider=p,
+                tenant_id=tenant_id,
             )
+            for p in providers
+        ]
+        ProviderGroupMembership.objects.bulk_create(new_relationships)
 
-        return super().validate(attrs)
+        return self.context.get("provider_group")
+
+    def update(self, instance, validated_data):
+        provider_ids = [item["id"] for item in validated_data["providers"]]
+        providers = Provider.objects.filter(id__in=provider_ids)
+        tenant_id = self.context.get("tenant_id")
+
+        instance.providers.clear()
+        new_relationships = [
+            ProviderGroupMembership(
+                provider_group=instance, provider=p, tenant_id=tenant_id
+            )
+            for p in providers
+        ]
+        ProviderGroupMembership.objects.bulk_create(new_relationships)
+
+        return instance
 
     class Meta:
         model = ProviderGroupMembership
-        fields = ["id", "provider_ids"]
+        fields = ["id", "providers"]
 
 
 # Providers

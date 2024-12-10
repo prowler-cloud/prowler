@@ -298,19 +298,10 @@ class ProviderGroup(RowLevelSecurityProtectedModel):
 
 
 class ProviderGroupMembership(RowLevelSecurityProtectedModel):
-    objects = ActiveProviderManager()
-    all_objects = models.Manager()
-
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
-    provider = models.ForeignKey(
-        Provider,
-        on_delete=models.CASCADE,
-    )
-    provider_group = models.ForeignKey(
-        ProviderGroup,
-        on_delete=models.CASCADE,
-    )
-    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+    provider_group = models.ForeignKey(ProviderGroup, on_delete=models.CASCADE)
+    provider = models.ForeignKey(Provider, on_delete=models.CASCADE)
+    inserted_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         db_table = "provider_group_memberships"
@@ -327,7 +318,7 @@ class ProviderGroupMembership(RowLevelSecurityProtectedModel):
         ]
 
     class JSONAPIMeta:
-        resource_name = "provider-group-memberships"
+        resource_name = "provider_groups-provider"
 
 
 class Task(RowLevelSecurityProtectedModel):
@@ -896,7 +887,6 @@ class RoleProviderGroupRelationship(RowLevelSecurityProtectedModel):
     role = models.ForeignKey(Role, on_delete=models.CASCADE)
     provider_group = models.ForeignKey(ProviderGroup, on_delete=models.CASCADE)
     inserted_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = "role_provider_group_relationship"
@@ -921,7 +911,6 @@ class UserRoleRelationship(RowLevelSecurityProtectedModel):
     role = models.ForeignKey(Role, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     inserted_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = "role_user_relationship"
@@ -946,7 +935,6 @@ class InvitationRoleRelationship(RowLevelSecurityProtectedModel):
     role = models.ForeignKey(Role, on_delete=models.CASCADE)
     invitation = models.ForeignKey(Invitation, on_delete=models.CASCADE)
     inserted_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = "role_invitation_relationship"
