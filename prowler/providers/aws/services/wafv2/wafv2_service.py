@@ -157,7 +157,7 @@ class WAFv2(AWSService):
                     )
 
                     for rule in firewall_manager_managed_rg:
-                        acl.rules.append(
+                        acl.rule_groups.append(
                             Rule(
                                 name=rule.get("Name", ""),
                                 cloudwatch_metrics_enabled=rule.get(
