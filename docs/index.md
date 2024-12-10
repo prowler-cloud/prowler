@@ -1,4 +1,4 @@
-**Prowler** is an Open Source security tool to perform AWS, Azure, Google Cloud and Kubernetes security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness, and also remediations! We have Prowler CLI (Command Line Interface) that we call Prowler Open Source and a service on top of it that we call <a href="https://prowler.com">Prowler SaaS</a>.
+**Prowler** is an Open Source security tool to perform AWS, Azure, Google Cloud and Kubernetes security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness, and also remediations! We have Prowler CLI (Command Line Interface) that we call Prowler Open Source and a service on top of it that we call <a href="https://prowler.com">Prowler Cloud</a>.
 
 ## Prowler App
 
@@ -29,7 +29,7 @@ It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, Fe
 
 Prowler App can be installed in different ways, depending on your environment:
 
-> See how to use Prowler App in the [Prowler App](tutorials/prowler-app.md) section.
+> See how to use Prowler App in the [Prowler App Tutorial](tutorials/prowler-app.md) section.
 
 === "Docker Compose"
 
@@ -65,6 +65,9 @@ Prowler App can be installed in different ways, depending on your environment:
     * `npm` installed: [npm installation](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm).
     * `Docker Compose` installed: https://docs.docker.com/compose/install/.
 
+    ???+ warning
+        Make sure to have `api/.env` and `ui/.env.local` files with the required environment variables. You can find the required environment variables in the [`api/.env.template`](https://github.com/prowler-cloud/prowler/blob/master/api/.env.example) and [`ui/.env.template`](https://github.com/prowler-cloud/prowler/blob/master/ui/.env.template) files.
+
     _Commands to run the API_:
 
     ``` bash
@@ -95,6 +98,19 @@ Prowler App can be installed in different ways, depending on your environment:
     python -m celery -A config.celery worker -l info -E
     ```
 
+    _Commands to run the API Scheduler_:
+
+    ``` bash
+    git clone https://github.com/prowler-cloud/prowler \
+    cd prowler/api \
+    poetry install \
+    poetry shell \
+    set -a \
+    source .env \
+    cd src/backend \
+    python -m celery -A config.celery beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    ```
+
     _Commands to run the UI_:
 
     ``` bash
@@ -106,9 +122,6 @@ Prowler App can be installed in different ways, depending on your environment:
     ```
 
     > Enjoy Prowler App at http://localhost:3000 by signing up with your email and password.
-
-    ???+ warning
-        Make sure to have `api/.env` and `ui/.env.local` files with the required environment variables. You can find the required environment variables in the [`api/.env.template`](https://github.com/prowler-cloud/prowler/blob/master/api/.env.example) and [`ui/.env.template`](https://github.com/prowler-cloud/prowler/blob/master/ui/.env.template) files.
 
     ???+ warning
         Google and GitHub authentication is only available in [Prowler Cloud](https://prowler.com).
@@ -373,8 +386,8 @@ After successfully adding and testing your credentials, Prowler will start scann
 #### **View Results**
 While the scan is running, start exploring the findings in these sections:
 
-- **Overview**: High-level summary of the scans. <img src="../../img/overview.png" alt="Overview" width="700"/>
-- **Compliance**: Insights into compliance status. <img src="../../img/compliance.png" alt="Compliance" width="700"/>
+- **Overview**: High-level summary of the scans. <img src="img/overview.png" alt="Overview" width="700"/>
+- **Compliance**: Insights into compliance status. <img src="img/compliance.png" alt="Compliance" width="700"/>
 
 > See more details about the Prowler App usage in the [Prowler App](tutorials/prowler-app.md) section.
 
