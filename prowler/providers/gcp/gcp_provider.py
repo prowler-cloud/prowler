@@ -202,7 +202,7 @@ class GcpProvider(Provider):
                     self._project_ids.append(project_id)
 
         # Change default project if not in active projects
-        if self._default_project_id not in self._project_ids:
+        if self._project_ids and self._default_project_id not in self._project_ids:
             self._default_project_id = self._project_ids[0]
 
         # Remove excluded projects if any input
