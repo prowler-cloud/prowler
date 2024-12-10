@@ -1,0 +1,89 @@
+services:
+  api:
+    hostname: "prowler-api"
+    image: prowlercloud/prowler-api:${PROWLER_API_VERSION:-latest}
+    env_file:
+      - path: .env
+        required: false
+    ports:
+      - "${DJANGO_PORT:-8080}:${DJANGO_PORT:-8080}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+    entrypoint:
+      - "/home/prowler/docker-entrypoint.sh"
+      - "prod"
+
+  ui:
+    image: prowlercloud/prowler-ui:${PROWLER_UI_VERSION:-latest}
+    env_file:
+      - path: .env
+        required: false
+    ports:
+      - ${UI_PORT:-3000}:${UI_PORT:-3000}
+
+  postgres:
+    image: postgres:16.3-alpine3.20
+    hostname: "postgres-db"
+    volumes:
+      - ./_data/postgres:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=${POSTGRES_ADMIN_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_ADMIN_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    env_file:
+      - path: .env
+        required: false
+    ports:
+      - "${POSTGRES_PORT:-5432}:${POSTGRES_PORT:-5432}"
+    healthcheck:
+      test: ["CMD-SHELL", "sh -c 'pg_isready -U ${POSTGRES_ADMIN_USER} -d ${POSTGRES_DB}'"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  valkey:
+    image: valkey/valkey:7-alpine3.19
+    hostname: "valkey"
+    volumes:
+      - ./_data/valkey:/data
+    env_file:
+      - path: .env
+        required: false
+    ports:
+      - "${VALKEY_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD-SHELL", "sh -c 'valkey-cli ping'"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  worker:
+    image: prowlercloud/prowler-api:${PROWLER_API_VERSION:-latest}
+    env_file:
+      - path: .env
+        required: false
+    depends_on:
+      valkey:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    entrypoint:
+      - "/home/prowler/docker-entrypoint.sh"
+      - "worker"
+
+  worker-beat:
+    image: prowlercloud/prowler-api:${PROWLER_API_VERSION:-latest}
+    env_file:
+      - path: ./.env
+        required: false
+    depends_on:
+      valkey:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    entrypoint:
+      - "../docker-entrypoint.sh"
+      - "beat"
