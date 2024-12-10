@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Checkbox } from "@nextui-org/react";
 import { SaveIcon } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -16,17 +16,19 @@ import { ApiError, editRoleFormSchema } from "@/types";
 
 export type FormValues = z.infer<typeof editRoleFormSchema>;
 
-export const EditRoleForm = ({ roleId }: { roleId: string }) => {
+export const EditRoleForm = ({
+  roleId,
+  roleData,
+}: {
+  roleId: string;
+  roleData: FormValues;
+}) => {
   const { toast } = useToast();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const searchRoleId = searchParams.get("roleId") || roleId;
 
   const form = useForm<FormValues>({
     resolver: zodResolver(editRoleFormSchema),
-    defaultValues: {
-      roleId: roleId,
-    },
+    defaultValues: roleData,
   });
 
   const { watch, setValue } = form;
@@ -66,7 +68,7 @@ export const EditRoleForm = ({ roleId }: { roleId: string }) => {
   };
 
   const onSubmitClient = async (values: FormValues) => {
-    if (!searchRoleId) {
+    if (!roleId) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -89,7 +91,7 @@ export const EditRoleForm = ({ roleId }: { roleId: string }) => {
     );
 
     try {
-      const data = await updateRole(formData, searchRoleId);
+      const data = await updateRole(formData, roleId);
 
       if (data?.errors && data.errors.length > 0) {
         data.errors.forEach((error: ApiError) => {
