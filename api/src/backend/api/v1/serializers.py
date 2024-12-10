@@ -1334,6 +1334,24 @@ class OverviewSeveritySerializer(serializers.Serializer):
         return {"version": "v1"}
 
 
+class OverviewServiceSerializer(serializers.Serializer):
+    id = serializers.CharField(source="service")
+    total = serializers.IntegerField()
+    _pass = serializers.IntegerField()
+    fail = serializers.IntegerField()
+    muted = serializers.IntegerField()
+
+    class JSONAPIMeta:
+        resource_name = "services-overview"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["pass"] = self.fields.pop("_pass")
+
+    def get_root_meta(self, _resource, _many):
+        return {"version": "v1"}
+
+
 # Schedules
 
 
