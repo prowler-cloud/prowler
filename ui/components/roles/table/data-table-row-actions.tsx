@@ -9,52 +9,38 @@ import {
   DropdownTrigger,
 } from "@nextui-org/react";
 import {
-  AddNoteBulkIcon,
   DeleteDocumentBulkIcon,
   EditDocumentBulkIcon,
 } from "@nextui-org/shared-icons";
 import { Row } from "@tanstack/react-table";
 import clsx from "clsx";
+import { useState } from "react";
 
 import { VerticalDotsIcon } from "@/components/icons";
+import { CustomAlertModal } from "@/components/ui/custom/custom-alert-modal";
 
-// import { DeleteForm, EditForm } from "../forms";
-
-interface DataTableRowActionsProps<InvitationProps> {
-  row: Row<InvitationProps>;
+import { DeleteRoleForm } from "../workflow/forms";
+interface DataTableRowActionsProps<RoleProps> {
+  row: Row<RoleProps>;
 }
 const iconClasses =
   "text-2xl text-default-500 pointer-events-none flex-shrink-0";
 
-export function DataTableRowActions<InvitationProps>({
+export function DataTableRowActions<RoleProps>({
   row,
-}: DataTableRowActionsProps<InvitationProps>) {
-  // const [isEditOpen, setIsEditOpen] = useState(false);
-  // const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const invitationId = (row.original as { id: string }).id;
+}: DataTableRowActionsProps<RoleProps>) {
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const roleId = (row.original as { id: string }).id;
   return (
     <>
-      {/* <CustomAlertModal
-        isOpen={isEditOpen}
-        onOpenChange={setIsEditOpen}
-        title="Edit Invitation"
-        description={"Edit the invitation details"}
-      >
-        <EditForm
-          invitationId={invitationId}
-          invitationEmail={invitationEmail}
-          setIsOpen={setIsEditOpen}
-        />
-      </CustomAlertModal> */}
-      {/* <CustomAlertModal
+      <CustomAlertModal
         isOpen={isDeleteOpen}
         onOpenChange={setIsDeleteOpen}
         title="Are you absolutely sure?"
-        description="This action cannot be undone. This will permanently revoke your invitation."
+        description="This action cannot be undone. This will permanently delete your role and remove your data from the server."
       >
-        <DeleteForm invitationId={invitationId} setIsOpen={setIsDeleteOpen} />
-      </CustomAlertModal> */}
-
+        <DeleteRoleForm roleId={roleId} setIsOpen={setIsDeleteOpen} />
+      </CustomAlertModal>
       <div className="relative flex items-center justify-end gap-2">
         <Dropdown
           className="shadow-xl dark:bg-prowler-blue-800"
@@ -73,23 +59,13 @@ export function DataTableRowActions<InvitationProps>({
           >
             <DropdownSection title="Actions">
               <DropdownItem
-                href={`/invitations/check-details?id=${invitationId}`}
+                href={`/roles/edit?roleId=${roleId}`}
                 key="check-details"
-                description="View invitation details"
-                textValue="Check Details"
-                startContent={<AddNoteBulkIcon className={iconClasses} />}
-              >
-                Check Details
-              </DropdownItem>
-
-              <DropdownItem
-                key="edit"
-                description="Allows you to edit the invitation"
-                textValue="Edit Invitation"
+                description="Edit the role details"
+                textValue="Edit Role"
                 startContent={<EditDocumentBulkIcon className={iconClasses} />}
-                // onClick={() => setIsEditOpen(true)}
               >
-                Edit Invitation
+                Edit Role
               </DropdownItem>
             </DropdownSection>
             <DropdownSection title="Danger zone">
@@ -97,16 +73,16 @@ export function DataTableRowActions<InvitationProps>({
                 key="delete"
                 className="text-danger"
                 color="danger"
-                description="Delete the invitation permanently"
-                textValue="Delete Invitation"
+                description="Delete the role permanently"
+                textValue="Delete Role"
                 startContent={
                   <DeleteDocumentBulkIcon
                     className={clsx(iconClasses, "!text-danger")}
                   />
                 }
-                // onClick={() => setIsDeleteOpen(true)}
+                onClick={() => setIsDeleteOpen(true)}
               >
-                Revoke Invitation
+                Delete Role
               </DropdownItem>
             </DropdownSection>
           </DropdownMenu>

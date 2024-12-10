@@ -15,7 +15,7 @@ const steps = [
   {
     title: "Edit a existing role",
     description:
-      "Review the role details and share the information required for the role.",
+      "Update the role's details, including its name and permissions.",
     href: "/roles/edit",
   },
 ];

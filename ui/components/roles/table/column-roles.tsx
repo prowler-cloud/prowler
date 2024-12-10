@@ -6,6 +6,8 @@ import { DateWithTime } from "@/components/ui/entities";
 import { DataTableColumnHeader } from "@/components/ui/table";
 import { RolesProps } from "@/types";
 
+import { DataTableRowActions } from "./data-table-row-actions";
+
 const getRoleAttributes = (row: { original: RolesProps["data"][number] }) => {
   return row.original.attributes;
 };
@@ -98,6 +100,14 @@ export const ColumnsRoles: ColumnDef<RolesProps["data"][number]>[] = [
     cell: ({ row }) => {
       const { inserted_at } = getRoleAttributes(row);
       return <DateWithTime dateTime={inserted_at} showTime={false} />;
+    },
+  },
+  {
+    accessorKey: "actions",
+    header: () => <div className="text-right">Actions</div>,
+    id: "actions",
+    cell: ({ row }) => {
+      return <DataTableRowActions row={row} />;
     },
   },
 ];
