@@ -12,7 +12,6 @@ export const addRoleFormSchema = z.object({
 });
 
 export const editRoleFormSchema = z.object({
-  roleId: z.string().uuid(),
   name: z.string().min(1, "Name is required"),
   manage_users: z.boolean().default(false),
   manage_account: z.boolean().default(false),

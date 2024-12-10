@@ -48,6 +48,33 @@ export const getRoles = async ({
   }
 };
 
+export const getRoleInfoById = async (roleId: string) => {
+  const session = await auth();
+  const keyServer = process.env.API_BASE_URL;
+  const url = new URL(`${keyServer}/roles/${roleId}`);
+
+  try {
+    const response = await fetch(url.toString(), {
+      method: "GET",
+      headers: {
+        Accept: "application/vnd.api+json",
+        Authorization: `Bearer ${session?.accessToken}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch role info: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return parseStringify(data);
+  } catch (error) {
+    return {
+      error: getErrorMessage(error),
+    };
+  }
+};
+
 export const addRole = async (formData: FormData) => {
   const session = await auth();
   const keyServer = process.env.API_BASE_URL;
