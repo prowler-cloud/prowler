@@ -45,7 +45,7 @@ def fixer(resource_id: str, region: str) -> bool:
                         "AWS": f"arn:{audited_partition}:iam::{account_id}:root"
                     },
                     "Action": "sqs:*",
-                    "Resource": f"arn:{audited_partition}:sqs:{region}:{account_id}:{queue_name}",
+                    "Resource": account_id,
                 }
             ],
         }
