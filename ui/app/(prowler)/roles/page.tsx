@@ -3,7 +3,7 @@ import { Suspense } from "react";
 
 import { getRoles } from "@/actions/roles";
 import { FilterControls } from "@/components/filters";
-import { filterInvitations } from "@/components/filters/data-filters";
+import { filterRoles } from "@/components/filters/data-filters";
 import { AddRoleButton } from "@/components/roles";
 import { ColumnsRoles } from "@/components/roles/table";
 import { SkeletonTableRoles } from "@/components/roles/table";
@@ -26,7 +26,7 @@ export default async function Roles({
       <Spacer y={8} />
       <AddRoleButton />
       <Spacer y={4} />
-      <DataTableFilterCustom filters={filterInvitations || []} />
+      <DataTableFilterCustom filters={filterRoles || []} />
       <Spacer y={8} />
 
       <Suspense key={searchParamsKey} fallback={<SkeletonTableRoles />}>
