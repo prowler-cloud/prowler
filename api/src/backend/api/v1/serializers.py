@@ -1277,27 +1277,10 @@ class RoleSerializer(RLSSerializer, BaseWriteSerializer):
     provider_groups = serializers.ResourceRelatedField(
         many=True, queryset=ProviderGroup.objects.all()
     )
-
     permission_state = serializers.SerializerMethodField()
 
     def get_permission_state(self, obj):
-        permission_fields = [
-            "manage_users",
-            "manage_account",
-            "manage_billing",
-            "manage_providers",
-            "manage_integrations",
-            "manage_scans",
-        ]
-
-        values = [getattr(obj, field) for field in permission_fields]
-
-        if all(values):
-            return "unlimited"
-        elif not any(values):
-            return "none"
-        else:
-            return "limited"
+        return obj.permission_state
 
     def validate(self, attrs):
         if Role.objects.filter(name=attrs.get("name")).exists():

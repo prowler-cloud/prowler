@@ -2815,6 +2815,7 @@ paths:
             - manage_providers
             - manage_integrations
             - manage_scans
+            - permission_state
             - unlimited_visibility
             - inserted_at
             - updated_at
@@ -2868,6 +2869,18 @@ paths:
         description: Multiple values may be separated by commas.
         explode: false
         style: form
+      - in: query
+        name: filter[permission_state]
+        schema:
+          type: string
+          enum:
+          - limited
+          - none
+          - unlimited
+        description: |-
+          * `unlimited` - Unlimited permissions
+          * `limited` - Limited permissions
+          * `none` - No permissions
       - name: filter[search]
         required: false
         in: query
@@ -2926,6 +2939,8 @@ paths:
             - -manage_integrations
             - manage_scans
             - -manage_scans
+            - permission_state
+            - -permission_state
             - unlimited_visibility
             - -unlimited_visibility
             - inserted_at
@@ -2999,6 +3014,7 @@ paths:
             - manage_providers
             - manage_integrations
             - manage_scans
+            - permission_state
             - unlimited_visibility
             - inserted_at
             - updated_at
@@ -8062,6 +8078,9 @@ components:
               type: boolean
             manage_scans:
               type: boolean
+            permission_state:
+              type: string
+              readOnly: true
             unlimited_visibility:
               type: boolean
             inserted_at:
@@ -8195,6 +8214,9 @@ components:
               type: boolean
             manage_scans:
               type: boolean
+            permission_state:
+              type: string
+              readOnly: true
             unlimited_visibility:
               type: boolean
             inserted_at:
@@ -8333,6 +8355,9 @@ components:
                   type: boolean
                 manage_scans:
                   type: boolean
+                permission_state:
+                  type: string
+                  readOnly: true
                 unlimited_visibility:
                   type: boolean
                 inserted_at:
