@@ -97,3 +97,18 @@ Those credentials must be associated to a user or service account with proper pe
 
 ???+ note
     By default, `prowler` will scan all accessible GCP Projects, use flag `--project-ids` to specify the projects to be scanned.
+
+## GitHub
+
+Prowler supports multiple methods to [authenticate with GitHub](https://docs.github.com/en/rest/authentication/authenticating-to-the-rest-api). These include:
+
+- **Personal Access Token (PAT)**
+- **OAuth App Token**
+- **GitHub App Credentials**
+
+This flexibility allows you to scan and analyze your GitHub account, including repositories, organizations, and applications, using the method that best suits your use case.
+
+The provided credentials must have the appropriate permissions to perform all the required checks.
+
+???+ note
+    GitHub app credentials support less checks than other authentication methods.

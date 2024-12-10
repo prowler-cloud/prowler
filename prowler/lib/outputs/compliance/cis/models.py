@@ -123,6 +123,14 @@ class KubernetesCISModel(BaseModel):
     Muted: bool
 
 
+class GithubCISModel(BaseModel):
+    """
+    GithubCISModel generates a finding's output in Github CIS Compliance format.
+    """
+
+    Provider: str
+
+
 # TODO: Create a parent class for the common fields of CIS and have the specific classes from each provider to inherit from it.
 # It is not done yet because it is needed to respect the current order of the fields in the output file.
 
