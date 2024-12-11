@@ -25,7 +25,7 @@ services:
       - ${UI_PORT:-3000}:${UI_PORT:-3000}
 
   postgres:
-    image: postgres:16.3-alpine
+    image: postgres:16.3-alpine3.20
     hostname: "postgres-db"
     volumes:
       - ./_data/postgres:/var/lib/postgresql/data
