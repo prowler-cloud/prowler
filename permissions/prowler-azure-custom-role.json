@@ -3,7 +3,7 @@
     "roleName": "ProwlerRole",
     "description": "Role used for checks that require read-only access to Azure resources and are not covered by the Reader role.",
     "assignableScopes": [
-      "/"
+      "/{'subscriptions', 'providers/Microsoft.Management/managementGroups'}/{Your Subscription or Management Group ID}"
     ],
     "permissions": [
       {
