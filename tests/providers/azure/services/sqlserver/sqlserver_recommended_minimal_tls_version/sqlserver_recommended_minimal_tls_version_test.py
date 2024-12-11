@@ -207,7 +207,7 @@ class Test_sqlserver_recommended_minimal_tls_version:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"SQL Server {sql_server_name} from subscription {AZURE_SUBSCRIPTION_ID} has a recommended TLS version set."
+                == f"SQL Server {sql_server_name} from subscription {AZURE_SUBSCRIPTION_ID} is using version 1.2 as minimal accepted which is recommended."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == sql_server_name
