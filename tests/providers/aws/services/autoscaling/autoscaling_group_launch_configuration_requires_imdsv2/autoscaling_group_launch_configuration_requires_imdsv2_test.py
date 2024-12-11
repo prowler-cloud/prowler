@@ -119,10 +119,6 @@ class Test_autoscaling_group_launch_configuration_requires_imdsv2:
             AvailabilityZones=["us-east-1a", "us-east-1b"],
         )
 
-        autoscaling_client.describe_auto_scaling_groups(
-            AutoScalingGroupNames=[autoscaling_group_name]
-        )["AutoScalingGroups"][0]["AutoScalingGroupARN"]
-
         from prowler.providers.aws.services.autoscaling.autoscaling_service import (
             AutoScaling,
         )
