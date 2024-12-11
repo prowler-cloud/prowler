@@ -699,3 +699,8 @@ def get_api_tokens(
 
 def get_authorization_header(access_token: str) -> dict:
     return {"Authorization": f"Bearer {access_token}"}
+
+
+def pytest_collection_modifyitems(items):
+    """Ensure test_rbac.py is executed first."""
+    items.sort(key=lambda item: 0 if "test_rbac.py" in item.nodeid else 1)
