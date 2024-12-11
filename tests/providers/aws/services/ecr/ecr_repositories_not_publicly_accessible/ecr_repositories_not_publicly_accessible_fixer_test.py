@@ -57,6 +57,23 @@ class Test_ecr_repositories_not_publicly_accessible_fixer:
         repository_name = "test-repo"
         ecr_client.create_repository(repositoryName=repository_name)
 
+        ecr_client.set_repository_policy(
+            repositoryName=repository_name,
+            policyText=dumps(
+                {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {"AWS": "123456789012"},
+                            "Action": "ecr:*",
+                            "Resource": f"arn:aws:ecr:{AWS_REGION_EU_WEST_1}:123456789012:repository/{repository_name}",
+                        }
+                    ],
+                }
+            ),
+        )
+
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
         from prowler.providers.aws.services.ecr.ecr_service import ECR
