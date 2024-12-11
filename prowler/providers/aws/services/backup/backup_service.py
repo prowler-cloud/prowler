@@ -195,6 +195,7 @@ class Backup(AWSService):
                                 self.recovery_points.append(
                                     RecoveryPoint(
                                         arn=arn,
+                                        id=arn.split(":")[-1],
                                         backup_vault_name=backup_vault.name,
                                         encrypted=recovery_point.get(
                                             "IsEncrypted", False
@@ -246,6 +247,7 @@ class BackupReportPlan(BaseModel):
 
 class RecoveryPoint(BaseModel):
     arn: str
+    id: str
     backup_vault_name: str
     encrypted: bool
     backup_vault_region: str
