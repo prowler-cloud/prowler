@@ -775,17 +775,17 @@ files = [
 
 [[package]]
 name = "boto3"
-version = "1.35.76"
+version = "1.35.77"
 description = "The AWS SDK for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "boto3-1.35.76-py3-none-any.whl", hash = "sha256:69458399f41f57a50770c8974796d96978bcca44915c260319696bb43e47dffd"},
-    {file = "boto3-1.35.76.tar.gz", hash = "sha256:31ddcdb6f15dace2b68f6a0f11bdb58dd3ae79b8a3ccb174ff811ef0bbf938e0"},
+    {file = "boto3-1.35.77-py3-none-any.whl", hash = "sha256:a09871805f8e462349a1c33c23eb413668df0bf68424e61d53518e1a7d883b2f"},
+    {file = "boto3-1.35.77.tar.gz", hash = "sha256:cc819cdbccbc2d0dc185f1dcfe74cf3809489c4cae63c2e5d6a557aa0c5ab928"},
 ]
 
 [package.dependencies]
-botocore = ">=1.35.76,<1.36.0"
+botocore = ">=1.35.77,<1.36.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.10.0,<0.11.0"
 
@@ -794,13 +794,13 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "botocore"
-version = "1.35.77"
+version = "1.35.78"
 description = "Low-level, data-driven core of boto 3."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "botocore-1.35.77-py3-none-any.whl", hash = "sha256:3faa27d65841499762228902d7e215fa99a4c2fdc76c9113e1c3f339bdf685b8"},
-    {file = "botocore-1.35.77.tar.gz", hash = "sha256:17b778016644e9342ca3ff2f430c1d1db0c6126e9b41a57cff52ac58e7a455e0"},
+    {file = "botocore-1.35.78-py3-none-any.whl", hash = "sha256:41c37bd7c0326f25122f33ec84fb80fc0a14d7fcc9961431b0e57568e88c9cb5"},
+    {file = "botocore-1.35.78.tar.gz", hash = "sha256:6905036c25449ae8dba5e950e4b908e4b8a6fe6b516bf61e007ecb62fa21f323"},
 ]
 
 [package.dependencies]
@@ -2403,13 +2403,13 @@ files = [
 
 [[package]]
 name = "microsoft-kiota-abstractions"
-version = "1.6.2"
+version = "1.6.6"
 description = "Core abstractions for kiota generated libraries in Python"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "microsoft_kiota_abstractions-1.6.2-py3-none-any.whl", hash = "sha256:8c2c777748e80f17dba3809b5d149585d9918198f0f94125e87432f7165ba80e"},
-    {file = "microsoft_kiota_abstractions-1.6.2.tar.gz", hash = "sha256:dec30f0fb427a051003e94b5c6fcf266f4702ecbd9d6961e3966124b9cbe41bf"},
+    {file = "microsoft_kiota_abstractions-1.6.6-py3-none-any.whl", hash = "sha256:29071715baf0d604c381c5d17be47f35e6e63a441dcfb5e9141963406b469d50"},
+    {file = "microsoft_kiota_abstractions-1.6.6.tar.gz", hash = "sha256:2554495b00c9c25b43f6964a71b65c89a277bd6b50f4d0028a7febcec6c4fd67"},
 ]
 
 [package.dependencies]
@@ -2769,13 +2769,13 @@ dev = ["bumpver", "isort", "mypy", "pylint", "pytest", "yapf"]
 
 [[package]]
 name = "msgraph-sdk"
-version = "1.12.0"
+version = "1.14.0"
 description = "The Microsoft Graph Python SDK"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "msgraph_sdk-1.12.0-py3-none-any.whl", hash = "sha256:ac298b546b240391b0e407379d039db32862a56d6fe15cf7c5f7e77631fc6771"},
-    {file = "msgraph_sdk-1.12.0.tar.gz", hash = "sha256:fbb5a8a9f6eed89b496f207eb35b6b4cfc7fefa75608aeef07477a3b2276d4fa"},
+    {file = "msgraph_sdk-1.14.0-py3-none-any.whl", hash = "sha256:1a2f327dc8fbe5a5e6d0d84cf71d605e7b118b3066b1e16f011ccd8fd927bb03"},
+    {file = "msgraph_sdk-1.14.0.tar.gz", hash = "sha256:5bbda80941c5d1794682753b8b291bd2ebed719a43d6de949fd0cd613b6dfbbd"},
 ]
 
 [package.dependencies]
@@ -5194,4 +5194,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "35d419f553bc11c3ca68b98fc9a01f8988aef3eb4dcf6bd2f18a2b13a119090c"
+content-hash = "ea4e52926a0b10ccc9109beaa54ac3fb3c02090dd8bd0dc127f303d28f7f3894"
