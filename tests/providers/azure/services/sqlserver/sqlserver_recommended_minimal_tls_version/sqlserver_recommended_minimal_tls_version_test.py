@@ -22,7 +22,7 @@ class Test_sqlserver_recommended_minimal_tls_version:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
-            "prowler.providers.azure.services.sqlserver.sqlserver_client.sqlserver_client",
+            "prowler.providers.azure.services.sqlserver.sqlserver_recommended_minimal_tls_version.sqlserver_recommended_minimal_tls_version.sqlserver_client",
             new=sqlserver_client,
         ):
             from prowler.providers.azure.services.sqlserver.sqlserver_recommended_minimal_tls_version.sqlserver_recommended_minimal_tls_version import (
