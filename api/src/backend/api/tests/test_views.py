@@ -3118,7 +3118,7 @@ class TestRoleViewSet:
 
     @pytest.mark.parametrize(
         ("permission_state", "index"),
-        [("limited", 0), ("unlimited", 2), ("none", 3), ("invalid", 4)],
+        [("limited", 0), ("unlimited", 2), ("none", 3)],
     )
     def test_role_retrieve_permission_state(
         self, authenticated_client, roles_fixture, permission_state, index

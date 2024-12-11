@@ -322,7 +322,7 @@ class ProviderGroupMembership(RowLevelSecurityProtectedModel):
         db_table = "provider_group_memberships"
         constraints = [
             models.UniqueConstraint(
-                fields=["provider_id", "provider_group_id"],
+                fields=["provider_id", "provider_group"],
                 name="unique_provider_group_membership",
             ),
             RowLevelSecurityConstraint(

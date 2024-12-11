@@ -552,7 +552,7 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name="providergroupmembership",
             constraint=models.UniqueConstraint(
-                fields=("provider_id", "provider_group_id"),
+                fields=("provider_id", "provider_group"),
                 name="unique_provider_group_membership",
             ),
         ),
