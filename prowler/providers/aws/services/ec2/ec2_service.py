@@ -10,7 +10,6 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################## EC2
 class EC2(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
@@ -569,6 +568,12 @@ class EC2(AWSService):
                                 ),
                                 network_interfaces=enis,
                                 associate_public_ip_address=associate_public_ip,
+                                http_tokens=template_version["LaunchTemplateData"]
+                                .get("MetadataOptions", {})
+                                .get("HttpTokens", ""),
+                                http_endpoint=template_version["LaunchTemplateData"]
+                                .get("MetadataOptions", {})
+                                .get("HttpEndpoint", ""),
                             ),
                         )
                     )
@@ -763,6 +768,8 @@ class TemplateData(BaseModel):
     user_data: str
     network_interfaces: Optional[list[NetworkInterface]]
     associate_public_ip_address: Optional[bool]
+    http_tokens: Optional[str]
+    http_endpoint: Optional[str]
 
 
 class LaunchTemplateVersion(BaseModel):
