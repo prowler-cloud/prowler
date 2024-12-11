@@ -10,7 +10,6 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################## EC2
 class EC2(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
