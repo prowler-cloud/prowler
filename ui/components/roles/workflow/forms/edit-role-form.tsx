@@ -14,7 +14,7 @@ import { CustomButton, CustomInput } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
 import { ApiError, editRoleFormSchema } from "@/types";
 
-export type FormValues = z.infer<typeof editRoleFormSchema>;
+type FormValues = z.infer<typeof editRoleFormSchema>;
 
 export const EditRoleForm = ({
   roleId,
