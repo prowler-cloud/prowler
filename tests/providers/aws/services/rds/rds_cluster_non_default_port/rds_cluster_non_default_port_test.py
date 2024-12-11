@@ -321,6 +321,7 @@ class Test_rds_cluster_non_default_port:
                 assert result[0].resource_tags == [
                     {"Key": "env", "Value": "production"}
                 ]
+
     @mock_aws
     def test_rds_cluster_mysql_default_port(self):
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
