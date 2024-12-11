@@ -48,7 +48,7 @@ class cloudtrail_multi_region_enabled_logging_management_events(Check):
                         report.resource_id = trail.name
                         report.resource_arn = trail.arn
                         report.resource_tags = trail.tags
-                        report.region = trail.home_region
+                        report.region = region
                         report.status = "PASS"
                         if trail.is_multiregion:
                             report.status_extended = f"Trail {trail.name} from home region {trail.home_region} is multi-region, is logging and have management events enabled."
