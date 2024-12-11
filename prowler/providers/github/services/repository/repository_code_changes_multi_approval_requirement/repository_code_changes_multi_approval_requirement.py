@@ -28,7 +28,10 @@ class repository_code_changes_multi_approval_requirement(Check):
             report.status = "FAIL"
             report.status_extended = f"Repository {repo.name} does not enforce at least 2 approvals for code changes."
 
-            if repo.default_branch_protection.approval_count >= 2:
+            if (
+                repo.default_branch_protection
+                and repo.default_branch_protection.approval_count >= 2
+            ):
                 report.status = "PASS"
                 report.status_extended = f"Repository {repo.name} does enforce at least 2 approvals for code changes."
 
