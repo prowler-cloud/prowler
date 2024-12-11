@@ -69,6 +69,21 @@ class StateChoices(models.TextChoices):
     CANCELLED = "cancelled", _("Cancelled")
 
 
+class PermissionChoices(models.TextChoices):
+    """
+    Represents the different permission states that a role can have.
+
+    Attributes:
+        UNLIMITED: Indicates that the role possesses all permissions.
+        LIMITED: Indicates that the role has some permissions but not all.
+        NONE: Indicates that the role does not have any permissions.
+    """
+
+    UNLIMITED = "unlimited", _("Unlimited permissions")
+    LIMITED = "limited", _("Limited permissions")
+    NONE = "none", _("No permissions")
+
+
 class ActiveProviderManager(models.Manager):
     def get_queryset(self):
         return super().get_queryset().filter(self.active_provider_filter())
@@ -294,23 +309,14 @@ class ProviderGroup(RowLevelSecurityProtectedModel):
         ]
 
     class JSONAPIMeta:
-        resource_name = "provider-groups"
+        resource_name = "provider-group"
 
 
 class ProviderGroupMembership(RowLevelSecurityProtectedModel):
-    objects = ActiveProviderManager()
-    all_objects = models.Manager()
-
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
-    provider = models.ForeignKey(
-        Provider,
-        on_delete=models.CASCADE,
-    )
-    provider_group = models.ForeignKey(
-        ProviderGroup,
-        on_delete=models.CASCADE,
-    )
-    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+    provider_group = models.ForeignKey(ProviderGroup, on_delete=models.CASCADE)
+    provider = models.ForeignKey(Provider, on_delete=models.CASCADE)
+    inserted_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         db_table = "provider_group_memberships"
@@ -327,7 +333,7 @@ class ProviderGroupMembership(RowLevelSecurityProtectedModel):
         ]
 
     class JSONAPIMeta:
-        resource_name = "provider-group-memberships"
+        resource_name = "provider_groups-provider"
 
 
 class Task(RowLevelSecurityProtectedModel):
@@ -849,6 +855,150 @@ class Invitation(RowLevelSecurityProtectedModel):
 
     class JSONAPIMeta:
         resource_name = "invitations"
+
+
+class Role(RowLevelSecurityProtectedModel):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    name = models.CharField(max_length=255)
+    manage_users = models.BooleanField(default=False)
+    manage_account = models.BooleanField(default=False)
+    manage_billing = models.BooleanField(default=False)
+    manage_providers = models.BooleanField(default=False)
+    manage_integrations = models.BooleanField(default=False)
+    manage_scans = models.BooleanField(default=False)
+    unlimited_visibility = models.BooleanField(default=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+    provider_groups = models.ManyToManyField(
+        ProviderGroup, through="RoleProviderGroupRelationship", related_name="roles"
+    )
+    users = models.ManyToManyField(
+        User, through="UserRoleRelationship", related_name="roles"
+    )
+    invitations = models.ManyToManyField(
+        Invitation, through="InvitationRoleRelationship", related_name="roles"
+    )
+
+    # Filter permission_state
+    PERMISSION_FIELDS = [
+        "manage_users",
+        "manage_account",
+        "manage_billing",
+        "manage_providers",
+        "manage_integrations",
+        "manage_scans",
+    ]
+
+    @property
+    def permission_state(self):
+        values = [getattr(self, field) for field in self.PERMISSION_FIELDS]
+        if all(values):
+            return PermissionChoices.UNLIMITED
+        elif not any(values):
+            return PermissionChoices.NONE
+        else:
+            return PermissionChoices.LIMITED
+
+    @classmethod
+    def filter_by_permission_state(cls, queryset, value):
+        q_all_true = Q(**{field: True for field in cls.PERMISSION_FIELDS})
+        q_all_false = Q(**{field: False for field in cls.PERMISSION_FIELDS})
+
+        if value == PermissionChoices.UNLIMITED:
+            return queryset.filter(q_all_true)
+        elif value == PermissionChoices.NONE:
+            return queryset.filter(q_all_false)
+        else:
+            return queryset.exclude(q_all_true | q_all_false)
+
+    class Meta:
+        db_table = "roles"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["tenant_id", "name"],
+                name="unique_role_per_tenant",
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "role"
+
+
+class RoleProviderGroupRelationship(RowLevelSecurityProtectedModel):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    role = models.ForeignKey(Role, on_delete=models.CASCADE)
+    provider_group = models.ForeignKey(ProviderGroup, on_delete=models.CASCADE)
+    inserted_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "role_provider_group_relationship"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["role_id", "provider_group_id"],
+                name="unique_role_provider_group_relationship",
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "role-provider_groups"
+
+
+class UserRoleRelationship(RowLevelSecurityProtectedModel):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    role = models.ForeignKey(Role, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    inserted_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "role_user_relationship"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["role_id", "user_id"],
+                name="unique_role_user_relationship",
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "user-roles"
+
+
+class InvitationRoleRelationship(RowLevelSecurityProtectedModel):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    role = models.ForeignKey(Role, on_delete=models.CASCADE)
+    invitation = models.ForeignKey(Invitation, on_delete=models.CASCADE)
+    inserted_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "role_invitation_relationship"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["role_id", "invitation_id"],
+                name="unique_role_invitation_relationship",
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "invitation-roles"
 
 
 class ComplianceOverview(RowLevelSecurityProtectedModel):
