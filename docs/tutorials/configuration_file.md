@@ -75,6 +75,7 @@ The following list includes all the Azure checks with configurable variables tha
 | `app_ensure_php_version_is_latest`                            | `php_latest_version`                             | String          |
 | `app_ensure_python_version_is_latest`                         | `python_latest_version`                          | String          |
 | `app_ensure_java_version_is_latest`                           | `java_latest_version`                            | String          |
+| `sqlserver_recommended_minimal_tls_version`                   | `recommended_minimal_tls_versions`               | List of Strings |
 
 
 ## GCP
@@ -446,6 +447,14 @@ azure:
   python_latest_version: "3.12"
   # azure.app_ensure_java_version_is_latest
   java_latest_version: "17"
+
+  # Azure SQL Server
+  # azure.sqlserver_minimal_tls_version
+  recommended_minimal_tls_versions:
+    [
+      "1.2",
+      "1.3"
+    ]
 
 # GCP Configuration
 gcp:
