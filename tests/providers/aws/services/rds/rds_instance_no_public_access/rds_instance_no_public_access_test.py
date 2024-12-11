@@ -373,7 +373,7 @@ class Test_rds_instance_no_public_access:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"RDS Instance db-master-1 is set as publicly accessible and security group default ({default_sg_id}) has postgres port 5432 open to the Internet at endpoint db-master-1.aaaaaaaaaa.us-east-1.rds.amazonaws.com in a public subnet {subnet_id}."
+                    == f"RDS Instance db-master-1 is set as publicly accessible and security group (default ({default_sg_id})) has postgres port 5432 open to the Internet at endpoint db-master-1.aaaaaaaaaa.us-east-1.rds.amazonaws.com in a public subnet {subnet_id}."
                 )
                 assert result[0].resource_id == "db-master-1"
                 assert result[0].region == AWS_REGION_US_EAST_1
