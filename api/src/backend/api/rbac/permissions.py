@@ -2,6 +2,8 @@ from config.django.base import DISABLE_RBAC
 
 from enum import Enum
 from rest_framework.permissions import BasePermission
+from api.models import User
+from api.db_router import MainRouter
 
 
 class Permissions(Enum):
@@ -29,7 +31,9 @@ class HasPermissions(BasePermission):
         if not required_permissions:
             return True
 
-        user_roles = request.user.roles.all()
+        user_roles = (
+            User.objects.using(MainRouter.admin_db).get(id=request.user.id).roles.all()
+        )
         if not user_roles:
             return False
 

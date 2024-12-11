@@ -1,11 +1,10 @@
-# TODO: Enable this tests
-
 import pytest
 from django.urls import reverse
 from rest_framework import status
 from unittest.mock import patch, ANY, Mock
 
 
+@patch("api.db_router.MainRouter.admin_db", new="default")
 @pytest.mark.django_db
 class TestUserViewSet:
     def test_list_users_with_all_permissions(self, authenticated_client_rbac):
@@ -31,6 +30,14 @@ class TestUserViewSet:
             == create_test_user_rbac.email
         )
 
+    def test_retrieve_user_with_no_roles(
+        self, authenticated_client_rbac_noroles, create_test_user_rbac_no_roles
+    ):
+        response = authenticated_client_rbac_noroles.get(
+            reverse("user-detail", kwargs={"pk": create_test_user_rbac_no_roles.id})
+        )
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
     def test_retrieve_user_with_no_permissions(
         self, authenticated_client_no_permissions_rbac, create_test_user
     ):
@@ -39,7 +46,6 @@ class TestUserViewSet:
         )
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
-    @patch("api.db_router.MainRouter.admin_db", new="default")
     def test_create_user_with_all_permissions(self, authenticated_client_rbac):
         valid_user_payload = {
             "name": "test",
@@ -52,7 +58,6 @@ class TestUserViewSet:
         assert response.status_code == status.HTTP_201_CREATED
         assert response.json()["data"]["attributes"]["email"] == "new_user@test.com"
 
-    @patch("api.db_router.MainRouter.admin_db", new="default")
     def test_create_user_with_no_permissions(
         self, authenticated_client_no_permissions_rbac
     ):
@@ -135,6 +140,7 @@ class TestUserViewSet:
         assert response.json()["data"]["attributes"]["email"] == "rbac_limited@rbac.com"
 
 
+@patch("api.db_router.MainRouter.admin_db", new="default")
 @pytest.mark.django_db
 class TestProviderViewSet:
     def test_list_providers_with_all_permissions(

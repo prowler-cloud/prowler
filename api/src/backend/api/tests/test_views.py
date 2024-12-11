@@ -3116,17 +3116,23 @@ class TestRoleViewSet:
         assert data["id"] == str(role.id)
         assert data["attributes"]["name"] == role.name
 
-    def test_role_retrieve_permission_state(self, authenticated_client, roles_fixture):
-        role = roles_fixture[0]
+    @pytest.mark.parametrize(
+        ("permission_state", "index"),
+        [("limited", 0), ("unlimited", 2), ("none", 3), ("invalid", 4)],
+    )
+    def test_role_retrieve_permission_state(
+        self, authenticated_client, roles_fixture, permission_state, index
+    ):
+        role = roles_fixture[index]
         response = authenticated_client.get(
             reverse("role-detail", kwargs={"pk": role.id}),
-            {"filter[permission_state]": "limited"},
+            {"filter[permission_state]": permission_state},
         )
         assert response.status_code == status.HTTP_200_OK
         data = response.json()["data"]
         assert data["id"] == str(role.id)
         assert data["attributes"]["name"] == role.name
-        assert data["attributes"]["permission_state"] == "limited"
+        assert data["attributes"]["permission_state"] == permission_state
 
     def test_role_create(self, authenticated_client):
         data = {

@@ -908,10 +908,8 @@ class Role(RowLevelSecurityProtectedModel):
             return queryset.filter(q_all_true)
         elif value == PermissionChoices.NONE:
             return queryset.filter(q_all_false)
-        elif value == PermissionChoices.LIMITED:
-            return queryset.exclude(q_all_true | q_all_false)
         else:
-            return queryset.none()
+            return queryset.exclude(q_all_true | q_all_false)
 
     class Meta:
         db_table = "roles"

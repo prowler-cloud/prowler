@@ -132,6 +132,26 @@ def create_test_user_rbac(django_db_setup, django_db_blocker):
 
 
 @pytest.fixture(scope="function")
+def create_test_user_rbac_no_roles(django_db_setup, django_db_blocker):
+    with django_db_blocker.unblock():
+        user = User.objects.create_user(
+            name="testing",
+            email="rbac_noroles@rbac.com",
+            password=TEST_PASSWORD,
+        )
+        tenant = Tenant.objects.create(
+            name="Tenant Test",
+        )
+        Membership.objects.create(
+            user=user,
+            tenant=tenant,
+            role=Membership.RoleChoices.OWNER,
+        )
+
+    return user
+
+
+@pytest.fixture(scope="function")
 def create_test_user_rbac_limited(django_db_setup, django_db_blocker):
     with django_db_blocker.unblock():
         user = User.objects.create_user(
@@ -171,6 +191,24 @@ def authenticated_client_rbac(create_test_user_rbac, tenants_fixture, client):
     client.user = create_test_user_rbac
     serializer = TokenSerializer(
         data={"type": "tokens", "email": "rbac@rbac.com", "password": TEST_PASSWORD}
+    )
+    serializer.is_valid()
+    access_token = serializer.validated_data["access"]
+    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {access_token}"
+    return client
+
+
+@pytest.fixture
+def authenticated_client_rbac_noroles(
+    create_test_user_rbac_no_roles, tenants_fixture, client
+):
+    client.user = create_test_user_rbac_no_roles
+    serializer = TokenSerializer(
+        data={
+            "type": "tokens",
+            "email": "rbac_noroles@rbac.com",
+            "password": TEST_PASSWORD,
+        }
     )
     serializer.is_valid()
     access_token = serializer.validated_data["access"]
@@ -361,8 +399,19 @@ def roles_fixture(tenants_fixture):
         manage_scans=True,
         unlimited_visibility=True,
     )
+    role4 = Role.objects.create(
+        name="Role Four",
+        tenant_id=tenant.id,
+        manage_users=False,
+        manage_account=False,
+        manage_billing=False,
+        manage_providers=False,
+        manage_integrations=False,
+        manage_scans=False,
+        unlimited_visibility=False,
+    )
 
-    return role1, role2, role3
+    return role1, role2, role3, role4
 
 
 @pytest.fixture
