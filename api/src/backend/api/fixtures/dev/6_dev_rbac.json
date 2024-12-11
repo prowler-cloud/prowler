@@ -64,7 +64,7 @@
     "pk": "3f01e759-bdf9-4a99-8888-1ab805b79f93",
     "fields": {
       "tenant": "12646005-9067-4d2a-a098-8bb378604362",
-      "name": "admin",
+      "name": "admin_test",
       "manage_users": true,
       "manage_account": true,
       "manage_billing": true,
