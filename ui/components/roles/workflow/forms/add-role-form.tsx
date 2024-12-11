@@ -14,7 +14,7 @@ import { CustomButton, CustomInput } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
 import { addRoleFormSchema, ApiError } from "@/types";
 
-export type FormValues = z.infer<typeof addRoleFormSchema>;
+type FormValues = z.infer<typeof addRoleFormSchema>;
 
 export const AddRoleForm = () => {
   const { toast } = useToast();
