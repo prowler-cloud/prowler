@@ -6,16 +6,16 @@ from prowler.providers.github.services.repository.repository_client import (
 )
 
 
-class repository_code_changes_multi_approval_requirement(Check):
-    """Check if a repository enforces at least 2 approvals for code changes
+class repository_merging_requires_linear_history(Check):
+    """Check if a repository requires linear history on default branch
 
-    This class verifies whether each repository enforces at least 2 approvals for code changes.
+    This class verifies whether each repository requires linear history on the default branch.
     """
 
     def execute(self) -> List[Check_Report_Github]:
-        """Execute the Github Repository code changes enforce multi approval requirement check
+        """Execute the Github Repository Merging Requires Linear History check
 
-        Iterates over each repository and checks if the repository enforces at least 2 approvals for code changes.
+        Iterates over all repositories and checks if they require linear history on the default branch.
 
         Returns:
             List[Check_Report_Github]: A list of reports for each repository
@@ -26,14 +26,14 @@ class repository_code_changes_multi_approval_requirement(Check):
             report.resource_id = repo.id
             report.resource_name = repo.name
             report.status = "FAIL"
-            report.status_extended = f"Repository {repo.name} does not enforce at least 2 approvals for code changes."
+            report.status_extended = f"Repository {repo.name} does not require linear history on default branch ({repo.default_branch})."
 
             if (
                 repo.default_branch_protection
-                and repo.default_branch_protection.approval_count >= 2
+                and repo.default_branch_protection.linear_history
             ):
                 report.status = "PASS"
-                report.status_extended = f"Repository {repo.name} does enforce at least 2 approvals for code changes."
+                report.status_extended = f"Repository {repo.name} does require linear history on default branch ({repo.default_branch})."
 
             findings.append(report)
 
