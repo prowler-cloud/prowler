@@ -569,12 +569,6 @@ class EC2(AWSService):
                                 ),
                                 network_interfaces=enis,
                                 associate_public_ip_address=associate_public_ip,
-                                http_tokens=template_version["LaunchTemplateData"]
-                                .get("MetadataOptions", {})
-                                .get("HttpTokens", ""),
-                                http_endpoint=template_version["LaunchTemplateData"]
-                                .get("MetadataOptions", {})
-                                .get("HttpEndpoint", ""),
                             ),
                         )
                     )
@@ -769,8 +763,6 @@ class TemplateData(BaseModel):
     user_data: str
     network_interfaces: Optional[list[NetworkInterface]]
     associate_public_ip_address: Optional[bool]
-    http_tokens: Optional[str]
-    http_endpoint: Optional[str]
 
 
 class LaunchTemplateVersion(BaseModel):
