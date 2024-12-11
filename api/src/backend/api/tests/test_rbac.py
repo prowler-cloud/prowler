@@ -4,7 +4,6 @@ from rest_framework import status
 from unittest.mock import patch, ANY, Mock
 
 
-@patch("api.db_router.MainRouter.admin_db", new="default")
 @pytest.mark.django_db
 class TestUserViewSet:
     def test_list_users_with_all_permissions(self, authenticated_client_rbac):
@@ -140,7 +139,6 @@ class TestUserViewSet:
         assert response.json()["data"]["attributes"]["email"] == "rbac_limited@rbac.com"
 
 
-@patch("api.db_router.MainRouter.admin_db", new="default")
 @pytest.mark.django_db
 class TestProviderViewSet:
     def test_list_providers_with_all_permissions(

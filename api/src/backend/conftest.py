@@ -753,3 +753,13 @@ def get_authorization_header(access_token: str) -> dict:
 def pytest_collection_modifyitems(items):
     """Ensure test_rbac.py is executed first."""
     items.sort(key=lambda item: 0 if "test_rbac.py" in item.nodeid else 1)
+
+
+def pytest_configure(config):
+    # Apply the mock before the test session starts. This is necessary to avoid admin error when running the 0004_rbac_missing_admin_roles migration
+    patch("api.db_router.MainRouter.admin_db", new="default").start()
+
+
+def pytest_unconfigure(config):
+    # Stop all patches after the test session ends. This is necessary to avoid admin error when running the 0004_rbac_missing_admin_roles migration
+    patch.stopall()

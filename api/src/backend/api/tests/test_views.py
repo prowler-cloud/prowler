@@ -61,7 +61,6 @@ class TestUserViewSet:
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["data"]["attributes"]["email"] == create_test_user.email
 
-    @patch("api.db_router.MainRouter.admin_db", new="default")
     def test_users_create(self, client):
         valid_user_payload = {
             "name": "test",
@@ -78,7 +77,6 @@ class TestUserViewSet:
             == valid_user_payload["email"].lower()
         )
 
-    @patch("api.db_router.MainRouter.admin_db", new="default")
     def test_users_create_duplicated_email(self, client):
         # Create a user
         self.test_users_create(client)
@@ -133,7 +131,6 @@ class TestUserViewSet:
             "NonExistentEmail@prowler.com",
         ],
     )
-    @patch("api.db_router.MainRouter.admin_db", new="default")
     def test_users_create_used_email(self, authenticated_client, email):
         # First user created; no errors should occur
         user_payload = {
@@ -429,7 +426,6 @@ class TestTenantViewSet:
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    @patch("api.db_router.MainRouter.admin_db", new="default")
     @patch("api.v1.views.delete_tenant_task.apply_async")
     def test_tenants_delete(
         self, delete_tenant_mock, authenticated_client, tenants_fixture
@@ -2866,7 +2862,6 @@ class TestInvitationViewSet:
             == "This invitation cannot be revoked."
         )
 
-    @patch("api.db_router.MainRouter.admin_db", new="default")
     def test_invitations_accept_invitation_new_user(self, client, invitations_fixture):
         invitation, *_ = invitations_fixture
 
@@ -2892,7 +2887,6 @@ class TestInvitationViewSet:
             user__email__iexact=invitation.email, tenant=invitation.tenant
         ).exists()
 
-    @patch("api.db_router.MainRouter.admin_db", new="default")
     def test_invitations_accept_invitation_existing_user(
         self, authenticated_client, create_test_user, tenants_fixture
     ):
@@ -2924,7 +2918,6 @@ class TestInvitationViewSet:
         ).exists()
         assert invitation.state == Invitation.State.ACCEPTED.value
 
-    @patch("api.db_router.MainRouter.admin_db", new="default")
     def test_invitations_accept_invitation_invalid_token(self, authenticated_client):
         data = {
             "invitation_token": "invalid_token",
@@ -2937,7 +2930,6 @@ class TestInvitationViewSet:
         assert response.status_code == status.HTTP_404_NOT_FOUND
         assert response.json()["errors"][0]["code"] == "not_found"
 
-    @patch("api.db_router.MainRouter.admin_db", new="default")
     def test_invitations_accept_invitation_invalid_token_expired(
         self, authenticated_client, invitations_fixture
     ):
@@ -2956,7 +2948,6 @@ class TestInvitationViewSet:
 
         assert response.status_code == status.HTTP_410_GONE
 
-    @patch("api.db_router.MainRouter.admin_db", new="default")
     def test_invitations_accept_invitation_invalid_token_expired_new_user(
         self, client, invitations_fixture
     ):
@@ -2980,7 +2971,6 @@ class TestInvitationViewSet:
 
         assert response.status_code == status.HTTP_410_GONE
 
-    @patch("api.db_router.MainRouter.admin_db", new="default")
     def test_invitations_accept_invitation_invalid_token_accepted(
         self, authenticated_client, invitations_fixture
     ):
@@ -3004,7 +2994,6 @@ class TestInvitationViewSet:
             == "This invitation is no longer valid."
         )
 
-    @patch("api.db_router.MainRouter.admin_db", new="default")
     def test_invitations_accept_invitation_invalid_token_revoked(
         self, authenticated_client, invitations_fixture
     ):
