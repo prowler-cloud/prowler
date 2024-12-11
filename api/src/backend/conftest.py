@@ -10,6 +10,7 @@ from prowler.lib.check.models import Severity
 from prowler.lib.outputs.finding import Status
 from rest_framework import status
 from rest_framework.test import APIClient
+from unittest.mock import patch
 
 from api.models import (
     Finding,
@@ -20,6 +21,7 @@ from api.models import (
     ProviderGroup,
     Resource,
     ResourceTag,
+    Role,
     Scan,
     StateChoices,
     Task,
@@ -27,6 +29,7 @@ from api.models import (
     ProviderSecret,
     Invitation,
     ComplianceOverview,
+    UserRoleRelationship,
 )
 from api.rls import Tenant
 from api.v1.serializers import TokenSerializer
@@ -72,6 +75,16 @@ def disable_logging():
     logging.disable(logging.CRITICAL)
 
 
+@pytest.fixture(scope="function")
+def patch_testing_flag():
+    """
+    Fixture to patch the TESTING flag to True during tests.
+    """
+    with patch("api.rbac.permissions.DISABLE_RBAC", True):
+        with patch("api.v1.views.DISABLE_RBAC", True):
+            yield
+
+
 @pytest.fixture(scope="session", autouse=True)
 def create_test_user(django_db_setup, django_db_blocker):
     with django_db_blocker.unblock():
@@ -81,6 +94,106 @@ def create_test_user(django_db_setup, django_db_blocker):
             password=TEST_PASSWORD,
         )
     return user
+
+
+@pytest.fixture(scope="function")
+def create_test_user_rbac(django_db_setup, django_db_blocker):
+    with django_db_blocker.unblock():
+        user = User.objects.create_user(
+            name="testing",
+            email="rbac@rbac.com",
+            password=TEST_PASSWORD,
+        )
+        tenant = Tenant.objects.create(
+            name="Tenant Test",
+        )
+        Membership.objects.create(
+            user=user,
+            tenant=tenant,
+            role=Membership.RoleChoices.OWNER,
+        )
+        Role.objects.create(
+            name="admin",
+            tenant_id=tenant.id,
+            manage_users=True,
+            manage_account=True,
+            manage_billing=True,
+            manage_providers=True,
+            manage_integrations=True,
+            manage_scans=True,
+            unlimited_visibility=True,
+        )
+        UserRoleRelationship.objects.create(
+            user=user,
+            role=Role.objects.get(name="admin"),
+            tenant_id=tenant.id,
+        )
+    return user
+
+
+@pytest.fixture(scope="function")
+def create_test_user_rbac_limited(django_db_setup, django_db_blocker):
+    with django_db_blocker.unblock():
+        user = User.objects.create_user(
+            name="testing_limited",
+            email="rbac_limited@rbac.com",
+            password=TEST_PASSWORD,
+        )
+        tenant = Tenant.objects.create(
+            name="Tenant Test",
+        )
+        Membership.objects.create(
+            user=user,
+            tenant=tenant,
+            role=Membership.RoleChoices.OWNER,
+        )
+        Role.objects.create(
+            name="limited",
+            tenant_id=tenant.id,
+            manage_users=False,
+            manage_account=False,
+            manage_billing=False,
+            manage_providers=False,
+            manage_integrations=False,
+            manage_scans=False,
+            unlimited_visibility=False,
+        )
+        UserRoleRelationship.objects.create(
+            user=user,
+            role=Role.objects.get(name="limited"),
+            tenant_id=tenant.id,
+        )
+    return user
+
+
+@pytest.fixture
+def authenticated_client_rbac(create_test_user_rbac, tenants_fixture, client):
+    client.user = create_test_user_rbac
+    serializer = TokenSerializer(
+        data={"type": "tokens", "email": "rbac@rbac.com", "password": TEST_PASSWORD}
+    )
+    serializer.is_valid()
+    access_token = serializer.validated_data["access"]
+    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {access_token}"
+    return client
+
+
+@pytest.fixture
+def authenticated_client_no_permissions_rbac(
+    create_test_user_rbac_limited, tenants_fixture, client
+):
+    client.user = create_test_user_rbac_limited
+    serializer = TokenSerializer(
+        data={
+            "type": "tokens",
+            "email": "rbac_limited@rbac.com",
+            "password": TEST_PASSWORD,
+        }
+    )
+    serializer.is_valid()
+    access_token = serializer.validated_data["access"]
+    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {access_token}"
+    return client
 
 
 @pytest.fixture
@@ -104,6 +217,7 @@ def authenticated_api_client(create_test_user, tenants_fixture):
     serializer.is_valid()
     access_token = serializer.validated_data["access"]
     client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {access_token}"
+
     return client
 
 
@@ -128,6 +242,7 @@ def tenants_fixture(create_test_user):
     tenant3 = Tenant.objects.create(
         name="Tenant Three",
     )
+
     return tenant1, tenant2, tenant3
 
 
@@ -208,6 +323,46 @@ def provider_groups_fixture(tenants_fixture):
     )
 
     return pgroup1, pgroup2, pgroup3
+
+
+@pytest.fixture
+def roles_fixture(tenants_fixture):
+    tenant, *_ = tenants_fixture
+    role1 = Role.objects.create(
+        name="Role One",
+        tenant_id=tenant.id,
+        manage_users=True,
+        manage_account=True,
+        manage_billing=True,
+        manage_providers=True,
+        manage_integrations=False,
+        manage_scans=True,
+        unlimited_visibility=False,
+    )
+    role2 = Role.objects.create(
+        name="Role Two",
+        tenant_id=tenant.id,
+        manage_users=False,
+        manage_account=False,
+        manage_billing=False,
+        manage_providers=True,
+        manage_integrations=True,
+        manage_scans=True,
+        unlimited_visibility=True,
+    )
+    role3 = Role.objects.create(
+        name="Role Three",
+        tenant_id=tenant.id,
+        manage_users=True,
+        manage_account=True,
+        manage_billing=True,
+        manage_providers=True,
+        manage_integrations=True,
+        manage_scans=True,
+        unlimited_visibility=True,
+    )
+
+    return role1, role2, role3
 
 
 @pytest.fixture

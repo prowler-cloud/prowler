@@ -22,13 +22,10 @@ from api.db_utils import (
     StatusEnumField,
 )
 from api.models import (
-    ComplianceOverview,
     Finding,
-    Invitation,
     Membership,
     Provider,
     ProviderGroup,
-    ProviderSecret,
     Resource,
     ResourceTag,
     Scan,
@@ -36,6 +33,10 @@ from api.models import (
     SeverityChoices,
     StateChoices,
     StatusChoices,
+    ProviderSecret,
+    Invitation,
+    Role,
+    ComplianceOverview,
     Task,
     User,
 )
@@ -478,6 +479,43 @@ class UserFilter(FilterSet):
             "company_name": ["exact", "icontains"],
             "date_joined": ["date", "gte", "lte"],
             "is_active": ["exact"],
+        }
+
+
+class RoleFilter(FilterSet):
+    inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
+    updated_at = DateFilter(field_name="updated_at", lookup_expr="date")
+    permission_state = CharFilter(method="filter_permission_state")
+
+    def filter_permission_state(self, queryset, name, value):
+        permission_fields = [
+            "manage_users",
+            "manage_account",
+            "manage_billing",
+            "manage_providers",
+            "manage_integrations",
+            "manage_scans",
+        ]
+
+        q_all_true = Q(**{field: True for field in permission_fields})
+        q_all_false = Q(**{field: False for field in permission_fields})
+
+        if value == "unlimited":
+            return queryset.filter(q_all_true)
+        elif value == "none":
+            return queryset.filter(q_all_false)
+        elif value == "limited":
+            return queryset.exclude(q_all_true | q_all_false)
+        else:
+            return queryset.none()
+
+    class Meta:
+        model = Role
+        fields = {
+            "id": ["exact", "in"],
+            "name": ["exact", "in"],
+            "inserted_at": ["gte", "lte"],
+            "updated_at": ["gte", "lte"],
         }
 
 

@@ -53,6 +53,7 @@ export const sendInvite = async (formData: FormData) => {
   const keyServer = process.env.API_BASE_URL;
 
   const email = formData.get("email");
+  const role = formData.get("role");
   const url = new URL(`${keyServer}/tenants/invitations`);
 
   const body = JSON.stringify({
@@ -61,7 +62,18 @@ export const sendInvite = async (formData: FormData) => {
       attributes: {
         email,
       },
-      relationships: {},
+      relationships: {
+        roles: {
+          data: role
+            ? [
+                {
+                  id: role,
+                  type: "role",
+                },
+              ]
+            : [],
+        },
+      },
     },
   });
 
