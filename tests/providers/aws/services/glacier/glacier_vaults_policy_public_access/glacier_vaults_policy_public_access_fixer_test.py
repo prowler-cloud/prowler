@@ -9,27 +9,18 @@ mock_make_api_call = botocore.client.BaseClient._make_api_call
 
 
 def mock_make_api_call_public_vault(self, operation_name, kwarg):
-    if operation_name == "SetVaultAccessPolicy":
+    if operation_name == "DeleteVaultAccessPolicy":
         return {
-            "VaultAccessPolicy": {
-                "Policy": {
-                    "Version": "2012-10-17",
-                    "Statement": [
-                        {
-                            "Effect": "Allow",
-                            "Principal": {"AWS": "arn:aws:iam::106908755756:root"},
-                            "Action": "glacier:InitiateJob",
-                            "Resource": "arn:aws:glacier:eu-west-1:106908755756:vaults/test-vault",
-                        }
-                    ],
-                }
+            "ResponseMetadata": {
+                "HTTPStatusCode": 204,
+                "RequestId": "test-request-id",
             }
         }
     return mock_make_api_call(self, operation_name, kwarg)
 
 
 def mock_make_api_call_public_vault_error(self, operation_name, kwarg):
-    if operation_name == "SetVaultAccessPolicy":
+    if operation_name == "DeleteVaultAccessPolicy":
         raise botocore.exceptions.ClientError(
             {
                 "Error": {
