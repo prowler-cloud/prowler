@@ -1,6 +1,8 @@
+import uuid
 from functools import wraps
 
 from django.db import connection, transaction
+from rest_framework_json_api.serializers import ValidationError
 
 
 def set_tenant(func):
@@ -43,9 +45,12 @@ def set_tenant(func):
             tenant_id = kwargs.pop("tenant_id")
         except KeyError:
             raise KeyError("This task requires the tenant_id")
-
+        try:
+            uuid.UUID(tenant_id)
+        except ValueError:
+            raise ValidationError("Tenant ID must be a valid UUID")
         with connection.cursor() as cursor:
-            cursor.execute(f"SELECT set_config('api.tenant_id', '{tenant_id}', TRUE);")
+            cursor.execute("SELECT set_config('api.tenant_id', %s, TRUE);", [tenant_id])
 
         return func(*args, **kwargs)
 

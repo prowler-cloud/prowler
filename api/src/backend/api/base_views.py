@@ -53,7 +53,7 @@ class BaseRLSViewSet(BaseViewSet):
             raise ValidationError("Tenant ID must be a valid UUID")
 
         with connection.cursor() as cursor:
-            cursor.execute(f"SELECT set_config('api.tenant_id', '{tenant_id}', TRUE);")
+            cursor.execute("SELECT set_config('api.tenant_id', %s, TRUE);", [tenant_id])
             self.request.tenant_id = tenant_id
             return super().initial(request, *args, **kwargs)
 
@@ -75,8 +75,13 @@ class BaseTenantViewset(BaseViewSet):
         ):
             user_id = str(request.user.id)
 
+            try:
+                uuid.UUID(user_id)
+            except ValueError:
+                raise ValidationError("User ID must be a valid UUID")
+
             with connection.cursor() as cursor:
-                cursor.execute(f"SELECT set_config('api.user_id', '{user_id}', TRUE);")
+                cursor.execute("SELECT set_config('api.user_id', %s, TRUE);", [user_id])
                 return super().initial(request, *args, **kwargs)
 
         # TODO: DRY this when we have time
@@ -93,7 +98,7 @@ class BaseTenantViewset(BaseViewSet):
             raise ValidationError("Tenant ID must be a valid UUID")
 
         with connection.cursor() as cursor:
-            cursor.execute(f"SELECT set_config('api.tenant_id', '{tenant_id}', TRUE);")
+            cursor.execute("SELECT set_config('api.tenant_id', %s, TRUE);", [tenant_id])
             self.request.tenant_id = tenant_id
             return super().initial(request, *args, **kwargs)
 
@@ -120,6 +125,6 @@ class BaseUserViewset(BaseViewSet):
             raise ValidationError("Tenant ID must be a valid UUID")
 
         with connection.cursor() as cursor:
-            cursor.execute(f"SELECT set_config('api.tenant_id', '{tenant_id}', TRUE);")
+            cursor.execute("SELECT set_config('api.tenant_id', %s, TRUE);", [tenant_id])
             self.request.tenant_id = tenant_id
             return super().initial(request, *args, **kwargs)
