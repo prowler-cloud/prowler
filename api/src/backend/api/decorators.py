@@ -46,7 +46,8 @@ def set_tenant(func):
         except KeyError:
             raise KeyError("This task requires the tenant_id")
         try:
-            uuid.UUID(tenant_id)
+            # just in case the tenant_id is an UUID object
+            uuid.UUID(str(tenant_id))
         except ValueError:
             raise ValidationError("Tenant ID must be a valid UUID")
         with connection.cursor() as cursor:
