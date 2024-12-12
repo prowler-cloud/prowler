@@ -6,9 +6,7 @@ def fixer(resource_id: str, region: str) -> bool:
     """
     Modify the S3 bucket ACL to restrict public write access.
     Specifically, this fixer sets the ACL of the bucket to 'private' to prevent
-    public write access to the S3 bucket.
-    Requires the s3:PutBucketAcl permission.
-
+    public write access to the S3 bucket. Requires the s3:PutBucketAcl permission.
     Permissions:
     {
         "Version": "2012-10-17",
@@ -20,11 +18,9 @@ def fixer(resource_id: str, region: str) -> bool:
             }
         ]
     }
-
     Args:
-        resource_id (str): The S3 bucket name.
+        resource_id (str): The S3 bucket id.
         region (str): AWS region where the S3 bucket exists.
-
     Returns:
         bool: True if the operation is successful (bucket access is updated), False otherwise.
     """
