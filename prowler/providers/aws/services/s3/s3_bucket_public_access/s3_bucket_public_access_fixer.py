@@ -6,7 +6,7 @@ def fixer(resource_id: str, region: str) -> bool:
     """
     Modify the S3 bucket's public access settings to block all public access.
     Specifically, this fixer configures the bucket's public access block settings to
-    prevent any public access (ACLs and policies). Requires the s3:PutBucketAcl
+    prevent any public access (ACLs and policies). Requires the s3:PutBucketPublicAccessBlock
     permission to modify the public access settings.
     Permissions:
     {
@@ -14,7 +14,7 @@ def fixer(resource_id: str, region: str) -> bool:
         "Statement": [
             {
                 "Effect": "Allow",
-                "Action": "s3:PutBucketAcl",
+                "Action": "s3:PutBucketPublicAccessBlock",
                 "Resource": "*"
             }
         ]
