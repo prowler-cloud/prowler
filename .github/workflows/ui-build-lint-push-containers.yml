@@ -58,7 +58,7 @@ jobs:
 
       - name: Build and push container image (latest)
         # Comment the following line for testing
-        # if: github.event_name == 'push'
+        if: github.event_name == 'push'
         uses: docker/build-push-action@v6
         with:
           context: ${{ env.WORKING_DIRECTORY }}
