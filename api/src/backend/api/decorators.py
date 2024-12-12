@@ -4,7 +4,7 @@ from functools import wraps
 from django.db import connection, transaction
 from rest_framework_json_api.serializers import ValidationError
 
-from api.src.backend.api.db_utils import SET_API_TENANT_ID_QUERY
+from api.db_utils import SET_API_TENANT_ID_QUERY
 
 
 def set_tenant(func):
@@ -35,7 +35,7 @@ def set_tenant(func):
             pass
 
         # When calling the task
-        some_task.delay(arg1, tenant_id="1234-abcd-5678")
+        some_task.delay(arg1, tenant_id="8db7ca86-03cc-4d42-99f6-5e480baf6ab5")
 
         # The tenant context will be set before the task logic executes.
     """
@@ -48,8 +48,7 @@ def set_tenant(func):
         except KeyError:
             raise KeyError("This task requires the tenant_id")
         try:
-            # just in case the tenant_id is an UUID object
-            uuid.UUID(str(tenant_id))
+            uuid.UUID(tenant_id)
         except ValueError:
             raise ValidationError("Tenant ID must be a valid UUID")
         with connection.cursor() as cursor:
