@@ -1,11 +1,8 @@
-import uuid
-
 from django.db import transaction
 from rest_framework import permissions
 from rest_framework.exceptions import NotAuthenticated
 from rest_framework.filters import SearchFilter
 from rest_framework_json_api import filters
-from rest_framework_json_api.serializers import ValidationError
 from rest_framework_json_api.views import ModelViewSet
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
@@ -69,11 +66,6 @@ class BaseTenantViewset(BaseViewSet):
             and request.method != "DELETE"
         ):
             user_id = str(request.user.id)
-
-            try:
-                uuid.UUID(user_id)
-            except ValueError:
-                raise ValidationError("User ID must be a valid UUID")
 
             with tenant_transaction(value=user_id, parameter=POSTGRES_USER_VAR):
                 return super().initial(request, *args, **kwargs)
