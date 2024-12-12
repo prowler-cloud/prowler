@@ -3,6 +3,7 @@ from unittest.mock import call, patch
 
 import pytest
 
+from api.db_utils import POSTGRES_TENANT_VAR, SET_CONFIG_QUERY
 from api.decorators import set_tenant
 
 
@@ -21,7 +22,7 @@ class TestSetTenantDecorator:
         result = random_func("test_arg", tenant_id=tenant_id)
 
         assert (
-            call("SELECT set_config('api.tenant_id', %s::text, TRUE);", [tenant_id])
+            call(SET_CONFIG_QUERY, [POSTGRES_TENANT_VAR, tenant_id])
             in mock_cursor.execute.mock_calls
         )
         assert result == "test_arg"
