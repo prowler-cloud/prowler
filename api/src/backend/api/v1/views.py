@@ -386,7 +386,6 @@ class UserViewSet(BaseUserViewset):
             user=user, tenant=tenant, role=role
         )
         if invitation:
-            # TODO: Add roles to output relationships
             user_role = []
             for role in invitation.roles.all():
                 user_role.append(
@@ -1635,7 +1634,6 @@ class InvitationAcceptViewSet(BaseRLSViewSet):
             user=user,
             tenant=invitation.tenant,
         )
-        # TODO: Add roles to output relationships
         user_role = []
         for role in invitation.roles.all():
             user_role.append(
