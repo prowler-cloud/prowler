@@ -55,12 +55,15 @@ class Test_ec2_launch_template_imdsv2_required:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_launch_template_imdsv2_required.ec2_launch_template_imdsv2_required.ec2_client",
-            new=EC2(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_launch_template_imdsv2_required.ec2_launch_template_imdsv2_required.ec2_client",
+                new=EC2(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_launch_template_imdsv2_required.ec2_launch_template_imdsv2_required import (
@@ -99,12 +102,15 @@ class Test_ec2_launch_template_imdsv2_required:
 
             aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-            with mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ), mock.patch(
-                "prowler.providers.aws.services.ec2.ec2_launch_template_imdsv2_required.ec2_launch_template_imdsv2_required.ec2_client",
-                new=EC2(aws_provider),
+            with (
+                mock.patch(
+                    "prowler.providers.common.provider.Provider.get_global_provider",
+                    return_value=aws_provider,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.ec2.ec2_launch_template_imdsv2_required.ec2_launch_template_imdsv2_required.ec2_client",
+                    new=EC2(aws_provider),
+                ),
             ):
                 # Test Check
                 from prowler.providers.aws.services.ec2.ec2_launch_template_imdsv2_required.ec2_launch_template_imdsv2_required import (
@@ -118,7 +124,7 @@ class Test_ec2_launch_template_imdsv2_required:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == f"EC2 Launch Template {launch_template_name} has IMDSv2 required in the following versions: 1."
+                    == f"EC2 Launch Template {launch_template_name} has IMDSv2 enabled and required in the following versions: 1."
                 )
                 assert result[0].resource_id == launch_template_id
                 assert result[0].region == AWS_REGION_US_EAST_1
@@ -156,12 +162,15 @@ class Test_ec2_launch_template_imdsv2_required:
 
             aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-            with mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ), mock.patch(
-                "prowler.providers.aws.services.ec2.ec2_launch_template_imdsv2_required.ec2_launch_template_imdsv2_required.ec2_client",
-                new=EC2(aws_provider),
+            with (
+                mock.patch(
+                    "prowler.providers.common.provider.Provider.get_global_provider",
+                    return_value=aws_provider,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.ec2.ec2_launch_template_imdsv2_required.ec2_launch_template_imdsv2_required.ec2_client",
+                    new=EC2(aws_provider),
+                ),
             ):
                 # Test Check
                 from prowler.providers.aws.services.ec2.ec2_launch_template_imdsv2_required.ec2_launch_template_imdsv2_required import (
@@ -175,7 +184,7 @@ class Test_ec2_launch_template_imdsv2_required:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"EC2 Launch Template {launch_template_name} does not have IMDSv2 required or metadata service disabled in any of its versions."
+                    == f"EC2 Launch Template {launch_template_name} has IMDSv2 disabled or not required in the following versions: 1."
                 )
                 assert result[0].resource_id == launch_template_id
                 assert result[0].region == AWS_REGION_US_EAST_1
