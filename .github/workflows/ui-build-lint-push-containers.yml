@@ -8,6 +8,15 @@ on:
       - "ui/**"
       - ".github/workflows/ui-build-lint-push-containers.yml"
 
+  # Uncomment the below code to test this action on PRs
+  # Do not forget to set `push: false`
+  # pull_request:
+  #   branches:
+  #     - "master"
+  #   paths:
+  #     - "ui/**"
+  #     - ".github/workflows/ui-build-lint-push-containers.yml"
+
   release:
     types: [published]
 
@@ -32,6 +41,11 @@ jobs:
         working-directory: ${{ env.WORKING_DIRECTORY }}
 
     steps:
+      - name: Repository check
+        working-directory: /tmp
+        run: |
+          [[ ${{ github.repository }} != "prowler-cloud/prowler" ]] && echo "This action only runs for prowler-cloud/prowler"; exit 0
+
       - name: Checkout
         uses: actions/checkout@v4
 
