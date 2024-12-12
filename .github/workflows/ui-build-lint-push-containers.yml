@@ -9,12 +9,12 @@ on:
       - ".github/workflows/ui-build-lint-push-containers.yml"
 
   # Uncomment the below code to test this action on PRs
-  pull_request:
-    branches:
-      - "master"
-    paths:
-      - "ui/**"
-      - ".github/workflows/ui-build-lint-push-containers.yml"
+  # pull_request:
+  #   branches:
+  #     - "master"
+  #   paths:
+  #     - "ui/**"
+  #     - ".github/workflows/ui-build-lint-push-containers.yml"
 
   release:
     types: [published]
@@ -63,7 +63,7 @@ jobs:
         with:
           context: ${{ env.WORKING_DIRECTORY }}
           # Set push: false for testing
-          push: false
+          push: true
           tags: |
             ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ env.LATEST_TAG }}
           cache-from: type=gha
