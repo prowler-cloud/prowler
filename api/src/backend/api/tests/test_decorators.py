@@ -1,3 +1,4 @@
+import uuid
 from unittest.mock import call, patch
 
 import pytest
@@ -15,7 +16,7 @@ class TestSetTenantDecorator:
         def random_func(arg):
             return arg
 
-        tenant_id = "1234-abcd-5678"
+        tenant_id = uuid.UUID()
 
         result = random_func("test_arg", tenant_id=tenant_id)
 
