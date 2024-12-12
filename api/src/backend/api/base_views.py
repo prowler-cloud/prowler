@@ -1,5 +1,6 @@
 import uuid
 
+from db_utils import tenant_transaction
 from django.db import connection, transaction
 from rest_framework import permissions
 from rest_framework.exceptions import NotAuthenticated
@@ -47,15 +48,7 @@ class BaseRLSViewSet(BaseViewSet):
         if tenant_id is None:
             raise NotAuthenticated("Tenant ID is not present in token")
 
-        try:
-            uuid.UUID(tenant_id)
-        except ValueError:
-            raise ValidationError("Tenant ID must be a valid UUID")
-
-        with connection.cursor() as cursor:
-            cursor.execute(
-                "SELECT set_config('api.tenant_id', %s::text, TRUE);", [tenant_id]
-            )
+        with tenant_transaction(tenant_id):
             self.request.tenant_id = tenant_id
             return super().initial(request, *args, **kwargs)
 
@@ -94,15 +87,7 @@ class BaseTenantViewset(BaseViewSet):
         if tenant_id is None:
             raise NotAuthenticated("Tenant ID is not present in token")
 
-        try:
-            uuid.UUID(tenant_id)
-        except ValueError:
-            raise ValidationError("Tenant ID must be a valid UUID")
-
-        with connection.cursor() as cursor:
-            cursor.execute(
-                "SELECT set_config('api.tenant_id', %s::text, TRUE);", [tenant_id]
-            )
+        with tenant_transaction(tenant_id):
             self.request.tenant_id = tenant_id
             return super().initial(request, *args, **kwargs)
 
@@ -123,14 +108,6 @@ class BaseUserViewset(BaseViewSet):
         if tenant_id is None:
             raise NotAuthenticated("Tenant ID is not present in token")
 
-        try:
-            uuid.UUID(tenant_id)
-        except ValueError:
-            raise ValidationError("Tenant ID must be a valid UUID")
-
-        with connection.cursor() as cursor:
-            cursor.execute(
-                "SELECT set_config('api.tenant_id', %s::text, TRUE);", [tenant_id]
-            )
+        with tenant_transaction(tenant_id):
             self.request.tenant_id = tenant_id
             return super().initial(request, *args, **kwargs)
