@@ -9,7 +9,7 @@ from rest_framework_json_api.serializers import ValidationError
 from rest_framework_json_api.views import ModelViewSet
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
-from api.db_utils import tenant_transaction
+from api.db_utils import POSTGRES_USER_VAR, tenant_transaction
 from api.filters import CustomDjangoFilterBackend
 
 
@@ -75,7 +75,7 @@ class BaseTenantViewset(BaseViewSet):
             except ValueError:
                 raise ValidationError("User ID must be a valid UUID")
 
-            with tenant_transaction(value=user_id, parameter="api.user_id"):
+            with tenant_transaction(value=user_id, parameter=POSTGRES_USER_VAR):
                 return super().initial(request, *args, **kwargs)
 
         # TODO: DRY this when we have time

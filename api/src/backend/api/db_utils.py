@@ -48,7 +48,7 @@ def psycopg_connection(database_alias: str):
 
 
 @contextmanager
-def tenant_transaction(value: str, parameter: str = "api.tenant_id"):
+def tenant_transaction(value: str, parameter: str = POSTGRES_TENANT_VAR):
     with transaction.atomic():
         with connection.cursor() as cursor:
             try:
