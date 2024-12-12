@@ -58,7 +58,6 @@ jobs:
         # if: github.event_name == 'push'
         uses: docker/build-push-action@v6
         with:
-          context: .
           push: false
           tags: |
             ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ env.LATEST_TAG }}
@@ -69,7 +68,6 @@ jobs:
         # if: github.event_name == 'release'
         uses: docker/build-push-action@v6
         with:
-          context: .
           push: false
           tags: |
             ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ env.RELEASE_TAG }}
