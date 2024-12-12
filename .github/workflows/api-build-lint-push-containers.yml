@@ -10,12 +10,12 @@ on:
 
   # Uncomment the below code to test this action on PRs
   # Do not forget to set `push: false`
-  # pull_request:
-  #   branches:
-  #     - "master"
-  #   paths:
-  #     - "api/**"
-  #     - ".github/workflows/api-build-lint-push-containers.yml"
+  pull_request:
+    branches:
+      - "master"
+    paths:
+      - "api/**"
+      - ".github/workflows/api-build-lint-push-containers.yml"
 
   release:
     types: [published]
@@ -26,7 +26,6 @@ env:
   RELEASE_TAG: ${{ github.event.release.tag_name }}
 
   WORKING_DIRECTORY: ./api
-  DOCKERFILE_PATH: ./api/Dockerfile
 
   # Container Registries
   PROWLERCLOUD_DOCKERHUB_REPOSITORY: prowlercloud
@@ -56,24 +55,23 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build and push container image (latest)
-        if: github.event_name == 'push'
+        # if: github.event_name == 'push'
         uses: docker/build-push-action@v6
         with:
-          push: true
+          context: .
+          push: false
           tags: |
             ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ env.LATEST_TAG }}
-          file: ${{ env.DOCKERFILE_PATH }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - name: Build and push container image (release)
-        if: github.event_name == 'release'
+        # if: github.event_name == 'release'
         uses: docker/build-push-action@v6
         with:
           context: .
-          push: true
+          push: false
           tags: |
             ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ env.RELEASE_TAG }}
-          file: ${{ env.DOCKERFILE_PATH }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
