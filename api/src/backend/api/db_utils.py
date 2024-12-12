@@ -49,10 +49,18 @@ def psycopg_connection(database_alias: str):
 
 @contextmanager
 def tenant_transaction(value: str, parameter: str = POSTGRES_TENANT_VAR):
+    """
+    Creates a new database transaction setting the given configuration value. It validates the
+    if the value is a valid UUID to be used for Postgres RLS.
+
+    Args:
+        value (str): Database configuration parameter value.
+        parameter (str): Database configuration parameter name
+    """
     with transaction.atomic():
         with connection.cursor() as cursor:
             try:
-                # just in case the tenant_id|user_id is an UUID object
+                # just in case the value is an UUID object
                 uuid.UUID(str(value))
             except ValueError:
                 raise ValidationError("Must be a valid UUID")
