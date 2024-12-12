@@ -30,17 +30,25 @@ class GCPBaseException(ProwlerException):
             "message": "Error testing connection to GCP",
             "remediation": "Check the connection and ensure it is properly set up.",
         },
-        (3006, "GCPLoadCredentialsFromServiceAccountKeyError"): {
-            "message": "Error loading credentials from service account key",
-            "remediation": "Check the credentials and ensure they are properly set up.",
+        (3006, "GCPLoadCredentialsFromDictError"): {
+            "message": "Error loading credentials from dictionary",
+            "remediation": "Check the credentials and ensure they are properly set up. client_id, client_secret and refresh_token are required.",
         },
-        (3007, "GCPInvalidProviderIdError"): {
+        (3007, "GCPStaticCredentialsError"): {
+            "message": "Error loading static credentials",
+            "remediation": "Check the credentials and ensure they are properly set up. client_id, client_secret and refresh_token are required.",
+        },
+        (3008, "GCPInvalidProviderIdError"): {
             "message": "Provider does not match with the expected project_id",
             "remediation": "Check the provider and ensure it matches the expected project_id.",
         },
-        (3008, "GCPCloudAssetAPINotUsedError"): {
+        (3009, "GCPCloudAssetAPINotUsedError"): {
             "message": "Cloud Asset API not used",
             "remediation": "Enable the Cloud Asset API for the project.",
+        },
+        (3010, "GCPLoadCredentialsFromServiceAccountKeyError"): {
+            "message": "Error loading credentials from service account key",
+            "remediation": "Check the credentials and ensure they are properly set up.",
         },
     }
 
@@ -107,22 +115,36 @@ class GCPTestConnectionError(GCPBaseException):
         )
 
 
-class GCPLoadCredentialsFromServiceAccountKeyError(GCPCredentialsError):
+class GCPLoadCredentialsFromDictError(GCPCredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             3006, file=file, original_exception=original_exception, message=message
         )
 
 
-class GCPInvalidProviderIdError(GCPBaseException):
+class GCPStaticCredentialsError(GCPCredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             3007, file=file, original_exception=original_exception, message=message
         )
 
 
-class GCPCloudAssetAPINotUsedError(GCPBaseException):
+class GCPInvalidProviderIdError(GCPBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             3008, file=file, original_exception=original_exception, message=message
+        )
+
+
+class GCPCloudAssetAPINotUsedError(GCPBaseException):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            3009, file=file, original_exception=original_exception, message=message
+        )
+
+
+class GCPLoadCredentialsFromServiceAccountKeyError(GCPCredentialsError):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            3010, file=file, original_exception=original_exception, message=message
         )

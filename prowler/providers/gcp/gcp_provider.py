@@ -4,7 +4,7 @@ import sys
 from typing import Optional
 
 from colorama import Fore, Style
-from google.auth import default, impersonated_credentials, load_credentials_from_file
+from google.auth import default, impersonated_credentials, load_credentials_from_dict
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from googleapiclient import discovery
@@ -25,9 +25,11 @@ from prowler.providers.gcp.exceptions.exceptions import (
     GCPGetProjectError,
     GCPHTTPError,
     GCPInvalidProviderIdError,
+    GCPLoadCredentialsFromDictError,
     GCPLoadCredentialsFromServiceAccountKeyError,
     GCPNoAccesibleProjectsError,
     GCPSetUpSessionError,
+    GCPStaticCredentialsError,
     GCPTestConnectionError,
 )
 from prowler.providers.gcp.lib.mutelist.mutelist import GCPMutelist
@@ -82,7 +84,10 @@ class GcpProvider(Provider):
         fixer_config: dict = {},
         mutelist_path: str = None,
         mutelist_content: dict = None,
-        service_account_key: str = None,
+        client_id: str = None,
+        client_secret: str = None,
+        refresh_token: str = None,
+        service_account_key: dict = None,
     ):
         """
         GCP Provider constructor
@@ -99,12 +104,15 @@ class GcpProvider(Provider):
             fixer_config: dict
             mutelist_path: str
             mutelist_content: dict
-            service_account_key: str
+            client_id: str
+            client_secret: str
+            refresh_token: str
+            service_account_key: dict
 
         Raises:
             GCPNoAccesibleProjectsError if no project IDs can be accessed via Google Credentials
             GCPSetUpSessionError if an error occurs during the setup session
-            GCPLoadCredentialsFromServiceAccountKeyError if an error occurs during the loading credentials from dict
+            GCPLoadCredentialsFromDictError if an error occurs during the loading credentials from dict
             GCPGetProjectError if an error occurs during the get project
 
         Returns:
@@ -118,9 +126,15 @@ class GcpProvider(Provider):
                     - gcloud auth application-default login to use the Application Default Credentials
                 - Prowler will use the Application Default Credentials if no credentials are provided
                     - Using static credentials:
+                        - Using the client_id, client_secret and refresh_token:
+                            >>> GcpProvider(
+                            ...     client_id="client_id",
+                            ...     client_secret="client_secret",
+                            ...     refresh_token="refresh_token"
+                            ... )
                         - Using the service account key:
                             >>> GcpProvider(
-                            ...     service_account_key="service_account_key"
+                            ...     service_account_key={"service_account_key": "service_account_key"}
                             ... )
                         - Using a credentials file:
                             >>> GcpProvider(
@@ -151,9 +165,18 @@ class GcpProvider(Provider):
         """
         logger.info("Instantiating GCP Provider ...")
         self._impersonated_service_account = impersonate_service_account
+        # Set the GCP credentials using the provided client_id, client_secret and refresh_token
+        gcp_credentials = None
+        if any([client_id, client_secret, refresh_token]):
+            gcp_credentials = self.validate_static_arguments(
+                client_id, client_secret, refresh_token
+            )
 
         self._session, self._default_project_id = self.setup_session(
-            credentials_file, self._impersonated_service_account, service_account_key
+            credentials_file=credentials_file,
+            service_account=self._impersonated_service_account,
+            gcp_credentials=gcp_credentials,
+            service_account_key=service_account_key,
         )
 
         self._project_ids = []
@@ -298,28 +321,52 @@ class GcpProvider(Provider):
 
     @staticmethod
     def setup_session(
-        credentials_file: str, service_account: str, service_account_key: str = None
+        credentials_file: str,
+        service_account: str,
+        gcp_credentials: dict = None,
+        service_account_key: dict = None,
     ) -> tuple:
         """
         Setup the GCP session with the provided credentials file or service account to impersonate
 
         Args:
             credentials_file: str
-            service_account: str
+            service_account: dict
+            gcp_credentials: dict
+            service_account_key: dict
 
         Returns:
             Credentials object and default project ID
 
         Raises:
+            GCPLoadCredentialsFromDictError if an error occurs during the loading credentials from dict
             GCPLoadCredentialsFromServiceAccountKeyError if an error occurs during the loading credentials from the service account key
             GCPSetUpSessionError if an error occurs during the setup session
 
         Usage:
             >>> GcpProvider.setup_session(credentials_file, service_account)
             >>> GcpProvider.setup_session(service_account, service_account_key)
+            >>> GcpProvider.setup_session(credentials_file, service_account, gcp_credentials)
+
         """
         try:
             scopes = ["https://www.googleapis.com/auth/cloud-platform"]
+
+            if gcp_credentials:
+                logger.info("Using GCP static credentials")
+                logger.info("GCP provider: Setting credentials from dict...")
+                try:
+                    credentials, default_project_id = load_credentials_from_dict(
+                        info=gcp_credentials
+                    )
+                    return credentials, default_project_id
+                except Exception as error:
+                    logger.critical(
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+                    raise GCPLoadCredentialsFromDictError(
+                        file=__file__, original_exception=error
+                    )
 
             if service_account_key:
                 logger.info("Using service account key")
@@ -327,7 +374,7 @@ class GcpProvider(Provider):
                     "GCP provider: Setting credentials from service account key..."
                 )
                 try:
-                    credentials, default_project_id = load_credentials_from_file(
+                    credentials, default_project_id = load_credentials_from_dict(
                         service_account_key, scopes=scopes
                     )
                     return credentials, default_project_id
@@ -377,7 +424,10 @@ class GcpProvider(Provider):
         service_account: str = None,
         raise_on_exception: bool = True,
         provider_id: Optional[str] = None,
-        service_account_key: str = None,
+        client_id: str = None,
+        client_secret: str = None,
+        refresh_token: str = None,
+        service_account_key: dict = None,
     ) -> Connection:
         """
         Test the connection to GCP with the provided credentials file or service account to impersonate.
@@ -390,12 +440,16 @@ class GcpProvider(Provider):
             service_account: str
             raise_on_exception: bool
             provider_id: Optional[str] -> The provider ID, for GCP it is the project ID
-            service_account_key: str
+            client_id: str
+            client_secret: str
+            refresh_token: str
+            service_account_key: dict
 
         Returns:
             Connection object with is_connected set to True if the connection is successful, or error set to the exception if the connection fails
 
         Raises:
+            GCPLoadCredentialsFromDictError if an error occurs during the loading credentials from dict
             GCPLoadCredentialsFromServiceAccountKeyError if an error occurs during the loading credentials from dict
             GCPSetUpSessionError if an error occurs during the setup session
             GCPCloudResourceManagerAPINotUsedError if the Cloud Resource Manager API has not been used before or it is disabled
@@ -403,9 +457,22 @@ class GcpProvider(Provider):
             GCPTestConnectionError if an error occurs during the test connection
 
         Usage:
+            - Using ADC credentials from `/Users/<user>/.config/gcloud/application_default_credentials.json`:
+                >>> GcpProvider.test_connection(
+                ...     client_id="client_id",
+                ...     client_secret="client_secret",
+                ...     refresh_token="refresh_token"
+                ... )
+            - Using ADC credentials with a Service Account to impersonate:
+                >>> GcpProvider.test_connection(
+                ...     client_id="client_id",
+                ...     client_secret="client_secret",
+                ...     refresh_token="refresh_token",
+                ...     service_account="service_account"
+                ... )
             - Using service account key:
                 >>> GcpProvider.test_connection(
-                ...     service_account_key="service_account_key"
+                ...     service_account_key={"service_account_key": "service_account_key"}
                 ... )
             - Using a Service Account credentials file path:
                 >>> GcpProvider.test_connection(
@@ -413,9 +480,17 @@ class GcpProvider(Provider):
                 ... )
         """
         try:
-
+            # Set the GCP credentials using the provided client_id, client_secret and refresh_token from ADC
+            gcp_credentials = None
+            if any([client_id, client_secret, refresh_token]):
+                gcp_credentials = GcpProvider.validate_static_arguments(
+                    client_id, client_secret, refresh_token
+                )
             session, project_id = GcpProvider.setup_session(
-                credentials_file, service_account, service_account_key
+                credentials_file=credentials_file,
+                service_account=service_account,
+                gcp_credentials=gcp_credentials,
+                service_account_key=service_account_key,
             )
             if provider_id and project_id != provider_id:
                 # Logic to check if the provider ID matches the project ID
@@ -681,6 +756,37 @@ class GcpProvider(Provider):
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
+    @staticmethod
+    def validate_static_arguments(
+        client_id: str = None, client_secret: str = None, refresh_token: str = None
+    ) -> dict:
+        """
+        Validate the static arguments client_id, client_secret and refresh_token of ADC credentials
+        Args:
+            client_id: str
+            client_secret: str
+            refresh_token: str
+        Returns:
+            dict
+        Raises:
+            GCPStaticCredentialsError if any of the static arguments is missing from the ADC credentials
+        Usage:
+            >>> GcpProvider.validate_static_arguments(client_id, client_secret, refresh_token)
+        """
+
+        if not client_id or not client_secret or not refresh_token:
+            raise GCPStaticCredentialsError(
+                file=__file__,
+                message="client_id, client_secret and refresh_token are required.",
+            )
+
+        return {
+            "client_id": client_id,
+            "client_secret": client_secret,
+            "refresh_token": refresh_token,
+            "type": "authorized_user",
+        }
 
     def is_project_matching(self, input_project: str, project_to_match: str) -> bool:
         """

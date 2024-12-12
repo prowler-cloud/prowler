@@ -803,6 +803,32 @@ class TestGCPProvider:
             assert e.type == GCPTestConnectionError
             assert "Test exception" in e.value.args[0]
 
+    def test_test_connection_with_exception_service_account_key(self):
+        with patch(
+            "prowler.providers.gcp.gcp_provider.GcpProvider.setup_session",
+            side_effect=Exception("Test exception"),
+        ):
+            with pytest.raises(Exception) as e:
+                GcpProvider.test_connection(
+                    service_account_key={"test": "key"},
+                )
+            assert e.type == GCPTestConnectionError
+            assert "Test exception" in e.value.args[0]
+
+    def test_validate_static_arguments(self):
+        output = GcpProvider.validate_static_arguments(
+            client_id="test-client-id",
+            client_secret="test-client-secret",
+            refresh_token="test-refresh-token",
+        )
+
+        assert output == {
+            "client_id": "test-client-id",
+            "client_secret": "test-client-secret",
+            "refresh_token": "test-refresh-token",
+            "type": "authorized_user",
+        }
+
     def test_test_connection_valid_project_id(self):
         project_id = "test-project-id"
         mocked_service = MagicMock()
