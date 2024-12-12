@@ -27,8 +27,6 @@ jobs:
   # Build Prowler OSS container
   container-build-push:
     runs-on: ubuntu-latest
-    env:
-      POETRY_VIRTUALENVS_CREATE: "false"
     defaults:
       run:
         working-directory: ${{ env.WORKING_DIRECTORY }}
