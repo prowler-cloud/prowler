@@ -37,39 +37,21 @@ class rds_instance_no_public_access(Check):
                                     ):
                                         report.status_extended = f"RDS Instance {db_instance.id} is set as publicly accessible and security group {security_group.name} ({security_group.id}) has {db_instance.engine} port {db_instance_port} open to the Internet at endpoint {db_instance.endpoint.get('Address')} but is not in a public subnet."
                                         public_sg = True
+                                        if db_instance.subnet_ids:
+                                            for subnet_id in db_instance.subnet_ids:
+                                                if (
+                                                    subnet_id in vpc_client.vpc_subnets
+                                                    and vpc_client.vpc_subnets[
+                                                        subnet_id
+                                                    ].public
+                                                ):
+                                                    report.status = "FAIL"
+                                                    report.status_extended = f"RDS Instance {db_instance.id} is set as publicly accessible and security group {security_group.name} ({security_group.id}) has {db_instance.engine} port {db_instance_port} open to the Internet at endpoint {db_instance.endpoint.get('Address')} in a public subnet {subnet_id}."
+                                                    break
+                                    if public_sg:
                                         break
                             if public_sg:
                                 break
-                        if db_instance.subnet_ids:
-                            for subnet_id in db_instance.subnet_ids:
-                                if (
-                                    subnet_id in vpc_client.vpc_subnets
-                                    and vpc_client.vpc_subnets[subnet_id].public
-                                ):
-                                    report.status = "FAIL"
-                                    invalid_security_groups = []
-                                    for (
-                                        security_group
-                                    ) in ec2_client.security_groups.values():
-                                        if (
-                                            security_group.id
-                                            in db_instance.security_groups
-                                        ):
-                                            for (
-                                                ingress_rule
-                                            ) in security_group.ingress_rules:
-                                                if check_security_group(
-                                                    ingress_rule,
-                                                    "tcp",
-                                                    [db_instance_port],
-                                                    any_address=True,
-                                                ):
-                                                    invalid_security_groups.append(
-                                                        f"{security_group.name} ({security_group.id})"
-                                                    )
-                                                    break
-                                    report.status_extended = f"RDS Instance {db_instance.id} is set as publicly accessible and security group{'s' if len(invalid_security_groups) > 1 else ''} ({', '.join(invalid_security_groups)}) has {db_instance.engine} port {db_instance_port} open to the Internet at endpoint {db_instance.endpoint.get('Address')} in a public subnet {subnet_id}."
-                                    break
 
             findings.append(report)
 
