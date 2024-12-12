@@ -22,8 +22,8 @@ class Test_ec2_instance_port_cifs_exposed_to_internet_fixer:
             IpPermissions=[
                 {
                     "IpProtocol": "tcp",
-                    "FromPort": 139,
-                    "ToPort": 139,
+                    "FromPort": 1,
+                    "ToPort": 1000,
                     "IpRanges": [{"CidrIp": "0.0.0.0/0"}, {"CidrIp": "10.0.0.0/24"}],
                     "Ipv6Ranges": [{"CidrIpv6": "::/0"}, {"CidrIpv6": "2001:db8::/32"}],
                 },
