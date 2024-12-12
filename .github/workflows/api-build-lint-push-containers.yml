@@ -57,7 +57,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build and push container image (latest)
-        # Uncomment the following line for testing
+        # Comment the following line for testing
         if: github.event_name == 'push'
         uses: docker/build-push-action@v6
         with:
