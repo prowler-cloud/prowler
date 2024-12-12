@@ -16,8 +16,8 @@ env:
   LATEST_TAG: latest
   RELEASE_TAG: ${{ github.event.release.tag_name }}
 
-  # Python configuration
-  PYTHON_VERSION: 3.12
+  WORKING_DIRECTORY: ./api
+  DOCKERFILE_PATH: ./api/Dockerfile
 
   # Container Registries
   PROWLERCLOUD_DOCKERHUB_REPOSITORY: prowlercloud
@@ -32,9 +32,12 @@ jobs:
         working-directory: ${{ env.WORKING_DIRECTORY }}
 
     steps:
+      - name: Repository check
+        run: |
+          [[ ${{ github.repository }} != "prowler-cloud/prowler" ]] && echo "This action only runs for prowler-cloud/prowler"; exit 1
+
       - name: Checkout
         uses: actions/checkout@v4
-
 
       - name: Login to DockerHub
         uses: docker/login-action@v3
