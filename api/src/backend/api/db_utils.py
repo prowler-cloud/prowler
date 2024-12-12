@@ -54,7 +54,9 @@ def tenant_transaction(tenant_id: str):
                 uuid.UUID(str(tenant_id))
             except ValueError:
                 raise ValidationError("Tenant ID must be a valid UUID")
-            cursor.execute("SELECT set_config('api.tenant_id', %s, TRUE);", [tenant_id])
+            cursor.execute(
+                "SELECT set_config('api.tenant_id', %s::text, TRUE);", [tenant_id]
+            )
             yield cursor
 
 

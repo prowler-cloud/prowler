@@ -51,7 +51,9 @@ def set_tenant(func):
         except ValueError:
             raise ValidationError("Tenant ID must be a valid UUID")
         with connection.cursor() as cursor:
-            cursor.execute("SELECT set_config('api.tenant_id', %s, TRUE);", [tenant_id])
+            cursor.execute(
+                "SELECT set_config('api.tenant_id', %s::text, TRUE);", [tenant_id]
+            )
 
         return func(*args, **kwargs)
 
