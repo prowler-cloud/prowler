@@ -8,6 +8,13 @@ on:
       - "api/**"
       - ".github/workflows/api-build-lint-push-containers.yml"
 
+  pull_request:
+    branches:
+      - "master"
+    paths:
+      - "api/**"
+      - ".github/workflows/api-build-lint-push-containers.yml"
+
   release:
     types: [published]
 
@@ -34,7 +41,7 @@ jobs:
     steps:
       - name: Repository check
         run: |
-          [[ ${{ github.repository }} != "prowler-cloud/prowler" ]] && echo "This action only runs for prowler-cloud/prowler"; exit 1
+          [[ ${{ github.repository }} != "prowler-cloud/prowler" ]] && echo "This action only runs for prowler-cloud/prowler"; exit 0
 
       - name: Checkout
         uses: actions/checkout@v4
@@ -52,7 +59,7 @@ jobs:
         if: github.event_name == 'push'
         uses: docker/build-push-action@v6
         with:
-          push: true
+          push: false
           tags: |
             ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ env.LATEST_TAG }}
           file: ${{ env.DOCKERFILE_PATH }}
@@ -64,7 +71,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          push: true
+          push: false
           tags: |
             ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ env.RELEASE_TAG }}
           file: ${{ env.DOCKERFILE_PATH }}
