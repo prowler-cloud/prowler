@@ -40,11 +40,9 @@ jobs:
 
     steps:
       - name: Repository check
+        working-directory: /tmp
         run: |
           [[ ${{ github.repository }} != "prowler-cloud/prowler" ]] && echo "This action only runs for prowler-cloud/prowler"; exit 0
-
-      - name: Checkout
-        uses: actions/checkout@v4
 
       - name: Login to DockerHub
         uses: docker/login-action@v3
