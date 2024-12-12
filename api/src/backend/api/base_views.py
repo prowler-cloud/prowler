@@ -1,7 +1,6 @@
 import uuid
 
-from db_utils import tenant_transaction
-from django.db import connection, transaction
+from django.db import transaction
 from rest_framework import permissions
 from rest_framework.exceptions import NotAuthenticated
 from rest_framework.filters import SearchFilter
@@ -10,6 +9,7 @@ from rest_framework_json_api.serializers import ValidationError
 from rest_framework_json_api.views import ModelViewSet
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
+from api.db_utils import tenant_transaction
 from api.filters import CustomDjangoFilterBackend
 
 
@@ -75,8 +75,7 @@ class BaseTenantViewset(BaseViewSet):
             except ValueError:
                 raise ValidationError("User ID must be a valid UUID")
 
-            with connection.cursor() as cursor:
-                cursor.execute("SELECT set_config('api.user_id', %s, TRUE);", [user_id])
+            with tenant_transaction(value=user_id, parameter="api.user_id"):
                 return super().initial(request, *args, **kwargs)
 
         # TODO: DRY this when we have time

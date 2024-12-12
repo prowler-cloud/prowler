@@ -25,7 +25,7 @@ TASK_RUNNER_DB_TABLE = "django_celery_results_taskresult"
 POSTGRES_TENANT_VAR = "api.tenant_id"
 POSTGRES_USER_VAR = "api.user_id"
 
-SET_API_TENANT_ID_QUERY = "SELECT set_config('api.tenant_id', %s::text, TRUE);"
+SET_CONFIG_QUERY = "SELECT set_config(%s, %s::text, TRUE);"
 
 
 @contextmanager
@@ -48,15 +48,15 @@ def psycopg_connection(database_alias: str):
 
 
 @contextmanager
-def tenant_transaction(tenant_id: str):
+def tenant_transaction(value: str, parameter: str = "api.tenant_id"):
     with transaction.atomic():
         with connection.cursor() as cursor:
             try:
-                # just in case the tenant_id is an UUID object
-                uuid.UUID(str(tenant_id))
+                # just in case the tenant_id|user_id is an UUID object
+                uuid.UUID(str(value))
             except ValueError:
-                raise ValidationError("Tenant ID must be a valid UUID")
-            cursor.execute(SET_API_TENANT_ID_QUERY, [tenant_id])
+                raise ValidationError("Must be a valid UUID")
+            cursor.execute(SET_CONFIG_QUERY, [parameter, value])
             yield cursor
 
 
