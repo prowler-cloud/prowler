@@ -213,7 +213,7 @@ class TestPerformScan:
         mock_get_or_create_resource,
         mock_get_or_create_tag,
     ):
-        tenant_id = uuid.UUID()
+        tenant_id = uuid.uuid4()
         provider_instance = MagicMock()
         provider_instance.id = "provider456"
 
@@ -261,7 +261,7 @@ class TestPerformScan:
         mock_get_or_create_resource,
         mock_get_or_create_tag,
     ):
-        tenant_id = uuid.UUID()
+        tenant_id = uuid.uuid4()
         provider_instance = MagicMock()
         provider_instance.id = "provider456"
 
@@ -318,7 +318,7 @@ class TestPerformScan:
         mock_get_or_create_resource,
         mock_get_or_create_tag,
     ):
-        tenant_id = uuid.UUID()
+        tenant_id = uuid.uuid4()
         provider_instance = MagicMock()
         provider_instance.id = "provider456"
 

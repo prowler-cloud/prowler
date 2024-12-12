@@ -16,7 +16,7 @@ class TestSetTenantDecorator:
         def random_func(arg):
             return arg
 
-        tenant_id = uuid.UUID()
+        tenant_id = uuid.uuid4()
 
         result = random_func("test_arg", tenant_id=tenant_id)
 
