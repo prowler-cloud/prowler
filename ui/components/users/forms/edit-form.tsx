@@ -25,11 +25,7 @@ export const EditForm = ({
   userCompanyName?: string;
   setIsOpen: Dispatch<SetStateAction<boolean>>;
 }) => {
-  const formSchema = editUserFormSchema(
-    userName ?? "",
-    userEmail ?? "",
-    userCompanyName ?? "",
-  );
+  const formSchema = editUserFormSchema();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -48,16 +44,26 @@ export const EditForm = ({
   const onSubmitClient = async (values: z.infer<typeof formSchema>) => {
     const formData = new FormData();
 
-    Object.entries(values).forEach(
-      ([key, value]) => value !== undefined && formData.append(key, value),
-    );
+    // Check if the value is not undefined before appending to FormData
+    if (values.name !== undefined) {
+      formData.append("name", values.name);
+    }
+    if (values.email !== undefined) {
+      formData.append("email", values.email);
+    }
+    if (values.company_name !== undefined) {
+      formData.append("company_name", values.company_name);
+    }
+
+    // Always include userId
+    formData.append("userId", userId);
 
     const data = await updateUser(formData);
 
     if (data?.errors && data.errors.length > 0) {
       const error = data.errors[0];
       const errorMessage = `${error.detail}`;
-      // show error
+      // Show error
       toast({
         variant: "destructive",
         title: "Oops! Something went wrong",
