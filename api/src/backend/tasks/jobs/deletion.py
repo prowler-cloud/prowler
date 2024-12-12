@@ -2,7 +2,7 @@ from celery.utils.log import get_task_logger
 from django.db import transaction
 
 from api.db_utils import batch_delete
-from api.models import Finding, Provider, Resource, Scan
+from api.models import Finding, Provider, Resource, Scan, ScanSummary
 
 logger = get_task_logger(__name__)
 
@@ -25,6 +25,11 @@ def delete_provider(pk: str):
     deletion_summary = {}
 
     with transaction.atomic():
+        # Delete Scan Summaries
+        scan_summaries_qs = ScanSummary.all_objects.filter(scan__provider=instance)
+        _, scans_summ_summary = batch_delete(scan_summaries_qs)
+        deletion_summary.update(scans_summ_summary)
+
         # Delete Findings
         findings_qs = Finding.all_objects.filter(scan__provider=instance)
         _, findings_summary = batch_delete(findings_qs)

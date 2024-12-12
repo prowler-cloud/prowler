@@ -105,7 +105,7 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
             name=f"scan-perform-scheduled-{provider_id}"
         )
         next_scan_date = datetime.combine(
-            datetime.now(timezone.utc), periodic_task_instance.date_changed.time()
+            datetime.now(timezone.utc), periodic_task_instance.start_time.time()
         ) + timedelta(hours=24)
 
         scan_instance = Scan.objects.create(
