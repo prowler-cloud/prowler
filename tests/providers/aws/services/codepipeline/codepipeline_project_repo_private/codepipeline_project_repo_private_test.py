@@ -44,9 +44,9 @@ class Test_codepipeline_project_repo_private:
                     region=AWS_REGION,
                     source=Source(
                         type="CodeStarSourceConnection",
-                        location="prowler-cloud/prowler",
+                        location="prowler-cloud/prowler-private",
                         configuration={
-                            "FullRepositoryId": "prowler-cloud/prowler",
+                            "FullRepositoryId": "prowler-cloud/prowler-private",
                             "ConnectionArn": connection_arn,
                         },
                     ),
