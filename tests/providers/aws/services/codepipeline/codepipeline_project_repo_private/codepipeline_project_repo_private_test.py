@@ -88,7 +88,7 @@ class Test_codepipeline_project_repo_private:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == f"CodePipeline {pipeline_name} source repository prowler-cloud/prowler-private is private.
+                    == f"CodePipeline {pipeline_name} source repository prowler-cloud/prowler-private is private"
                 )
 
     def test_pipeline_public_repo(self):
