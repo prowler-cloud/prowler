@@ -280,6 +280,7 @@ def tenants_fixture(create_test_user):
 @pytest.fixture
 def set_user_admin_roles_fixture(create_test_user, tenants_fixture):
     user = create_test_user
+    roles = []
     for tenant in tenants_fixture[:2]:
         with tenant_transaction(str(tenant.id)):
             role = Role.objects.create(
@@ -298,6 +299,9 @@ def set_user_admin_roles_fixture(create_test_user, tenants_fixture):
                 role=role,
                 tenant_id=tenant.id,
             )
+            roles.append(role)
+
+    return roles
 
 
 @pytest.fixture
