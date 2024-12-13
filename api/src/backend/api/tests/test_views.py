@@ -3277,13 +3277,15 @@ class TestRoleViewSet:
     def test_role_list_sorting(
         self, authenticated_client, set_user_admin_roles_fixture, roles_fixture
     ):
-        admin_roles = set_user_admin_roles_fixture
         response = authenticated_client.get(reverse("role-list"), {"sort": "name"})
         assert response.status_code == status.HTTP_200_OK
         data = response.json()["data"]
-        names = [item["attributes"]["name"] for item in data]
-        names.extend([role.name for role in admin_roles])
-        assert names == sorted(names)
+        names = [
+            item["attributes"]["name"]
+            for item in data
+            if item["attributes"]["name"] != "admin"
+        ]
+        assert names == sorted(names, key=lambda v: v.lower())
 
     def test_role_invalid_method(self, authenticated_client):
         response = authenticated_client.put(reverse("role-list"))
