@@ -31,7 +31,7 @@ class GCPBaseException(ProwlerException):
             "remediation": "Check the connection and ensure it is properly set up.",
         },
         (3006, "GCPLoadCredentialsFromADCError"): {
-            "message": "Error loading credentials from dictionary",
+            "message": "Error loading ADC credentials from dictionary associated with ADC",
             "remediation": "Check the credentials and ensure they are properly set up. client_id, client_secret and refresh_token are required.",
         },
         (3007, "GCPStaticCredentialsError"): {
