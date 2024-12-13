@@ -27,14 +27,6 @@ from api.rls import Tenant
 TODAY = str(datetime.today().date())
 
 
-@pytest.fixture(autouse=True)
-def enable_testing_flag(patch_testing_flag):
-    """
-    Automatically applies the patch_testing_flag fixture to all tests in this file.
-    """
-    pass
-
-
 @pytest.mark.django_db
 class TestUserViewSet:
     def test_users_list(self, authenticated_client, create_test_user):
@@ -3093,7 +3085,9 @@ class TestRoleViewSet:
     def test_role_list(self, authenticated_client, roles_fixture):
         response = authenticated_client.get(reverse("role-list"))
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.json()["data"]) == len(roles_fixture)
+        assert (
+            len(response.json()["data"]) == len(roles_fixture) + 2
+        )  # 2 default admin roles, one for each tenant
 
     def test_role_retrieve(self, authenticated_client, roles_fixture):
         role = roles_fixture[0]
@@ -3307,8 +3301,8 @@ class TestUserRoleRelationshipViewSet:
         )
         assert response.status_code == status.HTTP_204_NO_CONTENT
         relationships = UserRoleRelationship.objects.filter(user=create_test_user.id)
-        assert relationships.count() == 2
-        for relationship in relationships[1:]:  # Skip admin role
+        assert relationships.count() == 4
+        for relationship in relationships[2:]:  # Skip admin role
             assert relationship.role.id in [r.id for r in roles_fixture[:2]]
 
     def test_create_relationship_already_exists(

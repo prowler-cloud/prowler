@@ -79,7 +79,7 @@ from api.models import (
     Task,
 )
 from api.pagination import ComplianceOverviewPagination
-from api.rbac.permissions import DISABLE_RBAC, HasPermissions, Permissions
+from api.rbac.permissions import HasPermissions, Permissions
 from api.rls import Tenant
 from api.utils import validate_invitation
 from api.uuid_utils import datetime_to_uuid7
@@ -731,7 +731,7 @@ class ProviderGroupViewSet(BaseRLSViewSet):
         """
         Returns the required permissions based on the request method.
         """
-        if DISABLE_RBAC or self.request.method in SAFE_METHODS:
+        if self.request.method in SAFE_METHODS:
             # No permissions required for GET requests
             return []
         else:
@@ -743,9 +743,7 @@ class ProviderGroupViewSet(BaseRLSViewSet):
         user_roles = user.roles.all()
 
         # Check if any of the user's roles have UNLIMITED_VISIBILITY
-        if DISABLE_RBAC or getattr(
-            user_roles[0], Permissions.UNLIMITED_VISIBILITY.value, False
-        ):
+        if getattr(user_roles[0], Permissions.UNLIMITED_VISIBILITY.value, False):
             # User has unlimited visibility, return all provider groups
             return ProviderGroup.objects.prefetch_related("providers")
 
@@ -913,7 +911,7 @@ class ProviderViewSet(BaseRLSViewSet):
         """
         Returns the required permissions based on the request method.
         """
-        if DISABLE_RBAC or self.request.method in SAFE_METHODS:
+        if self.request.method in SAFE_METHODS:
             # No permissions required for GET requests
             return []
         else:
@@ -923,9 +921,7 @@ class ProviderViewSet(BaseRLSViewSet):
     def get_queryset(self):
         user = self.request.user
         user_roles = user.roles.all()
-        if DISABLE_RBAC or getattr(
-            user_roles[0], Permissions.UNLIMITED_VISIBILITY.value, False
-        ):
+        if getattr(user_roles[0], Permissions.UNLIMITED_VISIBILITY.value, False):
             # User has unlimited visibility, return all providers
             return Provider.objects.all()
 
@@ -1069,7 +1065,7 @@ class ScanViewSet(BaseRLSViewSet):
         """
         Returns the required permissions based on the request method.
         """
-        if DISABLE_RBAC or self.request.method in SAFE_METHODS:
+        if self.request.method in SAFE_METHODS:
             # No permissions required for GET requests
             return []
         else:
@@ -1079,9 +1075,7 @@ class ScanViewSet(BaseRLSViewSet):
     def get_queryset(self):
         user = self.request.user
         user_roles = user.roles.all()
-        if DISABLE_RBAC or getattr(
-            user_roles[0], Permissions.UNLIMITED_VISIBILITY.value, False
-        ):
+        if getattr(user_roles[0], Permissions.UNLIMITED_VISIBILITY.value, False):
             # User has unlimited visibility, return all scans
             return Scan.objects.all()
 
@@ -1186,9 +1180,7 @@ class TaskViewSet(BaseRLSViewSet):
     def get_queryset(self):
         user = self.request.user
         user_roles = user.roles.all()
-        if DISABLE_RBAC or getattr(
-            user_roles[0], Permissions.UNLIMITED_VISIBILITY.value, False
-        ):
+        if getattr(user_roles[0], Permissions.UNLIMITED_VISIBILITY.value, False):
             # User has unlimited visibility, return all tasks
             return Task.objects.annotate(
                 name=F("task_runner_task__task_name"),
@@ -1275,9 +1267,7 @@ class ResourceViewSet(BaseRLSViewSet):
     def get_queryset(self):
         user = self.request.user
         user_roles = user.roles.all()
-        if DISABLE_RBAC or getattr(
-            user_roles[0], Permissions.UNLIMITED_VISIBILITY.value, False
-        ):
+        if getattr(user_roles[0], Permissions.UNLIMITED_VISIBILITY.value, False):
             # User has unlimited visibility, return all scans
             queryset = Resource.objects.all()
         else:
@@ -1378,9 +1368,7 @@ class FindingViewSet(BaseRLSViewSet):
     def get_queryset(self):
         user = self.request.user
         user_roles = user.roles.all()
-        if DISABLE_RBAC or getattr(
-            user_roles[0], Permissions.UNLIMITED_VISIBILITY.value, False
-        ):
+        if getattr(user_roles[0], Permissions.UNLIMITED_VISIBILITY.value, False):
             # User has unlimited visibility, return all scans
             queryset = Finding.objects.all()
         else:

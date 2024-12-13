@@ -1,5 +1,3 @@
-from config.django.base import DISABLE_RBAC
-
 from enum import Enum
 from rest_framework.permissions import BasePermission
 from api.models import User
@@ -23,10 +21,6 @@ class HasPermissions(BasePermission):
     """
 
     def has_permission(self, request, view):
-        # This is for testing/demo purposes only
-        if DISABLE_RBAC:
-            return True
-
         required_permissions = getattr(view, "required_permissions", [])
         if not required_permissions:
             return True

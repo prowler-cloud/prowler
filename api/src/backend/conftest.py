@@ -11,6 +11,7 @@ from prowler.lib.outputs.finding import Status
 from rest_framework import status
 from rest_framework.test import APIClient
 from unittest.mock import patch
+from api.db_utils import tenant_transaction
 
 from api.models import (
     Finding,
@@ -73,16 +74,6 @@ def enforce_test_user_db_connection(django_db_setup, django_db_blocker):
 @pytest.fixture(autouse=True)
 def disable_logging():
     logging.disable(logging.CRITICAL)
-
-
-@pytest.fixture(scope="function")
-def patch_testing_flag():
-    """
-    Fixture to patch the TESTING flag to True during tests.
-    """
-    with patch("api.rbac.permissions.DISABLE_RBAC", True):
-        with patch("api.v1.views.DISABLE_RBAC", True):
-            yield
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -235,7 +226,9 @@ def authenticated_client_no_permissions_rbac(
 
 
 @pytest.fixture
-def authenticated_client(create_test_user, tenants_fixture, client):
+def authenticated_client(
+    create_test_user, tenants_fixture, set_user_admin_roles_fixture, client
+):
     client.user = create_test_user
     serializer = TokenSerializer(
         data={"type": "tokens", "email": TEST_USER, "password": TEST_PASSWORD}
@@ -282,6 +275,29 @@ def tenants_fixture(create_test_user):
     )
 
     return tenant1, tenant2, tenant3
+
+
+@pytest.fixture
+def set_user_admin_roles_fixture(create_test_user, tenants_fixture):
+    user = create_test_user
+    for tenant in tenants_fixture[:2]:
+        with tenant_transaction(str(tenant.id)):
+            role = Role.objects.create(
+                name="admin",
+                tenant_id=tenant.id,
+                manage_users=True,
+                manage_account=True,
+                manage_billing=True,
+                manage_providers=True,
+                manage_integrations=True,
+                manage_scans=True,
+                unlimited_visibility=True,
+            )
+            UserRoleRelationship.objects.create(
+                user=user,
+                role=role,
+                tenant_id=tenant.id,
+            )
 
 
 @pytest.fixture

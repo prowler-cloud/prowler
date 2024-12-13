@@ -207,6 +207,3 @@ CACHE_STALE_WHILE_REVALIDATE = env.int("DJANGO_STALE_WHILE_REVALIDATE", 60)
 
 
 TESTING = False
-
-# Disable RBAC during tests/demos
-DISABLE_RBAC = False
