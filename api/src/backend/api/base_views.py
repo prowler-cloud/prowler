@@ -1,15 +1,13 @@
-import uuid
-
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import connection, transaction
+from django.db import transaction
 from rest_framework import permissions
 from rest_framework.exceptions import NotAuthenticated
 from rest_framework.filters import SearchFilter
 from rest_framework_json_api import filters
-from rest_framework_json_api.serializers import ValidationError
 from rest_framework_json_api.views import ModelViewSet
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
+from api.db_utils import POSTGRES_USER_VAR, tenant_transaction
 from api.filters import CustomDjangoFilterBackend
 from api.models import Role, Tenant
 from api.db_router import MainRouter
@@ -50,13 +48,7 @@ class BaseRLSViewSet(BaseViewSet):
         if tenant_id is None:
             raise NotAuthenticated("Tenant ID is not present in token")
 
-        try:
-            uuid.UUID(tenant_id)
-        except ValueError:
-            raise ValidationError("Tenant ID must be a valid UUID")
-
-        with connection.cursor() as cursor:
-            cursor.execute(f"SELECT set_config('api.tenant_id', '{tenant_id}', TRUE);")
+        with tenant_transaction(tenant_id):
             self.request.tenant_id = tenant_id
             return super().initial(request, *args, **kwargs)
 
@@ -110,8 +102,7 @@ class BaseTenantViewset(BaseViewSet):
         ):
             user_id = str(request.user.id)
 
-            with connection.cursor() as cursor:
-                cursor.execute(f"SELECT set_config('api.user_id', '{user_id}', TRUE);")
+            with tenant_transaction(value=user_id, parameter=POSTGRES_USER_VAR):
                 return super().initial(request, *args, **kwargs)
 
         # TODO: DRY this when we have time
@@ -122,13 +113,7 @@ class BaseTenantViewset(BaseViewSet):
         if tenant_id is None:
             raise NotAuthenticated("Tenant ID is not present in token")
 
-        try:
-            uuid.UUID(tenant_id)
-        except ValueError:
-            raise ValidationError("Tenant ID must be a valid UUID")
-
-        with connection.cursor() as cursor:
-            cursor.execute(f"SELECT set_config('api.tenant_id', '{tenant_id}', TRUE);")
+        with tenant_transaction(tenant_id):
             self.request.tenant_id = tenant_id
             return super().initial(request, *args, **kwargs)
 
@@ -149,12 +134,6 @@ class BaseUserViewset(BaseViewSet):
         if tenant_id is None:
             raise NotAuthenticated("Tenant ID is not present in token")
 
-        try:
-            uuid.UUID(tenant_id)
-        except ValueError:
-            raise ValidationError("Tenant ID must be a valid UUID")
-
-        with connection.cursor() as cursor:
-            cursor.execute(f"SELECT set_config('api.tenant_id', '{tenant_id}', TRUE);")
+        with tenant_transaction(tenant_id):
             self.request.tenant_id = tenant_id
             return super().initial(request, *args, **kwargs)
