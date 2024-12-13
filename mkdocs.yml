@@ -34,7 +34,6 @@ theme:
         icon: material/weather-sunny
         name: Switch to light mode
 
-
 plugins:
   - search
   - git-revision-date-localized:
@@ -112,7 +111,7 @@ nav:
   - Contact Us: contact.md
   - Troubleshooting: troubleshooting.md
   - About: about.md
-  - Prowler SaaS: https://prowler.com
+  - Prowler Cloud: https://prowler.com
 
 # Customization
 extra:

@@ -5,6 +5,9 @@ The **Prowler App** is a user-friendly interface for the Prowler CLI, providing 
 After [installing](../index.md#prowler-app-installation) the **Prowler App**, access it at [http://localhost:3000](http://localhost:3000).
 You can also access to the auto-generated **Prowler API** documentation at [http://localhost:8080/api/v1/docs](http://localhost:8080/api/v1/docs) to see all the available endpoints, parameters and responses.
 
+???+ note
+    If you are a [Prowler Cloud](https://cloud.prowler.com/sign-in) user you can see API docs at [https://api.prowler.com/api/v1/docs](https://api.prowler.com/api/v1/docs)
+
 ## **Step 1: Sign Up**
 To get started, sign up using your email and password:
 
