@@ -62,7 +62,7 @@ class codepipeline_project_repo_private(Check):
                 else:
                     report.status = "PASS"
                     report.status_extended = (
-                        report.status_extended = f"CodePipeline {pipeline.name} source repository {repo_id} is private."
+                        f"CodePipeline {pipeline.name} source repository {repo_id} is private."
                     )
 
                 findings.append(report)
