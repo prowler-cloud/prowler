@@ -28,7 +28,7 @@ def mock_make_api_call_error(self, operation_name, kwarg):
     return mock_make_api_call(self, operation_name, kwarg)
 
 
-class Test_cloudtrail_logs_s3_bucket_is_not_publicly_accessible:
+class Test_cloudtrail_logs_s3_bucket_is_not_publicly_accessible_fixer:
     @mock_aws
     def test_trail_bucket_public_acl(self):
         aws_provider = set_mocked_aws_provider(

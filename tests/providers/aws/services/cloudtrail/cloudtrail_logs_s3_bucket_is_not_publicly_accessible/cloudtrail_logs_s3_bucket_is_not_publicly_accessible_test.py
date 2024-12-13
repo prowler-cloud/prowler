@@ -10,7 +10,7 @@ from tests.providers.aws.utils import (
 )
 
 
-class Test_cloudtrail_logs_s3_bucket_is_not_publicly_accessible_fixer:
+class Test_cloudtrail_logs_s3_bucket_is_not_publicly_accessible:
     @mock_aws
     def test_not_trails(self):
         aws_provider = set_mocked_aws_provider(
