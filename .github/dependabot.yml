@@ -36,6 +36,16 @@ updates:
       - "dependencies"
       - "npm"
 
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    target-branch: master
+    labels:
+      - "dependencies"
+      - "docker"
+
   # v4.6
   - package-ecosystem: "pip"
     directory: "/"
@@ -57,6 +67,17 @@ updates:
     labels:
       - "dependencies"
       - "github_actions"
+      - "v4"
+
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    target-branch: master
+    labels:
+      - "dependencies"
+      - "docker"
       - "v4"
 
   # v3
