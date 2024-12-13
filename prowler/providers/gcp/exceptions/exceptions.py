@@ -30,9 +30,9 @@ class GCPBaseException(ProwlerException):
             "message": "Error testing connection to GCP",
             "remediation": "Check the connection and ensure it is properly set up.",
         },
-        (3006, "GCPLoadCredentialsFromADCError"): {
-            "message": "Error loading ADC credentials from dictionary associated with ADC",
-            "remediation": "Check the credentials and ensure they are properly set up. client_id, client_secret and refresh_token are required.",
+        (3006, "GCPLoadADCFromDictError"): {
+            "message": "Error loading Application Default Credentials from dictionary",
+            "remediation": "Check the dictionary and ensure a valid Application Default Credentials are present with client_id, client_secret and refresh_token keys.",
         },
         (3007, "GCPStaticCredentialsError"): {
             "message": "Error loading static credentials",
@@ -46,9 +46,9 @@ class GCPBaseException(ProwlerException):
             "message": "Cloud Asset API not used",
             "remediation": "Enable the Cloud Asset API for the project.",
         },
-        (3010, "GCPLoadCredentialsFromServiceAccountKeyError"): {
-            "message": "Error loading credentials from service account key",
-            "remediation": "Check the credentials and ensure they are properly set up.",
+        (3010, "GCPLoadServiceAccountKeyFromDictError"): {
+            "message": "Error loading Service Account Private Key credentials from dictionary",
+            "remediation": "Check the dictionary and ensure it contains a Service Account Private Key.",
         },
     }
 
@@ -115,7 +115,7 @@ class GCPTestConnectionError(GCPBaseException):
         )
 
 
-class GCPLoadCredentialsFromADCError(GCPCredentialsError):
+class GCPLoadADCFromDictError(GCPCredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             3006, file=file, original_exception=original_exception, message=message
@@ -143,7 +143,7 @@ class GCPCloudAssetAPINotUsedError(GCPBaseException):
         )
 
 
-class GCPLoadCredentialsFromServiceAccountKeyError(GCPCredentialsError):
+class GCPLoadServiceAccountKeyFromDictError(GCPCredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             3010, file=file, original_exception=original_exception, message=message
