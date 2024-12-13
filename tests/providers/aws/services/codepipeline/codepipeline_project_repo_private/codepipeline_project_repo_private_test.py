@@ -196,7 +196,7 @@ class Test_codepipeline_project_repo_private:
                         type="CodeStarSourceConnection",
                         location="test/repo",
                         configuration={
-                            "FullRepositoryId": "test/repo",
+                            "FullRepositoryId": "prowler-cloud/prowler-private",
                             "ConnectionArn": connection_arn,
                         },
                     ),
@@ -237,7 +237,7 @@ class Test_codepipeline_project_repo_private:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == f"CodePipeline {pipeline_name} source repository is private: https://gitlab.com/test/repo"
+                    == f"CodePipeline {pipeline_name} source repository is private: https://gitlab.com/prowler-cloud/prowler-private"
                 )
                 assert result[0].resource_id == pipeline_name
                 assert result[0].resource_arn == pipeline_arn
@@ -272,9 +272,9 @@ class Test_codepipeline_project_repo_private:
                     region=AWS_REGION,
                     source=Source(
                         type="CodeStarSourceConnection",
-                        location="test/repo",
+                        location="prowler-cloud/prowler-private",
                         configuration={
-                            "FullRepositoryId": "test/repo",
+                            "FullRepositoryId": "prowler-cloud/prowler-private",
                             "ConnectionArn": connection_arn,
                         },
                     ),
@@ -315,7 +315,7 @@ class Test_codepipeline_project_repo_private:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"CodePipeline {pipeline_name} source repository is public: https://gitlab.com/test/repo"
+                    == f"CodePipeline {pipeline_name} source repository is public: https://gitlab.com/prowler-cloud/prowler-private"
                 )
                 assert result[0].resource_id == pipeline_name
                 assert result[0].resource_arn == pipeline_arn
