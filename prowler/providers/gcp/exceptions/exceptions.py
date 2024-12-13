@@ -30,7 +30,7 @@ class GCPBaseException(ProwlerException):
             "message": "Error testing connection to GCP",
             "remediation": "Check the connection and ensure it is properly set up.",
         },
-        (3006, "GCPLoadCredentialsFromDictError"): {
+        (3006, "GCPLoadCredentialsFromADCError"): {
             "message": "Error loading credentials from dictionary",
             "remediation": "Check the credentials and ensure they are properly set up. client_id, client_secret and refresh_token are required.",
         },
@@ -115,7 +115,7 @@ class GCPTestConnectionError(GCPBaseException):
         )
 
 
-class GCPLoadCredentialsFromDictError(GCPCredentialsError):
+class GCPLoadCredentialsFromADCError(GCPCredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             3006, file=file, original_exception=original_exception, message=message

@@ -25,7 +25,7 @@ from prowler.providers.gcp.exceptions.exceptions import (
     GCPGetProjectError,
     GCPHTTPError,
     GCPInvalidProviderIdError,
-    GCPLoadCredentialsFromDictError,
+    GCPLoadCredentialsFromADCError,
     GCPLoadCredentialsFromServiceAccountKeyError,
     GCPNoAccesibleProjectsError,
     GCPSetUpSessionError,
@@ -112,7 +112,7 @@ class GcpProvider(Provider):
         Raises:
             GCPNoAccesibleProjectsError if no project IDs can be accessed via Google Credentials
             GCPSetUpSessionError if an error occurs during the setup session
-            GCPLoadCredentialsFromDictError if an error occurs during the loading credentials from dict
+            GCPLoadCredentialsFromADCError if an error occurs during the loading credentials from dict
             GCPGetProjectError if an error occurs during the get project
 
         Returns:
@@ -345,7 +345,7 @@ class GcpProvider(Provider):
             Credentials object and default project ID
 
         Raises:
-            GCPLoadCredentialsFromDictError if an error occurs during the loading credentials from dict
+            GCPLoadCredentialsFromADCError if an error occurs during the loading credentials from dict
             GCPLoadCredentialsFromServiceAccountKeyError if an error occurs during the loading credentials from the service account key
             GCPSetUpSessionError if an error occurs during the setup session
 
@@ -370,7 +370,7 @@ class GcpProvider(Provider):
                     logger.critical(
                         f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
-                    raise GCPLoadCredentialsFromDictError(
+                    raise GCPLoadCredentialsFromADCError(
                         file=__file__, original_exception=error
                     )
 
@@ -454,7 +454,7 @@ class GcpProvider(Provider):
             Connection object with is_connected set to True if the connection is successful, or error set to the exception if the connection fails
 
         Raises:
-            GCPLoadCredentialsFromDictError if an error occurs during the loading credentials from dict
+            GCPLoadCredentialsFromADCError if an error occurs during the loading credentials from dict
             GCPLoadCredentialsFromServiceAccountKeyError if an error occurs during the loading credentials from dict
             GCPSetUpSessionError if an error occurs during the setup session
             GCPCloudResourceManagerAPINotUsedError if the Cloud Resource Manager API has not been used before or it is disabled
