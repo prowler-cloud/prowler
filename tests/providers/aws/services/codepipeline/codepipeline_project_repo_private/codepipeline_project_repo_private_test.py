@@ -88,7 +88,7 @@ class Test_codepipeline_project_repo_private:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == f"CodePipeline {pipeline_name} source repository is private: https://github.com/prowler-cloud/prowler"
+                    == f"CodePipeline {pipeline_name} source repository prowler-cloud/prowler-private is private.
                 )
 
     def test_pipeline_public_repo(self):
@@ -194,7 +194,7 @@ class Test_codepipeline_project_repo_private:
                     region=AWS_REGION,
                     source=Source(
                         type="CodeStarSourceConnection",
-                        location="test/repo",
+                        location="prowler-cloud/prowler-private",
                         configuration={
                             "FullRepositoryId": "prowler-cloud/prowler-private",
                             "ConnectionArn": connection_arn,
@@ -237,7 +237,7 @@ class Test_codepipeline_project_repo_private:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == f"CodePipeline {pipeline_name} source repository is private: https://gitlab.com/prowler-cloud/prowler-private"
+                    == f"CodePipeline {pipeline_name} source repository prowler-cloud/prowler-private is private."
                 )
                 assert result[0].resource_id == pipeline_name
                 assert result[0].resource_arn == pipeline_arn
