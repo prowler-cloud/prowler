@@ -1358,7 +1358,7 @@ class RoleCreateSerializer(RoleSerializer):
         return role
 
 
-class RoleUpdateSerializer(RoleSerializer):
+class RoleUpdateSerializer(RLSSerializer, BaseWriteSerializer):
     class Meta:
         model = Role
         fields = [
