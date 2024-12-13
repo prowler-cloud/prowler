@@ -1,3 +1,4 @@
+import uuid
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -212,7 +213,7 @@ class TestPerformScan:
         mock_get_or_create_resource,
         mock_get_or_create_tag,
     ):
-        tenant_id = "tenant123"
+        tenant_id = uuid.uuid4()
         provider_instance = MagicMock()
         provider_instance.id = "provider456"
 
@@ -260,7 +261,7 @@ class TestPerformScan:
         mock_get_or_create_resource,
         mock_get_or_create_tag,
     ):
-        tenant_id = "tenant123"
+        tenant_id = uuid.uuid4()
         provider_instance = MagicMock()
         provider_instance.id = "provider456"
 
@@ -317,7 +318,7 @@ class TestPerformScan:
         mock_get_or_create_resource,
         mock_get_or_create_tag,
     ):
-        tenant_id = "tenant123"
+        tenant_id = uuid.uuid4()
         provider_instance = MagicMock()
         provider_instance.id = "provider456"
 

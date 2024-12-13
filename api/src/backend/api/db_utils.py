@@ -1,4 +1,5 @@
 import secrets
+import uuid
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 
@@ -8,6 +9,7 @@ from django.core.paginator import Paginator
 from django.db import connection, models, transaction
 from psycopg2 import connect as psycopg2_connect
 from psycopg2.extensions import AsIs, new_type, register_adapter, register_type
+from rest_framework_json_api.serializers import ValidationError
 
 DB_USER = settings.DATABASES["default"]["USER"] if not settings.TESTING else "test"
 DB_PASSWORD = (
@@ -22,6 +24,8 @@ DB_PROWLER_PASSWORD = (
 TASK_RUNNER_DB_TABLE = "django_celery_results_taskresult"
 POSTGRES_TENANT_VAR = "api.tenant_id"
 POSTGRES_USER_VAR = "api.user_id"
+
+SET_CONFIG_QUERY = "SELECT set_config(%s, %s::text, TRUE);"
 
 
 @contextmanager
@@ -44,10 +48,23 @@ def psycopg_connection(database_alias: str):
 
 
 @contextmanager
-def tenant_transaction(tenant_id: str):
+def tenant_transaction(value: str, parameter: str = POSTGRES_TENANT_VAR):
+    """
+    Creates a new database transaction setting the given configuration value. It validates the
+    if the value is a valid UUID to be used for Postgres RLS.
+
+    Args:
+        value (str): Database configuration parameter value.
+        parameter (str): Database configuration parameter name
+    """
     with transaction.atomic():
         with connection.cursor() as cursor:
-            cursor.execute(f"SELECT set_config('api.tenant_id', '{tenant_id}', TRUE);")
+            try:
+                # just in case the value is an UUID object
+                uuid.UUID(str(value))
+            except ValueError:
+                raise ValidationError("Must be a valid UUID")
+            cursor.execute(SET_CONFIG_QUERY, [parameter, value])
             yield cursor
 
 
