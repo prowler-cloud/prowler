@@ -330,10 +330,16 @@ class GcpProvider(Provider):
         Setup the GCP session with the provided credentials file or service account to impersonate
 
         Args:
-            credentials_file: str
-            service_account: dict
-            gcp_credentials: dict
-            service_account_key: dict
+            credentials_file: str -> The credentials file path used to authenticate
+            service_account: dict -> The service account to impersonate
+            gcp_credentials: dict -> The GCP credentials following the format:
+                {
+                    "client_id": str,
+                    "client_secret": str,
+                    "refresh_token": str,
+                    "type": str
+                }
+            service_account_key: dict -> The service account key, used to authenticate
 
         Returns:
             Credentials object and default project ID
@@ -369,7 +375,6 @@ class GcpProvider(Provider):
                     )
 
             if service_account_key:
-                logger.info("Using service account key")
                 logger.info(
                     "GCP provider: Setting credentials from service account key..."
                 )
@@ -757,6 +762,28 @@ class GcpProvider(Provider):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def is_project_matching(self, input_project: str, project_to_match: str) -> bool:
+        """
+        Check if the input project matches the project to match
+
+        Args:
+            input_project: str
+            project_to_match: str
+
+        Returns:
+            bool
+
+        Usage:
+            >>> GcpProvider.is_project_matching(input_project, project_to_match)
+        """
+        return (
+            "*" in input_project
+            and re.search(
+                "." + input_project if input_project.startswith("*") else input_project,
+                project_to_match,
+            )
+        ) or input_project == project_to_match
+
     @staticmethod
     def validate_static_arguments(
         client_id: str = None, client_secret: str = None, refresh_token: str = None
@@ -787,28 +814,6 @@ class GcpProvider(Provider):
             "refresh_token": refresh_token,
             "type": "authorized_user",
         }
-
-    def is_project_matching(self, input_project: str, project_to_match: str) -> bool:
-        """
-        Check if the input project matches the project to match
-
-        Args:
-            input_project: str
-            project_to_match: str
-
-        Returns:
-            bool
-
-        Usage:
-            >>> GcpProvider.is_project_matching(input_project, project_to_match)
-        """
-        return (
-            "*" in input_project
-            and re.search(
-                "." + input_project if input_project.startswith("*") else input_project,
-                project_to_match,
-            )
-        ) or input_project == project_to_match
 
     @staticmethod
     def validate_project_id(provider_id: str, credentials: str = None) -> None:
