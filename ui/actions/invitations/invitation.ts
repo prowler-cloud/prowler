@@ -104,8 +104,32 @@ export const updateInvite = async (formData: FormData) => {
   const invitationId = formData.get("invitationId");
   const invitationEmail = formData.get("invitationEmail");
   const expiresAt = formData.get("expires_at");
+  const role = formData.get("role");
 
   const url = new URL(`${keyServer}/tenants/invitations/${invitationId}`);
+
+  const body = JSON.stringify({
+    data: {
+      type: "invitations",
+      id: invitationId,
+      attributes: {
+        email: invitationEmail,
+        ...(expiresAt && { expires_at: expiresAt }),
+      },
+      relationships: {
+        roles: {
+          data: role
+            ? [
+                {
+                  id: role,
+                  type: "role",
+                },
+              ]
+            : [],
+        },
+      },
+    },
+  });
 
   try {
     const response = await fetch(url.toString(), {
@@ -115,22 +139,12 @@ export const updateInvite = async (formData: FormData) => {
         Accept: "application/vnd.api+json",
         Authorization: `Bearer ${session?.accessToken}`,
       },
-      body: JSON.stringify({
-        data: {
-          type: "invitations",
-          id: invitationId,
-          attributes: {
-            email: invitationEmail,
-            ...(expiresAt && { expires_at: expiresAt }),
-          },
-        },
-      }),
+      body,
     });
     const data = await response.json();
     revalidatePath("/invitations");
     return parseStringify(data);
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error("Error updating invitation:", error);
     return {
       error: getErrorMessage(error),

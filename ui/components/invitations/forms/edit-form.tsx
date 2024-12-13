@@ -1,8 +1,7 @@
-"use client";
-
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Select, SelectItem } from "@nextui-org/react";
 import { Dispatch, SetStateAction } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import * as z from "zod";
 
 import { updateInvite } from "@/actions/invitations/invitation";
@@ -15,10 +14,14 @@ import { editInviteFormSchema } from "@/types";
 export const EditForm = ({
   invitationId,
   invitationEmail,
+  roles = [],
+  defaultRole = "",
   setIsOpen,
 }: {
   invitationId: string;
   invitationEmail?: string;
+  roles: Array<{ id: string; name: string }>;
+  defaultRole?: string;
   setIsOpen: Dispatch<SetStateAction<boolean>>;
 }) => {
   const formSchema = editInviteFormSchema;
@@ -27,7 +30,8 @@ export const EditForm = ({
     resolver: zodResolver(formSchema),
     defaultValues: {
       invitationId,
-      invitationEmail: invitationEmail,
+      invitationEmail: invitationEmail || "",
+      role: defaultRole,
     },
   });
 
@@ -37,7 +41,6 @@ export const EditForm = ({
 
   const onSubmitClient = async (values: z.infer<typeof formSchema>) => {
     const formData = new FormData();
-    console.log(values);
 
     Object.entries(values).forEach(
       ([key, value]) => value !== undefined && formData.append(key, value),
@@ -82,6 +85,33 @@ export const EditForm = ({
             isRequired={false}
             isInvalid={!!form.formState.errors.invitationEmail}
           />
+        </div>
+        <div>
+          <Controller
+            name="role"
+            control={form.control}
+            render={({ field }) => (
+              <Select
+                {...field}
+                label="Role"
+                placeholder="Select a role"
+                variant="bordered"
+                selectedKeys={[field.value]}
+                onSelectionChange={(selected) =>
+                  field.onChange(selected?.currentKey || "")
+                }
+              >
+                {roles.map((role) => (
+                  <SelectItem key={role.id}>{role.name}</SelectItem>
+                ))}
+              </Select>
+            )}
+          />
+          {form.formState.errors.role && (
+            <p className="mt-2 text-sm text-red-600">
+              {form.formState.errors.role.message}
+            </p>
+          )}
         </div>
         <input type="hidden" name="invitationId" value={invitationId} />
 

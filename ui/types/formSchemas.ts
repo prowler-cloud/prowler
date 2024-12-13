@@ -180,6 +180,7 @@ export const editInviteFormSchema = z.object({
   invitationId: z.string().uuid(),
   invitationEmail: z.string().email(),
   expires_at: z.string().optional(),
+  role: z.string().optional(),
 });
 
 export const editUserFormSchema = () =>

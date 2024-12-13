@@ -1,7 +1,8 @@
 import { Spacer } from "@nextui-org/react";
-import { Suspense } from "react";
+import React, { Suspense } from "react";
 
 import { getInvitations } from "@/actions/invitations/invitation";
+import { getRoles } from "@/actions/roles";
 import { FilterControls } from "@/components/filters";
 import { filterInvitations } from "@/components/filters/data-filters";
 import { SendInvitationButton } from "@/components/invitations";
@@ -11,7 +12,7 @@ import {
 } from "@/components/invitations/table";
 import { Header } from "@/components/ui";
 import { DataTable, DataTableFilterCustom } from "@/components/ui/table";
-import { SearchParamsProps } from "@/types";
+import { InvitationProps, Role, SearchParamsProps } from "@/types";
 
 export default async function Invitations({
   searchParams,
@@ -54,12 +55,45 @@ const SSRDataTable = async ({
   // Extract query from filters
   const query = (filters["filter[search]"] as string) || "";
 
+  // Fetch invitations and roles
   const invitationsData = await getInvitations({ query, page, sort, filters });
+  const rolesData = await getRoles({});
+
+  // Create a dictionary for roles by invitation ID
+  const roleDict = rolesData?.data?.reduce(
+    (acc: Record<string, Role>, role: Role) => {
+      role.relationships.invitations.data.forEach((invitation: any) => {
+        acc[invitation.id] = role;
+      });
+      return acc;
+    },
+    {},
+  );
+
+  // Expand invitations with role information
+  const expandedInvitations = invitationsData?.data?.map(
+    (invitation: InvitationProps) => {
+      const role = roleDict[invitation.id];
+      return {
+        ...invitation,
+        relationships: {
+          ...invitation.relationships,
+          role,
+        },
+      };
+    },
+  );
+
+  // Create the expanded response
+  const expandedResponse = {
+    ...invitationsData,
+    data: expandedInvitations,
+  };
 
   return (
     <DataTable
       columns={ColumnsInvitation}
-      data={invitationsData?.data || []}
+      data={expandedResponse?.data || []}
       metadata={invitationsData?.meta}
     />
   );
