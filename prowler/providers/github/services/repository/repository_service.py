@@ -48,12 +48,16 @@ class Repository(GithubService):
                                         protection.required_linear_history
                                     )
                                     allow_force_pushes = protection.allow_force_pushes
+                                    branch_deletion = protection.allow_deletions
+
                                     branch_protection = Protection(
                                         require_pull_request=require_pr,
                                         approval_count=approval_cnt,
                                         linear_history=required_linear_history,
                                         allow_force_push=allow_force_pushes,
+                                        allow_branch_deletion=branch_deletion,
                                     )
+
                         except Exception as e:
                             logger.warning(
                                 f"Could not get branch protection for repo {repo.name}: {e}"
@@ -82,7 +86,8 @@ class Protection(BaseModel):
     require_pull_request: bool = False
     approval_count: int = 0
     linear_history: bool = False
-    allow_force_push: bool = False
+    allow_force_push: bool = True
+    allow_branch_deletion: bool = True
 
 
 class Repo(BaseModel):
