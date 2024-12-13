@@ -94,12 +94,15 @@ class Test_backup_recovery_point_encrypted:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.backup.backup_recovery_point_encrypted.backup_recovery_point_encrypted.backup_client",
-            new=Backup(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.backup.backup_recovery_point_encrypted.backup_recovery_point_encrypted.backup_client",
+                new=Backup(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.backup.backup_recovery_point_encrypted.backup_recovery_point_encrypted import (
@@ -124,12 +127,15 @@ class Test_backup_recovery_point_encrypted:
 
             aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-            with mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ), mock.patch(
-                "prowler.providers.aws.services.backup.backup_recovery_point_encrypted.backup_recovery_point_encrypted.backup_client",
-                new=Backup(aws_provider),
+            with (
+                mock.patch(
+                    "prowler.providers.common.provider.Provider.get_global_provider",
+                    return_value=aws_provider,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.backup.backup_recovery_point_encrypted.backup_recovery_point_encrypted.backup_client",
+                    new=Backup(aws_provider),
+                ),
             ):
                 # Test Check
                 from prowler.providers.aws.services.backup.backup_recovery_point_encrypted.backup_recovery_point_encrypted import (
@@ -142,9 +148,9 @@ class Test_backup_recovery_point_encrypted:
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
                 assert result[0].status_extended == (
-                    "Backup Recovery Point arn:aws:backup:eu-west-1:123456789012:recovery-point:1 for Backup Vault Test Vault is not encrypted at rest."
+                    "Backup Recovery Point 1 for Backup Vault Test Vault is not encrypted at rest."
                 )
-                assert result[0].resource_id == "Test Vault"
+                assert result[0].resource_id == "1"
                 assert (
                     result[0].resource_arn
                     == "arn:aws:backup:eu-west-1:123456789012:recovery-point:1"
@@ -165,12 +171,15 @@ class Test_backup_recovery_point_encrypted:
 
             aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-            with mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ), mock.patch(
-                "prowler.providers.aws.services.backup.backup_recovery_point_encrypted.backup_recovery_point_encrypted.backup_client",
-                new=Backup(aws_provider),
+            with (
+                mock.patch(
+                    "prowler.providers.common.provider.Provider.get_global_provider",
+                    return_value=aws_provider,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.backup.backup_recovery_point_encrypted.backup_recovery_point_encrypted.backup_client",
+                    new=Backup(aws_provider),
+                ),
             ):
                 # Test Check
                 from prowler.providers.aws.services.backup.backup_recovery_point_encrypted.backup_recovery_point_encrypted import (
@@ -183,9 +192,9 @@ class Test_backup_recovery_point_encrypted:
                 assert len(result) == 1
                 assert result[0].status == "PASS"
                 assert result[0].status_extended == (
-                    "Backup Recovery Point arn:aws:backup:eu-west-1:123456789012:recovery-point:1 for Backup Vault Test Vault is encrypted at rest."
+                    "Backup Recovery Point 1 for Backup Vault Test Vault is encrypted at rest."
                 )
-                assert result[0].resource_id == "Test Vault"
+                assert result[0].resource_id == "1"
                 assert (
                     result[0].resource_arn
                     == "arn:aws:backup:eu-west-1:123456789012:recovery-point:1"
