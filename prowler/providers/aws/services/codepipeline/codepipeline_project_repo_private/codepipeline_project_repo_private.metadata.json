@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "codepipeline_project_repo_private",
-  "CheckTitle": "Check if CodePipeline projects use public Git repositories",
+  "CheckTitle": "Ensure that CodePipeline projects do not use public GitHub or GitLab repositories as source.",
   "CheckType": [],
   "ServiceName": "codepipeline",
   "SubServiceName": "",
@@ -23,9 +23,7 @@
       "Url": "https://docs.aws.amazon.com/codepipeline/latest/userguide/connections"
     }
   },
-  "Categories": [
-    "security-best-practices"
-  ],
+  "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "This check supports both GitHub and GitLab repositories through CodeStar Connections"

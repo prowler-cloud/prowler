@@ -2,8 +2,6 @@ import ssl
 import urllib.error
 import urllib.request
 
-import boto3
-
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.codepipeline.codepipeline_client import (
     codepipeline_client,
@@ -11,9 +9,10 @@ from prowler.providers.aws.services.codepipeline.codepipeline_client import (
 
 
 class codepipeline_project_repo_private(Check):
+    """Check if CodePipeline source repositories are private."""
+
     def execute(self):
         findings = []
-        client = boto3.client("codestar-connections")
 
         for pipeline in codepipeline_client.pipelines.values():
             if (
@@ -28,29 +27,32 @@ class codepipeline_project_repo_private(Check):
                 report.resource_tags = pipeline.tags
 
                 repo_id = pipeline.source.configuration.get("FullRepositoryId", "")
-                connection_arn = pipeline.source.configuration.get("ConnectionArn", "")
 
-                # Get connection details to determine provider type
-                connection = client.get_connection(ConnectionArn=connection_arn)
-                provider_type = connection["Connection"]["ProviderType"]
+                # Try both GitHub and GitLab URLs
+                github_url = f"https://github.com/{repo_id}"
+                gitlab_url = f"https://gitlab.com/{repo_id}"
 
-                if provider_type == "GitLab":
-                    repo_url = f"https://gitlab.com/{repo_id}"
+                is_public_github = self._is_public_repo(github_url)
+                is_public_gitlab = self._is_public_repo(gitlab_url)
+
+                if is_public_github:
+                    report.status = "FAIL"
+                    report.status_extended = f"CodePipeline {pipeline.name} source repository is public: {github_url}"
+                elif is_public_gitlab:
+                    report.status = "FAIL"
+                    report.status_extended = f"CodePipeline {pipeline.name} source repository is public: {gitlab_url}"
                 else:
-                    repo_url = f"https://github.com/{repo_id}"
-
-                report.status = "FAIL"
-                report.status_extended = f"CodePipeline {pipeline.name} source repository is public: {repo_url}"
-
-                if not self._is_public_repo(repo_url):
                     report.status = "PASS"
-                    report.status_extended = f"CodePipeline {pipeline.name} source repository is private: {repo_url}"
+                    report.status_extended = (
+                        f"CodePipeline {pipeline.name} source repository is private"
+                    )
 
                 findings.append(report)
 
         return findings
 
     def _is_public_repo(self, repo_url: str) -> bool:
+        """Check if a repository is public by attempting to access it anonymously."""
         if repo_url.endswith(".git"):
             repo_url = repo_url[:-4]
 
@@ -58,10 +60,6 @@ class codepipeline_project_repo_private(Check):
             context = ssl._create_unverified_context()
             req = urllib.request.Request(repo_url, method="HEAD")
             response = urllib.request.urlopen(req, context=context)
-
-            if response.geturl().endswith("sign_in"):
-                return False
-            return True
-
+            return not response.geturl().endswith("sign_in")
         except (urllib.error.HTTPError, urllib.error.URLError):
             return False
