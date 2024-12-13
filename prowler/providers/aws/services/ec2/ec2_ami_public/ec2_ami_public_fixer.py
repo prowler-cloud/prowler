@@ -8,7 +8,6 @@ def fixer(resource_id: str, region: str) -> bool:
     Specifically, this fixer removes the 'all' value from the 'LaunchPermission' attribute
     to prevent the AMI from being publicly accessible.
     Requires the ec2:ModifyImageAttribute permission.
-
     Permissions:
     {
         "Version": "2012-10-17",
@@ -20,11 +19,9 @@ def fixer(resource_id: str, region: str) -> bool:
             }
         ]
     }
-
     Args:
         resource_id (str): The ID of the EC2 AMI to make private.
         region (str): AWS region where the AMI exists.
-
     Returns:
         bool: True if the operation is successful (the AMI is no longer publicly accessible), False otherwise.
     """
