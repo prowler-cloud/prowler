@@ -1,4 +1,4 @@
-FROM python:3.12.8-alpine3.20
+FROM python:3.13.1-alpine3.20
 
 LABEL maintainer="https://github.com/prowler-cloud/prowler"
 
