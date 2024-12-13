@@ -92,8 +92,20 @@ class CodePipeline(AWSService):
                 type=source_info["actionTypeId"]["provider"],
                 location=source_info["configuration"].get("FullRepositoryId", ""),
                 configuration=source_info["configuration"],
-                tags=pipeline_info.get("tags", []),
             )
+
+            # Get tags using list_tags_for_resource API
+            try:
+                tags_response = regional_client.list_tags_for_resource(
+                    resourceArn=pipeline.arn
+                )
+                pipeline.tags = tags_response.get("tags", [])
+            except ClientError as error:
+                logger.error(
+                    f"Error getting tags for pipeline {pipeline.name}: {error}"
+                )
+                pipeline.tags = []
+
         except ClientError as error:
             logger.error(
                 f"{pipeline.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
