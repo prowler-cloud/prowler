@@ -222,6 +222,72 @@ export interface InvitationProps {
         id: string;
       };
     };
+    role?: {
+      data: {
+        type: "roles";
+        id: string;
+      };
+      attributes?: {
+        name: string;
+        manage_users?: boolean;
+        manage_account?: boolean;
+        manage_billing?: boolean;
+        manage_providers?: boolean;
+        manage_integrations?: boolean;
+        manage_scans?: boolean;
+        permission_state?: "unlimited" | "limited" | "none";
+      };
+    };
+  };
+  links: {
+    self: string;
+  };
+}
+
+export interface Role {
+  type: "role";
+  id: string;
+  attributes: {
+    name: string;
+    manage_users: boolean;
+    manage_account: boolean;
+    manage_billing: boolean;
+    manage_providers: boolean;
+    manage_integrations: boolean;
+    manage_scans: boolean;
+    unlimited_visibility: boolean;
+    permission_state: "unlimited" | "limited" | "none";
+    inserted_at: string;
+    updated_at: string;
+  };
+  relationships: {
+    provider_groups: {
+      meta: {
+        count: number;
+      };
+      data: {
+        type: string;
+        id: string;
+      }[];
+    };
+    users: {
+      meta: {
+        count: number;
+      };
+      data: {
+        type: string;
+        id: string;
+      }[];
+    };
+    invitations: {
+      meta: {
+        count: number;
+      };
+      data: {
+        type: string;
+        id: string;
+      }[];
+    };
   };
   links: {
     self: string;
@@ -235,55 +301,7 @@ export interface RolesProps {
     next: string | null;
     prev: string | null;
   };
-  data: {
-    type: "role";
-    id: string;
-    attributes: {
-      name: string;
-      manage_users: boolean;
-      manage_account: boolean;
-      manage_billing: boolean;
-      manage_providers: boolean;
-      manage_integrations: boolean;
-      manage_scans: boolean;
-      unlimited_visibility: boolean;
-      permission_state: "unlimited" | "limited" | "none";
-      inserted_at: string;
-      updated_at: string;
-    };
-    relationships: {
-      provider_groups: {
-        meta: {
-          count: number;
-        };
-        data: {
-          type: string;
-          id: string;
-        }[];
-      };
-      users: {
-        meta: {
-          count: number;
-        };
-        data: {
-          type: string;
-          id: string;
-        }[];
-      };
-      invitations: {
-        meta: {
-          count: number;
-        };
-        data: {
-          type: string;
-          id: string;
-        }[];
-      };
-    };
-    links: {
-      self: string;
-    };
-  }[];
+  data: Role[];
   meta: {
     pagination: {
       page: number;
@@ -293,6 +311,7 @@ export interface RolesProps {
     version: string;
   };
 }
+
 export interface UserProfileProps {
   data: {
     type: "users";
