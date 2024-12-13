@@ -92,8 +92,8 @@ class CodePipeline(AWSService):
                 type=source_info["actionTypeId"]["provider"],
                 location=source_info["configuration"].get("FullRepositoryId", ""),
                 configuration=source_info["configuration"],
+                tags=pipeline_info.get("tags", []),
             )
-            pipeline.tags = pipeline_info.get("tags", [])
         except ClientError as error:
             logger.error(
                 f"{pipeline.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
