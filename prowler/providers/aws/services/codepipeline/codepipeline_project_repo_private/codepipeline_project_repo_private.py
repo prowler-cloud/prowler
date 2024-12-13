@@ -9,9 +9,27 @@ from prowler.providers.aws.services.codepipeline.codepipeline_client import (
 
 
 class codepipeline_project_repo_private(Check):
-    """Check if CodePipeline source repositories are private."""
+    """Checks if AWS CodePipeline source repositories are configured as private.
 
-    def execute(self):
+    This check verifies whether source repositories (GitHub or GitLab) connected to
+    CodePipeline are publicly accessible. It attempts to access the repositories
+    anonymously to determine their visibility status.
+
+    Attributes:
+        None
+    """
+
+    def execute(self) -> list:
+        """Executes the repository privacy check for all CodePipeline sources.
+
+        Iterates through all CodePipeline pipelines and checks if their source
+        repositories (GitHub/GitLab) are publicly accessible by attempting anonymous
+        access.
+
+        Returns:
+            list: List of Check_Report_AWS objects containing the findings for each
+                pipeline's source repository.
+        """
         findings = []
 
         for pipeline in codepipeline_client.pipelines.values():
@@ -52,7 +70,23 @@ class codepipeline_project_repo_private(Check):
         return findings
 
     def _is_public_repo(self, repo_url: str) -> bool:
-        """Check if a repository is public by attempting to access it anonymously."""
+        """Checks if a repository is publicly accessible.
+
+        Attempts to access the repository URL anonymously to determine if it's
+        public or private.
+
+        Args:
+            repo_url: String containing the repository URL to check.
+
+        Returns:
+            bool: True if the repository is public, False if private or inaccessible.
+
+        Note:
+            The method considers a repository private if:
+            - The URL redirects to a sign-in page
+            - The request fails with HTTP errors
+            - The URL is not accessible
+        """
         if repo_url.endswith(".git"):
             repo_url = repo_url[:-4]
 
