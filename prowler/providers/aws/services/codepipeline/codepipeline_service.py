@@ -74,8 +74,7 @@ class CodePipeline(AWSService):
     def _get_pipeline_state(self, pipeline):
         """Retrieves the current state of a pipeline.
 
-        Gets detailed information about a pipeline including its source configuration
-        and tags.
+        Gets detailed information about a pipeline including its source configuration.
 
         Args:
             pipeline: Pipeline object to retrieve state for.
@@ -88,24 +87,14 @@ class CodePipeline(AWSService):
             regional_client = self.regional_clients[pipeline.region]
             pipeline_info = regional_client.get_pipeline(name=pipeline.name)
             source_info = pipeline_info["pipeline"]["stages"][0]["actions"][0]
+            repository_id = source_info["configuration"].get("FullRepositoryId", "")
             pipeline.source = Source(
                 type=source_info["actionTypeId"]["provider"],
-                location=source_info["configuration"].get("FullRepositoryId", ""),
+                location=repository_id,
                 configuration=source_info["configuration"],
             )
-
-            # Get tags using list_tags_for_resource API
-            try:
-                tags_response = regional_client.list_tags_for_resource(
-                    resourceArn=pipeline.arn
-                )
-                pipeline.tags = tags_response.get("tags", [])
-            except ClientError as error:
-                logger.error(
-                    f"Error getting tags for pipeline {pipeline.name}: {error}"
-                )
-                pipeline.tags = []
-
+            self._list_tags_for_resource(pipeline)  # 태그 조회 호출 추가
+            pipeline.status_extended = f"CodePipeline {pipeline.name} source repository {repository_id} is private."
         except ClientError as error:
             logger.error(
                 f"{pipeline.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -113,6 +102,32 @@ class CodePipeline(AWSService):
         except Exception as error:
             logger.error(
                 f"{pipeline.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _list_tags_for_resource(self, resource):
+        """Lists tags for a given resource.
+
+        Args:
+            resource: Resource object to retrieve tags for.
+        """
+        logger.info("CodePipeline - Listing Tags...")
+        try:
+            tags_response = self.regional_clients[
+                resource.region
+            ].list_tags_for_resource(ResourceArn=resource.arn)
+            resource.tags = tags_response.get("Tags", [])  # get 메서드로 변경
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "ResourceNotFoundException":
+                logger.warning(
+                    f"{resource.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: Resource {resource.arn} not found while listing tags"
+                )
+            else:
+                logger.error(
+                    f"{resource.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+        except Exception as error:
+            logger.error(
+                f"{resource.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
 
@@ -146,3 +161,4 @@ class Pipeline(BaseModel):
     region: str
     source: Optional[Source]
     tags: Optional[list] = []
+    status_extended: Optional[str] = None

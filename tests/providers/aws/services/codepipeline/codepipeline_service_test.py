@@ -18,7 +18,7 @@ from tests.providers.aws.utils import (
 pipeline_name = "test-pipeline"
 pipeline_arn = f"arn:{AWS_COMMERCIAL_PARTITION}:codepipeline:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:pipeline/{pipeline_name}"
 source_type = "CodeStarSourceConnection"
-repository_id = "test/repo"
+repository_id = "prowler-cloud/prowler-private"
 connection_arn = f"arn:{AWS_COMMERCIAL_PARTITION}:codestar-connections:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:connection/test"
 
 # Mocking API calls
@@ -53,8 +53,9 @@ def mock_make_api_call(self, operation_name, kwarg):
                     }
                 ],
             },
-            "tags": [{"key": "Environment", "value": "Test"}],
         }
+    elif operation_name == "ListTagsForResource":
+        return {"Tags": [{"key": "Environment", "value": "Test"}]}
     return make_api_call(self, operation_name, kwarg)
 
 
@@ -102,3 +103,7 @@ class Test_CodePipeline_Service:
         # Test tags
         assert pipeline.tags[0]["key"] == "Environment"
         assert pipeline.tags[0]["value"] == "Test"
+
+        # Test status extended
+        expected_status = f"CodePipeline {pipeline_name} source repository prowler-cloud/prowler-private is private."
+        assert pipeline.status_extended == expected_status
