@@ -114,8 +114,8 @@ class CodePipeline(AWSService):
         try:
             tags_response = self.regional_clients[
                 resource.region
-            ].list_tags_for_resource(ResourceArn=resource.arn)
-            resource.tags = tags_response.get("Tags", [])  # get 메서드로 변경
+            ].list_tags_for_resource(resourceArn=resource.arn)
+            resource.tags = tags_response.get("tags", [])
         except ClientError as error:
             if error.response["Error"]["Code"] == "ResourceNotFoundException":
                 logger.warning(

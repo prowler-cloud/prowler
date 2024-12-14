@@ -55,7 +55,9 @@ def mock_make_api_call(self, operation_name, kwarg):
             },
         }
     elif operation_name == "ListTagsForResource":
-        return {"Tags": [{"key": "Environment", "value": "Test"}]}
+        return {
+            "tags": [{"key": "Environment", "value": "Test"}]
+        }  # Key/Value -> key/value
     return make_api_call(self, operation_name, kwarg)
 
 
