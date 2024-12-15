@@ -98,15 +98,19 @@ export const sendInvite = async (formData: FormData) => {
 };
 
 export const updateInvite = async (formData: FormData) => {
+  console.log(formData, "formData from updateInvite");
   const session = await auth();
   const keyServer = process.env.API_BASE_URL;
 
   const invitationId = formData.get("invitationId");
   const invitationEmail = formData.get("invitationEmail");
-  const expiresAt = formData.get("expires_at");
-  const role = formData.get("role");
+  const roleId = formData.get("role");
+  const expiresAt =
+    formData.get("expires_at") ||
+    new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
   const url = new URL(`${keyServer}/tenants/invitations/${invitationId}`);
+  console.log(url, "url");
 
   const body = JSON.stringify({
     data: {
@@ -114,22 +118,22 @@ export const updateInvite = async (formData: FormData) => {
       id: invitationId,
       attributes: {
         email: invitationEmail,
-        ...(expiresAt && { expires_at: expiresAt }),
+        expires_at: expiresAt,
       },
       relationships: {
         roles: {
-          data: role
-            ? [
-                {
-                  id: role,
-                  type: "role",
-                },
-              ]
-            : [],
+          data: [
+            {
+              id: roleId,
+              type: "role",
+            },
+          ],
         },
       },
     },
   });
+
+  console.log("Payload send to server", JSON.stringify(body, null, 2));
 
   try {
     const response = await fetch(url.toString(), {
@@ -141,6 +145,13 @@ export const updateInvite = async (formData: FormData) => {
       },
       body,
     });
+
+    if (!response.ok) {
+      const error = await response.json();
+      console.error("API Error:", error);
+      return { error };
+    }
+
     const data = await response.json();
     revalidatePath("/invitations");
     return parseStringify(data);

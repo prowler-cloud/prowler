@@ -15,13 +15,13 @@ export const EditForm = ({
   invitationId,
   invitationEmail,
   roles = [],
-  defaultRole = "",
+  currentRole = "",
   setIsOpen,
 }: {
   invitationId: string;
   invitationEmail?: string;
   roles: Array<{ id: string; name: string }>;
-  defaultRole?: string;
+  currentRole?: string;
   setIsOpen: Dispatch<SetStateAction<boolean>>;
 }) => {
   const formSchema = editInviteFormSchema;
@@ -31,7 +31,7 @@ export const EditForm = ({
     defaultValues: {
       invitationId,
       invitationEmail: invitationEmail || "",
-      role: defaultRole,
+      role: roles.find((role) => role.name === currentRole)?.id || "",
     },
   });
 
@@ -40,6 +40,7 @@ export const EditForm = ({
   const isLoading = form.formState.isSubmitting;
 
   const onSubmitClient = async (values: z.infer<typeof formSchema>) => {
+    console.log(values, " from edit form");
     const formData = new FormData();
 
     Object.entries(values).forEach(
@@ -49,11 +50,10 @@ export const EditForm = ({
     const data = await updateInvite(formData);
 
     if (data?.error) {
-      const errorMessage = `${data.error}`;
       toast({
         variant: "destructive",
         title: "Oops! Something went wrong",
-        description: errorMessage,
+        description: `${data.error}`,
       });
     } else {
       toast({
@@ -70,8 +70,11 @@ export const EditForm = ({
         onSubmit={form.handleSubmit(onSubmitClient)}
         className="flex flex-col space-y-4"
       >
-        <div className="text-md">
+        <div className="text-small">
           Current email: <span className="font-bold">{invitationEmail}</span>
+        </div>
+        <div className="text-small">
+          Current role: <span className="font-bold">{currentRole}</span>
         </div>
         <div>
           <CustomInput
@@ -96,7 +99,7 @@ export const EditForm = ({
                 label="Role"
                 placeholder="Select a role"
                 variant="bordered"
-                selectedKeys={[field.value]}
+                selectedKeys={[field.value || ""]}
                 onSelectionChange={(selected) =>
                   field.onChange(selected?.currentKey || "")
                 }
@@ -107,6 +110,7 @@ export const EditForm = ({
               </Select>
             )}
           />
+
           {form.formState.errors.role && (
             <p className="mt-2 text-sm text-red-600">
               {form.formState.errors.role.message}
