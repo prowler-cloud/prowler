@@ -74,7 +74,8 @@ export const ColumnsInvitation: ColumnDef<InvitationProps>[] = [
     header: () => <div className="text-right">Actions</div>,
     id: "actions",
     cell: ({ row }) => {
-      return <DataTableRowActions row={row} />;
+      const roles = row.original.roles;
+      return <DataTableRowActions row={row} roles={roles} />;
     },
   },
 ];

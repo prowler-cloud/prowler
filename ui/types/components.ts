@@ -242,6 +242,10 @@ export interface InvitationProps {
   links: {
     self: string;
   };
+  roles?: {
+    id: string;
+    name: string;
+  }[];
 }
 
 export interface Role {

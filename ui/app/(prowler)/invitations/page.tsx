@@ -70,16 +70,28 @@ const SSRDataTable = async ({
     {},
   );
 
-  // Expand invitations with role information
+  // Generate the array of roles with all the roles available
+  const roles = Array.from(
+    new Map(
+      rolesData.data.map((role: any) => [
+        role.id,
+        { id: role.id, name: role.attributes?.name || "Unnamed Role" },
+      ]),
+    ).values(),
+  );
+
+  // Expand the invitations
   const expandedInvitations = invitationsData?.data?.map(
     (invitation: InvitationProps) => {
       const role = roleDict[invitation.id];
+
       return {
         ...invitation,
         relationships: {
           ...invitation.relationships,
           role,
         },
+        roles, // Include all roles here for each invitation
       };
     },
   );
@@ -88,6 +100,7 @@ const SSRDataTable = async ({
   const expandedResponse = {
     ...invitationsData,
     data: expandedInvitations,
+    roles,
   };
 
   return (
