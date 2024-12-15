@@ -98,7 +98,6 @@ export const sendInvite = async (formData: FormData) => {
 };
 
 export const updateInvite = async (formData: FormData) => {
-  console.log(formData, "formData from updateInvite");
   const session = await auth();
   const keyServer = process.env.API_BASE_URL;
 
@@ -110,9 +109,8 @@ export const updateInvite = async (formData: FormData) => {
     new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
   const url = new URL(`${keyServer}/tenants/invitations/${invitationId}`);
-  console.log(url, "url");
 
-  const body = JSON.stringify({
+  const body = {
     data: {
       type: "invitations",
       id: invitationId,
@@ -131,9 +129,7 @@ export const updateInvite = async (formData: FormData) => {
         },
       },
     },
-  });
-
-  console.log("Payload send to server", JSON.stringify(body, null, 2));
+  };
 
   try {
     const response = await fetch(url.toString(), {
@@ -143,12 +139,11 @@ export const updateInvite = async (formData: FormData) => {
         Accept: "application/vnd.api+json",
         Authorization: `Bearer ${session?.accessToken}`,
       },
-      body,
+      body: JSON.stringify(body),
     });
 
     if (!response.ok) {
       const error = await response.json();
-      console.error("API Error:", error);
       return { error };
     }
 
@@ -156,7 +151,6 @@ export const updateInvite = async (formData: FormData) => {
     revalidatePath("/invitations");
     return parseStringify(data);
   } catch (error) {
-    console.error("Error updating invitation:", error);
     return {
       error: getErrorMessage(error),
     };
