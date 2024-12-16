@@ -1,0 +1,11 @@
+component_management:
+  individual_components:
+    - component_id: "prowler"
+      paths:
+        - "prowler/**"
+    - component_id: "api"
+      paths:
+        - "api/**"
+
+comment:
+  layout: "header, diff, flags, components"

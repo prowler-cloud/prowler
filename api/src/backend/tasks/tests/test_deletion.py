@@ -1,5 +1,3 @@
-from unittest.mock import patch
-
 import pytest
 from django.core.exceptions import ObjectDoesNotExist
 from tasks.jobs.deletion import delete_provider, delete_tenant
@@ -24,7 +22,6 @@ class TestDeleteProvider:
             delete_provider(non_existent_pk)
 
 
-@patch("api.db_router.MainRouter.admin_db", new="default")
 @pytest.mark.django_db
 class TestDeleteTenant:
     def test_delete_tenant_success(self, tenants_fixture, providers_fixture):
