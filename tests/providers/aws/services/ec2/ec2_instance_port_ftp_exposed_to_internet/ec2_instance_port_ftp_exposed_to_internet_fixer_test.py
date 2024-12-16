@@ -24,7 +24,7 @@ def mock_make_api_call_error(self, operation_name, kwarg):
     return mock_make_api_call(self, operation_name, kwarg)
 
 
-class Test_ec2_instance_port_elastic_kibana_exposed_to_internet_fixer:
+class Test_ec2_instance_port_ftp_exposed_to_internet_fixer:
     @mock_aws
     def test_ec2_instance_exposed_port_in_private_subnet_with_ip4_and_ip6(self):
         # Create EC2 Mocked Resources
@@ -41,14 +41,14 @@ class Test_ec2_instance_port_elastic_kibana_exposed_to_internet_fixer:
                 {
                     "IpProtocol": "tcp",
                     "FromPort": 1,
-                    "ToPort": 9500,
+                    "ToPort": 1000,
                     "IpRanges": [{"CidrIp": "0.0.0.0/0"}, {"CidrIp": "10.0.0.0/24"}],
                     "Ipv6Ranges": [{"CidrIpv6": "::/0"}, {"CidrIpv6": "2001:db8::/32"}],
                 },
                 {
                     "IpProtocol": "tcp",
-                    "FromPort": 1,
-                    "ToPort": 5700,
+                    "FromPort": 445,
+                    "ToPort": 445,
                     "IpRanges": [{"CidrIp": "0.0.0.0/0"}, {"CidrIp": "10.0.0.0/24"}],
                     "Ipv6Ranges": [{"CidrIpv6": "::/0"}, {"CidrIpv6": "2001:db8::/32"}],
                 },
@@ -77,11 +77,11 @@ class Test_ec2_instance_port_elastic_kibana_exposed_to_internet_fixer:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_instance_port_elasticsearch_kibana_exposed_to_internet.ec2_instance_port_elasticsearch_kibana_exposed_to_internet_fixer.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_instance_port_ftp_exposed_to_internet.ec2_instance_port_ftp_exposed_to_internet_fixer.ec2_client",
             new=EC2(aws_provider),
         ):
             # Test Fixer
-            from prowler.providers.aws.services.ec2.ec2_instance_port_elasticsearch_kibana_exposed_to_internet.ec2_instance_port_elasticsearch_kibana_exposed_to_internet_fixer import (
+            from prowler.providers.aws.services.ec2.ec2_instance_port_ftp_exposed_to_internet.ec2_instance_port_ftp_exposed_to_internet_fixer import (
                 fixer,
             )
 
@@ -106,7 +106,7 @@ class Test_ec2_instance_port_elastic_kibana_exposed_to_internet_fixer:
                     {
                         "IpProtocol": "tcp",
                         "FromPort": 1,
-                        "ToPort": 9500,
+                        "ToPort": 1000,
                         "IpRanges": [
                             {"CidrIp": "0.0.0.0/0"},
                             {"CidrIp": "10.0.0.0/24"},
@@ -118,8 +118,8 @@ class Test_ec2_instance_port_elastic_kibana_exposed_to_internet_fixer:
                     },
                     {
                         "IpProtocol": "tcp",
-                        "FromPort": 5601,
-                        "ToPort": 5601,
+                        "FromPort": 445,
+                        "ToPort": 445,
                         "IpRanges": [
                             {"CidrIp": "0.0.0.0/0"},
                             {"CidrIp": "10.0.0.0/24"},
@@ -157,11 +157,11 @@ class Test_ec2_instance_port_elastic_kibana_exposed_to_internet_fixer:
                 "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=aws_provider,
             ), mock.patch(
-                "prowler.providers.aws.services.ec2.ec2_instance_port_elasticsearch_kibana_exposed_to_internet.ec2_instance_port_elasticsearch_kibana_exposed_to_internet_fixer.ec2_client",
+                "prowler.providers.aws.services.ec2.ec2_instance_port_ftp_exposed_to_internet.ec2_instance_port_ftp_exposed_to_internet_fixer.ec2_client",
                 new=EC2(aws_provider),
             ):
                 # Test Fixer
-                from prowler.providers.aws.services.ec2.ec2_instance_port_elasticsearch_kibana_exposed_to_internet.ec2_instance_port_elasticsearch_kibana_exposed_to_internet_fixer import (
+                from prowler.providers.aws.services.ec2.ec2_instance_port_ftp_exposed_to_internet.ec2_instance_port_ftp_exposed_to_internet_fixer import (
                     fixer,
                 )
 
@@ -182,14 +182,14 @@ class Test_ec2_instance_port_elastic_kibana_exposed_to_internet_fixer:
             IpPermissions=[
                 {
                     "IpProtocol": "tcp",
-                    "FromPort": 9200,
-                    "ToPort": 9200,
+                    "FromPort": 139,
+                    "ToPort": 139,
                     "IpRanges": [{"CidrIp": "0.0.0.0/0"}, {"CidrIp": "10.0.0.0/24"}],
                 },
                 {
                     "IpProtocol": "tcp",
-                    "FromPort": 5601,
-                    "ToPort": 5601,
+                    "FromPort": 445,
+                    "ToPort": 445,
                     "IpRanges": [{"CidrIp": "0.0.0.0/0"}, {"CidrIp": "10.0.0.0/24"}],
                 },
             ],
@@ -217,11 +217,11 @@ class Test_ec2_instance_port_elastic_kibana_exposed_to_internet_fixer:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_instance_port_elasticsearch_kibana_exposed_to_internet.ec2_instance_port_elasticsearch_kibana_exposed_to_internet_fixer.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_instance_port_ftp_exposed_to_internet.ec2_instance_port_ftp_exposed_to_internet_fixer.ec2_client",
             new=EC2(aws_provider),
         ):
             # Test Fixer
-            from prowler.providers.aws.services.ec2.ec2_instance_port_elasticsearch_kibana_exposed_to_internet.ec2_instance_port_elasticsearch_kibana_exposed_to_internet_fixer import (
+            from prowler.providers.aws.services.ec2.ec2_instance_port_ftp_exposed_to_internet.ec2_instance_port_ftp_exposed_to_internet_fixer import (
                 fixer,
             )
 
@@ -242,14 +242,14 @@ class Test_ec2_instance_port_elastic_kibana_exposed_to_internet_fixer:
             IpPermissions=[
                 {
                     "IpProtocol": "tcp",
-                    "FromPort": 9200,
-                    "ToPort": 9200,
+                    "FromPort": 139,
+                    "ToPort": 139,
                     "Ipv6Ranges": [{"CidrIpv6": "::/0"}, {"CidrIpv6": "2001:db8::/32"}],
                 },
                 {
                     "IpProtocol": "tcp",
-                    "FromPort": 5601,
-                    "ToPort": 5601,
+                    "FromPort": 445,
+                    "ToPort": 445,
                     "Ipv6Ranges": [{"CidrIpv6": "::/0"}, {"CidrIpv6": "2001:db8::/32"}],
                 },
             ],
@@ -277,11 +277,11 @@ class Test_ec2_instance_port_elastic_kibana_exposed_to_internet_fixer:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_instance_port_elasticsearch_kibana_exposed_to_internet.ec2_instance_port_elasticsearch_kibana_exposed_to_internet_fixer.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_instance_port_ftp_exposed_to_internet.ec2_instance_port_ftp_exposed_to_internet_fixer.ec2_client",
             new=EC2(aws_provider),
         ):
             # Test Fixer
-            from prowler.providers.aws.services.ec2.ec2_instance_port_elasticsearch_kibana_exposed_to_internet.ec2_instance_port_elasticsearch_kibana_exposed_to_internet_fixer import (
+            from prowler.providers.aws.services.ec2.ec2_instance_port_ftp_exposed_to_internet.ec2_instance_port_ftp_exposed_to_internet_fixer import (
                 fixer,
             )
 
@@ -302,8 +302,8 @@ class Test_ec2_instance_port_elastic_kibana_exposed_to_internet_fixer:
             IpPermissions=[
                 {
                     "IpProtocol": "tcp",
-                    "FromPort": 9200,
-                    "ToPort": 9300,
+                    "FromPort": 139,
+                    "ToPort": 139,
                     "IpRanges": [{"CidrIp": "0.0.0.0/0"}],
                 }
             ],
@@ -337,11 +337,11 @@ class Test_ec2_instance_port_elastic_kibana_exposed_to_internet_fixer:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_instance_port_elasticsearch_kibana_exposed_to_internet.ec2_instance_port_elasticsearch_kibana_exposed_to_internet_fixer.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_instance_port_ftp_exposed_to_internet.ec2_instance_port_ftp_exposed_to_internet_fixer.ec2_client",
             new=EC2(aws_provider),
         ):
             # Test Fixer
-            from prowler.providers.aws.services.ec2.ec2_instance_port_elasticsearch_kibana_exposed_to_internet.ec2_instance_port_elasticsearch_kibana_exposed_to_internet_fixer import (
+            from prowler.providers.aws.services.ec2.ec2_instance_port_ftp_exposed_to_internet.ec2_instance_port_ftp_exposed_to_internet_fixer import (
                 fixer,
             )
 
@@ -364,8 +364,8 @@ class Test_ec2_instance_port_elastic_kibana_exposed_to_internet_fixer:
             IpPermissions=[
                 {
                     "IpProtocol": "tcp",
-                    "FromPort": 5601,
-                    "ToPort": 5601,
+                    "FromPort": 445,
+                    "ToPort": 445,
                     "IpRanges": [{"CidrIp": "0.0.0.0/0"}],
                 }
             ],
@@ -419,11 +419,11 @@ class Test_ec2_instance_port_elastic_kibana_exposed_to_internet_fixer:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_instance_port_elasticsearch_kibana_exposed_to_internet.ec2_instance_port_elasticsearch_kibana_exposed_to_internet_fixer.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_instance_port_ftp_exposed_to_internet.ec2_instance_port_ftp_exposed_to_internet_fixer.ec2_client",
             new=EC2(aws_provider),
         ):
             # Test Fixer
-            from prowler.providers.aws.services.ec2.ec2_instance_port_elasticsearch_kibana_exposed_to_internet.ec2_instance_port_elasticsearch_kibana_exposed_to_internet_fixer import (
+            from prowler.providers.aws.services.ec2.ec2_instance_port_ftp_exposed_to_internet.ec2_instance_port_ftp_exposed_to_internet_fixer import (
                 fixer,
             )
 
