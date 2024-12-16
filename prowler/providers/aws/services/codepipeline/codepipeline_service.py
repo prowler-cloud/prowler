@@ -29,6 +29,9 @@ class CodePipeline(AWSService):
         self.__threading_call__(self._list_pipelines)
         if self.pipelines:
             self.__threading_call__(self._get_pipeline_state, self.pipelines.values())
+            self.__threading_call__(
+                self._list_tags_for_resource, self.pipelines.values()
+            )
 
     def _list_pipelines(self, regional_client):
         """Lists all CodePipeline pipelines in the specified region.
@@ -47,7 +50,7 @@ class CodePipeline(AWSService):
             list_pipelines_paginator = regional_client.get_paginator("list_pipelines")
             for page in list_pipelines_paginator.paginate():
                 for pipeline in page["pipelines"]:
-                    pipeline_arn = f"arn:{self.audited_partition}:codepipeline:{regional_client.region}:{self.audited_account}:pipeline/{pipeline['name']}"
+                    pipeline_arn = f"arn:{self.audited_partition}:codepipeline:{regional_client.region}:{self.audited_account}:{pipeline['name']}"
                     if self.pipelines is None:
                         self.pipelines = {}
                     self.pipelines[pipeline_arn] = Pipeline(
@@ -93,8 +96,6 @@ class CodePipeline(AWSService):
                 location=repository_id,
                 configuration=source_info["configuration"],
             )
-            self._list_tags_for_resource(pipeline)  # 태그 조회 호출 추가
-            pipeline.status_extended = f"CodePipeline {pipeline.name} source repository {repository_id} is private."
         except ClientError as error:
             logger.error(
                 f"{pipeline.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -119,7 +120,7 @@ class CodePipeline(AWSService):
         except ClientError as error:
             if error.response["Error"]["Code"] == "ResourceNotFoundException":
                 logger.warning(
-                    f"{resource.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: Resource {resource.arn} not found while listing tags"
+                    f"{resource.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
             else:
                 logger.error(
@@ -161,4 +162,3 @@ class Pipeline(BaseModel):
     region: str
     source: Optional[Source]
     tags: Optional[list] = []
-    status_extended: Optional[str] = None
