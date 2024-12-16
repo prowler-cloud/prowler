@@ -38,16 +38,19 @@ If your IAM entity enforces MFA you can use `--mfa` and Prowler will ask you to 
 
 ## Azure
 
-Prowler for Azure supports the following authentication types:
+Prowler for Azure supports the following authentication types. To use each one you need to pass the proper flag to the execution:
 
-- [Service principal application](https://learn.microsoft.com/en-us/entra/identity-platform/app-objects-and-service-principals?tabs=browser#service-principal-object) by environment variables (recommended)
-- Current az cli credentials stored
-- Interactive browser authentication
-- [Managed identity](https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/overview) authentication
+- [Service principal application](https://learn.microsoft.com/en-us/entra/identity-platform/app-objects-and-service-principals?tabs=browser#service-principal-object) (recommended).
+- Current az cli credentials stored.
+- Interactive browser authentication.
+- [Managed identity](https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/overview) authentication.
 
-### Service Principal authentication
+???+ warning
+    For Prowler App only the Service Principal authentication method is supported.
 
-To allow Prowler assume the service principal identity to start the scan it is needed to configure the following environment variables:
+### Service Principal Application authentication
+
+To allow Prowler assume the service principal application identity to start the scan it is needed to configure the following environment variables:
 
 ```console
 export AZURE_CLIENT_ID="XXXXXXXXX"
@@ -56,23 +59,23 @@ export AZURE_CLIENT_SECRET="XXXXXXX"
 ```
 
 If you try to execute Prowler with the `--sp-env-auth` flag and those variables are empty or not exported, the execution is going to fail.
-Follow the instructions in the [Create Prowler Service Principal](../tutorials/azure/create-prowler-service-principal.md) section to create a service principal.
+Follow the instructions in the [Create Prowler Service Principal](../tutorials/azure/create-prowler-service-principal.md#how-to-create-prowler-service-principal) section to create a service principal.
 
 ### AZ CLI / Browser / Managed Identity authentication
 
 The other three cases does not need additional configuration, `--az-cli-auth` and `--managed-identity-auth` are automated options. To use `--browser-auth`  the user needs to authenticate against Azure using the default browser to start the scan, also `tenant-id` is required.
 
-### Permissions
+### Needed permissions
 
-To use each one you need to pass the proper flag to the execution. Prowler for Azure handles two types of permission scopes, which are:
+Prowler for Azure needs two types of permission scopes to be set:
 
-- **Microsoft Entra ID permissions**: Used to retrieve metadata from the identity assumed by Prowler and specific Entra checks (not mandatory to have access to execute the tool). The permissions required by the tool are the following:
+- **Microsoft Entra ID permissions**: used to retrieve metadata from the identity assumed by Prowler and specific Entra checks (not mandatory to have access to execute the tool). The permissions required by the tool are the following:
     - `Directory.Read.All`
     - `Policy.Read.All`
-    - `UserAuthenticationMethod.Read.All`
-- **Subscription scope permissions**: Required to launch the checks against your resources, mandatory to launch the tool. It is required to add the following RBAC builtin roles per subscription to the entity that is going to be assumed by the tool:
+    - `UserAuthenticationMethod.Read.All` (used only for the Entra checks related with multifactor authentication)
+- **Subscription scope permissions**: required to launch the checks against your resources, mandatory to launch the tool. It is required to add the following RBAC builtin roles per subscription to the entity that is going to be assumed by the tool:
     - `Reader`
-    - `ProwlerRole` (custom role defined in [prowler-azure-custom-role](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-azure-custom-role.json))
+    - `ProwlerRole` (custom role with minimal permissions defined in [prowler-azure-custom-role](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-azure-custom-role.json))
     ???+ note
         Please, notice that the field `assignableScopes` in the JSON custom role file must be changed to be the subscription or management group where the role is going to be assigned. The valid formats for the field are `/subscriptions/<subscription-id>` or `/providers/Microsoft.Management/managementGroups/<management-group-id>`.
 
@@ -80,7 +83,7 @@ To assign the permissions, follow the instructions in the [Microsoft Entra ID pe
 
 #### Checks that require ProwlerRole
 
-The following checks require the `ProwlerRole` custom role to be executed, if you want to run them, make sure you have assigned the role to the identity that is going to be assumed by Prowler:
+The following checks require the `ProwlerRole` permissions to be executed, if you want to run them, make sure you have assigned the role to the identity that is going to be assumed by Prowler:
 
 - `app_function_access_keys_configured`
 - `app_function_ftps_deployment_disabled`
