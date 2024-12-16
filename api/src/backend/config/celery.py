@@ -35,10 +35,10 @@ class RLSTask(Task):
             **options,
         )
         task_result_instance = TaskResult.objects.get(task_id=result.task_id)
-        from api.db_utils import tenant_transaction
+        from api.db_utils import transaction_config
 
         tenant_id = kwargs.get("tenant_id")
-        with tenant_transaction(tenant_id):
+        with transaction_config(tenant_id):
             APITask.objects.create(
                 id=task_result_instance.task_id,
                 tenant_id=tenant_id,

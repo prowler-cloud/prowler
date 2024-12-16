@@ -7,10 +7,10 @@ from rest_framework_json_api import filters
 from rest_framework_json_api.views import ModelViewSet
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
-from api.db_utils import POSTGRES_USER_VAR, tenant_transaction
+from api.db_router import MainRouter
+from api.db_utils import POSTGRES_USER_VAR, transaction_config
 from api.filters import CustomDjangoFilterBackend
 from api.models import Role, Tenant
-from api.db_router import MainRouter
 
 
 class BaseViewSet(ModelViewSet):
@@ -48,7 +48,7 @@ class BaseRLSViewSet(BaseViewSet):
         if tenant_id is None:
             raise NotAuthenticated("Tenant ID is not present in token")
 
-        with tenant_transaction(tenant_id):
+        with transaction_config(tenant_id):
             self.request.tenant_id = tenant_id
             return super().initial(request, *args, **kwargs)
 
@@ -102,7 +102,7 @@ class BaseTenantViewset(BaseViewSet):
         ):
             user_id = str(request.user.id)
 
-            with tenant_transaction(value=user_id, parameter=POSTGRES_USER_VAR):
+            with transaction_config(value=user_id, parameter=POSTGRES_USER_VAR):
                 return super().initial(request, *args, **kwargs)
 
         # TODO: DRY this when we have time
@@ -113,7 +113,7 @@ class BaseTenantViewset(BaseViewSet):
         if tenant_id is None:
             raise NotAuthenticated("Tenant ID is not present in token")
 
-        with tenant_transaction(tenant_id):
+        with transaction_config(tenant_id):
             self.request.tenant_id = tenant_id
             return super().initial(request, *args, **kwargs)
 
@@ -134,6 +134,6 @@ class BaseUserViewset(BaseViewSet):
         if tenant_id is None:
             raise NotAuthenticated("Tenant ID is not present in token")
 
-        with tenant_transaction(tenant_id):
+        with transaction_config(tenant_id):
             self.request.tenant_id = tenant_id
             return super().initial(request, *args, **kwargs)
