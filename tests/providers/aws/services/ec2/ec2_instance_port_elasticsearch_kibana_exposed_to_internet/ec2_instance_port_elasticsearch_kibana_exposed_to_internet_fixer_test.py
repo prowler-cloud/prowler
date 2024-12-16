@@ -24,7 +24,7 @@ def mock_make_api_call_error(self, operation_name, kwarg):
     return mock_make_api_call(self, operation_name, kwarg)
 
 
-class Test_ec2_instance_port_elastic_kibana_exposed_to_internet_fixer:
+class Test_ec2_instance_port_elasticsearch_kibana_exposed_to_internet_fixer:
     @mock_aws
     def test_ec2_instance_exposed_port_in_private_subnet_with_ip4_and_ip6(self):
         # Create EC2 Mocked Resources
