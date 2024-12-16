@@ -1,35 +1,34 @@
 import logging
+from datetime import datetime, timedelta, timezone
 
 import pytest
 from django.conf import settings
-from datetime import datetime, timezone, timedelta
-from django.db import connections as django_connections, connection as django_connection
+from django.db import connection as django_connection
+from django.db import connections as django_connections
 from django.urls import reverse
 from django_celery_results.models import TaskResult
-from prowler.lib.check.models import Severity
-from prowler.lib.outputs.finding import Status
 from rest_framework import status
 from rest_framework.test import APIClient
 
 from api.models import (
+    ComplianceOverview,
     Finding,
-)
-from api.models import (
-    User,
+    Invitation,
+    Membership,
     Provider,
     ProviderGroup,
+    ProviderSecret,
     Resource,
     ResourceTag,
     Scan,
     StateChoices,
     Task,
-    Membership,
-    ProviderSecret,
-    Invitation,
-    ComplianceOverview,
+    User,
 )
 from api.rls import Tenant
 from api.v1.serializers import TokenSerializer
+from prowler.lib.check.models import Severity
+from prowler.lib.outputs.finding import Status
 
 API_JSON_CONTENT_TYPE = "application/vnd.api+json"
 NO_TENANT_HTTP_STATUS = status.HTTP_401_UNAUTHORIZED
@@ -537,9 +536,10 @@ def get_api_tokens(
         data=json_body,
         format="vnd.api+json",
     )
-    return response.json()["data"]["attributes"]["access"], response.json()["data"][
-        "attributes"
-    ]["refresh"]
+    return (
+        response.json()["data"]["attributes"]["access"],
+        response.json()["data"]["attributes"]["refresh"],
+    )
 
 
 def get_authorization_header(access_token: str) -> dict:
