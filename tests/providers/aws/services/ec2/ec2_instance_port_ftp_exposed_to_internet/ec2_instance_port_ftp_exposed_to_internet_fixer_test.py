@@ -288,7 +288,7 @@ class Test_ec2_instance_port_ftp_exposed_to_internet_fixer:
             assert fixer(instance_id, AWS_REGION_EU_WEST_1)
 
     @mock_aws
-    def test_ec2_instance_exposed_port_in_public_subnet_only_139_port(self):
+    def test_ec2_instance_exposed_port_in_public_subnet_only_both_ports(self):
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
         ec2_resource = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
