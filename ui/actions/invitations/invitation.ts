@@ -110,26 +110,32 @@ export const updateInvite = async (formData: FormData) => {
 
   const url = new URL(`${keyServer}/tenants/invitations/${invitationId}`);
 
-  const body = {
+  const body: any = {
     data: {
       type: "invitations",
       id: invitationId,
-      attributes: {
-        email: invitationEmail,
-        expires_at: expiresAt,
-      },
-      relationships: {
-        roles: {
-          data: [
-            {
-              id: roleId,
-              type: "role",
-            },
-          ],
-        },
-      },
+      attributes: {},
+      relationships: {},
     },
   };
+
+  // Only add attributes that exist in the formData
+  if (invitationEmail) {
+    body.data.attributes.email = invitationEmail;
+  }
+  if (expiresAt) {
+    body.data.attributes.expires_at = expiresAt;
+  }
+  if (roleId) {
+    body.data.relationships.roles = {
+      data: [
+        {
+          id: roleId,
+          type: "role",
+        },
+      ],
+    };
+  }
 
   try {
     const response = await fetch(url.toString(), {

@@ -45,7 +45,7 @@ export function DataTableRowActions<InvitationProps>({
       <CustomAlertModal
         isOpen={isEditOpen}
         onOpenChange={setIsEditOpen}
-        title="Edit Invitation"
+        title="Edit invitation details"
       >
         <EditForm
           invitationId={invitationId}

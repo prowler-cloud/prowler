@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Select, SelectItem } from "@nextui-org/react";
+import { MailIcon, ShieldIcon } from "lucide-react";
 import { Dispatch, SetStateAction } from "react";
 import { Controller, useForm } from "react-hook-form";
 import * as z from "zod";
@@ -40,11 +41,35 @@ export const EditForm = ({
   const isLoading = form.formState.isSubmitting;
 
   const onSubmitClient = async (values: z.infer<typeof formSchema>) => {
-    const formData = new FormData();
+    const changedFields: { [key: string]: any } = {};
 
-    Object.entries(values).forEach(
-      ([key, value]) => value !== undefined && formData.append(key, value),
-    );
+    // Check if the email changed
+    if (values.invitationEmail && values.invitationEmail !== invitationEmail) {
+      changedFields.invitationEmail = values.invitationEmail;
+    }
+
+    // Check if the role changed
+    const currentRoleId =
+      roles.find((role) => role.name === currentRole)?.id || "";
+    if (values.role && values.role !== currentRoleId) {
+      changedFields.role = values.role;
+    }
+
+    // If there are no changes, avoid the request
+    if (Object.keys(changedFields).length === 0) {
+      toast({
+        title: "No changes detected",
+        description: "Please modify at least one field before saving.",
+      });
+      return;
+    }
+
+    changedFields.invitationId = invitationId; // Always include the ID
+
+    const formData = new FormData();
+    Object.entries(changedFields).forEach(([key, value]) => {
+      formData.append(key, value);
+    });
 
     const data = await updateInvite(formData);
 
@@ -69,12 +94,23 @@ export const EditForm = ({
         onSubmit={form.handleSubmit(onSubmitClient)}
         className="flex flex-col space-y-4"
       >
-        <div className="text-small">
-          Current email: <span className="font-bold">{invitationEmail}</span>
+        <div className="flex flex-row justify-center space-x-4 rounded-lg bg-gray-50 p-3">
+          <div className="flex items-center text-small text-gray-600">
+            <MailIcon className="mr-2 h-4 w-4" />
+            <span className="text-gray-500">Email:</span>
+            <span className="ml-2 font-semibold text-gray-900">
+              {invitationEmail}
+            </span>
+          </div>
+          <div className="flex items-center text-small text-gray-600">
+            <ShieldIcon className="mr-2 h-4 w-4" />
+            <span className="text-gray-500">Role:</span>
+            <span className="ml-2 font-semibold text-gray-900">
+              {currentRole}
+            </span>
+          </div>
         </div>
-        <div className="text-small">
-          Current role: <span className="font-bold">{currentRole}</span>
-        </div>
+
         <div>
           <CustomInput
             control={form.control}
