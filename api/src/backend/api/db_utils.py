@@ -48,10 +48,10 @@ def psycopg_connection(database_alias: str):
 
 
 @contextmanager
-def transaction_config(value: str, parameter: str = POSTGRES_TENANT_VAR):
+def rls_transaction(value: str, parameter: str = POSTGRES_TENANT_VAR):
     """
-    Creates a new database transaction setting the given configuration value. It validates the
-    if the value is a valid UUID to be used for Postgres RLS.
+    Creates a new database transaction setting the given configuration value for Postgres RLS. It validates the
+    if the value is a valid UUID.
 
     Args:
         value (str): Database configuration parameter value.

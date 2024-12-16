@@ -11,7 +11,7 @@ from django_celery_results.models import TaskResult
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from api.db_utils import transaction_config
+from api.db_utils import rls_transaction
 from api.models import (
     ComplianceOverview,
     Finding,
@@ -280,7 +280,7 @@ def tenants_fixture(create_test_user):
 def set_user_admin_roles_fixture(create_test_user, tenants_fixture):
     user = create_test_user
     for tenant in tenants_fixture[:2]:
-        with transaction_config(str(tenant.id)):
+        with rls_transaction(str(tenant.id)):
             role = Role.objects.create(
                 name="admin",
                 tenant_id=tenant.id,
