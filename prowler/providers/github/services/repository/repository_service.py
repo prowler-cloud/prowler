@@ -49,6 +49,9 @@ class Repository(GithubService):
                                     )
                                     allow_force_pushes = protection.allow_force_pushes
                                     branch_deletion = protection.allow_deletions
+                                    status_checks = (
+                                        protection.required_status_checks.strict
+                                    )
 
                                     branch_protection = Protection(
                                         require_pull_request=require_pr,
@@ -56,6 +59,7 @@ class Repository(GithubService):
                                         linear_history=required_linear_history,
                                         allow_force_push=allow_force_pushes,
                                         allow_branch_deletion=branch_deletion,
+                                        enforce_status_checks=status_checks,
                                     )
 
                         except Exception as e:
@@ -88,6 +92,7 @@ class Protection(BaseModel):
     linear_history: bool = False
     allow_force_push: bool = True
     allow_branch_deletion: bool = True
+    enforce_status_checks: bool = False
 
 
 class Repo(BaseModel):
