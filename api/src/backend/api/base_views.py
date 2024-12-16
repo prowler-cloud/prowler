@@ -6,13 +6,8 @@ from rest_framework_json_api import filters
 from rest_framework_json_api.views import ModelViewSet
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
-from api.db_router import MainRouter
 from api.db_utils import POSTGRES_USER_VAR, rls_transaction
 from api.filters import CustomDjangoFilterBackend
-<<<<<<< HEAD
-=======
-from api.models import Role, Tenant
->>>>>>> 57854f23b (chore(rls): rename tenant_transaction to rls_transaction (#6202))
 
 
 class BaseViewSet(ModelViewSet):

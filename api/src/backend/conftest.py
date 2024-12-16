@@ -1,6 +1,5 @@
 import logging
 from datetime import datetime, timedelta, timezone
-from unittest.mock import patch
 
 import pytest
 from django.conf import settings
@@ -11,7 +10,6 @@ from django_celery_results.models import TaskResult
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from api.db_utils import rls_transaction
 from api.models import (
     ComplianceOverview,
     Finding,
@@ -25,15 +23,7 @@ from api.models import (
     Scan,
     StateChoices,
     Task,
-<<<<<<< HEAD
-    Membership,
-    ProviderSecret,
-    Invitation,
-    ComplianceOverview,
-=======
     User,
-    UserRoleRelationship,
->>>>>>> 57854f23b (chore(rls): rename tenant_transaction to rls_transaction (#6202))
 )
 from api.rls import Tenant
 from api.v1.serializers import TokenSerializer
@@ -141,32 +131,6 @@ def tenants_fixture(create_test_user):
 
 
 @pytest.fixture
-<<<<<<< HEAD
-=======
-def set_user_admin_roles_fixture(create_test_user, tenants_fixture):
-    user = create_test_user
-    for tenant in tenants_fixture[:2]:
-        with rls_transaction(str(tenant.id)):
-            role = Role.objects.create(
-                name="admin",
-                tenant_id=tenant.id,
-                manage_users=True,
-                manage_account=True,
-                manage_billing=True,
-                manage_providers=True,
-                manage_integrations=True,
-                manage_scans=True,
-                unlimited_visibility=True,
-            )
-            UserRoleRelationship.objects.create(
-                user=user,
-                role=role,
-                tenant_id=tenant.id,
-            )
-
-
-@pytest.fixture
->>>>>>> 57854f23b (chore(rls): rename tenant_transaction to rls_transaction (#6202))
 def invitations_fixture(create_test_user, tenants_fixture):
     user = create_test_user
     *_, tenant = tenants_fixture
