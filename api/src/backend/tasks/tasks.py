@@ -7,7 +7,7 @@ from tasks.jobs.connection import check_provider_connection
 from tasks.jobs.deletion import delete_provider, delete_tenant
 from tasks.jobs.scan import aggregate_findings, perform_prowler_scan
 
-from api.db_utils import tenant_transaction
+from api.db_utils import rls_transaction
 from api.decorators import set_tenant
 from api.models import Provider, Scan
 
@@ -99,7 +99,7 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
     """
     task_id = self.request.id
 
-    with tenant_transaction(tenant_id):
+    with rls_transaction(tenant_id):
         provider_instance = Provider.objects.get(pk=provider_id)
         periodic_task_instance = PeriodicTask.objects.get(
             name=f"scan-perform-scheduled-{provider_id}"

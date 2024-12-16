@@ -2,7 +2,7 @@ from celery.utils.log import get_task_logger
 from django.db import transaction
 
 from api.db_router import MainRouter
-from api.db_utils import batch_delete, tenant_transaction
+from api.db_utils import batch_delete, rls_transaction
 from api.models import Finding, Provider, Resource, Scan, ScanSummary, Tenant
 
 logger = get_task_logger(__name__)
@@ -66,7 +66,7 @@ def delete_tenant(pk: str):
     deletion_summary = {}
 
     for provider in Provider.objects.using(MainRouter.admin_db).filter(tenant_id=pk):
-        with tenant_transaction(pk):
+        with rls_transaction(pk):
             summary = delete_provider(provider.id)
             deletion_summary.update(summary)
 
