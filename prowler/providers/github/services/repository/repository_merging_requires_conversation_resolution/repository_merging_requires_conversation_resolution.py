@@ -7,15 +7,15 @@ from prowler.providers.github.services.repository.repository_client import (
 
 
 class repository_merging_requires_conversation_resolution(Check):
-    """Check if a repository requires
+    """Check if a repository requires conversation resolution
 
-    This class verifies whether each repository
+    This class verifies whether each repository requires conversation resolution.
     """
 
     def execute(self) -> List[Check_Report_Github]:
-        """Execute the Github Repository Merging Requires
+        """Execute the Github Repository Merging Requires Conversation Resolution check
 
-        Iterates over all repositories and checks if they
+        Iterates over all repositories and checks if they require conversation resolution.
 
         Returns:
             List[Check_Report_Github]: A list of reports for each repository
