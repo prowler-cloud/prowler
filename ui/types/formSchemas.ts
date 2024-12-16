@@ -200,4 +200,5 @@ export const editUserFormSchema = () =>
       .optional(),
     company_name: z.string().optional(),
     userId: z.string(),
+    role: z.string().optional(),
   });

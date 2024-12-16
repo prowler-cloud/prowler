@@ -325,6 +325,9 @@ export interface UserProfileProps {
       email: string;
       company_name: string;
       date_joined: string;
+      role: {
+        name: string;
+      };
     };
     relationships: {
       memberships: {
@@ -351,6 +354,9 @@ export interface UserProps {
     email: string;
     company_name: string;
     date_joined: string;
+    role: {
+      name: string;
+    };
   };
   relationships: {
     memberships: {
@@ -362,7 +368,20 @@ export interface UserProps {
         id: string;
       }>;
     };
+    roles: {
+      meta: {
+        count: number;
+      };
+      data: Array<{
+        type: "role";
+        id: string;
+      }>;
+    };
   };
+  roles: {
+    id: string;
+    name: string;
+  }[];
 }
 
 export interface ProviderProps {

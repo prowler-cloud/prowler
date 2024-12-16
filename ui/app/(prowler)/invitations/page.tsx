@@ -60,7 +60,7 @@ const SSRDataTable = async ({
   const rolesData = await getRoles({});
 
   // Create a dictionary for roles by invitation ID
-  const roleDict = rolesData?.data?.reduce(
+  const roleDict = (rolesData?.data || []).reduce(
     (acc: Record<string, Role>, role: Role) => {
       role.relationships.invitations.data.forEach((invitation: any) => {
         acc[invitation.id] = role;
@@ -73,7 +73,7 @@ const SSRDataTable = async ({
   // Generate the array of roles with all the roles available
   const roles = Array.from(
     new Map(
-      rolesData.data.map((role: any) => [
+      (rolesData?.data || []).map((role: Role) => [
         role.id,
         { id: role.id, name: role.attributes?.name || "Unnamed Role" },
       ]),
