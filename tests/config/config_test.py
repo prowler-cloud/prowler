@@ -79,7 +79,7 @@ config_aws = {
     "max_ec2_instance_age_in_days": 180,
     "ec2_allowed_interface_types": ["api_gateway_managed", "vpc_endpoint"],
     "ec2_allowed_instance_owners": ["amazon-elb"],
-    "ec2_sg_high_risk_ports": [
+    "ec2_high_risk_ports": [
         25,
         110,
         135,
@@ -318,6 +318,7 @@ config_azure = {
     "php_latest_version": "8.2",
     "python_latest_version": "3.12",
     "java_latest_version": "17",
+    "recommended_minimal_tls_versions": ["1.2", "1.3"],
 }
 
 config_gcp = {"shodan_api_key": None}

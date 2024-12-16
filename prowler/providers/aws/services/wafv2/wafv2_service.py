@@ -99,7 +99,7 @@ class WAFv2(AWSService):
     def _list_resources_for_web_acl(self, acl):
         logger.info("WAFv2 - Describing resources...")
         try:
-            if acl.scope == Scope.REGIONAL or acl.region in self.regional_clients:
+            if acl.scope == Scope.REGIONAL:
                 for resource in self.regional_clients[
                     acl.region
                 ].list_resources_for_web_acl(
@@ -150,6 +150,22 @@ class WAFv2(AWSService):
                         else:
                             acl.rules.append(new_rule)
 
+                    firewall_manager_managed_rg = get_web_acl.get("WebACL", {}).get(
+                        "PreProcessFirewallManagerRuleGroups", []
+                    ) + get_web_acl.get("WebACL", {}).get(
+                        "PostProcessFirewallManagerRuleGroups", []
+                    )
+
+                    for rule in firewall_manager_managed_rg:
+                        acl.rule_groups.append(
+                            Rule(
+                                name=rule.get("Name", ""),
+                                cloudwatch_metrics_enabled=rule.get(
+                                    "VisibilityConfig", {}
+                                ).get("CloudWatchMetricsEnabled", False),
+                            )
+                        )
+
                 except Exception as error:
                     logger.error(
                         f"{acl.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -188,13 +204,6 @@ class Scope(Enum):
 
 class Rule(BaseModel):
     """Model representing a rule for the Web ACL."""
-
-    name: str
-    cloudwatch_metrics_enabled: bool = False
-
-
-class FirewallManagerRuleGroup(BaseModel):
-    """Model representing a rule group for the Web ACL."""
 
     name: str
     cloudwatch_metrics_enabled: bool = False

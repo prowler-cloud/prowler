@@ -168,17 +168,22 @@ def is_policy_public(
                             in principal.get("CanonicalUser", "")
                             or check_cross_service_confused_deputy
                             and (
-                                (  # Check if function can be invoked by other AWS services if check_cross_service_confused_deputy is True
-                                    (
-                                        ".amazonaws.com" in principal.get("Service", "")
-                                        or ".amazon.com" in principal.get("Service", "")
-                                        or "*" in principal.get("Service", "")
-                                    )
+                                # Check if function can be invoked by other AWS services if check_cross_service_confused_deputy is True
+                                (
+                                    ".amazonaws.com" in principal.get("Service", "")
+                                    or ".amazon.com" in principal.get("Service", "")
+                                    or "*" in principal.get("Service", "")
                                 )
-                                and "secretsmanager.amazonaws.com"
-                                not in principal.get(
-                                    "Service", ""
-                                )  # AWS ensures that resources called by SecretsManager are executed in the same AWS account
+                                and (
+                                    "secretsmanager.amazonaws.com"
+                                    not in principal.get(
+                                        "Service", ""
+                                    )  # AWS ensures that resources called by SecretsManager are executed in the same AWS account
+                                    or "eks.amazonaws.com"
+                                    not in principal.get(
+                                        "Service", ""
+                                    )  # AWS ensures that resources called by EKS are executed in the same AWS account
+                                )
                             )
                         )
                     )

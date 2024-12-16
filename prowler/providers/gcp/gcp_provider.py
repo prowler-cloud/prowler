@@ -36,6 +36,31 @@ from prowler.providers.gcp.models import GCPIdentityInfo, GCPOrganization, GCPPr
 
 
 class GcpProvider(Provider):
+    """
+    GCP Provider class to handle the GCP provider
+
+    Attributes:
+        - _type: str -> The provider type
+        - _session: Credentials -> The GCP credentials session
+        - _project_ids: list -> The list of project IDs
+        - _excluded_project_ids: list -> The list of excluded project IDs
+        - _identity: GCPIdentityInfo -> The GCP identity info
+        - _audit_config: dict -> The audit config
+        - _mutelist: GCPMutelist -> The GCP mutelist
+        - audit_metadata: Audit_Metadata -> The audit metadata
+
+    Methods:
+        - __init__ -> GCP Provider
+        - setup_session -> Setup the GCP session
+        - test_connection -> Test the connection to GCP
+        - print_credentials -> Print the GCP credentials
+        - get_projects -> Get the projects accessible by the provided credentials
+        - update_projects_with_organizations -> Update the projects with organizations
+        - is_project_matching -> Check if the input project matches the project to match
+        - validate_static_arguments -> Validate the static arguments
+        - validate_project_id -> Validate the provider ID
+    """
+
     _type: str = "gcp"
     _session: Credentials
     _project_ids: list
@@ -81,6 +106,56 @@ class GcpProvider(Provider):
             client_id: str
             client_secret: str
             refresh_token: str
+
+        Raises:
+            GCPNoAccesibleProjectsError if no project IDs can be accessed via Google Credentials
+            GCPSetUpSessionError if an error occurs during the setup session
+            GCPLoadCredentialsFromDictError if an error occurs during the loading credentials from dict
+            GCPGetProjectError if an error occurs during the get project
+
+        Returns:
+            None
+
+        Usage:
+            - Authentication: Prowler will use by default your User Account credentials, you can configure it using:
+                - Using the gcloud command:
+                    - gcloud init to use a new account
+                    - gcloud config set account <account> to use a specific account
+                    - gcloud auth application-default login to use the Application Default Credentials
+                - Prowler will use the Application Default Credentials if no credentials are provided
+                    - Using static credentials:
+                        - Using the client_id, client_secret and refresh_token:
+                            >>> GcpProvider(
+                            ...     client_id="client_id",
+                            ...     client_secret="client_secret",
+                            ...     refresh_token="refresh_token"
+                            ... )
+                        - Using a credentials file:
+                            >>> GcpProvider(
+                            ...     credentials_file="credentials_file"
+                            ... )
+                - Impersonating a service account: If you want to impersonate a GCP service account, you can use the impersonate_service_account parameter. For this method user must be authenticated:
+                    >>> GcpProvider(
+                    ...     impersonate_service_account="service_account"
+                    ... )
+            - Projects: The GCP provider supports multi-project, which means that is capable of scan all the Google Cloud projects the user has access to.
+                - If you want to scan a specific project(s), you can use the project-ids argument.
+                    >>> GcpProvider(
+                    ...     project_ids=["project_id1", "project_id2"]
+                    ... )
+                - If you want to exclude a specific project(s), you can use the excluded-project-ids argument.
+                    >>> GcpProvider(
+                    ...     excluded_project_ids=["project_id1", "project_id2"]
+                    ... )
+                    * Note: You can use asterisk * to exclude projects that match a pattern. For example, using "sys*" will exclude all the projects that start with sys.
+                - If you want to list all the available project IDs, you can use the list-project-ids argument.
+                    >>> GcpProvider(
+                    ...     list_project_ids=True
+                    ... )
+            - Organizations: If you want to scan a specific organization, you can use the organization-id argument. With this argument, Prowler will scan all the projects under that organization.
+                >>> GcpProvider(
+                ...     organization_id="organization_id"
+                ... )
         """
         logger.info("Instantiating GCP Provider ...")
         self._impersonated_service_account = impersonate_service_account
@@ -106,8 +181,6 @@ class GcpProvider(Provider):
                 message="No Project IDs can be accessed via Google Credentials.",
             )
         if project_ids:
-            if self._default_project_id not in project_ids:
-                self._default_project_id = project_ids[0]
             for input_project in project_ids:
                 for (
                     accessible_project_id,
@@ -127,6 +200,10 @@ class GcpProvider(Provider):
                 if project.lifecycle_state == "ACTIVE":
                     self._projects[project_id] = project
                     self._project_ids.append(project_id)
+
+        # Change default project if not in active projects
+        if self._project_ids and self._default_project_id not in self._project_ids:
+            self._default_project_id = self._project_ids[0]
 
         # Remove excluded projects if any input
         if excluded_project_ids:
@@ -239,11 +316,21 @@ class GcpProvider(Provider):
     ) -> tuple:
         """
         Setup the GCP session with the provided credentials file or service account to impersonate
+
         Args:
             credentials_file: str
             service_account: str
+
         Returns:
             Credentials object and default project ID
+
+        Raises:
+            GCPLoadCredentialsFromDictError if an error occurs during the loading credentials from dict
+            GCPSetUpSessionError if an error occurs during the setup session
+
+        Usage:
+            >>> GcpProvider.setup_session(credentials_file, service_account)
+            >>> GcpProvider.setup_session(service_account, gcp_credentials)
         """
         try:
             scopes = ["https://www.googleapis.com/auth/cloud-platform"]
@@ -311,6 +398,7 @@ class GcpProvider(Provider):
         If the connection is successful, return a Connection object with is_connected set to True. If the connection fails, return a Connection object with error set to the exception.
         Raise an exception if raise_on_exception is set to True.
         If the Cloud Resource Manager API has not been used before or it is disabled, log a critical message and return a Connection object with error set to the exception.
+
         Args:
             credentials_file: str
             service_account: str
@@ -319,11 +407,38 @@ class GcpProvider(Provider):
             client_secret: str
             refresh_token: str
             provider_id: Optional[str] -> The provider ID, for GCP it is the project ID
+
         Returns:
             Connection object with is_connected set to True if the connection is successful, or error set to the exception if the connection fails
+
+        Raises:
+            GCPLoadCredentialsFromDictError if an error occurs during the loading credentials from dict
+            GCPSetUpSessionError if an error occurs during the setup session
+            GCPCloudResourceManagerAPINotUsedError if the Cloud Resource Manager API has not been used before or it is disabled
+            GCPInvalidProviderIdError if the provider ID does not match with the expected project_id
+            GCPTestConnectionError if an error occurs during the test connection
+
+        Usage:
+            - Using ADC credentials from `/Users/<user>/.config/gcloud/application_default_credentials.json`:
+                >>> GcpProvider.test_connection(
+                ...     client_id="client_id",
+                ...     client_secret="client_secret",
+                ...     refresh_token="refresh_token"
+                ... )
+            - Using a Service Account credentials file path:
+                >>> GcpProvider.test_connection(
+                ...     credentials_file="credentials_file"
+                ... )
+            - Using ADC credentials with a Service Account to impersonate:
+                >>> GcpProvider.test_connection(
+                ...     client_id="client_id",
+                ...     client_secret="client_secret",
+                ...     refresh_token="refresh_token",
+                ...     service_account="service_account"
+                ... )
         """
         try:
-            # Set the GCP credentials using the provided client_id, client_secret and refresh_token
+            # Set the GCP credentials using the provided client_id, client_secret and refresh_token from ADC
             gcp_credentials = None
             if any([client_id, client_secret, refresh_token]):
                 gcp_credentials = GcpProvider.validate_static_arguments(
@@ -421,11 +536,22 @@ class GcpProvider(Provider):
     ) -> dict[str, GCPProject]:
         """
         Get the projects accessible by the provided credentials. If an organization ID is provided, only the projects under that organization are returned.
+
         Args:
             credentials: Credentials
             organization_id: str
+
         Returns:
             dict[str, GCPProject]
+
+        Raises:
+            GCPCloudResourceManagerAPINotUsedError if the Cloud Resource Manager API has not been used before or it is disabled
+            GCPCloudAssetAPINotUsedError if the Cloud Asset API has not been used before or it is disabled
+            GCPHTTPError if an error occurs during the HTTP request
+            GCPGetProjectError if an error occurs during the get project
+
+        Usage:
+            >>> GcpProvider.get_projects(credentials=credentials, organization_id=organization_id)
         """
         try:
             projects = {}
@@ -541,6 +667,19 @@ class GcpProvider(Provider):
             return projects
 
     def update_projects_with_organizations(self):
+        """
+        Update the projects with organizations
+
+        Returns:
+            None
+
+        Raises:
+            GCPHTTPError if an error occurs during the HTTP request
+            GCPGetProjectError if an error occurs during the get project
+
+        Usage:
+            >>> GcpProvider.update_projects_with_organizations()
+        """
         try:
             service = discovery.build(
                 "cloudresourcemanager", "v1", credentials=self._session
@@ -577,11 +716,16 @@ class GcpProvider(Provider):
     def is_project_matching(self, input_project: str, project_to_match: str) -> bool:
         """
         Check if the input project matches the project to match
+
         Args:
             input_project: str
             project_to_match: str
+
         Returns:
             bool
+
+        Usage:
+            >>> GcpProvider.is_project_matching(input_project, project_to_match)
         """
         return (
             "*" in input_project
@@ -596,7 +740,7 @@ class GcpProvider(Provider):
         client_id: str = None, client_secret: str = None, refresh_token: str = None
     ) -> dict:
         """
-        Validate the static arguments client_id, client_secret and refresh_token
+        Validate the static arguments client_id, client_secret and refresh_token of ADC credentials
 
         Args:
             client_id: str
@@ -607,7 +751,10 @@ class GcpProvider(Provider):
             dict
 
         Raises:
-            GCPStaticCredentialsError if any of the static arguments is missing
+            GCPStaticCredentialsError if any of the static arguments is missing from the ADC credentials
+
+        Usage:
+            >>> GcpProvider.validate_static_arguments(client_id, client_secret, refresh_token)
         """
 
         if not client_id or not client_secret or not refresh_token:
@@ -637,6 +784,9 @@ class GcpProvider(Provider):
 
         Raises:
             GCPInvalidProviderIdError if the provider ID does not match with the expected project_id
+
+        Usage:
+            >>> GcpProvider.validate_project_id(provider_id, credentials)
         """
 
         available_projects = list(

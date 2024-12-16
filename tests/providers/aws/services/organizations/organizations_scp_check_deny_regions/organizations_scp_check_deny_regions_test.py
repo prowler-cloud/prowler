@@ -7,7 +7,6 @@ from prowler.providers.aws.services.organizations.organizations_service import (
     Organizations,
 )
 from tests.providers.aws.utils import (
-    AWS_ACCOUNT_ARN,
     AWS_REGION_EU_CENTRAL_1,
     AWS_REGION_EU_WEST_1,
     set_mocked_aws_provider,
@@ -49,8 +48,11 @@ class Test_organizations_scp_check_deny_regions:
                     result[0].status_extended
                     == "AWS Organizations is not in-use for this AWS Account."
                 )
-                assert result[0].resource_id == "AWS Organization"
-                assert result[0].resource_arn == AWS_ACCOUNT_ARN
+                assert result[0].resource_id == "unknown"
+                assert (
+                    result[0].resource_arn
+                    == "arn:aws:organizations::123456789012:unknown"
+                )
                 assert result[0].region == AWS_REGION_EU_WEST_1
 
     @mock_aws
@@ -84,7 +86,11 @@ class Test_organizations_scp_check_deny_regions:
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
                 assert result[0].resource_id == response["Organization"]["Id"]
-                assert result[0].resource_arn == response["Organization"]["Arn"]
+                # Using this because there is no way to get the ARN of the organization
+                assert (
+                    "arn:aws:organizations::123456789012:organization/o-"
+                    in result[0].resource_arn
+                )
                 assert (
                     result[0].status_extended
                     == f"AWS Organization {org_id} has SCP policies but don't restrict AWS Regions."
@@ -176,7 +182,10 @@ class Test_organizations_scp_check_deny_regions:
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
                 assert result[0].resource_id == response["Organization"]["Id"]
-                assert result[0].resource_arn == response["Organization"]["Arn"]
+                assert (
+                    "arn:aws:organizations::123456789012:organization/o-"
+                    in result[0].resource_arn
+                )
                 assert (
                     result[0].status_extended
                     == f"AWS Organization {org_id} has SCP policies {policy_id} restricting some AWS Regions, but not all the configured ones, please check config."
@@ -247,7 +256,7 @@ class Test_organizations_scp_check_deny_regions:
         # Create Organization
         conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
         response = conn.create_organization()
-        org_arn = response["Organization"]["Arn"]
+        response["Organization"]["Arn"]
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -262,9 +271,7 @@ class Test_organizations_scp_check_deny_regions:
                     organizations_scp_check_deny_regions,
                 )
 
-                for org in organizations_client.organizations:
-                    if org.arn == org_arn:
-                        org.policies = None
+                organizations_client.organization.policies = None
 
                 check = organizations_scp_check_deny_regions()
                 result = check.execute()

@@ -1,4 +1,5 @@
 import os
+from typing import Union
 
 from colorama import Fore, Style
 from kubernetes.client.exceptions import ApiException
@@ -33,6 +34,28 @@ from prowler.providers.kubernetes.models import (
 
 
 class KubernetesProvider(Provider):
+    """
+    Represents the Kubernetes provider.
+
+    Attributes:
+        _type (str): The provider type, wich is 'kubernetes'.
+        _session (KubernetesSession): The Kubernetes session.
+        _namespaces (list): The list of namespaces to audit.
+        _audit_config (dict): The audit configuration.
+        _identity (KubernetesIdentityInfo): The Kubernetes identity information.
+        _mutelist (dict): The mutelist.
+        audit_metadata (Audit_Metadata): The audit metadata.
+
+    Methods:
+        setup_session: Sets up the Kubernetes session.
+        test_connection: Tests the connection to the Kubernetes cluster.
+        search_and_save_roles: Searches for and saves roles.
+        get_context_user_roles: Retrieves the context user roles.
+        get_all_namespaces: Retrieves all namespaces.
+        get_pod_current_namespace: Retrieves the current namespace from the pod's mounted service account info.
+        print_credentials: Prints the Kubernetes credentials.
+    """
+
     _type: str = "kubernetes"
     _session: KubernetesSession
     _namespaces: list
@@ -52,13 +75,14 @@ class KubernetesProvider(Provider):
         fixer_config: dict = {},
         mutelist_path: str = None,
         mutelist_content: dict = {},
-        kubeconfig_content: dict = None,
+        kubeconfig_content: Union[dict, str] = None,
     ):
         """
         Initializes the KubernetesProvider instance.
+
         Args:
             kubeconfig_file (str): Path to the kubeconfig file.
-            kubeconfig_content (dict): Content of the kubeconfig file.
+            kubeconfig_content (str or dict): Content of the kubeconfig file.
             context (str): Context name.
             namespace (list): List of namespaces.
             config_content (dict): Audit configuration.
@@ -66,6 +90,60 @@ class KubernetesProvider(Provider):
             fixer_config (dict): Fixer configuration.
             mutelist_path (str): Path to the mutelist file.
             mutelist_content (dict): Mutelist content.
+
+        Raises:
+            KubernetesCloudResourceManagerAPINotUsedError: If the Kubernetes Cloud Resource Manager API is not used.
+            KubernetesError: If an error occurs.
+
+        Returns:
+            KubernetesProvider: The KubernetesProvider instance.
+
+        Usage:
+            - Authentication: The provider can be instantiated in two ways:
+                1. Using the kubeconfig file.
+                    >>> provider = KubernetesProvider(
+                    ...     kubeconfig_file="~/.kube/config",
+                    ...     context="my-context",
+                    ...     namespace=["default"],
+                    ... )
+                2. Using the kubeconfig content.
+                    >>> provider = KubernetesProvider(
+                    ...     kubeconfig_content={"kubecofig": "content"},
+                    ...     context="my-context",
+                    ...     namespace=["default"],
+                    ... )
+            - Namespace and context: The provider can be instantiated with or without specifying the namespace and context.
+                - Without specifying the namespace:
+                    >>> provider = KubernetesProvider(
+                    ...     kubeconfig_file="~/.kube/config",
+                    ...     context="my-context",
+                    ... )
+                - With specifying the namespace:
+                    >>> provider = KubernetesProvider(
+                    ...     kubeconfig_file="~/.kube/config",
+                    ...     context="my-context",
+                    ...     namespace=["default"],
+                    ... )
+                - With specifying the context:
+                    >>> provider = KubernetesProvider(
+                    ...     kubeconfig_file="~/.kube/config",
+                    ...     context="my-context",
+                    ...     namespace=["default"],
+                    ... )
+            - Configuration: The provider can be instantiated with or without specifying the configuration.
+                - Without specifying the configuration:
+                    >>> provider = KubernetesProvider(
+                    ...     kubeconfig_file="~/.kube/config",
+                    ...     context="my-context",
+                    ...     namespace=["default"],
+                    ... )
+                - With specifying the configuration:
+                    >>> provider = KubernetesProvider(
+                    ...     kubeconfig_file="~/.kube/config",
+                    ...     context="my-context",
+                    ...     namespace=["default"],
+                    ...     config_path="path/to/config.yaml",
+                    ... )
         """
 
         logger.info("Instantiating Kubernetes Provider ...")
@@ -147,7 +225,7 @@ class KubernetesProvider(Provider):
     @staticmethod
     def setup_session(
         kubeconfig_file: str = None,
-        kubeconfig_content: dict = None,
+        kubeconfig_content: Union[dict, str] = None,
         context: str = None,
     ) -> KubernetesSession:
         """
@@ -155,20 +233,31 @@ class KubernetesProvider(Provider):
 
         Args:
             kubeconfig_file (str): Path to the kubeconfig file.
-            kubeconfig_content (dict): Content of the kubeconfig file.
+            kubeconfig_content (str or dict): Content of the kubeconfig file.
             context (str): Context name.
 
         Returns:
             Tuple: A tuple containing the API client and the context.
+
+        Raises:
+            KubernetesInvalidKubeConfigFileError: If the kubeconfig file is invalid.
+            KubernetesInvalidProviderIdError: If the provider ID is invalid.
+            KubernetesSetUpSessionError: If an error occurs while setting up the session.
         """
-        logger.info(f"Using kubeconfig file: {kubeconfig_file}")
         try:
             if kubeconfig_content:
-                config.load_kube_config_from_dict(
-                    safe_load(kubeconfig_content), context=context
-                )
-
+                logger.info("Using kubeconfig content...")
+                config_data = safe_load(kubeconfig_content)
+                config.load_kube_config_from_dict(config_data, context=context)
+                if context:
+                    contexts = config_data.get("contexts", [])
+                    for context_item in contexts:
+                        if context_item["name"] == context:
+                            context = context_item
+                else:
+                    context = config_data.get("contexts", [])[0]
             else:
+                logger.info(f"Using kubeconfig file: {kubeconfig_file}...")
                 kubeconfig_file = (
                     kubeconfig_file if kubeconfig_file else "~/.kube/config"
                 )
@@ -191,17 +280,19 @@ class KubernetesProvider(Provider):
                     return KubernetesSession(
                         api_client=client.ApiClient(), context=context
                     )
-            if context:
-                contexts = config.list_kube_config_contexts(
-                    config_file=kubeconfig_file
-                )[0]
-                for context_item in contexts:
-                    if context_item["name"] == context:
-                        context = context_item
-            else:
-                context = config.list_kube_config_contexts(config_file=kubeconfig_file)[
-                    1
-                ]
+                if context:
+                    contexts = config.list_kube_config_contexts(
+                        config_file=kubeconfig_file
+                    )[0]
+                    for context_item in contexts:
+                        if context_item["name"] == context:
+                            context = context_item
+                else:
+                    # If no context is provided, use the active context in the kubeconfig file
+                    # The first element is the list of contexts, the second is the active context
+                    context = config.list_kube_config_contexts(
+                        config_file=kubeconfig_file
+                    )[1]
             return KubernetesSession(api_client=client.ApiClient(), context=context)
 
         except parser.ParserError as parser_error:
@@ -236,7 +327,7 @@ class KubernetesProvider(Provider):
     @staticmethod
     def test_connection(
         kubeconfig_file: str = "~/.kube/config",
-        kubeconfig_content: dict = None,
+        kubeconfig_content: Union[dict, str] = None,
         namespace: str = None,
         provider_id: str = None,
         raise_on_exception: bool = True,
@@ -246,12 +337,49 @@ class KubernetesProvider(Provider):
 
         Args:
             kubeconfig_file (str): Path to the kubeconfig file.
-            kubeconfig_content (dict): Content of the kubeconfig file.
+            kubeconfig_content (str or dict): Content of the kubeconfig file.
             namespace (str): Namespace name.
             provider_id (str): Provider ID to use, in this case, the Kubernetes context.
             raise_on_exception (bool): Whether to raise an exception on error.
+
         Returns:
             Connection: A Connection object.
+
+        Raises:
+            KubernetesInvalidKubeConfigFileError: If the kubeconfig file is invalid.
+            KubernetesInvalidProviderIdError: If the provider ID is invalid.
+            KubernetesSetUpSessionError: If an error occurs while setting up the session.
+            KubernetesAPIError: If an error occurs while testing the connection.
+
+        Usage:
+            - Using the kubeconfig file:
+                >>> connection = KubernetesProvider.test_connection(
+                ...     kubeconfig_file="~/.kube/config",
+                ...     namespace="default",
+                ...     provider_id="my-context",
+                ...     raise_on_exception=True,
+                ... )
+            - Using the kubeconfig content:
+                >>> connection = KubernetesProvider.test_connection(
+                ...     kubeconfig_content="kubeconfig content",
+                ...     namespace="default",
+                ...     provider_id="my-context",
+                ...     raise_on_exception=True,
+                ... )
+            - Using the namespace:
+                >>> connection = KubernetesProvider.test_connection(
+                ...     kubeconfig_file="~/.kube/config",
+                ...     namespace="default",
+                ...     provider_id="my-context",
+                ...     raise_on_exception=True,
+                ... )
+            - Without raising an exception:
+                >>> connection = KubernetesProvider.test_connection(
+                ...     kubeconfig_file="~/.kube/config",
+                ...     namespace="default",
+                ...     provider_id="my-context",
+                ...     raise_on_exception=False,
+                ... )
         """
         try:
             KubernetesProvider.setup_session(
@@ -316,6 +444,17 @@ class KubernetesProvider(Provider):
 
         Returns:
             list: A list containing the roles.
+
+        Raises:
+            KubernetesError: If an error occurs.
+
+        Usage:
+            >>> roles = self.search_and_save_roles(
+            ...     roles=[],
+            ...     role_bindings=rbac_api.list_cluster_role_binding().items,
+            ...     context_user="my-user",
+            ...     role_binding_type="ClusterRole",
+            ... )
         """
         try:
             for rb in role_bindings:
@@ -343,6 +482,12 @@ class KubernetesProvider(Provider):
 
         Returns:
             list: A list containing the context user roles.
+
+        Raises:
+            KubernetesError: If an error occurs.
+
+        Usage:
+            >>> roles = self.get_context_user_roles()
         """
         try:
             rbac_api = client.RbacAuthorizationV1Api()
@@ -379,8 +524,17 @@ class KubernetesProvider(Provider):
     def get_all_namespaces(self) -> list[str]:
         """
         Retrieves all namespaces.
+
         Returns:
             list: A list containing all namespace names.
+
+        Raises:
+            KubernetesAPIError: If an error occurs while retrieving the namespaces.
+            KubernetesTimeoutError: If a timeout occurs while retrieving the namespaces.
+            KubernetesError: If an error occurs.
+
+        Usage:
+            >>> namespaces = self.get_all_namespaces()
         """
         try:
             v1 = client.CoreV1Api()
@@ -413,8 +567,12 @@ class KubernetesProvider(Provider):
     def get_pod_current_namespace(self):
         """
         Retrieves the current namespace from the pod's mounted service account info.
+
         Returns:
             str: The current namespace.
+
+        Usage:
+            >>> namespace = self.get_pod_current_namespace()
         """
         try:
             with open(
@@ -430,6 +588,9 @@ class KubernetesProvider(Provider):
     def print_credentials(self):
         """
         Prints the Kubernetes credentials.
+
+        Usage:
+            >>> self.print_credentials()
         """
         if self._identity.context == "In-Cluster":
             report_lines = [

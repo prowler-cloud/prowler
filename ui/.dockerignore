@@ -1,0 +1,15 @@
+# Include any files or directories that you don't want to be copied to your
+# container here (e.g., local build artifacts, temporary files, etc.).
+#
+# For more help, visit the .dockerignore file reference guide at
+# https://docs.docker.com/go/build-context-dockerignore/
+
+Dockerfile
+.dockerignore
+node_modules
+npm-debug.log
+README.md
+.next
+!.next/static
+!.next/standalone
+.git

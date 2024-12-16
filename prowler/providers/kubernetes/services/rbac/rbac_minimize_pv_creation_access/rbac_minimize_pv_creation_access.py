@@ -1,6 +1,6 @@
 from prowler.lib.check.models import Check, Check_Report_Kubernetes
 from prowler.providers.kubernetes.services.rbac.lib.role_permissions import (
-    is_rule_allowing_permisions,
+    is_rule_allowing_permissions,
 )
 from prowler.providers.kubernetes.services.rbac.rbac_client import rbac_client
 
@@ -23,7 +23,7 @@ class rbac_minimize_pv_creation_access(Check):
                     report.status_extended = f"User or group '{subject.name}' does not have access to create PersistentVolumes."
                     for cr in rbac_client.cluster_roles.values():
                         if cr.metadata.name == crb.roleRef.name:
-                            if is_rule_allowing_permisions(cr.rules, resources, verbs):
+                            if is_rule_allowing_permissions(cr.rules, resources, verbs):
                                 report.status = "FAIL"
                                 report.status_extended = f"User or group '{subject.name}' has access to create PersistentVolumes."
                                 break

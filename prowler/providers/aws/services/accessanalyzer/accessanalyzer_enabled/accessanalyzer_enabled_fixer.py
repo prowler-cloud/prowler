@@ -6,7 +6,8 @@ from prowler.providers.aws.services.accessanalyzer.accessanalyzer_client import 
 
 def fixer(region):
     """
-    Enable Access Analyzer in a region. Requires the access-analyzer:CreateAnalyzer permission:
+    Enable Access Analyzer in a region. Requires the access-analyzer:CreateAnalyzer permission.
+    Permissions:
     {
         "Version": "2012-10-17",
         "Statement": [

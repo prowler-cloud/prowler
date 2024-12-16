@@ -22,7 +22,7 @@ class accessanalyzer_enabled(Check):
             else:
                 if analyzer.status == "NOT_AVAILABLE":
                     report.status = "FAIL"
-                    report.status_extended = f"IAM Access Analyzer in account {analyzer.name} is not enabled."
+                    report.status_extended = f"IAM Access Analyzer in account {accessanalyzer_client.audited_account} is not enabled."
 
                 else:
                     report.status = "FAIL"
