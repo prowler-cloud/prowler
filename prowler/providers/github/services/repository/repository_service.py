@@ -29,6 +29,12 @@ class Repository(GithubService):
                                 f"Could not find SECURITY.md for repo {repo.name}: {e}"
                             )
 
+                        delete_branch_on_merge = (
+                            repo.delete_branch_on_merge
+                            if repo.delete_branch_on_merge is not None
+                            else False
+                        )
+
                         branch_protection = None
                         try:
                             branch = repo.get_branch(default_branch)
@@ -68,6 +74,7 @@ class Repository(GithubService):
                             private=repo.private,
                             securitymd=securitymd_exists,
                             default_branch_protection=branch_protection,
+                            delete_branch_on_merge=delete_branch_on_merge,
                         )
 
         except Exception as error:
@@ -100,3 +107,4 @@ class Repo(BaseModel):
     default_branch: str
     default_branch_protection: Optional[Protection]
     securitymd: bool = False
+    delete_branch_on_merge: bool = False
