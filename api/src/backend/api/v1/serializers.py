@@ -14,24 +14,24 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from api.models import (
+    ComplianceOverview,
+    Finding,
+    Invitation,
+    InvitationRoleRelationship,
     Membership,
     Provider,
     ProviderGroup,
     ProviderGroupMembership,
+    ProviderSecret,
     Resource,
     ResourceTag,
-    Finding,
-    ProviderSecret,
-    Invitation,
-    InvitationRoleRelationship,
     Role,
     RoleProviderGroupRelationship,
-    UserRoleRelationship,
-    ComplianceOverview,
     Scan,
     StateChoices,
     Task,
     User,
+    UserRoleRelationship,
 )
 from api.rls import Tenant
 
@@ -1154,6 +1154,7 @@ class InvitationSerializer(RLSSerializer):
     Serializer for the Invitation model.
     """
 
+    # TODO: can we filter by tenant_id here?
     roles = serializers.ResourceRelatedField(many=True, queryset=Role.objects.all())
 
     class Meta:
@@ -1173,6 +1174,7 @@ class InvitationSerializer(RLSSerializer):
 
 
 class InvitationBaseWriteSerializer(BaseWriteSerializer):
+    # TODO: can we filter by tenant_id here?
     roles = serializers.ResourceRelatedField(many=True, queryset=Role.objects.all())
 
     def validate_email(self, value):
@@ -1274,6 +1276,7 @@ class InvitationAcceptSerializer(RLSSerializer):
 
 
 class RoleSerializer(RLSSerializer, BaseWriteSerializer):
+    # TODO: can we filter by tenant_id here?
     provider_groups = serializers.ResourceRelatedField(
         many=True, queryset=ProviderGroup.objects.all()
     )

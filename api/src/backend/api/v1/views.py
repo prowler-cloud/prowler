@@ -1273,7 +1273,7 @@ class ResourceViewSet(BaseRLSViewSet):
         tenant_id = self.request.tenant_id
         if getattr(user_roles[0], Permissions.UNLIMITED_VISIBILITY.value, False):
             # User has unlimited visibility, return all scans
-            queryset = Resource.objects.all().filter(tenant_id=tenant_id)
+            queryset = Resource.objects.filter(tenant_id=tenant_id)
         else:
             # User lacks permission, filter providers based on provider groups associated with the role
             provider_groups = user_roles[0].provider_groups.all()
@@ -1377,7 +1377,7 @@ class FindingViewSet(BaseRLSViewSet):
         tenant_id = self.request.tenant_id
         if getattr(user_roles[0], Permissions.UNLIMITED_VISIBILITY.value, False):
             # User has unlimited visibility, return all scans
-            queryset = Finding.objects.all().filter(tenant_id=tenant_id)
+            queryset = Finding.objects.filter(tenant_id=tenant_id)
         else:
             # User lacks permission, filter providers based on provider groups associated with the role
             provider_groups = user_roles[0].provider_groups.all()
@@ -1489,7 +1489,7 @@ class ProviderSecretViewSet(BaseRLSViewSet):
     ]
 
     def get_queryset(self):
-        return ProviderSecret.objects.all().filter(tenant_id=self.request.tenant_id)
+        return ProviderSecret.objects.filter(tenant_id=self.request.tenant_id)
 
     def get_serializer_class(self):
         if self.action == "create":
@@ -1548,7 +1548,7 @@ class InvitationViewSet(BaseRLSViewSet):
     permission_classes = BaseRLSViewSet.permission_classes + [HasPermissions]
 
     def get_queryset(self):
-        return Invitation.objects.all().filter(tenant_id=self.request.tenant_id)
+        return Invitation.objects.filter(tenant_id=self.request.tenant_id)
 
     def get_serializer_class(self):
         if self.action == "create":
@@ -1595,7 +1595,7 @@ class InvitationAcceptViewSet(BaseRLSViewSet):
     http_method_names = ["post"]
 
     def get_queryset(self):
-        return Invitation.objects.all().filter(tenant_id=self.request.tenant_id)
+        return Invitation.objects.filter(tenant_id=self.request.tenant_id)
 
     def get_serializer_class(self):
         if hasattr(self, "response_serializer_class"):
@@ -1687,7 +1687,7 @@ class RoleViewSet(BaseRLSViewSet):
     permission_classes = BaseRLSViewSet.permission_classes + [HasPermissions]
 
     def get_queryset(self):
-        return Role.objects.all().filter(tenant_id=self.request.tenant_id)
+        return Role.objects.filter(tenant_id=self.request.tenant_id)
 
     def get_serializer_class(self):
         if self.action == "create":
@@ -1746,7 +1746,7 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
     schema = RelationshipViewSchema()
 
     def get_queryset(self):
-        return Role.objects.all().filter(tenant_id=self.request.tenant_id)
+        return Role.objects.filter(tenant_id=self.request.tenant_id)
 
     def create(self, request, *args, **kwargs):
         role = self.get_object()
@@ -1832,12 +1832,10 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
 
     def get_queryset(self):
         if self.action == "retrieve":
-            return ComplianceOverview.objects.all().filter(
-                tenant_id=self.request.tenant_id
-            )
+            return ComplianceOverview.objects.filter(tenant_id=self.request.tenant_id)
 
         base_queryset = self.filter_queryset(
-            ComplianceOverview.objects.all().filter(tenant_id=self.request.tenant_id)
+            ComplianceOverview.objects.filter(tenant_id=self.request.tenant_id)
         )
 
         max_failed_ids = (
@@ -1912,11 +1910,11 @@ class OverviewViewSet(BaseRLSViewSet):
 
     def get_queryset(self):
         if self.action == "providers":
-            return Finding.objects.all().filter(tenant_id=self.request.tenant_id)
+            return Finding.objects.filter(tenant_id=self.request.tenant_id)
         elif self.action == "findings":
-            return ScanSummary.objects.all().filter(tenant_id=self.request.tenant_id)
+            return ScanSummary.objects.filter(tenant_id=self.request.tenant_id)
         elif self.action == "findings_severity":
-            return ScanSummary.objects.all().filter(tenant_id=self.request.tenant_id)
+            return ScanSummary.objects.filter(tenant_id=self.request.tenant_id)
         else:
             return super().get_queryset()
 
