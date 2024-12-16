@@ -10,7 +10,7 @@ class kms_key_not_publicly_accessible(Check):
             report.project_id = key.project_id
             report.resource_id = key.id
             report.resource_name = key.name
-            report.location = kms_client.region
+            report.location = key.location
             report.status = "PASS"
             report.status_extended = f"Key {key.name} is not exposed to Public."
             for member in key.members:
