@@ -77,7 +77,7 @@ def create_state_machine(name, logging_configuration):
     ],
 )
 @mock_aws(config={"stepfunctions": {"execute_state_machine": True}})
-def test_stepfunctions_statemachine_logging_enabled(state_machines, expected_status):
+def test_stepfunctions_statemachine_logging(state_machines, expected_status):
     # Create a mocked AWS provider
     mocked_aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
