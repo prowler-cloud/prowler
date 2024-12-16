@@ -46,6 +46,7 @@ class Test_compute_instance_confidential_computing_enabled:
         compute_client = mock.MagicMock
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = [instance]
+        compute_client.region = "global"
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -69,7 +70,7 @@ class Test_compute_instance_confidential_computing_enabled:
             )
             assert result[0].resource_id == instance.id
             assert result[0].resource_name == instance.name
-            assert result[0].location == instance.zone
+            assert result[0].location == "global"
             assert result[0].project_id == GCP_PROJECT_ID
 
     def test_one_instance_with_shielded_vtpm_disabled(self):
@@ -93,6 +94,7 @@ class Test_compute_instance_confidential_computing_enabled:
         compute_client = mock.MagicMock
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = [instance]
+        compute_client.region = "us-central1-a"
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -116,5 +118,5 @@ class Test_compute_instance_confidential_computing_enabled:
             )
             assert result[0].resource_id == instance.id
             assert result[0].resource_name == instance.name
-            assert result[0].location == instance.zone
+            assert result[0].location == "us-central1-a"
             assert result[0].project_id == GCP_PROJECT_ID

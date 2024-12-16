@@ -46,6 +46,7 @@ class Test_compute_instance_encryption_with_csek_enabled:
         compute_client = mock.MagicMock
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = [instance]
+        compute_client.region = "global"
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -68,6 +69,7 @@ class Test_compute_instance_encryption_with_csek_enabled:
                 result[0].status_extended,
             )
             assert result[0].resource_id == instance.id
+            assert result[0].location == "global"
 
     def test_one_instance_with_one_unecrypted_disk(self):
         from prowler.providers.gcp.services.compute.compute_service import Instance
@@ -90,6 +92,7 @@ class Test_compute_instance_encryption_with_csek_enabled:
         compute_client = mock.MagicMock
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = [instance]
+        compute_client.region = "global"
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -112,6 +115,7 @@ class Test_compute_instance_encryption_with_csek_enabled:
                 result[0].status_extended,
             )
             assert result[0].resource_id == instance.id
+            assert result[0].location == "global"
 
     def test_one_instance_with_all_unencrypted_disks(self):
         from prowler.providers.gcp.services.compute.compute_service import Instance
@@ -134,6 +138,7 @@ class Test_compute_instance_encryption_with_csek_enabled:
         compute_client = mock.MagicMock
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = [instance]
+        compute_client.region = "global"
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -156,3 +161,4 @@ class Test_compute_instance_encryption_with_csek_enabled:
                 result[0].status_extended,
             )
             assert result[0].resource_id == instance.id
+            assert result[0].location == "global"

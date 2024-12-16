@@ -134,6 +134,7 @@ class Test_compute_instance_serial_ports_in_use:
         compute_client = mock.MagicMock
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = [instance]
+        compute_client.region = "global"
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -156,6 +157,7 @@ class Test_compute_instance_serial_ports_in_use:
                 result[0].status_extended,
             )
             assert result[0].resource_id == instance.id
+            assert result[0].location == "global"
 
     def test_one_instance_with_serial_ports_enable_1(self):
         from prowler.providers.gcp.services.compute.compute_service import Instance
@@ -178,6 +180,7 @@ class Test_compute_instance_serial_ports_in_use:
         compute_client = mock.MagicMock
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = [instance]
+        compute_client.region = "global"
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -200,6 +203,7 @@ class Test_compute_instance_serial_ports_in_use:
                 result[0].status_extended,
             )
             assert result[0].resource_id == instance.id
+            assert result[0].location == "global"
 
     def test_one_instance_with_serial_ports_enable_true(self):
         from prowler.providers.gcp.services.compute.compute_service import Instance
@@ -222,6 +226,7 @@ class Test_compute_instance_serial_ports_in_use:
         compute_client = mock.MagicMock
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = [instance]
+        compute_client.region = "global"
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -244,3 +249,4 @@ class Test_compute_instance_serial_ports_in_use:
                 result[0].status_extended,
             )
             assert result[0].resource_id == instance.id
+            assert result[0].location == "global"

@@ -65,7 +65,7 @@ class Test_gke_cluster_no_default_service_account:
             assert result[0].project_id == clusters["123"].project_id
             assert result[0].resource_id == clusters["123"].id
             assert result[0].resource_name == clusters["123"].name
-            assert result[0].location == clusters["123"].location
+            assert result[0].location == "global"
 
     def test_one_cluster_without_node_pool_without_default_sa(self):
 
@@ -108,7 +108,7 @@ class Test_gke_cluster_no_default_service_account:
             assert result[0].project_id == clusters["123"].project_id
             assert result[0].resource_id == clusters["123"].id
             assert result[0].resource_name == clusters["123"].name
-            assert result[0].location == clusters["123"].location
+            assert result[0].location == "global"
 
     def test_one_cluster_with_node_pool_with_default_sa(self):
 
@@ -158,7 +158,7 @@ class Test_gke_cluster_no_default_service_account:
             assert result[0].project_id == clusters["123"].project_id
             assert result[0].resource_id == clusters["123"].id
             assert result[0].resource_name == clusters["123"].name
-            assert result[0].location == clusters["123"].location
+            assert result[0].location == "global"
 
     def test_one_cluster_with_node_pool_with_non_default_sa(self):
 
@@ -208,4 +208,4 @@ class Test_gke_cluster_no_default_service_account:
             assert result[0].project_id == clusters["123"].project_id
             assert result[0].resource_id == clusters["123"].id
             assert result[0].resource_name == clusters["123"].name
-            assert result[0].location == clusters["123"].location
+            assert result[0].location == "global"

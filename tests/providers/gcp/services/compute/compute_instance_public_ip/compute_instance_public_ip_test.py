@@ -57,6 +57,7 @@ class Test_compute_instance_public_ip:
 
             compute_client.project_ids = [GCP_PROJECT_ID]
             compute_client.instances = [instance]
+            compute_client.region = "global"
 
             check = compute_instance_public_ip()
             result = check.execute()
@@ -70,7 +71,7 @@ class Test_compute_instance_public_ip:
             assert result[0].resource_id == "1234567890"
             assert result[0].project_id == GCP_PROJECT_ID
             assert result[0].resource_name == "test"
-            assert result[0].location == "us-central1-a"
+            assert result[0].location == "global"
 
     def test_public_ip_instance(self):
         from prowler.providers.gcp.services.compute.compute_service import Instance
@@ -95,6 +96,7 @@ class Test_compute_instance_public_ip:
         compute_client = mock.MagicMock
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = [instance]
+        compute_client.region = "global"
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -116,4 +118,4 @@ class Test_compute_instance_public_ip:
             assert result[0].resource_id == "1234567890"
             assert result[0].project_id == GCP_PROJECT_ID
             assert result[0].resource_name == "test"
-            assert result[0].location == "us-central1-a"
+            assert result[0].location == "global"

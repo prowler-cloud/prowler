@@ -12,7 +12,7 @@ class kms_key_rotation_enabled(Check):
             report.project_id = key.project_id
             report.resource_id = key.id
             report.resource_name = key.name
-            report.location = key.location
+            report.location = kms_client.region
             now = datetime.datetime.now()
             condition_next_rotation_time = False
             if key.next_rotation_time:
