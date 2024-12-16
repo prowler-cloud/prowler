@@ -8,7 +8,6 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_control
 from drf_spectacular.settings import spectacular_settings
-from drf_spectacular_jsonapi.schemas.openapi import JsonApiAutoSchema
 from drf_spectacular.utils import (
     OpenApiParameter,
     OpenApiResponse,
@@ -17,6 +16,7 @@ from drf_spectacular.utils import (
     extend_schema_view,
 )
 from drf_spectacular.views import SpectacularAPIView
+from drf_spectacular_jsonapi.schemas.openapi import JsonApiAutoSchema
 from rest_framework import permissions, status
 from rest_framework.decorators import action
 from rest_framework.exceptions import (
@@ -26,10 +26,9 @@ from rest_framework.exceptions import (
     ValidationError,
 )
 from rest_framework.generics import GenericAPIView, get_object_or_404
+from rest_framework.permissions import SAFE_METHODS
 from rest_framework_json_api.views import RelationshipView, Response
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
-from rest_framework.permissions import SAFE_METHODS
-
 from tasks.beat import schedule_provider_scan
 from tasks.tasks import (
     check_provider_connection_task,
@@ -50,17 +49,14 @@ from api.filters import (
     ProviderGroupFilter,
     ProviderSecretFilter,
     ResourceFilter,
+    RoleFilter,
     ScanFilter,
     ScanSummaryFilter,
     TaskFilter,
     TenantFilter,
     UserFilter,
-    RoleFilter,
 )
 from api.models import (
-    StatusChoices,
-    User,
-    UserRoleRelationship,
     ComplianceOverview,
     Finding,
     Invitation,
@@ -69,14 +65,17 @@ from api.models import (
     ProviderGroup,
     ProviderGroupMembership,
     ProviderSecret,
+    Resource,
     Role,
     RoleProviderGroupRelationship,
-    Resource,
     Scan,
     ScanSummary,
     SeverityChoices,
     StateChoices,
+    StatusChoices,
     Task,
+    User,
+    UserRoleRelationship,
 )
 from api.pagination import ComplianceOverviewPagination
 from api.rbac.permissions import HasPermissions, Permissions
@@ -84,12 +83,6 @@ from api.rls import Tenant
 from api.utils import validate_invitation
 from api.uuid_utils import datetime_to_uuid7
 from api.v1.serializers import (
-    TokenSerializer,
-    TokenRefreshSerializer,
-    UserSerializer,
-    UserCreateSerializer,
-    UserUpdateSerializer,
-    UserRoleRelationshipSerializer,
     ComplianceOverviewFullSerializer,
     ComplianceOverviewSerializer,
     FindingDynamicFilterSerializer,
@@ -106,24 +99,29 @@ from api.v1.serializers import (
     ProviderGroupMembershipSerializer,
     ProviderGroupSerializer,
     ProviderGroupUpdateSerializer,
-    RoleProviderGroupRelationshipSerializer,
-    ProviderSerializer,
-    ProviderUpdateSerializer,
-    TenantSerializer,
-    TaskSerializer,
-    ScanSerializer,
-    ScanCreateSerializer,
-    ScanUpdateSerializer,
-    ResourceSerializer,
+    ProviderSecretCreateSerializer,
     ProviderSecretSerializer,
     ProviderSecretUpdateSerializer,
-    ProviderSecretCreateSerializer,
-    RoleSerializer,
+    ProviderSerializer,
+    ProviderUpdateSerializer,
+    ResourceSerializer,
     RoleCreateSerializer,
+    RoleProviderGroupRelationshipSerializer,
+    RoleSerializer,
     RoleUpdateSerializer,
+    ScanCreateSerializer,
+    ScanSerializer,
+    ScanUpdateSerializer,
     ScheduleDailyCreateSerializer,
+    TaskSerializer,
+    TenantSerializer,
+    TokenRefreshSerializer,
+    TokenSerializer,
+    UserCreateSerializer,
+    UserRoleRelationshipSerializer,
+    UserSerializer,
+    UserUpdateSerializer,
 )
-
 
 CACHE_DECORATOR = cache_control(
     max_age=django_settings.CACHE_MAX_AGE,
@@ -456,7 +454,7 @@ class UserRoleRelationshipView(RelationshipView, BaseRLSViewSet):
     schema = RelationshipViewSchema()
 
     def get_queryset(self):
-        return User.objects.all()
+        return User.objects.filter(tenant_id=self.request.tenant_id)
 
     def create(self, request, *args, **kwargs):
         user = self.get_object()
@@ -740,7 +738,7 @@ class ProviderGroupViewSet(BaseRLSViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        user_roles = user.roles.all()
+        user_roles = user.roles.filter(tenant_id=self.request.tenant_id)
 
         # Check if any of the user's roles have UNLIMITED_VISIBILITY
         if getattr(user_roles[0], Permissions.UNLIMITED_VISIBILITY.value, False):
@@ -801,7 +799,7 @@ class ProviderGroupProvidersRelationshipView(RelationshipView, BaseRLSViewSet):
     schema = RelationshipViewSchema()
 
     def get_queryset(self):
-        return ProviderGroup.objects.all()
+        return ProviderGroup.objects.filter(tenant_id=self.request.tenant_id)
 
     def create(self, request, *args, **kwargs):
         provider_group = self.get_object()
@@ -921,14 +919,15 @@ class ProviderViewSet(BaseRLSViewSet):
     def get_queryset(self):
         user = self.request.user
         user_roles = user.roles.all()
+        tenant_id = self.request.tenant_id
         if getattr(user_roles[0], Permissions.UNLIMITED_VISIBILITY.value, False):
             # User has unlimited visibility, return all providers
-            return Provider.objects.all()
+            return Provider.objects.filter(tenant_id=tenant_id)
 
         # User lacks permission, filter providers based on provider groups associated with the role
         provider_groups = user_roles[0].provider_groups.all()
         providers = Provider.objects.filter(
-            provider_groups__in=provider_groups
+            provider_groups__in=provider_groups, tenant_id=tenant_id
         ).distinct()
 
         return providers
@@ -1075,14 +1074,15 @@ class ScanViewSet(BaseRLSViewSet):
     def get_queryset(self):
         user = self.request.user
         user_roles = user.roles.all()
+        tenant_id = self.request.tenant_id
         if getattr(user_roles[0], Permissions.UNLIMITED_VISIBILITY.value, False):
             # User has unlimited visibility, return all scans
-            return Scan.objects.all()
+            return Scan.objects.filter(tenant_id=tenant_id)
 
         # User lacks permission, filter providers based on provider groups associated with the role
         provider_groups = user_roles[0].provider_groups.all()
         providers = Provider.objects.filter(
-            provider_groups__in=provider_groups
+            provider_groups__in=provider_groups, tenant_id=tenant_id
         ).distinct()
         return Scan.objects.filter(provider__in=providers).distinct()
 
@@ -1180,6 +1180,7 @@ class TaskViewSet(BaseRLSViewSet):
     def get_queryset(self):
         user = self.request.user
         user_roles = user.roles.all()
+        tenant_id = self.request.tenant_id
         if getattr(user_roles[0], Permissions.UNLIMITED_VISIBILITY.value, False):
             # User has unlimited visibility, return all tasks
             return Task.objects.annotate(
@@ -1190,9 +1191,11 @@ class TaskViewSet(BaseRLSViewSet):
         # User lacks permission, filter tasks based on provider groups associated with the role
         provider_groups = user_roles[0].provider_groups.all()
         providers = Provider.objects.filter(
-            provider_groups__in=provider_groups
+            provider_groups__in=provider_groups, tenant_id=tenant_id
         ).distinct()
-        scans = Scan.objects.filter(provider__in=providers).distinct()
+        scans = Scan.objects.filter(
+            provider__in=providers, tenant_id=tenant_id
+        ).distinct()
         return Task.objects.filter(scan__in=scans).distinct()
 
     def destroy(self, request, *args, pk=None, **kwargs):
@@ -1267,16 +1270,19 @@ class ResourceViewSet(BaseRLSViewSet):
     def get_queryset(self):
         user = self.request.user
         user_roles = user.roles.all()
+        tenant_id = self.request.tenant_id
         if getattr(user_roles[0], Permissions.UNLIMITED_VISIBILITY.value, False):
             # User has unlimited visibility, return all scans
-            queryset = Resource.objects.all()
+            queryset = Resource.objects.all().filter(tenant_id=tenant_id)
         else:
             # User lacks permission, filter providers based on provider groups associated with the role
             provider_groups = user_roles[0].provider_groups.all()
             providers = Provider.objects.filter(
-                provider_groups__in=provider_groups
+                provider_groups__in=provider_groups, tenant_id=tenant_id
             ).distinct()
-            queryset = Resource.objects.filter(provider__in=providers).distinct()
+            queryset = Resource.objects.filter(
+                provider__in=providers, tenant_id=tenant_id
+            ).distinct()
 
         search_value = self.request.query_params.get("filter[search]", None)
         if search_value:
@@ -1368,17 +1374,22 @@ class FindingViewSet(BaseRLSViewSet):
     def get_queryset(self):
         user = self.request.user
         user_roles = user.roles.all()
+        tenant_id = self.request.tenant_id
         if getattr(user_roles[0], Permissions.UNLIMITED_VISIBILITY.value, False):
             # User has unlimited visibility, return all scans
-            queryset = Finding.objects.all()
+            queryset = Finding.objects.all().filter(tenant_id=tenant_id)
         else:
             # User lacks permission, filter providers based on provider groups associated with the role
             provider_groups = user_roles[0].provider_groups.all()
             providers = Provider.objects.filter(
-                provider_groups__in=provider_groups
+                provider_groups__in=provider_groups, tenant_id=tenant_id
             ).distinct()
-            scans = Scan.objects.filter(provider__in=providers).distinct()
-            queryset = Finding.objects.filter(scan__in=scans).distinct()
+            scans = Scan.objects.filter(
+                provider__in=providers, tenant_id=tenant_id
+            ).distinct()
+            queryset = Finding.objects.filter(
+                scan__in=scans, tenant_id=tenant_id
+            ).distinct()
 
         search_value = self.request.query_params.get("filter[search]", None)
         if search_value:
@@ -1478,7 +1489,7 @@ class ProviderSecretViewSet(BaseRLSViewSet):
     ]
 
     def get_queryset(self):
-        return ProviderSecret.objects.all()
+        return ProviderSecret.objects.all().filter(tenant_id=self.request.tenant_id)
 
     def get_serializer_class(self):
         if self.action == "create":
@@ -1537,7 +1548,7 @@ class InvitationViewSet(BaseRLSViewSet):
     permission_classes = BaseRLSViewSet.permission_classes + [HasPermissions]
 
     def get_queryset(self):
-        return Invitation.objects.all()
+        return Invitation.objects.all().filter(tenant_id=self.request.tenant_id)
 
     def get_serializer_class(self):
         if self.action == "create":
@@ -1584,7 +1595,7 @@ class InvitationAcceptViewSet(BaseRLSViewSet):
     http_method_names = ["post"]
 
     def get_queryset(self):
-        return Invitation.objects.all()
+        return Invitation.objects.all().filter(tenant_id=self.request.tenant_id)
 
     def get_serializer_class(self):
         if hasattr(self, "response_serializer_class"):
@@ -1676,7 +1687,7 @@ class RoleViewSet(BaseRLSViewSet):
     permission_classes = BaseRLSViewSet.permission_classes + [HasPermissions]
 
     def get_queryset(self):
-        return Role.objects.all()
+        return Role.objects.all().filter(tenant_id=self.request.tenant_id)
 
     def get_serializer_class(self):
         if self.action == "create":
@@ -1735,7 +1746,7 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
     schema = RelationshipViewSchema()
 
     def get_queryset(self):
-        return Role.objects.all()
+        return Role.objects.all().filter(tenant_id=self.request.tenant_id)
 
     def create(self, request, *args, **kwargs):
         role = self.get_object()
@@ -1821,9 +1832,13 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
 
     def get_queryset(self):
         if self.action == "retrieve":
-            return ComplianceOverview.objects.all()
+            return ComplianceOverview.objects.all().filter(
+                tenant_id=self.request.tenant_id
+            )
 
-        base_queryset = self.filter_queryset(ComplianceOverview.objects.all())
+        base_queryset = self.filter_queryset(
+            ComplianceOverview.objects.all().filter(tenant_id=self.request.tenant_id)
+        )
 
         max_failed_ids = (
             base_queryset.filter(compliance_id=OuterRef("compliance_id"))
@@ -1897,11 +1912,11 @@ class OverviewViewSet(BaseRLSViewSet):
 
     def get_queryset(self):
         if self.action == "providers":
-            return Finding.objects.all()
+            return Finding.objects.all().filter(tenant_id=self.request.tenant_id)
         elif self.action == "findings":
-            return ScanSummary.objects.all()
+            return ScanSummary.objects.all().filter(tenant_id=self.request.tenant_id)
         elif self.action == "findings_severity":
-            return ScanSummary.objects.all()
+            return ScanSummary.objects.all().filter(tenant_id=self.request.tenant_id)
         else:
             return super().get_queryset()
 
