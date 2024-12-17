@@ -118,7 +118,14 @@ class Test_organizations_tags_policies_enabled_and_attached:
                         aws_managed=False,
                         content={
                             "services": {
-                                "default": {"opt_out_policy": {"@@operators_allowed_for_child_policies": ["@@none"], "@@assign": "optOut"}}
+                                "default": {
+                                    "opt_out_policy": {
+                                        "@@operators_allowed_for_child_policies": [
+                                            "@@none"
+                                        ],
+                                        "@@assign": "optOut",
+                                    }
+                                }
                             }
                         },
                         targets=[],
@@ -297,7 +304,13 @@ class Test_organizations_tags_policies_enabled_and_attached:
                         aws_managed=False,
                         content={
                             "services": {
-                                "default": {"opt_out_policy": {"@@operators_allowed_for_child_policies": ["@@none"]}}
+                                "default": {
+                                    "opt_out_policy": {
+                                        "@@operators_allowed_for_child_policies": [
+                                            "@@none"
+                                        ]
+                                    }
+                                }
                             }
                         },
                         targets=[],
@@ -337,4 +350,3 @@ class Test_organizations_tags_policies_enabled_and_attached:
                     == "arn:aws:organizations::1234567890:organization/o-1234567890"
                 )
                 assert result[0].region == AWS_REGION_EU_WEST_1
-

@@ -30,10 +30,13 @@ class organizations_opt_out_ai_services_policy(Check):
                             .get("default", {})
                             .get("opt_out_policy", {})
                         )
-                        if (
-                            opt_out_policy.get("@@assign") == "optOut"
-                            and opt_out_policy.get("@@operators_allowed_for_child_policies") == ["@@none"]
-                        ):
+                        if opt_out_policy.get(
+                            "@@assign"
+                        ) == "optOut" and opt_out_policy.get(
+                            "@@operators_allowed_for_child_policies"
+                        ) == [
+                            "@@none"
+                        ]:
                             report.status = "PASS"
                             report.status_extended = f"AWS Organization {organizations_client.organization.id} has opted out of all AI services, not granting consent for AWS to access its data, and also disallows child-accounts to overwrite this policy."
                             break
