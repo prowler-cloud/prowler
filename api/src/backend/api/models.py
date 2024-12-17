@@ -516,6 +516,7 @@ class Resource(RowLevelSecurityProtectedModel):
     )
 
     def get_tags(self) -> dict:
+        # TODO: can we filter by tenant_id here?
         return {tag.key: tag.value for tag in self.tags.all()}
 
     def clear_tags(self):
