@@ -5,7 +5,7 @@ from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
     cloudtrail_client,
 )
 
-original_threat_detection_enumeration_actions = [
+default_threat_detection_enumeration_actions = [
     "DescribeAccessEntry",
     "DescribeAccountAttributes",
     "DescribeAvailabilityZones",
@@ -110,7 +110,7 @@ class cloudtrail_threat_detection_enumeration(Check):
         )
         enumeration_actions = cloudtrail_client.audit_config.get(
             "threat_detection_enumeration_actions",
-            original_threat_detection_enumeration_actions,
+            default_threat_detection_enumeration_actions,
         )
         potential_enumeration = {}
         found_potential_enumeration = False

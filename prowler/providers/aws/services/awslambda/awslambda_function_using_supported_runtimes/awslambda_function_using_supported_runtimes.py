@@ -1,7 +1,7 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.awslambda.awslambda_client import awslambda_client
 
-original_obsolete_lambda_runtimes = [
+default_obsolete_lambda_runtimes = [
     "java8",
     "go1.x",
     "provided",
@@ -40,7 +40,7 @@ class awslambda_function_using_supported_runtimes(Check):
                 report.resource_tags = function.tags
 
                 if function.runtime in awslambda_client.audit_config.get(
-                    "obsolete_lambda_runtimes", original_obsolete_lambda_runtimes
+                    "obsolete_lambda_runtimes", default_obsolete_lambda_runtimes
                 ):
                     report.status = "FAIL"
                     report.status_extended = f"Lambda function {function.name} is using {function.runtime} which is obsolete."

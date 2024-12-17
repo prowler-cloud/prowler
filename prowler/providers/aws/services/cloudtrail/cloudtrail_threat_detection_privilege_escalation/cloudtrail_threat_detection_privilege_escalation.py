@@ -5,7 +5,7 @@ from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
     cloudtrail_client,
 )
 
-original_threat_detection_privilege_escalation_actions = [
+default_threat_detection_privilege_escalation_actions = [
     "AddPermission",
     "AddRoleToInstanceProfile",
     "AddUserToGroup",
@@ -71,7 +71,7 @@ class cloudtrail_threat_detection_privilege_escalation(Check):
         )
         privilege_escalation_actions = cloudtrail_client.audit_config.get(
             "threat_detection_privilege_escalation_actions",
-            original_threat_detection_privilege_escalation_actions,
+            default_threat_detection_privilege_escalation_actions,
         )
 
         potential_privilege_escalation = {}

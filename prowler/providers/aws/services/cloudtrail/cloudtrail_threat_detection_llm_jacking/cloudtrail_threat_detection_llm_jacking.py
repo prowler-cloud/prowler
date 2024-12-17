@@ -5,7 +5,7 @@ from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
     cloudtrail_client,
 )
 
-original_threat_detection_llm_jacking_actions = [
+default_threat_detection_llm_jacking_actions = [
     "PutUseCaseForModelAccess",
     "PutFoundationModelEntitlement",
     "PutModelInvocationLoggingConfiguration",
@@ -32,7 +32,7 @@ class cloudtrail_threat_detection_llm_jacking(Check):
         )
         llm_jacking_actions = cloudtrail_client.audit_config.get(
             "threat_detection_llm_jacking_actions",
-            original_threat_detection_llm_jacking_actions,
+            default_threat_detection_llm_jacking_actions,
         )
         potential_llm_jacking = {}
         found_potential_llm_jacking = False
