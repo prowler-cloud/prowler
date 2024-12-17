@@ -143,7 +143,7 @@ Mutelist:
 
 ### Description
 
-This field can be used to add some notes for the specific muted findings related with the checks, regions, resources and tags especified.
+This field can be used to add information or some hints for the Mutelist rule.
 
 ## How to Use the Mutelist
 
