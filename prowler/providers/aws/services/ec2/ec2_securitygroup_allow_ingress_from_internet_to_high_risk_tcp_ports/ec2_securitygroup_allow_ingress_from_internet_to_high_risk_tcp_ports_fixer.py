@@ -35,14 +35,13 @@ def fixer(resource_id: str, region: str) -> bool:
         for security_group in ec2_client.security_groups.values():
             if security_group.id == resource_id:
                 for ingress_rule in security_group.ingress_rules:
-                    for port in check_ports:
-                        if check_security_group(
-                            ingress_rule, "tcp", [port], any_address=True
-                        ):
-                            regional_client.revoke_security_group_ingress(
-                                GroupId=security_group.id,
-                                IpPermissions=[ingress_rule],
-                            )
+                    if check_security_group(
+                        ingress_rule, "tcp", check_ports, any_address=True
+                    ):
+                        regional_client.revoke_security_group_ingress(
+                            GroupId=security_group.id,
+                            IpPermissions=[ingress_rule],
+                        )
 
     except Exception as error:
         logger.error(

@@ -29,25 +29,18 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports_
     def test_ec2_sg_exposed_port_in_private_subnet_with_ip4_and_ip6(self):
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
-        ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
-        security_groups = ec2_client.describe_security_groups(GroupNames=["default"])[
+        ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]["VpcId"]
+        default_sg = ec2_client.describe_security_groups(GroupNames=["default"])[
             "SecurityGroups"
-        ]
-        default_sg_id = security_groups[0]["GroupId"]
+        ][0]
+        default_sg_id = default_sg["GroupId"]
         ec2_client.authorize_security_group_ingress(
             GroupId=default_sg_id,
             IpPermissions=[
                 {
                     "IpProtocol": "tcp",
-                    "FromPort": 20,
-                    "ToPort": 9000,
-                    "IpRanges": [{"CidrIp": "0.0.0.0/0"}, {"CidrIp": "10.0.0.0/24"}],
-                    "Ipv6Ranges": [{"CidrIpv6": "::/0"}, {"CidrIpv6": "2001:db8::/32"}],
-                },
-                {
-                    "IpProtocol": "tcp",
-                    "FromPort": 20,
-                    "ToPort": 9000,
+                    "FromPort": 10,
+                    "ToPort": 9100,
                     "IpRanges": [{"CidrIp": "0.0.0.0/0"}, {"CidrIp": "10.0.0.0/24"}],
                     "Ipv6Ranges": [{"CidrIpv6": "::/0"}, {"CidrIpv6": "2001:db8::/32"}],
                 },
@@ -94,31 +87,18 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports_
         ):
             # Create EC2 Mocked Resources
             ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
-            ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
-            security_groups = ec2_client.describe_security_groups(
-                GroupNames=["default"]
-            )["SecurityGroups"]
-            default_sg_id = security_groups[0]["GroupId"]
+            ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]["VpcId"]
+            default_sg = ec2_client.describe_security_groups(GroupNames=["default"])[
+                "SecurityGroups"
+            ][0]
+            default_sg_id = default_sg["GroupId"]
             ec2_client.authorize_security_group_ingress(
                 GroupId=default_sg_id,
                 IpPermissions=[
                     {
                         "IpProtocol": "tcp",
-                        "FromPort": 20,
-                        "ToPort": 9000,
-                        "IpRanges": [
-                            {"CidrIp": "0.0.0.0/0"},
-                            {"CidrIp": "10.0.0.0/24"},
-                        ],
-                        "Ipv6Ranges": [
-                            {"CidrIpv6": "::/0"},
-                            {"CidrIpv6": "2001:db8::/32"},
-                        ],
-                    },
-                    {
-                        "IpProtocol": "tcp",
-                        "FromPort": 20,
-                        "ToPort": 9000,
+                        "FromPort": 10,
+                        "ToPort": 9100,
                         "IpRanges": [
                             {"CidrIp": "0.0.0.0/0"},
                             {"CidrIp": "10.0.0.0/24"},
@@ -168,19 +148,19 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports_
     def test_ec2_sg_exposed_port_in_private_subnet_only_with_ip4(self):
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
-        ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
-        security_groups = ec2_client.describe_security_groups(GroupNames=["default"])[
+        ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]["VpcId"]
+        default_sg = ec2_client.describe_security_groups(GroupNames=["default"])[
             "SecurityGroups"
-        ]
-        default_sg_id = security_groups[0]["GroupId"]
+        ][0]
+        default_sg_id = default_sg["GroupId"]
         ec2_client.authorize_security_group_ingress(
             GroupId=default_sg_id,
             IpPermissions=[
                 {
                     "IpProtocol": "tcp",
-                    "FromPort": 20,
-                    "ToPort": 9000,
-                    "IpRanges": [{"CidrIp": "0.0.0.0/0"}, {"CidrIp": "10.0.0.0/24"}],
+                    "FromPort": 10,
+                    "ToPort": 9100,
+                    "IpRanges": [{"CidrIp": "0.0.0.0/0"}],
                 },
             ],
         )
@@ -222,19 +202,19 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports_
     def test_ec2_sg_exposed_port_in_private_subnet_only_with_ip6(self):
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
-        ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
-        security_groups = ec2_client.describe_security_groups(GroupNames=["default"])[
+        ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]["VpcId"]
+        default_sg = ec2_client.describe_security_groups(GroupNames=["default"])[
             "SecurityGroups"
-        ]
-        default_sg_id = security_groups[0]["GroupId"]
+        ][0]
+        default_sg_id = default_sg["GroupId"]
         ec2_client.authorize_security_group_ingress(
             GroupId=default_sg_id,
             IpPermissions=[
                 {
                     "IpProtocol": "tcp",
-                    "FromPort": 20,
-                    "ToPort": 9000,
-                    "Ipv6Ranges": [{"CidrIpv6": "::/0"}, {"CidrIpv6": "2001:db8::/32"}],
+                    "FromPort": 10,
+                    "ToPort": 9100,
+                    "Ipv6Ranges": [{"CidrIpv6": "::/0"}],
                 },
             ],
         )
@@ -276,20 +256,20 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports_
     def test_ec2_sg_exposed_port_in_public_subnet_all_ports(self):
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
-        ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
-        security_groups = ec2_client.describe_security_groups(GroupNames=["default"])[
+        ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]["VpcId"]
+        default_sg = ec2_client.describe_security_groups(GroupNames=["default"])[
             "SecurityGroups"
-        ]
-        default_sg_id = security_groups[0]["GroupId"]
+        ][0]
+        default_sg_id = default_sg["GroupId"]
         ec2_client.authorize_security_group_ingress(
             GroupId=default_sg_id,
             IpPermissions=[
                 {
                     "IpProtocol": "tcp",
-                    "FromPort": 20,
-                    "ToPort": 9000,
+                    "FromPort": 10,
+                    "ToPort": 9100,
                     "IpRanges": [{"CidrIp": "0.0.0.0/0"}],
-                },
+                }
             ],
         )
         ec2_client.audit_config = {
