@@ -5,6 +5,21 @@ from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
     cloudtrail_client,
 )
 
+original_threat_detection_llm_jacking_actions = [
+    "PutUseCaseForModelAccess",
+    "PutFoundationModelEntitlement",
+    "PutModelInvocationLoggingConfiguration",
+    "CreateFoundationModelAgreement",
+    "InvokeModel",
+    "InvokeModelWithResponseStream",
+    "GetUseCaseForModelAccess",
+    "GetModelInvocationLoggingConfiguration",
+    "GetFoundationModelAvailability",
+    "ListFoundationModelAgreementOffers",
+    "ListFoundationModels",
+    "ListProvisionedModelThroughputs",
+]
+
 
 class cloudtrail_threat_detection_llm_jacking(Check):
     def execute(self):
@@ -16,7 +31,8 @@ class cloudtrail_threat_detection_llm_jacking(Check):
             "threat_detection_llm_jacking_minutes", 1440
         )
         llm_jacking_actions = cloudtrail_client.audit_config.get(
-            "threat_detection_llm_jacking_actions", []
+            "threat_detection_llm_jacking_actions",
+            original_threat_detection_llm_jacking_actions,
         )
         potential_llm_jacking = {}
         found_potential_llm_jacking = False

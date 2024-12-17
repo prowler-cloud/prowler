@@ -5,6 +5,60 @@ from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
     cloudtrail_client,
 )
 
+original_threat_detection_privilege_escalation_actions = [
+    "AddPermission",
+    "AddRoleToInstanceProfile",
+    "AddUserToGroup",
+    "AssociateAccessPolicy",
+    "AssumeRole",
+    "AttachGroupPolicy",
+    "AttachRolePolicy",
+    "AttachUserPolicy",
+    "ChangePassword",
+    "CreateAccessEntry",
+    "CreateAccessKey",
+    "CreateDevEndpoint",
+    "CreateEventSourceMapping",
+    "CreateFunction",
+    "CreateGroup",
+    "CreateJob",
+    "CreateKeyPair",
+    "CreateLoginProfile",
+    "CreatePipeline",
+    "CreatePolicyVersion",
+    "CreateRole",
+    "CreateStack",
+    "DeleteRolePermissionsBoundary",
+    "DeleteRolePolicy",
+    "DeleteUserPermissionsBoundary",
+    "DeleteUserPolicy",
+    "DetachRolePolicy",
+    "DetachUserPolicy",
+    "GetCredentialsForIdentity",
+    "GetId",
+    "GetPolicyVersion",
+    "GetUserPolicy",
+    "Invoke",
+    "ModifyInstanceAttribute",
+    "PassRole",
+    "PutGroupPolicy",
+    "PutPipelineDefinition",
+    "PutRolePermissionsBoundary",
+    "PutRolePolicy",
+    "PutUserPermissionsBoundary",
+    "PutUserPolicy",
+    "ReplaceIamInstanceProfileAssociation",
+    "RunInstances",
+    "SetDefaultPolicyVersion",
+    "UpdateAccessKey",
+    "UpdateAssumeRolePolicy",
+    "UpdateDevEndpoint",
+    "UpdateEventSourceMapping",
+    "UpdateFunctionCode",
+    "UpdateJob",
+    "UpdateLoginProfile",
+]
+
 
 class cloudtrail_threat_detection_privilege_escalation(Check):
     def execute(self):
@@ -16,7 +70,8 @@ class cloudtrail_threat_detection_privilege_escalation(Check):
             "threat_detection_privilege_escalation_minutes", 1440
         )
         privilege_escalation_actions = cloudtrail_client.audit_config.get(
-            "threat_detection_privilege_escalation_actions", []
+            "threat_detection_privilege_escalation_actions",
+            original_threat_detection_privilege_escalation_actions,
         )
 
         potential_privilege_escalation = {}
