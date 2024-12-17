@@ -1235,7 +1235,7 @@ class ResourceViewSet(BaseRLSViewSet):
         "updated_at",
     ]
     # RBAC required permissions
-    required_permissions = [Permissions.MANAGE_PROVIDERS, Permissions.MANAGE_SCANS]
+    required_permissions = [Permissions.MANAGE_PROVIDERS]
 
     def get_queryset(self):
         user = self.request.user
@@ -1323,7 +1323,7 @@ class FindingViewSet(BaseRLSViewSet):
         "updated_at",
     ]
     # RBAC required permissions
-    required_permissions = [Permissions.MANAGE_PROVIDERS, Permissions.MANAGE_SCANS]
+    required_permissions = [Permissions.MANAGE_PROVIDERS]
 
     def get_serializer_class(self):
         if self.action == "findings_services_regions":
@@ -1789,7 +1789,7 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
     ordering = ["compliance_id"]
     ordering_fields = ["inserted_at", "compliance_id", "framework", "region"]
     # RBAC required permissions
-    required_permissions = [Permissions.MANAGE_PROVIDERS, Permissions.MANAGE_SCANS]
+    required_permissions = [Permissions.MANAGE_PROVIDERS]
 
     def get_queryset(self):
         if self.action == "retrieve":
@@ -1876,7 +1876,7 @@ class OverviewViewSet(BaseRLSViewSet):
     http_method_names = ["get"]
     ordering = ["-id"]
     # RBAC required permissions
-    required_permissions = [Permissions.MANAGE_PROVIDERS, Permissions.MANAGE_SCANS]
+    required_permissions = [Permissions.MANAGE_PROVIDERS]
 
     def get_queryset(self):
         if self.action == "providers":
