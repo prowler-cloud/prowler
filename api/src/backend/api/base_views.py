@@ -11,11 +11,13 @@ from api.db_router import MainRouter
 from api.db_utils import POSTGRES_USER_VAR, rls_transaction
 from api.filters import CustomDjangoFilterBackend
 from api.models import Role, Tenant
+from api.rbac.permissions import HasPermissions
 
 
 class BaseViewSet(ModelViewSet):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [permissions.IsAuthenticated]
+    required_permissions = []
+    permission_classes = [permissions.IsAuthenticated, HasPermissions]
     filter_backends = [
         filters.QueryParameterValidationFilter,
         filters.OrderingFilter,
@@ -28,6 +30,17 @@ class BaseViewSet(ModelViewSet):
 
     ordering_fields = "__all__"
     ordering = ["id"]
+
+    def initial(self, request, *args, **kwargs):
+        """
+        Sets required_permissions before permissions are checked.
+        """
+        self.set_required_permissions()
+        super().initial(request, *args, **kwargs)
+
+    def set_required_permissions(self):
+        """This is an abstract method that must be implemented by subclasses."""
+        NotImplemented
 
     def get_queryset(self):
         raise NotImplementedError

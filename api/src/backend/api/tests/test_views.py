@@ -543,6 +543,7 @@ class TestTenantViewSet:
         # Test user + 2 extra users for tenant 2
         assert len(response.json()["data"]) == 3
 
+    @patch("api.v1.views.TenantMembersViewSet.required_permissions", [])
     def test_tenants_list_memberships_as_member(
         self, authenticated_client, tenants_fixture, extra_users
     ):
@@ -3274,9 +3275,7 @@ class TestRoleViewSet:
         assert len(data) == 1
         assert data[0]["attributes"]["name"] == role.name
 
-    def test_role_list_sorting(
-        self, authenticated_client, set_user_admin_roles_fixture, roles_fixture
-    ):
+    def test_role_list_sorting(self, authenticated_client, roles_fixture):
         response = authenticated_client.get(reverse("role-list"), {"sort": "name"})
         assert response.status_code == status.HTTP_200_OK
         data = response.json()["data"]
@@ -3342,7 +3341,7 @@ class TestUserRoleRelationshipViewSet:
     ):
         data = {
             "data": [
-                {"type": "role", "id": str(roles_fixture[1].id)},
+                {"type": "role", "id": str(roles_fixture[2].id)},
             ]
         }
         response = authenticated_client.patch(
@@ -3353,7 +3352,7 @@ class TestUserRoleRelationshipViewSet:
         assert response.status_code == status.HTTP_204_NO_CONTENT
         relationships = UserRoleRelationship.objects.filter(user=create_test_user.id)
         assert relationships.count() == 1
-        assert {rel.role.id for rel in relationships} == {roles_fixture[1].id}
+        assert {rel.role.id for rel in relationships} == {roles_fixture[2].id}
 
         data = {
             "data": [
