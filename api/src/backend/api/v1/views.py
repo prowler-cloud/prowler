@@ -1158,22 +1158,10 @@ class TaskViewSet(BaseRLSViewSet):
     required_permissions = [Permissions.MANAGE_SCANS]
 
     def get_queryset(self):
-        user = self.request.user
-        user_roles = user.roles.all()
-        if getattr(user_roles[0], Permissions.UNLIMITED_VISIBILITY.value, False):
-            # User has unlimited visibility, return all tasks
-            return Task.objects.annotate(
-                name=F("task_runner_task__task_name"),
-                state=F("task_runner_task__status"),
-            )
-
-        # User lacks permission, filter tasks based on provider groups associated with the role
-        provider_groups = user_roles[0].provider_groups.all()
-        providers = Provider.objects.filter(
-            provider_groups__in=provider_groups
-        ).distinct()
-        scans = Scan.objects.filter(provider__in=providers).distinct()
-        return Task.objects.filter(scan__in=scans)
+        return Task.objects.annotate(
+            name=F("task_runner_task__task_name"),
+            state=F("task_runner_task__status"),
+        )
 
     def destroy(self, request, *args, pk=None, **kwargs):
         task = get_object_or_404(Task, pk=pk)
@@ -1249,7 +1237,7 @@ class ResourceViewSet(BaseRLSViewSet):
             providers = Provider.objects.filter(
                 provider_groups__in=provider_groups
             ).distinct()
-            queryset = Resource.objects.filter(provider__in=providers).distinct()
+            queryset = Resource.objects.filter(provider__in=providers)
 
         search_value = self.request.query_params.get("filter[search]", None)
         if search_value:
@@ -1343,8 +1331,7 @@ class FindingViewSet(BaseRLSViewSet):
             providers = Provider.objects.filter(
                 provider_groups__in=provider_groups
             ).distinct()
-            scans = Scan.objects.filter(provider__in=providers).distinct()
-            queryset = Finding.objects.filter(scan__in=scans).distinct()
+            queryset = Finding.objects.filter(scan__provider__in=providers)
 
         search_value = self.request.query_params.get("filter[search]", None)
         if search_value:
