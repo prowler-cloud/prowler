@@ -1047,7 +1047,7 @@ class ScanViewSet(BaseRLSViewSet):
         """
         if self.request.method in SAFE_METHODS:
             # No permissions required for GET requests
-            self.required_permissions = []
+            self.required_permissions = [Permissions.MANAGE_PROVIDERS]
         else:
             # Require permission for non-GET requests
             self.required_permissions = [Permissions.MANAGE_SCANS]
@@ -1064,7 +1064,7 @@ class ScanViewSet(BaseRLSViewSet):
         providers = Provider.objects.filter(
             provider_groups__in=provider_groups
         ).distinct()
-        return Scan.objects.filter(provider__in=providers).distinct()
+        return Scan.objects.filter(provider__in=providers)
 
     def get_serializer_class(self):
         if self.action == "create":
@@ -1173,7 +1173,7 @@ class TaskViewSet(BaseRLSViewSet):
             provider_groups__in=provider_groups
         ).distinct()
         scans = Scan.objects.filter(provider__in=providers).distinct()
-        return Task.objects.filter(scan__in=scans).distinct()
+        return Task.objects.filter(scan__in=scans)
 
     def destroy(self, request, *args, pk=None, **kwargs):
         task = get_object_or_404(Task, pk=pk)
