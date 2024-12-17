@@ -1751,8 +1751,7 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
     required_permissions = []
 
     def get_queryset(self):
-        user = self.request.user
-        role = user.roles.first()
+        role = get_role(self.request.user)
         unlimited_visibility = getattr(
             role, Permissions.UNLIMITED_VISIBILITY.value, False
         )
@@ -1762,9 +1761,7 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
                 # User has unlimited visibility, return all compliance compliances
                 return ComplianceOverview.objects.all()
 
-            providers = Provider.objects.filter(
-                provider_groups__in=role.provider_groups.all()
-            ).distinct()
+            providers = get_providers(role)
             return ComplianceOverview.objects.filter(scan__provider__in=providers)
 
         if unlimited_visibility:
@@ -1858,22 +1855,17 @@ class OverviewViewSet(BaseRLSViewSet):
 
     def get_queryset(self):
         role = get_role(self.request.user)
-        unlimited_visibility = (
-            getattr(role, Permissions.UNLIMITED_VISIBILITY.value, False)
-            if role
-            else False
-        )
         providers = get_providers(role)
 
-        def get_filtered_queryset(model):
-            if unlimited_visibility:
+        def _get_filtered_queryset(model):
+            if role.unlimited_visibility:
                 return model.objects.all()
             return model.objects.filter(scan__provider__in=providers)
 
         if self.action == "providers":
-            return get_filtered_queryset(Finding)
+            return _get_filtered_queryset(Finding)
         elif self.action in ("findings", "findings_severity", "services"):
-            return get_filtered_queryset(ScanSummary)
+            return _get_filtered_queryset(ScanSummary)
         else:
             return super().get_queryset()
 
