@@ -1,6 +1,8 @@
 {
-  "Framework": "CIS-GitHub",
-  "Version": "1.5",
+  "Framework": "CIS",
+  "Version": "1.0",
+  "Provider": "GitHub",
+  "Description": "This document provides prescriptive guidance for establishing a secure configuration posture for securing GitHub.",
   "Requirements": [
     {
       "Id": "Id",
