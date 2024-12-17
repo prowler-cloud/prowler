@@ -35,10 +35,10 @@ class BaseViewSet(ModelViewSet):
         """
         Sets required_permissions before permissions are checked.
         """
-        self.get_required_permissions()
+        self.set_required_permissions()
         super().initial(request, *args, **kwargs)
 
-    def get_required_permissions(self):
+    def set_required_permissions(self):
         """This is an abstract method that must be implemented by subclasses."""
         NotImplemented
 

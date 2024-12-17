@@ -293,7 +293,7 @@ class UserViewSet(BaseUserViewset):
     # RBAC required permissions
     required_permissions = [Permissions.MANAGE_USERS]
 
-    def get_required_permissions(self):
+    def set_required_permissions(self):
         """
         Returns the required permissions based on the request method.
         """
@@ -719,7 +719,7 @@ class ProviderGroupViewSet(BaseRLSViewSet):
     # RBAC required permissions
     required_permissions = [Permissions.MANAGE_PROVIDERS]
 
-    def get_required_permissions(self):
+    def set_required_permissions(self):
         """
         Returns the required permissions based on the request method.
         """
@@ -894,7 +894,7 @@ class ProviderViewSet(BaseRLSViewSet):
     # RBAC required permissions
     required_permissions = [Permissions.MANAGE_PROVIDERS]
 
-    def get_required_permissions(self):
+    def set_required_permissions(self):
         """
         Returns the required permissions based on the request method.
         """
@@ -1041,7 +1041,7 @@ class ScanViewSet(BaseRLSViewSet):
     # RBAC required permissions
     required_permissions = [Permissions.MANAGE_SCANS]
 
-    def get_required_permissions(self):
+    def set_required_permissions(self):
         """
         Returns the required permissions based on the request method.
         """
