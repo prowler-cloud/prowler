@@ -14,24 +14,24 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from api.models import (
+    ComplianceOverview,
+    Finding,
+    Invitation,
+    InvitationRoleRelationship,
     Membership,
     Provider,
     ProviderGroup,
     ProviderGroupMembership,
+    ProviderSecret,
     Resource,
     ResourceTag,
-    Finding,
-    ProviderSecret,
-    Invitation,
-    InvitationRoleRelationship,
     Role,
     RoleProviderGroupRelationship,
-    UserRoleRelationship,
-    ComplianceOverview,
     Scan,
     StateChoices,
     Task,
     User,
+    UserRoleRelationship,
 )
 from api.rls import Tenant
 
@@ -1650,6 +1650,24 @@ class OverviewSeveritySerializer(serializers.Serializer):
 
     class JSONAPIMeta:
         resource_name = "findings-severity-overview"
+
+    def get_root_meta(self, _resource, _many):
+        return {"version": "v1"}
+
+
+class OverviewServiceSerializer(serializers.Serializer):
+    id = serializers.CharField(source="service")
+    total = serializers.IntegerField()
+    _pass = serializers.IntegerField()
+    fail = serializers.IntegerField()
+    muted = serializers.IntegerField()
+
+    class JSONAPIMeta:
+        resource_name = "services-overview"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["pass"] = self.fields.pop("_pass")
 
     def get_root_meta(self, _resource, _many):
         return {"version": "v1"}

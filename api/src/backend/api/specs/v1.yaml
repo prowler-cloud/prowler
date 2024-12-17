@@ -1551,6 +1551,143 @@ paths:
               schema:
                 $ref: '#/components/schemas/OverviewProviderResponse'
           description: ''
+  /api/v1/overviews/services:
+    get:
+      operationId: overviews_services_retrieve
+      description: Retrieve an aggregated summary of findings grouped by service.
+        The response includes the total count of findings for each service, as long
+        as there are at least one finding for that service. At least one of the `inserted_at`
+        filters must be provided.
+      summary: Get findings data by service
+      parameters:
+      - in: query
+        name: fields[services-overview]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - total
+            - fail
+            - muted
+            - pass
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[inserted_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__date]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[inserted_at__lte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          enum:
+          - aws
+          - azure
+          - gcp
+          - kubernetes
+        description: |-
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - aws
+            - azure
+            - gcp
+            - kubernetes
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+        explode: false
+        style: form
+      - in: query
+        name: filter[region]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - -id
+            - total
+            - -total
+            - fail
+            - -fail
+            - muted
+            - -muted
+            - pass
+            - -pass
+        explode: false
+      tags:
+      - Overview
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/OverviewServiceResponse'
+          description: ''
   /api/v1/provider-groups:
     get:
       operationId: provider_groups_list
@@ -5996,6 +6133,50 @@ components:
       type: string
       enum:
       - providers-overview
+    OverviewService:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/OverviewServiceTypeEnum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        id: {}
+        attributes:
+          type: object
+          properties:
+            id:
+              type: string
+            total:
+              type: integer
+            fail:
+              type: integer
+            muted:
+              type: integer
+            pass:
+              type: integer
+          required:
+          - id
+          - total
+          - fail
+          - muted
+          - pass
+    OverviewServiceResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/OverviewService'
+      required:
+      - data
+    OverviewServiceTypeEnum:
+      type: string
+      enum:
+      - services-overview
     OverviewSeverity:
       type: object
       required:

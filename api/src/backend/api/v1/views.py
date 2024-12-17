@@ -8,7 +8,6 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_control
 from drf_spectacular.settings import spectacular_settings
-from drf_spectacular_jsonapi.schemas.openapi import JsonApiAutoSchema
 from drf_spectacular.utils import (
     OpenApiParameter,
     OpenApiResponse,
@@ -17,6 +16,7 @@ from drf_spectacular.utils import (
     extend_schema_view,
 )
 from drf_spectacular.views import SpectacularAPIView
+from drf_spectacular_jsonapi.schemas.openapi import JsonApiAutoSchema
 from rest_framework import permissions, status
 from rest_framework.decorators import action
 from rest_framework.exceptions import (
@@ -26,10 +26,9 @@ from rest_framework.exceptions import (
     ValidationError,
 )
 from rest_framework.generics import GenericAPIView, get_object_or_404
+from rest_framework.permissions import SAFE_METHODS
 from rest_framework_json_api.views import RelationshipView, Response
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
-from rest_framework.permissions import SAFE_METHODS
-
 from tasks.beat import schedule_provider_scan
 from tasks.tasks import (
     check_provider_connection_task,
@@ -50,17 +49,15 @@ from api.filters import (
     ProviderGroupFilter,
     ProviderSecretFilter,
     ResourceFilter,
+    RoleFilter,
     ScanFilter,
     ScanSummaryFilter,
+    ServiceOverviewFilter,
     TaskFilter,
     TenantFilter,
     UserFilter,
-    RoleFilter,
 )
 from api.models import (
-    StatusChoices,
-    User,
-    UserRoleRelationship,
     ComplianceOverview,
     Finding,
     Invitation,
@@ -69,14 +66,17 @@ from api.models import (
     ProviderGroup,
     ProviderGroupMembership,
     ProviderSecret,
+    Resource,
     Role,
     RoleProviderGroupRelationship,
-    Resource,
     Scan,
     ScanSummary,
     SeverityChoices,
     StateChoices,
+    StatusChoices,
     Task,
+    User,
+    UserRoleRelationship,
 )
 from api.pagination import ComplianceOverviewPagination
 from api.rbac.permissions import HasPermissions, Permissions
@@ -84,12 +84,6 @@ from api.rls import Tenant
 from api.utils import validate_invitation
 from api.uuid_utils import datetime_to_uuid7
 from api.v1.serializers import (
-    TokenSerializer,
-    TokenRefreshSerializer,
-    UserSerializer,
-    UserCreateSerializer,
-    UserUpdateSerializer,
-    UserRoleRelationshipSerializer,
     ComplianceOverviewFullSerializer,
     ComplianceOverviewSerializer,
     FindingDynamicFilterSerializer,
@@ -101,29 +95,35 @@ from api.v1.serializers import (
     MembershipSerializer,
     OverviewFindingSerializer,
     OverviewProviderSerializer,
+    OverviewServiceSerializer,
     OverviewSeveritySerializer,
     ProviderCreateSerializer,
     ProviderGroupMembershipSerializer,
     ProviderGroupSerializer,
     ProviderGroupUpdateSerializer,
-    RoleProviderGroupRelationshipSerializer,
-    ProviderSerializer,
-    ProviderUpdateSerializer,
-    TenantSerializer,
-    TaskSerializer,
-    ScanSerializer,
-    ScanCreateSerializer,
-    ScanUpdateSerializer,
-    ResourceSerializer,
+    ProviderSecretCreateSerializer,
     ProviderSecretSerializer,
     ProviderSecretUpdateSerializer,
-    ProviderSecretCreateSerializer,
-    RoleSerializer,
+    ProviderSerializer,
+    ProviderUpdateSerializer,
+    ResourceSerializer,
     RoleCreateSerializer,
+    RoleProviderGroupRelationshipSerializer,
+    RoleSerializer,
     RoleUpdateSerializer,
+    ScanCreateSerializer,
+    ScanSerializer,
+    ScanUpdateSerializer,
     ScheduleDailyCreateSerializer,
+    TaskSerializer,
+    TenantSerializer,
+    TokenRefreshSerializer,
+    TokenSerializer,
+    UserCreateSerializer,
+    UserRoleRelationshipSerializer,
+    UserSerializer,
+    UserUpdateSerializer,
 )
-
 
 CACHE_DECORATOR = cache_control(
     max_age=django_settings.CACHE_MAX_AGE,
@@ -191,7 +191,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.0.1"
+        spectacular_settings.VERSION = "1.1.0"
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -1888,6 +1888,15 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
         ),
         filters=True,
     ),
+    services=extend_schema(
+        summary="Get findings data by service",
+        description=(
+            "Retrieve an aggregated summary of findings grouped by service. The response includes the total count "
+            "of findings for each service, as long as there are at least one finding for that service. At least "
+            "one of the `inserted_at` filters must be provided."
+        ),
+        filters=True,
+    ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 class OverviewViewSet(BaseRLSViewSet):
@@ -1902,6 +1911,8 @@ class OverviewViewSet(BaseRLSViewSet):
             return ScanSummary.objects.all()
         elif self.action == "findings_severity":
             return ScanSummary.objects.all()
+        elif self.action == "services":
+            return ScanSummary.objects.all()
         else:
             return super().get_queryset()
 
@@ -1912,6 +1923,8 @@ class OverviewViewSet(BaseRLSViewSet):
             return OverviewFindingSerializer
         elif self.action == "findings_severity":
             return OverviewSeveritySerializer
+        elif self.action == "services":
+            return OverviewServiceSerializer
         return super().get_serializer_class()
 
     def get_filterset_class(self):
@@ -1919,6 +1932,8 @@ class OverviewViewSet(BaseRLSViewSet):
             return None
         elif self.action in ["findings", "findings_severity"]:
             return ScanSummaryFilter
+        elif self.action == "services":
+            return ServiceOverviewFilter
         return None
 
     @extend_schema(exclude=True)
@@ -2062,6 +2077,38 @@ class OverviewViewSet(BaseRLSViewSet):
             severity_data[item["severity"]] = item["count"]
 
         serializer = OverviewSeveritySerializer(severity_data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"], url_name="services")
+    def services(self, request):
+        queryset = self.get_queryset()
+        filtered_queryset = self.filter_queryset(queryset)
+
+        latest_scan_subquery = (
+            Scan.objects.filter(
+                state=StateChoices.COMPLETED, provider_id=OuterRef("scan__provider_id")
+            )
+            .order_by("-id")
+            .values("id")[:1]
+        )
+
+        annotated_queryset = filtered_queryset.annotate(
+            latest_scan_id=Subquery(latest_scan_subquery)
+        )
+
+        filtered_queryset = annotated_queryset.filter(scan_id=F("latest_scan_id"))
+
+        services_data = (
+            filtered_queryset.values("service")
+            .annotate(_pass=Sum("_pass"))
+            .annotate(fail=Sum("fail"))
+            .annotate(muted=Sum("muted"))
+            .annotate(total=Sum("total"))
+            .order_by("service")
+        )
+
+        serializer = OverviewServiceSerializer(services_data, many=True)
+
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 

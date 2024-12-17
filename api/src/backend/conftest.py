@@ -24,6 +24,7 @@ from api.models import (
     ResourceTag,
     Role,
     Scan,
+    ScanSummary,
     StateChoices,
     Task,
     User,
@@ -762,6 +763,85 @@ def get_api_tokens(
     )
 
 
+@pytest.fixture
+def scan_summaries_fixture(tenants_fixture, providers_fixture):
+    tenant = tenants_fixture[0]
+    provider = providers_fixture[0]
+    scan = Scan.objects.create(
+        name="overview scan",
+        provider=provider,
+        trigger=Scan.TriggerChoices.MANUAL,
+        state=StateChoices.COMPLETED,
+        tenant=tenant,
+    )
+
+    ScanSummary.objects.create(
+        tenant=tenant,
+        check_id="check1",
+        service="service1",
+        severity="high",
+        region="region1",
+        _pass=1,
+        fail=0,
+        muted=0,
+        total=1,
+        new=1,
+        changed=0,
+        unchanged=0,
+        fail_new=0,
+        fail_changed=0,
+        pass_new=1,
+        pass_changed=0,
+        muted_new=0,
+        muted_changed=0,
+        scan=scan,
+    )
+
+    ScanSummary.objects.create(
+        tenant=tenant,
+        check_id="check1",
+        service="service1",
+        severity="high",
+        region="region2",
+        _pass=0,
+        fail=1,
+        muted=1,
+        total=2,
+        new=2,
+        changed=0,
+        unchanged=0,
+        fail_new=1,
+        fail_changed=0,
+        pass_new=0,
+        pass_changed=0,
+        muted_new=1,
+        muted_changed=0,
+        scan=scan,
+    )
+
+    ScanSummary.objects.create(
+        tenant=tenant,
+        check_id="check2",
+        service="service2",
+        severity="critical",
+        region="region1",
+        _pass=1,
+        fail=0,
+        muted=0,
+        total=1,
+        new=1,
+        changed=0,
+        unchanged=0,
+        fail_new=0,
+        fail_changed=0,
+        pass_new=1,
+        pass_changed=0,
+        muted_new=0,
+        muted_changed=0,
+        scan=scan,
+    )
+
+
 def get_authorization_header(access_token: str) -> dict:
     return {"Authorization": f"Bearer {access_token}"}
 
@@ -772,10 +852,12 @@ def pytest_collection_modifyitems(items):
 
 
 def pytest_configure(config):
-    # Apply the mock before the test session starts. This is necessary to avoid admin error when running the 0004_rbac_missing_admin_roles migration
+    # Apply the mock before the test session starts. This is necessary to avoid admin error when running the
+    # 0004_rbac_missing_admin_roles migration
     patch("api.db_router.MainRouter.admin_db", new="default").start()
 
 
 def pytest_unconfigure(config):
-    # Stop all patches after the test session ends. This is necessary to avoid admin error when running the 0004_rbac_missing_admin_roles migration
+    # Stop all patches after the test session ends. This is necessary to avoid admin error when running the
+    # 0004_rbac_missing_admin_roles migration
     patch.stopall()

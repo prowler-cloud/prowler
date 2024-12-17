@@ -9,18 +9,18 @@ from django.urls import reverse
 from rest_framework import status
 
 from api.models import (
+    Invitation,
     Membership,
     Provider,
     ProviderGroup,
     ProviderGroupMembership,
+    ProviderSecret,
     Role,
     RoleProviderGroupRelationship,
-    Invitation,
-    UserRoleRelationship,
-    ProviderSecret,
     Scan,
     StateChoices,
     User,
+    UserRoleRelationship,
 )
 from api.rls import Tenant
 
@@ -3909,7 +3909,37 @@ class TestOverviewViewSet:
             resources_fixture
         )
 
-    # TODO Add more tests for the rest of overviews
+    def test_overview_services_list_no_required_filters(
+        self, authenticated_client, scan_summaries_fixture
+    ):
+        response = authenticated_client.get(reverse("overview-services"))
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_overview_services_list(self, authenticated_client, scan_summaries_fixture):
+        response = authenticated_client.get(
+            reverse("overview-services"), {"filter[inserted_at]": TODAY}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        # Only two different services
+        assert len(response.json()["data"]) == 2
+        # Fixed data from the fixture, TODO improve this at some point with something more dynamic
+        service1_data = response.json()["data"][0]
+        service2_data = response.json()["data"][1]
+        assert service1_data["id"] == "service1"
+        assert service2_data["id"] == "service2"
+
+        # TODO fix numbers when muted_findings filter is fixed
+        assert service1_data["attributes"]["total"] == 3
+        assert service2_data["attributes"]["total"] == 1
+
+        assert service1_data["attributes"]["pass"] == 1
+        assert service2_data["attributes"]["pass"] == 1
+
+        assert service1_data["attributes"]["fail"] == 1
+        assert service2_data["attributes"]["fail"] == 0
+
+        assert service1_data["attributes"]["muted"] == 1
+        assert service2_data["attributes"]["muted"] == 0
 
 
 @pytest.mark.django_db
