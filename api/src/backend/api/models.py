@@ -309,7 +309,7 @@ class ProviderGroup(RowLevelSecurityProtectedModel):
         ]
 
     class JSONAPIMeta:
-        resource_name = "provider-group"
+        resource_name = "provider-groups"
 
 
 class ProviderGroupMembership(RowLevelSecurityProtectedModel):
@@ -926,7 +926,7 @@ class Role(RowLevelSecurityProtectedModel):
         ]
 
     class JSONAPIMeta:
-        resource_name = "role"
+        resource_name = "roles"
 
 
 class RoleProviderGroupRelationship(RowLevelSecurityProtectedModel):

@@ -775,17 +775,17 @@ files = [
 
 [[package]]
 name = "boto3"
-version = "1.35.79"
+version = "1.35.81"
 description = "The AWS SDK for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "boto3-1.35.79-py3-none-any.whl", hash = "sha256:a673b0b6378c9ccbf045a31a43195b175e12aa5c37fb7635fcbfc8f48fb857b3"},
-    {file = "boto3-1.35.79.tar.gz", hash = "sha256:1fa26217cd33ded82e55aed4460cd55f7223fa647916aa0d3c5d6828e6ec7135"},
+    {file = "boto3-1.35.81-py3-none-any.whl", hash = "sha256:742941b2424c0223d2d94a08c3485462fa7c58d816b62ca80f08e555243acee1"},
+    {file = "boto3-1.35.81.tar.gz", hash = "sha256:d2e95fa06f095b8e0c545dd678c6269d253809b2997c30f5ce8a956c410b4e86"},
 ]
 
 [package.dependencies]
-botocore = ">=1.35.79,<1.36.0"
+botocore = ">=1.35.81,<1.36.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.10.0,<0.11.0"
 
@@ -794,13 +794,13 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "botocore"
-version = "1.35.80"
+version = "1.35.81"
 description = "Low-level, data-driven core of boto 3."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "botocore-1.35.80-py3-none-any.whl", hash = "sha256:36e589dccb62380abd628b08fecfa2f7c89b99f41ec9fc42c467c94008c0be4a"},
-    {file = "botocore-1.35.80.tar.gz", hash = "sha256:b8dfceca58891cb2711bd6455ec4f7159051f3796e0f64adef9bb334f19d8a92"},
+    {file = "botocore-1.35.81-py3-none-any.whl", hash = "sha256:a7b13bbd959bf2d6f38f681676aab408be01974c46802ab997617b51399239f7"},
+    {file = "botocore-1.35.81.tar.gz", hash = "sha256:564c2478e50179e0b766e6a87e5e0cdd35e1bc37eb375c1cf15511f5dd13600d"},
 ]
 
 [package.dependencies]
@@ -2583,13 +2583,13 @@ dev = ["click", "codecov", "mkdocs-gen-files", "mkdocs-git-authors-plugin", "mkd
 
 [[package]]
 name = "mkdocs-material"
-version = "9.5.48"
+version = "9.5.49"
 description = "Documentation that simply works"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "mkdocs_material-9.5.48-py3-none-any.whl", hash = "sha256:b695c998f4b939ce748adbc0d3bff73fa886a670ece948cf27818fa115dc16f8"},
-    {file = "mkdocs_material-9.5.48.tar.gz", hash = "sha256:a582531e8b34f4c7ed38c29d5c44763053832cf2a32f7409567e0c74749a47db"},
+    {file = "mkdocs_material-9.5.49-py3-none-any.whl", hash = "sha256:c3c2d8176b18198435d3a3e119011922f3e11424074645c24019c2dcf08a360e"},
+    {file = "mkdocs_material-9.5.49.tar.gz", hash = "sha256:3671bb282b4f53a1c72e08adbe04d2481a98f85fed392530051f80ff94a9621d"},
 ]
 
 [package.dependencies]
@@ -5199,4 +5199,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "a9eafd9fd620dd9f6800efabf5043e1de1bdcba6a7c4a45ed06d2a9560d33133"
+content-hash = "aff89cb4b5b66d79efcf4e1f16fdc76e4a1019e4196cd8961299d479b99cf7fa"

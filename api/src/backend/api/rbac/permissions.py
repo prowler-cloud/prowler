@@ -1,7 +1,9 @@
 from enum import Enum
 from rest_framework.permissions import BasePermission
-from api.models import User
+from api.models import Provider, Role, User
 from api.db_router import MainRouter
+from typing import Optional
+from django.db.models import QuerySet
 
 
 class Permissions(Enum):
@@ -36,3 +38,33 @@ class HasPermissions(BasePermission):
                 return False
 
         return True
+
+
+def get_role(user: User) -> Optional[Role]:
+    """
+    Retrieve the first role assigned to the given user.
+
+    Returns:
+        The user's first Role instance if the user has any roles, otherwise None.
+    """
+    return user.roles.first()
+
+
+def get_providers(role: Role) -> QuerySet[Provider]:
+    """
+    Return a distinct queryset of Providers accessible by the given role.
+
+    If the role has no associated provider groups, an empty queryset is returned.
+
+    Args:
+        role: A Role instance.
+
+    Returns:
+        A QuerySet of Provider objects filtered by the role's provider groups.
+        If the role has no provider groups, returns an empty queryset.
+    """
+    provider_groups = role.provider_groups.all()
+    if not provider_groups.exists():
+        return Provider.objects.none()
+
+    return Provider.objects.filter(provider_groups__in=provider_groups).distinct()
