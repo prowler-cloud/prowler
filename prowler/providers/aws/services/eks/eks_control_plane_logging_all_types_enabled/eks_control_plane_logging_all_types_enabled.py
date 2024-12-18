@@ -1,11 +1,21 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.eks.eks_client import eks_client
 
+default_eks_required_log_types = [
+    "api",
+    "audit",
+    "authenticator",
+    "controllerManager",
+    "scheduler",
+]
+
 
 class eks_control_plane_logging_all_types_enabled(Check):
     def execute(self):
         findings = []
-        required_log_types = eks_client.audit_config.get("eks_required_log_types", [])
+        required_log_types = eks_client.audit_config.get(
+            "eks_required_log_types", default_eks_required_log_types
+        )
         required_log_types_str = ", ".join(required_log_types)
 
         for cluster in eks_client.clusters:

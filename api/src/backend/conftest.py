@@ -1,39 +1,39 @@
 import logging
+from datetime import datetime, timedelta, timezone
+from unittest.mock import patch
 
 import pytest
 from django.conf import settings
-from datetime import datetime, timezone, timedelta
-from django.db import connections as django_connections, connection as django_connection
+from django.db import connection as django_connection
+from django.db import connections as django_connections
 from django.urls import reverse
 from django_celery_results.models import TaskResult
-from prowler.lib.check.models import Severity
-from prowler.lib.outputs.finding import Status
 from rest_framework import status
 from rest_framework.test import APIClient
-from unittest.mock import patch
-from api.db_utils import tenant_transaction
 
+from api.db_utils import rls_transaction
 from api.models import (
+    ComplianceOverview,
     Finding,
-)
-from api.models import (
-    User,
+    Invitation,
+    Membership,
     Provider,
     ProviderGroup,
+    ProviderSecret,
     Resource,
     ResourceTag,
     Role,
     Scan,
+    ScanSummary,
     StateChoices,
     Task,
-    Membership,
-    ProviderSecret,
-    Invitation,
-    ComplianceOverview,
+    User,
     UserRoleRelationship,
 )
 from api.rls import Tenant
 from api.v1.serializers import TokenSerializer
+from prowler.lib.check.models import Severity
+from prowler.lib.outputs.finding import Status
 
 API_JSON_CONTENT_TYPE = "application/vnd.api+json"
 NO_TENANT_HTTP_STATUS = status.HTTP_401_UNAUTHORIZED
@@ -281,7 +281,7 @@ def tenants_fixture(create_test_user):
 def set_user_admin_roles_fixture(create_test_user, tenants_fixture):
     user = create_test_user
     for tenant in tenants_fixture[:2]:
-        with tenant_transaction(str(tenant.id)):
+        with rls_transaction(str(tenant.id)):
             role = Role.objects.create(
                 name="admin",
                 tenant_id=tenant.id,
@@ -320,6 +320,20 @@ def invitations_fixture(create_test_user, tenants_fixture):
         tenant=tenant,
     )
     return valid_invitation, expired_invitation
+
+
+@pytest.fixture
+def users_fixture(django_user_model):
+    user1 = User.objects.create_user(
+        name="user1", email="test_unit0@prowler.com", password="S3cret"
+    )
+    user2 = User.objects.create_user(
+        name="user2", email="test_unit1@prowler.com", password="S3cret"
+    )
+    user3 = User.objects.create_user(
+        name="user3", email="test_unit2@prowler.com", password="S3cret"
+    )
+    return user1, user2, user3
 
 
 @pytest.fixture
@@ -757,9 +771,89 @@ def get_api_tokens(
         data=json_body,
         format="vnd.api+json",
     )
-    return response.json()["data"]["attributes"]["access"], response.json()["data"][
-        "attributes"
-    ]["refresh"]
+    return (
+        response.json()["data"]["attributes"]["access"],
+        response.json()["data"]["attributes"]["refresh"],
+    )
+
+
+@pytest.fixture
+def scan_summaries_fixture(tenants_fixture, providers_fixture):
+    tenant = tenants_fixture[0]
+    provider = providers_fixture[0]
+    scan = Scan.objects.create(
+        name="overview scan",
+        provider=provider,
+        trigger=Scan.TriggerChoices.MANUAL,
+        state=StateChoices.COMPLETED,
+        tenant=tenant,
+    )
+
+    ScanSummary.objects.create(
+        tenant=tenant,
+        check_id="check1",
+        service="service1",
+        severity="high",
+        region="region1",
+        _pass=1,
+        fail=0,
+        muted=0,
+        total=1,
+        new=1,
+        changed=0,
+        unchanged=0,
+        fail_new=0,
+        fail_changed=0,
+        pass_new=1,
+        pass_changed=0,
+        muted_new=0,
+        muted_changed=0,
+        scan=scan,
+    )
+
+    ScanSummary.objects.create(
+        tenant=tenant,
+        check_id="check1",
+        service="service1",
+        severity="high",
+        region="region2",
+        _pass=0,
+        fail=1,
+        muted=1,
+        total=2,
+        new=2,
+        changed=0,
+        unchanged=0,
+        fail_new=1,
+        fail_changed=0,
+        pass_new=0,
+        pass_changed=0,
+        muted_new=1,
+        muted_changed=0,
+        scan=scan,
+    )
+
+    ScanSummary.objects.create(
+        tenant=tenant,
+        check_id="check2",
+        service="service2",
+        severity="critical",
+        region="region1",
+        _pass=1,
+        fail=0,
+        muted=0,
+        total=1,
+        new=1,
+        changed=0,
+        unchanged=0,
+        fail_new=0,
+        fail_changed=0,
+        pass_new=1,
+        pass_changed=0,
+        muted_new=0,
+        muted_changed=0,
+        scan=scan,
+    )
 
 
 def get_authorization_header(access_token: str) -> dict:
@@ -772,10 +866,12 @@ def pytest_collection_modifyitems(items):
 
 
 def pytest_configure(config):
-    # Apply the mock before the test session starts. This is necessary to avoid admin error when running the 0004_rbac_missing_admin_roles migration
+    # Apply the mock before the test session starts. This is necessary to avoid admin error when running the
+    # 0004_rbac_missing_admin_roles migration
     patch("api.db_router.MainRouter.admin_db", new="default").start()
 
 
 def pytest_unconfigure(config):
-    # Stop all patches after the test session ends. This is necessary to avoid admin error when running the 0004_rbac_missing_admin_roles migration
+    # Stop all patches after the test session ends. This is necessary to avoid admin error when running the
+    # 0004_rbac_missing_admin_roles migration
     patch.stopall()
