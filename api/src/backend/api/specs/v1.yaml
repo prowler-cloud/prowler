@@ -1833,13 +1833,13 @@ paths:
         content:
           application/vnd.api+json:
             schema:
-              $ref: '#/components/schemas/ProviderGroupRequest'
+              $ref: '#/components/schemas/ProviderGroupCreateRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/ProviderGroupRequest'
+              $ref: '#/components/schemas/ProviderGroupCreateRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/ProviderGroupRequest'
+              $ref: '#/components/schemas/ProviderGroupCreateRequest'
         required: true
       security:
       - jwtAuth: []
@@ -1848,7 +1848,7 @@ paths:
           content:
             application/vnd.api+json:
               schema:
-                $ref: '#/components/schemas/ProviderGroupResponse'
+                $ref: '#/components/schemas/ProviderGroupCreateResponse'
           description: ''
   /api/v1/provider-groups/{id}:
     get:
@@ -7383,7 +7383,7 @@ components:
       properties:
         type:
           allOf:
-          - $ref: '#/components/schemas/ProviderGroupTypeEnum'
+          - $ref: '#/components/schemas/Type34dEnum'
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
@@ -7465,35 +7465,94 @@ components:
               - data
               description: A related resource object from type roles
               title: roles
-    ProviderGroupMembershipRequest:
+    ProviderGroupCreate:
       type: object
+      required:
+      - type
+      additionalProperties: false
       properties:
-        data:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/Type34dEnum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        attributes:
           type: object
-          required:
-          - type
-          additionalProperties: false
           properties:
-            type:
+            name:
               type: string
-              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
-                member is used to describe resource objects that share common attributes
-                and relationships.
-              enum:
-              - provider_groups-provider
-            attributes:
+              maxLength: 255
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
+            updated_at:
+              type: string
+              format: date-time
+              readOnly: true
+          required:
+          - name
+        relationships:
+          type: object
+          properties:
+            providers:
               type: object
               properties:
-                providers:
+                data:
                   type: array
                   items:
-                    $ref: '#/components/schemas/ProviderResourceIdentifierRequest'
-                  description: List of resource identifier objects representing providers.
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        title: Resource Identifier
+                        description: The identifier of the related object.
+                      type:
+                        type: string
+                        enum:
+                        - providers
+                        title: Resource Type Name
+                        description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                          member is used to describe resource objects that share common
+                          attributes and relationships.
+                    required:
+                    - id
+                    - type
               required:
-              - providers
-      required:
-      - data
-    ProviderGroupRequest:
+              - data
+              description: A related resource object from type providers
+              title: providers
+            roles:
+              type: object
+              properties:
+                data:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        title: Resource Identifier
+                        description: The identifier of the related object.
+                      type:
+                        type: string
+                        enum:
+                        - roles
+                        title: Resource Type Name
+                        description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                          member is used to describe resource objects that share common
+                          attributes and relationships.
+                    required:
+                    - id
+                    - type
+              required:
+              - data
+              description: A related resource object from type roles
+              title: roles
+    ProviderGroupCreateRequest:
       type: object
       properties:
         data:
@@ -7587,6 +7646,41 @@ components:
                   title: roles
       required:
       - data
+    ProviderGroupCreateResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/ProviderGroupCreate'
+      required:
+      - data
+    ProviderGroupMembershipRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - provider_groups-provider
+            attributes:
+              type: object
+              properties:
+                providers:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ProviderResourceIdentifierRequest'
+                  description: List of resource identifier objects representing providers.
+              required:
+              - providers
+      required:
+      - data
     ProviderGroupResourceIdentifierRequest:
       type: object
       properties:
@@ -7624,10 +7718,6 @@ components:
           $ref: '#/components/schemas/ProviderGroup'
       required:
       - data
-    ProviderGroupTypeEnum:
-      type: string
-      enum:
-      - provider-groups
     ProviderResourceIdentifierRequest:
       type: object
       properties:
@@ -8501,7 +8591,6 @@ components:
               - data
               description: A related resource object from type provider-groups
               title: provider-groups
-              readOnly: true
             users:
               type: object
               properties:
@@ -8530,7 +8619,6 @@ components:
               - data
               description: A related resource object from type users
               title: users
-              readOnly: true
             invitations:
               type: object
               properties:
@@ -9512,6 +9600,10 @@ components:
       type: string
       enum:
       - providers
+    Type34dEnum:
+      type: string
+      enum:
+      - provider-groups
     Type6bbEnum:
       type: string
       enum:
@@ -9664,37 +9756,6 @@ components:
           - name
           - password
           - email
-        relationships:
-          type: object
-          properties:
-            roles:
-              type: object
-              properties:
-                data:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                        format: uuid
-                        title: Resource Identifier
-                        description: The identifier of the related object.
-                      type:
-                        type: string
-                        enum:
-                        - roles
-                        title: Resource Type Name
-                        description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
-                          member is used to describe resource objects that share common
-                          attributes and relationships.
-                    required:
-                    - id
-                    - type
-              required:
-              - data
-              description: A related resource object from type roles
-              title: roles
     UserCreateRequest:
       type: object
       properties:
@@ -9735,37 +9796,6 @@ components:
               - name
               - password
               - email
-            relationships:
-              type: object
-              properties:
-                roles:
-                  type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          id:
-                            type: string
-                            format: uuid
-                            title: Resource Identifier
-                            description: The identifier of the related object.
-                          type:
-                            type: string
-                            enum:
-                            - roles
-                            title: Resource Type Name
-                            description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
-                              member is used to describe resource objects that share
-                              common attributes and relationships.
-                        required:
-                        - id
-                        - type
-                  required:
-                  - data
-                  description: A related resource object from type roles
-                  title: roles
       required:
       - data
     UserCreateResponse:
