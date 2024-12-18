@@ -20,9 +20,9 @@ class cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_change
 
         report = check_cloudwatch_log_metric_filter(
             pattern,
-            getattr(cloudtrail_client, "trails", []),
-            getattr(logs_client, "metric_filters", []),
-            getattr(cloudwatch_client, "metric_alarms", []),
+            cloudtrail_client.trails,
+            logs_client.metric_filters,
+            cloudwatch_client.metric_alarms,
             self.metadata(),
         )
 
