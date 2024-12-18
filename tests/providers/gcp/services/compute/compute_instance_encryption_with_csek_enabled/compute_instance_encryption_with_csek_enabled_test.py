@@ -32,6 +32,7 @@ class Test_compute_instance_encryption_with_csek_enabled:
             name="test",
             id="1234567890",
             zone="us-central1-a",
+            region="us-central1",
             public_ip=True,
             metadata={"items": [{"key": "block-project-ssh-keys", "value": "true"}]},
             shielded_enabled_vtpm=True,
@@ -46,6 +47,7 @@ class Test_compute_instance_encryption_with_csek_enabled:
         compute_client = mock.MagicMock
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = [instance]
+        compute_client.region = "us-central1"
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -68,6 +70,7 @@ class Test_compute_instance_encryption_with_csek_enabled:
                 result[0].status_extended,
             )
             assert result[0].resource_id == instance.id
+            assert result[0].location == "us-central1"
 
     def test_one_instance_with_one_unecrypted_disk(self):
         from prowler.providers.gcp.services.compute.compute_service import Instance
@@ -76,6 +79,7 @@ class Test_compute_instance_encryption_with_csek_enabled:
             name="test",
             id="1234567890",
             zone="us-central1-a",
+            region="us-central1",
             public_ip=True,
             metadata={},
             shielded_enabled_vtpm=True,
@@ -112,6 +116,7 @@ class Test_compute_instance_encryption_with_csek_enabled:
                 result[0].status_extended,
             )
             assert result[0].resource_id == instance.id
+            assert result[0].location == "us-central1"
 
     def test_one_instance_with_all_unencrypted_disks(self):
         from prowler.providers.gcp.services.compute.compute_service import Instance
@@ -120,6 +125,7 @@ class Test_compute_instance_encryption_with_csek_enabled:
             name="test",
             id="1234567890",
             zone="us-central1-a",
+            region="us-central1",
             public_ip=True,
             metadata={"items": [{"key": "block-project-ssh-keys", "value": "false"}]},
             shielded_enabled_vtpm=True,
@@ -156,3 +162,4 @@ class Test_compute_instance_encryption_with_csek_enabled:
                 result[0].status_extended,
             )
             assert result[0].resource_id == instance.id
+            assert result[0].location == "us-central1"

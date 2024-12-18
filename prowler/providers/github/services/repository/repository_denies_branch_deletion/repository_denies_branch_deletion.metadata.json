@@ -1,7 +1,7 @@
 {
   "Provider": "github",
   "CheckID": "repository_denies_branch_deletion",
-  "CheckTitle": "Check if repository denies branch deletion",
+  "CheckTitle": "Check if a repository denies branch deletion",
   "CheckType": [],
   "ServiceName": "repository",
   "SubServiceName": "",

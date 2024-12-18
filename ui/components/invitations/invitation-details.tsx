@@ -26,7 +26,7 @@ interface InvitationDetailsProps {
 }
 
 export const InvitationDetails = ({ attributes }: InvitationDetailsProps) => {
-  const baseURL = process.env.SITE_URL || "http://localhost:3000";
+  const baseURL = process.env.SITE_URL;
   const invitationLink = `${baseURL}/sign-up?invitation_token=${attributes.token}`;
   return (
     <div className="flex flex-col gap-x-4 gap-y-8">
