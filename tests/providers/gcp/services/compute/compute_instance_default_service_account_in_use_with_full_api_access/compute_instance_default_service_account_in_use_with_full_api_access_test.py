@@ -32,6 +32,7 @@ class Test_compute_instance_default_service_account_in_use_with_full_api_access:
             name="test",
             id="1234567890",
             zone="us-central1-a",
+            region="us-central1",
             public_ip=True,
             metadata={},
             shielded_enabled_vtpm=True,
@@ -72,6 +73,7 @@ class Test_compute_instance_default_service_account_in_use_with_full_api_access:
                 == f"The VM Instance {instance.name} is not configured to use the default service account with full access to all cloud APIs."
             )
             assert result[0].resource_id == instance.id
+            assert result[0].location == "us-central1"
 
     def test_one_compliant_instance_gke(self):
         from prowler.providers.gcp.services.compute.compute_service import Instance
@@ -80,6 +82,7 @@ class Test_compute_instance_default_service_account_in_use_with_full_api_access:
             name="gke-test",
             id="1234567890",
             zone="us-central1-a",
+            region="us-central1",
             public_ip=True,
             metadata={},
             shielded_enabled_vtpm=True,
@@ -123,6 +126,7 @@ class Test_compute_instance_default_service_account_in_use_with_full_api_access:
                 == f"The VM Instance {instance.name} is not configured to use the default service account with full access to all cloud APIs."
             )
             assert result[0].resource_id == instance.id
+            assert result[0].location == "us-central1"
 
     def test_instance_with_default_service_account(self):
         from prowler.providers.gcp.services.compute.compute_service import Instance
@@ -131,6 +135,7 @@ class Test_compute_instance_default_service_account_in_use_with_full_api_access:
             name="test",
             id="1234567890",
             zone="us-central1-a",
+            region="us-central1",
             public_ip=True,
             metadata={},
             shielded_enabled_vtpm=True,
@@ -174,3 +179,4 @@ class Test_compute_instance_default_service_account_in_use_with_full_api_access:
                 == f"The VM Instance {instance.name} is configured to use the default service account with full access to all cloud APIs."
             )
             assert result[0].resource_id == instance.id
+            assert result[0].location == "us-central1"

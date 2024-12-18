@@ -16,6 +16,7 @@ from drf_spectacular.utils import (
     extend_schema_view,
 )
 from drf_spectacular.views import SpectacularAPIView
+from drf_spectacular_jsonapi.schemas.openapi import JsonApiAutoSchema
 from rest_framework import permissions, status
 from rest_framework.decorators import action
 from rest_framework.exceptions import (
@@ -25,12 +26,14 @@ from rest_framework.exceptions import (
     ValidationError,
 )
 from rest_framework.generics import GenericAPIView, get_object_or_404
-from rest_framework_json_api.views import Response
+from rest_framework.permissions import SAFE_METHODS
+from rest_framework_json_api.views import RelationshipView, Response
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from tasks.beat import schedule_provider_scan
 from tasks.tasks import (
     check_provider_connection_task,
     delete_provider_task,
+    delete_tenant_task,
     perform_scan_summary_task,
     perform_scan_task,
 )
@@ -46,8 +49,10 @@ from api.filters import (
     ProviderGroupFilter,
     ProviderSecretFilter,
     ResourceFilter,
+    RoleFilter,
     ScanFilter,
     ScanSummaryFilter,
+    ServiceOverviewFilter,
     TaskFilter,
     TenantFilter,
     UserFilter,
@@ -62,6 +67,8 @@ from api.models import (
     ProviderGroupMembership,
     ProviderSecret,
     Resource,
+    Role,
+    RoleProviderGroupRelationship,
     Scan,
     ScanSummary,
     SeverityChoices,
@@ -69,8 +76,10 @@ from api.models import (
     StatusChoices,
     Task,
     User,
+    UserRoleRelationship,
 )
 from api.pagination import ComplianceOverviewPagination
+from api.rbac.permissions import HasPermissions, Permissions
 from api.rls import Tenant
 from api.utils import validate_invitation
 from api.uuid_utils import datetime_to_uuid7
@@ -86,9 +95,10 @@ from api.v1.serializers import (
     MembershipSerializer,
     OverviewFindingSerializer,
     OverviewProviderSerializer,
+    OverviewServiceSerializer,
     OverviewSeveritySerializer,
     ProviderCreateSerializer,
-    ProviderGroupMembershipUpdateSerializer,
+    ProviderGroupMembershipSerializer,
     ProviderGroupSerializer,
     ProviderGroupUpdateSerializer,
     ProviderSecretCreateSerializer,
@@ -97,6 +107,10 @@ from api.v1.serializers import (
     ProviderSerializer,
     ProviderUpdateSerializer,
     ResourceSerializer,
+    RoleCreateSerializer,
+    RoleProviderGroupRelationshipSerializer,
+    RoleSerializer,
+    RoleUpdateSerializer,
     ScanCreateSerializer,
     ScanSerializer,
     ScanUpdateSerializer,
@@ -106,6 +120,7 @@ from api.v1.serializers import (
     TokenRefreshSerializer,
     TokenSerializer,
     UserCreateSerializer,
+    UserRoleRelationshipSerializer,
     UserSerializer,
     UserUpdateSerializer,
 )
@@ -114,6 +129,11 @@ CACHE_DECORATOR = cache_control(
     max_age=django_settings.CACHE_MAX_AGE,
     stale_while_revalidate=django_settings.CACHE_STALE_WHILE_REVALIDATE,
 )
+
+
+class RelationshipViewSchema(JsonApiAutoSchema):
+    def _resolve_path_parameters(self, _path_variables):
+        return []
 
 
 @extend_schema(
@@ -171,7 +191,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.0.0"
+        spectacular_settings.VERSION = "1.1.0"
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -270,6 +290,26 @@ class UserViewSet(BaseUserViewset):
     filterset_class = UserFilter
     ordering = ["-date_joined"]
     ordering_fields = ["name", "email", "company_name", "date_joined", "is_active"]
+    required_permissions = [Permissions.MANAGE_USERS]
+    permission_classes = BaseRLSViewSet.permission_classes + [HasPermissions]
+
+    def initial(self, request, *args, **kwargs):
+        """
+        Sets required_permissions before permissions are checked.
+        """
+        self.required_permissions = self.get_required_permissions()
+        super().initial(request, *args, **kwargs)
+
+    def get_required_permissions(self):
+        """
+        Returns the required permissions based on the request method.
+        """
+        if self.action == "me":
+            # No permissions required for me request
+            return []
+        else:
+            # Require permission for the rest of the requests
+            return [Permissions.MANAGE_USERS]
 
     def get_queryset(self):
         # If called during schema generation, return an empty queryset
@@ -346,9 +386,121 @@ class UserViewSet(BaseUserViewset):
             user=user, tenant=tenant, role=role
         )
         if invitation:
+            user_role = []
+            for role in invitation.roles.all():
+                user_role.append(
+                    UserRoleRelationship.objects.using(MainRouter.admin_db).create(
+                        user=user, role=role, tenant=invitation.tenant
+                    )
+                )
             invitation.state = Invitation.State.ACCEPTED
             invitation.save(using=MainRouter.admin_db)
+        else:
+            role = Role.objects.using(MainRouter.admin_db).create(
+                name="admin",
+                tenant_id=tenant.id,
+                manage_users=True,
+                manage_account=True,
+                manage_billing=True,
+                manage_providers=True,
+                manage_integrations=True,
+                manage_scans=True,
+                unlimited_visibility=True,
+            )
+            UserRoleRelationship.objects.using(MainRouter.admin_db).create(
+                user=user,
+                role=role,
+                tenant_id=tenant.id,
+            )
         return Response(data=UserSerializer(user).data, status=status.HTTP_201_CREATED)
+
+
+@extend_schema_view(
+    create=extend_schema(
+        tags=["User"],
+        summary="Create a new user-roles relationship",
+        description="Add a new user-roles relationship to the system by providing the required user-roles details.",
+        responses={
+            204: OpenApiResponse(description="Relationship created successfully"),
+            400: OpenApiResponse(
+                description="Bad request (e.g., relationship already exists)"
+            ),
+        },
+    ),
+    partial_update=extend_schema(
+        tags=["User"],
+        summary="Partially update a user-roles relationship",
+        description="Update the user-roles relationship information without affecting other fields.",
+        responses={
+            204: OpenApiResponse(
+                response=None, description="Relationship updated successfully"
+            )
+        },
+    ),
+    destroy=extend_schema(
+        tags=["User"],
+        summary="Delete a user-roles relationship",
+        description="Remove the user-roles relationship from the system by their ID.",
+        responses={
+            204: OpenApiResponse(
+                response=None, description="Relationship deleted successfully"
+            )
+        },
+    ),
+)
+class UserRoleRelationshipView(RelationshipView, BaseRLSViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserRoleRelationshipSerializer
+    resource_name = "roles"
+    http_method_names = ["post", "patch", "delete"]
+    schema = RelationshipViewSchema()
+
+    def get_queryset(self):
+        return User.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        user = self.get_object()
+
+        role_ids = [item["id"] for item in request.data]
+        existing_relationships = UserRoleRelationship.objects.filter(
+            user=user, role_id__in=role_ids
+        )
+
+        if existing_relationships.exists():
+            return Response(
+                {"detail": "One or more roles are already associated with the user."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        serializer = self.get_serializer(
+            data={"roles": request.data},
+            context={
+                "user": user,
+                "tenant_id": self.request.tenant_id,
+                "request": request,
+            },
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def partial_update(self, request, *args, **kwargs):
+        user = self.get_object()
+        serializer = self.get_serializer(
+            instance=user,
+            data={"roles": request.data},
+            context={"tenant_id": self.request.tenant_id, "request": request},
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def destroy(self, request, *args, **kwargs):
+        user = self.get_object()
+        user.roles.clear()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 @extend_schema_view(
@@ -388,6 +540,8 @@ class TenantViewSet(BaseTenantViewset):
     search_fields = ["name"]
     ordering = ["-inserted_at"]
     ordering_fields = ["name", "inserted_at", "updated_at"]
+    required_permissions = [Permissions.MANAGE_ACCOUNT]
+    permission_classes = BaseRLSViewSet.permission_classes + [HasPermissions]
 
     def get_queryset(self):
         return Tenant.objects.all()
@@ -400,6 +554,25 @@ class TenantViewSet(BaseTenantViewset):
             user=self.request.user, tenant=tenant, role=Membership.RoleChoices.OWNER
         )
         return Response(data=serializer.data, status=status.HTTP_201_CREATED)
+
+    def destroy(self, request, *args, **kwargs):
+        # This will perform validation and raise a 404 if the tenant does not exist
+        tenant_id = kwargs.get("pk")
+        get_object_or_404(Tenant, id=tenant_id)
+
+        with transaction.atomic():
+            # Delete memberships
+            Membership.objects.using(MainRouter.admin_db).filter(
+                tenant_id=tenant_id
+            ).delete()
+
+            # Delete users without memberships
+            User.objects.using(MainRouter.admin_db).filter(
+                membership__isnull=True
+            ).delete()
+        # Delete tenant in batches
+        delete_tenant_task.apply_async(kwargs={"tenant_id": tenant_id})
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 @extend_schema_view(
@@ -542,66 +715,139 @@ class ProviderGroupViewSet(BaseRLSViewSet):
     queryset = ProviderGroup.objects.all()
     serializer_class = ProviderGroupSerializer
     filterset_class = ProviderGroupFilter
-    http_method_names = ["get", "post", "patch", "put", "delete"]
+    http_method_names = ["get", "post", "patch", "delete"]
     ordering = ["inserted_at"]
+    required_permissions = []
+    permission_classes = BaseRLSViewSet.permission_classes + [HasPermissions]
+
+    def initial(self, request, *args, **kwargs):
+        """
+        Sets required_permissions before permissions are checked.
+        """
+        self.required_permissions = self.get_required_permissions()
+        super().initial(request, *args, **kwargs)
+
+    def get_required_permissions(self):
+        """
+        Returns the required permissions based on the request method.
+        """
+        if self.request.method in SAFE_METHODS:
+            # No permissions required for GET requests
+            return []
+        else:
+            # Require permission for non-GET requests
+            return [Permissions.MANAGE_PROVIDERS]
 
     def get_queryset(self):
-        return ProviderGroup.objects.prefetch_related("providers")
+        user = self.request.user
+        user_roles = user.roles.all()
+
+        # Check if any of the user's roles have UNLIMITED_VISIBILITY
+        if getattr(user_roles[0], Permissions.UNLIMITED_VISIBILITY.value, False):
+            # User has unlimited visibility, return all provider groups
+            return ProviderGroup.objects.prefetch_related("providers")
+
+        # Collect provider groups associated with the user's roles
+        provider_groups = (
+            ProviderGroup.objects.filter(roles__in=user_roles)
+            .distinct()
+            .prefetch_related("providers")
+        )
+
+        return provider_groups
 
     def get_serializer_class(self):
         if self.action == "partial_update":
             return ProviderGroupUpdateSerializer
-        elif self.action == "providers":
-            if hasattr(self, "response_serializer_class"):
-                return self.response_serializer_class
-            return ProviderGroupMembershipUpdateSerializer
         return super().get_serializer_class()
 
-    @extend_schema(
-        tags=["Provider Group"],
-        summary="Add providers to a provider group",
-        description="Add one or more providers to an existing provider group.",
-        request=ProviderGroupMembershipUpdateSerializer,
-        responses={200: OpenApiResponse(response=ProviderGroupSerializer)},
-    )
-    @action(detail=True, methods=["put"], url_name="providers")
-    def providers(self, request, pk=None):
+
+@extend_schema(tags=["Provider Group"])
+@extend_schema_view(
+    create=extend_schema(
+        summary="Create a new provider_group-providers relationship",
+        description="Add a new provider_group-providers relationship to the system by providing the required provider_group-providers details.",
+        responses={
+            204: OpenApiResponse(description="Relationship created successfully"),
+            400: OpenApiResponse(
+                description="Bad request (e.g., relationship already exists)"
+            ),
+        },
+    ),
+    partial_update=extend_schema(
+        summary="Partially update a provider_group-providers relationship",
+        description="Update the provider_group-providers relationship information without affecting other fields.",
+        responses={
+            204: OpenApiResponse(
+                response=None, description="Relationship updated successfully"
+            )
+        },
+    ),
+    destroy=extend_schema(
+        summary="Delete a provider_group-providers relationship",
+        description="Remove the provider_group-providers relationship from the system by their ID.",
+        responses={
+            204: OpenApiResponse(
+                response=None, description="Relationship deleted successfully"
+            )
+        },
+    ),
+)
+class ProviderGroupProvidersRelationshipView(RelationshipView, BaseRLSViewSet):
+    queryset = ProviderGroup.objects.all()
+    serializer_class = ProviderGroupMembershipSerializer
+    resource_name = "providers"
+    http_method_names = ["post", "patch", "delete"]
+    schema = RelationshipViewSchema()
+
+    def get_queryset(self):
+        return ProviderGroup.objects.all()
+
+    def create(self, request, *args, **kwargs):
         provider_group = self.get_object()
 
-        # Validate input data
-        serializer = self.get_serializer_class()(
-            data=request.data,
-            context=self.get_serializer_context(),
+        provider_ids = [item["id"] for item in request.data]
+        existing_relationships = ProviderGroupMembership.objects.filter(
+            provider_group=provider_group, provider_id__in=provider_ids
+        )
+
+        if existing_relationships.exists():
+            return Response(
+                {
+                    "detail": "One or more providers are already associated with the provider_group."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        serializer = self.get_serializer(
+            data={"providers": request.data},
+            context={
+                "provider_group": provider_group,
+                "tenant_id": self.request.tenant_id,
+                "request": request,
+            },
         )
         serializer.is_valid(raise_exception=True)
+        serializer.save()
 
-        provider_ids = serializer.validated_data["provider_ids"]
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
-        # Update memberships
-        ProviderGroupMembership.objects.filter(
-            provider_group=provider_group, tenant_id=request.tenant_id
-        ).delete()
-
-        provider_group_memberships = [
-            ProviderGroupMembership(
-                tenant_id=self.request.tenant_id,
-                provider_group=provider_group,
-                provider_id=provider_id,
-            )
-            for provider_id in provider_ids
-        ]
-
-        ProviderGroupMembership.objects.bulk_create(
-            provider_group_memberships, ignore_conflicts=True
+    def partial_update(self, request, *args, **kwargs):
+        provider_group = self.get_object()
+        serializer = self.get_serializer(
+            instance=provider_group,
+            data={"providers": request.data},
+            context={"tenant_id": self.request.tenant_id, "request": request},
         )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
-        # Return the updated provider group with providers
-        provider_group.refresh_from_db()
-        self.response_serializer_class = ProviderGroupSerializer
-        response_serializer = ProviderGroupSerializer(
-            provider_group, context=self.get_serializer_context()
-        )
-        return Response(data=response_serializer.data, status=status.HTTP_200_OK)
+    def destroy(self, request, *args, **kwargs):
+        provider_group = self.get_object()
+        provider_group.providers.clear()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 @extend_schema_view(
@@ -651,9 +897,41 @@ class ProviderViewSet(BaseRLSViewSet):
         "inserted_at",
         "updated_at",
     ]
+    required_permissions = []
+    permission_classes = BaseRLSViewSet.permission_classes + [HasPermissions]
+
+    def initial(self, request, *args, **kwargs):
+        """
+        Sets required_permissions before permissions are checked.
+        """
+        self.required_permissions = self.get_required_permissions()
+        super().initial(request, *args, **kwargs)
+
+    def get_required_permissions(self):
+        """
+        Returns the required permissions based on the request method.
+        """
+        if self.request.method in SAFE_METHODS:
+            # No permissions required for GET requests
+            return []
+        else:
+            # Require permission for non-GET requests
+            return [Permissions.MANAGE_PROVIDERS]
 
     def get_queryset(self):
-        return Provider.objects.all()
+        user = self.request.user
+        user_roles = user.roles.all()
+        if getattr(user_roles[0], Permissions.UNLIMITED_VISIBILITY.value, False):
+            # User has unlimited visibility, return all providers
+            return Provider.objects.all()
+
+        # User lacks permission, filter providers based on provider groups associated with the role
+        provider_groups = user_roles[0].provider_groups.all()
+        providers = Provider.objects.filter(
+            provider_groups__in=provider_groups
+        ).distinct()
+
+        return providers
 
     def get_serializer_class(self):
         if self.action == "create":
@@ -773,9 +1051,40 @@ class ScanViewSet(BaseRLSViewSet):
         "inserted_at",
         "updated_at",
     ]
+    required_permissions = [Permissions.MANAGE_SCANS]
+    permission_classes = BaseRLSViewSet.permission_classes + [HasPermissions]
+
+    def initial(self, request, *args, **kwargs):
+        """
+        Sets required_permissions before permissions are checked.
+        """
+        self.required_permissions = self.get_required_permissions()
+        super().initial(request, *args, **kwargs)
+
+    def get_required_permissions(self):
+        """
+        Returns the required permissions based on the request method.
+        """
+        if self.request.method in SAFE_METHODS:
+            # No permissions required for GET requests
+            return []
+        else:
+            # Require permission for non-GET requests
+            return [Permissions.MANAGE_SCANS]
 
     def get_queryset(self):
-        return Scan.objects.all()
+        user = self.request.user
+        user_roles = user.roles.all()
+        if getattr(user_roles[0], Permissions.UNLIMITED_VISIBILITY.value, False):
+            # User has unlimited visibility, return all scans
+            return Scan.objects.all()
+
+        # User lacks permission, filter providers based on provider groups associated with the role
+        provider_groups = user_roles[0].provider_groups.all()
+        providers = Provider.objects.filter(
+            provider_groups__in=provider_groups
+        ).distinct()
+        return Scan.objects.filter(provider__in=providers).distinct()
 
     def get_serializer_class(self):
         if self.action == "create":
@@ -865,11 +1174,26 @@ class TaskViewSet(BaseRLSViewSet):
     search_fields = ["name"]
     ordering = ["-inserted_at"]
     ordering_fields = ["inserted_at", "completed_at", "name", "state"]
+    required_permissions = []
+    permission_classes = BaseRLSViewSet.permission_classes + [HasPermissions]
 
     def get_queryset(self):
-        return Task.objects.annotate(
-            name=F("task_runner_task__task_name"), state=F("task_runner_task__status")
-        )
+        user = self.request.user
+        user_roles = user.roles.all()
+        if getattr(user_roles[0], Permissions.UNLIMITED_VISIBILITY.value, False):
+            # User has unlimited visibility, return all tasks
+            return Task.objects.annotate(
+                name=F("task_runner_task__task_name"),
+                state=F("task_runner_task__status"),
+            )
+
+        # User lacks permission, filter tasks based on provider groups associated with the role
+        provider_groups = user_roles[0].provider_groups.all()
+        providers = Provider.objects.filter(
+            provider_groups__in=provider_groups
+        ).distinct()
+        scans = Scan.objects.filter(provider__in=providers).distinct()
+        return Task.objects.filter(scan__in=scans).distinct()
 
     def destroy(self, request, *args, pk=None, **kwargs):
         task = get_object_or_404(Task, pk=pk)
@@ -930,11 +1254,31 @@ class ResourceViewSet(BaseRLSViewSet):
         "inserted_at",
         "updated_at",
     ]
+    required_permissions = []
+    permission_classes = BaseRLSViewSet.permission_classes + [HasPermissions]
+
+    def initial(self, request, *args, **kwargs):
+        """
+        Sets required_permissions before permissions are checked.
+        """
+        self.required_permissions = ResourceViewSet.required_permissions
+        super().initial(request, *args, **kwargs)
 
     def get_queryset(self):
-        queryset = Resource.objects.all()
-        search_value = self.request.query_params.get("filter[search]", None)
+        user = self.request.user
+        user_roles = user.roles.all()
+        if getattr(user_roles[0], Permissions.UNLIMITED_VISIBILITY.value, False):
+            # User has unlimited visibility, return all scans
+            queryset = Resource.objects.all()
+        else:
+            # User lacks permission, filter providers based on provider groups associated with the role
+            provider_groups = user_roles[0].provider_groups.all()
+            providers = Provider.objects.filter(
+                provider_groups__in=provider_groups
+            ).distinct()
+            queryset = Resource.objects.filter(provider__in=providers).distinct()
 
+        search_value = self.request.query_params.get("filter[search]", None)
         if search_value:
             # Django's ORM will build a LEFT JOIN and OUTER JOIN on the "through" table, resulting in duplicates
             # The duplicates then require a `distinct` query
@@ -1005,11 +1349,15 @@ class FindingViewSet(BaseRLSViewSet):
         "inserted_at",
         "updated_at",
     ]
+    required_permissions = []
+    permission_classes = BaseRLSViewSet.permission_classes + [HasPermissions]
 
-    def inserted_at_to_uuidv7(self, inserted_at):
-        if inserted_at is None:
-            return None
-        return datetime_to_uuid7(inserted_at)
+    def initial(self, request, *args, **kwargs):
+        """
+        Sets required_permissions before permissions are checked.
+        """
+        self.required_permissions = ResourceViewSet.required_permissions
+        super().initial(request, *args, **kwargs)
 
     def get_serializer_class(self):
         if self.action == "findings_services_regions":
@@ -1018,9 +1366,21 @@ class FindingViewSet(BaseRLSViewSet):
         return super().get_serializer_class()
 
     def get_queryset(self):
-        queryset = Finding.objects.all()
-        search_value = self.request.query_params.get("filter[search]", None)
+        user = self.request.user
+        user_roles = user.roles.all()
+        if getattr(user_roles[0], Permissions.UNLIMITED_VISIBILITY.value, False):
+            # User has unlimited visibility, return all scans
+            queryset = Finding.objects.all()
+        else:
+            # User lacks permission, filter providers based on provider groups associated with the role
+            provider_groups = user_roles[0].provider_groups.all()
+            providers = Provider.objects.filter(
+                provider_groups__in=provider_groups
+            ).distinct()
+            scans = Scan.objects.filter(provider__in=providers).distinct()
+            queryset = Finding.objects.filter(scan__in=scans).distinct()
 
+        search_value = self.request.query_params.get("filter[search]", None)
         if search_value:
             # Django's ORM will build a LEFT JOIN and OUTER JOIN on any "through" tables, resulting in duplicates
             # The duplicates then require a `distinct` query
@@ -1047,6 +1407,11 @@ class FindingViewSet(BaseRLSViewSet):
             ).distinct()
 
         return queryset
+
+    def inserted_at_to_uuidv7(self, inserted_at):
+        if inserted_at is None:
+            return None
+        return datetime_to_uuid7(inserted_at)
 
     @action(detail=False, methods=["get"], url_name="findings_services_regions")
     def findings_services_regions(self, request):
@@ -1168,6 +1533,8 @@ class InvitationViewSet(BaseRLSViewSet):
         "state",
         "inviter",
     ]
+    required_permissions = [Permissions.MANAGE_ACCOUNT]
+    permission_classes = BaseRLSViewSet.permission_classes + [HasPermissions]
 
     def get_queryset(self):
         return Invitation.objects.all()
@@ -1255,12 +1622,166 @@ class InvitationAcceptViewSet(BaseRLSViewSet):
             user=user,
             tenant=invitation.tenant,
         )
+        user_role = []
+        for role in invitation.roles.all():
+            user_role.append(
+                UserRoleRelationship.objects.using(MainRouter.admin_db).create(
+                    user=user, role=role, tenant=invitation.tenant
+                )
+            )
         invitation.state = Invitation.State.ACCEPTED
         invitation.save(using=MainRouter.admin_db)
 
         self.response_serializer_class = MembershipSerializer
         membership_serializer = self.get_serializer(membership)
         return Response(data=membership_serializer.data, status=status.HTTP_201_CREATED)
+
+
+@extend_schema(tags=["Role"])
+@extend_schema_view(
+    list=extend_schema(
+        tags=["Role"],
+        summary="List all roles",
+        description="Retrieve a list of all roles with options for filtering by various criteria.",
+    ),
+    retrieve=extend_schema(
+        tags=["Role"],
+        summary="Retrieve data from a role",
+        description="Fetch detailed information about a specific role by their ID.",
+    ),
+    create=extend_schema(
+        tags=["Role"],
+        summary="Create a new role",
+        description="Add a new role to the system by providing the required role details.",
+    ),
+    partial_update=extend_schema(
+        tags=["Role"],
+        summary="Partially update a role",
+        description="Update certain fields of an existing role's information without affecting other fields.",
+        responses={200: RoleSerializer},
+    ),
+    destroy=extend_schema(
+        tags=["Role"],
+        summary="Delete a role",
+        description="Remove a role from the system by their ID.",
+    ),
+)
+class RoleViewSet(BaseRLSViewSet):
+    queryset = Role.objects.all()
+    serializer_class = RoleSerializer
+    filterset_class = RoleFilter
+    http_method_names = ["get", "post", "patch", "delete"]
+    ordering = ["inserted_at"]
+    required_permissions = [Permissions.MANAGE_ACCOUNT]
+    permission_classes = BaseRLSViewSet.permission_classes + [HasPermissions]
+
+    def get_queryset(self):
+        return Role.objects.all()
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return RoleCreateSerializer
+        elif self.action == "partial_update":
+            return RoleUpdateSerializer
+        return super().get_serializer_class()
+
+    def partial_update(self, request, *args, **kwargs):
+        user = request.user
+        user_role = user.roles.all().first()
+        # If the user is the owner of the role, the manage_account field is not editable
+        if user_role and kwargs["pk"] == str(user_role.id):
+            request.data["manage_account"] = str(user_role.manage_account).lower()
+        return super().partial_update(request, *args, **kwargs)
+
+
+@extend_schema_view(
+    create=extend_schema(
+        tags=["Role"],
+        summary="Create a new role-provider_groups relationship",
+        description="Add a new role-provider_groups relationship to the system by providing the required role-provider_groups details.",
+        responses={
+            204: OpenApiResponse(description="Relationship created successfully"),
+            400: OpenApiResponse(
+                description="Bad request (e.g., relationship already exists)"
+            ),
+        },
+    ),
+    partial_update=extend_schema(
+        tags=["Role"],
+        summary="Partially update a role-provider_groups relationship",
+        description="Update the role-provider_groups relationship information without affecting other fields.",
+        responses={
+            204: OpenApiResponse(
+                response=None, description="Relationship updated successfully"
+            )
+        },
+    ),
+    destroy=extend_schema(
+        tags=["Role"],
+        summary="Delete a role-provider_groups relationship",
+        description="Remove the role-provider_groups relationship from the system by their ID.",
+        responses={
+            204: OpenApiResponse(
+                response=None, description="Relationship deleted successfully"
+            )
+        },
+    ),
+)
+class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
+    queryset = Role.objects.all()
+    serializer_class = RoleProviderGroupRelationshipSerializer
+    resource_name = "provider_groups"
+    http_method_names = ["post", "patch", "delete"]
+    schema = RelationshipViewSchema()
+
+    def get_queryset(self):
+        return Role.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        role = self.get_object()
+
+        provider_group_ids = [item["id"] for item in request.data]
+        existing_relationships = RoleProviderGroupRelationship.objects.filter(
+            role=role, provider_group_id__in=provider_group_ids
+        )
+
+        if existing_relationships.exists():
+            return Response(
+                {
+                    "detail": "One or more provider groups are already associated with the role."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        serializer = self.get_serializer(
+            data={"provider_groups": request.data},
+            context={
+                "role": role,
+                "tenant_id": self.request.tenant_id,
+                "request": request,
+            },
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def partial_update(self, request, *args, **kwargs):
+        role = self.get_object()
+        serializer = self.get_serializer(
+            instance=role,
+            data={"provider_groups": request.data},
+            context={"tenant_id": self.request.tenant_id, "request": request},
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def destroy(self, request, *args, **kwargs):
+        role = self.get_object()
+        role.provider_groups.clear()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 @extend_schema_view(
@@ -1367,6 +1888,15 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
         ),
         filters=True,
     ),
+    services=extend_schema(
+        summary="Get findings data by service",
+        description=(
+            "Retrieve an aggregated summary of findings grouped by service. The response includes the total count "
+            "of findings for each service, as long as there are at least one finding for that service. At least "
+            "one of the `inserted_at` filters must be provided."
+        ),
+        filters=True,
+    ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 class OverviewViewSet(BaseRLSViewSet):
@@ -1381,6 +1911,8 @@ class OverviewViewSet(BaseRLSViewSet):
             return ScanSummary.objects.all()
         elif self.action == "findings_severity":
             return ScanSummary.objects.all()
+        elif self.action == "services":
+            return ScanSummary.objects.all()
         else:
             return super().get_queryset()
 
@@ -1391,6 +1923,8 @@ class OverviewViewSet(BaseRLSViewSet):
             return OverviewFindingSerializer
         elif self.action == "findings_severity":
             return OverviewSeveritySerializer
+        elif self.action == "services":
+            return OverviewServiceSerializer
         return super().get_serializer_class()
 
     def get_filterset_class(self):
@@ -1398,6 +1932,8 @@ class OverviewViewSet(BaseRLSViewSet):
             return None
         elif self.action in ["findings", "findings_severity"]:
             return ScanSummaryFilter
+        elif self.action == "services":
+            return ServiceOverviewFilter
         return None
 
     @extend_schema(exclude=True)
@@ -1541,6 +2077,38 @@ class OverviewViewSet(BaseRLSViewSet):
             severity_data[item["severity"]] = item["count"]
 
         serializer = OverviewSeveritySerializer(severity_data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"], url_name="services")
+    def services(self, request):
+        queryset = self.get_queryset()
+        filtered_queryset = self.filter_queryset(queryset)
+
+        latest_scan_subquery = (
+            Scan.objects.filter(
+                state=StateChoices.COMPLETED, provider_id=OuterRef("scan__provider_id")
+            )
+            .order_by("-id")
+            .values("id")[:1]
+        )
+
+        annotated_queryset = filtered_queryset.annotate(
+            latest_scan_id=Subquery(latest_scan_subquery)
+        )
+
+        filtered_queryset = annotated_queryset.filter(scan_id=F("latest_scan_id"))
+
+        services_data = (
+            filtered_queryset.values("service")
+            .annotate(_pass=Sum("_pass"))
+            .annotate(fail=Sum("fail"))
+            .annotate(muted=Sum("muted"))
+            .annotate(total=Sum("total"))
+            .order_by("service")
+        )
+
+        serializer = OverviewServiceSerializer(services_data, many=True)
+
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 

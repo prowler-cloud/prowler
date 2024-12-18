@@ -9,7 +9,7 @@ class compute_project_os_login_enabled(Check):
             report = Check_Report_GCP(self.metadata())
             report.project_id = project.id
             report.resource_id = project.id
-            report.location = "global"
+            report.location = compute_client.region
             report.status = "PASS"
             report.status_extended = f"Project {project.id} has OS Login enabled."
             if not project.enable_oslogin:

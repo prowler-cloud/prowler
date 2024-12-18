@@ -49,7 +49,7 @@ class iam_rotate_access_key_90_days(Check):
                         old_access_keys = True
                         report = Check_Report_AWS(self.metadata())
                         report.region = iam_client.region
-                        report.resource_id = user["user"]
+                        report.resource_id = f"{user['user']}-access-key-1"
                         report.resource_arn = user["arn"]
                         report.resource_tags = user_tags
                         report.status = "FAIL"
@@ -66,7 +66,7 @@ class iam_rotate_access_key_90_days(Check):
                         old_access_keys = True
                         report = Check_Report_AWS(self.metadata())
                         report.region = iam_client.region
-                        report.resource_id = user["user"]
+                        report.resource_id = f"{user['user']}-access-key-2"
                         report.resource_arn = user["arn"]
                         report.resource_tags = user_tags
                         report.status = "FAIL"
