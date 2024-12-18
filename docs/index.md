@@ -45,6 +45,8 @@ Prowler App can be installed in different ways, depending on your environment:
     docker compose up -d
     ```
 
+    > Containers are built for `linux/amd64`. If your workstation's architecture is different, please set `DOCKER_DEFAULT_PLATFORM=linux/amd64` in your environment.
+
     > Enjoy Prowler App at http://localhost:3000 by signing up with your email and password.
 
     ???+ note
