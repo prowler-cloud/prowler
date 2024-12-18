@@ -235,13 +235,10 @@ class UserCreateSerializer(BaseWriteSerializer):
 
 class UserUpdateSerializer(BaseWriteSerializer):
     password = serializers.CharField(write_only=True, required=False)
-    roles = serializers.ResourceRelatedField(
-        queryset=Role.objects.all(), many=True, required=False
-    )
 
     class Meta:
         model = User
-        fields = ["id", "name", "password", "email", "company_name", "roles"]
+        fields = ["id", "name", "password", "email", "company_name"]
         extra_kwargs = {
             "id": {"read_only": True},
         }
@@ -506,7 +503,6 @@ class ProviderGroupCreateSerializer(ProviderGroupSerializer):
             "updated_at",
             "providers",
             "roles",
-            "url",
         ]
 
     def create(self, validated_data):
