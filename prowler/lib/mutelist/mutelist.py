@@ -106,6 +106,7 @@ class Mutelist(ABC):
                             - 'i-123456789'
                         Tags:
                             - 'Name=AdminInstance | Environment=Prod'
+                        Description: 'Field to describe why the findings associated with these values are muted'
         ```
         The check `ec2_instance_detailed_monitoring_enabled` will be muted for all accounts and regions and for the resource_id 'i-123456789' with at least one of the tags 'Name=AdminInstance' or 'Environment=Prod'.
 

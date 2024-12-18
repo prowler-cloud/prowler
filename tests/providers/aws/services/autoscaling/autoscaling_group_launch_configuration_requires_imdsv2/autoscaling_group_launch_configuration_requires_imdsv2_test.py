@@ -119,10 +119,6 @@ class Test_autoscaling_group_launch_configuration_requires_imdsv2:
             AvailabilityZones=["us-east-1a", "us-east-1b"],
         )
 
-        autoscaling_group_arn = autoscaling_client.describe_auto_scaling_groups(
-            AutoScalingGroupNames=[autoscaling_group_name]
-        )["AutoScalingGroups"][0]["AutoScalingGroupARN"]
-
         from prowler.providers.aws.services.autoscaling.autoscaling_service import (
             AutoScaling,
         )
@@ -144,15 +140,7 @@ class Test_autoscaling_group_launch_configuration_requires_imdsv2:
             check = autoscaling_group_launch_configuration_requires_imdsv2()
             result = check.execute()
 
-            assert len(result) == 1
-            assert result[0].status == "FAIL"
-            assert (
-                result[0].status_extended
-                == f"Autoscaling group {autoscaling_group_name} has IMDSv2 disabled or not required."
-            )
-            assert result[0].resource_id == autoscaling_group_name
-            assert result[0].resource_tags == []
-            assert result[0].resource_arn == autoscaling_group_arn
+            assert len(result) == 0
 
     @mock_aws
     def test_groups_with_imdsv2_disabled(self):

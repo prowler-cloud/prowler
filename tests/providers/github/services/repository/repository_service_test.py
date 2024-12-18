@@ -26,7 +26,7 @@ def mock_list_repositories(_):
 class Test_Repository_Service:
     def test_get_client(self):
         repository_service = Repository(set_mocked_github_provider())
-        assert repository_service.client.__class__.__name__ == "Github"
+        assert repository_service.clients[0].__class__.__name__ == "Github"
 
     def test_get_service(self):
         repository_service = Repository(set_mocked_github_provider())

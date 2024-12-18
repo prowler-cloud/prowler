@@ -7,18 +7,18 @@ import { Control, Controller } from "react-hook-form";
 import { CustomRadio } from "@/components/ui/custom";
 import { FormMessage } from "@/components/ui/form";
 
-import { FormValues } from "./connect-account-form";
-
 type RadioGroupAWSViaCredentialsFormProps = {
-  control: Control<FormValues>;
+  control: Control<any>;
   isInvalid: boolean;
   errorMessage?: string;
+  onChange?: (value: string) => void;
 };
 
 export const RadioGroupAWSViaCredentialsForm = ({
   control,
   isInvalid,
   errorMessage,
+  onChange,
 }: RadioGroupAWSViaCredentialsFormProps) => {
   return (
     <Controller
@@ -31,6 +31,12 @@ export const RadioGroupAWSViaCredentialsForm = ({
             isInvalid={isInvalid}
             {...field}
             value={field.value || ""}
+            onValueChange={(value) => {
+              field.onChange(value);
+              if (onChange) {
+                onChange(value);
+              }
+            }}
           >
             <div className="flex flex-col gap-4">
               <span className="text-sm text-default-500">Using IAM Role</span>

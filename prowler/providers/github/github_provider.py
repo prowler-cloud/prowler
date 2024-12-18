@@ -1,6 +1,6 @@
 import os
+from os import environ
 
-import environ
 from colorama import Fore, Style
 from github import Auth, Github, GithubIntegration
 
@@ -29,7 +29,7 @@ from prowler.providers.github.models import (
 )
 
 
-def format_rsa_key(key):
+def format_rsa_key(key: str) -> str:
     """
     Format an RSA private key by adding line breaks to the key body.
     This function takes an RSA private key in PEM format as input and formats it by inserting line breaks every 64 characters in the key body. This formatting is necessary for the GitHub SDK Parser to correctly process the key.
@@ -38,11 +38,11 @@ def format_rsa_key(key):
     Returns:
         str: The formatted RSA private key with line breaks added to the key body. If the input key does not have the correct headers, it is returned unchanged.
     Example:
-        >>> key = "-----BEGIN RSA PRIVATE KEY-----MIIBOgIBAAJBAK1...-----END RSA PRIVATE KEY-----"
+        >>> key = "-----BEGIN RSA PRIVATE KEY-----XXXXXXXXXXXXX...-----END RSA PRIVATE KEY-----"
         >>> formatted_key = format_rsa_key(key)
         >>> print(formatted_key)
         -----BEGIN RSA PRIVATE KEY-----
-        MIIBOgIBAAJBAK1...
+        XXXXXXXXXXXXX...
         -----END RSA PRIVATE KEY-----
 
     """
@@ -229,35 +229,36 @@ class GithubProvider(Provider):
 
             elif github_app_id and github_app_key:
                 app_id = github_app_id
-                app_key = github_app_key
+                with open(github_app_key, "r") as rsa_key:
+                    app_key = rsa_key.read()
+
                 self._auth_method = "GitHub App Token"
 
             else:
-                env = environ.Env()
                 # PAT
-                logger.error(
-                    "GitHub provider: We will look for GITHUB_PERSONAL_ACCESS_TOKEN enviroment variable as you have not provided any token."
+                logger.info(
+                    "Looking for GITHUB_PERSONAL_ACCESS_TOKEN environment variable as user has not provided any token...."
                 )
-                session_token = env.str("GITHUB_PERSONAL_ACCESS_TOKEN", "")
+                session_token = environ.get("GITHUB_PERSONAL_ACCESS_TOKEN", "")
                 if session_token:
                     self._auth_method = "Environment Variable for Personal App Token"
 
                 if not session_token:
                     # OAUTH
-                    logger.error(
-                        "GitHub provider: We will look for GITHUB_OAUTH_TOKEN enviroment variable as you have not provided any token."
+                    logger.info(
+                        "Looking for GITHUB_OAUTH_TOKEN environment variable as user has not provided any token...."
                     )
-                    session_token = env.str("GITHUB_OAUTH_APP_TOKEN", "")
+                    session_token = environ.get("GITHUB_OAUTH_APP_TOKEN", "")
                     if session_token:
                         self._auth_method = "Environment Variable for OAuth App Token"
 
                     if not session_token:
                         # APP
-                        logger.error(
-                            "GitHub provider: We will look for GITHUB_APP_ID and GITHUB_APP_KEY enviroment variables as you have not provided any."
+                        logger.info(
+                            "Looking for GITHUB_APP_ID and GITHUB_APP_KEY environment variables as user has not provided any token...."
                         )
-                        app_id = env.str("GITHUB_APP_ID", "")
-                        app_key = format_rsa_key(env.str(r"GITHUB_APP_KEY", ""))
+                        app_id = environ.get("GITHUB_APP_ID", "")
+                        app_key = format_rsa_key(environ.get(r"GITHUB_APP_KEY", ""))
 
                         if app_id and app_key:
                             self._auth_method = (
@@ -265,12 +266,9 @@ class GithubProvider(Provider):
                             )
 
             if not self._auth_method:
-                logger.critical(
-                    "GitHub provider: No authentication method selected and not enviroment variables were found."
-                )
                 raise GithubEnvironmentVariableError(
                     file=os.path.basename(__file__),
-                    message="No authentication method selected.",
+                    message="No authentication method selected and not environment variables were found.",
                 )
 
             credentials = GithubSession(
@@ -282,7 +280,6 @@ class GithubProvider(Provider):
             return credentials
 
         except Exception as error:
-            logger.critical("GitHub provider: Error setting up session.")
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
             )
@@ -314,7 +311,6 @@ class GithubProvider(Provider):
                     return identity
 
                 except Exception as error:
-                    logger.critical("GitHub provider: Given token is not valid.")
                     raise GithubInvalidTokenError(
                         original_exception=error,
                     )
@@ -327,13 +323,11 @@ class GithubProvider(Provider):
                     return identity
 
                 except Exception as error:
-                    logger.critical("GitHub provider: Given credentials are not valid.")
                     raise GithubInvalidCredentialsError(
                         original_exception=error,
                     )
 
         except Exception as error:
-            logger.critical("GitHub provider: Error setting up identity.")
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
             )

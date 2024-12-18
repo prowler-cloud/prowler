@@ -15,6 +15,7 @@ Mutelist:
           Resources:
             - "prowler-pod1"           # Will ignore prowler-pod1 in check core_minimize_allowPrivilegeEscalation_containers located in namespace1
             - "prowler-pod2"           # Will ignore prowler-pod2 in check core_minimize_allowPrivilegeEscalation_containers located in namespace1
+          Description: "Findings related with the check core_minimize_allowPrivilegeEscalation_containers will be muted for namespace1 region and prowler-pod1, prowler-pod2 resources"
         "kubelet_*":
           Regions:
             - "*"

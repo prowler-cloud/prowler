@@ -6,8 +6,8 @@ class rds_instance_non_default_port(Check):
     def execute(self):
         findings = []
         default_ports = {
-            3306: ["mysql", "mariadb"],
-            5432: ["postgres"],
+            3306: ["mysql", "mariadb", "aurora-mysql"],
+            5432: ["postgres", "aurora-postgresql"],
             1521: ["oracle"],
             1433: ["sqlserver"],
             50000: ["db2"],

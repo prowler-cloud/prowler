@@ -11,7 +11,7 @@ from api.compliance import (
     PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE,
     generate_scan_compliance,
 )
-from api.db_utils import tenant_transaction
+from api.db_utils import rls_transaction
 from api.models import (
     ComplianceOverview,
     Finding,
@@ -69,7 +69,7 @@ def _store_resources(
             - tuple[str, str]: A tuple containing the resource UID and region.
 
     """
-    with tenant_transaction(tenant_id):
+    with rls_transaction(tenant_id):
         resource_instance, created = Resource.objects.get_or_create(
             tenant_id=tenant_id,
             provider=provider_instance,
@@ -86,7 +86,7 @@ def _store_resources(
             resource_instance.service = finding.service_name
             resource_instance.type = finding.resource_type
             resource_instance.save()
-    with tenant_transaction(tenant_id):
+    with rls_transaction(tenant_id):
         tags = [
             ResourceTag.objects.get_or_create(
                 tenant_id=tenant_id, key=key, value=value
@@ -122,7 +122,7 @@ def perform_prowler_scan(
     unique_resources = set()
     start_time = time.time()
 
-    with tenant_transaction(tenant_id):
+    with rls_transaction(tenant_id):
         provider_instance = Provider.objects.get(pk=provider_id)
         scan_instance = Scan.objects.get(pk=scan_id)
         scan_instance.state = StateChoices.EXECUTING
@@ -130,7 +130,7 @@ def perform_prowler_scan(
         scan_instance.save()
 
     try:
-        with tenant_transaction(tenant_id):
+        with rls_transaction(tenant_id):
             try:
                 prowler_provider = initialize_prowler_provider(provider_instance)
                 provider_instance.connected = True
@@ -156,7 +156,7 @@ def perform_prowler_scan(
             for finding in findings:
                 for attempt in range(CELERY_DEADLOCK_ATTEMPTS):
                     try:
-                        with tenant_transaction(tenant_id):
+                        with rls_transaction(tenant_id):
                             # Process resource
                             resource_uid = finding.resource_uid
                             if resource_uid not in resource_cache:
@@ -188,7 +188,7 @@ def perform_prowler_scan(
                             resource_instance.type = finding.resource_type
                             updated_fields.append("type")
                         if updated_fields:
-                            with tenant_transaction(tenant_id):
+                            with rls_transaction(tenant_id):
                                 resource_instance.save(update_fields=updated_fields)
                     except (OperationalError, IntegrityError) as db_err:
                         if attempt < CELERY_DEADLOCK_ATTEMPTS - 1:
@@ -203,7 +203,7 @@ def perform_prowler_scan(
 
                 # Update tags
                 tags = []
-                with tenant_transaction(tenant_id):
+                with rls_transaction(tenant_id):
                     for key, value in finding.resource_tags.items():
                         tag_key = (key, value)
                         if tag_key not in tag_cache:
@@ -219,7 +219,7 @@ def perform_prowler_scan(
                 unique_resources.add((resource_instance.uid, resource_instance.region))
 
                 # Process finding
-                with tenant_transaction(tenant_id):
+                with rls_transaction(tenant_id):
                     finding_uid = finding.uid
                     if finding_uid not in last_status_cache:
                         most_recent_finding = (
@@ -267,7 +267,7 @@ def perform_prowler_scan(
                 region_dict[finding.check_id] = finding.status.value
 
             # Update scan progress
-            with tenant_transaction(tenant_id):
+            with rls_transaction(tenant_id):
                 scan_instance.progress = progress
                 scan_instance.save()
 
@@ -279,7 +279,7 @@ def perform_prowler_scan(
         scan_instance.state = StateChoices.FAILED
 
     finally:
-        with tenant_transaction(tenant_id):
+        with rls_transaction(tenant_id):
             scan_instance.duration = time.time() - start_time
             scan_instance.completed_at = datetime.now(tz=timezone.utc)
             scan_instance.unique_resource_count = len(unique_resources)
@@ -330,7 +330,7 @@ def perform_prowler_scan(
                         total_requirements=compliance["total_requirements"],
                     )
                 )
-        with tenant_transaction(tenant_id):
+        with rls_transaction(tenant_id):
             ComplianceOverview.objects.bulk_create(compliance_overview_objects)
 
     if exception is not None:
@@ -368,7 +368,7 @@ def aggregate_findings(tenant_id: str, scan_id: str):
         - muted_new: Muted findings with a delta of 'new'.
         - muted_changed: Muted findings with a delta of 'changed'.
     """
-    with tenant_transaction(tenant_id):
+    with rls_transaction(tenant_id):
         findings = Finding.objects.filter(scan_id=scan_id)
 
         aggregation = findings.values(
@@ -464,7 +464,7 @@ def aggregate_findings(tenant_id: str, scan_id: str):
             ),
         )
 
-    with tenant_transaction(tenant_id):
+    with rls_transaction(tenant_id):
         scan_aggregations = {
             ScanSummary(
                 tenant_id=tenant_id,
