@@ -2834,9 +2834,10 @@ class TestInvitationViewSet:
         )
 
     def test_invitations_partial_update_valid(
-        self, authenticated_client, invitations_fixture
+        self, authenticated_client, invitations_fixture, roles_fixture
     ):
         invitation, *_ = invitations_fixture
+        role1, role2, *_ = roles_fixture
         new_email = "new_email@prowler.com"
         new_expires_at = datetime.now(timezone.utc) + timedelta(days=7)
         new_expires_at_iso = new_expires_at.isoformat()
@@ -2847,6 +2848,14 @@ class TestInvitationViewSet:
                 "attributes": {
                     "email": new_email,
                     "expires_at": new_expires_at_iso,
+                },
+                "relationships": {
+                    "roles": {
+                        "data": [
+                            {"type": "roles", "id": str(role1.id)},
+                            {"type": "roles", "id": str(role2.id)},
+                        ]
+                    },
                 },
             }
         }
@@ -2866,6 +2875,7 @@ class TestInvitationViewSet:
 
         assert invitation.email == new_email
         assert invitation.expires_at == new_expires_at
+        assert invitation.roles.count() == 2
 
     @pytest.mark.parametrize(
         "email",

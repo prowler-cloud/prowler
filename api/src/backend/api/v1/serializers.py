@@ -1316,6 +1316,10 @@ class InvitationCreateSerializer(InvitationBaseWriteSerializer, RLSSerializer):
 
 
 class InvitationUpdateSerializer(InvitationBaseWriteSerializer):
+    roles = serializers.ResourceRelatedField(
+        required=False, many=True, queryset=Role.objects.all()
+    )
+
     class Meta:
         model = Invitation
         fields = ["id", "email", "expires_at", "state", "token", "roles"]
@@ -1329,14 +1333,18 @@ class InvitationUpdateSerializer(InvitationBaseWriteSerializer):
 
     def update(self, instance, validated_data):
         tenant_id = self.context.get("tenant_id")
-        invitation = super().update(instance, validated_data)
         if "roles" in validated_data:
             roles = validated_data.pop("roles")
             instance.roles.clear()
-            for role in roles:
-                InvitationRoleRelationship.objects.create(
-                    role=role, invitation=invitation, tenant_id=tenant_id
+            new_relationships = [
+                InvitationRoleRelationship(
+                    role=r, invitation=instance, tenant_id=tenant_id
                 )
+                for r in roles
+            ]
+            InvitationRoleRelationship.objects.bulk_create(new_relationships)
+
+        invitation = super().update(instance, validated_data)
 
         return invitation
 
