@@ -45,7 +45,9 @@
     {
       "Id": "1.1.3",
       "Description": "More than one global administrator should be designated so a single admin can be monitored and to provide redundancy should a single admin leave an organization. Additionally, there should be no more than four global admins set for any tenant. Ideally global administrators will have no licenses assigned to them.",
-      "Checks": [],
+      "Checks": [
+        "admincenter_users_between_two_and_four_global_admins"
+      ],
       "Attributes": [
         {
           "Section": "1.1",
@@ -64,7 +66,9 @@
     {
       "Id": "1.1.4",
       "Description": "Administrative accounts are special privileged accounts that could have varying levels of access to data, users, and settings. A license can enable an account to gain access to a variety of different applications, depending on the license assigned.\n\nThe recommended state is to not license a privileged account or use `Microsoft Entra ID P1` or `Microsoft Entra ID P2` licenses.",
-      "Checks": [],
+      "Checks": [
+        "admincenter_users_admins_reduced_license_footprint"
+      ],
       "Attributes": [
         {
           "Section": "1.1",
@@ -83,7 +87,9 @@
     {
       "Id": "1.2.1",
       "Description": "Microsoft 365 Groups is the foundational membership service that drives all teamwork across Microsoft 365. With Microsoft 365 Groups, you can give a group of people access to a collection of shared resources. While there are several different group types this recommendation concerns **Microsoft 365 Groups**.\n\nIn the Administration panel, when a group is created, the default privacy value is \"Public\".",
-      "Checks": [],
+      "Checks": [
+        "admincenter_groups_not_public_visibility"
+      ],
       "Attributes": [
         {
           "Section": "1.2",
