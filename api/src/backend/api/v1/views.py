@@ -100,6 +100,7 @@ from api.v1.serializers import (
     ProviderCreateSerializer,
     ProviderGroupMembershipSerializer,
     ProviderGroupSerializer,
+    ProviderGroupCreateSerializer,
     ProviderGroupUpdateSerializer,
     ProviderSecretCreateSerializer,
     ProviderSecretSerializer,
@@ -741,7 +742,9 @@ class ProviderGroupViewSet(BaseRLSViewSet):
         return user_roles.provider_groups.all()
 
     def get_serializer_class(self):
-        if self.action == "partial_update":
+        if self.action == "create":
+            return ProviderGroupCreateSerializer
+        elif self.action == "partial_update":
             return ProviderGroupUpdateSerializer
         return super().get_serializer_class()
 
