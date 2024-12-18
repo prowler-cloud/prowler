@@ -5,7 +5,7 @@ import { getProvider } from "@/actions/providers";
 import { TestConnectionForm } from "@/components/providers/workflow/forms";
 
 interface Props {
-  searchParams: { type: string; id: string };
+  searchParams: { type: string; id: string; updated: string };
 }
 
 export default async function TestConnectionPage({ searchParams }: Props) {
@@ -25,7 +25,7 @@ export default async function TestConnectionPage({ searchParams }: Props) {
 async function SSRTestConnection({
   searchParams,
 }: {
-  searchParams: { type: string; id: string };
+  searchParams: { type: string; id: string; updated: string };
 }) {
   const formData = new FormData();
   formData.append("id", searchParams.id);

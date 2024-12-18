@@ -1,8 +1,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ChevronRightIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Control, useForm } from "react-hook-form";
 import * as z from "zod";
 
@@ -45,6 +45,15 @@ export const ViaCredentialsForm = ({
 }) => {
   const router = useRouter();
   const { toast } = useToast();
+
+  const searchParamsObj = useSearchParams();
+
+  // Handler for back button
+  const handleBackStep = () => {
+    const currentParams = new URLSearchParams(window.location.search);
+    currentParams.delete("via");
+    router.push(`?${currentParams.toString()}`);
+  };
 
   const providerType = searchParams.type;
   const providerId = searchParams.id;
@@ -199,6 +208,21 @@ export const ViaCredentialsForm = ({
         )}
 
         <div className="flex w-full justify-end sm:space-x-6">
+          {searchParamsObj.get("via") === "credentials" && (
+            <CustomButton
+              type="button"
+              ariaLabel="Back"
+              className="w-1/2 bg-transparent"
+              variant="faded"
+              size="lg"
+              radius="lg"
+              onPress={handleBackStep}
+              startContent={!isLoading && <ChevronLeftIcon size={24} />}
+              isDisabled={isLoading}
+            >
+              <span>Back</span>
+            </CustomButton>
+          )}
           <CustomButton
             type="submit"
             ariaLabel={"Save"}

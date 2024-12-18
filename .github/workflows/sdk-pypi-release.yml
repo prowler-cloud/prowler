@@ -1,4 +1,4 @@
-name: PyPI release
+name: SDK - PyPI release
 
 on:
   release:
@@ -26,6 +26,9 @@ jobs:
               ;;
           4)
               echo "Releasing Prowler v4 with tag ${PROWLER_VERSION}"
+              ;;
+          5)
+              echo "Releasing Prowler v5 with tag ${PROWLER_VERSION}"
               ;;
           *)
               echo "Releasing another Prowler major version, aborting..."

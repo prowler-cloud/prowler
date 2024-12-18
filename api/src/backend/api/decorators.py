@@ -1,6 +1,10 @@
+import uuid
 from functools import wraps
 
 from django.db import connection, transaction
+from rest_framework_json_api.serializers import ValidationError
+
+from api.db_utils import POSTGRES_TENANT_VAR, SET_CONFIG_QUERY
 
 
 def set_tenant(func):
@@ -31,7 +35,7 @@ def set_tenant(func):
             pass
 
         # When calling the task
-        some_task.delay(arg1, tenant_id="1234-abcd-5678")
+        some_task.delay(arg1, tenant_id="8db7ca86-03cc-4d42-99f6-5e480baf6ab5")
 
         # The tenant context will be set before the task logic executes.
     """
@@ -43,9 +47,12 @@ def set_tenant(func):
             tenant_id = kwargs.pop("tenant_id")
         except KeyError:
             raise KeyError("This task requires the tenant_id")
-
+        try:
+            uuid.UUID(tenant_id)
+        except ValueError:
+            raise ValidationError("Tenant ID must be a valid UUID")
         with connection.cursor() as cursor:
-            cursor.execute(f"SELECT set_config('api.tenant_id', '{tenant_id}', TRUE);")
+            cursor.execute(SET_CONFIG_QUERY, [POSTGRES_TENANT_VAR, tenant_id])
 
         return func(*args, **kwargs)
 
