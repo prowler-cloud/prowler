@@ -50,15 +50,29 @@ class Repository(GithubService):
                                         if require_pr
                                         else 0
                                     )
+
+                                    linear_history = protection.required_linear_history
+                                    allow_force_push = protection.allow_force_pushes
+                                    allow_branch_deletion = protection.allow_deletions
+                                    enforce_status_checks = (
+                                        protection.required_status_checks.strict
+                                        if protection.required_status_checks
+                                        else False
+                                    )
+                                    enforce_admins = protection.enforce_admins
+                                    conversation_resolution = (
+                                        protection.required_conversation_resolution
+                                    )
+
                                     branch_protection = Protection(
                                         require_pull_request=require_pr,
                                         approval_count=approval_cnt,
-                                        linear_history=protection.required_linear_history,
-                                        allow_force_push=protection.allow_force_pushes,
-                                        allow_branch_deletion=protection.allow_deletions,
-                                        enforce_status_checks=protection.required_status_checks.strict,
-                                        enforce_admins=protection.enforce_admins,
-                                        conversation_resolution=protection.required_conversation_resolution,
+                                        linear_history=linear_history,
+                                        allow_force_push=allow_force_push,
+                                        allow_branch_deletion=allow_branch_deletion,
+                                        enforce_status_checks=enforce_status_checks,
+                                        enforce_admins=enforce_admins,
+                                        conversation_resolution=conversation_resolution,
                                     )
 
                         except Exception as e:
