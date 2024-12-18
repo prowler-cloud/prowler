@@ -3,7 +3,7 @@
   "CheckID": "awslambda_function_not_publicly_accessible",
   "CheckTitle": "Check if Lambda functions have resource-based policy set as Public.",
   "CheckType": [],
-  "ServiceName": "lambda",
+  "ServiceName": "awslambda",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:lambda:region:account-id:function/function-name",
   "Severity": "critical",

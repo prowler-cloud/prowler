@@ -1,3 +1,4 @@
+import uuid
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -26,7 +27,7 @@ class TestPerformScan:
         providers_fixture,
     ):
         with (
-            patch("api.db_utils.tenant_transaction"),
+            patch("api.db_utils.rls_transaction"),
             patch(
                 "tasks.jobs.scan.initialize_prowler_provider"
             ) as mock_initialize_prowler_provider,
@@ -165,10 +166,10 @@ class TestPerformScan:
         "tasks.jobs.scan.initialize_prowler_provider",
         side_effect=Exception("Connection error"),
     )
-    @patch("api.db_utils.tenant_transaction")
+    @patch("api.db_utils.rls_transaction")
     def test_perform_prowler_scan_no_connection(
         self,
-        mock_tenant_transaction,
+        mock_rls_transaction,
         mock_initialize_prowler_provider,
         mock_prowler_scan_class,
         tenants_fixture,
@@ -205,14 +206,14 @@ class TestPerformScan:
 
     @patch("api.models.ResourceTag.objects.get_or_create")
     @patch("api.models.Resource.objects.get_or_create")
-    @patch("api.db_utils.tenant_transaction")
+    @patch("api.db_utils.rls_transaction")
     def test_store_resources_new_resource(
         self,
-        mock_tenant_transaction,
+        mock_rls_transaction,
         mock_get_or_create_resource,
         mock_get_or_create_tag,
     ):
-        tenant_id = "tenant123"
+        tenant_id = uuid.uuid4()
         provider_instance = MagicMock()
         provider_instance.id = "provider456"
 
@@ -253,14 +254,14 @@ class TestPerformScan:
 
     @patch("api.models.ResourceTag.objects.get_or_create")
     @patch("api.models.Resource.objects.get_or_create")
-    @patch("api.db_utils.tenant_transaction")
+    @patch("api.db_utils.rls_transaction")
     def test_store_resources_existing_resource(
         self,
-        mock_tenant_transaction,
+        mock_rls_transaction,
         mock_get_or_create_resource,
         mock_get_or_create_tag,
     ):
-        tenant_id = "tenant123"
+        tenant_id = uuid.uuid4()
         provider_instance = MagicMock()
         provider_instance.id = "provider456"
 
@@ -310,14 +311,14 @@ class TestPerformScan:
 
     @patch("api.models.ResourceTag.objects.get_or_create")
     @patch("api.models.Resource.objects.get_or_create")
-    @patch("api.db_utils.tenant_transaction")
+    @patch("api.db_utils.rls_transaction")
     def test_store_resources_with_tags(
         self,
-        mock_tenant_transaction,
+        mock_rls_transaction,
         mock_get_or_create_resource,
         mock_get_or_create_tag,
     ):
-        tenant_id = "tenant123"
+        tenant_id = uuid.uuid4()
         provider_instance = MagicMock()
         provider_instance.id = "provider456"
 

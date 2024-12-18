@@ -26,11 +26,13 @@ from api.models import (
     Finding,
     Invitation,
     Membership,
+    PermissionChoices,
     Provider,
     ProviderGroup,
     ProviderSecret,
     Resource,
     ResourceTag,
+    Role,
     Scan,
     ScanSummary,
     SeverityChoices,
@@ -481,6 +483,26 @@ class UserFilter(FilterSet):
         }
 
 
+class RoleFilter(FilterSet):
+    inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
+    updated_at = DateFilter(field_name="updated_at", lookup_expr="date")
+    permission_state = ChoiceFilter(
+        choices=PermissionChoices.choices, method="filter_permission_state"
+    )
+
+    def filter_permission_state(self, queryset, name, value):
+        return Role.filter_by_permission_state(queryset, value)
+
+    class Meta:
+        model = Role
+        fields = {
+            "id": ["exact", "in"],
+            "name": ["exact", "in"],
+            "inserted_at": ["gte", "lte"],
+            "updated_at": ["gte", "lte"],
+        }
+
+
 class ComplianceOverviewFilter(FilterSet):
     inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
     provider_type = ChoiceFilter(choices=Provider.ProviderChoices.choices)
@@ -521,3 +543,25 @@ class ScanSummaryFilter(FilterSet):
             "inserted_at": ["date", "gte", "lte"],
             "region": ["exact", "icontains", "in"],
         }
+
+
+class ServiceOverviewFilter(ScanSummaryFilter):
+    muted_findings = None
+
+    def is_valid(self):
+        # Check if at least one of the inserted_at filters is present
+        inserted_at_filters = [
+            self.data.get("inserted_at"),
+            self.data.get("inserted_at__gte"),
+            self.data.get("inserted_at__lte"),
+        ]
+        if not any(inserted_at_filters):
+            raise ValidationError(
+                {
+                    "inserted_at": [
+                        "At least one of filter[inserted_at], filter[inserted_at__gte], or "
+                        "filter[inserted_at__lte] is required."
+                    ]
+                }
+            )
+        return super().is_valid()

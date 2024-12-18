@@ -19,7 +19,6 @@ import { Form } from "@/components/ui/form";
 import { addProvider } from "../../../../actions/providers/providers";
 import { addProviderFormSchema, ApiError } from "../../../../types";
 import { RadioGroupProvider } from "../../radio-group-provider";
-import { RadioGroupAWSViaCredentialsForm } from "./radio-group-aws-via-credentials-form";
 
 export type FormValues = z.infer<typeof addProviderFormSchema>;
 
@@ -36,7 +35,6 @@ export const ConnectAccountForm = () => {
       providerType: undefined,
       providerUid: "",
       providerAlias: "",
-      awsCredentialsType: "",
     },
   });
 
@@ -51,55 +49,60 @@ export const ConnectAccountForm = () => {
       ([key, value]) => value !== undefined && formData.append(key, value),
     );
 
-    const data = await addProvider(formData);
+    try {
+      const data = await addProvider(formData);
 
-    if (data?.errors && data.errors.length > 0) {
-      // Handle server-side validation errors
-      data.errors.forEach((error: ApiError) => {
-        const errorMessage = error.detail;
-        const pointer = error.source?.pointer;
+      if (data?.errors && data.errors.length > 0) {
+        // Handle server-side validation errors
+        data.errors.forEach((error: ApiError) => {
+          const errorMessage = error.detail;
+          const pointer = error.source?.pointer;
 
-        switch (pointer) {
-          case "/data/attributes/provider":
-            form.setError("providerType", {
-              type: "server",
-              message: errorMessage,
-            });
-            break;
-          case "/data/attributes/uid":
-          case "/data/attributes/__all__":
-            form.setError("providerUid", {
-              type: "server",
-              message: errorMessage,
-            });
-            break;
-          case "/data/attributes/alias":
-            form.setError("providerAlias", {
-              type: "server",
-              message: errorMessage,
-            });
-            break;
-          default:
-            toast({
-              variant: "destructive",
-              title: "Oops! Something went wrong",
-              description: errorMessage,
-            });
-        }
+          switch (pointer) {
+            case "/data/attributes/provider":
+              form.setError("providerType", {
+                type: "server",
+                message: errorMessage,
+              });
+              break;
+            case "/data/attributes/uid":
+            case "/data/attributes/__all__":
+              form.setError("providerUid", {
+                type: "server",
+                message: errorMessage,
+              });
+              break;
+            case "/data/attributes/alias":
+              form.setError("providerAlias", {
+                type: "server",
+                message: errorMessage,
+              });
+              break;
+            default:
+              toast({
+                variant: "destructive",
+                title: "Oops! Something went wrong",
+                description: errorMessage,
+              });
+          }
+        });
+        return;
+      } else {
+        // Go to the next step after successful submission
+        const {
+          id,
+          attributes: { provider: providerType },
+        } = data.data;
+
+        router.push(`/providers/add-credentials?type=${providerType}&id=${id}`);
+      }
+    } catch (error: any) {
+      console.error("Error during submission:", error);
+      toast({
+        variant: "destructive",
+        title: "Submission Error",
+        description: error.message || "Something went wrong. Please try again.",
       });
-      return;
-    } else {
-      // Navigate to the next step after successful submission
-      const {
-        id,
-        attributes: { provider: providerType },
-      } = data.data;
-      const credentialsParam = values.awsCredentialsType
-        ? `&via=${values.awsCredentialsType}`
-        : "";
-      router.push(
-        `/providers/add-credentials?type=${providerType}&id=${id}${credentialsParam}`,
-      );
     }
   };
 
@@ -158,13 +161,6 @@ export const ConnectAccountForm = () => {
               isRequired={false}
               isInvalid={!!form.formState.errors.providerAlias}
             />
-            {providerType === "aws" && (
-              <RadioGroupAWSViaCredentialsForm
-                control={form.control}
-                isInvalid={!!form.formState.errors.awsCredentialsType}
-                errorMessage={form.formState.errors.awsCredentialsType?.message}
-              />
-            )}
           </>
         )}
         {/* Navigation buttons */}
