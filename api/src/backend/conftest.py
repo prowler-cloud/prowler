@@ -323,6 +323,20 @@ def invitations_fixture(create_test_user, tenants_fixture):
 
 
 @pytest.fixture
+def users_fixture(django_user_model):
+    user1 = User.objects.create_user(
+        name="user1", email="test_unit0@prowler.com", password="S3cret"
+    )
+    user2 = User.objects.create_user(
+        name="user2", email="test_unit1@prowler.com", password="S3cret"
+    )
+    user3 = User.objects.create_user(
+        name="user3", email="test_unit2@prowler.com", password="S3cret"
+    )
+    return user1, user2, user3
+
+
+@pytest.fixture
 def providers_fixture(tenants_fixture):
     tenant, *_ = tenants_fixture
     provider1 = Provider.objects.create(
