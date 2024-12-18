@@ -27,6 +27,7 @@ def mock_list_repositories(_):
                 conversation_resolution=True,
             ),
             securitymd=True,
+            delete_branch_on_merge=True,
         ),
     }
 
@@ -79,3 +80,4 @@ class Test_Repository_Service:
         ].default_branch_protection.conversation_resolution
         # Repo
         assert repository_service.repositories[1].securitymd
+        assert repository_service.repositories[1].delete_branch_on_merge
