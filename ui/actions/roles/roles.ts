@@ -82,7 +82,7 @@ export const addRole = async (formData: FormData) => {
   const url = new URL(`${keyServer}/roles`);
   const body = JSON.stringify({
     data: {
-      type: "role",
+      type: "roles",
       attributes: {
         name: formData.get("name"),
         manage_users: formData.get("manage_users") === "true",
@@ -128,7 +128,7 @@ export const updateRole = async (formData: FormData, roleId: string) => {
   const url = new URL(`${keyServer}/roles/${roleId}`);
   const body = JSON.stringify({
     data: {
-      type: "role",
+      type: "roles",
       id: roleId,
       attributes: {
         name: formData.get("name"),
