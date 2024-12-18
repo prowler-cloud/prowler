@@ -32,6 +32,7 @@ class Test_compute_instance_serial_ports_in_use:
             name="test",
             id="1234567890",
             zone="us-central1-a",
+            region="us-central1",
             public_ip=True,
             metadata={},
             shielded_enabled_vtpm=True,
@@ -68,6 +69,7 @@ class Test_compute_instance_serial_ports_in_use:
                 result[0].status_extended,
             )
             assert result[0].resource_id == instance.id
+            assert result[0].location == "us-central1"
 
     def test_one_compliant_instance_with_0(self):
         from prowler.providers.gcp.services.compute.compute_service import Instance
@@ -76,6 +78,7 @@ class Test_compute_instance_serial_ports_in_use:
             name="test",
             id="1234567890",
             zone="us-central1-a",
+            region="us-central1",
             public_ip=True,
             metadata={"items": [{"key": "serial-port-enabled", "value": "0"}]},
             shielded_enabled_vtpm=True,
@@ -112,6 +115,7 @@ class Test_compute_instance_serial_ports_in_use:
                 result[0].status_extended,
             )
             assert result[0].resource_id == instance.id
+            assert result[0].location == "us-central1"
 
     def test_one_compliant_instance_with_false(self):
         from prowler.providers.gcp.services.compute.compute_service import Instance
@@ -120,6 +124,7 @@ class Test_compute_instance_serial_ports_in_use:
             name="test",
             id="1234567890",
             zone="us-central1-a",
+            region="us-central1",
             public_ip=True,
             metadata={"items": [{"key": "serial-port-enabled", "value": "false"}]},
             shielded_enabled_vtpm=True,
@@ -156,6 +161,7 @@ class Test_compute_instance_serial_ports_in_use:
                 result[0].status_extended,
             )
             assert result[0].resource_id == instance.id
+            assert result[0].location == "us-central1"
 
     def test_one_instance_with_serial_ports_enable_1(self):
         from prowler.providers.gcp.services.compute.compute_service import Instance
@@ -164,6 +170,7 @@ class Test_compute_instance_serial_ports_in_use:
             name="test",
             id="1234567890",
             zone="us-central1-a",
+            region="us-central1",
             public_ip=True,
             metadata={"items": [{"key": "serial-port-enable", "value": "1"}]},
             shielded_enabled_vtpm=True,
@@ -200,6 +207,7 @@ class Test_compute_instance_serial_ports_in_use:
                 result[0].status_extended,
             )
             assert result[0].resource_id == instance.id
+            assert result[0].location == "us-central1"
 
     def test_one_instance_with_serial_ports_enable_true(self):
         from prowler.providers.gcp.services.compute.compute_service import Instance
@@ -208,6 +216,7 @@ class Test_compute_instance_serial_ports_in_use:
             name="test",
             id="1234567890",
             zone="us-central1-a",
+            region="us-central1",
             public_ip=True,
             metadata={"items": [{"key": "serial-port-enable", "value": "true"}]},
             shielded_enabled_vtpm=True,
@@ -244,3 +253,4 @@ class Test_compute_instance_serial_ports_in_use:
                 result[0].status_extended,
             )
             assert result[0].resource_id == instance.id
+            assert result[0].location == "us-central1"
