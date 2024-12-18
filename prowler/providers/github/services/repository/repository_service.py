@@ -47,10 +47,12 @@ class Repository(GithubService):
                                     required_linear_history = (
                                         protection.required_linear_history
                                     )
+                                    allow_force_pushes = protection.allow_force_pushes
                                     branch_protection = Protection(
                                         require_pull_request=require_pr,
                                         approval_count=approval_cnt,
                                         linear_history=required_linear_history,
+                                        allow_force_push=allow_force_pushes,
                                     )
                         except Exception as e:
                             logger.warning(
@@ -80,6 +82,7 @@ class Protection(BaseModel):
     require_pull_request: bool = False
     approval_count: int = 0
     linear_history: bool = False
+    allow_force_push: bool = False
 
 
 class Repo(BaseModel):
