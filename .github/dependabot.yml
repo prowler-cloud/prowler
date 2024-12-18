@@ -5,6 +5,7 @@
 
 version: 2
 updates:
+  # v5
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
@@ -14,6 +15,7 @@ updates:
     labels:
       - "dependencies"
       - "pip"
+
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -24,20 +26,76 @@ updates:
       - "dependencies"
       - "github_actions"
 
-  - package-ecosystem: "pip"
+  - package-ecosystem: "npm"
     directory: "/"
     schedule:
       interval: "daily"
+    open-pull-requests-limit: 10
+    target-branch: master
+    labels:
+      - "dependencies"
+      - "npm"
+
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    target-branch: master
+    labels:
+      - "dependencies"
+      - "docker"
+
+  # v4.6
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    target-branch: v4.6
+    labels:
+      - "dependencies"
+      - "pip"
+      - "v4"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    target-branch: v4.6
+    labels:
+      - "dependencies"
+      - "github_actions"
+      - "v4"
+
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    target-branch: v4.6
+    labels:
+      - "dependencies"
+      - "docker"
+      - "v4"
+
+  # v3
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "monthly"
     open-pull-requests-limit: 10
     target-branch: v3
     labels:
       - "dependencies"
       - "pip"
       - "v3"
+
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: "monthly"
     open-pull-requests-limit: 10
     target-branch: v3
     labels:

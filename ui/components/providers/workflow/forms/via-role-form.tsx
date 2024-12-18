@@ -1,8 +1,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { SaveIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Control, useForm } from "react-hook-form";
 import * as z from "zod";
 
@@ -25,6 +25,15 @@ export const ViaRoleForm = ({
 }) => {
   const router = useRouter();
   const { toast } = useToast();
+
+  const searchParamsObj = useSearchParams();
+
+  // Handler for back button
+  const handleBackStep = () => {
+    const currentParams = new URLSearchParams(window.location.search);
+    currentParams.delete("via");
+    router.push(`?${currentParams.toString()}`);
+  };
 
   const providerType = searchParams.type;
   const providerId = searchParams.id;
@@ -54,7 +63,6 @@ export const ViaRoleForm = ({
   const isLoading = form.formState.isSubmitting;
 
   const onSubmitClient = async (values: FormSchemaType) => {
-    console.log("via ROLE form", values);
     const formData = new FormData();
 
     Object.entries(values).forEach(
@@ -106,6 +114,21 @@ export const ViaRoleForm = ({
         )}
 
         <div className="flex w-full justify-end sm:space-x-6">
+          {searchParamsObj.get("via") === "role" && (
+            <CustomButton
+              type="button"
+              ariaLabel="Back"
+              className="w-1/2 bg-transparent"
+              variant="faded"
+              size="lg"
+              radius="lg"
+              onPress={handleBackStep}
+              startContent={!isLoading && <ChevronLeftIcon size={24} />}
+              isDisabled={isLoading}
+            >
+              <span>Back</span>
+            </CustomButton>
+          )}
           <CustomButton
             type="submit"
             ariaLabel={"Save"}
@@ -114,9 +137,9 @@ export const ViaRoleForm = ({
             color="action"
             size="lg"
             isLoading={isLoading}
-            startContent={!isLoading && <SaveIcon size={24} />}
+            endContent={!isLoading && <ChevronRightIcon size={24} />}
           >
-            {isLoading ? <>Loading</> : <span>Save</span>}
+            {isLoading ? <>Loading</> : <span>Next</span>}
           </CustomButton>
         </div>
       </form>

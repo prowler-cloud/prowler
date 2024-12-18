@@ -31,6 +31,12 @@ export const scheduleScanFormSchema = () =>
     scheduleDate: z.string(),
   });
 
+export const awsCredentialsTypeSchema = z.object({
+  awsCredentialsType: z.string().min(1, {
+    message: "Please select the type of credentials you want to use",
+  }),
+});
+
 export const addProviderFormSchema = z
   .object({
     providerType: z.enum(["aws", "azure", "gcp", "kubernetes"], {
@@ -43,9 +49,6 @@ export const addProviderFormSchema = z
         providerType: z.literal("aws"),
         providerAlias: z.string(),
         providerUid: z.string(),
-        awsCredentialsType: z.string().min(1, {
-          message: "Please select the type of credentials you want to use",
-        }),
       }),
       z.object({
         providerType: z.literal("azure"),
@@ -157,36 +160,21 @@ export const editInviteFormSchema = z.object({
   expires_at: z.string().optional(),
 });
 
-export const editUserFormSchema = (
-  currentName: string,
-  currentEmail: string,
-  currentCompanyName: string,
-) =>
+export const editUserFormSchema = () =>
   z.object({
     name: z
       .string()
       .min(3, { message: "The name must have at least 3 characters." })
       .max(150, { message: "The name cannot exceed 150 characters." })
-      .refine((val) => val !== currentName, {
-        message: "The new name must be different from the current one.",
-      })
       .optional(),
     email: z
       .string()
       .email({ message: "Please enter a valid email address." })
-      .refine((val) => val !== currentEmail, {
-        message: "The new email must be different from the current one.",
-      })
       .optional(),
     password: z
       .string()
       .min(1, { message: "The password cannot be empty." })
       .optional(),
-    company_name: z
-      .string()
-      .refine((val) => val !== currentCompanyName, {
-        message: "The new company name must be different from the current one.",
-      })
-      .optional(),
+    company_name: z.string().optional(),
     userId: z.string(),
   });

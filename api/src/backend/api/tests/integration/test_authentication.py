@@ -1,12 +1,10 @@
 import pytest
 from django.urls import reverse
-from unittest.mock import patch
 from rest_framework.test import APIClient
 
 from conftest import TEST_PASSWORD, get_api_tokens, get_authorization_header
 
 
-@patch("api.v1.views.MainRouter.admin_db", new="default")
 @pytest.mark.django_db
 def test_basic_authentication():
     client = APIClient()
