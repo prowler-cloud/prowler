@@ -1,10 +1,63 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 import { auth } from "@/auth.config";
-import { getErrorMessage, parseStringify } from "@/lib";
+import { getErrorMessage, parseStringify, wait } from "@/lib";
+import { ProviderGroupsResponse } from "@/types/components";
 
+export const getProviderGroups = async ({
+  page = 1,
+  query = "",
+  sort = "",
+  filters = {},
+}: {
+  page?: number;
+  query?: string;
+  sort?: string;
+  filters?: Record<string, string | number>;
+}): Promise<ProviderGroupsResponse | undefined> => {
+  const session = await auth();
+
+  if (isNaN(Number(page)) || page < 1) redirect("/providers/manage-groups");
+
+  const keyServer = process.env.API_BASE_URL;
+  const url = new URL(`${keyServer}/provider-groups`);
+
+  if (page) url.searchParams.append("page[number]", page.toString());
+  if (query) url.searchParams.append("filter[search]", query);
+  if (sort) url.searchParams.append("sort", sort);
+
+  // Handle multiple filters
+  Object.entries(filters).forEach(([key, value]) => {
+    if (key !== "filter[search]") {
+      url.searchParams.append(key, String(value));
+    }
+  });
+
+  try {
+    const response = await fetch(url.toString(), {
+      headers: {
+        Accept: "application/vnd.api+json",
+        Authorization: `Bearer ${session?.accessToken}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error fetching provider groups: ${response.statusText}`);
+    }
+
+    const data: ProviderGroupsResponse = await response.json();
+    const parsedData = parseStringify(data);
+    revalidatePath("/providers/manage-groups");
+    return parsedData;
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error("Error fetching provider groups:", error);
+    return undefined;
+  }
+};
 export const createProviderGroup = async (formData: FormData) => {
   const session = await auth();
   const keyServer = process.env.API_BASE_URL;
@@ -55,6 +108,31 @@ export const createProviderGroup = async (formData: FormData) => {
       body,
     });
     const data = await response.json();
+    revalidatePath("/providers/manage-groups");
+    return parseStringify(data);
+  } catch (error) {
+    return {
+      error: getErrorMessage(error),
+    };
+  }
+};
+
+export const deleteProviderGroup = async (formData: FormData) => {
+  const session = await auth();
+  const keyServer = process.env.API_BASE_URL;
+
+  const providerGroupId = formData.get("id");
+  const url = new URL(`${keyServer}/provider-groups/${providerGroupId}`);
+
+  try {
+    const response = await fetch(url.toString(), {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${session?.accessToken}`,
+      },
+    });
+    const data = await response.json();
+    await wait(2000);
     revalidatePath("/providers/manage-groups");
     return parseStringify(data);
   } catch (error) {

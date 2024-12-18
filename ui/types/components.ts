@@ -44,6 +44,57 @@ export interface FindingsByStatusData {
   };
 }
 
+export interface ProviderGroup {
+  type: "provider-groups";
+  id: string;
+  attributes: {
+    name: string;
+    inserted_at: string;
+    updated_at: string;
+  };
+  relationships: {
+    providers: {
+      meta: {
+        count: number;
+      };
+      data: {
+        type: string;
+        id: string;
+      }[];
+    };
+    roles: {
+      meta: {
+        count: number;
+      };
+      data: {
+        type: string;
+        id: string;
+      }[];
+    };
+  };
+  links: {
+    self: string;
+  };
+}
+
+export interface ProviderGroupsResponse {
+  links: {
+    first: string;
+    last: string;
+    next: string | null;
+    prev: string | null;
+  };
+  data: ProviderGroup[];
+  meta: {
+    pagination: {
+      page: number;
+      pages: number;
+      count: number;
+    };
+    version: string;
+  };
+}
+
 export interface FindingsSeverityOverview {
   data: {
     type: "findings-severity-overview";
