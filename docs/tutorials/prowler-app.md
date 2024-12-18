@@ -45,7 +45,7 @@ Once you’ve selected a provider, you need to provide the Provider UID:
 - **AWS**: Enter your AWS Account ID.
 - **GCP**: Enter your GCP Project ID.
 - **Azure**: Enter your Azure Subscription ID.
-- **Kubernetes**: Enter your Kubernetes Cluster context.
+- **Kubernetes**: Enter your Kubernetes Cluster context of your kubeconfig file.
 
 Optionally, provide a **Provider Alias** for easier identification. Follow the instructions provided to add your credentials:
 
