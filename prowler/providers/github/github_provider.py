@@ -229,7 +229,9 @@ class GithubProvider(Provider):
 
             elif github_app_id and github_app_key:
                 app_id = github_app_id
-                app_key = github_app_key
+                with open(github_app_key, "r") as rsa_key:
+                    app_key = rsa_key.read()
+
                 self._auth_method = "GitHub App Token"
 
             else:
