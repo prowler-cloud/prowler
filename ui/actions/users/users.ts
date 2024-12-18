@@ -51,13 +51,27 @@ export const updateUser = async (formData: FormData) => {
   const session = await auth();
   const keyServer = process.env.API_BASE_URL;
 
-  const userId = formData.get("userId");
-  const userName = formData.get("name");
-  const userPassword = formData.get("password");
-  const userEmail = formData.get("email");
-  const userCompanyName = formData.get("company_name");
+  const userId = formData.get("userId") as string; // Ensure userId is a string
+  const userName = formData.get("name") as string | null;
+  const userPassword = formData.get("password") as string | null;
+  const userEmail = formData.get("email") as string | null;
+  const userCompanyName = formData.get("company_name") as string | null;
 
   const url = new URL(`${keyServer}/users/${userId}`);
+
+  // Prepare attributes to send based on changes
+  const attributes: Record<string, any> = {};
+
+  // Add only changed fields
+  if (userName !== null) attributes.name = userName;
+  if (userEmail !== null) attributes.email = userEmail;
+  if (userCompanyName !== null) attributes.company_name = userCompanyName;
+  if (userPassword !== null) attributes.password = userPassword;
+
+  // If no fields have changed, don't send the request
+  if (Object.keys(attributes).length === 0) {
+    return { error: "No changes detected" };
+  }
 
   try {
     const response = await fetch(url.toString(), {
@@ -71,15 +85,11 @@ export const updateUser = async (formData: FormData) => {
         data: {
           type: "users",
           id: userId,
-          attributes: {
-            name: userName,
-            password: userPassword,
-            email: userEmail,
-            company_name: userCompanyName,
-          },
+          attributes: attributes,
         },
       }),
     });
+
     const data = await response.json();
     revalidatePath("/users");
     return parseStringify(data);

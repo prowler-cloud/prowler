@@ -183,21 +183,27 @@ class Backup(AWSService):
     def _list_recovery_points(self, regional_client):
         logger.info("Backup - Listing Recovery Points...")
         try:
-            for backup_vault in self.backup_vaults:
-                paginator = regional_client.get_paginator(
-                    "list_recovery_points_by_backup_vault"
-                )
-                for page in paginator.paginate(BackupVaultName=backup_vault.name):
-                    for recovery_point in page.get("RecoveryPoints", []):
-                        self.recovery_points.append(
-                            RecoveryPoint(
-                                arn=recovery_point.get("RecoveryPointArn"),
-                                backup_vault_name=backup_vault.name,
-                                encrypted=recovery_point.get("IsEncrypted", False),
-                                backup_vault_region=backup_vault.region,
-                                tags=[],
-                            )
-                        )
+            if self.backup_vaults:
+                for backup_vault in self.backup_vaults:
+                    paginator = regional_client.get_paginator(
+                        "list_recovery_points_by_backup_vault"
+                    )
+                    for page in paginator.paginate(BackupVaultName=backup_vault.name):
+                        for recovery_point in page.get("RecoveryPoints", []):
+                            arn = recovery_point.get("RecoveryPointArn")
+                            if arn:
+                                self.recovery_points.append(
+                                    RecoveryPoint(
+                                        arn=arn,
+                                        id=arn.split(":")[-1],
+                                        backup_vault_name=backup_vault.name,
+                                        encrypted=recovery_point.get(
+                                            "IsEncrypted", False
+                                        ),
+                                        backup_vault_region=backup_vault.region,
+                                        tags=[],
+                                    )
+                                )
         except ClientError as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -241,6 +247,7 @@ class BackupReportPlan(BaseModel):
 
 class RecoveryPoint(BaseModel):
     arn: str
+    id: str
     backup_vault_name: str
     encrypted: bool
     backup_vault_region: str

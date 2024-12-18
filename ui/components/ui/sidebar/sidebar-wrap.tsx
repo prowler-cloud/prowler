@@ -163,7 +163,7 @@ export const SidebarWrap = () => {
 
         <Tooltip content="Support" isDisabled={!isCompact} placement="right">
           <CustomButton
-            asLink="https://support.prowler.com/"
+            asLink="https://github.com/prowler-cloud/prowler/issues"
             target="_blank"
             ariaLabel="Support"
             variant="flat"

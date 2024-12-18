@@ -29,7 +29,7 @@ export const TestConnectionForm = ({
   searchParams,
   providerData,
 }: {
-  searchParams: { type: string; id: string };
+  searchParams: { type: string; id: string; updated: string };
   providerData: {
     data: {
       id: string;
@@ -75,6 +75,7 @@ export const TestConnectionForm = ({
   });
 
   const isLoading = form.formState.isSubmitting;
+  const isUpdated = searchParams?.updated === "true";
 
   const onSubmitClient = async (values: FormValues) => {
     const formData = new FormData();
@@ -124,9 +125,19 @@ export const TestConnectionForm = ({
                 message: data.error,
               });
             } else {
-              router.push(
-                `/providers/launch-scan?type=${providerType}&id=${providerId}`,
-              );
+              const urlParams = new URLSearchParams(window.location.search);
+              const isUpdated = urlParams.get("updated") === "true";
+
+              if (!isUpdated) {
+                router.push(
+                  `/providers/launch-scan?type=${providerType}&id=${providerId}`,
+                );
+              } else {
+                setConnectionStatus({
+                  connected: true,
+                  error: null,
+                });
+              }
             }
           } catch (error) {
             form.setError("providerId", {
@@ -254,7 +265,7 @@ export const TestConnectionForm = ({
             </Link>
           ) : connectionStatus?.error ? (
             <CustomButton
-              onPress={onResetCredentials}
+              onPress={isUpdated ? () => router.back() : onResetCredentials}
               type="button"
               ariaLabel={"Save"}
               className="w-1/2"
@@ -268,12 +279,21 @@ export const TestConnectionForm = ({
               {isResettingCredentials ? (
                 <>Loading</>
               ) : (
-                <span>Reset credentials</span>
+                <span>
+                  {isUpdated ? "Update credentials" : "Reset credentials"}
+                </span>
               )}
             </CustomButton>
           ) : (
             <CustomButton
-              type="submit"
+              type={
+                isUpdated && connectionStatus?.connected ? "button" : "submit"
+              }
+              onPress={
+                isUpdated && connectionStatus?.connected
+                  ? () => router.push("/providers")
+                  : undefined
+              }
               ariaLabel={"Save"}
               className="w-1/2"
               variant="solid"
@@ -282,7 +302,15 @@ export const TestConnectionForm = ({
               isLoading={isLoading}
               endContent={!isLoading && <RocketIcon size={24} />}
             >
-              {isLoading ? <>Loading</> : <span>Launch</span>}
+              {isLoading ? (
+                <>Loading</>
+              ) : (
+                <span>
+                  {isUpdated && connectionStatus?.connected
+                    ? "Go to providers"
+                    : "Launch"}
+                </span>
+              )}
             </CustomButton>
           )}
         </div>
