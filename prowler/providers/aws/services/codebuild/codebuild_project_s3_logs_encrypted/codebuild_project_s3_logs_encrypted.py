@@ -6,7 +6,7 @@ class codebuild_project_s3_logs_encrypted(Check):
     def execute(self):
         findings = []
         for project in codebuild_client.projects.values():
-            if project.s3_logs.enabled:
+            if getattr(getattr(project, "s3_logs", None), "enabled", False):
                 report = Check_Report_AWS(self.metadata())
                 report.resource_id = project.name
                 report.resource_arn = project.arn

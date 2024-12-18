@@ -7,7 +7,7 @@ from prowler.providers.aws.services.cloudwatch.cloudwatch_client import (
 class cloudwatch_alarm_actions_enabled(Check):
     def execute(self):
         findings = []
-        for metric_alarm in cloudwatch_client.metric_alarms:
+        for metric_alarm in getattr(cloudwatch_client, "metric_alarms", []):
             report = Check_Report_AWS(self.metadata())
             report.region = metric_alarm.region
             report.resource_id = metric_alarm.name

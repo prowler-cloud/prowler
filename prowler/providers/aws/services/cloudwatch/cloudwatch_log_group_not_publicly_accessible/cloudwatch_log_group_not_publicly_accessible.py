@@ -7,14 +7,14 @@ class cloudwatch_log_group_not_publicly_accessible(Check):
     def execute(self):
         findings = []
         public_log_groups = []
-        if (
-            logs_client.resource_policies is not None
-            and logs_client.log_groups is not None
+        if getattr(logs_client, "resource_policies", None) and getattr(
+            logs_client, "log_groups", None
         ):
             for resource_policies in logs_client.resource_policies.values():
                 for resource_policy in resource_policies:
                     if is_policy_public(
-                        resource_policy.policy, logs_client.audited_account
+                        getattr(resource_policy, "policy", None),
+                        getattr(logs_client, "audited_account", None),
                     ):
                         for statement in resource_policy.policy.get("Statement", []):
                             public_resources = statement.get("Resource", [])
@@ -34,7 +34,7 @@ class cloudwatch_log_group_not_publicly_accessible(Check):
                 report.status_extended = (
                     f"Log Group {log_group.name} is not publicly accessible."
                 )
-                if log_group.arn in public_log_groups:
+                if getattr(log_group, "arn", None) in public_log_groups:
                     report.status = "FAIL"
                     report.status_extended = (
                         f"Log Group {log_group.name} is publicly accessible."

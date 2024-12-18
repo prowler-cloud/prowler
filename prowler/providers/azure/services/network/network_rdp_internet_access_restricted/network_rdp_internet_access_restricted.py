@@ -16,18 +16,29 @@ class network_rdp_internet_access_restricted(Check):
                 report.status_extended = f"Security Group {security_group.name} from subscription {subscription} has RDP internet access restricted."
                 rule_fail_condition = any(
                     (
-                        rule.destination_port_range == "3389"
+                        getattr(rule, "destination_port_range", "") == "3389"
                         or (
-                            "-" in rule.destination_port_range
-                            and int(rule.destination_port_range.split("-")[0]) <= 3389
-                            and int(rule.destination_port_range.split("-")[1]) >= 3389
+                            "-" in getattr(rule, "destination_port_range", "")
+                            and int(
+                                getattr(rule, "destination_port_range", "0-0").split(
+                                    "-"
+                                )[0]
+                            )
+                            <= 3389
+                            and int(
+                                getattr(rule, "destination_port_range", "0-0").split(
+                                    "-"
+                                )[1]
+                            )
+                            >= 3389
                         )
                     )
-                    and rule.protocol in ["TCP", "Tcp", "*"]
-                    and rule.source_address_prefix in ["Internet", "*", "0.0.0.0/0"]
-                    and rule.access == "Allow"
-                    and rule.direction == "Inbound"
-                    for rule in security_group.security_rules
+                    and getattr(rule, "protocol", "").lower() in ["tcp", "*"]
+                    and getattr(rule, "source_address_prefix", "")
+                    in ["Internet", "*", "0.0.0.0/0"]
+                    and getattr(rule, "access", "") == "Allow"
+                    and getattr(rule, "direction", "") == "Inbound"
+                    for rule in getattr(security_group, "security_rules", []) or []
                 )
                 if rule_fail_condition:
                     report.status = "FAIL"

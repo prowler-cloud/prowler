@@ -18,9 +18,9 @@ class cloudwatch_log_metric_filter_sign_in_without_mfa(Check):
 
         report = check_cloudwatch_log_metric_filter(
             pattern,
-            cloudtrail_client.trails,
-            logs_client.metric_filters,
-            cloudwatch_client.metric_alarms,
+            getattr(cloudtrail_client, "trails", []),
+            getattr(logs_client, "metric_filters", []),
+            getattr(cloudwatch_client, "metric_alarms", []),
             self.metadata(),
         )
 
