@@ -31,10 +31,7 @@ class firehose_stream_encrypted_at_rest(Check):
                 f"Firehose Stream {stream.name} does have at rest encryption enabled."
             )
 
-            if (
-                stream.kms_encryption != EncryptionStatus.ENABLED
-                or not stream.kms_key_arn
-            ):
+            if stream.kms_encryption != EncryptionStatus.ENABLED:
                 report.status = "FAIL"
                 report.status_extended = f"Firehose Stream {stream.name} does not have at rest encryption enabled."
 

@@ -13,6 +13,7 @@ def test_check_resources_between_different_tenants(
     enforce_test_user_db_connection,
     authenticated_api_client,
     tenants_fixture,
+    set_user_admin_roles_fixture,
 ):
     client = authenticated_api_client
 

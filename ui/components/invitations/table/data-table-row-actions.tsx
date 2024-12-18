@@ -76,7 +76,7 @@ export function DataTableRowActions<InvitationProps>({
           >
             <DropdownSection title="Actions">
               <DropdownItem
-                href={`http://localhost:3000/invitations/check-details?id=${invitationId}`}
+                href={`/invitations/check-details?id=${invitationId}`}
                 key="check-details"
                 description="View invitation details"
                 textValue="Check Details"
