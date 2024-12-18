@@ -119,7 +119,7 @@ export const updateUserRole = async (formData: FormData) => {
   const requestBody = {
     data: [
       {
-        type: "role",
+        type: "roles",
         id: roleId,
       },
     ],

@@ -58,7 +58,7 @@ const SSRDataTable = async ({
   // Create a dictionary for roles by user ID
   const roleDict = (usersData?.included || []).reduce(
     (acc: Record<string, any>, item: Role) => {
-      if (item.type === "role") {
+      if (item.type === "roles") {
         acc[item.id] = item.attributes;
       }
       return acc;

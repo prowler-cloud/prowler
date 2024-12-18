@@ -1,67 +1,84 @@
 "use client";
-
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Select, SelectItem } from "@nextui-org/react";
+import { Divider } from "@nextui-org/react";
 import { SaveIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 import * as z from "zod";
 
-import { sendInvite } from "@/actions/invitations/invitation";
+import { createProviderGroup } from "@/actions/manage-groups";
 import { useToast } from "@/components/ui";
-import { CustomButton, CustomInput } from "@/components/ui/custom";
+import {
+  CustomButton,
+  CustomDropdownSelection,
+  CustomInput,
+} from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
 import { ApiError } from "@/types";
 
-const sendInvitationFormSchema = z.object({
-  email: z.string().email("Please enter a valid email"),
-  roleId: z.string().nonempty("Role is required"),
+const addGroupSchema = z.object({
+  name: z.string().nonempty("Provider group name is required"),
+  providers: z.array(z.string()).optional(),
+  roles: z.array(z.string()).optional(),
 });
 
-export type FormValues = z.infer<typeof sendInvitationFormSchema>;
+export type FormValues = z.infer<typeof addGroupSchema>;
 
 export const AddGroupForm = ({
   roles = [],
-  defaultRole = "admin",
-  isSelectorDisabled = false,
+  providers = [],
 }: {
   roles: Array<{ id: string; name: string }>;
-  defaultRole?: string;
-  isSelectorDisabled: boolean;
+  providers: Array<{ id: string; name: string }>;
 }) => {
   const { toast } = useToast();
-  const router = useRouter();
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(sendInvitationFormSchema),
+    resolver: zodResolver(addGroupSchema),
     defaultValues: {
-      email: "",
-      roleId: isSelectorDisabled ? defaultRole : "",
+      name: "",
+      providers: [],
+      roles: [],
     },
   });
 
   const isLoading = form.formState.isSubmitting;
 
   const onSubmitClient = async (values: FormValues) => {
-    const formData = new FormData();
-    formData.append("email", values.email);
-    formData.append("role", values.roleId);
-
+    console.log(values);
     try {
-      const data = await sendInvite(formData);
+      const formData = new FormData();
+      formData.append("name", values.name);
+
+      if (values.providers?.length) {
+        const providersData = values.providers.map((id) => ({
+          id,
+          type: "providers",
+        }));
+        formData.append("providers", JSON.stringify(providersData));
+      }
+
+      if (values.roles?.length) {
+        const rolesData = values.roles.map((id) => ({
+          id,
+          type: "roles",
+        }));
+        formData.append("roles", JSON.stringify(rolesData));
+      }
+
+      const data = await createProviderGroup(formData);
 
       if (data?.errors && data.errors.length > 0) {
         data.errors.forEach((error: ApiError) => {
           const errorMessage = error.detail;
           switch (error.source.pointer) {
-            case "/data/attributes/email":
-              form.setError("email", {
+            case "/data/attributes/name":
+              form.setError("name", {
                 type: "server",
                 message: errorMessage,
               });
               break;
             case "/data/relationships/roles":
-              form.setError("roleId", {
+              form.setError("roles", {
                 type: "server",
                 message: errorMessage,
               });
@@ -75,8 +92,11 @@ export const AddGroupForm = ({
           }
         });
       } else {
-        const invitationId = data?.data?.id || "";
-        router.push(`/invitations/check-details/?id=${invitationId}`);
+        form.reset();
+        toast({
+          title: "Success!",
+          description: "The group was created successfully.",
+        });
       }
     } catch (error) {
       toast({
@@ -93,65 +113,84 @@ export const AddGroupForm = ({
         onSubmit={form.handleSubmit(onSubmitClient)}
         className="flex flex-col space-y-4"
       >
-        {/* Email Field */}
-        <CustomInput
-          control={form.control}
-          name="email"
-          type="email"
-          label="Email"
-          labelPlacement="inside"
-          placeholder="Enter the email address"
-          variant="bordered"
-          isRequired
-          isInvalid={!!form.formState.errors.email}
-        />
+        {/* Name Field */}
+        <p className="text-small font-medium text-default-700">
+          Please provide a name for the group. You can also select providers and
+          roles to associate with the group, this step is optional and can be
+          done later if needed.
+        </p>
+        <Divider orientation="horizontal" className="mb-2" />
+        <div className="flex flex-col gap-2">
+          <CustomInput
+            control={form.control}
+            name="name"
+            type="text"
+            label="Provider group name"
+            labelPlacement="outside"
+            placeholder="Enter the provider group name"
+            variant="bordered"
+            isRequired
+            isInvalid={!!form.formState.errors.name}
+          />
+        </div>
 
+        {/* Providers Field */}
         <Controller
-          name="roleId"
+          name="providers"
           control={form.control}
           render={({ field }) => (
-            <>
-              <Select
-                {...field}
-                label="Role"
-                placeholder="Select a role"
-                variant="bordered"
-                isDisabled={isSelectorDisabled}
-                selectedKeys={[field.value]}
-                onSelectionChange={(selected) =>
-                  field.onChange(selected?.currentKey || "")
-                }
-              >
-                {isSelectorDisabled ? (
-                  <SelectItem key={defaultRole}>{defaultRole}</SelectItem>
-                ) : (
-                  roles.map((role) => (
-                    <SelectItem key={role.id}>{role.name}</SelectItem>
-                  ))
-                )}
-              </Select>
-              {form.formState.errors.roleId && (
-                <p className="mt-2 text-sm text-red-600">
-                  {form.formState.errors.roleId.message}
-                </p>
-              )}
-            </>
+            <CustomDropdownSelection
+              label="Select Providers"
+              name="providers"
+              values={providers}
+              selectedKeys={field.value || []}
+              onChange={(name, selectedValues) =>
+                field.onChange(selectedValues)
+              }
+            />
           )}
         />
+        {form.formState.errors.providers && (
+          <p className="mt-2 text-sm text-red-600">
+            {form.formState.errors.providers.message}
+          </p>
+        )}
+
+        {/* Roles Field */}
+        <Controller
+          name="roles"
+          control={form.control}
+          render={({ field }) => (
+            <CustomDropdownSelection
+              label="Select Roles"
+              name="roles"
+              values={roles}
+              selectedKeys={field.value || []}
+              onChange={(name, selectedValues) =>
+                field.onChange(selectedValues)
+              }
+            />
+          )}
+        />
+        {form.formState.errors.roles && (
+          <p className="mt-2 text-sm text-red-600">
+            {form.formState.errors.roles.message}
+          </p>
+        )}
 
         {/* Submit Button */}
         <div className="flex w-full justify-end sm:space-x-6">
           <CustomButton
             type="submit"
-            ariaLabel="Send Invitation"
+            ariaLabel="Create Group"
             className="w-1/2"
             variant="solid"
             color="action"
-            size="lg"
+            size="md"
             isLoading={isLoading}
             startContent={!isLoading && <SaveIcon size={24} />}
           >
-            {isLoading ? <>Loading</> : <span>Send Invitation</span>}
+            {isLoading ? <>Loading</> : <span>Create Group</span>}
           </CustomButton>
         </div>
       </form>

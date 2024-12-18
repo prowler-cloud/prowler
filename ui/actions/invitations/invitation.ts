@@ -68,7 +68,7 @@ export const sendInvite = async (formData: FormData) => {
             ? [
                 {
                   id: role,
-                  type: "role",
+                  type: "roles",
                 },
               ]
             : [],
@@ -131,7 +131,7 @@ export const updateInvite = async (formData: FormData) => {
       data: [
         {
           id: roleId,
-          type: "role",
+          type: "roles",
         },
       ],
     };

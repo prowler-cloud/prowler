@@ -18,7 +18,7 @@ export default function ProviderLayout({ children }: ProviderLayoutProps) {
         href="/providers"
       />
       <Spacer y={16} />
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">{children}</div>
+      {children}
     </>
   );
 }

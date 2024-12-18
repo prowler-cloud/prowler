@@ -249,7 +249,7 @@ export interface InvitationProps {
 }
 
 export interface Role {
-  type: "role";
+  type: "roles";
   id: string;
   attributes: {
     name: string;
@@ -373,7 +373,7 @@ export interface UserProps {
         count: number;
       };
       data: Array<{
-        type: "role";
+        type: "roles";
         id: string;
       }>;
     };
