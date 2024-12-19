@@ -125,7 +125,7 @@ export const EditGroupForm = ({
           title: "Success!",
           description: "The group was updated successfully.",
         });
-        router.push("/providers/manage-groups");
+        router.push("/manage-groups");
       }
     } catch (error) {
       toast({
@@ -244,7 +244,7 @@ export const EditGroupForm = ({
             variant="faded"
             size="md"
             onPress={() => {
-              router.push("/providers/manage-groups");
+              router.push("/manage-groups");
             }}
             isDisabled={isLoading}
           >

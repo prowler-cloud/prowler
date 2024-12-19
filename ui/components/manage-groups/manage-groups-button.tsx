@@ -7,7 +7,7 @@ import { CustomButton } from "../ui/custom";
 export const ManageGroupsButton = () => {
   return (
     <CustomButton
-      asLink="/providers/manage-groups"
+      asLink="/manage-groups"
       ariaLabel="Manage Groups"
       variant="dashed"
       color="warning"

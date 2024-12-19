@@ -69,9 +69,7 @@ export function DataTableRowActions<ProviderProps>({
                 description="Allows you to edit the provider group"
                 textValue="Edit Provider Group"
                 startContent={<EditDocumentBulkIcon className={iconClasses} />}
-                onClick={() =>
-                  router.push(`/providers/manage-groups?groupId=${groupId}`)
-                }
+                onClick={() => router.push(`/manage-groups?groupId=${groupId}`)}
               >
                 Edit Provider Group
               </DropdownItem>

@@ -20,7 +20,7 @@ export const getProviderGroups = async ({
 }): Promise<ProviderGroupsResponse | undefined> => {
   const session = await auth();
 
-  if (isNaN(Number(page)) || page < 1) redirect("/providers/manage-groups");
+  if (isNaN(Number(page)) || page < 1) redirect("/manage-groups");
 
   const keyServer = process.env.API_BASE_URL;
   const url = new URL(`${keyServer}/provider-groups`);
@@ -50,7 +50,7 @@ export const getProviderGroups = async ({
 
     const data: ProviderGroupsResponse = await response.json();
     const parsedData = parseStringify(data);
-    revalidatePath("/providers/manage-groups");
+    revalidatePath("/manage-groups");
     return parsedData;
   } catch (error) {
     // eslint-disable-next-line no-console
@@ -138,7 +138,7 @@ export const createProviderGroup = async (formData: FormData) => {
       body,
     });
     const data = await response.json();
-    revalidatePath("/providers/manage-groups");
+    revalidatePath("/manage-groups");
     return parseStringify(data);
   } catch (error) {
     return {
@@ -201,7 +201,7 @@ export const updateProviderGroup = async (
     }
 
     const data = await response.json();
-    revalidatePath("/providers/manage-groups");
+    revalidatePath("/manage-groups");
     return parseStringify(data);
   } catch (error) {
     // eslint-disable-next-line no-console
@@ -228,7 +228,7 @@ export const deleteProviderGroup = async (formData: FormData) => {
     });
     const data = await response.json();
     await wait(2000);
-    revalidatePath("/providers/manage-groups");
+    revalidatePath("/manage-groups");
     return parseStringify(data);
   } catch (error) {
     return {

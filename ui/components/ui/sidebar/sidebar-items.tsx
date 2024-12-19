@@ -217,6 +217,12 @@ export const sectionItems: SidebarItem[] = [
         icon: "mdi:account-key-outline",
         title: "Roles",
       },
+      {
+        key: "manage-groups",
+        href: "/manage-groups",
+        icon: "solar:settings-outline",
+        title: "Manage Groups",
+      },
       // {
       //   key: "integrations",
       //   href: "/integrations",

@@ -472,6 +472,24 @@ export interface ProviderProps {
       id: string;
     };
   };
+  relationships: {
+    secret: {
+      data: {
+        type: string;
+        id: string;
+      } | null;
+    };
+    provider_groups: {
+      meta: {
+        count: number;
+      };
+      data: Array<{
+        type: string;
+        id: string;
+      }>;
+    };
+  };
+  groupNames?: string[];
 }
 
 export interface ScanProps {

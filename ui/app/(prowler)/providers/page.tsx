@@ -11,7 +11,7 @@ import {
 } from "@/components/providers/table";
 import { Header } from "@/components/ui";
 import { DataTable, DataTableFilterCustom } from "@/components/ui/table";
-import { SearchParamsProps } from "@/types";
+import { ProviderProps, SearchParamsProps } from "@/types";
 
 export default async function Providers({
   searchParams,
@@ -63,10 +63,29 @@ const SSRDataTable = async ({
   const query = (filters["filter[search]"] as string) || "";
 
   const providersData = await getProviders({ query, page, sort, filters });
+
+  const providerGroupDict =
+    providersData?.included
+      ?.filter((item: any) => item.type === "provider-groups")
+      .reduce((acc: Record<string, string>, group: any) => {
+        acc[group.id] = group.attributes.name;
+        return acc;
+      }, {}) || {};
+
+  const enrichedProviders = providersData?.data.map(
+    (provider: ProviderProps) => {
+      const groupNames = provider.relationships.provider_groups.data.map(
+        (group: { id: string }) =>
+          providerGroupDict[group.id] || "Unknown Group",
+      );
+      return { ...provider, groupNames };
+    },
+  );
+
   return (
     <DataTable
       columns={ColumnProviders}
-      data={providersData?.data || []}
+      data={enrichedProviders || []}
       metadata={providersData?.meta}
     />
   );

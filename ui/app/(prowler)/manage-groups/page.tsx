@@ -77,7 +77,7 @@ const SSRDataEditGroup = async ({
 
   // Redirect if no group ID is provided or if the parameter is invalid
   if (!providerGroupId || Array.isArray(providerGroupId)) {
-    redirect("/providers/manage-groups");
+    redirect("/manage-groups");
   }
 
   // Fetch the provider group details
