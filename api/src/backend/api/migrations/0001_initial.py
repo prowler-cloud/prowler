@@ -387,6 +387,7 @@ class Migration(migrations.Migration):
                 ),
                 ("inserted_at", models.DateTimeField(auto_now_add=True)),
                 ("updated_at", models.DateTimeField(auto_now=True)),
+                ("is_deleted", models.BooleanField(default=False)),
                 (
                     "provider",
                     ProviderEnumField(
@@ -678,6 +679,7 @@ class Migration(migrations.Migration):
                 ("updated_at", models.DateTimeField(auto_now=True)),
                 ("started_at", models.DateTimeField(null=True, blank=True)),
                 ("completed_at", models.DateTimeField(null=True, blank=True)),
+                ("next_scan_at", models.DateTimeField(null=True, blank=True)),
                 (
                     "provider",
                     models.ForeignKey(
@@ -1093,7 +1095,7 @@ class Migration(migrations.Migration):
             },
             bases=(PostgresPartitionedModel,),
             managers=[
-                ("objects", PostgresManager()),
+                ("objects", api.models.ActiveProviderPartitionedManager()),
             ],
         ),
         migrations.RunSQL(

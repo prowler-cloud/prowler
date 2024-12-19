@@ -37,18 +37,21 @@ class rds_instance_no_public_access(Check):
                                     ):
                                         report.status_extended = f"RDS Instance {db_instance.id} is set as publicly accessible and security group {security_group.name} ({security_group.id}) has {db_instance.engine} port {db_instance_port} open to the Internet at endpoint {db_instance.endpoint.get('Address')} but is not in a public subnet."
                                         public_sg = True
+                                        if db_instance.subnet_ids:
+                                            for subnet_id in db_instance.subnet_ids:
+                                                if (
+                                                    subnet_id in vpc_client.vpc_subnets
+                                                    and vpc_client.vpc_subnets[
+                                                        subnet_id
+                                                    ].public
+                                                ):
+                                                    report.status = "FAIL"
+                                                    report.status_extended = f"RDS Instance {db_instance.id} is set as publicly accessible and security group {security_group.name} ({security_group.id}) has {db_instance.engine} port {db_instance_port} open to the Internet at endpoint {db_instance.endpoint.get('Address')} in a public subnet {subnet_id}."
+                                                    break
+                                    if public_sg:
                                         break
                             if public_sg:
                                 break
-                        if db_instance.subnet_ids:
-                            for subnet_id in db_instance.subnet_ids:
-                                if (
-                                    subnet_id in vpc_client.vpc_subnets
-                                    and vpc_client.vpc_subnets[subnet_id].public
-                                ):
-                                    report.status = "FAIL"
-                                    report.status_extended = f"RDS Instance {db_instance.id} is set as publicly accessible and security group {security_group.name} ({security_group.id}) has {db_instance.engine} port {db_instance_port} open to the Internet at endpoint {db_instance.endpoint.get('Address')} in a public subnet {subnet_id}."
-                                    break
 
             findings.append(report)
 

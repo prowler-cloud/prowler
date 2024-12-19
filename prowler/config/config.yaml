@@ -314,10 +314,12 @@ aws:
   # AWS ACM Configuration
   # aws.acm_certificates_expiration_check
   days_to_expire_threshold: 7
-  # aws.acm_certificates_rsa_key_length
+  # aws.acm_certificates_with_secure_key_algorithms
   insecure_key_algorithms:
     [
       "RSA-1024",
+      "P-192",
+      "SHA-1",
     ]
 
   # AWS EKS Configuration
@@ -387,6 +389,14 @@ azure:
   python_latest_version: "3.12"
   # azure.app_ensure_java_version_is_latest
   java_latest_version: "17"
+
+  # Azure SQL Server
+  # azure.sqlserver_minimal_tls_version
+  recommended_minimal_tls_versions:
+    [
+      "1.2",
+      "1.3",
+    ]
 
 # GCP Configuration
 gcp:

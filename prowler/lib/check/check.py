@@ -556,19 +556,6 @@ def execute_checks(
                 bar()
             bar.title = f"-> {Fore.GREEN}Scan completed!{Style.RESET_ALL}"
 
-    # Custom report interface
-    if os.environ.get("PROWLER_REPORT_LIB_PATH"):
-        try:
-            logger.info("Using custom report interface ...")
-            lib = os.environ["PROWLER_REPORT_LIB_PATH"]
-            outputs_module = importlib.import_module(lib)
-            custom_report_interface = getattr(outputs_module, "report")
-
-            # TODO: review this call and see if we can remove the global_provider.output_options since it is contained in the global_provider
-            custom_report_interface(check_findings, output_options, global_provider)
-        except Exception:
-            sys.exit(1)
-
     return all_findings
 
 

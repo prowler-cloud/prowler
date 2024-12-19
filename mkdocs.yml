@@ -11,6 +11,7 @@ theme:
   name: material
   favicon: favicon.ico
   features:
+    - content.code.copy
     - navigation.tabs
     - navigation.tabs.sticky
     - navigation.sections
@@ -33,7 +34,6 @@ theme:
         icon: material/weather-sunny
         name: Switch to light mode
 
-
 plugins:
   - search
   - git-revision-date-localized:
@@ -49,6 +49,7 @@ nav:
       - Overview: index.md
       - Requirements: getting-started/requirements.md
   - Tutorials:
+      - Prowler App: tutorials/prowler-app.md
       - Miscellaneous: tutorials/misc.md
       - Reporting: tutorials/reporting.md
       - Compliance: tutorials/compliance.md
@@ -110,7 +111,7 @@ nav:
   - Contact Us: contact.md
   - Troubleshooting: troubleshooting.md
   - About: about.md
-  - Prowler SaaS: https://prowler.com
+  - Prowler Cloud: https://prowler.com
 
 # Customization
 extra:

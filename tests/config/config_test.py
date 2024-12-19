@@ -296,6 +296,8 @@ config_aws = {
     "days_to_expire_threshold": 7,
     "insecure_key_algorithms": [
         "RSA-1024",
+        "P-192",
+        "SHA-1",
     ],
     "eks_required_log_types": [
         "api",
@@ -318,6 +320,7 @@ config_azure = {
     "php_latest_version": "8.2",
     "python_latest_version": "3.12",
     "java_latest_version": "17",
+    "recommended_minimal_tls_versions": ["1.2", "1.3"],
 }
 
 config_gcp = {"shodan_api_key": None}

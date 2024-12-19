@@ -15,6 +15,7 @@ Mutelist:
           Resources:
             - "sqlserver1"           # Will ignore sqlserver1 in check sqlserver_tde_encryption_enabled located in westeurope
             - "sqlserver2"           # Will ignore sqlserver2 in check sqlserver_tde_encryption_enabled located in westeurope
+          Description: "Findings related with the check sqlserver_tde_encryption_enabled is muted for westeurope region and sqlserver1, sqlserver2 resources"
         "defender_*":
           Regions:
             - "*"

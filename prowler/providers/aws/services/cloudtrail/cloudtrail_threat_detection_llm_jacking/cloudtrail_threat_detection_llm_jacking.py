@@ -5,6 +5,21 @@ from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
     cloudtrail_client,
 )
 
+default_threat_detection_llm_jacking_actions = [
+    "PutUseCaseForModelAccess",
+    "PutFoundationModelEntitlement",
+    "PutModelInvocationLoggingConfiguration",
+    "CreateFoundationModelAgreement",
+    "InvokeModel",
+    "InvokeModelWithResponseStream",
+    "GetUseCaseForModelAccess",
+    "GetModelInvocationLoggingConfiguration",
+    "GetFoundationModelAvailability",
+    "ListFoundationModelAgreementOffers",
+    "ListFoundationModels",
+    "ListProvisionedModelThroughputs",
+]
+
 
 class cloudtrail_threat_detection_llm_jacking(Check):
     def execute(self):
@@ -16,7 +31,8 @@ class cloudtrail_threat_detection_llm_jacking(Check):
             "threat_detection_llm_jacking_minutes", 1440
         )
         llm_jacking_actions = cloudtrail_client.audit_config.get(
-            "threat_detection_llm_jacking_actions", []
+            "threat_detection_llm_jacking_actions",
+            default_threat_detection_llm_jacking_actions,
         )
         potential_llm_jacking = {}
         found_potential_llm_jacking = False
@@ -67,10 +83,8 @@ class cloudtrail_threat_detection_llm_jacking(Check):
                 found_potential_llm_jacking = True
                 report = Check_Report_AWS(self.metadata())
                 report.region = cloudtrail_client.region
-                report.resource_id = cloudtrail_client.audited_account
-                report.resource_arn = cloudtrail_client._get_trail_arn_template(
-                    cloudtrail_client.region
-                )
+                report.resource_id = aws_identity_arn.split("/")[-1]
+                report.resource_arn = aws_identity_arn
                 report.status = "FAIL"
                 report.status_extended = f"Potential LLM Jacking attack detected from AWS {aws_identity_type} {aws_identity_arn.split('/')[-1]} with an threshold of {identity_threshold}."
                 findings.append(report)

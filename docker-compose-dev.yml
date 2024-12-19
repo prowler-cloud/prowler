@@ -1,0 +1,111 @@
+services:
+  api-dev:
+    hostname: "prowler-api"
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+      target: dev
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.django.devel
+      - DJANGO_LOGGING_FORMATTER=${LOGGING_FORMATTER:-human_readable}
+    env_file:
+      - path: .env
+        required: false
+    ports:
+      - "${DJANGO_PORT:-8080}:${DJANGO_PORT:-8080}"
+    volumes:
+      - "./api/src/backend:/home/prowler/backend"
+      - "./api/pyproject.toml:/home/prowler/pyproject.toml"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+    entrypoint:
+      - "/home/prowler/docker-entrypoint.sh"
+      - "dev"
+
+  ui-dev:
+    build:
+      context: ./ui
+      dockerfile: Dockerfile
+      target: dev
+    env_file:
+      - path: .env
+        required: false
+    ports:
+      - 3000:3000
+
+  postgres:
+    image: postgres:16.3-alpine3.20
+    hostname: "postgres-db"
+    volumes:
+      - ./_data/postgres:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=${POSTGRES_ADMIN_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_ADMIN_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    env_file:
+      - path: .env
+        required: false
+    ports:
+      - "${POSTGRES_PORT:-5432}:${POSTGRES_PORT:-5432}"
+    healthcheck:
+      test: ["CMD-SHELL", "sh -c 'pg_isready -U ${POSTGRES_ADMIN_USER} -d ${POSTGRES_DB}'"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  valkey:
+    image: valkey/valkey:7-alpine3.19
+    hostname: "valkey"
+    volumes:
+      - ./api/_data/valkey:/data
+    env_file:
+      - path: .env
+        required: false
+    ports:
+      - "${VALKEY_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD-SHELL", "sh -c 'valkey-cli ping'"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  worker-dev:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+      target: dev
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.django.devel
+    env_file:
+      - path: .env
+        required: false
+    depends_on:
+      valkey:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    entrypoint:
+      - "/home/prowler/docker-entrypoint.sh"
+      - "worker"
+
+  worker-beat:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+      target: dev
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.django.devel
+    env_file:
+      - path: ./.env
+        required: false
+    depends_on:
+      valkey:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    entrypoint:
+      - "../docker-entrypoint.sh"
+      - "beat"

@@ -6,8 +6,10 @@ from django.db.utils import ConnectionRouter
 from api.db_router import MainRouter
 from api.rls import Tenant
 from config.django.base import DATABASE_ROUTERS as PROD_DATABASE_ROUTERS
+from unittest.mock import patch
 
 
+@patch("api.db_router.MainRouter.admin_db", new="admin")
 class TestMainDatabaseRouter:
     @pytest.fixture(scope="module")
     def router(self):

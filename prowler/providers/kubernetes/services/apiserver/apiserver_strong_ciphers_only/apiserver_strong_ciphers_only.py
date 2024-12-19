@@ -3,6 +3,12 @@ from prowler.providers.kubernetes.services.apiserver.apiserver_client import (
     apiserver_client,
 )
 
+default_apiserver_strong_ciphers = [
+    "TLS_AES_128_GCM_SHA256",
+    "TLS_AES_256_GCM_SHA384",
+    "TLS_CHACHA20_POLY1305_SHA256",
+]
+
 
 class apiserver_strong_ciphers_only(Check):
     def execute(self) -> Check_Report_Kubernetes:
@@ -25,7 +31,8 @@ class apiserver_strong_ciphers_only(Check):
                             .split(",")
                             .issubset(
                                 apiserver_client.audit_config.get(
-                                    "apiserver_strong_ciphers", []
+                                    "apiserver_strong_ciphers",
+                                    default_apiserver_strong_ciphers,
                                 )
                             )
                         ):

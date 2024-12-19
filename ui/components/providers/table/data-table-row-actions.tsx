@@ -17,6 +17,7 @@ import { Row } from "@tanstack/react-table";
 import clsx from "clsx";
 import { useState } from "react";
 
+import { checkConnectionProvider } from "@/actions/providers/providers";
 import { VerticalDotsIcon } from "@/components/icons";
 import { CustomAlertModal } from "@/components/ui/custom";
 
@@ -37,13 +38,21 @@ export function DataTableRowActions<ProviderProps>({
   const providerId = (row.original as { id: string }).id;
   const providerType = (row.original as any).attributes?.provider;
   const providerAlias = (row.original as any).attributes?.alias;
+  const providerSecretId =
+    (row.original as any).relationships?.secret?.data?.id || null;
+
+  const handleTestConnection = async () => {
+    const formData = new FormData();
+    formData.append("providerId", providerId);
+    await checkConnectionProvider(formData);
+  };
+
   return (
     <>
       <CustomAlertModal
         isOpen={isEditOpen}
         onOpenChange={setIsEditOpen}
-        title="Edit Provider"
-        description={"Edit the provider details"}
+        title="Edit Provider Alias"
       >
         <EditForm
           providerId={providerId}
@@ -78,11 +87,20 @@ export function DataTableRowActions<ProviderProps>({
           >
             <DropdownSection title="Actions">
               <DropdownItem
-                href={`/providers/test-connection?type=${providerType}&id=${providerId}`}
+                href={`/providers/update-credentials?type=${providerType}&id=${providerId}${providerSecretId ? `&secretId=${providerSecretId}` : ""}`}
+                key="update"
+                description="Update the provider credentials"
+                textValue="Update Credentials"
+                startContent={<EditDocumentBulkIcon className={iconClasses} />}
+              >
+                Update Credentials
+              </DropdownItem>
+              <DropdownItem
                 key="new"
                 description="Check the connection to the provider"
                 textValue="Check Connection"
                 startContent={<AddNoteBulkIcon className={iconClasses} />}
+                onClick={handleTestConnection}
               >
                 Test Connection
               </DropdownItem>
@@ -93,7 +111,7 @@ export function DataTableRowActions<ProviderProps>({
                 startContent={<EditDocumentBulkIcon className={iconClasses} />}
                 onClick={() => setIsEditOpen(true)}
               >
-                Edit Provider
+                Edit Provider Alias
               </DropdownItem>
             </DropdownSection>
             <DropdownSection title="Danger zone">
