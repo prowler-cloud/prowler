@@ -9,12 +9,12 @@ on:
       - ".github/workflows/ui-build-lint-push-containers.yml"
 
   # Uncomment the below code to test this action on PRs
-  pull_request:
-    branches:
-      - "master"
-    paths:
-      - "ui/**"
-      - ".github/workflows/ui-build-lint-push-containers.yml"
+  # pull_request:
+  #   branches:
+  #     - "master"
+  #   paths:
+  #     - "ui/**"
+  #     - ".github/workflows/ui-build-lint-push-containers.yml"
 
   release:
     types: [published]
@@ -43,7 +43,7 @@ jobs:
         run: |
           if [[ ${{ github.repository }} == "prowler-cloud/prowler" ]]
           then
-            echo "is_repo=false" >> "${GITHUB_OUTPUT}"
+            echo "is_repo=true" >> "${GITHUB_OUTPUT}"
           else
             echo "This action only runs for prowler-cloud/prowler"
             echo "is_repo=false" >> "${GITHUB_OUTPUT}"
