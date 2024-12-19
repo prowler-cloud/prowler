@@ -44,7 +44,6 @@ export const AddGroupForm = ({
   const isLoading = form.formState.isSubmitting;
 
   const onSubmitClient = async (values: FormValues) => {
-    console.log(values);
     try {
       const formData = new FormData();
       formData.append("name", values.name);

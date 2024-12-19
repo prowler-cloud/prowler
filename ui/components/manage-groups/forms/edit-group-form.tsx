@@ -17,7 +17,6 @@ import {
 import { Form } from "@/components/ui/form";
 import { ApiError } from "@/types";
 
-// Schema para validar el formulario
 const editGroupSchema = z.object({
   name: z.string().nonempty("Provider group name is required"),
   providers: z.array(z.object({ id: z.string(), name: z.string() })).optional(),
@@ -49,7 +48,6 @@ export const EditGroupForm = ({
 
   const onSubmitClient = async (values: FormValues) => {
     try {
-      // Crear un objeto para almacenar solo los cambios
       const updatedFields: Partial<FormValues> = {};
 
       if (values.name !== providerGroupData.name) {
@@ -69,7 +67,6 @@ export const EditGroupForm = ({
         updatedFields.roles = values.roles;
       }
 
-      // Si no hay cambios, mostrar un mensaje y no enviar la solicitud
       if (Object.keys(updatedFields).length === 0) {
         toast({
           title: "No changes detected",
@@ -78,7 +75,6 @@ export const EditGroupForm = ({
         return;
       }
 
-      // Preparar formData para enviar solo los cambios
       const formData = new FormData();
       if (updatedFields.name) {
         formData.append("name", updatedFields.name);
