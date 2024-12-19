@@ -43,9 +43,9 @@ jobs:
         run: |
           if [[ ${{ github.repository }} == "prowler-cloud/prowler" ]]
           then
-            echo "This action only runs for prowler-cloud/prowler"
-            echo "is_repo=true" >> "${GITHUB_OUTPUT}"
+            echo "is_repo=false" >> "${GITHUB_OUTPUT}"
           else
+            echo "This action only runs for prowler-cloud/prowler"
             echo "is_repo=false" >> "${GITHUB_OUTPUT}"
           fi
 
