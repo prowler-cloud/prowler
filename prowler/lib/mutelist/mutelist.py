@@ -2,11 +2,80 @@ import re
 from abc import ABC, abstractmethod
 
 import yaml
+from jsonschema import validate
 
 from prowler.lib.logger import logger
-from prowler.lib.mutelist.models import mutelist_schema
 from prowler.lib.outputs.common import Status
 from prowler.lib.outputs.utils import unroll_dict, unroll_tags
+
+mutelist_schema = {
+    "type": "object",
+    "properties": {
+        "Accounts": {
+            "type": "object",
+            "patternProperties": {
+                ".*": {
+                    "type": "object",
+                    "properties": {
+                        "Checks": {
+                            "type": "object",
+                            "patternProperties": {
+                                ".*": {
+                                    "type": "object",
+                                    "properties": {
+                                        "Regions": {
+                                            "type": "array",
+                                            "items": {"type": "string"},
+                                        },
+                                        "Resources": {
+                                            "type": "array",
+                                            "items": {"type": "string"},
+                                        },
+                                        "Tags": {
+                                            "type": "array",
+                                            "items": {"type": "string"},
+                                        },
+                                        "Exceptions": {
+                                            "type": "object",
+                                            "properties": {
+                                                "Accounts": {
+                                                    "type": "array",
+                                                    "items": {"type": "string"},
+                                                },
+                                                "Regions": {
+                                                    "type": "array",
+                                                    "items": {"type": "string"},
+                                                },
+                                                "Resources": {
+                                                    "type": "array",
+                                                    "items": {"type": "string"},
+                                                },
+                                                "Tags": {
+                                                    "type": "array",
+                                                    "items": {"type": "string"},
+                                                },
+                                            },
+                                            "additionalProperties": False,
+                                        },
+                                        "Description": {
+                                            "type": "string",
+                                        },
+                                    },
+                                    "additionalProperties": False,
+                                }
+                            },
+                            "additionalProperties": False,
+                        },
+                    },
+                    "additionalProperties": False,
+                }
+            },
+            "additionalProperties": False,
+        }
+    },
+    "required": ["Accounts"],
+    "additionalProperties": False,
+}
 
 
 class Mutelist(ABC):
@@ -70,7 +139,7 @@ class Mutelist(ABC):
 
     def validate_mutelist(self) -> bool:
         try:
-            self._mutelist = mutelist_schema.validate(self._mutelist)
+            validate(self._mutelist, schema=mutelist_schema)
             return True
         except Exception as error:
             logger.error(
