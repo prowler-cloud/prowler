@@ -29,9 +29,13 @@ export type FormValues = z.infer<typeof editGroupSchema>;
 export const EditGroupForm = ({
   providerGroupId,
   providerGroupData,
+  allProviders,
+  allRoles,
 }: {
   providerGroupId: string;
   providerGroupData: FormValues;
+  allProviders: { id: string; name: string }[];
+  allRoles: { id: string; name: string }[];
 }) => {
   const { toast } = useToast();
   const router = useRouter();
@@ -149,36 +153,50 @@ export const EditGroupForm = ({
         <Divider orientation="horizontal" className="mb-2" />
 
         {/* Field for the name */}
-        <CustomInput
-          control={form.control}
-          name="name"
-          type="text"
-          label="Provider group name"
-          labelPlacement="outside"
-          placeholder="Enter the provider group name"
-          variant="bordered"
-          isRequired
-          isInvalid={!!form.formState.errors.name}
-        />
+        <div className="flex flex-col gap-2">
+          <CustomInput
+            control={form.control}
+            name="name"
+            type="text"
+            label="Provider group name"
+            labelPlacement="outside"
+            placeholder="Enter the provider group name"
+            variant="bordered"
+            isRequired
+            isInvalid={!!form.formState.errors.name}
+          />
+        </div>
 
         {/* Providers selection */}
         <Controller
           name="providers"
           control={form.control}
-          render={({ field }) => (
-            <CustomDropdownSelection
-              label="Select Providers"
-              name="providers"
-              values={providerGroupData.providers || []}
-              selectedKeys={field.value?.map((p) => p.id) || []}
-              onChange={(name, selectedValues) => {
-                const selectedProviders = providerGroupData.providers?.filter(
-                  (provider) => selectedValues.includes(provider.id),
-                );
-                field.onChange(selectedProviders || []);
-              }}
-            />
-          )}
+          render={({ field }) => {
+            const combinedProviders = [
+              ...(providerGroupData.providers || []),
+              ...allProviders.filter(
+                (p) =>
+                  !(providerGroupData.providers || []).some(
+                    (sp) => sp.id === p.id,
+                  ),
+              ),
+            ];
+
+            return (
+              <CustomDropdownSelection
+                label="Select Providers"
+                name="providers"
+                values={combinedProviders}
+                selectedKeys={field.value?.map((p) => p.id) || []}
+                onChange={(name, selectedValues) => {
+                  const selectedProviders = combinedProviders.filter(
+                    (provider) => selectedValues.includes(provider.id),
+                  );
+                  field.onChange(selectedProviders);
+                }}
+              />
+            );
+          }}
         />
         {form.formState.errors.providers && (
           <p className="mt-2 text-sm text-red-600">
@@ -190,20 +208,30 @@ export const EditGroupForm = ({
         <Controller
           name="roles"
           control={form.control}
-          render={({ field }) => (
-            <CustomDropdownSelection
-              label="Select Roles"
-              name="roles"
-              values={providerGroupData.roles || []}
-              selectedKeys={field.value?.map((r) => r.id) || []}
-              onChange={(name, selectedValues) => {
-                const selectedRoles = providerGroupData.roles?.filter((role) =>
-                  selectedValues.includes(role.id),
-                );
-                field.onChange(selectedRoles || []);
-              }}
-            />
-          )}
+          render={({ field }) => {
+            const combinedRoles = [
+              ...(providerGroupData.roles || []),
+              ...allRoles.filter(
+                (r) =>
+                  !(providerGroupData.roles || []).some((sr) => sr.id === r.id),
+              ),
+            ];
+
+            return (
+              <CustomDropdownSelection
+                label="Select Roles"
+                name="roles"
+                values={combinedRoles}
+                selectedKeys={field.value?.map((r) => r.id) || []}
+                onChange={(name, selectedValues) => {
+                  const selectedRoles = combinedRoles.filter((role) =>
+                    selectedValues.includes(role.id),
+                  );
+                  field.onChange(selectedRoles);
+                }}
+              />
+            );
+          }}
         />
         {form.formState.errors.roles && (
           <p className="mt-2 text-sm text-red-600">

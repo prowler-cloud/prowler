@@ -137,7 +137,7 @@ export const CustomDropdownSelection: React.FC<
       </Popover>
 
       {/* Selected Values Display */}
-      {selectedValues.size > 0 && selectedValues.size !== 1 && (
+      {selectedValues.size > 0 && (
         <div className="mt-2 flex flex-wrap gap-2">
           {Array.from(selectedValues)
             .filter((value) => value !== "all")

@@ -79,39 +79,31 @@ const SSRDataEditGroup = async ({
   }
 
   // Fetch the provider group details
-  const providerGroupData = await getProviderGroupInfoById(
-    providerGroupId as string,
-  );
+  const providerGroupData = await getProviderGroupInfoById(providerGroupId);
 
-  // Handle errors if provider group data is not found
   if (!providerGroupData || providerGroupData.error) {
     return <div>Provider group not found</div>;
   }
 
-  // Fetch the complete lists of providers and roles
   const providersResponse = await getProviders({});
   const rolesResponse = await getRoles({});
 
-  // Map all providers into an array of { id, name }
-  const providersList =
-    providersResponse?.data.map((provider: ProviderProps) => ({
+  const providersList = providersResponse?.data.map(
+    (provider: ProviderProps) => ({
       id: provider.id,
       name: provider.attributes.alias,
-    })) || [];
+    }),
+  );
 
-  // Map all roles into an array of { id, name }
-  const rolesList =
-    rolesResponse?.data.map((role: any) => ({
-      id: role.id,
-      name: role.attributes.name,
-    })) || [];
+  const rolesList = rolesResponse?.data.map((role: Role) => ({
+    id: role.id,
+    name: role.attributes.name,
+  }));
 
-  // Extract attributes and relationships from the group data
   const { attributes, relationships } = providerGroupData.data;
 
-  // Map the group's provider relationships to include { id, name }
-  const providers =
-    relationships.providers?.data.map((provider: any) => {
+  const associatedProviders = relationships.providers?.data.map(
+    (provider: ProviderProps) => {
       const matchingProvider = providersList.find(
         (p: ProviderProps) => p.id === provider.id,
       );
@@ -119,29 +111,29 @@ const SSRDataEditGroup = async ({
         id: provider.id,
         name: matchingProvider?.name || "Unknown Provider",
       };
-    }) || [];
+    },
+  );
 
-  // Map the group's role relationships to include { id, name }
-  const roles =
-    relationships.roles?.data.map((role: Role) => {
-      const matchingRole = rolesList.find((r: Role) => r.id === role.id);
-      return {
-        id: role.id,
-        name: matchingRole?.name || "Unknown Role",
-      };
-    }) || [];
+  const associatedRoles = relationships.roles?.data.map((role: Role) => {
+    const matchingRole = rolesList.find((r: Role) => r.id === role.id);
+    return {
+      id: role.id,
+      name: matchingRole?.name || "Unknown Role",
+    };
+  });
 
-  // Prepare the form data in the expected structure
   const formData = {
     name: attributes.name,
-    providers,
-    roles,
+    providers: associatedProviders,
+    roles: associatedRoles,
   };
 
   return (
     <EditGroupForm
       providerGroupId={providerGroupId}
       providerGroupData={formData}
+      allProviders={providersList}
+      allRoles={rolesList}
     />
   );
 };

@@ -21,7 +21,7 @@ const addGroupSchema = z.object({
   roles: z.array(z.string()).optional(),
 });
 
-export type FormValues = z.infer<typeof addGroupSchema>;
+type FormValues = z.infer<typeof addGroupSchema>;
 
 export const AddGroupForm = ({
   roles = [],
