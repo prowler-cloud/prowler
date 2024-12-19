@@ -23,6 +23,9 @@ class Test_codeartifact_packages_external_public_publishing_disabled:
         with mock.patch(
             "prowler.providers.aws.services.codeartifact.codeartifact_service.CodeArtifact",
             new=codeartifact_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.codeartifact.codeartifact_client.codeartifact_client",
+            new=codeartifact_client,
         ):
             # Test Check
             from prowler.providers.aws.services.codeartifact.codeartifact_packages_external_public_publishing_disabled.codeartifact_packages_external_public_publishing_disabled import (
@@ -97,6 +100,9 @@ class Test_codeartifact_packages_external_public_publishing_disabled:
         with mock.patch(
             "prowler.providers.aws.services.codeartifact.codeartifact_service.CodeArtifact",
             new=codeartifact_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.codeartifact.codeartifact_client.codeartifact_client",
+            new=codeartifact_client,
         ):
             # Test Check
             from prowler.providers.aws.services.codeartifact.codeartifact_packages_external_public_publishing_disabled.codeartifact_packages_external_public_publishing_disabled import (
@@ -156,6 +162,9 @@ class Test_codeartifact_packages_external_public_publishing_disabled:
         }
         with mock.patch(
             "prowler.providers.aws.services.codeartifact.codeartifact_service.CodeArtifact",
+            new=codeartifact_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.codeartifact.codeartifact_client.codeartifact_client",
             new=codeartifact_client,
         ):
             # Test Check
