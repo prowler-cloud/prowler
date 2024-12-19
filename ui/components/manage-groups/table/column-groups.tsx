@@ -22,7 +22,49 @@ export const ColumnGroups: ColumnDef<ProviderGroup>[] = [
       const {
         attributes: { name },
       } = getProviderData(row);
-      return <p className="text-small">{name}</p>;
+      return (
+        <p className="text-small font-medium">
+          {name.charAt(0).toUpperCase() + name.slice(1).toLowerCase()}
+        </p>
+      );
+    },
+  },
+
+  {
+    accessorKey: "providers_count",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Providers" param="name" />
+    ),
+    cell: ({ row }) => {
+      const {
+        relationships: { providers },
+      } = getProviderData(row);
+      return (
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
+          <span className="text-sm font-bold text-gray-900 dark:text-gray-100">
+            {providers.meta.count}
+          </span>
+        </div>
+      );
+    },
+  },
+
+  {
+    accessorKey: "roles_count",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Roles" param="roles" />
+    ),
+    cell: ({ row }) => {
+      const {
+        relationships: { roles },
+      } = getProviderData(row);
+      return (
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
+          <span className="text-sm font-bold text-gray-900 dark:text-gray-100">
+            {roles.meta.count}
+          </span>
+        </div>
+      );
     },
   },
 

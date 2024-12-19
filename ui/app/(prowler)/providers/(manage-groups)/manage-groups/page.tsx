@@ -1,4 +1,4 @@
-import { Divider } from "@nextui-org/react";
+import { Divider, Spacer } from "@nextui-org/react";
 import { redirect } from "next/navigation";
 import React, { Suspense } from "react";
 
@@ -8,6 +8,7 @@ import {
 } from "@/actions/manage-groups/manage-groups";
 import { getProviders } from "@/actions/providers";
 import { getRoles } from "@/actions/roles";
+import { FilterControls } from "@/components/filters/filter-controls";
 import { AddGroupForm, EditGroupForm } from "@/components/manage-groups/forms";
 import { SkeletonManageGroups } from "@/components/manage-groups/skeleton-manage-groups";
 import { ColumnGroups } from "@/components/manage-groups/table";
@@ -37,6 +38,9 @@ export default function ManageGroupsPage({
       <Divider orientation="vertical" className="mx-auto h-full" />
 
       <div className="col-span-1 flex-col justify-start md:col-span-6">
+        <FilterControls />
+        <Spacer y={8} />
+        <h3 className="mb-4 text-sm font-bold uppercase">Provider Groups</h3>
         <Suspense key={searchParamsKey} fallback={<SkeletonManageGroups />}>
           <SSRDataTable searchParams={searchParams} />
         </Suspense>
@@ -49,21 +53,19 @@ const SSRAddGroupForm = async () => {
   const providersResponse = await getProviders({});
   const rolesResponse = await getRoles({});
 
-  const providersData = providersResponse?.data.map(
-    (provider: ProviderProps) => ({
+  const providersData =
+    providersResponse?.data?.map((provider: ProviderProps) => ({
       id: provider.id,
       name: provider.attributes.alias,
-    }),
-  );
+    })) || [];
 
-  const rolesData = rolesResponse?.data.map((role: any) => ({
-    id: role.id,
-    name: role.attributes.name,
-  }));
+  const rolesData =
+    rolesResponse?.data?.map((role: Role) => ({
+      id: role.id,
+      name: role.attributes.name,
+    })) || [];
 
-  return (
-    <AddGroupForm providers={providersData || []} roles={rolesData || []} />
-  );
+  return <AddGroupForm providers={providersData} roles={rolesData} />;
 };
 
 const SSRDataEditGroup = async ({
@@ -88,17 +90,17 @@ const SSRDataEditGroup = async ({
   const providersResponse = await getProviders({});
   const rolesResponse = await getRoles({});
 
-  const providersList = providersResponse?.data.map(
-    (provider: ProviderProps) => ({
+  const providersList =
+    providersResponse?.data?.map((provider: ProviderProps) => ({
       id: provider.id,
       name: provider.attributes.alias,
-    }),
-  );
+    })) || [];
 
-  const rolesList = rolesResponse?.data.map((role: Role) => ({
-    id: role.id,
-    name: role.attributes.name,
-  }));
+  const rolesList =
+    rolesResponse?.data?.map((role: Role) => ({
+      id: role.id,
+      name: role.attributes.name,
+    })) || [];
 
   const { attributes, relationships } = providerGroupData.data;
 
@@ -109,7 +111,7 @@ const SSRDataEditGroup = async ({
       );
       return {
         id: provider.id,
-        name: matchingProvider?.name || "Unknown Provider",
+        name: matchingProvider?.name || "Unavailable for your role",
       };
     },
   );
@@ -118,7 +120,7 @@ const SSRDataEditGroup = async ({
     const matchingRole = rolesList.find((r: Role) => r.id === role.id);
     return {
       id: role.id,
-      name: matchingRole?.name || "Unknown Role",
+      name: matchingRole?.name || "Unavailable for your role",
     };
   });
 
