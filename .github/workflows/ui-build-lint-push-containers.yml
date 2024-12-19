@@ -9,12 +9,12 @@ on:
       - ".github/workflows/ui-build-lint-push-containers.yml"
 
   # Uncomment the below code to test this action on PRs
-  # pull_request:
-  #   branches:
-  #     - "master"
-  #   paths:
-  #     - "ui/**"
-  #     - ".github/workflows/ui-build-lint-push-containers.yml"
+  pull_request:
+    branches:
+      - "master"
+    paths:
+      - "ui/**"
+      - ".github/workflows/ui-build-lint-push-containers.yml"
 
   release:
     types: [published]
