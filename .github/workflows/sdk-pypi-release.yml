@@ -20,7 +20,7 @@ jobs:
         id: repository_check
         working-directory: /tmp
         run: |
-          if [[ "${{ github.repository }}" == "prowler-cloud/prowler" ]]
+          if [[ ${{ github.repository }} == "prowler-cloud/prowler" ]]
           then
             echo "is_repo=true" >> "${GITHUB_OUTPUT}"
           else
