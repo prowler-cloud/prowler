@@ -20,26 +20,50 @@ class organizations_opt_out_ai_services_policy(Check):
                 report.status_extended = (
                     "AWS Organizations is not in-use for this AWS Account."
                 )
+
                 if organizations_client.organization.status == "ACTIVE":
-                    report.status_extended = f"AWS Organization {organizations_client.organization.id} has not opted out of all AI services, granting consent for AWS to access its data, or does not disallow child-accounts to overwrite this policy."
-                    for policy in organizations_client.organization.policies.get(
+                    conditions_failed = []
+                    all_conditions_passed = False
+                    opt_out_policies = organizations_client.organization.policies.get(
                         "AISERVICES_OPT_OUT_POLICY", []
-                    ):
-                        opt_out_policy = (
-                            policy.content.get("services", {})
-                            .get("default", {})
-                            .get("opt_out_policy", {})
-                        )
-                        if opt_out_policy.get(
-                            "@@assign"
-                        ) == "optOut" and opt_out_policy.get(
-                            "@@operators_allowed_for_child_policies"
-                        ) == [
-                            "@@none"
-                        ]:
+                    )
+
+                    if not opt_out_policies:
+                        report.status_extended = f"AWS Organization {organizations_client.organization.id} has no opt-out policy for AI services."
+                    else:
+                        for policy in opt_out_policies:
+                            opt_out_policy = (
+                                policy.content.get("services", {})
+                                .get("default", {})
+                                .get("opt_out_policy", {})
+                            )
+
+                            condition_1 = opt_out_policy.get("@@assign") == "optOut"
+                            condition_2 = opt_out_policy.get(
+                                "@@operators_allowed_for_child_policies"
+                            ) == ["@@none"]
+
+                            if condition_1 and condition_2:
+                                all_conditions_passed = True
+                                break
+
+                            if not condition_1:
+                                conditions_failed.append(
+                                    "Organization has not opted out of all AI services."
+                                )
+                            if not condition_2:
+                                conditions_failed.append(
+                                    "Organization does not disallow child-accounts to overwrite the policy."
+                                )
+
+                        if all_conditions_passed:
                             report.status = "PASS"
-                            report.status_extended = f"AWS Organization {organizations_client.organization.id} has opted out of all AI services, not granting consent for AWS to access its data, and also disallows child-accounts to overwrite this policy."
-                            break
+                            report.status_extended = f"AWS Organization {organizations_client.organization.id} has opted out of all AI services and also disallows child-accounts to overwrite this policy."
+                        else:
+                            report.status_extended = (
+                                f"AWS Organization {organizations_client.organization.id} failed the check due to the following reason(s): "
+                                + " ".join(conditions_failed)
+                            )
 
                 findings.append(report)
 

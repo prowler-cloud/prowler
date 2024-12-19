@@ -87,7 +87,7 @@ class Test_organizations_tags_policies_enabled_and_attached:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == "AWS Organization o-1234567890 has not opted out of all AI services, granting consent for AWS to access its data, or does not disallow child-accounts to overwrite this policy."
+                    == "AWS Organization o-1234567890 has no opt-out policy for AI services."
                 )
                 assert result[0].resource_id == "o-1234567890"
                 assert (
@@ -160,7 +160,7 @@ class Test_organizations_tags_policies_enabled_and_attached:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == "AWS Organization o-1234567890 has opted out of all AI services, not granting consent for AWS to access its data, and also disallows child-accounts to overwrite this policy."
+                    == "AWS Organization o-1234567890 has opted out of all AI services and also disallows child-accounts to overwrite this policy."
                 )
                 assert result[0].resource_id == "o-1234567890"
                 assert (
@@ -216,7 +216,7 @@ class Test_organizations_tags_policies_enabled_and_attached:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == "AWS Organization o-1234567890 has not opted out of all AI services, granting consent for AWS to access its data, or does not disallow child-accounts to overwrite this policy."
+                    == "AWS Organization o-1234567890 failed the check due to the following reason(s): Organization has not opted out of all AI services. Organization does not disallow child-accounts to overwrite the policy."
                 )
                 assert result[0].resource_id == "o-1234567890"
                 assert (
@@ -276,7 +276,7 @@ class Test_organizations_tags_policies_enabled_and_attached:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == "AWS Organization o-1234567890 has not opted out of all AI services, granting consent for AWS to access its data, or does not disallow child-accounts to overwrite this policy."
+                    == "AWS Organization o-1234567890 failed the check due to the following reason(s): Organization does not disallow child-accounts to overwrite the policy."
                 )
                 assert result[0].resource_id == "o-1234567890"
                 assert (
@@ -342,7 +342,7 @@ class Test_organizations_tags_policies_enabled_and_attached:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == "AWS Organization o-1234567890 has not opted out of all AI services, granting consent for AWS to access its data, or does not disallow child-accounts to overwrite this policy."
+                    == "AWS Organization o-1234567890 failed the check due to the following reason(s): Organization has not opted out of all AI services."
                 )
                 assert result[0].resource_id == "o-1234567890"
                 assert (
