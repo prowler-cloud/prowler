@@ -24,28 +24,34 @@ import { DeleteForm, EditForm } from "../forms";
 
 interface DataTableRowActionsProps<InvitationProps> {
   row: Row<InvitationProps>;
+  roles?: { id: string; name: string }[];
 }
 const iconClasses =
   "text-2xl text-default-500 pointer-events-none flex-shrink-0";
 
 export function DataTableRowActions<InvitationProps>({
   row,
+  roles,
 }: DataTableRowActionsProps<InvitationProps>) {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const invitationId = (row.original as { id: string }).id;
   const invitationEmail = (row.original as any).attributes?.email;
+  const invitationRole = (row.original as any).relationships?.role?.attributes
+    ?.name;
+
   return (
     <>
       <CustomAlertModal
         isOpen={isEditOpen}
         onOpenChange={setIsEditOpen}
-        title="Edit Invitation"
-        description={"Edit the invitation details"}
+        title="Edit invitation details"
       >
         <EditForm
           invitationId={invitationId}
           invitationEmail={invitationEmail}
+          currentRole={invitationRole}
+          roles={roles || []}
           setIsOpen={setIsEditOpen}
         />
       </CustomAlertModal>

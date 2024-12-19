@@ -127,7 +127,7 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
-        title={"Next execution"}
+        title={"Next scan"}
         param="next_scan_at"
       />
     ),

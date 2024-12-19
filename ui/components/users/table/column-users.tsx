@@ -34,6 +34,14 @@ export const ColumnsUser: ColumnDef<UserProps>[] = [
     },
   },
   {
+    accessorKey: "role",
+    header: () => <div className="text-left">Role</div>,
+    cell: ({ row }) => {
+      const { role } = getUserData(row);
+      return <p className="font-semibold">{role?.name || "No Role"}</p>;
+    },
+  },
+  {
     accessorKey: "company_name",
     header: ({ column }) => (
       <DataTableColumnHeader
@@ -47,7 +55,6 @@ export const ColumnsUser: ColumnDef<UserProps>[] = [
       return <p className="font-semibold">{company_name}</p>;
     },
   },
-
   {
     accessorKey: "date_joined",
     header: ({ column }) => (
@@ -68,7 +75,8 @@ export const ColumnsUser: ColumnDef<UserProps>[] = [
     header: () => <div className="text-right">Actions</div>,
     id: "actions",
     cell: ({ row }) => {
-      return <DataTableRowActions row={row} />;
+      const roles = row.original.roles;
+      return <DataTableRowActions row={row} roles={roles} />;
     },
   },
 ];

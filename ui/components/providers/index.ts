@@ -1,4 +1,4 @@
-export * from "./add-provider";
+export * from "./add-provider-button";
 export * from "./forms/delete-form";
 export * from "./link-to-scans";
 export * from "./provider-info";

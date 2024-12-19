@@ -14,10 +14,10 @@ export const getUsers = async ({
 }) => {
   const session = await auth();
 
-  if (isNaN(Number(page)) || page < 1) redirect("/users");
+  if (isNaN(Number(page)) || page < 1) redirect("/users?include=roles");
 
   const keyServer = process.env.API_BASE_URL;
-  const url = new URL(`${keyServer}/users`);
+  const url = new URL(`${keyServer}/users?include=roles`);
 
   if (page) url.searchParams.append("page[number]", page.toString());
   if (query) url.searchParams.append("filter[search]", query);
@@ -94,6 +94,58 @@ export const updateUser = async (formData: FormData) => {
     revalidatePath("/users");
     return parseStringify(data);
   } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error(error);
+    return {
+      error: getErrorMessage(error),
+    };
+  }
+};
+
+export const updateUserRole = async (formData: FormData) => {
+  const session = await auth();
+  const keyServer = process.env.API_BASE_URL;
+
+  const userId = formData.get("userId") as string;
+  const roleId = formData.get("roleId") as string;
+
+  // Validate required fields
+  if (!userId || !roleId) {
+    return { error: "userId and roleId are required" };
+  }
+
+  const url = new URL(`${keyServer}/users/${userId}/relationships/roles`);
+
+  const requestBody = {
+    data: [
+      {
+        type: "roles",
+        id: roleId,
+      },
+    ],
+  };
+
+  try {
+    const response = await fetch(url.toString(), {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/vnd.api+json",
+        Accept: "application/vnd.api+json",
+        Authorization: `Bearer ${session?.accessToken}`,
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return { error: data.errors || "An error occurred" };
+    }
+
+    revalidatePath("/users"); // Update the path as needed
+    return parseStringify(data);
+  } catch (error) {
+    // eslint-disable-next-line no-console
     console.error(error);
     return {
       error: getErrorMessage(error),

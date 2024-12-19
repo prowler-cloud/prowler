@@ -3,7 +3,8 @@ import { Suspense } from "react";
 
 import { getProviders } from "@/actions/providers";
 import { FilterControls, filterProviders } from "@/components/filters";
-import { AddProvider } from "@/components/providers";
+import { ManageGroupsButton } from "@/components/manage-groups";
+import { AddProviderButton } from "@/components/providers";
 import {
   ColumnProviders,
   SkeletonTableProviders,
@@ -26,7 +27,10 @@ export default async function Providers({
       <Spacer y={4} />
       <FilterControls search providers />
       <Spacer y={8} />
-      <AddProvider />
+      <div className="flex items-center gap-4 md:justify-end">
+        <ManageGroupsButton />
+        <AddProviderButton />
+      </div>
       <Spacer y={4} />
       <DataTableFilterCustom filters={filterProviders || []} />
       <Spacer y={8} />
