@@ -228,7 +228,7 @@ class Microsoft365Provider(Provider):
         if not client_id or not client_secret or not tenant_id:
             raise Microsoft365IdentityInfo(
                 file=os.path.basename(__file__),
-                message="Tenant Id is required for Microsoft365 static credentials. Make sure you are using the correct credentials.",
+                message="Tenant Id, Client Id or Client Secret is required for Microsoft365 static credentials. Make sure you are using the correct credentials.",
             )
 
     @staticmethod

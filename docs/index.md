@@ -373,5 +373,15 @@ kubectl logs prowler-XXXXX --namespace prowler-ns
 ???+ note
     By default, `prowler` will scan all namespaces in your active Kubernetes context. Use the flag `--context` to specify the context to be scanned and `--namespaces` to specify the namespaces to be scanned.
 
+### Microsoft365
+
+With Microsoft365 you can only authenticate using Service Principal authentication using an app and setting some :
+
+```console
+prowler microsoft365
+```
+
+See more details about Microsoft365 Authentication in [Requirements](getting-started/requirements.md#microsoft365)
+
 ## Prowler v2 Documentation
 For **Prowler v2 Documentation**, please check it out [here](https://github.com/prowler-cloud/prowler/blob/8818f47333a0c1c1a457453c87af0ea5b89a385f/README.md).
