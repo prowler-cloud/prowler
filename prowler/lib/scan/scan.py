@@ -22,7 +22,7 @@ from prowler.lib.scan.exceptions.exceptions import (
     ScanInvalidSeverityError,
     ScanInvalidStatusError,
 )
-from prowler.providers.common.models import Audit_Metadata
+from prowler.providers.common.models import Audit_Metadata, ProviderOutputOptions
 from prowler.providers.common.provider import Provider
 
 
@@ -222,7 +222,7 @@ class Scan:
 
     def scan(
         self,
-        custom_checks_metadata: dict = {},
+        custom_checks_metadata: dict = None,
     ) -> Generator[tuple[float, list[Finding]], None, None]:
         """
         Executes the scan by iterating over the checks to execute and executing each check.
@@ -239,6 +239,20 @@ class Scan:
             Exception: If any other error occurs during the execution of a check.
         """
         try:
+            # Load bulk compliance frameworks
+            bulk_compliance_frameworks = Compliance.get_bulk(self.provider.type)
+
+            # Get bulk checks metadata for the provider
+            bulk_checks_metadata = CheckMetadata.get_bulk(self.provider.type)
+            # Complete checks metadata with the compliance framework specification
+            bulk_checks_metadata = update_checks_metadata_with_compliance(
+                bulk_compliance_frameworks, bulk_checks_metadata
+            )
+
+            output_options = ProviderOutputOptions(
+                bulk_checks_metadata=bulk_checks_metadata,
+            )
+
             checks_to_execute = self.checks_to_execute
             # Initialize the Audit Metadata
             # TODO: this should be done in the provider class
@@ -306,7 +320,7 @@ class Scan:
 
                     findings = [
                         Finding.generate_output(
-                            self._provider, finding, output_options=None
+                            self._provider, finding, output_options=output_options
                         )
                         for finding in check_findings
                     ]
