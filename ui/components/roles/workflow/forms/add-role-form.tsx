@@ -1,22 +1,30 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Checkbox } from "@nextui-org/react";
+import { Checkbox, Divider } from "@nextui-org/react";
 import { SaveIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { addRole } from "@/actions/roles/roles";
 import { useToast } from "@/components/ui";
-import { CustomButton, CustomInput } from "@/components/ui/custom";
+import {
+  CustomButton,
+  CustomDropdownSelection,
+  CustomInput,
+} from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
 import { addRoleFormSchema, ApiError } from "@/types";
 
 type FormValues = z.infer<typeof addRoleFormSchema>;
 
-export const AddRoleForm = () => {
+export const AddRoleForm = ({
+  groups,
+}: {
+  groups: { id: string; name: string }[];
+}) => {
   const { toast } = useToast();
   const router = useRouter();
 
@@ -31,10 +39,12 @@ export const AddRoleForm = () => {
       manage_integrations: false,
       manage_scans: false,
       unlimited_visibility: false,
+      groups: [],
     },
   });
 
   const manageProviders = form.watch("manage_providers");
+  const unlimitedVisibility = form.watch("unlimited_visibility");
 
   useEffect(() => {
     if (manageProviders) {
@@ -81,6 +91,12 @@ export const AddRoleForm = () => {
       String(values.unlimited_visibility),
     );
 
+    if (values.groups && values.groups.length > 0) {
+      values.groups.forEach((group) => {
+        formData.append("groups[]", group);
+      });
+    }
+
     try {
       const data = await addRole(formData);
 
@@ -120,9 +136,9 @@ export const AddRoleForm = () => {
 
   const permissions = [
     { field: "manage_users", label: "Invite and Manage Users" },
-    { field: "manage_account", label: "Manage SaaS Account" },
+    { field: "manage_account", label: "Manage Account" },
     { field: "manage_billing", label: "Manage Billing" },
-    { field: "manage_providers", label: "Manage Cloud Accounts" },
+    { field: "manage_providers", label: "Manage Cloud Providers" },
     { field: "manage_integrations", label: "Manage Integrations" },
     { field: "manage_scans", label: "Manage Scans" },
     { field: "unlimited_visibility", label: "Unlimited Visibility" },
@@ -178,7 +194,42 @@ export const AddRoleForm = () => {
             ))}
           </div>
         </div>
+        <Divider className="my-4" />
 
+        {!unlimitedVisibility && (
+          <div className="flex flex-col space-y-4">
+            <span className="text-lg font-semibold">
+              Groups and Account Visibility
+            </span>
+
+            <p className="text-small font-medium text-default-700">
+              Select the groups this role will have access to. If no groups are
+              selected and unlimited visibility is not enabled, the role will
+              not have access to any accounts.
+            </p>
+
+            <Controller
+              name="groups"
+              control={form.control}
+              render={({ field }) => (
+                <CustomDropdownSelection
+                  label="Select Groups"
+                  name="groups"
+                  values={groups}
+                  selectedKeys={field.value || []}
+                  onChange={(name, selectedValues) =>
+                    field.onChange(selectedValues)
+                  }
+                />
+              )}
+            />
+            {form.formState.errors.groups && (
+              <p className="mt-2 text-sm text-red-600">
+                {form.formState.errors.groups.message}
+              </p>
+            )}
+          </div>
+        )}
         <div className="flex w-full justify-end sm:space-x-6">
           <CustomButton
             type="submit"

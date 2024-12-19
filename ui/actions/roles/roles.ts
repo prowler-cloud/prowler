@@ -79,12 +79,14 @@ export const addRole = async (formData: FormData) => {
   const session = await auth();
   const keyServer = process.env.API_BASE_URL;
 
-  const url = new URL(`${keyServer}/roles`);
-  const body = JSON.stringify({
+  const name = formData.get("name") as string;
+  const groups = formData.getAll("groups[]") as string[];
+  // Prepare base payload
+  const payload: any = {
     data: {
       type: "roles",
       attributes: {
-        name: formData.get("name"),
+        name,
         manage_users: formData.get("manage_users") === "true",
         manage_account: formData.get("manage_account") === "true",
         manage_billing: formData.get("manage_billing") === "true",
@@ -93,15 +95,24 @@ export const addRole = async (formData: FormData) => {
         manage_scans: formData.get("manage_scans") === "true",
         unlimited_visibility: formData.get("unlimited_visibility") === "true",
       },
-      relationships: {
-        provider_groups: {
-          data: [],
-        },
-      },
+      relationships: {},
     },
-  });
+  };
+
+  // Add relationships only if there are items
+  if (groups.length > 0) {
+    payload.data.relationships.provider_groups = {
+      data: groups.map((groupId: string) => ({
+        type: "provider-groups",
+        id: groupId,
+      })),
+    };
+  }
+
+  const body = JSON.stringify(payload);
 
   try {
+    const url = new URL(`${keyServer}/roles`);
     const response = await fetch(url.toString(), {
       method: "POST",
       headers: {
@@ -111,10 +122,13 @@ export const addRole = async (formData: FormData) => {
       },
       body,
     });
+
     const data = await response.json();
     revalidatePath("/roles");
     return data;
   } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error("Error during API call:", error);
     return {
       error: getErrorMessage(error),
     };
@@ -125,13 +139,15 @@ export const updateRole = async (formData: FormData, roleId: string) => {
   const session = await auth();
   const keyServer = process.env.API_BASE_URL;
 
-  const url = new URL(`${keyServer}/roles/${roleId}`);
-  const body = JSON.stringify({
+  const name = formData.get("name") as string;
+  const groups = formData.getAll("groups[]") as string[];
+
+  const payload: any = {
     data: {
       type: "roles",
       id: roleId,
       attributes: {
-        name: formData.get("name"),
+        ...(name && { name }),
         manage_users: formData.get("manage_users") === "true",
         manage_account: formData.get("manage_account") === "true",
         manage_billing: formData.get("manage_billing") === "true",
@@ -140,10 +156,23 @@ export const updateRole = async (formData: FormData, roleId: string) => {
         manage_scans: formData.get("manage_scans") === "true",
         unlimited_visibility: formData.get("unlimited_visibility") === "true",
       },
+      relationships: {},
     },
-  });
+  };
+
+  if (groups.length > 0) {
+    payload.data.relationships.provider_groups = {
+      data: groups.map((groupId: string) => ({
+        type: "provider-groups",
+        id: groupId,
+      })),
+    };
+  }
+
+  const body = JSON.stringify(payload);
 
   try {
+    const url = new URL(`${keyServer}/roles/${roleId}`);
     const response = await fetch(url.toString(), {
       method: "PATCH",
       headers: {
@@ -157,6 +186,8 @@ export const updateRole = async (formData: FormData, roleId: string) => {
     revalidatePath("/roles");
     return data;
   } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error("Error during API call:", error);
     return {
       error: getErrorMessage(error),
     };

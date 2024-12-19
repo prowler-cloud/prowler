@@ -1,16 +1,20 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Checkbox } from "@nextui-org/react";
+import { Checkbox, Divider } from "@nextui-org/react";
 import { SaveIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { updateRole } from "@/actions/roles/roles";
 import { useToast } from "@/components/ui";
-import { CustomButton, CustomInput } from "@/components/ui/custom";
+import {
+  CustomButton,
+  CustomDropdownSelection,
+  CustomInput,
+} from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
 import { ApiError, editRoleFormSchema } from "@/types";
 
@@ -19,16 +23,31 @@ type FormValues = z.infer<typeof editRoleFormSchema>;
 export const EditRoleForm = ({
   roleId,
   roleData,
+  groups,
 }: {
   roleId: string;
-  roleData: FormValues;
+  roleData: {
+    data: {
+      attributes: FormValues;
+      relationships?: {
+        provider_groups?: {
+          data: Array<{ id: string; type: string }>;
+        };
+      };
+    };
+  };
+  groups: { id: string; name: string }[];
 }) => {
   const { toast } = useToast();
   const router = useRouter();
-
   const form = useForm<FormValues>({
     resolver: zodResolver(editRoleFormSchema),
-    defaultValues: roleData,
+    defaultValues: {
+      ...roleData.data.attributes,
+      groups:
+        roleData.data.relationships?.provider_groups?.data.map((g) => g.id) ||
+        [],
+    },
   });
 
   const { watch, setValue } = form;
@@ -68,29 +87,40 @@ export const EditRoleForm = ({
   };
 
   const onSubmitClient = async (values: FormValues) => {
-    if (!roleId) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Role ID is missing.",
-      });
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append("name", values.name);
-    formData.append("manage_users", String(values.manage_users));
-    formData.append("manage_account", String(values.manage_account));
-    formData.append("manage_billing", String(values.manage_billing));
-    formData.append("manage_providers", String(values.manage_providers));
-    formData.append("manage_integrations", String(values.manage_integrations));
-    formData.append("manage_scans", String(values.manage_scans));
-    formData.append(
-      "unlimited_visibility",
-      String(values.unlimited_visibility),
-    );
-
     try {
+      const updatedFields: Partial<FormValues> = {};
+
+      if (values.name !== roleData.data.attributes.name) {
+        updatedFields.name = values.name;
+      }
+
+      updatedFields.manage_users = values.manage_users;
+      updatedFields.manage_account = values.manage_account;
+      updatedFields.manage_billing = values.manage_billing;
+      updatedFields.manage_providers = values.manage_providers;
+      updatedFields.manage_integrations = values.manage_integrations;
+      updatedFields.manage_scans = values.manage_scans;
+      updatedFields.unlimited_visibility = values.unlimited_visibility;
+
+      if (
+        JSON.stringify(values.groups) !==
+        JSON.stringify(roleData.data.relationships?.provider_groups?.data)
+      ) {
+        updatedFields.groups = values.groups;
+      }
+
+      const formData = new FormData();
+
+      Object.entries(updatedFields).forEach(([key, value]) => {
+        if (key === "groups" && Array.isArray(value)) {
+          value.forEach((group) => {
+            formData.append("groups[]", group);
+          });
+        } else {
+          formData.append(key, String(value));
+        }
+      });
+
       const data = await updateRole(formData, roleId);
 
       if (data?.errors && data.errors.length > 0) {
@@ -129,9 +159,9 @@ export const EditRoleForm = ({
 
   const permissions = [
     { field: "manage_users", label: "Invite and Manage Users" },
-    { field: "manage_account", label: "Manage SaaS Account" },
+    { field: "manage_account", label: "Manage Account" },
     { field: "manage_billing", label: "Manage Billing" },
-    { field: "manage_providers", label: "Manage Cloud Accounts" },
+    { field: "manage_providers", label: "Manage Cloud Providers" },
     { field: "manage_integrations", label: "Manage Integrations" },
     { field: "manage_scans", label: "Manage Scans" },
     { field: "unlimited_visibility", label: "Unlimited Visibility" },
@@ -187,7 +217,41 @@ export const EditRoleForm = ({
             ))}
           </div>
         </div>
+        <Divider className="my-4" />
 
+        {!unlimitedVisibility && (
+          <div className="flex flex-col space-y-4">
+            <span className="text-lg font-semibold">Groups visibility</span>
+
+            <p className="text-small font-medium text-default-700">
+              Select the groups this role will have access to. If no groups are
+              selected and unlimited visibility is not enabled, the role will
+              not have access to any accounts.
+            </p>
+
+            <Controller
+              name="groups"
+              control={form.control}
+              render={({ field }) => (
+                <CustomDropdownSelection
+                  label="Select Groups"
+                  name="groups"
+                  values={groups}
+                  selectedKeys={field.value}
+                  onChange={(name, selectedValues) => {
+                    field.onChange(selectedValues);
+                  }}
+                />
+              )}
+            />
+
+            {form.formState.errors.groups && (
+              <p className="mt-2 text-sm text-red-600">
+                {form.formState.errors.groups.message}
+              </p>
+            )}
+          </div>
+        )}
         <div className="flex w-full justify-end sm:space-x-6">
           <CustomButton
             type="submit"

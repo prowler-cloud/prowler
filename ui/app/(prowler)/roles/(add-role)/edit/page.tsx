@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
+import { getProviderGroups } from "@/actions/manage-groups/manage-groups";
 import { getRoleInfoById } from "@/actions/roles/roles";
 import { SkeletonRoleForm } from "@/components/roles/workflow";
 import { EditRoleForm } from "@/components/roles/workflow/forms/edit-role-form";
@@ -37,7 +38,14 @@ const SSRDataRole = async ({
     return <div>Role not found</div>;
   }
 
-  const { attributes } = roleData.data;
+  const groupsResponse = await getProviderGroups({});
+  const groups =
+    groupsResponse?.data?.map(
+      (group: { id: string; attributes: { name: string } }) => ({
+        id: group.id,
+        name: group.attributes.name,
+      }),
+    ) || [];
 
-  return <EditRoleForm roleId={roleId} roleData={attributes} />;
+  return <EditRoleForm roleId={roleId} roleData={roleData} groups={groups} />;
 };
