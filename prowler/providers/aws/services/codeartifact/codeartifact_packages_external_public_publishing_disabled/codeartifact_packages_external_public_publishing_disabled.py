@@ -15,7 +15,7 @@ class codeartifact_packages_external_public_publishing_disabled(Check):
             for package in repository.packages:
                 report = Check_Report_AWS(self.metadata())
                 report.region = repository.region
-                report.resource_id = package.name
+                report.resource_id = f"{repository.domain_name}/{package.name}"
                 report.resource_arn = f"{repository.arn}/{package.namespace + ':' if package.namespace else ''}{package.name}"
                 report.resource_tags = repository.tags
 
@@ -28,10 +28,10 @@ class codeartifact_packages_external_public_publishing_disabled(Check):
                         == RestrictionValues.ALLOW
                     ):
                         report.status = "FAIL"
-                        report.status_extended = f"Internal package {package.name} is vulnerable to dependency confusion in repository {repository.arn}."
+                        report.status_extended = f"Internal package {package.name} is vulnerable to dependency confusion in repository {repository.domain_name}."
                     else:
                         report.status = "PASS"
-                        report.status_extended = f"Internal package {package.name} is not vulnerable to dependency confusion in repository {repository.arn}."
+                        report.status_extended = f"Internal package {package.name} is not vulnerable to dependency confusion in repository {repository.domain_name}."
 
                     findings.append(report)
 
