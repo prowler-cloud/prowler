@@ -43,7 +43,19 @@ export interface FindingsByStatusData {
     version: string;
   };
 }
-
+export interface ManageGroupPayload {
+  data: {
+    type: "provider-groups";
+    id: string;
+    attributes?: {
+      name: string;
+    };
+    relationships?: {
+      providers?: { data: Array<{ id: string; type: string }> };
+      roles?: { data: Array<{ id: string; type: string }> };
+    };
+  };
+}
 export interface ProviderGroup {
   type: "provider-groups";
   id: string;

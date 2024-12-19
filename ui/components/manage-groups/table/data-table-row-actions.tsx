@@ -14,6 +14,7 @@ import {
 } from "@nextui-org/shared-icons";
 import { Row } from "@tanstack/react-table";
 import clsx from "clsx";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { VerticalDotsIcon } from "@/components/icons";
@@ -30,31 +31,20 @@ const iconClasses =
 export function DataTableRowActions<ProviderProps>({
   row,
 }: DataTableRowActionsProps<ProviderProps>) {
-  // const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const providerId = (row.original as { id: string }).id;
-  // const providerAlias = (row.original as any).attributes?.alias;
+  const groupId = (row.original as { id: string }).id;
+
+  const router = useRouter();
 
   return (
     <>
-      {/* <CustomAlertModal
-        isOpen={isEditOpen}
-        onOpenChange={setIsEditOpen}
-        title="Edit Provider Alias"
-      >
-        <EditGroupForm
-          groupId={providerId}
-          groupName={providerAlias}
-          setIsOpen={setIsEditOpen}
-        />
-      </CustomAlertModal> */}
       <CustomAlertModal
         isOpen={isDeleteOpen}
         onOpenChange={setIsDeleteOpen}
         title="Are you absolutely sure?"
         description="This action cannot be undone. This will permanently delete your provider account and remove your data from the server."
       >
-        <DeleteGroupForm groupId={providerId} setIsOpen={setIsDeleteOpen} />
+        <DeleteGroupForm groupId={groupId} setIsOpen={setIsDeleteOpen} />
       </CustomAlertModal>
 
       <div className="relative flex items-center justify-end gap-2">
@@ -79,7 +69,9 @@ export function DataTableRowActions<ProviderProps>({
                 description="Allows you to edit the provider group"
                 textValue="Edit Provider Group"
                 startContent={<EditDocumentBulkIcon className={iconClasses} />}
-                // onClick={() => setIsEditOpen(true)}
+                onClick={() =>
+                  router.push(`/providers/manage-groups?groupId=${groupId}`)
+                }
               >
                 Edit Provider Group
               </DropdownItem>
