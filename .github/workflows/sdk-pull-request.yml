@@ -36,6 +36,11 @@ jobs:
             README.md
             mkdocs.yml
             .backportrc.json
+<<<<<<< HEAD
+=======
+            .env
+
+>>>>>>> e4c2b0c2d (chore: skip action on .env changes (#6257))
       - name: Install poetry
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
