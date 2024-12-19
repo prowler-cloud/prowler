@@ -43,6 +43,69 @@ export interface FindingsByStatusData {
     version: string;
   };
 }
+export interface ManageGroupPayload {
+  data: {
+    type: "provider-groups";
+    id: string;
+    attributes?: {
+      name: string;
+    };
+    relationships?: {
+      providers?: { data: Array<{ id: string; type: string }> };
+      roles?: { data: Array<{ id: string; type: string }> };
+    };
+  };
+}
+export interface ProviderGroup {
+  type: "provider-groups";
+  id: string;
+  attributes: {
+    name: string;
+    inserted_at: string;
+    updated_at: string;
+  };
+  relationships: {
+    providers: {
+      meta: {
+        count: number;
+      };
+      data: {
+        type: string;
+        id: string;
+      }[];
+    };
+    roles: {
+      meta: {
+        count: number;
+      };
+      data: {
+        type: string;
+        id: string;
+      }[];
+    };
+  };
+  links: {
+    self: string;
+  };
+}
+
+export interface ProviderGroupsResponse {
+  links: {
+    first: string;
+    last: string;
+    next: string | null;
+    prev: string | null;
+  };
+  data: ProviderGroup[];
+  meta: {
+    pagination: {
+      page: number;
+      pages: number;
+      count: number;
+    };
+    version: string;
+  };
+}
 
 export interface FindingsSeverityOverview {
   data: {
@@ -222,11 +285,100 @@ export interface InvitationProps {
         id: string;
       };
     };
+    role?: {
+      data: {
+        type: "roles";
+        id: string;
+      };
+      attributes?: {
+        name: string;
+        manage_users?: boolean;
+        manage_account?: boolean;
+        manage_billing?: boolean;
+        manage_providers?: boolean;
+        manage_integrations?: boolean;
+        manage_scans?: boolean;
+        permission_state?: "unlimited" | "limited" | "none";
+      };
+    };
+  };
+  links: {
+    self: string;
+  };
+  roles?: {
+    id: string;
+    name: string;
+  }[];
+}
+
+export interface Role {
+  type: "roles";
+  id: string;
+  attributes: {
+    name: string;
+    manage_users: boolean;
+    manage_account: boolean;
+    manage_billing: boolean;
+    manage_providers: boolean;
+    manage_integrations: boolean;
+    manage_scans: boolean;
+    unlimited_visibility: boolean;
+    permission_state: "unlimited" | "limited" | "none";
+    inserted_at: string;
+    updated_at: string;
+  };
+  relationships: {
+    provider_groups: {
+      meta: {
+        count: number;
+      };
+      data: {
+        type: string;
+        id: string;
+      }[];
+    };
+    users: {
+      meta: {
+        count: number;
+      };
+      data: {
+        type: string;
+        id: string;
+      }[];
+    };
+    invitations: {
+      meta: {
+        count: number;
+      };
+      data: {
+        type: string;
+        id: string;
+      }[];
+    };
   };
   links: {
     self: string;
   };
 }
+
+export interface RolesProps {
+  links: {
+    first: string;
+    last: string;
+    next: string | null;
+    prev: string | null;
+  };
+  data: Role[];
+  meta: {
+    pagination: {
+      page: number;
+      pages: number;
+      count: number;
+    };
+    version: string;
+  };
+}
+
 export interface UserProfileProps {
   data: {
     type: "users";
@@ -236,6 +388,9 @@ export interface UserProfileProps {
       email: string;
       company_name: string;
       date_joined: string;
+      role: {
+        name: string;
+      };
     };
     relationships: {
       memberships: {
@@ -262,6 +417,9 @@ export interface UserProps {
     email: string;
     company_name: string;
     date_joined: string;
+    role: {
+      name: string;
+    };
   };
   relationships: {
     memberships: {
@@ -273,7 +431,20 @@ export interface UserProps {
         id: string;
       }>;
     };
+    roles: {
+      meta: {
+        count: number;
+      };
+      data: Array<{
+        type: "roles";
+        id: string;
+      }>;
+    };
   };
+  roles: {
+    id: string;
+    name: string;
+  }[];
 }
 
 export interface ProviderProps {
@@ -301,6 +472,24 @@ export interface ProviderProps {
       id: string;
     };
   };
+  relationships: {
+    secret: {
+      data: {
+        type: string;
+        id: string;
+      } | null;
+    };
+    provider_groups: {
+      meta: {
+        count: number;
+      };
+      data: Array<{
+        type: string;
+        id: string;
+      }>;
+    };
+  };
+  groupNames?: string[];
 }
 
 export interface ScanProps {
