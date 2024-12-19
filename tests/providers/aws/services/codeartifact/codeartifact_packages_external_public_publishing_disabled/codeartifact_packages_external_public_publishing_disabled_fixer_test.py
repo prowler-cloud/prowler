@@ -59,7 +59,7 @@ class Test_codeartifact_packages_external_public_publishing_disabled_fixer:
                     fixer,
                 )
 
-                assert fixer("test-package", AWS_REGION_EU_WEST_1)
+                assert fixer("test/test-package", AWS_REGION_EU_WEST_1)
 
     @mock_aws
     def test_repository_package_public_publishing_origin_internal_error(self):

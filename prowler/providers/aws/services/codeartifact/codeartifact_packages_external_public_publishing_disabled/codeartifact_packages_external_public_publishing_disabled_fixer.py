@@ -22,17 +22,33 @@ def fixer(resource_id: str, region: str) -> bool:
         ]
     }
     Args:
-        resource_id (str): The CodeArtifact package name.
+        resource_id (str): The CodeArtifact package name in the format "domain_name/package_name".
         region (str): AWS region where the CodeArtifact package exists.
     Returns:
         bool: True if the operation is successful (configuration updated), False otherwise.
     """
     try:
+        domain_name, package_name = resource_id.split("/")
+
         regional_client = codeartifact_client.regional_clients[region]
-        regional_client.put_package_origin_configuration(
-            package=resource_id,
-            restrictions={"publish": "ALLOW", "upstream": "BLOCK"},
-        )
+
+        for repository in codeartifact_client.repositories.values():
+            if repository.domain_name == domain_name:
+                for package in repository.packages:
+                    if package.name == package_name:
+                        publish_value = (
+                            package.origin_configuration.restrictions.publish.value
+                        )
+                        regional_client.put_package_origin_configuration(
+                            domain=domain_name,
+                            repository=repository.name,
+                            format=package.format,
+                            package=package_name,
+                            restrictions={
+                                "publish": publish_value,
+                                "upstream": "BLOCK",
+                            },
+                        )
 
     except Exception as error:
         logger.error(
