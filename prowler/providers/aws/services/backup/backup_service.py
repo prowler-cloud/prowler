@@ -204,6 +204,7 @@ class Backup(AWSService):
                                             "IsEncrypted", False
                                         ),
                                         backup_vault_region=backup_vault.region,
+                                        region=regional_client.region,
                                         tags=[],
                                     )
                                 )
@@ -251,6 +252,7 @@ class BackupReportPlan(BaseModel):
 class RecoveryPoint(BaseModel):
     arn: str
     id: str
+    region: str
     backup_vault_name: str
     encrypted: bool
     backup_vault_region: str
