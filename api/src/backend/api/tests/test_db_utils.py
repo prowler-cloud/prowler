@@ -2,7 +2,15 @@ from datetime import datetime, timezone
 from enum import Enum
 from unittest.mock import patch
 
-from api.db_utils import enum_to_choices, one_week_from_now, generate_random_token
+import pytest
+
+from api.db_utils import (
+    batch_delete,
+    enum_to_choices,
+    generate_random_token,
+    one_week_from_now,
+)
+from api.models import Provider
 
 
 class TestEnumToChoices:
@@ -106,3 +114,26 @@ class TestGenerateRandomToken:
         token = generate_random_token(length=5, symbols="")
         # Default symbols
         assert len(token) == 5
+
+
+class TestBatchDelete:
+    @pytest.fixture
+    def create_test_providers(self, tenants_fixture):
+        tenant = tenants_fixture[0]
+        provider_id = 123456789012
+        provider_count = 10
+        for i in range(provider_count):
+            Provider.objects.create(
+                tenant=tenant,
+                uid=f"{provider_id + i}",
+                provider=Provider.ProviderChoices.AWS,
+            )
+        return provider_count
+
+    @pytest.mark.django_db
+    def test_batch_delete(self, create_test_providers):
+        _, summary = batch_delete(
+            Provider.objects.all(), batch_size=create_test_providers // 2
+        )
+        assert Provider.objects.all().count() == 0
+        assert summary == {"api.Provider": create_test_providers}
