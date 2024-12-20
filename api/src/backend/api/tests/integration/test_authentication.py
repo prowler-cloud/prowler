@@ -1,8 +1,7 @@
 import pytest
+from conftest import TEST_PASSWORD, get_api_tokens, get_authorization_header
 from django.urls import reverse
 from rest_framework.test import APIClient
-
-from conftest import TEST_PASSWORD, get_api_tokens, get_authorization_header
 
 
 @pytest.mark.django_db
@@ -96,3 +95,85 @@ def test_refresh_token(create_test_user, tenants_fixture):
         format="vnd.api+json",
     )
     assert new_refresh_response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_user_me_when_inviting_users(create_test_user, tenants_fixture, roles_fixture):
+    client = APIClient()
+
+    role = roles_fixture[0]
+
+    user1_email = "user1@testing.com"
+    user2_email = "user2@testing.com"
+
+    password = "thisisapassword123"
+
+    user1_response = client.post(
+        reverse("user-list"),
+        data={
+            "data": {
+                "type": "users",
+                "attributes": {
+                    "name": "user1",
+                    "email": user1_email,
+                    "password": password,
+                },
+            }
+        },
+        format="vnd.api+json",
+    )
+    assert user1_response.status_code == 201
+
+    user1_access_token, _ = get_api_tokens(client, user1_email, password)
+    user1_headers = get_authorization_header(user1_access_token)
+
+    user2_invitation = client.post(
+        reverse("invitation-list"),
+        data={
+            "data": {
+                "type": "invitations",
+                "attributes": {"email": user2_email},
+                "relationships": {
+                    "roles": {
+                        "data": [
+                            {
+                                "type": "roles",
+                                "id": str(role.id),
+                            }
+                        ]
+                    }
+                },
+            }
+        },
+        format="vnd.api+json",
+        headers=user1_headers,
+    )
+    assert user2_invitation.status_code == 201
+    invitation_token = user2_invitation.json()["data"]["attributes"]["token"]
+
+    user2_response = client.post(
+        reverse("user-list") + f"?invitation_token={invitation_token}",
+        data={
+            "data": {
+                "type": "users",
+                "attributes": {
+                    "name": "user2",
+                    "email": user2_email,
+                    "password": password,
+                },
+            }
+        },
+        format="vnd.api+json",
+    )
+    assert user2_response.status_code == 201
+
+    user2_access_token, _ = get_api_tokens(client, user2_email, password)
+    user2_headers = get_authorization_header(user2_access_token)
+
+    user1_me = client.get(reverse("user-me"), headers=user1_headers)
+    assert user1_me.status_code == 200
+    assert user1_me.json()["data"]["attributes"]["email"] == user1_email
+
+    user2_me = client.get(reverse("user-me"), headers=user2_headers)
+    assert user2_me.status_code == 200
+    assert user2_me.json()["data"]["attributes"]["email"] == user2_email
