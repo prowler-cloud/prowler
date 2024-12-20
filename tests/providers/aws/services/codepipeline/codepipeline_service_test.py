@@ -94,7 +94,7 @@ class Test_CodePipeline_Service:
         # Test source properties
         assert isinstance(pipeline.source, Source)
         assert pipeline.source.type == source_type
-        assert pipeline.source.location == repository_id
+        assert pipeline.source.repository_id == repository_id
         assert pipeline.source.configuration == {
             "ConnectionArn": connection_arn,
             "FullRepositoryId": repository_id,

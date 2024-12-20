@@ -93,7 +93,7 @@ class CodePipeline(AWSService):
             repository_id = source_info["configuration"].get("FullRepositoryId", "")
             pipeline.source = Source(
                 type=source_info["actionTypeId"]["provider"],
-                location=repository_id,
+                repository_id=repository_id,
                 configuration=source_info["configuration"],
             )
         except ClientError as error:
@@ -142,7 +142,7 @@ class Source(BaseModel):
     """
 
     type: str
-    location: str
+    repository_id: str
     configuration: Optional[dict]
 
 

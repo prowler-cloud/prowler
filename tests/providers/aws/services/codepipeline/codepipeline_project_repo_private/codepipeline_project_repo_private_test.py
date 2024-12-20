@@ -40,7 +40,7 @@ class Test_codepipeline_project_repo_private:
                     region=AWS_REGION,
                     source=Source(
                         type="CodeStarSourceConnection",
-                        location=repo_id,
+                        repository_id=repo_id,
                         configuration={
                             "FullRepositoryId": repo_id,
                             "ConnectionArn": connection_arn,
@@ -50,17 +50,18 @@ class Test_codepipeline_project_repo_private:
                 )
             }
 
-            with mock.patch(
-                "prowler.providers.aws.services.codepipeline.codepipeline_service.CodePipeline",
-                codepipeline_client,
-            ), mock.patch(
-                "prowler.providers.aws.services.codepipeline.codepipeline_project_repo_private.codepipeline_project_repo_private.codepipeline_client",
-                codepipeline_client,
-            ), mock.patch(
-                "boto3.client"
-            ) as mock_client, mock.patch(
-                "urllib.request.urlopen"
-            ) as mock_urlopen:
+            with (
+                mock.patch(
+                    "prowler.providers.aws.services.codepipeline.codepipeline_service.CodePipeline",
+                    codepipeline_client,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.codepipeline.codepipeline_project_repo_private.codepipeline_project_repo_private.codepipeline_client",
+                    codepipeline_client,
+                ),
+                mock.patch("boto3.client") as mock_client,
+                mock.patch("urllib.request.urlopen") as mock_urlopen,
+            ):
                 mock_connection = mock_client.return_value
                 mock_connection.get_connection.return_value = {
                     "Connection": {"ProviderType": "GitHub"}
@@ -113,7 +114,7 @@ class Test_codepipeline_project_repo_private:
                     region=AWS_REGION,
                     source=Source(
                         type="CodeStarSourceConnection",
-                        location=repo_id,
+                        repository_id=repo_id,
                         configuration={
                             "FullRepositoryId": repo_id,
                             "ConnectionArn": connection_arn,
@@ -123,17 +124,18 @@ class Test_codepipeline_project_repo_private:
                 )
             }
 
-            with mock.patch(
-                "prowler.providers.aws.services.codepipeline.codepipeline_service.CodePipeline",
-                codepipeline_client,
-            ), mock.patch(
-                "prowler.providers.aws.services.codepipeline.codepipeline_project_repo_private.codepipeline_project_repo_private.codepipeline_client",
-                codepipeline_client,
-            ), mock.patch(
-                "boto3.client"
-            ) as mock_client, mock.patch(
-                "urllib.request.urlopen"
-            ) as mock_urlopen:
+            with (
+                mock.patch(
+                    "prowler.providers.aws.services.codepipeline.codepipeline_service.CodePipeline",
+                    codepipeline_client,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.codepipeline.codepipeline_project_repo_private.codepipeline_project_repo_private.codepipeline_client",
+                    codepipeline_client,
+                ),
+                mock.patch("boto3.client") as mock_client,
+                mock.patch("urllib.request.urlopen") as mock_urlopen,
+            ):
                 mock_connection = mock_client.return_value
                 mock_connection.get_connection.return_value = {
                     "Connection": {"ProviderType": "GitHub"}
@@ -192,7 +194,7 @@ class Test_codepipeline_project_repo_private:
                     region=AWS_REGION,
                     source=Source(
                         type="CodeStarSourceConnection",
-                        location=repo_id,
+                        repository_id=repo_id,
                         configuration={
                             "FullRepositoryId": repo_id,
                             "ConnectionArn": connection_arn,
@@ -202,17 +204,18 @@ class Test_codepipeline_project_repo_private:
                 )
             }
 
-            with mock.patch(
-                "prowler.providers.aws.services.codepipeline.codepipeline_service.CodePipeline",
-                codepipeline_client,
-            ), mock.patch(
-                "prowler.providers.aws.services.codepipeline.codepipeline_project_repo_private.codepipeline_project_repo_private.codepipeline_client",
-                codepipeline_client,
-            ), mock.patch(
-                "boto3.client"
-            ) as mock_client, mock.patch(
-                "urllib.request.urlopen"
-            ) as mock_urlopen:
+            with (
+                mock.patch(
+                    "prowler.providers.aws.services.codepipeline.codepipeline_service.CodePipeline",
+                    codepipeline_client,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.codepipeline.codepipeline_project_repo_private.codepipeline_project_repo_private.codepipeline_client",
+                    codepipeline_client,
+                ),
+                mock.patch("boto3.client") as mock_client,
+                mock.patch("urllib.request.urlopen") as mock_urlopen,
+            ):
                 mock_connection = mock_client.return_value
                 mock_connection.get_connection.return_value = {
                     "Connection": {"ProviderType": "GitLab"}

@@ -36,7 +36,7 @@ class codepipeline_project_repo_private(Check):
             if (
                 pipeline.source
                 and pipeline.source.type == "CodeStarSourceConnection"
-                and "FullRepositoryId" in str(pipeline.source.configuration)
+                and pipeline.source.repository_id
             ):
                 report = Check_Report_AWS(self.metadata())
                 report.region = pipeline.region
@@ -44,11 +44,9 @@ class codepipeline_project_repo_private(Check):
                 report.resource_arn = pipeline.arn
                 report.resource_tags = pipeline.tags
 
-                repo_id = pipeline.source.configuration.get("FullRepositoryId", "")
-
                 # Try both GitHub and GitLab URLs
-                github_url = f"https://github.com/{repo_id}"
-                gitlab_url = f"https://gitlab.com/{repo_id}"
+                github_url = f"https://github.com/{pipeline.source.repository_id}"
+                gitlab_url = f"https://gitlab.com/{pipeline.source.repository_id}"
 
                 is_public_github = self._is_public_repo(github_url)
                 is_public_gitlab = self._is_public_repo(gitlab_url)
@@ -61,9 +59,7 @@ class codepipeline_project_repo_private(Check):
                     report.status_extended = f"CodePipeline {pipeline.name} source repository is public: {gitlab_url}"
                 else:
                     report.status = "PASS"
-                    report.status_extended = (
-                        f"CodePipeline {pipeline.name} source repository {repo_id} is private."
-                    )
+                    report.status_extended = f"CodePipeline {pipeline.name} source repository {pipeline.source.repository_id} is private."
 
                 findings.append(report)
 
