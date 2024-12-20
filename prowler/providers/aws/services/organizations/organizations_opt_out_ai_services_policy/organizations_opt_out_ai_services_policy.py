@@ -22,7 +22,6 @@ class organizations_opt_out_ai_services_policy(Check):
                 )
 
                 if organizations_client.organization.status == "ACTIVE":
-                    conditions_failed = []
                     all_conditions_passed = False
                     opt_out_policies = organizations_client.organization.policies.get(
                         "AISERVICES_OPT_OUT_POLICY", []
@@ -47,23 +46,16 @@ class organizations_opt_out_ai_services_policy(Check):
                                 all_conditions_passed = True
                                 break
 
-                            if not condition_1:
-                                conditions_failed.append(
-                                    "Organization has not opted out of all AI services."
-                                )
-                            if not condition_2:
-                                conditions_failed.append(
-                                    "Organization does not disallow child-accounts to overwrite the policy."
-                                )
+                            if not condition_1 and not condition_2:
+                                report.status_extended = f"AWS Organization {organizations_client.organization.id} has not opted out of all AI services and it does not disallow child-accounts to overwrite the policy."
+                            elif not condition_1:
+                                report.status_extended = f"AWS Organization {organizations_client.organization.id} has not opted out of all AI services."
+                            elif not condition_2:
+                                report.status_extended = f"AWS Organization {organizations_client.organization.id} has opted out of all AI services but it does not disallow child-accounts to overwrite the policy."
 
                         if all_conditions_passed:
                             report.status = "PASS"
                             report.status_extended = f"AWS Organization {organizations_client.organization.id} has opted out of all AI services and also disallows child-accounts to overwrite this policy."
-                        else:
-                            report.status_extended = (
-                                f"AWS Organization {organizations_client.organization.id} failed the check due to the following reason(s): "
-                                + " ".join(conditions_failed)
-                            )
 
                 findings.append(report)
 

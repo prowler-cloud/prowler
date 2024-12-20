@@ -141,12 +141,15 @@ class Test_organizations_tags_policies_enabled_and_attached:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
-            with mock.patch(
-                "prowler.providers.aws.services.organizations.organizations_opt_out_ai_services_policy.organizations_opt_out_ai_services_policy.organizations_client",
-                new=organizations_client,
-            ), mock.patch(
-                "prowler.providers.aws.services.organizations.organizations_opt_out_ai_services_policy.organizations_opt_out_ai_services_policy.organizations_client.get_unknown_arn",
-                return_value="arn:aws:organizations:eu-west-1:0123456789012:unknown",
+            with (
+                mock.patch(
+                    "prowler.providers.aws.services.organizations.organizations_opt_out_ai_services_policy.organizations_opt_out_ai_services_policy.organizations_client",
+                    new=organizations_client,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.organizations.organizations_opt_out_ai_services_policy.organizations_opt_out_ai_services_policy.organizations_client.get_unknown_arn",
+                    return_value="arn:aws:organizations:eu-west-1:0123456789012:unknown",
+                ),
             ):
                 # Test Check
                 from prowler.providers.aws.services.organizations.organizations_opt_out_ai_services_policy.organizations_opt_out_ai_services_policy import (
@@ -216,7 +219,7 @@ class Test_organizations_tags_policies_enabled_and_attached:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == "AWS Organization o-1234567890 failed the check due to the following reason(s): Organization has not opted out of all AI services. Organization does not disallow child-accounts to overwrite the policy."
+                    == "AWS Organization o-1234567890 has not opted out of all AI services and it does not disallow child-accounts to overwrite the policy."
                 )
                 assert result[0].resource_id == "o-1234567890"
                 assert (
@@ -276,7 +279,7 @@ class Test_organizations_tags_policies_enabled_and_attached:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == "AWS Organization o-1234567890 failed the check due to the following reason(s): Organization does not disallow child-accounts to overwrite the policy."
+                    == "AWS Organization o-1234567890 has opted out of all AI services but it does not disallow child-accounts to overwrite the policy."
                 )
                 assert result[0].resource_id == "o-1234567890"
                 assert (
@@ -342,7 +345,7 @@ class Test_organizations_tags_policies_enabled_and_attached:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == "AWS Organization o-1234567890 failed the check due to the following reason(s): Organization has not opted out of all AI services."
+                    == "AWS Organization o-1234567890 has not opted out of all AI services."
                 )
                 assert result[0].resource_id == "o-1234567890"
                 assert (
