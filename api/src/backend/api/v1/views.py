@@ -89,12 +89,7 @@ from api.v1.serializers import (
     OverviewProviderSerializer,
     OverviewSeveritySerializer,
     ProviderCreateSerializer,
-<<<<<<< HEAD
     ProviderGroupMembershipUpdateSerializer,
-=======
-    ProviderGroupCreateSerializer,
-    ProviderGroupMembershipSerializer,
->>>>>>> ea1324131 (fix(users): fix /users/me behavior when having more than 1 users in the same tenant (#6284))
     ProviderGroupSerializer,
     ProviderGroupUpdateSerializer,
     ProviderSecretCreateSerializer,
@@ -177,11 +172,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-<<<<<<< HEAD
-        spectacular_settings.VERSION = "1.0.1"
-=======
         spectacular_settings.VERSION = "1.1.1"
->>>>>>> ea1324131 (fix(users): fix /users/me behavior when having more than 1 users in the same tenant (#6284))
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
