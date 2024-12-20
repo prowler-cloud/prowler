@@ -140,7 +140,6 @@ const SSRDataTable = async ({
   // Extract all filter parameters and combine with default filters
   const defaultFilters = {
     "filter[status__in]": "FAIL, PASS",
-    "filter[delta__in]": "new",
   };
 
   const filters: Record<string, string> = {
