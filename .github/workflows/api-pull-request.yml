@@ -4,11 +4,13 @@ on:
   push:
     branches:
       - "master"
+      - "v5.*"
     paths:
       - "api/**"
   pull_request:
     branches:
       - "master"
+      - "v5.*"
     paths:
       - "api/**"
 
