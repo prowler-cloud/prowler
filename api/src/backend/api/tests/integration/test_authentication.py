@@ -1,7 +1,8 @@
+from unittest.mock import patch
+
 import pytest
 from conftest import TEST_PASSWORD, get_api_tokens, get_authorization_header
 from django.urls import reverse
-from unittest.mock import patch
 from rest_framework.test import APIClient
 
 
@@ -99,11 +100,10 @@ def test_refresh_token(create_test_user, tenants_fixture):
     assert new_refresh_response.status_code == 200
 
 
+@patch("api.db_router.MainRouter.admin_db", new="default")
 @pytest.mark.django_db
-def test_user_me_when_inviting_users(create_test_user, tenants_fixture, roles_fixture):
+def test_user_me_when_inviting_users(create_test_user, tenants_fixture):
     client = APIClient()
-
-    role = roles_fixture[0]
 
     user1_email = "user1@testing.com"
     user2_email = "user2@testing.com"
@@ -135,16 +135,6 @@ def test_user_me_when_inviting_users(create_test_user, tenants_fixture, roles_fi
             "data": {
                 "type": "invitations",
                 "attributes": {"email": user2_email},
-                "relationships": {
-                    "roles": {
-                        "data": [
-                            {
-                                "type": "roles",
-                                "id": str(role.id),
-                            }
-                        ]
-                    }
-                },
             }
         },
         format="vnd.api+json",

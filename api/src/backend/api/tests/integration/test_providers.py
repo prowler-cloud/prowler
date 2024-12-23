@@ -8,6 +8,7 @@ from rest_framework.test import APIClient
 from api.models import Provider
 
 
+@patch("api.db_router.MainRouter.admin_db", new="default")
 @patch("api.v1.views.Task.objects.get")
 @patch("api.v1.views.delete_provider_task.delay")
 @pytest.mark.django_db
