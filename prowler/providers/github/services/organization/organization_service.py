@@ -17,9 +17,7 @@ class Organization(GithubService):
                 for org in client.get_user().get_orgs():
                     organizations[org.id] = Org(
                         id=org.id,
-                        login=org.login,
-                        avatar_url=org.avatar_url,
-                        description=org.description,
+                        name=org.login,
                     )
         except Exception as error:
             logger.error(
