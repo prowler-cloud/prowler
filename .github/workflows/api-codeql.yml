@@ -15,16 +15,12 @@ on:
   push:
     branches:
       - "master"
-      - "v3"
-      - "v4.*"
       - "v5.*"
     paths:
       - "api/**"
   pull_request:
     branches:
       - "master"
-      - "v3"
-      - "v4.*"
       - "v5.*"
     paths:
       - "api/**"
