@@ -271,7 +271,7 @@ class Provider(RowLevelSecurityProtectedModel):
 
         constraints = [
             models.UniqueConstraint(
-                fields=("tenant_id", "provider", "uid"),
+                fields=("tenant_id", "provider", "uid", "is_deleted"),
                 name="unique_provider_uids",
             ),
             RowLevelSecurityConstraint(
@@ -309,7 +309,7 @@ class ProviderGroup(RowLevelSecurityProtectedModel):
         ]
 
     class JSONAPIMeta:
-        resource_name = "provider-group"
+        resource_name = "provider-groups"
 
 
 class ProviderGroupMembership(RowLevelSecurityProtectedModel):
@@ -927,7 +927,7 @@ class Role(RowLevelSecurityProtectedModel):
         ]
 
     class JSONAPIMeta:
-        resource_name = "role"
+        resource_name = "roles"
 
 
 class RoleProviderGroupRelationship(RowLevelSecurityProtectedModel):

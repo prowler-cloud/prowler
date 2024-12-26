@@ -1,25 +1,25 @@
 {
   "Provider": "aws",
   "CheckID": "organizations_opt_out_ai_services_policy",
-  "CheckTitle": "Ensure that AWS Organizations opt-out of AI services policy is enabled.",
+  "CheckTitle": "Ensure that AWS Organizations opt-out of AI services policy is enabled and disallow child-accounts to overwrite this policy.",
   "CheckType": [],
   "ServiceName": "organizations",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service::account-id:organization/organization-id",
   "Severity": "low",
   "ResourceType": "Other",
-  "Description": "This control checks whether the AWS Organizations opt-out of AI services policy is enabled. The control fails if the policy is not enabled.",
+  "Description": "This control checks whether the AWS Organizations opt-out of AI services policy is enabled and whether child-accounts are disallowed to overwrite this policy. The control fails if the policy is not enabled or if child-accounts are not disallowed to overwrite this policy.",
   "Risk": "By default, AWS may be using your data to train its AI models. This may include data from your AWS CloudTrail logs, AWS Config rules, and AWS GuardDuty findings. If you opt out of AI services, AWS will not use your data to train its AI models.",
   "RelatedUrl": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_ai-opt-out_all.html",
   "Remediation": {
     "Code": {
-      "CLI": "aws organizations enable-policy-type --root-id <root-id> --policy-type AI_SERVICES_OPT_OUT {'services': {'default': {'opt_out_policy': {'@@assign': 'optOut'}}}}",
+      "CLI": "",
       "NativeIaC": "",
       "Other": "",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Artificial Intelligence (AI) services opt-out policies enable you to control whether AWS AI services can store and use your content. Enable the AWS Organizations opt-out of AI services policy.",
+      "Text": "Artificial Intelligence (AI) services opt-out policies enable you to control whether AWS AI services can store and use your content. Enable the AWS Organizations opt-out of AI services policy and disallow child-accounts to overwrite this policy.",
       "Url": "https://docs.aws.amazon.com/organizations/latest/userguide/disable-policy-type.html"
     }
   },

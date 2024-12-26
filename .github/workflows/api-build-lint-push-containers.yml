@@ -31,19 +31,34 @@ env:
   PROWLERCLOUD_DOCKERHUB_IMAGE: prowler-api
 
 jobs:
+  repository-check:
+    name: Repository check
+    runs-on: ubuntu-latest
+    outputs:
+      is_repo: ${{ steps.repository_check.outputs.is_repo }}
+    steps:
+      - name: Repository check
+        id: repository_check
+        working-directory: /tmp
+        run: |
+          if [[ ${{ github.repository }} == "prowler-cloud/prowler" ]]
+          then
+            echo "is_repo=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "This action only runs for prowler-cloud/prowler"
+            echo "is_repo=false" >> "${GITHUB_OUTPUT}"
+          fi
+
   # Build Prowler OSS container
   container-build-push:
+    needs: repository-check
+    if: needs.repository-check.outputs.is_repo == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ${{ env.WORKING_DIRECTORY }}
 
     steps:
-      - name: Repository check
-        working-directory: /tmp
-        run: |
-          [[ ${{ github.repository }} != "prowler-cloud/prowler" ]] && echo "This action only runs for prowler-cloud/prowler"; exit 0
-
       - name: Checkout
         uses: actions/checkout@v4
 

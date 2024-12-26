@@ -45,6 +45,8 @@ Prowler App can be installed in different ways, depending on your environment:
     docker compose up -d
     ```
 
+    > Containers are built for `linux/amd64`. If your workstation's architecture is different, please set `DOCKER_DEFAULT_PLATFORM=linux/amd64` in your environment or use the `--platform linux/amd64` flag in the docker command.
+
     > Enjoy Prowler App at http://localhost:3000 by signing up with your email and password.
 
     ???+ note
@@ -185,6 +187,8 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
     * In the command below, change `-v` to your local directory path in order to access the reports.
     * AWS, GCP, Azure and/or Kubernetes credentials
 
+    > Containers are built for `linux/amd64`. If your workstation's architecture is different, please set `DOCKER_DEFAULT_PLATFORM=linux/amd64` in your environment or use the `--platform linux/amd64` flag in the docker command.
+
     _Commands_:
 
     ``` bash
@@ -315,10 +319,14 @@ The available versions of Prowler CLI are the following:
 - `v3-stable`: this tag always point to the latest release for v3.
 
 The container images are available here:
+
 - Prowler CLI:
+
     - [DockerHub](https://hub.docker.com/r/toniblyx/prowler/tags)
     - [AWS Public ECR](https://gallery.ecr.aws/prowler-cloud/prowler)
+
 - Prowler App:
+
     - [DockerHub - Prowler UI](https://hub.docker.com/r/prowlercloud/prowler-ui/tags)
     - [DockerHub - Prowler API](https://hub.docker.com/r/prowlercloud/prowler-api/tags)
 

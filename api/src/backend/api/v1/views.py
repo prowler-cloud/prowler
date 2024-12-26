@@ -52,6 +52,7 @@ from api.filters import (
     RoleFilter,
     ScanFilter,
     ScanSummaryFilter,
+    ServiceOverviewFilter,
     TaskFilter,
     TenantFilter,
     UserFilter,
@@ -78,7 +79,7 @@ from api.models import (
     UserRoleRelationship,
 )
 from api.pagination import ComplianceOverviewPagination
-from api.rbac.permissions import HasPermissions, Permissions
+from api.rbac.permissions import Permissions, get_providers, get_role
 from api.rls import Tenant
 from api.utils import validate_invitation
 from api.uuid_utils import datetime_to_uuid7
@@ -94,8 +95,10 @@ from api.v1.serializers import (
     MembershipSerializer,
     OverviewFindingSerializer,
     OverviewProviderSerializer,
+    OverviewServiceSerializer,
     OverviewSeveritySerializer,
     ProviderCreateSerializer,
+    ProviderGroupCreateSerializer,
     ProviderGroupMembershipSerializer,
     ProviderGroupSerializer,
     ProviderGroupUpdateSerializer,
@@ -189,7 +192,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.0.1"
+        spectacular_settings.VERSION = "1.1.1"
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -288,26 +291,19 @@ class UserViewSet(BaseUserViewset):
     filterset_class = UserFilter
     ordering = ["-date_joined"]
     ordering_fields = ["name", "email", "company_name", "date_joined", "is_active"]
+    # RBAC required permissions
     required_permissions = [Permissions.MANAGE_USERS]
-    permission_classes = BaseRLSViewSet.permission_classes + [HasPermissions]
 
-    def initial(self, request, *args, **kwargs):
-        """
-        Sets required_permissions before permissions are checked.
-        """
-        self.required_permissions = self.get_required_permissions()
-        super().initial(request, *args, **kwargs)
-
-    def get_required_permissions(self):
+    def set_required_permissions(self):
         """
         Returns the required permissions based on the request method.
         """
         if self.action == "me":
             # No permissions required for me request
-            return []
+            self.required_permissions = []
         else:
             # Require permission for the rest of the requests
-            return [Permissions.MANAGE_USERS]
+            self.required_permissions = [Permissions.MANAGE_USERS]
 
     def get_queryset(self):
         # If called during schema generation, return an empty queryset
@@ -332,7 +328,7 @@ class UserViewSet(BaseUserViewset):
 
     @action(detail=False, methods=["get"], url_name="me")
     def me(self, request):
-        user = self.get_queryset().first()
+        user = self.request.user
         serializer = UserSerializer(user, context=self.get_serializer_context())
         return Response(
             data=serializer.data,
@@ -452,6 +448,8 @@ class UserRoleRelationshipView(RelationshipView, BaseRLSViewSet):
     resource_name = "roles"
     http_method_names = ["post", "patch", "delete"]
     schema = RelationshipViewSchema()
+    # RBAC required permissions
+    required_permissions = [Permissions.MANAGE_USERS]
 
     def get_queryset(self):
         return User.objects.filter(tenant_id=self.request.tenant_id)
@@ -538,8 +536,8 @@ class TenantViewSet(BaseTenantViewset):
     search_fields = ["name"]
     ordering = ["-inserted_at"]
     ordering_fields = ["name", "inserted_at", "updated_at"]
+    # RBAC required permissions
     required_permissions = [Permissions.MANAGE_ACCOUNT]
-    permission_classes = BaseRLSViewSet.permission_classes + [HasPermissions]
 
     def get_queryset(self):
         return Tenant.objects.all()
@@ -597,6 +595,8 @@ class MembershipViewSet(BaseTenantViewset):
         "role",
         "date_joined",
     ]
+    # RBAC required permissions
+    required_permissions = [Permissions.MANAGE_ACCOUNT]
 
     def get_queryset(self):
         user = self.request.user
@@ -630,6 +630,8 @@ class TenantMembersViewSet(BaseTenantViewset):
     http_method_names = ["get", "delete"]
     serializer_class = MembershipSerializer
     queryset = Membership.objects.none()
+    # RBAC required permissions
+    required_permissions = [Permissions.MANAGE_ACCOUNT]
 
     def get_queryset(self):
         tenant = self.get_tenant()
@@ -715,47 +717,34 @@ class ProviderGroupViewSet(BaseRLSViewSet):
     filterset_class = ProviderGroupFilter
     http_method_names = ["get", "post", "patch", "delete"]
     ordering = ["inserted_at"]
-    required_permissions = []
-    permission_classes = BaseRLSViewSet.permission_classes + [HasPermissions]
+    # RBAC required permissions
+    required_permissions = [Permissions.MANAGE_PROVIDERS]
 
-    def initial(self, request, *args, **kwargs):
-        """
-        Sets required_permissions before permissions are checked.
-        """
-        self.required_permissions = self.get_required_permissions()
-        super().initial(request, *args, **kwargs)
-
-    def get_required_permissions(self):
+    def set_required_permissions(self):
         """
         Returns the required permissions based on the request method.
         """
         if self.request.method in SAFE_METHODS:
             # No permissions required for GET requests
-            return []
+            self.required_permissions = []
         else:
             # Require permission for non-GET requests
-            return [Permissions.MANAGE_PROVIDERS]
+            self.required_permissions = [Permissions.MANAGE_PROVIDERS]
 
     def get_queryset(self):
-        user = self.request.user
-        user_roles = user.roles.filter(tenant_id=self.request.tenant_id)
-
+        user_roles = get_role(self.request.user)
         # Check if any of the user's roles have UNLIMITED_VISIBILITY
-        if getattr(user_roles[0], Permissions.UNLIMITED_VISIBILITY.value, False):
+        if user_roles.unlimited_visibility:
             # User has unlimited visibility, return all provider groups
             return ProviderGroup.objects.prefetch_related("providers")
 
         # Collect provider groups associated with the user's roles
-        provider_groups = (
-            ProviderGroup.objects.filter(roles__in=user_roles)
-            .distinct()
-            .prefetch_related("providers")
-        )
-
-        return provider_groups
+        return user_roles.provider_groups.all()
 
     def get_serializer_class(self):
-        if self.action == "partial_update":
+        if self.action == "create":
+            return ProviderGroupCreateSerializer
+        elif self.action == "partial_update":
             return ProviderGroupUpdateSerializer
         return super().get_serializer_class()
 
@@ -797,6 +786,8 @@ class ProviderGroupProvidersRelationshipView(RelationshipView, BaseRLSViewSet):
     resource_name = "providers"
     http_method_names = ["post", "patch", "delete"]
     schema = RelationshipViewSchema()
+    # RBAC required permissions
+    required_permissions = [Permissions.MANAGE_PROVIDERS]
 
     def get_queryset(self):
         return ProviderGroup.objects.filter(tenant_id=self.request.tenant_id)
@@ -895,42 +886,28 @@ class ProviderViewSet(BaseRLSViewSet):
         "inserted_at",
         "updated_at",
     ]
-    required_permissions = []
-    permission_classes = BaseRLSViewSet.permission_classes + [HasPermissions]
+    # RBAC required permissions
+    required_permissions = [Permissions.MANAGE_PROVIDERS]
 
-    def initial(self, request, *args, **kwargs):
-        """
-        Sets required_permissions before permissions are checked.
-        """
-        self.required_permissions = self.get_required_permissions()
-        super().initial(request, *args, **kwargs)
-
-    def get_required_permissions(self):
+    def set_required_permissions(self):
         """
         Returns the required permissions based on the request method.
         """
         if self.request.method in SAFE_METHODS:
             # No permissions required for GET requests
-            return []
+            self.required_permissions = []
         else:
             # Require permission for non-GET requests
-            return [Permissions.MANAGE_PROVIDERS]
+            self.required_permissions = [Permissions.MANAGE_PROVIDERS]
 
     def get_queryset(self):
-        user = self.request.user
-        user_roles = user.roles.all()
-        tenant_id = self.request.tenant_id
-        if getattr(user_roles[0], Permissions.UNLIMITED_VISIBILITY.value, False):
+        user_roles = get_role(self.request.user)
+        if user_roles.unlimited_visibility:
             # User has unlimited visibility, return all providers
-            return Provider.objects.filter(tenant_id=tenant_id)
+            return Provider.objects.filter(tenant_id=self.request.tenant_id)
 
         # User lacks permission, filter providers based on provider groups associated with the role
-        provider_groups = user_roles[0].provider_groups.all()
-        providers = Provider.objects.filter(
-            provider_groups__in=provider_groups, tenant_id=tenant_id
-        ).distinct()
-
-        return providers
+        return get_providers(user_roles)
 
     def get_serializer_class(self):
         if self.action == "create":
@@ -968,7 +945,7 @@ class ProviderViewSet(BaseRLSViewSet):
         get_object_or_404(Provider, pk=pk)
         with transaction.atomic():
             task = check_provider_connection_task.delay(
-                provider_id=pk, tenant_id=request.tenant_id
+                provider_id=pk, tenant_id=self.request.tenant_id
             )
         prowler_task = Task.objects.get(id=task.id)
         serializer = TaskSerializer(prowler_task)
@@ -989,7 +966,7 @@ class ProviderViewSet(BaseRLSViewSet):
 
         with transaction.atomic():
             task = delete_provider_task.delay(
-                provider_id=pk, tenant_id=request.tenant_id
+                provider_id=pk, tenant_id=self.request.tenant_id
             )
         prowler_task = Task.objects.get(id=task.id)
         serializer = TaskSerializer(prowler_task)
@@ -1050,41 +1027,28 @@ class ScanViewSet(BaseRLSViewSet):
         "inserted_at",
         "updated_at",
     ]
+    # RBAC required permissions
     required_permissions = [Permissions.MANAGE_SCANS]
-    permission_classes = BaseRLSViewSet.permission_classes + [HasPermissions]
 
-    def initial(self, request, *args, **kwargs):
-        """
-        Sets required_permissions before permissions are checked.
-        """
-        self.required_permissions = self.get_required_permissions()
-        super().initial(request, *args, **kwargs)
-
-    def get_required_permissions(self):
+    def set_required_permissions(self):
         """
         Returns the required permissions based on the request method.
         """
         if self.request.method in SAFE_METHODS:
             # No permissions required for GET requests
-            return []
+            self.required_permissions = [Permissions.MANAGE_PROVIDERS]
         else:
             # Require permission for non-GET requests
-            return [Permissions.MANAGE_SCANS]
+            self.required_permissions = [Permissions.MANAGE_SCANS]
 
     def get_queryset(self):
-        user = self.request.user
-        user_roles = user.roles.all()
-        tenant_id = self.request.tenant_id
-        if getattr(user_roles[0], Permissions.UNLIMITED_VISIBILITY.value, False):
+        user_roles = get_role(self.request.user)
+        if user_roles.unlimited_visibility:
             # User has unlimited visibility, return all scans
-            return Scan.objects.filter(tenant_id=tenant_id)
+            return Scan.objects.filter(tenant_id=self.request.tenant_id)
 
         # User lacks permission, filter providers based on provider groups associated with the role
-        provider_groups = user_roles[0].provider_groups.all()
-        providers = Provider.objects.filter(
-            provider_groups__in=provider_groups, tenant_id=tenant_id
-        ).distinct()
-        return Scan.objects.filter(provider__in=providers).distinct()
+        return Scan.objects.filter(provider__in=get_providers(user_roles))
 
     def get_serializer_class(self):
         if self.action == "create":
@@ -1118,14 +1082,14 @@ class ScanViewSet(BaseRLSViewSet):
         with transaction.atomic():
             task = perform_scan_task.apply_async(
                 kwargs={
-                    "tenant_id": request.tenant_id,
+                    "tenant_id": self.request.tenant_id,
                     "scan_id": str(scan.id),
                     "provider_id": str(scan.provider_id),
                     # Disabled for now
                     # checks_to_execute=scan.scanner_args.get("checks_to_execute"),
                 },
                 link=perform_scan_summary_task.si(
-                    tenant_id=request.tenant_id,
+                    tenant_id=self.request.tenant_id,
                     scan_id=str(scan.id),
                 ),
             )
@@ -1174,29 +1138,14 @@ class TaskViewSet(BaseRLSViewSet):
     search_fields = ["name"]
     ordering = ["-inserted_at"]
     ordering_fields = ["inserted_at", "completed_at", "name", "state"]
+    # RBAC required permissions
     required_permissions = []
-    permission_classes = BaseRLSViewSet.permission_classes + [HasPermissions]
 
     def get_queryset(self):
-        user = self.request.user
-        user_roles = user.roles.all()
-        tenant_id = self.request.tenant_id
-        if getattr(user_roles[0], Permissions.UNLIMITED_VISIBILITY.value, False):
-            # User has unlimited visibility, return all tasks
-            return Task.objects.annotate(
-                name=F("task_runner_task__task_name"),
-                state=F("task_runner_task__status"),
-            )
-
-        # User lacks permission, filter tasks based on provider groups associated with the role
-        provider_groups = user_roles[0].provider_groups.all()
-        providers = Provider.objects.filter(
-            provider_groups__in=provider_groups, tenant_id=tenant_id
-        ).distinct()
-        scans = Scan.objects.filter(
-            provider__in=providers, tenant_id=tenant_id
-        ).distinct()
-        return Task.objects.filter(scan__in=scans).distinct()
+        return Task.objects.annotate(
+            name=F("task_runner_task__task_name"),
+            state=F("task_runner_task__status"),
+        )
 
     def destroy(self, request, *args, pk=None, **kwargs):
         task = get_object_or_404(Task, pk=pk)
@@ -1257,32 +1206,17 @@ class ResourceViewSet(BaseRLSViewSet):
         "inserted_at",
         "updated_at",
     ]
+    # RBAC required permissions (implicit -> MANAGE_PROVIDERS enable unlimited visibility or check the visibility of the provider through the provider group)
     required_permissions = []
-    permission_classes = BaseRLSViewSet.permission_classes + [HasPermissions]
-
-    def initial(self, request, *args, **kwargs):
-        """
-        Sets required_permissions before permissions are checked.
-        """
-        self.required_permissions = ResourceViewSet.required_permissions
-        super().initial(request, *args, **kwargs)
 
     def get_queryset(self):
-        user = self.request.user
-        user_roles = user.roles.all()
-        tenant_id = self.request.tenant_id
-        if getattr(user_roles[0], Permissions.UNLIMITED_VISIBILITY.value, False):
+        user_roles = get_role(self.request.user)
+        if user_roles.unlimited_visibility:
             # User has unlimited visibility, return all scans
-            queryset = Resource.objects.filter(tenant_id=tenant_id)
+            queryset = Resource.objects.filter(tenant_id=self.request.tenant_id)
         else:
             # User lacks permission, filter providers based on provider groups associated with the role
-            provider_groups = user_roles[0].provider_groups.all()
-            providers = Provider.objects.filter(
-                provider_groups__in=provider_groups, tenant_id=tenant_id
-            ).distinct()
-            queryset = Resource.objects.filter(
-                provider__in=providers, tenant_id=tenant_id
-            ).distinct()
+            queryset = Resource.objects.filter(provider__in=get_providers(user_roles))
 
         search_value = self.request.query_params.get("filter[search]", None)
         if search_value:
@@ -1355,15 +1289,8 @@ class FindingViewSet(BaseRLSViewSet):
         "inserted_at",
         "updated_at",
     ]
+    # RBAC required permissions (implicit -> MANAGE_PROVIDERS enable unlimited visibility or check the visibility of the provider through the provider group)
     required_permissions = []
-    permission_classes = BaseRLSViewSet.permission_classes + [HasPermissions]
-
-    def initial(self, request, *args, **kwargs):
-        """
-        Sets required_permissions before permissions are checked.
-        """
-        self.required_permissions = ResourceViewSet.required_permissions
-        super().initial(request, *args, **kwargs)
 
     def get_serializer_class(self):
         if self.action == "findings_services_regions":
@@ -1372,24 +1299,15 @@ class FindingViewSet(BaseRLSViewSet):
         return super().get_serializer_class()
 
     def get_queryset(self):
-        user = self.request.user
-        user_roles = user.roles.all()
-        tenant_id = self.request.tenant_id
-        if getattr(user_roles[0], Permissions.UNLIMITED_VISIBILITY.value, False):
+        user_roles = get_role(self.request.user)
+        if user_roles.unlimited_visibility:
             # User has unlimited visibility, return all scans
-            queryset = Finding.objects.filter(tenant_id=tenant_id)
+            queryset = Finding.objects.filter(tenant_id=self.request.tenant_id)
         else:
             # User lacks permission, filter providers based on provider groups associated with the role
-            provider_groups = user_roles[0].provider_groups.all()
-            providers = Provider.objects.filter(
-                provider_groups__in=provider_groups, tenant_id=tenant_id
-            ).distinct()
-            scans = Scan.objects.filter(
-                provider__in=providers, tenant_id=tenant_id
-            ).distinct()
             queryset = Finding.objects.filter(
-                scan__in=scans, tenant_id=tenant_id
-            ).distinct()
+                scan__provider__in=get_providers(user_roles)
+            )
 
         search_value = self.request.query_params.get("filter[search]", None)
         if search_value:
@@ -1487,6 +1405,8 @@ class ProviderSecretViewSet(BaseRLSViewSet):
         "inserted_at",
         "updated_at",
     ]
+    # RBAC required permissions
+    required_permissions = [Permissions.MANAGE_PROVIDERS]
 
     def get_queryset(self):
         return ProviderSecret.objects.filter(tenant_id=self.request.tenant_id)
@@ -1544,8 +1464,8 @@ class InvitationViewSet(BaseRLSViewSet):
         "state",
         "inviter",
     ]
+    # RBAC required permissions
     required_permissions = [Permissions.MANAGE_ACCOUNT]
-    permission_classes = BaseRLSViewSet.permission_classes + [HasPermissions]
 
     def get_queryset(self):
         return Invitation.objects.filter(tenant_id=self.request.tenant_id)
@@ -1683,8 +1603,8 @@ class RoleViewSet(BaseRLSViewSet):
     filterset_class = RoleFilter
     http_method_names = ["get", "post", "patch", "delete"]
     ordering = ["inserted_at"]
+    # RBAC required permissions
     required_permissions = [Permissions.MANAGE_ACCOUNT]
-    permission_classes = BaseRLSViewSet.permission_classes + [HasPermissions]
 
     def get_queryset(self):
         return Role.objects.filter(tenant_id=self.request.tenant_id)
@@ -1697,8 +1617,7 @@ class RoleViewSet(BaseRLSViewSet):
         return super().get_serializer_class()
 
     def partial_update(self, request, *args, **kwargs):
-        user = request.user
-        user_role = user.roles.all().first()
+        user_role = get_role(request.user)
         # If the user is the owner of the role, the manage_account field is not editable
         if user_role and kwargs["pk"] == str(user_role.id):
             request.data["manage_account"] = str(user_role.manage_account).lower()
@@ -1744,6 +1663,8 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
     resource_name = "provider_groups"
     http_method_names = ["post", "patch", "delete"]
     schema = RelationshipViewSchema()
+    # RBAC required permissions
+    required_permissions = [Permissions.MANAGE_ACCOUNT]
 
     def get_queryset(self):
         return Role.objects.filter(tenant_id=self.request.tenant_id)
@@ -1829,14 +1750,33 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
     search_fields = ["compliance_id"]
     ordering = ["compliance_id"]
     ordering_fields = ["inserted_at", "compliance_id", "framework", "region"]
+    # RBAC required permissions (implicit -> MANAGE_PROVIDERS enable unlimited visibility or check the visibility of
+    # the provider through the provider group)
+    required_permissions = []
 
     def get_queryset(self):
-        if self.action == "retrieve":
-            return ComplianceOverview.objects.filter(tenant_id=self.request.tenant_id)
-
-        base_queryset = self.filter_queryset(
-            ComplianceOverview.objects.filter(tenant_id=self.request.tenant_id)
+        role = get_role(self.request.user)
+        unlimited_visibility = getattr(
+            role, Permissions.UNLIMITED_VISIBILITY.value, False
         )
+
+        if self.action == "retrieve":
+            if unlimited_visibility:
+                # User has unlimited visibility, return all compliance compliances
+                return ComplianceOverview.objects.all()
+
+            providers = get_providers(role)
+            return ComplianceOverview.objects.filter(scan__provider__in=providers)
+
+        if unlimited_visibility:
+            base_queryset = self.filter_queryset(ComplianceOverview.objects.all())
+        else:
+            providers = Provider.objects.filter(
+                provider_groups__in=role.provider_groups.all()
+            ).distinct()
+            base_queryset = self.filter_queryset(
+                ComplianceOverview.objects.filter(scan__provider__in=providers)
+            )
 
         max_failed_ids = (
             base_queryset.filter(compliance_id=OuterRef("compliance_id"))
@@ -1844,11 +1784,9 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
             .values("id")[:1]
         )
 
-        queryset = base_queryset.filter(id__in=Subquery(max_failed_ids)).order_by(
+        return base_queryset.filter(id__in=Subquery(max_failed_ids)).order_by(
             "compliance_id"
         )
-
-        return queryset
 
     def get_serializer_class(self):
         if self.action == "retrieve":
@@ -1901,20 +1839,37 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
         ),
         filters=True,
     ),
+    services=extend_schema(
+        summary="Get findings data by service",
+        description=(
+            "Retrieve an aggregated summary of findings grouped by service. The response includes the total count "
+            "of findings for each service, as long as there are at least one finding for that service. At least "
+            "one of the `inserted_at` filters must be provided."
+        ),
+        filters=True,
+    ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 class OverviewViewSet(BaseRLSViewSet):
     queryset = ComplianceOverview.objects.all()
     http_method_names = ["get"]
     ordering = ["-id"]
+    # RBAC required permissions (implicit -> MANAGE_PROVIDERS enable unlimited visibility or check the visibility of the provider through the provider group)
+    required_permissions = []
 
     def get_queryset(self):
+        role = get_role(self.request.user)
+        providers = get_providers(role)
+
+        def _get_filtered_queryset(model):
+            if role.unlimited_visibility:
+                return model.objects.all()
+            return model.objects.filter(scan__provider__in=providers)
+
         if self.action == "providers":
-            return Finding.objects.filter(tenant_id=self.request.tenant_id)
-        elif self.action == "findings":
-            return ScanSummary.objects.filter(tenant_id=self.request.tenant_id)
-        elif self.action == "findings_severity":
-            return ScanSummary.objects.filter(tenant_id=self.request.tenant_id)
+            return _get_filtered_queryset(Finding)
+        elif self.action in ("findings", "findings_severity", "services"):
+            return _get_filtered_queryset(ScanSummary)
         else:
             return super().get_queryset()
 
@@ -1925,6 +1880,8 @@ class OverviewViewSet(BaseRLSViewSet):
             return OverviewFindingSerializer
         elif self.action == "findings_severity":
             return OverviewSeveritySerializer
+        elif self.action == "services":
+            return OverviewServiceSerializer
         return super().get_serializer_class()
 
     def get_filterset_class(self):
@@ -1932,6 +1889,8 @@ class OverviewViewSet(BaseRLSViewSet):
             return None
         elif self.action in ["findings", "findings_severity"]:
             return ScanSummaryFilter
+        elif self.action == "services":
+            return ServiceOverviewFilter
         return None
 
     @extend_schema(exclude=True)
@@ -2077,6 +2036,38 @@ class OverviewViewSet(BaseRLSViewSet):
         serializer = OverviewSeveritySerializer(severity_data)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @action(detail=False, methods=["get"], url_name="services")
+    def services(self, request):
+        queryset = self.get_queryset()
+        filtered_queryset = self.filter_queryset(queryset)
+
+        latest_scan_subquery = (
+            Scan.objects.filter(
+                state=StateChoices.COMPLETED, provider_id=OuterRef("scan__provider_id")
+            )
+            .order_by("-id")
+            .values("id")[:1]
+        )
+
+        annotated_queryset = filtered_queryset.annotate(
+            latest_scan_id=Subquery(latest_scan_subquery)
+        )
+
+        filtered_queryset = annotated_queryset.filter(scan_id=F("latest_scan_id"))
+
+        services_data = (
+            filtered_queryset.values("service")
+            .annotate(_pass=Sum("_pass"))
+            .annotate(fail=Sum("fail"))
+            .annotate(muted=Sum("muted"))
+            .annotate(total=Sum("total"))
+            .order_by("service")
+        )
+
+        serializer = OverviewServiceSerializer(services_data, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 @extend_schema(tags=["Schedule"])
 @extend_schema_view(
@@ -2092,6 +2083,8 @@ class ScheduleViewSet(BaseRLSViewSet):
     # TODO: change to Schedule when implemented
     queryset = Task.objects.none()
     http_method_names = ["post"]
+    # RBAC required permissions
+    required_permissions = [Permissions.MANAGE_SCANS]
 
     def get_queryset(self):
         return super().get_queryset()

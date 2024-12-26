@@ -32,6 +32,15 @@ export const ColumnsInvitation: ColumnDef<InvitationProps>[] = [
     },
   },
   {
+    accessorKey: "role",
+    header: () => <div className="text-left">Role</div>,
+    cell: ({ row }) => {
+      const roleName =
+        row.original.relationships?.role?.attributes?.name || "No Role";
+      return <p className="font-semibold">{roleName}</p>;
+    },
+  },
+  {
     accessorKey: "inserted_at",
     header: ({ column }) => (
       <DataTableColumnHeader
@@ -60,13 +69,13 @@ export const ColumnsInvitation: ColumnDef<InvitationProps>[] = [
       return <DateWithTime dateTime={expires_at} showTime={false} />;
     },
   },
-
   {
     accessorKey: "actions",
     header: () => <div className="text-right">Actions</div>,
     id: "actions",
     cell: ({ row }) => {
-      return <DataTableRowActions row={row} />;
+      const roles = row.original.roles;
+      return <DataTableRowActions row={row} roles={roles} />;
     },
   },
 ];

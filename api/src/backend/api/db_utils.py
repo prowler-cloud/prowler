@@ -5,7 +5,6 @@ from datetime import datetime, timedelta, timezone
 
 from django.conf import settings
 from django.contrib.auth.models import BaseUserManager
-from django.core.paginator import Paginator
 from django.db import connection, models, transaction
 from psycopg2 import connect as psycopg2_connect
 from psycopg2.extensions import AsIs, new_type, register_adapter, register_type
@@ -120,15 +119,18 @@ def batch_delete(queryset, batch_size=5000):
     total_deleted = 0
     deletion_summary = {}
 
-    paginator = Paginator(queryset.order_by("id").only("id"), batch_size)
-
-    for page_num in paginator.page_range:
-        batch_ids = [obj.id for obj in paginator.page(page_num).object_list]
+    while True:
+        # Get a batch of IDs to delete
+        batch_ids = set(
+            queryset.values_list("id", flat=True).order_by("id")[:batch_size]
+        )
+        if not batch_ids:
+            # No more objects to delete
+            break
 
         deleted_count, deleted_info = queryset.filter(id__in=batch_ids).delete()
 
         total_deleted += deleted_count
-
         for model_label, count in deleted_info.items():
             deletion_summary[model_label] = deletion_summary.get(model_label, 0) + count
 

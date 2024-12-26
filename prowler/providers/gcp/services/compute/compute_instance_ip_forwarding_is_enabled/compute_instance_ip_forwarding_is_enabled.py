@@ -10,7 +10,7 @@ class compute_instance_ip_forwarding_is_enabled(Check):
             report.project_id = instance.project_id
             report.resource_id = instance.id
             report.resource_name = instance.name
-            report.location = instance.zone
+            report.location = instance.region
             report.status = "PASS"
             report.status_extended = (
                 f"The IP Forwarding of VM Instance {instance.name} is not enabled."

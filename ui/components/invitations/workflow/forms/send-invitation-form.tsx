@@ -1,9 +1,10 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Select, SelectItem } from "@nextui-org/react";
 import { SaveIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import * as z from "zod";
 
 import { sendInvite } from "@/actions/invitations/invitation";
@@ -14,11 +15,20 @@ import { ApiError } from "@/types";
 
 const sendInvitationFormSchema = z.object({
   email: z.string().email("Please enter a valid email"),
+  roleId: z.string().nonempty("Role is required"),
 });
 
 export type FormValues = z.infer<typeof sendInvitationFormSchema>;
 
-export const SendInvitationForm = () => {
+export const SendInvitationForm = ({
+  roles = [],
+  defaultRole = "admin",
+  isSelectorDisabled = false,
+}: {
+  roles: Array<{ id: string; name: string }>;
+  defaultRole?: string;
+  isSelectorDisabled: boolean;
+}) => {
   const { toast } = useToast();
   const router = useRouter();
 
@@ -26,6 +36,7 @@ export const SendInvitationForm = () => {
     resolver: zodResolver(sendInvitationFormSchema),
     defaultValues: {
       email: "",
+      roleId: isSelectorDisabled ? defaultRole : "",
     },
   });
 
@@ -34,6 +45,7 @@ export const SendInvitationForm = () => {
   const onSubmitClient = async (values: FormValues) => {
     const formData = new FormData();
     formData.append("email", values.email);
+    formData.append("role", values.roleId);
 
     try {
       const data = await sendInvite(formData);
@@ -44,6 +56,12 @@ export const SendInvitationForm = () => {
           switch (error.source.pointer) {
             case "/data/attributes/email":
               form.setError("email", {
+                type: "server",
+                message: errorMessage,
+              });
+              break;
+            case "/data/relationships/roles":
+              form.setError("roleId", {
                 type: "server",
                 message: errorMessage,
               });
@@ -75,6 +93,7 @@ export const SendInvitationForm = () => {
         onSubmit={form.handleSubmit(onSubmitClient)}
         className="flex flex-col space-y-4"
       >
+        {/* Email Field */}
         <CustomInput
           control={form.control}
           name="email"
@@ -87,6 +106,40 @@ export const SendInvitationForm = () => {
           isInvalid={!!form.formState.errors.email}
         />
 
+        <Controller
+          name="roleId"
+          control={form.control}
+          render={({ field }) => (
+            <>
+              <Select
+                {...field}
+                label="Role"
+                placeholder="Select a role"
+                variant="bordered"
+                isDisabled={isSelectorDisabled}
+                selectedKeys={[field.value]}
+                onSelectionChange={(selected) =>
+                  field.onChange(selected?.currentKey || "")
+                }
+              >
+                {isSelectorDisabled ? (
+                  <SelectItem key={defaultRole}>{defaultRole}</SelectItem>
+                ) : (
+                  roles.map((role) => (
+                    <SelectItem key={role.id}>{role.name}</SelectItem>
+                  ))
+                )}
+              </Select>
+              {form.formState.errors.roleId && (
+                <p className="mt-2 text-sm text-red-600">
+                  {form.formState.errors.roleId.message}
+                </p>
+              )}
+            </>
+          )}
+        />
+
+        {/* Submit Button */}
         <div className="flex w-full justify-end sm:space-x-6">
           <CustomButton
             type="submit"
