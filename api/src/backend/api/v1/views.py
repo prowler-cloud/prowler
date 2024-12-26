@@ -309,9 +309,12 @@ class UserViewSet(BaseUserViewset):
         # If called during schema generation, return an empty queryset
         if getattr(self, "swagger_fake_view", False):
             return User.objects.none()
-        if hasattr(self.request, "tenant_id"):
-            return User.objects.filter(membership__tenant__id=self.request.tenant_id)
-        return User.objects.all()
+        queryset = (
+            User.objects.filter(membership__tenant__id=self.request.tenant_id)
+            if hasattr(self.request, "tenant_id")
+            else User.objects.all()
+        )
+        return queryset.prefetch_related("memberships", "roles")
 
     def get_permissions(self):
         if self.action == "create":
@@ -542,7 +545,8 @@ class TenantViewSet(BaseTenantViewset):
     required_permissions = [Permissions.MANAGE_ACCOUNT]
 
     def get_queryset(self):
-        return Tenant.objects.all()
+        queryset = Tenant.objects.filter(membership__user=self.request.user)
+        return queryset.prefetch_related("memberships")
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -602,7 +606,8 @@ class MembershipViewSet(BaseTenantViewset):
 
     def get_queryset(self):
         user = self.request.user
-        return Membership.objects.filter(user_id=user.id)
+        queryset = Membership.objects.filter(user_id=user.id)
+        return queryset.select_related("user", "tenant")
 
 
 @extend_schema_view(
@@ -738,10 +743,10 @@ class ProviderGroupViewSet(BaseRLSViewSet):
         # Check if any of the user's roles have UNLIMITED_VISIBILITY
         if user_roles.unlimited_visibility:
             # User has unlimited visibility, return all provider groups
-            return ProviderGroup.objects.prefetch_related("providers")
+            return ProviderGroup.objects.prefetch_related("providers", "roles")
 
         # Collect provider groups associated with the user's roles
-        return user_roles.provider_groups.all()
+        return user_roles.provider_groups.all().prefetch_related("providers", "roles")
 
     def get_serializer_class(self):
         if self.action == "create":
@@ -906,10 +911,11 @@ class ProviderViewSet(BaseRLSViewSet):
         user_roles = get_role(self.request.user)
         if user_roles.unlimited_visibility:
             # User has unlimited visibility, return all providers
-            return Provider.objects.filter(tenant_id=self.request.tenant_id)
-
-        # User lacks permission, filter providers based on provider groups associated with the role
-        return get_providers(user_roles)
+            queryset = Provider.objects.filter(tenant_id=self.request.tenant_id)
+        else:
+            # User lacks permission, filter providers based on provider groups associated with the role
+            queryset = get_providers(user_roles)
+        return queryset.select_related("secret").prefetch_related("provider_groups")
 
     def get_serializer_class(self):
         if self.action == "create":
@@ -1047,10 +1053,11 @@ class ScanViewSet(BaseRLSViewSet):
         user_roles = get_role(self.request.user)
         if user_roles.unlimited_visibility:
             # User has unlimited visibility, return all scans
-            return Scan.objects.filter(tenant_id=self.request.tenant_id)
-
-        # User lacks permission, filter providers based on provider groups associated with the role
-        return Scan.objects.filter(provider__in=get_providers(user_roles))
+            queryset = Scan.objects.filter(tenant_id=self.request.tenant_id)
+        else:
+            # User lacks permission, filter providers based on provider groups associated with the role
+            queryset = Scan.objects.filter(provider__in=get_providers(user_roles))
+        return queryset.select_related("provider", "task")
 
     def get_serializer_class(self):
         if self.action == "create":
@@ -1147,7 +1154,7 @@ class TaskViewSet(BaseRLSViewSet):
         return Task.objects.annotate(
             name=F("task_runner_task__task_name"),
             state=F("task_runner_task__status"),
-        )
+        ).select_related("task_runner_task")
 
     def destroy(self, request, *args, pk=None, **kwargs):
         task = get_object_or_404(Task, pk=pk)
@@ -1208,7 +1215,8 @@ class ResourceViewSet(BaseRLSViewSet):
         "inserted_at",
         "updated_at",
     ]
-    # RBAC required permissions (implicit -> MANAGE_PROVIDERS enable unlimited visibility or check the visibility of the provider through the provider group)
+    # RBAC required permissions (implicit -> MANAGE_PROVIDERS enable unlimited visibility or check the visibility of
+    # the provider through the provider group)
     required_permissions = []
 
     def get_queryset(self):
@@ -1218,7 +1226,9 @@ class ResourceViewSet(BaseRLSViewSet):
             queryset = Resource.objects.filter(tenant_id=self.request.tenant_id)
         else:
             # User lacks permission, filter providers based on provider groups associated with the role
-            queryset = Resource.objects.filter(provider__in=get_providers(user_roles))
+            queryset = Resource.objects.filter(
+                tenant_id=self.request.tenant_id, provider__in=get_providers(user_roles)
+            )
 
         search_value = self.request.query_params.get("filter[search]", None)
         if search_value:
@@ -1291,7 +1301,8 @@ class FindingViewSet(BaseRLSViewSet):
         "inserted_at",
         "updated_at",
     ]
-    # RBAC required permissions (implicit -> MANAGE_PROVIDERS enable unlimited visibility or check the visibility of the provider through the provider group)
+    # RBAC required permissions (implicit -> MANAGE_PROVIDERS enable unlimited visibility or check the visibility of
+    # the provider through the provider group)
     required_permissions = []
 
     def get_serializer_class(self):
@@ -1766,19 +1777,27 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
         if self.action == "retrieve":
             if unlimited_visibility:
                 # User has unlimited visibility, return all compliance
-                return ComplianceOverview.objects.all()
+                return ComplianceOverview.objects.filter(
+                    tenant_id=self.request.tenant_id
+                )
 
             providers = get_providers(role)
-            return ComplianceOverview.objects.filter(scan__provider__in=providers)
+            return ComplianceOverview.objects.filter(
+                tenant_id=self.request.tenant_id, scan__provider__in=providers
+            )
 
         if unlimited_visibility:
-            base_queryset = self.filter_queryset(ComplianceOverview.objects.all())
+            base_queryset = self.filter_queryset(
+                ComplianceOverview.objects.filter(tenant_id=self.request.tenant_id)
+            )
         else:
             providers = Provider.objects.filter(
                 provider_groups__in=role.provider_groups.all()
             ).distinct()
             base_queryset = self.filter_queryset(
-                ComplianceOverview.objects.filter(scan__provider__in=providers)
+                ComplianceOverview.objects.filter(
+                    tenant_id=self.request.tenant_id, scan__provider__in=providers
+                )
             )
 
         max_failed_ids = (
