@@ -775,17 +775,17 @@ files = [
 
 [[package]]
 name = "boto3"
-version = "1.35.80"
+version = "1.35.87"
 description = "The AWS SDK for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "boto3-1.35.80-py3-none-any.whl", hash = "sha256:21a3b18c3a7fd20e463708fe3fa035983105dc7f3a1c274e1903e1583ab91159"},
-    {file = "boto3-1.35.80.tar.gz", hash = "sha256:50dae461ab5fbedfb81b690895d48a918fed0d5fdff37be1c4232770c0dc9712"},
+    {file = "boto3-1.35.87-py3-none-any.whl", hash = "sha256:588ab05e2771c50fca5c242be14e7a25200ffd3dd95c45950ce40993473864c7"},
+    {file = "boto3-1.35.87.tar.gz", hash = "sha256:341c58602889078a4a25dc4331b832b5b600a33acd73471d2532c6f01b16fbb4"},
 ]
 
 [package.dependencies]
-botocore = ">=1.35.80,<1.36.0"
+botocore = ">=1.35.87,<1.36.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.10.0,<0.11.0"
 
@@ -5199,4 +5199,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "5c4fc737ee3ec2aa5250a25c2c57f1e22237b4dcf9e424a324dc249425896f72"
+content-hash = "ebe0b7f92f29273c00d44e977c6cee6a017890bb2e1f4b33a01e61b522ef14be"
