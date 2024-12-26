@@ -21,7 +21,9 @@ class cloudformation_stack_outputs_find_secrets(Check):
             report.resource_arn = stack.arn
             report.resource_tags = stack.tags
             report.status = "PASS"
-            report.status_extended = f"No secrets found in Stack {stack.name} Outputs."
+            report.status_extended = (
+                f"No secrets found in CloudFormation Stack {stack.name} Outputs."
+            )
             if stack.outputs:
                 data = ""
                 # Store the CloudFormation Stack Outputs into a file
@@ -40,11 +42,13 @@ class cloudformation_stack_outputs_find_secrets(Check):
                         ]
                     )
                     report.status = "FAIL"
-                    report.status_extended = f"Potential secret found in Stack {stack.name} Outputs -> {secrets_string}."
+                    report.status_extended = f"Potential secret found in CloudFormation Stack {stack.name} Outputs -> {secrets_string}."
 
             else:
                 report.status = "PASS"
-                report.status_extended = f"CloudFormation {stack.name} has no Outputs."
+                report.status_extended = (
+                    f"CloudFormation Stack {stack.name} has no Outputs."
+                )
 
             findings.append(report)
 
