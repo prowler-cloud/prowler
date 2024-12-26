@@ -1447,12 +1447,8 @@ class TestProviderGroupViewSet:
                 "id": str(group.id),
                 "type": "provider-groups",
                 "relationships": {
-                    "providers": {
-                        "data": []  # Removing all providers
-                    },
-                    "roles": {
-                        "data": []  # Removing all roles
-                    },
+                    "providers": {"data": []},  # Removing all providers
+                    "roles": {"data": []},  # Removing all roles
                 },
             }
         }
@@ -3261,8 +3257,8 @@ class TestRoleViewSet:
         response = authenticated_client.get(reverse("role-list"))
         assert response.status_code == status.HTTP_200_OK
         assert (
-            len(response.json()["data"]) == len(roles_fixture) + 2
-        )  # 2 default admin roles, one for each tenant
+            len(response.json()["data"]) == len(roles_fixture) + 1
+        )  # 1 default admin role
 
     def test_role_retrieve(self, authenticated_client, roles_fixture):
         role = roles_fixture[0]
@@ -3564,12 +3560,8 @@ class TestRoleViewSet:
                 "id": str(role.id),
                 "type": "roles",
                 "relationships": {
-                    "users": {
-                        "data": []  # Clearing all users
-                    },
-                    "provider_groups": {
-                        "data": []  # Clearing all provider groups
-                    },
+                    "users": {"data": []},  # Clearing all users
+                    "provider_groups": {"data": []},  # Clearing all provider groups
                 },
             }
         }
