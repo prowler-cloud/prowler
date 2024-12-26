@@ -1,9 +1,11 @@
 from enum import Enum
-from rest_framework.permissions import BasePermission
-from api.models import Provider, Role, User
-from api.db_router import MainRouter
 from typing import Optional
+
 from django.db.models import QuerySet
+from rest_framework.permissions import BasePermission
+
+from api.db_router import MainRouter
+from api.models import Provider, Role, User
 
 
 class Permissions(Enum):
@@ -63,8 +65,11 @@ def get_providers(role: Role) -> QuerySet[Provider]:
         A QuerySet of Provider objects filtered by the role's provider groups.
         If the role has no provider groups, returns an empty queryset.
     """
+    tenant = role.tenant
     provider_groups = role.provider_groups.all()
     if not provider_groups.exists():
         return Provider.objects.none()
 
-    return Provider.objects.filter(provider_groups__in=provider_groups).distinct()
+    return Provider.objects.filter(
+        tenant=tenant, provider_groups__in=provider_groups
+    ).distinct()

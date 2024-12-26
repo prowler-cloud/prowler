@@ -1630,7 +1630,8 @@ class RoleViewSet(BaseRLSViewSet):
     create=extend_schema(
         tags=["Role"],
         summary="Create a new role-provider_groups relationship",
-        description="Add a new role-provider_groups relationship to the system by providing the required role-provider_groups details.",
+        description="Add a new role-provider_groups relationship to the system by providing the required "
+        "role-provider_groups details.",
         responses={
             204: OpenApiResponse(description="Relationship created successfully"),
             400: OpenApiResponse(
@@ -1764,7 +1765,7 @@ class ComplianceOverviewViewSet(BaseRLSViewSet):
 
         if self.action == "retrieve":
             if unlimited_visibility:
-                # User has unlimited visibility, return all compliance compliances
+                # User has unlimited visibility, return all compliance
                 return ComplianceOverview.objects.all()
 
             providers = get_providers(role)
@@ -1856,7 +1857,8 @@ class OverviewViewSet(BaseRLSViewSet):
     queryset = ComplianceOverview.objects.all()
     http_method_names = ["get"]
     ordering = ["-id"]
-    # RBAC required permissions (implicit -> MANAGE_PROVIDERS enable unlimited visibility or check the visibility of the provider through the provider group)
+    # RBAC required permissions (implicit -> MANAGE_PROVIDERS enable unlimited visibility or check the visibility of
+    # the provider through the provider group)
     required_permissions = []
 
     def get_queryset(self):
@@ -1865,8 +1867,10 @@ class OverviewViewSet(BaseRLSViewSet):
 
         def _get_filtered_queryset(model):
             if role.unlimited_visibility:
-                return model.objects.all()
-            return model.objects.filter(scan__provider__in=providers)
+                return model.objects.filter(tenant_id=self.request.tenant_id)
+            return model.objects.filter(
+                tenant_id=self.request.tenant_id, scan__provider__in=providers
+            )
 
         if self.action == "providers":
             return _get_filtered_queryset(Finding)
@@ -1905,17 +1909,22 @@ class OverviewViewSet(BaseRLSViewSet):
 
     @action(detail=False, methods=["get"], url_name="providers")
     def providers(self, request):
+        tenant_id = self.request.tenant_id
         # Subquery to get the most recent finding for each uid
         latest_finding_ids = (
             Finding.objects.filter(
-                uid=OuterRef("uid"), scan__provider=OuterRef("scan__provider")
+                tenant_id=tenant_id,
+                uid=OuterRef("uid"),
+                scan__provider=OuterRef("scan__provider"),
             )
             .order_by("-id")  # Most recent by id
             .values("id")[:1]
         )
 
         # Filter findings to only include the most recent for each uid
-        recent_findings = Finding.objects.filter(id__in=Subquery(latest_finding_ids))
+        recent_findings = Finding.objects.filter(
+            tenant_id=tenant_id, id__in=Subquery(latest_finding_ids)
+        )
 
         # Aggregate findings by provider
         findings_aggregated = (
@@ -1932,8 +1941,10 @@ class OverviewViewSet(BaseRLSViewSet):
         )
 
         # Aggregate total resources by provider
-        resources_aggregated = Resource.objects.values("provider__provider").annotate(
-            total_resources=Count("id")
+        resources_aggregated = (
+            Resource.objects.filter(tenant_id=tenant_id)
+            .values("provider__provider")
+            .annotate(total_resources=Count("id"))
         )
 
         # Combine findings and resources data
@@ -1965,12 +1976,15 @@ class OverviewViewSet(BaseRLSViewSet):
 
     @action(detail=False, methods=["get"], url_name="findings")
     def findings(self, request):
+        tenant_id = self.request.tenant_id
         queryset = self.get_queryset()
         filtered_queryset = self.filter_queryset(queryset)
 
         latest_scan_subquery = (
             Scan.objects.filter(
-                state=StateChoices.COMPLETED, provider_id=OuterRef("scan__provider_id")
+                tenant_id=tenant_id,
+                state=StateChoices.COMPLETED,
+                provider_id=OuterRef("scan__provider_id"),
             )
             .order_by("-id")
             .values("id")[:1]
@@ -2007,12 +2021,15 @@ class OverviewViewSet(BaseRLSViewSet):
 
     @action(detail=False, methods=["get"], url_name="findings_severity")
     def findings_severity(self, request):
+        tenant_id = self.request.tenant_id
         queryset = self.get_queryset()
         filtered_queryset = self.filter_queryset(queryset)
 
         latest_scan_subquery = (
             Scan.objects.filter(
-                state=StateChoices.COMPLETED, provider_id=OuterRef("scan__provider_id")
+                tenant_id=tenant_id,
+                state=StateChoices.COMPLETED,
+                provider_id=OuterRef("scan__provider_id"),
             )
             .order_by("-id")
             .values("id")[:1]
@@ -2040,12 +2057,15 @@ class OverviewViewSet(BaseRLSViewSet):
 
     @action(detail=False, methods=["get"], url_name="services")
     def services(self, request):
+        tenant_id = self.request.tenant_id
         queryset = self.get_queryset()
         filtered_queryset = self.filter_queryset(queryset)
 
         latest_scan_subquery = (
             Scan.objects.filter(
-                state=StateChoices.COMPLETED, provider_id=OuterRef("scan__provider_id")
+                tenant_id=tenant_id,
+                state=StateChoices.COMPLETED,
+                provider_id=OuterRef("scan__provider_id"),
             )
             .order_by("-id")
             .values("id")[:1]

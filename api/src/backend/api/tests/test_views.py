@@ -2339,7 +2339,10 @@ class TestResourceViewSet:
             response.json()["errors"][0]["detail"] == "invalid sort parameter: invalid"
         )
 
-    def test_resources_retrieve(self, authenticated_client, resources_fixture):
+    def test_resources_retrieve(
+        self, authenticated_client, tenants_fixture, resources_fixture
+    ):
+        tenant = tenants_fixture[0]
         resource_1, *_ = resources_fixture
         response = authenticated_client.get(
             reverse("resource-detail", kwargs={"pk": resource_1.id}),
@@ -2350,7 +2353,9 @@ class TestResourceViewSet:
         assert response.json()["data"]["attributes"]["region"] == resource_1.region
         assert response.json()["data"]["attributes"]["service"] == resource_1.service
         assert response.json()["data"]["attributes"]["type"] == resource_1.type
-        assert response.json()["data"]["attributes"]["tags"] == resource_1.get_tags()
+        assert response.json()["data"]["attributes"]["tags"] == resource_1.get_tags(
+            tenant_id=str(tenant.id)
+        )
 
     def test_resources_invalid_retrieve(self, authenticated_client):
         response = authenticated_client.get(
