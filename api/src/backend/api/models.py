@@ -515,8 +515,8 @@ class Resource(RowLevelSecurityProtectedModel):
         through="ResourceTagMapping",
     )
 
-    def get_tags(self) -> dict:
-        return {tag.key: tag.value for tag in self.tags.all()}
+    def get_tags(self, tenant_id: str) -> dict:
+        return {tag.key: tag.value for tag in self.tags.filter(tenant_id=tenant_id)}
 
     def clear_tags(self):
         self.tags.clear()

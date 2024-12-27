@@ -874,7 +874,7 @@ class ResourceSerializer(RLSSerializer):
         }
     )
     def get_tags(self, obj):
-        return obj.get_tags()
+        return obj.get_tags(self.context.get("tenant_id"))
 
     def get_fields(self):
         """`type` is a Python reserved keyword."""
@@ -1233,6 +1233,12 @@ class InvitationSerializer(RLSSerializer):
 
     roles = serializers.ResourceRelatedField(many=True, queryset=Role.objects.all())
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        tenant_id = self.context.get("tenant_id")
+        if tenant_id is not None:
+            self.fields["roles"].queryset = Role.objects.filter(tenant_id=tenant_id)
+
     class Meta:
         model = Invitation
         fields = [
@@ -1251,6 +1257,12 @@ class InvitationSerializer(RLSSerializer):
 
 class InvitationBaseWriteSerializer(BaseWriteSerializer):
     roles = serializers.ResourceRelatedField(many=True, queryset=Role.objects.all())
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        tenant_id = self.context.get("tenant_id")
+        if tenant_id is not None:
+            self.fields["roles"].queryset = Role.objects.filter(tenant_id=tenant_id)
 
     def validate_email(self, value):
         user = User.objects.filter(email=value).first()
@@ -1366,6 +1378,17 @@ class RoleSerializer(RLSSerializer, BaseWriteSerializer):
     provider_groups = serializers.ResourceRelatedField(
         queryset=ProviderGroup.objects.all(), many=True, required=False
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        tenant_id = self.context.get("tenant_id")
+        if tenant_id is not None:
+            self.fields["users"].queryset = User.objects.filter(
+                membership__tenant__id=tenant_id
+            )
+            self.fields["provider_groups"].queryset = ProviderGroup.objects.filter(
+                tenant_id=self.context.get("tenant_id")
+            )
 
     def get_permission_state(self, obj) -> str:
         return obj.permission_state
