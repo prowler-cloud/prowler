@@ -1155,7 +1155,6 @@ class Migration(migrations.Migration):
             model_name="Finding",
             name="default",
         ),
-        # NOTE: the RLS policy needs to be explicitly set on the partitions
         migrations.AddConstraint(
             model_name="finding",
             constraint=api.rls.RowLevelSecurityConstraint(
