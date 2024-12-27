@@ -34,6 +34,7 @@ Available Cloud Providers:
     azure               Azure Provider
     gcp                 GCP Provider
     kubernetes          Kubernetes Provider
+    github              GitHub Provider
 
 Available components:
     dashboard           Local dashboard
