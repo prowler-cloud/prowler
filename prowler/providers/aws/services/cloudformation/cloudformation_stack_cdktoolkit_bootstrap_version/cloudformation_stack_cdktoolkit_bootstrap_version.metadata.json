@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "cloudformation_stack_cdktoolkit_bootstrap_version",
+  "CheckTitle": "Ensure that CDKToolkit stacks have a Bootstrap version of 21 or higher to mitigate security risks.",
+  "CheckType": [],
+  "ServiceName": "cloudformation",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:cloudformation:region:account-id:stack/resource-id",
+  "Severity": "high",
+  "ResourceType": "AwsCloudFormationStack",
+  "Description": "Ensure that CDKToolkit stacks have a Bootstrap version of 21 or higher to mitigate security risks.",
+  "Risk": "Using outdated CDKToolkit Bootstrap versions can expose accounts to risks such as bucket takeover or privilege escalation.",
+  "RelatedUrl": "https://docs.aws.amazon.com/cdk/latest/guide/bootstrapping.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Update the CDKToolkit stack Bootstrap version to 21 or later by running the cdk bootstrap command with the latest CDK version.",
+      "Url": "https://docs.aws.amazon.com/cdk/latest/guide/bootstrapping.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
