@@ -1,0 +1,30 @@
+{
+  "Provider": "github",
+  "CheckID": "repository_scans_packages_vulnerabilities",
+  "CheckTitle": "Check if repositories scan packages for vulnerabilities",
+  "CheckType": [],
+  "ServiceName": "repository",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "github:user-id:repository/repository-name",
+  "Severity": "high",
+  "ResourceType": "Other",
+  "Description": "Ensure that repositories scan packages for vulnerabilities to detect and remediate open-source vulnerabilities.",
+  "Risk": "Open-source vulnerabilities may exist in or be discovered for the packages an organization uses. These vulnerabilities can be exploited by attackers, potentially compromising the security of applications. Without proper monitoring, vulnerabilities affecting dependencies may go unnoticed, increasing the risk of breaches or failures in production environments.",
+  "RelatedUrl": "https://docs.github.com/en/code-security/dependabot/working-with-dependabot",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Implement and enforce tools to detect, monitor, and remediate open-source vulnerabilities. Enable GitHub's Dependabot alerts to track known issues, and consider integrating additional solutions to ensure comprehensive identification of vulnerabilities. This proactive approach mitigates security risks and helps maintain application stability and integrity.",
+      "Url": "https://docs.github.com/en/code-security/getting-started/dependabot-quickstart-guide"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -35,6 +35,17 @@ class Repository(GithubService):
                             else False
                         )
 
+                        dependabot_status = False
+                        try:
+                            dependabot_status = (
+                                repo.security_and_analysis.dependabot_security_updates.status
+                                == "enabled"
+                            )
+                        except Exception as e:
+                            logger.warning(
+                                f"Could not determine dependabot status for repo {repo.name}: {e}"
+                            )
+
                         branch_protection = None
                         try:
                             branch = repo.get_branch(default_branch)
@@ -89,6 +100,7 @@ class Repository(GithubService):
                             securitymd=securitymd_exists,
                             default_branch_protection=branch_protection,
                             delete_branch_on_merge=delete_branch_on_merge,
+                            dependabot_enabled=dependabot_status,
                         )
 
         except Exception as error:
@@ -122,3 +134,4 @@ class Repo(BaseModel):
     default_branch_protection: Optional[Protection]
     securitymd: bool = False
     delete_branch_on_merge: bool = False
+    dependabot_enabled: bool = False
