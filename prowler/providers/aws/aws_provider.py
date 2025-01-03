@@ -789,7 +789,14 @@ class AwsProvider(Provider):
         # Handle if there are audit resources so only their services are executed
         if self._audit_resources:
             # TODO: this should be retrieved automatically
-            services_without_subservices = ["guardduty", "kms", "s3", "elb", "efs"]
+            services_without_subservices = [
+                "guardduty",
+                "kms",
+                "s3",
+                "elb",
+                "efs",
+                "sqs",
+            ]
             service_list = set()
             sub_service_list = set()
             for resource in self._audit_resources:
