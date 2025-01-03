@@ -103,7 +103,7 @@ repos:
       - id: vulture
         name: vulture
         description: "Vulture finds unused code in Python programs."
-        entry: bash -c 'vulture --exclude "contrib" --min-confidence 100 .'
+        entry: bash -c 'vulture --exclude "contrib,*/api/src/backend/*" --min-confidence 100 .'
         exclude: 'api/src/backend/'
         language: system
         files: '.*\.py'
