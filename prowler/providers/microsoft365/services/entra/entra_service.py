@@ -33,7 +33,7 @@ class Entra(Microsoft365Service):
             auth_policy = await self.client.policies.authorization_policy.get()
             authorization_policy.update(
                 {
-                    AuthorizationPolicy(
+                    auth_policy.id: AuthorizationPolicy(
                         id=auth_policy.id,
                         name=auth_policy.display_name,
                         description=auth_policy.description,
@@ -56,3 +56,6 @@ class AuthorizationPolicy(BaseModel):
     name: str
     description: str
     default_user_role_permissions: Optional[DefaultUserRolePermissions]
+
+    class Config:
+        arbitrary_types_allowed = True
