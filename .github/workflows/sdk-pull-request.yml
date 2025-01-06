@@ -66,7 +66,9 @@ jobs:
       - name: Poetry check
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
-          poetry lock --check
+          poetry check
+          poetry lock --no-update
+          git diff --exit-code poetry.lock
 
       - name: Lint with flake8
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'

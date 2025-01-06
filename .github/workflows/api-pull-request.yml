@@ -114,7 +114,9 @@ jobs:
         working-directory: ./api
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
-          poetry lock --check
+          poetry check
+          poetry lock --no-update
+          git diff --exit-code poetry.lock
 
       - name: Lint with ruff
         working-directory: ./api
