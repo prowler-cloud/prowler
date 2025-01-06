@@ -279,7 +279,7 @@ Each Prowler check has metadata associated which is stored at the same level of 
   "Severity": "critical",
   # ResourceType only for AWS, holds the type from here
   # https://docs.aws.amazon.com/securityhub/latest/userguide/asff-resources.html
-  # In case of not exists, use CloudFormation type but removing the "::" and using capital letters only at the beginning of each word. Example: "AWS::EC2::Instance" -> "AwsEc2Instance"
+  # In case of not existing, use CloudFormation type but removing the "::" and using capital letters only at the beginning of each word. Example: "AWS::EC2::Instance" -> "AwsEc2Instance"
   # CloudFormation type reference: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-template-resource-type-ref.html
   # If the resource type does not exist in the CloudFormation types, use "Other".
   "ResourceType": "Other",
