@@ -259,6 +259,49 @@ def get_aws_available_regions():
         logger.error(f"{error.__class__.__name__}: {error}")
         return []
 
+<<<<<<< HEAD
+=======
+        Example:
+            checks = get_checks_from_input_arn()
+        """
+        checks_from_arn = set()
+        is_subservice_in_checks = False
+        # Handle if there are audit resources so only their services are executed
+        if self._audit_resources:
+            # TODO: this should be retrieved automatically
+            services_without_subservices = [
+                "guardduty",
+                "kms",
+                "s3",
+                "elb",
+                "efs",
+                "sqs",
+            ]
+            service_list = set()
+            sub_service_list = set()
+            for resource in self._audit_resources:
+                service = resource.split(":")[2]
+                sub_service = resource.split(":")[5].split("/")[0].replace("-", "_")
+                # WAF Services does not have checks
+                if service != "wafv2" and service != "waf":
+                    # Parse services when they are different in the ARNs
+                    if service == "lambda":
+                        service = "awslambda"
+                    elif service == "elasticloadbalancing":
+                        service = "elb"
+                    elif service == "elasticfilesystem":
+                        service = "efs"
+                    elif service == "logs":
+                        service = "cloudwatch"
+                    # Check if Prowler has checks in service
+                    try:
+                        list_modules(self.type, service)
+                    except ModuleNotFoundError:
+                        # Service is not supported
+                        pass
+                    else:
+                        service_list.add(service)
+>>>>>>> 3d6a6a9fe (fix(aws): add missing sqs service without subservice (#6352))
 
 def get_checks_from_input_arn(audit_resources: list, provider: str) -> set:
     """get_checks_from_input_arn gets the list of checks from the input arns"""
