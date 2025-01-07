@@ -9,8 +9,8 @@ Integrating Prowler with external tools enhances its functionality and seamlessl
 ### Identify the Integration Purpose
 
 * Clearly define the objective of the integration. For example:
-* Sending Prowler findings to a platform for alerts, tracking, or further analysis.
-* Review existing integrations in the `/lib/outputs` folder for inspiration and implementation examples.
+    * Sending Prowler findings to a platform for alerts, tracking, or further analysis.
+    * Review existing integrations in the `/lib/outputs` folder for inspiration and implementation examples.
 
 ### Review Prowler’s Integration Capabilities
 
