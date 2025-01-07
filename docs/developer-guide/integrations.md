@@ -29,7 +29,7 @@ Integrating Prowler with external tools enhances its functionality and seamlessl
 
 * Integration Class:
     * Create a class that encapsulates attributes and methods for the integration.
-    The following is the code for the `Jira` class:
+    Here is an example with Jira integration:
     ```python title="Jira Class"
     class Jira:
     """
