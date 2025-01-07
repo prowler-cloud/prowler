@@ -33,7 +33,7 @@ jobs:
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
           python -m pip install --upgrade pip
-          pipx install poetry
+          pipx install poetry==1.8.5
       - name: Set up Python ${{ matrix.python-version }}
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         uses: actions/setup-python@v5
