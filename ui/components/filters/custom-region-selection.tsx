@@ -38,7 +38,9 @@ export const CustomRegionSelection: React.FC = () => {
       className="w-full"
       size="sm"
       selectedKeys={selectedKeys}
-      onSelectionChange={(keys) => applyRegionFilter(Array.from(keys))}
+      onSelectionChange={(keys) =>
+        applyRegionFilter(Array.from(keys) as string[])
+      }
     >
       {regions.map((region) => (
         <SelectItem key={region.key}>{region.label}</SelectItem>
