@@ -3,6 +3,11 @@
 
 import sys
 from os import environ
+from datetime import datetime
+import platform
+import hashlib
+import requests
+from prowler.config.config import prowler_version
 
 from colorama import Fore, Style
 from colorama import init as colorama_init
@@ -80,7 +85,61 @@ from prowler.providers.gcp.models import GCPOutputOptions
 from prowler.providers.kubernetes.models import KubernetesOutputOptions
 
 
+def collect_anonymous_metrics(args, stats, findings, start_time):
+    """Collect anonymous usage metrics"""
+    try:
+        # Get list of failed check IDs (without any resource details)
+        failed_checks = [
+            finding.check_metadata.CheckID 
+            for finding in findings 
+            if finding.status == "FAIL"
+        ]
+    except Exception as e:
+        # Silently fail if metrics collection fails
+        pass
+        
+    metrics = {
+        # Basic execution info
+        "timestamp": datetime.utcnow().isoformat(),
+        "provider": args.provider,
+        "prowler_version": prowler_version,
+        "python_version": platform.python_version(),
+        "os_type": platform.system(),
+        "execution_duration": (datetime.utcnow() - start_time).total_seconds(),
+        
+        # Aggregated results
+        "total_pass": stats["total_pass"], 
+        "total_fail": stats["total_fail"],
+
+        
+        # Feature usage (boolean flags)
+        "using_compliance": bool(args.compliance),
+        "using_quick_inventory": bool(getattr(args, "quick_inventory", False)),
+        "using_fixer": bool(getattr(args, "fixer", False)),
+        "using_custom_checks": bool(args.checks_folder),
+        
+        # Output formats used
+        "output_formats": list(args.output_formats),
+        
+        # Generate anonymous session ID
+        "session_id": hashlib.sha256(str(datetime.utcnow()).encode()).hexdigest(),
+        
+        # Add failed checks list (just the check IDs)
+        "failed_checks": list(set(failed_checks)),  # Deduplicate the list
+        "unique_failed_checks_count": len(set(failed_checks))
+    }
+        
+    # Send metrics to collection endpoint
+    requests.post(
+        "https://oss-metrics.prowler.com/submit",
+        json=metrics,
+        timeout=2  # Short timeout to not impact execution
+    )
+
+
 def prowler():
+    start_time = datetime.utcnow()
+    
     # Parse Arguments
     # Refactor(CLI)
     parser = ProwlerArgumentParser()
@@ -722,6 +781,25 @@ def prowler():
     # If custom checks were passed, remove the modules
     if checks_folder:
         remove_custom_checks_module(checks_folder, provider)
+
+    # Collect metrics at the end if not opted out.
+    # Check for proxy environment variables - if any exist, skip telemetry
+    proxy_env_vars = [
+        "HTTP_PROXY", "HTTPS_PROXY", "http_proxy", "https_proxy",
+        "PROXY", "proxy", "ALL_PROXY", "all_proxy"
+    ]
+
+    try:   
+        if any(proxy_var in environ for proxy_var in proxy_env_vars):
+            # Disable telemetry if proxy detected
+            args.no_telemetry = True
+            print("Anonymous Telemetry disabled automatically due to proxy set in environment.\nSee https://docs.prowler.com/docs/telemetry for more information.")
+
+        if not args.no_telemetry:
+            collect_anonymous_metrics(args, stats, findings, start_time)
+    
+    except:
+        pass    
 
     # If there are failed findings exit code 3, except if -z is input
     if (
