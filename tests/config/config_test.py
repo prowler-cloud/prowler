@@ -112,7 +112,7 @@ config_gcp = {"shodan_api_key": None}
 
 class Test_Config:
     def test_get_aws_available_regions(self):
-        assert len(get_aws_available_regions()) == 34
+        assert len(get_aws_available_regions()) == 35
 
     @mock.patch(
         "prowler.config.config.requests.get", new=mock_prowler_get_latest_release
