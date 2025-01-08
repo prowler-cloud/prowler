@@ -147,7 +147,6 @@ if mode == "csv":
 
 ### Testing
 
-* Test the integration in a controlled environment to confirm it behaves as expected.
 * Verify that Prowler’s findings are accurately writed in the desired output format.
 * Simulate edge cases to ensure robust error handling.
 
