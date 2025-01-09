@@ -10,8 +10,12 @@ class Test_cloudformation_stack_outputs_find_secrets:
     def test_no_stacks(self):
         cloudformation_client = mock.MagicMock
         cloudformation_client.stacks = []
+        cloudformation_client.audit_config = {"secrets_ignore_patterns": []}
         with mock.patch(
             "prowler.providers.aws.services.cloudformation.cloudformation_service.CloudFormation",
+            new=cloudformation_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.cloudformation.cloudformation_client.cloudformation_client",
             new=cloudformation_client,
         ):
             # Test Check
@@ -36,9 +40,14 @@ class Test_cloudformation_stack_outputs_find_secrets:
             )
         ]
 
+        cloudformation_client.audit_config = {"secrets_ignore_patterns": []}
+
         with mock.patch(
             "prowler.providers.aws.services.cloudformation.cloudformation_service.CloudFormation",
             cloudformation_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.cloudformation.cloudformation_client.cloudformation_client",
+            new=cloudformation_client,
         ):
             from prowler.providers.aws.services.cloudformation.cloudformation_stack_outputs_find_secrets.cloudformation_stack_outputs_find_secrets import (
                 cloudformation_stack_outputs_find_secrets,
@@ -75,9 +84,14 @@ class Test_cloudformation_stack_outputs_find_secrets:
             )
         ]
 
+        cloudformation_client.audit_config = {"secrets_ignore_patterns": []}
+
         with mock.patch(
             "prowler.providers.aws.services.cloudformation.cloudformation_service.CloudFormation",
             cloudformation_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.cloudformation.cloudformation_client.cloudformation_client",
+            new=cloudformation_client,
         ):
             from prowler.providers.aws.services.cloudformation.cloudformation_stack_outputs_find_secrets.cloudformation_stack_outputs_find_secrets import (
                 cloudformation_stack_outputs_find_secrets,
@@ -112,9 +126,14 @@ class Test_cloudformation_stack_outputs_find_secrets:
             )
         ]
 
+        cloudformation_client.audit_config = {"secrets_ignore_patterns": []}
+
         with mock.patch(
             "prowler.providers.aws.services.cloudformation.cloudformation_service.CloudFormation",
             cloudformation_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.cloudformation.cloudformation_client.cloudformation_client",
+            new=cloudformation_client,
         ):
             from prowler.providers.aws.services.cloudformation.cloudformation_stack_outputs_find_secrets.cloudformation_stack_outputs_find_secrets import (
                 cloudformation_stack_outputs_find_secrets,
@@ -149,9 +168,14 @@ class Test_cloudformation_stack_outputs_find_secrets:
             )
         ]
 
+        cloudformation_client.audit_config = {"secrets_ignore_patterns": []}
+
         with mock.patch(
             "prowler.providers.aws.services.cloudformation.cloudformation_service.CloudFormation",
             cloudformation_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.cloudformation.cloudformation_client.cloudformation_client",
+            new=cloudformation_client,
         ):
             from prowler.providers.aws.services.cloudformation.cloudformation_stack_outputs_find_secrets.cloudformation_stack_outputs_find_secrets import (
                 cloudformation_stack_outputs_find_secrets,
