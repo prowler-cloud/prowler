@@ -13,6 +13,9 @@ class Test_cloudformation_stacks_termination_protection_enabled:
         with mock.patch(
             "prowler.providers.aws.services.cloudformation.cloudformation_service.CloudFormation",
             new=cloudformation_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.cloudformation.cloudformation_client.cloudformation_client",
+            new=cloudformation_client,
         ):
             # Test Check
             from prowler.providers.aws.services.cloudformation.cloudformation_stacks_termination_protection_enabled.cloudformation_stacks_termination_protection_enabled import (
@@ -40,6 +43,9 @@ class Test_cloudformation_stacks_termination_protection_enabled:
         with mock.patch(
             "prowler.providers.aws.services.cloudformation.cloudformation_service.CloudFormation",
             cloudformation_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.cloudformation.cloudformation_client.cloudformation_client",
+            new=cloudformation_client,
         ):
             from prowler.providers.aws.services.cloudformation.cloudformation_stacks_termination_protection_enabled.cloudformation_stacks_termination_protection_enabled import (
                 cloudformation_stacks_termination_protection_enabled,
@@ -78,6 +84,9 @@ class Test_cloudformation_stacks_termination_protection_enabled:
         with mock.patch(
             "prowler.providers.aws.services.cloudformation.cloudformation_service.CloudFormation",
             cloudformation_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.cloudformation.cloudformation_client.cloudformation_client",
+            new=cloudformation_client,
         ):
             from prowler.providers.aws.services.cloudformation.cloudformation_stacks_termination_protection_enabled.cloudformation_stacks_termination_protection_enabled import (
                 cloudformation_stacks_termination_protection_enabled,

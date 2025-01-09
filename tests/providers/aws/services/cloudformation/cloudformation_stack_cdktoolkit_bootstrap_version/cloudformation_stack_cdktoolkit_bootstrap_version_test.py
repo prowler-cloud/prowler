@@ -12,6 +12,9 @@ class Test_cloudformation_stack_cdktoolkit_bootstrap_version:
         cloudformation_client.stacks = []
         cloudformation_client.audit_config = {"recommended_cdk_bootstrap_version": 21}
         with mock.patch(
+            "prowler.providers.aws.services.cloudformation.cloudformation_service.CloudFormation",
+            new=cloudformation_client,
+        ), mock.patch(
             "prowler.providers.aws.services.cloudformation.cloudformation_client.cloudformation_client",
             new=cloudformation_client,
         ):
@@ -37,6 +40,9 @@ class Test_cloudformation_stack_cdktoolkit_bootstrap_version:
         cloudformation_client.audit_config = {"recommended_cdk_bootstrap_version": 21}
 
         with mock.patch(
+            "prowler.providers.aws.services.cloudformation.cloudformation_service.CloudFormation",
+            new=cloudformation_client,
+        ), mock.patch(
             "prowler.providers.aws.services.cloudformation.cloudformation_client.cloudformation_client",
             new=cloudformation_client,
         ):
@@ -73,6 +79,9 @@ class Test_cloudformation_stack_cdktoolkit_bootstrap_version:
         cloudformation_client.audit_config = {"recommended_cdk_bootstrap_version": 21}
 
         with mock.patch(
+            "prowler.providers.aws.services.cloudformation.cloudformation_service.CloudFormation",
+            new=cloudformation_client,
+        ), mock.patch(
             "prowler.providers.aws.services.cloudformation.cloudformation_client.cloudformation_client",
             new=cloudformation_client,
         ):
