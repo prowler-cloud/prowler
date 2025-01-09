@@ -77,7 +77,8 @@ class TestOCSF:
         assert output_data.resources[0].cloud_partition == findings[0].partition
         assert output_data.resources[0].region == findings[0].region
         assert output_data.resources[0].data == {
-            "details": findings[0].resource_details
+            "details": findings[0].resource_details,
+            "metadata": {},
         }
         assert output_data.metadata.profiles == ["cloud", "datetime"]
         assert output_data.metadata.tenant_uid == "test-organization-id"
@@ -191,7 +192,7 @@ class TestOCSF:
                     {
                         "cloud_partition": "aws",
                         "region": "eu-west-1",
-                        "data": {"details": "resource_details"},
+                        "data": {"details": "resource_details", "metadata": {}},
                         "group": {"name": "test-service"},
                         "labels": [],
                         "name": "resource_name",
@@ -315,7 +316,10 @@ class TestOCSF:
         assert resource_details[0].type == finding_output.metadata.ResourceType
         assert resource_details[0].cloud_partition == finding_output.partition
         assert resource_details[0].region == finding_output.region
-        assert resource_details[0].data == {"details": finding_output.resource_details}
+        assert resource_details[0].data == {
+            "details": finding_output.resource_details,
+            "metadata": {},
+        }
 
         resource_details_group = resource_details[0].group
         assert isinstance(resource_details_group, Group)
