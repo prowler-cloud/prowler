@@ -395,21 +395,38 @@ class IAM(AWSService):
         logger.info("IAM - List MFA Devices...")
         try:
             for user in self.users:
-                list_mfa_devices_paginator = self.client.get_paginator(
-                    "list_mfa_devices"
-                )
-                mfa_devices = []
-                for page in list_mfa_devices_paginator.paginate(UserName=user.name):
-                    for mfa_device in page["MFADevices"]:
-                        mfa_serial_number = mfa_device["SerialNumber"]
-                        try:
-                            mfa_type = mfa_serial_number.split(":")[5].split("/")[0]
-                        except IndexError:
-                            mfa_type = "hardware"
-                        mfa_devices.append(
-                            MFADevice(serial_number=mfa_serial_number, type=mfa_type)
+                try:
+                    list_mfa_devices_paginator = self.client.get_paginator(
+                        "list_mfa_devices"
+                    )
+                    mfa_devices = []
+                    for page in list_mfa_devices_paginator.paginate(UserName=user.name):
+                        for mfa_device in page["MFADevices"]:
+                            mfa_serial_number = mfa_device["SerialNumber"]
+                            try:
+                                mfa_type = mfa_serial_number.split(":")[5].split("/")[0]
+                            except IndexError:
+                                mfa_type = "hardware"
+                            mfa_devices.append(
+                                MFADevice(
+                                    serial_number=mfa_serial_number, type=mfa_type
+                                )
+                            )
+                    user.mfa_devices = mfa_devices
+                except ClientError as error:
+                    if error.response["Error"]["Code"] == "NoSuchEntity":
+                        logger.warning(
+                            f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
-                user.mfa_devices = mfa_devices
+                    else:
+                        logger.error(
+                            f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+
+                except Exception as error:
+                    logger.error(
+                        f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
