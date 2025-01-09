@@ -24,11 +24,10 @@ export default function Error({
       <RocketIcon className="h-5 w-5" />
       <AlertTitle className="text-lg">An unexpected error occurred</AlertTitle>
       <AlertDescription className="mb-5">
-        We're sorry for the inconvenience. Please try again or contact support
-        if the problem persists.
+        We&apos;re sorry for the inconvenience. Please try again or contact
+        support if the problem persists.
       </AlertDescription>
-      <Link href={"/"} className="font-bold">
-        {" "}
+      <Link href="/" className="font-bold">
         Go to the homepage
       </Link>
     </Alert>

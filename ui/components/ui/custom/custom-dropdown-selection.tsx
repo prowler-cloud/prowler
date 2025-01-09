@@ -47,7 +47,7 @@ export const CustomDropdownSelection: React.FC<
       }
       setSelectedValues(newSelection);
     }
-  }, [selectedKeys]);
+  }, [selectedKeys, allValues.length, selectedValues]);
 
   const onSelectionChange = useCallback(
     (keys: string[]) => {

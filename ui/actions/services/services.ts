@@ -1,13 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-import { parse } from "path";
 
 import { auth } from "@/auth.config";
-import { getErrorMessage, parseStringify } from "@/lib";
 
-export const getServices = async ({}) => {
+export const getServices = async () => {
   const session = await auth();
 
   const keyServer = process.env.API_BASE_URL;
@@ -90,6 +87,7 @@ export const getServices = async ({}) => {
         fail_findings: failFindings,
       });
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error(`Error fetching data for service ${service.id}:`, error);
     }
   }

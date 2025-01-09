@@ -17,28 +17,30 @@ const getScanData = (row: { original: ScanProps }) => {
   return row.original;
 };
 
+const ScanDetailsCell = ({ row }: { row: any }) => {
+  const searchParams = useSearchParams();
+  const scanId = searchParams.get("scanId");
+  const isOpen = scanId === row.original.id;
+
+  return (
+    <div className="flex w-9 items-center justify-center">
+      <TriggerSheet
+        triggerComponent={<InfoIcon className="text-primary" size={16} />}
+        title="Scan Details"
+        description="View the scan details"
+        defaultOpen={isOpen}
+      >
+        <DataTableRowDetails entityId={row.original.id} />
+      </TriggerSheet>
+    </div>
+  );
+};
+
 export const ColumnGetScans: ColumnDef<ScanProps>[] = [
   {
     id: "moreInfo",
     header: "Details",
-    cell: ({ row }) => {
-      const searchParams = useSearchParams();
-      const scanId = searchParams.get("scanId");
-      const isOpen = scanId === row.original.id;
-
-      return (
-        <div className="flex w-9 items-center justify-center">
-          <TriggerSheet
-            triggerComponent={<InfoIcon className="text-primary" size={16} />}
-            title="Scan Details"
-            description="View the scan details"
-            defaultOpen={isOpen}
-          >
-            <DataTableRowDetails entityId={row.original.id} />
-          </TriggerSheet>
-        </div>
-      );
-    },
+    cell: ({ row }) => <ScanDetailsCell row={row} />,
   },
   {
     accessorKey: "cloudProvider",

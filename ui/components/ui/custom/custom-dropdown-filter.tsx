@@ -31,7 +31,7 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
     null,
   );
 
-  const allFilterKeys = filter?.values || [];
+  const allFilterKeys = useMemo(() => filter?.values || [], [filter?.values]);
 
   const getActiveFilter = useMemo(() => {
     const currentFilters: Record<string, string> = {};
@@ -63,7 +63,7 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
     } else {
       setGroupSelected(new Set());
     }
-  }, [getActiveFilter, filter?.key, memoizedFilterValues]);
+  }, [getActiveFilter, filter?.key, memoizedFilterValues, filter]);
 
   const onSelectionChange = useCallback(
     (keys: string[]) => {
