@@ -11,9 +11,6 @@ class ec2_securitygroup_not_used(Check):
             if security_group.name != "default":
                 report = Check_Report_AWS(self.metadata(), security_group)
                 report.resource_details = security_group.name
-                report.resource_id = security_group.id
-                report.resource_arn = security_group_arn
-                report.resource_tags = security_group.tags
                 report.status = "PASS"
                 report.status_extended = f"Security group {security_group.name} ({security_group.id}) it is being used."
                 sg_in_lambda = False
