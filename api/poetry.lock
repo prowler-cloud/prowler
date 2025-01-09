@@ -3405,13 +3405,13 @@ files = [
 
 [[package]]
 name = "prowler"
-version = "5.0.2"
+version = "5.0.5"
 description = "Prowler is an Open Source security tool to perform AWS, GCP and Azure security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness. It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, FedRAMP, PCI-DSS, GDPR, HIPAA, FFIEC, SOC2, GXP, AWS Well-Architected Framework Security Pillar, AWS Foundational Technical Review (FTR), ENS (Spanish National Security Scheme) and your custom security frameworks."
 optional = false
 python-versions = "<3.13,>=3.9"
 files = [
-    {file = "prowler-5.0.2-py3-none-any.whl", hash = "sha256:752c23fcba0ef1f6b2e14557683a9f1040de278bf525020471b28397e06e477c"},
-    {file = "prowler-5.0.2.tar.gz", hash = "sha256:32f6fcaaa6921715bda38e19b0782f07f717a7f02b7065f7ea08e83216bcf39f"},
+    {file = "prowler-5.0.5-py3-none-any.whl", hash = "sha256:d1a77ba6d6e45ec80873b77739f75efabc5cc611d1ffaa2b0285f5692555e880"},
+    {file = "prowler-5.0.5.tar.gz", hash = "sha256:fe21d9708dca8e31c6160bf80a84b302c396c6cc066bb56cf9454da20d392b20"},
 ]
 
 [package.dependencies]
