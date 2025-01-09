@@ -80,13 +80,8 @@ export const DataTableColumnHeader = <TData, TValue>({
 
   return (
     <Button
-<<<<<<< HEAD
-      className="h-10 w-fit max-w-[110px] whitespace-nowrap bg-transparent px-0 text-left align-middle text-tiny font-semibold text-foreground-500 outline-none dark:text-slate-400"
-      onClick={getToggleSortingHandler}
-=======
       className="flex h-10 w-full items-center justify-between whitespace-nowrap bg-transparent px-0 text-left align-middle text-tiny font-semibold text-foreground-500 outline-none dark:text-slate-400"
       onPress={getToggleSortingHandler}
->>>>>>> e6b40358a (feat(update-credentials): add explanation text for the current behavior (#6400))
     >
       <span
         className="block whitespace-normal break-normal"
