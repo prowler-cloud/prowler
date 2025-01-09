@@ -2427,7 +2427,7 @@ class TestFindingViewSet:
                 ("inserted_at", "2024-01-01", 0),
                 ("inserted_at.date", "2024-01-01", 0),
                 ("inserted_at.gte", "2024-01-01", 2),
-                ("inserted_at.lte", "2024-12-31", 2),
+                ("inserted_at.lte", "2028-12-31", 2),
                 ("updated_at.lte", "2024-01-01", 0),
                 ("resource_type.icontains", "prowler", 2),
                 # full text search on finding
