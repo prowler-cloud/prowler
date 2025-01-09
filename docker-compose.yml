@@ -3,8 +3,7 @@ services:
     hostname: "prowler-api"
     image: prowlercloud/prowler-api:${PROWLER_API_VERSION:-stable}
     env_file:
-      - path: .env
-        required: false
+      - .env
     ports:
       - "${DJANGO_PORT:-8080}:${DJANGO_PORT:-8080}"
     depends_on:
@@ -19,8 +18,7 @@ services:
   ui:
     image: prowlercloud/prowler-ui:${PROWLER_UI_VERSION:-stable}
     env_file:
-      - path: .env
-        required: false
+      - .env
     ports:
       - ${UI_PORT:-3000}:${UI_PORT:-3000}
 
@@ -34,8 +32,7 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_ADMIN_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
     env_file:
-      - path: .env
-        required: false
+      - .env
     ports:
       - "${POSTGRES_PORT:-5432}:${POSTGRES_PORT:-5432}"
     healthcheck:
@@ -50,8 +47,7 @@ services:
     volumes:
       - ./_data/valkey:/data
     env_file:
-      - path: .env
-        required: false
+      - .env
     ports:
       - "${VALKEY_PORT:-6379}:6379"
     healthcheck:
@@ -63,8 +59,7 @@ services:
   worker:
     image: prowlercloud/prowler-api:${PROWLER_API_VERSION:-stable}
     env_file:
-      - path: .env
-        required: false
+      - .env
     depends_on:
       valkey:
         condition: service_healthy
@@ -77,8 +72,7 @@ services:
   worker-beat:
     image: prowlercloud/prowler-api:${PROWLER_API_VERSION:-stable}
     env_file:
-      - path: ./.env
-        required: false
+      - .env
     depends_on:
       valkey:
         condition: service_healthy
