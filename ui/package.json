@@ -36,7 +36,7 @@
     "recharts": "^2.13.0-alpha.4",
     "server-only": "^0.0.1",
     "shadcn-ui": "^0.2.3",
-    "tailwind-merge": "^2.5.3",
+    "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",
     "uuid": "^10.0.0",
     "zod": "^3.23.8",
