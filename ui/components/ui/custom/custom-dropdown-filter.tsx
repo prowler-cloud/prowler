@@ -127,10 +127,7 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
       <Button
         isIconOnly
         variant="light"
-        onClick={(e) => {
-          e.stopPropagation();
-          onClearFilter(filter.key);
-        }}
+        onPress={() => onClearFilter(filter.key)}
         className={`absolute right-2 top-1/2 z-40 -translate-y-1/2 ${
           groupSelected.size === 0 ? "hidden" : ""
         }`}

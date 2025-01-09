@@ -178,6 +178,9 @@ export const EditForm = ({
                 label="Role"
                 labelPlacement="outside"
                 placeholder="Select a role"
+                classNames={{
+                  selectorIcon: "right-2",
+                }}
                 variant="bordered"
                 selectedKeys={[field.value || ""]}
                 onSelectionChange={(selected) => {
