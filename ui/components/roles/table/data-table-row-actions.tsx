@@ -14,6 +14,7 @@ import {
 } from "@nextui-org/shared-icons";
 import { Row } from "@tanstack/react-table";
 import clsx from "clsx";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { VerticalDotsIcon } from "@/components/icons";
@@ -29,6 +30,7 @@ const iconClasses =
 export function DataTableRowActions<RoleProps>({
   row,
 }: DataTableRowActionsProps<RoleProps>) {
+  const router = useRouter();
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const roleId = (row.original as { id: string }).id;
   return (
@@ -59,11 +61,11 @@ export function DataTableRowActions<RoleProps>({
           >
             <DropdownSection title="Actions">
               <DropdownItem
-                href={`/roles/edit?roleId=${roleId}`}
-                key="check-details"
+                key="edit"
                 description="Edit the role details"
                 textValue="Edit Role"
                 startContent={<EditDocumentBulkIcon className={iconClasses} />}
+                onPress={() => router.push(`/roles/edit?roleId=${roleId}`)}
               >
                 Edit Role
               </DropdownItem>
@@ -80,7 +82,7 @@ export function DataTableRowActions<RoleProps>({
                     className={clsx(iconClasses, "!text-danger")}
                   />
                 }
-                onClick={() => setIsDeleteOpen(true)}
+                onPress={() => setIsDeleteOpen(true)}
               >
                 Delete Role
               </DropdownItem>
