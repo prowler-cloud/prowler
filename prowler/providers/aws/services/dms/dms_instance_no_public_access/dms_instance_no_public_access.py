@@ -12,6 +12,7 @@ class dms_instance_no_public_access(Check):
             report.region = instance.region
             report.resource_id = instance.id
             report.resource_arn = instance.arn
+            report.resource_tags = instance.tags
             report.status = "PASS"
             report.status_extended = (
                 f"DMS Replication Instance {instance.id} is not publicly accessible."

@@ -142,7 +142,8 @@ The JSON-OCSF output format implements the [Detection Finding](https://schema.oc
         "desc": "Ensure CloudTrail is enabled in all regions",
         "product_uid": "prowler",
         "title": "Ensure CloudTrail is enabled in all regions",
-        "uid": "prowler-aws-cloudtrail_multi_region_enabled-123456789012-ap-northeast-1-123456789012"
+        "uid": "prowler-aws-cloudtrail_multi_region_enabled-123456789012-ap-northeast-1-123456789012",
+        "types": ["Software and Configuration Checks","Industry and Regulatory Standards","CIS AWS Foundations Benchmark"],
     },
     "resources": [
         {
@@ -189,11 +190,10 @@ The JSON-OCSF output format implements the [Detection Finding](https://schema.oc
     "type_uid": 200401,
     "type_name": "Create",
     "unmapped": {
-        "check_type": "Software and Configuration Checks,Industry and Regulatory Standards,CIS AWS Foundations Benchmark",
         "related_url": "",
-        "categories": "forensics-ready",
-        "depends_on": "",
-        "related_to": "",
+        "categories": ["forensics-ready"],
+        "depends_on": [],
+        "related_to": [],
         "notes": "",
         "compliance": {
             "CISA": [
@@ -336,7 +336,7 @@ The following is the mapping between the native JSON and the Detection Finding f
 | Provider | cloud.provider |
 | CheckID | metadata.event_code |
 | CheckTitle | finding_info.title |
-| CheckType | unmapped.check_type |
+| CheckType | finding_info.types |
 | ServiceName | resources.group.name |
 | SubServiceName | _Not mapped yet_ |
 | Status | status_code |

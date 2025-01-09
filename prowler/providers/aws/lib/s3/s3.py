@@ -1,10 +1,20 @@
+import tempfile
 from os import path
 from tempfile import NamedTemporaryFile
 
 from boto3 import Session
+from botocore import exceptions
 
 from prowler.lib.logger import logger
 from prowler.lib.outputs.output import Output
+from prowler.providers.aws.lib.s3.exceptions.exceptions import (
+    S3BucketAccessDeniedError,
+    S3ClientError,
+    S3IllegalLocationConstraintError,
+    S3InvalidBucketNameError,
+    S3TestConnectionError,
+)
+from prowler.providers.common.models import Connection
 
 
 class S3:
@@ -147,3 +157,83 @@ class S3:
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
             )
         return uploaded_objects
+
+    @staticmethod
+    def test_connection(
+        session, bucket_name: str, raise_on_exception: bool = True
+    ) -> Connection:
+        """
+        Test the connection to the S3 bucket.
+
+        Parameters:
+        - session: An instance of the `Session` class representing the AWS session.
+        - bucket_name: A string representing the name of the S3 bucket.
+        - raise_on_exception: A boolean indicating whether to raise an exception if the connection test fails.
+
+        Returns:
+        - A Connection object indicating the status of the connection test.
+
+        Raises:
+        - Exception: An exception indicating that the connection test failed.
+        """
+        try:
+            s3_client = session.client(__class__.__name__.lower())
+            if "s3://" in bucket_name:
+                bucket_name = bucket_name.removeprefix("s3://")
+            # Check for the bucket location
+            bucket_location = s3_client.get_bucket_location(Bucket=bucket_name)
+            if bucket_location["LocationConstraint"] == "EU":
+                bucket_location["LocationConstraint"] = "eu-west-1"
+            if (
+                bucket_location["LocationConstraint"] == ""
+                or bucket_location["LocationConstraint"] is None
+            ):
+                bucket_location["LocationConstraint"] = "us-east-1"
+
+            # If the bucket location is not the same as the session region, change the session region
+            if (
+                session.region_name != bucket_location["LocationConstraint"]
+                and bucket_location["LocationConstraint"] is not None
+            ):
+                s3_client = session.client(
+                    __class__.__name__.lower(),
+                    region_name=bucket_location["LocationConstraint"],
+                )
+            # Set a Temp file to upload
+            with tempfile.TemporaryFile() as temp_file:
+                temp_file.write(b"Test Prowler Connection")
+                temp_file.seek(0)
+                s3_client.upload_fileobj(
+                    temp_file, bucket_name, "test-prowler-connection.txt"
+                )
+
+            # Try to delete the file
+            s3_client.delete_object(
+                Bucket=bucket_name, Key="test-prowler-connection.txt"
+            )
+            return Connection(is_connected=True)
+
+        except exceptions.ClientError as client_error:
+            if raise_on_exception:
+                if (
+                    "specified bucket does not exist"
+                    in client_error.response["Error"]["Message"]
+                ):
+                    raise S3InvalidBucketNameError(original_exception=client_error)
+                elif (
+                    "IllegalLocationConstraintException"
+                    in client_error.response["Error"]["Message"]
+                ):
+                    raise S3IllegalLocationConstraintError(
+                        original_exception=client_error
+                    )
+                elif "AccessDenied" in client_error.response["Error"]["Code"]:
+                    raise S3BucketAccessDeniedError(original_exception=client_error)
+                else:
+                    raise S3ClientError(original_exception=client_error)
+            return Connection(is_connected=False, error=client_error)
+
+        except Exception as error:
+            if raise_on_exception:
+                raise S3TestConnectionError(original_exception=error)
+            return False

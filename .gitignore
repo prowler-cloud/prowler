@@ -12,6 +12,7 @@ build/
 /dist/
 *.egg-info/
 */__pycache__/*.pyc
+.idea/
 
 # Session
 Session.vim
@@ -46,7 +47,8 @@ junit-reports/
 *.tfstate
 
 # .env
-.env*
+ui/.env*
+api/.env*
 
 # Coverage
 .coverage*
@@ -55,3 +57,6 @@ coverage*
 
 # Node
 node_modules
+
+# Persistent data
+_data/

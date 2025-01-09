@@ -6,7 +6,7 @@ class cloudwatch_log_group_kms_encryption_enabled(Check):
     def execute(self):
         findings = []
         if logs_client.log_groups:
-            for log_group in logs_client.log_groups:
+            for log_group in logs_client.log_groups.values():
                 report = Check_Report_AWS(self.metadata())
                 report.region = log_group.region
                 report.resource_id = log_group.name

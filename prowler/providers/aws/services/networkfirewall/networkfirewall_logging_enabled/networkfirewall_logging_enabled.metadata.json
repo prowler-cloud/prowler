@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "networkfirewall_logging_enabled",
+  "CheckTitle": "Ensure Network Firewall Logging is Enabled",
+  "CheckType": [
+    "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53"
+  ],
+  "ServiceName": "network-firewall",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:network-firewall::account-id:firewall/firewall-name",
+  "Severity": "medium",
+  "ResourceType": "AwsNetworkFirewallFirewall",
+  "Description": "This control checks whether logging is enabled for an AWS Network Firewall firewall. The control fails if logging isn't enabled for at least one log type or if the logging destination doesn't exist.",
+  "Risk": "Failing to enable logging on an AWS Network Firewall can lead to a lack of visibility into network traffic, making it difficult to monitor and respond to security incidents effectively, which could jeopardize the security and integrity of your infrastructure.",
+  "RelatedUrl": "https://docs.aws.amazon.com/network-firewall/latest/developerguide/firewall-logging.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws network-firewall update-logging-configuration --firewall-arn <firewall-arn> --logging-configuration <configuration>",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/networkfirewall-controls.html#networkfirewall-2",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable logging for your AWS Network Firewall by updating its logging configuration to ensure comprehensive tracking of network traffic and facilitate better incident response and auditing capabilities.",
+      "Url": "https://docs.aws.amazon.com/network-firewall/latest/developerguide/firewall-update-logging-configuration.html"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

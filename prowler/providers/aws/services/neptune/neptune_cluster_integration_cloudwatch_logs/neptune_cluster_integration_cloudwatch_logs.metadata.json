@@ -25,7 +25,9 @@
       "Url": "https://docs.aws.amazon.com/neptune/latest/userguide/cloudwatch-logs.html"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

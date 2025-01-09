@@ -5,15 +5,13 @@ from prowler.providers.aws.services.config.config_client import config_client
 class config_recorder_all_regions_enabled(Check):
     def execute(self):
         findings = []
-        for recorder in config_client.recorders:
+        for recorder in config_client.recorders.values():
             report = Check_Report_AWS(self.metadata())
             report.region = recorder.region
             report.resource_arn = config_client._get_recorder_arn_template(
                 recorder.region
             )
-            report.resource_id = (
-                config_client.audited_account if not recorder.name else recorder.name
-            )
+            report.resource_id = recorder.name
             # Check if Config is enabled in region
             if not recorder.name:
                 report.status = "FAIL"

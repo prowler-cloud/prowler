@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "autoscaling_group_using_ec2_launch_template",
+  "CheckTitle": "Check if Amazon EC2 Auto Scaling groups use EC2 launch templates.",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "autoscaling",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:autoscaling:region:account-id:autoScalingGroup/autoScalingGroupName",
+  "Severity": "medium",
+  "ResourceType": "AwsAutoScalingAutoScalingGroup",
+  "Description": "This control checks whether an Amazon EC2 Auto Scaling group is created using an EC2 launch template. The control fails if the Auto Scaling group is not created with a launch template or if a launch template is not specified in a mixed instances policy.",
+  "Risk": "Using launch configurations instead of launch templates may limit your access to the latest EC2 features and improvements, reducing the flexibility and efficiency of your Auto Scaling groups.",
+  "RelatedUrl": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/create-asg-launch-template.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws autoscaling create-auto-scaling-group --launch-template LaunchTemplateId=<template-id>",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/autoscaling-controls.html#autoscaling-9",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Use EC2 launch templates when creating Auto Scaling groups to ensure access to the latest features and improvements.",
+      "Url": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/AutoScaling/asg-launch-template.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

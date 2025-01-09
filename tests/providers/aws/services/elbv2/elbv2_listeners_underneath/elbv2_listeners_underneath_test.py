@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 
 from boto3 import client, resource
@@ -89,9 +88,8 @@ class Test_elbv2_listeners_underneath:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert search(
-                "has no listeners underneath",
-                result[0].status_extended,
+            assert (
+                result[0].status_extended == "ELBv2 my-lb has no listeners underneath."
             )
             assert result[0].resource_id == "my-lb"
             assert result[0].resource_arn == lb["LoadBalancerArn"]
@@ -167,6 +165,6 @@ class Test_elbv2_listeners_underneath:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert search("has listeners underneath", result[0].status_extended)
+            assert result[0].status_extended == "ELBv2 my-lb has listeners underneath."
             assert result[0].resource_id == "my-lb"
             assert result[0].resource_arn == lb["LoadBalancerArn"]

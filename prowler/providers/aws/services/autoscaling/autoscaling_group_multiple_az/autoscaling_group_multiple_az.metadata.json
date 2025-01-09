@@ -23,7 +23,9 @@
       "Url": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/as-add-availability-zone.html"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "redundancy"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "mq_broker_active_deployment_mode",
+  "CheckTitle": "Apache ActiveMQ brokers should be configured in active/standby mode.",
+  "CheckType": [
+    "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53 Controls"
+  ],
+  "ServiceName": "mq",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:mq:region:account-id:broker:broker-id",
+  "Severity": "low",
+  "ResourceType": "AwsAmazonMQBroker",
+  "Description": "Ensure Amazon MQ Apache ActiveMQ brokers are configured in active/standby mode for high availability and fault tolerance.",
+  "Risk": "Apache ActiveMQ brokers not configured in active/standby mode lack high availability, increasing the risk of downtime and data loss during failures.",
+  "RelatedUrl": "https://docs.aws.amazon.com/amazon-mq/latest/developer-guide/amazon-mq-basic-elements.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws mq create-broker --broker-name <broker-name> --engine-type ActiveMQ --deployment-mode ACTIVE_STANDBY_MULTI_AZ",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/mq-controls.html#mq-5",
+      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/MQ/deployment-mode.html"
+    },
+    "Recommendation": {
+      "Text": "Ensure Amazon MQ Apache ActiveMQ brokers use active/standby deployment mode for high availability and fault tolerance.",
+      "Url": "https://docs.aws.amazon.com/amazon-mq/latest/developer-guide/amazon-mq-broker-architecture.html#active-standby-broker-deployment"
+    }
+  },
+  "Categories": [
+    "redundancy"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

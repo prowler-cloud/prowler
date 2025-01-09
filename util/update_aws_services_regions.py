@@ -48,6 +48,10 @@ for page in get_parameters_by_path_paginator.paginate(
 logging.info("Updating subservices and the services not present in the original matrix")
 # macie2 --> macie
 regions_by_service["services"]["macie2"] = regions_by_service["services"]["macie"]
+# bedrock-agent --> bedrock
+regions_by_service["services"]["bedrock-agent"] = regions_by_service["services"][
+    "bedrock"
+]
 # cognito --> cognito-idp
 regions_by_service["services"]["cognito"] = regions_by_service["services"][
     "cognito-idp"
@@ -62,6 +66,8 @@ regions_by_service["services"]["wafv2"] = regions_by_service["services"]["waf"]
 regions_by_service["services"]["wellarchitected"] = regions_by_service["services"][
     "wellarchitectedtool"
 ]
+# sesv2 --> ses
+regions_by_service["services"]["sesv2"] = regions_by_service["services"]["ses"]
 
 # Write to file
 parsed_matrix_regions_aws = f"{os.path.dirname(os.path.realpath(__name__))}/prowler/providers/aws/aws_regions_by_service.json"

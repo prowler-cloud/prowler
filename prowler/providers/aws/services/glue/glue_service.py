@@ -1,30 +1,37 @@
-from typing import Optional
+import json
+from typing import Dict, List, Optional
 
 from botocore.exceptions import ClientError
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################## Glue
 class Glue(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.connections = []
         self.__threading_call__(self._get_connections)
+        self.__threading_call__(self._list_tags, self.connections)
         self.tables = []
         self.__threading_call__(self._search_tables)
-        self.catalog_encryption_settings = []
-        self.__threading_call__(self._get_data_catalog_encryption_settings)
+        self.data_catalogs = {}
+        self.__threading_call__(self._get_data_catalogs)
+        self.__threading_call__(self._get_resource_policy, self.data_catalogs.values())
         self.dev_endpoints = []
         self.__threading_call__(self._get_dev_endpoints)
+        self.__threading_call__(self._list_tags, self.dev_endpoints)
         self.security_configs = []
         self.__threading_call__(self._get_security_configurations)
         self.jobs = []
         self.__threading_call__(self._get_jobs)
+        self.__threading_call__(self._list_tags, self.jobs)
+        self.ml_transforms = {}
+        self.__threading_call__(self._get_ml_transforms)
+        self.__threading_call__(self._list_tags, self.ml_transforms.values())
 
     def _get_data_catalog_arn_template(self, region):
         return f"arn:{self.audited_partition}:glue:{region}:{self.audited_account}:data-catalog"
@@ -105,7 +112,7 @@ class Glue(AWSService):
                                 name=job["Name"],
                                 arn=arn,
                                 security=job.get("SecurityConfiguration"),
-                                arguments=job.get("DefaultArguments"),
+                                arguments=job.get("DefaultArguments", {}),
                                 region=regional_client.region,
                             )
                         )
@@ -176,8 +183,8 @@ class Glue(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _get_data_catalog_encryption_settings(self, regional_client):
-        logger.info("Glue - Catalog Encryption Settings...")
+    def _get_data_catalogs(self, regional_client):
+        logger.info("Glue - Catalog ...")
         try:
             settings = regional_client.get_data_catalog_encryption_settings()[
                 "DataCatalogEncryptionSettings"
@@ -186,23 +193,81 @@ class Glue(AWSService):
             for table in self.tables:
                 if table.region == regional_client.region:
                     tables_in_region = True
-            self.catalog_encryption_settings.append(
-                CatalogEncryptionSetting(
-                    mode=settings["EncryptionAtRest"]["CatalogEncryptionMode"],
-                    kms_id=settings["EncryptionAtRest"].get("SseAwsKmsKeyId"),
-                    password_encryption=settings["ConnectionPasswordEncryption"][
-                        "ReturnConnectionPasswordEncrypted"
-                    ],
-                    password_kms_id=settings["ConnectionPasswordEncryption"].get(
-                        "AwsKmsKeyId"
-                    ),
-                    region=regional_client.region,
-                    tables=tables_in_region,
-                )
+            catalog_encryption_settings = CatalogEncryptionSetting(
+                mode=settings["EncryptionAtRest"]["CatalogEncryptionMode"],
+                kms_id=settings["EncryptionAtRest"].get("SseAwsKmsKeyId"),
+                password_encryption=settings["ConnectionPasswordEncryption"][
+                    "ReturnConnectionPasswordEncrypted"
+                ],
+                password_kms_id=settings["ConnectionPasswordEncryption"].get(
+                    "AwsKmsKeyId"
+                ),
+            )
+            self.data_catalogs[regional_client.region] = DataCatalog(
+                tables=tables_in_region,
+                region=regional_client.region,
+                encryption_settings=catalog_encryption_settings,
             )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _list_tags(self, resource: any):
+        try:
+            resource.tags = [
+                self.regional_clients[resource.region].get_tags(
+                    ResourceArn=resource.arn
+                )["Tags"]
+            ]
+        except Exception as error:
+            logger.error(
+                f"{resource.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _get_ml_transforms(self, regional_client):
+        logger.info("Glue - Getting ML Transforms...")
+        try:
+            transforms = regional_client.get_ml_transforms()["Transforms"]
+            for transform in transforms:
+                ml_transform_arn = f"arn:{self.audited_partition}:glue:{regional_client.region}:{self.audited_account}:mlTransform/{transform['TransformId']}"
+                if not self.audit_resources or is_resource_filtered(
+                    ml_transform_arn, self.audit_resources
+                ):
+                    self.ml_transforms[ml_transform_arn] = MLTransform(
+                        arn=ml_transform_arn,
+                        id=transform["TransformId"],
+                        name=transform["Name"],
+                        user_data_encryption=transform.get("TransformEncryption", {})
+                        .get("MlUserDataEncryption", {})
+                        .get("MlUserDataEncryptionMode", "DISABLED"),
+                        region=regional_client.region,
+                    )
+
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _get_resource_policy(self, data_catalog):
+        logger.info("Glue - Getting Resource Policy...")
+        try:
+            data_catalog_policy = self.regional_clients[
+                data_catalog.region
+            ].get_resource_policy()
+            data_catalog.policy = json.loads(data_catalog_policy["PolicyInJson"])
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "EntityNotFoundException":
+                logger.warning(
+                    f"{data_catalog.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{data_catalog.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+        except Exception as error:
+            logger.error(
+                f"{data_catalog.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
 
@@ -212,6 +277,7 @@ class Connection(BaseModel):
     type: str
     properties: dict
     region: str
+    tags: Optional[List[Dict[str, str]]] = Field(default_factory=list)
 
 
 class Table(BaseModel):
@@ -220,6 +286,7 @@ class Table(BaseModel):
     database: str
     catalog: Optional[str]
     region: str
+    tags: Optional[List[Dict[str, str]]] = Field(default_factory=list)
 
 
 class CatalogEncryptionSetting(BaseModel):
@@ -227,8 +294,6 @@ class CatalogEncryptionSetting(BaseModel):
     kms_id: Optional[str]
     password_encryption: bool
     password_kms_id: Optional[str]
-    tables: bool
-    region: str
 
 
 class DevEndpoint(BaseModel):
@@ -236,14 +301,16 @@ class DevEndpoint(BaseModel):
     arn: str
     security: Optional[str]
     region: str
+    tags: Optional[List[Dict[str, str]]] = Field(default_factory=list)
 
 
 class Job(BaseModel):
     arn: str
     name: str
     security: Optional[str]
-    arguments: Optional[dict]
+    arguments: Optional[Dict[str, str]] = Field(default_factory=dict)
     region: str
+    tags: Optional[List[Dict[str, str]]] = Field(default_factory=list)
 
 
 class SecurityConfig(BaseModel):
@@ -255,3 +322,21 @@ class SecurityConfig(BaseModel):
     jb_encryption: str
     jb_key_arn: Optional[str]
     region: str
+    tags: Optional[List[Dict[str, str]]] = Field(default_factory=list)
+
+
+class MLTransform(BaseModel):
+    arn: str
+    id: str
+    name: str
+    user_data_encryption: str
+    region: str
+    tags: Optional[List[Dict[str, str]]] = Field(default_factory=list)
+
+
+class DataCatalog(BaseModel):
+    tables: bool
+    region: str
+    encryption_settings: Optional[CatalogEncryptionSetting]
+    policy: Optional[dict]
+    tags: Optional[List[Dict[str, str]]] = Field(default_factory=list)

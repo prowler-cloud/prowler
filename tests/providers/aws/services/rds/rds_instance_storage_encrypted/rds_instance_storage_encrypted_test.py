@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 
 import botocore
@@ -90,10 +89,6 @@ class Test_rds_instance_storage_encrypted:
                 assert (
                     result[0].status_extended
                     == "RDS Instance db-master-1 is not encrypted."
-                )
-                assert search(
-                    "is not encrypted",
-                    result[0].status_extended,
                 )
                 assert result[0].resource_id == "db-master-1"
                 assert result[0].region == AWS_REGION_US_EAST_1

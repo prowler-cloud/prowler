@@ -133,6 +133,9 @@ class Test_iam_policy_attached_only_to_group_or_roles:
             UserName=user, PolicyName=policyName, PolicyDocument=dumps(policyDocument)
         )
 
+        # Tag the user
+        iam_client.tag_user(UserName=user, Tags=[{"Key": "tag1", "Value": "value1"}])
+
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         from prowler.providers.aws.services.iam.iam_service import IAM
 
@@ -160,6 +163,7 @@ class Test_iam_policy_attached_only_to_group_or_roles:
                 result[0].resource_arn
                 == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:user/{user}"
             )
+            assert result[0].resource_tags == [{"Key": "tag1", "Value": "value1"}]
 
     @mock_aws
     def test_iam_user_no_policies(self):
@@ -167,6 +171,9 @@ class Test_iam_policy_attached_only_to_group_or_roles:
         iam_client = client("iam")
         user = "test_no_policies"
         iam_client.create_user(UserName=user)
+
+        # Tag the user
+        iam_client.tag_user(UserName=user, Tags=[{"Key": "tag1", "Value": "value1"}])
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         from prowler.providers.aws.services.iam.iam_service import IAM
@@ -195,3 +202,4 @@ class Test_iam_policy_attached_only_to_group_or_roles:
                 result[0].resource_arn
                 == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:user/{user}"
             )
+            assert result[0].resource_tags == [{"Key": "tag1", "Value": "value1"}]

@@ -20,6 +20,5 @@ class iam_customer_unattached_policy_no_administrative_privileges(Check):
                     if check_admin_access(policy.document):
                         report.status = "FAIL"
                         report.status_extended = f"{policy.type} policy {policy.name} is unattached and allows '*:*' administrative privileges."
-                        break
                 findings.append(report)
         return findings

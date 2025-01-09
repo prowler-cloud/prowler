@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 
 from boto3 import client
@@ -76,7 +75,10 @@ class Test_dynamodb_tables_kms_cmk_encryption_enabled:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert search("KMS encryption enabled", result[0].status_extended)
+            assert (
+                result[0].status_extended
+                == "DynamoDB table test1 has KMS encryption enabled with key custom-kms-key."
+            )
             assert result[0].resource_id == table["TableName"]
             assert result[0].resource_arn == table["TableArn"]
             assert result[0].region == AWS_REGION_US_EAST_1
@@ -120,7 +122,10 @@ class Test_dynamodb_tables_kms_cmk_encryption_enabled:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert search("DEFAULT encryption enabled", result[0].status_extended)
+            assert (
+                result[0].status_extended
+                == "DynamoDB table test1 is using DEFAULT encryption."
+            )
             assert result[0].resource_id == table["TableName"]
             assert result[0].resource_arn == table["TableArn"]
             assert result[0].region == AWS_REGION_US_EAST_1

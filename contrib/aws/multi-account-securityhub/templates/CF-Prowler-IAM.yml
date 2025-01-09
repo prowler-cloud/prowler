@@ -97,9 +97,15 @@ Outputs:
   ECSExecutionRoleARN:
     Description: ARN of the ECS Task Execution Role
     Value: !GetAtt ECSExecutionRole.Arn
+    Export:
+      Name: ECSExecutionRoleArn
   ProwlerTaskRoleARN:
     Description: ARN of the ECS Prowler Task Role
     Value: !GetAtt ProwlerTaskRole.Arn
+    Export:
+      Name: ProwlerTaskRoleArn
   ECSEventRoleARN:
     Description: ARN of the Eventbridge Task Role
     Value: !GetAtt ECSEventRole.Arn
+    Export:
+      Name: ECSEventRoleARN

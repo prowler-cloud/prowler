@@ -17,7 +17,7 @@ class sns_topics_not_publicly_accessible(Check):
             report.resource_tags = topic.tags
             report.status = "PASS"
             report.status_extended = (
-                f"SNS topic {topic.name} is not publicly accesible."
+                f"SNS topic {topic.name} is not publicly accessible."
             )
             if topic.policy:
                 for statement in topic.policy["Statement"]:

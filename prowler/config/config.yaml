@@ -42,7 +42,7 @@ aws:
         "amazon-elb"
     ]
   # aws.ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports
-  ec2_sg_high_risk_ports:
+  ec2_high_risk_ports:
     [
         25,
         110,
@@ -57,6 +57,11 @@ aws:
         8088,
     ]
 
+  # AWS ECS Configuration
+  # aws.ecs_service_fargate_latest_platform_version
+  fargate_linux_latest_version: "1.4.0"
+  fargate_windows_latest_version: "1.0.0"
+
   # AWS VPC Configuration (vpc_endpoint_connections_trust_boundaries, vpc_endpoint_services_allowed_principals_trust_boundaries)
   # AWS SSM Configuration (aws.ssm_documents_set_as_public)
   # Single account environment: No action required. The AWS account number will be automatically added by the checks.
@@ -67,6 +72,10 @@ aws:
   # AWS Cloudwatch Configuration
   # aws.cloudwatch_log_group_retention_policy_specific_days_enabled --> by default is 365 days
   log_group_retention_days: 365
+
+  # AWS CloudFormation Configuration
+  # cloudformation_stack_cdktoolkit_bootstrap_version --> by default is 21
+  recommended_cdk_bootstrap_version: 21
 
   # AWS AppStream Session Configuration
   # aws.appstream_fleet_session_idle_disconnect_timeout
@@ -94,7 +103,9 @@ aws:
       "nodejs10.x",
       "nodejs12.x",
       "nodejs14.x",
+      "nodejs16.x",
       "dotnet5.0",
+      "dotnet7",
       "dotnetcore1.0",
       "dotnetcore2.0",
       "dotnetcore2.1",
@@ -128,7 +139,7 @@ aws:
 
   # AWS CloudTrail Configuration
   # aws.cloudtrail_threat_detection_privilege_escalation
-  threat_detection_privilege_escalation_threshold: 0.1 # Percentage of actions found to decide if it is an privilege_escalation attack event, by default is 0.1 (10%)
+  threat_detection_privilege_escalation_threshold: 0.2 # Percentage of actions found to decide if it is an privilege_escalation attack event, by default is 0.2 (20%)
   threat_detection_privilege_escalation_minutes: 1440 # Past minutes to search from now for privilege_escalation attacks, by default is 1440 minutes (24 hours)
   threat_detection_privilege_escalation_actions:
     [
@@ -185,7 +196,7 @@ aws:
       "UpdateLoginProfile",
     ]
   # aws.cloudtrail_threat_detection_enumeration
-  threat_detection_enumeration_threshold: 0.1 # Percentage of actions found to decide if it is an enumeration attack event, by default is 0.1 (10%)
+  threat_detection_enumeration_threshold: 0.3 # Percentage of actions found to decide if it is an enumeration attack event, by default is 0.3 (30%)
   threat_detection_enumeration_minutes: 1440 # Past minutes to search from now for enumeration attacks, by default is 1440 minutes (24 hours)
   threat_detection_enumeration_actions:
     [
@@ -280,6 +291,24 @@ aws:
       "LookupEvents",
       "Search",
     ]
+  # aws.cloudtrail_threat_detection_llm_jacking
+  threat_detection_llm_jacking_threshold: 0.4 # Percentage of actions found to decide if it is an LLM Jacking attack event, by default is 0.4 (40%)
+  threat_detection_llm_jacking_minutes: 1440 # Past minutes to search from now for LLM Jacking attacks, by default is 1440 minutes (24 hours)
+  threat_detection_llm_jacking_actions:
+    [
+    "PutUseCaseForModelAccess",  # Submits a use case for model access, providing justification (Write).
+    "PutFoundationModelEntitlement",  # Grants entitlement for accessing a foundation model (Write).
+    "PutModelInvocationLoggingConfiguration", # Configures logging for model invocations (Write).
+    "CreateFoundationModelAgreement",  # Creates a new agreement to use a foundation model (Write).
+    "InvokeModel",  # Invokes a specified Bedrock model for inference using provided prompt and parameters (Read).
+    "InvokeModelWithResponseStream",  # Invokes a Bedrock model for inference with real-time token streaming (Read).
+    "GetUseCaseForModelAccess",  # Retrieves an existing use case for model access (Read).
+    "GetModelInvocationLoggingConfiguration",  # Fetches the logging configuration for model invocations (Read).
+    "GetFoundationModelAvailability",  # Checks the availability of a foundation model for use (Read).
+    "ListFoundationModelAgreementOffers",  # Lists available agreement offers for accessing foundation models (List).
+    "ListFoundationModels",  # Lists the available foundation models in Bedrock (List).
+    "ListProvisionedModelThroughputs",  # Lists the provisioned throughput for previously created models (List).
+    ]
 
   # AWS RDS Configuration
   # aws.rds_instance_backup_enabled
@@ -289,10 +318,12 @@ aws:
   # AWS ACM Configuration
   # aws.acm_certificates_expiration_check
   days_to_expire_threshold: 7
-  # aws.acm_certificates_rsa_key_length
+  # aws.acm_certificates_with_secure_key_algorithms
   insecure_key_algorithms:
     [
       "RSA-1024",
+      "P-192",
+      "SHA-1",
     ]
 
   # AWS EKS Configuration
@@ -330,9 +361,23 @@ aws:
   elbv2_min_azs: 2
 
 
-  # Known secrets to ignore on detection
-  # this will include a list of regex patterns to ignore on detection
+  # AWS Secrets Configuration
+  # Patterns to ignore in the secrets checks
   secrets_ignore_patterns: []
+
+  # AWS Secrets Manager Configuration
+  # aws.secretsmanager_secret_unused
+  # Maximum number of days a secret can be unused
+  max_days_secret_unused: 90
+
+  # aws.secretsmanager_secret_rotated_periodically
+  # Maximum number of days a secret should be rotated
+  max_days_secret_unrotated: 90
+
+  # AWS Kinesis Configuration
+  # Minimum retention period in hours for Kinesis streams
+  min_kinesis_stream_retention_hours: 168 # 7 days
+
 
 # Azure Configuration
 azure:
@@ -348,6 +393,14 @@ azure:
   python_latest_version: "3.12"
   # azure.app_ensure_java_version_is_latest
   java_latest_version: "17"
+
+  # Azure SQL Server
+  # azure.sqlserver_minimal_tls_version
+  recommended_minimal_tls_versions:
+    [
+      "1.2",
+      "1.3",
+    ]
 
 # GCP Configuration
 gcp:

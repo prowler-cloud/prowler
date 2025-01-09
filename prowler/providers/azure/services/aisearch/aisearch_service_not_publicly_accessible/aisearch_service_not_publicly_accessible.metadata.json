@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "aisearch_service_not_publicly_accessible",
+  "CheckTitle": "Restrict public network access to the AI Search Service",
+  "CheckType": [],
+  "ServiceName": "aisearch",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "",
+  "Description": "Ensure that public network access to the Search Service is restricted.",
+  "Risk": "Public accessibility exposes the Search Service to potential attacks, unauthorized usage, and data breaches. Restricting access minimizes the surface area for attacks and ensures that only authorized networks can access the search service.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/search/service-configure-firewall#configure-network-access-in-azure-portal",
+  "Remediation": {
+    "Code": {
+      "CLI": "az search service update --resource-group <resource_group_name> --name <service_name> --public-access disabled",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure that the necessary virtual network configurations or IP rules are in place to allow access from required services once public access is restricted. Review the network access settings regularly to maintain a secure environment. To restrict public network access to your Search Service: 1. Navigate to your Search Service y in the Azure Portal. 2. Under 'Settings'->'Networking', configure the 'Public network access' settings to 'Disabled'. 3. Set up virtual network service endpoints or private endpoints as needed for secure access. 4. Review and adjust IP access rules as necessary.",
+      "Url": "https://learn.microsoft.com/en-us/azure/search/service-configure-firewall#configure-network-access-in-azure-portal"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

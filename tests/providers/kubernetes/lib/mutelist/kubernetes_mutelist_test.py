@@ -2,6 +2,7 @@ import yaml
 from mock import MagicMock
 
 from prowler.providers.kubernetes.lib.mutelist.mutelist import KubernetesMutelist
+from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 
 MUTELIST_FIXTURE_PATH = (
     "tests/providers/kubernetes/lib/mutelist/fixtures/kubernetes_mutelist.yaml"
@@ -128,3 +129,36 @@ class TestKubernetesMutelist:
         finding.resource_tags = []
 
         assert mutelist.is_finding_muted(finding, "cluster_1")
+
+    def test_mute_finding(self):
+        # Mutelist
+        mutelist_content = {
+            "Accounts": {
+                "cluster_1": {
+                    "Checks": {
+                        "check_test": {
+                            "Regions": ["*"],
+                            "Resources": ["test_resource"],
+                        }
+                    }
+                }
+            }
+        }
+
+        mutelist = KubernetesMutelist(mutelist_content=mutelist_content)
+
+        finding_1 = generate_finding_output(
+            check_id="check_test",
+            status="FAIL",
+            account_uid="cluster_1",
+            region="test-region",
+            resource_uid="test_resource",
+            resource_tags=[],
+            muted=False,
+        )
+
+        muted_finding = mutelist.mute_finding(finding_1)
+
+        assert muted_finding.status == "MUTED"
+        assert muted_finding.muted is True
+        assert muted_finding.raw["status"] == "FAIL"

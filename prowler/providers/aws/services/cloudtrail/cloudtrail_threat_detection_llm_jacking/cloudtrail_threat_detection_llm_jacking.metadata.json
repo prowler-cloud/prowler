@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "cloudtrail_threat_detection_llm_jacking",
+  "CheckTitle": "Ensure there are no potential LLM Jacking threats in CloudTrail.",
+  "CheckType": [],
+  "ServiceName": "cloudtrail",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "critical",
+  "ResourceType": "AwsCloudTrailTrail",
+  "Description": "This check ensures that there are no potential LLM Jacking threats in CloudTrail. LLM Jacking attacks involve unauthorized access to cloud-hosted large language model (LLM) services, such as AWS Bedrock, by exploiting exposed credentials or vulnerabilities. These attacks can lead to resource hijacking, unauthorized model invocations, and high operational costs for the victim organization.",
+  "Risk": "Potential LLM Jacking threats in CloudTrail can lead to unauthorized access to sensitive AI models, stolen credentials, resource hijacking, or running costly workloads. Attackers may use reverse proxies or malicious credentials to sell access to models, exfiltrate sensitive data, or disrupt business operations.",
+  "RelatedUrl": "https://sysdig.com/blog/llmjacking-stolen-cloud-credentials-used-in-new-ai-attack/",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "To remediate this issue, enable detailed CloudTrail logging for Bedrock API calls, monitor suspicious activities, and secure sensitive credentials. Enable logging of model invocation inputs and outputs, and restrict access using IAM policies. Review CloudTrail logs regularly for suspicious `InvokeModel` actions or unauthorized access to models.",
+      "Url": "https://permiso.io/blog/exploiting-hosted-models"
+    }
+  },
+  "Categories": [
+    "threat-detection"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

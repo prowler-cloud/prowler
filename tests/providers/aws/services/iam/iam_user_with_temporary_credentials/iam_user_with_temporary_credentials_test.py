@@ -16,6 +16,13 @@ class Test_iam_user_with_temporary_credentials:
         iam_client.access_keys_metadata = {}
         iam_client.last_accessed_services = {}
 
+        iam_client.users = [
+            mock.MagicMock(
+                arn=IAM_USER_ARN,
+                tags=[{"Key": "Name", "Value": IAM_USER_NAME}],
+            )
+        ]
+
         # Generate temporary credentials usage
         iam_client.user_temporary_credentials_usage = {}
         iam_client._get_user_temporary_credentials_usage = (
@@ -45,6 +52,13 @@ class Test_iam_user_with_temporary_credentials:
         iam_client.access_keys_metadata = {USER_DATA: []}
         iam_client.last_accessed_services = {USER_DATA: []}
 
+        iam_client.users = [
+            mock.MagicMock(
+                arn=IAM_USER_ARN,
+                tags=[{"Key": "Name", "Value": IAM_USER_NAME}],
+            )
+        ]
+
         # Generate temporary credentials usage
         iam_client.user_temporary_credentials_usage = {}
         iam_client._get_user_temporary_credentials_usage = (
@@ -74,6 +88,7 @@ class Test_iam_user_with_temporary_credentials:
             assert result[0].resource_id == IAM_USER_NAME
             assert result[0].resource_arn == IAM_USER_ARN
             assert result[0].region == AWS_REGION_US_EAST_1
+            assert result[0].resource_tags == [{"Key": "Name", "Value": IAM_USER_NAME}]
 
     def test_user_access_keys_no_accesed_services(self):
         iam_client = mock.MagicMock
@@ -82,6 +97,13 @@ class Test_iam_user_with_temporary_credentials:
         iam_client.access_keys_metadata = {USER_DATA: [{"AccessKeyId": 1}]}
         iam_client.last_accessed_services = {USER_DATA: []}
 
+        iam_client.users = [
+            mock.MagicMock(
+                arn=IAM_USER_ARN,
+                tags=[{"Key": "Name", "Value": IAM_USER_NAME}],
+            )
+        ]
+
         # Generate temporary credentials usage
         iam_client.user_temporary_credentials_usage = {}
         iam_client._get_user_temporary_credentials_usage = (
@@ -111,6 +133,7 @@ class Test_iam_user_with_temporary_credentials:
             assert result[0].resource_id == IAM_USER_NAME
             assert result[0].resource_arn == IAM_USER_ARN
             assert result[0].region == AWS_REGION_US_EAST_1
+            assert result[0].resource_tags == [{"Key": "Name", "Value": IAM_USER_NAME}]
 
     def test_user_access_keys_accesed_services_sts(self):
         iam_client = mock.MagicMock
@@ -119,6 +142,13 @@ class Test_iam_user_with_temporary_credentials:
         iam_client.access_keys_metadata = {USER_DATA: [{"AccessKeyId": 1}]}
         iam_client.last_accessed_services = {USER_DATA: [{"ServiceNamespace": "sts"}]}
 
+        iam_client.users = [
+            mock.MagicMock(
+                arn=IAM_USER_ARN,
+                tags=[{"Key": "Name", "Value": IAM_USER_NAME}],
+            )
+        ]
+
         # Generate temporary credentials usage
         iam_client.user_temporary_credentials_usage = {}
         iam_client._get_user_temporary_credentials_usage = (
@@ -148,6 +178,7 @@ class Test_iam_user_with_temporary_credentials:
             assert result[0].resource_id == IAM_USER_NAME
             assert result[0].resource_arn == IAM_USER_ARN
             assert result[0].region == AWS_REGION_US_EAST_1
+            assert result[0].resource_tags == [{"Key": "Name", "Value": IAM_USER_NAME}]
 
     def test_access_keys_with_iam_and_sts(self):
         iam_client = mock.MagicMock
@@ -158,6 +189,13 @@ class Test_iam_user_with_temporary_credentials:
             USER_DATA: [{"ServiceNamespace": "sts"}, {"ServiceNamespace": "iam"}]
         }
 
+        iam_client.users = [
+            mock.MagicMock(
+                arn=IAM_USER_ARN,
+                tags=[{"Key": "Name", "Value": IAM_USER_NAME}],
+            )
+        ]
+
         # Generate temporary credentials usage
         iam_client.user_temporary_credentials_usage = {}
         iam_client._get_user_temporary_credentials_usage = (
@@ -187,6 +225,7 @@ class Test_iam_user_with_temporary_credentials:
             assert result[0].resource_id == IAM_USER_NAME
             assert result[0].resource_arn == IAM_USER_ARN
             assert result[0].region == AWS_REGION_US_EAST_1
+            assert result[0].resource_tags == [{"Key": "Name", "Value": IAM_USER_NAME}]
 
     def test_access_keys_with_iam_and_ec2(self):
         iam_client = mock.MagicMock
@@ -196,6 +235,13 @@ class Test_iam_user_with_temporary_credentials:
         iam_client.last_accessed_services = {
             USER_DATA: [{"ServiceNamespace": "iam"}, {"ServiceNamespace": "ec2"}]
         }
+
+        iam_client.users = [
+            mock.MagicMock(
+                arn=IAM_USER_ARN,
+                tags=[{"Key": "Name", "Value": IAM_USER_NAME}],
+            )
+        ]
 
         # Generate temporary credentials usage
         iam_client.user_temporary_credentials_usage = {}
@@ -226,3 +272,4 @@ class Test_iam_user_with_temporary_credentials:
             assert result[0].resource_id == IAM_USER_NAME
             assert result[0].resource_arn == IAM_USER_ARN
             assert result[0].region == AWS_REGION_US_EAST_1
+            assert result[0].resource_tags == [{"Key": "Name", "Value": IAM_USER_NAME}]

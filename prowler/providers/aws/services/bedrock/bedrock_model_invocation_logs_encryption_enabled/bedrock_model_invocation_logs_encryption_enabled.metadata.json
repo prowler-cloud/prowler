@@ -1,0 +1,33 @@
+{
+  "Provider": "aws",
+  "CheckID": "bedrock_model_invocation_logs_encryption_enabled",
+  "CheckTitle": "Ensure that Amazon Bedrock model invocation logs are encrypted with KMS.",
+  "CheckType": [],
+  "ServiceName": "bedrock",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:bedrock:region:account-id:model/resource-id",
+  "Severity": "high",
+  "ResourceType": "Other",
+  "Description": "Ensure that Amazon Bedrock model invocation logs are encrypted using AWS KMS to protect sensitive data in the request and response logs for all model invocations.",
+  "Risk": "If Amazon Bedrock model invocation logs are not encrypted, sensitive data such as prompts, responses, and token usage could be exposed to unauthorized parties. This may lead to data breaches, security vulnerabilities, or unintended use of sensitive information.",
+  "RelatedUrl": "https://docs.aws.amazon.com/bedrock/latest/userguide/data-protection.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure that model invocation logs for Amazon Bedrock are encrypted using AWS KMS to prevent unauthorized access to sensitive log data.",
+      "Url": "hhttps://docs.aws.amazon.com/bedrock/latest/userguide/data-protection.html"
+    }
+  },
+  "Categories": [
+    "encryption",
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

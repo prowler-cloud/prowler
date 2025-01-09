@@ -1,0 +1,38 @@
+{
+  "Provider": "aws",
+  "CheckID": "eks_cluster_not_publicly_accessible",
+  "CheckTitle": "Ensure EKS Clusters are not publicly accessible",
+  "CheckAliases": [
+    "eks_endpoints_not_publicly_accessible",
+    "eks_control_plane_endpoint_access_restricted"
+  ],
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
+  ],
+  "ServiceName": "eks",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "high",
+  "ResourceType": "AwsEksCluster",
+  "Description": "Ensure that your Amazon EKS cluster's Kubernetes API server endpoint is not publicly accessible from the Internet in order to avoid exposing private data and minimizing security risks.",
+  "Risk": "By default, this API server endpoint is publicly accessible, meaning any machine on the internet can potentially connect to your EKS cluster using its public endpoint. This exposes your cluster to a higher risk of malicious activities and attacks.",
+  "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/eks-controls.html#eks-1",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws eks update-cluster-config --region <region_name> --name <cluster_name> --resources-vpc-config endpointPublicAccess=false,endpointPrivateAccess=true,publicAccessCidrs=[\"123.123.123.123/32\"]",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EKS/endpoint-access.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Restricting public access to the Kubernetes API endpoint managed by the EKS cluster is a security best practice that helps protect your cluster from unauthorized access and potential security threats. By not allowing public access to the cluster's Kubernetes API endpoint, you ensure that only authorized entities can interact with your Amazon EKS cluster.",
+      "Url": "https://docs.aws.amazon.com/eks/latest/userguide/cluster-endpoint.html"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

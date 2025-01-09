@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "cloudwatch_log_group_not_publicly_accessible",
+  "CheckTitle": "Ensure that CloudWatch Log Groups are not publicly accessible",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "cloudwatch",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:ses:region:account-id:log-group/log_group_name",
+  "Severity": "high",
+  "ResourceType": "Other",
+  "Description": "This check ensures that no CloudWatch Log Groups are publicly accessible by checking for resource policies that allow access from any entity (Principal: '*'). Publicly exposed log groups pose a serious security risk as sensitive log data could be accessed by unauthorized parties.",
+  "Risk": "Publicly accessible CloudWatch Log Groups can expose sensitive information, leading to data breaches or unauthorized access. It is important to ensure that log groups are only accessible by trusted entities.",
+  "RelatedUrl": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/iam-access-control-overview-cwl.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws logs delete-resource-policy --policy-name <policy-name>",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure that CloudWatch Log Groups are not publicly accessible. Review and remove any resource policies that allow public access (Principal: '*') to log groups.",
+      "Url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/iam-access-control-overview-cwl.html"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

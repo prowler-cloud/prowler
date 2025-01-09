@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "guardduty_eks_runtime_monitoring_enabled",
+  "CheckTitle": "GuardDuty EKS Runtime Monitoring should be enabled",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "guardduty",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:guardduty:{region}:{account-id}:detector/{detector-id}",
+  "Severity": "medium",
+  "ResourceType": "AwsGuardDutyDetector",
+  "Description": "This control checks whether GuardDuty EKS Runtime Monitoring with automated agent management is enabled. For a standalone account, the control fails if GuardDuty EKS Runtime Monitoring with automated agent management is disabled in the account. In a multi-account environment, the control fails if the delegated GuardDuty administrator account and all member accounts don't have EKS Runtime Monitoring with automated agent management enabled.",
+  "Risk": "Without EKS Runtime Monitoring in GuardDuty, your Amazon EKS clusters may lack necessary protection against potential threats that can compromise container security, leading to unmonitored security risks.",
+  "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/guardduty-eks-protection-runtime-enabled.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws guardduty update-organization-configuration --detector-id <detector-id> --eks-runtime-monitoring-configuration Enable=true --auto-enable",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/guardduty-controls.html#guardduty-7",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable GuardDuty EKS Runtime Monitoring with automated agent management to protect EKS clusters.",
+      "Url": "https://docs.aws.amazon.com/guardduty/latest/ug/runtime-monitoring-configuration.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

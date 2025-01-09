@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "elb_ssl_listeners_use_acm_certificate",
+  "CheckTitle": "Check if Classic Load Balancers with SSL/HTTPS listeners use a certificate provided by AWS Certificate Manager (ACM).",
+  "CheckType": [
+    "Software and Configuration Checks/Vulnerabilities/NIST 800-53 Controls (USA)"
+  ],
+  "ServiceName": "elb",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:elasticloadbalancing:{region}:{account-id}:loadbalancer/{loadbalancer-name}",
+  "Severity": "medium",
+  "ResourceType": "AwsElbLoadBalancer",
+  "Description": "This control checks whether the Classic Load Balancer uses HTTPS/SSL certificates provided by AWS Certificate Manager (ACM). The control fails if the Classic Load Balancer does not use a certificate provided by ACM.",
+  "Risk": "If Classic Load Balancers are not using ACM certificates, it increases the risk of using self-signed or expired certificates, which can impact secure communication and lead to compliance issues.",
+  "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/elb-acm-certificate-required.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws elb set-load-balancer-listener-ssl-certificate --load-balancer-name <load-balancer-name> --load-balancer-port <port> --ssl-certificate-id <certificate-id>",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/elb-controls.html#elb-2",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Use AWS Certificate Manager (ACM) to manage SSL/TLS certificates for your Classic Load Balancer to ensure secure encryption of data in transit.",
+      "Url": "https://repost.aws/es/knowledge-center/associate-acm-certificate-alb-nlb"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

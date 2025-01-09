@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "config_recorder_using_aws_service_role",
+  "CheckTitle": "Ensure Config Recorder is using service-linked AWS Config role",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/AWS Foundational Security Best Practices"
+  ],
+  "ServiceName": "config",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:access-recorder:region:account-id:recorder/resource-id",
+  "Severity": "medium",
+  "ResourceType": "Other",
+  "Description": "AWS Config uses an IAM role to access other AWS services. This role should be AWSServiceRoleForConfig, not a custom role. Using AWSServiceRoleForConfig ensures that the Config recorder has the necessary permissions to record configuration changes and that the role is managed by AWS, reducing the risk of misconfiguration.",
+  "Risk": "If the Config recorder is not using AWSServiceRoleForConfig, it may not have the necessary permissions to record configuration changes, which could lead in not following the principle of least privilege, which could lead to misconfiguration and potential security vulnerabilities.",
+  "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/using-service-linked-roles.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws configservice put-configuration-recorder --configuration-recorder- name=<recorder-name>,roleARN=arn:<audited_partition>:iam::<account_number>:role/aws-service-role/config.amazonaws.com/AWSServiceRoleForConfig",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/config-controls.html#config-1",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Use service-linked role AWSServiceRoleForConfig for AWS Config recorders.",
+      "Url": "https://docs.aws.amazon.com/config/latest/developerguide/using-service-linked-roles.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

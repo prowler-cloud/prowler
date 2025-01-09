@@ -28,7 +28,9 @@
       "Url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/security-monitoring.html"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

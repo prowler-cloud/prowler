@@ -52,7 +52,7 @@ class Test_appinsights_ensure_is_configured:
             assert result[0].location == "global"
             assert (
                 result[0].status_extended
-                == f"There are no AppInsight configured in susbscription {AZURE_SUBSCRIPTION_ID}."
+                == f"There are no AppInsight configured in subscription {AZURE_SUBSCRIPTION_ID}."
             )
 
     def test_appinsights_configured(self):
@@ -89,5 +89,5 @@ class Test_appinsights_ensure_is_configured:
             assert result[0].location == "global"
             assert (
                 result[0].status_extended
-                == f"There is at least one AppInsight configured in susbscription {AZURE_SUBSCRIPTION_ID}."
+                == f"There is at least one AppInsight configured in subscription {AZURE_SUBSCRIPTION_ID}."
             )

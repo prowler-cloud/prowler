@@ -19,6 +19,7 @@ class codebuild_project_no_secrets_in_variables(Check):
             report.region = project.region
             report.resource_id = project.name
             report.resource_arn = project.arn
+            report.resource_tags = project.tags
             report.status = "PASS"
             report.status_extended = f"CodeBuild project {project.name} does not have sensitive environment plaintext credentials."
             secrets_found = []

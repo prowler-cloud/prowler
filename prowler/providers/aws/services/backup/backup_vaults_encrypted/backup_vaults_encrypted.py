@@ -7,23 +7,20 @@ class backup_vaults_encrypted(Check):
         findings = []
         if backup_client.backup_vaults:
             for backup_vault in backup_client.backup_vaults:
-                # By default we assume that the result is fail
                 report = Check_Report_AWS(self.metadata())
-                report.status = "FAIL"
-                report.status_extended = (
-                    f"Backup Vault {backup_vault.name} is not encrypted."
-                )
                 report.resource_arn = backup_vault.arn
                 report.resource_id = backup_vault.name
                 report.region = backup_vault.region
                 report.resource_tags = backup_vault.tags
-                # if it is encrypted we only change the status and the status extended
+                report.status = "FAIL"
+                report.status_extended = (
+                    f"Backup Vault {backup_vault.name} is not encrypted at rest."
+                )
                 if backup_vault.encryption:
                     report.status = "PASS"
                     report.status_extended = (
-                        f"Backup Vault {backup_vault.name} is encrypted."
+                        f"Backup Vault {backup_vault.name} is encrypted at rest."
                     )
-                # then we store the finding
                 findings.append(report)
 
         return findings

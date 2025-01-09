@@ -62,7 +62,7 @@ Resources:
               awslogs-stream-prefix: ecs
       Cpu: 1024
       ExecutionRoleArn: !Ref ECSExecutionRole
-      Memory: 2048
+      Memory: 8192
       NetworkMode: awsvpc
       TaskRoleArn: !Ref ProwlerTaskRole
       Family: SecurityHubProwlerTask

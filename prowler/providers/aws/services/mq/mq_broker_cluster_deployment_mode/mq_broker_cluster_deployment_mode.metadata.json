@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "mq_broker_cluster_deployment_mode",
+  "CheckTitle": "MQ RabbitMQ Brokers should use cluster deployment mode.",
+  "CheckType": [
+    "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53 Controls"
+  ],
+  "ServiceName": "mq",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:mq:region:account-id:broker:broker-id",
+  "Severity": "low",
+  "ResourceType": "AwsAmazonMQBroker",
+  "Description": "Ensure that RabbitMQ Brokers use cluster deployment mode.",
+  "Risk": "Using a single-instance RabbitMQ broker limits fault tolerance and high availability. Without cluster deployment, broker failures could lead to significant downtime and potential data loss.",
+  "RelatedUrl": "https://docs.aws.amazon.com/amazon-mq/latest/developer-guide/rabbitmq-basic-elements.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws mq create-broker --broker-name <your-broker-name> --engine-type RabbitMQ --deployment-mode CLUSTER_MULTI_AZ",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/mq-controls.html#mq-6",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure RabbitMQ brokers are deployed in cluster mode to enhance resilience and prevent data loss during failures.",
+      "Url": "https://docs.aws.amazon.com/amazon-mq/latest/developer-guide/rabbitmq-broker-architecture.html#rabbitmq-broker-architecture-cluster"
+    }
+  },
+  "Categories": [
+    "redundancy"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

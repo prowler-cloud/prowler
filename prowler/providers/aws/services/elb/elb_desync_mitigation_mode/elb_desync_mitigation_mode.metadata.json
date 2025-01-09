@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "elb_desync_mitigation_mode",
+  "CheckTitle": "Classic Load Balancer should be configured with defensive or strictest desync mitigation mode",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "elb",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:elasticloadbalancing:{region}:{account-id}:loadbalancer/{load-balancer-name}",
+  "Severity": "medium",
+  "ResourceType": "AwsElbLoadBalancer",
+  "Description": "This control checks whether a Classic Load Balancer is configured with defensive or strictest desync mitigation mode. The control fails if the Classic Load Balancer isn't configured with defensive or strictest desync mitigation mode.",
+  "Risk": "HTTP Desync issues can lead to request smuggling, making applications vulnerable to attacks such as request queue or cache poisoning, which could result in credential hijacking or unauthorized command execution.",
+  "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/clb-desync-mode-check.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws elb modify-load-balancer-attributes --load-balancer-name <load-balancer-name> --load-balancer-attributes '{\"DesyncMitigationMode\":\"defensive\"}'",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/elb-controls.html#elb-14",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure the Classic Load Balancer with defensive or strictest desync mitigation mode to prevent security issues caused by HTTP desync.",
+      "Url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/config-desync-mitigation-mode.html#update-desync-mitigation-mode"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

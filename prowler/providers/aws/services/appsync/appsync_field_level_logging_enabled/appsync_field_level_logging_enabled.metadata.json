@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "appsync_field_level_logging_enabled",
+  "CheckTitle": "AWS AppSync should have field-level logging enabled",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "appsync",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:appsync:{region}:{account-id}:apis/{api-id}",
+  "Severity": "medium",
+  "ResourceType": "AwsAppSyncGraphQLApi",
+  "Description": "This control checks whether an AWS AppSync API (only GraphQL APIs since boto3 doesnt have a method to return other APIs) field-level logging turned on. The control fails if the field resolver log level is set to None.",
+  "Risk": "Without field-level logging enabled, it's difficult to monitor, troubleshoot, and optimize GraphQL API queries effectively.",
+  "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/appsync-logging-enabled.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws appsync update-graphql-api --api-id <api-id> --log-config fieldLogLevel=<fieldLoggingLevel>",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/appsync-controls.html#appsync-2",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable field-level logging for your AWS AppSync API to monitor and troubleshoot GraphQL queries effectively.",
+      "Url": "https://docs.aws.amazon.com/appsync/latest/devguide/monitoring.html#setup-and-configuration"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

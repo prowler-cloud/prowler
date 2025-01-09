@@ -365,6 +365,23 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
             RouteTableId=route_table_private["RouteTable"]["RouteTableId"],
             SubnetId=subnet_private["Subnet"]["SubnetId"],
         )
+        nacls = (
+            ec2_client.describe_network_acls(
+                Filters=[
+                    {
+                        "Name": "association.subnet-id",
+                        "Values": [subnet_private["Subnet"]["SubnetId"]],
+                    }
+                ]
+            )
+        )["NetworkAcls"]
+        # Remove public ingress rule from private subnet in default NACLs
+        for nacl in nacls:
+            ec2_client.delete_network_acl_entry(
+                NetworkAclId=nacl["NetworkAclId"],
+                Egress=True,
+                RuleNumber=100,
+            )
         # VPC Private 2
         subnet_private_2 = ec2_client.create_subnet(
             VpcId=vpc.id,

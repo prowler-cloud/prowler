@@ -23,7 +23,9 @@
       "Url": "https://redis.io/blog/highly-available-in-memory-cloud-datastores/"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "redundancy"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

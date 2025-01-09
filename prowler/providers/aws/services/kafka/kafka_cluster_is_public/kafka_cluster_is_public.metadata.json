@@ -23,7 +23,9 @@
       "Url": "https://docs.aws.amazon.com/msk/latest/developerguide/public-access.html"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "internet-exposed"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

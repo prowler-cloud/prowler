@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "apigateway_restapi_tracing_enabled",
+  "CheckTitle": "Check if AWS X-Ray tracing is enabled for API Gateway REST API stages.",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "apigateway",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:apigateway:region:account-id:/restapis/restapi-id/stages/stage-name",
+  "Severity": "low",
+  "ResourceType": "AwsApiGatewayStage",
+  "Description": "This control checks whether AWS X-Ray active tracing is enabled for your Amazon API Gateway REST API stages.",
+  "Risk": "Without X-Ray active tracing, it may be difficult to quickly identify and respond to performance issues that could lead to decreased availability or degradation of the API's performance.",
+  "RelatedUrl": "https://docs.aws.amazon.com/xray/latest/devguide/xray-services-apigateway.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws apigateway update-stage --rest-api-id <restapi-id> --stage-name <stage-name> --patch-operations op=replace,path=/tracingEnabled,value=true",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/apigateway-controls.html#apigateway-3",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable AWS X-Ray tracing for API Gateway REST API stages to monitor and analyze performance in real time.",
+      "Url": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/APIGateway/tracing.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

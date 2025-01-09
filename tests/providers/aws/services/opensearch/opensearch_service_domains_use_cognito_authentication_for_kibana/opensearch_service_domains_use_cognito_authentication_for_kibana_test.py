@@ -1,25 +1,32 @@
 from unittest import mock
 
-from prowler.providers.aws.services.opensearch.opensearch_service import (
-    OpenSearchDomain,
-)
-from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_EU_WEST_1
+from boto3 import client
+from moto import mock_aws
 
-domain_name = "test-domain"
-domain_arn = f"arn:aws:es:us-west-2:{AWS_ACCOUNT_NUMBER}:domain/{domain_name}"
+from tests.providers.aws.utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_US_EAST_1,
+    set_mocked_aws_provider,
+)
 
 
 class Test_opensearch_service_domains_use_cognito_authentication_for_kibana:
+    @mock_aws
     def test_no_domains(self):
-        opensearch_client = mock.MagicMock
-        opensearch_client.opensearch_domains = []
+        client("opensearch", region_name=AWS_REGION_US_EAST_1)
+
+        from prowler.providers.aws.services.opensearch.opensearch_service import (
+            OpenSearchService,
+        )
+
+        mocked_aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.aws.services.opensearch.opensearch_service.OpenSearchService",
-            opensearch_client,
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=mocked_aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.opensearch.opensearch_service_domains_use_cognito_authentication_for_kibana.opensearch_service_domains_use_cognito_authentication_for_kibana.opensearch_client",
-            new=opensearch_client,
+            new=OpenSearchService(mocked_aws_provider),
         ):
             from prowler.providers.aws.services.opensearch.opensearch_service_domains_use_cognito_authentication_for_kibana.opensearch_service_domains_use_cognito_authentication_for_kibana import (
                 opensearch_service_domains_use_cognito_authentication_for_kibana,
@@ -29,25 +36,24 @@ class Test_opensearch_service_domains_use_cognito_authentication_for_kibana:
             result = check.execute()
             assert len(result) == 0
 
+    @mock_aws
     def test_neither_cognito_nor_saml_enabled(self):
-        opensearch_client = mock.MagicMock
-        opensearch_client.opensearch_domains = []
-        opensearch_client.opensearch_domains.append(
-            OpenSearchDomain(
-                name=domain_name,
-                region=AWS_REGION_EU_WEST_1,
-                arn=domain_arn,
-                cognito_options=False,
-                saml_enabled=False,
-            )
+        opensearch_client = client("opensearch", region_name=AWS_REGION_US_EAST_1)
+        domain = opensearch_client.create_domain(
+            DomainName="test-domain-no-cognito-no-saml",
+        )
+        from prowler.providers.aws.services.opensearch.opensearch_service import (
+            OpenSearchService,
         )
 
+        mocked_aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
         with mock.patch(
-            "prowler.providers.aws.services.opensearch.opensearch_service.OpenSearchService",
-            opensearch_client,
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=mocked_aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.opensearch.opensearch_service_domains_use_cognito_authentication_for_kibana.opensearch_service_domains_use_cognito_authentication_for_kibana.opensearch_client",
-            new=opensearch_client,
+            new=OpenSearchService(mocked_aws_provider),
         ):
             from prowler.providers.aws.services.opensearch.opensearch_service_domains_use_cognito_authentication_for_kibana.opensearch_service_domains_use_cognito_authentication_for_kibana import (
                 opensearch_service_domains_use_cognito_authentication_for_kibana,
@@ -59,31 +65,33 @@ class Test_opensearch_service_domains_use_cognito_authentication_for_kibana:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Opensearch domain {domain_name} has neither Amazon Cognito nor SAML authentication for Kibana enabled."
+                == "Opensearch domain test-domain-no-cognito-no-saml has neither Amazon Cognito nor SAML authentication for Kibana enabled."
             )
-            assert result[0].region == AWS_REGION_EU_WEST_1
-            assert result[0].resource_id == domain_name
-            assert result[0].resource_arn == domain_arn
-            assert result[0].resource_tags == []
+            assert result[0].resource_id == domain["DomainStatus"]["DomainName"]
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:es:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:domain/{domain['DomainStatus']['DomainName']}"
+            )
 
+    @mock_aws
     def test_cognito_enabled(self):
-        opensearch_client = mock.MagicMock
-        opensearch_client.opensearch_domains = []
-        opensearch_client.opensearch_domains.append(
-            OpenSearchDomain(
-                name=domain_name,
-                region=AWS_REGION_EU_WEST_1,
-                arn=domain_arn,
-                cognito_options=True,
-            )
+        opensearch_client = client("opensearch", region_name=AWS_REGION_US_EAST_1)
+        domain = opensearch_client.create_domain(
+            DomainName="test-domain-cognito",
+            CognitoOptions={"Enabled": True},
+        )
+        from prowler.providers.aws.services.opensearch.opensearch_service import (
+            OpenSearchService,
         )
 
+        mocked_aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
         with mock.patch(
-            "prowler.providers.aws.services.opensearch.opensearch_service.OpenSearchService",
-            opensearch_client,
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=mocked_aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.opensearch.opensearch_service_domains_use_cognito_authentication_for_kibana.opensearch_service_domains_use_cognito_authentication_for_kibana.opensearch_client",
-            new=opensearch_client,
+            new=OpenSearchService(mocked_aws_provider),
         ):
             from prowler.providers.aws.services.opensearch.opensearch_service_domains_use_cognito_authentication_for_kibana.opensearch_service_domains_use_cognito_authentication_for_kibana import (
                 opensearch_service_domains_use_cognito_authentication_for_kibana,
@@ -95,32 +103,33 @@ class Test_opensearch_service_domains_use_cognito_authentication_for_kibana:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Opensearch domain {domain_name} has either Amazon Cognito or SAML authentication for Kibana enabled."
+                == "Opensearch domain test-domain-cognito has either Amazon Cognito or SAML authentication for Kibana enabled."
             )
-            assert result[0].region == AWS_REGION_EU_WEST_1
-            assert result[0].resource_id == domain_name
-            assert result[0].resource_arn == domain_arn
-            assert result[0].resource_tags == []
-            assert result[0].resource_arn == domain_arn
+            assert result[0].resource_id == domain["DomainStatus"]["DomainName"]
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:es:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:domain/{domain['DomainStatus']['DomainName']}"
+            )
 
+    @mock_aws
     def test_saml_enabled(self):
-        opensearch_client = mock.MagicMock
-        opensearch_client.opensearch_domains = []
-        opensearch_client.opensearch_domains.append(
-            OpenSearchDomain(
-                name=domain_name,
-                region=AWS_REGION_EU_WEST_1,
-                arn=domain_arn,
-                saml_enabled=True,
-            )
+        opensearch_client = client("opensearch", region_name=AWS_REGION_US_EAST_1)
+        domain = opensearch_client.create_domain(
+            DomainName="test-domain-saml",
+            AdvancedSecurityOptions={"SAMLOptions": {"Enabled": True}},
+        )
+        from prowler.providers.aws.services.opensearch.opensearch_service import (
+            OpenSearchService,
         )
 
+        mocked_aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
         with mock.patch(
-            "prowler.providers.aws.services.opensearch.opensearch_service.OpenSearchService",
-            opensearch_client,
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=mocked_aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.opensearch.opensearch_service_domains_use_cognito_authentication_for_kibana.opensearch_service_domains_use_cognito_authentication_for_kibana.opensearch_client",
-            new=opensearch_client,
+            new=OpenSearchService(mocked_aws_provider),
         ):
             from prowler.providers.aws.services.opensearch.opensearch_service_domains_use_cognito_authentication_for_kibana.opensearch_service_domains_use_cognito_authentication_for_kibana import (
                 opensearch_service_domains_use_cognito_authentication_for_kibana,
@@ -132,10 +141,10 @@ class Test_opensearch_service_domains_use_cognito_authentication_for_kibana:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Opensearch domain {domain_name} has either Amazon Cognito or SAML authentication for Kibana enabled."
+                == "Opensearch domain test-domain-saml has either Amazon Cognito or SAML authentication for Kibana enabled."
             )
-            assert result[0].region == AWS_REGION_EU_WEST_1
-            assert result[0].resource_id == domain_name
-            assert result[0].resource_arn == domain_arn
-            assert result[0].resource_tags == []
-            assert result[0].resource_arn == domain_arn
+            assert result[0].resource_id == domain["DomainStatus"]["DomainName"]
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:es:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:domain/{domain['DomainStatus']['DomainName']}"
+            )

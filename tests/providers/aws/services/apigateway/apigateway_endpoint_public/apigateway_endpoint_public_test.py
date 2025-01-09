@@ -128,7 +128,7 @@ class Test_apigateway_restapi_public:
             assert len(result) == 1
             assert (
                 result[0].status_extended
-                == f"API Gateway test-rest-api ID {rest_api['id']} is internet accesible."
+                == f"API Gateway test-rest-api ID {rest_api['id']} is internet accessible."
             )
             assert result[0].resource_id == "test-rest-api"
             assert (

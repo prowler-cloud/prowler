@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "macie_automated_sensitive_data_discovery_enabled",
+  "CheckTitle": "Check if Macie automated sensitive data discovery is enabled.",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "macie",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "high",
+  "ResourceType": "AwsAccount",
+  "Description": "Check if automated sensitive data discovery is enabled for an Amazon Macie account. The control fails if it isn't enabled.",
+  "Risk": "Without automated sensitive data discovery, there could be delays in identifying sensitive data, leading to data exposure risks in Amazon S3 buckets.",
+  "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/macie-auto-sensitive-data-discovery-check.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws macie2 update-automated-discovery-configuration --status ENABLED",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/macie-controls.html#macie-2",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "To enable and configure automated sensitive data discovery jobs for S3 buckets, refer to the Configuring automated sensitive data discovery tutorial.",
+      "Url": "https://docs.aws.amazon.com/macie/latest/user/discovery-asdd-account-enable.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

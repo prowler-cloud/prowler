@@ -32,6 +32,7 @@ class Test_compute_instance_shielded_vm_enabled:
             name="test",
             id="1234567890",
             zone="us-central1-a",
+            region="us-central1",
             public_ip=True,
             metadata={},
             shielded_enabled_vtpm=True,
@@ -68,6 +69,7 @@ class Test_compute_instance_shielded_vm_enabled:
                 result[0].status_extended,
             )
             assert result[0].resource_id == instance.id
+            assert result[0].location == "us-central1"
 
     def test_one_instance_with_shielded_vtpm_disabled(self):
         from prowler.providers.gcp.services.compute.compute_service import Instance
@@ -76,6 +78,7 @@ class Test_compute_instance_shielded_vm_enabled:
             name="test",
             id="1234567890",
             zone="us-central1-a",
+            region="us-central1",
             public_ip=True,
             metadata={},
             shielded_enabled_vtpm=False,
@@ -112,6 +115,7 @@ class Test_compute_instance_shielded_vm_enabled:
                 result[0].status_extended,
             )
             assert result[0].resource_id == instance.id
+            assert result[0].location == "us-central1"
 
     def test_one_instance_with_shielded_integrity_monitoring_disabled(self):
         from prowler.providers.gcp.services.compute.compute_service import Instance
@@ -120,6 +124,7 @@ class Test_compute_instance_shielded_vm_enabled:
             name="test",
             id="1234567890",
             zone="us-central1-a",
+            region="us-central1",
             public_ip=True,
             metadata={},
             shielded_enabled_vtpm=True,
@@ -156,3 +161,4 @@ class Test_compute_instance_shielded_vm_enabled:
                 result[0].status_extended,
             )
             assert result[0].resource_id == instance.id
+            assert result[0].location == "us-central1"

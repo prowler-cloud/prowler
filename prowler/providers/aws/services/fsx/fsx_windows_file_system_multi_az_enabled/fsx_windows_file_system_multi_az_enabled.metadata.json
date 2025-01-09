@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "fsx_windows_file_system_multi_az_enabled",
+  "CheckTitle": "Check if FSx Windows file systems are configured with Multi-AZ.",
+  "CheckType": [],
+  "ServiceName": "fsx",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:fsx:{region}:{account-id}:file-system/{file-system-id}",
+  "Severity": "low",
+  "ResourceType": "AwsFSxFileSystem",
+  "Description": "Check if FSx Windows file systems are configured with Multi-AZ. The control fails if this configuration isn't enabled.",
+  "Risk": "Relative to Single-AZ deployment, Multi-AZ deployments provide enhanced durability by further replicating data across AZs, and enhanced availability during planned system maintenance and unplanned service disruption by failing over automatically to the standby AZ. This allows you to continue accessing your data, and helps to protect your data against instance failure and AZ disruption.",
+  "RelatedUrl": "https://docs.aws.amazon.com/fsx/latest/WindowsGuide/high-availability-multiAZ.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure your FSx Windows file system to be highly available with ENIs in Multiple AZs.",
+      "Url": "https://docs.aws.amazon.com/fsx/latest/WindowsGuide/high-availability-multiAZ.html"
+    }
+  },
+  "Categories": [
+    "redundancy"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

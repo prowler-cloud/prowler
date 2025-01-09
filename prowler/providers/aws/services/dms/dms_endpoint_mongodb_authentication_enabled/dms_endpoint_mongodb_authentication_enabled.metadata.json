@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "dms_endpoint_mongodb_authentication_enabled",
+  "CheckTitle": "Check if DMS endpoints for MongoDB have an authentication mechanism enabled.",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "dms",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:dms:region:account-id:endpoint/endpoint-id",
+  "Severity": "medium",
+  "ResourceType": "AwsDmsEndpoint",
+  "Description": "This control checks whether an AWS DMS endpoint for MongoDB is configured with an authentication mechanism. The control fails if an authentication type isn't set for the endpoint.",
+  "Risk": "Without an authentication mechanism enabled, unauthorized users may gain access to sensitive data during migration, increasing the risk of data breaches and security incidents.",
+  "RelatedUrl": "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Source.MongoDB.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws dms modify-endpoint --endpoint-arn <endpoint-arn> --username <username> --password <password> --authentication-type <authentication-type>",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/dms-controls.html#dms-11",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable an authentication mechanism on DMS endpoints for MongoDB to ensure secure access control during migration.",
+      "Url": "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Source.MongoDB.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

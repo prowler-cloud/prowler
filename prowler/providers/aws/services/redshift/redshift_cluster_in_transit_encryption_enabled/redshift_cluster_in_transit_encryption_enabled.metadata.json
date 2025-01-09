@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "redshift_cluster_in_transit_encryption_enabled",
+  "CheckTitle": "Check if connections to Amazon Redshift clusters are encrypted in transit.",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "redshift",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:redshift:region:account-id:cluster/cluster-name",
+  "Severity": "medium",
+  "ResourceType": "AwsRedshiftCluster",
+  "Description": "This control checks whether connections to Amazon Redshift clusters are required to use encryption in transit. The control fails if the Redshift cluster parameter 'require_SSL' isn't set to True.",
+  "Risk": "Without encryption in transit, connections to the Redshift cluster are vulnerable to eavesdropping or person-in-the-middle attacks, exposing sensitive data to unauthorized access.",
+  "RelatedUrl": "https://docs.aws.amazon.com/redshift/latest/mgmt/security-encryption-in-transit.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws redshift modify-cluster-parameter-group --parameter-group-name <group-name> --parameters ParameterName=require_ssl,ParameterValue=true,ApplyType=static",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/redshift-controls.html#redshift-2",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure that connections to Amazon Redshift clusters use encryption in transit by setting the 'require_ssl' parameter to True.",
+      "Url": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Redshift/redshift-parameter-groups-require-ssl.html"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

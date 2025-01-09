@@ -25,6 +25,7 @@ def mock_get_available_providers():
     return ["aws", "azure", "gcp", "kubernetes"]
 
 
+@pytest.mark.arg_parser
 class Test_Parser:
     def setup_method(self):
         # We need this to mock the get_available_providers function call
@@ -52,6 +53,7 @@ class Test_Parser:
         assert "output" in parsed.output_directory
         assert not parsed.verbose
         assert not parsed.no_banner
+        assert not parsed.no_color
         assert not parsed.slack
         assert not parsed.unix_timestamp
         assert parsed.log_level == "CRITICAL"
@@ -100,6 +102,7 @@ class Test_Parser:
         assert "output" in parsed.output_directory
         assert not parsed.verbose
         assert not parsed.no_banner
+        assert not parsed.no_color
         assert not parsed.slack
         assert not parsed.unix_timestamp
         assert parsed.log_level == "CRITICAL"
@@ -140,6 +143,7 @@ class Test_Parser:
         assert "output" in parsed.output_directory
         assert not parsed.verbose
         assert not parsed.no_banner
+        assert not parsed.no_color
         assert not parsed.slack
         assert not parsed.unix_timestamp
         assert parsed.log_level == "CRITICAL"
@@ -175,6 +179,7 @@ class Test_Parser:
         assert "output" in parsed.output_directory
         assert not parsed.verbose
         assert not parsed.no_banner
+        assert not parsed.no_color
         assert not parsed.slack
         assert not parsed.unix_timestamp
         assert parsed.log_level == "CRITICAL"
@@ -354,6 +359,11 @@ class Test_Parser:
         command = [prowler_command, "--no-banner"]
         parsed = self.parser.parse(command)
         assert parsed.no_banner
+
+    def test_root_parser_no_color_long(self):
+        command = [prowler_command, "--no-color"]
+        parsed = self.parser.parse(command)
+        assert parsed.no_color
 
     def test_root_parser_slack(self):
         command = [prowler_command, "--slack"]
@@ -644,7 +654,7 @@ class Test_Parser:
 
     def test_checks_parser_wrong_compliance(self):
         argument = "--compliance"
-        framework = "ens_rd2022_azure"
+        framework = "ens_rd2022_kubernetes"
         command = [prowler_command, argument, framework]
         with pytest.raises(SystemExit) as wrapped_exit:
             _ = self.parser.parse(command)
@@ -1212,6 +1222,14 @@ class Test_Parser:
         assert parsed.provider == "gcp"
         assert parsed.credentials_file == file
 
+    def test_parser_gcp_organization_id(self):
+        argument = "--organization-id"
+        organization = "test_organization"
+        command = [prowler_command, "gcp", argument, organization]
+        parsed = self.parser.parse(command)
+        assert parsed.provider == "gcp"
+        assert parsed.organization_id == organization
+
     def test_parser_gcp_project_id(self):
         argument = "--project-id"
         project_1 = "test_project_1"
@@ -1278,13 +1296,11 @@ class Test_Parser:
         expected_regions = [
             "AzureChinaCloud",
             "AzureUSGovernment",
-            "AzureGermanCloud",
             "AzureCloud",
         ]
         input_regions = [
             "AzureChinaCloud",
             "AzureUSGovernment",
-            "AzureGermanCloud",
             "AzureCloud",
         ]
         for region in input_regions:
@@ -1294,7 +1310,6 @@ class Test_Parser:
         expected_regions = [
             "AzureChinaCloud",
             "AzureUSGovernment",
-            "AzureGermanCloud",
             "AzureCloud",
         ]
         invalid_region = "non-valid-region"

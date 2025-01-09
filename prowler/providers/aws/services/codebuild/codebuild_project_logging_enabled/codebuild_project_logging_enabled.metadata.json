@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "codebuild_project_logging_enabled",
+  "CheckTitle": "Ensure that CodeBuild projects have S3 or CloudWatch logging enabled",
+  "CheckType": [],
+  "ServiceName": "codebuild",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "medium",
+  "ResourceType": "AwsCodeBuildProject",
+  "Description": "Ensure that CodeBuild projects have S3 or CloudWatch logging enabled.",
+  "Risk": "Without logging, tracking and investigating security incidents in CodeBuild projects becomes challenging, reducing confidence in threat detections.",
+  "RelatedUrl": "https://docs.aws.amazon.com/codebuild/latest/userguide/change-project.html#change-project-console-logs",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws codebuild update-project --name <project-name> --logs-config \"cloudWatchLogs={status=ENABLED},s3Logs={status=ENABLED\"}",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/codebuild-controls.html#codebuild-4",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable logging for CodeBuild projects to capture build events and logs for future analysis and incident response.",
+      "Url": "https://docs.aws.amazon.com/codebuild/latest/userguide/change-project.html#change-project-console-logs"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

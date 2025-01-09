@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 
 from boto3 import client
@@ -75,9 +74,9 @@ class Test_dynamodb_tables_pitr_enabled:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert search(
-                "does not have point-in-time recovery enabled",
-                result[0].status_extended,
+            assert (
+                result[0].status_extended
+                == "DynamoDB table test1 does not have point-in-time recovery enabled."
             )
             assert result[0].resource_id == table["TableName"]
             assert result[0].resource_arn == table["TableArn"]
@@ -126,8 +125,9 @@ class Test_dynamodb_tables_pitr_enabled:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert search(
-                "has point-in-time recovery enabled", result[0].status_extended
+            assert (
+                result[0].status_extended
+                == "DynamoDB table test1 has point-in-time recovery enabled."
             )
             assert result[0].resource_id == table["TableName"]
             assert result[0].resource_arn == table["TableArn"]

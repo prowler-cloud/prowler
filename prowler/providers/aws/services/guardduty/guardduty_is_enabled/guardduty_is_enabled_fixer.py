@@ -4,7 +4,8 @@ from prowler.providers.aws.services.guardduty.guardduty_client import guardduty_
 
 def fixer(region):
     """
-    Enable GuardDuty in a region. Requires the guardduty:CreateDetector permission:
+    Enable GuardDuty in a region. Requires the guardduty:CreateDetector permission.
+    Permissions:
     {
         "Version": "2012-10-17",
         "Statement": [

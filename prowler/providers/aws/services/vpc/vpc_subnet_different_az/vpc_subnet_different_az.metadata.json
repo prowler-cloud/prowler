@@ -25,7 +25,9 @@
       "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/configure-subnets.html"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "redundancy"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

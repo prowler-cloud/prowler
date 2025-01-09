@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "bedrock_agent_guardrail_enabled",
+  "CheckTitle": "Ensure that Guardrails are enabled for Amazon Bedrock agent sessions.",
+  "CheckType": [],
+  "ServiceName": "bedrock",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:bedrock:region:account-id:agent/resource-id",
+  "Severity": "high",
+  "ResourceType": "Other",
+  "Description": "This check ensures that Guardrails are enabled to protect Amazon Bedrock agent sessions. Guardrails help mitigate security risks by filtering and blocking harmful or sensitive content during interactions with AI models.",
+  "Risk": "Without guardrails enabled, Amazon Bedrock agent sessions are vulnerable to harmful prompts or inputs that could expose sensitive information or generate inappropriate content. This could lead to privacy violations, data leaks, or other security risks.",
+  "RelatedUrl": "https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Bedrock/protect-agent-sessions-with-guardrails.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable Guardrails for Amazon Bedrock agent sessions to protect against harmful inputs and outputs during interactions.",
+      "Url": "https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails-create.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

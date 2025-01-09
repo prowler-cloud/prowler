@@ -1,3 +1,4 @@
+import json
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -9,7 +10,6 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################## CloudWatch
 class CloudWatch(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
@@ -43,6 +43,8 @@ class CloudWatch(AWSService):
                                 metric=metric_name,
                                 name_space=namespace,
                                 region=regional_client.region,
+                                alarm_actions=alarm.get("AlarmActions", []),
+                                actions_enabled=alarm.get("ActionsEnabled", False),
                             )
                         )
         except ClientError as error:
@@ -76,16 +78,17 @@ class CloudWatch(AWSService):
             )
 
 
-################## CloudWatch Logs
 class Logs(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.log_group_arn_template = f"arn:{self.audited_partition}:logs:{self.region}:{self.audited_account}:log-group"
-        self.metric_filters = []
-        self.log_groups = []
-        self.__threading_call__(self._describe_metric_filters)
+        self.log_groups = {}
         self.__threading_call__(self._describe_log_groups)
+        self.resource_policies = {}
+        self.__threading_call__(self._describe_resource_policies)
+        self.metric_filters = []
+        self.__threading_call__(self._describe_metric_filters)
         if self.log_groups:
             if (
                 "cloudwatch_log_group_no_secrets_in_logs"
@@ -95,7 +98,9 @@ class Logs(AWSService):
                     1000  # The threshold for number of events to return per log group.
                 )
                 self.__threading_call__(self._get_log_events)
-            self.__threading_call__(self._list_tags_for_resource, self.log_groups)
+            self.__threading_call__(
+                self._list_tags_for_resource, self.log_groups.values()
+            )
 
     def _describe_metric_filters(self, regional_client):
         logger.info("CloudWatch Logs - Describing metric filters...")
@@ -111,13 +116,20 @@ class Logs(AWSService):
                     ):
                         if self.metric_filters is None:
                             self.metric_filters = []
+
+                        log_group = None
+                        for lg in self.log_groups.values():
+                            if lg.name == filter["logGroupName"]:
+                                log_group = lg
+                                break
+
                         self.metric_filters.append(
                             MetricFilter(
                                 arn=arn,
                                 name=filter["filterName"],
                                 metric=filter["metricTransformations"][0]["metricName"],
                                 pattern=filter.get("filterPattern", ""),
-                                log_group=filter["logGroupName"],
+                                log_group=log_group,
                                 region=regional_client.region,
                             )
                         )
@@ -127,7 +139,7 @@ class Logs(AWSService):
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
                 if not self.metric_filters:
-                    self.metric_filters = []
+                    self.metric_filters = None
             else:
                 logger.error(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -155,16 +167,14 @@ class Logs(AWSService):
                             never_expire = True
                             retention_days = 9999
                         if self.log_groups is None:
-                            self.log_groups = []
-                        self.log_groups.append(
-                            LogGroup(
-                                arn=log_group["arn"],
-                                name=log_group["logGroupName"],
-                                retention_days=retention_days,
-                                never_expire=never_expire,
-                                kms_id=kms,
-                                region=regional_client.region,
-                            )
+                            self.log_groups = {}
+                        self.log_groups[log_group["arn"]] = LogGroup(
+                            arn=log_group["arn"],
+                            name=log_group["logGroupName"],
+                            retention_days=retention_days,
+                            never_expire=never_expire,
+                            kms_id=kms,
+                            region=regional_client.region,
                         )
         except ClientError as error:
             if error.response["Error"]["Code"] == "AccessDeniedException":
@@ -185,7 +195,7 @@ class Logs(AWSService):
     def _get_log_events(self, regional_client):
         regional_log_groups = [
             log_group
-            for log_group in self.log_groups
+            for log_group in self.log_groups.values()
             if log_group.region == regional_client.region
         ]
         total_log_groups = len(regional_log_groups)
@@ -214,6 +224,38 @@ class Logs(AWSService):
             f"CloudWatch Logs - Finished retrieving log events in {regional_client.region}..."
         )
 
+    def _describe_resource_policies(self, regional_client):
+        logger.info("CloudWatch Logs - Describing resource policies...")
+        try:
+            describe_resource_policies_paginator = regional_client.get_paginator(
+                "describe_resource_policies"
+            )
+            if regional_client.region not in self.resource_policies:
+                self.resource_policies[regional_client.region] = []
+            for page in describe_resource_policies_paginator.paginate():
+                for policy in page["resourcePolicies"]:
+                    self.resource_policies[regional_client.region].append(
+                        ResourcePolicy(
+                            name=policy["policyName"],
+                            policy=json.loads(policy["policyDocument"]),
+                            region=regional_client.region,
+                        )
+                    )
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "AccessDeniedException":
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+                self.resource_policies[regional_client.region] = None
+            else:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
     def _list_tags_for_resource(self, log_group):
         logger.info(f"CloudWatch Logs - List Tags for Log Group {log_group.name}...")
         try:
@@ -240,15 +282,8 @@ class MetricAlarm(BaseModel):
     name_space: Optional[str]
     region: str
     tags: Optional[list] = []
-
-
-class MetricFilter(BaseModel):
-    arn: str
-    name: str
-    metric: str
-    pattern: str
-    log_group: str
-    region: str
+    alarm_actions: list
+    actions_enabled: bool
 
 
 class LogGroup(BaseModel):
@@ -262,6 +297,21 @@ class LogGroup(BaseModel):
         {}
     )  # Log stream name as the key, array of events as the value
     tags: Optional[list] = []
+
+
+class ResourcePolicy(BaseModel):
+    name: str
+    policy: dict
+    region: str
+
+
+class MetricFilter(BaseModel):
+    arn: str
+    name: str
+    metric: str
+    pattern: str
+    log_group: Optional[LogGroup]
+    region: str
 
 
 def convert_to_cloudwatch_timestamp_format(epoch_time):

@@ -10,6 +10,7 @@ from moto import mock_aws
 
 from prowler.config.config import encoding_format_utf_8
 from prowler.providers.aws.services.ec2.ec2_service import (
+    Attachment,
     LaunchTemplate,
     LaunchTemplateVersion,
     NetworkInterface,
@@ -110,6 +111,11 @@ class Test_ec2_launch_template_no_public_ip:
             )
             assert result[0].resource_id == launch_template_id
             assert result[0].region == AWS_REGION_US_EAST_1
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:123456789012:launch-template/{launch_template_id}"
+            )
+            assert result[0].resource_tags == []
 
     def test_launch_template_public_ip_auto_assign(self):
         ec2_client = mock.MagicMock()
@@ -166,6 +172,11 @@ class Test_ec2_launch_template_no_public_ip:
             )
             assert result[0].resource_id == launch_template_id
             assert result[0].region == AWS_REGION_US_EAST_1
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:123456789012:launch-template/{launch_template_id}"
+            )
+            assert result[0].resource_tags == []
 
     def test_network_interface_with_public_ipv4_network_interface_autoassign_true_and_false(
         self,
@@ -180,7 +191,7 @@ class Test_ec2_launch_template_no_public_ip:
         network_interface = NetworkInterface(
             id="eni-1234567890",
             association={},
-            attachment={},
+            attachment=Attachment(),
             private_ip="",
             public_ip_addresses=[IPv4Address("192.175.48.10")],
             type="interface",
@@ -258,6 +269,11 @@ class Test_ec2_launch_template_no_public_ip:
             )
             assert result[0].resource_id == launch_template_id
             assert result[0].region == AWS_REGION_US_EAST_1
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:123456789012:launch-template/{launch_template_id}"
+            )
+            assert result[0].resource_tags == []
 
     def test_network_interface_with_public_ipv6_network_interface_autoassign_true_and_false(
         self,
@@ -272,7 +288,7 @@ class Test_ec2_launch_template_no_public_ip:
         network_interface = NetworkInterface(
             id="eni-1234567890",
             association={},
-            attachment={},
+            attachment=Attachment(),
             private_ip="",
             public_ip_addresses=[IPv6Address("::1234:5678")],
             type="interface",
@@ -340,3 +356,8 @@ class Test_ec2_launch_template_no_public_ip:
             )
             assert result[0].resource_id == launch_template_id
             assert result[0].region == AWS_REGION_US_EAST_1
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:123456789012:launch-template/{launch_template_id}"
+            )
+            assert result[0].resource_tags == []

@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "redshift_cluster_non_default_username",
+  "CheckTitle": "Check if Amazon Redshift clusters are using the default Admin username.",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "redshift",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:redshift:region:account-id:cluster/cluster-name",
+  "Severity": "medium",
+  "ResourceType": "AwsRedshiftCluster",
+  "Description": "This control checks whether an Amazon Redshift cluster has changed the admin username from its default value. The control fails if the admin username is set to 'awsuser'.",
+  "Risk": "Using the default admin username increases the risk of unauthorized access, as default credentials are publicly known and often targeted by attackers.",
+  "RelatedUrl": "https://docs.aws.amazon.com/redshift/latest/gsg/rs-gsg-prereq.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws redshift create-cluster --cluster-identifier <cluster-id> --master-username <new-username> --master-user-password <password>",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/redshift-controls.html#redshift-8",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Change the default admin username by creating a new Redshift cluster with a unique admin username.",
+      "Url": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Redshift/master-username.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

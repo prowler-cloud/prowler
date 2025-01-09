@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "elasticbeanstalk_environment_enhanced_health_reporting",
+  "CheckTitle": "Elastic Beanstalk environments should have enhanced health reporting enabled",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "elasticbeanstalk",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:elasticbeanstalk:{region}:{account-id}:environment/{environment-id}",
+  "Severity": "low",
+  "ResourceType": "AwsElasticBeanstalkEnvironment",
+  "Description": "This control checks whether enhanced health reporting is enabled for your AWS Elastic Beanstalk environments.",
+  "Risk": "Without enhanced health reporting, you may face delays in detecting and responding to issues in your Elastic Beanstalk environment, affecting application availability and performance.",
+  "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/beanstalk-enhanced-health-reporting-enabled.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws elasticbeanstalk update-environment --environment-id <environment-id> --option-settings Namespace=aws:elasticbeanstalk:healthreporting:system,OptionName=EnhancedHealthReporting,Value=enabled",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/elasticbeanstalk-controls.html#elasticbeanstalk-1",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable enhanced health reporting in your Elastic Beanstalk environments for better monitoring and faster issue detection.",
+      "Url": "https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/health-enhanced-enable.html#health-enhanced-enable-console"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

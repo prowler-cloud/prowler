@@ -39,6 +39,7 @@ class Test_iam_customer_unattached_policy_no_administrative_privileges_test:
 
             check = iam_customer_unattached_policy_no_administrative_privileges()
             results = check.execute()
+            assert len(results) == 1, f"Expected 1 result, but got {len(results)}"
             for result in results:
                 if result.resource_id == "policy1":
                     assert result.status == "FAIL"
@@ -78,6 +79,7 @@ class Test_iam_customer_unattached_policy_no_administrative_privileges_test:
 
             check = iam_customer_unattached_policy_no_administrative_privileges()
             results = check.execute()
+            assert len(results) == 1, f"Expected 1 result, but got {len(results)}"
             for result in results:
                 if result.resource_id == "policy1":
                     assert result.status == "PASS"
@@ -129,6 +131,7 @@ class Test_iam_customer_unattached_policy_no_administrative_privileges_test:
 
             check = iam_customer_unattached_policy_no_administrative_privileges()
             results = check.execute()
+            assert len(results) == 2, f"Expected 2 results, but got {len(results)}"
             for result in results:
                 if result.resource_id == "policy1":
                     assert result.status == "PASS"

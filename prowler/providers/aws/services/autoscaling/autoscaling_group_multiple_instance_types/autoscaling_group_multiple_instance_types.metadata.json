@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "autoscaling_group_multiple_instance_types",
+  "CheckTitle": "EC2 Auto Scaling Group should use multiple instance types in multiple Availability Zones.",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "autoscaling",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:autoscaling:region:account-id:autoScalingGroupName/resource-name",
+  "Severity": "medium",
+  "ResourceType": "AwsAutoScalingAutoScalingGroup",
+  "Description": "This control checks whether an Amazon EC2 Auto Scaling group uses multiple instance types in all the Availability Zones, meaning that there should be multiple Availability Zones with multiple instances on each one. The control fails if the Auto Scaling group has only one instance type defined.",
+  "Risk": "Using only one instance type in an Auto Scaling group reduces the flexibility to launch new instances when there is insufficient capacity for that specific type, potentially affecting the availability of the application.",
+  "RelatedUrl": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-mixed-instances-groups.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws autoscaling create-auto-scaling-group --mixed-instances-policy ...",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/autoscaling-controls.html#autoscaling-6",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure your EC2 Auto Scaling group to use multiple instance types across multiple Availability Zones.",
+      "Url": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/AutoScaling/asg-multiple-instance-type-az.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

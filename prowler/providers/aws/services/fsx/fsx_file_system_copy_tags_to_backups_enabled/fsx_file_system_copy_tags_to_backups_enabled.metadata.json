@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "fsx_file_system_copy_tags_to_backups_enabled",
+  "CheckTitle": "Check if FSx file systems are configured to copy tags to backups.",
+  "CheckType": [
+    "Software and Configuration Checks/Vulnerabilities"
+  ],
+  "ServiceName": "fsx",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:fsx:{region}:{account-id}:file-system/{file-system-id}",
+  "Severity": "low",
+  "ResourceType": "AwsFSxFileSystem",
+  "Description": "Check if an Amazon FSx file system is configured to copy tags to backups. The control fails if this configuration isn't enabled.",
+  "Risk": "Without tag copying, managing and tracking your resources could be more difficult, impacting your governance and inventory management processes.",
+  "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/fsx-lustre-copy-tags-to-backups.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws fsx update-file-system --file-system-id <file-system-id> --open-zfs-configuration CopyTagsToBackups=true",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/fsx-controls.html#fsx-2",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure your FSx file system to copy tags to backups to improve resource management and tracking.",
+      "Url": "https://docs.aws.amazon.com/fsx/latest/OpenZFSGuide/updating-file-system.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

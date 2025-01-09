@@ -35,6 +35,16 @@ def mock_make_api_call(self, operation_name, kwargs):
             "Policy": '{"Version":"2012-10-17","Statement":[{"Sid":"AllowReadWrite","Effect":"Allow","Principal":{"AWS":"arn:aws:iam::123456789012:root"},"Action":"schemas:*","Resource":"arn:aws:schemas:eu-west-1:123456789012:registry/test"}]}',
             "RevisionId": "1",
         }
+    if operation_name == "ListEndpoints":
+        return {
+            "Endpoints": [
+                {
+                    "Name": "test-endpoint",
+                    "Arn": f"arn:aws:events:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:endpoint/test-endpoint",
+                    "ReplicationConfig": {"State": "DISABLED"},
+                }
+            ]
+        }
 
     return make_api_call(self, operation_name, kwargs)
 
@@ -169,3 +179,18 @@ class Test_EventBridge_Service:
             ],
             "Version": "2012-10-17",
         }
+
+    # Test EventBridge Endpoints
+    def test_list_endpoints(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        eventbridge = EventBridge(aws_provider)
+        assert len(eventbridge.endpoints) == 1
+        endpoint_arn = f"arn:aws:events:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:endpoint/test-endpoint"
+        assert eventbridge.endpoints[endpoint_arn].name == "test-endpoint"
+        assert (
+            eventbridge.endpoints[endpoint_arn].arn
+            == f"arn:aws:events:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:endpoint/test-endpoint"
+        )
+        assert eventbridge.endpoints[endpoint_arn].replication_state == "DISABLED"
+        assert eventbridge.endpoints[endpoint_arn].tags == []
+        assert eventbridge.endpoints[endpoint_arn].region == AWS_REGION_US_EAST_1

@@ -1,6 +1,14 @@
-**Prowler** is an Open Source security tool to perform AWS, Azure, Google Cloud and Kubernetes security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness, and also remediations! We have Prowler CLI (Command Line Interface) that we call Prowler Open Source and a service on top of it that we call <a href="https://prowler.com">Prowler SaaS</a>.
+**Prowler** is an Open Source security tool to perform AWS, Azure, Google Cloud and Kubernetes security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness, and also remediations! We have Prowler CLI (Command Line Interface) that we call Prowler Open Source and a service on top of it that we call <a href="https://prowler.com">Prowler Cloud</a>.
 
-## Prowler CLI
+## Prowler App
+
+![Prowler App](img/overview.png)
+
+Prowler App is a web application that allows you to run Prowler in a simple way. It provides a user-friendly interface to configure and run scans, view results, and manage your security findings.
+
+See how to install the Prowler App in the [Quick Start](#prowler-app-installation) section.
+
+## Prowler CLI
 
 ```console
 prowler <provider>
@@ -17,16 +25,145 @@ prowler dashboard
 It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, FedRAMP, PCI-DSS, GDPR, HIPAA, FFIEC, SOC2, GXP, AWS Well-Architected Framework Security Pillar, AWS Foundational Technical Review (FTR), ENS (Spanish National Security Scheme) and your custom security frameworks.
 
 ## Quick Start
-### Installation
+### Prowler App Installation
 
-Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), thus can be installed using pip with `Python >= 3.9`:
+Prowler App can be installed in different ways, depending on your environment:
 
-=== "Generic"
+> See how to use Prowler App in the [Prowler App Tutorial](tutorials/prowler-app.md) section.
+
+=== "Docker Compose"
+
+    _Requirements_:
+
+    * `Docker Compose` installed: https://docs.docker.com/compose/install/.
+
+    _Commands_:
+
+    ``` bash
+    curl -LO https://raw.githubusercontent.com/prowler-cloud/prowler/refs/heads/master/docker-compose.yml
+    curl -LO https://raw.githubusercontent.com/prowler-cloud/prowler/refs/heads/master/.env
+    docker compose up -d
+    ```
+
+    > Containers are built for `linux/amd64`. If your workstation's architecture is different, please set `DOCKER_DEFAULT_PLATFORM=linux/amd64` in your environment or use the `--platform linux/amd64` flag in the docker command.
+
+    > Enjoy Prowler App at http://localhost:3000 by signing up with your email and password.
+
+    ???+ note
+        You can change the environment variables in the `.env` file. Note that it is not recommended to use the default values in production environments.
+
+    ???+ note
+        There is a development mode available, you can use the file https://github.com/prowler-cloud/prowler/blob/master/docker-compose.dev.yml to run the app in development mode.
+
+    ???+ warning
+        Google and GitHub authentication is only available in [Prowler Cloud](https://prowler.com).
+
+=== "GitHub"
+
+    _Requirements_:
+
+    * `git` installed.
+    * `poetry` installed: [poetry installation](https://python-poetry.org/docs/#installation).
+    * `npm` installed: [npm installation](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm).
+    * `Docker Compose` installed: https://docs.docker.com/compose/install/.
+
+    ???+ warning
+        Make sure to have `api/.env` and `ui/.env.local` files with the required environment variables. You can find the required environment variables in the [`api/.env.template`](https://github.com/prowler-cloud/prowler/blob/master/api/.env.example) and [`ui/.env.template`](https://github.com/prowler-cloud/prowler/blob/master/ui/.env.template) files.
+
+    _Commands to run the API_:
+
+    ``` bash
+    git clone https://github.com/prowler-cloud/prowler \
+    cd prowler/api \
+    poetry install \
+    poetry shell \
+    set -a \
+    source .env \
+    docker compose up postgres valkey -d \
+    cd src/backend \
+    python manage.py migrate --database admin \
+    gunicorn -c config/guniconf.py config.wsgi:application
+    ```
+
+    > Now, you can access the API documentation at http://localhost:8080/api/v1/docs.
+
+    _Commands to run the API Worker_:
+
+    ``` bash
+    git clone https://github.com/prowler-cloud/prowler \
+    cd prowler/api \
+    poetry install \
+    poetry shell \
+    set -a \
+    source .env \
+    cd src/backend \
+    python -m celery -A config.celery worker -l info -E
+    ```
+
+    _Commands to run the API Scheduler_:
+
+    ``` bash
+    git clone https://github.com/prowler-cloud/prowler \
+    cd prowler/api \
+    poetry install \
+    poetry shell \
+    set -a \
+    source .env \
+    cd src/backend \
+    python -m celery -A config.celery beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    ```
+
+    _Commands to run the UI_:
+
+    ``` bash
+    git clone https://github.com/prowler-cloud/prowler \
+    cd prowler/ui \
+    npm install \
+    npm run build \
+    npm start
+    ```
+
+    > Enjoy Prowler App at http://localhost:3000 by signing up with your email and password.
+
+    ???+ warning
+        Google and GitHub authentication is only available in [Prowler Cloud](https://prowler.com).
+
+### Prowler CLI Installation
+
+Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), thus can be installed as Python package with `Python >= 3.9`:
+
+=== "pipx"
+
+    [pipx](https://pipx.pypa.io/stable/) is a tool to install Python applications in isolated environments. It is recommended to use `pipx` for a global installation.
 
     _Requirements_:
 
     * `Python >= 3.9`
-    * `Python pip >= 3.9`
+    * `pipx` installed: [pipx installation](https://pipx.pypa.io/stable/installation/).
+    * AWS, GCP, Azure and/or Kubernetes credentials
+
+    _Commands_:
+
+    ``` bash
+    pipx install prowler
+    prowler -v
+    ```
+
+    To upgrade Prowler to the latest version, run:
+
+    ``` bash
+    pipx upgrade prowler
+    ```
+
+=== "pip"
+
+    ???+ warning
+        This method is not recommended because it will modify the environment which you choose to install. Consider using [pipx](https://docs.prowler.com/projects/prowler-open-source/en/latest/#__tabbed_1_1) for a global installation.
+
+    _Requirements_:
+
+    * `Python >= 3.9`
+    * `Python pip >= 21.0.0`
     * AWS, GCP, Azure and/or Kubernetes credentials
 
     _Commands_:
@@ -36,13 +173,21 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
     prowler -v
     ```
 
+    To upgrade Prowler to the latest version, run:
+
+    ``` bash
+    pip install --upgrade prowler
+    ```
+
 === "Docker"
 
     _Requirements_:
 
     * Have `docker` installed: https://docs.docker.com/get-docker/.
-    * AWS, GCP, Azure and/or Kubernetes credentials
     * In the command below, change `-v` to your local directory path in order to access the reports.
+    * AWS, GCP, Azure and/or Kubernetes credentials
+
+    > Containers are built for `linux/amd64`. If your workstation's architecture is different, please set `DOCKER_DEFAULT_PLATFORM=linux/amd64` in your environment or use the `--platform linux/amd64` flag in the docker command.
 
     _Commands_:
 
@@ -54,41 +199,21 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
     --env AWS_SESSION_TOKEN toniblyx/prowler:latest
     ```
 
-=== "Ubuntu"
-
-    _Requirements for Ubuntu 20.04.3 LTS_:
-
-    * AWS, GCP, Azure and/or Kubernetes credentials
-    * Install python 3.9 with: `sudo apt-get install python3.9`
-    * Remove python 3.8 to avoid conflicts if you can: `sudo apt-get remove python3.8`
-    * Make sure you have the python3 distutils package installed: `sudo apt-get install python3-distutils`
-    * To make sure you use pip for 3.9 get the get-pip script with: `curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py`
-    * Execute it with the proper python version: `sudo python3.9 get-pip.py`
-    * Now you should have pip for 3.9 ready: `pip3.9 --version`
-
-    _Commands_:
-
-    ```
-    pip3.9 install prowler
-    export PATH=$PATH:/home/$HOME/.local/bin/
-    prowler -v
-    ```
-
 === "GitHub"
 
     _Requirements for Developers_:
 
+    * `git`
+    * `poetry` installed: [poetry installation](https://python-poetry.org/docs/#installation).
     * AWS, GCP, Azure and/or Kubernetes credentials
-    * `git`, `Python >= 3.9`, `pip` and `poetry` installed (`pip install poetry`)
 
     _Commands_:
 
     ```
     git clone https://github.com/prowler-cloud/prowler
     cd prowler
-    poetry shell
     poetry install
-    python prowler.py -v
+    poetry run python prowler.py -v
     ```
     ???+ note
         If you want to clone Prowler from Windows, use `git config core.longpaths true` to allow long file paths.
@@ -97,15 +222,33 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
 
     _Requirements_:
 
+    * `Python >= 3.9`
     * AWS, GCP, Azure and/or Kubernetes credentials
-    * Latest Amazon Linux 2 should come with Python 3.9 already installed however it may need pip. Install Python pip 3.9 with: `sudo yum install -y python3-pip`.
-    * Make sure setuptools for python is already installed with: `pip3 install setuptools`
 
     _Commands_:
 
     ```
-    pip3.9 install prowler
-    export PATH=$PATH:/home/$HOME/.local/bin/
+    python3 -m pip install --user pipx
+    python3 -m pipx ensurepath
+    pipx install prowler
+    prowler -v
+    ```
+
+=== "Ubuntu"
+
+    _Requirements_:
+
+    * `Ubuntu 23.04` or above, if you are using an older version of Ubuntu check [pipx installation](https://docs.prowler.com/projects/prowler-open-source/en/latest/#__tabbed_1_1) and ensure you have `Python >= 3.9`.
+    * `Python >= 3.9`
+    * AWS, GCP, Azure and/or Kubernetes credentials
+
+    _Commands_:
+
+    ``` bash
+    sudo apt update
+    sudo apt install pipx
+    pipx ensurepath
+    pipx install prowler
     prowler -v
     ```
 
@@ -125,7 +268,7 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
 
 === "AWS CloudShell"
 
-    After the migration of AWS CloudShell from Amazon Linux 2 to Amazon Linux 2023 [[1]](https://aws.amazon.com/about-aws/whats-new/2023/12/aws-cloudshell-migrated-al2023/) [2](https://docs.aws.amazon.com/cloudshell/latest/userguide/cloudshell-AL2023-migration.html), there is no longer a need to manually compile Python 3.9 as it's already included in AL2023. Prowler can thus be easily installed following the Generic method of installation via pip. Follow the steps below to successfully execute Prowler v4 in AWS CloudShell:
+    After the migration of AWS CloudShell from Amazon Linux 2 to Amazon Linux 2023 [[1]](https://aws.amazon.com/about-aws/whats-new/2023/12/aws-cloudshell-migrated-al2023/) [[2]](https://docs.aws.amazon.com/cloudshell/latest/userguide/cloudshell-AL2023-migration.html), there is no longer a need to manually compile Python 3.9 as it's already included in AL2023. Prowler can thus be easily installed following the Generic method of installation via pip. Follow the steps below to successfully execute Prowler v4 in AWS CloudShell:
 
     _Requirements_:
 
@@ -133,11 +276,13 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
 
     _Commands_:
 
-    ```
+    ```bash
     sudo bash
     adduser prowler
     su prowler
-    pip install prowler
+    python3 -m pip install --user pipx
+    python3 -m pipx ensurepath
+    pipx install prowler
     cd /tmp
     prowler aws
     ```
@@ -153,31 +298,59 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
 
     _Commands_:
 
-    ```
-    pip install prowler
-    prowler -v
+    ```bash
+    python3 -m pip install --user pipx
+    python3 -m pipx ensurepath
+    pipx install prowler
+    cd /tmp
+    prowler azure --az-cli-auth
     ```
 
 ## Prowler container versions
 
-The available versions of Prowler are the following:
+The available versions of Prowler CLI are the following:
 
 - `latest`: in sync with `master` branch (bear in mind that it is not a stable version)
+- `v4-latest`: in sync with `v4` branch (bear in mind that it is not a stable version)
 - `v3-latest`: in sync with `v3` branch (bear in mind that it is not a stable version)
 - `<x.y.z>` (release): you can find the releases [here](https://github.com/prowler-cloud/prowler/releases), those are stable releases.
 - `stable`: this tag always point to the latest release.
+- `v4-stable`: this tag always point to the latest release for v4.
 - `v3-stable`: this tag always point to the latest release for v3.
 
 The container images are available here:
 
-- [DockerHub](https://hub.docker.com/r/toniblyx/prowler/tags)
-- [AWS Public ECR](https://gallery.ecr.aws/prowler-cloud/prowler)
+- Prowler CLI:
+
+    - [DockerHub](https://hub.docker.com/r/toniblyx/prowler/tags)
+    - [AWS Public ECR](https://gallery.ecr.aws/prowler-cloud/prowler)
+
+- Prowler App:
+
+    - [DockerHub - Prowler UI](https://hub.docker.com/r/prowlercloud/prowler-ui/tags)
+    - [DockerHub - Prowler API](https://hub.docker.com/r/prowlercloud/prowler-api/tags)
 
 ## High level architecture
 
 You can run Prowler from your workstation, a Kubernetes Job, a Google Compute Engine, an Azure VM, an EC2 instance, Fargate or any other container, CloudShell and many more.
 
 ![Architecture](img/architecture.png)
+
+### Prowler App
+
+The **Prowler App** consists of three main components:
+
+- **Prowler UI**: A user-friendly web interface for running Prowler and viewing results, powered by Next.js.
+- **Prowler API**: The backend API that executes Prowler scans and stores the results, built with Django REST Framework.
+- **Prowler SDK**: A Python SDK that integrates with the Prowler CLI for advanced functionality.
+
+The app leverages the following supporting infrastructure:
+
+- **PostgreSQL**: Used for persistent storage of scan results.
+- **Celery Workers**: Facilitate asynchronous execution of Prowler scans.
+- **Valkey**: An in-memory database serving as a message broker for the Celery workers.
+
+![Prowler App Architecture](img/prowler-app-architecture.png)
 
 ## Deprecations from v3
 
@@ -196,6 +369,40 @@ We have deprecated some of our outputs formats:
 - To send only FAILS to AWS Security Hub, now use either `--send-sh-only-fails` or `--security-hub --status FAIL`.
 
 ## Basic Usage
+### Prowler App
+
+#### **Access the App**
+Go to [http://localhost:3000](http://localhost:3000) after installing the app (see [Quick Start](#prowler-app-installation)). Sign up with your email and password.
+
+<img src="img/sign-up-button.png" alt="Sign Up Button" width="320"/>
+<img src="img/sign-up.png" alt="Sign Up" width="285"/>
+
+#### **Log In**
+Log in with your email and password to start using the Prowler App.
+
+<img src="img/log-in.png" alt="Log In" width="285"/>
+
+#### **Add a Provider**
+- Go to `Settings > Cloud Providers` and click `Add Account`.
+- Select the provider you want to scan (AWS, GCP, Azure, Kubernetes).
+- Enter the provider's ID (AWS Account ID, GCP Project ID, Azure Subscription ID, Kubernetes Cluster) and optional alias.
+- Follow the instructions to add your credentials.
+
+#### **Start a Scan**
+After successfully adding and testing your credentials, Prowler will start scanning your cloud environment, click on the `Go to Scans` button to see the progress.
+
+#### **View Results**
+While the scan is running, start exploring the findings in these sections:
+
+- **Overview**: High-level summary of the scans. <img src="img/overview.png" alt="Overview" width="700"/>
+- **Compliance**: Insights into compliance status. <img src="img/compliance.png" alt="Compliance" width="700"/>
+
+> See more details about the Prowler App usage in the [Prowler App](tutorials/prowler-app.md) section.
+
+???+ note
+    Prowler will automatically scan all configured providers every **24 hours**, ensuring your cloud environment stays continuously monitored.
+
+### Prowler CLI
 
 To run Prowler, you will need to specify the provider (e.g `aws`, `gcp`, `azure` or `kubernetes`):
 
@@ -254,7 +461,7 @@ You can always use `-h`/`--help` to access to the usage information and all the 
 prowler --help
 ```
 
-### AWS
+#### AWS
 
 Use a custom AWS profile with `-p`/`--profile` and/or AWS regions which you want to audit with `-f`/`--filter-region`:
 
@@ -267,7 +474,7 @@ prowler aws --profile custom-profile -f us-east-1 eu-south-2
 
 See more details about AWS Authentication in [Requirements](getting-started/requirements.md#aws)
 
-### Azure
+#### Azure
 
 With Azure you need to specify which auth method is going to be used:
 
@@ -292,7 +499,7 @@ Prowler by default scans all the subscriptions that is allowed to scan, if you w
 prowler azure --az-cli-auth --subscription-ids <subscription ID 1> <subscription ID 2> ... <subscription ID N>
 ```
 
-### Google Cloud
+#### Google Cloud
 
 Prowler will use by default your User Account credentials, you can configure it using:
 
@@ -314,7 +521,7 @@ prowler gcp --project-ids <Project ID 1> <Project ID 2> ... <Project ID N>
 
 See more details about GCP Authentication in [Requirements](getting-started/requirements.md#google-cloud)
 
-### Kubernetes
+#### Kubernetes
 
 Prowler allows you to scan your Kubernetes Cluster either from within the cluster or from outside the cluster.
 

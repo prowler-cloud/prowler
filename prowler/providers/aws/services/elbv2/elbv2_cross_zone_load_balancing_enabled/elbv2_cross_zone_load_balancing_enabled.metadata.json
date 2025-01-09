@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "elbv2_cross_zone_load_balancing_enabled",
+  "CheckTitle": "Ensure Cross-Zone Load Balancing is enabled for Network (NLBs) and Gateway (GWLB) Load Balancers",
+  "CheckType": [],
+  "ServiceName": "elbv2",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "medium",
+  "ResourceType": "AwsElbv2LoadBalancer",
+  "Description": "Checks whether cross-zone load balancing is enabled for Network Load Balancers (NLBs) and Gateway Load Balancers (GWLB). Cross-zone load balancing ensures even distribution of traffic across all registered targets in all Availability Zones, improving fault tolerance and load distribution.",
+  "Risk": "If cross-zone load balancing is not enabled, traffic may not be evenly distributed across Availability Zones, leading to over-utilization of resources in certain zones and potential application performance degradation or outages.",
+  "RelatedUrl": "https://docs.aws.amazon.com/elasticloadbalancing/latest/network/network-load-balancers.html#cross-zone-load-balancing",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws elbv2 modify-load-balancer-attributes --load-balancer-name <load-balancer-name> --attributes Key=load_balancing.cross_zone.enabled,Value=true",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELBv2/enable-cross-zone-load-balancing.html#",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable cross-zone load balancing for Network and Gateway Load Balancers to ensure even traffic distribution and enhance fault tolerance across Availability Zones.",
+      "Url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/network/network-load-balancers.html#cross-zone-load-balancing"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

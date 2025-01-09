@@ -10,6 +10,7 @@ class dms_instance_minor_version_upgrade_enabled(Check):
             report.region = instance.region
             report.resource_id = instance.id
             report.resource_arn = instance.arn
+            report.resource_tags = instance.tags
             report.status = "FAIL"
             report.status_extended = f"DMS Replication Instance {instance.id} does not have auto minor version upgrade enabled."
             if instance.auto_minor_version_upgrade:

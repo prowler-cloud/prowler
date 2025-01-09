@@ -1,8 +1,18 @@
+from importlib.machinery import FileFinder
+from pkgutil import ModuleInfo
 from unittest import mock
 
 import pytest
 from mock import MagicMock, patch
 
+from prowler.lib.scan.exceptions.exceptions import (
+    ScanInvalidCategoryError,
+    ScanInvalidCheckError,
+    ScanInvalidComplianceFrameworkError,
+    ScanInvalidServiceError,
+    ScanInvalidSeverityError,
+    ScanInvalidStatusError,
+)
 from prowler.lib.scan.scan import Scan, get_service_checks_to_execute
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 from tests.providers.aws.utils import set_mocked_aws_provider
@@ -25,9 +35,9 @@ finding = generate_finding_output(
     remediation_code_other="other-code",
     remediation_code_cli="cli-code",
     compliance={"compliance_key": "compliance_value"},
-    categories="category1,category2",
-    depends_on="dependency",
-    related_to="related finding",
+    categories=["categorya", "categoryb"],
+    depends_on=["dependency"],
+    related_to=["related"],
     notes="Notes about the finding",
 )
 
@@ -67,6 +77,57 @@ def mock_generate_output():
     ) as mock_gen_output:
         mock_gen_output.side_effect = lambda provider, finding, output_options: finding
         yield mock_gen_output
+
+
+@pytest.fixture
+def mock_list_modules():
+    with mock.patch(
+        "prowler.lib.check.utils.list_modules", autospec=True
+    ) as mock_list_mod:
+        mock_list_mod.return_value = [
+            ModuleInfo(
+                module_finder=FileFinder(
+                    "/prowler/providers/aws/services/accessanalyzer/accessanalyzer_enabled"
+                ),
+                name="prowler.providers.aws.services.accessanalyzer.accessanalyzer_enabled.accessanalyzer_enabled",
+                ispkg=False,
+            )
+        ]
+        yield mock_list_mod
+
+
+@pytest.fixture
+def mock_recover_checks_from_provider():
+    with mock.patch(
+        "prowler.lib.check.models.recover_checks_from_provider", autospec=True
+    ) as mock_recover:
+        mock_recover.return_value = [
+            (
+                "accessanalyzer_enabled",
+                "/prowler/providers/aws/services/accessanalyzer/accessanalyzer_enabled",
+            )
+        ]
+        yield mock_recover
+
+
+@pytest.fixture
+def mock_load_check_metadata():
+    with mock.patch(
+        "prowler.lib.check.models.load_check_metadata", autospec=True
+    ) as mock_load:
+        mock_metadata = MagicMock()
+        mock_metadata.CheckID = "accessanalyzer_enabled"
+        mock_load.return_value = mock_metadata
+        yield mock_load
+
+
+@pytest.fixture
+def mock_load_checks_to_execute():
+    with mock.patch(
+        "prowler.lib.check.models.CheckMetadata.list", autospec=True
+    ) as mock_load:
+        mock_load.return_value = {"accessanalyzer_enabled"}
+        yield mock_load
 
 
 class TestScan:
@@ -132,7 +193,8 @@ class TestScan:
             "cognito_user_pool_waf_acl_attached",
             "config_recorder_all_regions_enabled",
         }
-        scan = Scan(mock_provider, checks_to_execute)
+        mock_provider.type = "aws"
+        scan = Scan(mock_provider, checks=checks_to_execute)
 
         assert scan.provider == mock_provider
         # Check that the checks to execute are sorted and without duplicates
@@ -201,6 +263,31 @@ class TestScan:
         )
         assert scan.service_checks_completed == {}
         assert scan.progress == 0
+        assert scan.duration == 0
+        assert scan.get_completed_services() == set()
+        assert scan.get_completed_checks() == set()
+
+    def test_init_with_no_checks(
+        mock_provider,
+        mock_recover_checks_from_provider,
+        mock_load_check_metadata,
+        mock_load_checks_to_execute,
+    ):
+        checks_to_execute = set()
+        mock_provider.type = "aws"
+
+        scan = Scan(mock_provider, checks=checks_to_execute)
+        mock_load_check_metadata.assert_called_once()
+        mock_load_checks_to_execute.assert_called_once()
+        mock_recover_checks_from_provider.assert_called_once_with("aws")
+
+        assert scan.provider == mock_provider
+        assert scan.checks_to_execute == ["accessanalyzer_enabled"]
+        assert scan.service_checks_to_execute == get_service_checks_to_execute(
+            ["accessanalyzer_enabled"]
+        )
+        assert scan.service_checks_completed == {}
+        assert scan.progress == 0
         assert scan.get_completed_services() == set()
         assert scan.get_completed_checks() == set()
 
@@ -211,12 +298,15 @@ class TestScan:
         mock_execute,
         mock_logger,
         mock_generate_output,
+        mock_recover_checks_from_provider,
+        mock_load_check_metadata,
     ):
         mock_check_class = MagicMock()
         mock_check_instance = mock_check_class.return_value
         mock_check_instance.Provider = "aws"
         mock_check_instance.CheckID = "accessanalyzer_enabled"
         mock_check_instance.CheckTitle = "Check if IAM Access Analyzer is enabled"
+        mock_check_instance.Categories = []
 
         mock_import_module.return_value = MagicMock(
             accessanalyzer_enabled=mock_check_class
@@ -226,7 +316,9 @@ class TestScan:
         custom_checks_metadata = {}
         mock_global_provider.type = "aws"
 
-        scan = Scan(mock_global_provider, checks_to_execute)
+        scan = Scan(mock_global_provider, checks=checks_to_execute)
+        mock_load_check_metadata.assert_called_once()
+        mock_recover_checks_from_provider.assert_called_once_with("aws")
         results = list(scan.scan(custom_checks_metadata))
 
         assert mock_generate_output.call_count == 1 * len(mock_execute.side_effect())
@@ -235,9 +327,100 @@ class TestScan:
         assert results[0][1] == mock_execute.side_effect()
         assert results[0][0] == 100.0
         assert scan.progress == 100.0
+        # Since the scan is mocked, the duration will always be 0 for now
+        assert scan.duration == 0
         assert scan._number_of_checks_completed == 1
         assert scan.service_checks_completed == {
             "accessanalyzer": {"accessanalyzer_enabled"},
         }
         assert scan.findings == mock_execute.side_effect()
         mock_logger.error.assert_not_called()
+
+    def test_init_invalid_severity(
+        mock_provider,
+    ):
+        checks_to_execute = set()
+        mock_provider.type = "aws"
+
+        with pytest.raises(ScanInvalidSeverityError):
+            Scan(mock_provider, checks=checks_to_execute, severities=["invalid"])
+
+    def test_init_invalid_check(
+        mock_provider,
+    ):
+        checks_to_execute = ["invalid_check"]
+        mock_provider.type = "aws"
+
+        with pytest.raises(ScanInvalidCheckError):
+            Scan(mock_provider, checks=checks_to_execute)
+
+    def test_init_invalid_service(
+        mock_provider,
+    ):
+        checks_to_execute = set()
+        mock_provider.type = "aws"
+
+        with pytest.raises(ScanInvalidServiceError):
+            Scan(mock_provider, checks=checks_to_execute, services=["invalid_service"])
+
+    def test_init_invalid_compliance_framework(
+        mock_provider,
+    ):
+        checks_to_execute = set()
+        mock_provider.type = "aws"
+
+        with pytest.raises(ScanInvalidComplianceFrameworkError):
+            Scan(
+                mock_provider,
+                checks=checks_to_execute,
+                compliances=["invalid_framework"],
+            )
+
+    def test_init_invalid_category(
+        mock_provider,
+    ):
+        checks_to_execute = set()
+        mock_provider.type = "aws"
+
+        with pytest.raises(ScanInvalidCategoryError):
+            Scan(
+                mock_provider, checks=checks_to_execute, categories=["invalid_category"]
+            )
+
+    def test_init_invalid_status(
+        mock_provider,
+    ):
+        checks_to_execute = set()
+        mock_provider.type = "aws"
+
+        with pytest.raises(ScanInvalidStatusError):
+            Scan(mock_provider, checks=checks_to_execute, status=["invalid_status"])
+
+    @patch("importlib.import_module")
+    def test_scan_filter_status(
+        mock_import_module,
+        mock_global_provider,
+        mock_recover_checks_from_provider,
+        mock_load_check_metadata,
+    ):
+        mock_check_class = MagicMock()
+        mock_check_instance = mock_check_class.return_value
+        mock_check_instance.Provider = "aws"
+        mock_check_instance.CheckID = "accessanalyzer_enabled"
+        mock_check_instance.CheckTitle = "Check if IAM Access Analyzer is enabled"
+        mock_check_instance.Categories = []
+
+        mock_import_module.return_value = MagicMock(
+            accessanalyzer_enabled=mock_check_class
+        )
+
+        checks_to_execute = {"accessanalyzer_enabled"}
+        custom_checks_metadata = {}
+        mock_global_provider.type = "aws"
+
+        scan = Scan(mock_global_provider, checks=checks_to_execute, status=["FAIL"])
+        mock_load_check_metadata.assert_called_once()
+        mock_recover_checks_from_provider.assert_called_once_with("aws")
+        results = list(scan.scan(custom_checks_metadata))
+
+        assert results[0] == (100.0, [])

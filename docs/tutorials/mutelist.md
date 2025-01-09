@@ -42,6 +42,7 @@ Mutelist:
           Resources:
             - "user-1"           # Will mute user-1 in check iam_user_hardware_mfa_enabled
             - "user-2"           # Will mute user-2 in check iam_user_hardware_mfa_enabled
+          Description: "Findings related with the check iam_user_hardware_mfa_enabled will be muted for us-east-1 region and user-1, user-2 resources"
         "ec2_*":
           Regions:
             - "*"
@@ -140,6 +141,9 @@ Mutelist:
 | `resource`    | The resource identifier. Use `*` to apply the mutelist to all resources.    | `ANDed`    |
 | `tag`    | The tag value.    | `ORed`    |
 
+### Description
+
+This field can be used to add information or some hints for the Mutelist rule.
 
 ## How to Use the Mutelist
 
@@ -171,6 +175,7 @@ If you want to mute failed findings only in specific regions, create a file with
               - "ap-southeast-2"
             Resources:
               - "*"
+            Description: "Description related with the muted findings for the check"
 
 ### Default Mutelist
 For the AWS Provider, Prowler is executed with a default AWS Mutelist with the AWS Resources that should be muted such as all resources created by AWS Control Tower when setting up a landing zone that can be found in [AWS Documentation](https://docs.aws.amazon.com/controltower/latest/userguide/shared-account-resources.html).

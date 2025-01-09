@@ -31,6 +31,7 @@ class Test_compute_instance_ip_forwarding_is_enabled:
             name="test",
             id="1234567890",
             zone="us-central1-a",
+            region="us-central1",
             public_ip=True,
             metadata={},
             shielded_enabled_vtpm=True,
@@ -67,6 +68,7 @@ class Test_compute_instance_ip_forwarding_is_enabled:
                 result[0].status_extended,
             )
             assert result[0].resource_id == instance.id
+            assert result[0].location == "us-central1"
 
     def test_one_compliant_instance_gke(self):
         from prowler.providers.gcp.services.compute.compute_service import Instance
@@ -75,6 +77,7 @@ class Test_compute_instance_ip_forwarding_is_enabled:
             name="gke-test",
             id="1234567890",
             zone="us-central1-a",
+            region="us-central1",
             public_ip=True,
             metadata={},
             shielded_enabled_vtpm=True,
@@ -113,6 +116,7 @@ class Test_compute_instance_ip_forwarding_is_enabled:
                 result[0].status_extended,
             )
             assert result[0].resource_id == instance.id
+            assert result[0].location == "us-central1"
 
     def test_instance_with_ip_forwarding_enabled(self):
         from prowler.providers.gcp.services.compute.compute_service import Instance
@@ -121,6 +125,7 @@ class Test_compute_instance_ip_forwarding_is_enabled:
             name="test",
             id="1234567890",
             zone="us-central1-a",
+            region="us-central1",
             public_ip=True,
             metadata={},
             shielded_enabled_vtpm=True,
@@ -159,3 +164,4 @@ class Test_compute_instance_ip_forwarding_is_enabled:
                 result[0].status_extended,
             )
             assert result[0].resource_id == instance.id
+            assert result[0].location == "us-central1"

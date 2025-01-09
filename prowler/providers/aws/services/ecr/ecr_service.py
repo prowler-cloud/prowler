@@ -47,6 +47,9 @@ class ECR(AWSService):
                                 scan_on_push=repository["imageScanningConfiguration"][
                                     "scanOnPush"
                                 ],
+                                immutability=repository.get(
+                                    "imageTagMutability", "MUTABLE"
+                                ),
                                 policy=None,
                                 images_details=[],
                                 lifecycle_policy=None,
@@ -55,6 +58,7 @@ class ECR(AWSService):
             # The default ECR registry is assumed
             self.registries[regional_client.region] = Registry(
                 id=self.registry_id,
+                arn=f"arn:{self.audited_partition}:ecr:{regional_client.region}:{self.audited_account}:registry/{self.registry_id}",
                 region=regional_client.region,
                 repositories=regional_registry_repositories,
             )
@@ -372,6 +376,7 @@ class Repository(BaseModel):
     region: str
     registry_id = str
     scan_on_push: bool
+    immutability: Optional[str]
     policy: Optional[dict]
     images_details: Optional[list[ImageDetails]]
     lifecycle_policy: Optional[str]
@@ -385,6 +390,7 @@ class ScanningRule(BaseModel):
 
 class Registry(BaseModel):
     id: str
+    arn: str
     region: str
     repositories: list[Repository]
     scan_type: Optional[str]

@@ -44,7 +44,6 @@ class Provider(ABC):
     Methods:
         print_credentials(): Displays the provider's credentials used for auditing in the command-line interface.
         setup_session(): Sets up the session for the provider.
-        get_output_mapping(): Returns the output mapping between the provider and the generic model.
         validate_arguments(): Validates the arguments for the provider.
         get_checks_to_execute_by_audit_resources(): Returns a set of checks based on the input resources to scan.
 
@@ -131,15 +130,6 @@ class Provider(ABC):
         """
         raise NotImplementedError()
 
-    @abstractmethod
-    def get_output_mapping(self) -> dict:
-        """
-        get_output_mapping returns the output mapping between the provider and the generic model.
-
-        This method needs to be created in each provider.
-        """
-        raise NotImplementedError()
-
     def validate_arguments(self) -> None:
         """
         validate_arguments validates the arguments for the provider.
@@ -200,18 +190,18 @@ from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.provider import Provider
 from prowler.providers.<new_provider_name>.models import (
     # All providers models needed
-    ProvierSessionModel,
-    ProvierIdentityModel,
-    ProvierOutputOptionsModel
+    ProviderSessionModel,
+    ProviderIdentityModel,
+    ProviderOutputOptionsModel
 )
 
 class NewProvider(Provider):
     # All properties from the class, some of this are properties in the base class
     _type: str = "<provider_name>"
-    _session: <ProvierSessionModel>
-    _identity: <ProvierIdentityModel>
+    _session: <ProviderSessionModel>
+    _identity: <ProviderIdentityModel>
     _audit_config: dict
-    _output_options: ProvierOutputOptionsModel
+    _output_options: ProviderOutputOptionsModel
     _mutelist: dict
     audit_metadata: Audit_Metadata
 
@@ -222,13 +212,13 @@ class NewProvider(Provider):
             arguments (dict): A dictionary containing configuration arguments.
         """
         logger.info("Setting <NewProviderName> provider ...")
-        # First get from arguments the necesary from the cloud acount (subscriptions or projects or whatever the provider use for storing services)
+        # First get from arguments the necessary from the cloud account (subscriptions or projects or whatever the provider use for storing services)
 
         # Set the session with the method enforced by parent class
         self._session = self.setup_session(credentials_file)
 
         # Set the Identity class normaly the provider class give by Python provider library
-        self._identity = <ProvierIdentityModel>()
+        self._identity = <ProviderIdentityModel>()
 
         # Set the provider configuration
         self._audit_config = load_and_validate_config_file(
@@ -264,7 +254,7 @@ class NewProvider(Provider):
             <all_needed_for_auth> Can include all necessary arguments to setup the session
 
         Returns:
-            Credentials necesary to communicate with the provider.
+            Credentials necessary to communicate with the provider.
         """
         pass
 

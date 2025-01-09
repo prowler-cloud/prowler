@@ -68,7 +68,7 @@ for accountId in ${ACCOUNTS_IN_ORGS}; do
         # Run Prowler
         echo -e "Assessing AWS Account: ${accountId}, using Role: ${ROLE} on $(date)"
         # Pipe stdout to /dev/null to reduce unnecessary Cloudwatch logs
-        prowler aws -R arn:"${PARTITION}":iam::"${accountId}":role/"${ROLE}" -q -S -f "${REGION}" > /dev/null
+        prowler aws -R arn:"${PARTITION}":iam::"${accountId}":role/"${ROLE}" --security-hub --send-sh-only-fails -f "${REGION}" > /dev/null
         TOTAL_SEC=$((SECONDS - START_TIME))
         printf "Completed AWS Account: ${accountId} in %02dh:%02dm:%02ds" $((TOTAL_SEC / 3600)) $((TOTAL_SEC % 3600 / 60)) $((TOTAL_SEC % 60))
         echo ""

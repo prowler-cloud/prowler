@@ -3,7 +3,7 @@
   "CheckID": "awslambda_function_invoke_api_operations_cloudtrail_logging_enabled",
   "CheckTitle": "Check if Lambda functions invoke API operations are being recorded by CloudTrail.",
   "CheckType": [],
-  "ServiceName": "lambda",
+  "ServiceName": "awslambda",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:lambda:region:account-id:function/function-name",
   "Severity": "low",
@@ -24,7 +24,8 @@
     }
   },
   "Categories": [
-    "forensics-ready"
+    "forensics-ready",
+    "logging"
   ],
   "DependsOn": [],
   "RelatedTo": [],

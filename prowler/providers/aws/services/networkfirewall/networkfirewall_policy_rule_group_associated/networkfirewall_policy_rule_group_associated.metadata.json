@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "networkfirewall_policy_rule_group_associated",
+  "CheckTitle": "Ensure Network Firewall Policies Have at Least One Rule Group Associated",
+  "CheckType": [
+    "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53"
+  ],
+  "ServiceName": "network-firewall",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:network-firewall::account-id:firewall-policy/policy-name",
+  "Severity": "medium",
+  "ResourceType": "AwsNetworkFirewallFirewallPolicy",
+  "Description": "This control checks whether a Network Firewall policy has any stateful or stateless rule groups associated. The control fails if stateless or stateful rule groups are not assigned.",
+  "Risk": "If a Network Firewall policy does not have at least one rule group associated, it may fail to properly filter and handle traffic, leaving the network vulnerable to unauthorized access and attacks.",
+  "RelatedUrl": "https://docs.aws.amazon.com/network-firewall/latest/developerguide/rule-groups.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/networkfirewall-controls.html#networkfirewall-3",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Regularly review your Network Firewall policies to ensure they have the necessary rule groups associated. Create and manage rule groups as needed to maintain effective traffic filtering and security.",
+      "Url": "https://docs.aws.amazon.com/network-firewall/latest/developerguide/firewall-policy-updating.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

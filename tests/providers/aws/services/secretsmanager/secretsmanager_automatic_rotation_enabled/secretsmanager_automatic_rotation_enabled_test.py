@@ -1,3 +1,4 @@
+from datetime import datetime
 from unittest import mock
 
 from prowler.providers.aws.services.secretsmanager.secretsmanager_service import Secret
@@ -8,8 +9,12 @@ class Test_secretsmanager_automatic_rotation_enabled:
     def test_no_secrets(self):
         secretsmanager_client = mock.MagicMock
         secretsmanager_client.secrets = {}
+
         with mock.patch(
             "prowler.providers.aws.services.secretsmanager.secretsmanager_service.SecretsManager",
+            new=secretsmanager_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.secretsmanager.secretsmanager_client.secretsmanager_client",
             new=secretsmanager_client,
         ):
             # Test Check
@@ -32,10 +37,15 @@ class Test_secretsmanager_automatic_rotation_enabled:
                 region=AWS_REGION_EU_WEST_1,
                 name=secret_name,
                 rotation_enabled=False,
+                last_accessed_date=datetime.min,
+                last_rotated_date=datetime.min,
             )
         }
         with mock.patch(
             "prowler.providers.aws.services.secretsmanager.secretsmanager_service.SecretsManager",
+            new=secretsmanager_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.secretsmanager.secretsmanager_client.secretsmanager_client",
             new=secretsmanager_client,
         ):
             # Test Check
@@ -66,10 +76,15 @@ class Test_secretsmanager_automatic_rotation_enabled:
                 region=AWS_REGION_EU_WEST_1,
                 name=secret_name,
                 rotation_enabled=True,
+                last_accessed_date=datetime.min,
+                last_rotated_date=datetime.min,
             )
         }
         with mock.patch(
             "prowler.providers.aws.services.secretsmanager.secretsmanager_service.SecretsManager",
+            new=secretsmanager_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.secretsmanager.secretsmanager_client.secretsmanager_client",
             new=secretsmanager_client,
         ):
             # Test Check

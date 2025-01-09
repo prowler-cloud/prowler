@@ -41,7 +41,6 @@ class Provider(ABC):
     Methods:
         print_credentials(): Displays the provider's credentials used for auditing in the command-line interface.
         setup_session(): Sets up the session for the provider.
-        get_output_mapping(): Returns the output mapping between the provider and the generic model.
         validate_arguments(): Validates the arguments for the provider.
         get_checks_to_execute_by_audit_resources(): Returns a set of checks based on the input resources to scan.
 
@@ -108,15 +107,6 @@ class Provider(ABC):
         """
         raise NotImplementedError()
 
-    @abstractmethod
-    def get_output_mapping(self) -> dict:
-        """
-        get_output_mapping returns the output mapping between the provider and the generic model.
-
-        This method needs to be created in each provider.
-        """
-        raise NotImplementedError()
-
     # TODO: uncomment this once all the providers have implemented the test_connection method
     # @abstractmethod
     def test_connection(self) -> Any:
@@ -163,9 +153,7 @@ class Provider(ABC):
             provider_class = getattr(
                 import_module(provider_class_path), provider_class_name
             )
-            audit_config = load_and_validate_config_file(
-                arguments.provider, arguments.config_file
-            )
+
             fixer_config = load_and_validate_config_file(
                 arguments.provider, arguments.fixer_config
             )
@@ -173,50 +161,55 @@ class Provider(ABC):
             if not isinstance(Provider._global, provider_class):
                 if "aws" in provider_class_name.lower():
                     provider_class(
-                        arguments.aws_retries_max_attempts,
-                        arguments.role,
-                        arguments.session_duration,
-                        arguments.external_id,
-                        arguments.role_session_name,
-                        arguments.mfa,
-                        arguments.profile,
-                        set(arguments.region) if arguments.region else None,
-                        arguments.organizations_role,
-                        arguments.scan_unused_services,
-                        arguments.resource_tag,
-                        arguments.resource_arn,
-                        audit_config,
-                        fixer_config,
+                        retries_max_attempts=arguments.aws_retries_max_attempts,
+                        role_arn=arguments.role,
+                        session_duration=arguments.session_duration,
+                        external_id=arguments.external_id,
+                        role_session_name=arguments.role_session_name,
+                        mfa=arguments.mfa,
+                        profile=arguments.profile,
+                        regions=set(arguments.region) if arguments.region else None,
+                        organizations_role_arn=arguments.organizations_role,
+                        scan_unused_services=arguments.scan_unused_services,
+                        resource_tags=arguments.resource_tag,
+                        resource_arn=arguments.resource_arn,
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
                     )
                 elif "azure" in provider_class_name.lower():
                     provider_class(
-                        arguments.az_cli_auth,
-                        arguments.sp_env_auth,
-                        arguments.browser_auth,
-                        arguments.managed_identity_auth,
-                        arguments.tenant_id,
-                        arguments.azure_region,
-                        arguments.subscription_id,
-                        audit_config,
-                        fixer_config,
+                        az_cli_auth=arguments.az_cli_auth,
+                        sp_env_auth=arguments.sp_env_auth,
+                        browser_auth=arguments.browser_auth,
+                        managed_identity_auth=arguments.managed_identity_auth,
+                        tenant_id=arguments.tenant_id,
+                        region=arguments.azure_region,
+                        subscription_ids=arguments.subscription_id,
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
                     )
                 elif "gcp" in provider_class_name.lower():
                     provider_class(
-                        arguments.project_id,
-                        arguments.excluded_project_id,
-                        arguments.credentials_file,
-                        arguments.impersonate_service_account,
-                        arguments.list_project_id,
-                        audit_config,
-                        fixer_config,
+                        organization_id=arguments.organization_id,
+                        project_ids=arguments.project_id,
+                        excluded_project_ids=arguments.excluded_project_id,
+                        credentials_file=arguments.credentials_file,
+                        impersonate_service_account=arguments.impersonate_service_account,
+                        list_project_ids=arguments.list_project_id,
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
                     )
                 elif "kubernetes" in provider_class_name.lower():
                     provider_class(
-                        arguments.kubeconfig_file,
-                        arguments.context,
-                        arguments.namespace,
-                        audit_config,
-                        fixer_config,
+                        kubeconfig_file=arguments.kubeconfig_file,
+                        context=arguments.context,
+                        namespace=arguments.namespace,
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
                     )
 
         except TypeError as error:

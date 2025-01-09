@@ -12,6 +12,7 @@ class codebuild_project_user_controlled_buildspec(Check):
             report.region = project.region
             report.resource_id = project.name
             report.resource_arn = project.arn
+            report.resource_tags = project.tags
             report.status = "PASS"
             report.status_extended = f"CodeBuild project {project.name} does not use an user controlled buildspec."
             if project.buildspec:

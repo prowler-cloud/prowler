@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "efs_access_point_enforce_root_directory",
+  "CheckTitle": "EFS access points should enforce a root directory",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "efs",
+  "SubServiceName": "access-point",
+  "ResourceIdTemplate": "arn:aws:elasticfilesystem:{region}:{account-id}:access-point/{access-point-id}",
+  "Severity": "medium",
+  "ResourceType": "AwsEfsAccessPoint",
+  "Description": "This control checks if Amazon EFS access points are configured to enforce a root directory. The control fails if the value of Path is set to / (the default root directory of the file system).",
+  "Risk": "Access points without enforced root directories can potentially expose the entire file system's root directory to clients, which may result in unauthorized access.",
+  "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/efs-access-point-enforce-root-directory.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws efs update-access-point --access-point-id <access-point-id> --root-directory Path=<non-root-directory-path>",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/efs-controls.html#efs-3",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Update the EFS access point to enforce a non-root directory. This ensures clients can only access a specified subdirectory.",
+      "Url": "https://docs.aws.amazon.com/efs/latest/ug/enforce-root-directory-access-point.html"
+    }
+  },
+  "Categories": [
+    "vulnerabilities"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

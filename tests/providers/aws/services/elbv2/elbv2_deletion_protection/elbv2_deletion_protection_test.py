@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 
 from boto3 import client, resource
@@ -96,9 +95,9 @@ class Test_elbv2_deletion_protection:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert search(
-                "does not have deletion protection",
-                result[0].status_extended,
+            assert (
+                result[0].status_extended
+                == "ELBv2 my-lb does not have deletion protection enabled."
             )
             assert result[0].resource_id == "my-lb"
             assert result[0].resource_arn == lb["LoadBalancerArn"]
@@ -159,9 +158,9 @@ class Test_elbv2_deletion_protection:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert search(
-                "has deletion protection enabled",
-                result[0].status_extended,
+            assert (
+                result[0].status_extended
+                == "ELBv2 my-lb has deletion protection enabled."
             )
             assert result[0].resource_id == "my-lb"
             assert result[0].resource_arn == lb["LoadBalancerArn"]

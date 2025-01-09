@@ -13,10 +13,10 @@ class dynamodb_tables_kms_cmk_encryption_enabled(Check):
             report.region = table.region
             report.status = "FAIL"
             report.status_extended = (
-                f"DynamoDB table {table.name} does have DEFAULT encryption enabled."
+                f"DynamoDB table {table.name} is using DEFAULT encryption."
             )
             if table.encryption_type == "KMS":
                 report.status = "PASS"
-                report.status_extended = f"DynamoDB table {table.name} does have KMS encryption enabled with key {table.kms_arn.split('/')[1]}."
+                report.status_extended = f"DynamoDB table {table.name} has KMS encryption enabled with key {table.kms_arn.split('/')[1]}."
             findings.append(report)
         return findings

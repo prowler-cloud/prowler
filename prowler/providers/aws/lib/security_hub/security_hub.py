@@ -1,12 +1,33 @@
+from dataclasses import dataclass
+
 from boto3 import Session
 from botocore.client import ClientError
 
 from prowler.config.config import timestamp_utc
 from prowler.lib.logger import logger
 from prowler.lib.outputs.asff.asff import AWSSecurityFindingFormat
+from prowler.providers.aws.aws_provider import AwsProvider
+from prowler.providers.aws.lib.security_hub.exceptions.exceptions import (
+    SecurityHubInvalidRegionError,
+    SecurityHubNoEnabledRegionsError,
+)
+from prowler.providers.common.models import Connection
 
 SECURITY_HUB_INTEGRATION_NAME = "prowler/prowler"
 SECURITY_HUB_MAX_BATCH = 100
+
+
+@dataclass
+class SecurityHubConnection(Connection):
+    """
+    Represents a Security Hub connection object.
+    Attributes:
+        enabled_regions (set): Set of regions where Security Hub is enabled.
+        disabled_regions (set): Set of regions where Security Hub is disabled.
+    """
+
+    enabled_regions: set = None
+    disabled_regions: set = None
 
 
 class SecurityHub:
@@ -53,7 +74,10 @@ class SecurityHub:
 
         if aws_security_hub_available_regions:
             self._enabled_regions = self.verify_enabled_per_region(
-                aws_security_hub_available_regions
+                aws_security_hub_available_regions,
+                aws_session,
+                aws_account_id,
+                aws_partition,
             )
         if findings and self._enabled_regions:
             self._findings_per_region = self.filter(findings, send_only_fails)
@@ -103,9 +127,12 @@ class SecurityHub:
             )
         return findings_per_region
 
+    @staticmethod
     def verify_enabled_per_region(
-        self,
         aws_security_hub_available_regions: list[str],
+        session: Session,
+        aws_account_id: str,
+        aws_partition: str,
     ) -> dict[str, Session]:
         """
         Filters the given list of regions where AWS Security Hub is enabled and returns a dictionary containing the region and their boto3 client if the region and the Prowler integration is enabled.
@@ -123,13 +150,11 @@ class SecurityHub:
                     f"Checking if the {SECURITY_HUB_INTEGRATION_NAME} is enabled in the {region} region."
                 )
                 # Check if security hub is enabled in current region
-                security_hub_client = self._session.client(
-                    "securityhub", region_name=region
-                )
+                security_hub_client = session.client("securityhub", region_name=region)
                 security_hub_client.describe_hub()
 
                 # Check if Prowler integration is enabled in Security Hub
-                security_hub_prowler_integration_arn = f"arn:{self._aws_partition}:securityhub:{region}:{self._aws_account_id}:product-subscription/{SECURITY_HUB_INTEGRATION_NAME}"
+                security_hub_prowler_integration_arn = f"arn:{aws_partition}:securityhub:{region}:{aws_account_id}:product-subscription/{SECURITY_HUB_INTEGRATION_NAME}"
                 if security_hub_prowler_integration_arn not in str(
                     security_hub_client.list_enabled_products_for_import()
                 ):
@@ -137,7 +162,7 @@ class SecurityHub:
                         f"Security Hub is enabled in {region} but Prowler integration does not accept findings. More info: https://docs.prowler.cloud/en/latest/tutorials/aws/securityhub/"
                     )
                 else:
-                    enabled_regions[region] = self._session.client(
+                    enabled_regions[region] = session.client(
                         "securityhub", region_name=region
                     )
 
@@ -148,7 +173,7 @@ class SecurityHub:
                 error_message = client_error.response["Error"]["Message"]
                 if (
                     error_code == "InvalidAccessException"
-                    and f"Account {self._aws_account_id} is not subscribed to AWS Security Hub"
+                    and f"Account {aws_account_id} is not subscribed to AWS Security Hub"
                     in error_message
                 ):
                     logger.warning(
@@ -284,3 +309,104 @@ class SecurityHub:
                 f"{error.__class__.__name__} -- [{error.__traceback__.tb_lineno}]:{error} in region {region}"
             )
             return success_count
+
+    @staticmethod
+    def test_connection(
+        session: Session,
+        aws_account_id: str,
+        aws_partition: str,
+        regions: set = None,
+        raise_on_exception: bool = True,
+    ) -> SecurityHubConnection:
+        """
+        Test the connection to AWS Security Hub by checking if Security Hub is enabled in the provided region
+        and if the Prowler integration is active.
+
+        Args:
+            session (Session): AWS session to use for authentication.
+            regions (set): Set of regions to check for Security Hub integration.
+            aws_account_id (str): AWS account ID to check for Prowler integration.
+            aws_partition (str): AWS partition (e.g., aws, aws-cn, aws-us-gov).
+            raise_on_exception (bool): Whether to raise an exception if an error occurs.
+
+        Returns:
+            Connection: An object that contains the result of the test connection operation.
+                - is_connected (bool): Indicates whether the connection was successful.
+                - error (Exception): An exception object if an error occurs during the connection test.
+            enabled_regions (set): Set of regions where Security Hub is enabled.
+            disabled_regions (set): Set of regions where Security Hub is disabled.
+        """
+        try:
+            disabled_regions = set()
+            enabled_regions = set()
+
+            all_regions = AwsProvider.get_available_aws_service_regions(
+                service="securityhub", partition=aws_partition
+            )
+
+            enabled_regions = SecurityHub.verify_enabled_per_region(
+                aws_security_hub_available_regions=all_regions,
+                session=session,
+                aws_account_id=aws_account_id,
+                aws_partition=aws_partition,
+            ).keys()
+            disabled_regions = all_regions - enabled_regions
+            if regions:
+                if not any(region in enabled_regions for region in regions):
+                    logger.warning(
+                        f"Prowler integration is not enabled in regions: {regions - enabled_regions}."
+                    )
+                    invalid_region_error = SecurityHubInvalidRegionError(
+                        message="Given regions have not Security Hub enabled."
+                    )
+                    if raise_on_exception:
+                        raise invalid_region_error
+                    return SecurityHubConnection(
+                        is_connected=False,
+                        error=invalid_region_error,
+                        enabled_regions=enabled_regions,
+                        disabled_regions=disabled_regions,
+                    )
+                else:
+                    logger.info(
+                        f"Prowler integration is enabled in regions: {', '.join(regions)}."
+                    )
+                    return SecurityHubConnection(
+                        is_connected=True,
+                        error=None,
+                        enabled_regions=enabled_regions,
+                        disabled_regions=disabled_regions,
+                    )
+
+            if len(enabled_regions) == 0:
+                error_str = (
+                    "No regions found with the Security Hub integration enabled."
+                )
+                logger.warning(error_str)
+                no_enabled_regions_error = SecurityHubNoEnabledRegionsError(
+                    message=error_str
+                )
+                if raise_on_exception:
+                    raise no_enabled_regions_error
+                return SecurityHubConnection(
+                    is_connected=False,
+                    error=no_enabled_regions_error,
+                    enabled_regions=enabled_regions,
+                    disabled_regions=disabled_regions,
+                )
+            else:
+                logger.info(
+                    f"Security Hub is enabled in the following regions: {', '.join(enabled_regions)}."
+                )
+                return SecurityHubConnection(
+                    is_connected=True,
+                    error=None,
+                    enabled_regions=enabled_regions,
+                    disabled_regions=disabled_regions,
+                )
+
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            raise error

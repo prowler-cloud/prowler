@@ -62,7 +62,7 @@ class Test_defender_additional_email_configured_with_a_security_contact:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"There is not another correct email configured for susbscription {AZURE_SUBSCRIPTION_ID}."
+                == f"There is not another correct email configured for subscription {AZURE_SUBSCRIPTION_ID}."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == "default"
@@ -102,7 +102,7 @@ class Test_defender_additional_email_configured_with_a_security_contact:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"There is not another correct email configured for susbscription {AZURE_SUBSCRIPTION_ID}."
+                == f"There is not another correct email configured for subscription {AZURE_SUBSCRIPTION_ID}."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == "default"
@@ -142,7 +142,7 @@ class Test_defender_additional_email_configured_with_a_security_contact:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"There is not another correct email configured for susbscription {AZURE_SUBSCRIPTION_ID}."
+                == f"There is not another correct email configured for subscription {AZURE_SUBSCRIPTION_ID}."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == "default"
@@ -182,7 +182,7 @@ class Test_defender_additional_email_configured_with_a_security_contact:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"There is another correct email configured for susbscription {AZURE_SUBSCRIPTION_ID}."
+                == f"There is another correct email configured for subscription {AZURE_SUBSCRIPTION_ID}."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == "default"
@@ -222,7 +222,7 @@ class Test_defender_additional_email_configured_with_a_security_contact:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"There is another correct email configured for susbscription {AZURE_SUBSCRIPTION_ID}."
+                == f"There is another correct email configured for subscription {AZURE_SUBSCRIPTION_ID}."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == "default"
@@ -261,7 +261,7 @@ class Test_defender_additional_email_configured_with_a_security_contact:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"There is not another correct email configured for susbscription {AZURE_SUBSCRIPTION_ID}."
+                == f"There is not another correct email configured for subscription {AZURE_SUBSCRIPTION_ID}."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == "default"

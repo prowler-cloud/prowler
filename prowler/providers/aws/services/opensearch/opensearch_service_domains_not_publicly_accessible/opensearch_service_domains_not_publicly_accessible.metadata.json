@@ -1,28 +1,27 @@
 {
   "Provider": "aws",
   "CheckID": "opensearch_service_domains_not_publicly_accessible",
-  "CheckTitle": "Check if Amazon Opensearch/Elasticsearch domains are set as Public or if it has open policy access",
+  "CheckTitle": "Check if Amazon Opensearch/Elasticsearch domains are publicly accessible",
   "CheckType": [
-    "Protect",
-    "Secure Access Management"
+    "Effects/Data Exposure"
   ],
   "ServiceName": "opensearch",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "critical",
   "ResourceType": "AwsOpenSearchServiceDomain",
-  "Description": "Check if Amazon Opensearch/Elasticsearch domains are set as Public or if it has open policy access",
+  "Description": "Check if Amazon Opensearch/Elasticsearch domains are publicly accessible via their access policies.",
   "Risk": "Publicly accessible services could expose sensitive data to bad actors.",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Elasticsearch/elasticsearch-domain-exposed.html",
+      "CLI": "",
       "NativeIaC": "",
-      "Other": "https://docs.prowler.com/checks/aws/public-policies/public_3#fix---runtime",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Elasticsearch/domain-exposed.html",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Use  VPC endpoints for internal services.",
+      "Text": "Modify the access policy attached to your Amazon OpenSearch domain and replace the 'Principal' element value (i.e. '*') with the ARN of the trusted AWS account. You can also add a Condition clause to the policy statement to limit the domain access to a specific (trusted) IP address/IP range only.",
       "Url": "https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-vpc.html"
     }
   },

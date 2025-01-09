@@ -2,7 +2,6 @@ from azure.identity import AzureAuthorityHosts
 
 AZURE_CHINA_CLOUD = "https://management.chinacloudapi.cn"
 AZURE_US_GOV_CLOUD = "https://management.usgovcloudapi.net"
-AZURE_GERMAN_CLOUD = "https://management.microsoftazure.de"
 AZURE_GENERIC_CLOUD = "https://management.azure.com"
 
 
@@ -22,11 +21,6 @@ def get_regions_config(region):
             "authority": AzureAuthorityHosts.AZURE_GOVERNMENT,
             "base_url": AZURE_US_GOV_CLOUD,
             "credential_scopes": [AZURE_US_GOV_CLOUD + "/.default"],
-        },
-        "AzureGermanCloud": {
-            "authority": AzureAuthorityHosts.AZURE_GERMANY,
-            "base_url": AZURE_GERMAN_CLOUD,
-            "credential_scopes": [AZURE_GERMAN_CLOUD + "/.default"],
         },
     }
     return allowed_regions[region]

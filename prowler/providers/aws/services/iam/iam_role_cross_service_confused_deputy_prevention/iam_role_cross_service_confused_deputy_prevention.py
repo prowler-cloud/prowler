@@ -19,6 +19,8 @@ class iam_role_cross_service_confused_deputy_prevention(Check):
                     report.status_extended = f"IAM Service Role {role.name} does not prevent against a cross-service confused deputy attack."
                     if not is_policy_public(
                         role.assume_role_policy,
+                        iam_client.audited_account,
+                        check_cross_service_confused_deputy=True,
                         not_allowed_actions=["sts:AssumeRole", "sts:*"],
                     ):
                         report.status = "PASS"

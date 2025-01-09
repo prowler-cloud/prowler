@@ -37,7 +37,7 @@ class Test_iam_support_role_created:
         )
         iam.attach_role_policy(
             RoleName=role_name,
-            PolicyArn="arn:aws:iam::aws:policy/aws-service-role/AWSSupportServiceRolePolicy",
+            PolicyArn="arn:aws:iam::aws:policy/AWSSupportAccess",
         )
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
@@ -58,14 +58,11 @@ class Test_iam_support_role_created:
             result = check.execute()
             assert result[0].status == "PASS"
             assert search(
-                f"Support policy attached to role {role_name}.",
+                f"AWS Support Access policy attached to role {role_name}.",
                 result[0].status_extended,
             )
-            assert result[0].resource_id == "AWSSupportServiceRolePolicy"
-            assert (
-                result[0].resource_arn
-                == "arn:aws:iam::aws:policy/aws-service-role/AWSSupportServiceRolePolicy"
-            )
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert result[0].resource_arn == "arn:aws:iam::aws:policy/AWSSupportAccess"
 
     @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
     def test_no_support_role_created(self):
@@ -88,13 +85,10 @@ class Test_iam_support_role_created:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Support policy is not attached to any role."
+                == "AWS Support Access policy is not attached to any role."
             )
-            assert result[0].resource_id == "AWSSupportServiceRolePolicy"
-            assert (
-                result[0].resource_arn
-                == "arn:aws:iam::aws:policy/aws-service-role/AWSSupportServiceRolePolicy"
-            )
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert result[0].resource_arn == "arn:aws:iam::aws:policy/AWSSupportAccess"
 
     @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
     def test_access_denied(self):

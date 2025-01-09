@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "containerregistry_not_publicly_accessible",
+  "CheckTitle": "Restrict public network access to the Container Registry",
+  "CheckType": [],
+  "ServiceName": "containerregistry",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "ContainerRegistry",
+  "Description": "Ensure that public network access to the Azure Container Registry is restricted.",
+  "Risk": "Public accessibility exposes the Container Registry to potential attacks, unauthorized usage, and data breaches. Restricting access minimizes the surface area for attacks and ensures that only authorized networks can access the registry.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/container-registry/container-registry-access-selected-networks",
+  "Remediation": {
+    "Code": {
+      "CLI": "az acr update --name <registry-name> --default-action Deny",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure that the necessary virtual network configurations or IP rules are in place to allow access from required services once public access is restricted. Review the network access settings regularly to maintain a secure environment. To restrict public network access to your Azure Container Registry: 1. Navigate to your Container Registry in the Azure Portal. 2. Under 'Settings'->'Networking', configure the 'Public network access' settings to 'Disabled'. 3. Set up virtual network service endpoints or private endpoints as needed for secure access. 4. Review and adjust IP access rules as necessary.",
+      "Url": "https://learn.microsoft.com/en-us/azure/container-registry/container-registry-access-selected-networks"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This feature is only available for Premium SKU registries."
+}

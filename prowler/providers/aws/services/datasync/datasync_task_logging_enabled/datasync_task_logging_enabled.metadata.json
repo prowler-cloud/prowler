@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "datasync_task_logging_enabled",
+  "CheckTitle": "DataSync tasks should have logging enabled",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "datasync",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:datasync:{region}:{account-id}:task/{task-id}",
+  "Severity": "high",
+  "ResourceType": "AwsDataSyncTask",
+  "Description": "This control checks if AWS DataSync tasks have logging enabled. The control fails if the task doesn't have the CloudWatchLogGroupArn property defined.",
+  "Risk": "Without logging enabled, important operational data may be lost, making it difficult to troubleshoot issues, monitor performance, and ensure compliance with auditing requirements.",
+  "RelatedUrl": "https://docs.aws.amazon.com/datasync/latest/userguide/monitor-datasync.html#enable-logging",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws datasync update-task --task-arn <task-arn> --cloud-watch-log-group-arn <log-group-arn>",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/datasync/latest/userguide/monitor-datasync.html#enable-logging",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure logging for your DataSync tasks to ensure that operational data is captured and available for debugging, monitoring, and auditing purposes.",
+      "Url": "https://docs.aws.amazon.com/datasync/latest/userguide/monitor-datasync.html#enable-logging"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

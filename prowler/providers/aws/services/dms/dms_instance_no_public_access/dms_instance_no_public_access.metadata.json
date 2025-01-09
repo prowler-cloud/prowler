@@ -23,7 +23,9 @@
       "Url": "https://docs.aws.amazon.com/securityhub/latest/userguide/dms-controls.html#dms-1"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "internet-exposed"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

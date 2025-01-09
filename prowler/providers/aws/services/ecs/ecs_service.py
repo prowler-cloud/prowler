@@ -8,7 +8,6 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################################ ECS
 class ECS(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
@@ -16,6 +15,7 @@ class ECS(AWSService):
         self.task_definitions = {}
         self.services = {}
         self.clusters = {}
+        self.task_sets = {}
         self.__threading_call__(self._list_task_definitions)
         self.__threading_call__(
             self._describe_task_definition, self.task_definitions.values()
@@ -35,7 +35,7 @@ class ECS(AWSService):
                     ):
                         self.task_definitions[task_definition] = TaskDefinition(
                             # we want the family name without the revision
-                            name=sub(":.*", "", task_definition.split("/")[1]),
+                            name=sub(":.*", "", task_definition.split("/")[-1]),
                             arn=task_definition,
                             revision=task_definition.split(":")[-1],
                             region=regional_client.region,
@@ -47,7 +47,7 @@ class ECS(AWSService):
             )
 
     def _describe_task_definition(self, task_definition):
-        logger.info("ECS - Describing Task Definitions...")
+        logger.info("ECS - Describing Task Definition...")
         try:
             client = self.regional_clients[task_definition.region]
             response = client.describe_task_definition(
@@ -70,12 +70,24 @@ class ECS(AWSService):
                     ContainerDefinition(
                         name=container["name"],
                         privileged=container.get("privileged", False),
+                        readonly_rootfilesystem=container.get(
+                            "readonlyRootFilesystem", False
+                        ),
                         user=container.get("user", ""),
                         environment=environment,
+                        log_driver=container.get("logConfiguration", {}).get(
+                            "logDriver", ""
+                        ),
+                        log_option=container.get("logConfiguration", {})
+                        .get("options", {})
+                        .get("mode", ""),
                     )
                 )
+            task_definition.pid_mode = response["taskDefinition"].get("pidMode", "")
             task_definition.tags = response.get("tags")
-            task_definition.network_mode = response["taskDefinition"].get("networkMode")
+            task_definition.network_mode = response["taskDefinition"].get(
+                "networkMode", "bridge"
+            )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -102,7 +114,7 @@ class ECS(AWSService):
                     service_desc = describe_response["services"][0]
                     service_arn = service_desc["serviceArn"]
                     service_obj = Service(
-                        name=sub(":.*", "", service_arn.split("/")[2]),
+                        name=sub(":.*", "", service_arn.split("/")[-1]),
                         arn=service_arn,
                         region=cluster.region,
                         assign_public_ip=(
@@ -111,8 +123,23 @@ class ECS(AWSService):
                             .get("assignPublicIp", "DISABLED")
                             == "ENABLED"
                         ),
+                        launch_type=service_desc.get("launchType", ""),
+                        platform_version=service_desc.get("platformVersion", ""),
+                        platform_family=service_desc.get("platformFamily", ""),
                         tags=service_desc.get("tags", []),
                     )
+                    for task_set in service_desc.get("taskSets", []):
+                        self.task_sets[task_set["taskSetArn"]] = TaskSet(
+                            id=task_set["id"],
+                            arn=task_set["taskSetArn"],
+                            cluster_arn=task_set["clusterArn"],
+                            service_arn=task_set["serviceArn"],
+                            assign_public_ip=task_set.get("networkConfiguration", {})
+                            .get("awsvpcConfiguration", {})
+                            .get("assignPublicIp", "DISABLED"),
+                            region=cluster.region,
+                            tags=task_set.get("tags", []),
+                        )
                     cluster.services[service_arn] = service_obj
                     self.services[service_arn] = service_obj
         except Exception as error:
@@ -130,7 +157,7 @@ class ECS(AWSService):
                         is_resource_filtered(cluster, self.audit_resources)
                     ):
                         self.clusters[cluster] = Cluster(
-                            name=sub(":.*", "", cluster.split("/")[1]),
+                            name=sub(":.*", "", cluster.split("/")[-1]),
                             arn=cluster,
                             region=regional_client.region,
                         )
@@ -149,6 +176,7 @@ class ECS(AWSService):
                     "TAGS",
                 ],
             )
+            cluster.settings = response["clusters"][0].get("settings", [])
             cluster.tags = response["clusters"][0].get("tags", [])
         except Exception as error:
             logger.error(
@@ -164,8 +192,11 @@ class ContainerEnvVariable(BaseModel):
 class ContainerDefinition(BaseModel):
     name: str
     privileged: bool
+    readonly_rootfilesystem: bool = False
     user: str
     environment: list[ContainerEnvVariable]
+    log_driver: Optional[str]
+    log_option: Optional[str]
 
 
 class TaskDefinition(BaseModel):
@@ -174,6 +205,7 @@ class TaskDefinition(BaseModel):
     revision: str
     region: str
     container_definitions: list[ContainerDefinition] = []
+    pid_mode: Optional[str]
     tags: Optional[list] = []
     network_mode: Optional[str]
 
@@ -182,6 +214,9 @@ class Service(BaseModel):
     name: str
     arn: str
     region: str
+    launch_type: str = ""
+    platform_version: Optional[str]
+    platform_family: Optional[str]
     assign_public_ip: Optional[bool]
     tags: Optional[list] = []
 
@@ -191,4 +226,15 @@ class Cluster(BaseModel):
     arn: str
     region: str
     services: dict = {}
+    settings: Optional[list] = []
+    tags: Optional[list] = []
+
+
+class TaskSet(BaseModel):
+    id: str
+    arn: str
+    cluster_arn: str
+    service_arn: str
+    region: str
+    assign_public_ip: Optional[str]
     tags: Optional[list] = []

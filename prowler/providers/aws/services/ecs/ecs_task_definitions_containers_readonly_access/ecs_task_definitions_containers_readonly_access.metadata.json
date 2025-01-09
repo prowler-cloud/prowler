@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "ecs_task_definitions_containers_readonly_access",
+  "CheckTitle": "ECS containers should be limited to read-only access to root filesystems",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "ecs",
+  "SubServiceName": "taskDefinition",
+  "ResourceIdTemplate": "arn:aws:ecs:{region}:{account-id}:task-definition/{task-definition-name}",
+  "Severity": "high",
+  "ResourceType": "AwsEcsTaskDefinition",
+  "Description": "This control checks if Amazon ECS containers are limited to read-only access to mounted root filesystems. The control fails if the readonlyRootFilesystem parameter is set to false or if the parameter doesn't exist in the container definition.",
+  "Risk": "If ECS containers have write access to root filesystems, it increases the risk of filesystem tampering and exploitation of vulnerabilities, violating the principle of least privilege.",
+  "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/ecs-containers-readonly-access.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws ecs register-task-definition --family <task-family> --container-definitions '[{\"name\":\"<container-name>\",\"image\":\"<image>\",\"readonlyRootFilesystem\":true}]'",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/ecs-controls.html#ecs-5",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure that containers have read-only access to their root filesystems to limit write access and reduce the attack surface.",
+      "Url": "https://docs.aws.amazon.com/AmazonECS/latest/userguide/task_definition_parameters.html#container_definition_readonly"
+    }
+  },
+  "Categories": [
+    "vulnerabilities"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

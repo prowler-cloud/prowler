@@ -15,6 +15,7 @@ mutelist_schema = Schema(
                             Optional("Resources"): list,
                             Optional("Tags"): list,
                         },
+                        Optional("Description"): str,
                     }
                 }
             }

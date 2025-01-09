@@ -60,7 +60,6 @@ def validate_azure_region(region):
     regions_allowed = [
         "AzureChinaCloud",
         "AzureUSGovernment",
-        "AzureGermanCloud",
         "AzureCloud",
     ]
     if region not in regions_allowed:

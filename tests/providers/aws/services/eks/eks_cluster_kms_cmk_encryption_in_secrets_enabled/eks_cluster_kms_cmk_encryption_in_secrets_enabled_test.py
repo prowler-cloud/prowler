@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 
 from prowler.providers.aws.services.eks.eks_service import EKSCluster
@@ -50,9 +49,9 @@ class Test_eks_cluster_kms_cmk_encryption_in_secrets_enabled:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert search(
-                "does not have encryption for Kubernetes secrets",
-                result[0].status_extended,
+            assert (
+                result[0].status_extended
+                == f"EKS cluster {cluster_name} does not have encryption for Kubernetes secrets."
             )
             assert result[0].resource_id == cluster_name
             assert result[0].resource_arn == cluster_arn
@@ -81,8 +80,9 @@ class Test_eks_cluster_kms_cmk_encryption_in_secrets_enabled:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert search(
-                "has encryption for Kubernetes secrets", result[0].status_extended
+            assert (
+                result[0].status_extended
+                == f"EKS cluster {cluster_name} has encryption for Kubernetes secrets."
             )
             assert result[0].resource_id == cluster_name
             assert result[0].resource_arn == cluster_arn

@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "ecs_task_definitions_logging_enabled",
+  "CheckTitle": "ECS task definitions containers should have a logging configuration",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "ecs",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:ecs:{region}:{account-id}:task-definition/{task-definition-name}",
+  "Severity": "high",
+  "ResourceType": "AwsEcsTaskDefinition",
+  "Description": "This control checks if the latest active Amazon ECS task definition has a logging configuration specified. The control fails if the task definition doesn't have the logConfiguration property defined or if the value for logDriver is null in at least one container definition.",
+  "Risk": "Without a logging configuration, important data may be lost, making it difficult to troubleshoot issues, monitor performance, and ensure compliance with auditing requirements.",
+  "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/ecs-task-definition-log-configuration.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws ecs register-task-definition --family <task-family> --container-definitions '[{\"name\":\"<container-name>\",\"image\":\"<image>\",\"logConfiguration\":{\"logDriver\":\"awslogs\",\"options\":{\"awslogs-group\":\"<log-group>\",\"awslogs-region\":\"<region>\",\"awslogs-stream-prefix\":\"ecs\"}}}]'",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/ecs-controls.html#ecs-9",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Define a logging configuration in the ECS task definition to ensure important data is captured and available for debugging, monitoring, and auditing purposes.",
+      "Url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/using_awslogs.html#specify-log-config"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -4,7 +4,16 @@ from prowler.providers.gcp.services.cloudsql.cloudsql_client import cloudsql_cli
 
 class cloudsql_instance_postgres_log_min_messages_flag(Check):
     def execute(self) -> Check_Report_GCP:
-        desired_log_min_messages = "error"
+        failing_log_levels = [
+            "DEBUG5",
+            "DEBUG4",
+            "DEBUG3",
+            "DEBUG2",
+            "DEBUG1",
+            "INFO",
+            "NOTICE",
+        ]
+
         findings = []
         for instance in cloudsql_client.instances:
             if "POSTGRES" in instance.version:
@@ -14,15 +23,17 @@ class cloudsql_instance_postgres_log_min_messages_flag(Check):
                 report.resource_name = instance.name
                 report.location = instance.region
                 report.status = "FAIL"
-                report.status_extended = f"PostgreSQL Instance {instance.name} does not have 'log_min_messages' flag set minimum to '{desired_log_min_messages}'."
+                report.status_extended = f"PostgreSQL Instance {instance.name} does not have 'log_min_messages' flag set."
+
                 for flag in instance.flags:
-                    if (
-                        flag.get("name", "") == "log_min_messages"
-                        and flag.get("value", "warning") == desired_log_min_messages
-                    ):
-                        report.status = "PASS"
-                        report.status_extended = f"PostgreSQL Instance {instance.name} has 'log_min_messages' flag set minimum to '{desired_log_min_messages}'."
-                        break
+                    if flag.get("name", "") == "log_min_messages":
+                        current_level = flag.get("value", "").upper()
+                        if current_level in failing_log_levels:
+                            report.status = "FAIL"
+                            report.status_extended = f"PostgreSQL Instance {instance.name} has 'log_min_messages' flag set to '{current_level}', which is below the recommended minimum of 'ERROR'."
+                        else:
+                            report.status = "PASS"
+                            report.status_extended = f"PostgreSQL Instance {instance.name} has 'log_min_messages' flag set to an acceptable severity level: '{current_level}'."
                 findings.append(report)
 
         return findings

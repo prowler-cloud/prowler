@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "wafv2_webacl_rule_logging_enabled",
+  "CheckTitle": "Check if AWS WAFv2 WebACL rule or rule group has Amazon CloudWatch metrics enabled.",
+  "CheckType": [
+    "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53 Controls"
+  ],
+  "ServiceName": "wafv2",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:wafv2:region:account-id:webacl/webacl-id",
+  "Severity": "medium",
+  "ResourceType": "AwsWafv2RuleGroup",
+  "Description": "This control checks whether an AWS WAF rule or rule group has Amazon CloudWatch metrics enabled. The control fails if the rule or rule group doesn't have CloudWatch metrics enabled.",
+  "Risk": "Without CloudWatch Metrics enabled on AWS WAF rules or rule groups, it's challenging to monitor traffic flow effectively. This reduces visibility into potential security threats, such as malicious activities or unusual traffic patterns.",
+  "RelatedUrl": "https://docs.aws.amazon.com/waf/latest/APIReference/API_UpdateRuleGroup.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws wafv2 update-rule-group --id <rule-group-id> --scope <scope> --name <rule-group-name> --cloudwatch-metrics-enabled true",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/waf-controls.html#waf-12",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure that CloudWatch Metrics are enabled for AWS WAF rules and rule groups. This provides detailed insights into traffic, enabling timely identification of security risks.",
+      "Url": "https://docs.aws.amazon.com/waf/latest/APIReference/API_UpdateWebACL.html"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

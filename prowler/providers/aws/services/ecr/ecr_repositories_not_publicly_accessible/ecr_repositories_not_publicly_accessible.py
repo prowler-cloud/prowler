@@ -15,11 +15,14 @@ class ecr_repositories_not_publicly_accessible(Check):
                 report.resource_tags = repository.tags
                 report.status = "PASS"
                 report.status_extended = (
-                    f"Repository {repository.name} is not publicly accesible."
+                    f"Repository {repository.name} is not publicly accessible."
                 )
-                if is_policy_public(repository.policy):
-                    report.status = "FAIL"
-                    report.status_extended = f"Repository {repository.name} policy may allow anonymous users to perform actions (Principal: '*')."
+                if repository.policy:
+                    if is_policy_public(repository.policy, ecr_client.audited_account):
+                        report.status = "FAIL"
+                        report.status_extended = (
+                            f"Repository {repository.name} is publicly accessible."
+                        )
 
                 findings.append(report)
 

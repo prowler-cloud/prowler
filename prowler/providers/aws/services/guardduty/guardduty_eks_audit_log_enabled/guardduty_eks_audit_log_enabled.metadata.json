@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "guardduty_eks_audit_log_enabled",
+  "CheckTitle": "GuardDuty EKS Audit Log Monitoring Enabled",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Runtime Behavior Analysis"
+  ],
+  "ServiceName": "guardduty",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:guardduty:region:account-id/detector-id",
+  "Severity": "high",
+  "ResourceType": "AwsGuardDutyDetector",
+  "Description": "Checks whether GuardDuty EKS Audit Log Monitoring is enabled as source in a detector.",
+  "Risk": "Without GuardDuty EKS Audit Log Monitoring enabled, you may not be able to detect potentially suspicious activities in your Amazon Elastic Kubernetes Service (Amazon EKS) clusters.",
+  "RelatedUrl": "https://docs.aws.amazon.com/guardduty/latest/ug/kubernetes-protection.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws guardduty update-detector --detector-id <detector-id> --data-sources Kubernetes={AuditLogs={Enable=true}}",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/guardduty-controls.html#guardduty-5",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable GuardDuty EKS Audit Log Monitoring to detect potentially suspicious activities in your Amazon Elastic Kubernetes Service (Amazon EKS) clusters.",
+      "Url": "https://docs.aws.amazon.com/guardduty/latest/ug/eks-protection-enable-standalone-account.html"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

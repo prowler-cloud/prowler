@@ -41,7 +41,7 @@ The following list includes all the AWS checks with configurable variables that 
 | `ec2_launch_template_no_secrets`                              | `secrets_ignore_patterns`                        | List of Strings |
 | `ec2_securitygroup_allow_ingress_from_internet_to_any_port`   | `ec2_allowed_instance_owners`                    | List of Strings |
 | `ec2_securitygroup_allow_ingress_from_internet_to_any_port`   | `ec2_allowed_interface_types`                    | List of Strings |
-| `ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports`| `ec2_sg_high_risk_ports`                 | List of Integer |
+| `ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports`| `ec2_high_risk_ports`                    | List of Integer |
 | `ec2_securitygroup_with_many_ingress_egress_rules`            | `max_security_group_rules`                       | Integer         |
 | `ecs_task_definitions_no_environment_secrets`                 | `secrets_ignore_patterns`                        | List of Strings |
 | `ecr_repositories_scan_vulnerabilities_in_latest_image`       | `ecr_repository_vulnerability_minimum_severity`  | String          |
@@ -56,6 +56,8 @@ The following list includes all the AWS checks with configurable variables that 
 | `organizations_scp_check_deny_regions`                        | `organizations_enabled_regions`                  | List of Strings |
 | `rds_instance_backup_enabled`                                 | `check_rds_instance_replicas`                    | Boolean         |
 | `securityhub_enabled`                                         | `mute_non_default_regions`                       | Boolean         |
+| `secretsmanager_secret_unused`                                | `max_days_secret_unused`                         | Integer         |
+| `secretsmanager_secret_rotated_periodically`                  | `max_days_secret_unrotated`                      | Integer         |
 | `ssm_document_secrets`                                        | `secrets_ignore_patterns`                        | List of Strings |
 | `trustedadvisor_premium_support_plan_subscribed`              | `verify_premium_support_plans`                   | Boolean         |
 | `vpc_endpoint_connections_trust_boundaries`                   | `trusted_account_ids`                            | List of Strings |
@@ -73,6 +75,7 @@ The following list includes all the Azure checks with configurable variables tha
 | `app_ensure_php_version_is_latest`                            | `php_latest_version`                             | String          |
 | `app_ensure_python_version_is_latest`                         | `python_latest_version`                          | String          |
 | `app_ensure_java_version_is_latest`                           | `java_latest_version`                            | String          |
+| `sqlserver_recommended_minimal_tls_version`                   | `recommended_minimal_tls_versions`               | List of Strings |
 
 
 ## GCP
@@ -142,7 +145,7 @@ aws:
         "amazon-elb"
     ]
   # aws.ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports
-  ec2_sg_high_risk_ports:
+  ec2_high_risk_ports:
     [
         25,
         110,
@@ -226,7 +229,7 @@ aws:
 
   # AWS CloudTrail Configuration
   # aws.cloudtrail_threat_detection_privilege_escalation
-  threat_detection_privilege_escalation_threshold: 0.1 # Percentage of actions found to decide if it is an privilege_escalation attack event, by default is 0.1 (10%)
+  threat_detection_privilege_escalation_threshold: 0.2 # Percentage of actions found to decide if it is an privilege_escalation attack event, by default is 0.2 (20%)
   threat_detection_privilege_escalation_minutes: 1440 # Past minutes to search from now for privilege_escalation attacks, by default is 1440 minutes (24 hours)
   threat_detection_privilege_escalation_actions:
     [
@@ -283,7 +286,7 @@ aws:
       "UpdateLoginProfile",
     ]
   # aws.cloudtrail_threat_detection_enumeration
-  threat_detection_enumeration_threshold: 0.1 # Percentage of actions found to decide if it is an enumeration attack event, by default is 0.1 (10%)
+  threat_detection_enumeration_threshold: 0.3 # Percentage of actions found to decide if it is an enumeration attack event, by default is 0.3 (30%)
   threat_detection_enumeration_minutes: 1440 # Past minutes to search from now for enumeration attacks, by default is 1440 minutes (24 hours)
   threat_detection_enumeration_actions:
     [
@@ -378,6 +381,24 @@ aws:
       "LookupEvents",
       "Search",
     ]
+  # aws.cloudtrail_threat_detection_llm_jacking
+  threat_detection_llm_jacking_threshold: 0.4 # Percentage of actions found to decide if it is an LLM Jacking attack event, by default is 0.4 (40%)
+  threat_detection_llm_jacking_minutes: 1440 # Past minutes to search from now for LLM Jacking attacks, by default is 1440 minutes (24 hours)
+  threat_detection_llm_jacking_actions:
+    [
+    "PutUseCaseForModelAccess",  # Submits a use case for model access, providing justification (Write).
+    "PutFoundationModelEntitlement",  # Grants entitlement for accessing a foundation model (Write).
+    "PutModelInvocationLoggingConfiguration", # Configures logging for model invocations (Write).
+    "CreateFoundationModelAgreement",  # Creates a new agreement to use a foundation model (Write).
+    "InvokeModel",  # Invokes a specified Bedrock model for inference using provided prompt and parameters (Read).
+    "InvokeModelWithResponseStream",  # Invokes a Bedrock model for inference with real-time token streaming (Read).
+    "GetUseCaseForModelAccess",  # Retrieves an existing use case for model access (Read).
+    "GetModelInvocationLoggingConfiguration",  # Fetches the logging configuration for model invocations (Read).
+    "GetFoundationModelAvailability",  # Checks the availability of a foundation model for use (Read).
+    "ListFoundationModelAgreementOffers",  # Lists available agreement offers for accessing foundation models (List).
+    "ListFoundationModels",  # Lists the available foundation models in Bedrock (List).
+    "ListProvisionedModelThroughputs",  # Lists the provisioned throughput for previously created models (List).
+    ]
 
   # AWS RDS Configuration
   # aws.rds_instance_backup_enabled
@@ -426,6 +447,14 @@ azure:
   python_latest_version: "3.12"
   # azure.app_ensure_java_version_is_latest
   java_latest_version: "17"
+
+  # Azure SQL Server
+  # azure.sqlserver_minimal_tls_version
+  recommended_minimal_tls_versions:
+    [
+      "1.2",
+      "1.3"
+    ]
 
 # GCP Configuration
 gcp:

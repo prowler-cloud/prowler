@@ -7,7 +7,6 @@ At the time of writing this documentation the available Azure Clouds from differ
 - AzureCloud
 - AzureChinaCloud
 - AzureUSGovernment
-- AzureGermanCloud
 
 If you want to change the default one you must include the flag `--azure-region`, i.e.:
 

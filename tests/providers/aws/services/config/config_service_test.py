@@ -52,6 +52,30 @@ class Test_Config_Service:
         config = Config(aws_provider)
         assert config.audited_account == AWS_ACCOUNT_NUMBER
 
+    @mock_aws
+    def test_describe_configuration_recorders(self):
+        # Generate Config Client
+        config_client = client("config", region_name=AWS_REGION_EU_WEST_1)
+        # Create Config Recorder and start it
+        config_client.put_configuration_recorder(
+            ConfigurationRecorder={"name": "default", "roleARN": "somearn"}
+        )
+        # Make the delivery channel
+        config_client.put_delivery_channel(
+            DeliveryChannel={"name": "testchannel", "s3BucketName": "somebucket"}
+        )
+        config_client.start_configuration_recorder(ConfigurationRecorderName="default")
+        # Config client for this test class
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        config = Config(aws_provider)
+        # One recorder per region
+        assert len(config.recorders) == 1
+        # Check the active one
+        assert "default" in config.recorders
+        assert config.recorders["default"].name == "default"
+        assert config.recorders["default"].role_arn == "somearn"
+        assert config.recorders["default"].region == AWS_REGION_EU_WEST_1
+
     # Test Config Get Rest APIs
     @mock_aws
     def test_describe_configuration_recorder_status(self):
@@ -75,6 +99,6 @@ class Test_Config_Service:
         assert len(config.recorders) == 2
         # Check the active one
         # Search for the recorder just created
-        for recorder in config.recorders:
+        for recorder in config.recorders.values():
             if recorder.name == "default":
                 assert recorder.recording is True

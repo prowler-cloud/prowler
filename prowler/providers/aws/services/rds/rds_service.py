@@ -32,6 +32,7 @@ class RDS(AWSService):
         self.__threading_call__(self._describe_db_cluster_snapshot_attributes)
         self.__threading_call__(self._describe_db_engine_versions)
         self.__threading_call__(self._describe_db_event_subscriptions)
+        self.__threading_call__(self._list_tags, self.db_event_subscriptions)
 
     def _get_rds_arn_template(self, region):
         return (
@@ -102,6 +103,13 @@ class RDS(AWSService):
                                 ),
                                 port=instance.get("Endpoint", {}).get("Port"),
                                 vpc_id=instance.get("DBSubnetGroup", {}).get("VpcId"),
+                                subnet_ids=[
+                                    subnet_id["SubnetIdentifier"]
+                                    for subnet_id in instance.get(
+                                        "DBSubnetGroup", {}
+                                    ).get("Subnets", [])
+                                    if subnet_id["SubnetStatus"] == "Active"
+                                ],
                             )
         except Exception as error:
             logger.error(
@@ -438,7 +446,7 @@ class RDS(AWSService):
                                     arn=arn,
                                     sns_topic_arn=event["SnsTopicArn"],
                                     status=event["Status"],
-                                    source_type=event["SourceType"],
+                                    source_type=event.get("SourceType", ""),
                                     source_id=event.get("SourceIdsList", []),
                                     event_list=event.get("EventCategoriesList", []),
                                     enabled=event["Enabled"],
@@ -463,11 +471,25 @@ class RDS(AWSService):
                         event_list=[],
                         enabled=False,
                         region=regional_client.region,
+                        tags=[],
                     )
                 )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _list_tags(self, resource: any):
+        try:
+            if getattr(resource, "region", "") and getattr(resource, "arn", ""):
+                resource.tags = (
+                    self.regional_clients[resource.region]
+                    .list_tags_for_resource(ResourceName=resource.arn)
+                    .get("TagList", [])
+                )
+        except Exception as error:
+            logger.error(
+                f"{resource.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
 
@@ -512,6 +534,7 @@ class DBInstance(BaseModel):
     copy_tags_to_snapshot: Optional[bool]
     port: Optional[int]
     vpc_id: Optional[str]
+    subnet_ids: list[str] = []
 
 
 class DBCluster(BaseModel):
@@ -578,3 +601,4 @@ class EventSubscription(BaseModel):
     event_list: list
     enabled: bool
     region: str
+    tags: Optional[list]

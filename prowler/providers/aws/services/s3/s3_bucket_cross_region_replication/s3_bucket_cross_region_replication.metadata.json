@@ -21,7 +21,7 @@
       "Terraform": "https://docs.prowler.com/checks/aws/general-policies/ensure-that-s3-bucket-has-cross-region-replication-enabled#terraform"
     },
     "Recommendation": {
-      "Text": "Ensure that S3 buckets have corss region replication.",
+      "Text": "Ensure that S3 buckets have cross region replication.",
       "Url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/replication-walkthrough1.html"
     }
   },

@@ -79,6 +79,18 @@ def mock_make_api_call(self, operation_name, kwarg):
                 },
             ]
         }
+    if operation_name == "ListGateways":
+        return {
+            "Gateways": [
+                {
+                    "GatewayId": f"{test_gateway}",
+                    "GatewayARN": f"{test_gateway_arn}",
+                    "GatewayType": "fsx",
+                    "GatewayName": "test",
+                    "HostEnvironment": "EC2",
+                },
+            ]
+        }
     return make_api_call(self, operation_name, kwarg)
 
 
@@ -125,3 +137,18 @@ class Test_StorageGateway_Service:
         assert not sgw.fileshares[1].kms
         assert sgw.fileshares[1].kms_key == ""
         assert sgw.fileshares[1].tags == []
+
+    @mock_aws
+    def test__describe_gateways__(self):
+        # StorageGateway client for this test class
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        sgw = StorageGateway(aws_provider)
+        assert len(sgw.gateways) == 1
+        assert sgw.gateways[0].id == f"{test_gateway}"
+        assert sgw.gateways[0].type == "fsx"
+        assert sgw.gateways[0].name == "test"
+        assert (
+            sgw.gateways[0].arn
+            == "arn:aws:storagegateway:us-east-1:123456789012:gateway/sgw-12A3456B"
+        )
+        assert sgw.gateways[0].environment == "EC2"

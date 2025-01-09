@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "kinesis_stream_encrypted_at_rest",
+  "CheckTitle": "Kinesis streams should be encrypted at rest.",
+  "CheckType": [
+    "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53 Controls"
+  ],
+  "ServiceName": "kinesis",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:kinesis::account-id:stream/stream-name",
+  "Severity": "medium",
+  "ResourceType": "AwsKinesisStream",
+  "Description": "Ensure Kinesis streams use server-side encryption with AWS KMS keys for data protection.",
+  "Risk": "If Kinesis streams are not encrypted at rest, sensitive data stored in the stream could be exposed to unauthorized access or breaches. This could lead to potential data theft or misuse of unencrypted data.",
+  "RelatedUrl": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingKMSEncryption.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws kinesis start-stream-encryption --stream-name <your-stream-name> --encryption-type KMS --key-id <your-kms-key-id>",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_22/#cloudformation",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/kinesis-controls.html#kinesis-1",
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_22/#terraform"
+    },
+    "Recommendation": {
+      "Text": "Enable server-side encryption for Kinesis streams using AWS KMS keys to ensure that all data is encrypted before it is stored, protecting data at rest and reducing the risk of unauthorized access.",
+      "Url": "https://docs.aws.amazon.com/streams/latest/dev/getting-started-with-sse.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

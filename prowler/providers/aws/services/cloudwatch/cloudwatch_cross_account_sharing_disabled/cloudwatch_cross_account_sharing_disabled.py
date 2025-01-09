@@ -16,6 +16,7 @@ class cloudwatch_cross_account_sharing_disabled(Check):
                 if role.name == "CloudWatch-CrossAccountSharingRole":
                     report.resource_arn = role.arn
                     report.resource_id = role.name
+                    report.resource_tags = role.tags
                     report.status = "FAIL"
                     report.status_extended = (
                         "CloudWatch has allowed cross-account sharing."

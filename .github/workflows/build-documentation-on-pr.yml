@@ -1,4 +1,4 @@
-name: Pull Request Documentation Link
+name: Prowler - Pull Request Documentation Link
 
 on:
   pull_request:

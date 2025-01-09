@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "elasticbeanstalk_environment_managed_updates_enabled",
+  "CheckTitle": "Elastic Beanstalk managed platform updates should be enabled",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "elasticbeanstalk",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:elasticbeanstalk:{region}:{account-id}:environment/{environment-id}",
+  "Severity": "high",
+  "ResourceType": "AwsElasticBeanstalkEnvironment",
+  "Description": "This control checks whether managed platform updates are enabled for an Elastic Beanstalk environment. The control fails if no managed platform updates are enabled.",
+  "Risk": "If managed platform updates are not enabled, the environment might miss critical security patches and updates, which can expose it to vulnerabilities.",
+  "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/elastic-beanstalk-managed-updates-enabled.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws elasticbeanstalk update-environment --environment-id <environment-id> --option-settings Namespace=aws:elasticbeanstalk:environment:ManagedActions,OptionName=ManagedActionsEnabled,Value=true",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/elasticbeanstalk-controls.html#elasticbeanstalk-2",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable managed platform updates for your Elastic Beanstalk environment to ensure the latest security patches and updates are applied.",
+      "Url": "https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/environment-platform-update-managed.html"
+    }
+  },
+  "Categories": [
+    "vulnerabilities"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

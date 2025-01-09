@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "ecs_service_fargate_latest_platform_version",
+  "CheckTitle": "ECS Fargate services should run on the latest Fargate platform version",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "ecs",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:ecs:{region}:{account-id}:service/{service-name}",
+  "Severity": "medium",
+  "ResourceType": "AwsEcsService",
+  "Description": "This control checks if Amazon ECS Fargate services are running the latest Fargate platform version. The control fails if the platform version is not the latest.",
+  "Risk": "Not running the latest Fargate platform version may expose your services to security vulnerabilities and bugs that are resolved in newer versions.",
+  "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/ecs-fargate-latest-platform-version.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws ecs update-service --cluster <cluster-name> --service <service-name> --platform-version LATEST",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/ecs-controls.html#ecs-10",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Update your ECS Fargate services to the latest platform version to ensure they are running in a secure and optimized environment.",
+      "Url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html"
+    }
+  },
+  "Categories": [
+    "vulnerabilities"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

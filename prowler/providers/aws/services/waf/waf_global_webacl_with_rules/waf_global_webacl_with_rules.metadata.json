@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "waf_global_webacl_with_rules",
+  "CheckTitle": "Check if AWS WAF Classic Global WebACL has at least one rule or rule group.",
+  "CheckType": [
+    "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53 Controls"
+  ],
+  "ServiceName": "waf",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:waf:account-id:webacl/web-acl-id",
+  "Severity": "medium",
+  "ResourceType": "AwsWafWebAcl",
+  "Description": "Ensure that every AWS WAF Classic Global WebACL contains at least one rule or rule group.",
+  "Risk": "An empty AWS WAF Classic Global web ACL allows all web traffic to bypass inspection, potentially exposing resources to unauthorized access and attacks.",
+  "RelatedUrl": "https://docs.aws.amazon.com/waf/latest/developerguide/waf-rules.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws waf update-web-acl --web-acl-id <your-web-acl-id> --change-token <your-change-token> --updates '[{\"Action\":\"INSERT\",\"ActivatedRule\":{\"Priority\":1,\"RuleId\":\"<your-rule-id>\",\"Action\":{\"Type\":\"BLOCK\"}}}]' --default-action Type=ALLOW --region <your-region>",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/waf-controls.html#waf-8",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure that every AWS WAF Classic Global web ACL includes at least one rule or rule group to monitor and control web traffic effectively.",
+      "Url": "https://docs.aws.amazon.com/waf/latest/developerguide/classic-web-acl-editing.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

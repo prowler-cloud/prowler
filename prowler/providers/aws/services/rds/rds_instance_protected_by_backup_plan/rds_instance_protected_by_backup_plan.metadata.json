@@ -21,7 +21,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "",
+      "Text": "Create a backup plan for the RDS instance to protect it from data loss, accidental deletion, or corruption.",
       "Url": "https://docs.aws.amazon.com/aws-backup/latest/devguide/assigning-resources.html"
     }
   },

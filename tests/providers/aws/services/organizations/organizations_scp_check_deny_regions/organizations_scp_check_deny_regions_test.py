@@ -7,7 +7,6 @@ from prowler.providers.aws.services.organizations.organizations_service import (
     Organizations,
 )
 from tests.providers.aws.utils import (
-    AWS_ACCOUNT_ARN,
     AWS_REGION_EU_CENTRAL_1,
     AWS_REGION_EU_WEST_1,
     set_mocked_aws_provider,
@@ -49,8 +48,11 @@ class Test_organizations_scp_check_deny_regions:
                     result[0].status_extended
                     == "AWS Organizations is not in-use for this AWS Account."
                 )
-                assert result[0].resource_id == "AWS Organization"
-                assert result[0].resource_arn == AWS_ACCOUNT_ARN
+                assert result[0].resource_id == "unknown"
+                assert (
+                    result[0].resource_arn
+                    == "arn:aws:organizations::123456789012:unknown"
+                )
                 assert result[0].region == AWS_REGION_EU_WEST_1
 
     @mock_aws
@@ -84,7 +86,11 @@ class Test_organizations_scp_check_deny_regions:
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
                 assert result[0].resource_id == response["Organization"]["Id"]
-                assert result[0].resource_arn == response["Organization"]["Arn"]
+                # Using this because there is no way to get the ARN of the organization
+                assert (
+                    "arn:aws:organizations::123456789012:organization/o-"
+                    in result[0].resource_arn
+                )
                 assert (
                     result[0].status_extended
                     == f"AWS Organization {org_id} has SCP policies but don't restrict AWS Regions."
@@ -176,7 +182,10 @@ class Test_organizations_scp_check_deny_regions:
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
                 assert result[0].resource_id == response["Organization"]["Id"]
-                assert result[0].resource_arn == response["Organization"]["Arn"]
+                assert (
+                    "arn:aws:organizations::123456789012:organization/o-"
+                    in result[0].resource_arn
+                )
                 assert (
                     result[0].status_extended
                     == f"AWS Organization {org_id} has SCP policies {policy_id} restricting some AWS Regions, but not all the configured ones, please check config."
@@ -233,3 +242,38 @@ class Test_organizations_scp_check_deny_regions:
                     == f"AWS Organization {org_id} has SCP policy {policy_id} restricting all configured regions found."
                 )
                 assert result[0].region == AWS_REGION_EU_WEST_1
+
+    @mock_aws
+    def test_access_denied(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        aws_provider._audit_config = {
+            "organizations_enabled_regions": [
+                AWS_REGION_EU_WEST_1,
+                AWS_REGION_EU_CENTRAL_1,
+            ]
+        }
+
+        # Create Organization
+        conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
+        response = conn.create_organization()
+        response["Organization"]["Arn"]
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.organizations.organizations_scp_check_deny_regions.organizations_scp_check_deny_regions.organizations_client",
+                new=Organizations(aws_provider),
+            ) as organizations_client:
+                # Test Check
+                from prowler.providers.aws.services.organizations.organizations_scp_check_deny_regions.organizations_scp_check_deny_regions import (
+                    organizations_scp_check_deny_regions,
+                )
+
+                organizations_client.organization.policies = None
+
+                check = organizations_scp_check_deny_regions()
+                result = check.execute()
+
+                assert len(result) == 0

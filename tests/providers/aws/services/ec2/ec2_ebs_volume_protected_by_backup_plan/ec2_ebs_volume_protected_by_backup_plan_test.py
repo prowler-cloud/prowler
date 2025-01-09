@@ -1,6 +1,5 @@
 from unittest import mock
 
-import botocore
 from boto3 import client
 from moto import mock_aws
 
@@ -10,52 +9,10 @@ from tests.providers.aws.utils import (
     set_mocked_aws_provider,
 )
 
-make_api_call = botocore.client.BaseClient._make_api_call
-
-
-def mock_make_api_call(self, operation_name, kwarg):
-    if operation_name == "CreateBackupSelection":
-        return {
-            "SelectionName": "test-backup-selection",
-            "IamRoleArn": "arn:aws:iam::123456789012:role/backup-role",
-            "Resources": [
-                f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:volume/volume-tester",
-            ],
-        }
-    elif operation_name == "ListProtectedResources":
-        return {
-            "Results": [
-                {
-                    "ResourceArn": f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:volume/volume-tester",
-                    "ResourceType": "EC2",
-                    "LastBackupTime": "2023-08-23T00:00:00Z",
-                }
-            ]
-        }
-    elif operation_name == "ListBackupPlans":
-        return {
-            "BackupPlans": [
-                {
-                    "BackupPlanId": "test-backup-plan-id",
-                    "BackupPlanName": "test-backup-plan",
-                }
-            ]
-        }
-    elif operation_name == "DescribeVolumes":
-        return {
-            "Volumes": [
-                {
-                    "VolumeId": "volume-tester",
-                    "Encrypted": True,
-                }
-            ]
-        }
-    return make_api_call(self, operation_name, kwarg)
-
 
 class Test_ec2_ebs_volume_protected_by_backup_plan:
     @mock_aws
-    def test_ec2_no_instances(self):
+    def test_ec2_no_volumes(self):
         from prowler.providers.aws.services.backup.backup_service import Backup
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
@@ -189,10 +146,24 @@ class Test_ec2_ebs_volume_protected_by_backup_plan:
                 )
                 assert result[0].resource_tags is None
 
-    @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     def test_ec2_instance_with_backup_plan(self):
-        from prowler.providers.aws.services.backup.backup_service import Backup
-        from prowler.providers.aws.services.ec2.ec2_service import EC2
+        ec2_client = mock.MagicMock()
+        from prowler.providers.aws.services.ec2.ec2_service import Volume
+
+        ec2_client.volumes = [
+            Volume(
+                id="volume-tester",
+                arn=f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:volume/volume-tester",
+                tags=None,
+                region=AWS_REGION_US_EAST_1,
+                encrypted=False,
+            )
+        ]
+
+        backup_client = mock.MagicMock()
+        backup_client.protected_resources = [
+            f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:volume/volume-tester"
+        ]
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
@@ -202,10 +173,133 @@ class Test_ec2_ebs_volume_protected_by_backup_plan:
         ):
             with mock.patch(
                 "prowler.providers.aws.services.ec2.ec2_ebs_volume_protected_by_backup_plan.ec2_ebs_volume_protected_by_backup_plan.ec2_client",
-                new=EC2(aws_provider),
+                new=ec2_client,
+            ), mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_client.ec2_client",
+                new=ec2_client,
             ), mock.patch(
                 "prowler.providers.aws.services.ec2.ec2_ebs_volume_protected_by_backup_plan.ec2_ebs_volume_protected_by_backup_plan.backup_client",
-                new=Backup(aws_provider),
+                new=backup_client,
+            ), mock.patch(
+                "prowler.providers.aws.services.backup.backup_client.backup_client",
+                new=backup_client,
+            ):
+                # Test Check
+                from prowler.providers.aws.services.ec2.ec2_ebs_volume_protected_by_backup_plan.ec2_ebs_volume_protected_by_backup_plan import (
+                    ec2_ebs_volume_protected_by_backup_plan,
+                )
+
+                check = ec2_ebs_volume_protected_by_backup_plan()
+                result = check.execute()
+
+                assert len(result) == 1
+                assert result[0].status == "PASS"
+                assert (
+                    result[0].status_extended
+                    == "EBS Volume volume-tester is protected by a backup plan."
+                )
+                assert result[0].resource_id == "volume-tester"
+                assert result[0].region == AWS_REGION_US_EAST_1
+                assert (
+                    result[0].resource_arn
+                    == f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:volume/volume-tester"
+                )
+                assert result[0].resource_tags is None
+
+    def test_ec2_instance_with_backup_plan_via_volume_wildcard(self):
+        ec2_client = mock.MagicMock()
+        from prowler.providers.aws.services.ec2.ec2_service import Volume
+
+        ec2_client.audited_partition = "aws"
+        ec2_client.volumes = [
+            Volume(
+                id="volume-tester",
+                arn=f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:volume/volume-tester",
+                tags=None,
+                region=AWS_REGION_US_EAST_1,
+                encrypted=False,
+            )
+        ]
+
+        backup_client = mock.MagicMock()
+        backup_client.protected_resources = ["arn:aws:ec2:*:*:volume/*"]
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_ebs_volume_protected_by_backup_plan.ec2_ebs_volume_protected_by_backup_plan.ec2_client",
+                new=ec2_client,
+            ), mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_client.ec2_client",
+                new=ec2_client,
+            ), mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_ebs_volume_protected_by_backup_plan.ec2_ebs_volume_protected_by_backup_plan.backup_client",
+                new=backup_client,
+            ), mock.patch(
+                "prowler.providers.aws.services.backup.backup_client.backup_client",
+                new=backup_client,
+            ):
+                # Test Check
+                from prowler.providers.aws.services.ec2.ec2_ebs_volume_protected_by_backup_plan.ec2_ebs_volume_protected_by_backup_plan import (
+                    ec2_ebs_volume_protected_by_backup_plan,
+                )
+
+                check = ec2_ebs_volume_protected_by_backup_plan()
+                result = check.execute()
+
+                assert len(result) == 1
+                assert result[0].status == "PASS"
+                assert (
+                    result[0].status_extended
+                    == "EBS Volume volume-tester is protected by a backup plan."
+                )
+                assert result[0].resource_id == "volume-tester"
+                assert result[0].region == AWS_REGION_US_EAST_1
+                assert (
+                    result[0].resource_arn
+                    == f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:volume/volume-tester"
+                )
+                assert result[0].resource_tags is None
+
+    def test_ec2_instance_with_backup_plan_via_all_wildcard(self):
+        ec2_client = mock.MagicMock()
+        from prowler.providers.aws.services.ec2.ec2_service import Volume
+
+        ec2_client.volumes = [
+            Volume(
+                id="volume-tester",
+                arn=f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:volume/volume-tester",
+                tags=None,
+                region=AWS_REGION_US_EAST_1,
+                encrypted=False,
+            )
+        ]
+
+        backup_client = mock.MagicMock()
+        backup_client.protected_resources = ["*"]
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_ebs_volume_protected_by_backup_plan.ec2_ebs_volume_protected_by_backup_plan.ec2_client",
+                new=ec2_client,
+            ), mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_client.ec2_client",
+                new=ec2_client,
+            ), mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_ebs_volume_protected_by_backup_plan.ec2_ebs_volume_protected_by_backup_plan.backup_client",
+                new=backup_client,
+            ), mock.patch(
+                "prowler.providers.aws.services.backup.backup_client.backup_client",
+                new=backup_client,
             ):
                 # Test Check
                 from prowler.providers.aws.services.ec2.ec2_ebs_volume_protected_by_backup_plan.ec2_ebs_volume_protected_by_backup_plan import (

@@ -13,6 +13,11 @@ class iam_user_two_active_access_key(Check):
                 report.resource_id = user["user"]
                 report.resource_arn = user["arn"]
                 report.region = iam_client.region
+                # Search user in iam_client.users to get tags
+                for iam_user in iam_client.users:
+                    if iam_user.arn == user["arn"]:
+                        report.resource_tags = iam_user.tags
+                        break
                 if (
                     user["access_key_1_active"] == "true"
                     and user["access_key_2_active"] == "true"

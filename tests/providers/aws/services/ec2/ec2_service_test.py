@@ -36,6 +36,10 @@ def mock_make_api_call(self, operation_name, kwarg):
                             "foobar123".encode(encoding_format_utf_8)
                         ).decode(encoding_format_utf_8),
                         "NetworkInterfaces": [{"AssociatePublicIpAddress": True}],
+                        "MetadataOptions": {
+                            "HttpEndpoint": "enabled",
+                            "HttpTokens": "optional",
+                        },
                     },
                 }
             ]
@@ -676,6 +680,14 @@ class Test_EC2_Service:
                     KNOWN_SECRET_USER_DATA.encode(encoding_format_utf_8)
                 ).decode(encoding_format_utf_8),
             },
+            TagSpecifications=[
+                {
+                    "ResourceType": "launch-template",
+                    "Tags": [
+                        {"Key": "test", "Value": "test"},
+                    ],
+                }
+            ],
         )
 
         # EC2 client for this test class
@@ -691,6 +703,9 @@ class Test_EC2_Service:
             ec2.launch_templates[0].arn
             == f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:launch-template/{ec2.launch_templates[0].id}"
         )
+        assert ec2.launch_templates[0].tags == [
+            {"Key": "test", "Value": "test"},
+        ]
 
     # Test EC2 Describe Launch Templates
     @mock_aws
@@ -730,6 +745,8 @@ class Test_EC2_Service:
         )
 
         assert version.template_data.associate_public_ip_address
+        assert version.template_data.http_endpoint == "enabled"
+        assert version.template_data.http_tokens == "optional"
 
     # Test EC2 Describe VPN Endpoints
     @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)

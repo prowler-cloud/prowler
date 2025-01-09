@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "autoscaling_group_launch_configuration_requires_imdsv2",
+  "CheckTitle": "Check if Auto Scaling group launch configurations require Instance Metadata Service Version 2 (IMDSv2).",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "autoscaling",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:autoscaling:region:account-id:launchConfiguration/launchConfigurationName",
+  "Severity": "high",
+  "ResourceType": "AwsAutoScalingLaunchConfiguration",
+  "Description": "This control checks whether IMDSv2 is enabled on all instances launched by Amazon EC2 Auto Scaling groups. The control fails if the Instance Metadata Service (IMDS) version isn't included in the launch configuration or is configured as token optional, which allows either IMDSv1 or IMDSv2.",
+  "Risk": "If IMDSv2 is not enforced, instances may be vulnerable to certain types of attacks that target the metadata service, potentially exposing sensitive instance information.",
+  "RelatedUrl": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-IMDS-new-instances.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws autoscaling create-launch-configuration --launch-configuration-name <new-launch-config> --metadata-options 'HttpTokens=required'",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/autoscaling-controls.html#autoscaling-3",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Create a new launch configuration that requires IMDSv2 and update your Auto Scaling groups to use the new configuration.",
+      "Url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-IMDS-new-instances.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

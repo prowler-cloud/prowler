@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "elbv2_nlb_tls_termination_enabled",
+  "CheckTitle": "Check if Network Load Balancers (NLB) has TLS termination enabled.",
+  "CheckType": [
+    "Data Protection"
+  ],
+  "ServiceName": "elbv2",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "medium",
+  "ResourceType": "AwsElbv2LoadBalancer",
+  "Description": "Check if Network Load Balancers (NLB) has TLS listeners.",
+  "Risk": "Ensure that your Amazon Network Load Balancers (NLBs) are configured to terminate TLS connections in order to optimize the performance of the backend servers while encrypting the communication between the load balancer and the associated targets (i.e. server instances).",
+  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELBv2/network-load-balancer-listener-security.html#",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws elbv2 create-listener --load-balancer-arn <nlb_arn> --protocol TLS --port 443 --ssl-policy ELBSecurityPolicy-TLS13-1-2-2021-06 --certificates CertificateArn=<certificate_arn> --default-actions Type=forward,TargetGroupArn=<target_group_arn>",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELBv2/network-load-balancer-listener-security.html#",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "When Transport Layer Security (TLS) termination is enabled, you can offload the encryption and decryption of the TLS traffic from your backend application servers to your Amazon Network Load Balancer, enhancing the performance of your backend servers while keeping the workload secure. ",
+      "Url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/network/listener-update-rules.html"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -12,7 +12,11 @@ Originally based on [org-multi-account](https://github.com/prowler-cloud/prowler
 
 ## Architecture Explanation
 
- The solution is designed to be very simple. Prowler is run via an ECS Task definition that launches a single Fargate container. This Task Definition is executed on a schedule using an EventBridge Rule.
+The solution is designed to be very simple. Prowler is run via an ECS Task definition that launches a single Fargate container. This Task Definition is executed on a schedule using an EventBridge Rule.
+
+## Prerequisites
+
+This solution assumes that you have a VPC architecture with two redundant subnets that can reach the AWS API endpoints (e.g. PrivateLink, NAT Gateway, etc.).
 
 ## CloudFormation Templates
 
@@ -59,9 +63,9 @@ The logs that are generated and sent to Cloudwatch are error logs, and assessmen
 
 ## Instructions
  1. Create a Private ECR Repository in the account that will host the Prowler container. The Audit account is recommended, but any account can be used.
- 2.  Configure the .awsvariables file. Note the ROLE name chosen as it will be the CrossAccountRole.
- 3. Follow the steps from "View Push Commands" to build and upload the container image. You need to have Docker and AWS CLI installed, and use the cli to login to the account first.  After upload note the Image URI, as it is required for the CF-Prowler-ECS template.
- 4.  Make sure SecurityHub is enabled in every account in AWS Organizations, and that the SecurityHub integration is enabled as explained in [Prowler - Security Hub Integration](https://github.com/prowler-cloud/prowler#security-hub-integration)
+ 2. Configure the .awsvariables file. Note the ROLE name chosen as it will be the CrossAccountRole.
+ 3. Follow the steps from "View Push Commands" to build and upload the container image. Substitute step 2 with the build command provided in the Dockerfile. You need to have Docker and AWS CLI installed, and use the cli to login to the account first.  After upload note the Image URI, as it is required for the CF-Prowler-ECS template. Ensure that you pay attention to the architecture while performing the docker build command. A common mistake is not specifying the architecture and then building on Apple silicon. Your task will fail with  *exec /home/prowler/.local/bin/prowler: exec format error*. 
+ 4. Make sure SecurityHub is enabled in every account in AWS Organizations, and that the SecurityHub integration is enabled as explained in [Prowler - Security Hub Integration](https://github.com/prowler-cloud/prowler#security-hub-integration)
  5. Deploy **CF-Prowler-CrossAccountRole.yml** in the Master Account as a single stack. You will have to choose the CrossAccountRole name (ProwlerXA-Role by default) and the ProwlerTaskRoleName (ProwlerECSTask-Role by default)
  6. Deploy **CF-Prowler-CrossAccountRole.yml** in every Member Account as a StackSet. Choose the same CrossAccountName and ProwlerTaskRoleName as the previous step.
  7. Deploy **CF-Prowler-IAM.yml** in the account that will host the Prowler container (the same from step 1).  The following template parameters must be provided:

@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "cloudwatch_alarm_actions_alarm_state_configured",
+  "CheckTitle": "Check if CloudWatch alarms have specified actions configured for the ALARM state.",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "cloudwatch",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:cloudwatch:region:account-id:alarm/alarm-name",
+  "Severity": "high",
+  "ResourceType": "AwsCloudWatchAlarm",
+  "Description": "This control checks whether an Amazon CloudWatch alarm has at least one action configured for the ALARM state. The control fails if the alarm doesn't have an action configured for the ALARM state.",
+  "Risk": "Without an action configured for the ALARM state, the CloudWatch alarm will not notify you or take any predefined action when a monitored metric goes beyond the defined threshold, potentially delaying responses to critical events.",
+  "RelatedUrl": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/AlarmThatSendsEmail.html#alarms-and-actions",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws cloudwatch put-metric-alarm --alarm-name <alarm-name> --alarm-actions <action-arn>",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudwatch-controls.html#cloudwatch-15",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure your CloudWatch alarms to trigger actions, such as sending notifications via Amazon SNS, when the alarm state changes to ALARM.",
+      "Url": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudWatch/cloudwatch-alarm-action.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

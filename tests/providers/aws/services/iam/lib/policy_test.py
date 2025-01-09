@@ -4,10 +4,8 @@ from prowler.providers.aws.services.iam.lib.policy import (
     is_condition_block_restrictive,
     is_condition_block_restrictive_organization,
     is_condition_restricting_from_private_ip,
-    is_policy_cross_account,
     is_policy_public,
 )
-from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER
 
 TRUSTED_AWS_ACCOUNT_NUMBER = "123456789012"
 NON_TRUSTED_AWS_ACCOUNT_NUMBER = "111222333444"
@@ -1449,14 +1447,18 @@ class Test_Policy:
             "Statement": [
                 {
                     "Effect": "Allow",
-                    "Principal": {"AWS": ["arn:aws:iam::123456789012:root", "*"]},
+                    "Principal": {
+                        "AWS": [f"arn:aws:iam::{TRUSTED_AWS_ACCOUNT_NUMBER}:root", "*"]
+                    },
                     "Action": "s3:*",
                     "Resource": "arn:aws:s3:::example_bucket/*",
                 }
             ]
         }
-        assert is_policy_cross_account(
-            policy_allow_root_and_wildcard_principal, AWS_ACCOUNT_NUMBER
+        assert is_policy_public(
+            policy_allow_root_and_wildcard_principal,
+            TRUSTED_AWS_ACCOUNT_NUMBER,
+            is_cross_account_allowed=False,
         )
 
     def test_policy_does_not_allow_cross_account_access_with_specific_root_principal(
@@ -1466,14 +1468,18 @@ class Test_Policy:
             "Statement": [
                 {
                     "Effect": "Allow",
-                    "Principal": {"AWS": ["arn:aws:iam::123456789012:root"]},
+                    "Principal": {
+                        "AWS": [f"arn:aws:iam::{TRUSTED_AWS_ACCOUNT_NUMBER}:root"]
+                    },
                     "Action": "s3:*",
                     "Resource": "arn:aws:s3:::example_bucket/*",
                 }
             ]
         }
-        assert not is_policy_cross_account(
-            policy_allow_specific_root_principal, AWS_ACCOUNT_NUMBER
+        assert not is_policy_public(
+            policy_allow_specific_root_principal,
+            TRUSTED_AWS_ACCOUNT_NUMBER,
+            is_cross_account_allowed=False,
         )
 
     def test_policy_does_not_allow_cross_account_access_with_deny_effect(self):
@@ -1481,14 +1487,18 @@ class Test_Policy:
             "Statement": [
                 {
                     "Effect": "Deny",
-                    "Principal": {"AWS": ["arn:aws:iam::123456789012:root"]},
+                    "Principal": {
+                        "AWS": [f"arn:aws:iam::{TRUSTED_AWS_ACCOUNT_NUMBER}:root"]
+                    },
                     "Action": "s3:*",
                     "Resource": "arn:aws:s3:::example_bucket/*",
                 }
             ]
         }
-        assert not is_policy_cross_account(
-            policy_deny_specific_root_principal, AWS_ACCOUNT_NUMBER
+        assert not is_policy_public(
+            policy_deny_specific_root_principal,
+            TRUSTED_AWS_ACCOUNT_NUMBER,
+            is_cross_account_allowed=False,
         )
 
     def test_policy_allows_public_access_with_wildcard_principal(self):
@@ -1503,7 +1513,9 @@ class Test_Policy:
             ]
         }
         assert is_policy_public(
-            policy_allow_wildcard_principal, not_allowed_actions=["s3:*"]
+            policy_allow_wildcard_principal,
+            TRUSTED_AWS_ACCOUNT_NUMBER,
+            not_allowed_actions=["s3:*"],
         )
 
     def test_policy_allows_public_access_with_aws_wildcard_principal(self):
@@ -1518,7 +1530,9 @@ class Test_Policy:
             ]
         }
         assert is_policy_public(
-            policy_allow_aws_wildcard_principal, not_allowed_actions=["s3:*"]
+            policy_allow_aws_wildcard_principal,
+            TRUSTED_AWS_ACCOUNT_NUMBER,
+            not_allowed_actions=["s3:*"],
         )
 
     def test_policy_does_not_allow_public_access_with_specific_aws_principal(self):
@@ -1526,13 +1540,17 @@ class Test_Policy:
             "Statement": [
                 {
                     "Effect": "Allow",
-                    "Principal": {"AWS": "arn:aws:iam::123456789012:root"},
+                    "Principal": {
+                        "AWS": f"arn:aws:iam::{TRUSTED_AWS_ACCOUNT_NUMBER}:root"
+                    },
                     "Action": "s3:*",
                     "Resource": "arn:aws:s3:::example_bucket/*",
                 }
             ]
         }
-        assert not is_policy_public(policy_allow_specific_aws_principal)
+        assert not is_policy_public(
+            policy_allow_specific_aws_principal, TRUSTED_AWS_ACCOUNT_NUMBER
+        )
 
     def test_policy_does_not_allow_public_access_with_condition(self):
         policy_allow_aws_wildcard_principal_with_condition = {
@@ -1546,7 +1564,10 @@ class Test_Policy:
                 }
             ]
         }
-        assert not is_policy_public(policy_allow_aws_wildcard_principal_with_condition)
+        assert not is_policy_public(
+            policy_allow_aws_wildcard_principal_with_condition,
+            TRUSTED_AWS_ACCOUNT_NUMBER,
+        )
 
     def test_policy_allows_full_service_access_with_wildcard_action_and_resource(self):
         policy_allow_wildcard_action_and_resource = {
@@ -1718,7 +1739,7 @@ class Test_Policy:
         }
         assert not is_condition_restricting_from_private_ip(condition_from_invalid_ip)
 
-    def test__is_policy_public__(self):
+    def test_is_policy_public_(self):
         policy = {
             "Statement": [
                 {
@@ -1730,10 +1751,12 @@ class Test_Policy:
             ]
         }
         assert is_policy_public(
-            policy, not_allowed_actions=["elasticfilesystem:ClientMount"]
+            policy,
+            TRUSTED_AWS_ACCOUNT_NUMBER,
+            not_allowed_actions=["elasticfilesystem:ClientMount"],
         )
 
-    def test__is_policy_public__with_principal_dict(self):
+    def test_is_policy_public_with_principal_dict(self):
         policy = {
             "Statement": [
                 {
@@ -1745,10 +1768,12 @@ class Test_Policy:
             ]
         }
         assert is_policy_public(
-            policy, not_allowed_actions=["elasticfilesystem:ClientMount"]
+            policy,
+            TRUSTED_AWS_ACCOUNT_NUMBER,
+            not_allowed_actions=["elasticfilesystem:ClientMount"],
         )
 
-    def test__is_policy_public__with_secure_conditions_and_allowed_conditions(
+    def test_is_policy_public_with_secure_conditions_and_allowed_conditions(
         self,
     ):
         policy = {
@@ -1760,14 +1785,14 @@ class Test_Policy:
                     "Resource": "*",
                     "Condition": {
                         "Bool": {"elasticfilesystem:AccessedViaMountTarget": "true"},
-                        "StringEquals": {"aws:SourceOwner": "123456789012"},
+                        "StringEquals": {"aws:SourceOwner": TRUSTED_AWS_ACCOUNT_NUMBER},
                     },
                 }
             ]
         }
-        assert not is_policy_public(policy)
+        assert not is_policy_public(policy, TRUSTED_AWS_ACCOUNT_NUMBER)
 
-    def test__is_policy_public__with_secure_conditions_and_allowed_conditions_nested(
+    def test_is_policy_public_with_secure_conditions_and_allowed_conditions_nested(
         self,
     ):
         policy = {
@@ -1779,7 +1804,7 @@ class Test_Policy:
                     "Resource": "*",
                     "Condition": {
                         "Bool": {"elasticfilesystem:AccessedViaMountTarget": "true"},
-                        "StringEquals": {"aws:SourceOwner": "123456789012"},
+                        "StringEquals": {"aws:SourceOwner": TRUSTED_AWS_ACCOUNT_NUMBER},
                         "StringEqualsIfExists": {
                             "aws:SourceVpce": "vpce-1234567890abcdef0"
                         },
@@ -1787,9 +1812,9 @@ class Test_Policy:
                 }
             ]
         }
-        assert not is_policy_public(policy)
+        assert not is_policy_public(policy, TRUSTED_AWS_ACCOUNT_NUMBER)
 
-    def test__is_policy_public__with_secure_conditions_and_allowed_conditions_nested_dict(
+    def test_is_policy_public_with_secure_conditions_and_allowed_conditions_nested_dict(
         self,
     ):
         policy = {
@@ -1801,7 +1826,7 @@ class Test_Policy:
                     "Resource": "*",
                     "Condition": {
                         "Bool": {"elasticfilesystem:AccessedViaMountTarget": "true"},
-                        "StringEquals": {"aws:SourceOwner": "123456789012"},
+                        "StringEquals": {"aws:SourceOwner": TRUSTED_AWS_ACCOUNT_NUMBER},
                         "StringEqualsIfExists": {
                             "aws:SourceVpce": {
                                 "vpce-1234567890abcdef0": "vpce-1234567890abcdef0"
@@ -1811,9 +1836,9 @@ class Test_Policy:
                 }
             ]
         }
-        assert not is_policy_public(policy)
+        assert not is_policy_public(policy, TRUSTED_AWS_ACCOUNT_NUMBER)
 
-    def test__is_policy_public__with_secure_conditions_and_allowed_conditions_nested_dict_key(
+    def test_is_policy_public_with_secure_conditions_and_allowed_conditions_nested_dict_key(
         self,
     ):
         policy = {
@@ -1825,7 +1850,7 @@ class Test_Policy:
                     "Resource": "*",
                     "Condition": {
                         "Bool": {"elasticfilesystem:AccessedViaMountTarget": "true"},
-                        "StringEquals": {"aws:SourceOwner": "123456789012"},
+                        "StringEquals": {"aws:SourceOwner": TRUSTED_AWS_ACCOUNT_NUMBER},
                         "StringEqualsIfExists": {
                             "aws:SourceVpce": {
                                 "vpce-1234567890abcdef0": "vpce-1234567890abcdef0"
@@ -1835,9 +1860,9 @@ class Test_Policy:
                 }
             ]
         }
-        assert not is_policy_public(policy)
+        assert not is_policy_public(policy, TRUSTED_AWS_ACCOUNT_NUMBER)
 
-    def test__is_policy_public_with_action_wildcard(
+    def test_is_policy_public_with_action_wildcard(
         self,
     ):
         policy = {
@@ -1850,9 +1875,9 @@ class Test_Policy:
                 }
             ]
         }
-        assert is_policy_public(policy)
+        assert is_policy_public(policy, TRUSTED_AWS_ACCOUNT_NUMBER)
 
-    def test__is_policy_public_allowing_all_actions(
+    def test_is_policy_public_allowing_all_actions(
         self,
     ):
         policy = {
@@ -1865,7 +1890,143 @@ class Test_Policy:
                 }
             ]
         }
-        assert is_policy_public(policy)
+        assert is_policy_public(policy, TRUSTED_AWS_ACCOUNT_NUMBER)
+
+    def test_is_policy_public_allowing_other_account(self):
+        policy = {
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": {
+                        "AWS": f"arn:aws:iam::{TRUSTED_AWS_ACCOUNT_NUMBER}:root"
+                    },
+                    "Action": "*",
+                    "Resource": "*",
+                }
+            ]
+        }
+        assert not is_policy_public(policy, TRUSTED_AWS_ACCOUNT_NUMBER)
+
+    def test_is_policy_public_secrets_manager(
+        self,
+    ):
+        policy = {
+            "Statement": [
+                {
+                    "Sid": "test",
+                    "Effect": "Allow",
+                    "Principal": {"Service": "secretsmanager.amazonaws.com"},
+                    "Action": "lambda:GetFunction",
+                    "Resource": "*",
+                }
+            ]
+        }
+        assert not is_policy_public(policy, TRUSTED_AWS_ACCOUNT_NUMBER)
+
+    def test_is_policy_public_eks(
+        self,
+    ):
+        policy = {
+            "Statement": [
+                {
+                    "Sid": "test",
+                    "Effect": "Allow",
+                    "Principal": {"Service": "eks.amazonaws.com"},
+                    "Action": "lambda:GetFunction",
+                    "Resource": "*",
+                }
+            ]
+        }
+        assert not is_policy_public(policy, TRUSTED_AWS_ACCOUNT_NUMBER)
+
+    def test_is_policy_public_cross_cross_service_confused_deputy(
+        self,
+    ):
+        policy = {
+            "Statement": [
+                {
+                    "Sid": "test",
+                    "Effect": "Allow",
+                    "Principal": {"Service": "ec2.amazonaws.com"},
+                    "Action": "lambda:InvokeFunction",
+                    "Resource": "*",
+                }
+            ]
+        }
+        assert is_policy_public(
+            policy, TRUSTED_AWS_ACCOUNT_NUMBER, check_cross_service_confused_deputy=True
+        )
+
+    def test_is_policy_public_cross_cross_service_confused_deputy_ignored(
+        self,
+    ):
+        policy = {
+            "Statement": [
+                {
+                    "Sid": "test",
+                    "Effect": "Allow",
+                    "Principal": {"Service": "ec2.amazonaws.com"},
+                    "Action": "lambda:InvokeFunction",
+                    "Resource": "*",
+                }
+            ]
+        }
+        assert not is_policy_public(
+            policy,
+            TRUSTED_AWS_ACCOUNT_NUMBER,
+            check_cross_service_confused_deputy=False,
+        )
+
+    def test_is_policy_public_alexa_condition(
+        self,
+    ):
+        policy = {
+            "Statement": [
+                {
+                    "Sid": "test",
+                    "Effect": "Allow",
+                    "Principal": {"Service": "alexa-connectedhome.amazon.com"},
+                    "Action": "lambda:GetFunction",
+                    "Resource": "*",
+                    "Condition": {"StringEquals": {"lambda:EventSourceToken": "test"}},
+                }
+            ]
+        }
+        assert not is_policy_public(policy, TRUSTED_AWS_ACCOUNT_NUMBER)
+
+    def test_is_policy_private_org_s3_bucket(
+        self,
+    ):
+        policy = {
+            "Statement": [
+                {
+                    "Sid": "test",
+                    "Effect": "Allow",
+                    "Principal": {"Service": "personalize.amazonaws.com"},
+                    "Action": "*",
+                    "Resource": "*",
+                    "Condition": {"StringLike": {"aws:SourceOrgID": "o-123456"}},
+                }
+            ]
+        }
+        assert not is_policy_public(policy, TRUSTED_AWS_ACCOUNT_NUMBER)
+
+    def test_is_policy_public_ip(
+        self,
+    ):
+        policy = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": {"AWS": "*"},
+                    "Action": ["*"],
+                    "Condition": {"IpAddress": {"aws:SourceIp": ["0.0.0.0/0"]}},
+                    "Resource": "*",
+                }
+            ],
+        }
+        assert is_policy_public(policy, TRUSTED_AWS_ACCOUNT_NUMBER)
 
     def test_check_admin_access(self):
         policy = {

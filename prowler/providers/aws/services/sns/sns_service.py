@@ -1,6 +1,7 @@
 from json import loads
 from typing import Optional
 
+from botocore.exceptions import ClientError
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -8,7 +9,6 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################################ SNS
 class SNS(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
@@ -16,7 +16,7 @@ class SNS(AWSService):
         self.topics = []
         self.__threading_call__(self._list_topics)
         self._get_topic_attributes(self.regional_clients)
-        self._list_tags_for_resource()
+        self.__threading_call__(self._list_tags_for_resource, self.topics)
         self._list_subscriptions_by_topic()
 
     def _list_topics(self, regional_client):
@@ -61,18 +61,24 @@ class SNS(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _list_tags_for_resource(self):
-        logger.info("SNS - List Tags...")
+    def _list_tags_for_resource(self, resource):
+        logger.info("SNS - Listing Tags...")
         try:
-            for topic in self.topics:
-                regional_client = self.regional_clients[topic.region]
-                response = regional_client.list_tags_for_resource(
-                    ResourceArn=topic.arn
-                )["Tags"]
-                topic.tags = response
+            resource.tags = self.regional_clients[
+                resource.region
+            ].list_tags_for_resource(ResourceArn=resource.arn)["Tags"]
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "ResourceNotFoundException":
+                logger.warning(
+                    f"{resource.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: Resource {resource.arn} not found while listing tags"
+                )
+            else:
+                logger.error(
+                    f"{resource.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{resource.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def _list_subscriptions_by_topic(self):

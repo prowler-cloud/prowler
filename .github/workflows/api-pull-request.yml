@@ -1,0 +1,173 @@
+name: API - Pull Request
+
+on:
+  push:
+    branches:
+      - "master"
+      - "v5.*"
+    paths:
+      - "api/**"
+  pull_request:
+    branches:
+      - "master"
+      - "v5.*"
+    paths:
+      - "api/**"
+
+
+env:
+  POSTGRES_HOST: localhost
+  POSTGRES_PORT: 5432
+  POSTGRES_ADMIN_USER: prowler
+  POSTGRES_ADMIN_PASSWORD: S3cret
+  POSTGRES_USER: prowler_user
+  POSTGRES_PASSWORD: prowler
+  POSTGRES_DB: postgres-db
+  VALKEY_HOST: localhost
+  VALKEY_PORT: 6379
+  VALKEY_DB: 0
+
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12"]
+
+    # Service containers to run with `test`
+    services:
+      # Label used to access the service container
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_HOST: ${{ env.POSTGRES_HOST }}
+          POSTGRES_PORT: ${{ env.POSTGRES_PORT }}
+          POSTGRES_USER: ${{ env.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+          POSTGRES_DB: ${{ env.POSTGRES_DB }}
+        # Set health checks to wait until postgres has started
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      valkey:
+        image: valkey/valkey:7-alpine3.19
+        env:
+          VALKEY_HOST: ${{ env.VALKEY_HOST }}
+          VALKEY_PORT: ${{ env.VALKEY_PORT }}
+          VALKEY_DB: ${{ env.VALKEY_DB }}
+        # Set health checks to wait until postgres has started
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "valkey-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Test if changes are in not ignored paths
+        id: are-non-ignored-files-changed
+        uses: tj-actions/changed-files@v45
+        with:
+          files: api/**
+          files_ignore: |
+            api/.github/**
+            api/docs/**
+            api/permissions/**
+            api/README.md
+            api/mkdocs.yml
+
+      - name: Install poetry
+        working-directory: ./api
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        run: |
+          python -m pip install --upgrade pip
+          pipx install poetry==1.8.5
+
+      - name: Set up Python ${{ matrix.python-version }}
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "poetry"
+
+      - name: Install dependencies
+        working-directory: ./api
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        run: |
+          poetry install
+          poetry run pip list
+          VERSION=$(curl --silent "https://api.github.com/repos/hadolint/hadolint/releases/latest" | \
+            grep '"tag_name":' | \
+            sed -E 's/.*"v([^"]+)".*/\1/' \
+            ) && curl -L -o /tmp/hadolint "https://github.com/hadolint/hadolint/releases/download/v${VERSION}/hadolint-Linux-x86_64" \
+            && chmod +x /tmp/hadolint
+
+      - name: Poetry check
+        working-directory: ./api
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        run: |
+          poetry check --lock
+
+      - name: Lint with ruff
+        working-directory: ./api
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        run: |
+          poetry run ruff check . --exclude contrib
+
+      - name: Check Format with ruff
+        working-directory: ./api
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        run: |
+          poetry run ruff format --check . --exclude contrib
+
+      - name: Lint with pylint
+        working-directory: ./api
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        run: |
+          poetry run pylint --disable=W,C,R,E -j 0 -rn -sn src/
+
+      - name: Bandit
+        working-directory: ./api
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        run: |
+          poetry run bandit -q -lll -x '*_test.py,./contrib/' -r .
+
+      - name: Safety
+        working-directory: ./api
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        run: |
+          poetry run safety check --ignore 70612,66963
+
+      - name: Vulture
+        working-directory: ./api
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        run: |
+          poetry run vulture --exclude "contrib,tests,conftest.py" --min-confidence 100 .
+
+      - name: Hadolint
+        working-directory: ./api
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        run: |
+          /tmp/hadolint Dockerfile --ignore=DL3013
+
+      - name: Test with pytest
+        working-directory: ./api
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        run: |
+          poetry run pytest --cov=./src/backend --cov-report=xml src/backend
+
+      - name: Upload coverage reports to Codecov
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        uses: codecov/codecov-action@v5
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          flags: api

@@ -1,13 +1,13 @@
 from pytest import raises
 
 from prowler.providers.aws.exceptions.exceptions import (
-    AWSIAMRoleARNEmptyResource,
-    AWSIAMRoleARNInvalidAccountID,
-    AWSIAMRoleARNInvalidResourceType,
-    AWSIAMRoleARNMissingFields,
-    AWSIAMRoleARNPartitionEmpty,
-    AWSIAMRoleARNRegionNotEmtpy,
-    AWSIAMRoleARNServiceNotIAMnorSTS,
+    AWSIAMRoleARNEmptyResourceError,
+    AWSIAMRoleARNInvalidAccountIDError,
+    AWSIAMRoleARNInvalidResourceTypeError,
+    AWSIAMRoleARNMissingFieldsError,
+    AWSIAMRoleARNPartitionEmptyError,
+    AWSIAMRoleARNRegionNotEmtpyError,
+    AWSIAMRoleARNServiceNotIAMnorSTSError,
 )
 from prowler.providers.aws.lib.arn.arn import is_valid_arn, parse_iam_credentials_arn
 from prowler.providers.aws.lib.arn.models import ARN
@@ -327,54 +327,54 @@ class Test_ARN_Parsing:
         self,
     ):
         input_arn = ""
-        with raises(AWSIAMRoleARNMissingFields) as error:
+        with raises(AWSIAMRoleARNMissingFieldsError) as error:
             parse_iam_credentials_arn(input_arn)
 
-        assert error._excinfo[0] == AWSIAMRoleARNMissingFields
+        assert error._excinfo[0] == AWSIAMRoleARNMissingFieldsError
 
     def test_iam_credentials_arn_parsing_raising_AWSIAMRoleARNRegionNotEmtpy(self):
         input_arn = "arn:aws:iam:eu-west-1:111111111111:user/prowler"
-        with raises(AWSIAMRoleARNRegionNotEmtpy) as error:
+        with raises(AWSIAMRoleARNRegionNotEmtpyError) as error:
             parse_iam_credentials_arn(input_arn)
 
-        assert error._excinfo[0] == AWSIAMRoleARNRegionNotEmtpy
+        assert error._excinfo[0] == AWSIAMRoleARNRegionNotEmtpyError
 
     def test_iam_credentials_arn_parsing_raising_AWSIAMRoleARNPartitionEmpty(self):
         input_arn = "arn::iam::111111111111:user/prowler"
-        with raises(AWSIAMRoleARNPartitionEmpty) as error:
+        with raises(AWSIAMRoleARNPartitionEmptyError) as error:
             parse_iam_credentials_arn(input_arn)
 
-        assert error._excinfo[0] == AWSIAMRoleARNPartitionEmpty
+        assert error._excinfo[0] == AWSIAMRoleARNPartitionEmptyError
 
     def test_iam_credentials_arn_parsing_raising_AWSIAMRoleARNServiceNotIAMnorSTS(self):
         input_arn = "arn:aws:s3::111111111111:user/prowler"
-        with raises(AWSIAMRoleARNServiceNotIAMnorSTS) as error:
+        with raises(AWSIAMRoleARNServiceNotIAMnorSTSError) as error:
             parse_iam_credentials_arn(input_arn)
 
-        assert error._excinfo[0] == AWSIAMRoleARNServiceNotIAMnorSTS
+        assert error._excinfo[0] == AWSIAMRoleARNServiceNotIAMnorSTSError
 
     def test_iam_credentials_arn_parsing_raising_AWSIAMRoleARNInvalidAccountID(self):
         input_arn = "arn:aws:iam::AWS_ACCOUNT_ID:user/prowler"
-        with raises(AWSIAMRoleARNInvalidAccountID) as error:
+        with raises(AWSIAMRoleARNInvalidAccountIDError) as error:
             parse_iam_credentials_arn(input_arn)
 
-        assert error._excinfo[0] == AWSIAMRoleARNInvalidAccountID
+        assert error._excinfo[0] == AWSIAMRoleARNInvalidAccountIDError
 
     def test_iam_credentials_arn_parsing_raising_AWSIAMRoleARNInvalidResourceType(
         self,
     ):
         input_arn = "arn:aws:iam::111111111111:account/prowler"
-        with raises(AWSIAMRoleARNInvalidResourceType) as error:
+        with raises(AWSIAMRoleARNInvalidResourceTypeError) as error:
             parse_iam_credentials_arn(input_arn)
 
-        assert error._excinfo[0] == AWSIAMRoleARNInvalidResourceType
+        assert error._excinfo[0] == AWSIAMRoleARNInvalidResourceTypeError
 
     def test_iam_credentials_arn_parsing_raising_AWSIAMRoleARNEmptyResource(self):
         input_arn = "arn:aws:iam::111111111111:role/"
-        with raises(AWSIAMRoleARNEmptyResource) as error:
+        with raises(AWSIAMRoleARNEmptyResourceError) as error:
             parse_iam_credentials_arn(input_arn)
 
-        assert error._excinfo[0] == AWSIAMRoleARNEmptyResource
+        assert error._excinfo[0] == AWSIAMRoleARNEmptyResourceError
 
     def test_is_valid_arn(self):
         assert is_valid_arn("arn:aws:iam::012345678910:user/test")

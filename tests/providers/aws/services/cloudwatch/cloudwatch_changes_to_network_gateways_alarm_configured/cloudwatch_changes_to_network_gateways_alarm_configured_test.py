@@ -227,6 +227,10 @@ class Test_cloudwatch_changes_to_network_gateways_alarm_configured:
             ],
         )
 
+        logs_client.tag_log_group(
+            logGroupName="/log-group/test", tags={"tag_key": "tag_value"}
+        )
+
         from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
             Cloudtrail,
         )
@@ -279,9 +283,10 @@ class Test_cloudwatch_changes_to_network_gateways_alarm_configured:
             assert result[0].resource_id == "/log-group/test"
             assert (
                 result[0].resource_arn
-                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:metric-filter/test-filter"
+                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
+            assert result[0].resource_tags == [{"tag_key": "tag_value"}]
 
     @mock_aws
     def test_cloudwatch_trail_with_log_group_with_metric_and_alarm(self):
@@ -320,6 +325,10 @@ class Test_cloudwatch_changes_to_network_gateways_alarm_configured:
             ActionsEnabled=True,
         )
 
+        logs_client.tag_log_group(
+            logGroupName="/log-group/test", tags={"tag_key": "tag_value"}
+        )
+
         from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
             Cloudtrail,
         )
@@ -372,9 +381,10 @@ class Test_cloudwatch_changes_to_network_gateways_alarm_configured:
             assert result[0].resource_id == "/log-group/test"
             assert (
                 result[0].resource_arn
-                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:metric-filter/test-filter"
+                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
+            assert result[0].resource_tags == [{"tag_key": "tag_value"}]
 
     @mock_aws
     def test_cloudwatch_trail_with_log_group_with_metric_and_alarm_with_quotes(self):
@@ -413,6 +423,10 @@ class Test_cloudwatch_changes_to_network_gateways_alarm_configured:
             ActionsEnabled=True,
         )
 
+        logs_client.tag_log_group(
+            logGroupName="/log-group/test", tags={"tag_key": "tag_value"}
+        )
+
         from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
             Cloudtrail,
         )
@@ -465,9 +479,10 @@ class Test_cloudwatch_changes_to_network_gateways_alarm_configured:
             assert result[0].resource_id == "/log-group/test"
             assert (
                 result[0].resource_arn
-                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:metric-filter/test-filter"
+                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
+            assert result[0].resource_tags == [{"tag_key": "tag_value"}]
 
     @mock_aws
     def test_cloudwatch_trail_with_log_group_with_metric_and_alarm_with_newlines(self):
@@ -506,6 +521,10 @@ class Test_cloudwatch_changes_to_network_gateways_alarm_configured:
             ActionsEnabled=True,
         )
 
+        logs_client.tag_log_group(
+            logGroupName="/log-group/test", tags={"tag_key": "tag_value"}
+        )
+
         from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
             Cloudtrail,
         )
@@ -558,6 +577,7 @@ class Test_cloudwatch_changes_to_network_gateways_alarm_configured:
             assert result[0].resource_id == "/log-group/test"
             assert (
                 result[0].resource_arn
-                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:metric-filter/test-filter"
+                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
+            assert result[0].resource_tags == [{"tag_key": "tag_value"}]

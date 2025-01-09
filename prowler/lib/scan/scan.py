@@ -1,8 +1,27 @@
+import datetime
 from typing import Generator
 
-from prowler.lib.check.check import execute, import_check, update_audit_metadata
+from prowler.lib.check.check import (
+    execute,
+    import_check,
+    list_services,
+    update_audit_metadata,
+)
+from prowler.lib.check.checks_loader import load_checks_to_execute
+from prowler.lib.check.compliance import update_checks_metadata_with_compliance
+from prowler.lib.check.compliance_models import Compliance
+from prowler.lib.check.models import CheckMetadata, Severity
 from prowler.lib.logger import logger
+from prowler.lib.outputs.common import Status
 from prowler.lib.outputs.finding import Finding
+from prowler.lib.scan.exceptions.exceptions import (
+    ScanInvalidCategoryError,
+    ScanInvalidCheckError,
+    ScanInvalidComplianceFrameworkError,
+    ScanInvalidServiceError,
+    ScanInvalidSeverityError,
+    ScanInvalidStatusError,
+)
 from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.provider import Provider
 
@@ -18,29 +37,161 @@ class Scan:
     _service_checks_completed: dict[str, set[str]]
     _progress: float = 0.0
     _findings: list = []
+    _duration: int = 0
+    _status: list[str] = None
 
-    def __init__(self, provider: Provider, checks_to_execute: list[str]):
+    def __init__(
+        self,
+        provider: Provider,
+        checks: list[str] = None,
+        services: list[str] = None,
+        compliances: list[str] = None,
+        categories: list[str] = None,
+        severities: list[str] = None,
+        excluded_checks: list[str] = None,
+        excluded_services: list[str] = None,
+        status: list[str] = None,
+    ):
         """
         Scan is the class that executes the checks and yields the progress and the findings.
 
         Params:
             provider: Provider -> The provider to scan
-            checks_to_execute: list[str] -> The checks to execute
+            checks: list[str] -> The checks to execute
+            services: list[str] -> The services to scan
+            compliances: list[str] -> The compliances to check
+            categories: list[str] -> The categories of the checks
+            severities: list[str] -> The severities of the checks
+            excluded_checks: list[str] -> The checks to exclude
+            excluded_services: list[str] -> The services to exclude
+            status: list[str] -> The status of the checks
+
+        Raises:
+            ScanInvalidCheckError: If the check does not exist in the provider or is from another provider.
+            ScanInvalidServiceError: If the service does not exist in the provider.
+            ScanInvalidComplianceFrameworkError: If the compliance framework does not exist in the provider.
+            ScanInvalidCategoryError: If the category does not exist in the provider.
+            ScanInvalidSeverityError: If the severity does not exist in the provider.
+            ScanInvalidStatusError: If the status does not exist in the provider.
         """
         self._provider = provider
-        # Remove duplicated checks and sort them
-        self._checks_to_execute = sorted(list(set(checks_to_execute)))
 
-        self._number_of_checks_to_execute = len(checks_to_execute)
+        # Validate the status
+        if status:
+            try:
+                for s in status:
+                    Status(s)
+                    if not self._status:
+                        self._status = []
+                    if s not in self._status:
+                        self._status.append(s)
+            except ValueError:
+                raise ScanInvalidStatusError(f"Invalid status provided: {s}.")
 
-        service_checks_to_execute = get_service_checks_to_execute(checks_to_execute)
+        # Load bulk compliance frameworks
+        bulk_compliance_frameworks = Compliance.get_bulk(provider.type)
+
+        # Get bulk checks metadata for the provider
+        bulk_checks_metadata = CheckMetadata.get_bulk(provider.type)
+        # Complete checks metadata with the compliance framework specification
+        bulk_checks_metadata = update_checks_metadata_with_compliance(
+            bulk_compliance_frameworks, bulk_checks_metadata
+        )
+
+        # Create a list of valid categories
+        valid_categories = set()
+        for check, metadata in bulk_checks_metadata.items():
+            for category in metadata.Categories:
+                if category not in valid_categories:
+                    valid_categories.add(category)
+
+        # Validate checks
+        if checks:
+            for check in checks:
+                if check not in bulk_checks_metadata.keys():
+                    raise ScanInvalidCheckError(f"Invalid check provided: {check}.")
+
+        # Validate services
+        if services:
+            for service in services:
+                if service not in list_services(provider.type):
+                    raise ScanInvalidServiceError(
+                        f"Invalid service provided: {service}."
+                    )
+
+        # Validate compliances
+        if compliances:
+            for compliance in compliances:
+                if compliance not in bulk_compliance_frameworks.keys():
+                    raise ScanInvalidComplianceFrameworkError(
+                        f"Invalid compliance provided: {compliance}."
+                    )
+
+        # Validate categories
+        if categories:
+            for category in categories:
+                if category not in valid_categories:
+                    raise ScanInvalidCategoryError(
+                        f"Invalid category provided: {category}."
+                    )
+
+        # Validate severity
+        if severities:
+            for severity in severities:
+                try:
+                    Severity(severity)
+                except ValueError:
+                    raise ScanInvalidSeverityError(
+                        f"Invalid severity provided: {severity}."
+                    )
+
+        # Load checks to execute
+        self._checks_to_execute = sorted(
+            load_checks_to_execute(
+                bulk_checks_metadata=bulk_checks_metadata,
+                bulk_compliance_frameworks=bulk_compliance_frameworks,
+                check_list=checks,
+                service_list=services,
+                compliance_frameworks=compliances,
+                categories=categories,
+                severities=severities,
+                provider=provider.type,
+                checks_file=None,
+            )
+        )
+
+        # Exclude checks
+        if excluded_checks:
+            for check in excluded_checks:
+                if check in self._checks_to_execute:
+                    self._checks_to_execute.remove(check)
+                else:
+                    raise ScanInvalidCheckError(
+                        f"Invalid check provided: {check}. Check does not exist in the provider."
+                    )
+
+        # Exclude services
+        if excluded_services:
+            for check in self._checks_to_execute:
+                if get_service_name_from_check_name(check) in excluded_services:
+                    self._checks_to_execute.remove(check)
+                else:
+                    raise ScanInvalidServiceError(
+                        f"Invalid service provided: {check}. Service does not exist in the provider."
+                    )
+
+        self._number_of_checks_to_execute = len(self._checks_to_execute)
+
+        service_checks_to_execute = get_service_checks_to_execute(
+            self._checks_to_execute
+        )
         service_checks_completed = dict()
 
         self._service_checks_to_execute = service_checks_to_execute
         self._service_checks_completed = service_checks_completed
 
     @property
-    def checks_to_execute(self) -> set[str]:
+    def checks_to_execute(self) -> list[str]:
         return self._checks_to_execute
 
     @property
@@ -60,6 +211,10 @@ class Scan:
         return (
             self._number_of_checks_completed / self._number_of_checks_to_execute * 100
         )
+
+    @property
+    def duration(self) -> int:
+        return self._duration
 
     @property
     def findings(self) -> list:
@@ -95,6 +250,8 @@ class Scan:
                 audit_progress=0,
             )
 
+            start_time = datetime.datetime.now()
+
             for check_name in checks_to_execute:
                 try:
                     # Recover service from check name
@@ -118,6 +275,12 @@ class Scan:
                         custom_checks_metadata,
                         output_options=None,
                     )
+
+                    # Filter the findings by the status
+                    if self._status:
+                        for finding in check_findings:
+                            if finding.status not in self._status:
+                                check_findings.remove(finding)
 
                     # Store findings
                     self._findings.extend(check_findings)
@@ -149,7 +312,6 @@ class Scan:
                     ]
 
                     yield self.progress, findings
-
                 # If check does not exists in the provider or is from another provider
                 except ModuleNotFoundError:
                     logger.error(
@@ -159,6 +321,8 @@ class Scan:
                     logger.error(
                         f"{check_name} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
+            # Update the scan duration when all checks are completed
+            self._duration = int((datetime.datetime.now() - start_time).total_seconds())
         except Exception as error:
             logger.error(
                 f"{check_name} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

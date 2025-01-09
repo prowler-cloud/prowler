@@ -1,3 +1,5 @@
+from typing import Optional
+
 from botocore.client import ClientError
 from pydantic import BaseModel
 
@@ -6,13 +8,13 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################## SecurityHub
 class SecurityHub(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.securityhubs = []
         self.__threading_call__(self._describe_hub)
+        self.__threading_call__(self._list_tags, self.securityhubs)
 
     def _describe_hub(self, regional_client):
         logger.info("SecurityHub - Describing Hub...")
@@ -25,8 +27,10 @@ class SecurityHub(AWSService):
                 if e.response["Error"]["Code"] == "InvalidAccessException":
                     self.securityhubs.append(
                         SecurityHubHub(
-                            arn=self.audited_account_arn,
-                            id="Security Hub",
+                            arn=self.get_unknown_arn(
+                                region=regional_client.region, resource_type="hub"
+                            ),
+                            id="hub/unknown",
                             status="NOT_AVAILABLE",
                             standards="",
                             integrations="",
@@ -71,8 +75,10 @@ class SecurityHub(AWSService):
                     # SecurityHub is filtered
                     self.securityhubs.append(
                         SecurityHubHub(
-                            arn=self.audited_account_arn,
-                            id="Security Hub",
+                            arn=self.get_unknown_arn(
+                                region=regional_client.region, resource_type="hub"
+                            ),
+                            id="hub/unknown",
                             status="NOT_AVAILABLE",
                             standards="",
                             integrations="",
@@ -85,6 +91,19 @@ class SecurityHub(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _list_tags(self, resource: any):
+        try:
+            if resource.status != "NOT_AVAILABLE":
+                resource.tags = [
+                    self.regional_clients[resource.region].list_tags_for_resource(
+                        ResourceArn=resource.arn
+                    )["Tags"]
+                ]
+        except Exception as error:
+            logger.error(
+                f"{resource.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class SecurityHubHub(BaseModel):
     arn: str
@@ -93,3 +112,4 @@ class SecurityHubHub(BaseModel):
     standards: str
     integrations: str
     region: str
+    tags: Optional[list]

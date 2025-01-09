@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "directconnect_connection_redundancy",
+  "CheckTitle": "Ensure Direct Connect connections are redundant",
+  "CheckType": [
+    "Resilience"
+  ],
+  "ServiceName": "directconnect",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:directconnect:region:account-id:directconnect/resource-id",
+  "Severity": "medium",
+  "ResourceType": "",
+  "Description": "Checks the resilience of the AWS Direct Connect used to connect your on-premises.",
+  "Risk": "This check alerts you if any Direct Connect connections are not redundant and the connections are coming from two distinct Direct Connect locations. Lack of location resiliency can result in unexpected downtime during maintenance, a fiber cut, a device failure, or a complete location failure.",
+  "RelatedUrl": "https://docs.aws.amazon.com/awssupport/latest/user/fault-tolerance-checks.html#amazon-direct-connect-location-resiliency",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "To build Direct Connect location resiliency, you should have at least two connections from at least two distinct Direct Connect locations.",
+      "Url": "https://aws.amazon.com/directconnect/resiliency-recommendation/"
+    }
+  },
+  "Categories": [
+    "redundancy"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

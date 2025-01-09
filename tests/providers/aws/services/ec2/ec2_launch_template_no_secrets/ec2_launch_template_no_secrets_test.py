@@ -42,6 +42,9 @@ def mock_make_api_call(self, operation_name, kwarg):
                 {
                     "LaunchTemplateName": "tester1",
                     "LaunchTemplateId": "lt-1234567890",
+                    "Tags": [
+                        {"Key": "Name", "Value": "tester1"},
+                    ],
                 }
             ]
         }
@@ -122,10 +125,13 @@ class Test_ec2_launch_template_no_secrets:
             )
             assert result[0].resource_id == launch_template_id
             assert result[0].region == AWS_REGION_US_EAST_1
+            assert result[0].resource_arn == (
+                f"arn:aws:ec2:us-east-1:123456789012:launch-template/{launch_template_id}"
+            )
+            assert result[0].resource_tags == []
 
     @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     def test_one_launch_template_with_secrets(self):
-
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
@@ -153,6 +159,10 @@ class Test_ec2_launch_template_no_secrets:
             )
             assert result[0].resource_id == "lt-1234567890"
             assert result[0].region == AWS_REGION_US_EAST_1
+            assert result[0].resource_arn == (
+                "arn:aws:ec2:us-east-1:123456789012:launch-template/lt-1234567890"
+            )
+            assert result[0].resource_tags == [{"Key": "Name", "Value": "tester1"}]
 
     def test_one_launch_template_with_secrets_in_multiple_versions(self):
         ec2_client = mock.MagicMock()
@@ -217,6 +227,10 @@ class Test_ec2_launch_template_no_secrets:
             )
             assert result[0].resource_id == launch_template_id
             assert result[0].region == AWS_REGION_US_EAST_1
+            assert result[0].resource_arn == (
+                f"arn:aws:ec2:us-east-1:123456789012:launch-template/{launch_template_id}"
+            )
+            assert result[0].resource_tags == []
 
     def test_one_launch_template_with_secrets_in_single_version(self):
         ec2_client = mock.MagicMock()
@@ -287,6 +301,10 @@ class Test_ec2_launch_template_no_secrets:
             )
             assert result[0].resource_id == launch_template_id
             assert result[0].region == AWS_REGION_US_EAST_1
+            assert result[0].resource_arn == (
+                f"arn:aws:ec2:us-east-1:123456789012:launch-template/{launch_template_id}"
+            )
+            assert result[0].resource_tags == []
 
     def test_one_launch_template_with_secrets_gzip(self):
         ec2_client = mock.MagicMock()
@@ -347,6 +365,10 @@ class Test_ec2_launch_template_no_secrets:
             )
             assert result[0].resource_id == launch_template_id
             assert result[0].region == AWS_REGION_US_EAST_1
+            assert result[0].resource_arn == (
+                f"arn:aws:ec2:us-east-1:123456789012:launch-template/{launch_template_id}"
+            )
+            assert result[0].resource_tags == []
 
     @mock_aws
     def test_one_launch_template_without_user_data(self):
@@ -392,6 +414,10 @@ class Test_ec2_launch_template_no_secrets:
             )
             assert result[0].resource_id == launch_template_id
             assert result[0].region == AWS_REGION_US_EAST_1
+            assert result[0].resource_arn == (
+                f"arn:aws:ec2:us-east-1:123456789012:launch-template/{launch_template_id}"
+            )
+            assert result[0].resource_tags == []
 
     @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     def test_two_launch_templates_one_template_with_secrets(self):
@@ -480,6 +506,10 @@ class Test_ec2_launch_template_no_secrets:
             )
             assert result[0].resource_id == launch_template_id1
             assert result[0].region == AWS_REGION_US_EAST_1
+            assert result[0].resource_arn == (
+                f"arn:aws:ec2:us-east-1:123456789012:launch-template/{launch_template_id1}"
+            )
+            assert result[0].resource_tags == []
 
             assert result[1].status == "PASS"
             assert (
@@ -488,6 +518,10 @@ class Test_ec2_launch_template_no_secrets:
             )
             assert result[1].resource_id == launch_template_id2
             assert result[1].region == AWS_REGION_US_EAST_1
+            assert result[1].resource_arn == (
+                f"arn:aws:ec2:us-east-1:123456789012:launch-template/{launch_template_id2}"
+            )
+            assert result[1].resource_tags == []
 
     @mock_aws
     def test_one_launch_template_with_unicode_error(self):
@@ -535,8 +569,7 @@ class Test_ec2_launch_template_no_secrets:
             )
             assert result[0].resource_id == launch_template_id
             assert result[0].region == AWS_REGION_US_EAST_1
-            assert (
-                result[0].resource_arn
-                == f"arn:aws:ec2:us-east-1:123456789012:launch-template/{launch_template_id}"
+            assert result[0].resource_arn == (
+                f"arn:aws:ec2:us-east-1:123456789012:launch-template/{launch_template_id}"
             )
             assert result[0].resource_tags == []

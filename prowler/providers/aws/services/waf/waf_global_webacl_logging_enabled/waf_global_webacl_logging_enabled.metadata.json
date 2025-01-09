@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "waf_global_webacl_logging_enabled",
+  "CheckTitle": "Check if AWS WAF Classic Global WebACL has logging enabled.",
+  "CheckType": [
+    "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53 Controls"
+  ],
+  "ServiceName": "waf",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:waf:account-id:webacl/web-acl-id",
+  "Severity": "medium",
+  "ResourceType": "AwsWafWebAcl",
+  "Description": "Ensure that every AWS WAF Classic Global WebACL has logging enabled.",
+  "Risk": "Without logging enabled, there is no visibility into traffic patterns or potential security threats, which limits the ability to troubleshoot and monitor web traffic effectively.",
+  "RelatedUrl": "https://docs.aws.amazon.com/waf/latest/developerguide/classic-waf-incident-response.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws waf put-logging-configuration --logging-configuration ResourceArn=<web-acl-arn>,LogDestinationConfigs=<log-destination-arn>",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/logging-policies/bc_aws_logging_31/",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/waf-controls.html#waf-1",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure logging is enabled for AWS WAF Classic Global Web ACLs to capture traffic details and maintain compliance.",
+      "Url": "https://docs.aws.amazon.com/waf/latest/developerguide/classic-logging.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

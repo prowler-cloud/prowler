@@ -55,7 +55,9 @@ class GCPService:
         project_ids = []
         for project_id in audited_project_ids:
             try:
-                client = discovery.build("serviceusage", "v1")
+                client = discovery.build(
+                    "serviceusage", "v1", credentials=self.credentials
+                )
                 request = client.services().get(
                     name=f"projects/{project_id}/services/{self.service}.googleapis.com"
                 )

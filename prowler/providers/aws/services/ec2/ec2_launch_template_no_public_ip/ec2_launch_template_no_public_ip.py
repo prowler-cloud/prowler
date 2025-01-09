@@ -10,6 +10,7 @@ class ec2_launch_template_no_public_ip(Check):
             report.region = template.region
             report.resource_id = template.id
             report.resource_arn = template.arn
+            report.resource_tags = template.tags
 
             versions_with_autoassign_public_ip = []
             versions_with_network_interfaces_public_ip = []

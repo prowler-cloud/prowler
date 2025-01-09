@@ -557,7 +557,7 @@
         }
       ],
       "Checks": [
-        "inspector2_findings_exist"
+        "inspector2_is_enabled"
       ]
     },
     {
@@ -587,7 +587,8 @@
         }
       ],
       "Checks": [
-        "inspector2_findings_exist",
+        "inspector2_active_findings_exist",
+        "inspector2_is_enabled",
         "ecr_registry_scan_images_on_push_enabled",
         "ecr_repositories_scan_vulnerabilities_in_latest_image",
         "ecr_repositories_scan_images_on_push_enabled"

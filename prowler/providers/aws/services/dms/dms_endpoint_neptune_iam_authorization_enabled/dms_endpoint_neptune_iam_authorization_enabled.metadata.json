@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "dms_endpoint_neptune_iam_authorization_enabled",
+  "CheckTitle": "Check if DMS endpoints for Neptune databases have IAM authorization enabled.",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "dms",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:dms:region:account-id:endpoint/endpoint-id",
+  "Severity": "medium",
+  "ResourceType": "AwsDmsEndpoint",
+  "Description": "This control checks whether an AWS DMS endpoint for an Amazon Neptune database is configured with IAM authorization. The control fails if the DMS endpoint doesn't have IAM authorization enabled.",
+  "Risk": "Without IAM authorization, DMS endpoints for Neptune databases may lack granular access control, increasing the risk of unauthorized access to sensitive data.",
+  "RelatedUrl": "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Target.Neptune.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws dms modify-endpoint --endpoint-arn <endpoint-arn> --service-access-role-arn <iam-role-arn>",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/dms-controls.html#dms-10",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable IAM authorization on DMS endpoints for Neptune databases by specifying a service role in the ServiceAccessRoleARN parameter.",
+      "Url": "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Target.Neptune.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

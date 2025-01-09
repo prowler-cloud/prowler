@@ -23,7 +23,9 @@
       "Url": "https://docs.aws.amazon.com/amazonglacier/latest/dev/access-control-overview.html"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "internet-exposed"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

@@ -12,6 +12,7 @@ class securityhub_enabled(Check):
             report.region = securityhub.region
             report.resource_id = securityhub.id
             report.resource_arn = securityhub.arn
+            report.resource_tags = securityhub.tags
             if securityhub.status == "ACTIVE":
                 report.status = "PASS"
                 if securityhub.standards:

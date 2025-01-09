@@ -74,6 +74,7 @@ class Test_s3_access_point_public_access_block:
             s3control_client = mock.MagicMock()
             s3control_client.access_points = {
                 arn_us: AccessPoint(
+                    arn=arn_us,
                     account_id=AWS_ACCOUNT_NUMBER,
                     name=ap_name_us,
                     bucket=bucket_name_us,
@@ -86,6 +87,7 @@ class Test_s3_access_point_public_access_block:
                     ),
                 ),
                 arn_eu: AccessPoint(
+                    arn=arn_eu,
                     account_id=AWS_ACCOUNT_NUMBER,
                     name=ap_name_eu,
                     bucket=bucket_name_eu,
@@ -165,6 +167,7 @@ class Test_s3_access_point_public_access_block:
             s3control_client = mock.MagicMock()
             s3control_client.access_points = {
                 arn_us: AccessPoint(
+                    arn=arn_us,
                     account_id=AWS_ACCOUNT_NUMBER,
                     name=ap_name_us,
                     bucket=bucket_name_us,
@@ -177,6 +180,7 @@ class Test_s3_access_point_public_access_block:
                     ),
                 ),
                 arn_eu: AccessPoint(
+                    arn=arn_eu,
                     account_id=AWS_ACCOUNT_NUMBER,
                     name=ap_name_eu,
                     bucket=bucket_name_eu,
@@ -256,6 +260,7 @@ class Test_s3_access_point_public_access_block:
             s3control_client = mock.MagicMock()
             s3control_client.access_points = {
                 arn_us: AccessPoint(
+                    arn=arn_us,
                     account_id=AWS_ACCOUNT_NUMBER,
                     name=ap_name_us,
                     bucket=bucket_name_us,
@@ -268,6 +273,7 @@ class Test_s3_access_point_public_access_block:
                     ),
                 ),
                 arn_eu: AccessPoint(
+                    arn=arn_eu,
                     account_id=AWS_ACCOUNT_NUMBER,
                     name=ap_name_eu,
                     bucket=bucket_name_eu,
@@ -346,6 +352,7 @@ class Test_s3_access_point_public_access_block:
             s3control_client = mock.MagicMock()
             s3control_client.access_points = {
                 arn_us: AccessPoint(
+                    arn=arn_us,
                     account_id=AWS_ACCOUNT_NUMBER,
                     name=ap_name_us,
                     bucket="bucket-us",
@@ -358,6 +365,7 @@ class Test_s3_access_point_public_access_block:
                     ),
                 ),
                 arn_eu: AccessPoint(
+                    arn=arn_eu,
                     account_id=AWS_ACCOUNT_NUMBER,
                     name=ap_name_eu,
                     bucket="bucket-eu",
@@ -370,6 +378,7 @@ class Test_s3_access_point_public_access_block:
                     ),
                 ),
                 arn_ap: AccessPoint(
+                    arn=arn_ap,
                     account_id=AWS_ACCOUNT_NUMBER,
                     name=ap_name_ap,
                     bucket="bucket-ap",

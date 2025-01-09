@@ -1,5 +1,6 @@
 import json
 import os
+from operator import attrgetter
 
 try:
     import grp
@@ -16,7 +17,7 @@ from io import TextIOWrapper
 from ipaddress import ip_address
 from os.path import exists
 from time import mktime
-from typing import Optional
+from typing import Any, Optional
 
 from colorama import Style
 from detect_secrets import SecretsCollection
@@ -120,7 +121,7 @@ def detect_secrets_scan(
                 {"name": "HexHighEntropyString", "limit": 3.0},
                 {"name": "IbmCloudIamDetector"},
                 {"name": "IbmCosHmacDetector"},
-                {"name": "IPPublicDetector"},
+                # {"name": "IPPublicDetector"}, https://github.com/Yelp/detect-secrets/pull/885
                 {"name": "JwtTokenDetector"},
                 {"name": "KeywordDetector"},
                 {"name": "MailchimpDetector"},
@@ -272,3 +273,44 @@ def print_boxes(messages: list, report_title: str):
             f"{Style.BRIGHT}{Style.RESET_ALL}  · {message}{Style.BRIGHT}{Style.RESET_ALL}"
         )
     print()
+
+
+def dict_to_lowercase(d):
+    """
+    Convert all keys in a dictionary to lowercase.
+    This function takes a dictionary and returns a new dictionary
+    with all the keys converted to lowercase. If a value in the
+    dictionary is another dictionary, the function will recursively
+    convert the keys of that dictionary to lowercase as well.
+    Args:
+        d (dict): The dictionary to convert.
+    Returns:
+        dict: A new dictionary with all keys in lowercase.
+    """
+
+    new_dict = {}
+    for k, v in d.items():
+        if isinstance(v, dict):
+            v = dict_to_lowercase(v)
+        new_dict[k.lower()] = v
+    return new_dict
+
+
+def get_nested_attribute(obj: Any, attr: str) -> Any:
+    """
+    Get a nested attribute from an object.
+    Args:
+        obj (Any): The object to get the attribute from.
+        attr (str): The attribute to get.
+    Returns:
+        Any: The attribute value if present, otherwise "".
+    """
+    try:
+        return attrgetter(attr)(obj)
+    except AttributeError:
+        return ""
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
+        return ""

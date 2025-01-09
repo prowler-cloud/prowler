@@ -54,4 +54,9 @@ class iam_user_no_setup_initial_access_key(Check):
         report.resource_arn = user["arn"]
         report.status = status
         report.status_extended = status_extended
+        # Search user in iam_client.users to get tags
+        for iam_user in iam_client.users:
+            if iam_user.arn == user["arn"]:
+                report.resource_tags = iam_user.tags
+                break
         findings.append(report)

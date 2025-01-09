@@ -44,6 +44,7 @@ class Test_dataproc_encrypted_with_cmks_disabled:
                 project_id=GCP_PROJECT_ID,
             )
             dataproc_client.clusters = [cluster]
+            dataproc_client.region = "global"
 
             from prowler.providers.gcp.services.dataproc.dataproc_encrypted_with_cmks_disabled.dataproc_encrypted_with_cmks_disabled import (
                 dataproc_encrypted_with_cmks_disabled,
@@ -59,6 +60,7 @@ class Test_dataproc_encrypted_with_cmks_disabled:
                 result[0].status_extended,
             )
             assert result[0].resource_id == cluster.id
+            assert result[0].location == "global"
 
     def test_cluster_without_encryption(self):
         dataproc_client = mock.MagicMock
@@ -81,6 +83,7 @@ class Test_dataproc_encrypted_with_cmks_disabled:
                 project_id=GCP_PROJECT_ID,
             )
             dataproc_client.clusters = [cluster]
+            dataproc_client.region = "global"
 
             from prowler.providers.gcp.services.dataproc.dataproc_encrypted_with_cmks_disabled.dataproc_encrypted_with_cmks_disabled import (
                 dataproc_encrypted_with_cmks_disabled,
@@ -96,3 +99,4 @@ class Test_dataproc_encrypted_with_cmks_disabled:
                 result[0].status_extended,
             )
             assert result[0].resource_id == cluster.id
+            assert result[0].location == "global"

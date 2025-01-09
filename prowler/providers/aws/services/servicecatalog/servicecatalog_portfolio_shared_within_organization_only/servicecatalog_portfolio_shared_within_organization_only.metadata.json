@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "servicecatalog_portfolio_shared_within_organization_only",
+  "CheckTitle": "Service Catalog portfolios should be shared within an AWS organization only",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "servicecatalog",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:servicecatalog:{region}:{account-id}:portfolio/{portfolio-id}",
+  "Severity": "high",
+  "ResourceType": "AwsServiceCatalogPortfolio",
+  "Description": "This control checks whether AWS Service Catalog shares portfolios within an organization when the integration with AWS Organizations is enabled. The control fails if portfolios aren't shared within an organization.",
+  "Risk": "Sharing Service Catalog portfolios outside of an organization may result in access granted to unintended AWS accounts, potentially exposing sensitive resources.",
+  "RelatedUrl": "https://docs.aws.amazon.com/servicecatalog/latest/adminguide/catalogs_portfolios_sharing.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws servicecatalog create-portfolio-share --portfolio-id <portfolio-id> --organization-ids <org-id>",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/servicecatalog/latest/adminguide/catalogs_portfolios_sharing.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure AWS Service Catalog to share portfolios only within your AWS Organization for more secure access management.",
+      "Url": "https://docs.aws.amazon.com/servicecatalog/latest/adminguide/catalogs_portfolios_sharing.html"
+    }
+  },
+  "Categories": [
+    "trustboundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

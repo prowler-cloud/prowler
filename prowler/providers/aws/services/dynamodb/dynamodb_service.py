@@ -11,7 +11,6 @@ from prowler.providers.aws.lib.service.service import AWSService
 
 class DynamoDB(AWSService):
     def __init__(self, provider):
-        # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.tables = {}
         self.__threading_call__(self._list_tables)
@@ -49,11 +48,18 @@ class DynamoDB(AWSService):
                 properties = regional_client.describe_table(TableName=table.name)[
                     "Table"
                 ]
+                table.billing_mode = properties.get("BillingModeSummary", {}).get(
+                    "BillingMode", "PROVISIONED"
+                )
                 if "SSEDescription" in properties:
                     if "SSEType" in properties["SSEDescription"]:
                         table.encryption_type = properties["SSEDescription"]["SSEType"]
                 if table.encryption_type == "KMS":
                     table.kms_arn = properties["SSEDescription"]["KMSMasterKeyArn"]
+
+                table.deletion_protection = properties.get(
+                    "DeletionProtectionEnabled", False
+                )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
@@ -148,7 +154,6 @@ class DynamoDB(AWSService):
 
 class DAX(AWSService):
     def __init__(self, provider):
-        # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.clusters = []
         self.__threading_call__(self._describe_clusters)
@@ -180,6 +185,10 @@ class DAX(AWSService):
                                 arn=cluster["ClusterArn"],
                                 name=cluster["ClusterName"],
                                 encryption=encryption,
+                                node_azs=[
+                                    node["AvailabilityZone"]
+                                    for node in cluster.get("Nodes", {})
+                                ],
                                 region=regional_client.region,
                                 tls_encryption=tls_encryption,
                             )
@@ -213,18 +222,21 @@ class DAX(AWSService):
 
 class Table(BaseModel):
     name: str
+    billing_mode: str = "PROVISIONED"
     encryption_type: Optional[str]
     kms_arn: Optional[str]
     pitr: bool = False
     policy: Optional[dict] = None
     region: str
     tags: Optional[list] = []
+    deletion_protection: bool = False
 
 
 class Cluster(BaseModel):
     arn: str
     name: str
     encryption: bool
+    node_azs: Optional[list] = []
     region: str
     tags: Optional[list] = []
     tls_encryption: bool

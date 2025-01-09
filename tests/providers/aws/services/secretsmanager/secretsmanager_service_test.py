@@ -1,8 +1,10 @@
 import io
 import zipfile
+from datetime import datetime, timezone
 from unittest.mock import patch
 
 from boto3 import client, resource
+from freezegun import freeze_time
 from moto import mock_aws
 
 from prowler.providers.aws.services.secretsmanager.secretsmanager_service import (
@@ -50,6 +52,7 @@ class Test_SecretsManager_Service:
         secretsmanager = SecretsManager(aws_provider)
         assert secretsmanager.service == "secretsmanager"
 
+    @freeze_time("2023-04-09")
     @mock_aws
     def test_list_secrets(self):
         secretsmanager_client = client(
@@ -125,7 +128,6 @@ class Test_SecretsManager_Service:
         # Set partition for the service
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         secretsmanager = SecretsManager(aws_provider)
-
         assert len(secretsmanager.secrets) == 1
         assert secretsmanager.secrets
         assert secretsmanager.secrets[secret_arn]
@@ -133,6 +135,44 @@ class Test_SecretsManager_Service:
         assert secretsmanager.secrets[secret_arn].arn == secret_arn
         assert secretsmanager.secrets[secret_arn].region == AWS_REGION_EU_WEST_1
         assert secretsmanager.secrets[secret_arn].rotation_enabled is True
+        assert secretsmanager.secrets[
+            secret_arn
+        ].last_accessed_date == datetime.min.replace(tzinfo=timezone.utc)
+        assert (
+            secretsmanager.secrets[secret_arn].last_rotated_date.date()
+            == datetime(2023, 4, 9).date()
+        )
         assert secretsmanager.secrets[secret_arn].tags == [
             {"Key": "test", "Value": "test"},
         ]
+
+    @mock_aws
+    def test_get_resource_policy(self):
+        secretsmanager_client = client(
+            "secretsmanager", region_name=AWS_REGION_EU_WEST_1
+        )
+        secret = secretsmanager_client.create_secret(
+            Name="test-secret-policy",
+        )
+        secretsmanager_client.put_resource_policy(
+            SecretId=secret["ARN"],
+            ResourcePolicy='{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":"*","Action":"secretsmanager:GetSecretValue","Resource":"*"}]}',
+        )
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        secretsmanager = SecretsManager(aws_provider)
+
+        assert len(secretsmanager.secrets) == 1
+        assert secretsmanager.secrets[secret["ARN"]].name == "test-secret-policy"
+        assert secretsmanager.secrets[secret["ARN"]].arn == secret["ARN"]
+        assert secretsmanager.secrets[secret["ARN"]].region == AWS_REGION_EU_WEST_1
+        assert secretsmanager.secrets[secret["ARN"]].policy == {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": "*",
+                    "Action": "secretsmanager:GetSecretValue",
+                    "Resource": "*",
+                }
+            ],
+        }

@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 
 from boto3 import client, resource
@@ -100,9 +99,9 @@ class Test_elbv2_desync_mitigation_mode:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert search(
-                "does not have desync mitigation mode set as strictest and is not dropping invalid header fields",
-                result[0].status_extended,
+            assert (
+                result[0].status_extended
+                == "ELBv2 ALB my-lb does not have desync mitigation mode set as strictest/defensive and is not dropping invalid header fields."
             )
             assert result[0].resource_id == "my-lb"
             assert result[0].resource_arn == lb["LoadBalancerArn"]
@@ -168,9 +167,9 @@ class Test_elbv2_desync_mitigation_mode:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert search(
-                "does not have desync mitigation mode set as strictest but is dropping invalid header fields",
-                result[0].status_extended,
+            assert (
+                result[0].status_extended
+                == "ELBv2 ALB my-lb does not have desync mitigation mode set as strictest/defensive but is dropping invalid header fields."
             )
             assert result[0].resource_id == "my-lb"
             assert result[0].resource_arn == lb["LoadBalancerArn"]
@@ -231,9 +230,9 @@ class Test_elbv2_desync_mitigation_mode:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert search(
-                "is configured with correct desync mitigation mode",
-                result[0].status_extended,
+            assert (
+                result[0].status_extended
+                == "ELBv2 ALB my-lb is configured with correct desync mitigation mode."
             )
             assert result[0].resource_id == "my-lb"
             assert result[0].resource_arn == lb["LoadBalancerArn"]

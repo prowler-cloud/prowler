@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "eventbridge_global_endpoint_event_replication_enabled",
+  "CheckTitle": "Check if EventBridge global endpoints have event replication enabled.",
+  "CheckType": [
+    "Software and Configuration Checks/Vulnerabilities"
+  ],
+  "ServiceName": "eventbridge",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:events:{region}:{account-id}:endpoint/{endpoint-id}",
+  "Severity": "medium",
+  "ResourceType": "AwsEventsEndpoint",
+  "Description": "Check if event replication is enabled for an Amazon EventBridge global endpoint. The control fails if event replication isn't enabled.",
+  "Risk": "Without event replication, automatic failover in case of Regional failure may not work as expected, increasing the risk of service disruption.",
+  "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/global-endpoint-event-replication-enabled.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws events update-endpoint --name <endpoint-name> --event-replication-enabled",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/eventbridge-controls.html#eventbridge-4",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable event replication for your EventBridge global endpoints to ensure failover and regional fault tolerance.",
+      "Url": "https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-global-endpoints.html"
+    }
+  },
+  "Categories": [
+    "redundancy"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

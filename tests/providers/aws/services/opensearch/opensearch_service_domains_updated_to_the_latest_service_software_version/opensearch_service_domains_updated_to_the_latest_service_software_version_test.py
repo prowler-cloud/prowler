@@ -1,26 +1,76 @@
-from re import search
 from unittest import mock
 
-from prowler.providers.aws.services.opensearch.opensearch_service import (
-    OpenSearchDomain,
-)
-from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_EU_WEST_1
+import botocore
+from boto3 import client
+from moto import mock_aws
 
-domain_name = "test-domain"
-domain_arn = f"arn:aws:es:us-west-2:{AWS_ACCOUNT_NUMBER}:domain/{domain_name}"
+from tests.providers.aws.utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_US_EAST_1,
+    set_mocked_aws_provider,
+)
+
+make_api_call = botocore.client.BaseClient._make_api_call
+
+
+def mock_make_api_call(self, operation_name, kwarg):
+    if operation_name == "ListDomainNames":
+        return {
+            "DomainNames": [
+                {
+                    "DomainName": "test-domain-updates",
+                },
+            ]
+        }
+    if operation_name == "DescribeDomain":
+        return {
+            "DomainStatus": {
+                "DomainName": "test-domain-updates",
+                "EngineVersion": "OpenSearch2.0",
+                "ServiceSoftwareOptions": {
+                    "UpdateAvailable": True,
+                },
+                "ARN": f"arn:aws:es:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:domain/test-domain-updates",
+                "ClusterConfig": {
+                    "InstanceCount": 1,
+                },
+                "AdvancedSecurityOptions": {
+                    "InternalUserDatabaseEnabled": False,
+                },
+                "CognitoOptions": {
+                    "Enabled": False,
+                },
+                "EncryptionAtRestOptions": {
+                    "Enabled": False,
+                },
+                "NodeToNodeEncryptionOptions": {
+                    "Enabled": False,
+                },
+                "DomainEndpointOptions": {
+                    "EnforceHTTPS": False,
+                },
+            }
+        }
+    return make_api_call(self, operation_name, kwarg)
 
 
 class Test_opensearch_service_domains_updated_to_the_latest_service_software_version:
+    @mock_aws
     def test_no_domains(self):
-        opensearch_client = mock.MagicMock
-        opensearch_client.opensearch_domains = []
+        client("opensearch", region_name=AWS_REGION_US_EAST_1)
+
+        from prowler.providers.aws.services.opensearch.opensearch_service import (
+            OpenSearchService,
+        )
+
+        mocked_aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.aws.services.opensearch.opensearch_service.OpenSearchService",
-            new=opensearch_client,
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=mocked_aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.opensearch.opensearch_service_domains_updated_to_the_latest_service_software_version.opensearch_service_domains_updated_to_the_latest_service_software_version.opensearch_client",
-            new=opensearch_client,
+            new=OpenSearchService(mocked_aws_provider),
         ):
             from prowler.providers.aws.services.opensearch.opensearch_service_domains_updated_to_the_latest_service_software_version.opensearch_service_domains_updated_to_the_latest_service_software_version import (
                 opensearch_service_domains_updated_to_the_latest_service_software_version,
@@ -32,61 +82,22 @@ class Test_opensearch_service_domains_updated_to_the_latest_service_software_ver
             result = check.execute()
             assert len(result) == 0
 
-    def test_internal_update_available(self):
-        opensearch_client = mock.MagicMock
-        opensearch_client.opensearch_domains = []
-        opensearch_client.opensearch_domains.append(
-            OpenSearchDomain(
-                name=domain_name,
-                region=AWS_REGION_EU_WEST_1,
-                arn=domain_arn,
-                update_available=False,
-            )
+    @mock_aws
+    @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
+    def test_updates_available(self):
+        client("opensearch", region_name=AWS_REGION_US_EAST_1)
+        from prowler.providers.aws.services.opensearch.opensearch_service import (
+            OpenSearchService,
         )
-        opensearch_client.opensearch_domains[0].logging = []
+
+        mocked_aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.aws.services.opensearch.opensearch_service.OpenSearchService",
-            new=opensearch_client,
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=mocked_aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.opensearch.opensearch_service_domains_updated_to_the_latest_service_software_version.opensearch_service_domains_updated_to_the_latest_service_software_version.opensearch_client",
-            new=opensearch_client,
-        ):
-            from prowler.providers.aws.services.opensearch.opensearch_service_domains_updated_to_the_latest_service_software_version.opensearch_service_domains_updated_to_the_latest_service_software_version import (
-                opensearch_service_domains_updated_to_the_latest_service_software_version,
-            )
-
-            check = (
-                opensearch_service_domains_updated_to_the_latest_service_software_version()
-            )
-            result = check.execute()
-            assert len(result) == 1
-            assert result[0].status == "PASS"
-            assert search(
-                "does not have internal updates available", result[0].status_extended
-            )
-            assert result[0].resource_id == domain_name
-            assert result[0].resource_arn == domain_arn
-
-    def test_internal_database_enabled(self):
-        opensearch_client = mock.MagicMock
-        opensearch_client.opensearch_domains = []
-        opensearch_client.opensearch_domains.append(
-            OpenSearchDomain(
-                name=domain_name,
-                region=AWS_REGION_EU_WEST_1,
-                arn=domain_arn,
-                update_available=True,
-            )
-        )
-        opensearch_client.opensearch_domains[0].logging = []
-
-        with mock.patch(
-            "prowler.providers.aws.services.opensearch.opensearch_service.OpenSearchService",
-            new=opensearch_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.opensearch.opensearch_service_domains_updated_to_the_latest_service_software_version.opensearch_service_domains_updated_to_the_latest_service_software_version.opensearch_client",
-            new=opensearch_client,
+            new=OpenSearchService(mocked_aws_provider),
         ):
             from prowler.providers.aws.services.opensearch.opensearch_service_domains_updated_to_the_latest_service_software_version.opensearch_service_domains_updated_to_the_latest_service_software_version import (
                 opensearch_service_domains_updated_to_the_latest_service_software_version,
@@ -98,6 +109,52 @@ class Test_opensearch_service_domains_updated_to_the_latest_service_software_ver
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert search("has internal updates available", result[0].status_extended)
-            assert result[0].resource_id == domain_name
-            assert result[0].resource_arn == domain_arn
+            assert (
+                result[0].status_extended
+                == "Opensearch domain test-domain-updates with version OpenSearch2.0 has internal updates available."
+            )
+            assert result[0].resource_id == "test-domain-updates"
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:es:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:domain/test-domain-updates"
+            )
+
+    @mock_aws
+    def test_no_updates_availables(self):
+        opensearch_client = client("opensearch", region_name=AWS_REGION_US_EAST_1)
+        domain = opensearch_client.create_domain(
+            DomainName="test-domain-no-updates",
+            SoftwareUpdateOptions={"AutoSoftwareUpdateEnabled": True},
+        )
+        from prowler.providers.aws.services.opensearch.opensearch_service import (
+            OpenSearchService,
+        )
+
+        mocked_aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=mocked_aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.opensearch.opensearch_service_domains_updated_to_the_latest_service_software_version.opensearch_service_domains_updated_to_the_latest_service_software_version.opensearch_client",
+            new=OpenSearchService(mocked_aws_provider),
+        ):
+            from prowler.providers.aws.services.opensearch.opensearch_service_domains_updated_to_the_latest_service_software_version.opensearch_service_domains_updated_to_the_latest_service_software_version import (
+                opensearch_service_domains_updated_to_the_latest_service_software_version,
+            )
+
+            check = (
+                opensearch_service_domains_updated_to_the_latest_service_software_version()
+            )
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"Opensearch domain test-domain-no-updates with version {domain['DomainStatus']['EngineVersion']} does not have internal updates available."
+            )
+            assert result[0].resource_id == domain["DomainStatus"]["DomainName"]
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:es:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:domain/{domain['DomainStatus']['DomainName']}"
+            )

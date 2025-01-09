@@ -1192,7 +1192,6 @@
       "Checks": [
         "organizations_scp_check_deny_regions",
         "cognito_user_pool_self_registration_disabled",
-        "cloudtrail_threat_detection_privilege_escalation",
         "iam_user_administrator_access_policy",
         "iam_customer_unattached_policy_no_administrative_privileges",
         "iam_inline_policy_allows_privilege_escalation",
@@ -1510,9 +1509,9 @@
         "iam_user_mfa_enabled_console_access",
         "networkfirewall_in_all_vpc",
         "eks_cluster_network_policy_enabled",
-        "eks_control_plane_endpoint_access_restricted",
+        "eks_cluster_not_publicly_accessible",
         "eks_cluster_private_nodes_enabled",
-        "eks_endpoints_not_publicly_accessible",
+        "eks_cluster_not_publicly_accessible",
         "kafka_cluster_is_public",
         "kafka_cluster_unrestricted_access_disabled",
         "vpc_peering_routing_tables_with_least_privilege",
@@ -2654,7 +2653,6 @@
         "accessanalyzer_enabled_without_findings",
         "cloudtrail_insights_exist",
         "cloudtrail_threat_detection_enumeration",
-        "cloudtrail_threat_detection_privilege_escalation",
         "guardduty_no_high_severity_findings",
         "trustedadvisor_errors_and_warnings"
       ],

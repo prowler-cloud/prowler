@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "backup_recovery_point_encrypted",
+  "CheckTitle": "Check if AWS Backup recovery points are encrypted at rest.",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "backup",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:backup:region:account-id:recovery-point/recovery-point-id",
+  "Severity": "medium",
+  "ResourceType": "AwsBackupRecoveryPoint",
+  "Description": "This control checks if an AWS Backup recovery point is encrypted at rest. The control fails if the recovery point isn't encrypted at rest.",
+  "Risk": "Without encryption at rest, AWS Backup recovery points are vulnerable to unauthorized access, which could compromise the confidentiality and integrity of the backed-up data.",
+  "RelatedUrl": "https://docs.aws.amazon.com/aws-backup/latest/devguide/encryption.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws backup update-backup-vault --backup-vault-name <backup_vault_name> --encryption-key-arn <kms_key_arn>",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/backup-controls.html#backup-1",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure that AWS Backup recovery points are encrypted at rest by using an AWS KMS key when creating backups.",
+      "Url": "https://docs.aws.amazon.com/aws-backup/latest/devguide/encryption.html"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

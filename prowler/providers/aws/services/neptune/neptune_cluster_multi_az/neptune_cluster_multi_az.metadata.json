@@ -23,7 +23,9 @@
       "Url": "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-9"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "redundancy"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

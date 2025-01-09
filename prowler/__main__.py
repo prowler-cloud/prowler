@@ -5,6 +5,7 @@ import sys
 from os import environ
 
 from colorama import Fore, Style
+from colorama import init as colorama_init
 
 from prowler.config.config import (
     csv_file_suffix,
@@ -52,6 +53,8 @@ from prowler.lib.outputs.compliance.cis.cis_gcp import GCPCIS
 from prowler.lib.outputs.compliance.cis.cis_kubernetes import KubernetesCIS
 from prowler.lib.outputs.compliance.compliance import display_compliance_table
 from prowler.lib.outputs.compliance.ens.ens_aws import AWSENS
+from prowler.lib.outputs.compliance.ens.ens_azure import AzureENS
+from prowler.lib.outputs.compliance.ens.ens_gcp import GCPENS
 from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
 from prowler.lib.outputs.compliance.iso27001.iso27001_aws import AWSISO27001
 from prowler.lib.outputs.compliance.kisa_ismsp.kisa_ismsp_aws import AWSKISAISMSP
@@ -111,6 +114,9 @@ def prowler():
         and not checks_file
         and not checks_folder
     )
+
+    if args.no_color:
+        colorama_init(strip=True)
 
     if not args.no_banner:
         legend = args.verbose or getattr(args, "fixer", None)
@@ -173,15 +179,15 @@ def prowler():
 
     # Load checks to execute
     checks_to_execute = load_checks_to_execute(
-        bulk_checks_metadata,
-        bulk_compliance_frameworks,
-        checks_file,
-        checks,
-        services,
-        severities,
-        compliance_framework,
-        categories,
-        provider,
+        bulk_checks_metadata=bulk_checks_metadata,
+        bulk_compliance_frameworks=bulk_compliance_frameworks,
+        checks_file=checks_file,
+        check_list=checks,
+        service_list=services,
+        severities=severities,
+        compliance_frameworks=compliance_framework,
+        categories=categories,
+        provider=provider,
     )
 
     # if --list-checks-json, dump a json file and exit
@@ -235,9 +241,6 @@ def prowler():
 
     # Sort final check list
     checks_to_execute = sorted(checks_to_execute)
-
-    # Setup Mutelist
-    global_provider.mutelist = args.mutelist_file
 
     # Setup Output Options
     if provider == "aws":
@@ -510,6 +513,20 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(mitre_attack)
                 mitre_attack.batch_write_data_to_file()
+            elif compliance_name.startswith("ens_"):
+                # Generate ENS Finding Object
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                ens = AzureENS(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    create_file_descriptor=True,
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(ens)
+                ens.batch_write_data_to_file()
             else:
                 filename = (
                     f"{output_options.output_directory}/compliance/"
@@ -554,6 +571,20 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(mitre_attack)
                 mitre_attack.batch_write_data_to_file()
+            elif compliance_name.startswith("ens_"):
+                # Generate ENS Finding Object
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                ens = GCPENS(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    create_file_descriptor=True,
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(ens)
+                ens.batch_write_data_to_file()
             else:
                 filename = (
                     f"{output_options.output_directory}/compliance/"
@@ -620,7 +651,11 @@ def prowler():
             )
 
             security_hub_regions = (
-                global_provider.get_available_aws_service_regions("securityhub")
+                global_provider.get_available_aws_service_regions(
+                    "securityhub",
+                    global_provider.identity.partition,
+                    global_provider.identity.audited_regions,
+                )
                 if not global_provider.identity.audited_regions
                 else global_provider.identity.audited_regions
             )

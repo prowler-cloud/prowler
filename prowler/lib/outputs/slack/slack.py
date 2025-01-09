@@ -1,3 +1,4 @@
+import os
 from typing import Any
 
 from slack_sdk import WebClient
@@ -5,6 +6,12 @@ from slack_sdk.web.base_client import SlackResponse
 
 from prowler.config.config import aws_logo, azure_logo, gcp_logo, square_logo_img
 from prowler.lib.logger import logger
+from prowler.lib.outputs.slack.exceptions.exceptions import (
+    SlackChannelNotFound,
+    SlackClientError,
+    SlackNoCredentialsError,
+)
+from prowler.providers.common.models import Connection
 
 
 class Slack:
@@ -43,6 +50,7 @@ class Slack:
                 username="Prowler",
                 icon_url=square_logo_img,
                 channel=f"#{self.channel}",
+                text="Prowler Scan Summary",
                 blocks=self.__create_message_blocks__(identity, logo, stats, args),
             )
             return response
@@ -50,7 +58,6 @@ class Slack:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            return error
 
     def __create_message_identity__(self, provider: Any):
         """
@@ -178,7 +185,7 @@ class Slack:
                     "accessory": {
                         "type": "button",
                         "text": {"type": "plain_text", "text": "Prowler :slack:"},
-                        "url": "https://join.slack.com/t/prowler-workspace/shared_invite/zt-1hix76xsl-2uq222JIXrC7Q8It~9ZNog",
+                        "url": "https://goto.prowler.com/slack",
                     },
                 },
                 {
@@ -230,3 +237,66 @@ class Slack:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
+    @staticmethod
+    def test_connection(
+        token: str,
+        channel: str,
+        raise_on_exception: bool = True,
+    ) -> Connection:
+        """
+        Test the Slack connection by validating the provided token and channel.
+
+        Args:
+            token (str): The Slack token to be tested.
+            channel (str): The Slack channel to be validated.
+
+        Returns:
+            Connection: A Connection object.
+        """
+        try:
+            client = WebClient(token=token)
+            # Test if the token is valid
+            auth_response = client.auth_test()
+            if auth_response["ok"]:
+                # Test if the channel is accessible
+                channels_response = client.conversations_info(
+                    token=token, channel=channel
+                )
+                if channels_response["ok"]:
+                    return Connection(is_connected=True)
+                else:
+                    exception = SlackChannelNotFound(
+                        file=os.path.basename(__file__),
+                        message=(
+                            channels_response["error"]
+                            if "error" in channels_response
+                            else "Unknown error"
+                        ),
+                    )
+                    if raise_on_exception:
+                        raise exception
+                    return Connection(error=exception)
+            else:
+                exception = SlackNoCredentialsError(
+                    file=os.path.basename(__file__),
+                    message=(
+                        auth_response["error"]
+                        if "error" in auth_response
+                        else "Unknown error"
+                    ),
+                )
+                if raise_on_exception:
+                    raise exception
+                return Connection(error=exception)
+
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            if raise_on_exception:
+                raise SlackClientError(
+                    file=os.path.basename(__file__),
+                    original_exception=error,
+                ) from error
+            return Connection(error=error)

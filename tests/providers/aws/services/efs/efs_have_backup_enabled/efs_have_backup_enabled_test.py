@@ -1,36 +1,35 @@
-from re import search
 from unittest import mock
 
-from prowler.providers.aws.services.efs.efs_service import FileSystem
+from boto3 import client
+from moto import mock_aws
 
-# Mock Test Region
-AWS_REGION = "eu-west-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
+from tests.providers.aws.utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_US_EAST_1,
+    set_mocked_aws_provider,
+)
 
-file_system_id = "fs-c7a0456e"
-
-backup_valid_policy_status = "ENABLED"
-backup_valid_invalid_policy_status_1 = "DISABLING"
-backup_valid_invalid_policy_status_2 = "DISABLED"
+CREATION_TOKEN = "fs-123"
 
 
 class Test_efs_have_backup_enabled:
+    @mock_aws
     def test_efs_valid_backup_policy(self):
-        efs_client = mock.MagicMock
-        efs_arn = f"arn:aws:elasticfilesystem:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:file-system/{file_system_id}"
-        efs_client.filesystems = [
-            FileSystem(
-                id=file_system_id,
-                arn=efs_arn,
-                region=AWS_REGION,
-                policy=None,
-                backup_policy=backup_valid_policy_status,
-                encrypted=True,
-            )
-        ]
+        efs_client = client("efs", region_name=AWS_REGION_US_EAST_1)
+        file_system = efs_client.create_file_system(
+            CreationToken=CREATION_TOKEN, Backup=True
+        )
+
+        from prowler.providers.aws.services.efs.efs_service import EFS
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
         with mock.patch(
-            "prowler.providers.aws.services.efs.efs_service.EFS",
-            efs_client,
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.efs.efs_have_backup_enabled.efs_have_backup_enabled.efs_client",
+            new=EFS(aws_provider),
         ):
             from prowler.providers.aws.services.efs.efs_have_backup_enabled.efs_have_backup_enabled import (
                 efs_have_backup_enabled,
@@ -40,26 +39,33 @@ class Test_efs_have_backup_enabled:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert search("has backup enabled", result[0].status_extended)
-            assert result[0].resource_id == file_system_id
-            assert result[0].resource_arn == efs_arn
+            assert (
+                result[0].status_extended
+                == f"EFS {file_system['FileSystemId']} has backup enabled."
+            )
+            assert result[0].resource_id == file_system["FileSystemId"]
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:elasticfilesystem:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:file-system/{file_system['FileSystemId']}"
+            )
 
+    @mock_aws
     def test_efs_invalid_policy_backup_1(self):
-        efs_client = mock.MagicMock
-        efs_arn = f"arn:aws:elasticfilesystem:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:file-system/{file_system_id}"
-        efs_client.filesystems = [
-            FileSystem(
-                id=file_system_id,
-                arn=efs_arn,
-                region=AWS_REGION,
-                policy=None,
-                backup_policy=backup_valid_invalid_policy_status_1,
-                encrypted=True,
-            )
-        ]
+        efs_client = client("efs", region_name=AWS_REGION_US_EAST_1)
+        file_system = efs_client.create_file_system(
+            CreationToken=CREATION_TOKEN, Backup=False
+        )
+
+        from prowler.providers.aws.services.efs.efs_service import EFS
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
         with mock.patch(
-            "prowler.providers.aws.services.efs.efs_service.EFS",
-            efs_client,
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.efs.efs_have_backup_enabled.efs_have_backup_enabled.efs_client",
+            new=EFS(aws_provider),
         ):
             from prowler.providers.aws.services.efs.efs_have_backup_enabled.efs_have_backup_enabled import (
                 efs_have_backup_enabled,
@@ -69,26 +75,33 @@ class Test_efs_have_backup_enabled:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert search("does not have backup enabled", result[0].status_extended)
-            assert result[0].resource_id == file_system_id
-            assert result[0].resource_arn == efs_arn
+            assert (
+                result[0].status_extended
+                == f"EFS {file_system['FileSystemId']} does not have backup enabled."
+            )
+            assert result[0].resource_id == file_system["FileSystemId"]
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:elasticfilesystem:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:file-system/{file_system['FileSystemId']}"
+            )
 
+    @mock_aws
     def test_efs_invalid_policy_backup_2(self):
-        efs_client = mock.MagicMock
-        efs_arn = f"arn:aws:elasticfilesystem:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:file-system/{file_system_id}"
-        efs_client.filesystems = [
-            FileSystem(
-                id=file_system_id,
-                arn=efs_arn,
-                region=AWS_REGION,
-                policy=None,
-                backup_policy=backup_valid_invalid_policy_status_2,
-                encrypted=True,
-            )
-        ]
+        efs_client = client("efs", region_name=AWS_REGION_US_EAST_1)
+        file_system = efs_client.create_file_system(
+            CreationToken=CREATION_TOKEN, Backup=False
+        )
+
+        from prowler.providers.aws.services.efs.efs_service import EFS
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
         with mock.patch(
-            "prowler.providers.aws.services.efs.efs_service.EFS",
-            efs_client,
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.efs.efs_have_backup_enabled.efs_have_backup_enabled.efs_client",
+            new=EFS(aws_provider),
         ):
             from prowler.providers.aws.services.efs.efs_have_backup_enabled.efs_have_backup_enabled import (
                 efs_have_backup_enabled,
@@ -98,6 +111,12 @@ class Test_efs_have_backup_enabled:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert search("does not have backup enabled", result[0].status_extended)
-            assert result[0].resource_id == file_system_id
-            assert result[0].resource_arn == efs_arn
+            assert (
+                result[0].status_extended
+                == f"EFS {file_system['FileSystemId']} does not have backup enabled."
+            )
+            assert result[0].resource_id == file_system["FileSystemId"]
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:elasticfilesystem:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:file-system/{file_system['FileSystemId']}"
+            )

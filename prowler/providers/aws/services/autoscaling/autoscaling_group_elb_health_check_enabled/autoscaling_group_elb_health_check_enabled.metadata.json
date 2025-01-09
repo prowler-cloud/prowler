@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "autoscaling_group_elb_health_check_enabled",
+  "CheckTitle": "Check if Auto Scaling groups associated with a load balancer use ELB health checks.",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "autoscaling",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:autoscaling:region:account-id:autoScalingGroup/autoScalingGroupName",
+  "Severity": "low",
+  "ResourceType": "AwsAutoScalingAutoScalingGroup",
+  "Description": "This control checks whether an Amazon EC2 Auto Scaling group that is associated with a load balancer uses Elastic Load Balancing (ELB) health checks. The control fails if the Auto Scaling group doesn't use ELB health checks.",
+  "Risk": "If ELB health checks are not enabled, the Auto Scaling group might not be able to accurately determine the health of instances, which could impact the availability and reliability of the applications running on these instances.",
+  "RelatedUrl": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/as-add-elb-healthcheck.html#as-add-elb-healthcheck-console",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws autoscaling update-auto-scaling-group --auto-scaling-group-name <auto-scaling-group-name> --health-check-type ELB",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/autoscaling-controls.html#autoscaling-1",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure your Auto Scaling groups to use ELB health checks to improve the monitoring and availability of your applications.",
+      "Url": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/AutoScaling/auto-scaling-group-health-check.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

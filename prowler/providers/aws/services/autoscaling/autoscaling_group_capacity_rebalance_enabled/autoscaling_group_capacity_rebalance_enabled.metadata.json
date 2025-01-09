@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "autoscaling_group_capacity_rebalance_enabled",
+  "CheckTitle": "Check if Amazon EC2 Auto Scaling groups have capacity rebalance enabled.",
+  "CheckType": [
+    "Resilience"
+  ],
+  "ServiceName": "autoscaling",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:autoscaling:region:account-id:autoScalingGroup/autoScalingGroupName",
+  "Severity": "medium",
+  "ResourceType": "AwsAutoScalingAutoScalingGroup",
+  "Description": "This control checks whether an Amazon EC2 Auto Scaling group has capacity rebalance enabled.",
+  "Risk": "When you don't use Capacity Rebalancing, Amazon EC2 Auto Scaling doesn't replace Spot Instances until after the Amazon EC2 Spot service interrupts the instances and their health check fails. Before interrupting an instance, Amazon EC2 always gives both an EC2 instance rebalance recommendation and a Spot two-minute instance interruption notice.",
+  "RelatedUrl": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-capacity-rebalancing.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws autoscaling create-auto-scaling-group --capacity-rebalance",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/enable-capacity-rebalancing-console-cli.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "When you enable Capacity Rebalancing for your Auto Scaling group, Amazon EC2 Auto Scaling attempts to proactively replace the Spot Instances in your group that have received a rebalance recommendation. This provides an opportunity to rebalance your workload to new Spot Instances that aren't at an elevated risk of interruption.",
+      "Url": "https://docs.aws.amazon.com/awssupport/latest/user/fault-tolerance-checks.html#amazon-ec2-auto-scaling-group-capacity-rebalance-enabled"
+    }
+  },
+  "Categories": [
+    "redundancy"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "networkfirewall_policy_default_action_full_packets",
+  "CheckTitle": "NetworkFirewall firewall policy default action for full packets is set to drop or forward.",
+  "CheckType": [
+    "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53 Controls"
+  ],
+  "ServiceName": "network-firewall",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:network-firewall::account-id:firewall/firewall-name",
+  "Severity": "medium",
+  "ResourceType": "AwsNetworkFirewallFirewall",
+  "Description": "Default stateless action for full packets must be set to drop or forward in AWS Network Firewall policy.",
+  "Risk": "If the default stateless action for full packets is set to 'Pass', unintended traffic may bypass network filtering, leading to potential security vulnerabilities by allowing unauthorized or harmful packets.",
+  "RelatedUrl": "https://docs.aws.amazon.com/network-firewall/latest/developerguide/stateless-default-actions.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws network-firewall update-firewall-policy --firewall-policy-arn <your-firewall-policy-arn> --stateless-default-actions aws:drop",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/networkfirewall-controls.html#networkfirewall-4",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Modify the firewall policy to ensure that full packets are either dropped or forwarded to stateful rule groups for further inspection, mitigating the risk of unauthorized traffic entering the network.",
+      "Url": "https://docs.aws.amazon.com/network-firewall/latest/developerguide/firewall-policy-updating.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

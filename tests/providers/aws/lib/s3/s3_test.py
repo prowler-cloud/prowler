@@ -2,12 +2,14 @@ from os import path, remove
 from pathlib import Path
 
 import boto3
+import pytest
 from moto import mock_aws
 
 from prowler.lib.outputs.compliance.iso27001.iso27001_aws import AWSISO27001
 from prowler.lib.outputs.csv.csv import CSV
 from prowler.lib.outputs.html.html import HTML
 from prowler.lib.outputs.ocsf.ocsf import OCSF
+from prowler.providers.aws.lib.s3.exceptions.exceptions import S3InvalidBucketNameError
 from prowler.providers.aws.lib.s3.s3 import S3
 from tests.lib.outputs.compliance.fixtures import ISO27001_2013_AWS
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
@@ -38,9 +40,9 @@ FINDING = generate_finding_output(
     remediation_code_other="other-code",
     remediation_code_cli="cli-code",
     compliance={"compliance_key": "compliance_value"},
-    categories="category1,category2",
-    depends_on="dependency",
-    related_to="related finding",
+    categories=["categorya", "categoryb"],
+    depends_on=["dependency"],
+    related_to=["related"],
     notes="Notes about the finding",
 )
 
@@ -314,3 +316,32 @@ class TestS3:
 
     def test_generate_subfolder_name_by_extension_json_ocsf(self):
         assert S3.generate_subfolder_name_by_extension(".ocsf.json") == "json-ocsf"
+
+    @mock_aws
+    def test_test_connection_S3(self):
+        current_session = boto3.session.Session(region_name=AWS_REGION_US_EAST_1)
+        s3_client = current_session.client("s3")
+        s3_client.create_bucket(Bucket=S3_BUCKET_NAME)
+        s3 = S3.test_connection(
+            session=current_session,
+            bucket_name=S3_BUCKET_NAME,
+        )
+        assert s3 is not None
+        assert s3.is_connected is True
+        assert s3.error is None
+
+    @mock_aws
+    def test_test_connection_S3_bucket_invalid_name(self):
+        current_session = boto3.session.Session(region_name=AWS_REGION_US_EAST_1)
+        s3_client = current_session.client("s3")
+
+        s3_client.create_bucket(Bucket=S3_BUCKET_NAME)
+        with pytest.raises(S3InvalidBucketNameError):
+            s3 = S3.test_connection(
+                session=current_session,
+                bucket_name="invalid_bucket",
+            )
+
+            assert s3 is not None
+            assert s3.is_connected is False
+            assert s3.error is not None

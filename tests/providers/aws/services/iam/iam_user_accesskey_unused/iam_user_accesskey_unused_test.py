@@ -18,6 +18,8 @@ class Test_iam_user_accesskey_unused_test:
         user = "test-user"
         arn = iam_client.create_user(UserName=user)["User"]["Arn"]
 
+        iam_client.tag_user(UserName=user, Tags=[{"Key": "Name", "Value": "test-user"}])
+
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         aws_provider = set_mocked_aws_provider(
@@ -54,6 +56,9 @@ class Test_iam_user_accesskey_unused_test:
                 assert result[0].resource_id == user
                 assert result[0].resource_arn == arn
                 assert result[0].region == AWS_REGION_US_EAST_1
+                assert result[0].resource_tags == [
+                    {"Key": "Name", "Value": "test-user"}
+                ]
 
     @mock_aws
     def test_user_access_key_1_not_used(self):
@@ -63,6 +68,8 @@ class Test_iam_user_accesskey_unused_test:
         iam_client = client("iam")
         user = "test-user"
         arn = iam_client.create_user(UserName=user)["User"]["Arn"]
+
+        iam_client.tag_user(UserName=user, Tags=[{"Key": "Name", "Value": "test-user"}])
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
@@ -98,6 +105,9 @@ class Test_iam_user_accesskey_unused_test:
                 assert result[0].resource_id == user + "/AccessKey1"
                 assert result[0].resource_arn == arn
                 assert result[0].region == AWS_REGION_US_EAST_1
+                assert result[0].resource_tags == [
+                    {"Key": "Name", "Value": "test-user"}
+                ]
 
     @mock_aws
     def test_user_access_key_2_not_used(self):
@@ -107,6 +117,8 @@ class Test_iam_user_accesskey_unused_test:
         iam_client = client("iam")
         user = "test-user"
         arn = iam_client.create_user(UserName=user)["User"]["Arn"]
+
+        iam_client.tag_user(UserName=user, Tags=[{"Key": "Name", "Value": "test-user"}])
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
@@ -142,6 +154,9 @@ class Test_iam_user_accesskey_unused_test:
                 assert result[0].resource_id == user + "/AccessKey2"
                 assert result[0].resource_arn == arn
                 assert result[0].region == AWS_REGION_US_EAST_1
+                assert result[0].resource_tags == [
+                    {"Key": "Name", "Value": "test-user"}
+                ]
 
     @mock_aws
     def test_user_both_access_keys_not_used(self):
@@ -151,6 +166,8 @@ class Test_iam_user_accesskey_unused_test:
         iam_client = client("iam")
         user = "test-user"
         arn = iam_client.create_user(UserName=user)["User"]["Arn"]
+
+        iam_client.tag_user(UserName=user, Tags=[{"Key": "Name", "Value": "test-user"}])
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
@@ -191,6 +208,9 @@ class Test_iam_user_accesskey_unused_test:
                 assert result[0].resource_id == user + "/AccessKey1"
                 assert result[0].resource_arn == arn
                 assert result[0].region == AWS_REGION_US_EAST_1
+                assert result[0].resource_tags == [
+                    {"Key": "Name", "Value": "test-user"}
+                ]
 
                 assert result[1].status == "FAIL"
                 assert (
@@ -209,6 +229,8 @@ class Test_iam_user_accesskey_unused_test:
         iam_client = client("iam")
         user = "test-user"
         arn = iam_client.create_user(UserName=user)["User"]["Arn"]
+
+        iam_client.tag_user(UserName=user, Tags=[{"Key": "Name", "Value": "test-user"}])
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
@@ -249,3 +271,6 @@ class Test_iam_user_accesskey_unused_test:
                 assert result[0].resource_id == user
                 assert result[0].resource_arn == arn
                 assert result[0].region == AWS_REGION_US_EAST_1
+                assert result[0].resource_tags == [
+                    {"Key": "Name", "Value": "test-user"}
+                ]

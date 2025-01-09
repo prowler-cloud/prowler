@@ -415,6 +415,52 @@ class Test_VPC_Service:
                 assert vpc.subnets[0].region == AWS_REGION_US_EAST_1
                 assert vpc.subnets[0].tags is None
 
+    @mock_aws
+    def test_vpc_subnet_with_open_nacl(self):
+        # Generate VPC Client
+        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
+        # Create VPC
+        vpc_id = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]["VpcId"]
+        subnet_id = ec2_client.create_subnet(
+            VpcId=vpc_id,
+            CidrBlock="10.0.0.0/16",
+            AvailabilityZone=f"{AWS_REGION_US_EAST_1}a",
+        )["Subnet"]["SubnetId"]
+        nacl_id = ec2_client.create_network_acl(VpcId=vpc_id)["NetworkAcl"][
+            "NetworkAclId"
+        ]
+        ec2_client.create_network_acl_entry(
+            NetworkAclId=nacl_id,
+            RuleNumber=100,
+            Protocol="-1",
+            RuleAction="allow",
+            Egress=False,
+            CidrBlock="0.0.0.0/0",
+        )
+        ec2_client.create_network_acl_entry(
+            NetworkAclId=nacl_id,
+            RuleNumber=200,
+            Protocol="-1",
+            RuleAction="allow",
+            Egress=True,
+            CidrBlock="0.0.0.0/0",
+        )
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
+        )
+        from prowler.providers.aws.services.vpc.vpc_service import VPC
+
+        vpc = VPC(aws_provider)
+        assert (
+            len(vpc.vpcs) == 3
+        )  # Number of AWS regions + created VPC, one default VPC per region
+        for vpc in vpc.vpcs.values():
+            if vpc.cidr_block == "10.0.0.0/16":
+                assert vpc.subnets[0].id == subnet_id
+                assert vpc.subnets[0].vpc_id == vpc_id
+                assert vpc.subnets[0].availability_zone == f"{AWS_REGION_US_EAST_1}a"
+                assert vpc.subnets[0].region == AWS_REGION_US_EAST_1
+
     # Test VPC Describe VPN Connections
     @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     def test_describe_vpn_connections(self):

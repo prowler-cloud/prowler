@@ -41,6 +41,7 @@ class Test_compute_network_default_in_use:
 
             compute_client.project_ids = [GCP_PROJECT_ID]
             compute_client.networks = []
+            compute_client.region = "global"
 
             check = compute_network_default_in_use()
             result = check.execute()
@@ -79,6 +80,7 @@ class Test_compute_network_default_in_use:
                     project_id=GCP_PROJECT_ID,
                 )
             ]
+            compute_client.region = "global"
 
             check = compute_network_default_in_use()
             result = check.execute()
@@ -117,6 +119,7 @@ class Test_compute_network_default_in_use:
                     project_id=GCP_PROJECT_ID,
                 )
             ]
+            compute_client.region = "global"
 
             check = compute_network_default_in_use()
             result = check.execute()

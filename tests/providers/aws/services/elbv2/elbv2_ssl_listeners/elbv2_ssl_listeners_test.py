@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 
 from boto3 import client, resource
@@ -111,9 +110,9 @@ class Test_elbv2_ssl_listeners:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert search(
-                "has non-encrypted listeners",
-                result[0].status_extended,
+            assert (
+                result[0].status_extended
+                == "ELBv2 ALB my-lb has non-encrypted listeners."
             )
             assert result[0].resource_id == "my-lb"
             assert result[0].resource_arn == lb["LoadBalancerArn"]
@@ -189,9 +188,8 @@ class Test_elbv2_ssl_listeners:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert search(
-                "has HTTPS listeners only",
-                result[0].status_extended,
+            assert (
+                result[0].status_extended == "ELBv2 ALB my-lb has HTTPS listeners only."
             )
             assert result[0].resource_id == "my-lb"
             assert result[0].resource_arn == lb["LoadBalancerArn"]
@@ -260,9 +258,9 @@ class Test_elbv2_ssl_listeners:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert search(
-                "has HTTP listener but it redirects to HTTPS",
-                result[0].status_extended,
+            assert (
+                result[0].status_extended
+                == "ELBv2 ALB my-lb has HTTP listener but it redirects to HTTPS."
             )
             assert result[0].resource_id == "my-lb"
             assert result[0].resource_arn == lb["LoadBalancerArn"]
