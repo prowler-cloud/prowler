@@ -1447,12 +1447,8 @@ class TestProviderGroupViewSet:
                 "id": str(group.id),
                 "type": "provider-groups",
                 "relationships": {
-                    "providers": {
-                        "data": []  # Removing all providers
-                    },
-                    "roles": {
-                        "data": []  # Removing all roles
-                    },
+                    "providers": {"data": []},  # Removing all providers
+                    "roles": {"data": []},  # Removing all roles
                 },
             }
         }
@@ -2427,7 +2423,11 @@ class TestFindingViewSet:
                 ("inserted_at", "2024-01-01", 0),
                 ("inserted_at.date", "2024-01-01", 0),
                 ("inserted_at.gte", "2024-01-01", 2),
-                ("inserted_at.lte", "2024-12-31", 2),
+                (
+                    "inserted_at.lte",
+                    "2028-12-31",
+                    2,
+                ),  # TODO: To avoid having to modify this value and to ensure that the tests always work, we should set the time before the fixtures are inserted
                 ("updated_at.lte", "2024-01-01", 0),
                 ("resource_type.icontains", "prowler", 2),
                 # full text search on finding
@@ -3564,12 +3564,8 @@ class TestRoleViewSet:
                 "id": str(role.id),
                 "type": "roles",
                 "relationships": {
-                    "users": {
-                        "data": []  # Clearing all users
-                    },
-                    "provider_groups": {
-                        "data": []  # Clearing all provider groups
-                    },
+                    "users": {"data": []},  # Clearing all users
+                    "provider_groups": {"data": []},  # Clearing all provider groups
                 },
             }
         }
