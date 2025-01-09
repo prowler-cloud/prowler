@@ -15,6 +15,7 @@ import {
 } from "@nextui-org/shared-icons";
 import { Row } from "@tanstack/react-table";
 import clsx from "clsx";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { checkConnectionProvider } from "@/actions/providers/providers";
@@ -33,6 +34,7 @@ const iconClasses =
 export function DataTableRowActions<ProviderProps>({
   row,
 }: DataTableRowActionsProps<ProviderProps>) {
+  const router = useRouter();
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const providerId = (row.original as { id: string }).id;
@@ -87,11 +89,15 @@ export function DataTableRowActions<ProviderProps>({
           >
             <DropdownSection title="Actions">
               <DropdownItem
-                href={`/providers/update-credentials?type=${providerType}&id=${providerId}${providerSecretId ? `&secretId=${providerSecretId}` : ""}`}
                 key="update"
                 description="Update the provider credentials"
                 textValue="Update Credentials"
                 startContent={<EditDocumentBulkIcon className={iconClasses} />}
+                onPress={() =>
+                  router.push(
+                    `/providers/update-credentials?type=${providerType}&id=${providerId}${providerSecretId ? `&secretId=${providerSecretId}` : ""}`,
+                  )
+                }
               >
                 Update Credentials
               </DropdownItem>
@@ -100,7 +106,7 @@ export function DataTableRowActions<ProviderProps>({
                 description="Check the connection to the provider"
                 textValue="Check Connection"
                 startContent={<AddNoteBulkIcon className={iconClasses} />}
-                onClick={handleTestConnection}
+                onPress={handleTestConnection}
               >
                 Test Connection
               </DropdownItem>
@@ -109,7 +115,7 @@ export function DataTableRowActions<ProviderProps>({
                 description="Allows you to edit the provider"
                 textValue="Edit Provider"
                 startContent={<EditDocumentBulkIcon className={iconClasses} />}
-                onClick={() => setIsEditOpen(true)}
+                onPress={() => setIsEditOpen(true)}
               >
                 Edit Provider Alias
               </DropdownItem>
@@ -126,7 +132,7 @@ export function DataTableRowActions<ProviderProps>({
                     className={clsx(iconClasses, "!text-danger")}
                   />
                 }
-                onClick={() => setIsDeleteOpen(true)}
+                onPress={() => setIsDeleteOpen(true)}
               >
                 Delete Provider
               </DropdownItem>

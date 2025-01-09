@@ -83,7 +83,7 @@ export function DataTableRowActions<ProviderProps>({
                 description="Allows you to edit the user"
                 textValue="Edit User"
                 startContent={<EditDocumentBulkIcon className={iconClasses} />}
-                onClick={() => setIsEditOpen(true)}
+                onPress={() => setIsEditOpen(true)}
               >
                 Edit User
               </DropdownItem>
@@ -100,7 +100,7 @@ export function DataTableRowActions<ProviderProps>({
                     className={clsx(iconClasses, "!text-danger")}
                   />
                 }
-                onClick={() => setIsDeleteOpen(true)}
+                onPress={() => setIsDeleteOpen(true)}
               >
                 Delete User
               </DropdownItem>
