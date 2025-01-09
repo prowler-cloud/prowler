@@ -14,53 +14,35 @@ import {
 } from "@nextui-org/shared-icons";
 import { Row } from "@tanstack/react-table";
 import clsx from "clsx";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { VerticalDotsIcon } from "@/components/icons";
-import { CustomAlertModal } from "@/components/ui/custom";
+import { CustomAlertModal } from "@/components/ui/custom/custom-alert-modal";
 
-import { DeleteForm, EditForm } from "../forms";
-
-interface DataTableRowActionsProps<ProviderProps> {
-  row: Row<ProviderProps>;
+import { DeleteRoleForm } from "../workflow/forms";
+interface DataTableRowActionsProps<RoleProps> {
+  row: Row<RoleProps>;
 }
 const iconClasses =
   "text-2xl text-default-500 pointer-events-none flex-shrink-0";
 
-export function DataTableRowActions<ProviderProps>({
+export function DataTableRowActions<RoleProps>({
   row,
-}: DataTableRowActionsProps<ProviderProps>) {
-  const [isEditOpen, setIsEditOpen] = useState(false);
+}: DataTableRowActionsProps<RoleProps>) {
+  const router = useRouter();
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const userId = (row.original as { id: string }).id;
-  const userName = (row.original as any).attributes?.name;
-  const userEmail = (row.original as any).attributes?.email;
-  const userCompanyName = (row.original as any).attributes?.company_name;
+  const roleId = (row.original as { id: string }).id;
   return (
     <>
-      <CustomAlertModal
-        isOpen={isEditOpen}
-        onOpenChange={setIsEditOpen}
-        title="Edit user"
-        description={"Edit the user details"}
-      >
-        <EditForm
-          userId={userId}
-          userName={userName}
-          userEmail={userEmail}
-          userCompanyName={userCompanyName}
-          setIsOpen={setIsEditOpen}
-        />
-      </CustomAlertModal>
       <CustomAlertModal
         isOpen={isDeleteOpen}
         onOpenChange={setIsDeleteOpen}
         title="Are you absolutely sure?"
-        description="This action cannot be undone. This will permanently delete your user account and remove your data from the server."
+        description="This action cannot be undone. This will permanently delete your role and remove your data from the server."
       >
-        <DeleteForm userId={userId} setIsOpen={setIsDeleteOpen} />
+        <DeleteRoleForm roleId={roleId} setIsOpen={setIsDeleteOpen} />
       </CustomAlertModal>
-
       <div className="relative flex items-center justify-end gap-2">
         <Dropdown
           className="shadow-xl dark:bg-prowler-blue-800"
@@ -80,12 +62,12 @@ export function DataTableRowActions<ProviderProps>({
             <DropdownSection title="Actions">
               <DropdownItem
                 key="edit"
-                description="Allows you to edit the user"
-                textValue="Edit User"
+                description="Edit the role details"
+                textValue="Edit Role"
                 startContent={<EditDocumentBulkIcon className={iconClasses} />}
-                onPress={() => setIsEditOpen(true)}
+                onPress={() => router.push(`/roles/edit?roleId=${roleId}`)}
               >
-                Edit User
+                Edit Role
               </DropdownItem>
             </DropdownSection>
             <DropdownSection title="Danger zone">
@@ -93,8 +75,8 @@ export function DataTableRowActions<ProviderProps>({
                 key="delete"
                 className="text-danger"
                 color="danger"
-                description="Delete the user permanently"
-                textValue="Delete User"
+                description="Delete the role permanently"
+                textValue="Delete Role"
                 startContent={
                   <DeleteDocumentBulkIcon
                     className={clsx(iconClasses, "!text-danger")}
@@ -102,7 +84,7 @@ export function DataTableRowActions<ProviderProps>({
                 }
                 onPress={() => setIsDeleteOpen(true)}
               >
-                Delete User
+                Delete Role
               </DropdownItem>
             </DropdownSection>
           </DropdownMenu>
