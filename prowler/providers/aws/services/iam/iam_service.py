@@ -112,7 +112,8 @@ class IAM(AWSService):
             [policy for policy in self.policies if policy.type == "Custom"],
         )
         self.__threading_call__(self._list_tags, self.server_certificates)
-        self.__threading_call__(self._list_tags, self.saml_providers.values())
+        if self.saml_providers is not None:
+            self.__threading_call__(self._list_tags, self.saml_providers.values())
 
     def _get_client(self):
         return self.client

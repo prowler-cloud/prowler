@@ -160,6 +160,50 @@ export const SidebarWrap = () => {
             )}
           </CustomButton>
         </Tooltip>
+        <Tooltip
+          content="API reference"
+          isDisabled={!isCompact}
+          placement="right"
+        >
+          <CustomButton
+            asLink={
+              process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true"
+                ? "https://api.prowler.com/api/v1/docs"
+                : `${process.env.NEXT_PUBLIC_API_DOCS_URL}`
+            }
+            target="_blank"
+            ariaLabel="API reference"
+            variant="flat"
+            className={clsx(
+              "justify-start truncate bg-transparent text-default-500 data-[hover=true]:text-foreground dark:bg-transparent",
+              {
+                "justify-center": isCompact,
+              },
+            )}
+            isIconOnly={isCompact}
+            startContent={
+              isCompact ? null : (
+                <Icon
+                  className="flex-none text-default-500"
+                  icon="tabler:api"
+                  width={24}
+                  aria-hidden="true"
+                />
+              )
+            }
+          >
+            {isCompact ? (
+              <Icon
+                className="text-default-500"
+                icon="tabler:api"
+                width={24}
+                aria-hidden="true"
+              />
+            ) : (
+              "API reference"
+            )}
+          </CustomButton>
+        </Tooltip>
 
         <Tooltip content="Support" isDisabled={!isCompact} placement="right">
           <CustomButton

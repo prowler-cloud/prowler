@@ -116,7 +116,6 @@ def perform_prowler_scan(
         ValueError: If the provider cannot be connected.
 
     """
-    generate_compliance = False
     check_status_by_region = {}
     exception = None
     unique_resources = set()
@@ -145,7 +144,6 @@ def perform_prowler_scan(
                 )
                 provider_instance.save()
 
-        generate_compliance = provider_instance.provider != Provider.ProviderChoices.GCP
         prowler_scan = ProwlerScan(provider=prowler_provider, checks=checks_to_execute)
 
         resource_cache = {}
@@ -257,7 +255,7 @@ def perform_prowler_scan(
                     finding_instance.add_resources([resource_instance])
 
                 # Update compliance data if applicable
-                if not generate_compliance or finding.status.value == "MUTED":
+                if finding.status.value == "MUTED":
                     continue
 
                 region_dict = check_status_by_region.setdefault(finding.region, {})
@@ -285,7 +283,7 @@ def perform_prowler_scan(
             scan_instance.unique_resource_count = len(unique_resources)
             scan_instance.save()
 
-    if exception is None and generate_compliance:
+    if exception is None:
         try:
             regions = prowler_provider.get_regions()
         except AttributeError:

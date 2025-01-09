@@ -39,7 +39,10 @@ jobs:
       - name: Repository check
         working-directory: /tmp
         run: |
-          [[ ${{ github.repository }} != "prowler-cloud/prowler" ]] && echo "This action only runs for prowler-cloud/prowler"; exit 1
+              if [[ "${{ github.repository }}" != "prowler-cloud/prowler" ]]; then
+                  echo "This action only runs for prowler-cloud/prowler"
+                  exit 1
+              fi
 
       - name: Get Prowler version
         run: |
@@ -65,7 +68,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pipx install poetry
+          pipx install poetry==1.8.5
 
       - name: Setup Python
         uses: actions/setup-python@v5

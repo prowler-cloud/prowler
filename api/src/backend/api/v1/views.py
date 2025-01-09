@@ -98,9 +98,9 @@ from api.v1.serializers import (
     OverviewServiceSerializer,
     OverviewSeveritySerializer,
     ProviderCreateSerializer,
+    ProviderGroupCreateSerializer,
     ProviderGroupMembershipSerializer,
     ProviderGroupSerializer,
-    ProviderGroupCreateSerializer,
     ProviderGroupUpdateSerializer,
     ProviderSecretCreateSerializer,
     ProviderSecretSerializer,
@@ -192,7 +192,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.1.0"
+        spectacular_settings.VERSION = "1.1.1"
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -328,7 +328,7 @@ class UserViewSet(BaseUserViewset):
 
     @action(detail=False, methods=["get"], url_name="me")
     def me(self, request):
-        user = self.get_queryset().first()
+        user = self.request.user
         serializer = UserSerializer(user, context=self.get_serializer_context())
         return Response(
             data=serializer.data,
