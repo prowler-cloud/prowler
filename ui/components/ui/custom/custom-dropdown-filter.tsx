@@ -181,7 +181,10 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
               className="font-bold"
             >
               <Checkbox
-                className="font-normal"
+                classNames={{
+                  label: "text-small font-normal",
+                  wrapper: "checkbox-update",
+                }}
                 value="all"
                 isSelected={groupSelected.has("all")}
                 onClick={handleSelectAllClick}
@@ -194,7 +197,14 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
                 className="flex max-h-96 max-w-56 flex-col gap-y-2 py-2"
               >
                 {memoizedFilterValues.map((value) => (
-                  <Checkbox className="font-normal" key={value} value={value}>
+                  <Checkbox
+                    classNames={{
+                      label: "text-small font-normal",
+                      wrapper: "checkbox-update",
+                    }}
+                    key={value}
+                    value={value}
+                  >
                     {value}
                   </Checkbox>
                 ))}

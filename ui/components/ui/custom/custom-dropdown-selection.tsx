@@ -114,7 +114,10 @@ export const CustomDropdownSelection: React.FC<
               className="font-bold"
             >
               <Checkbox
-                className="font-normal"
+                classNames={{
+                  label: "text-small font-normal",
+                  wrapper: "checkbox-update",
+                }}
                 value="all"
                 onClick={handleSelectAllClick}
               >
@@ -126,7 +129,14 @@ export const CustomDropdownSelection: React.FC<
                 className="flex max-h-96 max-w-56 flex-col gap-y-2 py-2"
               >
                 {memoizedValues.map(({ id, name }) => (
-                  <Checkbox className="font-normal" key={id} value={id}>
+                  <Checkbox
+                    classNames={{
+                      label: "text-small font-normal",
+                      wrapper: "checkbox-update",
+                    }}
+                    key={id}
+                    value={id}
+                  >
                     {name}
                   </Checkbox>
                 ))}
