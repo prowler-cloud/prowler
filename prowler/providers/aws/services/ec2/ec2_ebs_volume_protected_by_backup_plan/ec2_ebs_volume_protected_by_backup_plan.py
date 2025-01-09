@@ -7,11 +7,7 @@ class ec2_ebs_volume_protected_by_backup_plan(Check):
     def execute(self):
         findings = []
         for volume in ec2_client.volumes:
-            report = Check_Report_AWS(self.metadata())
-            report.region = volume.region
-            report.resource_id = volume.id
-            report.resource_arn = volume.arn
-            report.resource_tags = volume.tags
+            report = Check_Report_AWS(self.metadata(), volume)
             report.status = "FAIL"
             report.status_extended = (
                 f"EBS Volume {volume.id} is not protected by a backup plan."

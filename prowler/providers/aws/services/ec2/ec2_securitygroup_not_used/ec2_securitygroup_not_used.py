@@ -9,8 +9,7 @@ class ec2_securitygroup_not_used(Check):
         for security_group_arn, security_group in ec2_client.security_groups.items():
             # Default security groups can not be deleted, so ignore them
             if security_group.name != "default":
-                report = Check_Report_AWS(self.metadata())
-                report.region = security_group.region
+                report = Check_Report_AWS(self.metadata(), security_group)
                 report.resource_details = security_group.name
                 report.resource_id = security_group.id
                 report.resource_arn = security_group_arn

@@ -111,7 +111,10 @@ class OCSF(Output):
                                 # TODO: this should be included only if using the Cloud profile
                                 cloud_partition=finding.partition,
                                 region=finding.region,
-                                data={"details": finding.resource_details},
+                                data={
+                                    "details": finding.resource_details,
+                                    "metadata": finding.resource_metadata,
+                                },
                             )
                         ]
                         if finding.metadata.Provider != "kubernetes"
@@ -122,7 +125,10 @@ class OCSF(Output):
                                 uid=finding.resource_uid,
                                 group=Group(name=finding.metadata.ServiceName),
                                 type=finding.metadata.ResourceType,
-                                data={"details": finding.resource_details},
+                                data={
+                                    "details": finding.resource_details,
+                                    "metadata": finding.resource_metadata,
+                                },
                                 namespace=finding.region.replace("namespace: ", ""),
                             )
                         ]

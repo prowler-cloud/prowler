@@ -6,12 +6,8 @@ class ec2_ebs_volume_snapshots_exists(Check):
     def execute(self):
         findings = []
         for volume in ec2_client.volumes:
-            report = Check_Report_AWS(self.metadata())
+            report = Check_Report_AWS(self.metadata(), volume)
             report.status = "FAIL"
-            report.region = volume.region
-            report.resource_id = volume.id
-            report.resource_arn = volume.arn
-            report.resource_tags = volume.tags
             report.status_extended = (
                 f"Snapshots not found for the EBS volume {volume.id}."
             )

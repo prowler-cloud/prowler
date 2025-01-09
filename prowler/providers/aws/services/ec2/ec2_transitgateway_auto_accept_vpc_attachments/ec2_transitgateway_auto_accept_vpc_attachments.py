@@ -6,11 +6,7 @@ class ec2_transitgateway_auto_accept_vpc_attachments(Check):
     def execute(self):
         findings = []
         for tgw_arn, tgw in ec2_client.transit_gateways.items():
-            report = Check_Report_AWS(self.metadata())
-            report.region = tgw.region
-            report.resource_id = tgw.id
-            report.resource_arn = tgw_arn
-            report.resource_tags = tgw.tags
+            report = Check_Report_AWS(self.metadata(), tgw)
 
             if tgw.auto_accept_shared_attachments:
                 report.status = "FAIL"
