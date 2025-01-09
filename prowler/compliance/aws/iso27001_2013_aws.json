@@ -1271,6 +1271,1378 @@
       "Checks": [
         "iam_no_root_access_key"
       ]
+    },
+    {
+      "Id": "A.5.1",
+      "Description": "To provide management direction and support for information security in accordance with business requirements and relevant laws and regulations.",
+      "Name": "Management direction for information security",
+      "Attributes": [
+        {
+          "Category": "A.5 Information security policies",
+          "Objetive_ID": "A.5.1",
+          "Objetive_Name": "Management direction for information security",
+          "Check_Summary": "To provide management direction and support for information security in accordance with business requirements and relevant laws and regulations."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.5.1.1",
+      "Description": "A set of policies for information security shall be defined, approved by management, published and communicated to employees and relevant external parties.",
+      "Name": "Policies for information security",
+      "Attributes": [
+        {
+          "Category": "A.5 Information security policies",
+          "Objetive_ID": "A.5.1.1",
+          "Objetive_Name": "Policies for information security",
+          "Check_Summary": "A set of policies for information security shall be defined, approved by management, published and communicated to employees and relevant external parties."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.5.1.2",
+      "Description": "The policies for information security shall be reviewed at planned intervals or if significant changes occur to ensure their continuing suitability, adequacy and effectiveness.",
+      "Name": "Review of the policies for information security",
+      "Attributes": [
+        {
+          "Category": "A.5 Information security policies",
+          "Objetive_ID": "A.5.1.2",
+          "Objetive_Name": "Review of the policies for information security",
+          "Check_Summary": "The policies for information security shall be reviewed at planned intervals or if significant changes occur to ensure their continuing suitability, adequacy and effectiveness."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.6.1",
+      "Description": "To establish a management framework to initiate and control the implementation and operation of information security within the organization.",
+      "Name": "Internal organization",
+      "Attributes": [
+        {
+          "Category": "A.6 Organization of information security",
+          "Objetive_ID": "A.6.1",
+          "Objetive_Name": "Internal organization",
+          "Check_Summary": "To establish a management framework to initiate and control the implementation and operation of information security within the organization."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.6.1.1",
+      "Description": "All information security responsibilities shall be defined and allocated.",
+      "Name": "Information security roles and responsibilities",
+      "Attributes": [
+        {
+          "Category": "A.6 Organization of information security",
+          "Objetive_ID": "A.6.1.1",
+          "Objetive_Name": "Information security roles and responsibilities",
+          "Check_Summary": "All information security responsibilities shall be defined and allocated."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.6.1.2",
+      "Description": "Conflicting duties and areas of responsibility shall be segregated to reduce opportunities for unauthorized or unintentional modification or misuse of the organization’s assets.",
+      "Name": "Segregation of duties",
+      "Attributes": [
+        {
+          "Category": "A.6 Organization of information security",
+          "Objetive_ID": "A.6.1.2",
+          "Objetive_Name": "Segregation of duties",
+          "Check_Summary": "Conflicting duties and areas of responsibility shall be segregated to reduce opportunities for unauthorized or unintentional modification or misuse of the organization’s assets."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.6.1.3",
+      "Description": "Appropriate contacts with relevant authorities shall be maintained.",
+      "Name": "Contact with authorities",
+      "Attributes": [
+        {
+          "Category": "A.6 Organization of information security",
+          "Objetive_ID": "A.6.1.3",
+          "Objetive_Name": "Contact with authorities",
+          "Check_Summary": "Appropriate contacts with relevant authorities shall be maintained."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.6.1.4",
+      "Description": "Appropriate contacts with special interest groups or other specialist security forums and professional associations shall be maintained.",
+      "Name": "Contact with special interest groups",
+      "Attributes": [
+        {
+          "Category": "A.6 Organization of information security",
+          "Objetive_ID": "A.6.1.4",
+          "Objetive_Name": "Contact with special interest groups",
+          "Check_Summary": "Appropriate contacts with special interest groups or other specialist security forums and professional associations shall be maintained."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.6.1.5",
+      "Description": "Information security shall be addressed in project management, regardless of the type of the project.",
+      "Name": "Information security in project management",
+      "Attributes": [
+        {
+          "Category": "A.6 Organization of information security",
+          "Objetive_ID": "A.6.1.5",
+          "Objetive_Name": "Information security in project management",
+          "Check_Summary": "Information security shall be addressed in project management, regardless of the type of the project."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.6.2",
+      "Description": "To ensure the security of teleworking and use of mobile devices.",
+      "Name": "Mobile devices and teleworking",
+      "Attributes": [
+        {
+          "Category": "A.6 Organization of information security",
+          "Objetive_ID": "A.6.2",
+          "Objetive_Name": "Mobile devices and teleworking",
+          "Check_Summary": "To ensure the security of teleworking and use of mobile devices."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.6.2.1",
+      "Description": "A policy and supporting security measures shall be adopted to manage the risks introduced by using mobile devices.",
+      "Name": "Mobile device policy",
+      "Attributes": [
+        {
+          "Category": "A.6 Organization of information security",
+          "Objetive_ID": "A.6.2.1",
+          "Objetive_Name": "Mobile device policy",
+          "Check_Summary": "A policy and supporting security measures shall be adopted to manage the risks introduced by using mobile devices."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.6.2.2",
+      "Description": "A policy and supporting security measures shall be implemented to protect information accessed, processed or stored at teleworking sites.",
+      "Name": "Teleworking",
+      "Attributes": [
+        {
+          "Category": "A.6 Organization of information security",
+          "Objetive_ID": "A.6.2.2",
+          "Objetive_Name": "Teleworking",
+          "Check_Summary": "A policy and supporting security measures shall be implemented to protect information accessed, processed or stored at teleworking sites."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.7.1",
+      "Description": "To ensure that employees and contractors understand their responsibilities and are suitable for the roles for which they are considered.",
+      "Name": "Prior to employment",
+      "Attributes": [
+        {
+          "Category": "A.7 Human resource security",
+          "Objetive_ID": "A.7.1",
+          "Objetive_Name": "Prior to employment",
+          "Check_Summary": "To ensure that employees and contractors understand their responsibilities and are suitable for the roles for which they are considered."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.7.1.1",
+      "Description": "Background verification checks on all candidates for employment shall be carried out in accordance with relevant laws, regulations and ethics and shall be proportional to the business requirements, the classification of the information to be accessed and the perceived risks.",
+      "Name": "Screening",
+      "Attributes": [
+        {
+          "Category": "A.7 Human resource security",
+          "Objetive_ID": "A.7.1.1",
+          "Objetive_Name": "Screening",
+          "Check_Summary": "Background verification checks on all candidates for employment shall be carried out in accordance with relevant laws, regulations and ethics and shall be proportional to the business requirements, the classification of the information to be accessed and the perceived risks."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.7.1.2",
+      "Description": "The contractual agreements with employees and contractors shall state their and the organization’s responsibilities for information security.",
+      "Name": "Terms and conditions of employment",
+      "Attributes": [
+        {
+          "Category": "A.7 Human resource security",
+          "Objetive_ID": "A.7.1.2",
+          "Objetive_Name": "Terms and conditions of employment",
+          "Check_Summary": "The contractual agreements with employees and contractors shall state their and the organization’s responsibilities for information security."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.7.2",
+      "Description": "To ensure that employees and contractors are aware of and fulfil their information security responsibilities.",
+      "Name": "During employment",
+      "Attributes": [
+        {
+          "Category": "A.7 Human resource security",
+          "Objetive_ID": "A.7.2",
+          "Objetive_Name": "During employment",
+          "Check_Summary": "To ensure that employees and contractors are aware of and fulfil their information security responsibilities."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.7.2.1",
+      "Description": "Management shall require all employees and contractors to apply information security in accordance with the established policies and procedures of the organization.",
+      "Name": "Management responsibilities",
+      "Attributes": [
+        {
+          "Category": "A.7 Human resource security",
+          "Objetive_ID": "A.7.2.1",
+          "Objetive_Name": "Management responsibilities",
+          "Check_Summary": "Management shall require all employees and contractors to apply information security in accordance with the established policies and procedures of the organization."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.7.2.2",
+      "Description": "All employees of the organization and, where relevant, contractors shall receive appropriate awareness education and training and regular updates in organizational policies and procedures, as relevant for their job function.",
+      "Name": "Information security awareness, education and training",
+      "Attributes": [
+        {
+          "Category": "A.7 Human resource security",
+          "Objetive_ID": "A.7.2.2",
+          "Objetive_Name": "Information security awareness, education and training",
+          "Check_Summary": "All employees of the organization and, where relevant, contractors shall receive appropriate awareness education and training and regular updates in organizational policies and procedures, as relevant for their job function."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.7.2.3",
+      "Description": "There shall be a formal and communicated disciplinary process in place to take action against employees who have committed an information security breach.",
+      "Name": "Disciplinary process",
+      "Attributes": [
+        {
+          "Category": "A.7 Human resource security",
+          "Objetive_ID": "A.7.2.3",
+          "Objetive_Name": "Disciplinary process",
+          "Check_Summary": "There shall be a formal and communicated disciplinary process in place to take action against employees who have committed an information security breach."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.7.3",
+      "Description": "To protect the organization’s interests as part of the process of changing or terminating employment.",
+      "Name": "Termination and change of employment",
+      "Attributes": [
+        {
+          "Category": "A.7 Human resource security",
+          "Objetive_ID": "A.7.3",
+          "Objetive_Name": "Termination and change of employment",
+          "Check_Summary": "To protect the organization’s interests as part of the process of changing or terminating employment."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.7.3.1",
+      "Description": "Information security responsibilities and duties that remain valid after termination or change of employment shall be defined, communicated to the employee or contractor and enforced.",
+      "Name": "Termination or change of employment responsibilities",
+      "Attributes": [
+        {
+          "Category": "A.7 Human resource security",
+          "Objetive_ID": "A.7.3.1",
+          "Objetive_Name": "Termination or change of employment responsibilities",
+          "Check_Summary": "Information security responsibilities and duties that remain valid after termination or change of employment shall be defined, communicated to the employee or contractor and enforced."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.8.1",
+      "Description": "To identify organizational assets and define appropriate protection responsibilities.",
+      "Name": "Responsibility for assets",
+      "Attributes": [
+        {
+          "Category": "A.8 Asset management",
+          "Objetive_ID": "A.8.1",
+          "Objetive_Name": "Responsibility for assets",
+          "Check_Summary": "To identify organizational assets and define appropriate protection responsibilities."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.8.1.1",
+      "Description": "Assets associated with information and information processing facilities shall be identified and an inventory of these assets shall be drawn up and maintained.",
+      "Name": "Inventory of assets",
+      "Attributes": [
+        {
+          "Category": "A.8 Asset management",
+          "Objetive_ID": "A.8.1.1",
+          "Objetive_Name": "Inventory of assets",
+          "Check_Summary": "Assets associated with information and information processing facilities shall be identified and an inventory of these assets shall be drawn up and maintained."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.8.1.2",
+      "Description": "Assets maintained in the inventory shall be owned.",
+      "Name": "Ownership of assets",
+      "Attributes": [
+        {
+          "Category": "A.8 Asset management",
+          "Objetive_ID": "A.8.1.2",
+          "Objetive_Name": "Ownership of assets",
+          "Check_Summary": "Assets maintained in the inventory shall be owned."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.8.1.3",
+      "Description": "Rules for the acceptable use of information and of assets associated with information and information processing facilities shall be identified, documented and implemented.",
+      "Name": "Acceptable use of assets",
+      "Attributes": [
+        {
+          "Category": "A.8 Asset management",
+          "Objetive_ID": "A.8.1.3",
+          "Objetive_Name": "Acceptable use of assets",
+          "Check_Summary": "Rules for the acceptable use of information and of assets associated with information and information processing facilities shall be identified, documented and implemented."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.8.1.4",
+      "Description": "All employees and external party users shall return all of the organizational assets in their possession upon termination of their employment, contract or agreement.",
+      "Name": "Return of assets",
+      "Attributes": [
+        {
+          "Category": "A.8 Asset management",
+          "Objetive_ID": "A.8.1.4",
+          "Objetive_Name": "Return of assets",
+          "Check_Summary": "All employees and external party users shall return all of the organizational assets in their possession upon termination of their employment, contract or agreement."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.8.2",
+      "Description": "To ensure that information receives an appropriate level of protection in accordance with its importance to the organization.",
+      "Name": "Information classification",
+      "Attributes": [
+        {
+          "Category": "A.8 Asset management",
+          "Objetive_ID": "A.8.2",
+          "Objetive_Name": "Information classification",
+          "Check_Summary": "To ensure that information receives an appropriate level of protection in accordance with its importance to the organization."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.8.2.1",
+      "Description": "Information shall be classified in terms of legal requirements, value, criticality and sensitivity to unauthorised disclosure or modification.",
+      "Name": "Classification of information",
+      "Attributes": [
+        {
+          "Category": "A.8 Asset management",
+          "Objetive_ID": "A.8.2.1",
+          "Objetive_Name": "Classification of information",
+          "Check_Summary": "Information shall be classified in terms of legal requirements, value, criticality and sensitivity to unauthorised disclosure or modification."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.8.2.2",
+      "Description": "An appropriate set of procedures for information labelling shall be developed and implemented in accordance with the information classification scheme adopted by the organization.",
+      "Name": "Labelling of information",
+      "Attributes": [
+        {
+          "Category": "A.8 Asset management",
+          "Objetive_ID": "A.8.2.2",
+          "Objetive_Name": "Labelling of information",
+          "Check_Summary": "An appropriate set of procedures for information labelling shall be developed and implemented in accordance with the information classification scheme adopted by the organization."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.8.2.3",
+      "Description": "Procedures for handling assets shall be developed and implemented in accordance with the information classification scheme adopted by the organization.",
+      "Name": "Handling of assets",
+      "Attributes": [
+        {
+          "Category": "A.8 Asset management",
+          "Objetive_ID": "A.8.2.3",
+          "Objetive_Name": "Handling of assets",
+          "Check_Summary": "Procedures for handling assets shall be developed and implemented in accordance with the information classification scheme adopted by the organization."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.8.3",
+      "Description": "To prevent unauthorized disclosure, modification, removal or destruction of information stored on media.",
+      "Name": "Media handling",
+      "Attributes": [
+        {
+          "Category": "A.8 Asset management",
+          "Objetive_ID": "A.8.3",
+          "Objetive_Name": "Media handling",
+          "Check_Summary": "To prevent unauthorized disclosure, modification, removal or destruction of information stored on media."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.8.3.1",
+      "Description": "Procedures shall be implemented for the management of removable media in accordance with the classification scheme adopted by the organization.",
+      "Name": "Management of removable media",
+      "Attributes": [
+        {
+          "Category": "A.8 Asset management",
+          "Objetive_ID": "A.8.3.1",
+          "Objetive_Name": "Management of removable media",
+          "Check_Summary": "Procedures shall be implemented for the management of removable media in accordance with the classification scheme adopted by the organization."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.8.3.2",
+      "Description": "Media shall be disposed of securely when no longer required, using formal procedures.",
+      "Name": "Disposal of media",
+      "Attributes": [
+        {
+          "Category": "A.8 Asset management",
+          "Objetive_ID": "A.8.3.2",
+          "Objetive_Name": "Disposal of media",
+          "Check_Summary": "Media shall be disposed of securely when no longer required, using formal procedures."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.8.3.3",
+      "Description": "Media containing information shall be protected against unauthorized access, misuse or corruption during transportation",
+      "Name": "Physical media transfer",
+      "Attributes": [
+        {
+          "Category": "A.8 Asset management",
+          "Objetive_ID": "A.8.3.3",
+          "Objetive_Name": "Physical media transfer",
+          "Check_Summary": "Media containing information shall be protected against unauthorized access, misuse or corruption during transportation"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.11.1 ",
+      "Description": "To prevent unauthorized physical access, damage and interference to the organization’s information and information processing facilities.",
+      "Name": "Secure areas",
+      "Attributes": [
+        {
+          "Category": "A.11 Physical and environmental security",
+          "Objetive_ID": "A.11.1 ",
+          "Objetive_Name": "Secure areas",
+          "Check_Summary": "To prevent unauthorized physical access, damage and interference to the organization’s information and information processing facilities."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.11.1.1",
+      "Description": "Security perimeters shall be defined and used to protect areas that contain either sensitive or critical information and information processing facilities.",
+      "Name": "Physical security perimeter",
+      "Attributes": [
+        {
+          "Category": "A.11 Physical and environmental security",
+          "Objetive_ID": "A.11.1.1",
+          "Objetive_Name": "Physical security perimeter",
+          "Check_Summary": "Security perimeters shall be defined and used to protect areas that contain either sensitive or critical information and information processing facilities."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.11.1.2",
+      "Description": "Secure areas shall be protected by appropriate entry controls to ensure that only authorized personnel are allowed access.",
+      "Name": "Physical entry controls",
+      "Attributes": [
+        {
+          "Category": "A.11 Physical and environmental security",
+          "Objetive_ID": "A.11.1.2",
+          "Objetive_Name": "Physical entry controls",
+          "Check_Summary": "Secure areas shall be protected by appropriate entry controls to ensure that only authorized personnel are allowed access."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.11.1.3",
+      "Description": "Physical security for offices, rooms and facilities shall be designed and applied.",
+      "Name": "Securing offices, rooms and facilities",
+      "Attributes": [
+        {
+          "Category": "A.11 Physical and environmental security",
+          "Objetive_ID": "A.11.1.3",
+          "Objetive_Name": "Securing offices, rooms and facilities",
+          "Check_Summary": "Physical security for offices, rooms and facilities shall be designed and applied."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.11.1.4",
+      "Description": "Physical protection against natural disasters, malicious attack or accidents shall be designed and applied.",
+      "Name": "Protecting against external and environmental threats",
+      "Attributes": [
+        {
+          "Category": "A.11 Physical and environmental security",
+          "Objetive_ID": "A.11.1.4",
+          "Objetive_Name": "Protecting against external and environmental threats",
+          "Check_Summary": "Physical protection against natural disasters, malicious attack or accidents shall be designed and applied."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.11.1.5",
+      "Description": "Procedures for working in secure areas shall be designed and applied.",
+      "Name": "Working in secure areas",
+      "Attributes": [
+        {
+          "Category": "A.11 Physical and environmental security",
+          "Objetive_ID": "A.11.1.5",
+          "Objetive_Name": "Working in secure areas",
+          "Check_Summary": "Procedures for working in secure areas shall be designed and applied."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.11.1.6",
+      "Description": "Access points such as delivery and loading areas and other points where unauthorized persons could enter the premises shall be controlled and, if possible, isolated from information processing facilities to avoid unauthorized access.",
+      "Name": "Delivery and loading areas",
+      "Attributes": [
+        {
+          "Category": "A.11 Physical and environmental security",
+          "Objetive_ID": "A.11.1.6",
+          "Objetive_Name": "Delivery and loading areas",
+          "Check_Summary": "Access points such as delivery and loading areas and other points where unauthorized persons could enter the premises shall be controlled and, if possible, isolated from information processing facilities to avoid unauthorized access."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.11.2",
+      "Description": "To prevent loss, damage, theft or compromise of assets and interruption to the organization’s operations.",
+      "Name": "Equipment",
+      "Attributes": [
+        {
+          "Category": "A.11 Physical and environmental security",
+          "Objetive_ID": "A.11.2",
+          "Objetive_Name": "Equipment",
+          "Check_Summary": "To prevent loss, damage, theft or compromise of assets and interruption to the organization’s operations."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.11.2.1",
+      "Description": "Equipment shall be sited and protected to reduce the risks from environmental threats and hazards, and opportunities for unauthorized access.",
+      "Name": "Equipment siting and protection",
+      "Attributes": [
+        {
+          "Category": "A.11 Physical and environmental security",
+          "Objetive_ID": "A.11.2.1",
+          "Objetive_Name": "Equipment siting and protection",
+          "Check_Summary": "Equipment shall be sited and protected to reduce the risks from environmental threats and hazards, and opportunities for unauthorized access."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.11.2.2",
+      "Description": "Equipment shall be protected from power failures and other disruptions caused by failures in supporting utilities.",
+      "Name": "Supporting utilities",
+      "Attributes": [
+        {
+          "Category": "A.11 Physical and environmental security",
+          "Objetive_ID": "A.11.2.2",
+          "Objetive_Name": "Supporting utilities",
+          "Check_Summary": "Equipment shall be protected from power failures and other disruptions caused by failures in supporting utilities."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.11.2.3",
+      "Description": "Power and telecommunications cabling carrying data or supporting information services shall be protected from interception, interference or damage.",
+      "Name": "Cabling security",
+      "Attributes": [
+        {
+          "Category": "A.11 Physical and environmental security",
+          "Objetive_ID": "A.11.2.3",
+          "Objetive_Name": "Cabling security",
+          "Check_Summary": "Power and telecommunications cabling carrying data or supporting information services shall be protected from interception, interference or damage."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.11.2.4",
+      "Description": "Equipment shall be correctly maintained to ensure its continued availability and integrity",
+      "Name": "Equipment maintenance",
+      "Attributes": [
+        {
+          "Category": "A.11 Physical and environmental security",
+          "Objetive_ID": "A.11.2.4",
+          "Objetive_Name": "Equipment maintenance",
+          "Check_Summary": "Equipment shall be correctly maintained to ensure its continued availability and integrity"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.11.2.5",
+      "Description": "Equipment, information or software shall not be taken offsite without prior authorization.",
+      "Name": "Removal of assets",
+      "Attributes": [
+        {
+          "Category": "A.11 Physical and environmental security",
+          "Objetive_ID": "A.11.2.5",
+          "Objetive_Name": "Removal of assets",
+          "Check_Summary": "Equipment, information or software shall not be taken offsite without prior authorization."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.11.2.6",
+      "Description": "Security shall be applied to off-site assets taking into account the different risks of working outside the organization’s premises.",
+      "Name": "Security of equipment and assets off-premises",
+      "Attributes": [
+        {
+          "Category": "A.11 Physical and environmental security",
+          "Objetive_ID": "A.11.2.6",
+          "Objetive_Name": "Security of equipment and assets off-premises",
+          "Check_Summary": "Security shall be applied to off-site assets taking into account the different risks of working outside the organization’s premises."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.11.2.7",
+      "Description": "All items of equipment containing storage media shall be verified to ensure that any sensitive data and licensed software has been removed or securely overwritten prior to disposal or re-use.",
+      "Name": "Secure disposal or reuse of equipment",
+      "Attributes": [
+        {
+          "Category": "A.11 Physical and environmental security",
+          "Objetive_ID": "A.11.2.7",
+          "Objetive_Name": "Secure disposal or reuse of equipment",
+          "Check_Summary": "All items of equipment containing storage media shall be verified to ensure that any sensitive data and licensed software has been removed or securely overwritten prior to disposal or re-use."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.11.2.8",
+      "Description": "Users shall ensure that unattended equipment has appropriate protection.",
+      "Name": "Unattended user equipment",
+      "Attributes": [
+        {
+          "Category": "A.11 Physical and environmental security",
+          "Objetive_ID": "A.11.2.8",
+          "Objetive_Name": "Unattended user equipment",
+          "Check_Summary": "Users shall ensure that unattended equipment has appropriate protection."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.11.2.9",
+      "Description": "A clear desk policy for papers and removable storage media and a clear screen policy for information processing facilities shall be adopted.",
+      "Name": "Clear desk and clear screen policy",
+      "Attributes": [
+        {
+          "Category": "A.11 Physical and environmental security",
+          "Objetive_ID": "A.11.2.9",
+          "Objetive_Name": "Clear desk and clear screen policy",
+          "Check_Summary": "A clear desk policy for papers and removable storage media and a clear screen policy for information processing facilities shall be adopted."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.14.1",
+      "Description": "To ensure that information security is an integral part of information systems across the entire lifecycle. This also includes the requirements for information systems which provide services over public networks.",
+      "Name": "Security requirements of information systems",
+      "Attributes": [
+        {
+          "Category": "A.14 System acquisition, development and maintenance",
+          "Objetive_ID": "A.14.1",
+          "Objetive_Name": "Security requirements of information systems",
+          "Check_Summary": "To ensure that information security is an integral part of information systems across the entire lifecycle. This also includes the requirements for information systems which provide services over public networks."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.14.1.1",
+      "Description": "The information security related requirements shall be included in the requirements for new information systems or enhancements to existing information systems.",
+      "Name": "Information security requirements analysis and specification",
+      "Attributes": [
+        {
+          "Category": "A.14 System acquisition, development and maintenance",
+          "Objetive_ID": "A.14.1.1",
+          "Objetive_Name": "Information security requirements analysis and specification",
+          "Check_Summary": "The information security related requirements shall be included in the requirements for new information systems or enhancements to existing information systems."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.14.1.2",
+      "Description": "Information involved in application services passing over public networks shall be protected from fraudulent activity, contract dispute and unauthorized disclosure and modification.",
+      "Name": "Securing application services on public networks",
+      "Attributes": [
+        {
+          "Category": "A.14 System acquisition, development and maintenance",
+          "Objetive_ID": "A.14.1.2",
+          "Objetive_Name": "Securing application services on public networks",
+          "Check_Summary": "Information involved in application services passing over public networks shall be protected from fraudulent activity, contract dispute and unauthorized disclosure and modification."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.14.1.3",
+      "Description": "Information involved in application service transactions shall be protected to prevent incomplete transmission, misrouting, unauthorized message alteration, unauthorized disclosure, unauthorized message duplication or replay.",
+      "Name": "Protecting application services transactions",
+      "Attributes": [
+        {
+          "Category": "A.14 System acquisition, development and maintenance",
+          "Objetive_ID": "A.14.1.3",
+          "Objetive_Name": "Protecting application services transactions",
+          "Check_Summary": "Information involved in application service transactions shall be protected to prevent incomplete transmission, misrouting, unauthorized message alteration, unauthorized disclosure, unauthorized message duplication or replay."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.14.2",
+      "Description": "To ensure that information security is designed and implemented within the development lifecycle of information systems.",
+      "Name": "Security in development and support processes",
+      "Attributes": [
+        {
+          "Category": "A.14 System acquisition, development and maintenance",
+          "Objetive_ID": "A.14.2",
+          "Objetive_Name": "Security in development and support processes",
+          "Check_Summary": "To ensure that information security is designed and implemented within the development lifecycle of information systems."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.14.2.1",
+      "Description": "Rules for the development of software and systems shall be established and applied to developments within the organization.",
+      "Name": "Secure development policy",
+      "Attributes": [
+        {
+          "Category": "A.14 System acquisition, development and maintenance",
+          "Objetive_ID": "A.14.2.1",
+          "Objetive_Name": "Secure development policy",
+          "Check_Summary": "Rules for the development of software and systems shall be established and applied to developments within the organization."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.14.2.2",
+      "Description": "Changes to systems within the development lifecycle shall be controlled by the use of formal change control procedures.",
+      "Name": "System change control procedures",
+      "Attributes": [
+        {
+          "Category": "A.14 System acquisition, development and maintenance",
+          "Objetive_ID": "A.14.2.2",
+          "Objetive_Name": "System change control procedures",
+          "Check_Summary": "Changes to systems within the development lifecycle shall be controlled by the use of formal change control procedures."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.14.2.3",
+      "Description": "When operating platforms are changed, business critical applications shall be reviewed and tested to ensure there is no adverse impact on organizational operations or security",
+      "Name": "Technical review of applications after operating platform changes",
+      "Attributes": [
+        {
+          "Category": "A.14 System acquisition, development and maintenance",
+          "Objetive_ID": "A.14.2.3",
+          "Objetive_Name": "Technical review of applications after operating platform changes",
+          "Check_Summary": "When operating platforms are changed, business critical applications shall be reviewed and tested to ensure there is no adverse impact on organizational operations or security"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.14.2.4",
+      "Description": "Modifications to software packages shall be discouraged, limited to necessary changes and all changes shall be strictly controlled.",
+      "Name": "Restrictions on changes to software packages",
+      "Attributes": [
+        {
+          "Category": "A.14 System acquisition, development and maintenance",
+          "Objetive_ID": "A.14.2.4",
+          "Objetive_Name": "Restrictions on changes to software packages",
+          "Check_Summary": "Modifications to software packages shall be discouraged, limited to necessary changes and all changes shall be strictly controlled."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.14.2.5",
+      "Description": "Principles for engineering secure systems shall be established, documented, maintained and applied to any information system implementation efforts.",
+      "Name": "Secure system engineering principles",
+      "Attributes": [
+        {
+          "Category": "A.14 System acquisition, development and maintenance",
+          "Objetive_ID": "A.14.2.5",
+          "Objetive_Name": "Secure system engineering principles",
+          "Check_Summary": "Principles for engineering secure systems shall be established, documented, maintained and applied to any information system implementation efforts."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.14.2.6",
+      "Description": "Organizations shall establish and appropriately protect secure development environments for system development and integration efforts that cover the entire system development lifecycle.",
+      "Name": "Secure development environment",
+      "Attributes": [
+        {
+          "Category": "A.14 System acquisition, development and maintenance",
+          "Objetive_ID": "A.14.2.6",
+          "Objetive_Name": "Secure development environment",
+          "Check_Summary": "Organizations shall establish and appropriately protect secure development environments for system development and integration efforts that cover the entire system development lifecycle."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.14.2.7",
+      "Description": "The organization shall supervise and monitor the activity of outsourced system development.",
+      "Name": "Outsourced development",
+      "Attributes": [
+        {
+          "Category": "A.14 System acquisition, development and maintenance",
+          "Objetive_ID": "A.14.2.7",
+          "Objetive_Name": "Outsourced development",
+          "Check_Summary": "The organization shall supervise and monitor the activity of outsourced system development."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.14.2.8",
+      "Description": "Testing of security functionality shall be carried out during development.",
+      "Name": "System security testing",
+      "Attributes": [
+        {
+          "Category": "A.14 System acquisition, development and maintenance",
+          "Objetive_ID": "A.14.2.8",
+          "Objetive_Name": "System security testing",
+          "Check_Summary": "Testing of security functionality shall be carried out during development."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.14.2.9",
+      "Description": "Acceptance testing programs and related criteria shall be established for new information systems, upgrades and new versions.",
+      "Name": "System acceptance testing",
+      "Attributes": [
+        {
+          "Category": "A.14 System acquisition, development and maintenance",
+          "Objetive_ID": "A.14.2.9",
+          "Objetive_Name": "System acceptance testing",
+          "Check_Summary": "Acceptance testing programs and related criteria shall be established for new information systems, upgrades and new versions."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.14.3",
+      "Description": "To ensure the protection of data used for testing",
+      "Name": "Test data",
+      "Attributes": [
+        {
+          "Category": "A.14 System acquisition, development and maintenance",
+          "Objetive_ID": "A.14.3",
+          "Objetive_Name": "Test data",
+          "Check_Summary": "To ensure the protection of data used for testing"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.14.3.1",
+      "Description": "Test data shall be selected carefully, protected and controlled.",
+      "Name": "Protection of test data",
+      "Attributes": [
+        {
+          "Category": "A.14 System acquisition, development and maintenance",
+          "Objetive_ID": "A.14.3.1",
+          "Objetive_Name": "Protection of test data",
+          "Check_Summary": "Test data shall be selected carefully, protected and controlled."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.15.1",
+      "Description": "To ensure protection of the organization’s assets that is accessible by suppliers.",
+      "Name": "Information security in supplier relationships",
+      "Attributes": [
+        {
+          "Category": "A.15 Supplier relationships",
+          "Objetive_ID": "A.15.1",
+          "Objetive_Name": "Information security in supplier relationships",
+          "Check_Summary": "To ensure protection of the organization’s assets that is accessible by suppliers."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.15.1.1",
+      "Description": "Information security requirements for mitigating the risks associated with supplier’s access to the organization’s assets shall be agreed with the supplier and documented.",
+      "Name": "Information security policy for supplier relationships",
+      "Attributes": [
+        {
+          "Category": "A.15 Supplier relationships",
+          "Objetive_ID": "A.15.1.1",
+          "Objetive_Name": "Information security policy for supplier relationships",
+          "Check_Summary": "Information security requirements for mitigating the risks associated with supplier’s access to the organization’s assets shall be agreed with the supplier and documented."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.15.1.2",
+      "Description": "All relevant information security requirements shall be established and agreed with each supplier that may access, process, store, communicate, or provide IT infrastructure components for, the organization’s information.",
+      "Name": "Addressing security within supplier agreements",
+      "Attributes": [
+        {
+          "Category": "A.15 Supplier relationships",
+          "Objetive_ID": "A.15.1.2",
+          "Objetive_Name": "Addressing security within supplier agreements",
+          "Check_Summary": "All relevant information security requirements shall be established and agreed with each supplier that may access, process, store, communicate, or provide IT infrastructure components for, the organization’s information."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.15.1.3",
+      "Description": "Agreements with suppliers shall include requirements to address the information security risks associated with information and communications technology services and product supply chain.",
+      "Name": "Information and communication technology supply chain",
+      "Attributes": [
+        {
+          "Category": "A.15 Supplier relationships",
+          "Objetive_ID": "A.15.1.3",
+          "Objetive_Name": "Information and communication technology supply chain",
+          "Check_Summary": "Agreements with suppliers shall include requirements to address the information security risks associated with information and communications technology services and product supply chain."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.15.2",
+      "Description": "To maintain an agreed level of information security and service delivery in line with supplier agreements.",
+      "Name": "Supplier service delivery management",
+      "Attributes": [
+        {
+          "Category": "A.15 Supplier relationships",
+          "Objetive_ID": "A.15.2",
+          "Objetive_Name": "Supplier service delivery management",
+          "Check_Summary": "To maintain an agreed level of information security and service delivery in line with supplier agreements."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.15.2.1",
+      "Description": "Organizations shall regularly monitor, review and audit supplier service delivery.",
+      "Name": "Monitoring and review of supplier services",
+      "Attributes": [
+        {
+          "Category": "A.15 Supplier relationships",
+          "Objetive_ID": "A.15.2.1",
+          "Objetive_Name": "Monitoring and review of supplier services",
+          "Check_Summary": "Organizations shall regularly monitor, review and audit supplier service delivery."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.15.2.2",
+      "Description": "Changes to the provision of services by suppliers, including maintaining and improving existing information security policies, procedures and controls, shall be managed, taking account of the criticality of business information, systems and processes involved and reassessment of risks.",
+      "Name": "Managing changes to supplier services",
+      "Attributes": [
+        {
+          "Category": "A.15 Supplier relationships",
+          "Objetive_ID": "A.15.2.2",
+          "Objetive_Name": "Managing changes to supplier services",
+          "Check_Summary": "Changes to the provision of services by suppliers, including maintaining and improving existing information security policies, procedures and controls, shall be managed, taking account of the criticality of business information, systems and processes involved and reassessment of risks."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.16.1",
+      "Description": "To ensure a consistent and effective approach to the management of information security incidents, including communication on security events and weaknesses.",
+      "Name": "Management of information security incidents and improvements",
+      "Attributes": [
+        {
+          "Category": "A.16 Information security incident management",
+          "Objetive_ID": "A.16.1",
+          "Objetive_Name": "Management of information security incidents and improvements",
+          "Check_Summary": "To ensure a consistent and effective approach to the management of information security incidents, including communication on security events and weaknesses."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.16.1.1",
+      "Description": "Management responsibilities and procedures shall be established to ensure a quick, effective and orderly response to information security incidents.",
+      "Name": "Responsibilities and procedures",
+      "Attributes": [
+        {
+          "Category": "A.16 Information security incident management",
+          "Objetive_ID": "A.16.1.1",
+          "Objetive_Name": "Responsibilities and procedures",
+          "Check_Summary": "Management responsibilities and procedures shall be established to ensure a quick, effective and orderly response to information security incidents."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.16.1.2",
+      "Description": "Information security events shall be reported through appropriate management channels as quickly as possible.",
+      "Name": "Reporting information security events",
+      "Attributes": [
+        {
+          "Category": "A.16 Information security incident management",
+          "Objetive_ID": "A.16.1.2",
+          "Objetive_Name": "Reporting information security events",
+          "Check_Summary": "Information security events shall be reported through appropriate management channels as quickly as possible."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.16.1.3",
+      "Description": "Employees and contractors using the organization’s information systems and services shall be required to note and report any observed or suspected information security weaknesses in systems or services.",
+      "Name": "Reporting information security weaknesses",
+      "Attributes": [
+        {
+          "Category": "A.16 Information security incident management",
+          "Objetive_ID": "A.16.1.3",
+          "Objetive_Name": "Reporting information security weaknesses",
+          "Check_Summary": "Employees and contractors using the organization’s information systems and services shall be required to note and report any observed or suspected information security weaknesses in systems or services."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.16.1.4",
+      "Description": "Information security events shall be assessed and it shall be decided if they are to be classified as information security incidents.",
+      "Name": "Assessment of and decision on information security events",
+      "Attributes": [
+        {
+          "Category": "A.16 Information security incident management",
+          "Objetive_ID": "A.16.1.4",
+          "Objetive_Name": "Assessment of and decision on information security events",
+          "Check_Summary": "Information security events shall be assessed and it shall be decided if they are to be classified as information security incidents."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.16.1.5",
+      "Description": "Information security incidents shall be responded to in accordance with the documented procedures.",
+      "Name": "Response to information security incidents",
+      "Attributes": [
+        {
+          "Category": "A.16 Information security incident management",
+          "Objetive_ID": "A.16.1.5",
+          "Objetive_Name": "Response to information security incidents",
+          "Check_Summary": "Information security incidents shall be responded to in accordance with the documented procedures."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.16.1.6",
+      "Description": "Knowledge gained from analysing and resolving information security incidents shall be used to reduce the likelihood or impact of future incidents.",
+      "Name": "Learning from information security incidents",
+      "Attributes": [
+        {
+          "Category": "A.16 Information security incident management",
+          "Objetive_ID": "A.16.1.6",
+          "Objetive_Name": "Learning from information security incidents",
+          "Check_Summary": "Knowledge gained from analysing and resolving information security incidents shall be used to reduce the likelihood or impact of future incidents."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.16.1.7",
+      "Description": "The organization shall define and apply procedures for the identification, collection, acquisition and preservation of information, which can serve as evidence",
+      "Name": "Collection of evidence",
+      "Attributes": [
+        {
+          "Category": "A.16 Information security incident management",
+          "Objetive_ID": "A.16.1.7",
+          "Objetive_Name": "Collection of evidence",
+          "Check_Summary": "The organization shall define and apply procedures for the identification, collection, acquisition and preservation of information, which can serve as evidence"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.17.1",
+      "Description": "Information security continuity shall be embedded in the organization’s business continuity management systems.",
+      "Name": "Information security continuity",
+      "Attributes": [
+        {
+          "Category": "A.17 Information security aspects of business continuity management",
+          "Objetive_ID": "A.17.1",
+          "Objetive_Name": "Information security continuity",
+          "Check_Summary": "Information security continuity shall be embedded in the organization’s business continuity management systems."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.17.1.1",
+      "Description": "The organization shall determine its requirements for information security and the continuity of information security management in adverse situations, e.g. during a crisis or disaster.",
+      "Name": "Planning information security continuity",
+      "Attributes": [
+        {
+          "Category": "A.17 Information security aspects of business continuity management",
+          "Objetive_ID": "A.17.1.1",
+          "Objetive_Name": "Planning information security continuity",
+          "Check_Summary": "The organization shall determine its requirements for information security and the continuity of information security management in adverse situations, e.g. during a crisis or disaster."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.17.1.2",
+      "Description": "The organization shall establish, document, implement and maintain processes, procedures and controls to ensure the required level of continuity for information security during an adverse situation.",
+      "Name": "Implementing information security continuity",
+      "Attributes": [
+        {
+          "Category": "A.17 Information security aspects of business continuity management",
+          "Objetive_ID": "A.17.1.2",
+          "Objetive_Name": "Implementing information security continuity",
+          "Check_Summary": "The organization shall establish, document, implement and maintain processes, procedures and controls to ensure the required level of continuity for information security during an adverse situation."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.17.1.3",
+      "Description": "The organization shall verify the established and implemented information security continuity controls at regular intervals in order to ensure that they are valid and effective during adverse situations",
+      "Name": "Verify, review and evaluate information security continuity",
+      "Attributes": [
+        {
+          "Category": "A.17 Information security aspects of business continuity management",
+          "Objetive_ID": "A.17.1.3",
+          "Objetive_Name": "Verify, review and evaluate information security continuity",
+          "Check_Summary": "The organization shall verify the established and implemented information security continuity controls at regular intervals in order to ensure that they are valid and effective during adverse situations"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.17.2",
+      "Description": "To ensure availability of information processing facilities",
+      "Name": "Redundancies",
+      "Attributes": [
+        {
+          "Category": "A.17 Information security aspects of business continuity management",
+          "Objetive_ID": "A.17.2",
+          "Objetive_Name": "Redundancies",
+          "Check_Summary": "To ensure availability of information processing facilities"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.17.2.1",
+      "Description": "Information processing facilities shall be implemented with redundancy sufficient to meet availability requirements.",
+      "Name": "Availability of information processing facilities",
+      "Attributes": [
+        {
+          "Category": "A.17 Information security aspects of business continuity management",
+          "Objetive_ID": "A.17.2.1",
+          "Objetive_Name": "Availability of information processing facilities",
+          "Check_Summary": "Information processing facilities shall be implemented with redundancy sufficient to meet availability requirements."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.18.1",
+      "Description": "To avoid breaches of legal, statutory, regulatory or contractual obligations related to information security and of any security requirements.",
+      "Name": "Compliance with legal and contractual requirements",
+      "Attributes": [
+        {
+          "Category": "A.18 Compliance",
+          "Objetive_ID": "A.18.1",
+          "Objetive_Name": "Compliance with legal and contractual requirements",
+          "Check_Summary": "To avoid breaches of legal, statutory, regulatory or contractual obligations related to information security and of any security requirements."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.18.1.1",
+      "Description": "All relevant legislative statutory, regulatory, contractual requirements and the organization’s approach to meet these requirements shall be explicitly identified, documented and kept up to date for each information system and the organization.",
+      "Name": "Identification of applicable legislation and contractual requirements",
+      "Attributes": [
+        {
+          "Category": "A.18 Compliance",
+          "Objetive_ID": "A.18.1.1",
+          "Objetive_Name": "Identification of applicable legislation and contractual requirements",
+          "Check_Summary": "All relevant legislative statutory, regulatory, contractual requirements and the organization’s approach to meet these requirements shall be explicitly identified, documented and kept up to date for each information system and the organization."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.18.1.2",
+      "Description": "Appropriate procedures shall be implemented to ensure compliance with legislative, regulatory and contractual requirements related to intellectual property rights and use of proprietary software products.",
+      "Name": "Intellectual property rights",
+      "Attributes": [
+        {
+          "Category": "A.18 Compliance",
+          "Objetive_ID": "A.18.1.2",
+          "Objetive_Name": "Intellectual property rights",
+          "Check_Summary": "Appropriate procedures shall be implemented to ensure compliance with legislative, regulatory and contractual requirements related to intellectual property rights and use of proprietary software products."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.18.1.3",
+      "Description": "Records shall be protected from loss, destruction, falsification, unauthorized access and unauthorized release, in accordance with legislatory, regulatory, contractual and business requirements.",
+      "Name": "Protection of records",
+      "Attributes": [
+        {
+          "Category": "A.18 Compliance",
+          "Objetive_ID": "A.18.1.3",
+          "Objetive_Name": "Protection of records",
+          "Check_Summary": "Records shall be protected from loss, destruction, falsification, unauthorized access and unauthorized release, in accordance with legislatory, regulatory, contractual and business requirements."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.18.1.4",
+      "Description": "Privacy and protection of personally identifiable information shall be ensured as required in relevant legislation and regulation where applicable.",
+      "Name": "Privacy and protection of personally identifiable information",
+      "Attributes": [
+        {
+          "Category": "A.18 Compliance",
+          "Objetive_ID": "A.18.1.4",
+          "Objetive_Name": "Privacy and protection of personally identifiable information",
+          "Check_Summary": "Privacy and protection of personally identifiable information shall be ensured as required in relevant legislation and regulation where applicable."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.18.1.5",
+      "Description": "Cryptographic controls shall be used in compliance with all relevant agreements, legislation and regulations.",
+      "Name": "Regulation of cryptographic controls",
+      "Attributes": [
+        {
+          "Category": "A.18 Compliance",
+          "Objetive_ID": "A.18.1.5",
+          "Objetive_Name": "Regulation of cryptographic controls",
+          "Check_Summary": "Cryptographic controls shall be used in compliance with all relevant agreements, legislation and regulations."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.18.2",
+      "Description": "To ensure that information security is implemented and operated in accordance with the organizational policies and procedures.",
+      "Name": "Information security reviews",
+      "Attributes": [
+        {
+          "Category": "A.18 Compliance",
+          "Objetive_ID": "A.18.2",
+          "Objetive_Name": "Information security reviews",
+          "Check_Summary": "To ensure that information security is implemented and operated in accordance with the organizational policies and procedures."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.18.2.1",
+      "Description": "The organization’s approach to managing information security and its implementation (i.e. control objectives, controls, policies, processes and procedures for information security) shall be reviewed independently at planned intervals or when significant changes occur.",
+      "Name": "Independent review of information security",
+      "Attributes": [
+        {
+          "Category": "A.18 Compliance",
+          "Objetive_ID": "A.18.2.1",
+          "Objetive_Name": "Independent review of information security",
+          "Check_Summary": "The organization’s approach to managing information security and its implementation (i.e. control objectives, controls, policies, processes and procedures for information security) shall be reviewed independently at planned intervals or when significant changes occur."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.18.2.2",
+      "Description": "Managers shall regularly review the compliance of information processing and procedures within their area of responsibility with the appropriate security policies, standards and any other security requirements.",
+      "Name": "Compliance with security policies and standards",
+      "Attributes": [
+        {
+          "Category": "A.18 Compliance",
+          "Objetive_ID": "A.18.2.2",
+          "Objetive_Name": "Compliance with security policies and standards",
+          "Check_Summary": "Managers shall regularly review the compliance of information processing and procedures within their area of responsibility with the appropriate security policies, standards and any other security requirements."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.18.2.3",
+      "Description": "Information systems shall be regularly reviewed for compliance with the organization’s information security policies and standards.",
+      "Name": "Technical compliance review",
+      "Attributes": [
+        {
+          "Category": "A.18 Compliance",
+          "Objetive_ID": "A.18.2.3",
+          "Objetive_Name": "Technical compliance review",
+          "Check_Summary": "Information systems shall be regularly reviewed for compliance with the organization’s information security policies and standards."
+        }
+      ],
+      "Checks": []
     }
   ]
 }
