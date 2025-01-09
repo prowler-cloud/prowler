@@ -196,6 +196,7 @@ export const EditRoleForm = ({
             onChange={(e) => onSelectAllChange(e.target.checked)}
             classNames={{
               label: "text-small",
+              wrapper: "checkbox-update",
             }}
           >
             Grant all admin permissions
@@ -210,6 +211,7 @@ export const EditRoleForm = ({
                 isSelected={!!form.watch(field as keyof FormValues)}
                 classNames={{
                   label: "text-small",
+                  wrapper: "checkbox-update",
                 }}
               >
                 {label}

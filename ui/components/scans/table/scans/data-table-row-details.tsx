@@ -50,6 +50,7 @@ export const DataTableRowDetails = ({ entityId }: { entityId: string }) => {
           setScanDetails(result.data);
         }
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.error("Error in fetchScanDetails:", error);
       } finally {
         setIsLoading(false);

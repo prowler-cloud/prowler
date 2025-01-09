@@ -42,6 +42,7 @@ export const getProviders = async ({
     revalidatePath("/providers");
     return parsedData;
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error("Error fetching providers:", error);
     return undefined;
   }

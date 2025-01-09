@@ -72,15 +72,15 @@ const SSRDataTable = async ({
         return acc;
       }, {}) || {};
 
-  const enrichedProviders = providersData?.data.map(
-    (provider: ProviderProps) => {
-      const groupNames = provider.relationships.provider_groups.data.map(
-        (group: { id: string }) =>
-          providerGroupDict[group.id] || "Unknown Group",
-      );
+  const enrichedProviders =
+    providersData?.data?.map((provider: ProviderProps) => {
+      const groupNames =
+        provider.relationships?.provider_groups?.data?.map(
+          (group: { id: string }) =>
+            providerGroupDict[group.id] || "Unknown Group",
+        ) || [];
       return { ...provider, groupNames };
-    },
-  );
+    }) || [];
 
   return (
     <DataTable
