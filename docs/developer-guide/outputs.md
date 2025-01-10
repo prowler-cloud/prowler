@@ -14,18 +14,19 @@ Prowler can generate outputs in multiple formats, allowing users to customize th
 ### Schema
 
 * Output Class:
+    * The class must inherit from `Output`. Review the [Output Class](https://github.com/prowler-cloud/prowler/blob/master/prowler/lib/outputs/output.py).
     * Create a class that encapsulates attributes and methods for the output.
     The following is the code for the `CSV` class:
     ```python title="CSV Class"
     class CSV(Output):
-    def transform(self, findings: List[Finding]) -> None:
-        """Transforms the findings into the CSV format.
+        def transform(self, findings: List[Finding]) -> None:
+            """Transforms the findings into the CSV format.
 
-        Args:
-            findings (list[Finding]): a list of Finding objects
+            Args:
+                findings (list[Finding]): a list of Finding objects
 
-        """
-    ...
+            """
+        ...
     ```
 * Transform Method:
     * This method will transform the findings provided by Prowler to a specific format.
