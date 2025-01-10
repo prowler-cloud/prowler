@@ -26,7 +26,7 @@ class rds_instance_no_public_access(Check):
                     report.status_extended = f"RDS Instance {db_instance.id} is set as publicly accessible but filtered with security groups."
                     db_instance_port = db_instance.endpoint.get("Port")
                     if db_instance_port:
-                        for security_group in ec2_client.security_groups.items():
+                        for security_group in ec2_client.security_groups.values():
                             if security_group.id in db_instance.security_groups:
                                 for ingress_rule in security_group.ingress_rules:
                                     if check_security_group(

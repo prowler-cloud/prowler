@@ -32,7 +32,7 @@ def fixer(resource_id: str, region: str) -> bool:
             "ec2_high_risk_ports",
             [25, 110, 135, 143, 445, 3000, 4333, 5000, 5500, 8080, 8088],
         )
-        for security_group in ec2_client.security_groups.items():
+        for security_group in ec2_client.security_groups.values():
             if security_group.id == resource_id:
                 for ingress_rule in security_group.ingress_rules:
                     if check_security_group(

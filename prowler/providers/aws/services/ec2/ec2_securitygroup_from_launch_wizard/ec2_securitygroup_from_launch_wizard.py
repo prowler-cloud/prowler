@@ -5,7 +5,7 @@ from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 class ec2_securitygroup_from_launch_wizard(Check):
     def execute(self):
         findings = []
-        for security_group in ec2_client.security_groups.items():
+        for security_group in ec2_client.security_groups.values():
             report = Check_Report_AWS(self.metadata(), security_group)
             report.resource_details = security_group.name
             report.status = "PASS"
