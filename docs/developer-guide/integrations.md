@@ -4,18 +4,16 @@
 
 Integrating Prowler with external tools enhances its functionality and seamlessly embeds it into your workflows. Prowler supports a wide range of integrations to streamline security assessments and reporting. Common integration targets include messaging platforms like Slack, project management tools like Jira, and cloud services such as AWS Security Hub.
 
-## Steps to Create a General Integration
+* Consult the [Prowler Developer Guide](https://docs.prowler.com/projects/prowler-open-source/en/latest/) to understand how Prowler works and the way that you can integrate it with the desired product!
+* Identify the best approach for the specific platform you’re targeting.
+
+## Steps to Create an Integration
 
 ### Identify the Integration Purpose
 
 * Clearly define the objective of the integration. For example:
     * Sending Prowler findings to a platform for alerts, tracking, or further analysis.
     * Review existing integrations in the [`prowler/lib/outputs`](https://github.com/prowler-cloud/prowler/tree/master/prowler/lib/outputs) folder for inspiration and implementation examples.
-
-### Review Prowler’s Integration Capabilities
-
-* Consult the [Prowler Developer Guide](https://docs.prowler.com/projects/prowler-open-source/en/latest/) to understand how Prowler works and the way that you can integrate it with the desired product!
-* Identify the best approach for the specific platform you’re targeting.
 
 ### Develop the Integration
 
