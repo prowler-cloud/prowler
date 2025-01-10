@@ -14,13 +14,13 @@ mutelist_schema = {
         "Accounts": {
             "type": "object",
             "patternProperties": {
-                ".*": {
+                ".*": {  # Match any account
                     "type": "object",
                     "properties": {
                         "Checks": {
                             "type": "object",
                             "patternProperties": {
-                                ".*": {
+                                ".*": {  # Match any check
                                     "type": "object",
                                     "properties": {
                                         "Regions": {
@@ -31,51 +31,54 @@ mutelist_schema = {
                                             "type": "array",
                                             "items": {"type": "string"},
                                         },
-                                        "Tags": {
+                                        "Tags": {  # Optional field
                                             "type": "array",
                                             "items": {"type": "string"},
                                         },
-                                        "Exceptions": {
+                                        "Exceptions": {  # Optional field
                                             "type": "object",
                                             "properties": {
-                                                "Accounts": {
+                                                "Accounts": {  # Optional field
                                                     "type": "array",
                                                     "items": {"type": "string"},
                                                 },
-                                                "Regions": {
+                                                "Regions": {  # Optional field
                                                     "type": "array",
                                                     "items": {"type": "string"},
                                                 },
-                                                "Resources": {
+                                                "Resources": {  # Optional field
                                                     "type": "array",
                                                     "items": {"type": "string"},
                                                 },
-                                                "Tags": {
+                                                "Tags": {  # Optional field
                                                     "type": "array",
                                                     "items": {"type": "string"},
                                                 },
                                             },
                                             "additionalProperties": False,
                                         },
-                                        "Description": {
+                                        "Description": {  # Optional field
                                             "type": "string",
                                         },
                                     },
-                                    "required": [],
+                                    "required": [
+                                        "Regions",
+                                        "Resources",
+                                    ],  # Mandatory within a check
                                     "additionalProperties": False,
                                 }
                             },
                             "additionalProperties": False,
                         },
                     },
-                    "required": [],
+                    "required": ["Checks"],  # Mandatory within an account
                     "additionalProperties": False,
                 }
             },
             "additionalProperties": False,
         }
     },
-    "required": ["Accounts"],
+    "required": ["Accounts"],  # Accounts is mandatory at the root level
     "additionalProperties": False,
 }
 
