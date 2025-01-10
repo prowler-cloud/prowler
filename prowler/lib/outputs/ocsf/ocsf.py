@@ -127,7 +127,7 @@ class OCSF(Output):
                                 type=finding.metadata.ResourceType,
                                 data={
                                     "details": finding.resource_details,
-                                    "metadata": finding.resource_metadata,
+                                    # "metadata": finding.resource_metadata, TODO: add the resource_metadata to the finding
                                 },
                                 namespace=finding.region.replace("namespace: ", ""),
                             )

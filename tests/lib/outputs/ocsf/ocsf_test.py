@@ -192,7 +192,10 @@ class TestOCSF:
                     {
                         "cloud_partition": "aws",
                         "region": "eu-west-1",
-                        "data": {"details": "resource_details", "metadata": {}},
+                        "data": {
+                            "details": "resource_details",
+                            # "metadata": {} TODO: add metadata to the resource details
+                        },
                         "group": {"name": "test-service"},
                         "labels": [],
                         "name": "resource_name",
@@ -318,7 +321,7 @@ class TestOCSF:
         assert resource_details[0].region == finding_output.region
         assert resource_details[0].data == {
             "details": finding_output.resource_details,
-            "metadata": {},
+            # "metadata": {}, TODO: add metadata to the resource details
         }
 
         resource_details_group = resource_details[0].group
