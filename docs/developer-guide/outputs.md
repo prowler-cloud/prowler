@@ -4,23 +4,29 @@
 
 Prowler can generate outputs in multiple formats, allowing users to customize the way findings are presented. This is particularly useful when integrating Prowler with third-party tools, creating specialized reports, or simply tailoring the data to meet specific requirements. A custom output format gives you the flexibility to extract and display only the most relevant information in the way you need it.
 
-## Steps to Create a Custom Output Format
-
-### Understand Prowler’s Output Framework
-
-* Prowler organizes its outputs in the /lib/outputs directory. Each format (e.g., JSON, CSV, HTML) is implemented as a Python class.
+* Prowler organizes its outputs in the `/lib/outputs` directory. Each format (e.g., JSON, CSV, HTML) is implemented as a Python class.
 * Outputs are generated based on findings collected during a scan. Each finding is represented as a structured dictionary containing details like resource IDs, severities, descriptions, and more.
-
-### Review Prowler’s Output Capabilities
-
 * Consult the [Prowler Developer Guide](https://docs.prowler.com/projects/prowler-open-source/en/latest/) to understand how Prowler works and the way that you can create it with the desired output!
 * Identify the best approach for the specific output you’re targeting.
 
+## Steps to Create a Custom Output Format
 
-### Fundamental Structure
+### Schema
 
 * Output Class:
     * Create a class that encapsulates attributes and methods for the output.
+    The following is the code for the `CSV` class:
+    ```python title="CSV Class"
+    class CSV(Output):
+    def transform(self, findings: List[Finding]) -> None:
+        """Transforms the findings into the CSV format.
+
+        Args:
+            findings (list[Finding]): a list of Finding objects
+
+        """
+    ...
+    ```
 * Transform Method:
     * This method will transform the findings provided by Prowler to a specific format.
     The following is the code for the `transform` method for the `CSV` class:
