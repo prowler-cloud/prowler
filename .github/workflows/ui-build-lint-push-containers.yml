@@ -23,6 +23,7 @@ env:
   # Tags
   LATEST_TAG: latest
   RELEASE_TAG: ${{ github.event.release.tag_name }}
+  STABLE_TAG: stable
 
   WORKING_DIRECTORY: ./ui
 
@@ -92,5 +93,6 @@ jobs:
           push: true
           tags: |
             ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ env.RELEASE_TAG }}
+            ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ env.STABLE_TAG }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

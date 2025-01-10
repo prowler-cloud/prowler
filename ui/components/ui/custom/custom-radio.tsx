@@ -1,9 +1,9 @@
-import { UseRadioProps } from "@nextui-org/radio/dist/use-radio";
 import { cn, useRadio, VisuallyHidden } from "@nextui-org/react";
 import React from "react";
 
-interface CustomRadioProps extends UseRadioProps {
+interface CustomRadioProps {
   description?: string;
+  value?: string;
   children?: React.ReactNode;
 }
 
@@ -18,7 +18,7 @@ export const CustomRadio: React.FC<CustomRadioProps> = (props) => {
     getLabelProps,
     getLabelWrapperProps,
     getControlProps,
-  } = useRadio(props);
+  } = useRadio({ ...props, value: props.value || "" });
 
   return (
     <Component

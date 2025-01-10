@@ -23,7 +23,12 @@ export const CustomSearchInput: React.FC = () => {
     [router, searchParams],
   );
 
-  const debouncedChangeHandler = useCallback(debounce(applySearch, 300), []);
+  const debouncedChangeHandler = useCallback(
+    (value: string) => {
+      debounce((val) => applySearch(val), 300)(value);
+    },
+    [applySearch],
+  );
 
   const clearIconSearch = () => {
     setSearchQuery("");

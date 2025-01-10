@@ -26,8 +26,14 @@ interface InvitationDetailsProps {
 }
 
 export const InvitationDetails = ({ attributes }: InvitationDetailsProps) => {
-  const baseURL = process.env.SITE_URL;
-  const invitationLink = `${baseURL}/sign-up?invitation_token=${attributes.token}`;
+  // window.location.origin to get the current base URL
+  const baseUrl =
+    typeof window !== "undefined"
+      ? window.location.origin
+      : "http://localhost:3000";
+
+  const invitationLink = `${baseUrl}/invitations/check-details?id=${attributes.token}`;
+
   return (
     <div className="flex flex-col gap-x-4 gap-y-8">
       <Card
