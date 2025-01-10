@@ -35,7 +35,7 @@ python = ">=3.11,<3.13"
 uuid6 = "2024.7.10"
 
 [tool.poetry.group.dev.dependencies]
-bandit = "1.7.9"
+bandit = "1.8.0"
 coverage = "7.5.4"
 docker = "7.1.0"
 freezegun = "1.5.1"
