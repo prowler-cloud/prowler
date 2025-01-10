@@ -110,7 +110,10 @@ class Test_sqs_queues_not_publicly_accessible:
         sqs_client.queues = []
         with mock.patch(
             "prowler.providers.aws.services.sqs.sqs_service.SQS",
-            sqs_client,
+            new=sqs_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.sqs.sqs_client.sqs_client",
+            new=sqs_client,
         ):
             from prowler.providers.aws.services.sqs.sqs_queues_not_publicly_accessible.sqs_queues_not_publicly_accessible import (
                 sqs_queues_not_publicly_accessible,
@@ -167,7 +170,10 @@ class Test_sqs_queues_not_publicly_accessible:
         )
         with mock.patch(
             "prowler.providers.aws.services.sqs.sqs_service.SQS",
-            sqs_client,
+            new=sqs_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.sqs.sqs_client.sqs_client",
+            new=sqs_client,
         ):
             from prowler.providers.aws.services.sqs.sqs_queues_not_publicly_accessible.sqs_queues_not_publicly_accessible import (
                 sqs_queues_not_publicly_accessible,
@@ -201,7 +207,10 @@ class Test_sqs_queues_not_publicly_accessible:
         )
         with mock.patch(
             "prowler.providers.aws.services.sqs.sqs_service.SQS",
-            sqs_client,
+            new=sqs_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.sqs.sqs_client.sqs_client",
+            new=sqs_client,
         ):
             from prowler.providers.aws.services.sqs.sqs_queues_not_publicly_accessible.sqs_queues_not_publicly_accessible import (
                 sqs_queues_not_publicly_accessible,
@@ -235,7 +244,10 @@ class Test_sqs_queues_not_publicly_accessible:
         )
         with mock.patch(
             "prowler.providers.aws.services.sqs.sqs_service.SQS",
-            sqs_client,
+            new=sqs_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.sqs.sqs_client.sqs_client",
+            new=sqs_client,
         ):
             from prowler.providers.aws.services.sqs.sqs_queues_not_publicly_accessible.sqs_queues_not_publicly_accessible import (
                 sqs_queues_not_publicly_accessible,
@@ -269,7 +281,10 @@ class Test_sqs_queues_not_publicly_accessible:
         )
         with mock.patch(
             "prowler.providers.aws.services.sqs.sqs_service.SQS",
-            sqs_client,
+            new=sqs_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.sqs.sqs_client.sqs_client",
+            new=sqs_client,
         ):
             from prowler.providers.aws.services.sqs.sqs_queues_not_publicly_accessible.sqs_queues_not_publicly_accessible import (
                 sqs_queues_not_publicly_accessible,
@@ -303,7 +318,10 @@ class Test_sqs_queues_not_publicly_accessible:
         )
         with mock.patch(
             "prowler.providers.aws.services.sqs.sqs_service.SQS",
-            sqs_client,
+            new=sqs_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.sqs.sqs_client.sqs_client",
+            new=sqs_client,
         ):
             from prowler.providers.aws.services.sqs.sqs_queues_not_publicly_accessible.sqs_queues_not_publicly_accessible import (
                 sqs_queues_not_publicly_accessible,

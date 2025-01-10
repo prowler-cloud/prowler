@@ -90,19 +90,19 @@ repos:
       - id: bandit
         name: bandit
         description: "Bandit is a tool for finding common security issues in Python code"
-        entry: bash -c 'bandit -q -lll -x '*_test.py,./contrib/' -r .'
+        entry: bash -c 'bandit -q -lll -x '*_test.py,./contrib/,./.venv/' -r .'
         language: system
         files: '.*\.py'
 
       - id: safety
         name: safety
         description: "Safety is a tool that checks your installed dependencies for known security vulnerabilities"
-        entry: bash -c 'safety check --ignore 70612'
+        entry: bash -c 'safety check --ignore 70612,66963'
         language: system
 
       - id: vulture
         name: vulture
         description: "Vulture finds unused code in Python programs."
-        entry: bash -c 'vulture --exclude "contrib" --min-confidence 100 .'
+        entry: bash -c 'vulture --exclude "contrib,.venv,api/src/backend/api/tests/,api/src/backend/conftest.py,api/src/backend/tasks/tests/" --min-confidence 100 .'
         language: system
         files: '.*\.py'

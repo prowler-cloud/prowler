@@ -1,7 +1,7 @@
 from unittest import mock
 from uuid import uuid4
 
-from azure.mgmt.network.models._models import SecurityRule
+from azure.mgmt.network.models import SecurityRule
 
 from prowler.providers.azure.services.network.network_service import SecurityGroup
 from tests.providers.azure.azure_fixtures import (

@@ -131,7 +131,10 @@ class Test_route53_dangling_ip_subdomain_takeover:
                     )
                     assert (
                         result[0].resource_id
-                        == zone_id.replace("/hostedzone/", "") + "/192.168.1.1"
+                        == zone_id.replace("/hostedzone/", "")
+                        + "/"
+                        + record_set_name
+                        + "/192.168.1.1"
                     )
                     assert (
                         result[0].resource_arn
@@ -196,7 +199,10 @@ class Test_route53_dangling_ip_subdomain_takeover:
                     )
                     assert (
                         result[0].resource_id
-                        == zone_id.replace("/hostedzone/", "") + "/17.5.7.3"
+                        == zone_id.replace("/hostedzone/", "")
+                        + "/"
+                        + record_set_name
+                        + "/17.5.7.3"
                     )
                     assert (
                         result[0].resource_arn
@@ -261,7 +267,10 @@ class Test_route53_dangling_ip_subdomain_takeover:
                     )
                     assert (
                         result[0].resource_id
-                        == zone_id.replace("/hostedzone/", "") + "/54.152.12.70"
+                        == zone_id.replace("/hostedzone/", "")
+                        + "/"
+                        + record_set_name
+                        + "/54.152.12.70"
                     )
                     assert (
                         result[0].resource_arn
@@ -330,7 +339,10 @@ class Test_route53_dangling_ip_subdomain_takeover:
                     )
                     assert (
                         result[0].resource_id
-                        == zone_id.replace("/hostedzone/", "") + "/17.5.7.3"
+                        == zone_id.replace("/hostedzone/", "")
+                        + "/"
+                        + record_set_name
+                        + "/17.5.7.3"
                     )
                     assert (
                         result[0].resource_arn
@@ -405,7 +417,10 @@ class Test_route53_dangling_ip_subdomain_takeover:
                     )
                     assert (
                         result[0].resource_id
-                        == zone_id.replace("/hostedzone/", "") + "/17.5.7.3"
+                        == zone_id.replace("/hostedzone/", "")
+                        + "/"
+                        + record_set_name
+                        + "/17.5.7.3"
                     )
                     assert (
                         result[0].resource_arn

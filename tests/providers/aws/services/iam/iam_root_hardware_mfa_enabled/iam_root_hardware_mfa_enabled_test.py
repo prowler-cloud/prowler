@@ -29,6 +29,7 @@ class Test_iam_root_hardware_mfa_enabled_test:
         iam_client.audited_partition = "aws"
         iam_client.region = AWS_REGION_US_EAST_1
         iam_client.mfa_arn_template = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:mfa"
+        iam_client.organization_features = []
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
@@ -63,6 +64,7 @@ class Test_iam_root_hardware_mfa_enabled_test:
         iam_client.audited_partition = "aws"
         iam_client.region = AWS_REGION_US_EAST_1
         iam_client.mfa_arn_template = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:mfa"
+        iam_client.organization_features = []
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
@@ -95,6 +97,7 @@ class Test_iam_root_hardware_mfa_enabled_test:
         iam_client.audited_partition = "aws"
         iam_client.region = AWS_REGION_US_EAST_1
         iam_client.mfa_arn_template = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:mfa"
+        iam_client.organization_features = []
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 

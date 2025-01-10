@@ -18,7 +18,7 @@ class compute_network_default_in_use(Check):
             report.project_id = project
             report.resource_id = "default"
             report.resource_name = "default"
-            report.location = "global"
+            report.location = compute_client.region
 
             if project in projects_with_default_network:
                 report.status = "FAIL"

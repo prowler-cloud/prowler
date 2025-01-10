@@ -8,26 +8,28 @@ class organizations_tags_policies_enabled_and_attached(Check):
     def execute(self):
         findings = []
 
-        for org in organizations_client.organizations:
-            if org.policies is not None:  # Access Denied to list_policies
+        if organizations_client.organization:
+            if (
+                organizations_client.organization.policies is not None
+            ):  # Access Denied to list_policies
                 report = Check_Report_AWS(self.metadata())
-                report.resource_id = org.id
-                report.resource_arn = org.arn
+                report.resource_id = organizations_client.organization.id
+                report.resource_arn = organizations_client.organization.arn
                 report.region = organizations_client.region
                 report.status = "FAIL"
                 report.status_extended = (
                     "AWS Organizations is not in-use for this AWS Account."
                 )
 
-                if org.status == "ACTIVE":
-                    report.status_extended = (
-                        f"AWS Organizations {org.id} does not have tag policies."
-                    )
-                    for policy in org.policies.get("TAG_POLICY", []):
-                        report.status_extended = f"AWS Organization {org.id} has tag policies enabled but not attached."
+                if organizations_client.organization.status == "ACTIVE":
+                    report.status_extended = f"AWS Organizations {organizations_client.organization.id} does not have tag policies."
+                    for policy in organizations_client.organization.policies.get(
+                        "TAG_POLICY", []
+                    ):
+                        report.status_extended = f"AWS Organization {organizations_client.organization.id} has tag policies enabled but not attached."
                         if policy.targets:
                             report.status = "PASS"
-                            report.status_extended = f"AWS Organization {org.id} has tag policies enabled and attached to an AWS account."
+                            report.status_extended = f"AWS Organization {organizations_client.organization.id} has tag policies enabled and attached to an AWS account."
 
                 findings.append(report)
 

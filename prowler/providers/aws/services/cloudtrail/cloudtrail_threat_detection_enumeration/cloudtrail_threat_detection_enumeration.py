@@ -5,6 +5,99 @@ from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
     cloudtrail_client,
 )
 
+default_threat_detection_enumeration_actions = [
+    "DescribeAccessEntry",
+    "DescribeAccountAttributes",
+    "DescribeAvailabilityZones",
+    "DescribeBundleTasks",
+    "DescribeCarrierGateways",
+    "DescribeClientVpnRoutes",
+    "DescribeCluster",
+    "DescribeDhcpOptions",
+    "DescribeFlowLogs",
+    "DescribeImages",
+    "DescribeInstanceAttribute",
+    "DescribeInstanceInformation",
+    "DescribeInstanceTypes",
+    "DescribeInstances",
+    "DescribeInstances",
+    "DescribeKeyPairs",
+    "DescribeLogGroups",
+    "DescribeLogStreams",
+    "DescribeOrganization",
+    "DescribeRegions",
+    "DescribeSecurityGroups",
+    "DescribeSnapshotAttribute",
+    "DescribeSnapshotTierStatus",
+    "DescribeSubscriptionFilters",
+    "DescribeTransitGatewayMulticastDomains",
+    "DescribeVolumes",
+    "DescribeVolumesModifications",
+    "DescribeVpcEndpointConnectionNotifications",
+    "DescribeVpcs",
+    "GetAccount",
+    "GetAccountAuthorizationDetails",
+    "GetAccountSendingEnabled",
+    "GetBucketAcl",
+    "GetBucketLogging",
+    "GetBucketPolicy",
+    "GetBucketReplication",
+    "GetBucketVersioning",
+    "GetCallerIdentity",
+    "GetCertificate",
+    "GetConsoleScreenshot",
+    "GetCostAndUsage",
+    "GetDetector",
+    "GetEbsDefaultKmsKeyId",
+    "GetEbsEncryptionByDefault",
+    "GetFindings",
+    "GetFlowLogsIntegrationTemplate",
+    "GetIdentityVerificationAttributes",
+    "GetInstances",
+    "GetIntrospectionSchema",
+    "GetLaunchTemplateData",
+    "GetLaunchTemplateData",
+    "GetLogRecord",
+    "GetParameters",
+    "GetPolicyVersion",
+    "GetPublicAccessBlock",
+    "GetQueryResults",
+    "GetRegions",
+    "GetSMSAttributes",
+    "GetSMSSandboxAccountStatus",
+    "GetSendQuota",
+    "GetTransitGatewayRouteTableAssociations",
+    "GetUserPolicy",
+    "HeadObject",
+    "ListAccessKeys",
+    "ListAccounts",
+    "ListAllMyBuckets",
+    "ListAssociatedAccessPolicies",
+    "ListAttachedUserPolicies",
+    "ListClusters",
+    "ListDetectors",
+    "ListDomains",
+    "ListFindings",
+    "ListHostedZones",
+    "ListIPSets",
+    "ListIdentities",
+    "ListInstanceProfiles",
+    "ListObjects",
+    "ListOrganizationalUnitsForParent",
+    "ListOriginationNumbers",
+    "ListPolicyVersions",
+    "ListRoles",
+    "ListRoles",
+    "ListRules",
+    "ListServiceQuotas",
+    "ListSubscriptions",
+    "ListTargetsByRule",
+    "ListTopics",
+    "ListUsers",
+    "LookupEvents",
+    "Search",
+]
+
 
 class cloudtrail_threat_detection_enumeration(Check):
     def execute(self):
@@ -16,7 +109,8 @@ class cloudtrail_threat_detection_enumeration(Check):
             "threat_detection_enumeration_minutes", 1440
         )
         enumeration_actions = cloudtrail_client.audit_config.get(
-            "threat_detection_enumeration_actions", []
+            "threat_detection_enumeration_actions",
+            default_threat_detection_enumeration_actions,
         )
         potential_enumeration = {}
         found_potential_enumeration = False
@@ -67,10 +161,8 @@ class cloudtrail_threat_detection_enumeration(Check):
                 found_potential_enumeration = True
                 report = Check_Report_AWS(self.metadata())
                 report.region = cloudtrail_client.region
-                report.resource_id = cloudtrail_client.audited_account
-                report.resource_arn = cloudtrail_client._get_trail_arn_template(
-                    cloudtrail_client.region
-                )
+                report.resource_id = aws_identity_arn.split("/")[-1]
+                report.resource_arn = aws_identity_arn
                 report.status = "FAIL"
                 report.status_extended = f"Potential enumeration attack detected from AWS {aws_identity_type} {aws_identity_arn.split('/')[-1]} with an threshold of {identity_threshold}."
                 findings.append(report)

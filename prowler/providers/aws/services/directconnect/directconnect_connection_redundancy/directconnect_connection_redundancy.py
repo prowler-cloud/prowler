@@ -20,8 +20,10 @@ class directconnect_connection_redundancy(Check):
             for region, connections in regions.items():
                 report = Check_Report_AWS(self.metadata())
                 report.region = region
-                report.resource_arn = directconnect_client.audited_account_arn
-                report.resource_id = directconnect_client.audited_account
+                report.resource_arn = directconnect_client._get_connection_arn_template(
+                    region
+                )
+                report.resource_id = "unknown"
                 if connections["Connections"] == 1:
                     report.status = "FAIL"
                     report.status_extended = (

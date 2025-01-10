@@ -60,6 +60,7 @@ class GKE(GCPService):
                     name=cluster["name"],
                     id=cluster["id"],
                     location=cluster["location"],
+                    region=cluster["location"].rsplit("-", 1)[0],
                     service_account=cluster["nodeConfig"]["serviceAccount"],
                     node_pools=node_pools,
                     project_id=location.project_id,
@@ -85,6 +86,7 @@ class NodePool(BaseModel):
 class Cluster(BaseModel):
     name: str
     id: str
+    region: str
     location: str
     service_account: str
     node_pools: list[NodePool]

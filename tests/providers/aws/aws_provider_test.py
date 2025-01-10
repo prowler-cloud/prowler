@@ -9,17 +9,14 @@ from unittest import mock
 
 import botocore
 import botocore.exceptions
+import pytest
 from boto3 import client, resource, session
 from mock import patch
 from moto import mock_aws
 from pytest import raises
 from tzlocal import get_localzone
 
-from prowler.providers.aws.aws_provider import (
-    AwsProvider,
-    get_aws_available_regions,
-    get_aws_region_for_sts,
-)
+from prowler.providers.aws.aws_provider import AwsProvider, get_aws_region_for_sts
 from prowler.providers.aws.config import (
     AWS_STS_GLOBAL_ENDPOINT_REGION,
     BOTO3_USER_AGENT_EXTRA,
@@ -28,6 +25,7 @@ from prowler.providers.aws.config import (
 from prowler.providers.aws.exceptions.exceptions import (
     AWSArgumentTypeValidationError,
     AWSIAMRoleARNInvalidResourceTypeError,
+    AWSInvalidPartitionError,
     AWSInvalidProviderIdError,
     AWSNoCredentialsError,
 )
@@ -354,7 +352,6 @@ class TestAWSProvider:
 
     @mock_aws
     def test_aws_provider_organizations_none_organizations_metadata(self):
-
         aws_provider = AwsProvider()
 
         assert isinstance(aws_provider.organizations_metadata, AWSOrganizationsInfo)
@@ -446,7 +443,6 @@ class TestAWSProvider:
                 totp="111111",
             ),
         ):
-
             aws_provider = AwsProvider(mfa=mfa)
 
             assert aws_provider.type == "aws"
@@ -680,7 +676,6 @@ aws:
 
     @mock_aws
     def test_aws_provider_mutelist_none(self):
-
         with patch(
             "prowler.providers.aws.aws_provider.get_default_mute_file_path",
             return_value=None,
@@ -830,7 +825,6 @@ aws:
 
     @mock_aws
     def test_generate_regional_clients_with_enabled_regions(self):
-
         aws_provider = AwsProvider()
         enabled_regions = [AWS_REGION_EU_WEST_1]
         aws_provider._enabled_regions = enabled_regions
@@ -984,7 +978,6 @@ aws:
 
     @mock_aws
     def test_get_available_aws_service_regions_with_all_regions_audited(self):
-
         aws_provider = AwsProvider()
 
         with patch(
@@ -1220,25 +1213,27 @@ aws:
         assert connection.error is None
 
     def test_test_connection_without_credentials(self):
-        with mock.patch("boto3.Session.get_credentials", return_value=None), mock.patch(
-            "botocore.session.Session.get_scoped_config", return_value={}
-        ), mock.patch(
-            "botocore.credentials.EnvProvider.load", return_value=None
-        ), mock.patch(
-            "botocore.credentials.SharedCredentialProvider.load", return_value=None
-        ), mock.patch(
-            "botocore.credentials.InstanceMetadataProvider.load", return_value=None
-        ), mock.patch.dict(
-            "os.environ",
-            {
-                "AWS_ACCESS_KEY_ID": "",
-                "AWS_SECRET_ACCESS_KEY": "",
-                "AWS_SESSION_TOKEN": "",
-                "AWS_PROFILE": "",
-            },
-            clear=True,
+        with (
+            mock.patch("boto3.Session.get_credentials", return_value=None),
+            mock.patch("botocore.session.Session.get_scoped_config", return_value={}),
+            mock.patch("botocore.credentials.EnvProvider.load", return_value=None),
+            mock.patch(
+                "botocore.credentials.SharedCredentialProvider.load", return_value=None
+            ),
+            mock.patch(
+                "botocore.credentials.InstanceMetadataProvider.load", return_value=None
+            ),
+            mock.patch.dict(
+                "os.environ",
+                {
+                    "AWS_ACCESS_KEY_ID": "",
+                    "AWS_SECRET_ACCESS_KEY": "",
+                    "AWS_SESSION_TOKEN": "",
+                    "AWS_PROFILE": "",
+                },
+                clear=True,
+            ),
         ):
-
             with raises(AWSNoCredentialsError) as exception:
                 AwsProvider.test_connection(
                     profile=None
@@ -1496,7 +1491,6 @@ aws:
         new=mock_recover_checks_from_aws_provider_elb_service,
     )
     def test_get_checks_from_input_arn_elb(self):
-
         expected_checks = [
             "elb_insecure_ssl_ciphers",
             "elb_internet_facing",
@@ -1517,7 +1511,6 @@ aws:
         new=mock_recover_checks_from_aws_provider_efs_service,
     )
     def test_get_checks_from_input_arn_efs(self):
-
         expected_checks = [
             "efs_encryption_at_rest_enabled",
             "efs_have_backup_enabled",
@@ -1558,7 +1551,6 @@ aws:
         new=mock_recover_checks_from_aws_provider_iam_service,
     )
     def test_get_checks_from_input_arn_iam(self):
-
         expected_checks = [
             "iam_check_saml_providers_sts",
             "iam_customer_attached_policy_no_administrative_privileges",
@@ -1580,7 +1572,6 @@ aws:
         new=mock_recover_checks_from_aws_provider_s3_service,
     )
     def test_get_checks_from_input_arn_s3(self):
-
         expected_checks = [
             "s3_account_level_public_access_blocks",
             "s3_bucket_acl_prohibited",
@@ -1720,7 +1711,16 @@ aws:
         )
         assert not recovered_regions
 
-    def test_get_aws_available_regions(self):
+    def test_get_regions_all_count(self):
+        assert len(AwsProvider.get_regions(partition=None)) == 35
+
+    def test_get_regions_cn_count(self):
+        assert len(AwsProvider.get_regions("aws-cn")) == 2
+
+    def test_get_regions_aws_count(self):
+        assert len(AwsProvider.get_regions(partition="aws")) == 31
+
+    def test_get_all_regions(self):
         with patch(
             "prowler.providers.aws.aws_provider.read_aws_regions_file",
             return_value={
@@ -1741,11 +1741,114 @@ aws:
                 }
             },
         ):
-            assert get_aws_available_regions() == {
+            assert AwsProvider.get_regions(partition=None) == {
                 "af-south-1",
                 "cn-north-1",
                 "us-gov-west-1",
             }
+
+    def test_get_regions_with_us_gov_partition(self):
+        with patch(
+            "prowler.providers.aws.aws_provider.read_aws_regions_file",
+            return_value={
+                "services": {
+                    "acm": {
+                        "regions": {
+                            "aws": [
+                                "af-south-1",
+                            ],
+                            "aws-cn": [
+                                "cn-north-1",
+                            ],
+                            "aws-us-gov": [
+                                "us-gov-west-1",
+                            ],
+                        }
+                    }
+                }
+            },
+        ):
+            assert AwsProvider.get_regions("aws-us-gov") == {
+                "us-gov-west-1",
+            }
+
+    def test_get_regions_with_aws_partition(self):
+        with patch(
+            "prowler.providers.aws.aws_provider.read_aws_regions_file",
+            return_value={
+                "services": {
+                    "acm": {
+                        "regions": {
+                            "aws": [
+                                "af-south-1",
+                            ],
+                            "aws-cn": [
+                                "cn-north-1",
+                            ],
+                            "aws-us-gov": [
+                                "us-gov-west-1",
+                            ],
+                        }
+                    }
+                }
+            },
+        ):
+            assert AwsProvider.get_regions("aws") == {
+                "af-south-1",
+            }
+
+    def test_get_regions_with_cn_partition(self):
+        with patch(
+            "prowler.providers.aws.aws_provider.read_aws_regions_file",
+            return_value={
+                "services": {
+                    "acm": {
+                        "regions": {
+                            "aws": [
+                                "af-south-1",
+                            ],
+                            "aws-cn": [
+                                "cn-north-1",
+                            ],
+                            "aws-us-gov": [
+                                "us-gov-west-1",
+                            ],
+                        }
+                    }
+                }
+            },
+        ):
+            assert AwsProvider.get_regions("aws-cn") == {
+                "cn-north-1",
+            }
+
+    def test_get_regions_with_unknown_partition(self):
+        with patch(
+            "prowler.providers.aws.aws_provider.read_aws_regions_file",
+            return_value={
+                "services": {
+                    "acm": {
+                        "regions": {
+                            "aws": [
+                                "af-south-1",
+                            ],
+                            "aws-cn": [
+                                "cn-north-1",
+                            ],
+                            "aws-us-gov": [
+                                "us-gov-west-1",
+                            ],
+                        }
+                    }
+                }
+            },
+        ):
+            partition = "unknown"
+            with pytest.raises(AWSInvalidPartitionError) as exception:
+                AwsProvider.get_regions(partition)
+
+            assert exception.type == AWSInvalidPartitionError
+        assert f"Invalid partition: {partition}" in exception.value.args[0]
 
     def test_get_aws_region_for_sts_input_regions_none_session_region_none(self):
         input_regions = None
@@ -1789,7 +1892,6 @@ aws:
 
     @mock_aws
     def test_set_session_config_default(self):
-
         aws_provider = AwsProvider()
         session_config = aws_provider.set_session_config(None)
 
@@ -1798,7 +1900,6 @@ aws:
 
     @mock_aws
     def test_set_session_config_10_max_attempts(self):
-
         aws_provider = AwsProvider()
         session_config = aws_provider.set_session_config(10)
 
@@ -1811,7 +1912,6 @@ aws:
         new=mock_recover_checks_from_aws_provider_ec2_service,
     )
     def test_get_checks_to_execute_by_audit_resources(self):
-
         aws_provider = AwsProvider()
         aws_provider._audit_resources = [
             f"arn:aws:ec2:us-west-2:{AWS_ACCOUNT_NUMBER}:network-acl/acl-1"
@@ -1829,7 +1929,6 @@ aws:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
-
             assert {
                 "shodan_api_key": "TEST-API-KEY"
             } == Provider.update_provider_config(
@@ -1845,7 +1944,6 @@ aws:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
-
             assert {"shodan_api_key": "DEFAULT-KEY"} == Provider.update_provider_config(
                 aws_provider.audit_config, "not_found", "not_value"
             )

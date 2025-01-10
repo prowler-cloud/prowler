@@ -10,6 +10,7 @@ class dataproc_encrypted_with_cmks_disabled(Check):
             report.project_id = cluster.project_id
             report.resource_id = cluster.id
             report.resource_name = cluster.name
+            report.location = dataproc_client.region
             report.status = "PASS"
             report.status_extended = f"Dataproc cluster {cluster.name} is encrypted with customer managed encryption keys."
             if cluster.encryption_config.get("gcePdKmsKeyName") is None:

@@ -36,6 +36,7 @@ class Test_compute_project_os_login_enabled:
         compute_client = mock.MagicMock
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.projects = [project]
+        compute_client.region = "global"
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -72,6 +73,7 @@ class Test_compute_project_os_login_enabled:
         compute_client = mock.MagicMock
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.projects = [project]
+        compute_client.region = "global"
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",

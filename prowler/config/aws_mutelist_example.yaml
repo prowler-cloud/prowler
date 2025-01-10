@@ -14,6 +14,7 @@ Mutelist:
           Resources:
             - "user-1"           # Will ignore user-1 in check iam_user_hardware_mfa_enabled
             - "user-2"           # Will ignore user-2 in check iam_user_hardware_mfa_enabled
+          Description: "Check iam_user_hardware_mfa_enabled muted for region us-east-1 and resources user-1, user-2"
         "ec2_*":
           Regions:
             - "*"

@@ -42,6 +42,7 @@ class Test_compute_instance_public_ip:
                 name="test",
                 id="1234567890",
                 zone="us-central1-a",
+                region="us-central1",
                 public_ip=False,
                 metadata={},
                 shielded_enabled_vtpm=True,
@@ -70,7 +71,7 @@ class Test_compute_instance_public_ip:
             assert result[0].resource_id == "1234567890"
             assert result[0].project_id == GCP_PROJECT_ID
             assert result[0].resource_name == "test"
-            assert result[0].location == "us-central1-a"
+            assert result[0].location == "us-central1"
 
     def test_public_ip_instance(self):
         from prowler.providers.gcp.services.compute.compute_service import Instance
@@ -79,6 +80,7 @@ class Test_compute_instance_public_ip:
             name="test",
             id="1234567890",
             zone="us-central1-a",
+            region="us-central1",
             public_ip=True,
             metadata={},
             shielded_enabled_vtpm=True,
@@ -116,4 +118,4 @@ class Test_compute_instance_public_ip:
             assert result[0].resource_id == "1234567890"
             assert result[0].project_id == GCP_PROJECT_ID
             assert result[0].resource_name == "test"
-            assert result[0].location == "us-central1-a"
+            assert result[0].location == "us-central1"

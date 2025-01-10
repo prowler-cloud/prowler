@@ -10,7 +10,7 @@ class compute_instance_default_service_account_in_use(Check):
             report.project_id = instance.project_id
             report.resource_id = instance.id
             report.resource_name = instance.name
-            report.location = instance.zone
+            report.location = instance.region
             report.status = "PASS"
             report.status_extended = f"The default service account is not configured to be used with VM Instance {instance.name}."
             if (

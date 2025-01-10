@@ -101,6 +101,7 @@ class Compute(GCPService):
                                 name=instance["name"],
                                 id=instance["id"],
                                 zone=zone,
+                                region=zone.rsplit("-", 1)[0],
                                 public_ip=public_ip,
                                 metadata=instance.get("metadata", {}),
                                 shielded_enabled_vtpm=instance.get(
@@ -306,6 +307,7 @@ class Instance(BaseModel):
     name: str
     id: str
     zone: str
+    region: str
     public_ip: bool
     project_id: str
     metadata: dict

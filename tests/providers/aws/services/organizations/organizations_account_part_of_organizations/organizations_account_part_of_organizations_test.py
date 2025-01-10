@@ -6,11 +6,7 @@ from moto import mock_aws
 from prowler.providers.aws.services.organizations.organizations_service import (
     Organizations,
 )
-from tests.providers.aws.utils import (
-    AWS_ACCOUNT_ARN,
-    AWS_REGION_EU_WEST_1,
-    set_mocked_aws_provider,
-)
+from tests.providers.aws.utils import AWS_REGION_EU_WEST_1, set_mocked_aws_provider
 
 
 class Test_organizations_account_part_of_organizations:
@@ -42,8 +38,11 @@ class Test_organizations_account_part_of_organizations:
                     result[0].status_extended
                     == "AWS Organizations is not in-use for this AWS Account."
                 )
-                assert result[0].resource_id == "AWS Organization"
-                assert result[0].resource_arn == AWS_ACCOUNT_ARN
+                assert result[0].resource_id == "unknown"
+                assert (
+                    result[0].resource_arn
+                    == "arn:aws:organizations::123456789012:unknown"
+                )
                 assert result[0].region == AWS_REGION_EU_WEST_1
 
     @mock_aws

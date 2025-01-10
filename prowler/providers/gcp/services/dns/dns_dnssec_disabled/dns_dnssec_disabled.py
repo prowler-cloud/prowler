@@ -10,6 +10,7 @@ class dns_dnssec_disabled(Check):
             report.project_id = managed_zone.project_id
             report.resource_id = managed_zone.id
             report.resource_name = managed_zone.name
+            report.location = dns_client.region
             report.status = "PASS"
             report.status_extended = (
                 f"Cloud DNS {managed_zone.name} has DNSSEC enabled."
