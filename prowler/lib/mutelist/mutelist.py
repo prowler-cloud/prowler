@@ -61,12 +61,14 @@ mutelist_schema = {
                                             "type": "string",
                                         },
                                     },
+                                    "required": [],
                                     "additionalProperties": False,
                                 }
                             },
                             "additionalProperties": False,
                         },
                     },
+                    "required": [],
                     "additionalProperties": False,
                 }
             },
