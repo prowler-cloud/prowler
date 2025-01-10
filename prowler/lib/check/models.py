@@ -410,15 +410,13 @@ class Check_Report:
     resource_tags: list
     muted: bool
 
-    def __init__(self, metadata, resource_metadata=None):
+    def __init__(self, metadata, resource=None):
         self.status = ""
         self.check_metadata = CheckMetadata.parse_raw(metadata)
-        self.resource_metadata = resource_metadata.dict() if resource_metadata else {}
+        self.resource_metadata = resource.dict() if resource else {}
         self.status_extended = ""
         self.resource_details = ""
-        self.resource_tags = (
-            getattr(resource_metadata, "tags", []) if resource_metadata else []
-        )
+        self.resource_tags = getattr(resource, "tags", []) if resource else []
         self.muted = False
 
 

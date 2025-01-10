@@ -14,7 +14,7 @@ def fill_common_finding_data(finding: dict, unix_timestamp: bool) -> dict:
         "status_extended": finding.status_extended,
         "muted": finding.muted,
         "resource_details": finding.resource_details,
-        "resource_metadata": finding.resource_metadata,
+        # "resource_metadata": finding.resource_metadata, TODO: add resource_metadata to the finding
         "resource_tags": unroll_tags(finding.resource_tags),
     }
     return finding_data
