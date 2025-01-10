@@ -34,7 +34,9 @@ export const CustomRegionSelection: React.FC = () => {
       label="Region"
       aria-label="Select a Region"
       placeholder="Select a region"
-      selectionMode="multiple"
+      classNames={{
+        selectorIcon: "right-2",
+      }}
       className="w-full"
       size="sm"
       selectedKeys={selectedKeys}

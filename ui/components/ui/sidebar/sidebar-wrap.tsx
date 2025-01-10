@@ -37,7 +37,7 @@ export const SidebarWrap = () => {
   const onToggle = useCallback(() => {
     if (!isCollapsed) openSideMenu();
     if (isCollapsed) closeSideMenu();
-  }, [isCollapsed]);
+  }, [isCollapsed, openSideMenu, closeSideMenu]);
 
   const currentPath = pathname === "/" ? "overview" : pathname.split("/")?.[1];
 

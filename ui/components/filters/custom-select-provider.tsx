@@ -66,6 +66,9 @@ export const CustomSelectProvider: React.FC = () => {
       items={dataInputsProvider}
       aria-label="Select a Provider"
       placeholder="Select a provider"
+      classNames={{
+        selectorIcon: "right-2",
+      }}
       label="Provider"
       labelPlacement="inside"
       size="sm"

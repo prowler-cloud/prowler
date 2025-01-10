@@ -42,6 +42,7 @@ export const getUsers = async ({
     revalidatePath("/users");
     return parsedData;
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error("Error fetching users:", error);
     return undefined;
   }
@@ -200,6 +201,7 @@ export const getProfileInfo = async () => {
     revalidatePath("/profile");
     return parsedData;
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error("Error fetching profile:", error);
     return undefined;
   }

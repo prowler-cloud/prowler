@@ -4,7 +4,10 @@ import React from "react";
 export const CustomCheckboxMutedFindings = () => {
   return (
     <Checkbox
-      className="xl:-mt-8"
+      classNames={{
+        label: "text-small",
+        wrapper: "checkbox-update xl:-mt-8",
+      }}
       size="md"
       color="danger"
       aria-label="Include Muted Findings"
