@@ -20,7 +20,7 @@
     "bcryptjs": "^2.4.3",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
-    "cmdk": "^1.0.0",
+    "cmdk": "^1.0.4",
     "date-fns": "^4.1.0",
     "framer-motion": "^11.16.0",
     "intl-messageformat": "^10.5.0",
