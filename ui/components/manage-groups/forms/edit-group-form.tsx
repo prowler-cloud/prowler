@@ -142,11 +142,9 @@ export const EditGroupForm = ({
         onSubmit={form.handleSubmit(onSubmitClient)}
         className="flex flex-col space-y-4"
       >
-        <p className="text-small font-medium text-default-700">
-          Edit the group information, including name, associated providers, and
-          roles.
+        <p className="text-small font-bold text-default-700">
+          Edit the group name or associated providers:
         </p>
-        <Divider orientation="horizontal" className="mb-2" />
 
         {/* Field for the name */}
         <div className="flex flex-col gap-2">
@@ -155,7 +153,7 @@ export const EditGroupForm = ({
             name="name"
             type="text"
             label="Provider group name"
-            labelPlacement="outside"
+            labelPlacement="inside"
             placeholder="Enter the provider group name"
             variant="bordered"
             isRequired
@@ -200,6 +198,11 @@ export const EditGroupForm = ({
           </p>
         )}
 
+        <Divider orientation="horizontal" className="mb-2" />
+        <p className="text-small font-medium text-default-700">
+          The roles associated with the group can be edited directly here or
+          from the Roles page.
+        </p>
         {/* Roles selection */}
         <Controller
           name="roles"
@@ -234,7 +237,6 @@ export const EditGroupForm = ({
             {form.formState.errors.roles.message}
           </p>
         )}
-        <Divider orientation="horizontal" className="mb-2" />
 
         <div className="flex w-full justify-end sm:space-x-6">
           <CustomButton

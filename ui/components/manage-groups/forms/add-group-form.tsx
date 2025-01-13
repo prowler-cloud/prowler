@@ -154,8 +154,8 @@ export const AddGroupForm = ({
         <Divider orientation="horizontal" className="mb-2" />
 
         <p className="text-small font-medium text-default-700">
-          You can also associate roles with the group. This step is optional,
-          can be done later if needed or from the Roles page.
+          Roles can also be associated with the group. This step is optional and
+          can be completed later if needed or from the Roles page.
         </p>
         {/* Roles Field */}
         <Controller
