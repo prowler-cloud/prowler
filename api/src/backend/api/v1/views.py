@@ -1638,12 +1638,10 @@ class RoleViewSet(BaseRLSViewSet):
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        serializer = self.get_serializer(
-            instance,
-            data=request.data,
-            partial=True,
-        )
-        serializer.is_valid(raise_exception=True)
+        if (
+            instance.name == "admin"
+        ):  # TODO: Move to a constant/enum (in case other roles are created by default)
+            raise ValidationError(detail="The admin role cannot be deleted.")
 
         return super().destroy(request, *args, **kwargs)
 
