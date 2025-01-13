@@ -1636,6 +1636,17 @@ class RoleViewSet(BaseRLSViewSet):
             request.data["manage_account"] = str(user_role.manage_account).lower()
         return super().partial_update(request, *args, **kwargs)
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(
+            instance,
+            data=request.data,
+            partial=True,
+        )
+        serializer.is_valid(raise_exception=True)
+
+        return super().destroy(request, *args, **kwargs)
+
 
 @extend_schema_view(
     create=extend_schema(
