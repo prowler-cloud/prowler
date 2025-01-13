@@ -2,7 +2,7 @@
   "Framework": "CIS",
   "Version": "3.0",
   "Provider": "GCP",
-  "Description": "The CIS Azure Foundations Benchmark provides prescriptive guidance for configuring security options for a subset of Azure with an emphasis on foundational, testable, and architecture agnostic settings.",
+  "Description": "The CIS Google Cloud Platform Foundations Benchmark provides prescriptive guidance for configuring security options for a subset of GCP with an emphasis on foundational, testable, and architecture agnostic settings.",
   "Requirements": [
     {
       "Id": "1.1",
