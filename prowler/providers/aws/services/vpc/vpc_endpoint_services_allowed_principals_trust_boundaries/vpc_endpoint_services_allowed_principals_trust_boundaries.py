@@ -10,16 +10,17 @@ class vpc_endpoint_services_allowed_principals_trust_boundaries(Check):
         # Get trusted account_ids from prowler.config.yaml
         trusted_account_ids = vpc_client.audit_config.get("trusted_account_ids", [])
         for service in vpc_client.vpc_endpoint_services:
+            report = Check_Report_AWS(self.metadata())
+            report.region = service.region
+            report.resource_id = service.id
+            report.resource_arn = service.arn
+            report.resource_tags = service.tags
+
             if not service.allowed_principals:
-                report = Check_Report_AWS(self.metadata())
-                report.region = service.region
                 report.status = "PASS"
                 report.status_extended = (
                     f"VPC Endpoint Service {service.id} has no allowed principals."
                 )
-                report.resource_id = service.id
-                report.resource_arn = service.arn
-                report.resource_tags = service.tags
                 findings.append(report)
             else:
                 for principal in service.allowed_principals:
@@ -27,27 +28,24 @@ class vpc_endpoint_services_allowed_principals_trust_boundaries(Check):
                     pattern = compile(r"^[0-9]{12}$")
                     match = pattern.match(principal)
                     if not match:
-                        account_id = principal.split(":")[4]
+                        account_id = (
+                            principal.split(":")[4] if principal != "*" else "*"
+                        )
                     else:
                         account_id = match.string
 
-                    report = Check_Report_AWS(self.metadata())
-                    report.region = service.region
                     if (
                         account_id in trusted_account_ids
                         or account_id in vpc_client.audited_account
                     ):
                         report.status = "PASS"
                         report.status_extended = f"Found trusted account {account_id} in VPC Endpoint Service {service.id}."
-                        report.resource_id = service.id
-                        report.resource_arn = service.arn
-                        report.resource_tags = service.tags
                     else:
                         report.status = "FAIL"
-                        report.status_extended = f"Found untrusted account {account_id} in VPC Endpoint Service {service.id}."
-                        report.resource_id = service.id
-                        report.resource_arn = service.arn
-                        report.resource_tags = service.tags
+                        if account_id == "*":
+                            report.status_extended = f"Wildcard principal found in VPC Endpoint Service {service.id}."
+                        else:
+                            report.status_extended = f"Found untrusted account {account_id} in VPC Endpoint Service {service.id}."
                     findings.append(report)
 
         return findings
