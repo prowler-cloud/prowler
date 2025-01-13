@@ -32,7 +32,7 @@ export const InvitationDetails = ({ attributes }: InvitationDetailsProps) => {
       ? window.location.origin
       : "http://localhost:3000";
 
-  const invitationLink = `${baseUrl}/invitations/check-details?id=${attributes.token}`;
+  const invitationLink = `${baseUrl}/sign-up?invitation_token=${attributes.token}`;
 
   return (
     <div className="flex flex-col gap-x-4 gap-y-8">
