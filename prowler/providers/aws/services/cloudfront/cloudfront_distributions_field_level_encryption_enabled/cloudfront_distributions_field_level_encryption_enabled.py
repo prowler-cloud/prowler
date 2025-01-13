@@ -8,11 +8,7 @@ class cloudfront_distributions_field_level_encryption_enabled(Check):
     def execute(self):
         findings = []
         for distribution in cloudfront_client.distributions.values():
-            report = Check_Report_AWS(self.metadata())
-            report.region = distribution.region
-            report.resource_arn = distribution.arn
-            report.resource_id = distribution.id
-            report.resource_tags = distribution.tags
+            report = Check_Report_AWS(self.metadata(), distribution)
             if (
                 distribution.default_cache_config
                 and distribution.default_cache_config.field_level_encryption_id

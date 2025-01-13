@@ -8,11 +8,7 @@ class cloudfront_distributions_origin_traffic_encrypted(Check):
     def execute(self):
         findings = []
         for distribution in cloudfront_client.distributions.values():
-            report = Check_Report_AWS(self.metadata())
-            report.region = distribution.region
-            report.resource_arn = distribution.arn
-            report.resource_id = distribution.id
-            report.resource_tags = distribution.tags
+            report = Check_Report_AWS(self.metadata(), distribution)
             report.status = "PASS"
             report.status_extended = f"CloudFront Distribution {distribution.id} does encrypt traffic to custom origins."
             unencrypted_origins = []
