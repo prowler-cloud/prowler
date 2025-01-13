@@ -11,15 +11,11 @@ class ec2_instance_port_ftp_exposed_to_internet(Check):
         findings = []
         check_ports = [20, 21]
         for instance in ec2_client.instances:
-            report = Check_Report_AWS(self.metadata())
-            report.region = instance.region
+            report = Check_Report_AWS(self.metadata(), instance)
             report.status = "PASS"
             report.status_extended = (
                 f"Instance {instance.id} does not have FTP ports open to the Internet."
             )
-            report.resource_id = instance.id
-            report.resource_arn = instance.arn
-            report.resource_tags = instance.tags
             is_open_port = False
             if instance.security_groups:
                 for sg in ec2_client.security_groups.values():

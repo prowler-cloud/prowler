@@ -7,8 +7,7 @@ class ec2_instance_managed_by_ssm(Check):
     def execute(self):
         findings = []
         for instance in ec2_client.instances:
-            report = Check_Report_AWS(self.metadata())
-            report.region = instance.region
+            report = Check_Report_AWS(self.metadata(), instance)
             report.resource_arn = instance.arn
             report.resource_tags = instance.tags
             report.status = "PASS"

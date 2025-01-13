@@ -81,7 +81,7 @@ export const DataTableColumnHeader = <TData, TValue>({
   return (
     <Button
       className="flex h-10 w-full items-center justify-between whitespace-nowrap bg-transparent px-0 text-left align-middle text-tiny font-semibold text-foreground-500 outline-none dark:text-slate-400"
-      onClick={getToggleSortingHandler}
+      onPress={getToggleSortingHandler}
     >
       <span className="block whitespace-normal break-normal">{title}</span>
       {renderSortIcon()}

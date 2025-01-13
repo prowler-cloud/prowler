@@ -11,8 +11,8 @@ export const NoProvidersAdded = () => {
         <CardBody className="space-y-6 p-6 text-center">
           <h2 className="text-xl font-bold">No Cloud Accounts Configured</h2>
           <p className="text-md text-gray-600">
-            You don't have any cloud accounts configured yet. This is the first
-            step to get started.
+            You don&apos;t have any cloud accounts configured yet. This is the
+            first step to get started.
           </p>
           <CustomButton
             asLink="/providers/connect-account"

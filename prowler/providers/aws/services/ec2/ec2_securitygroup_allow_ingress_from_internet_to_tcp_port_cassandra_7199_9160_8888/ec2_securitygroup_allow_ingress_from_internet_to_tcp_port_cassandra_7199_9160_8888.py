@@ -20,12 +20,8 @@ class ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9
                 and vpc_client.vpcs[security_group.vpc_id].in_use
                 and len(security_group.network_interfaces) > 0
             ):
-                report = Check_Report_AWS(self.metadata())
-                report.region = security_group.region
+                report = Check_Report_AWS(self.metadata(), security_group)
                 report.resource_details = security_group.name
-                report.resource_id = security_group.id
-                report.resource_arn = security_group_arn
-                report.resource_tags = security_group.tags
                 report.status = "PASS"
                 report.status_extended = f"Security group {security_group.name} ({security_group.id}) does not have Casandra ports 7199, 8888 and 9160 open to the Internet."
                 # only proceed if check "..._to_all_ports" did not run or did not FAIL to avoid to report open ports twice

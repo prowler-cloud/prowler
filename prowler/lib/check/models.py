@@ -405,16 +405,18 @@ class Check_Report:
     status: str
     status_extended: str
     check_metadata: CheckMetadata
+    resource_metadata: dict
     resource_details: str
     resource_tags: list
     muted: bool
 
-    def __init__(self, metadata):
+    def __init__(self, metadata, resource=None):
         self.status = ""
         self.check_metadata = CheckMetadata.parse_raw(metadata)
+        self.resource_metadata = resource.dict() if resource else {}
         self.status_extended = ""
         self.resource_details = ""
-        self.resource_tags = []
+        self.resource_tags = getattr(resource, "tags", []) if resource else []
         self.muted = False
 
 
@@ -426,11 +428,20 @@ class Check_Report_AWS(Check_Report):
     resource_arn: str
     region: str
 
-    def __init__(self, metadata):
-        super().__init__(metadata)
-        self.resource_id = ""
-        self.resource_arn = ""
-        self.region = ""
+    def __init__(self, metadata, resource_metadata=None):
+        super().__init__(metadata, resource_metadata)
+        if resource_metadata:
+            self.resource_id = (
+                getattr(resource_metadata, "id", None)
+                or getattr(resource_metadata, "name", None)
+                or ""
+            )
+            self.resource_arn = getattr(resource_metadata, "arn", "")
+            self.region = getattr(resource_metadata, "region", "")
+        else:
+            self.resource_id = ""
+            self.resource_arn = ""
+            self.region = ""
 
 
 @dataclass

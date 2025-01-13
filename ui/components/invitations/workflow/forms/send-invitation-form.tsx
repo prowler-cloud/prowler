@@ -115,6 +115,9 @@ export const SendInvitationForm = ({
                 {...field}
                 label="Role"
                 placeholder="Select a role"
+                classNames={{
+                  selectorIcon: "right-2",
+                }}
                 variant="bordered"
                 isDisabled={isSelectorDisabled}
                 selectedKeys={[field.value]}

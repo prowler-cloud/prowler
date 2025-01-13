@@ -69,7 +69,7 @@ export function DataTableRowActions<ProviderProps>({
                 description="Allows you to edit the provider group"
                 textValue="Edit Provider Group"
                 startContent={<EditDocumentBulkIcon className={iconClasses} />}
-                onClick={() => router.push(`/manage-groups?groupId=${groupId}`)}
+                onPress={() => router.push(`/manage-groups?groupId=${groupId}`)}
               >
                 Edit Provider Group
               </DropdownItem>
@@ -86,7 +86,7 @@ export function DataTableRowActions<ProviderProps>({
                     className={clsx(iconClasses, "!text-danger")}
                   />
                 }
-                onClick={() => setIsDeleteOpen(true)}
+                onPress={() => setIsDeleteOpen(true)}
               >
                 Delete Provider Group
               </DropdownItem>

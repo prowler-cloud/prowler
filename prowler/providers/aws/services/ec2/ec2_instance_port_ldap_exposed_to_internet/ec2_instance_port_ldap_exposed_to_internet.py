@@ -11,8 +11,7 @@ class ec2_instance_port_ldap_exposed_to_internet(Check):
         findings = []
         check_ports = [389, 636]
         for instance in ec2_client.instances:
-            report = Check_Report_AWS(self.metadata())
-            report.region = instance.region
+            report = Check_Report_AWS(self.metadata(), instance)
             report.status = "PASS"
             report.status_extended = (
                 f"Instance {instance.id} does not have LDAP ports open to the Internet."

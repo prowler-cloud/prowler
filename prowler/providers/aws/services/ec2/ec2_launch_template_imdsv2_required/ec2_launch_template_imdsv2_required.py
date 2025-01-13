@@ -6,11 +6,7 @@ class ec2_launch_template_imdsv2_required(Check):
     def execute(self):
         findings = []
         for template in ec2_client.launch_templates:
-            report = Check_Report_AWS(self.metadata())
-            report.region = template.region
-            report.resource_id = template.id
-            report.resource_arn = template.arn
-            report.resource_tags = template.tags
+            report = Check_Report_AWS(self.metadata(), template)
 
             versions_with_imdsv2_required = []
             versions_with_metadata_disabled = []

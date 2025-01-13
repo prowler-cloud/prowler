@@ -37,7 +37,7 @@ export const SidebarWrap = () => {
   const onToggle = useCallback(() => {
     if (!isCollapsed) openSideMenu();
     if (isCollapsed) closeSideMenu();
-  }, [isCollapsed]);
+  }, [isCollapsed, openSideMenu, closeSideMenu]);
 
   const currentPath = pathname === "/" ? "overview" : pathname.split("/")?.[1];
 
@@ -283,7 +283,7 @@ export const SidebarWrap = () => {
         <Tooltip content="Log Out" isDisabled={!isCompact} placement="right">
           <Button
             aria-label="Log Out"
-            onClick={() => logOut()}
+            onPress={() => logOut()}
             className={clsx(
               "justify-start text-default-500 data-[hover=true]:text-foreground",
               {

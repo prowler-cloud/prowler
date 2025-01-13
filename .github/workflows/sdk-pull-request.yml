@@ -38,12 +38,13 @@ jobs:
             mkdocs.yml
             .backportrc.json
             .env
+            docker-compose*
 
       - name: Install poetry
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
           python -m pip install --upgrade pip
-          pipx install poetry
+          pipx install poetry==1.8.5
 
       - name: Set up Python ${{ matrix.python-version }}
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
@@ -66,7 +67,7 @@ jobs:
       - name: Poetry check
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
-          poetry lock --check
+          poetry check --lock
 
       - name: Lint with flake8
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'

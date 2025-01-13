@@ -15,6 +15,7 @@ import {
 } from "@nextui-org/shared-icons";
 import { Row } from "@tanstack/react-table";
 import clsx from "clsx";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { VerticalDotsIcon } from "@/components/icons";
@@ -33,6 +34,7 @@ export function DataTableRowActions<InvitationProps>({
   row,
   roles,
 }: DataTableRowActionsProps<InvitationProps>) {
+  const router = useRouter();
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const invitationId = (row.original as { id: string }).id;
@@ -82,11 +84,13 @@ export function DataTableRowActions<InvitationProps>({
           >
             <DropdownSection title="Actions">
               <DropdownItem
-                href={`/invitations/check-details?id=${invitationId}`}
                 key="check-details"
                 description="View invitation details"
                 textValue="Check Details"
                 startContent={<AddNoteBulkIcon className={iconClasses} />}
+                onPress={() =>
+                  router.push(`/invitations/check-details?id=${invitationId}`)
+                }
               >
                 Check Details
               </DropdownItem>
@@ -96,7 +100,7 @@ export function DataTableRowActions<InvitationProps>({
                 description="Allows you to edit the invitation"
                 textValue="Edit Invitation"
                 startContent={<EditDocumentBulkIcon className={iconClasses} />}
-                onClick={() => setIsEditOpen(true)}
+                onPress={() => setIsEditOpen(true)}
               >
                 Edit Invitation
               </DropdownItem>
@@ -113,7 +117,7 @@ export function DataTableRowActions<InvitationProps>({
                     className={clsx(iconClasses, "!text-danger")}
                   />
                 }
-                onClick={() => setIsDeleteOpen(true)}
+                onPress={() => setIsDeleteOpen(true)}
               >
                 Revoke Invitation
               </DropdownItem>

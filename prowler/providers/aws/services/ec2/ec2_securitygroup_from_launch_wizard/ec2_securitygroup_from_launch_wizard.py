@@ -5,13 +5,9 @@ from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 class ec2_securitygroup_from_launch_wizard(Check):
     def execute(self):
         findings = []
-        for security_group_arn, security_group in ec2_client.security_groups.items():
-            report = Check_Report_AWS(self.metadata())
-            report.region = security_group.region
+        for security_group in ec2_client.security_groups.values():
+            report = Check_Report_AWS(self.metadata(), security_group)
             report.resource_details = security_group.name
-            report.resource_id = security_group.id
-            report.resource_arn = security_group_arn
-            report.resource_tags = security_group.tags
             report.status = "PASS"
             report.status_extended = f"Security group {security_group.name} ({security_group.id}) was not created using the EC2 Launch Wizard."
             if "launch-wizard" in security_group.name:
