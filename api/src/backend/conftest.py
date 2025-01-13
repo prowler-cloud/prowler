@@ -609,6 +609,7 @@ def findings_fixture(scans_fixture, resources_fixture):
             "CheckId": "test_check_id",
             "Description": "test description apple sauce",
         },
+        first_seen="2024-01-02T00:00:00Z",
     )
 
     finding1.add_resources([resource1])
@@ -634,6 +635,7 @@ def findings_fixture(scans_fixture, resources_fixture):
             "CheckId": "test_check_id",
             "Description": "test description orange juice",
         },
+        first_seen="2024-01-02T00:00:00Z",
     )
 
     finding2.add_resources([resource2])
