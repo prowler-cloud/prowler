@@ -12,8 +12,7 @@ class ec2_ebs_snapshot_account_block_public_access(Check):
                 ebs_snapshot_block_status.snapshots
                 or ec2_client.provider.scan_unused_services
             ):
-                report = Check_Report_AWS(self.metadata())
-                report.region = ebs_snapshot_block_status.region
+                report = Check_Report_AWS(self.metadata(), ebs_snapshot_block_status)
                 report.resource_arn = ec2_client.account_arn_template
                 report.resource_id = ec2_client.audited_account
                 if ebs_snapshot_block_status.status == "block-all-sharing":
