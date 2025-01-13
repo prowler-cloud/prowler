@@ -1416,10 +1416,12 @@ class RoleSerializer(RLSSerializer, BaseWriteSerializer):
             "id",
             "name",
             "manage_users",
-            "manage_account",
-            "manage_billing",
+            # Disable for the first release
+            # "manage_account",
+            # "manage_billing",
+            # "manage_integrations",
+            # /Disable for the first release
             "manage_providers",
-            "manage_integrations",
             "manage_scans",
             "permission_state",
             "unlimited_visibility",
