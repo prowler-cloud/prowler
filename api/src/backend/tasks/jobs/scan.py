@@ -241,7 +241,7 @@ def perform_prowler_scan(
                     # When the delta attribute is different from new it means that previously there was a finding with the same uid and delta new, so we will obtain the first_seen attribute of that first finding
                     if delta != Finding.DeltaChoices.NEW:
                         first_seen = (
-                            Finding.objects.filter(uid=finding_uid, delta="new")
+                            Finding.objects.filter(uid=finding_uid, delta=Finding.DeltaChoices.NEW.value)
                             .values("first_seen")
                             .first()["first_seen"]
                         )
