@@ -3306,6 +3306,7 @@ class TestRoleViewSet:
                 "attributes": {
                     "name": "Test Role",
                     "manage_users": "false",
+                    "manage_account": "false",
                     "manage_providers": "true",
                     "manage_scans": "true",
                     "unlimited_visibility": "true",
@@ -3332,6 +3333,7 @@ class TestRoleViewSet:
                 "attributes": {
                     "name": "Test Role",
                     "manage_users": "false",
+                    "manage_account": "false",
                     "manage_providers": "true",
                     "manage_scans": "true",
                     "unlimited_visibility": "true",
@@ -3477,6 +3479,7 @@ class TestRoleViewSet:
                 "attributes": {
                     "name": "Role with Users and PGs",
                     "manage_users": "true",
+                    "manage_account": "false",
                     "manage_providers": "true",
                     "manage_scans": "false",
                     "unlimited_visibility": "false",
@@ -3590,6 +3593,7 @@ class TestRoleViewSet:
                 "attributes": {
                     "name": "Invalid Users Role",
                     "manage_users": "false",
+                    "manage_account": "false",
                     "manage_providers": "true",
                     "manage_scans": "true",
                     "unlimited_visibility": "true",
