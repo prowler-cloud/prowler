@@ -7,10 +7,7 @@ class kubelet_disable_anonymous_auth(Check):
         findings = []
         for cm in kubelet_client.kubelet_config_maps:
             authentication = cm.kubelet_args.get("authentication", {})
-            report = Check_Report_Kubernetes(self.metadata())
-            report.namespace = cm.namespace
-            report.resource_name = cm.name
-            report.resource_id = cm.uid
+            report = Check_Report_Kubernetes(self.metadata(), cm)
             report.status = "FAIL"
             report.status_extended = (
                 f"Kubelet has anonymous access enabled in config file {cm.name}."

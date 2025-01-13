@@ -8,10 +8,7 @@ class apiserver_kubelet_cert_auth(Check):
     def execute(self) -> Check_Report_Kubernetes:
         findings = []
         for pod in apiserver_client.apiserver_pods:
-            report = Check_Report_Kubernetes(self.metadata())
-            report.namespace = pod.namespace
-            report.resource_name = pod.name
-            report.resource_id = pod.uid
+            report = Check_Report_Kubernetes(self.metadata(), pod)
             report.status = "PASS"
             report.status_extended = f"API Server has appropriate kubelet certificate authority configured in pod {pod.name}."
             for container in pod.containers.values():

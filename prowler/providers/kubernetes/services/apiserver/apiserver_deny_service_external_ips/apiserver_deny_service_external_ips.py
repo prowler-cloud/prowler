@@ -8,10 +8,7 @@ class apiserver_deny_service_external_ips(Check):
     def execute(self) -> Check_Report_Kubernetes:
         findings = []
         for pod in apiserver_client.apiserver_pods:
-            report = Check_Report_Kubernetes(self.metadata())
-            report.namespace = pod.namespace
-            report.resource_name = pod.name
-            report.resource_id = pod.uid
+            report = Check_Report_Kubernetes(self.metadata(), pod)
             report.status = "PASS"
             report.status_extended = f"API Server has DenyServiceExternalIPs admission controller enabled in pod {pod.name}."
             deny_service_external_ips = False

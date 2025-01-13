@@ -8,10 +8,7 @@ class scheduler_bind_address(Check):
     def execute(self) -> Check_Report_Kubernetes:
         findings = []
         for pod in scheduler_client.scheduler_pods:
-            report = Check_Report_Kubernetes(self.metadata())
-            report.namespace = pod.namespace
-            report.resource_name = pod.name
-            report.resource_id = pod.uid
+            report = Check_Report_Kubernetes(self.metadata(), pod)
             report.status = "PASS"
             report.status_extended = (
                 f"Scheduler is bound to the loopback address in pod {pod.name}."

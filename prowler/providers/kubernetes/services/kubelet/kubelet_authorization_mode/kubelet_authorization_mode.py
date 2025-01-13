@@ -7,10 +7,7 @@ class kubelet_authorization_mode(Check):
         findings = []
         for cm in kubelet_client.kubelet_config_maps:
             authorization = cm.kubelet_args.get("authorization")
-            report = Check_Report_Kubernetes(self.metadata())
-            report.namespace = cm.namespace
-            report.resource_name = cm.name
-            report.resource_id = cm.uid
+            report = Check_Report_Kubernetes(self.metadata(), cm)
             if not authorization:
                 report.status = "MANUAL"
                 report.status_extended = f"Kubelet does not have the argument `readOnlyPort` in config file {cm.name}, verify it in the node's arguments."

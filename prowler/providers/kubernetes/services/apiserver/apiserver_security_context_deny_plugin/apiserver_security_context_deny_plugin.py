@@ -8,10 +8,7 @@ class apiserver_security_context_deny_plugin(Check):
     def execute(self) -> Check_Report_Kubernetes:
         findings = []
         for pod in apiserver_client.apiserver_pods:
-            report = Check_Report_Kubernetes(self.metadata())
-            report.namespace = pod.namespace
-            report.resource_name = pod.name
-            report.resource_id = pod.uid
+            report = Check_Report_Kubernetes(self.metadata(), pod)
             security_context_deny_set = False
             pod_security_policy_set = False
             for container in pod.containers.values():

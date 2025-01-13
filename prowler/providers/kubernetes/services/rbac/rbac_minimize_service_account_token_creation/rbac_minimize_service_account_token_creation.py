@@ -14,10 +14,7 @@ class rbac_minimize_service_account_token_creation(Check):
         for crb in rbac_client.cluster_role_bindings.values():
             for subject in crb.subjects:
                 if subject.kind in ["User", "Group"]:
-                    report = Check_Report_Kubernetes(self.metadata())
-                    report.namespace = "cluster-wide"
-                    report.resource_name = subject.name
-                    report.resource_id = subject.uid if hasattr(subject, "uid") else ""
+                    report = Check_Report_Kubernetes(self.metadata(), subject)
                     report.status = "PASS"
                     report.status_extended = f"User or group '{subject.name}' does not have access to create service account tokens."
                     for cr in rbac_client.cluster_roles.values():

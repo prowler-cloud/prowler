@@ -413,7 +413,11 @@ class Check_Report:
     def __init__(self, metadata, resource=None):
         self.status = ""
         self.check_metadata = CheckMetadata.parse_raw(metadata)
-        self.resource_metadata = resource.dict() if resource else {}
+        self.resource_metadata = (
+            resource.dict()
+            if hasattr(resource, "dict")
+            else resource.to_dict() if hasattr(resource, "to_dict") else {}
+        )
         self.status_extended = ""
         self.resource_details = ""
         self.resource_tags = getattr(resource, "tags", []) if resource else []
@@ -487,11 +491,17 @@ class Check_Report_Kubernetes(Check_Report):
     resource_id: str
     namespace: str
 
-    def __init__(self, metadata):
-        super().__init__(metadata)
-        self.resource_name = ""
-        self.resource_id = ""
-        self.namespace = ""
+    def __init__(self, metadata, resource_metadata):
+        super().__init__(metadata, resource_metadata)
+        self.resource_id = (
+            getattr(resource_metadata, "uid", None)
+            or getattr(resource_metadata, "name", None)
+            or ""
+        )
+        self.resource_name = getattr(resource_metadata, "name", "")
+        self.namespace = getattr(resource_metadata, "namespace", "cluster-wide")
+        if not self.namespace:
+            self.namespace = "cluster-wide"
 
 
 # Testing Pending

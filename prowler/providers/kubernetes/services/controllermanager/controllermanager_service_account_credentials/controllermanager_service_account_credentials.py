@@ -8,10 +8,7 @@ class controllermanager_service_account_credentials(Check):
     def execute(self) -> Check_Report_Kubernetes:
         findings = []
         for pod in controllermanager_client.controllermanager_pods:
-            report = Check_Report_Kubernetes(self.metadata())
-            report.namespace = pod.namespace
-            report.resource_name = pod.name
-            report.resource_id = pod.uid
+            report = Check_Report_Kubernetes(self.metadata(), pod)
             report.status = "PASS"
             report.status_extended = f"Controller Manager is not using service account credentials in pod {pod.name}."
             for container in pod.containers.values():

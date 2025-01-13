@@ -8,10 +8,7 @@ class apiserver_disable_profiling(Check):
     def execute(self) -> Check_Report_Kubernetes:
         findings = []
         for pod in apiserver_client.apiserver_pods:
-            report = Check_Report_Kubernetes(self.metadata())
-            report.namespace = pod.namespace
-            report.resource_name = pod.name
-            report.resource_id = pod.uid
+            report = Check_Report_Kubernetes(self.metadata(), pod)
             report.status = "PASS"
             report.status_extended = f"Profiling is disabled in pod {pod.name}."
             profiling_enabled = False

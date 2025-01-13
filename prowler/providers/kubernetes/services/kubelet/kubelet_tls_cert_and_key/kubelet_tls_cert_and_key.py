@@ -6,10 +6,7 @@ class kubelet_tls_cert_and_key(Check):
     def execute(self) -> Check_Report_Kubernetes:
         findings = []
         for cm in kubelet_client.kubelet_config_maps:
-            report = Check_Report_Kubernetes(self.metadata())
-            report.namespace = cm.namespace
-            report.resource_name = cm.name
-            report.resource_id = cm.uid
+            report = Check_Report_Kubernetes(self.metadata(), cm)
             if (
                 "tlsCertFile" not in cm.kubelet_args
                 or "tlsPrivateKeyFile" not in cm.kubelet_args
