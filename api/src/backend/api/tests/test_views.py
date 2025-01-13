@@ -340,7 +340,7 @@ class TestTenantViewSet:
     def test_tenants_list(self, authenticated_client, tenants_fixture):
         response = authenticated_client.get(reverse("tenant-list"))
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.json()["data"]) == len(tenants_fixture)
+        assert len(response.json()["data"]) == 2  # Test user belongs to 2 tenants
 
     def test_tenants_retrieve(self, authenticated_client, tenants_fixture):
         tenant1, *_ = tenants_fixture
@@ -470,11 +470,11 @@ class TestTenantViewSet:
         (
             [
                 ("name", "Tenant One", 1),
-                ("name.icontains", "Tenant", 3),
-                ("inserted_at", TODAY, 3),
-                ("inserted_at.gte", "2024-01-01", 3),
+                ("name.icontains", "Tenant", 2),
+                ("inserted_at", TODAY, 2),
+                ("inserted_at.gte", "2024-01-01", 2),
                 ("inserted_at.lte", "2024-01-01", 0),
-                ("updated_at.gte", "2024-01-01", 3),
+                ("updated_at.gte", "2024-01-01", 2),
                 ("updated_at.lte", "2024-01-01", 0),
             ]
         ),
@@ -510,7 +510,9 @@ class TestTenantViewSet:
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == page_size
         assert response.json()["meta"]["pagination"]["page"] == 1
-        assert response.json()["meta"]["pagination"]["pages"] == len(tenants_fixture)
+        assert (
+            response.json()["meta"]["pagination"]["pages"] == 2
+        )  # Test user belongs to 2 tenants
 
     def test_tenants_list_page_number(self, authenticated_client, tenants_fixture):
         page_size = 1
@@ -523,13 +525,13 @@ class TestTenantViewSet:
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == page_size
         assert response.json()["meta"]["pagination"]["page"] == page_number
-        assert response.json()["meta"]["pagination"]["pages"] == len(tenants_fixture)
+        assert response.json()["meta"]["pagination"]["pages"] == 2
 
     def test_tenants_list_sort_name(self, authenticated_client, tenants_fixture):
         _, tenant2, _ = tenants_fixture
         response = authenticated_client.get(reverse("tenant-list"), {"sort": "-name"})
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.json()["data"]) == 3
+        assert len(response.json()["data"]) == 2
         assert response.json()["data"][0]["attributes"]["name"] == tenant2.name
 
     def test_tenants_list_memberships_as_owner(
@@ -2339,7 +2341,10 @@ class TestResourceViewSet:
             response.json()["errors"][0]["detail"] == "invalid sort parameter: invalid"
         )
 
-    def test_resources_retrieve(self, authenticated_client, resources_fixture):
+    def test_resources_retrieve(
+        self, authenticated_client, tenants_fixture, resources_fixture
+    ):
+        tenant = tenants_fixture[0]
         resource_1, *_ = resources_fixture
         response = authenticated_client.get(
             reverse("resource-detail", kwargs={"pk": resource_1.id}),
@@ -2350,7 +2355,9 @@ class TestResourceViewSet:
         assert response.json()["data"]["attributes"]["region"] == resource_1.region
         assert response.json()["data"]["attributes"]["service"] == resource_1.service
         assert response.json()["data"]["attributes"]["type"] == resource_1.type
-        assert response.json()["data"]["attributes"]["tags"] == resource_1.get_tags()
+        assert response.json()["data"]["attributes"]["tags"] == resource_1.get_tags(
+            tenant_id=str(tenant.id)
+        )
 
     def test_resources_invalid_retrieve(self, authenticated_client):
         response = authenticated_client.get(
@@ -3261,8 +3268,8 @@ class TestRoleViewSet:
         response = authenticated_client.get(reverse("role-list"))
         assert response.status_code == status.HTTP_200_OK
         assert (
-            len(response.json()["data"]) == len(roles_fixture) + 2
-        )  # 2 default admin roles, one for each tenant
+            len(response.json()["data"]) == len(roles_fixture) + 1
+        )  # 1 default admin role
 
     def test_role_retrieve(self, authenticated_client, roles_fixture):
         role = roles_fixture[0]
