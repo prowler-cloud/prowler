@@ -41,7 +41,7 @@ class Test_bigquery_table_cmk_encryption:
             table = Table(
                 name="test",
                 id="1234567890",
-                region="us-central1",
+                location="us-central1",
                 cmk_encryption=True,
                 project_id=GCP_PROJECT_ID,
             )
@@ -61,7 +61,7 @@ class Test_bigquery_table_cmk_encryption:
             assert result[0].resource_id == table.id
             assert result[0].resource_name == table.name
             assert result[0].project_id == table.project_id
-            assert result[0].location == table.region
+            assert result[0].location == table.location
 
     def test_one_non_compliant_table(self):
         bigquery_client = mock.MagicMock
@@ -81,7 +81,7 @@ class Test_bigquery_table_cmk_encryption:
             table = Table(
                 name="test",
                 id="1234567890",
-                region="us-central1",
+                location="us-central1",
                 cmk_encryption=False,
                 project_id=GCP_PROJECT_ID,
             )
@@ -101,4 +101,4 @@ class Test_bigquery_table_cmk_encryption:
             assert result[0].resource_id == table.id
             assert result[0].resource_name == table.name
             assert result[0].project_id == table.project_id
-            assert result[0].location == table.region
+            assert result[0].location == table.location

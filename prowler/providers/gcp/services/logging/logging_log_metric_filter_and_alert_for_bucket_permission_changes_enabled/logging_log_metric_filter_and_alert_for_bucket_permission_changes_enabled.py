@@ -14,12 +14,12 @@ class logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled(
                 'resource.type="gcs_bucket" AND protoPayload.methodName="storage.setIamPermissions"'
                 in metric.filter
             ):
-                report = Check_Report_GCP(self.metadata())
+                report = Check_Report_GCP(
+                    metadata=self.metadata(),
+                    resource_metadata=metric,
+                    location=logging_client.region,
+                )
                 projects_with_metric.add(metric.project_id)
-                report.project_id = metric.project_id
-                report.resource_id = metric.name
-                report.resource_name = metric.name
-                report.location = logging_client.region
                 report.status = "FAIL"
                 report.status_extended = f"Log metric filter {metric.name} found but no alerts associated in project {metric.project_id}."
                 for alert_policy in monitoring_client.alert_policies:
@@ -32,11 +32,13 @@ class logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled(
 
         for project in logging_client.project_ids:
             if project not in projects_with_metric:
-                report = Check_Report_GCP(self.metadata())
-                report.project_id = project
-                report.resource_id = project
-                report.resource_name = ""
-                report.location = logging_client.region
+                report = Check_Report_GCP(
+                    metadata=self.metadata(),
+                    resource_metadata=project,
+                    project_id=project,
+                    resource_id=project,
+                    location=logging_client.region,
+                )
                 report.status = "FAIL"
                 report.status_extended = f"There are no log metric filters or alerts associated in project {project}."
                 findings.append(report)

@@ -14,12 +14,14 @@ class compute_network_default_in_use(Check):
 
         # Generate reports for all projects
         for project in compute_client.project_ids:
-            report = Check_Report_GCP(self.metadata())
-            report.project_id = project
-            report.resource_id = "default"
-            report.resource_name = "default"
-            report.location = compute_client.region
-
+            report = Check_Report_GCP(
+                metadata=self.metadata(),
+                resource_metadata=project,
+                project_id=project,
+                resource_id="default",
+                resource_name="default",
+                location=compute_client.region,
+            )
             if project in projects_with_default_network:
                 report.status = "FAIL"
                 report.status_extended = (

@@ -413,7 +413,11 @@ class Check_Report:
     def __init__(self, metadata, resource=None):
         self.status = ""
         self.check_metadata = CheckMetadata.parse_raw(metadata)
-        self.resource_metadata = resource.dict() if resource else {}
+        self.resource_metadata = (
+            resource.dict()
+            if hasattr(resource, "dict")
+            else resource.to_dict() if hasattr(resource, "to_dict") else {}
+        )
         self.status_extended = ""
         self.resource_details = ""
         self.resource_tags = getattr(resource, "tags", []) if resource else []
@@ -470,12 +474,35 @@ class Check_Report_GCP(Check_Report):
     project_id: str
     location: str
 
-    def __init__(self, metadata):
-        super().__init__(metadata)
-        self.resource_name = ""
-        self.resource_id = ""
-        self.project_id = ""
-        self.location = ""
+    def __init__(
+        self,
+        metadata,
+        resource_metadata=None,
+        location=None,
+        resource_name=None,
+        resource_id=None,
+        project_id=None,
+    ):
+        super().__init__(metadata, resource_metadata)
+        if resource_metadata:
+            self.resource_id = (
+                resource_id
+                or getattr(resource_metadata, "id", None)
+                or getattr(resource_metadata, "name", None)
+                or ""
+            )
+            self.resource_name = resource_name or getattr(resource_metadata, "name", "")
+            self.project_id = project_id or getattr(resource_metadata, "project_id", "")
+            self.location = (
+                location
+                or getattr(resource_metadata, "location", "")
+                or getattr(resource_metadata, "region", "")
+            )
+        else:
+            self.resource_name = ""
+            self.resource_id = ""
+            self.project_id = ""
+            self.location = ""
 
 
 @dataclass

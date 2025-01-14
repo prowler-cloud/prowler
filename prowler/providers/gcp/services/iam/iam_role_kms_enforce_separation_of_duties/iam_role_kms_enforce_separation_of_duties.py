@@ -10,10 +10,13 @@ class iam_role_kms_enforce_separation_of_duties(Check):
         for project in cloudresourcemanager_client.project_ids:
             non_compliant_members = []
             kms_admin_members = []
-            report = Check_Report_GCP(self.metadata())
-            report.project_id = project
-            report.location = cloudresourcemanager_client.region
-            report.resource_id = project
+            report = Check_Report_GCP(
+                metadata=self.metadata(),
+                resource_metadata=project,
+                resource_id=project,
+                project_id=project,
+                location=cloudresourcemanager_client.region,
+            )
             report.status = "PASS"
             report.status_extended = f"Principle of separation of duties was enforced for KMS-Related Roles in project {project}."
             for binding in cloudresourcemanager_client.bindings:

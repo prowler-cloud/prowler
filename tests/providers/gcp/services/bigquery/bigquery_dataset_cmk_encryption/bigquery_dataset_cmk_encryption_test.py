@@ -41,7 +41,7 @@ class Test_bigquery_dataset_cmk_encryption:
             dataset = Dataset(
                 name="test",
                 id="1234567890",
-                region="us-central1",
+                location="us-central1",
                 cmk_encryption=True,
                 public=False,
                 project_id=GCP_PROJECT_ID,
@@ -61,7 +61,7 @@ class Test_bigquery_dataset_cmk_encryption:
             assert result[0].resource_id == dataset.id
             assert result[0].resource_name == dataset.name
             assert result[0].project_id == dataset.project_id
-            assert result[0].location == dataset.region
+            assert result[0].location == dataset.location
 
     def test_one_non_compliant_dataset(self):
         bigquery_client = mock.MagicMock
@@ -81,7 +81,7 @@ class Test_bigquery_dataset_cmk_encryption:
             dataset = Dataset(
                 name="test",
                 id="1234567890",
-                region="us-central1",
+                location="us-central1",
                 cmk_encryption=False,
                 public=False,
                 project_id=GCP_PROJECT_ID,
@@ -102,4 +102,4 @@ class Test_bigquery_dataset_cmk_encryption:
             assert result[0].resource_id == dataset.id
             assert result[0].resource_name == dataset.name
             assert result[0].project_id == dataset.project_id
-            assert result[0].location == dataset.region
+            assert result[0].location == dataset.location
