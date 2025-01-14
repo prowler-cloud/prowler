@@ -12,7 +12,9 @@ class cloudformation_stacks_termination_protection_enabled(Check):
         findings = []
         for stack in cloudformation_client.stacks:
             if not stack.is_nested_stack:
-                report = Check_Report_AWS(self.metadata(), stack)
+                report = Check_Report_AWS(
+                    metadata=self.metadata(), resource_metadata=stack
+                )
 
                 if stack.enable_termination_protection:
                     report.status = "PASS"

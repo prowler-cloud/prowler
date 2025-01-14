@@ -6,7 +6,7 @@ class cognito_user_pool_password_policy_symbol(Check):
     def execute(self):
         findings = []
         for pool in cognito_idp_client.user_pools.values():
-            report = Check_Report_AWS(self.metadata(), pool)
+            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=pool)
             if pool.password_policy:
                 if pool.password_policy.require_symbols:
                     report.status = "PASS"

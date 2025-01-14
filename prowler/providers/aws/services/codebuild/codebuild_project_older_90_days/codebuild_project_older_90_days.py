@@ -8,7 +8,9 @@ class codebuild_project_older_90_days(Check):
     def execute(self):
         findings = []
         for project in codebuild_client.projects.values():
-            report = Check_Report_AWS(self.metadata(), project)
+            report = Check_Report_AWS(
+                metadata=self.metadata(), resource_metadata=project
+            )
             report.status = "PASS"
             report.status_extended = f"CodeBuild project {project.name} has been invoked in the last 90 days."
             if project.last_invoked_time:

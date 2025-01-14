@@ -6,7 +6,7 @@ class cognito_user_pool_mfa_enabled(Check):
     def execute(self):
         findings = []
         for pool in cognito_idp_client.user_pools.values():
-            report = Check_Report_AWS(self.metadata(), pool)
+            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=pool)
             if pool.mfa_config and pool.mfa_config.status == "ON":
                 report.status = "PASS"
                 report.status_extended = f"User pool {pool.name} has MFA enabled."

@@ -11,7 +11,9 @@ class cloudtrail_multi_region_enabled(Check):
             for region in cloudtrail_client.regional_clients.keys():
                 for trail in cloudtrail_client.trails.values():
                     if trail.region == region or trail.is_multiregion:
-                        report = Check_Report_AWS(self.metadata(), trail)
+                        report = Check_Report_AWS(
+                            metadata=self.metadata(), resource_metadata=trail
+                        )
                         report.region = region
                         if trail.is_logging:
                             report.status = "PASS"

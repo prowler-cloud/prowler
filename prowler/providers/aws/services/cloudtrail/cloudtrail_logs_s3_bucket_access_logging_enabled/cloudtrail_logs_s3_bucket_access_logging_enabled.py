@@ -13,7 +13,9 @@ class cloudtrail_logs_s3_bucket_access_logging_enabled(Check):
                 if trail.name:
                     trail_bucket_is_in_account = False
                     trail_bucket = trail.s3_bucket
-                    report = Check_Report_AWS(self.metadata(), trail)
+                    report = Check_Report_AWS(
+                        metadata=self.metadata(), resource_metadata=trail
+                    )
                     report.region = trail.home_region
                     report.status = "FAIL"
                     if trail.is_multiregion:

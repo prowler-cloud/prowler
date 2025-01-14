@@ -8,7 +8,9 @@ class cloudfront_distributions_using_waf(Check):
     def execute(self):
         findings = []
         for distribution in cloudfront_client.distributions.values():
-            report = Check_Report_AWS(self.metadata(), distribution)
+            report = Check_Report_AWS(
+                metadata=self.metadata(), resource_metadata=distribution
+            )
             if distribution.web_acl_id:
                 report.status = "PASS"
                 report.status_extended = f"CloudFront Distribution {distribution.id} is using AWS WAF web ACL {distribution.web_acl_id}."

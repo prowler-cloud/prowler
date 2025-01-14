@@ -27,7 +27,10 @@ class cloudtrail_s3_dataevents_read_enabled(Check):
                                     or f"arn:{cloudtrail_client.audited_partition}:s3:::*/*"
                                     in resource["Values"]
                                 ):
-                                    report = Check_Report_AWS(self.metadata(), trail)
+                                    report = Check_Report_AWS(
+                                        metadata=self.metadata(),
+                                        resource_metadata=trail,
+                                    )
                                     report.region = trail.home_region
                                     report.status = "PASS"
                                     report.status_extended = f"Trail {trail.name} from home region {trail.home_region} has a classic data event selector to record all S3 object-level API operations."
@@ -41,7 +44,9 @@ class cloudtrail_s3_dataevents_read_enabled(Check):
                                 field_selector["Field"] == "resources.type"
                                 and field_selector["Equals"][0] == "AWS::S3::Object"
                             ):
-                                report = Check_Report_AWS(self.metadata(), trail)
+                                report = Check_Report_AWS(
+                                    metadata=self.metadata(), resource_metadata=trail
+                                )
                                 report.region = trail.home_region
                                 report.status = "PASS"
                                 report.status_extended = f"Trail {trail.name} from home region {trail.home_region} has an advanced data event selector to record all S3 object-level API operations."
@@ -49,8 +54,9 @@ class cloudtrail_s3_dataevents_read_enabled(Check):
             if not findings and (
                 s3_client.buckets or cloudtrail_client.provider.scan_unused_services
             ):
-                report = Check_Report_AWS(self.metadata())
-                report.region = cloudtrail_client.region
+                report = Check_Report_AWS(
+                    metadata=self.metadata(), resource_metadata=cloudtrail_client
+                )
                 report.resource_arn = cloudtrail_client.trail_arn_template
                 report.resource_id = cloudtrail_client.audited_account
                 report.status = "FAIL"

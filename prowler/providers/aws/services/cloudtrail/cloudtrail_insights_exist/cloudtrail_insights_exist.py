@@ -10,7 +10,9 @@ class cloudtrail_insights_exist(Check):
         if cloudtrail_client.trails is not None:
             for trail in cloudtrail_client.trails.values():
                 if trail.is_logging:
-                    report = Check_Report_AWS(self.metadata(), trail)
+                    report = Check_Report_AWS(
+                        metadata=self.metadata(), resource_metadata=trail
+                    )
                     report.region = trail.home_region
                     report.status = "FAIL"
                     report.status_extended = f"Trail {trail.name} does not have insight selectors and it is logging."

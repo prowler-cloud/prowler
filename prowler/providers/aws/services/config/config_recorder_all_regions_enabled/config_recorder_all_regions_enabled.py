@@ -6,7 +6,9 @@ class config_recorder_all_regions_enabled(Check):
     def execute(self):
         findings = []
         for recorder in config_client.recorders.values():
-            report = Check_Report_AWS(self.metadata(), recorder)
+            report = Check_Report_AWS(
+                metadata=self.metadata(), resource_metadata=recorder
+            )
             report.resource_arn = config_client._get_recorder_arn_template(
                 recorder.region
             )

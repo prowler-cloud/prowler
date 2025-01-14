@@ -6,7 +6,7 @@ class cognito_user_pool_temporary_password_expiration(Check):
     def execute(self):
         findings = []
         for pool in cognito_idp_client.user_pools.values():
-            report = Check_Report_AWS(self.metadata(), pool)
+            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=pool)
             if pool.password_policy:
                 if pool.password_policy.temporary_password_validity_days <= 7:
                     report.status = "PASS"

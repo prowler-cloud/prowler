@@ -25,10 +25,11 @@ class cloudwatch_log_metric_filter_root_usage(Check):
         )
 
         if report is not None:
-            if report == Check_Report_AWS(self.metadata()):
+            if report == Check_Report_AWS(
+                metadata=self.metadata(), resource_metadata=logs_client
+            ):
                 report.status = "FAIL"
                 report.status_extended = "No CloudWatch log groups found with metric filters or alarms associated."
-                report.region = logs_client.region
                 report.resource_id = logs_client.audited_account
                 report.resource_arn = logs_client.log_group_arn_template
                 report.resource_tags = []
