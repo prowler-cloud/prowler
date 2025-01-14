@@ -374,6 +374,12 @@ class FindingFilter(FilterSet):
             },
         }
 
+    @property
+    def qs(self):
+        # Force distinct results to prevent duplicates with many-to-many relationships
+        parent_qs = super().qs
+        return parent_qs.distinct()
+
     #  Convert filter values to UUIDv7 values for use with partitioning
     def filter_scan_id(self, queryset, name, value):
         try:

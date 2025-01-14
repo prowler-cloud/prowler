@@ -2444,6 +2444,15 @@ class TestFindingViewSet:
                 ("search", "ec2", 2),
                 # full text search on finding tags
                 ("search", "value2", 2),
+                ("resource_tag_key", "key", 2),
+                ("resource_tag_key__in", "key,key2", 2),
+                ("resource_tag_key__icontains", "key", 2),
+                ("resource_tag_value", "value", 2),
+                ("resource_tag_value__in", "value,value2", 2),
+                ("resource_tag_value__icontains", "value", 2),
+                ("resource_tags", "key:value", 2),
+                ("resource_tags", "not:exists", 0),
+                ("resource_tags", "not:exists,key:value", 2),
             ]
         ),
     )
@@ -2592,7 +2601,7 @@ class TestFindingViewSet:
 
         expected_services = {"ec2", "s3"}
         expected_regions = {"eu-west-1", "us-east-1"}
-        expected_tags = {"key": "value", "key2": "value2"}
+        expected_tags = {"key": ["value"], "key2": ["value2"]}
         expected_resource_types = {"prowler-test"}
 
         assert data["data"]["type"] == "findings-metadata"
@@ -2619,7 +2628,7 @@ class TestFindingViewSet:
 
         expected_services = {"s3"}
         expected_regions = {"eu-west-1"}
-        expected_tags = {"key": "value", "key2": "value2"}
+        expected_tags = {"key": ["value"], "key2": ["value2"]}
         expected_resource_types = {"prowler-test"}
 
         assert data["data"]["type"] == "findings-metadata"
