@@ -10,9 +10,9 @@ import sys
 file_name = sys.argv[1]
 
 # read the CSV file rows and use the column fields to form the Prowler compliance JSON file 'ens_rd2022_aws.json'
-output = {"Framework": "CIS", "Version": "3.0", "Provider": "Azure", "Requirements": []}
+output = {"Framework": "CIS-AWS", "Version": "1.5", "Requirements": []}
 with open(file_name, newline="", encoding="utf-8") as f:
-    reader = csv.reader(f, delimiter=";")
+    reader = csv.reader(f, delimiter=",")
     for row in reader:
         attribute = {
             "Section": row[3],
@@ -24,8 +24,7 @@ with open(file_name, newline="", encoding="utf-8") as f:
             "RemediationProcedure": row[9],
             "AuditProcedure": row[10],
             "AdditionalInformation": row[11],
-            "DefaultValue": row[12],
-            "References": row[13],
+            "References": row[12],
         }
         output["Requirements"].append(
             {
@@ -37,5 +36,5 @@ with open(file_name, newline="", encoding="utf-8") as f:
         )
 
 # Write the output Prowler compliance JSON file 'cis_1.5_aws.json' locally
-with open("cis_3.0_azure.json", "w", encoding="utf-8") as outfile:
+with open("cis_1.5_aws.json", "w", encoding="utf-8") as outfile:
     json.dump(output, outfile, indent=4, ensure_ascii=False)
