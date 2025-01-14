@@ -918,12 +918,25 @@ class FindingSerializer(RLSSerializer):
     }
 
 
+# To be removed when the related endpoint is removed as well
 class FindingDynamicFilterSerializer(serializers.Serializer):
     services = serializers.ListField(child=serializers.CharField(), allow_empty=True)
     regions = serializers.ListField(child=serializers.CharField(), allow_empty=True)
 
     class Meta:
         resource_name = "finding-dynamic-filters"
+
+
+class FindingMetadataSerializer(serializers.Serializer):
+    services = serializers.ListField(child=serializers.CharField(), allow_empty=True)
+    regions = serializers.ListField(child=serializers.CharField(), allow_empty=True)
+    resource_types = serializers.ListField(
+        child=serializers.CharField(), allow_empty=True
+    )
+    tags = serializers.JSONField(help_text="Tags are described as key-value pairs.")
+
+    class Meta:
+        resource_name = "findings-metadata"
 
 
 # Provider secrets
@@ -1418,9 +1431,11 @@ class RoleSerializer(RLSSerializer, BaseWriteSerializer):
             "name",
             "manage_users",
             "manage_account",
-            "manage_billing",
+            # Disable for the first release
+            # "manage_billing",
+            # "manage_integrations",
+            # /Disable for the first release
             "manage_providers",
-            "manage_integrations",
             "manage_scans",
             "permission_state",
             "unlimited_visibility",

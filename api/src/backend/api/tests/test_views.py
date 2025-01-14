@@ -2582,30 +2582,34 @@ class TestFindingViewSet:
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_findings_services_regions_retrieve(
-        self, authenticated_client, findings_fixture
-    ):
+    def test_findings_metadata_retrieve(self, authenticated_client, findings_fixture):
         finding_1, *_ = findings_fixture
         response = authenticated_client.get(
-            reverse("finding-findings_services_regions"),
+            reverse("finding-metadata"),
             {"filter[inserted_at]": finding_1.updated_at.strftime("%Y-%m-%d")},
         )
         data = response.json()
 
         expected_services = {"ec2", "s3"}
         expected_regions = {"eu-west-1", "us-east-1"}
+        expected_tags = {"key": "value", "key2": "value2"}
+        expected_resource_types = {"prowler-test"}
 
-        assert data["data"]["type"] == "finding-dynamic-filters"
+        assert data["data"]["type"] == "findings-metadata"
         assert data["data"]["id"] is None
         assert set(data["data"]["attributes"]["services"]) == expected_services
         assert set(data["data"]["attributes"]["regions"]) == expected_regions
+        assert (
+            set(data["data"]["attributes"]["resource_types"]) == expected_resource_types
+        )
+        assert data["data"]["attributes"]["tags"] == expected_tags
 
-    def test_findings_services_regions_severity_retrieve(
+    def test_findings_metadata_severity_retrieve(
         self, authenticated_client, findings_fixture
     ):
         finding_1, *_ = findings_fixture
         response = authenticated_client.get(
-            reverse("finding-findings_services_regions"),
+            reverse("finding-metadata"),
             {
                 "filter[severity__in]": ["low", "medium"],
                 "filter[inserted_at]": finding_1.updated_at.strftime("%Y-%m-%d"),
@@ -2615,26 +2619,34 @@ class TestFindingViewSet:
 
         expected_services = {"s3"}
         expected_regions = {"eu-west-1"}
+        expected_tags = {"key": "value", "key2": "value2"}
+        expected_resource_types = {"prowler-test"}
 
-        assert data["data"]["type"] == "finding-dynamic-filters"
+        assert data["data"]["type"] == "findings-metadata"
         assert data["data"]["id"] is None
         assert set(data["data"]["attributes"]["services"]) == expected_services
         assert set(data["data"]["attributes"]["regions"]) == expected_regions
+        assert (
+            set(data["data"]["attributes"]["resource_types"]) == expected_resource_types
+        )
+        assert data["data"]["attributes"]["tags"] == expected_tags
 
-    def test_findings_services_regions_future_date(self, authenticated_client):
+    def test_findings_metadata_future_date(self, authenticated_client):
         response = authenticated_client.get(
-            reverse("finding-findings_services_regions"),
+            reverse("finding-metadata"),
             {"filter[inserted_at]": "2048-01-01"},
         )
         data = response.json()
-        assert data["data"]["type"] == "finding-dynamic-filters"
+        assert data["data"]["type"] == "findings-metadata"
         assert data["data"]["id"] is None
         assert data["data"]["attributes"]["services"] == []
         assert data["data"]["attributes"]["regions"] == []
+        assert data["data"]["attributes"]["tags"] == {}
+        assert data["data"]["attributes"]["resource_types"] == []
 
-    def test_findings_services_regions_invalid_date(self, authenticated_client):
+    def test_findings_metadata_invalid_date(self, authenticated_client):
         response = authenticated_client.get(
-            reverse("finding-findings_services_regions"),
+            reverse("finding-metadata"),
             {"filter[inserted_at]": "2048-01-011"},
         )
         assert response.json() == {
@@ -3307,9 +3319,7 @@ class TestRoleViewSet:
                     "name": "Test Role",
                     "manage_users": "false",
                     "manage_account": "false",
-                    "manage_billing": "false",
                     "manage_providers": "true",
-                    "manage_integrations": "true",
                     "manage_scans": "true",
                     "unlimited_visibility": "true",
                 },
@@ -3336,9 +3346,7 @@ class TestRoleViewSet:
                     "name": "Test Role",
                     "manage_users": "false",
                     "manage_account": "false",
-                    "manage_billing": "false",
                     "manage_providers": "true",
-                    "manage_integrations": "true",
                     "manage_scans": "true",
                     "unlimited_visibility": "true",
                 },
@@ -3386,6 +3394,26 @@ class TestRoleViewSet:
         errors = response.json()["errors"]
         assert errors[0]["source"]["pointer"] == "/data/attributes/name"
 
+    def test_admin_role_partial_update(self, authenticated_client, admin_role_fixture):
+        role = admin_role_fixture
+        data = {
+            "data": {
+                "id": str(role.id),
+                "type": "roles",
+                "attributes": {
+                    "name": "Updated Role",
+                },
+            }
+        }
+        response = authenticated_client.patch(
+            reverse("role-detail", kwargs={"pk": role.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        role.refresh_from_db()
+        assert role.name != "Updated Role"
+
     def test_role_partial_update(self, authenticated_client, roles_fixture):
         role = roles_fixture[1]
         data = {
@@ -3393,7 +3421,7 @@ class TestRoleViewSet:
                 "id": str(role.id),
                 "type": "roles",
                 "attributes": {
-                    "name": "Updated Provider Group Name",
+                    "name": "Updated Role",
                 },
             }
         }
@@ -3404,7 +3432,7 @@ class TestRoleViewSet:
         )
         assert response.status_code == status.HTTP_200_OK
         role.refresh_from_db()
-        assert role.name == "Updated Provider Group Name"
+        assert role.name == "Updated Role"
 
     def test_role_partial_update_invalid(self, authenticated_client, roles_fixture):
         role = roles_fixture[2]
@@ -3425,6 +3453,14 @@ class TestRoleViewSet:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         errors = response.json()["errors"]
         assert errors[0]["source"]["pointer"] == "/data/attributes/name"
+
+    def test_role_destroy_admin(self, authenticated_client, admin_role_fixture):
+        role = admin_role_fixture
+        response = authenticated_client.delete(
+            reverse("role-detail", kwargs={"pk": role.id})
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert Role.objects.filter(id=role.id).exists()
 
     def test_role_destroy(self, authenticated_client, roles_fixture):
         role = roles_fixture[2]
@@ -3484,9 +3520,7 @@ class TestRoleViewSet:
                     "name": "Role with Users and PGs",
                     "manage_users": "true",
                     "manage_account": "false",
-                    "manage_billing": "true",
                     "manage_providers": "true",
-                    "manage_integrations": "false",
                     "manage_scans": "false",
                     "unlimited_visibility": "false",
                 },
@@ -3600,9 +3634,7 @@ class TestRoleViewSet:
                     "name": "Invalid Users Role",
                     "manage_users": "false",
                     "manage_account": "false",
-                    "manage_billing": "false",
                     "manage_providers": "true",
-                    "manage_integrations": "true",
                     "manage_scans": "true",
                     "unlimited_visibility": "true",
                 },

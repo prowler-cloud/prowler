@@ -112,20 +112,13 @@ export const AddGroupForm = ({
         onSubmit={form.handleSubmit(onSubmitClient)}
         className="flex flex-col space-y-4"
       >
-        {/* Name Field */}
-        <p className="text-small font-medium text-default-700">
-          Please provide a name for the group. You can also select providers and
-          roles to associate with the group, this step is optional and can be
-          done later if needed.
-        </p>
-        <Divider orientation="horizontal" className="mb-2" />
         <div className="flex flex-col gap-2">
           <CustomInput
             control={form.control}
             name="name"
             type="text"
             label="Provider group name"
-            labelPlacement="outside"
+            labelPlacement="inside"
             placeholder="Enter the provider group name"
             variant="bordered"
             isRequired
@@ -154,7 +147,12 @@ export const AddGroupForm = ({
             {form.formState.errors.providers.message}
           </p>
         )}
+        <Divider orientation="horizontal" className="mb-2" />
 
+        <p className="text-small text-default-500">
+          Roles can also be associated with the group. This step is optional and
+          can be completed later if needed or from the Roles page.
+        </p>
         {/* Roles Field */}
         <Controller
           name="roles"

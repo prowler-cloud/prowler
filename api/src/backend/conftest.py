@@ -396,6 +396,23 @@ def provider_groups_fixture(tenants_fixture):
 
 
 @pytest.fixture
+def admin_role_fixture(tenants_fixture):
+    tenant, *_ = tenants_fixture
+
+    return Role.objects.get_or_create(
+        name="admin",
+        tenant_id=tenant.id,
+        manage_users=True,
+        manage_account=True,
+        manage_billing=True,
+        manage_providers=True,
+        manage_integrations=True,
+        manage_scans=True,
+        unlimited_visibility=True,
+    )[0]
+
+
+@pytest.fixture
 def roles_fixture(tenants_fixture):
     tenant, *_ = tenants_fixture
     role1 = Role.objects.create(
