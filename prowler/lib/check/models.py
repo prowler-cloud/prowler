@@ -5,7 +5,7 @@ import sys
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Set
+from typing import Any, Dict, Set
 
 from pydantic import BaseModel, ValidationError, validator
 
@@ -410,10 +410,29 @@ class Check_Report:
     resource_tags: list
     muted: bool
 
-    def __init__(self, metadata, resource=None):
+    def __init__(self, metadata: Dict, resource: Any = None) -> None:
+        """Initialize the Check's finding information.
+
+        Args:
+            metadata: The metadata of the check.
+            resource: Basic information about the resource. Defaults to None.
+                      Only accepted BaseModels (dict attribute), custom models (to_dict attribute) or objects with __dict__.
+        """
         self.status = ""
         self.check_metadata = CheckMetadata.parse_raw(metadata)
-        self.resource_metadata = resource.dict() if resource else {}
+
+        if hasattr(resource, "dict"):
+            self.resource_metadata = resource.dict()
+        elif hasattr(resource, "to_dict"):
+            self.resource_metadata = resource.to_dict()
+        elif hasattr(resource, "__dict__"):
+            self.resource_metadata = resource.__dict__
+        else:
+            logger.error(
+                f"Resource metadata {type(resource)} could not be converted to dict"
+            )
+            self.resource_metadata = {}
+
         self.status_extended = ""
         self.resource_details = ""
         self.resource_tags = getattr(resource, "tags", []) if resource else []
@@ -453,7 +472,7 @@ class Check_Report_Azure(Check_Report):
     subscription: str
     location: str
 
-    def __init__(self, metadata: dict, resource_metadata: Any = None) -> None:
+    def __init__(self, metadata: Dict, resource_metadata: Any = None) -> None:
         """Initialize the Azure Check's finding information.
 
         Args:
