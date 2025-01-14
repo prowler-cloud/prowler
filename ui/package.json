@@ -55,7 +55,7 @@
     "autoprefixer": "10.4.19",
     "eslint": "^8.56.0",
     "eslint-config-next": "^14.2.23",
-    "eslint-config-prettier": "^9.1.0",
+    "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-jsx-a11y": "^6.9.0",
     "eslint-plugin-node": "^11.1.0",
