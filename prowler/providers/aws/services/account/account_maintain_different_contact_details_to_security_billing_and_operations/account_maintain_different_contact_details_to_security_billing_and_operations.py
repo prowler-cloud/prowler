@@ -8,8 +8,9 @@ class account_maintain_different_contact_details_to_security_billing_and_operati
     def execute(self):
         findings = []
         if account_client.contact_base:
-            report = Check_Report_AWS(self.metadata())
-            report.region = account_client.region
+            report = Check_Report_AWS(
+                metadata=self.metadata(), resource_metadata=account_client
+            )
             report.resource_id = account_client.audited_account
             report.resource_arn = account_client.audited_account_arn
 

@@ -20,10 +20,10 @@ class autoscaling_find_secrets_ec2_launch_configuration(Check):
             configuration_arn,
             configuration,
         ) in autoscaling_client.launch_configurations.items():
-            report = Check_Report_AWS(self.metadata())
-            report.region = configuration.region
+            report = Check_Report_AWS(
+                metadata=self.metadata(), resource_metadata=configuration
+            )
             report.resource_id = configuration.name
-            report.resource_arn = configuration_arn
 
             if configuration.user_data:
                 user_data = b64decode(configuration.user_data)

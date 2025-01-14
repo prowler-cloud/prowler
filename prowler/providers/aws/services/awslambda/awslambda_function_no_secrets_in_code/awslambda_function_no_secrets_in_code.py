@@ -15,11 +15,10 @@ class awslambda_function_no_secrets_in_code(Check):
             )
             for function, function_code in awslambda_client._get_function_code():
                 if function_code:
-                    report = Check_Report_AWS(self.metadata())
-                    report.region = function.region
+                    report = Check_Report_AWS(
+                        metadata=self.metadata(), resource_metadata=function
+                    )
                     report.resource_id = function.name
-                    report.resource_arn = function.arn
-                    report.resource_tags = function.tags
 
                     report.status = "PASS"
                     report.status_extended = (

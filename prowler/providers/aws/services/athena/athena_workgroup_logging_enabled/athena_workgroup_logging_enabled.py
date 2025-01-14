@@ -21,11 +21,10 @@ class athena_workgroup_logging_enabled(Check):
             if (
                 workgroup.state == "ENABLED" and workgroup.queries
             ) or athena_client.provider.scan_unused_services:
-                report = Check_Report_AWS(self.metadata())
+                report = Check_Report_AWS(
+                    metadata=self.metadata(), resource_metadata=workgroup
+                )
                 report.resource_id = workgroup.name
-                report.resource_arn = workgroup.arn
-                report.region = workgroup.region
-                report.resource_tags = workgroup.tags
                 report.status = "PASS"
                 report.status_extended = (
                     f"Athena WorkGroup {workgroup.name} has CloudWatch logging enabled."

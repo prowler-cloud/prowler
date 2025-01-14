@@ -9,7 +9,7 @@ AWS_REGION = "us-east-1"
 
 class Test_account_maintain_different_contact_details_to_security_billing_and_operations:
     def test_contacts_not_configured_or_equal(self):
-        account_client = mock.MagicMock
+        account_client = mock.MagicMock()
         account_client.region = AWS_REGION
         account_client.audited_account = AWS_ACCOUNT_NUMBER
         account_client.audited_account_arn = AWS_ACCOUNT_ARN
@@ -26,12 +26,15 @@ class Test_account_maintain_different_contact_details_to_security_billing_and_op
         account_client.contact_names = {}
         account_client.contact_emails = {}
 
-        with mock.patch(
-            "prowler.providers.aws.services.account.account_service.Account",
-            new=account_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.account.account_client.account_client",
-            new=account_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.account.account_service.Account",
+                new=account_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.account.account_client.account_client",
+                new=account_client,
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.account.account_maintain_different_contact_details_to_security_billing_and_operations.account_maintain_different_contact_details_to_security_billing_and_operations import (
@@ -54,7 +57,7 @@ class Test_account_maintain_different_contact_details_to_security_billing_and_op
             assert result[0].resource_arn == AWS_ACCOUNT_ARN
 
     def test_contacts_diffent(self):
-        account_client = mock.MagicMock
+        account_client = mock.MagicMock()
         account_client.region = AWS_REGION
         account_client.audited_account = AWS_ACCOUNT_NUMBER
         account_client.audited_account_arn = AWS_ACCOUNT_ARN
@@ -75,12 +78,15 @@ class Test_account_maintain_different_contact_details_to_security_billing_and_op
             "test3@test.com",
         }
 
-        with mock.patch(
-            "prowler.providers.aws.services.account.account_service.Account",
-            new=account_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.account.account_client.account_client",
-            new=account_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.account.account_service.Account",
+                new=account_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.account.account_client.account_client",
+                new=account_client,
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.account.account_maintain_different_contact_details_to_security_billing_and_operations.account_maintain_different_contact_details_to_security_billing_and_operations import (
@@ -103,18 +109,21 @@ class Test_account_maintain_different_contact_details_to_security_billing_and_op
             assert result[0].resource_arn == AWS_ACCOUNT_ARN
 
     def test_access_denied(self):
-        account_client = mock.MagicMock
+        account_client = mock.MagicMock()
         account_client.region = AWS_REGION
         account_client.audited_account = AWS_ACCOUNT_NUMBER
         account_client.audited_account_arn = AWS_ACCOUNT_ARN
         account_client.contact_base = None
 
-        with mock.patch(
-            "prowler.providers.aws.services.account.account_service.Account",
-            new=account_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.account.account_client.account_client",
-            new=account_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.account.account_service.Account",
+                new=account_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.account.account_client.account_client",
+                new=account_client,
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.account.account_maintain_different_contact_details_to_security_billing_and_operations.account_maintain_different_contact_details_to_security_billing_and_operations import (
