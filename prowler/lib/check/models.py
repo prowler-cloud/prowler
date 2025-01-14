@@ -479,7 +479,7 @@ class Check_Report_Azure(Check_Report):
                 else ""
             )
         )
-        self.subscription = getattr(resource_metadata, "subscription", "")
+        self.subscription = ""
         self.location = getattr(resource_metadata, "location", "global")
 
 
