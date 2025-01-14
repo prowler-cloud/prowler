@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Prowler API
-  version: 1.1.0
+  version: 1.2.0
   description: |-
     Prowler API specification.
 
@@ -1167,12 +1167,439 @@ paths:
       - Finding
       security:
       - jwtAuth: []
+      deprecated: true
       responses:
-        '201':
+        '200':
           content:
             application/vnd.api+json:
               schema:
-                $ref: '#/components/schemas/OpenApiResponseResponse'
+                $ref: '#/components/schemas/FindingDynamicFilterResponse'
+          description: ''
+  /api/v1/findings/metadata:
+    get:
+      operationId: findings_metadata_retrieve
+      description: Fetch unique metadata values from a set of findings. This is useful
+        for dynamic filtering.
+      summary: Retrieve metadata values from findings
+      parameters:
+      - in: query
+        name: fields[findings-metadata]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - services
+            - regions
+            - resource_types
+            - tags
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[check_id]
+        schema:
+          type: string
+      - in: query
+        name: filter[check_id__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[check_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[delta]
+        schema:
+          type: string
+          nullable: true
+          enum:
+          - changed
+          - new
+        description: |-
+          * `new` - New
+          * `changed` - Changed
+      - in: query
+        name: filter[delta__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[impact]
+        schema:
+          type: string
+          enum:
+          - critical
+          - high
+          - informational
+          - low
+          - medium
+        description: |-
+          * `critical` - Critical
+          * `high` - High
+          * `medium` - Medium
+          * `low` - Low
+          * `informational` - Informational
+      - in: query
+        name: filter[impact__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[inserted_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__date]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__gte]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__lte]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[provider]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_alias]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          enum:
+          - aws
+          - azure
+          - gcp
+          - kubernetes
+        description: |-
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - aws
+            - azure
+            - gcp
+            - kubernetes
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[region]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_name]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_name__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_name__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_type]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_type__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_uid__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_uid__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resources]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[scan]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[scan__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: filter[service]
+        schema:
+          type: string
+      - in: query
+        name: filter[service__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[service__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[severity]
+        schema:
+          type: string
+          enum:
+          - critical
+          - high
+          - informational
+          - low
+          - medium
+        description: |-
+          * `critical` - Critical
+          * `high` - High
+          * `medium` - Medium
+          * `low` - Low
+          * `informational` - Informational
+      - in: query
+        name: filter[severity__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[status]
+        schema:
+          type: string
+          enum:
+          - FAIL
+          - MANUAL
+          - MUTED
+          - PASS
+        description: |-
+          * `FAIL` - Fail
+          * `PASS` - Pass
+          * `MANUAL` - Manual
+          * `MUTED` - Muted
+      - in: query
+        name: filter[status__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[uid__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[updated_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[updated_at__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[updated_at__lte]
+        schema:
+          type: string
+          format: date-time
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - -id
+            - status
+            - -status
+            - severity
+            - -severity
+            - check_id
+            - -check_id
+            - inserted_at
+            - -inserted_at
+            - updated_at
+            - -updated_at
+        explode: false
+      tags:
+      - Finding
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/FindingMetadataResponse'
           description: ''
   /api/v1/invitations/accept:
     post:
@@ -2948,9 +3375,7 @@ paths:
             - name
             - manage_users
             - manage_account
-            - manage_billing
             - manage_providers
-            - manage_integrations
             - manage_scans
             - permission_state
             - unlimited_visibility
@@ -3068,12 +3493,8 @@ paths:
             - -manage_users
             - manage_account
             - -manage_account
-            - manage_billing
-            - -manage_billing
             - manage_providers
             - -manage_providers
-            - manage_integrations
-            - -manage_integrations
             - manage_scans
             - -manage_scans
             - permission_state
@@ -3147,9 +3568,7 @@ paths:
             - name
             - manage_users
             - manage_account
-            - manage_billing
             - manage_providers
-            - manage_integrations
             - manage_scans
             - permission_state
             - unlimited_visibility
@@ -5458,6 +5877,92 @@ components:
               readOnly: true
           required:
           - scan
+    FindingDynamicFilter:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/FindingDynamicFilterTypeEnum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        id: {}
+        attributes:
+          type: object
+          properties:
+            services:
+              type: array
+              items:
+                type: string
+            regions:
+              type: array
+              items:
+                type: string
+          required:
+          - services
+          - regions
+    FindingDynamicFilterResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/FindingDynamicFilter'
+      required:
+      - data
+    FindingDynamicFilterTypeEnum:
+      type: string
+      enum:
+      - finding-dynamic-filters
+    FindingMetadata:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/FindingMetadataTypeEnum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        id: {}
+        attributes:
+          type: object
+          properties:
+            services:
+              type: array
+              items:
+                type: string
+            regions:
+              type: array
+              items:
+                type: string
+            resource_types:
+              type: array
+              items:
+                type: string
+            tags:
+              description: Tags are described as key-value pairs.
+          required:
+          - services
+          - regions
+          - resource_types
+          - tags
+    FindingMetadataResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/FindingMetadata'
+      required:
+      - data
+    FindingMetadataTypeEnum:
+      type: string
+      enum:
+      - findings-metadata
     FindingResponse:
       type: object
       properties:
@@ -5902,8 +6407,6 @@ components:
               - data
               description: A related resource object from type roles
               title: roles
-          required:
-          - roles
     InvitationUpdateResponse:
       type: object
       properties:
@@ -5915,7 +6418,6 @@ components:
       type: object
       required:
       - type
-      - id
       additionalProperties: false
       properties:
         type:
@@ -5924,9 +6426,6 @@ components:
           description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
             member is used to describe resource objects that share common attributes
             and relationships.
-        id:
-          type: string
-          format: uuid
         attributes:
           type: object
           properties:
@@ -6437,8 +6936,6 @@ components:
                   - data
                   description: A related resource object from type roles
                   title: roles
-              required:
-              - roles
       required:
       - data
     PatchedProviderGroupMembershipRequest:
@@ -6850,11 +7347,7 @@ components:
                   type: boolean
                 manage_account:
                   type: boolean
-                manage_billing:
-                  type: boolean
                 manage_providers:
-                  type: boolean
-                manage_integrations:
                   type: boolean
                 manage_scans:
                   type: boolean
@@ -7131,37 +7624,6 @@ components:
               required:
               - name
               - email
-            relationships:
-              type: object
-              properties:
-                roles:
-                  type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          id:
-                            type: string
-                            format: uuid
-                            title: Resource Identifier
-                            description: The identifier of the related object.
-                          type:
-                            type: string
-                            enum:
-                            - roles
-                            title: Resource Type Name
-                            description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
-                              member is used to describe resource objects that share
-                              common attributes and relationships.
-                        required:
-                        - id
-                        - type
-                  required:
-                  - data
-                  description: A related resource object from type roles
-                  title: roles
       required:
       - data
     Provider:
@@ -8537,11 +8999,7 @@ components:
               type: boolean
             manage_account:
               type: boolean
-            manage_billing:
-              type: boolean
             manage_providers:
-              type: boolean
-            manage_integrations:
               type: boolean
             manage_scans:
               type: boolean
@@ -8670,11 +9128,7 @@ components:
               type: boolean
             manage_account:
               type: boolean
-            manage_billing:
-              type: boolean
             manage_providers:
-              type: boolean
-            manage_integrations:
               type: boolean
             manage_scans:
               type: boolean
@@ -8808,11 +9262,7 @@ components:
                   type: boolean
                 manage_account:
                   type: boolean
-                manage_billing:
-                  type: boolean
                 manage_providers:
-                  type: boolean
-                manage_integrations:
                   type: boolean
                 manage_scans:
                   type: boolean
@@ -9877,37 +10327,6 @@ components:
           required:
           - name
           - email
-        relationships:
-          type: object
-          properties:
-            roles:
-              type: object
-              properties:
-                data:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                        format: uuid
-                        title: Resource Identifier
-                        description: The identifier of the related object.
-                      type:
-                        type: string
-                        enum:
-                        - roles
-                        title: Resource Type Name
-                        description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
-                          member is used to describe resource objects that share common
-                          attributes and relationships.
-                    required:
-                    - id
-                    - type
-              required:
-              - data
-              description: A related resource object from type roles
-              title: roles
     UserUpdateResponse:
       type: object
       properties:
