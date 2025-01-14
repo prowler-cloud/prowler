@@ -1010,7 +1010,7 @@ class KubernetesProviderSecret(serializers.Serializer):
 
 class AWSRoleAssumptionProviderSecret(serializers.Serializer):
     role_arn = serializers.CharField()
-    external_id = serializers.CharField(required=False)
+    external_id = serializers.CharField()
     role_session_name = serializers.CharField(required=False)
     session_duration = serializers.IntegerField(
         required=False, min_value=900, max_value=43200
@@ -1057,6 +1057,10 @@ class AWSRoleAssumptionProviderSecret(serializers.Serializer):
                         "description": "The Amazon Resource Name (ARN) of the role to assume. Required for AWS role "
                         "assumption.",
                     },
+                    "external_id": {
+                        "type": "string",
+                        "description": "An identifier to enhance security for role assumption.",
+                    },
                     "aws_access_key_id": {
                         "type": "string",
                         "description": "The AWS access key ID. Only required if the environment lacks pre-configured "
@@ -1078,11 +1082,6 @@ class AWSRoleAssumptionProviderSecret(serializers.Serializer):
                         "default": 3600,
                         "description": "The duration (in seconds) for the role session.",
                     },
-                    "external_id": {
-                        "type": "string",
-                        "description": "An optional identifier to enhance security for role assumption; may be "
-                        "required by the role administrator.",
-                    },
                     "role_session_name": {
                         "type": "string",
                         "description": "An identifier for the role session, useful for tracking sessions in AWS logs. "
@@ -1096,7 +1095,7 @@ class AWSRoleAssumptionProviderSecret(serializers.Serializer):
                         "pattern": "^[a-zA-Z0-9=,.@_-]+$",
                     },
                 },
-                "required": ["role_arn"],
+                "required": ["role_arn", "external_id"],
             },
             {
                 "type": "object",
