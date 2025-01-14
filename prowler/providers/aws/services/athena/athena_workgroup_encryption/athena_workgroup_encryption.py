@@ -16,7 +16,6 @@ class athena_workgroup_encryption(Check):
                 report = Check_Report_AWS(
                     metadata=self.metadata(), resource_metadata=workgroup
                 )
-                report.resource_id = workgroup.name
 
                 if workgroup.encryption_configuration.encrypted:
                     report.status = "PASS"

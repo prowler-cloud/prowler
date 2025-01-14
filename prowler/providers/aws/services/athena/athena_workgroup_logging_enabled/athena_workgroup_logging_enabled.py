@@ -24,7 +24,6 @@ class athena_workgroup_logging_enabled(Check):
                 report = Check_Report_AWS(
                     metadata=self.metadata(), resource_metadata=workgroup
                 )
-                report.resource_id = workgroup.name
                 report.status = "PASS"
                 report.status_extended = (
                     f"Athena WorkGroup {workgroup.name} has CloudWatch logging enabled."

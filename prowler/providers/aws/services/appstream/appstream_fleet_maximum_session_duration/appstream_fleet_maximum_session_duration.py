@@ -16,7 +16,6 @@ class appstream_fleet_maximum_session_duration(Check):
         findings = []
         for fleet in appstream_client.fleets:
             report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=fleet)
-            report.resource_id = fleet.name
 
             if fleet.max_user_duration_in_seconds < max_session_duration_seconds:
                 report.status = "PASS"

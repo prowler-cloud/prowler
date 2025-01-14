@@ -16,7 +16,6 @@ class athena_workgroup_enforce_configuration(Check):
                 report = Check_Report_AWS(
                     metadata=self.metadata(), resource_metadata=workgroup
                 )
-                report.resource_id = workgroup.name
 
                 if workgroup.enforce_workgroup_configuration:
                     report.status = "PASS"
