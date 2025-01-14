@@ -171,14 +171,13 @@ export const updateProviderGroup = async (
   };
 
   // Add relationships only if there are items
-  if (providers.length > 0) {
+  if (providers.length >= 0) {
     payload.data.relationships!.providers = { data: providers };
   }
 
-  if (roles.length > 0) {
+  if (roles.length >= 0) {
     payload.data.relationships!.roles = { data: roles };
   }
-
   try {
     const url = `${keyServer}/provider-groups/${providerGroupId}`;
     const response = await fetch(url, {
