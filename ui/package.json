@@ -39,7 +39,7 @@
     "sharp": "^0.33.5",
     "tailwind-merge": "^2.5.3",
     "tailwindcss-animate": "^1.0.7",
-    "uuid": "^10.0.0",
+    "uuid": "^11.0.5",
     "zod": "^3.23.8",
     "zustand": "^4.5.5"
   },
