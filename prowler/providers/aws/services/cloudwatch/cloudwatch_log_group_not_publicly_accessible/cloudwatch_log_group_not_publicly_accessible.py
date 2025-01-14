@@ -25,11 +25,7 @@ class cloudwatch_log_group_not_publicly_accessible(Check):
                                     if log_group.arn in resource or resource == "*":
                                         public_log_groups.append(log_group.arn)
             for log_group in logs_client.log_groups.values():
-                report = Check_Report_AWS(self.metadata())
-                report.region = log_group.region
-                report.resource_id = log_group.name
-                report.resource_arn = log_group.arn
-                report.resource_tags = log_group.tags
+                report = Check_Report_AWS(self.metadata(), log_group)
                 report.status = "PASS"
                 report.status_extended = (
                     f"Log Group {log_group.name} is not publicly accessible."

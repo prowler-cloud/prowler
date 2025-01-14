@@ -8,11 +8,7 @@ class cloudwatch_alarm_actions_enabled(Check):
     def execute(self):
         findings = []
         for metric_alarm in cloudwatch_client.metric_alarms:
-            report = Check_Report_AWS(self.metadata())
-            report.region = metric_alarm.region
-            report.resource_id = metric_alarm.name
-            report.resource_arn = metric_alarm.arn
-            report.resource_tags = metric_alarm.tags
+            report = Check_Report_AWS(self.metadata(), metric_alarm)
             report.status = "PASS"
             report.status_extended = (
                 f"CloudWatch metric alarm {metric_alarm.name} has actions enabled."
