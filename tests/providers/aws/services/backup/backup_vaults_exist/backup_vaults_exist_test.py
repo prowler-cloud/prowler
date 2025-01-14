@@ -8,7 +8,7 @@ AWS_ACCOUNT_NUMBER = "123456789012"
 
 class Test_backup_vaults_exist:
     def test_no_backup_vaults(self):
-        backup_client = mock.MagicMock
+        backup_client = mock.MagicMock()
         backup_client.audited_account = AWS_ACCOUNT_NUMBER
         backup_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
         backup_client.region = AWS_REGION
@@ -45,7 +45,7 @@ class Test_backup_vaults_exist:
             assert result[0].resource_tags == []
 
     def test_one_backup_vault(self):
-        backup_client = mock.MagicMock
+        backup_client = mock.MagicMock()
         backup_client.audited_account = AWS_ACCOUNT_NUMBER
         backup_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
         backup_client.region = AWS_REGION
@@ -96,7 +96,7 @@ class Test_backup_vaults_exist:
             assert result[0].resource_tags == []
 
     def test_access_denied(self):
-        backup_client = mock.MagicMock
+        backup_client = mock.MagicMock()
         backup_client.audited_account = AWS_ACCOUNT_NUMBER
         backup_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
         backup_client.region = AWS_REGION
