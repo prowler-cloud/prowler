@@ -25,11 +25,10 @@ class cloudwatch_changes_to_network_acls_alarm_configured(Check):
         )
 
         if report is not None:
-            if report == Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=logs_client
-            ):
+            if report == Check_Report_AWS(metadata=self.metadata()):
                 report.status = "FAIL"
                 report.status_extended = "No CloudWatch log groups found with metric filters or alarms associated."
+                report.region = logs_client.region
                 report.resource_id = logs_client.audited_account
                 report.resource_arn = logs_client.log_group_arn_template
                 report.resource_tags = []
