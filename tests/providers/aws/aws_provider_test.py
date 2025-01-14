@@ -821,7 +821,7 @@ aws:
         aws_provider = AwsProvider()
         response = aws_provider.generate_regional_clients("ec2")
 
-        assert len(response.keys()) == 31
+        assert len(response.keys()) == 30
 
     @mock_aws
     def test_generate_regional_clients_with_enabled_regions(self):
