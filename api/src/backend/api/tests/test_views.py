@@ -3382,6 +3382,26 @@ class TestRoleViewSet:
         errors = response.json()["errors"]
         assert errors[0]["source"]["pointer"] == "/data/attributes/name"
 
+    def test_admin_role_partial_update(self, authenticated_client, admin_role_fixture):
+        role = admin_role_fixture
+        data = {
+            "data": {
+                "id": str(role.id),
+                "type": "roles",
+                "attributes": {
+                    "name": "Updated Role",
+                },
+            }
+        }
+        response = authenticated_client.patch(
+            reverse("role-detail", kwargs={"pk": role.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        role.refresh_from_db()
+        assert role.name != "Updated Role"
+
     def test_role_partial_update(self, authenticated_client, roles_fixture):
         role = roles_fixture[1]
         data = {
@@ -3389,7 +3409,7 @@ class TestRoleViewSet:
                 "id": str(role.id),
                 "type": "roles",
                 "attributes": {
-                    "name": "Updated Provider Group Name",
+                    "name": "Updated Role",
                 },
             }
         }
@@ -3400,7 +3420,7 @@ class TestRoleViewSet:
         )
         assert response.status_code == status.HTTP_200_OK
         role.refresh_from_db()
-        assert role.name == "Updated Provider Group Name"
+        assert role.name == "Updated Role"
 
     def test_role_partial_update_invalid(self, authenticated_client, roles_fixture):
         role = roles_fixture[2]
@@ -3421,6 +3441,14 @@ class TestRoleViewSet:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         errors = response.json()["errors"]
         assert errors[0]["source"]["pointer"] == "/data/attributes/name"
+
+    def test_role_destroy_admin(self, authenticated_client, admin_role_fixture):
+        role = admin_role_fixture
+        response = authenticated_client.delete(
+            reverse("role-detail", kwargs={"pk": role.id})
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert Role.objects.filter(id=role.id).exists()
 
     def test_role_destroy(self, authenticated_client, roles_fixture):
         role = roles_fixture[2]
