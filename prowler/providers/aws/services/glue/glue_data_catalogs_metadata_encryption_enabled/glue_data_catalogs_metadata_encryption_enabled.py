@@ -8,7 +8,9 @@ class glue_data_catalogs_metadata_encryption_enabled(Check):
         for data_catalog in glue_client.data_catalogs.values():
             # Check only if there are Glue Tables
             if data_catalog.tables or glue_client.provider.scan_unused_services:
-                report = Check_Report_AWS(self.metadata(), data_catalog)
+                report = Check_Report_AWS(
+                    metadata=self.metadata(), resource_metadata=data_catalog
+                )
                 report.resource_id = glue_client.audited_account
                 report.resource_arn = glue_client._get_data_catalog_arn_template(
                     data_catalog.region

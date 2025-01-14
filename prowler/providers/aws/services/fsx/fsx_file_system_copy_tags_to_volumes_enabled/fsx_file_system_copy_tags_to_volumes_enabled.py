@@ -7,7 +7,9 @@ class fsx_file_system_copy_tags_to_volumes_enabled(Check):
         findings = []
         for file_system in fsx_client.file_systems.values():
             if file_system.copy_tags_to_volumes is not None:
-                report = Check_Report_AWS(self.metadata(), file_system)
+                report = Check_Report_AWS(
+                    metadata=self.metadata(), resource_metadata=file_system
+                )
                 report.status = "PASS"
                 report.status_extended = f"FSx file system {file_system.id} has copy tags to volumes enabled."
 

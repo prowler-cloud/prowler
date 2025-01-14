@@ -21,7 +21,9 @@ class firehose_stream_encrypted_at_rest(Check):
         """
         findings = []
         for stream in firehose_client.delivery_streams.values():
-            report = Check_Report_AWS(self.metadata(), stream)
+            report = Check_Report_AWS(
+                metadata=self.metadata(), resource_metadata=stream
+            )
             report.status = "PASS"
             report.status_extended = (
                 f"Firehose Stream {stream.name} does have at rest encryption enabled."

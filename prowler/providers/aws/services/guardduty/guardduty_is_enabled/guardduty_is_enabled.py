@@ -6,7 +6,9 @@ class guardduty_is_enabled(Check):
     def execute(self):
         findings = []
         for detector in guardduty_client.detectors:
-            report = Check_Report_AWS(self.metadata(), detector)
+            report = Check_Report_AWS(
+                metadata=self.metadata(), resource_metadata=detector
+            )
             report.status = "PASS"
             report.status_extended = f"GuardDuty detector {detector.id} enabled."
 

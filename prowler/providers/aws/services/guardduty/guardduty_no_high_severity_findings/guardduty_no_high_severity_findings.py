@@ -7,7 +7,9 @@ class guardduty_no_high_severity_findings(Check):
         findings = []
         for detector in guardduty_client.detectors:
             if detector.id and detector.enabled_in_account:
-                report = Check_Report_AWS(self.metadata(), detector)
+                report = Check_Report_AWS(
+                    metadata=self.metadata(), resource_metadata=detector
+                )
                 report.status = "PASS"
                 report.status_extended = f"GuardDuty detector {detector.id} does not have high severity findings."
                 if len(detector.findings) > 0:
