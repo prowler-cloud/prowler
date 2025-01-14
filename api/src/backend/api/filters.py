@@ -319,6 +319,27 @@ class FindingFilter(FilterSet):
         field_name="resources__type", lookup_expr="icontains"
     )
 
+    resource_tag_key = CharFilter(field_name="resources__tags__key")
+    resource_tag_key__in = CharInFilter(
+        field_name="resources__tags__key", lookup_expr="in"
+    )
+    resource_tag_key__icontains = CharFilter(
+        field_name="resources__tags__key", lookup_expr="icontains"
+    )
+    resource_tag_value = CharFilter(field_name="resources__tags__value")
+    resource_tag_value__in = CharInFilter(
+        field_name="resources__tags__value", lookup_expr="in"
+    )
+    resource_tag_value__icontains = CharFilter(
+        field_name="resources__tags__value", lookup_expr="icontains"
+    )
+    resource_tags = CharInFilter(
+        method="filter_resource_tag",
+        lookup_expr="in",
+        help_text="Filter by resource tags `key:value` pairs.\nMultiple values may be "
+        "separated by commas.",
+    )
+
     scan = UUIDFilter(method="filter_scan_id")
     scan__in = UUIDInFilter(method="filter_scan_id_in")
 
@@ -425,6 +446,16 @@ class FindingFilter(FilterSet):
         end = uuid7_start(datetime_to_uuid7(value))
 
         return queryset.filter(id__lte=end).filter(inserted_at__lte=value)
+
+    def filter_resource_tag(self, queryset, name, value):
+        overall_query = Q()
+        for key_value_pair in value:
+            tag_key, tag_value = key_value_pair.split(":", 1)
+            overall_query |= Q(
+                resources__tags__key__icontains=tag_key,
+                resources__tags__value__icontains=tag_value,
+            )
+        return queryset.filter(overall_query).distinct()
 
     @staticmethod
     def maybe_date_to_datetime(value):
