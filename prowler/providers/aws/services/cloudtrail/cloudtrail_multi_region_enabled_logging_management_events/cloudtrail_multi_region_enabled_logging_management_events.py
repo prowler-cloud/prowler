@@ -45,9 +45,7 @@ class cloudtrail_multi_region_enabled_logging_management_events(Check):
                                     ):
                                         trail_is_logging_management_events = True
                     if trail_is_logging_management_events:
-                        report.resource_id = trail.name
-                        report.resource_arn = trail.arn
-                        report.resource_tags = trail.tags
+                        report = Check_Report_AWS(self.metadata(), trail)
                         report.region = region
                         report.status = "PASS"
                         if trail.is_multiregion:

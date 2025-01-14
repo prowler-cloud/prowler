@@ -10,11 +10,8 @@ class cloudtrail_log_file_validation_enabled(Check):
         if cloudtrail_client.trails is not None:
             for trail in cloudtrail_client.trails.values():
                 if trail.name:
-                    report = Check_Report_AWS(self.metadata())
+                    report = Check_Report_AWS(self.metadata(), trail)
                     report.region = trail.home_region
-                    report.resource_id = trail.name
-                    report.resource_arn = trail.arn
-                    report.resource_tags = trail.tags
                     report.status = "FAIL"
                     if trail.is_multiregion:
                         report.status_extended = f"Multiregion trail {trail.name} has log file validation disabled."
