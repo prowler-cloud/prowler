@@ -9,7 +9,7 @@ class awslambda_function_url_cors_policy(Check):
             report = Check_Report_AWS(
                 metadata=self.metadata(), resource_metadata=function
             )
-            report.resource_id = function.name
+
             if function.url_config:
                 if "*" in function.url_config.cors_config.allow_origins:
                     report.status = "FAIL"

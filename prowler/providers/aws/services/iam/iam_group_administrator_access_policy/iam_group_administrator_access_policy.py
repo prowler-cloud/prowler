@@ -11,7 +11,7 @@ class iam_group_administrator_access_policy(Check):
             report = Check_Report_AWS(self.metadata())
             report.region = iam_client.region
             report.resource_arn = group.arn
-            report.resource_id = group.name
+
             report.status = "PASS"
             report.status_extended = (
                 f"IAM Group {group.name} does not have AdministratorAccess policy."

@@ -15,7 +15,7 @@ class awslambda_function_no_secrets_in_variables(Check):
             report = Check_Report_AWS(
                 metadata=self.metadata(), resource_metadata=function
             )
-            report.resource_id = function.name
+
             report.status = "PASS"
             report.status_extended = (
                 f"No secrets found in Lambda function {function.name} variables."

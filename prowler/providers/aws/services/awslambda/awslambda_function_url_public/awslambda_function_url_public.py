@@ -10,7 +10,7 @@ class awslambda_function_url_public(Check):
             report = Check_Report_AWS(
                 metadata=self.metadata(), resource_metadata=function
             )
-            report.resource_id = function.name
+
             if function.url_config:
                 if function.url_config.auth_type == AuthType.AWS_IAM:
                     report.status = "PASS"

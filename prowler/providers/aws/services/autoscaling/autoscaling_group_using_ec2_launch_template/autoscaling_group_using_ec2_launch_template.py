@@ -9,7 +9,7 @@ class autoscaling_group_using_ec2_launch_template(Check):
         findings = []
         for group in autoscaling_client.groups:
             report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=group)
-            report.resource_id = group.name
+
             report.status = "PASS"
             report.status_extended = (
                 f"Autoscaling group {group.name} is using an EC2 launch template."

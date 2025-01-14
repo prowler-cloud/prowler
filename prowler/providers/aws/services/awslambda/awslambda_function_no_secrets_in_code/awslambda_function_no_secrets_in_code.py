@@ -18,7 +18,6 @@ class awslambda_function_no_secrets_in_code(Check):
                     report = Check_Report_AWS(
                         metadata=self.metadata(), resource_metadata=function
                     )
-                    report.resource_id = function.name
 
                     report.status = "PASS"
                     report.status_extended = (

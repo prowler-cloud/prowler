@@ -23,7 +23,6 @@ class autoscaling_find_secrets_ec2_launch_configuration(Check):
             report = Check_Report_AWS(
                 metadata=self.metadata(), resource_metadata=configuration
             )
-            report.resource_id = configuration.name
 
             if configuration.user_data:
                 user_data = b64decode(configuration.user_data)

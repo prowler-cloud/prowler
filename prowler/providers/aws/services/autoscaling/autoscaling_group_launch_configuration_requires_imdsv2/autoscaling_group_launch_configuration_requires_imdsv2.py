@@ -15,7 +15,7 @@ class autoscaling_group_launch_configuration_requires_imdsv2(Check):
                     report = Check_Report_AWS(
                         metadata=self.metadata(), resource_metadata=group
                     )
-                    report.resource_id = group.name
+
                     report.status = "FAIL"
                     report.status_extended = f"Autoscaling group {group.name} has IMDSv2 disabled or not required."
                     if (

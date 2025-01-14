@@ -19,7 +19,7 @@ class awslambda_function_vpc_multi_az(Check):
                 report = Check_Report_AWS(
                     metadata=self.metadata(), resource_metadata=function
                 )
-                report.resource_id = function.name
+
                 report.status = "FAIL"
                 report.status_extended = (
                     f"Lambda function {function.name} is not inside a VPC."

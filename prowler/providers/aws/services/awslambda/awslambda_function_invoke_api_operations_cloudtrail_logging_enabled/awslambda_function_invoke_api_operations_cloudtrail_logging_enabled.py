@@ -12,7 +12,6 @@ class awslambda_function_invoke_api_operations_cloudtrail_logging_enabled(Check)
             report = Check_Report_AWS(
                 metadata=self.metadata(), resource_metadata=function
             )
-            report.resource_id = function.name
 
             report.status = "FAIL"
             report.status_extended = (

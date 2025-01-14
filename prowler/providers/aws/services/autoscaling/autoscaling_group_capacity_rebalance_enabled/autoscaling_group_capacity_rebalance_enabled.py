@@ -12,7 +12,7 @@ class autoscaling_group_capacity_rebalance_enabled(Check):
                 report = Check_Report_AWS(
                     metadata=self.metadata(), resource_metadata=group
                 )
-                report.resource_id = group.name
+
                 report.status = "FAIL"
                 report.status_extended = f"Autoscaling group {group.name} does not have capacity rebalance enabled."
                 if group.capacity_rebalance:

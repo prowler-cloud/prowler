@@ -9,7 +9,7 @@ class autoscaling_group_multiple_az(Check):
         findings = []
         for group in autoscaling_client.groups:
             report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=group)
-            report.resource_id = group.name
+
             report.status = "FAIL"
             report.status_extended = (
                 f"Autoscaling group {group.name} has only one availability zones."

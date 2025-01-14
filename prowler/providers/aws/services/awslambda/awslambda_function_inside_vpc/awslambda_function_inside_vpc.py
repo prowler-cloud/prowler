@@ -11,7 +11,7 @@ class awslambda_function_inside_vpc(Check):
             report = Check_Report_AWS(
                 metadata=self.metadata(), resource_metadata=function
             )
-            report.resource_id = function.name
+
             report.status = "PASS"
             report.status_extended = (
                 f"Lambda function {function.name} is inside of VPC {function.vpc_id}"

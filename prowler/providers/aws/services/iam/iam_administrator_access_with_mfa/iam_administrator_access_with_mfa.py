@@ -9,7 +9,7 @@ class iam_administrator_access_with_mfa(Check):
 
         for group in response:
             report = Check_Report_AWS(self.metadata())
-            report.resource_id = group.name
+
             report.resource_arn = group.arn
             report.region = iam_client.region
             report.status = "PASS"
