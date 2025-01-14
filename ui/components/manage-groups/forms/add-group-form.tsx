@@ -112,10 +112,6 @@ export const AddGroupForm = ({
         onSubmit={form.handleSubmit(onSubmitClient)}
         className="flex flex-col space-y-4"
       >
-        {/* Name Field */}
-        <p className="text-small font-bold text-default-700">
-          Provide a name for the group:
-        </p>
         <div className="flex flex-col gap-2">
           <CustomInput
             control={form.control}
@@ -153,7 +149,7 @@ export const AddGroupForm = ({
         )}
         <Divider orientation="horizontal" className="mb-2" />
 
-        <p className="text-small font-medium text-default-700">
+        <p className="text-small text-default-500">
           Roles can also be associated with the group. This step is optional and
           can be completed later if needed or from the Roles page.
         </p>

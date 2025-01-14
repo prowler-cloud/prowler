@@ -142,10 +142,6 @@ export const EditGroupForm = ({
         onSubmit={form.handleSubmit(onSubmitClient)}
         className="flex flex-col space-y-4"
       >
-        <p className="text-small font-bold text-default-700">
-          Edit the group name or associated providers:
-        </p>
-
         {/* Field for the name */}
         <div className="flex flex-col gap-2">
           <CustomInput
@@ -199,7 +195,7 @@ export const EditGroupForm = ({
         )}
 
         <Divider orientation="horizontal" className="mb-2" />
-        <p className="text-small font-medium text-default-700">
+        <p className="text-small text-default-500">
           The roles associated with the group can be edited directly here or
           from the Roles page.
         </p>
