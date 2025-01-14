@@ -7,11 +7,7 @@ class ec2_networkacl_unused(Check):
         findings = []
         for arn, network_acl in ec2_client.network_acls.items():
             if not network_acl.default:
-                report = Check_Report_AWS(self.metadata())
-                report.resource_id = network_acl.id
-                report.region = network_acl.region
-                report.resource_arn = arn
-                report.resource_tags = network_acl.tags
+                report = Check_Report_AWS(self.metadata(), network_acl)
 
                 if not network_acl.in_use:
                     report.status = "FAIL"

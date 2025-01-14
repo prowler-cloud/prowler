@@ -19,12 +19,15 @@ class Test_ec2_client_vpn_endpoint_connection_logging_enabled:
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_client_vpn_endpoint_connection_logging_enabled.ec2_client_vpn_endpoint_connection_logging_enabled.ec2_client",
-            new=EC2(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_client_vpn_endpoint_connection_logging_enabled.ec2_client_vpn_endpoint_connection_logging_enabled.ec2_client",
+                new=EC2(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_client_vpn_endpoint_connection_logging_enabled.ec2_client_vpn_endpoint_connection_logging_enabled import (
@@ -51,18 +54,22 @@ class Test_ec2_client_vpn_endpoint_connection_logging_enabled:
         ec2.vpn_endpoints = {
             "arn:aws:ec2:us-east-1:123456789012:client-vpn-endpoint/cvpn-endpoint-1234567890abcdef0": VpnEndpoint(
                 id="cvpn-endpoint-1234567890abcdef0",
+                arn="arn:aws:ec2:us-east-1:123456789012:client-vpn-endpoint/cvpn-endpoint-1234567890abcdef0",
                 connection_logging=False,
                 region=AWS_REGION_US_EAST_1,
                 tags=None,
             )
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_client_vpn_endpoint_connection_logging_enabled.ec2_client_vpn_endpoint_connection_logging_enabled.ec2_client",
-            new=ec2,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_client_vpn_endpoint_connection_logging_enabled.ec2_client_vpn_endpoint_connection_logging_enabled.ec2_client",
+                new=ec2,
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_client_vpn_endpoint_connection_logging_enabled.ec2_client_vpn_endpoint_connection_logging_enabled import (
@@ -100,18 +107,22 @@ class Test_ec2_client_vpn_endpoint_connection_logging_enabled:
         ec2.vpn_endpoints = {
             "arn:aws:ec2:us-east-1:123456789012:client-vpn-endpoint/cvpn-endpoint-1234567890abcdef0": VpnEndpoint(
                 id="cvpn-endpoint-1234567890abcdef0",
+                arn="arn:aws:ec2:us-east-1:123456789012:client-vpn-endpoint/cvpn-endpoint-1234567890abcdef0",
                 connection_logging=True,
                 region=AWS_REGION_US_EAST_1,
                 tags=None,
             )
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_client_vpn_endpoint_connection_logging_enabled.ec2_client_vpn_endpoint_connection_logging_enabled.ec2_client",
-            new=ec2,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_client_vpn_endpoint_connection_logging_enabled.ec2_client_vpn_endpoint_connection_logging_enabled.ec2_client",
+                new=ec2,
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_client_vpn_endpoint_connection_logging_enabled.ec2_client_vpn_endpoint_connection_logging_enabled import (

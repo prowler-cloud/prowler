@@ -5162,6 +5162,7 @@
           "ap-southeast-2",
           "ap-southeast-3",
           "ap-southeast-4",
+          "ap-southeast-5",
           "ca-central-1",
           "ca-west-1",
           "eu-central-1",
@@ -5429,30 +5430,6 @@
           "us-gov-east-1",
           "us-gov-west-1"
         ]
-      }
-    },
-    "iot1click-devices": {
-      "regions": {
-        "aws": [
-          "us-west-2"
-        ],
-        "aws-cn": [],
-        "aws-us-gov": []
-      }
-    },
-    "iot1click-projects": {
-      "regions": {
-        "aws": [
-          "ap-northeast-1",
-          "eu-central-1",
-          "eu-west-1",
-          "eu-west-2",
-          "us-east-1",
-          "us-east-2",
-          "us-west-2"
-        ],
-        "aws-cn": [],
-        "aws-us-gov": []
       }
     },
     "iotanalytics": {
@@ -6280,6 +6257,7 @@
           "ap-southeast-2",
           "ap-southeast-3",
           "ap-southeast-4",
+          "ap-southeast-5",
           "ca-central-1",
           "ca-west-1",
           "eu-central-1",

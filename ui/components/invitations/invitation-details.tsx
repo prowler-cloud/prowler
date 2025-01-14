@@ -25,6 +25,21 @@ interface InvitationDetailsProps {
   selfLink: string;
 }
 
+const InfoField = ({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) => (
+  <div className="flex flex-col gap-1">
+    <span className="text-xs font-bold text-gray-500">{label}</span>
+    <div className="flex items-center rounded-lg bg-gray-50 p-3">
+      <span className="text-small text-gray-900">{children}</span>
+    </div>
+  </div>
+);
+
 export const InvitationDetails = ({ attributes }: InvitationDetailsProps) => {
   // window.location.origin to get the current base URL
   const baseUrl =
@@ -32,7 +47,7 @@ export const InvitationDetails = ({ attributes }: InvitationDetailsProps) => {
       ? window.location.origin
       : "http://localhost:3000";
 
-  const invitationLink = `${baseUrl}/invitations/check-details?id=${attributes.token}`;
+  const invitationLink = `${baseUrl}/sign-up?invitation_token=${attributes.token}`;
 
   return (
     <div className="flex flex-col gap-x-4 gap-y-8">
@@ -42,45 +57,37 @@ export const InvitationDetails = ({ attributes }: InvitationDetailsProps) => {
         shadow="sm"
       >
         <CardBody>
-          <h2 className="text-2xl font-bold text-foreground/90">
-            Invitation Details
+          <h2 className="text-md font-bold text-foreground/90">
+            Invitation details
           </h2>
           <Divider className="my-4" />
 
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <strong className="text-default-500">Email:</strong>
-              <span>{attributes.email}</span>
-            </div>
+            <InfoField label="Email">{attributes.email}</InfoField>
 
-            <div className="flex items-center justify-between">
-              <strong className="text-default-500">State:</strong>
-              <span className="capitalize">{attributes.state}</span>
-            </div>
+            <InfoField label="Token">{attributes.token}</InfoField>
 
-            <div className="flex items-center justify-between">
-              <strong className="text-default-500">Token:</strong>
-              <span>{attributes.token}</span>
-            </div>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <InfoField label="State">
+                <span className="capitalize">{attributes.state}</span>
+              </InfoField>
 
-            <div className="flex items-center justify-between">
-              <strong className="text-default-500">Expires At:</strong>
-              <DateWithTime dateTime={attributes.expires_at} />
-            </div>
+              <InfoField label="Expires At">
+                <DateWithTime dateTime={attributes.expires_at} inline />
+              </InfoField>
 
-            <div className="flex items-center justify-between">
-              <strong className="text-default-500">Inserted At:</strong>
-              <DateWithTime dateTime={attributes.inserted_at} />
-            </div>
+              <InfoField label="Created At">
+                <DateWithTime dateTime={attributes.inserted_at} inline />
+              </InfoField>
 
-            <div className="flex items-center justify-between">
-              <strong className="text-default-500">Updated At:</strong>
-              <DateWithTime dateTime={attributes.updated_at} />
+              <InfoField label="Updated At">
+                <DateWithTime dateTime={attributes.updated_at} inline />
+              </InfoField>
             </div>
           </div>
 
           <Divider className="my-4" />
-          <h3 className="pb-2 text-xl font-bold text-foreground/90">
+          <h3 className="pb-2 text-small font-bold text-foreground/90">
             Share this link with the user:
           </h3>
 
@@ -93,7 +100,7 @@ export const InvitationDetails = ({ attributes }: InvitationDetailsProps) => {
               variant="bordered"
               className="overflow-hidden text-ellipsis whitespace-nowrap"
             >
-              <p className="no-scrollbar w-96 overflow-hidden overflow-x-scroll text-ellipsis whitespace-nowrap text-sm">
+              <p className="no-scrollbar w-fit overflow-hidden overflow-x-scroll text-ellipsis whitespace-nowrap text-small">
                 {invitationLink}
               </p>
             </Snippet>

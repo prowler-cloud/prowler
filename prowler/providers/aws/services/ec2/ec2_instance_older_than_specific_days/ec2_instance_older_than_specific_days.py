@@ -13,8 +13,7 @@ class ec2_instance_older_than_specific_days(Check):
             "max_ec2_instance_age_in_days", 180
         )
         for instance in ec2_client.instances:
-            report = Check_Report_AWS(self.metadata())
-            report.region = instance.region
+            report = Check_Report_AWS(self.metadata(), instance)
             report.resource_id = instance.id
             report.resource_arn = instance.arn
             report.resource_tags = instance.tags
