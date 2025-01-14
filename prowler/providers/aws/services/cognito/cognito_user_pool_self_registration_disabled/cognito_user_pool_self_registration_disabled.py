@@ -9,11 +9,7 @@ class cognito_user_pool_self_registration_disabled(Check):
     def execute(self):
         findings = []
         for user_pool in cognito_idp_client.user_pools.values():
-            report = Check_Report_AWS(self.metadata())
-            report.region = user_pool.region
-            report.resource_id = user_pool.id
-            report.resource_arn = user_pool.arn
-            report.resource_tags = user_pool.tags
+            report = Check_Report_AWS(self.metadata(), user_pool)
             report.status = "PASS"
             report.status_extended = (
                 f"User pool {user_pool.id} has self registration disabled."
