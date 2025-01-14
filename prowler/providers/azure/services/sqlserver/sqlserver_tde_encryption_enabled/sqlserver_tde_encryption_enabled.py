@@ -12,6 +12,8 @@ class sqlserver_tde_encryption_enabled(Check):
                 )
                 if len(databases) > 0:
                     for database in databases:
+                        if database.name.lower() == "master":
+                            continue
                         report = Check_Report_Azure(self.metadata())
                         report.subscription = subscription
                         report.resource_name = database.name

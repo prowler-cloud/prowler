@@ -157,3 +157,63 @@ class Test_sqlserver_tde_encryption_enabled:
             assert result[0].subscription == AZURE_SUBSCRIPTION
             assert result[0].resource_name == database_name
             assert result[0].resource_id == database_id
+
+    def test_sql_servers_database_encryption_disabled_on_master_db(self):
+        sqlserver_client = mock.MagicMock
+        sql_server_name = "SQL Server Name"
+        sql_server_id = str(uuid4())
+        database_master_name = "MASTER"
+        database_master_id = str(uuid4())
+        database_master = Database(
+            id=database_master_id,
+            name=database_master_name,
+            type="type",
+            location="location",
+            managed_by="managed_by",
+            tde_encryption=TransparentDataEncryption(status="Disabled"),
+        )
+        database_name = "Database Name"
+        database_id = str(uuid4())
+        database = Database(
+            id=database_id,
+            name=database_name,
+            type="type",
+            location="location",
+            managed_by="managed_by",
+            tde_encryption=TransparentDataEncryption(status="Enabled"),
+        )
+        sqlserver_client.sql_servers = {
+            AZURE_SUBSCRIPTION: [
+                Server(
+                    id=sql_server_id,
+                    name=sql_server_name,
+                    public_network_access="",
+                    minimal_tls_version="",
+                    administrators=None,
+                    auditing_policies=None,
+                    firewall_rules=None,
+                    databases=[database_master, database],
+                    encryption_protector=None,
+                )
+            ]
+        }
+
+        with mock.patch(
+            "prowler.providers.azure.services.sqlserver.sqlserver_tde_encryption_enabled.sqlserver_tde_encryption_enabled.sqlserver_client",
+            new=sqlserver_client,
+        ):
+            from prowler.providers.azure.services.sqlserver.sqlserver_tde_encryption_enabled.sqlserver_tde_encryption_enabled import (
+                sqlserver_tde_encryption_enabled,
+            )
+
+            check = sqlserver_tde_encryption_enabled()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"Database {database_name} from SQL Server {sql_server_name} from subscription {AZURE_SUBSCRIPTION} has TDE enabled"
+            )
+            assert result[0].subscription == AZURE_SUBSCRIPTION
+            assert result[0].resource_name == database_name
+            assert result[0].resource_id == database_id
