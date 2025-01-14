@@ -7,11 +7,7 @@ class codebuild_project_s3_logs_encrypted(Check):
         findings = []
         for project in codebuild_client.projects.values():
             if project.s3_logs.enabled:
-                report = Check_Report_AWS(self.metadata())
-                report.resource_id = project.name
-                report.resource_arn = project.arn
-                report.region = project.region
-                report.resource_tags = project.tags
+                report = Check_Report_AWS(self.metadata(), project)
                 report.status = "PASS"
                 report.status_extended = f"CodeBuild project {project.name} has encrypted S3 logs stored in {project.s3_logs.bucket_location}."
                 if not project.s3_logs.encrypted:

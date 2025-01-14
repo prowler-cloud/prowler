@@ -6,11 +6,7 @@ class codebuild_project_logging_enabled(Check):
     def execute(self):
         findings = []
         for project in codebuild_client.projects.values():
-            report = Check_Report_AWS(self.metadata())
-            report.resource_id = project.name
-            report.resource_arn = project.arn
-            report.region = project.region
-            report.resource_tags = project.tags
+            report = Check_Report_AWS(self.metadata(), project)
             report.status = "PASS"
 
             if project.cloudwatch_logs.enabled and project.s3_logs.enabled:
