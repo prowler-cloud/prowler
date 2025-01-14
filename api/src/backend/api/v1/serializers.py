@@ -905,7 +905,7 @@ class FindingSerializer(RLSSerializer):
             "raw_result",
             "inserted_at",
             "updated_at",
-            "first_seen",
+            "first_seen_at",
             "url",
             # Relationships
             "scan",

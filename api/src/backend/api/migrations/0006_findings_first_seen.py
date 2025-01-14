@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name="finding",
-            name="first_seen",
-            field=models.DateTimeField(editable=False, null=True),
+            name="first_seen_at",
+            field=models.DateTimeField(editable=False),
         ),
     ]
