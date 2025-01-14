@@ -136,8 +136,12 @@ export const AddRoleForm = ({
 
   const permissions = [
     { field: "manage_users", label: "Invite and Manage Users" },
-    { field: "manage_account", label: "Manage Account" },
-    { field: "manage_billing", label: "Manage Billing" },
+    ...(process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true"
+      ? [
+          { field: "manage_account", label: "Manage Account" },
+          { field: "manage_billing", label: "Manage Billing" },
+        ]
+      : []),
     { field: "manage_providers", label: "Manage Cloud Providers" },
     // TODO: Add back when we have integrations ready
     // { field: "manage_integrations", label: "Manage Integrations" },
