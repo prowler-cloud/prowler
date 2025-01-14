@@ -2582,30 +2582,34 @@ class TestFindingViewSet:
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_findings_services_regions_retrieve(
-        self, authenticated_client, findings_fixture
-    ):
+    def test_findings_metadata_retrieve(self, authenticated_client, findings_fixture):
         finding_1, *_ = findings_fixture
         response = authenticated_client.get(
-            reverse("finding-findings_services_regions"),
+            reverse("finding-metadata"),
             {"filter[inserted_at]": finding_1.updated_at.strftime("%Y-%m-%d")},
         )
         data = response.json()
 
         expected_services = {"ec2", "s3"}
         expected_regions = {"eu-west-1", "us-east-1"}
+        expected_tags = {"key": "value", "key2": "value2"}
+        expected_resource_types = {"prowler-test"}
 
-        assert data["data"]["type"] == "finding-dynamic-filters"
+        assert data["data"]["type"] == "findings-metadata"
         assert data["data"]["id"] is None
         assert set(data["data"]["attributes"]["services"]) == expected_services
         assert set(data["data"]["attributes"]["regions"]) == expected_regions
+        assert (
+            set(data["data"]["attributes"]["resource_types"]) == expected_resource_types
+        )
+        assert data["data"]["attributes"]["tags"] == expected_tags
 
-    def test_findings_services_regions_severity_retrieve(
+    def test_findings_metadata_severity_retrieve(
         self, authenticated_client, findings_fixture
     ):
         finding_1, *_ = findings_fixture
         response = authenticated_client.get(
-            reverse("finding-findings_services_regions"),
+            reverse("finding-metadata"),
             {
                 "filter[severity__in]": ["low", "medium"],
                 "filter[inserted_at]": finding_1.updated_at.strftime("%Y-%m-%d"),
@@ -2615,26 +2619,34 @@ class TestFindingViewSet:
 
         expected_services = {"s3"}
         expected_regions = {"eu-west-1"}
+        expected_tags = {"key": "value", "key2": "value2"}
+        expected_resource_types = {"prowler-test"}
 
-        assert data["data"]["type"] == "finding-dynamic-filters"
+        assert data["data"]["type"] == "findings-metadata"
         assert data["data"]["id"] is None
         assert set(data["data"]["attributes"]["services"]) == expected_services
         assert set(data["data"]["attributes"]["regions"]) == expected_regions
+        assert (
+            set(data["data"]["attributes"]["resource_types"]) == expected_resource_types
+        )
+        assert data["data"]["attributes"]["tags"] == expected_tags
 
-    def test_findings_services_regions_future_date(self, authenticated_client):
+    def test_findings_metadata_future_date(self, authenticated_client):
         response = authenticated_client.get(
-            reverse("finding-findings_services_regions"),
+            reverse("finding-metadata"),
             {"filter[inserted_at]": "2048-01-01"},
         )
         data = response.json()
-        assert data["data"]["type"] == "finding-dynamic-filters"
+        assert data["data"]["type"] == "findings-metadata"
         assert data["data"]["id"] is None
         assert data["data"]["attributes"]["services"] == []
         assert data["data"]["attributes"]["regions"] == []
+        assert data["data"]["attributes"]["tags"] == {}
+        assert data["data"]["attributes"]["resource_types"] == []
 
-    def test_findings_services_regions_invalid_date(self, authenticated_client):
+    def test_findings_metadata_invalid_date(self, authenticated_client):
         response = authenticated_client.get(
-            reverse("finding-findings_services_regions"),
+            reverse("finding-metadata"),
             {"filter[inserted_at]": "2048-01-011"},
         )
         assert response.json() == {

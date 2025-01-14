@@ -4,6 +4,7 @@ from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.search import SearchQuery
 from django.db import transaction
 from django.db.models import Count, F, OuterRef, Prefetch, Q, Subquery, Sum
+from django.db.models.functions import JSONObject
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_control
@@ -87,6 +88,7 @@ from api.v1.serializers import (
     ComplianceOverviewFullSerializer,
     ComplianceOverviewSerializer,
     FindingDynamicFilterSerializer,
+    FindingMetadataSerializer,
     FindingSerializer,
     InvitationAcceptSerializer,
     InvitationCreateSerializer,
@@ -192,7 +194,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.1.1"
+        spectacular_settings.VERSION = "1.2.0"
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -1274,7 +1276,13 @@ class ResourceViewSet(BaseRLSViewSet):
         tags=["Finding"],
         summary="Retrieve the services and regions that are impacted by findings",
         description="Fetch services and regions affected in findings.",
-        responses={201: OpenApiResponse(response=MembershipSerializer)},
+        filters=True,
+        deprecated=True,
+    ),
+    metadata=extend_schema(
+        tags=["Finding"],
+        summary="Retrieve metadata values from findings",
+        description="Fetch unique metadata values from a set of findings. This is useful for dynamic filtering.",
         filters=True,
     ),
 )
@@ -1308,6 +1316,8 @@ class FindingViewSet(BaseRLSViewSet):
     def get_serializer_class(self):
         if self.action == "findings_services_regions":
             return FindingDynamicFilterSerializer
+        elif self.action == "metadata":
+            return FindingMetadataSerializer
 
         return super().get_serializer_class()
 
@@ -1372,6 +1382,44 @@ class FindingViewSet(BaseRLSViewSet):
         serializer = self.get_serializer(
             data=result,
         )
+        serializer.is_valid(raise_exception=True)
+
+        return Response(data=serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"], url_name="metadata")
+    def metadata(self, request):
+        queryset = self.get_queryset()
+        filtered_queryset = self.filter_queryset(queryset)
+
+        result = filtered_queryset.aggregate(
+            services=ArrayAgg("resources__service", flat=True, distinct=True),
+            regions=ArrayAgg("resources__region", flat=True, distinct=True),
+            tags=ArrayAgg(
+                JSONObject(
+                    key=F("resources__tags__key"), value=F("resources__tags__value")
+                ),
+                distinct=True,
+                filter=Q(resources__tags__key__isnull=False),
+            ),
+            resource_types=ArrayAgg("resources__type", flat=True, distinct=True),
+        )
+        if result["services"] is None:
+            result["services"] = []
+        if result["regions"] is None:
+            result["regions"] = []
+        if result["regions"] is None:
+            result["regions"] = []
+        if result["resource_types"] is None:
+            result["resource_types"] = []
+        if result["tags"] is None:
+            result["tags"] = []
+
+        result["tags"] = {t["key"]: t["value"] for t in result["tags"]}
+
+        serializer = self.get_serializer(
+            data=result,
+        )
+
         serializer.is_valid(raise_exception=True)
 
         return Response(data=serializer.data, status=status.HTTP_200_OK)
