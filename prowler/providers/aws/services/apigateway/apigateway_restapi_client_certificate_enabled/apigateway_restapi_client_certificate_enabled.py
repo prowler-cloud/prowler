@@ -13,6 +13,7 @@ class apigateway_restapi_client_certificate_enabled(Check):
                     metadata=self.metadata(), resource_metadata=stage
                 )
                 report.resource_id = rest_api.name
+                report.region = rest_api.region
                 if stage.client_certificate:
                     report.status = "PASS"
                     report.status_extended = f"API Gateway {rest_api.name} ID {rest_api.id} in stage {stage.name} has client certificate enabled."
