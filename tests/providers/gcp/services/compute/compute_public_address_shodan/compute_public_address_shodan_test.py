@@ -6,7 +6,7 @@ from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, set_mocked_gcp_prov
 
 class Test_compute_public_address_shodan:
     def test_no_public_ip_addresses(self):
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         compute_client.addresses = {}
 
         with mock.patch(
@@ -27,7 +27,7 @@ class Test_compute_public_address_shodan:
             assert len(result) == 0
 
     def test_compute_ip_in_shodan(self):
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         public_ip_id = "id"
         public_ip_name = "name"
         ip_address = "ip_address"

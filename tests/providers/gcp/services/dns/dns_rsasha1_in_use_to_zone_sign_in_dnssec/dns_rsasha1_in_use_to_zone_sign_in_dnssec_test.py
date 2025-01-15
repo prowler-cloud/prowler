@@ -10,7 +10,7 @@ from tests.providers.gcp.gcp_fixtures import (
 
 class Test_dns_rsasha1_in_use_to_zone_sign_in_dnssec:
     def test_dns_no_managed_zones(self):
-        dns_client = mock.MagicMock
+        dns_client = mock.MagicMock()
         dns_client.managed_zones = []
         dns_client.region = GCP_EU1_LOCATION
 
@@ -53,7 +53,7 @@ class Test_dns_rsasha1_in_use_to_zone_sign_in_dnssec:
             project_id=GCP_PROJECT_ID,
         )
 
-        dns_client = mock.MagicMock
+        dns_client = mock.MagicMock()
         dns_client.project_ids = [GCP_PROJECT_ID]
         dns_client.managed_zones = [managed_zone]
         dns_client.region = GCP_EU1_LOCATION
@@ -104,7 +104,7 @@ class Test_dns_rsasha1_in_use_to_zone_sign_in_dnssec:
             project_id=GCP_PROJECT_ID,
         )
 
-        dns_client = mock.MagicMock
+        dns_client = mock.MagicMock()
         dns_client.project_ids = [GCP_PROJECT_ID]
         dns_client.managed_zones = [managed_zone]
         dns_client.region = GCP_EU1_LOCATION

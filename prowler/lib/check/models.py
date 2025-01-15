@@ -513,12 +513,29 @@ class Check_Report_GCP(Check_Report):
     project_id: str
     location: str
 
-    def __init__(self, metadata):
-        super().__init__(metadata)
-        self.resource_name = ""
-        self.resource_id = ""
-        self.project_id = ""
-        self.location = ""
+    def __init__(
+        self,
+        metadata,
+        resource_metadata,
+        location=None,
+        resource_name=None,
+        resource_id=None,
+        project_id=None,
+    ):
+        super().__init__(metadata, resource_metadata)
+        self.resource_id = (
+            resource_id
+            or getattr(resource_metadata, "id", None)
+            or getattr(resource_metadata, "name", None)
+            or ""
+        )
+        self.resource_name = resource_name or getattr(resource_metadata, "name", "")
+        self.project_id = project_id or getattr(resource_metadata, "project_id", "")
+        self.location = (
+            location
+            or getattr(resource_metadata, "location", "")
+            or getattr(resource_metadata, "region", "")
+        )
 
 
 @dataclass

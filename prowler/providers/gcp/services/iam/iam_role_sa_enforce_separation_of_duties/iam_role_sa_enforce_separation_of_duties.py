@@ -9,10 +9,12 @@ class iam_role_sa_enforce_separation_of_duties(Check):
         findings = []
         for project in cloudresourcemanager_client.project_ids:
             non_compliant_members = []
-            report = Check_Report_GCP(self.metadata())
-            report.project_id = project
-            report.location = cloudresourcemanager_client.region
-            report.resource_id = project
+            report = Check_Report_GCP(
+                metadata=self.metadata(),
+                resource_metadata=cloudresourcemanager_client.projects[project],
+                location=cloudresourcemanager_client.region,
+                project_id=project,
+            )
             report.status = "PASS"
             report.status_extended = f"Principle of separation of duties was enforced for Service-Account Related Roles in project {project}."
             for binding in cloudresourcemanager_client.bindings:
