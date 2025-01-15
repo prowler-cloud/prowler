@@ -33,8 +33,9 @@ class Test_defender_additional_email_configured_with_a_security_contact:
         defender_client = mock.MagicMock
         defender_client.security_contacts = {
             AZURE_SUBSCRIPTION_ID: {
-                "default": SecurityContacts(
+                resource_id: SecurityContacts(
                     resource_id=resource_id,
+                    name="default",
                     emails="",
                     phone="",
                     alert_notifications_minimal_severity="High",
@@ -73,8 +74,9 @@ class Test_defender_additional_email_configured_with_a_security_contact:
         defender_client = mock.MagicMock
         defender_client.security_contacts = {
             AZURE_SUBSCRIPTION_ID: {
-                "default": SecurityContacts(
+                resource_id: SecurityContacts(
                     resource_id=resource_id,
+                    name="default",
                     emails="bad_email",
                     phone="",
                     alert_notifications_minimal_severity="High",
@@ -113,8 +115,9 @@ class Test_defender_additional_email_configured_with_a_security_contact:
         defender_client = mock.MagicMock
         defender_client.security_contacts = {
             AZURE_SUBSCRIPTION_ID: {
-                "default": SecurityContacts(
+                resource_id: SecurityContacts(
                     resource_id=resource_id,
+                    name="default",
                     emails="test@test.es,   test@test.email.com",
                     phone="",
                     alert_notifications_minimal_severity="High",
@@ -153,8 +156,9 @@ class Test_defender_additional_email_configured_with_a_security_contact:
         defender_client = mock.MagicMock
         defender_client.security_contacts = {
             AZURE_SUBSCRIPTION_ID: {
-                "default": SecurityContacts(
+                resource_id: SecurityContacts(
                     resource_id=resource_id,
+                    name="default",
                     emails="test@test.com",
                     phone="",
                     alert_notifications_minimal_severity="High",
@@ -193,8 +197,9 @@ class Test_defender_additional_email_configured_with_a_security_contact:
         defender_client = mock.MagicMock
         defender_client.security_contacts = {
             AZURE_SUBSCRIPTION_ID: {
-                "default": SecurityContacts(
+                resource_id: SecurityContacts(
                     resource_id=resource_id,
+                    name="default",
                     emails="test@test.mail.es; bad_mail",
                     phone="",
                     alert_notifications_minimal_severity="High",
@@ -232,8 +237,9 @@ class Test_defender_additional_email_configured_with_a_security_contact:
         defender_client = mock.MagicMock
         defender_client.security_contacts = {
             AZURE_SUBSCRIPTION_ID: {
-                "default": SecurityContacts(
+                f"/subscriptions/{AZURE_SUBSCRIPTION_ID}/providers/Microsoft.Security/securityContacts/default": SecurityContacts(
                     resource_id=f"/subscriptions/{AZURE_SUBSCRIPTION_ID}/providers/Microsoft.Security/securityContacts/default",
+                    name="default",
                     emails="",
                     phone="",
                     alert_notifications_minimal_severity="",

@@ -33,8 +33,9 @@ class Test_defender_ensure_notify_emails_to_owners:
         defender_client = mock.MagicMock
         defender_client.security_contacts = {
             AZURE_SUBSCRIPTION_ID: {
-                "default": SecurityContacts(
+                resource_id: SecurityContacts(
                     resource_id=resource_id,
+                    name="default",
                     emails="",
                     phone="",
                     alert_notifications_minimal_severity="High",
@@ -73,8 +74,9 @@ class Test_defender_ensure_notify_emails_to_owners:
         defender_client = mock.MagicMock
         defender_client.security_contacts = {
             AZURE_SUBSCRIPTION_ID: {
-                "default": SecurityContacts(
+                resource_id: SecurityContacts(
                     resource_id=resource_id,
+                    name="default",
                     emails="",
                     phone="",
                     alert_notifications_minimal_severity="High",
@@ -113,8 +115,9 @@ class Test_defender_ensure_notify_emails_to_owners:
         defender_client = mock.MagicMock
         defender_client.security_contacts = {
             AZURE_SUBSCRIPTION_ID: {
-                "default": SecurityContacts(
+                resource_id: SecurityContacts(
                     resource_id=resource_id,
+                    name="default",
                     emails="test@test.es",
                     phone="",
                     alert_notifications_minimal_severity="High",
@@ -152,8 +155,9 @@ class Test_defender_ensure_notify_emails_to_owners:
         defender_client = mock.MagicMock
         defender_client.security_contacts = {
             AZURE_SUBSCRIPTION_ID: {
-                "default": SecurityContacts(
+                f"/subscriptions/{AZURE_SUBSCRIPTION_ID}/providers/Microsoft.Security/securityContacts/default": SecurityContacts(
                     resource_id=f"/subscriptions/{AZURE_SUBSCRIPTION_ID}/providers/Microsoft.Security/securityContacts/default",
+                    name="default",
                     emails="",
                     phone="",
                     alert_notifications_minimal_severity="",
