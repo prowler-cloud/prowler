@@ -66,6 +66,7 @@ class S3(AWSService):
                                 )
                         else:
                             self.buckets[arn] = Bucket(
+                                arn=arn,
                                 name=bucket["Name"],
                                 region=bucket_region,
                             )
