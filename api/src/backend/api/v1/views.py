@@ -1414,7 +1414,14 @@ class FindingViewSet(BaseRLSViewSet):
         if result["tags"] is None:
             result["tags"] = []
 
-        result["tags"] = {t["key"]: t["value"] for t in result["tags"]}
+        tags_dict = {}
+        for t in result["tags"]:
+            key, value = t["key"], t["value"]
+            if key not in tags_dict:
+                tags_dict[key] = []
+            tags_dict[key].append(value)
+
+        result["tags"] = tags_dict
 
         serializer = self.get_serializer(
             data=result,
