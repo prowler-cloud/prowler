@@ -528,11 +528,17 @@ class Check_Report_Kubernetes(Check_Report):
     resource_id: str
     namespace: str
 
-    def __init__(self, metadata):
-        super().__init__(metadata)
-        self.resource_name = ""
-        self.resource_id = ""
-        self.namespace = ""
+    def __init__(self, metadata, resource_metadata):
+        super().__init__(metadata, resource_metadata)
+        self.resource_id = (
+            getattr(resource_metadata, "uid", None)
+            or getattr(resource_metadata, "name", None)
+            or ""
+        )
+        self.resource_name = getattr(resource_metadata, "name", "")
+        self.namespace = getattr(resource_metadata, "namespace", "cluster-wide")
+        if not self.namespace:
+            self.namespace = "cluster-wide"
 
 
 # Testing Pending
