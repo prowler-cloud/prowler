@@ -7,8 +7,9 @@ class macie_automated_sensitive_data_discovery_enabled(Check):
         findings = []
         for session in macie_client.sessions:
             if session.status == "ENABLED":
-                report = Check_Report_AWS(self.metadata())
-                report.region = session.region
+                report = Check_Report_AWS(
+                    metadata=self.metadata(), resource_metadata=session
+                )
                 report.resource_arn = macie_client._get_session_arn_template(
                     session.region
                 )

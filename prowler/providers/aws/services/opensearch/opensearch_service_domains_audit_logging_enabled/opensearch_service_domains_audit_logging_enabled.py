@@ -8,11 +8,9 @@ class opensearch_service_domains_audit_logging_enabled(Check):
     def execute(self):
         findings = []
         for domain in opensearch_client.opensearch_domains.values():
-            report = Check_Report_AWS(self.metadata())
-            report.region = domain.region
-            report.resource_id = domain.name
-            report.resource_arn = domain.arn
-            report.resource_tags = domain.tags
+            report = Check_Report_AWS(
+                metadata=self.metadata(), resource_metadata=domain
+            )
             report.status = "FAIL"
             report.status_extended = (
                 f"Opensearch domain {domain.name} AUDIT_LOGS disabled."

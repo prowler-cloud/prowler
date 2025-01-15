@@ -7,11 +7,7 @@ class glue_etl_jobs_cloudwatch_logs_encryption_enabled(Check):
         findings = []
         for job in glue_client.jobs:
             no_sec_configs = True
-            report = Check_Report_AWS(self.metadata())
-            report.resource_id = job.name
-            report.resource_arn = job.arn
-            report.region = job.region
-            report.resource_tags = job.tags
+            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=job)
             for sec_config in glue_client.security_configs:
                 if sec_config.name == job.security:
                     no_sec_configs = False
