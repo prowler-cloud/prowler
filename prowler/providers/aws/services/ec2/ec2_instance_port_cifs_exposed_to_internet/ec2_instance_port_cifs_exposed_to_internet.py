@@ -11,7 +11,9 @@ class ec2_instance_port_cifs_exposed_to_internet(Check):
         findings = []
         check_ports = [139, 445]
         for instance in ec2_client.instances:
-            report = Check_Report_AWS(self.metadata(), instance)
+            report = Check_Report_AWS(
+                metadata=self.metadata(), resource_metadata=instance
+            )
             report.status = "PASS"
             report.status_extended = (
                 f"Instance {instance.id} does not have CIFS ports open to the Internet."

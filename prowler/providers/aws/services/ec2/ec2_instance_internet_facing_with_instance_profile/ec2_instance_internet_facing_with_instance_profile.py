@@ -7,7 +7,9 @@ class ec2_instance_internet_facing_with_instance_profile(Check):
         findings = []
         for instance in ec2_client.instances:
             if instance.state != "terminated":
-                report = Check_Report_AWS(self.metadata(), instance)
+                report = Check_Report_AWS(
+                    metadata=self.metadata(), resource_metadata=instance
+                )
                 report.status = "PASS"
                 report.status_extended = f"EC2 Instance {instance.id} is not internet facing with an instance profile."
                 if instance.public_ip and instance.instance_profile:

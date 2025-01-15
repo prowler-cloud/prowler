@@ -18,7 +18,9 @@ class ec2_securitygroup_allow_ingress_from_internet_to_port_mongodb_27017_27018(
                 and vpc_client.vpcs[security_group.vpc_id].in_use
                 and len(security_group.network_interfaces) > 0
             ):
-                report = Check_Report_AWS(self.metadata(), security_group)
+                report = Check_Report_AWS(
+                    metadata=self.metadata(), resource_metadata=security_group
+                )
                 report.resource_details = security_group.name
                 report.status = "PASS"
                 report.status_extended = f"Security group {security_group.name} ({security_group.id}) does not have MongoDB ports 27017 and 27018 open to the Internet."

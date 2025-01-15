@@ -16,7 +16,9 @@ class ec2_securitygroup_default_restrict_traffic(Check):
                     and len(security_group.network_interfaces) > 0
                 )
             ):
-                report = Check_Report_AWS(self.metadata(), security_group)
+                report = Check_Report_AWS(
+                    metadata=self.metadata(), resource_metadata=security_group
+                )
                 report.resource_details = security_group.name
                 report.status = "FAIL"
                 report.status_extended = (

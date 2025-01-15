@@ -27,10 +27,7 @@ class directconnect_virtual_interface_redundancy(Check):
             findings.append(report)
 
         for dxgw in directconnect_client.dxgws.values():
-            report = Check_Report_AWS(self.metadata())
-            report.region = dxgw.region
-            report.resource_arn = dxgw.arn
-            report.resource_id = dxgw.id
+            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=dxgw)
             if len(dxgw.vifs) < 2:
                 report.status = "FAIL"
                 report.status_extended = (
