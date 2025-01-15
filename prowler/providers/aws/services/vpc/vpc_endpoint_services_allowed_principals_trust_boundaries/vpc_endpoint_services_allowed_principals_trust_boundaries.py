@@ -10,11 +10,9 @@ class vpc_endpoint_services_allowed_principals_trust_boundaries(Check):
         # Get trusted account_ids from prowler.config.yaml
         trusted_account_ids = vpc_client.audit_config.get("trusted_account_ids", [])
         for service in vpc_client.vpc_endpoint_services:
-            report = Check_Report_AWS(self.metadata())
-            report.region = service.region
-            report.resource_id = service.id
-            report.resource_arn = service.arn
-            report.resource_tags = service.tags
+            report = Check_Report_AWS(
+                metadata=self.metadata(), resource_metadata=service
+            )
 
             if not service.allowed_principals:
                 report.status = "PASS"

@@ -475,4 +475,5 @@ class Test_VPC_Service:
         vpn_conn = vpc.vpn_connections[vpn_arn]
         assert vpn_conn.id == "vpn-1234567890abcdef0"
         assert vpn_conn.region == AWS_REGION_US_EAST_1
+        assert vpn_conn.arn == vpn_arn
         assert len(vpn_conn.tunnels) == 2

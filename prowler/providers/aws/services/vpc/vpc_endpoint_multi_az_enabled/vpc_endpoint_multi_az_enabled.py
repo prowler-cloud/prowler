@@ -7,11 +7,9 @@ class vpc_endpoint_multi_az_enabled(Check):
         findings = []
         for endpoint in vpc_client.vpc_endpoints:
             if endpoint.vpc_id in vpc_client.vpcs and endpoint.type == "Interface":
-                report = Check_Report_AWS(self.metadata())
-                report.region = endpoint.region
-                report.resource_tags = endpoint.tags
-                report.resource_id = endpoint.id
-                report.resource_arn = endpoint.arn
+                report = Check_Report_AWS(
+                    metadata=self.metadata(), resource_metadata=endpoint
+                )
                 report.status = "FAIL"
                 report.status_extended = f"VPC Endpoint {endpoint.id} in VPC {endpoint.vpc_id} has subnets in different AZs."
                 if len(endpoint.subnet_ids) > 1:
