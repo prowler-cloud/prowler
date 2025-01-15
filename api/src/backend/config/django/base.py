@@ -115,6 +115,12 @@ DJANGO_GUID = {
 
 DATABASE_ROUTERS = ["api.db_router.MainRouter"]
 
+# Database connection pool
+DB_CP_MIN_SIZE = env.int("DJANGO_DB_CONNECTION_POOL_MIN_SIZE", 4)
+DB_CP_MAX_SIZE = env.int("DJANGO_DB_CONNECTION_POOL_MAX_SIZE", 10)
+DB_CP_MAX_IDLE = env.int("DJANGO_DB_CONNECTION_POOL_MAX_IDLE", 36000)
+DB_CP_MAX_LIFETIME = env.int("DJANGO_DB_CONNECTION_POOL_MAX_LIFETIME", 86400)
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
