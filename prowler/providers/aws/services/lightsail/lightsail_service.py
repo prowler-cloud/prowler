@@ -66,6 +66,7 @@ class Lightsail(AWSService):
                         self.instances[arn] = Instance(
                             name=instance.get("name", ""),
                             id=instance.get("supportCode", ""),
+                            arn=arn,
                             tags=instance.get("tags", []),
                             region=instance.get(
                                 "location", {"regionName": regional_client.region}
@@ -106,6 +107,7 @@ class Lightsail(AWSService):
                         self.databases[arn] = Database(
                             name=database.get("name", ""),
                             id=database.get("supportCode", ""),
+                            arn=arn,
                             tags=database.get("tags", []),
                             region=database.get(
                                 "location", {"regionName": regional_client.region}
@@ -142,6 +144,7 @@ class Lightsail(AWSService):
                         self.static_ips[arn] = StaticIP(
                             name=static_ip.get("name", ""),
                             id=static_ip.get("supportCode", ""),
+                            arn=arn,
                             region=static_ip.get(
                                 "location", {"regionName": regional_client.region}
                             ).get("regionName", ""),
@@ -169,6 +172,7 @@ class PortRange(BaseModel):
 class Instance(BaseModel):
     name: str
     id: str
+    arn: str
     tags: List[Dict[str, str]]
     region: str
     availability_zone: str
@@ -184,6 +188,7 @@ class Instance(BaseModel):
 class Database(BaseModel):
     name: str
     id: str
+    arn: str
     tags: List[Dict[str, str]]
     region: str
     availability_zone: str
@@ -197,6 +202,7 @@ class Database(BaseModel):
 class StaticIP(BaseModel):
     name: str
     id: str
+    arn: str
     region: str
     availability_zone: str
     ip_address: str

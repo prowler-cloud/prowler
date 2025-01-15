@@ -20,11 +20,7 @@ class glue_etl_jobs_logging_enabled(Check):
         """
         findings = []
         for job in glue_client.jobs:
-            report = Check_Report_AWS(self.metadata())
-            report.resource_id = job.name
-            report.resource_arn = job.arn
-            report.region = job.region
-            report.resource_tags = job.tags
+            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=job)
             report.status = "FAIL"
             report.status_extended = (
                 f"Glue job {job.name} does not have logging enabled."

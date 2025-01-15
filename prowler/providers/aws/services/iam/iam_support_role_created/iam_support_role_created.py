@@ -6,7 +6,10 @@ class iam_support_role_created(Check):
     def execute(self) -> Check_Report_AWS:
         findings = []
         if iam_client.entities_role_attached_to_support_policy is not None:
-            report = Check_Report_AWS(self.metadata())
+            report = Check_Report_AWS(
+                metadata=self.metadata(),
+                resource_metadata=iam_client.entities_role_attached_to_support_policy,
+            )
             report.region = iam_client.region
             report.resource_id = iam_client.audited_account
             report.resource_arn = (
