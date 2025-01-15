@@ -11,9 +11,6 @@ class entra_policy_user_consent_for_verified_apps(Check):
                 metadata=self.metadata(), resource_metadata=auth_policy
             )
             report.subscription = f"Tenant: {tenant_domain}"
-            if not auth_policy:
-                report.resource_name = "Authorization Policy"
-                report.resource_id = "authorizationPolicy"
             report.status = "PASS"
             report.status_extended = "Entra does not allow users to consent non-verified apps accessing company data on their behalf."
 

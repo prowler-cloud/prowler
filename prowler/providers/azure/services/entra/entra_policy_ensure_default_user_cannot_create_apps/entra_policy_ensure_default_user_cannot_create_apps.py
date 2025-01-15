@@ -11,9 +11,6 @@ class entra_policy_ensure_default_user_cannot_create_apps(Check):
                 metadata=self.metadata(), resource_metadata=auth_policy
             )
             report.subscription = f"Tenant: {tenant_domain}"
-            if not auth_policy:
-                report.resource_name = "Authorization Policy"
-                report.resource_id = "authorizationPolicy"
             report.status = "FAIL"
             report.status_extended = "App creation is not disabled for non-admin users."
 

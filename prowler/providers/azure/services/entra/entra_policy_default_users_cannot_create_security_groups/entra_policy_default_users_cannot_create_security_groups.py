@@ -11,9 +11,6 @@ class entra_policy_default_users_cannot_create_security_groups(Check):
                 metadata=self.metadata(), resource_metadata=auth_policy
             )
             report.subscription = f"Tenant: {tenant_domain}"
-            if not auth_policy:
-                report.resource_name = "Authorization Policy"
-                report.resource_id = "authorizationPolicy"
             report.status = "FAIL"
             report.status_extended = "Non-privileged users are able to create security groups via the Access Panel and the Azure administration portal."
 

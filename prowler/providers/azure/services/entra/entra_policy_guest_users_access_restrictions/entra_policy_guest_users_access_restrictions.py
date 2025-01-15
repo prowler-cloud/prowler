@@ -12,9 +12,6 @@ class entra_policy_guest_users_access_restrictions(Check):
                 metadata=self.metadata(), resource_metadata=auth_policy
             )
             report.subscription = f"Tenant: {tenant_domain}"
-            if not auth_policy:
-                report.resource_name = "Authorization Policy"
-                report.resource_id = "authorizationPolicy"
             report.status = "FAIL"
             report.status_extended = "Guest user access is not restricted to properties and memberships of their own directory objects"
 
