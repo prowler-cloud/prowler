@@ -478,6 +478,51 @@ paths:
         explode: false
         style: form
       - in: query
+        name: filter[resource_tag_key]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_tag_key__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_tag_key__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_tag_value]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_tag_value__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_tag_value__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_tags]
+        schema:
+          type: array
+          items:
+            type: string
+        description: |-
+          Filter by resource tags `key:value` pairs.
+          Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[resource_type]
         schema:
           type: string
@@ -984,6 +1029,51 @@ paths:
         explode: false
         style: form
       - in: query
+        name: filter[resource_tag_key]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_tag_key__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_tag_key__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_tag_value]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_tag_value__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_tag_value__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_tags]
+        schema:
+          type: array
+          items:
+            type: string
+        description: |-
+          Filter by resource tags `key:value` pairs.
+          Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[resource_type]
         schema:
           type: string
@@ -1408,6 +1498,51 @@ paths:
           items:
             type: string
         description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_tag_key]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_tag_key__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_tag_key__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_tag_value]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_tag_value__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_tag_value__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_tags]
+        schema:
+          type: array
+          items:
+            type: string
+        description: |-
+          Filter by resource tags `key:value` pairs.
+          Multiple values may be separated by commas.
         explode: false
         style: form
       - in: query
