@@ -63,8 +63,9 @@ class Test_app_http_logs_enabled:
 
             app_client.apps = {
                 AZURE_SUBSCRIPTION_ID: {
-                    "app1": WebApp(
+                    "resource_id": WebApp(
                         resource_id="resource_id",
+                        name="app1",
                         auth_enabled=True,
                         configurations=None,
                         client_cert_mode="Ignore",
@@ -107,8 +108,9 @@ class Test_app_http_logs_enabled:
 
             app_client.apps = {
                 AZURE_SUBSCRIPTION_ID: {
-                    "app_id-1": WebApp(
+                    "resource_id1": WebApp(
                         resource_id="resource_id1",
+                        name="app_id-1",
                         auth_enabled=True,
                         configurations=None,
                         client_cert_mode="Ignore",
@@ -151,8 +153,9 @@ class Test_app_http_logs_enabled:
                             ),
                         ],
                     ),
-                    "app_id-2": WebApp(
+                    "resource_id2": WebApp(
                         resource_id="resource_id2",
+                        name="app_id-2",
                         auth_enabled=True,
                         configurations=None,
                         client_cert_mode="Ignore",
