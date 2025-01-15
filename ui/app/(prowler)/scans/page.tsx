@@ -8,7 +8,6 @@ import {
   ButtonRefreshData,
   NoProvidersAdded,
   NoProvidersConnected,
-  ScanWarningBar,
 } from "@/components/scans";
 import { LaunchScanWorkflow } from "@/components/scans/launch-workflow";
 import { SkeletonTableScans } from "@/components/scans/table";
@@ -75,8 +74,6 @@ export default async function Scans({
           )}
           <div className="grid grid-cols-12 items-start gap-4">
             <div className="col-span-12">
-              <ScanWarningBar />
-              <Spacer y={4} />
               <div className="flex flex-row items-center justify-between">
                 <DataTableFilterCustom filters={filterScans || []} />
                 <ButtonRefreshData
