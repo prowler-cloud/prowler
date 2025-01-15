@@ -396,6 +396,23 @@ def provider_groups_fixture(tenants_fixture):
 
 
 @pytest.fixture
+def admin_role_fixture(tenants_fixture):
+    tenant, *_ = tenants_fixture
+
+    return Role.objects.get_or_create(
+        name="admin",
+        tenant_id=tenant.id,
+        manage_users=True,
+        manage_account=True,
+        manage_billing=True,
+        manage_providers=True,
+        manage_integrations=True,
+        manage_scans=True,
+        unlimited_visibility=True,
+    )[0]
+
+
+@pytest.fixture
 def roles_fixture(tenants_fixture):
     tenant, *_ = tenants_fixture
     role1 = Role.objects.create(
@@ -609,6 +626,7 @@ def findings_fixture(scans_fixture, resources_fixture):
             "CheckId": "test_check_id",
             "Description": "test description apple sauce",
         },
+        first_seen_at="2024-01-02T00:00:00Z",
     )
 
     finding1.add_resources([resource1])
@@ -634,6 +652,7 @@ def findings_fixture(scans_fixture, resources_fixture):
             "CheckId": "test_check_id",
             "Description": "test description orange juice",
         },
+        first_seen_at="2024-01-02T00:00:00Z",
     )
 
     finding2.add_resources([resource2])

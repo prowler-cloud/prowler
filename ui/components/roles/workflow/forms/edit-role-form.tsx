@@ -159,10 +159,15 @@ export const EditRoleForm = ({
 
   const permissions = [
     { field: "manage_users", label: "Invite and Manage Users" },
-    { field: "manage_account", label: "Manage Account" },
-    { field: "manage_billing", label: "Manage Billing" },
+    ...(process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true"
+      ? [
+          { field: "manage_account", label: "Manage Account" },
+          { field: "manage_billing", label: "Manage Billing" },
+        ]
+      : []),
     { field: "manage_providers", label: "Manage Cloud Providers" },
-    { field: "manage_integrations", label: "Manage Integrations" },
+    // TODO: Add back when we have integrations ready
+    // { field: "manage_integrations", label: "Manage Integrations" },
     { field: "manage_scans", label: "Manage Scans" },
     { field: "unlimited_visibility", label: "Unlimited Visibility" },
   ];

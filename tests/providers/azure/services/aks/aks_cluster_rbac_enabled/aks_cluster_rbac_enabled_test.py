@@ -53,6 +53,7 @@ class Test_aks_cluster_rbac_enabled:
         aks_client.clusters = {
             AZURE_SUBSCRIPTION_ID: {
                 cluster_id: Cluster(
+                    id=cluster_id,
                     name="cluster_name",
                     public_fqdn="public_fqdn",
                     private_fqdn=None,
@@ -94,6 +95,7 @@ class Test_aks_cluster_rbac_enabled:
         aks_client.clusters = {
             AZURE_SUBSCRIPTION_ID: {
                 cluster_id: Cluster(
+                    id=cluster_id,
                     name="cluster_name",
                     public_fqdn="public_fqdn",
                     private_fqdn=None,
