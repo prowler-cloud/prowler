@@ -416,12 +416,16 @@ class Check_Report:
         Args:
             metadata: The metadata of the check.
             resource: Basic information about the resource. Defaults to None.
-                      Only accepted BaseModels (dict attribute), custom models (to_dict attribute) or objects with __dict__.
+                      Only accepted dict, list, BaseModels (dict attribute), custom models (with to_dict attribute) or objects with __dict__.
         """
         self.status = ""
         self.check_metadata = CheckMetadata.parse_raw(metadata)
 
-        if hasattr(resource, "dict"):
+        if isinstance(resource, dict):
+            self.resource_metadata = resource
+        elif isinstance(resource, list):
+            self.resource_metadata = dict(enumerate(resource))
+        elif hasattr(resource, "dict"):
             self.resource_metadata = resource.dict()
         elif hasattr(resource, "to_dict"):
             self.resource_metadata = resource.to_dict()
