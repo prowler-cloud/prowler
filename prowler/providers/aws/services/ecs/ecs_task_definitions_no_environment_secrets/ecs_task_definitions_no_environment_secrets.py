@@ -29,7 +29,11 @@ class ecs_task_definitions_no_environment_secrets(Check):
 
                     env_data = dumps(dump_env_vars, indent=2)
                     detect_secrets_output = detect_secrets_scan(
-                        data=env_data, excluded_secrets=secrets_ignore_patterns
+                        data=env_data,
+                        excluded_secrets=secrets_ignore_patterns,
+                        detect_secrets_plugins=ecs_client.audit_config.get(
+                            "detect_secrets_plugins", None
+                        ),
                     )
                     if detect_secrets_output:
                         secrets_string = ", ".join(

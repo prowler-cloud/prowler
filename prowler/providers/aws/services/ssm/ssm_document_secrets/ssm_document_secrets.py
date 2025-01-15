@@ -26,6 +26,9 @@ class ssm_document_secrets(Check):
                 detect_secrets_output = detect_secrets_scan(
                     data=json.dumps(document.content, indent=2),
                     excluded_secrets=secrets_ignore_patterns,
+                    detect_secrets_plugins=ssm_client.audit_config.get(
+                        "detect_secrets_plugins", None
+                    ),
                 )
                 if detect_secrets_output:
                     secrets_string = ", ".join(
