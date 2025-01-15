@@ -15,11 +15,7 @@ class cloudformation_stack_outputs_find_secrets(Check):
             "secrets_ignore_patterns", []
         )
         for stack in cloudformation_client.stacks:
-            report = Check_Report_AWS(self.metadata())
-            report.region = stack.region
-            report.resource_id = stack.name
-            report.resource_arn = stack.arn
-            report.resource_tags = stack.tags
+            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=stack)
             report.status = "PASS"
             report.status_extended = (
                 f"No secrets found in CloudFormation Stack {stack.name} Outputs."
