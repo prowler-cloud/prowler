@@ -1,8 +1,6 @@
 import socket
-from dataclasses import dataclass
-from typing import List, Optional
+from typing import Any, List, Optional
 
-from kubernetes.client.models import V1PodSecurityContext, V1SecurityContext
 from pydantic import BaseModel
 
 from kubernetes import client
@@ -143,18 +141,16 @@ class Core(KubernetesService):
             )
 
 
-@dataclass
-class Container:
+class Container(BaseModel):
     name: str
     image: str
     command: Optional[List[str]]
     ports: Optional[List[dict]]
     env: Optional[List[dict]]
-    security_context: Optional[V1SecurityContext]
+    security_context: Any
 
 
-@dataclass
-class Pod:
+class Pod(BaseModel):
     name: str
     uid: str
     namespace: str
@@ -168,7 +164,7 @@ class Pod:
     host_pid: Optional[str]
     host_ipc: Optional[str]
     host_network: Optional[str]
-    security_context: Optional[V1PodSecurityContext]
+    security_context: Any
     containers: Optional[dict]
 
 
