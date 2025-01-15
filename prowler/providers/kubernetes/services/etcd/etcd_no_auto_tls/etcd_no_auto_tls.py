@@ -6,7 +6,9 @@ class etcd_no_auto_tls(Check):
     def execute(self) -> Check_Report_Kubernetes:
         findings = []
         for pod in etcd_client.etcd_pods:
-            report = Check_Report_Kubernetes(self.metadata(), pod)
+            report = Check_Report_Kubernetes(
+                metadata=self.metadata(), resource_metadata=pod
+            )
             report.status = "PASS"
             report.status_extended = f"Etcd is not configured to use self-signed certificates for TLS in pod {pod.name}."
             for container in pod.containers.values():

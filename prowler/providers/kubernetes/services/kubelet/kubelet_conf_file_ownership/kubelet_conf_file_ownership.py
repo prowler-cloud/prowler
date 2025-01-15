@@ -7,7 +7,9 @@ class kubelet_conf_file_ownership(Check):
     def execute(self) -> Check_Report_Kubernetes:
         findings = []
         for node in core_client.nodes.values():
-            report = Check_Report_Kubernetes(self.metadata(), node)
+            report = Check_Report_Kubernetes(
+                metadata=self.metadata(), resource_metadata=node
+            )
             # It can only be checked if Prowler is being executed inside a worker node or if the file is the default one
             if node.inside:
                 if is_owned_by_root("/etc/kubernetes/kubelet.conf") is None:

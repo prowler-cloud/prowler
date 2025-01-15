@@ -14,7 +14,9 @@ class rbac_minimize_csr_approval_access(Check):
         for crb in rbac_client.cluster_role_bindings.values():
             for subject in crb.subjects:
                 if subject.kind in ["User", "Group"]:
-                    report = Check_Report_Kubernetes(self.metadata(), subject)
+                    report = Check_Report_Kubernetes(
+                        metadata=self.metadata(), resource_metadata=subject
+                    )
                     report.status = "PASS"
                     report.status_extended = f"User or group '{subject.name}' does not have access to update the CSR approval sub-resource."
                     for cr in rbac_client.cluster_roles.values():

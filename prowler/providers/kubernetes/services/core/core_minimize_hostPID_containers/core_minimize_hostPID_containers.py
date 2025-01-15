@@ -6,7 +6,9 @@ class core_minimize_hostPID_containers(Check):
     def execute(self) -> Check_Report_Kubernetes:
         findings = []
         for pod in core_client.pods.values():
-            report = Check_Report_Kubernetes(self.metadata(), pod)
+            report = Check_Report_Kubernetes(
+                metadata=self.metadata(), resource_metadata=pod
+            )
             if pod.host_pid:
                 report.status = "FAIL"
                 report.status_extended = f"Pod {pod.name} is using hostPID."

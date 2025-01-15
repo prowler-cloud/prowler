@@ -8,7 +8,9 @@ class apiserver_auth_mode_include_node(Check):
     def execute(self) -> Check_Report_Kubernetes:
         findings = []
         for pod in apiserver_client.apiserver_pods:
-            report = Check_Report_Kubernetes(self.metadata(), pod)
+            report = Check_Report_Kubernetes(
+                metadata=self.metadata(), resource_metadata=pod
+            )
             report.status = "PASS"
             report.status_extended = (
                 f"API Server authorization mode includes Node in pod {pod.name}."

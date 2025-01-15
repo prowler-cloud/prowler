@@ -6,7 +6,9 @@ class etcd_tls_encryption(Check):
     def execute(self) -> Check_Report_Kubernetes:
         findings = []
         for pod in etcd_client.etcd_pods:
-            report = Check_Report_Kubernetes(self.metadata(), pod)
+            report = Check_Report_Kubernetes(
+                metadata=self.metadata(), resource_metadata=pod
+            )
             report.status = "FAIL"
             report.status_extended = (
                 f"Etcd does not have TLS encryption configured in pod {pod.name}."

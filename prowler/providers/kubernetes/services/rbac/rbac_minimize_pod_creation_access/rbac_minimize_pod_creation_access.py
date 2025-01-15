@@ -13,7 +13,9 @@ class rbac_minimize_pod_creation_access(Check):
         findings = []
         # Check ClusterRoleBindings for pod create access
         for cr in rbac_client.cluster_roles.values():
-            report = Check_Report_Kubernetes(self.metadata(), cr.metadata)
+            report = Check_Report_Kubernetes(
+                metadata=self.metadata(), resource_metadata=cr.metadata
+            )
             report.status = "PASS"
             report.status_extended = (
                 f"ClusterRole {cr.metadata.name} does not have pod create access."
@@ -27,7 +29,9 @@ class rbac_minimize_pod_creation_access(Check):
 
         # Check RoleBindings for pod create access
         for role in rbac_client.roles.values():
-            report = Check_Report_Kubernetes(self.metadata(), role.metadata)
+            report = Check_Report_Kubernetes(
+                metadata=self.metadata(), resource_metadata=role.metadata
+            )
             report.status = "PASS"
             report.status_extended = (
                 f"Role {role.metadata.name} does not have pod create access."

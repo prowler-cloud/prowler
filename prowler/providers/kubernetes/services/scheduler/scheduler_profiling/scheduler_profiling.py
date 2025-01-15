@@ -8,7 +8,9 @@ class scheduler_profiling(Check):
     def execute(self) -> Check_Report_Kubernetes:
         findings = []
         for pod in scheduler_client.scheduler_pods:
-            report = Check_Report_Kubernetes(self.metadata(), pod)
+            report = Check_Report_Kubernetes(
+                metadata=self.metadata(), resource_metadata=pod
+            )
             report.status = "FAIL"
             report.status_extended = (
                 f"Scheduler has profiling enabled in pod {pod.name}."
