@@ -82,8 +82,9 @@ class cloudtrail_threat_detection_llm_jacking(Check):
             if len(actions) / len(llm_jacking_actions) > threshold:
                 found_potential_llm_jacking = True
                 report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=cloudtrail_client
+                    metadata=self.metadata(), resource_metadata=cloudtrail_client.trails
                 )
+                report.region = cloudtrail_client.region
                 report.resource_id = aws_identity_arn.split("/")[-1]
                 report.resource_arn = aws_identity_arn
                 report.status = "FAIL"
@@ -91,8 +92,9 @@ class cloudtrail_threat_detection_llm_jacking(Check):
                 findings.append(report)
         if not found_potential_llm_jacking:
             report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=cloudtrail_client
+                metadata=self.metadata(), resource_metadata=cloudtrail_client.trails
             )
+            report.region = cloudtrail_client.region
             report.resource_id = cloudtrail_client.audited_account
             report.resource_arn = cloudtrail_client._get_trail_arn_template(
                 cloudtrail_client.region

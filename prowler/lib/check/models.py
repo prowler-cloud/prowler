@@ -413,7 +413,11 @@ class Check_Report:
     def __init__(self, metadata, resource=None):
         self.status = ""
         self.check_metadata = CheckMetadata.parse_raw(metadata)
-        self.resource_metadata = resource.dict() if resource else {}
+        self.resource_metadata = (
+            resource.dict()
+            if hasattr(resource, "dict")
+            else resource.to_dict() if hasattr(resource, "to_dict") else {}
+        )
         self.status_extended = ""
         self.resource_details = ""
         self.resource_tags = getattr(resource, "tags", []) if resource else []

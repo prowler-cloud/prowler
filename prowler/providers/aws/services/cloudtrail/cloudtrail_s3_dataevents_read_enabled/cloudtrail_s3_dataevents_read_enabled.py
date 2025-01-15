@@ -54,7 +54,9 @@ class cloudtrail_s3_dataevents_read_enabled(Check):
             if not findings and (
                 s3_client.buckets or cloudtrail_client.provider.scan_unused_services
             ):
-                report = Check_Report_AWS(metadata=self.metadata())
+                report = Check_Report_AWS(
+                    metadata=self.metadata(), resource_metadata=cloudtrail_client.trails
+                )
                 report.region = cloudtrail_client.region
                 report.resource_arn = cloudtrail_client.trail_arn_template
                 report.resource_id = cloudtrail_client.audited_account
