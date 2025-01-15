@@ -6,7 +6,7 @@ class ec2_ami_public(Check):
     def execute(self):
         findings = []
         for image in ec2_client.images:
-            report = Check_Report_AWS(self.metadata(), image)
+            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=image)
             report.status = "PASS"
             report.status_extended = (
                 f"EC2 AMI {image.name if image.name else image.id} is not public."

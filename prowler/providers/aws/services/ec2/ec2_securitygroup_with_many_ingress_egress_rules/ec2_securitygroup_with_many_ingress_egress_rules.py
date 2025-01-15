@@ -11,7 +11,9 @@ class ec2_securitygroup_with_many_ingress_egress_rules(Check):
             "max_security_group_rules", 50
         )
         for security_group_arn, security_group in ec2_client.security_groups.items():
-            report = Check_Report_AWS(self.metadata(), security_group)
+            report = Check_Report_AWS(
+                metadata=self.metadata(), resource_metadata=security_group
+            )
             report.resource_details = security_group.name
             report.status = "PASS"
             report.status_extended = f"Security group {security_group.name} ({security_group.id}) has {len(security_group.ingress_rules)} inbound rules and {len(security_group.egress_rules)} outbound rules."

@@ -11,7 +11,9 @@ class ec2_instance_port_telnet_exposed_to_internet(Check):
         findings = []
         check_ports = [23]
         for instance in ec2_client.instances:
-            report = Check_Report_AWS(self.metadata(), instance)
+            report = Check_Report_AWS(
+                metadata=self.metadata(), resource_metadata=instance
+            )
             report.status = "PASS"
             report.status_extended = f"Instance {instance.id} does not have Telnet port 23 open to the Internet."
             is_open_port = False

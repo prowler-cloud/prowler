@@ -11,7 +11,9 @@ class ec2_instance_port_oracle_exposed_to_internet(Check):
         findings = []
         check_ports = [1521, 2483, 2484]
         for instance in ec2_client.instances:
-            report = Check_Report_AWS(self.metadata(), instance)
+            report = Check_Report_AWS(
+                metadata=self.metadata(), resource_metadata=instance
+            )
             report.status = "PASS"
             report.status_extended = f"Instance {instance.id} does not have Oracle ports open to the Internet."
             is_open_port = False

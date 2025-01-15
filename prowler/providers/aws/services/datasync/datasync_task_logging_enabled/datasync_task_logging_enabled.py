@@ -22,7 +22,7 @@ class datasync_task_logging_enabled(Check):
         """
         findings = []
         for task in datasync_client.tasks.values():
-            report = Check_Report_AWS(self.metadata(), task)
+            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=task)
             report.status = "PASS"
             report.status_extended = f"DataSync task {task.name} has logging enabled."
 
