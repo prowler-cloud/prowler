@@ -11,7 +11,6 @@ class iam_account_access_approval_enabled(Check):
             report = Check_Report_GCP(
                 metadata=self.metadata(),
                 resource_metadata=project_id,
-                project_id=project_id,
                 resource_id=project_id,
                 location=accessapproval_client.region,
             )

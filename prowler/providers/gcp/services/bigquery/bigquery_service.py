@@ -44,7 +44,7 @@ class BigQuery(GCPService):
                             Dataset(
                                 name=dataset["datasetReference"]["datasetId"],
                                 id=dataset["id"],
-                                location=dataset["location"],
+                                region=dataset["location"],
                                 cmk_encryption=cmk_encryption,
                                 public=public,
                                 project_id=project_id,
@@ -85,7 +85,7 @@ class BigQuery(GCPService):
                             Table(
                                 name=table["tableReference"]["tableId"],
                                 id=table["id"],
-                                location=dataset.location,
+                                region=dataset.region,
                                 cmk_encryption=cmk_encryption,
                                 project_id=dataset.project_id,
                             )
@@ -103,7 +103,7 @@ class BigQuery(GCPService):
 class Dataset(BaseModel):
     name: str
     id: str
-    location: str
+    region: str
     cmk_encryption: bool
     public: bool
     project_id: str
@@ -112,6 +112,6 @@ class Dataset(BaseModel):
 class Table(BaseModel):
     name: str
     id: str
-    location: str
+    region: str
     cmk_encryption: bool
     project_id: str

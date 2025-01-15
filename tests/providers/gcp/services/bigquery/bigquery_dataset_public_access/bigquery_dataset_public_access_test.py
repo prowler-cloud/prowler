@@ -29,7 +29,7 @@ class Test_bigquery_dataset_public_access:
         dataset = Dataset(
             name="test",
             id="1234567890",
-            location="us-central1",
+            region="us-central1",
             cmk_encryption=False,
             public=False,
             project_id=GCP_PROJECT_ID,
@@ -62,7 +62,7 @@ class Test_bigquery_dataset_public_access:
             assert result[0].resource_id == dataset.id
             assert result[0].resource_name == dataset.name
             assert result[0].project_id == dataset.project_id
-            assert result[0].location == dataset.location
+            assert result[0].location == dataset.region
 
     def test_one_non_compliant_dataset(self):
         from prowler.providers.gcp.services.bigquery.bigquery_service import Dataset
@@ -70,7 +70,7 @@ class Test_bigquery_dataset_public_access:
         dataset = Dataset(
             name="test",
             id="1234567890",
-            location="us-central1",
+            region="us-central1",
             cmk_encryption=False,
             public=True,
             project_id=GCP_PROJECT_ID,
@@ -103,4 +103,4 @@ class Test_bigquery_dataset_public_access:
             assert result[0].resource_id == dataset.id
             assert result[0].resource_name == dataset.name
             assert result[0].project_id == dataset.project_id
-            assert result[0].location == dataset.location
+            assert result[0].location == dataset.region

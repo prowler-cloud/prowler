@@ -11,7 +11,6 @@ class gcr_container_scanning_enabled(Check):
             report = Check_Report_GCP(
                 metadata=self.metadata(),
                 resource_metadata=project_id,
-                project_id=project_id,
                 resource_id="containerscanning.googleapis.com",
                 resource_name="GCR Container Scanning",
                 location=serviceusage_client.region,
