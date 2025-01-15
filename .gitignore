@@ -45,6 +45,7 @@ junit-reports/
 # Terraform
 .terraform*
 *.tfstate
+*.tfstate.*
 
 # .env
 ui/.env*

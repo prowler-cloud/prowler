@@ -30,7 +30,15 @@ export default function ManageGroupsPage({
           {providerGroupId ? (
             <SSRDataEditGroup searchParams={searchParams} />
           ) : (
-            <SSRAddGroupForm />
+            <div className="flex flex-col">
+              <h1 className="mb-2 text-xl font-medium" id="getting-started">
+                Create a new provider group
+              </h1>
+              <p className="mb-5 text-small text-default-500">
+                Create a new provider group to manage the providers and roles.
+              </p>
+              <SSRAddGroupForm />
+            </div>
           )}
         </Suspense>
       </div>
@@ -131,12 +139,20 @@ const SSRDataEditGroup = async ({
   };
 
   return (
-    <EditGroupForm
-      providerGroupId={providerGroupId}
-      providerGroupData={formData}
-      allProviders={providersList}
-      allRoles={rolesList}
-    />
+    <div className="flex flex-col">
+      <h1 className="mb-2 text-xl font-medium" id="getting-started">
+        Edit provider group
+      </h1>
+      <p className="mb-5 text-small text-default-500">
+        Edit the provider group to manage the providers and roles.
+      </p>
+      <EditGroupForm
+        providerGroupId={providerGroupId}
+        providerGroupData={formData}
+        allProviders={providersList}
+        allRoles={rolesList}
+      />
+    </div>
   );
 };
 
