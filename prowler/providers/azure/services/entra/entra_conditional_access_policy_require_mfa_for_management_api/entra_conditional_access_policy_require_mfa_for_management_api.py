@@ -11,16 +11,7 @@ class entra_conditional_access_policy_require_mfa_for_management_api(Check):
             tenant_name,
             conditional_access_policies,
         ) in entra_client.conditional_access_policy.items():
-            report = Check_Report_Azure(self.metadata())
-            report.status = "FAIL"
-            report.subscription = f"Tenant: {tenant_name}"
-            report.resource_name = "Conditional Access Policy"
-            report.resource_id = "Conditional Access Policy"
-            report.status_extended = (
-                "Conditional Access Policy does not require MFA for management API."
-            )
-
-            for policy_id, policy in conditional_access_policies.items():
+            for policy in conditional_access_policies.values():
                 if (
                     policy.state == "enabled"
                     and "All" in policy.users["include"]
@@ -31,13 +22,24 @@ class entra_conditional_access_policy_require_mfa_for_management_api(Check):
                         for access_control in policy.access_controls["grant"]
                     )
                 ):
+                    report = Check_Report_Azure(
+                        metadata=self.metadata(), resource_metadata=policy
+                    )
+                    report.subscription = f"Tenant: {tenant_name}"
                     report.status = "PASS"
                     report.status_extended = (
                         "Conditional Access Policy requires MFA for management API."
                     )
-                    report.resource_id = policy_id
-                    report.resource_name = policy.name
                     break
+            else:
+                report = Check_Report_Azure(self.metadata())
+                report.subscription = f"Tenant: {tenant_name}"
+                report.resource_name = "Conditional Access Policy"
+                report.resource_id = "Conditional Access Policy"
+                report.status = "FAIL"
+                report.status_extended = (
+                    "Conditional Access Policy does not require MFA for management API."
+                )
 
             findings.append(report)
 
