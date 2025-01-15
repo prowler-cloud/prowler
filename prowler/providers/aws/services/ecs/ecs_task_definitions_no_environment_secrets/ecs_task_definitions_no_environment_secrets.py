@@ -13,11 +13,10 @@ class ecs_task_definitions_no_environment_secrets(Check):
             "secrets_ignore_patterns", []
         )
         for task_definition in ecs_client.task_definitions.values():
-            report = Check_Report_AWS(self.metadata())
-            report.region = task_definition.region
+            report = Check_Report_AWS(
+                metadata=self.metadata(), resource_metadata=task_definition
+            )
             report.resource_id = f"{task_definition.name}:{task_definition.revision}"
-            report.resource_arn = task_definition.arn
-            report.resource_tags = task_definition.tags
             report.status = "PASS"
             extended_status_parts = []
 
