@@ -420,7 +420,6 @@ class Check_Report:
         """
         self.status = ""
         self.check_metadata = CheckMetadata.parse_raw(metadata)
-
         if isinstance(resource, dict):
             self.resource_metadata = resource
         elif isinstance(resource, list):
@@ -436,7 +435,6 @@ class Check_Report:
                 f"Resource metadata {type(resource)} could not be converted to dict"
             )
             self.resource_metadata = {}
-
         self.status_extended = ""
         self.resource_details = ""
         self.resource_tags = getattr(resource, "tags", []) if resource else []
