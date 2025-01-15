@@ -13,6 +13,7 @@ class shield_advanced_protection_in_global_accelerators(Check):
                 report = Check_Report_AWS(
                     metadata=self.metadata(), resource_metadata=accelerator
                 )
+                report.region = shield_client.region
                 report.status = "FAIL"
                 report.status_extended = f"Global Accelerator {accelerator.name} is not protected by AWS Shield Advanced."
 

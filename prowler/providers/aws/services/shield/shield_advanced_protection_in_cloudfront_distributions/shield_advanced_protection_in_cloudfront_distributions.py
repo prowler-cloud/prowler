@@ -13,6 +13,7 @@ class shield_advanced_protection_in_cloudfront_distributions(Check):
                 report = Check_Report_AWS(
                     metadata=self.metadata(), resource_metadata=distribution
                 )
+                report.region = shield_client.region
                 report.status = "FAIL"
                 report.status_extended = f"CloudFront distribution {distribution.id} is not protected by AWS Shield Advanced."
 
