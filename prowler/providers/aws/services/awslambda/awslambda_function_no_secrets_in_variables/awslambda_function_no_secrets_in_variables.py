@@ -13,11 +13,9 @@ class awslambda_function_no_secrets_in_variables(Check):
             "secrets_ignore_patterns", []
         )
         for function in awslambda_client.functions.values():
-            report = Check_Report_AWS(self.metadata())
-            report.region = function.region
-            report.resource_id = function.name
-            report.resource_arn = function.arn
-            report.resource_tags = function.tags
+            report = Check_Report_AWS(
+                metadata=self.metadata(), resource_metadata=function
+            )
 
             report.status = "PASS"
             report.status_extended = (
