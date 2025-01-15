@@ -1,18 +1,31 @@
 from unittest import mock
 
+from prowler.providers.gcp.models import GCPProject
 from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, set_mocked_gcp_provider
 
 
 class Test_compute_network_default_in_use:
     def test_compute_no_projects(self):
         compute_client = mock.MagicMock()
+        compute_client.projects = {
+            GCP_PROJECT_ID: GCPProject(
+                id=GCP_PROJECT_ID,
+                number="123456789012",
+                name="test",
+                labels={},
+                lifecycle_state="ACTIVE",
+            )
+        }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_network_default_in_use.compute_network_default_in_use.compute_client",
-            new=compute_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.compute.compute_network_default_in_use.compute_network_default_in_use.compute_client",
+                new=compute_client,
+            ),
         ):
             from prowler.providers.gcp.services.compute.compute_network_default_in_use.compute_network_default_in_use import (
                 compute_network_default_in_use,
@@ -27,13 +40,25 @@ class Test_compute_network_default_in_use:
 
     def test_compute_no_networks(self):
         compute_client = mock.MagicMock()
+        compute_client.projects = {
+            GCP_PROJECT_ID: GCPProject(
+                id=GCP_PROJECT_ID,
+                number="123456789012",
+                name="test",
+                labels={},
+                lifecycle_state="ACTIVE",
+            )
+        }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_network_default_in_use.compute_network_default_in_use.compute_client",
-            new=compute_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.compute.compute_network_default_in_use.compute_network_default_in_use.compute_client",
+                new=compute_client,
+            ),
         ):
             from prowler.providers.gcp.services.compute.compute_network_default_in_use.compute_network_default_in_use import (
                 compute_network_default_in_use,
@@ -58,13 +83,25 @@ class Test_compute_network_default_in_use:
 
     def test_compute_one_project_default_network(self):
         compute_client = mock.MagicMock()
+        compute_client.projects = {
+            GCP_PROJECT_ID: GCPProject(
+                id=GCP_PROJECT_ID,
+                number="123456789012",
+                name="test",
+                labels={},
+                lifecycle_state="ACTIVE",
+            )
+        }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_network_default_in_use.compute_network_default_in_use.compute_client",
-            new=compute_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.compute.compute_network_default_in_use.compute_network_default_in_use.compute_client",
+                new=compute_client,
+            ),
         ):
             from prowler.providers.gcp.services.compute.compute_network_default_in_use.compute_network_default_in_use import (
                 compute_network_default_in_use,
@@ -97,13 +134,25 @@ class Test_compute_network_default_in_use:
 
     def test_compute_one_project_no_default_network(self):
         compute_client = mock.MagicMock()
+        compute_client.projects = {
+            GCP_PROJECT_ID: GCPProject(
+                id=GCP_PROJECT_ID,
+                number="123456789012",
+                name="test",
+                labels={},
+                lifecycle_state="ACTIVE",
+            )
+        }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_network_default_in_use.compute_network_default_in_use.compute_client",
-            new=compute_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.compute.compute_network_default_in_use.compute_network_default_in_use.compute_client",
+                new=compute_client,
+            ),
         ):
             from prowler.providers.gcp.services.compute.compute_network_default_in_use.compute_network_default_in_use import (
                 compute_network_default_in_use,

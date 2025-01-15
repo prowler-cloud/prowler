@@ -9,18 +9,22 @@ from tests.providers.gcp.gcp_fixtures import (
 
 class TestCloudStorageBucketLogRetentionPolicyLock:
     def test_bucket_with_retention_policy_and_lock(self):
-        cloudstorage_client = mock.MagicMock()()
-        logging_client = mock.MagicMock()()
+        cloudstorage_client = mock.MagicMock()
+        logging_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_log_retention_policy_lock.cloudstorage_bucket_log_retention_policy_lock.cloudstorage_client",
-            new=cloudstorage_client,
-        ), mock.patch(
-            "prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_log_retention_policy_lock.cloudstorage_bucket_log_retention_policy_lock.logging_client",
-            new=logging_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_log_retention_policy_lock.cloudstorage_bucket_log_retention_policy_lock.cloudstorage_client",
+                new=cloudstorage_client,
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_log_retention_policy_lock.cloudstorage_bucket_log_retention_policy_lock.logging_client",
+                new=logging_client,
+            ),
         ):
             from prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_log_retention_policy_lock.cloudstorage_bucket_log_retention_policy_lock import (
                 cloudstorage_bucket_log_retention_policy_lock,
@@ -69,18 +73,22 @@ class TestCloudStorageBucketLogRetentionPolicyLock:
             assert result[0].project_id == GCP_PROJECT_ID
 
     def test_bucket_with_retention_policy_without_lock(self):
-        cloudstorage_client = mock.MagicMock()()
-        logging_client = mock.MagicMock()()
+        cloudstorage_client = mock.MagicMock()
+        logging_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_log_retention_policy_lock.cloudstorage_bucket_log_retention_policy_lock.cloudstorage_client",
-            new=cloudstorage_client,
-        ), mock.patch(
-            "prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_log_retention_policy_lock.cloudstorage_bucket_log_retention_policy_lock.logging_client",
-            new=logging_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_log_retention_policy_lock.cloudstorage_bucket_log_retention_policy_lock.cloudstorage_client",
+                new=cloudstorage_client,
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_log_retention_policy_lock.cloudstorage_bucket_log_retention_policy_lock.logging_client",
+                new=logging_client,
+            ),
         ):
             from prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_log_retention_policy_lock.cloudstorage_bucket_log_retention_policy_lock import (
                 cloudstorage_bucket_log_retention_policy_lock,
@@ -129,18 +137,22 @@ class TestCloudStorageBucketLogRetentionPolicyLock:
             assert result[0].project_id == GCP_PROJECT_ID
 
     def test_bucket_without_retention_policy(self):
-        cloudstorage_client = mock.MagicMock()()
-        logging_client = mock.MagicMock()()
+        cloudstorage_client = mock.MagicMock()
+        logging_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_log_retention_policy_lock.cloudstorage_bucket_log_retention_policy_lock.cloudstorage_client",
-            new=cloudstorage_client,
-        ), mock.patch(
-            "prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_log_retention_policy_lock.cloudstorage_bucket_log_retention_policy_lock.logging_client",
-            new=logging_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_log_retention_policy_lock.cloudstorage_bucket_log_retention_policy_lock.cloudstorage_client",
+                new=cloudstorage_client,
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_log_retention_policy_lock.cloudstorage_bucket_log_retention_policy_lock.logging_client",
+                new=logging_client,
+            ),
         ):
             from prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_log_retention_policy_lock.cloudstorage_bucket_log_retention_policy_lock import (
                 cloudstorage_bucket_log_retention_policy_lock,
@@ -189,18 +201,22 @@ class TestCloudStorageBucketLogRetentionPolicyLock:
             assert result[0].project_id == GCP_PROJECT_ID
 
     def test_no_buckets(self):
-        cloudstorage_client = mock.MagicMock()()
-        logging_client = mock.MagicMock()()
+        cloudstorage_client = mock.MagicMock()
+        logging_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_log_retention_policy_lock.cloudstorage_bucket_log_retention_policy_lock.cloudstorage_client",
-            new=cloudstorage_client,
-        ), mock.patch(
-            "prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_log_retention_policy_lock.cloudstorage_bucket_log_retention_policy_lock.logging_client",
-            new=logging_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_log_retention_policy_lock.cloudstorage_bucket_log_retention_policy_lock.cloudstorage_client",
+                new=cloudstorage_client,
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_log_retention_policy_lock.cloudstorage_bucket_log_retention_policy_lock.logging_client",
+                new=logging_client,
+            ),
         ):
             from prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_log_retention_policy_lock.cloudstorage_bucket_log_retention_policy_lock import (
                 cloudstorage_bucket_log_retention_policy_lock,
@@ -227,18 +243,22 @@ class TestCloudStorageBucketLogRetentionPolicyLock:
             assert len(result) == 0
 
     def test_no_buckets_no_sinks(self):
-        cloudstorage_client = mock.MagicMock()()
-        logging_client = mock.MagicMock()()
+        cloudstorage_client = mock.MagicMock()
+        logging_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_log_retention_policy_lock.cloudstorage_bucket_log_retention_policy_lock.cloudstorage_client",
-            new=cloudstorage_client,
-        ), mock.patch(
-            "prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_log_retention_policy_lock.cloudstorage_bucket_log_retention_policy_lock.logging_client",
-            new=logging_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_log_retention_policy_lock.cloudstorage_bucket_log_retention_policy_lock.cloudstorage_client",
+                new=cloudstorage_client,
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_log_retention_policy_lock.cloudstorage_bucket_log_retention_policy_lock.logging_client",
+                new=logging_client,
+            ),
         ):
             from prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_log_retention_policy_lock.cloudstorage_bucket_log_retention_policy_lock import (
                 cloudstorage_bucket_log_retention_policy_lock,
