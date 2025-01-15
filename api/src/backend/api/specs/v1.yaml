@@ -257,6 +257,7 @@ paths:
             - raw_result
             - inserted_at
             - updated_at
+            - first_seen_at
             - url
             - scan
             - resources
@@ -760,6 +761,7 @@ paths:
             - raw_result
             - inserted_at
             - updated_at
+            - first_seen_at
             - url
             - scan
             - resources
@@ -5949,6 +5951,11 @@ components:
               type: string
               format: date-time
               readOnly: true
+            first_seen_at:
+              type: string
+              format: date-time
+              readOnly: true
+              nullable: true
           required:
           - uid
           - status
