@@ -6,7 +6,10 @@ class emr_cluster_account_public_block_enabled(Check):
     def execute(self):
         findings = []
         for region in emr_client.block_public_access_configuration:
-            report = Check_Report_AWS(self.metadata())
+            report = Check_Report_AWS(
+                metadata=self.metadata(),
+                resource_metadata=emr_client.block_public_access_configuration,
+            )
             report.region = region
             report.resource_id = emr_client.audited_account
             report.resource_arn = emr_client._get_cluster_arn_template(region)
