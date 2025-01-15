@@ -176,6 +176,7 @@ class Entra(AzureService):
                     named_locations[tenant].update(
                         {
                             named_location.id: NamedLocation(
+                                id=named_location.id,
                                 name=named_location.display_name,
                                 ip_ranges_addresses=[
                                     getattr(ip_range, "cidr_address", None)
@@ -274,6 +275,7 @@ class Entra(AzureService):
                     conditional_access_policy[tenant].update(
                         {
                             policy.id: ConditionalAccessPolicy(
+                                id=policy.id,
                                 name=policy.display_name,
                                 state=getattr(policy, "state", "None"),
                                 users={
@@ -337,6 +339,7 @@ class SecurityDefault(BaseModel):
 
 
 class NamedLocation(BaseModel):
+    id: str
     name: str
     ip_ranges_addresses: List[str]
     is_trusted: bool
@@ -348,6 +351,7 @@ class DirectoryRole(BaseModel):
 
 
 class ConditionalAccessPolicy(BaseModel):
+    id: str
     name: str
     state: str
     users: dict[str, List[str]]

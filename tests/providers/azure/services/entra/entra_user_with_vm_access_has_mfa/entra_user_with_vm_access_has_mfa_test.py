@@ -92,7 +92,7 @@ class Test_iam_assignment_priviledge_access_vm_has_mfa:
                     == f"User test can access VMs in subscription {AZURE_SUBSCRIPTION_ID} but it has MFA."
                 )
                 assert result[0].subscription == AZURE_SUBSCRIPTION_ID
-                assert result[0].resource_name == f"test@{DOMAIN}"
+                assert result[0].resource_name == "test"
                 assert result[0].resource_id == user_id
 
     def test_entra_user_with_vm_access_has_mfa_no_mfa(self):
@@ -150,7 +150,7 @@ class Test_iam_assignment_priviledge_access_vm_has_mfa:
                     == f"User test without MFA can access VMs in subscription {AZURE_SUBSCRIPTION_ID}"
                 )
                 assert result[0].subscription == AZURE_SUBSCRIPTION_ID
-                assert result[0].resource_name == f"test@{DOMAIN}"
+                assert result[0].resource_name == "test"
                 assert result[0].resource_id == user_id
 
     def test_entra_user_with_vm_access_has_mfa_no_user(self):
