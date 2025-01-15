@@ -6,13 +6,11 @@ class rds_cluster_integration_cloudwatch_logs(Check):
     def execute(self):
         findings = []
         valid_engines = ["aurora-mysql", "aurora-postgresql", "mysql", "postgres"]
-        for db_cluster_arn, db_cluster in rds_client.db_clusters.items():
+        for db_cluster in rds_client.db_clusters.values():
             if db_cluster.engine in valid_engines:
-                report = Check_Report_AWS(self.metadata())
-                report.region = db_cluster.region
-                report.resource_id = db_cluster.id
-                report.resource_arn = db_cluster_arn
-                report.resource_tags = db_cluster.tags
+                report = Check_Report_AWS(
+                    metadata=self.metadata(), resource_metadata=db_cluster
+                )
                 if db_cluster.cloudwatch_logs:
                     report.status = "PASS"
                     report.status_extended = f"RDS Cluster {db_cluster.id} is shipping {', '.join(db_cluster.cloudwatch_logs)} logs to CloudWatch Logs."
