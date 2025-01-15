@@ -13,6 +13,7 @@ class artifacts_container_analysis_enabled(Check):
                 resource_metadata=serviceusage_client.projects[project_id],
                 resource_id="containeranalysis.googleapis.com",
                 resource_name="AR Container Analysis",
+                project_id=project_id,
                 location=serviceusage_client.region,
             )
             report.status = "FAIL"

@@ -1,15 +1,25 @@
 from re import search
 from unittest import mock
 
+from prowler.providers.gcp.models import GCPProject
 from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, set_mocked_gcp_provider
 
 
 class Test_iam_account_access_approval_enabled:
     def test_iam_no_settings(self):
-        accessapproval_client = mock.MagicMock
+        accessapproval_client = mock.MagicMock()
         accessapproval_client.settings = {}
         accessapproval_client.project_ids = [GCP_PROJECT_ID]
         accessapproval_client.region = "global"
+        accessapproval_client.projects = {
+            GCP_PROJECT_ID: GCPProject(
+                id=GCP_PROJECT_ID,
+                number="123456789012",
+                name="test",
+                labels={},
+                lifecycle_state="ACTIVE",
+            )
+        }
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -35,10 +45,19 @@ class Test_iam_account_access_approval_enabled:
             assert result[0].location == "global"
 
     def test_iam_project_with_settings(self):
-        cloudresourcemanager_client = mock.MagicMock
-        accessapproval_client = mock.MagicMock
+        cloudresourcemanager_client = mock.MagicMock()()
+        accessapproval_client = mock.MagicMock()()
         accessapproval_client.project_ids = [GCP_PROJECT_ID]
         accessapproval_client.region = "global"
+        accessapproval_client.projects = {
+            GCP_PROJECT_ID: GCPProject(
+                id=GCP_PROJECT_ID,
+                number="123456789012",
+                name="test",
+                labels={},
+                lifecycle_state="ACTIVE",
+            )
+        }
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",

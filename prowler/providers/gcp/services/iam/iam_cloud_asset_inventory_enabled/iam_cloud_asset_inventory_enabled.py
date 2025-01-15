@@ -13,6 +13,7 @@ class iam_cloud_asset_inventory_enabled(Check):
                 resource_metadata=serviceusage_client.projects[project_id],
                 resource_id="cloudasset.googleapis.com",
                 resource_name="Cloud Asset Inventory",
+                project_id=project_id,
                 location=serviceusage_client.region,
             )
             report.status = "FAIL"

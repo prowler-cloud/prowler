@@ -9,7 +9,7 @@ from tests.providers.gcp.gcp_fixtures import (
 
 class TestCloudStorageBucketUniformBucketLevelAccess:
     def test_bucket_with_uniform_bucket_level_access_enabled(self):
-        cloudstorage_client = mock.MagicMock()
+        cloudstorage_client = mock.MagicMock()()
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -54,7 +54,7 @@ class TestCloudStorageBucketUniformBucketLevelAccess:
             assert result[0].project_id == GCP_PROJECT_ID
 
     def test_bucket_with_uniform_bucket_level_access_disabled(self):
-        cloudstorage_client = mock.MagicMock()
+        cloudstorage_client = mock.MagicMock()()
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -99,7 +99,7 @@ class TestCloudStorageBucketUniformBucketLevelAccess:
             assert result[0].project_id == GCP_PROJECT_ID
 
     def test_no_buckets(self):
-        cloudstorage_client = mock.MagicMock()
+        cloudstorage_client = mock.MagicMock()()
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",

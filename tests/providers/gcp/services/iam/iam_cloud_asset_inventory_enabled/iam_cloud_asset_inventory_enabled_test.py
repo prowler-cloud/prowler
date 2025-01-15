@@ -6,7 +6,7 @@ from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, set_mocked_gcp_prov
 
 class Test_iam_cloud_asset_inventory_enabled:
     def test_serviceusage_no_active_services(self):
-        serviceusage_client = mock.MagicMock
+        serviceusage_client = mock.MagicMock()
         serviceusage_client.active_services = {}
         serviceusage_client.project_ids = [GCP_PROJECT_ID]
         serviceusage_client.region = "global"
@@ -36,7 +36,7 @@ class Test_iam_cloud_asset_inventory_enabled:
             assert result[0].location == serviceusage_client.region
 
     def test_serviceusage_active_cloudasset(self):
-        serviceusage_client = mock.MagicMock
+        serviceusage_client = mock.MagicMock()
         serviceusage_client.active_services = {
             GCP_PROJECT_ID: [
                 Service(

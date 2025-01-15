@@ -5,7 +5,7 @@ from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, set_mocked_gcp_prov
 
 class Test_compute_network_default_in_use:
     def test_compute_no_projects(self):
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -26,7 +26,7 @@ class Test_compute_network_default_in_use:
             assert len(result) == 0
 
     def test_compute_no_networks(self):
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -57,7 +57,7 @@ class Test_compute_network_default_in_use:
             assert result[0].location == "global"
 
     def test_compute_one_project_default_network(self):
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -96,7 +96,7 @@ class Test_compute_network_default_in_use:
             assert result[0].location == "global"
 
     def test_compute_one_project_no_default_network(self):
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",

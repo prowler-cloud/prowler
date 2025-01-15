@@ -13,6 +13,7 @@ class gcr_container_scanning_enabled(Check):
                 resource_metadata=serviceusage_client.projects[project_id],
                 resource_id="containerscanning.googleapis.com",
                 resource_name="GCR Container Scanning",
+                project_id=project_id,
                 location=serviceusage_client.region,
             )
             report.status = "FAIL"
