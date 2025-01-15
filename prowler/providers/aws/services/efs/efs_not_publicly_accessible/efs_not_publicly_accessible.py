@@ -7,11 +7,7 @@ class efs_not_publicly_accessible(Check):
     def execute(self):
         findings = []
         for fs in efs_client.filesystems.values():
-            report = Check_Report_AWS(self.metadata())
-            report.region = fs.region
-            report.resource_id = fs.id
-            report.resource_arn = fs.arn
-            report.resource_tags = fs.tags
+            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=fs)
             report.status = "PASS"
             report.status_extended = f"EFS {fs.id} has a policy which does not allow access to any client within the VPC."
             if not fs.policy:

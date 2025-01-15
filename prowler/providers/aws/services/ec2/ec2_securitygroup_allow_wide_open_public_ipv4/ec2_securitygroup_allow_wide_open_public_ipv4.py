@@ -16,7 +16,9 @@ class ec2_securitygroup_allow_wide_open_public_ipv4(Check):
                 and vpc_client.vpcs[security_group.vpc_id].in_use
                 and len(security_group.network_interfaces) > 0
             ):
-                report = Check_Report_AWS(self.metadata(), security_group)
+                report = Check_Report_AWS(
+                    metadata=self.metadata(), resource_metadata=security_group
+                )
                 report.resource_details = security_group.name
                 report.status = "PASS"
                 report.status_extended = f"Security group {security_group.name} ({security_group.id}) has no potential wide-open non-RFC1918 address."
