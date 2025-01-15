@@ -10,6 +10,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="finding",
             name="first_seen_at",
-            field=models.DateTimeField(editable=False),
+            field=models.DateTimeField(editable=False, null=True),
         ),
     ]
