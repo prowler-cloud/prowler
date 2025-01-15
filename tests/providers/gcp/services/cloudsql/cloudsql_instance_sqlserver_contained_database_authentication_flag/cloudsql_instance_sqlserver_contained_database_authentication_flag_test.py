@@ -9,7 +9,7 @@ from tests.providers.gcp.gcp_fixtures import (
 
 class Test_cloudsql_instance_sqlserver_contained_database_authentication_flag:
     def test_no_cloudsql_instances(self):
-        cloudsql_client = mock.MagicMock
+        cloudsql_client = mock.MagicMock()
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -29,7 +29,7 @@ class Test_cloudsql_instance_sqlserver_contained_database_authentication_flag:
             assert len(result) == 0
 
     def test_cloudsql_postgres_instance(self):
-        cloudsql_client = mock.MagicMock
+        cloudsql_client = mock.MagicMock()
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -66,7 +66,7 @@ class Test_cloudsql_instance_sqlserver_contained_database_authentication_flag:
             assert len(result) == 0
 
     def test_cloudsql_instance_no_flags(self):
-        cloudsql_client = mock.MagicMock
+        cloudsql_client = mock.MagicMock()
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -112,7 +112,7 @@ class Test_cloudsql_instance_sqlserver_contained_database_authentication_flag:
             assert result[0].project_id == GCP_PROJECT_ID
 
     def test_cloudsql_instance_contained_database_authentication_flag_on(self):
-        cloudsql_client = mock.MagicMock
+        cloudsql_client = mock.MagicMock()
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -160,7 +160,7 @@ class Test_cloudsql_instance_sqlserver_contained_database_authentication_flag:
             assert result[0].project_id == GCP_PROJECT_ID
 
     def test_cloudsql_instance_contained_database_authentication_flag_off(self):
-        cloudsql_client = mock.MagicMock
+        cloudsql_client = mock.MagicMock()
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
