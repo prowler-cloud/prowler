@@ -1,6 +1,7 @@
 from unittest import mock
 
-from prowler.providers.aws.services.account.account_service import Contact
+from prowler.providers.aws.services.account.account_service import Account, Contact
+from tests.providers.aws.utils import AWS_REGION_EU_WEST_1, set_mocked_aws_provider
 
 AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_ACCOUNT_ARN = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
@@ -9,6 +10,7 @@ AWS_REGION = "us-east-1"
 
 class Test_account_maintain_different_contact_details_to_security_billing_and_operations:
     def test_contacts_not_configured_or_equal(self):
+        aws_mocked_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         account_client = mock.MagicMock()
         account_client.region = AWS_REGION
         account_client.audited_account = AWS_ACCOUNT_NUMBER
@@ -28,12 +30,12 @@ class Test_account_maintain_different_contact_details_to_security_billing_and_op
 
         with (
             mock.patch(
-                "prowler.providers.aws.services.account.account_service.Account",
-                new=account_client,
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_mocked_provider,
             ),
             mock.patch(
-                "prowler.providers.aws.services.account.account_client.account_client",
-                new=account_client,
+                "prowler.providers.aws.services.account.account_maintain_different_contact_details_to_security_billing_and_operations.account_maintain_different_contact_details_to_security_billing_and_operations.account_client",
+                new=Account(aws_mocked_provider),
             ),
         ):
             # Test Check
@@ -57,6 +59,7 @@ class Test_account_maintain_different_contact_details_to_security_billing_and_op
             assert result[0].resource_arn == AWS_ACCOUNT_ARN
 
     def test_contacts_diffent(self):
+        aws_mocked_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         account_client = mock.MagicMock()
         account_client.region = AWS_REGION
         account_client.audited_account = AWS_ACCOUNT_NUMBER
@@ -80,12 +83,12 @@ class Test_account_maintain_different_contact_details_to_security_billing_and_op
 
         with (
             mock.patch(
-                "prowler.providers.aws.services.account.account_service.Account",
-                new=account_client,
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_mocked_provider,
             ),
             mock.patch(
-                "prowler.providers.aws.services.account.account_client.account_client",
-                new=account_client,
+                "prowler.providers.aws.services.account.account_maintain_different_contact_details_to_security_billing_and_operations.account_maintain_different_contact_details_to_security_billing_and_operations.account_client",
+                new=Account(aws_mocked_provider),
             ),
         ):
             # Test Check
@@ -109,6 +112,7 @@ class Test_account_maintain_different_contact_details_to_security_billing_and_op
             assert result[0].resource_arn == AWS_ACCOUNT_ARN
 
     def test_access_denied(self):
+        aws_mocked_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         account_client = mock.MagicMock()
         account_client.region = AWS_REGION
         account_client.audited_account = AWS_ACCOUNT_NUMBER
@@ -117,12 +121,12 @@ class Test_account_maintain_different_contact_details_to_security_billing_and_op
 
         with (
             mock.patch(
-                "prowler.providers.aws.services.account.account_service.Account",
-                new=account_client,
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_mocked_provider,
             ),
             mock.patch(
-                "prowler.providers.aws.services.account.account_client.account_client",
-                new=account_client,
+                "prowler.providers.aws.services.account.account_maintain_different_contact_details_to_security_billing_and_operations.account_maintain_different_contact_details_to_security_billing_and_operations.account_client",
+                new=Account(aws_mocked_provider),
             ),
         ):
             # Test Check
