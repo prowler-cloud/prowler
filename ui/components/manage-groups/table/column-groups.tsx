@@ -22,11 +22,7 @@ export const ColumnGroups: ColumnDef<ProviderGroup>[] = [
       const {
         attributes: { name },
       } = getProviderData(row);
-      return (
-        <p className="text-small font-medium">
-          {name.charAt(0).toUpperCase() + name.slice(1).toLowerCase()}
-        </p>
-      );
+      return <p className="text-small font-medium">{name}</p>;
     },
   },
 
