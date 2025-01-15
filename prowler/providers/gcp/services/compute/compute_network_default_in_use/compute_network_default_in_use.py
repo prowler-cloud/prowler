@@ -16,7 +16,7 @@ class compute_network_default_in_use(Check):
         for project in compute_client.project_ids:
             report = Check_Report_GCP(
                 metadata=self.metadata(),
-                resource_metadata=project,
+                resource_metadata=compute_client.projects[project],
                 project_id=project,
                 resource_id="default",
                 resource_name="default",

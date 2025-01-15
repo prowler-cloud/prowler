@@ -12,8 +12,7 @@ class iam_role_kms_enforce_separation_of_duties(Check):
             kms_admin_members = []
             report = Check_Report_GCP(
                 metadata=self.metadata(),
-                resource_metadata=project,
-                resource_id=project,
+                resource_metadata=cloudresourcemanager_client.projects[project],
                 project_id=project,
                 location=cloudresourcemanager_client.region,
             )

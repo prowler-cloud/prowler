@@ -11,8 +11,7 @@ class iam_role_sa_enforce_separation_of_duties(Check):
             non_compliant_members = []
             report = Check_Report_GCP(
                 metadata=self.metadata(),
-                resource_metadata=project,
-                resource_id=project,
+                resource_metadata=cloudresourcemanager_client.projects[project],
                 location=cloudresourcemanager_client.region,
                 project_id=project,
             )

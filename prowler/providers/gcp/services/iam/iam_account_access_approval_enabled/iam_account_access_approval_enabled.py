@@ -10,7 +10,7 @@ class iam_account_access_approval_enabled(Check):
         for project_id in accessapproval_client.project_ids:
             report = Check_Report_GCP(
                 metadata=self.metadata(),
-                resource_metadata=project_id,
+                resource_metadata=accessapproval_client.projects[project_id],
                 resource_id=project_id,
                 location=accessapproval_client.region,
             )

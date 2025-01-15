@@ -29,10 +29,8 @@ class iam_no_service_roles_at_project_level(Check):
             if project not in failed_projects:
                 report = Check_Report_GCP(
                     metadata=self.metadata(),
-                    resource_metadata=project,
+                    resource_metadata=cloudresourcemanager_client.projects[project],
                     project_id=project,
-                    resource_id=project,
-                    resource_name=project,
                     location=cloudresourcemanager_client.region,
                 )
                 report.status = "PASS"

@@ -10,7 +10,7 @@ class iam_cloud_asset_inventory_enabled(Check):
         for project_id in serviceusage_client.project_ids:
             report = Check_Report_GCP(
                 metadata=self.metadata(),
-                resource_metadata=project_id,
+                resource_metadata=serviceusage_client.projects[project_id],
                 resource_id="cloudasset.googleapis.com",
                 resource_name="Cloud Asset Inventory",
                 location=serviceusage_client.region,

@@ -34,9 +34,8 @@ class logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled(
             if project not in projects_with_metric:
                 report = Check_Report_GCP(
                     metadata=self.metadata(),
-                    resource_metadata=project,
+                    resource_metadata=logging_client.projects[project],
                     project_id=project,
-                    resource_id=project,
                     location=logging_client.region,
                 )
                 report.status = "FAIL"

@@ -24,9 +24,8 @@ class logging_sink_created(Check):
             if project not in projects_with_sink:
                 report = Check_Report_GCP(
                     metadata=self.metadata(),
-                    resource_metadata=project,
+                    resource_metadata=logging_client.projects[project],
                     project_id=project,
-                    resource_id=project,
                     location=logging_client.region,
                 )
                 report.status = "FAIL"
