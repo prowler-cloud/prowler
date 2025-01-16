@@ -28,7 +28,8 @@ CIS_1_4_AWS = Compliance(
             Description="Ensure MFA Delete is enabled on S3 buckets",
             Attributes=[
                 CIS_Requirement_Attribute(
-                    Section="2.1. Simple Storage Service (S3)",
+                    Section="2. Storage",
+                    SubSection="2.1. Simple Storage Service (S3)",
                     Profile="Level 1",
                     AssessmentStatus="Automated",
                     Description="Once MFA Delete is enabled on your sensitive and classified S3 bucket it requires the user to have two forms of authentication.",
@@ -47,7 +48,8 @@ CIS_1_4_AWS = Compliance(
             Description="Ensure MFA Delete is enabled on S3 buckets",
             Attributes=[
                 CIS_Requirement_Attribute(
-                    Section="2.1. Simple Storage Service (S3)",
+                    Section="2. Storage",
+                    SubSection="2.1. Simple Storage Service (S3)",
                     Profile="Level 1",
                     AssessmentStatus="Automated",
                     Description="Once MFA Delete is enabled on your sensitive and classified S3 bucket it requires the user to have two forms of authentication.",
@@ -75,7 +77,8 @@ CIS_2_0_AZURE = Compliance(
             Description="Ensure That Microsoft Defender for Databases Is Set To 'On'",
             Attributes=[
                 CIS_Requirement_Attribute(
-                    Section="2.1 Microsoft Defender for Cloud",
+                    Section="2. Defender",
+                    SubSection="2.1 Microsoft Defender for Cloud",
                     Profile="Level 2",
                     AssessmentStatus="Manual",
                     Description="Turning on Microsoft Defender for Databases enables threat detection for the instances running your database software. This provides threat intelligence, anomaly detection, and behavior analytics in the Azure Microsoft Defender for Cloud. Instead of being enabled on services like Platform as a Service (PaaS), this implementation will run within your instances as Infrastructure as a Service (IaaS) on the Operating Systems hosting your databases.",
@@ -95,7 +98,8 @@ CIS_2_0_AZURE = Compliance(
             Description="Ensure That Microsoft Defender for Databases Is Set To 'On'",
             Attributes=[
                 CIS_Requirement_Attribute(
-                    Section="2.1 Microsoft Defender for Cloud",
+                    Section="2. Defender",
+                    SubSection="2.1 Microsoft Defender for Cloud",
                     Profile="Level 2",
                     AssessmentStatus="Manual",
                     Description="Turning on Microsoft Defender for Databases enables threat detection for the instances running your database software. This provides threat intelligence, anomaly detection, and behavior analytics in the Azure Microsoft Defender for Cloud. Instead of being enabled on services like Platform as a Service (PaaS), this implementation will run within your instances as Infrastructure as a Service (IaaS) on the Operating Systems hosting your databases.",
@@ -124,7 +128,8 @@ CIS_2_0_GCP = Compliance(
             Description="Ensure That Microsoft Defender for Databases Is Set To 'On'",
             Attributes=[
                 CIS_Requirement_Attribute(
-                    Section="2. Logging and Monitoring",
+                    Section="2. Logging",
+                    SubSection="2.1. Logging and Monitoring",
                     Profile="Level 1",
                     AssessmentStatus="Automated",
                     Description="GCP Cloud Asset Inventory is services that provides a historical view of GCP resources and IAM policies through a time-series database. The information recorded includes metadata on Google Cloud resources, metadata on policies set on Google Cloud projects or resources, and runtime information gathered within a Google Cloud resource.",
@@ -143,7 +148,7 @@ CIS_2_0_GCP = Compliance(
             Description="Ensure That Microsoft Defender for Databases Is Set To 'On'",
             Attributes=[
                 CIS_Requirement_Attribute(
-                    Section="2. Logging and Monitoring",
+                    Section="2. Logging",
                     Profile="Level 1",
                     AssessmentStatus="Automated",
                     Description="GCP Cloud Asset Inventory is services that provides a historical view of GCP resources and IAM policies through a time-series database. The information recorded includes metadata on Google Cloud resources, metadata on policies set on Google Cloud projects or resources, and runtime information gathered within a Google Cloud resource.",
@@ -171,7 +176,8 @@ CIS_1_8_KUBERNETES = Compliance(
             Description="Ensure that the controller manager pod specification file permissions are set to 600 or more restrictive",
             Attributes=[
                 CIS_Requirement_Attribute(
-                    Section="1.1 Control Plane Node Configuration Files",
+                    Section="1. Control Plane",
+                    SubSection="1.1 Control Plane Node Configuration Files",
                     Profile="Level 1 - Master Node",
                     AssessmentStatus="Automated",
                     Description="Ensure that the controller manager pod specification file has permissions of `600` or more restrictive.",
