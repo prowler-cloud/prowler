@@ -55,8 +55,9 @@ class Test_mysql_flexible_server_ssl_connection_enabled:
         mysql_client = mock.MagicMock
         mysql_client.flexible_servers = {
             AZURE_SUBSCRIPTION_ID: {
-                server_name: FlexibleServer(
+                "/subscriptions/resource_id": FlexibleServer(
                     resource_id="/subscriptions/resource_id",
+                    name=server_name,
                     location="location",
                     version="version",
                     configurations={
@@ -102,8 +103,9 @@ class Test_mysql_flexible_server_ssl_connection_enabled:
         mysql_client = mock.MagicMock
         mysql_client.flexible_servers = {
             AZURE_SUBSCRIPTION_ID: {
-                server_name: FlexibleServer(
+                "/subscriptions/resource_id": FlexibleServer(
                     resource_id="/subscriptions/resource_id",
+                    name=server_name,
                     location="location",
                     version="version",
                     configurations={
@@ -149,8 +151,9 @@ class Test_mysql_flexible_server_ssl_connection_enabled:
         mysql_client = mock.MagicMock
         mysql_client.flexible_servers = {
             AZURE_SUBSCRIPTION_ID: {
-                server_name: FlexibleServer(
+                "/subscriptions/resource_id": FlexibleServer(
                     resource_id="/subscriptions/resource_id",
+                    name=server_name,
                     location="location",
                     version="version",
                     configurations={},
@@ -175,7 +178,7 @@ class Test_mysql_flexible_server_ssl_connection_enabled:
             assert result[0].status == "FAIL"
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == server_name
-            assert result[0].resource_id == server_name
+            assert result[0].resource_id == "/subscriptions/resource_id"
             assert result[0].location == "location"
             assert (
                 result[0].status_extended
@@ -188,8 +191,9 @@ class Test_mysql_flexible_server_ssl_connection_enabled:
         mysql_client = mock.MagicMock
         mysql_client.flexible_servers = {
             AZURE_SUBSCRIPTION_ID: {
-                server_name_1: FlexibleServer(
-                    resource_id="/subscriptions/resource_id",
+                "/subscriptions/resource_id1": FlexibleServer(
+                    resource_id="/subscriptions/resource_id1",
+                    name=server_name_1,
                     location="location",
                     version="version",
                     configurations={
@@ -200,8 +204,9 @@ class Test_mysql_flexible_server_ssl_connection_enabled:
                         )
                     },
                 ),
-                server_name_2: FlexibleServer(
-                    resource_id="/subscriptions/resource_id",
+                "/subscriptions/resource_id2": FlexibleServer(
+                    resource_id="/subscriptions/resource_id2",
+                    name=server_name_2,
                     location="location",
                     version="version",
                     configurations={
