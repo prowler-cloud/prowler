@@ -11,6 +11,8 @@ class entra_policy_ensure_default_user_cannot_create_tenants(Check):
                 metadata=self.metadata(), resource_metadata=auth_policy
             )
             report.subscription = f"Tenant: {tenant_domain}"
+            report.resource_name = getattr(auth_policy, "name", "Authorization Policy")
+            report.resource_id = getattr(auth_policy, "id", "authorizationPolicy")
             report.status = "FAIL"
             report.status_extended = (
                 "Tenants creation is not disabled for non-admin users."

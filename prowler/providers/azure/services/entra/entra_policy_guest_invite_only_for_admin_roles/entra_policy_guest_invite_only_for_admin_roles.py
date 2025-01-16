@@ -11,6 +11,8 @@ class entra_policy_guest_invite_only_for_admin_roles(Check):
                 metadata=self.metadata(), resource_metadata=auth_policy
             )
             report.subscription = f"Tenant: {tenant_domain}"
+            report.resource_name = getattr(auth_policy, "name", "Authorization Policy")
+            report.resource_id = getattr(auth_policy, "id", "authorizationPolicy")
             report.status = "FAIL"
             report.status_extended = "Guest invitations are not restricted to users with specific administrative roles only."
 
