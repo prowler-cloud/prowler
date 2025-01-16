@@ -25,8 +25,6 @@ class repository_enforces_default_branch_protection(Check):
             report = Check_Report_Github(
                 metadata=self.metadata(), resource_metadata=repo
             )
-            report.resource_id = repo.id
-            report.resource_name = repo.name
             report.status = "FAIL"
             report.status_extended = f"Repository {repo.name} does not enforce branch protection on default branch ({repo.default_branch})."
 
