@@ -7,11 +7,10 @@ class keyvault_recoverable(Check):
         findings = []
         for subscription, key_vaults in keyvault_client.key_vaults.items():
             for keyvault in key_vaults:
-                report = Check_Report_Azure(self.metadata())
+                report = Check_Report_Azure(
+                    metadata=self.metadata(), resource_metadata=keyvault
+                )
                 report.subscription = subscription
-                report.resource_name = keyvault.name
-                report.resource_id = keyvault.id
-                report.location = keyvault.location
                 report.status = "FAIL"
                 report.status_extended = f"Keyvault {keyvault.name} from subscription {subscription} is not recoverable."
                 if (
