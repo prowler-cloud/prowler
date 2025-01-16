@@ -22,6 +22,7 @@ def mock_list_repositories(_):
                 linear_history=True,
                 allow_force_push=False,
                 allow_branch_deletion=False,
+                enforce_status_checks=True,
             ),
             securitymd=True,
         ),
@@ -65,5 +66,8 @@ class Test_Repository_Service:
         assert not repository_service.repositories[
             1
         ].default_branch_protection.allow_branch_deletion
+        assert repository_service.repositories[
+            1
+        ].default_branch_protection.enforce_status_checks
         # Repo
         assert repository_service.repositories[1].securitymd
