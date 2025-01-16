@@ -1,19 +1,18 @@
-import { Alert, cn } from "@nextui-org/react";
+"use client";
+
+import { InfoIcon } from "../icons";
 
 export const ScanWarningBar = () => {
   return (
-    <Alert
-      color="warning"
-      title="Waiting for Your Scan to Show Up?"
-      description="Your scan is being processed and may take a few minutes to appear on the table. It will show up shortly."
-      variant="faded"
-      isClosable
-      classNames={{
-        base: cn([
-          "border-1 border-default-200 dark:border-default-100",
-          "gap-x-4",
-        ]),
-      }}
-    />
+    <div className="flex items-center rounded-lg border border-system-warning bg-system-warning-medium p-4 text-sm dark:text-default-300">
+      <InfoIcon className="mr-4 inline h-4 w-4 flex-shrink-0" />
+      <div className="flex flex-col gap-1">
+        <strong>Waiting for Your Scan to Show Up?</strong>
+        <p>
+          It may take a few minutes for the scan to appear on the table and be
+          displayed.
+        </p>
+      </div>
+    </div>
   );
 };
