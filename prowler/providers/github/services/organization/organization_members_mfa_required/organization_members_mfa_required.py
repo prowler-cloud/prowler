@@ -22,9 +22,9 @@ class organization_members_mfa_required(Check):
         """
         findings = []
         for org in organization_client.organizations.values():
-            report = Check_Report_Github(self.metadata())
-            report.resource_id = org.id
-            report.resource_name = org.name
+            report = Check_Report_Github(
+                metadata=self.metadata(), resource_metadata=org
+            )
             report.status = "FAIL"
             report.status_extended = f"Organization {org.name} does not require members to have two-factor authentication enabled."
 
