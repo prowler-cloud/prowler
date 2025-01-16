@@ -27,8 +27,8 @@ drf-nested-routers = "^0.94.1"
 drf-spectacular = "0.27.2"
 drf-spectacular-jsonapi = "0.5.1"
 gunicorn = "23.0.0"
-prowler = {git = "https://github.com/prowler-cloud/prowler.git", branch = "v5.1"}
-psycopg2-binary = "2.9.9"
+prowler = {git = "https://github.com/prowler-cloud/prowler.git", branch = "v5.2"}
+psycopg = {extras = ["pool", "binary"], version = "3.2.3"}
 pytest-celery = {extras = ["redis"], version = "^1.0.1"}
 # Needed for prowler compatibility
 python = ">=3.11,<3.13"
