@@ -17,7 +17,7 @@ def mock_list_repositories(_):
             private=False,
             default_branch="main",
             default_branch_protection=Protection(
-                require_pull_request=True, approval_count=2
+                require_pull_request=True, approval_count=2, linear_history=True
             ),
             securitymd=True,
         ),
@@ -52,5 +52,8 @@ class Test_Repository_Service:
             repository_service.repositories[1].default_branch_protection.approval_count
             == 2
         )
+        assert repository_service.repositories[
+            1
+        ].default_branch_protection.linear_history
         # Repo
         assert repository_service.repositories[1].securitymd

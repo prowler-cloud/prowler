@@ -44,9 +44,13 @@ class Repository(GithubService):
                                         if require_pr
                                         else 0
                                     )
+                                    required_linear_history = (
+                                        protection.required_linear_history
+                                    )
                                     branch_protection = Protection(
                                         require_pull_request=require_pr,
                                         approval_count=approval_cnt,
+                                        linear_history=required_linear_history,
                                     )
                         except Exception as e:
                             logger.warning(
@@ -73,8 +77,9 @@ class Repository(GithubService):
 class Protection(BaseModel):
     """Model for Github Branch Protection"""
 
-    require_pull_request: Optional[bool] = False
-    approval_count: Optional[int] = 0
+    require_pull_request: bool = False
+    approval_count: int = 0
+    linear_history: bool = False
 
 
 class Repo(BaseModel):
@@ -86,4 +91,4 @@ class Repo(BaseModel):
     private: bool
     default_branch: str
     default_branch_protection: Optional[Protection]
-    securitymd: Optional[bool] = False
+    securitymd: bool = False
