@@ -1695,7 +1695,8 @@
       ],
       "Attributes": [
         {
-          "Section": "4.2 SQL Server - Microsoft Defender for SQL",
+          "Section": "4. Database Services",
+          "SubSection": "4.2 SQL Server - Microsoft Defender for SQL",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Enable 'Microsoft Defender for SQL' on critical SQL Servers.",
@@ -1717,7 +1718,8 @@
       ],
       "Attributes": [
         {
-          "Section": "4.2 SQL Server - Microsoft Defender for SQL",
+          "Section": "4. Database Services",
+          "SubSection": "4.2 SQL Server - Microsoft Defender for SQL",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Enable Vulnerability Assessment (VA) service scans for critical SQL servers and corresponding SQL databases.",
@@ -1739,7 +1741,8 @@
       ],
       "Attributes": [
         {
-          "Section": "4.2 SQL Server - Microsoft Defender for SQL",
+          "Section": "4. Database Services",
+          "SubSection": "4.2 SQL Server - Microsoft Defender for SQL",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Enable Vulnerability Assessment (VA) service scans for critical SQL servers and corresponding SQL databases.",
@@ -1761,7 +1764,8 @@
       ],
       "Attributes": [
         {
-          "Section": "4.2 SQL Server - Microsoft Defender for SQL",
+          "Section": "4. Database Services",
+          "SubSection": "4.2 SQL Server - Microsoft Defender for SQL",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Configure 'Send scan reports to' with email addresses of concerned data owners/stakeholders for a critical SQL servers",
@@ -1783,7 +1787,8 @@
       ],
       "Attributes": [
         {
-          "Section": "4.2 SQL Server - Microsoft Defender for SQL",
+          "Section": "4. Database Services",
+          "SubSection": "4.2 SQL Server - Microsoft Defender for SQL",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Enable Vulnerability Assessment (VA) setting 'Also send email notifications to admins and subscription owners'.",
@@ -1805,7 +1810,8 @@
       ],
       "Attributes": [
         {
-          "Section": "4.3 PostgreSQL Database Server",
+          "Section": "4. Database Services",
+          "SubSection": "4.3 PostgreSQL Database Server",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Enable SSL connection on PostgreSQL Servers.",
@@ -1827,7 +1833,8 @@
       ],
       "Attributes": [
         {
-          "Section": "4.3 PostgreSQL Database Server",
+          "Section": "4. Database Services",
+          "SubSection": "4.3 PostgreSQL Database Server",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Enable log_checkpoints on PostgreSQL Servers.",
@@ -1849,7 +1856,8 @@
       ],
       "Attributes": [
         {
-          "Section": "4.3 PostgreSQL Database Server",
+          "Section": "4. Database Services",
+          "SubSection": "4.3 PostgreSQL Database Server",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Enable log_connections on PostgreSQL Servers.",
@@ -1871,7 +1879,8 @@
       ],
       "Attributes": [
         {
-          "Section": "4.3 PostgreSQL Database Server",
+          "Section": "4. Database Services",
+          "SubSection": "4.3 PostgreSQL Database Server",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Enable log_disconnections on PostgreSQL Servers.",
@@ -1893,7 +1902,8 @@
       ],
       "Attributes": [
         {
-          "Section": "4.3 PostgreSQL Database Server",
+          "Section": "4. Database Services",
+          "SubSection": "4.3 PostgreSQL Database Server",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Enable connection_throttling on PostgreSQL Servers.",
@@ -1915,7 +1925,8 @@
       ],
       "Attributes": [
         {
-          "Section": "4.3 PostgreSQL Database Server",
+          "Section": "4. Database Services",
+          "SubSection": "4.3 PostgreSQL Database Server",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Ensure log_retention_days on PostgreSQL Servers is set to an appropriate value.",
@@ -1937,7 +1948,8 @@
       ],
       "Attributes": [
         {
-          "Section": "4.3 PostgreSQL Database Server",
+          "Section": "4. Database Services",
+          "SubSection": "4.3 PostgreSQL Database Server",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Disable access from Azure services to PostgreSQL Database Server.",
@@ -1957,7 +1969,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "4.3 PostgreSQL Database Server",
+          "Section": "4. Database Services",
+          "SubSection": "4.3 PostgreSQL Database Server",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Azure Database for PostgreSQL servers should be created with 'infrastructure double encryption' enabled.",
@@ -1979,7 +1992,8 @@
       ],
       "Attributes": [
         {
-          "Section": "4.4 MySQL Database",
+          "Section": "4. Database Services",
+          "SubSection": "4.4 MySQL Database",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Enable SSL connection on MYSQL Servers.",
@@ -2001,7 +2015,8 @@
       ],
       "Attributes": [
         {
-          "Section": "4.4 MySQL Database",
+          "Section": "4. Database Services",
+          "SubSection": "4.4 MySQL Database",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Ensure TLS version on MySQL flexible servers is set to the default value.",
@@ -2023,7 +2038,8 @@
       ],
       "Attributes": [
         {
-          "Section": "4.4 MySQL Database",
+          "Section": "4. Database Services",
+          "SubSection": "4.4 MySQL Database",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Enable audit_log_enabled on MySQL Servers.",
@@ -2045,7 +2061,8 @@
       ],
       "Attributes": [
         {
-          "Section": "4.4 MySQL Database",
+          "Section": "4. Database Services",
+          "SubSection": "4.4 MySQL Database",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Set audit_log_enabled to include CONNECTION on MySQL Servers.",
@@ -2067,7 +2084,8 @@
       ],
       "Attributes": [
         {
-          "Section": "4.5 Cosmos DB",
+          "Section": "4. Database Services",
+          "SubSection": "4.5 Cosmos DB",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Limiting your Cosmos DB to only communicate on whitelisted networks lowers its attack footprint.",
@@ -2089,7 +2107,8 @@
       ],
       "Attributes": [
         {
-          "Section": "4.5 Cosmos DB",
+          "Section": "4. Database Services",
+          "SubSection": "4.5 Cosmos DB",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Private endpoints limit network traffic to approved sources.",
@@ -2111,7 +2130,8 @@
       ],
       "Attributes": [
         {
-          "Section": "4.5 Cosmos DB",
+          "Section": "4. Database Services",
+          "SubSection": "4.5 Cosmos DB",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Cosmos DB can use tokens or AAD for client authentication which in turn will use Azure RBAC for authorization. Using AAD is significantly more secure because AAD handles the credentials and allows for MFA and centralized management, and the Azure RBAC better integrated with the rest of Azure.",
@@ -2133,7 +2153,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.1 Configuring Diagnostic Settings",
+          "Section": "5. Logging and Monitoring",
+          "SubSection": "5.1 Configuring Diagnostic Settings",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Enable Diagnostic settings for exporting activity logs. Diagnos tic settings are available for each individual resource within a subscription. Settings should be configured for allappropriate resources for your environment.",
@@ -2155,7 +2176,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.1 Configuring Diagnostic Settings",
+          "Section": "5. Logging and Monitoring",
+          "SubSection": "5.1 Configuring Diagnostic Settings",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Prerequisite: A Diagnostic Setting must exist. If a Diagnostic Setting does not exist, the navigation and options within this recommendation will not be available. Please review the recommendation at the beginning of this subsection titled: 'Ensure that a 'Diagnostic Setting' exists.' The diagnostic setting should be configured to log the appropriate activities from the control/management plane.",
@@ -2177,7 +2199,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.1 Configuring Diagnostic Settings",
+          "Section": "5. Logging and Monitoring",
+          "SubSection": "5.1 Configuring Diagnostic Settings",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "The storage account container containing the activity log export should not be publicly accessible.",
@@ -2199,7 +2222,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.1 Configuring Diagnostic Settings",
+          "Section": "5. Logging and Monitoring",
+          "SubSection": "5.1 Configuring Diagnostic Settings",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Storage accounts with the activity log exports can be configured to use Customer Managed Keys (CMK).",
@@ -2221,7 +2245,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.1 Configuring Diagnostic Settings",
+          "Section": "5. Logging and Monitoring",
+          "SubSection": "5.1 Configuring Diagnostic Settings",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Enable AuditEvent logging for key vault instances to ensure interactions with key vaults are logged and available.",
@@ -2243,7 +2268,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.1 Configuring Diagnostic Settings",
+          "Section": "5. Logging and Monitoring",
+          "SubSection": "5.1 Configuring Diagnostic Settings",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Ensure that network flow logs are captured and fed into a central log analytics workspace.",
@@ -2265,7 +2291,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.1 Configuring Diagnostic Settings",
+          "Section": "5. Logging and Monitoring",
+          "SubSection": "5.1 Configuring Diagnostic Settings",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Enable AppServiceHTTPLogs diagnostic log category for Azure App Service instances to ensure all http requests are captured and centrally logged.",
@@ -2287,7 +2314,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.2 Monitoring using Activity Log Alerts",
+          "Section": "5. Logging and Monitoring",
+          "SubSection": "5.2 Monitoring using Activity Log Alerts",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Create an activity log alert for the Create Policy Assignment event.",
@@ -2309,7 +2337,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.2 Monitoring using Activity Log Alerts",
+          "Section": "5. Logging and Monitoring",
+          "SubSection": "5.2 Monitoring using Activity Log Alerts",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Create an activity log alert for the Delete Policy Assignment event.",
@@ -2331,7 +2360,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.2 Monitoring using Activity Log Alerts",
+          "Section": "5. Logging and Monitoring",
+          "SubSection": "5.2 Monitoring using Activity Log Alerts",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Create an Activity Log Alert for the Create or Update Network Security Group event.",
@@ -2353,7 +2383,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.2 Monitoring using Activity Log Alerts",
+          "Section": "5. Logging and Monitoring",
+          "SubSection": "5.2 Monitoring using Activity Log Alerts",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Create an activity log alert for the Delete Network Security Group event.",
@@ -2375,7 +2406,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.2 Monitoring using Activity Log Alerts",
+          "Section": "5. Logging and Monitoring",
+          "SubSection": "5.2 Monitoring using Activity Log Alerts",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Create an activity log alert for the Create or Update Security Solution event.",
@@ -2397,7 +2429,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.2 Monitoring using Activity Log Alerts",
+          "Section": "5. Logging and Monitoring",
+          "SubSection": "5.2 Monitoring using Activity Log Alerts",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Create an activity log alert for the Delete Security Solution event.",
@@ -2419,7 +2452,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.2 Monitoring using Activity Log Alerts",
+          "Section": "5. Logging and Monitoring",
+          "SubSection": "5.2 Monitoring using Activity Log Alerts",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Create an activity log alert for the Create or Update SQL Server Firewall Rule event.",
@@ -2441,7 +2475,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.2 Monitoring using Activity Log Alerts",
+          "Section": "5. Logging and Monitoring",
+          "SubSection": "5.2 Monitoring using Activity Log Alerts",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Create an activity log alert for the 'Delete SQL Server Firewall Rule.'",
@@ -2463,7 +2498,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.2 Monitoring using Activity Log Alerts",
+          "Section": "5. Logging and Monitoring",
+          "SubSection": "5.2 Monitoring using Activity Log Alerts",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Create an activity log alert for the Create or Update Public IP Addresses rule.",
@@ -2485,7 +2521,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.2 Monitoring using Activity Log Alerts",
+          "Section": "5. Logging and Monitoring",
+          "SubSection": "5.2 Monitoring using Activity Log Alerts",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Create an activity log alert for the Delete Public IP Address rule.",
@@ -2505,7 +2542,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "5.3 Configuring Application Insights",
+          "Section": "5. Logging and Monitoring",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Resource Logs capture activity to the data access plane while the Activity log is a subscription-level log for the control plane. Resource-level diagnostic logs provide insight into operations that were performed within that resource itself; for example, reading or updating a secret from a Key Vault. Currently, 95 Azure resources support Azure Monitoring (See the more information section for a complete list), including Network Security Groups, Load Balancers, Key Vault, AD, Logic Apps, and CosmosDB. The content of these logs varies by resource type. A number of back-end services were not configured to log and store Resource Logs for certain activities or for a sufficient length. It is crucial that monitoring is correctly configured to log all relevant activities and retain those logs for a sufficient length of time. Given that the mean time to detection in an enterprise is 240 days, a minimum retention period of two years is recommended.",
@@ -2525,7 +2562,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "5.3 Configuring Application Insights",
+          "Section": "5. Logging and Monitoring",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "The use of Basic or Free SKUs in Azure whilst cost effective have significant limitations in terms of what can be monitored and what support can be realized from Microsoft. Typically, these SKU’s do not have a service SLA and Microsoft will usually refuse to provide support for them. Consequently Basic/Free SKUs should never be used for production workloads.",
@@ -2547,7 +2584,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.3 Configuring Application Insights",
+          "Section": "5. Logging and Monitoring",
+          "SubSection": "5.3 Configuring Application Insights",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Application Insights within Azure act as an Application Performance Monitoring solution providing valuable data into how well an application performs and additional information when performing incident response. The types of log data collected include application metrics, telemetry data, and application trace logging data providing organizations with detailed information about application activity and application transactions. Both data sets help organizations adopt a proactive and retroactive means to handle security and performance related metrics within their modern applications.",
