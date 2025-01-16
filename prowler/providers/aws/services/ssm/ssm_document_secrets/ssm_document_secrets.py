@@ -1,7 +1,7 @@
 import json
 
 from prowler.lib.check.models import Check, Check_Report_AWS
-from prowler.lib.utils.utils import detect_secrets_scan
+from prowler.lib.utils.utils import default_detect_secrets_plugins, detect_secrets_scan
 from prowler.providers.aws.services.ssm.ssm_client import ssm_client
 
 
@@ -27,7 +27,7 @@ class ssm_document_secrets(Check):
                     data=json.dumps(document.content, indent=2),
                     excluded_secrets=secrets_ignore_patterns,
                     detect_secrets_plugins=ssm_client.audit_config.get(
-                        "detect_secrets_plugins", None
+                        "detect_secrets_plugins", default_detect_secrets_plugins
                     ),
                 )
                 if detect_secrets_output:

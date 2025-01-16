@@ -1,5 +1,5 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
-from prowler.lib.utils.utils import detect_secrets_scan
+from prowler.lib.utils.utils import default_detect_secrets_plugins, detect_secrets_scan
 from prowler.providers.aws.services.cloudformation.cloudformation_client import (
     cloudformation_client,
 )
@@ -30,7 +30,7 @@ class cloudformation_stack_outputs_find_secrets(Check):
                     data=data,
                     excluded_secrets=secrets_ignore_patterns,
                     detect_secrets_plugins=cloudformation_client.audit_config.get(
-                        "detect_secrets_plugins", None
+                        "detect_secrets_plugins", default_detect_secrets_plugins
                     ),
                 )
                 # If secrets are found, update the report status
