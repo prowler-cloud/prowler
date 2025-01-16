@@ -7,11 +7,10 @@ class sqlserver_auditing_retention_90_days(Check):
         findings = []
         for subscription, sql_servers in sqlserver_client.sql_servers.items():
             for sql_server in sql_servers:
-                report = Check_Report_Azure(self.metadata())
+                report = Check_Report_Azure(
+                    metadata=self.metadata(), resource_metadata=sql_server
+                )
                 report.subscription = subscription
-                report.resource_name = sql_server.name
-                report.resource_id = sql_server.id
-                report.location = sql_server.location
                 has_failed = False
                 has_policy = False
                 for policy in sql_server.auditing_policies:
