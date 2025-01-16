@@ -3,14 +3,15 @@ import { Suspense } from "react";
 
 import { getProviders } from "@/actions/providers";
 import { FilterControls, filterProviders } from "@/components/filters";
-import { AddProvider } from "@/components/providers";
+import { ManageGroupsButton } from "@/components/manage-groups";
+import { AddProviderButton } from "@/components/providers";
 import {
   ColumnProviders,
   SkeletonTableProviders,
 } from "@/components/providers/table";
 import { Header } from "@/components/ui";
 import { DataTable, DataTableFilterCustom } from "@/components/ui/table";
-import { SearchParamsProps } from "@/types";
+import { ProviderProps, SearchParamsProps } from "@/types";
 
 export default async function Providers({
   searchParams,
@@ -26,7 +27,10 @@ export default async function Providers({
       <Spacer y={4} />
       <FilterControls search providers />
       <Spacer y={8} />
-      <AddProvider />
+      <div className="flex items-center gap-4 md:justify-end">
+        <ManageGroupsButton />
+        <AddProviderButton />
+      </div>
       <Spacer y={4} />
       <DataTableFilterCustom filters={filterProviders || []} />
       <Spacer y={8} />
@@ -59,10 +63,29 @@ const SSRDataTable = async ({
   const query = (filters["filter[search]"] as string) || "";
 
   const providersData = await getProviders({ query, page, sort, filters });
+
+  const providerGroupDict =
+    providersData?.included
+      ?.filter((item: any) => item.type === "provider-groups")
+      .reduce((acc: Record<string, string>, group: any) => {
+        acc[group.id] = group.attributes.name;
+        return acc;
+      }, {}) || {};
+
+  const enrichedProviders =
+    providersData?.data?.map((provider: ProviderProps) => {
+      const groupNames =
+        provider.relationships?.provider_groups?.data?.map(
+          (group: { id: string }) =>
+            providerGroupDict[group.id] || "Unknown Group",
+        ) || [];
+      return { ...provider, groupNames };
+    }) || [];
+
   return (
     <DataTable
       columns={ColumnProviders}
-      data={providersData?.data || []}
+      data={enrichedProviders || []}
       metadata={providersData?.meta}
     />
   );

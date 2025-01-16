@@ -58,6 +58,9 @@ export const SelectScanProvider = <
               aria-label="Select a scan job"
               placeholder="Choose a scan job"
               labelPlacement="outside"
+              classNames={{
+                selectorIcon: "right-2",
+              }}
               size="md"
               selectedKeys={field.value ? new Set([field.value]) : new Set()}
               onSelectionChange={(keys) => {

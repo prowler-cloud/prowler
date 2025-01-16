@@ -6,7 +6,7 @@ from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, set_mocked_gcp_prov
 
 class Test_compute_instance_confidential_computing_enabled:
     def test_compute_no_instances(self):
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = []
 
@@ -44,7 +44,7 @@ class Test_compute_instance_confidential_computing_enabled:
             project_id=GCP_PROJECT_ID,
         )
 
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = [instance]
 
@@ -92,7 +92,7 @@ class Test_compute_instance_confidential_computing_enabled:
             project_id=GCP_PROJECT_ID,
         )
 
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = [instance]
 

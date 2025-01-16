@@ -6,11 +6,7 @@ class bigquery_table_cmk_encryption(Check):
     def execute(self) -> Check_Report_GCP:
         findings = []
         for table in bigquery_client.tables:
-            report = Check_Report_GCP(self.metadata())
-            report.project_id = table.project_id
-            report.resource_id = table.id
-            report.resource_name = table.name
-            report.location = table.region
+            report = Check_Report_GCP(metadata=self.metadata(), resource_metadata=table)
             report.status = "PASS"
             report.status_extended = (
                 f"Table {table.name} is encrypted with Customer-Managed Keys (CMKs)."

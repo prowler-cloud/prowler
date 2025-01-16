@@ -18,7 +18,8 @@ class Backup(AWSService):
         self.backup_vault_arn_template = f"arn:{self.audited_partition}:backup:{self.region}:{self.audited_account}:backup-vault"
         self.backup_vaults = []
         self.__threading_call__(self._list_backup_vaults)
-        self.__threading_call__(self._list_tags, self.backup_vaults)
+        if self.backup_vaults is not None:
+            self.__threading_call__(self._list_tags, self.backup_vaults)
         self.backup_plans = []
         self.__threading_call__(self._list_backup_plans)
         self.__threading_call__(self._list_tags, self.backup_plans)
@@ -28,6 +29,7 @@ class Backup(AWSService):
         self.__threading_call__(self._list_backup_selections)
         self.recovery_points = []
         self.__threading_call__(self._list_recovery_points)
+        self.__threading_call__(self._list_tags, self.recovery_points)
 
     def _list_backup_vaults(self, regional_client):
         logger.info("Backup - Listing Backup Vaults...")
@@ -171,10 +173,11 @@ class Backup(AWSService):
 
     def _list_tags(self, resource):
         try:
-            tags = self.regional_clients[resource.region].list_tags(
-                ResourceArn=resource.arn
-            )["Tags"]
-            resource.tags = [tags] if tags else []
+            if getattr(resource, "arn", None):
+                tags = self.regional_clients[resource.region].list_tags(
+                    ResourceArn=resource.arn
+                )["Tags"]
+                resource.tags = [tags] if tags else []
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -201,6 +204,7 @@ class Backup(AWSService):
                                             "IsEncrypted", False
                                         ),
                                         backup_vault_region=backup_vault.region,
+                                        region=regional_client.region,
                                         tags=[],
                                     )
                                 )
@@ -248,6 +252,7 @@ class BackupReportPlan(BaseModel):
 class RecoveryPoint(BaseModel):
     arn: str
     id: str
+    region: str
     backup_vault_name: str
     encrypted: bool
     backup_vault_region: str

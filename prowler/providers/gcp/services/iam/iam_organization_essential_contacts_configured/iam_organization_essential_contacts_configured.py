@@ -8,11 +8,12 @@ class iam_organization_essential_contacts_configured(Check):
     def execute(self) -> Check_Report_GCP:
         findings = []
         for org in essentialcontacts_client.organizations:
-            report = Check_Report_GCP(self.metadata())
-            report.project_id = essentialcontacts_client.default_project_id
-            report.resource_id = org.id
-            report.resource_name = org.name
-            report.location = essentialcontacts_client.region
+            report = Check_Report_GCP(
+                metadata=self.metadata(),
+                resource_metadata=org,
+                project_id=essentialcontacts_client.default_project_id,
+                location=essentialcontacts_client.region,
+            )
             report.status = "FAIL"
             report.status_extended = (
                 f"Organization {org.name} does not have essential contacts configured."

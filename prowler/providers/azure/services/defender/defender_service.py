@@ -14,7 +14,6 @@ from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.azure.lib.service.service import AzureService
 
 
-########################## Defender
 class Defender(AzureService):
     def __init__(self, provider: AzureProvider):
         super().__init__(SecurityCenter, provider)
@@ -161,6 +160,7 @@ class Defender(AzureService):
                     {
                         security_contact_default.name: SecurityContacts(
                             resource_id=security_contact_default.id,
+                            name=security_contact_default.name,
                             emails=security_contact_default.emails,
                             phone=security_contact_default.phone,
                             alert_notifications_minimal_severity=security_contact_default.alert_notifications.minimal_severity,
@@ -207,8 +207,9 @@ class Defender(AzureService):
                 for iot_security_solution in iot_security_solutions_list:
                     iot_security_solutions[subscription_name].update(
                         {
-                            iot_security_solution.name: IoTSecuritySolution(
+                            iot_security_solution.id: IoTSecuritySolution(
                                 resource_id=iot_security_solution.id,
+                                name=iot_security_solution.name,
                                 status=iot_security_solution.status,
                             )
                         }
@@ -249,6 +250,7 @@ class Setting(BaseModel):
 
 class SecurityContacts(BaseModel):
     resource_id: str
+    name: str
     emails: str
     phone: str
     alert_notifications_minimal_severity: str
@@ -259,4 +261,5 @@ class SecurityContacts(BaseModel):
 
 class IoTSecuritySolution(BaseModel):
     resource_id: str
+    name: str
     status: str

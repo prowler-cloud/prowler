@@ -8,11 +8,9 @@ class dms_instance_no_public_access(Check):
     def execute(self):
         findings = []
         for instance in dms_client.instances:
-            report = Check_Report_AWS(self.metadata())
-            report.region = instance.region
-            report.resource_id = instance.id
-            report.resource_arn = instance.arn
-            report.resource_tags = instance.tags
+            report = Check_Report_AWS(
+                metadata=self.metadata(), resource_metadata=instance
+            )
             report.status = "PASS"
             report.status_extended = (
                 f"DMS Replication Instance {instance.id} is not publicly accessible."

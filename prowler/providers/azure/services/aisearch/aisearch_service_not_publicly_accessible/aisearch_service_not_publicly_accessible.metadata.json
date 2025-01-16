@@ -23,7 +23,7 @@
       "Url": "https://learn.microsoft.com/en-us/azure/search/service-configure-firewall#configure-network-access-in-azure-portal"
     }
   },
-  "Categories": [],
+  "Categories": ["gen-ai"],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

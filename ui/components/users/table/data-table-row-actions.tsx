@@ -21,34 +21,39 @@ import { CustomAlertModal } from "@/components/ui/custom";
 
 import { DeleteForm, EditForm } from "../forms";
 
-interface DataTableRowActionsProps<ProviderProps> {
-  row: Row<ProviderProps>;
+interface DataTableRowActionsProps<UserProps> {
+  row: Row<UserProps>;
+  roles?: { id: string; name: string }[];
 }
 const iconClasses =
   "text-2xl text-default-500 pointer-events-none flex-shrink-0";
 
-export function DataTableRowActions<ProviderProps>({
+export function DataTableRowActions<UserProps>({
   row,
-}: DataTableRowActionsProps<ProviderProps>) {
+  roles,
+}: DataTableRowActionsProps<UserProps>) {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const userId = (row.original as { id: string }).id;
   const userName = (row.original as any).attributes?.name;
   const userEmail = (row.original as any).attributes?.email;
   const userCompanyName = (row.original as any).attributes?.company_name;
+  const userRole = (row.original as any).attributes?.role?.name;
+
   return (
     <>
       <CustomAlertModal
         isOpen={isEditOpen}
         onOpenChange={setIsEditOpen}
-        title="Edit user"
-        description={"Edit the user details"}
+        title="Edit user details"
       >
         <EditForm
           userId={userId}
           userName={userName}
           userEmail={userEmail}
           userCompanyName={userCompanyName}
+          currentRole={userRole}
+          roles={roles || []}
           setIsOpen={setIsEditOpen}
         />
       </CustomAlertModal>
@@ -83,7 +88,7 @@ export function DataTableRowActions<ProviderProps>({
                 description="Allows you to edit the user"
                 textValue="Edit User"
                 startContent={<EditDocumentBulkIcon className={iconClasses} />}
-                onClick={() => setIsEditOpen(true)}
+                onPress={() => setIsEditOpen(true)}
               >
                 Edit User
               </DropdownItem>
@@ -100,7 +105,7 @@ export function DataTableRowActions<ProviderProps>({
                     className={clsx(iconClasses, "!text-danger")}
                   />
                 }
-                onClick={() => setIsDeleteOpen(true)}
+                onPress={() => setIsDeleteOpen(true)}
               >
                 Delete User
               </DropdownItem>

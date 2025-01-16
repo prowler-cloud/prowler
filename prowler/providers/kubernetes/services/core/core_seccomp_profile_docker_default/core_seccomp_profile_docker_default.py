@@ -6,10 +6,9 @@ class core_seccomp_profile_docker_default(Check):
     def execute(self) -> Check_Report_Kubernetes:
         findings = []
         for pod in core_client.pods.values():
-            report = Check_Report_Kubernetes(self.metadata())
-            report.namespace = pod.namespace
-            report.resource_name = pod.name
-            report.resource_id = pod.uid
+            report = Check_Report_Kubernetes(
+                metadata=self.metadata(), resource_metadata=pod
+            )
 
             pod_seccomp_correct = (
                 pod.security_context

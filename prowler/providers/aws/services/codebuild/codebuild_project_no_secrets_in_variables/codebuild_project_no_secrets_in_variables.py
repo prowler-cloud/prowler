@@ -15,11 +15,9 @@ class codebuild_project_no_secrets_in_variables(Check):
             "secrets_ignore_patterns", []
         )
         for project in codebuild_client.projects.values():
-            report = Check_Report_AWS(self.metadata())
-            report.region = project.region
-            report.resource_id = project.name
-            report.resource_arn = project.arn
-            report.resource_tags = project.tags
+            report = Check_Report_AWS(
+                metadata=self.metadata(), resource_metadata=project
+            )
             report.status = "PASS"
             report.status_extended = f"CodeBuild project {project.name} does not have sensitive environment plaintext credentials."
             secrets_found = []

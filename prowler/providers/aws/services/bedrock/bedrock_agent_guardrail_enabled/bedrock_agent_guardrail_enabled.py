@@ -8,11 +8,7 @@ class bedrock_agent_guardrail_enabled(Check):
     def execute(self):
         findings = []
         for agent in bedrock_agent_client.agents.values():
-            report = Check_Report_AWS(self.metadata())
-            report.region = agent.region
-            report.resource_id = agent.id
-            report.resource_arn = agent.arn
-            report.resource_tags = agent.tags
+            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=agent)
             report.status = "FAIL"
             report.status_extended = f"Bedrock Agent {agent.name} is not using any guardrail to protect agent sessions."
             if agent.guardrail_id:

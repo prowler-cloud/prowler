@@ -12,11 +12,10 @@ class autoscaling_group_launch_configuration_requires_imdsv2(Check):
                 launch_configuration
             ) in autoscaling_client.launch_configurations.values():
                 if launch_configuration.name == group.launch_configuration_name:
-                    report = Check_Report_AWS(self.metadata())
-                    report.region = group.region
-                    report.resource_id = group.name
-                    report.resource_arn = group.arn
-                    report.resource_tags = group.tags
+                    report = Check_Report_AWS(
+                        metadata=self.metadata(), resource_metadata=group
+                    )
+
                     report.status = "FAIL"
                     report.status_extended = f"Autoscaling group {group.name} has IMDSv2 disabled or not required."
                     if (

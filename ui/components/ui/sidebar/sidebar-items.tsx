@@ -206,10 +206,22 @@ export const sectionItems: SidebarItem[] = [
         title: "Cloud Providers",
       },
       {
+        key: "provider-groups",
+        href: "/manage-groups",
+        icon: "solar:settings-outline",
+        title: "Provider Groups",
+      },
+      {
         key: "scans",
         href: "/scans",
         icon: "lucide:scan-search",
         title: "Scan Jobs",
+      },
+      {
+        key: "roles",
+        href: "/roles",
+        icon: "mdi:account-key-outline",
+        title: "Roles",
       },
       // {
       //   key: "integrations",

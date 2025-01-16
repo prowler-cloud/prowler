@@ -25,7 +25,8 @@
   },
   "Categories": [
     "encryption",
-    "logging"
+    "logging",
+    "gen-ai"
   ],
   "DependsOn": [],
   "RelatedTo": [],
