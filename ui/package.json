@@ -89,5 +89,8 @@
     "format:write": "./node_modules/.bin/prettier --config .prettierrc.json --write ./app",
     "prepare": "husky"
   },
+  "overrides": {
+    "@react-types/shared": "3.26.0"
+  },
   "version": "0.0.1"
 }
