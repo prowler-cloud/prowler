@@ -7,11 +7,13 @@ class defender_ensure_defender_for_sql_servers_is_on(Check):
         findings = []
         for subscription, pricings in defender_client.pricings.items():
             if "SqlServerVirtualMachines" in pricings:
-                report = Check_Report_Azure(self.metadata())
-                report.status = "PASS"
+                report = Check_Report_Azure(
+                    metadata=self.metadata(),
+                    resource_metadata=pricings["SqlServerVirtualMachines"],
+                )
                 report.subscription = subscription
                 report.resource_name = "Defender plan SQL Server VMs"
-                report.resource_id = pricings["SqlServerVirtualMachines"].resource_id
+                report.status = "PASS"
                 report.status_extended = f"Defender plan Defender for SQL Server VMs from subscription {subscription} is set to ON (pricing tier standard)."
                 if pricings["SqlServerVirtualMachines"].pricing_tier != "Standard":
                     report.status = "FAIL"

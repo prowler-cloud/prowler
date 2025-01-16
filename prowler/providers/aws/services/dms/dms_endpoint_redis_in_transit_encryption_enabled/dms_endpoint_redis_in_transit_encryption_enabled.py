@@ -24,13 +24,11 @@ class dms_endpoint_redis_in_transit_encryption_enabled(Check):
             List[Check_Report_AWS]: A list of report objects with the results of the check.
         """
         findings = []
-        for endpoint_arn, endpoint in dms_client.endpoints.items():
+        for endpoint in dms_client.endpoints.values():
             if endpoint.engine_name == "redis":
-                report = Check_Report_AWS(self.metadata())
-                report.resource_id = endpoint.id
-                report.resource_arn = endpoint_arn
-                report.region = endpoint.region
-                report.resource_tags = endpoint.tags
+                report = Check_Report_AWS(
+                    metadata=self.metadata(), resource_metadata=endpoint
+                )
                 report.status = "FAIL"
                 report.status_extended = f"DMS Endpoint {endpoint.id} for Redis OSS is not encrypted in transit."
                 if endpoint.redis_ssl_protocol == "ssl-encryption":

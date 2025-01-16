@@ -21,11 +21,9 @@ class transfer_server_in_transit_encryption_enabled(Check):
         """
         findings = []
         for server in transfer_client.servers.values():
-            report = Check_Report_AWS(self.metadata())
-            report.region = server.region
-            report.resource_id = server.id
-            report.resource_arn = server.arn
-            report.resource_tags = server.tags
+            report = Check_Report_AWS(
+                metadata=self.metadata(), resource_metadata=server
+            )
             report.status = "PASS"
             report.status_extended = (
                 f"Transfer Server {server.id} does have encryption in transit enabled."

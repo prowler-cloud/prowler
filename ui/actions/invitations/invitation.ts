@@ -53,6 +53,7 @@ export const sendInvite = async (formData: FormData) => {
   const keyServer = process.env.API_BASE_URL;
 
   const email = formData.get("email");
+  const role = formData.get("role");
   const url = new URL(`${keyServer}/tenants/invitations`);
 
   const body = JSON.stringify({
@@ -61,7 +62,18 @@ export const sendInvite = async (formData: FormData) => {
       attributes: {
         email,
       },
-      relationships: {},
+      relationships: {
+        roles: {
+          data: role
+            ? [
+                {
+                  id: role,
+                  type: "roles",
+                },
+              ]
+            : [],
+        },
+      },
     },
   });
 
@@ -91,9 +103,39 @@ export const updateInvite = async (formData: FormData) => {
 
   const invitationId = formData.get("invitationId");
   const invitationEmail = formData.get("invitationEmail");
-  const expiresAt = formData.get("expires_at");
+  const roleId = formData.get("role");
+  const expiresAt =
+    formData.get("expires_at") ||
+    new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
   const url = new URL(`${keyServer}/tenants/invitations/${invitationId}`);
+
+  const body: any = {
+    data: {
+      type: "invitations",
+      id: invitationId,
+      attributes: {},
+      relationships: {},
+    },
+  };
+
+  // Only add attributes that exist in the formData
+  if (invitationEmail) {
+    body.data.attributes.email = invitationEmail;
+  }
+  if (expiresAt) {
+    body.data.attributes.expires_at = expiresAt;
+  }
+  if (roleId) {
+    body.data.relationships.roles = {
+      data: [
+        {
+          id: roleId,
+          type: "roles",
+        },
+      ],
+    };
+  }
 
   try {
     const response = await fetch(url.toString(), {
@@ -103,23 +145,18 @@ export const updateInvite = async (formData: FormData) => {
         Accept: "application/vnd.api+json",
         Authorization: `Bearer ${session?.accessToken}`,
       },
-      body: JSON.stringify({
-        data: {
-          type: "invitations",
-          id: invitationId,
-          attributes: {
-            email: invitationEmail,
-            ...(expiresAt && { expires_at: expiresAt }),
-          },
-        },
-      }),
+      body: JSON.stringify(body),
     });
+
+    if (!response.ok) {
+      const error = await response.json();
+      return { error };
+    }
+
     const data = await response.json();
     revalidatePath("/invitations");
     return parseStringify(data);
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error("Error updating invitation:", error);
     return {
       error: getErrorMessage(error),
     };

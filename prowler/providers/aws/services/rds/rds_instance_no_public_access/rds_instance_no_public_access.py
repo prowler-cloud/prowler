@@ -8,12 +8,10 @@ from prowler.providers.aws.services.vpc.vpc_client import vpc_client
 class rds_instance_no_public_access(Check):
     def execute(self):
         findings = []
-        for db_instance_arn, db_instance in rds_client.db_instances.items():
-            report = Check_Report_AWS(self.metadata())
-            report.region = db_instance.region
-            report.resource_id = db_instance.id
-            report.resource_arn = db_instance_arn
-            report.resource_tags = db_instance.tags
+        for db_instance in rds_client.db_instances.values():
+            report = Check_Report_AWS(
+                metadata=self.metadata(), resource_metadata=db_instance
+            )
             report.status = "PASS"
             report.status_extended = (
                 f"RDS Instance {db_instance.id} is not publicly accessible."

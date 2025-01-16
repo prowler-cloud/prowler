@@ -29,11 +29,9 @@ class stepfunctions_statemachine_logging_enabled(Check):
         """
         findings = []
         for state_machine in stepfunctions_client.state_machines.values():
-            report = Check_Report_AWS(self.metadata())
-            report.region = state_machine.region
-            report.resource_id = state_machine.id
-            report.resource_arn = state_machine.arn
-            report.resource_tags = state_machine.tags
+            report = Check_Report_AWS(
+                metadata=self.metadata(), resource_metadata=state_machine
+            )
             report.status = "PASS"
             report.status_extended = f"Step Functions state machine {state_machine.name} has logging enabled."
 

@@ -21,6 +21,7 @@ interface CustomInputProps<T extends FieldValues> {
   defaultValue?: string;
   isRequired?: boolean;
   isInvalid?: boolean;
+  isDisabled?: boolean;
 }
 
 export const CustomInput = <T extends FieldValues>({
@@ -37,6 +38,7 @@ export const CustomInput = <T extends FieldValues>({
   defaultValue,
   isRequired = true,
   isInvalid,
+  isDisabled = false,
 }: CustomInputProps<T>) => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] =
@@ -103,6 +105,7 @@ export const CustomInput = <T extends FieldValues>({
               isInvalid={isInvalid}
               defaultValue={defaultValue}
               endContent={endContent}
+              isDisabled={isDisabled}
               {...field}
             />
           </FormControl>

@@ -38,30 +38,33 @@ const getProviderData = (
   );
 };
 
+const FindingDetailsCell = ({ row }: { row: any }) => {
+  const searchParams = useSearchParams();
+  const findingId = searchParams.get("id");
+  const isOpen = findingId === row.original.id;
+
+  return (
+    <div className="flex justify-center">
+      <TriggerSheet
+        triggerComponent={<InfoIcon className="text-primary" size={16} />}
+        title="Finding Details"
+        description="View the finding details"
+        defaultOpen={isOpen}
+      >
+        <DataTableRowDetails
+          entityId={row.original.id}
+          findingDetails={row.original}
+        />
+      </TriggerSheet>
+    </div>
+  );
+};
+
 export const ColumnNewFindingsToDate: ColumnDef<FindingProps>[] = [
   {
     id: "moreInfo",
     header: "Details",
-    cell: ({ row }) => {
-      const searchParams = useSearchParams();
-      const findingId = searchParams.get("id");
-      const isOpen = findingId === row.original.id;
-      return (
-        <div className="flex justify-center">
-          <TriggerSheet
-            triggerComponent={<InfoIcon className="text-primary" size={16} />}
-            title="Finding Details"
-            description="View the finding details"
-            defaultOpen={isOpen}
-          >
-            <DataTableRowDetails
-              entityId={row.original.id}
-              findingDetails={row.original}
-            />
-          </TriggerSheet>
-        </div>
-      );
-    },
+    cell: ({ row }) => <FindingDetailsCell row={row} />,
   },
   {
     accessorKey: "check",

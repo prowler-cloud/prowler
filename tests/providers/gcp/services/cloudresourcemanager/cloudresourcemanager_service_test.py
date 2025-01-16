@@ -26,9 +26,11 @@ class TestCloudResourceManagerService:
             assert api_keys_client.service == "cloudresourcemanager"
             assert api_keys_client.project_ids == [GCP_PROJECT_ID]
 
-            assert len(api_keys_client.projects) == 1
-            assert api_keys_client.projects[0].id == GCP_PROJECT_ID
-            assert api_keys_client.projects[0].audit_logging
+            assert len(api_keys_client.cloud_resource_manager_projects) == 1
+            assert (
+                api_keys_client.cloud_resource_manager_projects[0].id == GCP_PROJECT_ID
+            )
+            assert api_keys_client.cloud_resource_manager_projects[0].audit_logging
 
             assert len(api_keys_client.bindings) == 2
             assert (

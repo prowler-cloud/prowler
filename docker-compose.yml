@@ -1,7 +1,7 @@
 services:
   api:
     hostname: "prowler-api"
-    image: prowlercloud/prowler-api:${PROWLER_API_VERSION:-latest}
+    image: prowlercloud/prowler-api:${PROWLER_API_VERSION:-stable}
     env_file:
       - path: .env
         required: false
@@ -17,7 +17,7 @@ services:
       - "prod"
 
   ui:
-    image: prowlercloud/prowler-ui:${PROWLER_UI_VERSION:-latest}
+    image: prowlercloud/prowler-ui:${PROWLER_UI_VERSION:-stable}
     env_file:
       - path: .env
         required: false
@@ -61,7 +61,7 @@ services:
       retries: 3
 
   worker:
-    image: prowlercloud/prowler-api:${PROWLER_API_VERSION:-latest}
+    image: prowlercloud/prowler-api:${PROWLER_API_VERSION:-stable}
     env_file:
       - path: .env
         required: false
@@ -75,7 +75,7 @@ services:
       - "worker"
 
   worker-beat:
-    image: prowlercloud/prowler-api:${PROWLER_API_VERSION:-latest}
+    image: prowlercloud/prowler-api:${PROWLER_API_VERSION:-stable}
     env_file:
       - path: ./.env
         required: false

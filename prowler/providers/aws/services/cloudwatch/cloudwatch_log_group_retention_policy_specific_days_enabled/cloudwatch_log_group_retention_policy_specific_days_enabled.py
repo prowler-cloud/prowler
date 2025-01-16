@@ -12,11 +12,9 @@ class cloudwatch_log_group_retention_policy_specific_days_enabled(Check):
         )
         if logs_client.log_groups:
             for log_group in logs_client.log_groups.values():
-                report = Check_Report_AWS(self.metadata())
-                report.region = log_group.region
-                report.resource_id = log_group.name
-                report.resource_arn = log_group.arn
-                report.resource_tags = log_group.tags
+                report = Check_Report_AWS(
+                    metadata=self.metadata(), resource_metadata=log_group
+                )
                 if (
                     log_group.never_expire is False
                     and log_group.retention_days < specific_retention_days

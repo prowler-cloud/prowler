@@ -68,6 +68,7 @@ class Test_app_function_latest_runtime_version:
             app_client.functions = {
                 AZURE_SUBSCRIPTION_ID: {
                     function_id: FunctionApp(
+                        id=function_id,
                         name="function1",
                         location="West Europe",
                         kind="functionapp,linux",
@@ -113,6 +114,7 @@ class Test_app_function_latest_runtime_version:
             app_client.functions = {
                 AZURE_SUBSCRIPTION_ID: {
                     function_id: FunctionApp(
+                        id=function_id,
                         name="function1",
                         location="West Europe",
                         kind="functionapp,linux",
