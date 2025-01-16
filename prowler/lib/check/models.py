@@ -560,6 +560,20 @@ class Check_Report_Kubernetes(Check_Report):
             self.namespace = "cluster-wide"
 
 
+@dataclass
+class Check_Report_Github(Check_Report):
+    # TODO change class name to CheckReportGitHub
+    """Contains the GitHub Check's finding information."""
+
+    resource_name: str
+    resource_id: str
+
+    def __init__(self, metadata, resource_metadata):
+        super().__init__(metadata, resource_metadata)
+        self.resource_id = getattr(resource_metadata, "id", "")
+        self.resource_name = getattr(resource_metadata, "name", "")
+
+
 # Testing Pending
 def load_check_metadata(metadata_file: str) -> CheckMetadata:
     """
