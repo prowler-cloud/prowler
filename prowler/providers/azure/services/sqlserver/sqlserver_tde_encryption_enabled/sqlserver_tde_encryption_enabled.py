@@ -14,11 +14,10 @@ class sqlserver_tde_encryption_enabled(Check):
                     for database in databases:
                         if database.name.lower() == "master":
                             continue
-                        report = Check_Report_Azure(self.metadata())
+                        report = Check_Report_Azure(
+                            metadata=self.metadata(), resource_metadata=database
+                        )
                         report.subscription = subscription
-                        report.resource_name = database.name
-                        report.resource_id = database.id
-                        report.location = sql_server.location
                         if database.tde_encryption.status == "Enabled":
                             report.status = "PASS"
                             report.status_extended = f"Database {database.name} from SQL Server {sql_server.name} from subscription {subscription} has TDE enabled"

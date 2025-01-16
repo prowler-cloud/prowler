@@ -16,7 +16,6 @@ from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.azure.lib.service.service import AzureService
 
 
-########################## SQLServer
 class SQLServer(AzureService):
     def __init__(self, provider: AzureProvider):
         super().__init__(SqlManagementClient, provider)

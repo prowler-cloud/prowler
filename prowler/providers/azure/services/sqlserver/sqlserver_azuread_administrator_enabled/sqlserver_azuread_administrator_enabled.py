@@ -7,13 +7,12 @@ class sqlserver_azuread_administrator_enabled(Check):
         findings = []
         for subscription, sql_servers in sqlserver_client.sql_servers.items():
             for sql_server in sql_servers:
-                report = Check_Report_Azure(self.metadata())
+                report = Check_Report_Azure(
+                    metadata=self.metadata(), resource_metadata=sql_server
+                )
                 report.subscription = subscription
                 report.status = "PASS"
-                report.location = sql_server.location
                 report.status_extended = f"SQL Server {sql_server.name} from subscription {subscription} has an Active Directory administrator."
-                report.resource_name = sql_server.name
-                report.resource_id = sql_server.id
 
                 if (
                     sql_server.administrators is None
