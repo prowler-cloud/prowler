@@ -12,6 +12,7 @@ IDENTITY_ID = "00000000-0000-0000-0000-000000000000"
 IDENTITY_TYPE = "Application"
 TENANT_ID = "00000000-0000-0000-0000-000000000000"
 DOMAIN = "user.onmicrosoft.com"
+LOCATION = "global"
 
 
 # Mocked Azure Audit Info

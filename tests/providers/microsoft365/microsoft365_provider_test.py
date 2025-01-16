@@ -2,6 +2,7 @@ from unittest.mock import patch
 from uuid import uuid4
 
 import pytest
+from azure.identity import ClientSecretCredential
 from mock import MagicMock
 
 from prowler.config.config import (
@@ -14,6 +15,13 @@ from prowler.providers.microsoft365.microsoft365_provider import Microsoft365Pro
 from prowler.providers.microsoft365.models import (
     Microsoft365IdentityInfo,
     Microsoft365RegionConfig,
+)
+from tests.providers.microsoft365.microsoft365_fixtures import (
+    DOMAIN,
+    IDENTITY_ID,
+    IDENTITY_TYPE,
+    LOCATION,
+    TENANT_ID,
 )
 
 
@@ -28,9 +36,25 @@ class TestMicrosoft365Provider:
         )
         azure_region = "Microsoft365Global"
 
-        with patch(
-            "prowler.providers.microsoft365.microsoft365_provider.Microsoft365Provider.setup_identity",
-            return_value=Microsoft365IdentityInfo(),
+        with (
+            patch(
+                "prowler.providers.microsoft365.microsoft365_provider.Microsoft365Provider.setup_session",
+                return_value=ClientSecretCredential(
+                    client_id=IDENTITY_ID,
+                    tenant_id=TENANT_ID,
+                    client_secret="client_secret",
+                ),
+            ),
+            patch(
+                "prowler.providers.microsoft365.microsoft365_provider.Microsoft365Provider.setup_identity",
+                return_value=Microsoft365IdentityInfo(
+                    identity_id=IDENTITY_ID,
+                    identity_type=IDENTITY_TYPE,
+                    tenant_id=TENANT_ID,
+                    tenant_domain=DOMAIN,
+                    location=LOCATION,
+                ),
+            ),
         ):
             microsoft365_provider = Microsoft365Provider(
                 tenant_id,
@@ -48,10 +72,11 @@ class TestMicrosoft365Provider:
                 credential_scopes=["https://graph.microsoft.com/.default"],
             )
             assert microsoft365_provider.identity == Microsoft365IdentityInfo(
-                identity_id="",
-                identity_type="",
-                tenant_id="",
-                tenant_domain="Unknown tenant domain (missing AAD permissions)",
+                identity_id=IDENTITY_ID,
+                identity_type=IDENTITY_TYPE,
+                tenant_id=TENANT_ID,
+                tenant_domain=DOMAIN,
+                location=LOCATION,
             )
 
     def test_test_connection_tenant_id_client_id_client_secret(self):
@@ -92,5 +117,5 @@ class TestMicrosoft365Provider:
                     raise_on_exception=True,
                 )
 
-            assert exception.type == Exception
+            assert exception.type is Exception
             assert exception.value.args[0] == "Simulated Exception"
