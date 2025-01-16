@@ -17,15 +17,14 @@ class defender_ensure_system_updates_are_applied(Check):
                 in assessments
                 and "System updates should be installed on your machines" in assessments
             ):
-                report = Check_Report_Azure(self.metadata())
-                report.status = "PASS"
+                report = Check_Report_Azure(
+                    metadata=self.metadata(),
+                    resource_metadata=assessments[
+                        "System updates should be installed on your machines"
+                    ],
+                )
                 report.subscription = subscription_name
-                report.resource_name = assessments[
-                    "System updates should be installed on your machines"
-                ].resource_name
-                report.resource_id = assessments[
-                    "System updates should be installed on your machines"
-                ].resource_id
+                report.status = "PASS"
                 report.status_extended = f"System updates are applied for all the VMs in the subscription {subscription_name}."
 
                 if (

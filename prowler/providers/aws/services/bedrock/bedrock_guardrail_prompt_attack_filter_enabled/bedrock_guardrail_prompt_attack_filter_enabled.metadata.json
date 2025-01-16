@@ -23,7 +23,7 @@
       "Url": "https://docs.aws.amazon.com/bedrock/latest/userguide/prompt-injection.html"
     }
   },
-  "Categories": [],
+  "Categories": ["gen-ai"],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "Ensure that prompt attack protection is set to the highest strength to minimize the risk of prompt injection attacks."

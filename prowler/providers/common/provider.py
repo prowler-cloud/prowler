@@ -217,6 +217,7 @@ class Provider(ABC):
                         oauth_app_token=arguments.oauth_app_token,
                         github_app_key=arguments.github_app_key,
                         github_app_id=arguments.github_app_id,
+                        mutelist_path=arguments.mutelist_file,
                         config_path=arguments.config_file,
                     )
 

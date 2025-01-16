@@ -6,11 +6,9 @@ class mq_broker_not_publicly_accessible(Check):
     def execute(self):
         findings = []
         for broker in mq_client.brokers.values():
-            report = Check_Report_AWS(self.metadata())
-            report.region = broker.region
-            report.resource_id = broker.id
-            report.resource_arn = broker.arn
-            report.resource_tags = broker.tags
+            report = Check_Report_AWS(
+                metadata=self.metadata(), resource_metadata=broker
+            )
             report.status = "FAIL"
             report.status_extended = f"MQ Broker {broker.name} is publicly accessible."
 

@@ -6,7 +6,7 @@ from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, set_mocked_gcp_prov
 
 class Test_iam_audit_logs_enabled:
     def test_iam_no_projects(self):
-        cloudresourcemanager_client = mock.MagicMock
+        cloudresourcemanager_client = mock.MagicMock()
         cloudresourcemanager_client.projects = []
         cloudresourcemanager_client.project_ids = [GCP_PROJECT_ID]
         cloudresourcemanager_client.region = "global"
@@ -33,7 +33,7 @@ class Test_iam_audit_logs_enabled:
 
         project1 = Project(id=GCP_PROJECT_ID, audit_logging=True)
 
-        cloudresourcemanager_client = mock.MagicMock
+        cloudresourcemanager_client = mock.MagicMock()
         cloudresourcemanager_client.project_ids = [GCP_PROJECT_ID]
         cloudresourcemanager_client.projects = [project1]
         cloudresourcemanager_client.region = "global"
@@ -70,7 +70,7 @@ class Test_iam_audit_logs_enabled:
 
         project1 = Project(id=GCP_PROJECT_ID, audit_logging=False)
 
-        cloudresourcemanager_client = mock.MagicMock
+        cloudresourcemanager_client = mock.MagicMock()
         cloudresourcemanager_client.project_ids = [GCP_PROJECT_ID]
         cloudresourcemanager_client.projects = [project1]
         cloudresourcemanager_client.region = "global"

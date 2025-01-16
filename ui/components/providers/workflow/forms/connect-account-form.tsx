@@ -97,6 +97,7 @@ export const ConnectAccountForm = () => {
         router.push(`/providers/add-credentials?type=${providerType}&id=${id}`);
       }
     } catch (error: any) {
+      // eslint-disable-next-line no-console
       console.error("Error during submission:", error);
       toast({
         variant: "destructive",

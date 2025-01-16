@@ -10,11 +10,7 @@ class sns_topics_not_publicly_accessible(Check):
     def execute(self):
         findings = []
         for topic in sns_client.topics:
-            report = Check_Report_AWS(self.metadata())
-            report.region = topic.region
-            report.resource_id = topic.name
-            report.resource_arn = topic.arn
-            report.resource_tags = topic.tags
+            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=topic)
             report.status = "PASS"
             report.status_extended = (
                 f"SNS topic {topic.name} is not publicly accessible."

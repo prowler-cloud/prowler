@@ -6,11 +6,7 @@ class glacier_vaults_policy_public_access(Check):
     def execute(self):
         findings = []
         for vault in glacier_client.vaults.values():
-            report = Check_Report_AWS(self.metadata())
-            report.region = vault.region
-            report.resource_id = vault.name
-            report.resource_arn = vault.arn
-            report.resource_tags = vault.tags
+            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=vault)
             report.status = "PASS"
             report.status_extended = f"Vault {vault.name} has policy which does not allow access to everyone."
 

@@ -11,6 +11,7 @@ def mock_aks_get_clusters(_):
     return {
         AZURE_SUBSCRIPTION_ID: {
             "cluster_id-1": Cluster(
+                id="cluster_id-1",
                 name="cluster_name",
                 public_fqdn="public_fqdn",
                 private_fqdn="private_fqdn",

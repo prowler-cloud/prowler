@@ -15,6 +15,9 @@ export const SelectScanComplianceData = ({
     <Select
       aria-label="Select a Scan"
       placeholder="Select a scan"
+      classNames={{
+        selectorIcon: "right-2",
+      }}
       labelPlacement="outside"
       size="md"
       selectedKeys={new Set([selectedScanId])}
