@@ -132,7 +132,7 @@ class Test_ecs_task_definitions_no_environment_secrets:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Potential secrets found in ECS task definition {TASK_NAME} with revision {TASK_REVISION}: Secrets in container test-container -> Secret Keyword on env var DB_PASSWORD."
+                == f"Potential secrets found in ECS task definition {TASK_NAME} with revision {TASK_REVISION}: Secrets in container test-container -> Secret Keyword on the environment variable DB_PASSWORD."
             )
             assert result[0].resource_id == f"{TASK_NAME}:{TASK_REVISION}"
             assert result[0].resource_arn == task_arn
