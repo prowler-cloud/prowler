@@ -1,11 +1,11 @@
 import React from "react";
 
+import { InfoIcon } from "@/components/icons";
 import {
   UpdateViaCredentialsForm,
   UpdateViaRoleForm,
 } from "@/components/providers/workflow/forms";
 import { SelectViaAWS } from "@/components/providers/workflow/forms/select-via-aws/select-via-aws";
-import { InfoIcon } from "@/components/icons";
 
 interface Props {
   searchParams: { type: string; id: string; via?: string };

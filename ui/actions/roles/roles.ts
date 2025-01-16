@@ -134,6 +134,7 @@ export const addRole = async (formData: FormData) => {
     revalidatePath("/roles");
     return data;
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error("Error during API call:", error);
     return {
       error: getErrorMessage(error),
@@ -201,6 +202,7 @@ export const updateRole = async (formData: FormData, roleId: string) => {
     revalidatePath("/roles");
     return data;
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error("Error during API call:", error);
     return {
       error: getErrorMessage(error),
