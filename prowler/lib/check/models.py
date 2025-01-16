@@ -568,30 +568,10 @@ class Check_Report_Github(Check_Report):
     resource_name: str
     resource_id: str
 
-    def __init__(self, metadata: Dict, resource: Any = None) -> None:
-        """Initialize the Check's finding information.
-        Args:
-            metadata: The metadata of the check.
-            resource: Basic information about the resource. Defaults to None.
-                      Only accepted BaseModels (dict attribute), custom models (to_dict attribute) or objects with __dict__.
-        """
-        self.status = ""
-        self.check_metadata = CheckMetadata.parse_raw(metadata)
-
-        if hasattr(resource, "dict"):
-            self.resource_metadata = resource.dict()
-        elif hasattr(resource, "to_dict"):
-            self.resource_metadata = resource.to_dict()
-        elif hasattr(resource, "__dict__"):
-            self.resource_metadata = resource.__dict__
-        else:
-            logger.error(
-                f"Resource metadata {type(resource)} could not be converted to dict"
-            )
-            self.resource_metadata = {}
-
-        self.check_metadata = CheckMetadata.parse_raw(metadata)
-        self.resource_metadata = resource.dict() if resource else {}
+    def __init__(self, metadata, resource_metadata):
+        super().__init__(metadata, resource_metadata)
+        self.resource_id = getattr(resource_metadata, "id", "")
+        self.resource_name = getattr(resource_metadata, "name", "")
 
 
 # Testing Pending
