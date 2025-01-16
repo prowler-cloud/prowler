@@ -8,11 +8,10 @@ class awslambda_function_inside_vpc(Check):
     def execute(self) -> List[Check_Report_AWS]:
         findings = []
         for function_arn, function in awslambda_client.functions.items():
-            report = Check_Report_AWS(self.metadata())
-            report.region = function.region
-            report.resource_id = function.name
-            report.resource_arn = function_arn
-            report.resource_tags = function.tags
+            report = Check_Report_AWS(
+                metadata=self.metadata(), resource_metadata=function
+            )
+
             report.status = "PASS"
             report.status_extended = (
                 f"Lambda function {function.name} is inside of VPC {function.vpc_id}"

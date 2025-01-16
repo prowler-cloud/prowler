@@ -73,6 +73,10 @@ aws:
   # aws.cloudwatch_log_group_retention_policy_specific_days_enabled --> by default is 365 days
   log_group_retention_days: 365
 
+  # AWS CloudFormation Configuration
+  # cloudformation_stack_cdktoolkit_bootstrap_version --> by default is 21
+  recommended_cdk_bootstrap_version: 21
+
   # AWS AppStream Session Configuration
   # aws.appstream_fleet_session_idle_disconnect_timeout
   max_idle_disconnect_timeout_in_seconds: 600 # 10 Minutes
@@ -314,10 +318,12 @@ aws:
   # AWS ACM Configuration
   # aws.acm_certificates_expiration_check
   days_to_expire_threshold: 7
-  # aws.acm_certificates_rsa_key_length
+  # aws.acm_certificates_with_secure_key_algorithms
   insecure_key_algorithms:
     [
       "RSA-1024",
+      "P-192",
+      "SHA-1",
     ]
 
   # AWS EKS Configuration

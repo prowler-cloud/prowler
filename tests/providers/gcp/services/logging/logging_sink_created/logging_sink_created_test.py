@@ -1,5 +1,6 @@
 from unittest.mock import MagicMock, patch
 
+from prowler.providers.gcp.models import GCPProject
 from tests.providers.gcp.gcp_fixtures import (
     GCP_EU1_LOCATION,
     GCP_PROJECT_ID,
@@ -46,6 +47,15 @@ class Test_logging_sink_created:
             logging_client.project_ids = [GCP_PROJECT_ID]
             logging_client.region = GCP_EU1_LOCATION
             logging_client.sinks = []
+            logging_client.projects = {
+                GCP_PROJECT_ID: GCPProject(
+                    id=GCP_PROJECT_ID,
+                    number="123456789012",
+                    name="test",
+                    labels={},
+                    lifecycle_state="ACTIVE",
+                )
+            }
 
             check = logging_sink_created()
             result = check.execute()
@@ -56,7 +66,7 @@ class Test_logging_sink_created:
                 == f"There are no logging sinks to export copies of all the log entries in project {GCP_PROJECT_ID}."
             )
             assert result[0].resource_id == GCP_PROJECT_ID
-            assert result[0].resource_name == ""
+            assert result[0].resource_name == "test"
             assert result[0].project_id == GCP_PROJECT_ID
             assert result[0].location == GCP_EU1_LOCATION
 

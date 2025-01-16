@@ -13,10 +13,9 @@ class compute_public_address_shodan(Check):
             api = shodan.Shodan(shodan_api_key)
             for address in compute_client.addresses:
                 if address.type == "EXTERNAL":
-                    report = Check_Report_GCP(self.metadata())
-                    report.project_id = address.project_id
-                    report.resource_id = address.id
-                    report.location = address.region
+                    report = Check_Report_GCP(
+                        metadata=self.metadata(), resource_metadata=address
+                    )
                     try:
                         shodan_info = api.host(address.ip)
                         report.status = "FAIL"

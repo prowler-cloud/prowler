@@ -1,5 +1,29 @@
 import { z } from "zod";
 
+export const addRoleFormSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  manage_users: z.boolean().default(false),
+  manage_account: z.boolean().default(false),
+  manage_billing: z.boolean().default(false),
+  manage_providers: z.boolean().default(false),
+  manage_integrations: z.boolean().default(false),
+  manage_scans: z.boolean().default(false),
+  unlimited_visibility: z.boolean().default(false),
+  groups: z.array(z.string()).optional(),
+});
+
+export const editRoleFormSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  manage_users: z.boolean().default(false),
+  manage_account: z.boolean().default(false),
+  manage_billing: z.boolean().default(false),
+  manage_providers: z.boolean().default(false),
+  manage_integrations: z.boolean().default(false),
+  manage_scans: z.boolean().default(false),
+  unlimited_visibility: z.boolean().default(false),
+  groups: z.array(z.string()).optional(),
+});
+
 export const editScanFormSchema = (currentName: string) =>
   z.object({
     scanName: z
@@ -158,6 +182,7 @@ export const editInviteFormSchema = z.object({
   invitationId: z.string().uuid(),
   invitationEmail: z.string().email(),
   expires_at: z.string().optional(),
+  role: z.string().optional(),
 });
 
 export const editUserFormSchema = () =>
@@ -177,4 +202,5 @@ export const editUserFormSchema = () =>
       .optional(),
     company_name: z.string().optional(),
     userId: z.string(),
+    role: z.string().optional(),
   });

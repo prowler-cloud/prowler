@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from azure.mgmt.cosmosdb import CosmosDBManagementClient
 from azure.mgmt.cosmosdb.models import PrivateEndpointConnection
@@ -50,5 +50,7 @@ class Account:
     tags: dict
     is_virtual_network_filter_enabled: bool
     location: str
-    private_endpoint_connections: list[PrivateEndpointConnection] = None
+    private_endpoint_connections: list[PrivateEndpointConnection] = field(
+        default_factory=list
+    )
     disable_local_auth: bool = False

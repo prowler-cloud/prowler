@@ -8,11 +8,9 @@ class cloudsql_instance_postgres_log_statement_flag(Check):
         findings = []
         for instance in cloudsql_client.instances:
             if "POSTGRES" in instance.version:
-                report = Check_Report_GCP(self.metadata())
-                report.project_id = instance.project_id
-                report.resource_id = instance.name
-                report.resource_name = instance.name
-                report.location = instance.region
+                report = Check_Report_GCP(
+                    metadata=self.metadata(), resource_metadata=instance
+                )
                 report.status = "FAIL"
                 report.status_extended = f"PostgreSQL Instance {instance.name} does not have 'log_statement' flag set to '{desired_log_statement}'."
                 for flag in instance.flags:

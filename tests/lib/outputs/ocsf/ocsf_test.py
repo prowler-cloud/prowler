@@ -322,7 +322,10 @@ class TestOCSF:
         assert resource_details[0].type == finding_output.metadata.ResourceType
         assert resource_details[0].cloud_partition == finding_output.partition
         assert resource_details[0].region == finding_output.region
-        assert resource_details[0].data == {"details": finding_output.resource_details}
+        assert resource_details[0].data == {
+            "details": finding_output.resource_details,
+            # "metadata": {}, TODO: add metadata to the resource details
+        }
 
         resource_details_group = resource_details[0].group
         assert isinstance(resource_details_group, Group)

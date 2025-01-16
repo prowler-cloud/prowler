@@ -7,7 +7,7 @@ from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, set_mocked_gcp_prov
 
 class Test_compute_network_dns_logging_enabled:
     def test_compute_no_networks(self):
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.networks = []
         compute_client.region = "global"
@@ -34,7 +34,7 @@ class Test_compute_network_dns_logging_enabled:
             name="test", id="test_id", project_id=GCP_PROJECT_ID, subnet_mode="auto"
         )
 
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.networks = [network]
         compute_client.region = "global"
@@ -47,7 +47,7 @@ class Test_compute_network_dns_logging_enabled:
             project_id=GCP_PROJECT_ID,
         )
 
-        dns_client = mock.MagicMock
+        dns_client = mock.MagicMock()
         dns_client.project_ids = [GCP_PROJECT_ID]
         dns_client.policies = [policy]
 
@@ -87,7 +87,7 @@ class Test_compute_network_dns_logging_enabled:
             name="test", id="test_id", project_id=GCP_PROJECT_ID, subnet_mode="auto"
         )
 
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.networks = [network]
         compute_client.region = "global"
@@ -100,7 +100,7 @@ class Test_compute_network_dns_logging_enabled:
             project_id=GCP_PROJECT_ID,
         )
 
-        dns_client = mock.MagicMock
+        dns_client = mock.MagicMock()
         dns_client.project_ids = [GCP_PROJECT_ID]
         dns_client.policies = [policy]
 

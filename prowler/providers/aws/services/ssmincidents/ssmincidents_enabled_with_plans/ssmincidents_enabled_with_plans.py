@@ -8,7 +8,10 @@ class ssmincidents_enabled_with_plans(Check):
     def execute(self):
         findings = []
         if ssmincidents_client.replication_set is not None:
-            report = Check_Report_AWS(self.metadata())
+            report = Check_Report_AWS(
+                metadata=self.metadata(),
+                resource_metadata=ssmincidents_client.replication_set,
+            )
             report.status = "FAIL"
             report.status_extended = "No SSM Incidents replication set exists."
             report.resource_arn = ssmincidents_client.replication_set_arn_template

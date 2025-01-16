@@ -36,4 +36,8 @@
   .no-scrollbar {
     scrollbar-width: none;
   }
+
+  .checkbox-update {
+    @apply mr-2 bg-background;
+  }
 }

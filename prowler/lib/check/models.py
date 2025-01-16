@@ -405,16 +405,39 @@ class Check_Report:
     status: str
     status_extended: str
     check_metadata: CheckMetadata
+    resource_metadata: dict
     resource_details: str
     resource_tags: list
     muted: bool
 
-    def __init__(self, metadata):
+    def __init__(self, metadata: Dict, resource: Any = None) -> None:
+        """Initialize the Check's finding information.
+
+        Args:
+            metadata: The metadata of the check.
+            resource: Basic information about the resource. Defaults to None.
+                      Only accepted dict, list, BaseModels (dict attribute), custom models (with to_dict attribute) or objects with __dict__.
+        """
         self.status = ""
         self.check_metadata = CheckMetadata.parse_raw(metadata)
+        if isinstance(resource, dict):
+            self.resource_metadata = resource
+        elif isinstance(resource, list):
+            self.resource_metadata = dict(enumerate(resource))
+        elif hasattr(resource, "dict"):
+            self.resource_metadata = resource.dict()
+        elif hasattr(resource, "to_dict"):
+            self.resource_metadata = resource.to_dict()
+        elif hasattr(resource, "__dict__"):
+            self.resource_metadata = resource.__dict__
+        else:
+            logger.error(
+                f"Resource metadata {type(resource)} could not be converted to dict"
+            )
+            self.resource_metadata = {}
         self.status_extended = ""
         self.resource_details = ""
-        self.resource_tags = []
+        self.resource_tags = getattr(resource, "tags", []) if resource else []
         self.muted = False
 
 
@@ -426,11 +449,20 @@ class Check_Report_AWS(Check_Report):
     resource_arn: str
     region: str
 
-    def __init__(self, metadata):
-        super().__init__(metadata)
-        self.resource_id = ""
-        self.resource_arn = ""
-        self.region = ""
+    def __init__(self, metadata, resource_metadata=None):
+        super().__init__(metadata, resource_metadata)
+        if resource_metadata:
+            self.resource_id = (
+                getattr(resource_metadata, "id", None)
+                or getattr(resource_metadata, "name", None)
+                or ""
+            )
+            self.resource_arn = getattr(resource_metadata, "arn", "")
+            self.region = getattr(resource_metadata, "region", "")
+        else:
+            self.resource_id = ""
+            self.resource_arn = ""
+            self.region = ""
 
 
 @dataclass
@@ -442,12 +474,34 @@ class Check_Report_Azure(Check_Report):
     subscription: str
     location: str
 
-    def __init__(self, metadata):
-        super().__init__(metadata)
-        self.resource_name = ""
-        self.resource_id = ""
+    def __init__(self, metadata: Dict, resource_metadata: Any = None) -> None:
+        """Initialize the Azure Check's finding information.
+
+        Args:
+            metadata: The metadata of the check.
+            resource_metadata: Basic information about the resource. Defaults to None.
+        """
+        super().__init__(metadata, resource_metadata)
+        self.resource_name = (
+            resource_metadata.name
+            if hasattr(resource_metadata, "name")
+            else (
+                resource_metadata.resource_name
+                if hasattr(resource_metadata, "resource_name")
+                else ""
+            )
+        )
+        self.resource_id = (
+            resource_metadata.id
+            if hasattr(resource_metadata, "id")
+            else (
+                resource_metadata.resource_id
+                if hasattr(resource_metadata, "resource_id")
+                else ""
+            )
+        )
         self.subscription = ""
-        self.location = "global"
+        self.location = getattr(resource_metadata, "location", "global")
 
 
 @dataclass
@@ -459,12 +513,29 @@ class Check_Report_GCP(Check_Report):
     project_id: str
     location: str
 
-    def __init__(self, metadata):
-        super().__init__(metadata)
-        self.resource_name = ""
-        self.resource_id = ""
-        self.project_id = ""
-        self.location = ""
+    def __init__(
+        self,
+        metadata,
+        resource_metadata,
+        location=None,
+        resource_name=None,
+        resource_id=None,
+        project_id=None,
+    ):
+        super().__init__(metadata, resource_metadata)
+        self.resource_id = (
+            resource_id
+            or getattr(resource_metadata, "id", None)
+            or getattr(resource_metadata, "name", None)
+            or ""
+        )
+        self.resource_name = resource_name or getattr(resource_metadata, "name", "")
+        self.project_id = project_id or getattr(resource_metadata, "project_id", "")
+        self.location = (
+            location
+            or getattr(resource_metadata, "location", "")
+            or getattr(resource_metadata, "region", "")
+        )
 
 
 @dataclass
@@ -476,11 +547,17 @@ class Check_Report_Kubernetes(Check_Report):
     resource_id: str
     namespace: str
 
-    def __init__(self, metadata):
-        super().__init__(metadata)
-        self.resource_name = ""
-        self.resource_id = ""
-        self.namespace = ""
+    def __init__(self, metadata, resource_metadata):
+        super().__init__(metadata, resource_metadata)
+        self.resource_id = (
+            getattr(resource_metadata, "uid", None)
+            or getattr(resource_metadata, "name", None)
+            or ""
+        )
+        self.resource_name = getattr(resource_metadata, "name", "")
+        self.namespace = getattr(resource_metadata, "namespace", "cluster-wide")
+        if not self.namespace:
+            self.namespace = "cluster-wide"
 
 
 @dataclass

@@ -23,19 +23,14 @@ export default async function Services({
       <FilterControls />
       <Spacer y={4} />
       <Suspense key={searchParamsKey} fallback={<ServiceSkeletonGrid />}>
-        <SSRServiceGrid searchParams={searchParams} />
+        <SSRServiceGrid />
       </Suspense>
     </>
   );
 }
 
-const SSRServiceGrid = async ({
-  searchParams,
-}: {
-  searchParams: SearchParamsProps;
-}) => {
-  const servicesData = await getServices(searchParams);
-  const [services] = await Promise.all([servicesData]);
+const SSRServiceGrid = async () => {
+  const services = await getServices();
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

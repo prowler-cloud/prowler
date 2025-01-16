@@ -9,11 +9,9 @@ class opensearch_service_domains_not_publicly_accessible(Check):
     def execute(self):
         findings = []
         for domain in opensearch_client.opensearch_domains.values():
-            report = Check_Report_AWS(self.metadata())
-            report.region = domain.region
-            report.resource_id = domain.name
-            report.resource_arn = domain.arn
-            report.resource_tags = domain.tags
+            report = Check_Report_AWS(
+                metadata=self.metadata(), resource_metadata=domain
+            )
             report.status = "PASS"
             report.status_extended = (
                 f"Opensearch domain {domain.name} is not publicly accessible."

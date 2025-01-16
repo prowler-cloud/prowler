@@ -6,7 +6,7 @@ from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, set_mocked_gcp_prov
 
 class Test_dataproc_encrypted_with_cmks_disabled:
     def test_dataproc_no_clsuters(self):
-        dataproc_client = mock.MagicMock
+        dataproc_client = mock.MagicMock()
         dataproc_client.clusters = []
 
         with mock.patch(
@@ -25,7 +25,7 @@ class Test_dataproc_encrypted_with_cmks_disabled:
             assert len(result) == 0
 
     def test_one_compliant_cluster(self):
-        dataproc_client = mock.MagicMock
+        dataproc_client = mock.MagicMock()
         dataproc_client.project_ids = [GCP_PROJECT_ID]
 
         with mock.patch(
@@ -63,7 +63,7 @@ class Test_dataproc_encrypted_with_cmks_disabled:
             assert result[0].location == "global"
 
     def test_cluster_without_encryption(self):
-        dataproc_client = mock.MagicMock
+        dataproc_client = mock.MagicMock()
         dataproc_client.project_ids = [GCP_PROJECT_ID]
 
         with mock.patch(

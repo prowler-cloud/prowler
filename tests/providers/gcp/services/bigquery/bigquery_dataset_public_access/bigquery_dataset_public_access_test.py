@@ -5,7 +5,7 @@ from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, set_mocked_gcp_prov
 
 class Test_bigquery_dataset_public_access:
     def test_bigquery_no_datasets(self):
-        bigquery_client = mock.MagicMock
+        bigquery_client = mock.MagicMock()
         bigquery_client.datasets = []
 
         with mock.patch(
@@ -35,7 +35,7 @@ class Test_bigquery_dataset_public_access:
             project_id=GCP_PROJECT_ID,
         )
 
-        bigquery_client = mock.MagicMock
+        bigquery_client = mock.MagicMock()
         bigquery_client.project_ids = [GCP_PROJECT_ID]
         bigquery_client.datasets = [dataset]
 
@@ -76,7 +76,7 @@ class Test_bigquery_dataset_public_access:
             project_id=GCP_PROJECT_ID,
         )
 
-        bigquery_client = mock.MagicMock
+        bigquery_client = mock.MagicMock()
         bigquery_client.project_ids = [GCP_PROJECT_ID]
         bigquery_client.datasets = [dataset]
 

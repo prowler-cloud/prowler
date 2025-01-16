@@ -10,14 +10,13 @@ class app_function_identity_is_configured(Check):
             subscription_name,
             functions,
         ) in app_client.functions.items():
-            for function_id, function in functions.items():
-                report = Check_Report_Azure(self.metadata())
+            for function in functions.values():
+                report = Check_Report_Azure(
+                    metadata=self.metadata(), resource_metadata=function
+                )
+                report.subscription = subscription_name
                 report.status = "FAIL"
                 report.status_extended = f"Function {function.name} does not have a managed identity enabled."
-                report.subscription = subscription_name
-                report.resource_name = function.name
-                report.resource_id = function_id
-                report.location = function.location
 
                 if function.identity:
                     report.status = "PASS"

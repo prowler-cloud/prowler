@@ -39,6 +39,7 @@ class Test_lightsail_instance_automated_snapshots:
             f"{BASE_LIGHTSAIL_ARN}:Instance/test-instance": Instance(
                 name="test-instance",
                 id="1234/5678",
+                arn=f"{BASE_LIGHTSAIL_ARN}:Instance/test-instance",
                 tags=[],
                 region=AWS_REGION_US_EAST_1,
                 availability_zone=AWS_REGION_US_EAST_1_AZA,
@@ -98,6 +99,7 @@ class Test_lightsail_instance_automated_snapshots:
             f"{BASE_LIGHTSAIL_ARN}:Instance/test-instance": Instance(
                 name="test-instance",
                 id="1234/5678",
+                arn=f"{BASE_LIGHTSAIL_ARN}:Instance/test-instance",
                 tags=[],
                 region=AWS_REGION_US_EAST_1,
                 availability_zone=AWS_REGION_US_EAST_1_AZA,
