@@ -7,11 +7,7 @@ class cognito_user_pool_waf_acl_attached(Check):
     def execute(self):
         findings = []
         for pool in cognito_idp_client.user_pools.values():
-            report = Check_Report_AWS(self.metadata())
-            report.region = pool.region
-            report.resource_id = pool.id
-            report.resource_arn = pool.arn
-            report.resource_tags = pool.tags
+            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=pool)
             report.status = "FAIL"
             report.status_extended = (
                 f"Cognito User Pool {pool.name} is not associated with a WAF Web ACL."

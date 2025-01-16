@@ -72,3 +72,11 @@ export const filterInvitations = [
     values: ["pending", "accepted", "expired", "revoked"],
   },
 ];
+
+export const filterRoles = [
+  {
+    key: "permission_state",
+    labelCheckboxGroup: "Permissions",
+    values: ["unlimited", "limited", "none"],
+  },
+];

@@ -15,11 +15,7 @@ class appstream_fleet_session_disconnect_timeout(Check):
 
         findings = []
         for fleet in appstream_client.fleets:
-            report = Check_Report_AWS(self.metadata())
-            report.region = fleet.region
-            report.resource_id = fleet.name
-            report.resource_arn = fleet.arn
-            report.resource_tags = fleet.tags
+            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=fleet)
 
             if fleet.disconnect_timeout_in_seconds <= max_disconnect_timeout_in_seconds:
                 report.status = "PASS"

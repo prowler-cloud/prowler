@@ -26,11 +26,14 @@ class Test_cloudfront_s3_origin_non_existent_bucket:
         # Buckets
         s3_client.buckets = {}
 
-        with mock.patch(
-            "prowler.providers.aws.services.s3.s3_service.S3", new=s3_client
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudfront.cloudfront_service.CloudFront",
-            new=cloudfront_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.s3.s3_service.S3", new=s3_client
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudfront.cloudfront_service.CloudFront",
+                new=cloudfront_client,
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudfront.cloudfront_distributions_s3_origin_non_existent_bucket.cloudfront_distributions_s3_origin_non_existent_bucket import (
@@ -68,14 +71,18 @@ class Test_cloudfront_s3_origin_non_existent_bucket:
         s3_client = mock.MagicMock()
         s3_client.buckets = {}
 
-        with mock.patch(
-            "prowler.providers.aws.services.s3.s3_service.S3", new=s3_client
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudfront.cloudfront_service.CloudFront",
-            new=cloudfront_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudfront.cloudfront_distributions_s3_origin_non_existent_bucket.cloudfront_distributions_s3_origin_non_existent_bucket.s3_client._head_bucket",
-            new=mock.MagicMock(return_value=False),
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.s3.s3_service.S3", new=s3_client
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudfront.cloudfront_service.CloudFront",
+                new=cloudfront_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudfront.cloudfront_distributions_s3_origin_non_existent_bucket.cloudfront_distributions_s3_origin_non_existent_bucket.s3_client._head_bucket",
+                new=mock.MagicMock(return_value=False),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudfront.cloudfront_distributions_s3_origin_non_existent_bucket.cloudfront_distributions_s3_origin_non_existent_bucket import (
@@ -121,19 +128,24 @@ class Test_cloudfront_s3_origin_non_existent_bucket:
         s3_client.audited_account = AWS_ACCOUNT_NUMBER
         s3_client.buckets = {
             f"arn:aws:s3:::{bucket_name}": Bucket(
+                arn=f"arn:aws:s3:::{bucket_name}",
                 name=bucket_name,
                 region=AWS_REGION_EU_WEST_1,
             )
         }
 
-        with mock.patch(
-            "prowler.providers.aws.services.s3.s3_service.S3", new=s3_client
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudfront.cloudfront_service.CloudFront",
-            new=cloudfront_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudfront.cloudfront_distributions_s3_origin_non_existent_bucket.cloudfront_distributions_s3_origin_non_existent_bucket.s3_client._head_bucket",
-            new=mock.MagicMock(return_value=True),
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.s3.s3_service.S3", new=s3_client
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudfront.cloudfront_service.CloudFront",
+                new=cloudfront_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudfront.cloudfront_distributions_s3_origin_non_existent_bucket.cloudfront_distributions_s3_origin_non_existent_bucket.s3_client._head_bucket",
+                new=mock.MagicMock(return_value=True),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudfront.cloudfront_distributions_s3_origin_non_existent_bucket.cloudfront_distributions_s3_origin_non_existent_bucket import (

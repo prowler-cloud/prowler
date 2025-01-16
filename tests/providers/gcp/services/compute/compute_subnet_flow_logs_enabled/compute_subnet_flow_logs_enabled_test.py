@@ -6,7 +6,7 @@ from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, set_mocked_gcp_prov
 
 class Test_compute_subnet_flow_logs_enabled:
     def test_compute_no_subnets(self):
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.subnets = []
 
@@ -37,7 +37,7 @@ class Test_compute_subnet_flow_logs_enabled:
             region="global",
         )
 
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.subnets = [subnet]
 
@@ -78,7 +78,7 @@ class Test_compute_subnet_flow_logs_enabled:
             region="global",
         )
 
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.subnets = [subnet]
 

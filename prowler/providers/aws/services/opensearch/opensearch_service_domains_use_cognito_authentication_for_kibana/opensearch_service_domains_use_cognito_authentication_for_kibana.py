@@ -8,11 +8,9 @@ class opensearch_service_domains_use_cognito_authentication_for_kibana(Check):
     def execute(self):
         findings = []
         for domain in opensearch_client.opensearch_domains.values():
-            report = Check_Report_AWS(self.metadata())
-            report.region = domain.region
-            report.resource_id = domain.name
-            report.resource_arn = domain.arn
-            report.resource_tags = domain.tags
+            report = Check_Report_AWS(
+                metadata=self.metadata(), resource_metadata=domain
+            )
             report.status = "PASS"
             report.status_extended = f"Opensearch domain {domain.name} has either Amazon Cognito or SAML authentication for Kibana enabled."
             if not domain.cognito_options and not domain.saml_enabled:

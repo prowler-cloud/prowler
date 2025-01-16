@@ -6,7 +6,10 @@ class iam_policy_cloudshell_admin_not_attached(Check):
     def execute(self) -> Check_Report_AWS:
         findings = []
         if iam_client.entities_attached_to_cloudshell_policy:
-            report = Check_Report_AWS(self.metadata())
+            report = Check_Report_AWS(
+                metadata=self.metadata(),
+                resource_metadata=iam_client.entities_attached_to_cloudshell_policy,
+            )
             report.region = iam_client.region
             report.resource_id = iam_client.audited_account
             report.resource_arn = f"arn:{iam_client.audited_partition}:iam::aws:policy/AWSCloudShellFullAccess"

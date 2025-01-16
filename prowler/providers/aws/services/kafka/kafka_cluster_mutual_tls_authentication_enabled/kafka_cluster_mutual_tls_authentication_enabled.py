@@ -6,12 +6,10 @@ class kafka_cluster_mutual_tls_authentication_enabled(Check):
     def execute(self):
         findings = []
 
-        for arn_cluster, cluster in kafka_client.clusters.items():
-            report = Check_Report_AWS(self.metadata())
-            report.region = cluster.region
-            report.resource_id = cluster.id
-            report.resource_arn = arn_cluster
-            report.resource_tags = cluster.tags
+        for cluster in kafka_client.clusters.values():
+            report = Check_Report_AWS(
+                metadata=self.metadata(), resource_metadata=cluster
+            )
             report.status = "FAIL"
             report.status_extended = f"Kafka cluster '{cluster.name}' does not have mutual TLS authentication enabled."
 

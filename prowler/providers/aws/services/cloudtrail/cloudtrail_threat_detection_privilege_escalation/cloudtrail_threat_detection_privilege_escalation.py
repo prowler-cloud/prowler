@@ -5,6 +5,60 @@ from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
     cloudtrail_client,
 )
 
+default_threat_detection_privilege_escalation_actions = [
+    "AddPermission",
+    "AddRoleToInstanceProfile",
+    "AddUserToGroup",
+    "AssociateAccessPolicy",
+    "AssumeRole",
+    "AttachGroupPolicy",
+    "AttachRolePolicy",
+    "AttachUserPolicy",
+    "ChangePassword",
+    "CreateAccessEntry",
+    "CreateAccessKey",
+    "CreateDevEndpoint",
+    "CreateEventSourceMapping",
+    "CreateFunction",
+    "CreateGroup",
+    "CreateJob",
+    "CreateKeyPair",
+    "CreateLoginProfile",
+    "CreatePipeline",
+    "CreatePolicyVersion",
+    "CreateRole",
+    "CreateStack",
+    "DeleteRolePermissionsBoundary",
+    "DeleteRolePolicy",
+    "DeleteUserPermissionsBoundary",
+    "DeleteUserPolicy",
+    "DetachRolePolicy",
+    "DetachUserPolicy",
+    "GetCredentialsForIdentity",
+    "GetId",
+    "GetPolicyVersion",
+    "GetUserPolicy",
+    "Invoke",
+    "ModifyInstanceAttribute",
+    "PassRole",
+    "PutGroupPolicy",
+    "PutPipelineDefinition",
+    "PutRolePermissionsBoundary",
+    "PutRolePolicy",
+    "PutUserPermissionsBoundary",
+    "PutUserPolicy",
+    "ReplaceIamInstanceProfileAssociation",
+    "RunInstances",
+    "SetDefaultPolicyVersion",
+    "UpdateAccessKey",
+    "UpdateAssumeRolePolicy",
+    "UpdateDevEndpoint",
+    "UpdateEventSourceMapping",
+    "UpdateFunctionCode",
+    "UpdateJob",
+    "UpdateLoginProfile",
+]
+
 
 class cloudtrail_threat_detection_privilege_escalation(Check):
     def execute(self):
@@ -16,7 +70,8 @@ class cloudtrail_threat_detection_privilege_escalation(Check):
             "threat_detection_privilege_escalation_minutes", 1440
         )
         privilege_escalation_actions = cloudtrail_client.audit_config.get(
-            "threat_detection_privilege_escalation_actions", []
+            "threat_detection_privilege_escalation_actions",
+            default_threat_detection_privilege_escalation_actions,
         )
 
         potential_privilege_escalation = {}
@@ -67,7 +122,9 @@ class cloudtrail_threat_detection_privilege_escalation(Check):
             aws_identity_arn = aws_identity[0]
             if len(actions) / len(privilege_escalation_actions) > threshold:
                 found_potential_privilege_escalation = True
-                report = Check_Report_AWS(self.metadata())
+                report = Check_Report_AWS(
+                    metadata=self.metadata(), resource_metadata=cloudtrail_client.trails
+                )
                 report.region = cloudtrail_client.region
                 report.resource_id = aws_identity_arn.split("/")[-1]
                 report.resource_arn = aws_identity_arn
@@ -75,7 +132,9 @@ class cloudtrail_threat_detection_privilege_escalation(Check):
                 report.status_extended = f"Potential privilege escalation attack detected from AWS {aws_identity_type} {aws_identity_arn.split('/')[-1]} with an threshold of {identity_threshold}."
                 findings.append(report)
         if not found_potential_privilege_escalation:
-            report = Check_Report_AWS(self.metadata())
+            report = Check_Report_AWS(
+                metadata=self.metadata(), resource_metadata=cloudtrail_client.trails
+            )
             report.region = cloudtrail_client.region
             report.resource_id = cloudtrail_client.audited_account
             report.resource_arn = cloudtrail_client._get_trail_arn_template(

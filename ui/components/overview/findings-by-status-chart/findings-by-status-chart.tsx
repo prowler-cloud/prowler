@@ -63,18 +63,21 @@ export const FindingsByStatusChart: React.FC<FindingsByStatusChartProps> = ({
     pass_new = 0,
     fail_new = 0,
   } = findingsByStatus?.data?.attributes || {};
-  const chartData = [
-    {
-      findings: "Success",
-      number: pass,
-      fill: "var(--color-success)",
-    },
-    {
-      findings: "Fail",
-      number: fail,
-      fill: "var(--color-fail)",
-    },
-  ];
+  const chartData = useMemo(
+    () => [
+      {
+        findings: "Success",
+        number: pass,
+        fill: "var(--color-success)",
+      },
+      {
+        findings: "Fail",
+        number: fail,
+        fill: "var(--color-fail)",
+      },
+    ],
+    [pass, fail],
+  );
 
   const updatedChartData = calculatePercent(chartData);
 
