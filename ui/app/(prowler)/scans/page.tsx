@@ -8,6 +8,7 @@ import {
   ButtonRefreshData,
   NoProvidersAdded,
   NoProvidersConnected,
+  ScanWarningBar,
 } from "@/components/scans";
 import { LaunchScanWorkflow } from "@/components/scans/launch-workflow";
 import { SkeletonTableScans } from "@/components/scans/table";
@@ -65,10 +66,13 @@ export default async function Scans({
             <>
               <Spacer y={8} />
               <NoProvidersConnected />
+              <Spacer y={4} />
             </>
           ) : (
             <>
               <LaunchScanWorkflow providers={providerInfo} />
+              <Spacer y={4} />
+              <ScanWarningBar />
               <Spacer y={8} />
             </>
           )}

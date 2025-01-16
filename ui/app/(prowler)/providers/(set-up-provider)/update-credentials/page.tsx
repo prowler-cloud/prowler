@@ -23,7 +23,7 @@ export default function UpdateCredentialsPage({ searchParams }: Props) {
                 the same type that was originally configured must be used.
               </strong>
             </p>
-            <div className="flex items-center rounded-lg border border-system-warning-lighter bg-system-warning-medium p-4 text-sm dark:text-default-300">
+            <div className="flex items-center rounded-lg border border-system-warning bg-system-warning-medium p-4 text-sm dark:text-default-300">
               <InfoIcon className="mr-2 inline h-4 w-4 flex-shrink-0" />
               <p>
                 If the provider was configured with static credentials, updates
