@@ -76,7 +76,7 @@ export function DataTableRowActions<FindingProps>({
                 description="Allows you to send the finding to Jira"
                 textValue="Send to Jira"
                 startContent={<EditDocumentBulkIcon className={iconClasses} />}
-                // onClick={() => setIsEditOpen(true)}
+                // onPress={() => setIsEditOpen(true)}
               >
                 <span className="hidden text-sm">{findingId}</span>
                 Send to Jira
@@ -86,7 +86,7 @@ export function DataTableRowActions<FindingProps>({
                 description="Allows you to send the finding to Slack"
                 textValue="Send to Slack"
                 startContent={<EditDocumentBulkIcon className={iconClasses} />}
-                // onClick={() => setIsEditOpen(true)}
+                // onPress={() => setIsEditOpen(true)}
               >
                 Send to Slack
               </DropdownItem>

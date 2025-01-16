@@ -8,11 +8,9 @@ class cloudstorage_bucket_uniform_bucket_level_access(Check):
     def execute(self) -> Check_Report_GCP:
         findings = []
         for bucket in cloudstorage_client.buckets:
-            report = Check_Report_GCP(self.metadata())
-            report.project_id = bucket.project_id
-            report.resource_id = bucket.id
-            report.resource_name = bucket.name
-            report.location = bucket.region
+            report = Check_Report_GCP(
+                metadata=self.metadata(), resource_metadata=bucket
+            )
             report.status = "PASS"
             report.status_extended = (
                 f"Bucket {bucket.name} has uniform Bucket Level Access enabled."

@@ -88,16 +88,14 @@ def create_test_user(django_db_setup, django_db_blocker):
 
 
 @pytest.fixture(scope="function")
-def create_test_user_rbac(django_db_setup, django_db_blocker):
+def create_test_user_rbac(django_db_setup, django_db_blocker, tenants_fixture):
     with django_db_blocker.unblock():
         user = User.objects.create_user(
             name="testing",
             email="rbac@rbac.com",
             password=TEST_PASSWORD,
         )
-        tenant = Tenant.objects.create(
-            name="Tenant Test",
-        )
+        tenant = tenants_fixture[0]
         Membership.objects.create(
             user=user,
             tenant=tenant,
@@ -123,16 +121,14 @@ def create_test_user_rbac(django_db_setup, django_db_blocker):
 
 
 @pytest.fixture(scope="function")
-def create_test_user_rbac_no_roles(django_db_setup, django_db_blocker):
+def create_test_user_rbac_no_roles(django_db_setup, django_db_blocker, tenants_fixture):
     with django_db_blocker.unblock():
         user = User.objects.create_user(
             name="testing",
             email="rbac_noroles@rbac.com",
             password=TEST_PASSWORD,
         )
-        tenant = Tenant.objects.create(
-            name="Tenant Test",
-        )
+        tenant = tenants_fixture[0]
         Membership.objects.create(
             user=user,
             tenant=tenant,
@@ -180,10 +176,16 @@ def create_test_user_rbac_limited(django_db_setup, django_db_blocker):
 @pytest.fixture
 def authenticated_client_rbac(create_test_user_rbac, tenants_fixture, client):
     client.user = create_test_user_rbac
+    tenant_id = tenants_fixture[0].id
     serializer = TokenSerializer(
-        data={"type": "tokens", "email": "rbac@rbac.com", "password": TEST_PASSWORD}
+        data={
+            "type": "tokens",
+            "email": "rbac@rbac.com",
+            "password": TEST_PASSWORD,
+            "tenant_id": tenant_id,
+        }
     )
-    serializer.is_valid()
+    serializer.is_valid(raise_exception=True)
     access_token = serializer.validated_data["access"]
     client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {access_token}"
     return client
@@ -303,7 +305,7 @@ def set_user_admin_roles_fixture(create_test_user, tenants_fixture):
 @pytest.fixture
 def invitations_fixture(create_test_user, tenants_fixture):
     user = create_test_user
-    *_, tenant = tenants_fixture
+    tenant = tenants_fixture[0]
     valid_invitation = Invitation.objects.create(
         email="testing@prowler.com",
         state=Invitation.State.PENDING,
@@ -320,6 +322,20 @@ def invitations_fixture(create_test_user, tenants_fixture):
         tenant=tenant,
     )
     return valid_invitation, expired_invitation
+
+
+@pytest.fixture
+def users_fixture(django_user_model):
+    user1 = User.objects.create_user(
+        name="user1", email="test_unit0@prowler.com", password="S3cret"
+    )
+    user2 = User.objects.create_user(
+        name="user2", email="test_unit1@prowler.com", password="S3cret"
+    )
+    user3 = User.objects.create_user(
+        name="user3", email="test_unit2@prowler.com", password="S3cret"
+    )
+    return user1, user2, user3
 
 
 @pytest.fixture
@@ -377,6 +393,23 @@ def provider_groups_fixture(tenants_fixture):
     )
 
     return pgroup1, pgroup2, pgroup3
+
+
+@pytest.fixture
+def admin_role_fixture(tenants_fixture):
+    tenant, *_ = tenants_fixture
+
+    return Role.objects.get_or_create(
+        name="admin",
+        tenant_id=tenant.id,
+        manage_users=True,
+        manage_account=True,
+        manage_billing=True,
+        manage_providers=True,
+        manage_integrations=True,
+        manage_scans=True,
+        unlimited_visibility=True,
+    )[0]
 
 
 @pytest.fixture
@@ -593,6 +626,7 @@ def findings_fixture(scans_fixture, resources_fixture):
             "CheckId": "test_check_id",
             "Description": "test description apple sauce",
         },
+        first_seen_at="2024-01-02T00:00:00Z",
     )
 
     finding1.add_resources([resource1])
@@ -618,6 +652,7 @@ def findings_fixture(scans_fixture, resources_fixture):
             "CheckId": "test_check_id",
             "Description": "test description orange juice",
         },
+        first_seen_at="2024-01-02T00:00:00Z",
     )
 
     finding2.add_resources([resource2])

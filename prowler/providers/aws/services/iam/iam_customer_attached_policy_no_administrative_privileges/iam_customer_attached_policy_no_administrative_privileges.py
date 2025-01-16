@@ -9,11 +9,10 @@ class iam_customer_attached_policy_no_administrative_privileges(Check):
         for policy in iam_client.policies:
             # Check only for attached custom policies
             if policy.attached and policy.type == "Custom":
-                report = Check_Report_AWS(self.metadata())
+                report = Check_Report_AWS(
+                    metadata=self.metadata(), resource_metadata=policy
+                )
                 report.region = iam_client.region
-                report.resource_arn = policy.arn
-                report.resource_id = policy.name
-                report.resource_tags = policy.tags
                 report.status = "PASS"
                 report.status_extended = f"{policy.type} policy {policy.name} is attached but does not allow '*:*' administrative privileges."
                 if policy.document:

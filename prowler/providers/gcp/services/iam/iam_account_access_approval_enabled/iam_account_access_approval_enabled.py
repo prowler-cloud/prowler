@@ -8,10 +8,12 @@ class iam_account_access_approval_enabled(Check):
     def execute(self) -> Check_Report_GCP:
         findings = []
         for project_id in accessapproval_client.project_ids:
-            report = Check_Report_GCP(self.metadata())
-            report.project_id = project_id
-            report.resource_id = project_id
-            report.location = accessapproval_client.region
+            report = Check_Report_GCP(
+                metadata=self.metadata(),
+                resource_metadata=accessapproval_client.projects[project_id],
+                project_id=project_id,
+                location=accessapproval_client.region,
+            )
             report.status = "PASS"
             report.status_extended = (
                 f"Project {project_id} has Access Approval enabled."

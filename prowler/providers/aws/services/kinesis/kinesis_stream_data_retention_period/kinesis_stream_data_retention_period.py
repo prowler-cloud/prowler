@@ -18,11 +18,9 @@ class kinesis_stream_data_retention_period(Check):
         """
         findings = []
         for stream in kinesis_client.streams.values():
-            report = Check_Report_AWS(self.metadata())
-            report.region = stream.region
-            report.resource_id = stream.name
-            report.resource_arn = stream.arn
-            report.resource_tags = stream.tags
+            report = Check_Report_AWS(
+                metadata=self.metadata(), resource_metadata=stream
+            )
             report.status = "FAIL"
             report.status_extended = f"Kinesis Stream {stream.name} does not have an adequate data retention period ({stream.retention_period}hrs)."
 

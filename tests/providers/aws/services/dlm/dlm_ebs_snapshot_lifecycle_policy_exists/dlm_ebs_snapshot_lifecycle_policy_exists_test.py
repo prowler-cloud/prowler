@@ -72,7 +72,7 @@ class Test_dlm_ebs_snapshot_lifecycle_policy_exists:
         )["SnapshotId"]
 
         # DLM Mock Client
-        dlm_client = mock.MagicMock
+        dlm_client = mock.MagicMock()
         dlm_client.audited_account = AWS_ACCOUNT_NUMBER
         dlm_client.audited_account_arn = AWS_ACCOUNT_ARN
         dlm_client.region = AWS_REGION_US_EAST_1

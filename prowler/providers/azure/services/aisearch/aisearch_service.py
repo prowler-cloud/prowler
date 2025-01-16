@@ -1,6 +1,5 @@
-from dataclasses import dataclass
-
 from azure.mgmt.search import SearchManagementClient
+from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.azure.azure_provider import AzureProvider
@@ -23,6 +22,7 @@ class AISearch(AzureService):
                     aisearch_services[subscription].update(
                         {
                             aisearch_service.id: AISearchService(
+                                id=aisearch_service.id,
                                 name=aisearch_service.name,
                                 location=aisearch_service.location,
                                 public_network_access=(
@@ -41,8 +41,8 @@ class AISearch(AzureService):
         return aisearch_services
 
 
-@dataclass
-class AISearchService:
+class AISearchService(BaseModel):
+    id: str
     name: str
     location: str
     public_network_access: bool

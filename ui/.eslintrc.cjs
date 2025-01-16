@@ -12,6 +12,7 @@ module.exports = {
     "plugin:jsx-a11y/recommended",
     "eslint-config-prettier",
     "prettier",
+    "next/core-web-vitals",
   ],
   parserOptions: {
     ecmaVersion: "latest",
@@ -37,7 +38,14 @@ module.exports = {
     "eol-last": ["error", "always"],
     "simple-import-sort/imports": "error",
     "simple-import-sort/exports": "error",
-    "jsx-a11y/anchor-is-valid": "error",
+    "jsx-a11y/anchor-is-valid": [
+      "error",
+      {
+        components: ["Link"],
+        specialLink: ["hrefLeft", "hrefRight"],
+        aspects: ["invalidHref", "preferButton"],
+      },
+    ],
     "jsx-a11y/alt-text": "error",
     "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
   },

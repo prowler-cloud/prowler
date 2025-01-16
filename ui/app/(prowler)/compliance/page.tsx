@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { Spacer } from "@nextui-org/react";
 import { Suspense } from "react";
 
@@ -40,6 +42,7 @@ export default async function Compliance({
           progress: scan.attributes.progress,
         })) || [];
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error("Error fetching scans data:", error);
   }
 
@@ -72,6 +75,7 @@ export default async function Compliance({
         )
       : [];
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error("Error fetching compliance data:", error);
   }
 
@@ -104,6 +108,7 @@ const SSRComplianceGrid = async ({
       region: regionFilter,
     });
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error("Error fetching compliances overview:", error);
     return (
       <div className="flex h-full items-center justify-center">

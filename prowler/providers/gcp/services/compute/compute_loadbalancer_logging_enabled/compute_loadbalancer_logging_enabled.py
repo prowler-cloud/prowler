@@ -6,11 +6,11 @@ class compute_loadbalancer_logging_enabled(Check):
     def execute(self) -> Check_Report_GCP:
         findings = []
         for lb in compute_client.load_balancers:
-            report = Check_Report_GCP(self.metadata())
-            report.project_id = lb.project_id
-            report.resource_id = lb.id
-            report.resource_name = lb.name
-            report.location = compute_client.region
+            report = Check_Report_GCP(
+                metadata=self.metadata(),
+                resource_metadata=lb,
+                location=compute_client.region,
+            )
             report.status = "PASS"
             report.status_extended = f"LoadBalancer {lb.name} has logging enabled."
             if not lb.logging:

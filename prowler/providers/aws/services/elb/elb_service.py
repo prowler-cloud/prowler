@@ -43,6 +43,7 @@ class ELB(AWSService):
                             )
 
                         self.loadbalancers[arn] = LoadBalancer(
+                            arn=arn,
                             name=elb["LoadBalancerName"],
                             dns=elb["DNSName"],
                             region=regional_client.region,
@@ -104,6 +105,7 @@ class Listener(BaseModel):
 
 
 class LoadBalancer(BaseModel):
+    arn: str
     name: str
     dns: str
     region: str

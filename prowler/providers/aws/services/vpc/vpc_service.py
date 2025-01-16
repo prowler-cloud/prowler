@@ -422,6 +422,7 @@ class VPC(AWSService):
                         )
                     self.vpn_connections[arn] = VpnConnection(
                         id=vpn_connection["VpnConnectionId"],
+                        arn=arn,
                         tunnels=tunnels,
                         region=regional_client.region,
                         tags=vpn_connection.get("Tags"),
@@ -510,6 +511,7 @@ class VpnTunnel(BaseModel):
 
 class VpnConnection(BaseModel):
     id: str
+    arn: str
     tunnels: list[VpnTunnel]
     region: str
     tags: Optional[list] = []
