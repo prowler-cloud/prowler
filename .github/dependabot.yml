@@ -16,6 +16,17 @@ updates:
       - "dependencies"
       - "pip"
 
+  - package-ecosystem: "pip"
+    directory: "/api"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 10
+    target-branch: master
+    labels:
+      - "dependencies"
+      - "pip"
+      - "component/api"
+
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -27,7 +38,7 @@ updates:
       - "github_actions"
 
   - package-ecosystem: "npm"
-    directory: "/"
+    directory: "/ui"
     schedule:
       interval: "daily"
     open-pull-requests-limit: 10
@@ -35,6 +46,7 @@ updates:
     labels:
       - "dependencies"
       - "npm"
+      - "component/ui"
 
   - package-ecosystem: "docker"
     directory: "/"

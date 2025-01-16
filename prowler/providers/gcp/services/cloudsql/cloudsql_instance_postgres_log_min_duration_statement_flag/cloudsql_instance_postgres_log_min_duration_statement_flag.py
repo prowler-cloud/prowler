@@ -7,11 +7,9 @@ class cloudsql_instance_postgres_log_min_duration_statement_flag(Check):
         findings = []
         for instance in cloudsql_client.instances:
             if "POSTGRES" in instance.version:
-                report = Check_Report_GCP(self.metadata())
-                report.project_id = instance.project_id
-                report.resource_id = instance.name
-                report.resource_name = instance.name
-                report.location = instance.region
+                report = Check_Report_GCP(
+                    metadata=self.metadata(), resource_metadata=instance
+                )
                 report.status = "PASS"
                 report.status_extended = f"PostgreSQL Instance {instance.name} has 'log_min_duration_statement' flag set to '-1'."
                 for flag in instance.flags:

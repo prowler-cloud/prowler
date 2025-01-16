@@ -8,11 +8,9 @@ class mq_broker_active_deployment_mode(Check):
         findings = []
         for broker in mq_client.brokers.values():
             if broker.engine_type == EngineType.ACTIVEMQ:
-                report = Check_Report_AWS(self.metadata())
-                report.region = broker.region
-                report.resource_id = broker.id
-                report.resource_arn = broker.arn
-                report.resource_tags = broker.tags
+                report = Check_Report_AWS(
+                    metadata=self.metadata(), resource_metadata=broker
+                )
                 report.status = "FAIL"
                 report.status_extended = f"MQ Apache ActiveMQ Broker {broker.name} does not have an active/standby deployment mode."
                 if broker.deployment_mode == DeploymentMode.ACTIVE_STANDBY_MULTI_AZ:

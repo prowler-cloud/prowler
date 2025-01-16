@@ -6,11 +6,9 @@ class ec2_ebs_volume_encryption(Check):
     def execute(self):
         findings = []
         for volume in ec2_client.volumes:
-            report = Check_Report_AWS(self.metadata())
-            report.region = volume.region
-            report.resource_id = volume.id
-            report.resource_arn = volume.arn
-            report.resource_tags = volume.tags
+            report = Check_Report_AWS(
+                metadata=self.metadata(), resource_metadata=volume
+            )
             report.status = "PASS"
             report.status_extended = f"EBS Snapshot {volume.id} is encrypted."
             if not volume.encrypted:

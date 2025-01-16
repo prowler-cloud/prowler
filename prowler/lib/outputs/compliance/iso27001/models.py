@@ -11,6 +11,8 @@ class AWSISO27001Model(BaseModel):
     AccountId: str
     Region: str
     AssessmentDate: str
+    Requirements_Id: str
+    Requirements_Description: str
     Requirements_Attributes_Category: str
     Requirements_Attributes_Objetive_ID: str
     Requirements_Attributes_Objetive_Name: str

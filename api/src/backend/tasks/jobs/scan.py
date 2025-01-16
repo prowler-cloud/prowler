@@ -116,7 +116,6 @@ def perform_prowler_scan(
         ValueError: If the provider cannot be connected.
 
     """
-    generate_compliance = False
     check_status_by_region = {}
     exception = None
     unique_resources = set()
@@ -145,7 +144,6 @@ def perform_prowler_scan(
                 )
                 provider_instance.save()
 
-        generate_compliance = provider_instance.provider != Provider.ProviderChoices.GCP
         prowler_scan = ProwlerScan(provider=prowler_provider, checks=checks_to_execute)
 
         resource_cache = {}
@@ -221,24 +219,28 @@ def perform_prowler_scan(
                 # Process finding
                 with rls_transaction(tenant_id):
                     finding_uid = finding.uid
+                    last_first_seen_at = None
                     if finding_uid not in last_status_cache:
                         most_recent_finding = (
                             Finding.objects.filter(uid=finding_uid)
                             .order_by("-id")
-                            .values("status")
+                            .values("status", "first_seen_at")
                             .first()
                         )
-                        last_status = (
-                            most_recent_finding["status"]
-                            if most_recent_finding
-                            else None
-                        )
-                        last_status_cache[finding_uid] = last_status
+                        last_status = None
+                        if most_recent_finding:
+                            last_status = most_recent_finding["status"]
+                            last_first_seen_at = most_recent_finding["first_seen_at"]
+                        last_status_cache[finding_uid] = last_status, last_first_seen_at
                     else:
-                        last_status = last_status_cache[finding_uid]
+                        last_status, last_first_seen_at = last_status_cache[finding_uid]
 
                     status = FindingStatus[finding.status]
                     delta = _create_finding_delta(last_status, status)
+                    # For the findings prior to the change, when a first finding is found with delta!="new" it will be assigned a current date as first_seen_at and the successive findings with the same UID will always get the date of the previous finding.
+                    # For new findings, when a finding (delta="new") is found for the first time, the first_seen_at attribute will be assigned the current date, the following findings will get that date.
+                    if not last_first_seen_at:
+                        last_first_seen_at = datetime.now(tz=timezone.utc)
 
                     # Create the finding
                     finding_instance = Finding.objects.create(
@@ -253,11 +255,12 @@ def perform_prowler_scan(
                         raw_result=finding.raw,
                         check_id=finding.check_id,
                         scan=scan_instance,
+                        first_seen_at=last_first_seen_at,
                     )
                     finding_instance.add_resources([resource_instance])
 
                 # Update compliance data if applicable
-                if not generate_compliance or finding.status.value == "MUTED":
+                if finding.status.value == "MUTED":
                     continue
 
                 region_dict = check_status_by_region.setdefault(finding.region, {})
@@ -285,7 +288,7 @@ def perform_prowler_scan(
             scan_instance.unique_resource_count = len(unique_resources)
             scan_instance.save()
 
-    if exception is None and generate_compliance:
+    if exception is None:
         try:
             regions = prowler_provider.get_regions()
         except AttributeError:

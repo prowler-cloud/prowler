@@ -6,11 +6,11 @@ class compute_network_not_legacy(Check):
     def execute(self) -> Check_Report_GCP:
         findings = []
         for network in compute_client.networks:
-            report = Check_Report_GCP(self.metadata())
-            report.project_id = network.project_id
-            report.resource_id = network.id
-            report.resource_name = network.name
-            report.location = compute_client.region
+            report = Check_Report_GCP(
+                metadata=self.metadata(),
+                resource_metadata=network,
+                location=compute_client.region,
+            )
             report.status = "PASS"
             report.status_extended = f"Network {network.name} is not legacy."
             if network.subnet_mode == "legacy":

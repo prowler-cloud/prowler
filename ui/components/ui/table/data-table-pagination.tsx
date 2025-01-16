@@ -18,9 +18,10 @@ interface DataTablePaginationProps {
 }
 
 export function DataTablePagination({ metadata }: DataTablePaginationProps) {
-  if (!metadata) return null;
   const pathname = usePathname();
   const searchParams = useSearchParams();
+
+  if (!metadata) return null;
 
   const { currentPage, totalPages, totalEntries } = getPaginationInfo(metadata);
 

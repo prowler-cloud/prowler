@@ -35,6 +35,7 @@ class Finding(BaseModel):
     status_extended: str
     muted: bool = False
     resource_uid: str
+    # resource_metadata: dict = Field(default_factory=dict) TODO: add resource_metadata to the finding
     resource_name: str
     resource_details: str
     resource_tags: dict = Field(default_factory=dict)
@@ -238,6 +239,7 @@ class Finding(BaseModel):
                 output_data["resource_uid"] = check_output.resource_id
                 output_data["account_name"] = provider.identity.account_name
                 output_data["account_uid"] = provider.identity.account_id
+                # resource_metadata: dict = Field(default_factory=dict) TODO: add resource_metadata to the finding
                 output_data["region"] = "global"
 
             # check_output Unique ID

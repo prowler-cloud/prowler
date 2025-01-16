@@ -9,11 +9,9 @@ class vpc_subnet_no_public_ip_by_default(Check):
             for subnet in vpc.subnets:
                 # Check if ignoring flag is set and if the VPC Subnet is in use
                 if vpc_client.provider.scan_unused_services or subnet.in_use:
-                    report = Check_Report_AWS(self.metadata())
-                    report.region = subnet.region
-                    report.resource_tags = subnet.tags
-                    report.resource_id = subnet.id
-                    report.resource_arn = subnet.arn
+                    report = Check_Report_AWS(
+                        metadata=self.metadata(), resource_metadata=subnet
+                    )
                     if subnet.mapPublicIpOnLaunch:
                         report.status = "FAIL"
                         report.status_extended = f"VPC subnet {subnet.name if subnet.name else subnet.id} assigns public IP by default."

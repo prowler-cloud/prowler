@@ -53,6 +53,7 @@ class Test_aks_clusters_public_access_disabled:
         aks_client.clusters = {
             AZURE_SUBSCRIPTION_ID: {
                 cluster_id: Cluster(
+                    id=cluster_id,
                     name="cluster_name",
                     public_fqdn="public_fqdn",
                     private_fqdn=None,
@@ -94,6 +95,7 @@ class Test_aks_clusters_public_access_disabled:
         aks_client.clusters = {
             AZURE_SUBSCRIPTION_ID: {
                 cluster_id: Cluster(
+                    id=cluster_id,
                     name="cluster_name",
                     public_fqdn="public_fqdn",
                     private_fqdn="private_fqdn",
@@ -135,6 +137,7 @@ class Test_aks_clusters_public_access_disabled:
         aks_client.clusters = {
             AZURE_SUBSCRIPTION_ID: {
                 cluster_id: Cluster(
+                    id=cluster_id,
                     name="cluster_name",
                     public_fqdn="public_fqdn",
                     private_fqdn="private_fqdn",

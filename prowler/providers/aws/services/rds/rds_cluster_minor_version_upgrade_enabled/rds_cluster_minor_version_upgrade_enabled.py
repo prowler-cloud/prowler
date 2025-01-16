@@ -8,11 +8,10 @@ class rds_cluster_minor_version_upgrade_enabled(Check):
         for db_cluster in rds_client.db_clusters:
             # Auto minor version upgrade is only available for non-Aurora Multi-AZ DB clusters
             if rds_client.db_clusters[db_cluster].multi_az:
-                report = Check_Report_AWS(self.metadata())
-                report.region = rds_client.db_clusters[db_cluster].region
-                report.resource_id = rds_client.db_clusters[db_cluster].id
-                report.resource_arn = rds_client.db_clusters[db_cluster].arn
-                report.resource_tags = rds_client.db_clusters[db_cluster].tags
+                report = Check_Report_AWS(
+                    metadata=self.metadata(),
+                    resource_metadata=rds_client.db_clusters[db_cluster],
+                )
                 if rds_client.db_clusters[db_cluster].auto_minor_version_upgrade:
                     report.status = "PASS"
                     report.status_extended = f"RDS Cluster {rds_client.db_clusters[db_cluster].id} has minor version upgrade enabled."
