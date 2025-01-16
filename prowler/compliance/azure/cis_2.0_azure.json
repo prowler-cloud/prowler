@@ -12,7 +12,8 @@
       ],
       "Attributes": [
         {
-          "Section": "1.1 Security Defaults",
+          "Section": "1. Identity and Access Management",
+          "SubSection": "1.1 Security Defaults",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Security defaults in Azure Active Directory (Azure AD) make it easier to be secure and help protect your organization. Security defaults contain preconfigured security settings for common attacks. Security defaults is available to everyone. The goal is to ensure that all organizations have a basic level of security",
@@ -34,7 +35,8 @@
       ],
       "Attributes": [
         {
-          "Section": "1.1 Security Defaults",
+          "Section": "1. Identity and Access Management",
+          "SubSection": "1.1 Security Defaults",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Enable multi-factor authentication for all roles, groups, and users that have write access or permissions to Azure resources. These include custom created objects or built-in roles such as; • Service Co-Administrators • Subscription Owners • Contributors",
@@ -56,7 +58,8 @@
       ],
       "Attributes": [
         {
-          "Section": "1.1 Security Defaults",
+          "Section": "1. Identity and Access Management",
+          "SubSection": "1.1 Security Defaults",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Enable multi-factor authentication for all non-privileged users.",
@@ -76,7 +79,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1.1 Security Defaults",
+          "Section": "1. Identity and Access Management",
+          "SubSection": "1.1 Security Defaults",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Do not allow users to remember multi-factor authentication on devices.",
@@ -98,7 +102,8 @@
       ],
       "Attributes": [
         {
-          "Section": "1.2 Conditional Access",
+          "Section": "1. Identity and Access Management",
+          "SubSection": "1.2 Conditional Access",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Azure Active Directory Conditional Access allows an organization to configure Named locations and configure whether those locations are trusted or untrusted. These settings provide organizations the means to specify Geographical locations for use in conditional access policies, or define actual IP addresses and IP ranges and whether or not those IP addresses and/or ranges are trusted by the organization.",
@@ -118,7 +123,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1.2 Conditional Access",
+          "Section": "1. Identity and Access Management",
+          "SubSection": "1.2 Conditional Access",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "CAUTION: If these policies are created without first auditing and testing the result, misconfiguration can potentially lock out administrators or create undesired access issues. Conditional Access Policies can be used to block access from geographic locations that are deemed out-of-scope for your organization or application. The scope and variables for this policy should be carefully examined and defined.",
@@ -138,7 +144,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1.2 Conditional Access",
+          "Section": "1. Identity and Access Management",
+          "SubSection": "1.2 Conditional Access",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "For designated users, they will be prompted to use their multi-factor authentication (MFA) process on login.",
@@ -158,7 +165,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1.2 Conditional Access",
+          "Section": "1. Identity and Access Management",
+          "SubSection": "1.2 Conditional Access",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "For designated users, they will be prompted to use their multi-factor authentication (MFA) process on logins.",
@@ -178,7 +186,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1.2 Conditional Access",
+          "Section": "1. Identity and Access Management",
+          "SubSection": "1.2 Conditional Access",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "For designated users, they will be prompted to use their multi-factor authentication (MFA) process on login.",
@@ -198,7 +207,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1.2 Conditional Access",
+          "Section": "1. Identity and Access Management",
+          "SubSection": "1.2 Conditional Access",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "For designated users, they will be prompted to use their multi-factor authentication (MFA) process on logins.",
@@ -220,7 +230,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1.2 Conditional Access",
+          "Section": "1. Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Require administrators or appropriately delegated users to create new tenants.",
@@ -240,7 +250,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1.2 Conditional Access",
+          "Section": "1. Identity and Access Management",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "This recommendation extends guest access review by utilizing the Azure AD Privileged Identity Management feature provided in Azure AD Premium P2. Azure AD is extended to include Azure AD B2B collaboration, allowing you to invite people from outside your organization to be guest users in your cloud account and sign in with their own work, school, or social identities. Guest users allow you to share your company's applications and services with users from any other organization, while maintaining control over your own corporate data. Work with external partners, large or small, even if they don't have Azure AD or an IT department. A simple invitation and redemption process lets partners use their own credentials to access your company's resources a a guest user.",
@@ -260,7 +270,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1.2 Conditional Access",
+          "Section": "1. Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Azure AD is extended to include Azure AD B2B collaboration, allowing you to invite people from outside your organization to be guest users in your cloud account and sign in with their own work, school, or social identities. Guest users allow you to share your company's applications and services with users from any other organization, while maintaining control over your own corporate data. Work with external partners, large or small, even if they don't have Azure AD or an IT department. A simple invitation and redemption process lets partners use their own credentials to access your company's resources as a guest user. Guest users in every subscription should be review on a regular basis to ensure that inactive and unneeded accounts are removed.",
@@ -280,7 +290,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1.2 Conditional Access",
+          "Section": "1. Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Ensures that two alternate forms of identification are provided before allowing a password reset.",
@@ -300,7 +310,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1.2 Conditional Access",
+          "Section": "1. Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Microsoft Azure provides a Global Banned Password policy that applies to Azure administrative and normal user accounts. This is not applied to user accounts that are synced from an on-premise Active Directory unless Azure AD Connect is used and you enable EnforceCloudPasswordPolicyForPasswordSyncedUsers. Please see the list in default values on the specifics of this policy. To further password security, it is recommended to further define a custom banned password policy.",
@@ -320,7 +330,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1.2 Conditional Access",
+          "Section": "1. Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Ensure that the number of days before users are asked to re-confirm their authentication information is not set to 0.",
@@ -340,7 +350,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1.2 Conditional Access",
+          "Section": "1. Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Ensure that users are notified on their primary and secondary emails on password resets.",
@@ -360,7 +370,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1.2 Conditional Access",
+          "Section": "1. Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Ensure that all Global Administrators are notified if any other administrator resets their password.",
@@ -382,7 +392,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1.2 Conditional Access",
+          "Section": "1. Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Require administrators to provide consent for applications before use.",
@@ -404,7 +414,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1.2 Conditional Access",
+          "Section": "1. Identity and Access Management",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Allow users to provide consent for selected permissions when a request is coming from a verified publisher.",
@@ -424,7 +434,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1.2 Conditional Access",
+          "Section": "1. Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Require administrators to provide consent for the apps before use.",
@@ -446,7 +456,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1.2 Conditional Access",
+          "Section": "1. Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Require administrators or appropriately delegated users to register third-party applications.",
@@ -468,7 +478,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1.2 Conditional Access",
+          "Section": "1. Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Limit guest user permissions.",
@@ -490,7 +500,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1.2 Conditional Access",
+          "Section": "1. Identity and Access Management",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Restrict invitations to users with specific administrative roles only.",
@@ -510,7 +520,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1.2 Conditional Access",
+          "Section": "1. Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Restrict access to the Azure AD administration portal to administrators only. NOTE: This only affects access to the Azure AD administrator's web portal. This setting does not prohibit privileged users from using other methods such as Rest API or Powershell to obtain sensitive information from Azure AD.",
@@ -530,7 +540,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1.2 Conditional Access",
+          "Section": "1. Identity and Access Management",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Restricts group creation to administrators with permissions only.",
@@ -552,7 +562,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1.2 Conditional Access",
+          "Section": "1. Identity and Access Management",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Restrict security group creation to administrators only.",
@@ -572,7 +582,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1.2 Conditional Access",
+          "Section": "1. Identity and Access Management",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Restrict security group management to administrators only.",
@@ -594,7 +604,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1.2 Conditional Access",
+          "Section": "1. Identity and Access Management",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Restrict Microsoft 365 group creation to administrators only.",
@@ -614,7 +624,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1.2 Conditional Access",
+          "Section": "1. Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Joining or registering devices to the active directory should require Multi-factor authentication.",
@@ -636,7 +646,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1.2 Conditional Access",
+          "Section": "1. Identity and Access Management",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "The principle of least privilege should be followed and only necessary privileges should be assigned instead of allowing full administrative access.",
@@ -658,7 +668,7 @@
       ],
       "Attributes": [
         {
-          "Section": "1.2 Conditional Access",
+          "Section": "1. Identity and Access Management",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Resource locking is a powerful protection mechanism that can prevent inadvertent modification/deletion of resources within Azure subscriptions/Resource Groups and is a recommended NIST configuration.",
@@ -678,7 +688,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "1.2 Conditional Access",
+          "Section": "1. Identity and Access Management",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Users who are set as subscription owners are able to make administrative changes to the subscriptions and move them into and out of Azure Active Directories.",
@@ -700,7 +710,8 @@
       ],
       "Attributes": [
         {
-          "Section": "2.1 Microsoft Defender for Cloud",
+          "Section": "2. Microsoft Defender",
+          "SubSection": "2.1 Microsoft Defender for Cloud",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Turning on Microsoft Defender for Servers enables threat detection for Servers, providing threat intelligence, anomaly detection, and behavior analytics in the Microsoft Defender for Cloud.",
@@ -722,7 +733,8 @@
       ],
       "Attributes": [
         {
-          "Section": "2.1 Microsoft Defender for Cloud",
+          "Section": "2. Microsoft Defender",
+          "SubSection": "2.1 Microsoft Defender for Cloud",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Turning on Microsoft Defender for App Service enables threat detection for App Service, providing threat intelligence, anomaly detection, and behavior analytics in the Microsoft Defender for Cloud.",
@@ -744,7 +756,8 @@
       ],
       "Attributes": [
         {
-          "Section": "2.1 Microsoft Defender for Cloud",
+          "Section": "2. Microsoft Defender",
+          "SubSection": "2.1 Microsoft Defender for Cloud",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Turning on Microsoft Defender for Databases enables threat detection for the instances running your database software. This provides threat intelligence, anomaly detection, and behavior analytics in the Azure Microsoft Defender for Cloud. Instead of being enabled on services like Platform as a Service (PaaS), this implementation will run within your instances as Infrastructure as a Service (IaaS) on the Operating Systems hosting your databases.",
@@ -766,7 +779,8 @@
       ],
       "Attributes": [
         {
-          "Section": "2.1 Microsoft Defender for Cloud",
+          "Section": "2. Microsoft Defender",
+          "SubSection": "2.1 Microsoft Defender for Cloud",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Turning on Microsoft Defender for Azure SQL Databases  enables threat detection for Azure SQL database servers, providing threat intelligence, anomaly detection, andbehavior analytics in the Microsoft Defender for Cloud.",
@@ -788,7 +802,8 @@
       ],
       "Attributes": [
         {
-          "Section": "2.1 Microsoft Defender for Cloud",
+          "Section": "2. Microsoft Defender",
+          "SubSection": "2.1 Microsoft Defender for Cloud",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Turning on Microsoft Defender for SQL servers on machines enables threat detection for SQL servers on machines, providing threat intelligence, anomaly detection, and behavior analytics in the Microsoft Defender for Cloud.",
@@ -810,7 +825,8 @@
       ],
       "Attributes": [
         {
-          "Section": "2.1 Microsoft Defender for Cloud",
+          "Section": "2. Microsoft Defender",
+          "SubSection": "2.1 Microsoft Defender for Cloud",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Turning on Microsoft Defender for Open-source relational databases enables threat detection for Open-source relational databases, providing threat intelligence, anomaly detection, and behavior analytics in the Microsoft Defender for Cloud.",
@@ -832,7 +848,8 @@
       ],
       "Attributes": [
         {
-          "Section": "2.1 Microsoft Defender for Cloud",
+          "Section": "2. Microsoft Defender",
+          "SubSection": "2.1 Microsoft Defender for Cloud",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Turning on Microsoft Defender for Storage enables threat detection for Storage, providing threat intelligence, anomaly detection, and behavior analytics in the Microsoft Defender for Cloud.",
@@ -854,7 +871,8 @@
       ],
       "Attributes": [
         {
-          "Section": "2.1 Microsoft Defender for Cloud",
+          "Section": "2. Microsoft Defender",
+          "SubSection": "2.1 Microsoft Defender for Cloud",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Turning on Microsoft Defender for Containers enables threat detection for Container Registries including Kubernetes, providing threat intelligence, anomaly detection, and behavior analytics in the Microsoft Defender for Cloud.",
@@ -876,7 +894,8 @@
       ],
       "Attributes": [
         {
-          "Section": "2.1 Microsoft Defender for Cloud",
+          "Section": "2. Microsoft Defender",
+          "SubSection": "2.1 Microsoft Defender for Cloud",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Microsoft Defender for Azure Cosmos DB scans all incoming network requests for threats to your Azure Cosmos DB resources.",
@@ -898,7 +917,8 @@
       ],
       "Attributes": [
         {
-          "Section": "2.1 Microsoft Defender for Cloud",
+          "Section": "2. Microsoft Defender",
+          "SubSection": "2.1 Microsoft Defender for Cloud",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Turning on Microsoft Defender for Key Vault enables threat detection for Key Vault, providing threat intelligence, anomaly detection, and behavior analytics in the Microsoft Defender for Cloud.",
@@ -920,7 +940,8 @@
       ],
       "Attributes": [
         {
-          "Section": "2.1 Microsoft Defender for Cloud",
+          "Section": "2. Microsoft Defender",
+          "SubSection": "2.1 Microsoft Defender for Cloud",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Microsoft Defender for DNS scans all network traffic exiting from within a subscription.",
@@ -942,7 +963,8 @@
       ],
       "Attributes": [
         {
-          "Section": "2.1 Microsoft Defender for Cloud",
+          "Section": "2. Microsoft Defender",
+          "SubSection": "2.1 Microsoft Defender for Cloud",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Microsoft Defender for Resource Manager scans incoming administrative requests to change your infrastructure from both CLI and the Azure portal.",
@@ -964,7 +986,8 @@
       ],
       "Attributes": [
         {
-          "Section": "2.1 Microsoft Defender for Cloud",
+          "Section": "2. Microsoft Defender",
+          "SubSection": "2.1 Microsoft Defender for Cloud",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Ensure that the latest OS patches for all virtual machines are applied.",
@@ -986,7 +1009,8 @@
       ],
       "Attributes": [
         {
-          "Section": "2.1 Microsoft Defender for Cloud",
+          "Section": "2. Microsoft Defender",
+          "SubSection": "2.1 Microsoft Defender for Cloud",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "None of the settings offered by ASC Default policy should be set to effect Disabled.",
@@ -1008,7 +1032,8 @@
       ],
       "Attributes": [
         {
-          "Section": "2.1 Microsoft Defender for Cloud",
+          "Section": "2. Microsoft Defender",
+          "SubSection": "2.1 Microsoft Defender for Cloud",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Enable automatic provisioning of the monitoring agent to collect security data.",
@@ -1030,7 +1055,8 @@
       ],
       "Attributes": [
         {
-          "Section": "2.1 Microsoft Defender for Cloud",
+          "Section": "2. Microsoft Defender",
+          "SubSection": "2.1 Microsoft Defender for Cloud",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Enable automatic provisioning of vulnerability assessment for machines on both Azure and hybrid (Arc enabled) machines.",
@@ -1050,7 +1076,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "2.1 Microsoft Defender for Cloud",
+          "Section": "2. Microsoft Defender",
+          "SubSection": "2.1 Microsoft Defender for Cloud",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Enable automatic provisioning of the Microsoft Defender for Containers components.",
@@ -1072,7 +1099,8 @@
       ],
       "Attributes": [
         {
-          "Section": "2.1 Microsoft Defender for Cloud",
+          "Section": "2. Microsoft Defender",
+          "SubSection": "2.1 Microsoft Defender for Cloud",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Enable security alert emails to subscription owners.",
@@ -1094,7 +1122,8 @@
       ],
       "Attributes": [
         {
-          "Section": "2.1 Microsoft Defender for Cloud",
+          "Section": "2. Microsoft Defender",
+          "SubSection": "2.1 Microsoft Defender for Cloud",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Microsoft Defender for Cloud emails the subscription owners whenever a high-severity alert is triggered for their subscription. You should provide a security contact email address as an additional email address.",
@@ -1116,7 +1145,8 @@
       ],
       "Attributes": [
         {
-          "Section": "2.1 Microsoft Defender for Cloud",
+          "Section": "2. Microsoft Defender",
+          "SubSection": "2.1 Microsoft Defender for Cloud",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Enables emailing security alerts to the subscription owner or other designated security contact.",
@@ -1138,7 +1168,8 @@
       ],
       "Attributes": [
         {
-          "Section": "2.1 Microsoft Defender for Cloud",
+          "Section": "2. Microsoft Defender",
+          "SubSection": "2.1 Microsoft Defender for Cloud",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "This integration setting enables Microsoft Defender for Cloud Apps (formerly 'Microsoft Cloud App Security' or 'MCAS' - see additional info) to communicate with Microsoft Defender for Cloud.",
@@ -1160,7 +1191,8 @@
       ],
       "Attributes": [
         {
-          "Section": "2.1 Microsoft Defender for Cloud",
+          "Section": "2. Microsoft Defender",
+          "SubSection": "2.1 Microsoft Defender for Cloud",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "This integration setting enables Microsoft Defender for Endpoint (formerly 'Advanced Threat Protection' or 'ATP' or 'WDATP' - see additional info) to communicate with Microsoft Defender for Cloud. IMPORTANT: When enabling integration between DfE & DfC it needs to be taken into account that this will have some side effects that may be undesirable. 1. For server 2019 & above if defender is installed (default for these server SKU's) this will trigger a deployment of the new unified agent and link to any of the extended configuration in the Defender portal. 2. If the new unified agent is required for server SKU's of Win 2016 or Linux and lower there is additional integration that needs to be switched on and agents need to be aligned.",
@@ -1182,7 +1214,8 @@
       ],
       "Attributes": [
         {
-          "Section": "2.2 Microsoft Defender for IoT",
+          "Section": "2. Microsoft Defender",
+          "SubSection": "2.2 Microsoft Defender for IoT",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Microsoft Defender for IoT acts as a central security hub for IoT devices within your organization.",
@@ -1524,7 +1557,8 @@
       ],
       "Attributes": [
         {
-          "Section": "4.1 SQL Server - Auditing",
+          "Section": "4. Database Services",
+          "SubSection": "4.1 SQL Server - Auditing",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Enable auditing on SQL Servers.",
@@ -1546,7 +1580,8 @@
       ],
       "Attributes": [
         {
-          "Section": "4.1 SQL Server - Auditing",
+          "Section": "4. Database Services",
+          "SubSection": "4.1 SQL Server - Auditing",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Ensure that no SQL Databases allow ingress from 0.0.0.0/0 (ANY IP).",
@@ -1568,7 +1603,8 @@
       ],
       "Attributes": [
         {
-          "Section": "4.1 SQL Server - Auditing",
+          "Section": "4. Database Services",
+          "SubSection": "4.1 SQL Server - Auditing",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Transparent Data Encryption (TDE) with Customer-managed key support provides increased transparency and control over the TDE Protector, increased security with an HSM-backed external service, and promotion of separation of duties. With TDE, data is encrypted at rest with a symmetric key (called the database encryption key) stored in the database or data warehouse distribution. To protect this data encryption key (DEK) in the past, only a certificate that the Azure SQL Service managed could be used. Now, with Customer-managed key support for TDE, the DEK can be protected with an asymmetric key that is stored in the Azure Key Vault. The Azure Key Vault is a highly available and scalable cloud-based key store which offers central key management, leverages FIPS 140-2 Level 2 validated hardware security modules (HSMs), and allows separation of management of keys and data for additional security. Based on business needs or criticality of data/databases hosted on a SQL server, it is recommended that the TDE protector is encrypted by a key that is managed by the data owner (Customer-managed key).",
@@ -1590,7 +1626,8 @@
       ],
       "Attributes": [
         {
-          "Section": "4.1 SQL Server - Auditing",
+          "Section": "4. Database Services",
+          "SubSection": "4.1 SQL Server - Auditing",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Use Azure Active Directory Authentication for authentication with SQL Database to manage credentials in a single place.",
@@ -1612,7 +1649,8 @@
       ],
       "Attributes": [
         {
-          "Section": "4.1 SQL Server - Auditing",
+          "Section": "4. Database Services",
+          "SubSection": "4.1 SQL Server - Auditing",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Enable Transparent Data Encryption on every SQL server.",
@@ -1634,7 +1672,8 @@
       ],
       "Attributes": [
         {
-          "Section": "4.1 SQL Server - Auditing",
+          "Section": "4. Database Services",
+          "SubSection": "4.1 SQL Server - Auditing",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "SQL Server Audit Retention should be configured to be greater than 90 days.",
