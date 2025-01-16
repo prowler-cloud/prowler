@@ -26,7 +26,8 @@
     }
   },
   "Categories": [
-    "redundancy"
+    "redundancy",
+    "gen-ai"
   ],
   "DependsOn": [],
   "RelatedTo": [],

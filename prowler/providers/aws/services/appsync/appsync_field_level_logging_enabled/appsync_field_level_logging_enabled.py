@@ -7,11 +7,7 @@ class appsync_field_level_logging_enabled(Check):
         findings = []
         # Check only GraphQL APIs because boto3 does not have a method to get other types of AppSync APIs (list_apis is not working)
         for api in appsync_client.graphql_apis.values():
-            report = Check_Report_AWS(self.metadata())
-            report.region = api.region
-            report.resource_id = api.id
-            report.resource_arn = api.arn
-            report.resource_tags = api.tags
+            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=api)
             report.status = "PASS"
             report.status_extended = (
                 f"AppSync API {api.name} has field log level enabled."

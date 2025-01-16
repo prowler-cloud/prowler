@@ -11,12 +11,15 @@ class TestCloudStorageBucketUniformBucketLevelAccess:
     def test_bucket_with_uniform_bucket_level_access_enabled(self):
         cloudstorage_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_uniform_bucket_level_access.cloudstorage_bucket_uniform_bucket_level_access.cloudstorage_client",
-            new=cloudstorage_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_uniform_bucket_level_access.cloudstorage_bucket_uniform_bucket_level_access.cloudstorage_client",
+                new=cloudstorage_client,
+            ),
         ):
             from prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_uniform_bucket_level_access.cloudstorage_bucket_uniform_bucket_level_access import (
                 cloudstorage_bucket_uniform_bucket_level_access,
@@ -56,12 +59,15 @@ class TestCloudStorageBucketUniformBucketLevelAccess:
     def test_bucket_with_uniform_bucket_level_access_disabled(self):
         cloudstorage_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_uniform_bucket_level_access.cloudstorage_bucket_uniform_bucket_level_access.cloudstorage_client",
-            new=cloudstorage_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_uniform_bucket_level_access.cloudstorage_bucket_uniform_bucket_level_access.cloudstorage_client",
+                new=cloudstorage_client,
+            ),
         ):
             from prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_uniform_bucket_level_access.cloudstorage_bucket_uniform_bucket_level_access import (
                 cloudstorage_bucket_uniform_bucket_level_access,
@@ -101,12 +107,15 @@ class TestCloudStorageBucketUniformBucketLevelAccess:
     def test_no_buckets(self):
         cloudstorage_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_uniform_bucket_level_access.cloudstorage_bucket_uniform_bucket_level_access.cloudstorage_client",
-            new=cloudstorage_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_uniform_bucket_level_access.cloudstorage_bucket_uniform_bucket_level_access.cloudstorage_client",
+                new=cloudstorage_client,
+            ),
         ):
             from prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_uniform_bucket_level_access.cloudstorage_bucket_uniform_bucket_level_access import (
                 cloudstorage_bucket_uniform_bucket_level_access,

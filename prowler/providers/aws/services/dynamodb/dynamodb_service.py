@@ -30,6 +30,7 @@ class DynamoDB(AWSService):
                         is_resource_filtered(arn, self.audit_resources)
                     ):
                         self.tables[arn] = Table(
+                            arn=arn,
                             name=table,
                             encryption_type=None,
                             kms_arn=None,
@@ -221,6 +222,7 @@ class DAX(AWSService):
 
 
 class Table(BaseModel):
+    arn: str
     name: str
     billing_mode: str = "PROVISIONED"
     encryption_type: Optional[str]

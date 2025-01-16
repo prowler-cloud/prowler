@@ -11,7 +11,7 @@ class CloudResourceManager(GCPService):
         super().__init__(__class__.__name__, provider)
 
         self.bindings = []
-        self.projects = []
+        self.cloud_resource_manager_projects = []
         self.organizations = []
         self._get_iam_policy()
         self._get_organizations()
@@ -25,7 +25,7 @@ class CloudResourceManager(GCPService):
                 audit_logging = False
                 if policy.get("auditConfigs"):
                     audit_logging = True
-                self.projects.append(
+                self.cloud_resource_manager_projects.append(
                     Project(id=project_id, audit_logging=audit_logging)
                 )
                 for binding in policy["bindings"]:

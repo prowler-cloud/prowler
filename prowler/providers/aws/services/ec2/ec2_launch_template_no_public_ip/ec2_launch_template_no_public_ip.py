@@ -6,11 +6,9 @@ class ec2_launch_template_no_public_ip(Check):
     def execute(self):
         findings = []
         for template in ec2_client.launch_templates:
-            report = Check_Report_AWS(self.metadata())
-            report.region = template.region
-            report.resource_id = template.id
-            report.resource_arn = template.arn
-            report.resource_tags = template.tags
+            report = Check_Report_AWS(
+                metadata=self.metadata(), resource_metadata=template
+            )
 
             versions_with_autoassign_public_ip = []
             versions_with_network_interfaces_public_ip = []

@@ -6,7 +6,7 @@ from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, set_mocked_gcp_prov
 
 class Test_compute_loadbalancer_logging_enabled:
     def test_compute_no_load_balancers(self):
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.load_balancers = []
 
@@ -36,7 +36,7 @@ class Test_compute_loadbalancer_logging_enabled:
             service="test",
         )
 
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.load_balancers = [load_balancer]
         compute_client.region = "global"
@@ -77,7 +77,7 @@ class Test_compute_loadbalancer_logging_enabled:
             service="test",
         )
 
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.load_balancers = [load_balancer]
         compute_client.region = "global"

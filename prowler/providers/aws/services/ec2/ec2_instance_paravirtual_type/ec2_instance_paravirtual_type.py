@@ -7,19 +7,16 @@ class ec2_instance_paravirtual_type(Check):
         findings = []
         for instance in ec2_client.instances:
             if instance.state != "terminated":
-                report = Check_Report_AWS(self.metadata())
-                report.region = instance.region
-                report.resource_arn = instance.arn
-                report.resource_tags = instance.tags
+                report = Check_Report_AWS(
+                    metadata=self.metadata(), resource_metadata=instance
+                )
                 report.status = "PASS"
                 report.status_extended = (
                     f"EC2 Instance {instance.id} virtualization type is set to HVM."
                 )
-                report.resource_id = instance.id
                 if instance.virtualization_type == "paravirtual":
                     report.status = "FAIL"
                     report.status_extended = f"EC2 Instance {instance.id} virtualization type is set to paravirtual."
-                    report.resource_id = instance.id
 
                 findings.append(report)
 

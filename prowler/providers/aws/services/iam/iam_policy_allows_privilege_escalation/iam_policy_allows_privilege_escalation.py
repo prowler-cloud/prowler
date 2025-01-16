@@ -11,11 +11,10 @@ class iam_policy_allows_privilege_escalation(Check):
 
         for policy in iam_client.policies:
             if policy.type == "Custom":
-                report = Check_Report_AWS(self.metadata())
-                report.resource_id = policy.name
-                report.resource_arn = policy.arn
+                report = Check_Report_AWS(
+                    metadata=self.metadata(), resource_metadata=policy
+                )
                 report.region = iam_client.region
-                report.resource_tags = policy.tags
                 report.status = "PASS"
                 report.status_extended = f"Custom Policy {report.resource_arn} does not allow privilege escalation."
 

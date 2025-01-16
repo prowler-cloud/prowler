@@ -16,7 +16,7 @@ class Compute(GCPService):
         self.subnets = []
         self.addresses = []
         self.firewalls = []
-        self.projects = []
+        self.compute_projects = []
         self.load_balancers = []
         self._get_url_maps()
         self._describe_backend_service()
@@ -73,7 +73,7 @@ class Compute(GCPService):
                 for item in response["commonInstanceMetadata"].get("items", []):
                     if item["key"] == "enable-oslogin" and item["value"] == "TRUE":
                         enable_oslogin = True
-                self.projects.append(
+                self.compute_projects.append(
                     Project(id=project_id, enable_oslogin=enable_oslogin)
                 )
             except Exception as error:

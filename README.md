@@ -72,9 +72,9 @@ It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, Fe
 | Provider | Checks | Services | [Compliance Frameworks](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/compliance/) | [Categories](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/misc/#categories) |
 |---|---|---|---|---|
 | AWS | 561 | 81 -> `prowler aws --list-services` | 30 -> `prowler aws --list-compliance` | 9 -> `prowler aws --list-categories` |
-| GCP | 77 | 13 -> `prowler gcp --list-services` | 3 -> `prowler gcp --list-compliance` | 2 -> `prowler gcp --list-categories`|
-| Azure | 139 | 18 -> `prowler azure --list-services` | 4 -> `prowler azure --list-compliance` | 2 -> `prowler azure --list-categories` |
-| Kubernetes | 83 | 7 -> `prowler kubernetes --list-services` | 1 -> `prowler kubernetes --list-compliance` | 7 -> `prowler kubernetes --list-categories` |
+| GCP | 77 | 13 -> `prowler gcp --list-services` | 4 -> `prowler gcp --list-compliance` | 2 -> `prowler gcp --list-categories`|
+| Azure | 139 | 18 -> `prowler azure --list-services` | 5 -> `prowler azure --list-compliance` | 2 -> `prowler azure --list-categories` |
+| Kubernetes | 83 | 7 -> `prowler kubernetes --list-services` | 2 -> `prowler kubernetes --list-compliance` | 7 -> `prowler kubernetes --list-categories` |
 
 # 💻 Installation
 
@@ -98,6 +98,7 @@ curl -LO https://raw.githubusercontent.com/prowler-cloud/prowler/refs/heads/mast
 docker compose up -d
 ```
 
+> Containers are built for `linux/amd64`. If your workstation's architecture is different, please set `DOCKER_DEFAULT_PLATFORM=linux/amd64` in your environment or use the `--platform linux/amd64` flag in the docker command.
 > Enjoy Prowler App at http://localhost:3000 by signing up with your email and password.
 
 ### From GitHub

@@ -5,12 +5,10 @@ from prowler.providers.aws.services.lightsail.lightsail_client import lightsail_
 class lightsail_instance_automated_snapshots(Check):
     def execute(self):
         findings = []
-        for arn_instance, instance in lightsail_client.instances.items():
-            report = Check_Report_AWS(self.metadata())
-            report.region = instance.region
-            report.resource_id = instance.id
-            report.resource_arn = arn_instance
-            report.resource_tags = instance.tags
+        for instance in lightsail_client.instances.values():
+            report = Check_Report_AWS(
+                metadata=self.metadata(), resource_metadata=instance
+            )
             report.status = "FAIL"
             report.status_extended = (
                 f"Instance '{instance.name}' does not have automated snapshots enabled."

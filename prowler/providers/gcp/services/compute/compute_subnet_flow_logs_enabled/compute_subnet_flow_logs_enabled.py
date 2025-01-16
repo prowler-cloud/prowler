@@ -6,11 +6,9 @@ class compute_subnet_flow_logs_enabled(Check):
     def execute(self) -> Check_Report_GCP:
         findings = []
         for subnet in compute_client.subnets:
-            report = Check_Report_GCP(self.metadata())
-            report.project_id = subnet.project_id
-            report.resource_id = subnet.id
-            report.resource_name = subnet.name
-            report.location = subnet.region
+            report = Check_Report_GCP(
+                metadata=self.metadata(), resource_metadata=subnet
+            )
             report.status = "PASS"
             report.status_extended = f"Subnet {subnet.name} in network {subnet.network} has flow logs enabled."
             if not subnet.flow_logs:

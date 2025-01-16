@@ -10,7 +10,7 @@ AWS_ACCOUNT_NUMBER = "123456789012"
 
 class Test_backup_plans_exist:
     def test_no_backup_plans(self):
-        backup_client = mock.MagicMock
+        backup_client = mock.MagicMock()
         backup_client.audited_account = AWS_ACCOUNT_NUMBER
         backup_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
         backup_client.audited_partition = "aws"

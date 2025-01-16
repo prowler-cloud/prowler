@@ -31,6 +31,7 @@ class Kafka(AWSService):
                         self.clusters[cluster.get("ClusterArn", "")] = Cluster(
                             id=arn.split(":")[-1].split("/")[-1],
                             name=cluster.get("ClusterName", ""),
+                            arn=arn,
                             region=regional_client.region,
                             tags=list(cluster.get("Tags", {})),
                             state=cluster.get("State", ""),
@@ -98,6 +99,7 @@ class EncryptionInTransit(BaseModel):
 class Cluster(BaseModel):
     id: str
     name: str
+    arn: str
     region: str
     tags: list
     kafka_version: str

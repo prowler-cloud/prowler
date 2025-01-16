@@ -64,8 +64,9 @@ class Test_app_minimum_tls_version_12:
 
             app_client.apps = {
                 AZURE_SUBSCRIPTION_ID: {
-                    "app_id-1": WebApp(
+                    resource_id: WebApp(
                         resource_id=resource_id,
+                        name="app_id-1",
                         auth_enabled=True,
                         configurations=None,
                         client_cert_mode="Ignore",
@@ -106,8 +107,9 @@ class Test_app_minimum_tls_version_12:
 
             app_client.apps = {
                 AZURE_SUBSCRIPTION_ID: {
-                    "app_id-1": WebApp(
+                    resource_id: WebApp(
                         resource_id=resource_id,
+                        name="app_id-1",
                         auth_enabled=True,
                         configurations=mock.MagicMock(min_tls_version="1.2"),
                         client_cert_mode="Ignore",
@@ -148,8 +150,9 @@ class Test_app_minimum_tls_version_12:
 
             app_client.apps = {
                 AZURE_SUBSCRIPTION_ID: {
-                    "app_id-1": WebApp(
+                    resource_id: WebApp(
                         resource_id=resource_id,
+                        name="app_id-1",
                         auth_enabled=False,
                         configurations=mock.MagicMock(min_tls_version="1.0"),
                         client_cert_mode="Ignore",
@@ -190,8 +193,9 @@ class Test_app_minimum_tls_version_12:
 
             app_client.apps = {
                 AZURE_SUBSCRIPTION_ID: {
-                    "app_id-1": WebApp(
+                    resource_id: WebApp(
                         resource_id=resource_id,
+                        name="app_id-1",
                         auth_enabled=False,
                         configurations=mock.MagicMock(min_tls_version="1.3"),
                         client_cert_mode="Ignore",

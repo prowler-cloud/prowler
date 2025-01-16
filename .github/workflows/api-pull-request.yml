@@ -4,11 +4,13 @@ on:
   push:
     branches:
       - "master"
+      - "v5.*"
     paths:
       - "api/**"
   pull_request:
     branches:
       - "master"
+      - "v5.*"
     paths:
       - "api/**"
 
@@ -87,7 +89,7 @@ jobs:
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
           python -m pip install --upgrade pip
-          pipx install poetry
+          pipx install poetry==1.8.5
 
       - name: Set up Python ${{ matrix.python-version }}
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
@@ -112,7 +114,7 @@ jobs:
         working-directory: ./api
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
-          poetry lock --check
+          poetry check --lock
 
       - name: Lint with ruff
         working-directory: ./api

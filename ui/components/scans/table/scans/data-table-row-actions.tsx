@@ -69,7 +69,7 @@ export function DataTableRowActions<ScanProps>({
                 description="Allows you to edit the scan name"
                 textValue="Edit Scan Name"
                 startContent={<EditDocumentBulkIcon className={iconClasses} />}
-                onClick={() => setIsEditOpen(true)}
+                onPress={() => setIsEditOpen(true)}
               >
                 Edit scan name
               </DropdownItem>

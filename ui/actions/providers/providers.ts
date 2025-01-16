@@ -17,7 +17,7 @@ export const getProviders = async ({
   if (isNaN(Number(page)) || page < 1) redirect("/providers");
 
   const keyServer = process.env.API_BASE_URL;
-  const url = new URL(`${keyServer}/providers`);
+  const url = new URL(`${keyServer}/providers?include=provider_groups`);
 
   if (page) url.searchParams.append("page[number]", page.toString());
   if (query) url.searchParams.append("filter[search]", query);
@@ -42,6 +42,7 @@ export const getProviders = async ({
     revalidatePath("/providers");
     return parsedData;
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error("Error fetching providers:", error);
     return undefined;
   }

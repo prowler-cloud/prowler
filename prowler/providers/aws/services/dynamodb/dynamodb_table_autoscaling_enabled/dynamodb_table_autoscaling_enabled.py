@@ -22,12 +22,8 @@ class dynamodb_table_autoscaling_enabled(Check):
                 autoscaling_mapping[table_name] = {}
             autoscaling_mapping[table_name][target.scalable_dimension] = target
 
-        for table_arn, table in dynamodb_client.tables.items():
-            report = Check_Report_AWS(self.metadata())
-            report.region = table.region
-            report.resource_id = table.name
-            report.resource_arn = table_arn
-            report.resource_tags = table.tags
+        for table in dynamodb_client.tables.values():
+            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=table)
             report.status = "PASS"
             report.status_extended = (
                 f"DynamoDB table {table.name} automatically scales capacity on demand."

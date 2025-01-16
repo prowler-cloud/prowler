@@ -312,10 +312,12 @@ aws:
   # AWS ACM Configuration
   # aws.acm_certificates_expiration_check
   days_to_expire_threshold: 7
-  # aws.acm_certificates_rsa_key_length
+  # aws.acm_certificates_with_secure_key_algorithms
   insecure_key_algorithms:
     [
       "RSA-1024",
+      "P-192",
+      "SHA-1",
     ]
 
   # AWS EKS Configuration

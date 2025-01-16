@@ -23,8 +23,6 @@ class repository_enforces_status_checks(Check):
         findings = []
         for repo in repository_client.repositories.values():
             report = Check_Report_Github(self.metadata())
-            report.resource_id = repo.id
-            report.resource_name = repo.name
             report.status = "FAIL"
             report.status_extended = (
                 f"Repository {repo.name} does not enforce status checks."

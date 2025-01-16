@@ -31,7 +31,7 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
     null,
   );
 
-  const allFilterKeys = filter?.values || [];
+  const allFilterKeys = useMemo(() => filter?.values || [], [filter?.values]);
 
   const getActiveFilter = useMemo(() => {
     const currentFilters: Record<string, string> = {};
@@ -63,7 +63,7 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
     } else {
       setGroupSelected(new Set());
     }
-  }, [getActiveFilter, filter?.key, memoizedFilterValues]);
+  }, [getActiveFilter, filter?.key, memoizedFilterValues, filter]);
 
   const onSelectionChange = useCallback(
     (keys: string[]) => {
@@ -127,10 +127,7 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
       <Button
         isIconOnly
         variant="light"
-        onClick={(e) => {
-          e.stopPropagation();
-          onClearFilter(filter.key);
-        }}
+        onPress={() => onClearFilter(filter.key)}
         className={`absolute right-2 top-1/2 z-40 -translate-y-1/2 ${
           groupSelected.size === 0 ? "hidden" : ""
         }`}
@@ -181,7 +178,10 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
               className="font-bold"
             >
               <Checkbox
-                className="font-normal"
+                classNames={{
+                  label: "text-small font-normal",
+                  wrapper: "checkbox-update",
+                }}
                 value="all"
                 isSelected={groupSelected.has("all")}
                 onClick={handleSelectAllClick}
@@ -194,7 +194,14 @@ export const CustomDropdownFilter: React.FC<CustomDropdownFilterProps> = ({
                 className="flex max-h-96 max-w-56 flex-col gap-y-2 py-2"
               >
                 {memoizedFilterValues.map((value) => (
-                  <Checkbox className="font-normal" key={value} value={value}>
+                  <Checkbox
+                    classNames={{
+                      label: "text-small font-normal",
+                      wrapper: "checkbox-update",
+                    }}
+                    key={value}
+                    value={value}
+                  >
                     {value}
                   </Checkbox>
                 ))}
