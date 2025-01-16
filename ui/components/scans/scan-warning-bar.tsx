@@ -1,7 +1,6 @@
 "use client";
 
-import { RocketIcon, InfoIcon } from "../icons";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui";
+import { InfoIcon } from "../icons";
 
 export const ScanWarningBar = () => {
   return (
