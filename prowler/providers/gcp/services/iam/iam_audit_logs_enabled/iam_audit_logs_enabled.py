@@ -7,7 +7,7 @@ from prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_cl
 class iam_audit_logs_enabled(Check):
     def execute(self) -> Check_Report_GCP:
         findings = []
-        for project in cloudresourcemanager_client.projects:
+        for project in cloudresourcemanager_client.cloud_resource_manager_projects:
             report = Check_Report_GCP(
                 metadata=self.metadata(),
                 resource_metadata=project,
