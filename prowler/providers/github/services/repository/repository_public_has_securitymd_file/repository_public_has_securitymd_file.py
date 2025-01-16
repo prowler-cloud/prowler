@@ -26,8 +26,6 @@ class repository_public_has_securitymd_file(Check):
                 report = Check_Report_Github(
                     metadata=self.metadata(), resource_metadata=repo
                 )
-                report.resource_id = repo.id
-                report.resource_name = repo.name
                 report.status = "PASS"
                 report.status_extended = (
                     f"Repository {repo.name} does have a SECURITY.md file."

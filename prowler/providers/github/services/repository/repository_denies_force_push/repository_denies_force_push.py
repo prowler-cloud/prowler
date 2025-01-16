@@ -25,8 +25,6 @@ class repository_denies_force_push(Check):
             report = Check_Report_Github(
                 metadata=self.metadata(), resource_metadata=repo
             )
-            report.resource_id = repo.id
-            report.resource_name = repo.name
             report.status = "FAIL"
             report.status_extended = f"Repository {repo.name} does allow force push."
 
