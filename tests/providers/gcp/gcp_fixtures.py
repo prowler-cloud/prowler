@@ -3,7 +3,7 @@ from uuid import uuid4
 from mock import MagicMock
 
 from prowler.providers.gcp.gcp_provider import GcpProvider
-from prowler.providers.gcp.models import GCPIdentityInfo
+from prowler.providers.gcp.models import GCPIdentityInfo, GCPProject
 
 GCP_PROJECT_ID = "123456789012"
 
@@ -18,6 +18,15 @@ def set_mocked_gcp_provider(
     provider.type = "gcp"
     provider.session = MagicMock()
     provider.session._service_account_email = "test@test.com"
+    provider.projects = {
+        GCP_PROJECT_ID: GCPProject(
+            id=GCP_PROJECT_ID,
+            number="123456789012",
+            name="test",
+            labels={},
+            lifecycle_state="ACTIVE",
+        )
+    }
     provider.project_ids = project_ids
     provider.default_project_id = GCP_PROJECT_ID
     provider.identity = GCPIdentityInfo(

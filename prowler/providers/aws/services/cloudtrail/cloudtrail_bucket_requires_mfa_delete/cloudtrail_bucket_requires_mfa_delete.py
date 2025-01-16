@@ -13,11 +13,10 @@ class cloudtrail_bucket_requires_mfa_delete(Check):
                 if trail.is_logging:
                     trail_bucket_is_in_account = False
                     trail_bucket = trail.s3_bucket
-                    report = Check_Report_AWS(self.metadata())
+                    report = Check_Report_AWS(
+                        metadata=self.metadata(), resource_metadata=trail
+                    )
                     report.region = trail.home_region
-                    report.resource_id = trail.name
-                    report.resource_arn = trail.arn
-                    report.resource_tags = trail.tags
                     report.status = "FAIL"
                     report.status_extended = f"Trail {trail.name} bucket ({trail_bucket}) does not have MFA delete enabled."
                     for bucket in s3_client.buckets.values():

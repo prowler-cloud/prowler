@@ -6,11 +6,9 @@ class bedrock_guardrail_sensitive_information_filter_enabled(Check):
     def execute(self):
         findings = []
         for guardrail in bedrock_client.guardrails.values():
-            report = Check_Report_AWS(self.metadata())
-            report.region = guardrail.region
-            report.resource_id = guardrail.id
-            report.resource_arn = guardrail.arn
-            report.resource_tags = guardrail.tags
+            report = Check_Report_AWS(
+                metadata=self.metadata(), resource_metadata=guardrail
+            )
             report.status = "PASS"
             report.status_extended = f"Bedrock Guardrail {guardrail.name} is blocking or masking sensitive information."
             if not guardrail.sensitive_information_filter:

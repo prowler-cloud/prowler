@@ -11,12 +11,15 @@ class TestCloudStorageBucketPublicAccess:
     def test_bucket_public_access(self):
         cloudstorage_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_public_access.cloudstorage_bucket_public_access.cloudstorage_client",
-            new=cloudstorage_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_public_access.cloudstorage_bucket_public_access.cloudstorage_client",
+                new=cloudstorage_client,
+            ),
         ):
             from prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_public_access.cloudstorage_bucket_public_access import (
                 cloudstorage_bucket_public_access,
@@ -56,12 +59,15 @@ class TestCloudStorageBucketPublicAccess:
     def test_bucket_no_public_access(self):
         cloudstorage_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_public_access.cloudstorage_bucket_public_access.cloudstorage_client",
-            new=cloudstorage_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_public_access.cloudstorage_bucket_public_access.cloudstorage_client",
+                new=cloudstorage_client,
+            ),
         ):
             from prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_public_access.cloudstorage_bucket_public_access import (
                 cloudstorage_bucket_public_access,
@@ -101,12 +107,15 @@ class TestCloudStorageBucketPublicAccess:
     def test_no_buckets(self):
         cloudstorage_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_public_access.cloudstorage_bucket_public_access.cloudstorage_client",
-            new=cloudstorage_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_public_access.cloudstorage_bucket_public_access.cloudstorage_client",
+                new=cloudstorage_client,
+            ),
         ):
             from prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_public_access.cloudstorage_bucket_public_access import (
                 cloudstorage_bucket_public_access,

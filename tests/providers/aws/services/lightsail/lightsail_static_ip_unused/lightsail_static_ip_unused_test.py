@@ -36,6 +36,7 @@ class Test_lightsail_static_ip_unused:
             f"{BASE_LIGHTSAIL_ARN}:StaticIp/test-static-ip": StaticIP(
                 name="test-static-ip",
                 id="1234/5678",
+                arn=f"{BASE_LIGHTSAIL_ARN}:StaticIp/test-static-ip",
                 region=AWS_REGION_US_EAST_1,
                 availability_zone=AWS_REGION_US_EAST_1_AZA,
                 ip_address="1.2.3.4",
@@ -78,6 +79,7 @@ class Test_lightsail_static_ip_unused:
             f"{BASE_LIGHTSAIL_ARN}:StaticIp/test-static-ip": StaticIP(
                 name="test-static-ip",
                 id="1234/5678",
+                arn=f"{BASE_LIGHTSAIL_ARN}:StaticIp/test-static-ip",
                 region=AWS_REGION_US_EAST_1,
                 availability_zone=AWS_REGION_US_EAST_1_AZA,
                 ip_address="1.2.3.4",

@@ -6,11 +6,9 @@ class ssm_documents_set_as_public(Check):
     def execute(self):
         findings = []
         for document in ssm_client.documents.values():
-            report = Check_Report_AWS(self.metadata())
-            report.region = document.region
-            report.resource_arn = document.arn
-            report.resource_id = document.name
-            report.resource_tags = document.tags
+            report = Check_Report_AWS(
+                metadata=self.metadata(), resource_metadata=document
+            )
             trusted_account_ids = ssm_client.audit_config.get("trusted_account_ids", [])
             if ssm_client.audited_account not in trusted_account_ids:
                 trusted_account_ids.append(ssm_client.audited_account)

@@ -6,7 +6,7 @@ from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, set_mocked_gcp_prov
 
 class Test_compute_project_os_login_enabled:
     def test_compute_no_project(self):
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.projects = []
 
@@ -33,7 +33,7 @@ class Test_compute_project_os_login_enabled:
             enable_oslogin=True,
         )
 
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.projects = [project]
         compute_client.region = "global"
@@ -70,7 +70,7 @@ class Test_compute_project_os_login_enabled:
             enable_oslogin=False,
         )
 
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.projects = [project]
         compute_client.region = "global"

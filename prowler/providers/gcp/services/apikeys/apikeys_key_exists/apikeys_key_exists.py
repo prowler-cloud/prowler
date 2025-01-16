@@ -6,10 +6,12 @@ class apikeys_key_exists(Check):
     def execute(self) -> Check_Report_GCP:
         findings = []
         for project in apikeys_client.project_ids:
-            report = Check_Report_GCP(self.metadata())
-            report.project_id = project
-            report.resource_id = project
-            report.location = apikeys_client.region
+            report = Check_Report_GCP(
+                metadata=self.metadata(),
+                resource_metadata=apikeys_client.projects[project],
+                project_id=project,
+                location=apikeys_client.region,
+            )
             report.status = "PASS"
             report.status_extended = f"Project {project} does not have active API Keys."
             for key in apikeys_client.keys:

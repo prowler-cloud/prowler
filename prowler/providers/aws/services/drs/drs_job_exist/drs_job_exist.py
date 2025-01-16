@@ -6,13 +6,12 @@ class drs_job_exist(Check):
     def execute(self):
         findings = []
         for drs in drs_client.drs_services:
-            report = Check_Report_AWS(self.metadata())
-            report.status = "FAIL"
-            report.status_extended = "DRS is not enabled for this region."
-            report.region = drs.region
-            report.resource_tags = []
+            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=drs)
             report.resource_arn = drs_client._get_recovery_job_arn_template(drs.region)
             report.resource_id = drs_client.audited_account
+            report.status = "FAIL"
+            report.status_extended = "DRS is not enabled for this region."
+
             if drs.status == "ENABLED":
                 report.status_extended = "DRS is enabled for this region without jobs."
                 if drs.jobs:

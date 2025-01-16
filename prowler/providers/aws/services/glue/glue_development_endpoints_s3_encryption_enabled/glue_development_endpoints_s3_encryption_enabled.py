@@ -7,11 +7,9 @@ class glue_development_endpoints_s3_encryption_enabled(Check):
         findings = []
         for endpoint in glue_client.dev_endpoints:
             no_sec_configs = True
-            report = Check_Report_AWS(self.metadata())
-            report.resource_id = endpoint.name
-            report.resource_arn = endpoint.arn
-            report.region = endpoint.region
-            report.resource_tags = endpoint.tags
+            report = Check_Report_AWS(
+                metadata=self.metadata(), resource_metadata=endpoint
+            )
             for sec_config in glue_client.security_configs:
                 if sec_config.name == endpoint.security:
                     no_sec_configs = False

@@ -49,7 +49,7 @@ class Test_DynamoDB_Service:
         # Generate DynamoDB Client
         dynamodb_client = client("dynamodb", region_name=AWS_REGION_US_EAST_1)
         # Create DynamoDB Tables
-        dynamodb_client.create_table(
+        table1_arn = dynamodb_client.create_table(
             TableName="test1",
             AttributeDefinitions=[
                 {"AttributeName": "client", "AttributeType": "S"},
@@ -60,8 +60,8 @@ class Test_DynamoDB_Service:
                 {"AttributeName": "app", "KeyType": "RANGE"},
             ],
             BillingMode="PAY_PER_REQUEST",
-        )
-        dynamodb_client.create_table(
+        )["TableDescription"]["TableArn"]
+        table2_arn = dynamodb_client.create_table(
             TableName="test2",
             AttributeDefinitions=[
                 {"AttributeName": "client", "AttributeType": "S"},
@@ -73,7 +73,7 @@ class Test_DynamoDB_Service:
             ],
             BillingMode="PROVISIONED",
             ProvisionedThroughput={"ReadCapacityUnits": 5, "WriteCapacityUnits": 5},
-        )
+        )["TableDescription"]["TableArn"]
         # DynamoDB client for this test class
         aws_provider = set_mocked_aws_provider()
         dynamo = DynamoDB(aws_provider)
@@ -81,6 +81,8 @@ class Test_DynamoDB_Service:
         table_names = [table.name for table in dynamo.tables.values()]
         assert "test1" in table_names
         assert "test2" in table_names
+        assert table1_arn == list(dynamo.tables.keys())[0]
+        assert table2_arn == list(dynamo.tables.keys())[1]
         for table in dynamo.tables.values():
             assert table.region == AWS_REGION_US_EAST_1
         table_billing = [table.billing_mode for table in dynamo.tables.values()]
