@@ -144,7 +144,7 @@ class Test_entra_privileged_user_has_mfa:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].status_extended == "Privileged user foo does not have MFA."
-            assert result[0].resource_name == f"foo@{DOMAIN}"
+            assert result[0].resource_name == "foo"
             assert result[0].resource_id == user_id
             assert result[0].subscription == f"Tenant: {DOMAIN}"
 
@@ -183,6 +183,6 @@ class Test_entra_privileged_user_has_mfa:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert result[0].status_extended == "Privileged user foo has MFA."
-            assert result[0].resource_name == f"foo@{DOMAIN}"
+            assert result[0].resource_name == "foo"
             assert result[0].resource_id == user_id
             assert result[0].subscription == f"Tenant: {DOMAIN}"

@@ -61,6 +61,7 @@ async def mock_entra_get_named_locations(_):
     return {
         DOMAIN: {
             "id-1": NamedLocation(
+                id="id-1",
                 name="Test",
                 ip_ranges_addresses=[],
                 is_trusted=False,
