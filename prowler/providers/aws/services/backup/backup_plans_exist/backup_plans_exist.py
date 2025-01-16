@@ -16,6 +16,7 @@ class backup_plans_exist(Check):
             findings.append(report)
         elif backup_client.backup_vaults:
             report = Check_Report_AWS(metadata=self.metadata(), resource_metadata={})
+            report.region = backup_client.region
             report.status = "FAIL"
             report.status_extended = "No Backup Plan exist."
             report.resource_arn = backup_client.backup_plan_arn_template
