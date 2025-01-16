@@ -22,9 +22,9 @@ class repository_enforces_admin_branch_protection(Check):
         """
         findings = []
         for repo in repository_client.repositories.values():
-            report = Check_Report_Github(self.metadata())
-            report.resource_id = repo.id
-            report.resource_name = repo.name
+            report = Check_Report_Github(
+                metadata=self.metadata(), resource_metadata=repo
+            )
             report.status = "FAIL"
             report.status_extended = f"Repository {repo.name} does not enforce administrators to be subject to the same branch protection rules as other users."
 
