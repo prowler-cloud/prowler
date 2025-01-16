@@ -12,6 +12,7 @@ def mock_list_organizations(_):
         1: Org(
             id=1,
             name="test-organization",
+            mfa_required=True,
         ),
     }
 
@@ -33,3 +34,4 @@ class Test_Repository_Service:
         repository_service = Organization(set_mocked_github_provider())
         assert len(repository_service.organizations) == 1
         assert repository_service.organizations[1].name == "test-organization"
+        assert repository_service.organizations[1].mfa_required
