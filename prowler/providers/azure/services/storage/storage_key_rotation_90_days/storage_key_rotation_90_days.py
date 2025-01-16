@@ -7,11 +7,10 @@ class storage_key_rotation_90_days(Check):
         findings = []
         for subscription, storage_accounts in storage_client.storage_accounts.items():
             for storage_account in storage_accounts:
-                report = Check_Report_Azure(self.metadata())
+                report = Check_Report_Azure(
+                    metadata=self.metadata(), resource_metadata=storage_account
+                )
                 report.subscription = subscription
-                report.resource_name = storage_account.name
-                report.resource_id = storage_account.id
-                report.location = storage_account.location
                 if not storage_account.key_expiration_period_in_days:
                     report.status = "FAIL"
                     report.status_extended = f"Storage account {storage_account.name} from subscription {subscription} has no key expiration period set."
