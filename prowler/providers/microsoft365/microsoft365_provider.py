@@ -42,7 +42,9 @@ from prowler.providers.microsoft365.lib.arguments.arguments import (
     validate_microsoft365_region,
 )
 from prowler.providers.microsoft365.lib.mutelist.mutelist import Microsoft365Mutelist
-from prowler.providers.microsoft365.lib.regions.regions import get_regions_config
+from prowler.providers.microsoft365.lib.regions.microsoft365_regions import (
+    get_regions_config,
+)
 from prowler.providers.microsoft365.models import (
     Microsoft365IdentityInfo,
     Microsoft365RegionConfig,
