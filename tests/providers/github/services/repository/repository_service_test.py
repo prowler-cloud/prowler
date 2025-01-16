@@ -24,6 +24,7 @@ def mock_list_repositories(_):
                 allow_branch_deletion=False,
                 enforce_status_checks=True,
                 enforce_admins=True,
+                conversation_resolution=True,
             ),
             securitymd=True,
         ),
@@ -73,5 +74,8 @@ class Test_Repository_Service:
         assert repository_service.repositories[
             1
         ].default_branch_protection.enforce_admins
+        assert repository_service.repositories[
+            1
+        ].default_branch_protection.conversation_resolution
         # Repo
         assert repository_service.repositories[1].securitymd

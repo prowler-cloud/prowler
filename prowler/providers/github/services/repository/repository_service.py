@@ -52,6 +52,7 @@ class Repository(GithubService):
                                         allow_branch_deletion=protection.allow_deletions,
                                         enforce_status_checks=protection.required_status_checks.strict,
                                         enforce_admins=protection.enforce_admins,
+                                        conversation_resolution=protection.required_conversation_resolution,
                                     )
 
                         except Exception as e:
@@ -86,6 +87,7 @@ class Protection(BaseModel):
     allow_branch_deletion: bool = True
     enforce_status_checks: bool = False
     enforce_admins: bool = False
+    conversation_resolution: bool = False
 
 
 class Repo(BaseModel):
