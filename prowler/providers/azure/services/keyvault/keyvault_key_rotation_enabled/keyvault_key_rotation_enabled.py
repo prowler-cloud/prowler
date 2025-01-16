@@ -8,11 +8,10 @@ class keyvault_key_rotation_enabled(Check):
         for subscription, key_vaults in keyvault_client.key_vaults.items():
             for keyvault in key_vaults:
                 if keyvault.keys:
-                    report = Check_Report_Azure(self.metadata())
+                    report = Check_Report_Azure(
+                        metadata=self.metadata(), resource_metadata=keyvault
+                    )
                     report.subscription = subscription
-                    report.resource_name = keyvault.name
-                    report.resource_id = keyvault.id
-                    report.location = keyvault.location
                     for key in keyvault.keys:
                         if (
                             key.rotation_policy

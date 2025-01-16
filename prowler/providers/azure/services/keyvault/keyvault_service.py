@@ -16,7 +16,6 @@ from prowler.providers.azure.services.monitor.monitor_client import monitor_clie
 from prowler.providers.azure.services.monitor.monitor_service import DiagnosticSetting
 
 
-########################## KeyVault
 class KeyVault(AzureService):
     def __init__(self, provider: AzureProvider):
         super().__init__(KeyVaultManagementClient, provider)
