@@ -10,11 +10,11 @@ class monitor_diagnostic_setting_with_appropriate_categories(Check):
             subscription_name,
             diagnostic_settings,
         ) in monitor_client.diagnostics_settings.items():
-            report = Check_Report_Azure(self.metadata())
-            report.status = "FAIL"
+            report = Check_Report_Azure(metadata=self.metadata(), resource_metadata={})
             report.subscription = subscription_name
             report.resource_name = "Monitor"
             report.resource_id = "Monitor"
+            report.status = "FAIL"
             report.status_extended = f"There are no diagnostic settings capturing appropiate categories in subscription {subscription_name}."
             administrative_enabled = False
             security_enabled = False
