@@ -28,7 +28,9 @@ class route53_dangling_ip_subdomain_takeover(Check):
                 for record in record_set.records:
                     # Check if record is an IP Address
                     if validate_ip_address(record):
-                        report = Check_Report_AWS(self.metadata())
+                        report = Check_Report_AWS(
+                            metadata=self.metadata(), resource_metadata=record_set
+                        )
                         report.resource_id = (
                             f"{record_set.hosted_zone_id}/{record_set.name}/{record}"
                         )
@@ -38,7 +40,6 @@ class route53_dangling_ip_subdomain_takeover(Check):
                         report.resource_tags = route53_client.hosted_zones[
                             record_set.hosted_zone_id
                         ].tags
-                        report.region = record_set.region
                         report.status = "PASS"
                         report.status_extended = f"Route53 record {record} (name: {record_set.name}) in Hosted Zone {route53_client.hosted_zones[record_set.hosted_zone_id].name} is not a dangling IP."
                         # If Public IP check if it is in the AWS Account

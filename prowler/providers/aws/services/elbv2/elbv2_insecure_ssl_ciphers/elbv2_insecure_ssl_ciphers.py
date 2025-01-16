@@ -17,12 +17,8 @@ class elbv2_insecure_ssl_ciphers(Check):
             "ELBSecurityPolicy-TLS13-1-2-Ext1-2021-06",
             "ELBSecurityPolicy-TLS13-1-2-Ext2-2021-06",
         ]
-        for lb_arn, lb in elbv2_client.loadbalancersv2.items():
-            report = Check_Report_AWS(self.metadata())
-            report.region = lb.region
-            report.resource_id = lb.name
-            report.resource_arn = lb_arn
-            report.resource_tags = lb.tags
+        for lb in elbv2_client.loadbalancersv2.values():
+            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=lb)
             report.status = "PASS"
             report.status_extended = (
                 f"ELBv2 {lb.name} does not have insecure SSL protocols or ciphers."
