@@ -1,6 +1,6 @@
-import { Alert, cn } from "@nextui-org/react";
 import React from "react";
 
+import { InfoIcon } from "@/components/icons";
 import {
   UpdateViaCredentialsForm,
   UpdateViaRoleForm,
@@ -17,33 +17,23 @@ export default function UpdateCredentialsPage({ searchParams }: Props) {
       {searchParams.type === "aws" && !searchParams.via && (
         <>
           <div className="flex flex-col gap-4">
-            <p className="text-sm text-default-500">
-              If the provider was set up with static credentials, updates must
-              use static credentials. If it was set up with a role, updates must
-              use a role.
+            <p className="text-sm text-default-700">
+              To update provider credentials,{" "}
+              <strong>
+                the same type that was originally configured must be used.
+              </strong>
             </p>
-
-            <Alert
-              color="warning"
-              variant="faded"
-              classNames={{
-                base: cn([
-                  "border-1 border-default-200 dark:border-default-100",
-                  "gap-x-4",
-                ]),
-              }}
-              description={
-                <>
-                  To update provider credentials,{" "}
-                  <strong>
-                    you must use the same type that was originally configured.
-                  </strong>{" "}
-                </>
-              }
-            />
-            <p className="text-sm text-default-500">
-              To switch from static credentials to a role (or vice versa), you
-              need to delete the provider and set it up again.
+            <div className="flex items-center rounded-lg border border-system-warning bg-system-warning-medium p-4 text-sm dark:text-default-300">
+              <InfoIcon className="mr-2 inline h-4 w-4 flex-shrink-0" />
+              <p>
+                If the provider was configured with static credentials, updates
+                must also use static credentials. If it was configured with a
+                role, updates must use a role.
+              </p>
+            </div>
+            <p className="text-sm text-default-700">
+              To switch from static credentials to a role (or vice versa), the
+              provider must be deleted and set up again.
             </p>
             <SelectViaAWS initialVia={searchParams.via} />
           </div>

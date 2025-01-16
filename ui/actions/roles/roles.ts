@@ -81,25 +81,32 @@ export const addRole = async (formData: FormData) => {
 
   const name = formData.get("name") as string;
   const groups = formData.getAll("groups[]") as string[];
-  // Prepare base payload
+
   const payload: any = {
     data: {
       type: "roles",
       attributes: {
         name,
         manage_users: formData.get("manage_users") === "true",
-        manage_account: formData.get("manage_account") === "true",
-        manage_billing: formData.get("manage_billing") === "true",
         manage_providers: formData.get("manage_providers") === "true",
-        manage_integrations: formData.get("manage_integrations") === "true",
         manage_scans: formData.get("manage_scans") === "true",
+        // TODO: Add back when we have integrations ready
+        // manage_integrations: formData.get("manage_integrations") === "true",
         unlimited_visibility: formData.get("unlimited_visibility") === "true",
       },
       relationships: {},
     },
   };
 
-  // Add relationships only if there are items
+  // Conditionally include manage_account and manage_billing for cloud environment
+  if (process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true") {
+    payload.data.attributes.manage_account =
+      formData.get("manage_account") === "true";
+    payload.data.attributes.manage_billing =
+      formData.get("manage_billing") === "true";
+  }
+
+  // Add provider groups relationships only if there are items
   if (groups.length > 0) {
     payload.data.relationships.provider_groups = {
       data: groups.map((groupId: string) => ({
@@ -147,19 +154,27 @@ export const updateRole = async (formData: FormData, roleId: string) => {
       type: "roles",
       id: roleId,
       attributes: {
-        ...(name && { name }),
+        ...(name && { name }), // Include name only if provided
         manage_users: formData.get("manage_users") === "true",
-        manage_account: formData.get("manage_account") === "true",
-        manage_billing: formData.get("manage_billing") === "true",
         manage_providers: formData.get("manage_providers") === "true",
-        manage_integrations: formData.get("manage_integrations") === "true",
         manage_scans: formData.get("manage_scans") === "true",
+        // TODO: Add back when we have integrations ready
+        // manage_integrations: formData.get("manage_integrations") === "true",
         unlimited_visibility: formData.get("unlimited_visibility") === "true",
       },
       relationships: {},
     },
   };
 
+  // Conditionally include manage_account and manage_billing for cloud environments
+  if (process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true") {
+    payload.data.attributes.manage_account =
+      formData.get("manage_account") === "true";
+    payload.data.attributes.manage_billing =
+      formData.get("manage_billing") === "true";
+  }
+
+  // Add provider groups relationships only if there are items
   if (groups.length > 0) {
     payload.data.relationships.provider_groups = {
       data: groups.map((groupId: string) => ({
@@ -182,6 +197,7 @@ export const updateRole = async (formData: FormData, roleId: string) => {
       },
       body,
     });
+
     const data = await response.json();
     revalidatePath("/roles");
     return data;

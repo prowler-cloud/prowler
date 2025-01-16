@@ -33,13 +33,14 @@ export const AddRoleForm = ({
     defaultValues: {
       name: "",
       manage_users: false,
-      manage_account: false,
-      manage_billing: false,
       manage_providers: false,
-      manage_integrations: false,
       manage_scans: false,
       unlimited_visibility: false,
       groups: [],
+      ...(process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true" && {
+        manage_account: false,
+        manage_billing: false,
+      }),
     },
   });
 
@@ -64,7 +65,7 @@ export const AddRoleForm = ({
       "manage_account",
       "manage_billing",
       "manage_providers",
-      "manage_integrations",
+      // "manage_integrations",
       "manage_scans",
       "unlimited_visibility",
     ];
@@ -79,17 +80,21 @@ export const AddRoleForm = ({
 
   const onSubmitClient = async (values: FormValues) => {
     const formData = new FormData();
+
     formData.append("name", values.name);
     formData.append("manage_users", String(values.manage_users));
-    formData.append("manage_account", String(values.manage_account));
-    formData.append("manage_billing", String(values.manage_billing));
     formData.append("manage_providers", String(values.manage_providers));
-    formData.append("manage_integrations", String(values.manage_integrations));
     formData.append("manage_scans", String(values.manage_scans));
     formData.append(
       "unlimited_visibility",
       String(values.unlimited_visibility),
     );
+
+    // Conditionally append manage_account and manage_billing
+    if (process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true") {
+      formData.append("manage_account", String(values.manage_account));
+      formData.append("manage_billing", String(values.manage_billing));
+    }
 
     if (values.groups && values.groups.length > 0) {
       values.groups.forEach((group) => {
