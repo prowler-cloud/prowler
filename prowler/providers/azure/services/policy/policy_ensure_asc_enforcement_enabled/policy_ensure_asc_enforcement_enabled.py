@@ -8,13 +8,13 @@ class policy_ensure_asc_enforcement_enabled(Check):
 
         for subscription_name, policies in policy_client.policy_assigments.items():
             if "SecurityCenterBuiltIn" in policies:
-                report = Check_Report_Azure(self.metadata())
-                report.status = "PASS"
+                report = Check_Report_Azure(
+                    metadata=self.metadata(),
+                    resource_metadata=policies["SecurityCenterBuiltIn"],
+                )
                 report.subscription = subscription_name
-                report.resource_name = "SecurityCenterBuiltIn"
-                report.resource_id = policies["SecurityCenterBuiltIn"].id
+                report.status = "PASS"
                 report.status_extended = f"Policy assigment '{policies['SecurityCenterBuiltIn'].id}' is configured with enforcement mode '{policies['SecurityCenterBuiltIn'].enforcement_mode}'."
-
                 if policies["SecurityCenterBuiltIn"].enforcement_mode != "Default":
                     report.status = "FAIL"
                     report.status_extended = f"Policy assigment '{policies['SecurityCenterBuiltIn'].id}' is not configured with enforcement mode Default."
