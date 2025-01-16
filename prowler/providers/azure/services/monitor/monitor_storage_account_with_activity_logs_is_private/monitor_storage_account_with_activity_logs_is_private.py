@@ -16,9 +16,10 @@ class monitor_storage_account_with_activity_logs_is_private(Check):
                     subscription_name
                 ]:
                     if storage_account.name == diagnostic_setting.storage_account_name:
-                        report = Check_Report_Azure(self.metadata())
+                        report = Check_Report_Azure(
+                            metadata=self.metadata(), resource_metadata=storage_account
+                        )
                         report.subscription = subscription_name
-
                         if storage_account.allow_blob_public_access:
                             report.status = "FAIL"
                             report.status_extended = f"Blob public access enabled in storage account {storage_account.name} storing activity logs in subscription {subscription_name}."

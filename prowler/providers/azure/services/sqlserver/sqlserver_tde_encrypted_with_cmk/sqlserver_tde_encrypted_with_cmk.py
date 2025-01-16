@@ -11,11 +11,10 @@ class sqlserver_tde_encrypted_with_cmk(Check):
                     sql_server.databases if sql_server.databases is not None else []
                 )
                 if len(databases) > 0:
-                    report = Check_Report_Azure(self.metadata())
+                    report = Check_Report_Azure(
+                        metadata=self.metadata(), resource_metadata=sql_server
+                    )
                     report.subscription = subscription
-                    report.resource_name = sql_server.name
-                    report.resource_id = sql_server.id
-                    report.location = sql_server.location
                     found_disabled = False
                     if (
                         sql_server.encryption_protector.server_key_type

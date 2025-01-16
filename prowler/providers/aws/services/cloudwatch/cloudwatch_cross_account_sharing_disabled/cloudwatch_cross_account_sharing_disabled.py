@@ -16,7 +16,9 @@ class cloudwatch_cross_account_sharing_disabled(Check):
             report.resource_id = iam_client.audited_account
             for role in iam_client.roles:
                 if role.name == "CloudWatch-CrossAccountSharingRole":
-                    report = Check_Report_AWS(self.metadata(), role)
+                    report = Check_Report_AWS(
+                        metadata=self.metadata(), resource_metadata=role
+                    )
                     report.region = iam_client.region
                     report.status = "FAIL"
                     report.status_extended = (

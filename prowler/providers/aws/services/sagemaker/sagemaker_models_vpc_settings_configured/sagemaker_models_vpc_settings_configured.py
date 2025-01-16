@@ -6,11 +6,7 @@ class sagemaker_models_vpc_settings_configured(Check):
     def execute(self):
         findings = []
         for model in sagemaker_client.sagemaker_models:
-            report = Check_Report_AWS(self.metadata())
-            report.region = model.region
-            report.resource_id = model.name
-            report.resource_arn = model.arn
-            report.resource_tags = model.tags
+            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=model)
             report.status = "PASS"
             report.status_extended = (
                 f"Sagemaker notebook instance {model.name} has VPC settings enabled."

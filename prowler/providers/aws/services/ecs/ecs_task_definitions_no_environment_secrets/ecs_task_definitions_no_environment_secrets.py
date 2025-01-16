@@ -1,3 +1,4 @@
+import hashlib
 from json import dumps
 
 from prowler.lib.check.models import Check, Check_Report_AWS
@@ -24,8 +25,16 @@ class ecs_task_definitions_no_environment_secrets(Check):
 
                 if container.environment:
                     dump_env_vars = {}
+                    original_env_vars = {}
                     for env_var in container.environment:
                         dump_env_vars.update({env_var.name: env_var.value})
+                        original_env_vars.update(
+                            {
+                                hashlib.sha1(  # nosec B324 SHA1 is used here for non-security-critical unique identifiers
+                                    env_var.value.encode("utf-8")
+                                ).hexdigest(): env_var.name
+                            }
+                        )
 
                     env_data = dumps(dump_env_vars, indent=2)
                     detect_secrets_output = detect_secrets_scan(
@@ -34,7 +43,7 @@ class ecs_task_definitions_no_environment_secrets(Check):
                     if detect_secrets_output:
                         secrets_string = ", ".join(
                             [
-                                f"{secret['type']} on line {secret['line_number']}"
+                                f"{secret['type']} on the environment variable {original_env_vars[secret['hashed_secret']]}"
                                 for secret in detect_secrets_output
                             ]
                         )
