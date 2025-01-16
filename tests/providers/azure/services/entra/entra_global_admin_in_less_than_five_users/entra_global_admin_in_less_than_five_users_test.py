@@ -8,18 +8,23 @@ class Test_entra_global_admin_in_less_than_five_users:
     def test_entra_no_tenants(self):
         entra_client = mock.MagicMock
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.entra.entra_global_admin_in_less_than_five_users.entra_global_admin_in_less_than_five_users.entra_client",
-            new=entra_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.entra.entra_global_admin_in_less_than_five_users.entra_global_admin_in_less_than_five_users.entra_client",
+                new=entra_client,
+            ),
         ):
             from prowler.providers.azure.services.entra.entra_global_admin_in_less_than_five_users.entra_global_admin_in_less_than_five_users import (
                 entra_global_admin_in_less_than_five_users,
             )
 
             entra_client.directory_roles = {}
+
+            entra_client.uses = {}
 
             check = entra_global_admin_in_less_than_five_users()
             result = check.execute()
@@ -28,18 +33,23 @@ class Test_entra_global_admin_in_less_than_five_users:
     def test_entra_tenant_empty(self):
         entra_client = mock.MagicMock
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.entra.entra_global_admin_in_less_than_five_users.entra_global_admin_in_less_than_five_users.entra_client",
-            new=entra_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.entra.entra_global_admin_in_less_than_five_users.entra_global_admin_in_less_than_five_users.entra_client",
+                new=entra_client,
+            ),
         ):
             from prowler.providers.azure.services.entra.entra_global_admin_in_less_than_five_users.entra_global_admin_in_less_than_five_users import (
                 entra_global_admin_in_less_than_five_users,
             )
 
             entra_client.directory_roles = {DOMAIN: {}}
+
+            entra_client.users = {DOMAIN: {}}
 
             check = entra_global_admin_in_less_than_five_users()
             result = check.execute()
@@ -48,12 +58,15 @@ class Test_entra_global_admin_in_less_than_five_users:
     def test_entra_less_than_five_global_admins(self):
         entra_client = mock.MagicMock
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.entra.entra_global_admin_in_less_than_five_users.entra_global_admin_in_less_than_five_users.entra_client",
-            new=entra_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.entra.entra_global_admin_in_less_than_five_users.entra_global_admin_in_less_than_five_users.entra_client",
+                new=entra_client,
+            ),
         ):
             from prowler.providers.azure.services.entra.entra_global_admin_in_less_than_five_users.entra_global_admin_in_less_than_five_users import (
                 entra_global_admin_in_less_than_five_users,
@@ -79,6 +92,13 @@ class Test_entra_global_admin_in_less_than_five_users:
                 }
             }
 
+            entra_client.users = {
+                DOMAIN: {
+                    f"User1@{DOMAIN}": User(id=id_user1, name="User1"),
+                    f"User2@{DOMAIN}": User(id=id_user2, name="User2"),
+                }
+            }
+
             check = entra_global_admin_in_less_than_five_users()
             result = check.execute()
             assert len(result) == 1
@@ -91,12 +111,15 @@ class Test_entra_global_admin_in_less_than_five_users:
     def test_entra_more_than_five_global_admins(self):
         entra_client = mock.MagicMock
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.entra.entra_global_admin_in_less_than_five_users.entra_global_admin_in_less_than_five_users.entra_client",
-            new=entra_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.entra.entra_global_admin_in_less_than_five_users.entra_global_admin_in_less_than_five_users.entra_client",
+                new=entra_client,
+            ),
         ):
             from prowler.providers.azure.services.entra.entra_global_admin_in_less_than_five_users.entra_global_admin_in_less_than_five_users import (
                 entra_global_admin_in_less_than_five_users,
@@ -130,6 +153,17 @@ class Test_entra_global_admin_in_less_than_five_users:
                 }
             }
 
+            entra_client.users = {
+                DOMAIN: {
+                    f"User1@{DOMAIN}": User(id=id_user1, name="User1"),
+                    f"User2@{DOMAIN}": User(id=id_user2, name="User2"),
+                    f"User3@{DOMAIN}": User(id=id_user3, name="User3"),
+                    f"User4@{DOMAIN}": User(id=id_user4, name="User4"),
+                    f"User5@{DOMAIN}": User(id=id_user5, name="User5"),
+                    f"User6@{DOMAIN}": User(id=id_user6, name="User6"),
+                }
+            }
+
             check = entra_global_admin_in_less_than_five_users()
             result = check.execute()
             assert len(result) == 1
@@ -145,12 +179,15 @@ class Test_entra_global_admin_in_less_than_five_users:
     def test_entra_exactly_five_global_admins(self):
         entra_client = mock.MagicMock
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.entra.entra_global_admin_in_less_than_five_users.entra_global_admin_in_less_than_five_users.entra_client",
-            new=entra_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.entra.entra_global_admin_in_less_than_five_users.entra_global_admin_in_less_than_five_users.entra_client",
+                new=entra_client,
+            ),
         ):
             from prowler.providers.azure.services.entra.entra_global_admin_in_less_than_five_users.entra_global_admin_in_less_than_five_users import (
                 entra_global_admin_in_less_than_five_users,
@@ -179,6 +216,16 @@ class Test_entra_global_admin_in_less_than_five_users:
                             User(id=id_user5, name="User5"),
                         ],
                     )
+                }
+            }
+
+            entra_client.users = {
+                DOMAIN: {
+                    f"User1@{DOMAIN}": User(id=id_user1, name="User1"),
+                    f"User2@{DOMAIN}": User(id=id_user2, name="User2"),
+                    f"User3@{DOMAIN}": User(id=id_user3, name="User3"),
+                    f"User4@{DOMAIN}": User(id=id_user4, name="User4"),
+                    f"User5@{DOMAIN}": User(id=id_user5, name="User5"),
                 }
             }
 
