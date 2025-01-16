@@ -20,6 +20,9 @@ export const CustomAccountSelection = () => {
       label="Account"
       aria-label="Select an Account"
       placeholder="Select an account"
+      classNames={{
+        selectorIcon: "right-2",
+      }}
       selectionMode="multiple"
       className="w-full"
       size="sm"

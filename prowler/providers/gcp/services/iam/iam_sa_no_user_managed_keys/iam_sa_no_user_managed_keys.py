@@ -6,11 +6,12 @@ class iam_sa_no_user_managed_keys(Check):
     def execute(self) -> Check_Report_GCP:
         findings = []
         for account in iam_client.service_accounts:
-            report = Check_Report_GCP(self.metadata())
-            report.project_id = account.project_id
-            report.resource_id = account.email
-            report.resource_name = account.name
-            report.location = iam_client.region
+            report = Check_Report_GCP(
+                metadata=self.metadata(),
+                resource_metadata=account,
+                resource_id=account.email,
+                location=iam_client.region,
+            )
             report.status = "PASS"
             report.status_extended = (
                 f"Account {account.email} does not have user-managed keys."

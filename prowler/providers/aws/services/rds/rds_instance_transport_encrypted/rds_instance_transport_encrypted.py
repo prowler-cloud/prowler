@@ -16,12 +16,10 @@ class rds_instance_transport_encrypted(Check):
             "mariadb",
             "aurora-mysql",
         ]
-        for db_instance_arn, db_instance in rds_client.db_instances.items():
-            report = Check_Report_AWS(self.metadata())
-            report.region = db_instance.region
-            report.resource_id = db_instance.id
-            report.resource_arn = db_instance_arn
-            report.resource_tags = db_instance.tags
+        for db_instance in rds_client.db_instances.values():
+            report = Check_Report_AWS(
+                metadata=self.metadata(), resource_metadata=db_instance
+            )
             report.status = "FAIL"
             report.status_extended = (
                 f"RDS Instance {db_instance.id} connections are not encrypted."
@@ -58,11 +56,10 @@ class rds_instance_transport_encrypted(Check):
                 findings.append(report)
 
         for db_cluster in rds_client.db_clusters:
-            report = Check_Report_AWS(self.metadata())
-            report.region = rds_client.db_clusters[db_cluster].region
-            report.resource_id = rds_client.db_clusters[db_cluster].id
-            report.resource_arn = db_cluster
-            report.resource_tags = rds_client.db_clusters[db_cluster].tags
+            report = Check_Report_AWS(
+                metadata=self.metadata(),
+                resource_metadata=rds_client.db_clusters[db_cluster],
+            )
             report.status = "FAIL"
             report.status_extended = f"RDS Cluster {rds_client.db_clusters[db_cluster].id} connections are not encrypted."
             # Check RDS Clusters that support TLS encryption

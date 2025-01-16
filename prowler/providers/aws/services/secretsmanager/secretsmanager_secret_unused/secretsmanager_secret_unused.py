@@ -10,11 +10,9 @@ class secretsmanager_secret_unused(Check):
     def execute(self):
         findings = []
         for secret in secretsmanager_client.secrets.values():
-            report = Check_Report_AWS(self.metadata())
-            report.resource_id = secret.name
-            report.resource_arn = secret.arn
-            report.region = secret.region
-            report.resource_tags = secret.tags
+            report = Check_Report_AWS(
+                metadata=self.metadata(), resource_metadata=secret
+            )
             report.status = "PASS"
             report.status_extended = f"Secret {secret.name} has been accessed recently, last accessed on {secret.last_accessed_date.strftime('%B %d, %Y')}."
 

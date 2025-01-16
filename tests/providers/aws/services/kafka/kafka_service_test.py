@@ -93,6 +93,7 @@ class TestKafkaService:
         assert (
             kafka.clusters[cluster_arn].id == "6357e0b2-0e6a-4b86-a0b4-70df934c2e31-5"
         )
+        assert kafka.clusters[cluster_arn].arn == cluster_arn
         assert kafka.clusters[cluster_arn].name == "demo-cluster-1"
         assert kafka.clusters[cluster_arn].region == AWS_REGION_US_EAST_1
         assert kafka.clusters[cluster_arn].tags == []
