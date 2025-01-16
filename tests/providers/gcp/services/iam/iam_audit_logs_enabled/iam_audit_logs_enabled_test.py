@@ -1,6 +1,7 @@
 from re import search
 from unittest import mock
 
+from prowler.providers.gcp.models import GCPProject
 from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, set_mocked_gcp_provider
 
 
@@ -35,7 +36,16 @@ class Test_iam_audit_logs_enabled:
 
         cloudresourcemanager_client = mock.MagicMock()
         cloudresourcemanager_client.project_ids = [GCP_PROJECT_ID]
-        cloudresourcemanager_client.projects = [project1]
+        cloudresourcemanager_client.cloud_resource_manager_projects = [project1]
+        cloudresourcemanager_client.projects = {
+            GCP_PROJECT_ID: GCPProject(
+                id=GCP_PROJECT_ID,
+                number="123456789012",
+                name="test",
+                labels={},
+                lifecycle_state="ACTIVE",
+            )
+        }
         cloudresourcemanager_client.region = "global"
 
         with mock.patch(
@@ -72,7 +82,16 @@ class Test_iam_audit_logs_enabled:
 
         cloudresourcemanager_client = mock.MagicMock()
         cloudresourcemanager_client.project_ids = [GCP_PROJECT_ID]
-        cloudresourcemanager_client.projects = [project1]
+        cloudresourcemanager_client.cloud_resource_manager_projects = [project1]
+        cloudresourcemanager_client.projects = {
+            GCP_PROJECT_ID: GCPProject(
+                id=GCP_PROJECT_ID,
+                number="123456789012",
+                name="test",
+                labels={},
+                lifecycle_state="ACTIVE",
+            )
+        }
         cloudresourcemanager_client.region = "global"
 
         with mock.patch(
