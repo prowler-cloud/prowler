@@ -340,7 +340,7 @@ class TestTenantViewSet:
     def test_tenants_list(self, authenticated_client, tenants_fixture):
         response = authenticated_client.get(reverse("tenant-list"))
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.json()["data"]) == len(tenants_fixture)
+        assert len(response.json()["data"]) == 2  # Test user belongs to 2 tenants
 
     def test_tenants_retrieve(self, authenticated_client, tenants_fixture):
         tenant1, *_ = tenants_fixture
@@ -470,11 +470,11 @@ class TestTenantViewSet:
         (
             [
                 ("name", "Tenant One", 1),
-                ("name.icontains", "Tenant", 3),
-                ("inserted_at", TODAY, 3),
-                ("inserted_at.gte", "2024-01-01", 3),
+                ("name.icontains", "Tenant", 2),
+                ("inserted_at", TODAY, 2),
+                ("inserted_at.gte", "2024-01-01", 2),
                 ("inserted_at.lte", "2024-01-01", 0),
-                ("updated_at.gte", "2024-01-01", 3),
+                ("updated_at.gte", "2024-01-01", 2),
                 ("updated_at.lte", "2024-01-01", 0),
             ]
         ),
@@ -510,7 +510,9 @@ class TestTenantViewSet:
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == page_size
         assert response.json()["meta"]["pagination"]["page"] == 1
-        assert response.json()["meta"]["pagination"]["pages"] == len(tenants_fixture)
+        assert (
+            response.json()["meta"]["pagination"]["pages"] == 2
+        )  # Test user belongs to 2 tenants
 
     def test_tenants_list_page_number(self, authenticated_client, tenants_fixture):
         page_size = 1
@@ -523,13 +525,13 @@ class TestTenantViewSet:
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == page_size
         assert response.json()["meta"]["pagination"]["page"] == page_number
-        assert response.json()["meta"]["pagination"]["pages"] == len(tenants_fixture)
+        assert response.json()["meta"]["pagination"]["pages"] == 2
 
     def test_tenants_list_sort_name(self, authenticated_client, tenants_fixture):
         _, tenant2, _ = tenants_fixture
         response = authenticated_client.get(reverse("tenant-list"), {"sort": "-name"})
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.json()["data"]) == 3
+        assert len(response.json()["data"]) == 2
         assert response.json()["data"][0]["attributes"]["name"] == tenant2.name
 
     def test_tenants_list_memberships_as_owner(
@@ -543,6 +545,7 @@ class TestTenantViewSet:
         # Test user + 2 extra users for tenant 2
         assert len(response.json()["data"]) == 3
 
+    @patch("api.v1.views.TenantMembersViewSet.required_permissions", [])
     def test_tenants_list_memberships_as_member(
         self, authenticated_client, tenants_fixture, extra_users
     ):
@@ -814,7 +817,7 @@ class TestProviderViewSet:
     @pytest.mark.parametrize(
         "include_values, expected_resources",
         [
-            ("provider_groups", ["provider-group"]),
+            ("provider_groups", ["provider-groups"]),
         ],
     )
     def test_providers_list_include(
@@ -1199,7 +1202,7 @@ class TestProviderGroupViewSet:
     def test_provider_group_create(self, authenticated_client):
         data = {
             "data": {
-                "type": "provider-group",
+                "type": "provider-groups",
                 "attributes": {
                     "name": "Test Provider Group",
                 },
@@ -1218,7 +1221,7 @@ class TestProviderGroupViewSet:
     def test_provider_group_create_invalid(self, authenticated_client):
         data = {
             "data": {
-                "type": "provider-group",
+                "type": "provider-groups",
                 "attributes": {
                     # Name is missing
                 },
@@ -1240,7 +1243,7 @@ class TestProviderGroupViewSet:
         data = {
             "data": {
                 "id": str(provider_group.id),
-                "type": "provider-group",
+                "type": "provider-groups",
                 "attributes": {
                     "name": "Updated Provider Group Name",
                 },
@@ -1262,7 +1265,7 @@ class TestProviderGroupViewSet:
         data = {
             "data": {
                 "id": str(provider_group.id),
-                "type": "provider-group",
+                "type": "provider-groups",
                 "attributes": {
                     "name": "",  # Invalid name
                 },
@@ -1325,6 +1328,166 @@ class TestProviderGroupViewSet:
     def test_provider_group_invalid_method(self, authenticated_client):
         response = authenticated_client.put(reverse("providergroup-list"))
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+
+    def test_provider_group_create_with_relationships(
+        self, authenticated_client, providers_fixture, roles_fixture
+    ):
+        provider1, provider2, *_ = providers_fixture
+        role1, role2, *_ = roles_fixture
+
+        data = {
+            "data": {
+                "type": "provider-groups",
+                "attributes": {"name": "Test Provider Group with relationships"},
+                "relationships": {
+                    "providers": {
+                        "data": [
+                            {"type": "providers", "id": str(provider1.id)},
+                            {"type": "providers", "id": str(provider2.id)},
+                        ]
+                    },
+                    "roles": {
+                        "data": [
+                            {"type": "roles", "id": str(role1.id)},
+                            {"type": "roles", "id": str(role2.id)},
+                        ]
+                    },
+                },
+            }
+        }
+
+        response = authenticated_client.post(
+            reverse("providergroup-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED
+        response_data = response.json()["data"]
+        group = ProviderGroup.objects.get(id=response_data["id"])
+        assert group.name == "Test Provider Group with relationships"
+        assert set(group.providers.all()) == {provider1, provider2}
+        assert set(group.roles.all()) == {role1, role2}
+
+    def test_provider_group_update_relationships(
+        self,
+        authenticated_client,
+        provider_groups_fixture,
+        providers_fixture,
+        roles_fixture,
+    ):
+        group = provider_groups_fixture[0]
+        provider3 = providers_fixture[2]
+        provider4 = providers_fixture[3]
+        role3 = roles_fixture[2]
+        role4 = roles_fixture[3]
+
+        data = {
+            "data": {
+                "id": str(group.id),
+                "type": "provider-groups",
+                "relationships": {
+                    "providers": {
+                        "data": [
+                            {"type": "providers", "id": str(provider3.id)},
+                            {"type": "providers", "id": str(provider4.id)},
+                        ]
+                    },
+                    "roles": {
+                        "data": [
+                            {"type": "roles", "id": str(role3.id)},
+                            {"type": "roles", "id": str(role4.id)},
+                        ]
+                    },
+                },
+            }
+        }
+
+        response = authenticated_client.patch(
+            reverse("providergroup-detail", kwargs={"pk": group.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        group.refresh_from_db()
+        assert set(group.providers.all()) == {provider3, provider4}
+        assert set(group.roles.all()) == {role3, role4}
+
+    def test_provider_group_clear_relationships(
+        self, authenticated_client, providers_fixture, provider_groups_fixture
+    ):
+        group = provider_groups_fixture[0]
+        provider3 = providers_fixture[2]
+        provider4 = providers_fixture[3]
+
+        data = {
+            "data": {
+                "id": str(group.id),
+                "type": "provider-groups",
+                "relationships": {
+                    "providers": {
+                        "data": [
+                            {"type": "providers", "id": str(provider3.id)},
+                            {"type": "providers", "id": str(provider4.id)},
+                        ]
+                    }
+                },
+            }
+        }
+
+        response = authenticated_client.patch(
+            reverse("providergroup-detail", kwargs={"pk": group.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+
+        data = {
+            "data": {
+                "id": str(group.id),
+                "type": "provider-groups",
+                "relationships": {
+                    "providers": {"data": []},  # Removing all providers
+                    "roles": {"data": []},  # Removing all roles
+                },
+            }
+        }
+
+        response = authenticated_client.patch(
+            reverse("providergroup-detail", kwargs={"pk": group.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        group.refresh_from_db()
+        assert group.providers.count() == 0
+        assert group.roles.count() == 0
+
+    def test_provider_group_create_with_invalid_relationships(
+        self, authenticated_client
+    ):
+        invalid_provider_id = "non-existent-id"
+        data = {
+            "data": {
+                "type": "provider-groups",
+                "attributes": {"name": "Invalid relationships test"},
+                "relationships": {
+                    "providers": {
+                        "data": [{"type": "providers", "id": invalid_provider_id}]
+                    }
+                },
+            }
+        }
+
+        response = authenticated_client.post(
+            reverse("providergroup-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code in [status.HTTP_400_BAD_REQUEST]
 
 
 @pytest.mark.django_db
@@ -2178,7 +2341,10 @@ class TestResourceViewSet:
             response.json()["errors"][0]["detail"] == "invalid sort parameter: invalid"
         )
 
-    def test_resources_retrieve(self, authenticated_client, resources_fixture):
+    def test_resources_retrieve(
+        self, authenticated_client, tenants_fixture, resources_fixture
+    ):
+        tenant = tenants_fixture[0]
         resource_1, *_ = resources_fixture
         response = authenticated_client.get(
             reverse("resource-detail", kwargs={"pk": resource_1.id}),
@@ -2189,7 +2355,9 @@ class TestResourceViewSet:
         assert response.json()["data"]["attributes"]["region"] == resource_1.region
         assert response.json()["data"]["attributes"]["service"] == resource_1.service
         assert response.json()["data"]["attributes"]["type"] == resource_1.type
-        assert response.json()["data"]["attributes"]["tags"] == resource_1.get_tags()
+        assert response.json()["data"]["attributes"]["tags"] == resource_1.get_tags(
+            tenant_id=str(tenant.id)
+        )
 
     def test_resources_invalid_retrieve(self, authenticated_client):
         response = authenticated_client.get(
@@ -2262,7 +2430,11 @@ class TestFindingViewSet:
                 ("inserted_at", "2024-01-01", 0),
                 ("inserted_at.date", "2024-01-01", 0),
                 ("inserted_at.gte", "2024-01-01", 2),
-                ("inserted_at.lte", "2024-12-31", 2),
+                (
+                    "inserted_at.lte",
+                    "2028-12-31",
+                    2,
+                ),  # TODO: To avoid having to modify this value and to ensure that the tests always work, we should set the time before the fixtures are inserted
                 ("updated_at.lte", "2024-01-01", 0),
                 ("resource_type.icontains", "prowler", 2),
                 # full text search on finding
@@ -2272,6 +2444,15 @@ class TestFindingViewSet:
                 ("search", "ec2", 2),
                 # full text search on finding tags
                 ("search", "value2", 2),
+                ("resource_tag_key", "key", 2),
+                ("resource_tag_key__in", "key,key2", 2),
+                ("resource_tag_key__icontains", "key", 2),
+                ("resource_tag_value", "value", 2),
+                ("resource_tag_value__in", "value,value2", 2),
+                ("resource_tag_value__icontains", "value", 2),
+                ("resource_tags", "key:value", 2),
+                ("resource_tags", "not:exists", 0),
+                ("resource_tags", "not:exists,key:value", 2),
             ]
         ),
     )
@@ -2410,30 +2591,34 @@ class TestFindingViewSet:
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_findings_services_regions_retrieve(
-        self, authenticated_client, findings_fixture
-    ):
+    def test_findings_metadata_retrieve(self, authenticated_client, findings_fixture):
         finding_1, *_ = findings_fixture
         response = authenticated_client.get(
-            reverse("finding-findings_services_regions"),
+            reverse("finding-metadata"),
             {"filter[inserted_at]": finding_1.updated_at.strftime("%Y-%m-%d")},
         )
         data = response.json()
 
         expected_services = {"ec2", "s3"}
         expected_regions = {"eu-west-1", "us-east-1"}
+        expected_tags = {"key": ["value"], "key2": ["value2"]}
+        expected_resource_types = {"prowler-test"}
 
-        assert data["data"]["type"] == "finding-dynamic-filters"
+        assert data["data"]["type"] == "findings-metadata"
         assert data["data"]["id"] is None
         assert set(data["data"]["attributes"]["services"]) == expected_services
         assert set(data["data"]["attributes"]["regions"]) == expected_regions
+        assert (
+            set(data["data"]["attributes"]["resource_types"]) == expected_resource_types
+        )
+        assert data["data"]["attributes"]["tags"] == expected_tags
 
-    def test_findings_services_regions_severity_retrieve(
+    def test_findings_metadata_severity_retrieve(
         self, authenticated_client, findings_fixture
     ):
         finding_1, *_ = findings_fixture
         response = authenticated_client.get(
-            reverse("finding-findings_services_regions"),
+            reverse("finding-metadata"),
             {
                 "filter[severity__in]": ["low", "medium"],
                 "filter[inserted_at]": finding_1.updated_at.strftime("%Y-%m-%d"),
@@ -2443,26 +2628,34 @@ class TestFindingViewSet:
 
         expected_services = {"s3"}
         expected_regions = {"eu-west-1"}
+        expected_tags = {"key": ["value"], "key2": ["value2"]}
+        expected_resource_types = {"prowler-test"}
 
-        assert data["data"]["type"] == "finding-dynamic-filters"
+        assert data["data"]["type"] == "findings-metadata"
         assert data["data"]["id"] is None
         assert set(data["data"]["attributes"]["services"]) == expected_services
         assert set(data["data"]["attributes"]["regions"]) == expected_regions
+        assert (
+            set(data["data"]["attributes"]["resource_types"]) == expected_resource_types
+        )
+        assert data["data"]["attributes"]["tags"] == expected_tags
 
-    def test_findings_services_regions_future_date(self, authenticated_client):
+    def test_findings_metadata_future_date(self, authenticated_client):
         response = authenticated_client.get(
-            reverse("finding-findings_services_regions"),
+            reverse("finding-metadata"),
             {"filter[inserted_at]": "2048-01-01"},
         )
         data = response.json()
-        assert data["data"]["type"] == "finding-dynamic-filters"
+        assert data["data"]["type"] == "findings-metadata"
         assert data["data"]["id"] is None
         assert data["data"]["attributes"]["services"] == []
         assert data["data"]["attributes"]["regions"] == []
+        assert data["data"]["attributes"]["tags"] == {}
+        assert data["data"]["attributes"]["resource_types"] == []
 
-    def test_findings_services_regions_invalid_date(self, authenticated_client):
+    def test_findings_metadata_invalid_date(self, authenticated_client):
         response = authenticated_client.get(
-            reverse("finding-findings_services_regions"),
+            reverse("finding-metadata"),
             {"filter[inserted_at]": "2048-01-011"},
         )
         assert response.json() == {
@@ -2570,7 +2763,7 @@ class TestInvitationViewSet:
                 },
                 "relationships": {
                     "roles": {
-                        "data": [{"type": "role", "id": str(roles_fixture[0].id)}]
+                        "data": [{"type": "roles", "id": str(roles_fixture[0].id)}]
                     }
                 },
             }
@@ -2669,9 +2862,10 @@ class TestInvitationViewSet:
         )
 
     def test_invitations_partial_update_valid(
-        self, authenticated_client, invitations_fixture
+        self, authenticated_client, invitations_fixture, roles_fixture
     ):
         invitation, *_ = invitations_fixture
+        role1, role2, *_ = roles_fixture
         new_email = "new_email@prowler.com"
         new_expires_at = datetime.now(timezone.utc) + timedelta(days=7)
         new_expires_at_iso = new_expires_at.isoformat()
@@ -2682,6 +2876,14 @@ class TestInvitationViewSet:
                 "attributes": {
                     "email": new_email,
                     "expires_at": new_expires_at_iso,
+                },
+                "relationships": {
+                    "roles": {
+                        "data": [
+                            {"type": "roles", "id": str(role1.id)},
+                            {"type": "roles", "id": str(role2.id)},
+                        ]
+                    },
                 },
             }
         }
@@ -2701,6 +2903,7 @@ class TestInvitationViewSet:
 
         assert invitation.email == new_email
         assert invitation.expires_at == new_expires_at
+        assert invitation.roles.count() == 2
 
     @pytest.mark.parametrize(
         "email",
@@ -3086,8 +3289,8 @@ class TestRoleViewSet:
         response = authenticated_client.get(reverse("role-list"))
         assert response.status_code == status.HTTP_200_OK
         assert (
-            len(response.json()["data"]) == len(roles_fixture) + 2
-        )  # 2 default admin roles, one for each tenant
+            len(response.json()["data"]) == len(roles_fixture) + 1
+        )  # 1 default admin role
 
     def test_role_retrieve(self, authenticated_client, roles_fixture):
         role = roles_fixture[0]
@@ -3120,14 +3323,12 @@ class TestRoleViewSet:
     def test_role_create(self, authenticated_client):
         data = {
             "data": {
-                "type": "role",
+                "type": "roles",
                 "attributes": {
                     "name": "Test Role",
                     "manage_users": "false",
                     "manage_account": "false",
-                    "manage_billing": "false",
                     "manage_providers": "true",
-                    "manage_integrations": "true",
                     "manage_scans": "true",
                     "unlimited_visibility": "true",
                 },
@@ -3149,21 +3350,19 @@ class TestRoleViewSet:
     ):
         data = {
             "data": {
-                "type": "role",
+                "type": "roles",
                 "attributes": {
                     "name": "Test Role",
                     "manage_users": "false",
                     "manage_account": "false",
-                    "manage_billing": "false",
                     "manage_providers": "true",
-                    "manage_integrations": "true",
                     "manage_scans": "true",
                     "unlimited_visibility": "true",
                 },
                 "relationships": {
                     "provider_groups": {
                         "data": [
-                            {"type": "provider-group", "id": str(provider_group.id)}
+                            {"type": "provider-groups", "id": str(provider_group.id)}
                             for provider_group in provider_groups_fixture[:2]
                         ]
                     }
@@ -3189,7 +3388,7 @@ class TestRoleViewSet:
     def test_role_create_invalid(self, authenticated_client):
         data = {
             "data": {
-                "type": "role",
+                "type": "roles",
                 "attributes": {
                     # Name is missing
                 },
@@ -3204,14 +3403,34 @@ class TestRoleViewSet:
         errors = response.json()["errors"]
         assert errors[0]["source"]["pointer"] == "/data/attributes/name"
 
+    def test_admin_role_partial_update(self, authenticated_client, admin_role_fixture):
+        role = admin_role_fixture
+        data = {
+            "data": {
+                "id": str(role.id),
+                "type": "roles",
+                "attributes": {
+                    "name": "Updated Role",
+                },
+            }
+        }
+        response = authenticated_client.patch(
+            reverse("role-detail", kwargs={"pk": role.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        role.refresh_from_db()
+        assert role.name != "Updated Role"
+
     def test_role_partial_update(self, authenticated_client, roles_fixture):
         role = roles_fixture[1]
         data = {
             "data": {
                 "id": str(role.id),
-                "type": "role",
+                "type": "roles",
                 "attributes": {
-                    "name": "Updated Provider Group Name",
+                    "name": "Updated Role",
                 },
             }
         }
@@ -3222,14 +3441,14 @@ class TestRoleViewSet:
         )
         assert response.status_code == status.HTTP_200_OK
         role.refresh_from_db()
-        assert role.name == "Updated Provider Group Name"
+        assert role.name == "Updated Role"
 
     def test_role_partial_update_invalid(self, authenticated_client, roles_fixture):
         role = roles_fixture[2]
         data = {
             "data": {
                 "id": str(role.id),
-                "type": "role",
+                "type": "roles",
                 "attributes": {
                     "name": "",  # Invalid name
                 },
@@ -3243,6 +3462,14 @@ class TestRoleViewSet:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         errors = response.json()["errors"]
         assert errors[0]["source"]["pointer"] == "/data/attributes/name"
+
+    def test_role_destroy_admin(self, authenticated_client, admin_role_fixture):
+        role = admin_role_fixture
+        response = authenticated_client.delete(
+            reverse("role-detail", kwargs={"pk": role.id})
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert Role.objects.filter(id=role.id).exists()
 
     def test_role_destroy(self, authenticated_client, roles_fixture):
         role = roles_fixture[2]
@@ -3274,9 +3501,7 @@ class TestRoleViewSet:
         assert len(data) == 1
         assert data[0]["attributes"]["name"] == role.name
 
-    def test_role_list_sorting(
-        self, authenticated_client, set_user_admin_roles_fixture, roles_fixture
-    ):
+    def test_role_list_sorting(self, authenticated_client, roles_fixture):
         response = authenticated_client.get(reverse("role-list"), {"sort": "name"})
         assert response.status_code == status.HTTP_200_OK
         data = response.json()["data"]
@@ -3291,6 +3516,154 @@ class TestRoleViewSet:
         response = authenticated_client.put(reverse("role-list"))
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
+    def test_role_create_with_users_and_provider_groups(
+        self, authenticated_client, users_fixture, provider_groups_fixture
+    ):
+        user1, user2, *_ = users_fixture
+        pg1, pg2, *_ = provider_groups_fixture
+
+        data = {
+            "data": {
+                "type": "roles",
+                "attributes": {
+                    "name": "Role with Users and PGs",
+                    "manage_users": "true",
+                    "manage_account": "false",
+                    "manage_providers": "true",
+                    "manage_scans": "false",
+                    "unlimited_visibility": "false",
+                },
+                "relationships": {
+                    "users": {
+                        "data": [
+                            {"type": "users", "id": str(user1.id)},
+                            {"type": "users", "id": str(user2.id)},
+                        ]
+                    },
+                    "provider_groups": {
+                        "data": [
+                            {"type": "provider-groups", "id": str(pg1.id)},
+                            {"type": "provider-groups", "id": str(pg2.id)},
+                        ]
+                    },
+                },
+            }
+        }
+
+        response = authenticated_client.post(
+            reverse("role-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        created_role = Role.objects.get(name="Role with Users and PGs")
+
+        assert created_role.users.count() == 2
+        assert set(created_role.users.all()) == {user1, user2}
+
+        assert created_role.provider_groups.count() == 2
+        assert set(created_role.provider_groups.all()) == {pg1, pg2}
+
+    def test_role_update_relationships(
+        self,
+        authenticated_client,
+        roles_fixture,
+        users_fixture,
+        provider_groups_fixture,
+    ):
+        role = roles_fixture[0]
+        user3 = users_fixture[2]
+        pg3 = provider_groups_fixture[2]
+
+        data = {
+            "data": {
+                "id": str(role.id),
+                "type": "roles",
+                "relationships": {
+                    "users": {
+                        "data": [
+                            {"type": "users", "id": str(user3.id)},
+                        ]
+                    },
+                    "provider_groups": {
+                        "data": [
+                            {"type": "provider-groups", "id": str(pg3.id)},
+                        ]
+                    },
+                },
+            }
+        }
+
+        response = authenticated_client.patch(
+            reverse("role-detail", kwargs={"pk": role.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_200_OK
+        role.refresh_from_db()
+
+        assert role.users.count() == 1
+        assert role.users.first() == user3
+        assert role.provider_groups.count() == 1
+        assert role.provider_groups.first() == pg3
+
+    def test_role_clear_relationships(self, authenticated_client, roles_fixture):
+        role = roles_fixture[0]
+        data = {
+            "data": {
+                "id": str(role.id),
+                "type": "roles",
+                "relationships": {
+                    "users": {"data": []},  # Clearing all users
+                    "provider_groups": {"data": []},  # Clearing all provider groups
+                },
+            }
+        }
+
+        response = authenticated_client.patch(
+            reverse("role-detail", kwargs={"pk": role.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_200_OK
+        role.refresh_from_db()
+        assert role.users.count() == 0
+        assert role.provider_groups.count() == 0
+
+    def test_role_create_with_invalid_user_relationship(
+        self, authenticated_client, provider_groups_fixture
+    ):
+        invalid_user_id = "non-existent-user-id"
+        pg = provider_groups_fixture[0]
+
+        data = {
+            "data": {
+                "type": "roles",
+                "attributes": {
+                    "name": "Invalid Users Role",
+                    "manage_users": "false",
+                    "manage_account": "false",
+                    "manage_providers": "true",
+                    "manage_scans": "true",
+                    "unlimited_visibility": "true",
+                },
+                "relationships": {
+                    "users": {"data": [{"type": "users", "id": invalid_user_id}]},
+                    "provider_groups": {
+                        "data": [{"type": "provider-groups", "id": str(pg.id)}]
+                    },
+                },
+            }
+        }
+
+        response = authenticated_client.post(
+            reverse("role-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code in [status.HTTP_400_BAD_REQUEST]
+
 
 @pytest.mark.django_db
 class TestUserRoleRelationshipViewSet:
@@ -3298,7 +3671,9 @@ class TestUserRoleRelationshipViewSet:
         self, authenticated_client, roles_fixture, create_test_user
     ):
         data = {
-            "data": [{"type": "role", "id": str(role.id)} for role in roles_fixture[:2]]
+            "data": [
+                {"type": "roles", "id": str(role.id)} for role in roles_fixture[:2]
+            ]
         }
         response = authenticated_client.post(
             reverse("user-roles-relationship", kwargs={"pk": create_test_user.id}),
@@ -3315,7 +3690,9 @@ class TestUserRoleRelationshipViewSet:
         self, authenticated_client, roles_fixture, create_test_user
     ):
         data = {
-            "data": [{"type": "role", "id": str(role.id)} for role in roles_fixture[:2]]
+            "data": [
+                {"type": "roles", "id": str(role.id)} for role in roles_fixture[:2]
+            ]
         }
         authenticated_client.post(
             reverse("user-roles-relationship", kwargs={"pk": create_test_user.id}),
@@ -3325,7 +3702,7 @@ class TestUserRoleRelationshipViewSet:
 
         data = {
             "data": [
-                {"type": "role", "id": str(roles_fixture[0].id)},
+                {"type": "roles", "id": str(roles_fixture[0].id)},
             ]
         }
         response = authenticated_client.post(
@@ -3342,7 +3719,7 @@ class TestUserRoleRelationshipViewSet:
     ):
         data = {
             "data": [
-                {"type": "role", "id": str(roles_fixture[1].id)},
+                {"type": "roles", "id": str(roles_fixture[2].id)},
             ]
         }
         response = authenticated_client.patch(
@@ -3353,12 +3730,12 @@ class TestUserRoleRelationshipViewSet:
         assert response.status_code == status.HTTP_204_NO_CONTENT
         relationships = UserRoleRelationship.objects.filter(user=create_test_user.id)
         assert relationships.count() == 1
-        assert {rel.role.id for rel in relationships} == {roles_fixture[1].id}
+        assert {rel.role.id for rel in relationships} == {roles_fixture[2].id}
 
         data = {
             "data": [
-                {"type": "role", "id": str(roles_fixture[1].id)},
-                {"type": "role", "id": str(roles_fixture[2].id)},
+                {"type": "roles", "id": str(roles_fixture[1].id)},
+                {"type": "roles", "id": str(roles_fixture[2].id)},
             ]
         }
         response = authenticated_client.patch(
@@ -3386,7 +3763,7 @@ class TestUserRoleRelationshipViewSet:
 
     def test_invalid_provider_group_id(self, authenticated_client, create_test_user):
         invalid_id = "non-existent-id"
-        data = {"data": [{"type": "provider-group", "id": invalid_id}]}
+        data = {"data": [{"type": "provider-groups", "id": invalid_id}]}
         response = authenticated_client.post(
             reverse("user-roles-relationship", kwargs={"pk": create_test_user.id}),
             data=data,
@@ -3404,7 +3781,7 @@ class TestRoleProviderGroupRelationshipViewSet:
     ):
         data = {
             "data": [
-                {"type": "provider-group", "id": str(provider_group.id)}
+                {"type": "provider-groups", "id": str(provider_group.id)}
                 for provider_group in provider_groups_fixture[:2]
             ]
         }
@@ -3430,7 +3807,7 @@ class TestRoleProviderGroupRelationshipViewSet:
     ):
         data = {
             "data": [
-                {"type": "provider-group", "id": str(provider_group.id)}
+                {"type": "provider-groups", "id": str(provider_group.id)}
                 for provider_group in provider_groups_fixture[:2]
             ]
         }
@@ -3444,7 +3821,7 @@ class TestRoleProviderGroupRelationshipViewSet:
 
         data = {
             "data": [
-                {"type": "provider-group", "id": str(provider_groups_fixture[0].id)},
+                {"type": "provider-groups", "id": str(provider_groups_fixture[0].id)},
             ]
         }
         response = authenticated_client.post(
@@ -3463,7 +3840,7 @@ class TestRoleProviderGroupRelationshipViewSet:
     ):
         data = {
             "data": [
-                {"type": "provider-group", "id": str(provider_groups_fixture[1].id)},
+                {"type": "provider-groups", "id": str(provider_groups_fixture[1].id)},
             ]
         }
         response = authenticated_client.patch(
@@ -3484,8 +3861,8 @@ class TestRoleProviderGroupRelationshipViewSet:
 
         data = {
             "data": [
-                {"type": "provider-group", "id": str(provider_groups_fixture[1].id)},
-                {"type": "provider-group", "id": str(provider_groups_fixture[2].id)},
+                {"type": "provider-groups", "id": str(provider_groups_fixture[1].id)},
+                {"type": "provider-groups", "id": str(provider_groups_fixture[2].id)},
             ]
         }
         response = authenticated_client.patch(
@@ -3521,7 +3898,7 @@ class TestRoleProviderGroupRelationshipViewSet:
 
     def test_invalid_provider_group_id(self, authenticated_client, roles_fixture):
         invalid_id = "non-existent-id"
-        data = {"data": [{"type": "provider-group", "id": invalid_id}]}
+        data = {"data": [{"type": "provider-groups", "id": invalid_id}]}
         response = authenticated_client.post(
             reverse(
                 "role-provider-groups-relationship", kwargs={"pk": roles_fixture[1].id}
@@ -3682,7 +4059,7 @@ class TestProviderGroupMembershipViewSet:
     ):
         provider_group, *_ = provider_groups_fixture
         invalid_id = "non-existent-id"
-        data = {"data": [{"type": "provider-group", "id": invalid_id}]}
+        data = {"data": [{"type": "provider-groups", "id": invalid_id}]}
         response = authenticated_client.post(
             reverse(
                 "provider_group-providers-relationship",

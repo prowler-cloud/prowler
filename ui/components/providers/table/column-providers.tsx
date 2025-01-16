@@ -1,5 +1,6 @@
 "use client";
 
+import { Chip } from "@nextui-org/react";
 import { ColumnDef } from "@tanstack/react-table";
 
 import { DateWithTime, SnippetId } from "@/components/ui/entities";
@@ -10,8 +11,16 @@ import { LinkToScans } from "../link-to-scans";
 import { ProviderInfo } from "../provider-info";
 import { DataTableRowActions } from "./data-table-row-actions";
 
+interface GroupNameChipsProps {
+  groupNames?: string[];
+}
+
 const getProviderData = (row: { original: ProviderProps }) => {
-  return row.original;
+  const provider = row.original;
+  return {
+    attributes: provider.attributes,
+    groupNames: provider.groupNames,
+  };
 };
 
 export const ColumnProviders: ColumnDef<ProviderProps>[] = [
@@ -42,6 +51,14 @@ export const ColumnProviders: ColumnDef<ProviderProps>[] = [
         attributes: { uid },
       } = getProviderData(row);
       return <LinkToScans providerUid={uid} />;
+    },
+  },
+  {
+    accessorKey: "groupNames",
+    header: "Groups",
+    cell: ({ row }) => {
+      const { groupNames } = getProviderData(row);
+      return <GroupNameChips groupNames={groupNames || []} />;
     },
   },
   {
@@ -79,3 +96,24 @@ export const ColumnProviders: ColumnDef<ProviderProps>[] = [
     },
   },
 ];
+
+export const GroupNameChips: React.FC<GroupNameChipsProps> = ({
+  groupNames,
+}) => {
+  return (
+    <div className="flex max-w-[300px] flex-wrap gap-1">
+      {groupNames?.map((name, index) => (
+        <Chip
+          key={index}
+          size="sm"
+          variant="flat"
+          classNames={{
+            base: "bg-default-100",
+          }}
+        >
+          {name}
+        </Chip>
+      ))}
+    </div>
+  );
+};

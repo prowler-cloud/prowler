@@ -6,19 +6,15 @@ from prowler.providers.aws.services.dynamodb.dynamodb_client import dynamodb_cli
 class dynamodb_table_protected_by_backup_plan(Check):
     def execute(self):
         findings = []
-        for table_arn, table in dynamodb_client.tables.items():
-            report = Check_Report_AWS(self.metadata())
-            report.resource_id = table.name
-            report.resource_arn = table_arn
-            report.resource_tags = table.tags
-            report.region = table.region
+        for table in dynamodb_client.tables.values():
+            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=table)
             report.status = "FAIL"
             report.status_extended = (
                 f"DynamoDB table {table.name} is not protected by a backup plan."
             )
 
             if (
-                table_arn in backup_client.protected_resources
+                table.arn in backup_client.protected_resources
                 or f"arn:{dynamodb_client.audited_partition}:dynamodb:*:*:table/*"
                 in backup_client.protected_resources
                 or "*" in backup_client.protected_resources

@@ -137,6 +137,7 @@ class EC2(AWSService):
                             name=sg["GroupName"],
                             region=regional_client.region,
                             id=sg["GroupId"],
+                            arn=arn,
                             ingress_rules=sg["IpPermissions"],
                             egress_rules=sg["IpPermissionsEgress"],
                             associated_sgs=associated_sgs,
@@ -708,6 +709,7 @@ class NetworkInterface(BaseModel):
 class SecurityGroup(BaseModel):
     name: str
     region: str
+    arn: str
     id: str
     vpc_id: str
     associated_sgs: list
@@ -788,6 +790,7 @@ class LaunchTemplate(BaseModel):
 
 class VpnEndpoint(BaseModel):
     id: str
+    arn: str
     connection_logging: bool
     region: str
     tags: Optional[list] = []

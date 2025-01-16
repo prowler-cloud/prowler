@@ -42,6 +42,7 @@ class ELBv2(AWSService):
                         )
                     ):
                         self.loadbalancersv2[elbv2["LoadBalancerArn"]] = LoadBalancerv2(
+                            arn=elbv2["LoadBalancerArn"],
                             name=elbv2["LoadBalancerName"],
                             region=regional_client.region,
                             type=elbv2["Type"],
@@ -197,6 +198,7 @@ class Listenerv2(BaseModel):
 
 
 class LoadBalancerv2(BaseModel):
+    arn: str
     name: str
     region: str
     type: str

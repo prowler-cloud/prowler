@@ -15,13 +15,11 @@ class cloudformation_stack_outputs_find_secrets(Check):
             "secrets_ignore_patterns", []
         )
         for stack in cloudformation_client.stacks:
-            report = Check_Report_AWS(self.metadata())
-            report.region = stack.region
-            report.resource_id = stack.name
-            report.resource_arn = stack.arn
-            report.resource_tags = stack.tags
+            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=stack)
             report.status = "PASS"
-            report.status_extended = f"No secrets found in Stack {stack.name} Outputs."
+            report.status_extended = (
+                f"No secrets found in CloudFormation Stack {stack.name} Outputs."
+            )
             if stack.outputs:
                 data = ""
                 # Store the CloudFormation Stack Outputs into a file
@@ -40,11 +38,13 @@ class cloudformation_stack_outputs_find_secrets(Check):
                         ]
                     )
                     report.status = "FAIL"
-                    report.status_extended = f"Potential secret found in Stack {stack.name} Outputs -> {secrets_string}."
+                    report.status_extended = f"Potential secret found in CloudFormation Stack {stack.name} Outputs -> {secrets_string}."
 
             else:
                 report.status = "PASS"
-                report.status_extended = f"CloudFormation {stack.name} has no Outputs."
+                report.status_extended = (
+                    f"CloudFormation Stack {stack.name} has no Outputs."
+                )
 
             findings.append(report)
 

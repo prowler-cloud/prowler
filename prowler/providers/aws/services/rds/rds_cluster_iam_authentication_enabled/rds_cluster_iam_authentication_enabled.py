@@ -18,11 +18,10 @@ class rds_cluster_iam_authentication_enabled(Check):
                 engine in rds_client.db_clusters[db_cluster].engine
                 for engine in supported_engines
             ):
-                report = Check_Report_AWS(self.metadata())
-                report.region = rds_client.db_clusters[db_cluster].region
-                report.resource_id = rds_client.db_clusters[db_cluster].id
-                report.resource_arn = db_cluster
-                report.resource_tags = rds_client.db_clusters[db_cluster].tags
+                report = Check_Report_AWS(
+                    metadata=self.metadata(),
+                    resource_metadata=rds_client.db_clusters[db_cluster],
+                )
 
                 if rds_client.db_clusters[db_cluster].iam_auth:
                     report.status = "PASS"

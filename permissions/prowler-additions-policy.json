@@ -52,7 +52,7 @@
       ],
       "Resource": "*",
       "Effect": "Allow",
-      "Sid": "AllowMoreReadForProwler"
+      "Sid": "AllowMoreReadOnly"
     },
     {
       "Effect": "Allow",
@@ -60,9 +60,10 @@
         "apigateway:GET"
       ],
       "Resource": [
-        "arn:aws:apigateway:*::/restapis/*",
-        "arn:aws:apigateway:*::/apis/*"
-      ]
+        "arn:*:apigateway:*::/restapis/*",
+        "arn:*:apigateway:*::/apis/*"
+      ],
+      "Sid": "AllowAPIGatewayReadOnly"
     }
   ]
 }
