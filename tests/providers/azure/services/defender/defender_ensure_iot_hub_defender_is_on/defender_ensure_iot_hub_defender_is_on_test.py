@@ -15,12 +15,15 @@ class Test_defender_ensure_iot_hub_defender_is_on:
         defender_client = mock.MagicMock
         defender_client.iot_security_solutions = {}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.defender.defender_ensure_iot_hub_defender_is_on.defender_ensure_iot_hub_defender_is_on.defender_client",
-            new=defender_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.defender.defender_ensure_iot_hub_defender_is_on.defender_ensure_iot_hub_defender_is_on.defender_client",
+                new=defender_client,
+            ),
         ):
             from prowler.providers.azure.services.defender.defender_ensure_iot_hub_defender_is_on.defender_ensure_iot_hub_defender_is_on import (
                 defender_ensure_iot_hub_defender_is_on,
@@ -34,12 +37,15 @@ class Test_defender_ensure_iot_hub_defender_is_on:
         defender_client = mock.MagicMock
         defender_client.iot_security_solutions = {AZURE_SUBSCRIPTION_ID: {}}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.defender.defender_ensure_iot_hub_defender_is_on.defender_ensure_iot_hub_defender_is_on.defender_client",
-            new=defender_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.defender.defender_ensure_iot_hub_defender_is_on.defender_ensure_iot_hub_defender_is_on.defender_client",
+                new=defender_client,
+            ),
         ):
             from prowler.providers.azure.services.defender.defender_ensure_iot_hub_defender_is_on.defender_ensure_iot_hub_defender_is_on import (
                 defender_ensure_iot_hub_defender_is_on,
@@ -61,18 +67,21 @@ class Test_defender_ensure_iot_hub_defender_is_on:
         defender_client = mock.MagicMock
         defender_client.iot_security_solutions = {
             AZURE_SUBSCRIPTION_ID: {
-                "iot_sec_solution": IoTSecuritySolution(
-                    resource_id=resource_id, status="Disabled"
+                resource_id: IoTSecuritySolution(
+                    resource_id=resource_id, name="iot_sec_solution", status="Disabled"
                 )
             }
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.defender.defender_ensure_iot_hub_defender_is_on.defender_ensure_iot_hub_defender_is_on.defender_client",
-            new=defender_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.defender.defender_ensure_iot_hub_defender_is_on.defender_ensure_iot_hub_defender_is_on.defender_client",
+                new=defender_client,
+            ),
         ):
             from prowler.providers.azure.services.defender.defender_ensure_iot_hub_defender_is_on.defender_ensure_iot_hub_defender_is_on import (
                 defender_ensure_iot_hub_defender_is_on,
@@ -94,18 +103,21 @@ class Test_defender_ensure_iot_hub_defender_is_on:
         defender_client = mock.MagicMock
         defender_client.iot_security_solutions = {
             AZURE_SUBSCRIPTION_ID: {
-                "iot_sec_solution": IoTSecuritySolution(
-                    resource_id=resource_id, status="Enabled"
+                resource_id: IoTSecuritySolution(
+                    resource_id=resource_id, name="iot_sec_solution", status="Enabled"
                 )
             }
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.defender.defender_ensure_iot_hub_defender_is_on.defender_ensure_iot_hub_defender_is_on.defender_client",
-            new=defender_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.defender.defender_ensure_iot_hub_defender_is_on.defender_ensure_iot_hub_defender_is_on.defender_client",
+                new=defender_client,
+            ),
         ):
             from prowler.providers.azure.services.defender.defender_ensure_iot_hub_defender_is_on.defender_ensure_iot_hub_defender_is_on import (
                 defender_ensure_iot_hub_defender_is_on,
@@ -129,21 +141,28 @@ class Test_defender_ensure_iot_hub_defender_is_on:
         defender_client = mock.MagicMock
         defender_client.iot_security_solutions = {
             AZURE_SUBSCRIPTION_ID: {
-                "iot_sec_solution_enabled": IoTSecuritySolution(
-                    resource_id=resource_id_enabled, status="Enabled"
+                resource_id_enabled: IoTSecuritySolution(
+                    resource_id=resource_id_enabled,
+                    name="iot_sec_solution_enabled",
+                    status="Enabled",
                 ),
-                "iot_sec_solution_disabled": IoTSecuritySolution(
-                    resource_id=resource_id_disabled, status="Disabled"
+                resource_id_disabled: IoTSecuritySolution(
+                    resource_id=resource_id_disabled,
+                    name="iot_sec_solution_disabled",
+                    status="Disabled",
                 ),
             }
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.defender.defender_ensure_iot_hub_defender_is_on.defender_ensure_iot_hub_defender_is_on.defender_client",
-            new=defender_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.defender.defender_ensure_iot_hub_defender_is_on.defender_ensure_iot_hub_defender_is_on.defender_client",
+                new=defender_client,
+            ),
         ):
             from prowler.providers.azure.services.defender.defender_ensure_iot_hub_defender_is_on.defender_ensure_iot_hub_defender_is_on import (
                 defender_ensure_iot_hub_defender_is_on,

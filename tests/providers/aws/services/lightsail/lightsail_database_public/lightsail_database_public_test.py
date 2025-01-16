@@ -36,6 +36,7 @@ class Test_lightsail_database_public:
             f"{BASE_LIGHTSAIL_ARN}:Database/test-database": Database(
                 name="test-database",
                 id="1234/5678",
+                arn=f"{BASE_LIGHTSAIL_ARN}:Database/test-database",
                 tags=[],
                 region=AWS_REGION_US_EAST_1,
                 availability_zone=AWS_REGION_US_EAST_1_AZA,
@@ -78,6 +79,7 @@ class Test_lightsail_database_public:
             f"{BASE_LIGHTSAIL_ARN}:Database/test-database": Database(
                 name="test-database",
                 id="1234/5678",
+                arn=f"{BASE_LIGHTSAIL_ARN}:Database/test-database",
                 tags=[],
                 region=AWS_REGION_US_EAST_1,
                 availability_zone=AWS_REGION_US_EAST_1_AZA,

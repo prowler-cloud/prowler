@@ -1,0 +1,9 @@
+Mutelist:
+  Accounts:
+    "*":
+      Checks:
+        "*":
+          Regions:
+            - "*"
+          Resources:
+            - "*"

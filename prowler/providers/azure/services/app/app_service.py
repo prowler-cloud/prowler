@@ -39,8 +39,9 @@ class App(AzureService):
 
                         apps[subscription_name].update(
                             {
-                                app.name: WebApp(
+                                app.id: WebApp(
                                     resource_id=app.id,
+                                    name=app.name,
                                     auth_enabled=(
                                         getattr(platform_auth, "enabled", False)
                                         if platform_auth
@@ -97,6 +98,7 @@ class App(AzureService):
                         functions[subscription_name].update(
                             {
                                 function.id: FunctionApp(
+                                    id=function.id,
                                     name=function.name,
                                     location=function.location,
                                     kind=function.kind,
@@ -172,6 +174,7 @@ class App(AzureService):
 @dataclass
 class WebApp:
     resource_id: str
+    name: str
     configurations: SiteConfigResource
     identity: ManagedServiceIdentity
     location: str
@@ -184,6 +187,7 @@ class WebApp:
 
 @dataclass
 class FunctionApp:
+    id: str
     name: str
     location: str
     kind: str

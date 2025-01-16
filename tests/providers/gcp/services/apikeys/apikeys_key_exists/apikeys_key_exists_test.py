@@ -1,15 +1,25 @@
 from re import search
 from unittest import mock
 
+from prowler.providers.gcp.models import GCPProject
 from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, set_mocked_gcp_provider
 
 
 class Test_apikeys_key_exists:
     def test_apikeys_no_keys(self):
-        apikeys_client = mock.MagicMock
+        apikeys_client = mock.MagicMock()
         apikeys_client.project_ids = [GCP_PROJECT_ID]
         apikeys_client.keys = []
         apikeys_client.region = "global"
+        apikeys_client.projects = {
+            GCP_PROJECT_ID: GCPProject(
+                id=GCP_PROJECT_ID,
+                number="123456789012",
+                name="test",
+                labels={},
+                lifecycle_state="ACTIVE",
+            )
+        }
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -43,10 +53,19 @@ class Test_apikeys_key_exists:
             project_id=GCP_PROJECT_ID,
         )
 
-        apikeys_client = mock.MagicMock
+        apikeys_client = mock.MagicMock()
         apikeys_client.project_ids = [GCP_PROJECT_ID]
         apikeys_client.keys = [key]
         apikeys_client.region = "global"
+        apikeys_client.projects = {
+            GCP_PROJECT_ID: GCPProject(
+                id=GCP_PROJECT_ID,
+                number="123456789012",
+                name="test",
+                labels={},
+                lifecycle_state="ACTIVE",
+            )
+        }
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",

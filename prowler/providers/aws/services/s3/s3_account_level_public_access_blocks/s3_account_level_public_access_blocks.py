@@ -6,7 +6,10 @@ from prowler.providers.aws.services.s3.s3control_client import s3control_client
 class s3_account_level_public_access_blocks(Check):
     def execute(self):
         findings = []
-        report = Check_Report_AWS(self.metadata())
+        report = Check_Report_AWS(
+            metadata=self.metadata(),
+            resource_metadata=s3control_client.account_public_access_block,
+        )
         if (
             s3control_client.account_public_access_block
             and s3control_client.account_public_access_block.ignore_public_acls

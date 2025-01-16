@@ -7,10 +7,9 @@ class rbac_minimize_wildcard_use_roles(Check):
         findings = []
         # Check ClusterRoles for wildcards
         for cr in rbac_client.cluster_roles.values():
-            report = Check_Report_Kubernetes(self.metadata())
-            report.namespace = "cluster-wide"
-            report.resource_name = cr.metadata.name
-            report.resource_id = cr.metadata.uid
+            report = Check_Report_Kubernetes(
+                metadata=self.metadata(), resource_metadata=cr.metadata
+            )
             report.status = "PASS"
             report.status_extended = (
                 f"ClusterRole {cr.metadata.name} does not use wildcards."
@@ -28,10 +27,9 @@ class rbac_minimize_wildcard_use_roles(Check):
 
         # Check Roles for wildcards
         for role in rbac_client.roles.values():
-            report = Check_Report_Kubernetes(self.metadata())
-            report.namespace = role.metadata.namespace
-            report.resource_name = role.metadata.name
-            report.resource_id = role.metadata.uid
+            report = Check_Report_Kubernetes(
+                metadata=self.metadata(), resource_metadata=role.metadata
+            )
             report.status = "PASS"
             report.status_extended = (
                 f"Role {role.metadata.name} does not use wildcards."

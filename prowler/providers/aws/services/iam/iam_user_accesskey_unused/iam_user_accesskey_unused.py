@@ -25,7 +25,9 @@ class iam_user_accesskey_unused(Check):
                 user["access_key_1_active"] != "true"
                 and user["access_key_2_active"] != "true"
             ):
-                report = Check_Report_AWS(self.metadata())
+                report = Check_Report_AWS(
+                    metadata=self.metadata(), resource_metadata=user
+                )
                 report.region = iam_client.region
                 report.resource_id = user["user"]
                 report.resource_arn = user["arn"]
