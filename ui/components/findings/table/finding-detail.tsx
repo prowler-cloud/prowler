@@ -3,14 +3,14 @@
 import { Snippet } from "@nextui-org/react";
 import Link from "next/link";
 
-import { InfoField, SnippetId } from "@/components/ui/entities";
+import { InfoField } from "@/components/ui/entities";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
-import { SeverityBadge } from "@/components/ui/table/severity-badge";
-import { FindingProps } from "@/types";
 import {
   getProviderLogo,
   type ProviderType,
 } from "@/components/ui/entities/get-provider-logo";
+import { SeverityBadge } from "@/components/ui/table/severity-badge";
+import { FindingProps } from "@/types";
 
 const renderValue = (value: string | null | undefined) => {
   return value && value.trim() !== "" ? value : "-";
@@ -54,7 +54,6 @@ export const FindingDetail = ({
   const finding = findingDetails;
   const attributes = finding.attributes;
   const resource = finding.relationships.resource.attributes;
-  const remediation = attributes.check_metadata.remediation;
   const scan = finding.relationships.scan.attributes;
   const provider = finding.relationships.provider.attributes;
 
