@@ -3,10 +3,48 @@
 import { Snippet } from "@nextui-org/react";
 import Link from "next/link";
 
-import { SnippetId } from "@/components/ui/entities";
+import { InfoField } from "@/components/ui/entities";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
+import {
+  getProviderLogo,
+  type ProviderType,
+} from "@/components/ui/entities/get-provider-logo";
 import { SeverityBadge } from "@/components/ui/table/severity-badge";
 import { FindingProps } from "@/types";
+
+const renderValue = (value: string | null | undefined) => {
+  return value && value.trim() !== "" ? value : "-";
+};
+
+const Section = ({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) => (
+  <div className="flex flex-col gap-4 rounded-lg p-4 shadow dark:bg-prowler-blue-400">
+    <h3 className="text-md font-medium text-gray-800 dark:text-prowler-theme-pale/90">
+      {title}
+    </h3>
+    {children}
+  </div>
+);
+
+// Add new utility function for duration formatting
+const formatDuration = (seconds: number) => {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const remainingSeconds = seconds % 60;
+
+  const parts = [];
+  if (hours > 0) parts.push(`${hours}h`);
+  if (minutes > 0) parts.push(`${minutes}m`);
+  if (remainingSeconds > 0 || parts.length === 0)
+    parts.push(`${remainingSeconds}s`);
+
+  return parts.join(" ");
+};
 
 export const FindingDetail = ({
   findingDetails,
@@ -16,21 +54,19 @@ export const FindingDetail = ({
   const finding = findingDetails;
   const attributes = finding.attributes;
   const resource = finding.relationships.resource.attributes;
-
-  const remediation = attributes.check_metadata.remediation;
+  const scan = finding.relationships.scan.attributes;
+  const provider = finding.relationships.provider.attributes;
 
   return (
     <div className="flex flex-col gap-6 rounded-lg">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="line-clamp-2 text-xl font-bold leading-tight text-gray-800 dark:text-prowler-theme-pale/90">
-            {attributes.check_metadata.checktitle}
+          <h2 className="line-clamp-2 text-lg font-medium leading-tight text-gray-800 dark:text-prowler-theme-pale/90">
+            {renderValue(attributes.check_metadata.checktitle)}
           </h2>
-          <p className="text-sm text-gray-500 dark:text-prowler-theme-pale/70">
-            {resource.service}
-          </p>
         </div>
+
         <div
           className={`rounded-lg px-3 py-1 text-sm font-semibold ${
             attributes.status === "PASS"
@@ -40,180 +76,230 @@ export const FindingDetail = ({
                 : "bg-red-100 text-red-600"
           }`}
         >
-          {attributes.status}
+          {renderValue(attributes.status)}
         </div>
       </div>
 
       {/* Check Metadata */}
-      <div className="flex flex-col gap-4 rounded-lg p-4 shadow dark:bg-prowler-blue-400">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-bold text-gray-800 dark:text-prowler-theme-pale/90">
-            Finding details
-          </h3>
-          <SeverityBadge severity={attributes.severity} />
+      <Section title="Finding Details">
+        <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-4">
+          <InfoField label="Provider" variant="simple">
+            <div className="flex items-center gap-2">
+              {getProviderLogo(
+                attributes.check_metadata.provider as ProviderType,
+              )}
+            </div>
+          </InfoField>
+          <InfoField label="Service">
+            {attributes.check_metadata.servicename}
+          </InfoField>
+          <InfoField label="Region">{resource.region}</InfoField>
+          <InfoField label="First Seen">
+            <DateWithTime inline dateTime={attributes.first_seen_at || "-"} />
+          </InfoField>
         </div>
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <InfoField label="Check ID" variant="simple">
+            <Snippet className="max-w-full" hideSymbol>
+              {attributes.check_id}
+            </Snippet>
+          </InfoField>
+          <InfoField label="Severity" variant="simple">
+            <SeverityBadge severity={attributes.severity || "-"} />
+          </InfoField>
+        </div>
+
         {attributes.status === "FAIL" && (
-          <Snippet
-            className="max-w-full py-4"
-            color="danger"
-            hideCopyButton
-            hideSymbol
-          >
-            <p className="text-sm font-semibold dark:text-prowler-theme-pale">
-              Risk
-            </p>
-            <p className="whitespace-pre-line text-gray-800 dark:text-prowler-theme-pale/90">
-              {attributes.check_metadata.risk}
-            </p>
-          </Snippet>
+          <InfoField label="Risk" variant="simple">
+            <Snippet
+              className="max-w-full py-4"
+              color="danger"
+              hideCopyButton
+              hideSymbol
+            >
+              <p className="whitespace-pre-line">
+                {attributes.check_metadata.risk}
+              </p>
+            </Snippet>
+          </InfoField>
         )}
 
-        <div className="flex flex-col gap-2">
-          <p className="text-sm font-semibold dark:text-prowler-theme-pale">
-            Description
-          </p>
-          <p className="text-gray-800 dark:text-prowler-theme-pale/90">
-            {attributes.check_metadata.description}
-          </p>
-        </div>
+        <InfoField label="Description">
+          {renderValue(attributes.check_metadata.description)}
+        </InfoField>
 
-        <div className="flex flex-col gap-2">
-          <h3 className="text-sm font-semibold dark:text-prowler-theme-pale">
-            Remediation
-          </h3>
-          <div className="text-gray-800 dark:text-prowler-theme-pale/90">
-            {remediation.recommendation && (
-              <>
-                <p className="text-sm font-semibold">Recommendation:</p>
-                <p>{remediation.recommendation.text}</p>
-                <Link
-                  target="_blank"
-                  href={remediation.recommendation.url}
-                  className="mt-2 inline-block text-sm text-blue-500 underline"
-                >
-                  Learn more
-                </Link>
-              </>
-            )}
-            {remediation.code &&
-              Object.values(remediation.code).some(Boolean) && (
+        {attributes.check_metadata.remediation && (
+          <div className="flex flex-col gap-4">
+            <h4 className="text-sm font-bold text-gray-700 dark:text-prowler-theme-pale/90">
+              Remediation Details
+            </h4>
+
+            {/* Recommendation section */}
+            {attributes.check_metadata.remediation.recommendation.text && (
+              <InfoField label="Recommendation">
                 <div className="flex flex-col gap-2">
-                  <p className="mt-4 text-sm font-semibold">
-                    Reference Information:
+                  <p>
+                    {attributes.check_metadata.remediation.recommendation.text}
                   </p>
-                  <div className="flex flex-col gap-2">
-                    {remediation.code.cli && (
-                      <div>
-                        <p className="text-sm font-semibold">CLI Command:</p>
-                        <Snippet hideSymbol size="sm" className="max-w-full">
-                          <p className="whitespace-pre-line">
-                            {remediation.code.cli}
-                          </p>
-                        </Snippet>
-                      </div>
-                    )}
-                    <div className="flex flex-row gap-4">
-                      {Object.entries(remediation.code)
-                        .filter(([key]) => key !== "cli")
-                        .map(([key, value]) =>
-                          value ? (
-                            <Link
-                              key={key}
-                              href={value}
-                              target="_blank"
-                              className="text-sm font-medium text-blue-500"
-                            >
-                              {key === "other"
-                                ? "External doc"
-                                : key.charAt(0).toUpperCase() +
-                                  key.slice(1).toLowerCase()}
-                            </Link>
-                          ) : null,
-                        )}
-                    </div>
-                  </div>
+                  {attributes.check_metadata.remediation.recommendation.url && (
+                    <Link
+                      href={
+                        attributes.check_metadata.remediation.recommendation.url
+                      }
+                      target="_blank"
+                      className="text-sm text-blue-500 hover:underline"
+                    >
+                      Learn more
+                    </Link>
+                  )}
                 </div>
-              )}
-          </div>
-        </div>
-      </div>
+              </InfoField>
+            )}
 
-      {/* Resources Section */}
-      <div className="flex flex-col gap-4 rounded-lg p-4 shadow dark:bg-prowler-blue-400">
-        <h3 className="text-lg font-bold text-gray-800 dark:text-prowler-theme-pale/90">
-          Resource Details
-        </h3>
-        <div className="grid grid-cols-2 gap-6">
-          <div className="col-span-2">
-            <p className="text-sm font-semibold dark:text-prowler-theme-pale">
-              Resource ID
-            </p>
-            <Snippet size="sm" hideSymbol className="max-w-full">
-              <p className="whitespace-pre-line">{resource.uid}</p>
-            </Snippet>
-          </div>
-          <div>
-            <p className="text-sm font-semibold dark:text-prowler-theme-pale">
-              Resource Name
-            </p>
-            <p className="text-gray-800 dark:text-prowler-theme-pale/90">
-              {resource.name}
-            </p>
-          </div>
-          <div>
-            <p className="text-sm font-semibold dark:text-prowler-theme-pale">
-              Region
-            </p>
-            <p className="text-gray-800 dark:text-prowler-theme-pale/90">
-              {resource.region}
-            </p>
-          </div>
-          <div>
-            <p className="text-sm font-semibold dark:text-prowler-theme-pale">
-              Resource Type
-            </p>
-            <p className="text-gray-800 dark:text-prowler-theme-pale/90">
-              {resource.type}
-            </p>
-          </div>
-          <div>
-            <p className="text-sm font-semibold dark:text-prowler-theme-pale">
-              Severity
-            </p>
-            <SeverityBadge severity={attributes.severity} />
-          </div>
-          {resource.tags &&
-            Object.entries(resource.tags).map(([key, value]) => (
-              <div key={key}>
-                <p className="text-sm font-semibold dark:text-prowler-theme-pale">
-                  Tag: {key}
-                </p>
-                <SnippetId
-                  entityId={value}
-                  hideSymbol
-                  size="sm"
-                  className="max-w-full"
+            {/* CLI Command section */}
+            {attributes.check_metadata.remediation.code.cli && (
+              <InfoField label="CLI Command" variant="simple">
+                <Snippet>
+                  <span className="whitespace-pre-line text-xs">
+                    {attributes.check_metadata.remediation.code.cli}
+                  </span>
+                </Snippet>
+              </InfoField>
+            )}
+
+            {/* Additional Resources section */}
+            {attributes.check_metadata.remediation.code.other && (
+              <InfoField label="Additional Resources">
+                <Link
+                  href={attributes.check_metadata.remediation.code.other}
+                  target="_blank"
+                  className="text-sm text-blue-500 hover:underline"
                 >
-                  <p className="whitespace-pre-line">{value}</p>
-                </SnippetId>
-              </div>
-            ))}
-          <div className="col-span-2 grid grid-cols-2 gap-6">
-            <div>
-              <p className="text-sm font-semibold dark:text-prowler-theme-pale">
-                First seen
-              </p>
-              <DateWithTime inline dateTime={resource.inserted_at} />
-            </div>
-            <div>
-              <p className="text-sm font-semibold dark:text-prowler-theme-pale">
-                Last seen
-              </p>
-              <DateWithTime inline dateTime={resource.updated_at} />
-            </div>
+                  View documentation
+                </Link>
+              </InfoField>
+            )}
           </div>
+        )}
+
+        <InfoField label="Categories">
+          {attributes.check_metadata.categories?.join(", ") || "-"}
+        </InfoField>
+      </Section>
+
+      {/* Resource Details */}
+      <Section title="Resource Details">
+        <InfoField label="Resource ID" variant="simple">
+          <Snippet hideSymbol>
+            <span className="whitespace-pre-line text-xs">
+              {renderValue(resource.uid)}
+            </span>
+          </Snippet>
+        </InfoField>
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <InfoField label="Resource Name">
+            {renderValue(resource.name)}
+          </InfoField>
+          <InfoField label="Resource Type">
+            {renderValue(resource.type)}
+          </InfoField>
         </div>
-      </div>
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <InfoField label="Service">{renderValue(resource.service)}</InfoField>
+          <InfoField label="Region">{renderValue(resource.region)}</InfoField>
+        </div>
+
+        {resource.tags && Object.entries(resource.tags).length > 0 && (
+          <div className="flex flex-col gap-4">
+            <h4 className="text-sm font-bold text-gray-500 dark:text-gray-400">
+              Tags
+            </h4>
+            {Object.entries(resource.tags).map(([key, value]) => (
+              <InfoField key={key} label={key}>
+                {renderValue(value)}
+              </InfoField>
+            ))}
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <InfoField label="Created At">
+            <DateWithTime inline dateTime={resource.inserted_at || "-"} />
+          </InfoField>
+          <InfoField label="Last Updated">
+            <DateWithTime inline dateTime={resource.updated_at || "-"} />
+          </InfoField>
+        </div>
+      </Section>
+
+      {/* Add new Scan Details section */}
+      <Section title="Scan Details">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <InfoField label="Scan Name">{scan.name}</InfoField>
+          <InfoField label="Resources Scanned">
+            {scan.unique_resource_count}
+          </InfoField>
+          <InfoField label="Progress">{scan.progress}%</InfoField>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <InfoField label="Trigger">{scan.trigger}</InfoField>
+          <InfoField label="State">{scan.state}</InfoField>
+          <InfoField label="Duration">
+            {formatDuration(scan.duration)}
+          </InfoField>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <InfoField label="Started At">
+            <DateWithTime inline dateTime={scan.started_at || "-"} />
+          </InfoField>
+          <InfoField label="Completed At">
+            <DateWithTime inline dateTime={scan.completed_at || "-"} />
+          </InfoField>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <InfoField label="Launched At">
+            <DateWithTime inline dateTime={scan.inserted_at || "-"} />
+          </InfoField>
+          <InfoField label="Next Scan">
+            <DateWithTime inline dateTime={scan.next_scan_at || "-"} />
+          </InfoField>
+        </div>
+
+        {scan.scheduled_at && (
+          <InfoField label="Scheduled At">
+            <DateWithTime inline dateTime={scan.scheduled_at} />
+          </InfoField>
+        )}
+      </Section>
+
+      {/* Provider Details section */}
+      <Section title="Provider Details">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <InfoField label="Provider" variant="simple">
+            {getProviderLogo(
+              attributes.check_metadata.provider as ProviderType,
+            )}
+          </InfoField>
+          <InfoField label="Account ID">{provider.uid}</InfoField>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <InfoField label="Alias">{provider.alias}</InfoField>
+          <InfoField label="Connection Status">
+            <span
+              className={`${provider.connection.connected ? "text-green-500" : "text-red-500"}`}
+            >
+              {provider.connection.connected ? "Connected" : "Disconnected"}
+            </span>
+          </InfoField>
+        </div>
+      </Section>
     </div>
   );
 };
