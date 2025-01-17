@@ -8,9 +8,7 @@ class securityhub_enabled(Check):
     def execute(self):
         findings = []
         for securityhub in securityhub_client.securityhubs:
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=securityhub
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=securityhub)
             if securityhub.status == "ACTIVE":
                 report.status = "PASS"
                 if securityhub.standards:

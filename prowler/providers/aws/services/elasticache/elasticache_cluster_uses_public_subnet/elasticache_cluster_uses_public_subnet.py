@@ -9,9 +9,7 @@ class elasticache_cluster_uses_public_subnet(Check):
     def execute(self):
         findings = []
         for cluster in elasticache_client.clusters.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=cluster
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=cluster)
 
             report.status = "PASS"
             if cluster.engine == "redis":

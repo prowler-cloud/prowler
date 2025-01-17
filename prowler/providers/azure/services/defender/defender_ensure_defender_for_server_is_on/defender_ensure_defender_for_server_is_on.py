@@ -9,7 +9,7 @@ class defender_ensure_defender_for_server_is_on(Check):
             if "VirtualMachines" in pricings:
                 report = Check_Report_Azure(
                     metadata=self.metadata(),
-                    resource_metadata=pricings["VirtualMachines"],
+                    resource=pricings["VirtualMachines"],
                 )
                 report.subscription = subscription
                 report.resource_name = "Defender plan Servers"

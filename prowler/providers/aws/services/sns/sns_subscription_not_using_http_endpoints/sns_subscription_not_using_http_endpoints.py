@@ -10,7 +10,7 @@ class sns_subscription_not_using_http_endpoints(Check):
                 if subscription.arn == "PendingConfirmation":
                     continue
                 report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=subscription
+                    metadata=self.metadata(), resource=subscription
                 )
                 report.resource_details = topic.arn
                 report.status = "PASS"

@@ -8,7 +8,7 @@ class defender_ensure_defender_for_containers_is_on(Check):
         for subscription, pricings in defender_client.pricings.items():
             if "Containers" in pricings:
                 report = Check_Report_Azure(
-                    metadata=self.metadata(), resource_metadata=pricings["Containers"]
+                    metadata=self.metadata(), resource=pricings["Containers"]
                 )
                 report.subscription = subscription
                 report.resource_name = "Defender plan Container Registries"

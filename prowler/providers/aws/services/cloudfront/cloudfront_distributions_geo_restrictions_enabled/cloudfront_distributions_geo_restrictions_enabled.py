@@ -11,9 +11,7 @@ class cloudfront_distributions_geo_restrictions_enabled(Check):
     def execute(self):
         findings = []
         for distribution in cloudfront_client.distributions.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=distribution
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=distribution)
 
             if distribution.geo_restriction_type == GeoRestrictionType.none:
                 report.status = "FAIL"

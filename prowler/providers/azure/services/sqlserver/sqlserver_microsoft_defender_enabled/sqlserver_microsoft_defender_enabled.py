@@ -9,7 +9,7 @@ class sqlserver_microsoft_defender_enabled(Check):
             for sql_server in sql_servers:
                 if sql_server.security_alert_policies:
                     report = Check_Report_Azure(
-                        metadata=self.metadata(), resource_metadata=sql_server
+                        metadata=self.metadata(), resource=sql_server
                     )
                     report.subscription = subscription
                     report.status = "FAIL"

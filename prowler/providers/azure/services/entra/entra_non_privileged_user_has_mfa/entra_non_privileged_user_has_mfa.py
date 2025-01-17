@@ -14,9 +14,7 @@ class entra_non_privileged_user_has_mfa(Check):
                 if not is_privileged_user(
                     user, entra_client.directory_roles[tenant_domain]
                 ):
-                    report = Check_Report_Azure(
-                        metadata=self.metadata(), resource_metadata=user
-                    )
+                    report = Check_Report_Azure(metadata=self.metadata(), resource=user)
                     report.subscription = f"Tenant: {tenant_domain}"
                     report.status = "FAIL"
                     report.status_extended = (

@@ -9,7 +9,7 @@ class defender_ensure_defender_for_storage_is_on(Check):
             if "StorageAccounts" in pricings:
                 report = Check_Report_Azure(
                     metadata=self.metadata(),
-                    resource_metadata=pricings["StorageAccounts"],
+                    resource=pricings["StorageAccounts"],
                 )
                 report.subscription = subscription
                 report.resource_name = "Defender plan Storage Accounts"

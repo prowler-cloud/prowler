@@ -9,9 +9,7 @@ class app_http_logs_enabled(Check):
         for subscription_name, apps in app_client.apps.items():
             for app in apps.values():
                 if "functionapp" not in app.kind:
-                    report = Check_Report_Azure(
-                        metadata=self.metadata(), resource_metadata=app
-                    )
+                    report = Check_Report_Azure(metadata=self.metadata(), resource=app)
                     report.subscription = subscription_name
                     report.status = "FAIL"
                     if not app.monitor_diagnostic_settings:

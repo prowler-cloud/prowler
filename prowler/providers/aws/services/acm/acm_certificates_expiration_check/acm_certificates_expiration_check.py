@@ -8,7 +8,7 @@ class acm_certificates_expiration_check(Check):
         for certificate in acm_client.certificates.values():
             if certificate.in_use or acm_client.provider.scan_unused_services:
                 report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=certificate
+                    metadata=self.metadata(), resource=certificate
                 )
                 if certificate.expiration_days > acm_client.audit_config.get(
                     "days_to_expire_threshold", 7

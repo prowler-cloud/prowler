@@ -8,7 +8,7 @@ class sqlserver_va_scan_reports_configured(Check):
         for subscription, sql_servers in sqlserver_client.sql_servers.items():
             for sql_server in sql_servers:
                 report = Check_Report_Azure(
-                    metadata=self.metadata(), resource_metadata=sql_server
+                    metadata=self.metadata(), resource=sql_server
                 )
                 report.subscription = subscription
                 report.status = "FAIL"

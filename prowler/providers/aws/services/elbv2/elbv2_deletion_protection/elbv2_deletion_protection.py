@@ -6,7 +6,7 @@ class elbv2_deletion_protection(Check):
     def execute(self):
         findings = []
         for lb in elbv2_client.loadbalancersv2.values():
-            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=lb)
+            report = Check_Report_AWS(metadata=self.metadata(), resource=lb)
             report.status = "FAIL"
             report.status_extended = (
                 f"ELBv2 {lb.name} does not have deletion protection enabled."

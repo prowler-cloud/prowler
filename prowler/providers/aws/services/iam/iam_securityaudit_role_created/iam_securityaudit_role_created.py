@@ -8,7 +8,7 @@ class iam_securityaudit_role_created(Check):
         if iam_client.entities_role_attached_to_securityaudit_policy is not None:
             report = Check_Report_AWS(
                 metadata=self.metadata(),
-                resource_metadata=iam_client.entities_role_attached_to_securityaudit_policy,
+                resource=iam_client.entities_role_attached_to_securityaudit_policy,
             )
             report.region = iam_client.region
             report.resource_id = "SecurityAudit"

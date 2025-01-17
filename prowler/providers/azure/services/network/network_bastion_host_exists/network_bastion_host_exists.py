@@ -19,7 +19,7 @@ class network_bastion_host_exists(Check):
                 status_extended = f"Bastion Host from subscription {subscription} available are: {bastion_names}"
 
             report = Check_Report_Azure(
-                metadata=self.metadata(), resource_metadata=bastion_hosts
+                metadata=self.metadata(), resource=bastion_hosts
             )
             report.subscription = subscription
             report.resource_name = "Bastion Host"

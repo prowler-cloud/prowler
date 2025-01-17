@@ -7,9 +7,7 @@ class neptune_cluster_uses_public_subnet(Check):
     def execute(self):
         findings = []
         for cluster in neptune_client.clusters.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=cluster
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=cluster)
             report.status = "PASS"
             report.status_extended = (
                 f"Cluster {cluster.id} is not using public subnets."

@@ -11,7 +11,7 @@ class containerregistry_uses_private_link(Check):
         for subscription, registries in containerregistry_client.registries.items():
             for container_registry_info in registries.values():
                 report = Check_Report_Azure(
-                    metadata=self.metadata(), resource_metadata=container_registry_info
+                    metadata=self.metadata(), resource=container_registry_info
                 )
                 report.subscription = subscription
                 report.status = "FAIL"

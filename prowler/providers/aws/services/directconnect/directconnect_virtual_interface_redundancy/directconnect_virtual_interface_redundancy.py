@@ -8,7 +8,7 @@ class directconnect_virtual_interface_redundancy(Check):
     def execute(self):
         findings = []
         for vgw in directconnect_client.vgws.values():
-            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=vgw)
+            report = Check_Report_AWS(metadata=self.metadata(), resource=vgw)
             if len(vgw.vifs) < 2:
                 report.status = "FAIL"
                 report.status_extended = (
@@ -24,7 +24,7 @@ class directconnect_virtual_interface_redundancy(Check):
             findings.append(report)
 
         for dxgw in directconnect_client.dxgws.values():
-            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=dxgw)
+            report = Check_Report_AWS(metadata=self.metadata(), resource=dxgw)
             if len(dxgw.vifs) < 2:
                 report.status = "FAIL"
                 report.status_extended = (

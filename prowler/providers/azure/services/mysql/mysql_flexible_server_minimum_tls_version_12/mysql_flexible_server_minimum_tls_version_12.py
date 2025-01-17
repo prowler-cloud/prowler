@@ -11,9 +11,7 @@ class mysql_flexible_server_minimum_tls_version_12(Check):
             servers,
         ) in mysql_client.flexible_servers.items():
             for server in servers.values():
-                report = Check_Report_Azure(
-                    metadata=self.metadata(), resource_metadata=server
-                )
+                report = Check_Report_Azure(metadata=self.metadata(), resource=server)
                 report.subscription = subscription_name
                 report.status = "FAIL"
                 report.status_extended = f"TLS version is not configured in server {server.name} in subscription {subscription_name}."

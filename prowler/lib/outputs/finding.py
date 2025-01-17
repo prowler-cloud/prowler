@@ -35,7 +35,7 @@ class Finding(BaseModel):
     status_extended: str
     muted: bool = False
     resource_uid: str
-    resource_metadata: dict = Field(default_factory=dict)
+    resource: dict = Field(default_factory=dict)
     resource_name: str
     resource_details: str
     resource_tags: dict = Field(default_factory=dict)

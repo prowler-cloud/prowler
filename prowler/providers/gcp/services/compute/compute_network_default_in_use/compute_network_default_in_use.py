@@ -16,7 +16,7 @@ class compute_network_default_in_use(Check):
         for project in compute_client.project_ids:
             report = Check_Report_GCP(
                 metadata=self.metadata(),
-                resource_metadata=compute_client.projects[project],
+                resource=compute_client.projects[project],
                 project_id=project,
                 resource_id="default",
                 resource_name="default",
@@ -27,7 +27,7 @@ class compute_network_default_in_use(Check):
                 report.status_extended = (
                     f"Default network is in use in project {project}."
                 )
-                report.resource_metadata = projects_with_default_network[project]
+                report.resource = projects_with_default_network[project]
             else:
                 report.status = "PASS"
                 report.status_extended = (

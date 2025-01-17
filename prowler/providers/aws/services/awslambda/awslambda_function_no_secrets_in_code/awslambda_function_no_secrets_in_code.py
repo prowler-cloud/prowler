@@ -16,7 +16,7 @@ class awslambda_function_no_secrets_in_code(Check):
             for function, function_code in awslambda_client._get_function_code():
                 if function_code:
                     report = Check_Report_AWS(
-                        metadata=self.metadata(), resource_metadata=function
+                        metadata=self.metadata(), resource=function
                     )
 
                     report.status = "PASS"

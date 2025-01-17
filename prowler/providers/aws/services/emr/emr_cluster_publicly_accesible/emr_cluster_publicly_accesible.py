@@ -15,9 +15,7 @@ class emr_cluster_publicly_accesible(Check):
                 ClusterStatus.TERMINATED,
                 ClusterStatus.TERMINATED_WITH_ERRORS,
             ):
-                report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=cluster
-                )
+                report = Check_Report_AWS(metadata=self.metadata(), resource=cluster)
                 report.status = "PASS"
                 report.status_extended = (
                     f"EMR Cluster {cluster.id} is not publicly accessible."
