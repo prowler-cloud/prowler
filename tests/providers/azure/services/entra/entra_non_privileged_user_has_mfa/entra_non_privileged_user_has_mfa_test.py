@@ -8,12 +8,15 @@ class Test_entra_non_privileged_user_has_mfa:
     def test_entra_no_tenants(self):
         entra_client = mock.MagicMock
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.entra.entra_non_privileged_user_has_mfa.entra_non_privileged_user_has_mfa.entra_client",
-            new=entra_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.entra.entra_non_privileged_user_has_mfa.entra_non_privileged_user_has_mfa.entra_client",
+                new=entra_client,
+            ),
         ):
             from prowler.providers.azure.services.entra.entra_non_privileged_user_has_mfa.entra_non_privileged_user_has_mfa import (
                 entra_non_privileged_user_has_mfa,
@@ -28,12 +31,15 @@ class Test_entra_non_privileged_user_has_mfa:
     def test_entra_tenant_no_users(self):
         entra_client = mock.MagicMock
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.entra.entra_non_privileged_user_has_mfa.entra_non_privileged_user_has_mfa.entra_client",
-            new=entra_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.entra.entra_non_privileged_user_has_mfa.entra_non_privileged_user_has_mfa.entra_client",
+                new=entra_client,
+            ),
         ):
             from prowler.providers.azure.services.entra.entra_non_privileged_user_has_mfa.entra_non_privileged_user_has_mfa import (
                 entra_non_privileged_user_has_mfa,
@@ -49,22 +55,30 @@ class Test_entra_non_privileged_user_has_mfa:
         entra_client = mock.MagicMock
         user_id = str(uuid4())
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.entra.entra_non_privileged_user_has_mfa.entra_non_privileged_user_has_mfa.entra_client",
-            new=entra_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.entra.entra_non_privileged_user_has_mfa.entra_non_privileged_user_has_mfa.entra_client",
+                new=entra_client,
+            ),
         ):
             from prowler.providers.azure.services.entra.entra_non_privileged_user_has_mfa.entra_non_privileged_user_has_mfa import (
                 entra_non_privileged_user_has_mfa,
             )
             from prowler.providers.azure.services.entra.entra_service import (
+                AuthMethod,
                 DirectoryRole,
                 User,
             )
 
-            user = User(id=user_id, name="foo", authentication_methods=["foo"])
+            user = User(
+                id=user_id,
+                name="foo",
+                authentication_methods=[AuthMethod(id=str(uuid4()), type="foo")],
+            )
 
             entra_client.users = {DOMAIN: {f"foo@{DOMAIN}": user}}
             entra_client.directory_roles = {
@@ -89,22 +103,33 @@ class Test_entra_non_privileged_user_has_mfa:
         entra_client = mock.MagicMock
         user_id = str(uuid4())
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.entra.entra_non_privileged_user_has_mfa.entra_non_privileged_user_has_mfa.entra_client",
-            new=entra_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.entra.entra_non_privileged_user_has_mfa.entra_non_privileged_user_has_mfa.entra_client",
+                new=entra_client,
+            ),
         ):
             from prowler.providers.azure.services.entra.entra_non_privileged_user_has_mfa.entra_non_privileged_user_has_mfa import (
                 entra_non_privileged_user_has_mfa,
             )
             from prowler.providers.azure.services.entra.entra_service import (
+                AuthMethod,
                 DirectoryRole,
                 User,
             )
 
-            user = User(id=user_id, name="foo", authentication_methods=["foo", "bar"])
+            user = User(
+                id=user_id,
+                name="foo",
+                authentication_methods=[
+                    AuthMethod(id=str(uuid4()), type="foo"),
+                    AuthMethod(id=str(uuid4()), type="bar"),
+                ],
+            )
 
             entra_client.users = {DOMAIN: {f"foo@{DOMAIN}": user}}
             entra_client.directory_roles = {
@@ -126,22 +151,30 @@ class Test_entra_non_privileged_user_has_mfa:
         entra_client = mock.MagicMock
         user_id = str(uuid4())
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.entra.entra_non_privileged_user_has_mfa.entra_non_privileged_user_has_mfa.entra_client",
-            new=entra_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.entra.entra_non_privileged_user_has_mfa.entra_non_privileged_user_has_mfa.entra_client",
+                new=entra_client,
+            ),
         ):
             from prowler.providers.azure.services.entra.entra_non_privileged_user_has_mfa.entra_non_privileged_user_has_mfa import (
                 entra_non_privileged_user_has_mfa,
             )
             from prowler.providers.azure.services.entra.entra_service import (
+                AuthMethod,
                 DirectoryRole,
                 User,
             )
 
-            user = User(id=user_id, name="foo", authentication_methods=["foo"])
+            user = User(
+                id=user_id,
+                name="foo",
+                authentication_methods=[AuthMethod(id=str(uuid4()), type="foo")],
+            )
 
             entra_client.users = {DOMAIN: {f"foo@{DOMAIN}": user}}
             entra_client.directory_roles = {
@@ -160,22 +193,33 @@ class Test_entra_non_privileged_user_has_mfa:
         entra_client = mock.MagicMock
         user_id = str(uuid4())
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.entra.entra_non_privileged_user_has_mfa.entra_non_privileged_user_has_mfa.entra_client",
-            new=entra_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.entra.entra_non_privileged_user_has_mfa.entra_non_privileged_user_has_mfa.entra_client",
+                new=entra_client,
+            ),
         ):
             from prowler.providers.azure.services.entra.entra_non_privileged_user_has_mfa.entra_non_privileged_user_has_mfa import (
                 entra_non_privileged_user_has_mfa,
             )
             from prowler.providers.azure.services.entra.entra_service import (
+                AuthMethod,
                 DirectoryRole,
                 User,
             )
 
-            user = User(id=user_id, name="foo", authentication_methods=["foo", "bar"])
+            user = User(
+                id=user_id,
+                name="foo",
+                authentication_methods=[
+                    AuthMethod(id=str(uuid4()), type="foo"),
+                    AuthMethod(id=str(uuid4()), type="bar"),
+                ],
+            )
 
             entra_client.users = {DOMAIN: {f"foo@{DOMAIN}": user}}
             entra_client.directory_roles = {
