@@ -513,6 +513,7 @@ export interface ScanProps {
       aws_retries_max_attempts?: number;
     } | null;
     duration: number;
+    started_at: string;
     inserted_at: string;
     completed_at: string;
     scheduled_at: string;
