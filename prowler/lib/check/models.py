@@ -410,7 +410,7 @@ class Check_Report:
     resource_tags: list
     muted: bool
 
-    def __init__(self, metadata: Dict, resource: Any = None) -> None:
+    def __init__(self, metadata: Dict, resource: Any) -> None:
         """Initialize the Check's finding information.
 
         Args:
@@ -449,20 +449,15 @@ class Check_Report_AWS(Check_Report):
     resource_arn: str
     region: str
 
-    def __init__(self, metadata, resource_metadata=None):
+    def __init__(self, metadata: Dict, resource_metadata: Any) -> None:
         super().__init__(metadata, resource_metadata)
-        if resource_metadata:
-            self.resource_id = (
-                getattr(resource_metadata, "id", None)
-                or getattr(resource_metadata, "name", None)
-                or ""
-            )
-            self.resource_arn = getattr(resource_metadata, "arn", "")
-            self.region = getattr(resource_metadata, "region", "")
-        else:
-            self.resource_id = ""
-            self.resource_arn = ""
-            self.region = ""
+        self.resource_id = (
+            getattr(resource_metadata, "id", None)
+            or getattr(resource_metadata, "name", None)
+            or ""
+        )
+        self.resource_arn = getattr(resource_metadata, "arn", "")
+        self.region = getattr(resource_metadata, "region", "")
 
 
 @dataclass
@@ -474,7 +469,7 @@ class Check_Report_Azure(Check_Report):
     subscription: str
     location: str
 
-    def __init__(self, metadata: Dict, resource_metadata: Any = None) -> None:
+    def __init__(self, metadata: Dict, resource_metadata: Any) -> None:
         """Initialize the Azure Check's finding information.
 
         Args:
@@ -482,23 +477,11 @@ class Check_Report_Azure(Check_Report):
             resource_metadata: Basic information about the resource. Defaults to None.
         """
         super().__init__(metadata, resource_metadata)
-        self.resource_name = (
-            resource_metadata.name
-            if hasattr(resource_metadata, "name")
-            else (
-                resource_metadata.resource_name
-                if hasattr(resource_metadata, "resource_name")
-                else ""
-            )
+        self.resource_name = getattr(
+            resource_metadata, "name", getattr(resource_metadata, "resource_name", "")
         )
-        self.resource_id = (
-            resource_metadata.id
-            if hasattr(resource_metadata, "id")
-            else (
-                resource_metadata.resource_id
-                if hasattr(resource_metadata, "resource_id")
-                else ""
-            )
+        self.resource_id = getattr(
+            resource_metadata, "id", getattr(resource_metadata, "resource_id", "")
         )
         self.subscription = ""
         self.location = getattr(resource_metadata, "location", "global")
@@ -515,13 +498,13 @@ class Check_Report_GCP(Check_Report):
 
     def __init__(
         self,
-        metadata,
-        resource_metadata,
+        metadata: Dict,
+        resource_metadata: Any,
         location=None,
         resource_name=None,
         resource_id=None,
         project_id=None,
-    ):
+    ) -> None:
         super().__init__(metadata, resource_metadata)
         self.resource_id = (
             resource_id
@@ -547,7 +530,7 @@ class Check_Report_Kubernetes(Check_Report):
     resource_id: str
     namespace: str
 
-    def __init__(self, metadata, resource_metadata):
+    def __init__(self, metadata: Dict, resource_metadata: Any) -> None:
         super().__init__(metadata, resource_metadata)
         self.resource_id = (
             getattr(resource_metadata, "uid", None)

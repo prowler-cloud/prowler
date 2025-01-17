@@ -34,7 +34,7 @@ class entra_conditional_access_policy_require_mfa_for_management_api(Check):
             else:
                 report = Check_Report_Azure(
                     metadata=self.metadata(),
-                    resource_metadata=conditional_access_policies.values(),
+                    resource_metadata=conditional_access_policies,
                 )
                 report.subscription = f"Tenant: {tenant_name}"
                 report.resource_name = "Conditional Access Policy"
