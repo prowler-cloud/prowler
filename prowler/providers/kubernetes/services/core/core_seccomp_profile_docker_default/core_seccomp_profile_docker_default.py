@@ -10,8 +10,8 @@ class core_seccomp_profile_docker_default(Check):
 
             pod_seccomp_correct = (
                 pod.security_context
-                and pod.security_context.seccomp_profile
-                and pod.security_context.seccomp_profile.type == "RuntimeDefault"
+                and pod.security_context["seccomp_profile"]
+                and pod.security_context["seccomp_profile"]["type"] == "RuntimeDefault"
             )
             containers_seccomp_correct = True
 
@@ -19,8 +19,8 @@ class core_seccomp_profile_docker_default(Check):
             for container in pod.containers.values():
                 if not (
                     container.security_context
-                    and container.security_context.seccomp_profile
-                    and container.security_context.seccomp_profile.type
+                    and container.security_context["seccomp_profile"]
+                    and container.security_context["seccomp_profile"]["type"]
                     == "RuntimeDefault"
                 ):
                     containers_seccomp_correct = False
