@@ -57,8 +57,8 @@ class TestGithubMutelist:
 
         mutelist = GithubMutelist(mutelist_content=mutelist_content)
 
-        finding = MagicMock
-        finding.check_metadata = MagicMock
+        finding = MagicMock()
+        finding.check_metadata = MagicMock()
         finding.check_metadata.CheckID = "check_test"
         finding.status = "FAIL"
         finding.resource_name = "test_resource"
@@ -66,7 +66,7 @@ class TestGithubMutelist:
         finding.location = "test-location"
         finding.resource_tags = []
 
-        assert mutelist.is_finding_muted(finding)
+        assert mutelist.is_finding_muted(finding, finding.account_name)
 
     def test_mute_finding(self):
         # Mutelist
