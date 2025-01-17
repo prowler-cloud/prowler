@@ -192,7 +192,7 @@ const SSRDataTable = async ({
     ...findingsData,
     data: expandedFindings,
   };
-
+  console.log(expandedResponse);
   return (
     <DataTable
       columns={ColumnFindings}
