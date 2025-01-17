@@ -13,8 +13,8 @@ class core_minimize_admission_windows_hostprocess_containers(Check):
             for container in pod.containers.values():
                 if (
                     container.security_context
-                    and container.security_context.windows_options
-                    and container.security_context.windows_options.host_process
+                    and container.security_context["windows_options"]
+                    and container.security_context["windows_options"]["host_process"]
                 ):
                     report.status = "FAIL"
                     report.status_extended = f"Pod {pod.name} has the ability to run a Windows HostProcess in container {container.name}."

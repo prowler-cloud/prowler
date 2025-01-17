@@ -13,7 +13,10 @@ class core_minimize_privileged_containers(Check):
             )
 
             for container in pod.containers.values():
-                if container.security_context and container.security_context.privileged:
+                if (
+                    container.security_context
+                    and container.security_context["privileged"]
+                ):
                     report.status = "FAIL"
                     report.status_extended = f"Pod {pod.name} contains a privileged container {container.name}."
                     break

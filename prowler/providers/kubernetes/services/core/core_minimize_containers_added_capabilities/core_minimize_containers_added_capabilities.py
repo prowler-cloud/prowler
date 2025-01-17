@@ -13,8 +13,8 @@ class core_minimize_containers_added_capabilities(Check):
             for container in pod.containers.values():
                 if (
                     container.security_context
-                    and container.security_context.capabilities
-                    and container.security_context.capabilities.add
+                    and container.security_context["capabilities"]
+                    and container.security_context["capabilities"]["add"]
                 ):
                     report.status = "FAIL"
                     report.status_extended = f"Pod {pod.name} has added capabilities in container {container.name}."

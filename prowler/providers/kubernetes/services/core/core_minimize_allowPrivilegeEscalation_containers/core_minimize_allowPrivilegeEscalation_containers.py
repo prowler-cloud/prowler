@@ -15,7 +15,7 @@ class core_minimize_allowPrivilegeEscalation_containers(Check):
             for container in pod.containers.values():
                 if (
                     container.security_context
-                    and container.security_context.allow_privilege_escalation
+                    and container.security_context["allow_privilege_escalation"]
                 ):
                     report.status = "FAIL"
                     report.status_extended = f"Pod {pod.name} allows privilege escalation in container {container.name}."
