@@ -9,7 +9,6 @@ from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
 from prowler.providers.kubernetes.lib.service.service import KubernetesService
 
 
-################## Core ##################
 class Core(KubernetesService):
     def __init__(self, provider: KubernetesProvider):
         super().__init__(provider)

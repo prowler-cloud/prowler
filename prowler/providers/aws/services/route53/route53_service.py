@@ -7,7 +7,6 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################## Route53
 class Route53(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
@@ -137,7 +136,6 @@ class RecordSet(BaseModel):
     region: str
 
 
-################## Route53Domains
 class Route53Domains(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
