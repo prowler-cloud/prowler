@@ -1,6 +1,6 @@
 from asyncio import gather, get_event_loop
 from dataclasses import dataclass
-from typing import Any, List, Optional
+from typing import List, Optional
 from uuid import UUID
 
 from msgraph import GraphServiceClient
@@ -56,11 +56,17 @@ class Entra(AzureService):
                             user.user_principal_name: User(
                                 id=user.id,
                                 name=user.display_name,
-                                authentication_methods=(
-                                    await client.users.by_user_id(
-                                        user.id
-                                    ).authentication.methods.get()
-                                ).value,
+                                authentication_methods=[
+                                    AuthMethod(
+                                        id=auth_method.id,
+                                        type=getattr(auth_method, "odata_type", None),
+                                    )
+                                    for auth_method in (
+                                        await client.users.by_user_id(
+                                            user.id
+                                        ).authentication.methods.get()
+                                    ).value
+                                ],
                             )
                         }
                     )
@@ -309,10 +315,15 @@ class Entra(AzureService):
         return conditional_access_policy
 
 
+class AuthMethod(BaseModel):
+    id: str
+    type: str
+
+
 class User(BaseModel):
     id: str
     name: str
-    authentication_methods: List[Any] = []
+    authentication_methods: List[AuthMethod] = []
 
 
 @dataclass
