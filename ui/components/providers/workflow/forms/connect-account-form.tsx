@@ -22,6 +22,37 @@ import { RadioGroupProvider } from "../../radio-group-provider";
 
 export type FormValues = z.infer<typeof addProviderFormSchema>;
 
+// Helper function for labels and placeholders
+const getProviderFieldDetails = (providerType?: string) => {
+  switch (providerType) {
+    case "aws":
+      return {
+        label: "Account ID",
+        placeholder: "123456...",
+      };
+    case "gcp":
+      return {
+        label: "Project ID",
+        placeholder: "project_id...",
+      };
+    case "azure":
+      return {
+        label: "Subscription ID",
+        placeholder: "fc94207a-d396-4a14-a7fd-12a...",
+      };
+    case "kubernetes":
+      return {
+        label: "Kubernetes Context",
+        placeholder: "context_name....",
+      };
+    default:
+      return {
+        label: "Provider UID",
+        placeholder: "Enter the provider UID",
+      };
+  }
+};
+
 export const ConnectAccountForm = () => {
   const { toast } = useToast();
   const [prevStep, setPrevStep] = useState(1);
@@ -39,6 +70,8 @@ export const ConnectAccountForm = () => {
   });
 
   const providerType = form.watch("providerType");
+  const providerFieldDetails = getProviderFieldDetails(providerType);
+
   const isLoading = form.formState.isSubmitting;
 
   const onSubmitClient = async (values: FormValues) => {
@@ -107,7 +140,12 @@ export const ConnectAccountForm = () => {
     }
   };
 
-  const handleBackStep = () => setPrevStep((prev) => prev - 1);
+  const handleBackStep = () => {
+    setPrevStep((prev) => prev - 1);
+    // Reset the providerUid and providerAlias fields when going back
+    form.setValue("providerUid", "");
+    form.setValue("providerAlias", "");
+  };
 
   useEffect(() => {
     if (providerType) {
@@ -144,9 +182,9 @@ export const ConnectAccountForm = () => {
               control={form.control}
               name="providerUid"
               type="text"
-              label="Provider UID"
+              label={providerFieldDetails.label}
               labelPlacement="inside"
-              placeholder="Enter the provider UID"
+              placeholder={providerFieldDetails.placeholder}
               variant="bordered"
               isRequired
               isInvalid={!!form.formState.errors.providerUid}
