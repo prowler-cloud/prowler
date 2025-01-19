@@ -51,6 +51,11 @@ Detailed documentation at https://docs.prowler.com
             action="store_true",
             help="show Prowler version",
         )
+        self.parser.add_argument(
+            "--no-telemetry",
+            action="store_true",
+            help="Opt out of sending anonymous usage statistics",
+        )
         # Common arguments parser
         self.common_providers_parser = argparse.ArgumentParser(add_help=False)
 
