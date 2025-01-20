@@ -5,6 +5,7 @@ import React from "react";
 
 import { WorkflowAddEditRole } from "@/components/roles/workflow";
 import { NavigationHeader } from "@/components/ui";
+import { PermissionsInfo } from "@/components/roles";
 
 interface RoleLayoutProps {
   children: React.ReactNode;
@@ -27,6 +28,8 @@ export default function RoleLayout({ children }: RoleLayoutProps) {
           {children}
         </div>
       </div>
+      <Spacer y={16} />
+      <PermissionsInfo />
     </>
   );
 }

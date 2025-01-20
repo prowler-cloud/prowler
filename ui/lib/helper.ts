@@ -1,5 +1,5 @@
 import { getTask } from "@/actions/task";
-import { MetaDataProps } from "@/types";
+import { MetaDataProps, PermissionInfo } from "@/types";
 
 export async function checkTaskStatus(
   taskId: string,
@@ -182,4 +182,46 @@ export const regions = [
   { key: "southamerica-east1", label: "GCP - South America East (São Paulo)" },
   { key: "us-west2", label: "GCP - US West (Los Angeles)" },
   { key: "us-east4", label: "GCP - US East (Northern Virginia)" },
+];
+
+export const permissionsData: PermissionInfo[] = [
+  {
+    field: "manage_users",
+    label: "Invite and Manage Users",
+    description: "Allows inviting new users and managing existing user access",
+  },
+  {
+    field: "manage_account",
+    label: "Manage Account",
+    description: "Provides access to account settings and configuration",
+  },
+  {
+    field: "unlimited_visibility",
+    label: "Unlimited Visibility",
+    description:
+      "Provides complete visibility across all resources and results",
+  },
+  {
+    field: "manage_providers",
+    label: "Manage Cloud Providers",
+    description:
+      "Permits configuration and management of cloud provider connections",
+  },
+  // {
+  //   field: "manage_integrations",
+  //   label: "Manage Integrations",
+  //   description:
+  //     "Controls the setup and management of third-party integrations",
+  // },
+  {
+    field: "manage_scans",
+    label: "Manage Scans",
+    description: "Allows initiating and configuring security scans",
+  },
+
+  {
+    field: "manage_billing",
+    label: "Manage Billing",
+    description: "Provides access to billing settings and invoices",
+  },
 ];

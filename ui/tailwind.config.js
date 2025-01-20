@@ -122,6 +122,7 @@ module.exports = {
           "0px -6px 24px #FFFFFF, 0px 7px 16px rgba(104, 132, 157, 0.5)",
         up: "0.3rem 0.3rem 0.6rem #c8d0e7, -0.2rem -0.2rem 0.5rem #fff",
         down: "inset 0.2rem 0.2rem 0.5rem #c8d0e7, inset -0.2rem -0.2rem 0.5rem #fff",
+        box: "rgba(0, 0, 0, 0.1) 0px 4px 8px;",
       },
       animation: {
         "fade-in": "fade-in 200ms ease-out 0s 1 normal forwards running",
