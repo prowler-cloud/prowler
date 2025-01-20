@@ -99,7 +99,7 @@ export const addRole = async (formData: FormData) => {
     },
   };
 
-  // Conditionally include manage_account and manage_billing for cloud environment
+  // Conditionally include manage_billing for cloud environment
   if (process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true") {
     payload.data.attributes.manage_billing =
       formData.get("manage_billing") === "true";
@@ -166,7 +166,7 @@ export const updateRole = async (formData: FormData, roleId: string) => {
     },
   };
 
-  // Conditionally include manage_account and manage_billing for cloud environments
+  // Conditionally include manage_billing for cloud environments
   if (process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true") {
     payload.data.attributes.manage_billing =
       formData.get("manage_billing") === "true";
