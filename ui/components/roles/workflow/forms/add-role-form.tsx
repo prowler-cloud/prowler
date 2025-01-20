@@ -38,7 +38,6 @@ export const AddRoleForm = ({
       unlimited_visibility: false,
       groups: [],
       ...(process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true" && {
-        manage_account: false,
         manage_billing: false,
       }),
     },
@@ -85,6 +84,7 @@ export const AddRoleForm = ({
     formData.append("manage_users", String(values.manage_users));
     formData.append("manage_providers", String(values.manage_providers));
     formData.append("manage_scans", String(values.manage_scans));
+    formData.append("manage_account", String(values.manage_account));
     formData.append(
       "unlimited_visibility",
       String(values.unlimited_visibility),
@@ -92,7 +92,6 @@ export const AddRoleForm = ({
 
     // Conditionally append manage_account and manage_billing
     if (process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true") {
-      formData.append("manage_account", String(values.manage_account));
       formData.append("manage_billing", String(values.manage_billing));
     }
 
@@ -142,12 +141,10 @@ export const AddRoleForm = ({
   const permissions = [
     { field: "manage_users", label: "Invite and Manage Users" },
     ...(process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true"
-      ? [
-          { field: "manage_account", label: "Manage Account" },
-          { field: "manage_billing", label: "Manage Billing" },
-        ]
+      ? [{ field: "manage_billing", label: "Manage Billing" }]
       : []),
     { field: "manage_providers", label: "Manage Cloud Providers" },
+    { field: "manage_account", label: "Manage Account" },
     // TODO: Add back when we have integrations ready
     // { field: "manage_integrations", label: "Manage Integrations" },
     { field: "manage_scans", label: "Manage Scans" },

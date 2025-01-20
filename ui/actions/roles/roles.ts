@@ -90,6 +90,7 @@ export const addRole = async (formData: FormData) => {
         manage_users: formData.get("manage_users") === "true",
         manage_providers: formData.get("manage_providers") === "true",
         manage_scans: formData.get("manage_scans") === "true",
+        manage_account: formData.get("manage_account") === "true",
         // TODO: Add back when we have integrations ready
         // manage_integrations: formData.get("manage_integrations") === "true",
         unlimited_visibility: formData.get("unlimited_visibility") === "true",
@@ -98,10 +99,8 @@ export const addRole = async (formData: FormData) => {
     },
   };
 
-  // Conditionally include manage_account and manage_billing for cloud environment
+  // Conditionally include manage_billing for cloud environment
   if (process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true") {
-    payload.data.attributes.manage_account =
-      formData.get("manage_account") === "true";
     payload.data.attributes.manage_billing =
       formData.get("manage_billing") === "true";
   }
@@ -157,6 +156,7 @@ export const updateRole = async (formData: FormData, roleId: string) => {
         ...(name && { name }), // Include name only if provided
         manage_users: formData.get("manage_users") === "true",
         manage_providers: formData.get("manage_providers") === "true",
+        manage_account: formData.get("manage_account") === "true",
         manage_scans: formData.get("manage_scans") === "true",
         // TODO: Add back when we have integrations ready
         // manage_integrations: formData.get("manage_integrations") === "true",
@@ -166,10 +166,8 @@ export const updateRole = async (formData: FormData, roleId: string) => {
     },
   };
 
-  // Conditionally include manage_account and manage_billing for cloud environments
+  // Conditionally include manage_billing for cloud environments
   if (process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true") {
-    payload.data.attributes.manage_account =
-      formData.get("manage_account") === "true";
     payload.data.attributes.manage_billing =
       formData.get("manage_billing") === "true";
   }
