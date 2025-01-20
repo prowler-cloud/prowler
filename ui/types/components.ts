@@ -26,6 +26,11 @@ export type NextUIColors =
   | "danger"
   | "default";
 
+export interface PermissionInfo {
+  field: string;
+  label: string;
+  description: string;
+}
 export interface FindingsByStatusData {
   data: {
     type: "findings-overview";
