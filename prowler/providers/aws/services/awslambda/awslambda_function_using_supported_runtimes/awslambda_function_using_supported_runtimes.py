@@ -33,9 +33,7 @@ class awslambda_function_using_supported_runtimes(Check):
         findings = []
         for function in awslambda_client.functions.values():
             if function.runtime:
-                report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=function
-                )
+                report = Check_Report_AWS(metadata=self.metadata(), resource=function)
 
                 if function.runtime in awslambda_client.audit_config.get(
                     "obsolete_lambda_runtimes", default_obsolete_lambda_runtimes

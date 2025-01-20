@@ -17,7 +17,7 @@ class monitor_storage_account_with_activity_logs_cmk_encrypted(Check):
                 ]:
                     if storage_account.name == diagnostic_setting.storage_account_name:
                         report = Check_Report_Azure(
-                            metadata=self.metadata(), resource_metadata=storage_account
+                            metadata=self.metadata(), resource=storage_account
                         )
                         report.subscription = subscription_name
                         if storage_account.encryption_type == "Microsoft.Storage":

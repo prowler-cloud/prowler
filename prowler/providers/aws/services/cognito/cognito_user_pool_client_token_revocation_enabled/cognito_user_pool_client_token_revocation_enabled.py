@@ -8,7 +8,7 @@ class cognito_user_pool_client_token_revocation_enabled(Check):
         for pool in cognito_idp_client.user_pools.values():
             for pool_client in pool.user_pool_clients.values():
                 report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=pool_client
+                    metadata=self.metadata(), resource=pool_client
                 )
                 report.resource_tags = pool.tags
                 if pool_client.enable_token_revocation:

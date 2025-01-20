@@ -14,7 +14,7 @@ class aisearch_service_not_publicly_accessible(Check):
         ) in aisearch_client.aisearch_services.items():
             for aisearch_service in aisearch_services.values():
                 report = Check_Report_Azure(
-                    metadata=self.metadata(), resource_metadata=aisearch_service
+                    metadata=self.metadata(), resource=aisearch_service
                 )
                 report.subscription = subscription_name
                 report.status = "FAIL"

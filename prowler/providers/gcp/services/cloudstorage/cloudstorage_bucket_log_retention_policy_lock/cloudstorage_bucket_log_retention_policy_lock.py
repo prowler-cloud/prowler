@@ -15,9 +15,7 @@ class cloudstorage_bucket_log_retention_policy_lock(Check):
                 log_buckets.append(sink.destination.split("/")[-1])
         for bucket in cloudstorage_client.buckets:
             if bucket.name in log_buckets:
-                report = Check_Report_GCP(
-                    metadata=self.metadata(), resource_metadata=bucket
-                )
+                report = Check_Report_GCP(metadata=self.metadata(), resource=bucket)
                 report.status = "FAIL"
                 report.status_extended = (
                     f"Log Sink Bucket {bucket.name} has no Retention Policy."

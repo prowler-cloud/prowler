@@ -6,9 +6,7 @@ class neptune_cluster_snapshot_encrypted(Check):
     def execute(self):
         findings = []
         for snapshot in neptune_client.db_cluster_snapshots:
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=snapshot
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=snapshot)
             report.status = "FAIL"
             report.status_extended = (
                 f"Neptune Cluster Snapshot {snapshot.id} is not encrypted at rest."

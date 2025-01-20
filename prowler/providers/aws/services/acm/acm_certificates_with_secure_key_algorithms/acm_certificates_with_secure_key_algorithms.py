@@ -8,7 +8,7 @@ class acm_certificates_with_secure_key_algorithms(Check):
         for certificate in acm_client.certificates.values():
             if certificate.in_use or acm_client.provider.scan_unused_services:
                 report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=certificate
+                    metadata=self.metadata(), resource=certificate
                 )
 
                 report.status = "PASS"

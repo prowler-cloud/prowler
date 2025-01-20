@@ -7,9 +7,7 @@ class lightsail_static_ip_unused(Check):
         findings = []
 
         for static_ip in lightsail_client.static_ips.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=static_ip
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=static_ip)
             report.status = "FAIL"
             report.status_extended = (
                 f"Static IP '{static_ip.name}' is not associated with any instance."

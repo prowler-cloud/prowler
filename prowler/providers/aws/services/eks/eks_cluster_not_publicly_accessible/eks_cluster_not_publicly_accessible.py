@@ -6,9 +6,7 @@ class eks_cluster_not_publicly_accessible(Check):
     def execute(self):
         findings = []
         for cluster in eks_client.clusters:
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=cluster
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=cluster)
             report.status = "PASS"
             report.status_extended = (
                 f"EKS cluster {cluster.name} is not publicly accessible."

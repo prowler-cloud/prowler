@@ -8,7 +8,7 @@ class iam_policy_cloudshell_admin_not_attached(Check):
         if iam_client.entities_attached_to_cloudshell_policy:
             report = Check_Report_AWS(
                 metadata=self.metadata(),
-                resource_metadata=iam_client.entities_attached_to_cloudshell_policy,
+                resource=iam_client.entities_attached_to_cloudshell_policy,
             )
             report.region = iam_client.region
             report.resource_id = iam_client.audited_account

@@ -9,7 +9,7 @@ class appinsights_ensure_is_configured(Check):
         findings = []
 
         for subscription_name, components in appinsights_client.components.items():
-            report = Check_Report_Azure(metadata=self.metadata(), resource_metadata={})
+            report = Check_Report_Azure(metadata=self.metadata(), resource={})
             report.status = "PASS"
             report.subscription = subscription_name
             report.resource_name = "AppInsights"

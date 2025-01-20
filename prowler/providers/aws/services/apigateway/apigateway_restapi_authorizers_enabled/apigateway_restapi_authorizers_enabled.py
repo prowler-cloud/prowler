@@ -8,9 +8,7 @@ class apigateway_restapi_authorizers_enabled(Check):
     def execute(self):
         findings = []
         for rest_api in apigateway_client.rest_apis:
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=rest_api
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=rest_api)
             report.resource_id = rest_api.name
 
             # it there are not authorizers at api level and resources without methods (default case) ->

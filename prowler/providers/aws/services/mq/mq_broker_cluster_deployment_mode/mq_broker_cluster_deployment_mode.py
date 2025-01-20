@@ -20,9 +20,7 @@ class mq_broker_cluster_deployment_mode(Check):
         findings = []
         for broker in mq_client.brokers.values():
             if broker.engine_type == EngineType.RABBITMQ:
-                report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=broker
-                )
+                report = Check_Report_AWS(metadata=self.metadata(), resource=broker)
                 report.status = "FAIL"
                 report.status_extended = f"MQ RabbitMQ Broker {broker.name} does not have a cluster deployment mode."
                 if broker.deployment_mode == DeploymentMode.CLUSTER_MULTI_AZ:

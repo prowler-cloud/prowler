@@ -7,9 +7,7 @@ class ecr_repositories_scan_images_on_push_enabled(Check):
         findings = []
         for registry in ecr_client.registries.values():
             for repository in registry.repositories:
-                report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=repository
-                )
+                report = Check_Report_AWS(metadata=self.metadata(), resource=repository)
                 report.status = "PASS"
                 report.status_extended = (
                     f"ECR repository {repository.name} has scan on push enabled."

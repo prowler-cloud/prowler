@@ -8,9 +8,7 @@ class shield_advanced_protection_in_associated_elastic_ips(Check):
         findings = []
         if shield_client.enabled:
             for elastic_ip in ec2_client.elastic_ips:
-                report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=elastic_ip
-                )
+                report = Check_Report_AWS(metadata=self.metadata(), resource=elastic_ip)
                 report.region = shield_client.region
                 report.resource_id = elastic_ip.allocation_id
                 report.status = "FAIL"

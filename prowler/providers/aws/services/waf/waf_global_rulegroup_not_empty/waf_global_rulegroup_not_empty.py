@@ -6,9 +6,7 @@ class waf_global_rulegroup_not_empty(Check):
     def execute(self):
         findings = []
         for rule_group in waf_client.rule_groups.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=rule_group
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=rule_group)
             report.status = "FAIL"
             report.status_extended = (
                 f"AWS WAF Global Rule Group {rule_group.name} does not have any rules."

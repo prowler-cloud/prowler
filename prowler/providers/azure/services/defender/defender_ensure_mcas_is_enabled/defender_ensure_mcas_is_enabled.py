@@ -11,9 +11,7 @@ class defender_ensure_mcas_is_enabled(Check):
             settings,
         ) in defender_client.settings.items():
             if "MCAS" not in settings:
-                report = Check_Report_Azure(
-                    metadata=self.metadata(), resource_metadata={}
-                )
+                report = Check_Report_Azure(metadata=self.metadata(), resource={})
                 report.subscription = subscription_name
                 report.resource_name = "MCAS"
                 report.resource_id = "MCAS"
@@ -21,7 +19,7 @@ class defender_ensure_mcas_is_enabled(Check):
                 report.status_extended = f"Microsoft Defender for Cloud Apps not exists for subscription {subscription_name}."
             else:
                 report = Check_Report_Azure(
-                    metadata=self.metadata(), resource_metadata=settings["MCAS"]
+                    metadata=self.metadata(), resource=settings["MCAS"]
                 )
                 report.subscription = subscription_name
                 report.resource_name = "MCAS"

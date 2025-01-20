@@ -9,7 +9,7 @@ class storage_ensure_soft_delete_is_enabled(Check):
             for storage_account in storage_accounts:
                 if storage_account.blob_properties:
                     report = Check_Report_Azure(
-                        metadata=self.metadata(), resource_metadata=storage_account
+                        metadata=self.metadata(), resource=storage_account
                     )
                     report.subscription = subscription
                     if getattr(

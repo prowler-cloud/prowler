@@ -11,9 +11,7 @@ class directoryservice_directory_snapshots_limit(Check):
     def execute(self):
         findings = []
         for directory in directoryservice_client.directories.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=directory
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=directory)
             if directory.snapshots_limits:
                 if directory.snapshots_limits.manual_snapshots_limit_reached:
                     report.status = "FAIL"

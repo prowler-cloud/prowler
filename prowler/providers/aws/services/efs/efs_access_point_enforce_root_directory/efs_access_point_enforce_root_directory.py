@@ -7,9 +7,7 @@ class efs_access_point_enforce_root_directory(Check):
         findings = []
         for fs in efs_client.filesystems.values():
             if fs.access_points:
-                report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=fs
-                )
+                report = Check_Report_AWS(metadata=self.metadata(), resource=fs)
                 report.status = "PASS"
                 report.status_extended = f"EFS {fs.id} does not have any access point allowing access to the root directory."
                 access_points = []

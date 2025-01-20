@@ -1,5 +1,5 @@
 import socket
-from typing import Any, List, Optional
+from typing import List, Optional
 
 from pydantic import BaseModel
 
@@ -60,7 +60,11 @@ class Core(KubernetesService):
                                 if container.env
                                 else None
                             ),
-                            security_context=container.security_context,
+                            security_context=(
+                                container.security_context.to_dict()
+                                if container.security_context
+                                else {}
+                            ),
                         )
                     self.pods[pod.metadata.uid] = Pod(
                         name=pod.metadata.name,
@@ -76,7 +80,11 @@ class Core(KubernetesService):
                         host_pid=pod.spec.host_pid,
                         host_ipc=pod.spec.host_ipc,
                         host_network=pod.spec.host_network,
-                        security_context=pod.spec.security_context,
+                        security_context=(
+                            pod.spec.security_context.to_dict()
+                            if pod.spec.security_context
+                            else {}
+                        ),
                         containers=pod_containers,
                     )
         except Exception as error:
@@ -147,7 +155,7 @@ class Container(BaseModel):
     command: Optional[List[str]]
     ports: Optional[List[dict]]
     env: Optional[List[dict]]
-    security_context: Any
+    security_context: dict
 
 
 class Pod(BaseModel):
@@ -164,7 +172,7 @@ class Pod(BaseModel):
     host_pid: Optional[str]
     host_ipc: Optional[str]
     host_network: Optional[str]
-    security_context: Any
+    security_context: Optional[dict]
     containers: Optional[dict]
 
 

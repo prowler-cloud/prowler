@@ -8,9 +8,7 @@ class cloudstorage_bucket_public_access(Check):
     def execute(self) -> Check_Report_GCP:
         findings = []
         for bucket in cloudstorage_client.buckets:
-            report = Check_Report_GCP(
-                metadata=self.metadata(), resource_metadata=bucket
-            )
+            report = Check_Report_GCP(metadata=self.metadata(), resource=bucket)
             report.status = "PASS"
             report.status_extended = f"Bucket {bucket.name} is not publicly accessible."
             if bucket.public:

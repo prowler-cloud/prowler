@@ -10,7 +10,7 @@ class organizations_account_part_of_organizations(Check):
         if organizations_client.organization:
             report = Check_Report_AWS(
                 metadata=self.metadata(),
-                resource_metadata=organizations_client.organization,
+                resource=organizations_client.organization,
             )
             if organizations_client.organization.status == "ACTIVE":
                 report.status = "PASS"

@@ -7,7 +7,7 @@ class backup_vaults_exist(Check):
         findings = []
         if backup_client.backup_vaults is not None:
             report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=backup_client.backup_vaults
+                metadata=self.metadata(), resource=backup_client.backup_vaults
             )
             report.resource_arn = backup_client.backup_vault_arn_template
             report.resource_id = backup_client.audited_account
@@ -18,7 +18,7 @@ class backup_vaults_exist(Check):
             if backup_client.backup_vaults:
                 report = Check_Report_AWS(
                     metadata=self.metadata(),
-                    resource_metadata=backup_client.backup_vaults[0],
+                    resource=backup_client.backup_vaults[0],
                 )
                 report.status = "PASS"
                 report.status_extended = f"At least one backup vault exists: {backup_client.backup_vaults[0].name}."

@@ -7,9 +7,7 @@ class lightsail_database_public(Check):
         findings = []
 
         for database in lightsail_client.databases.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=database
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=database)
             report.status = "FAIL"
             report.status_extended = f"Database '{database.name}' is public."
 

@@ -9,7 +9,7 @@ class shield_advanced_protection_in_route53_hosted_zones(Check):
         if shield_client.enabled:
             for hosted_zone in route53_client.hosted_zones.values():
                 report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=hosted_zone
+                    metadata=self.metadata(), resource=hosted_zone
                 )
                 report.region = shield_client.region
                 report.status = "FAIL"

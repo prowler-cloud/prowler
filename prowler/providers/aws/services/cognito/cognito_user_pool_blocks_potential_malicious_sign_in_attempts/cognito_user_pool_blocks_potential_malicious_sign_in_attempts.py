@@ -6,7 +6,7 @@ class cognito_user_pool_blocks_potential_malicious_sign_in_attempts(Check):
     def execute(self):
         findings = []
         for pool in cognito_idp_client.user_pools.values():
-            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=pool)
+            report = Check_Report_AWS(metadata=self.metadata(), resource=pool)
             if pool.advanced_security_mode == "ENFORCED" and all(
                 [
                     pool.risk_configuration.account_takeover_risk_configuration.low_action

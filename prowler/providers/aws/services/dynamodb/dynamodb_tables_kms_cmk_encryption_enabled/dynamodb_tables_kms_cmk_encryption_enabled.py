@@ -6,7 +6,7 @@ class dynamodb_tables_kms_cmk_encryption_enabled(Check):
     def execute(self):
         findings = []
         for table in dynamodb_client.tables.values():
-            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=table)
+            report = Check_Report_AWS(metadata=self.metadata(), resource=table)
             report.status = "FAIL"
             report.status_extended = (
                 f"DynamoDB table {table.name} is using DEFAULT encryption."

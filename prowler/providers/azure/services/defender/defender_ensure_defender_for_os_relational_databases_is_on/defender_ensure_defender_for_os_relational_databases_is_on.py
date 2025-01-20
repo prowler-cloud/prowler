@@ -9,7 +9,7 @@ class defender_ensure_defender_for_os_relational_databases_is_on(Check):
             if "OpenSourceRelationalDatabases" in pricings:
                 report = Check_Report_Azure(
                     metadata=self.metadata(),
-                    resource_metadata=pricings["OpenSourceRelationalDatabases"],
+                    resource=pricings["OpenSourceRelationalDatabases"],
                 )
                 report.subscription = subscription
                 report.resource_name = "Defender plan Open-Source Relational Databases"

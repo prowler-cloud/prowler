@@ -15,7 +15,7 @@ class appstream_fleet_session_idle_disconnect_timeout(Check):
 
         findings = []
         for fleet in appstream_client.fleets:
-            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=fleet)
+            report = Check_Report_AWS(metadata=self.metadata(), resource=fleet)
 
             if (
                 fleet.idle_disconnect_timeout_in_seconds

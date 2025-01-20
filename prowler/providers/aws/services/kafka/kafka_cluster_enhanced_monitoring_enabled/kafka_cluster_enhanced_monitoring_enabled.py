@@ -7,9 +7,7 @@ class kafka_cluster_enhanced_monitoring_enabled(Check):
         findings = []
 
         for cluster in kafka_client.clusters.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=cluster
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=cluster)
             report.status = "PASS"
             report.status_extended = (
                 f"Kafka cluster '{cluster.name}' has enhanced monitoring enabled."

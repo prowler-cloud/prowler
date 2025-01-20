@@ -8,7 +8,7 @@ class iam_user_administrator_access_policy(Check):
     def execute(self) -> List[Check_Report_AWS]:
         findings = []
         for user in iam_client.users:
-            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=user)
+            report = Check_Report_AWS(metadata=self.metadata(), resource=user)
             report.region = iam_client.region
             report.status = "PASS"
             report.status_extended = (

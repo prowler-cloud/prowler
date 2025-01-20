@@ -9,9 +9,7 @@ class iam_no_expired_server_certificates_stored(Check):
         findings = []
 
         for certificate in iam_client.server_certificates:
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=certificate
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=certificate)
             report.region = iam_client.region
             expiration_days = (datetime.now(timezone.utc) - certificate.expiration).days
             if expiration_days >= 0:

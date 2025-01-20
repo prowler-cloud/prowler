@@ -8,9 +8,7 @@ class workspaces_volume_encryption_enabled(Check):
     def execute(self):
         findings = []
         for workspace in workspaces_client.workspaces:
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=workspace
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=workspace)
             report.status = "PASS"
             report.status_extended = f"WorkSpaces workspace {workspace.id} root and user volumes are encrypted."
             if not workspace.user_volume_encryption_enabled:

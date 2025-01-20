@@ -9,7 +9,7 @@ class eventbridge_bus_exposed(Check):
     def execute(self):
         findings = []
         for bus in eventbridge_client.buses.values():
-            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=bus)
+            report = Check_Report_AWS(metadata=self.metadata(), resource=bus)
             report.status = "PASS"
             report.status_extended = (
                 f"EventBridge event bus {bus.name} is not exposed to everyone."

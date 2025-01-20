@@ -7,9 +7,7 @@ class vpc_subnet_separate_private_public(Check):
         findings = []
         for vpc in vpc_client.vpcs.values():
             if vpc_client.provider.scan_unused_services or vpc.in_use:
-                report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=vpc
-                )
+                report = Check_Report_AWS(metadata=self.metadata(), resource=vpc)
                 report.status = "FAIL"
                 report.status_extended = (
                     f"VPC {vpc.name if vpc.name else vpc.id} has no subnets."

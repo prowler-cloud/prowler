@@ -7,9 +7,7 @@ class cosmosdb_account_firewall_use_selected_networks(Check):
         findings = []
         for subscription, accounts in cosmosdb_client.accounts.items():
             for account in accounts:
-                report = Check_Report_Azure(
-                    metadata=self.metadata(), resource_metadata=account
-                )
+                report = Check_Report_Azure(metadata=self.metadata(), resource=account)
                 report.subscription = subscription
                 report.status = "FAIL"
                 report.status_extended = f"CosmosDB account {account.name} from subscription {subscription} has firewall rules that allow access from all networks."

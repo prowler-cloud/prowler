@@ -8,7 +8,7 @@ class ec2_networkacl_unused(Check):
         for arn, network_acl in ec2_client.network_acls.items():
             if not network_acl.default:
                 report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=network_acl
+                    metadata=self.metadata(), resource=network_acl
                 )
 
                 if not network_acl.in_use:

@@ -10,9 +10,7 @@ class codebuild_project_source_repo_url_no_sensitive_credentials(Check):
         token_pattern = re.compile(r"https://x-token-auth:[^@]+@bitbucket\.org/.+\.git")
         user_pass_pattern = re.compile(r"https://[^:]+:[^@]+@bitbucket\.org/.+\.git")
         for project in codebuild_client.projects.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=project
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=project)
             report.status = "PASS"
             report.status_extended = f"CodeBuild project {project.name} does not contain sensitive credentials in any source repository URLs."
             secrets_found = []

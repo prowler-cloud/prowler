@@ -12,7 +12,7 @@ class keyvault_non_rbac_secret_expiration_set(Check):
                     and keyvault.secrets
                 ):
                     report = Check_Report_Azure(
-                        metadata=self.metadata(), resource_metadata=keyvault
+                        metadata=self.metadata(), resource=keyvault
                     )
                     report.subscription = subscription
                     report.status = "PASS"

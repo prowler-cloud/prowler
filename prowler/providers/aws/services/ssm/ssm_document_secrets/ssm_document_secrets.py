@@ -12,9 +12,7 @@ class ssm_document_secrets(Check):
             "secrets_ignore_patterns", []
         )
         for document in ssm_client.documents.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=document
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=document)
             report.status = "PASS"
             report.status_extended = (
                 f"No secrets found in SSM Document {document.name}."

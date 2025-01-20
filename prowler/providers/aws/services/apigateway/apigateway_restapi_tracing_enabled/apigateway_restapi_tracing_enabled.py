@@ -9,9 +9,7 @@ class apigateway_restapi_tracing_enabled(Check):
         findings = []
         for rest_api in apigateway_client.rest_apis:
             for stage in rest_api.stages:
-                report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=stage
-                )
+                report = Check_Report_AWS(metadata=self.metadata(), resource=stage)
                 report.region = rest_api.region
                 report.resource_id = rest_api.name
                 report.status = "FAIL"

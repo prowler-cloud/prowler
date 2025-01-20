@@ -17,9 +17,7 @@ class cloudsql_instance_postgres_log_min_messages_flag(Check):
         findings = []
         for instance in cloudsql_client.instances:
             if "POSTGRES" in instance.version:
-                report = Check_Report_GCP(
-                    metadata=self.metadata(), resource_metadata=instance
-                )
+                report = Check_Report_GCP(metadata=self.metadata(), resource=instance)
                 report.status = "FAIL"
                 report.status_extended = f"PostgreSQL Instance {instance.name} does not have 'log_min_messages' flag set."
 

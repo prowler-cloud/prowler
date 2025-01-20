@@ -8,9 +8,7 @@ class networkfirewall_policy_rule_group_associated(Check):
     def execute(self):
         findings = []
         for firewall in networkfirewall_client.network_firewalls.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=firewall
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=firewall)
             report.status = "PASS"
             report.status_extended = f"Network Firewall {firewall.name} policy has at least one rule group associated."
 

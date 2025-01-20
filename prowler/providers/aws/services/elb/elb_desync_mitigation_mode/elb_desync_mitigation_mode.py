@@ -6,7 +6,7 @@ class elb_desync_mitigation_mode(Check):
     def execute(self):
         findings = []
         for lb in elb_client.loadbalancers.values():
-            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=lb)
+            report = Check_Report_AWS(metadata=self.metadata(), resource=lb)
             if (
                 lb.desync_mitigation_mode == "defensive"
                 or lb.desync_mitigation_mode == "strictest"

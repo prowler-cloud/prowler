@@ -8,9 +8,7 @@ class shield_advanced_protection_in_classic_load_balancers(Check):
         findings = []
         if shield_client.enabled:
             for lb in elb_client.loadbalancers.values():
-                report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=lb
-                )
+                report = Check_Report_AWS(metadata=self.metadata(), resource=lb)
                 report.region = shield_client.region
                 report.status = "FAIL"
                 report.status_extended = (

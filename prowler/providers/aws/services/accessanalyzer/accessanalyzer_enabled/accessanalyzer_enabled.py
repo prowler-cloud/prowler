@@ -8,9 +8,7 @@ class accessanalyzer_enabled(Check):
     def execute(self):
         findings = []
         for analyzer in accessanalyzer_client.analyzers:
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=analyzer
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=analyzer)
             if analyzer.status == "ACTIVE":
                 report.status = "PASS"
                 report.status_extended = (

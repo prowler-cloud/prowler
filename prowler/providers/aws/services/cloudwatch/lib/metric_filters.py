@@ -23,7 +23,7 @@ def check_cloudwatch_log_metric_filter(
                 metric_filter_pattern, metric_filter.pattern, flags=re.DOTALL
             ):
                 report = Check_Report_AWS(
-                    metadata=metadata, resource_metadata=metric_filter.log_group
+                    metadata=metadata, resource=metric_filter.log_group
                 )
                 report.status = "FAIL"
                 report.status_extended = f"CloudWatch log group {metric_filter.log_group.name} found with metric filter {metric_filter.name} but no alarms associated."

@@ -11,9 +11,7 @@ class iam_policy_no_full_access_to_kms(Check):
         for policy in iam_client.policies:
             # Check only custom policies
             if policy.type == "Custom":
-                report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=policy
-                )
+                report = Check_Report_AWS(metadata=self.metadata(), resource=policy)
                 report.region = iam_client.region
                 report.status = "PASS"
                 report.status_extended = f"Custom Policy {policy.name} does not allow '{critical_service}:*' privileges."

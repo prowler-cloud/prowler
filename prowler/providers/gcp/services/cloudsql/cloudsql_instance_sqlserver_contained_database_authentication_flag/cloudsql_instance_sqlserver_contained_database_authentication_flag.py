@@ -7,9 +7,7 @@ class cloudsql_instance_sqlserver_contained_database_authentication_flag(Check):
         findings = []
         for instance in cloudsql_client.instances:
             if "SQLSERVER" in instance.version:
-                report = Check_Report_GCP(
-                    metadata=self.metadata(), resource_metadata=instance
-                )
+                report = Check_Report_GCP(metadata=self.metadata(), resource=instance)
                 report.status = "PASS"
                 report.status_extended = f"SQL Server Instance {instance.name} has 'contained database authentication' flag set to 'off'."
                 for flag in instance.flags:

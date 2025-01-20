@@ -8,9 +8,7 @@ class apiserver_no_token_auth_file(Check):
     def execute(self) -> Check_Report_Kubernetes:
         findings = []
         for pod in apiserver_client.apiserver_pods:
-            report = Check_Report_Kubernetes(
-                metadata=self.metadata(), resource_metadata=pod
-            )
+            report = Check_Report_Kubernetes(metadata=self.metadata(), resource=pod)
             report.status = "PASS"
             report.status_extended = (
                 f"API Server does not have token-auth-file enabled in pod {pod.name}."

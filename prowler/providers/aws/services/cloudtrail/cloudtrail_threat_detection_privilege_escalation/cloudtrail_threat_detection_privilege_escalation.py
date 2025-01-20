@@ -123,7 +123,7 @@ class cloudtrail_threat_detection_privilege_escalation(Check):
             if len(actions) / len(privilege_escalation_actions) > threshold:
                 found_potential_privilege_escalation = True
                 report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=cloudtrail_client.trails
+                    metadata=self.metadata(), resource=cloudtrail_client.trails
                 )
                 report.region = cloudtrail_client.region
                 report.resource_id = aws_identity_arn.split("/")[-1]
@@ -133,7 +133,7 @@ class cloudtrail_threat_detection_privilege_escalation(Check):
                 findings.append(report)
         if not found_potential_privilege_escalation:
             report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=cloudtrail_client.trails
+                metadata=self.metadata(), resource=cloudtrail_client.trails
             )
             report.region = cloudtrail_client.region
             report.resource_id = cloudtrail_client.audited_account

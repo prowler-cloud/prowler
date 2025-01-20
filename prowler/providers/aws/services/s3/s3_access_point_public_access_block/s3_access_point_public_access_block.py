@@ -6,9 +6,7 @@ class s3_access_point_public_access_block(Check):
     def execute(self):
         findings = []
         for access_point in s3control_client.access_points.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=access_point
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=access_point)
             report.status = "PASS"
             report.status_extended = f"Access Point {access_point.name} of bucket {access_point.bucket} does have Public Access Block enabled."
 

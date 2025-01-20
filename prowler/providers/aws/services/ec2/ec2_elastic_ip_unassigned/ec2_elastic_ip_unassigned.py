@@ -6,7 +6,7 @@ class ec2_elastic_ip_unassigned(Check):
     def execute(self):
         findings = []
         for eip in ec2_client.elastic_ips:
-            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=eip)
+            report = Check_Report_AWS(metadata=self.metadata(), resource=eip)
             if eip.public_ip:
                 report.resource_id = eip.public_ip
                 report.status = "FAIL"

@@ -11,7 +11,7 @@ class shield_advanced_protection_in_cloudfront_distributions(Check):
         if shield_client.enabled:
             for distribution in cloudfront_client.distributions.values():
                 report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=distribution
+                    metadata=self.metadata(), resource=distribution
                 )
                 report.region = shield_client.region
                 report.status = "FAIL"

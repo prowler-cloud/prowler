@@ -6,9 +6,7 @@ class ecs_service_no_assign_public_ip(Check):
     def execute(self):
         findings = []
         for service in ecs_client.services.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=service
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=service)
             report.status = "PASS"
             report.status_extended = f"ECS Service {service.name} does not have automatic public IP assignment."
 

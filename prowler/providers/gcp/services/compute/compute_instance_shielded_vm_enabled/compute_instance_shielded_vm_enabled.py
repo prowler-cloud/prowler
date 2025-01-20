@@ -6,9 +6,7 @@ class compute_instance_shielded_vm_enabled(Check):
     def execute(self) -> Check_Report_GCP:
         findings = []
         for instance in compute_client.instances:
-            report = Check_Report_GCP(
-                metadata=self.metadata(), resource_metadata=instance
-            )
+            report = Check_Report_GCP(metadata=self.metadata(), resource=instance)
             report.status = "PASS"
             report.status_extended = f"VM Instance {instance.name} has vTPM or Integrity Monitoring set to on."
             if (

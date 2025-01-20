@@ -8,9 +8,7 @@ class keyvault_logging_enabled(Check):
 
         for subscription_name, key_vaults in keyvault_client.key_vaults.items():
             for keyvault in key_vaults:
-                report = Check_Report_Azure(
-                    metadata=self.metadata(), resource_metadata=keyvault
-                )
+                report = Check_Report_Azure(metadata=self.metadata(), resource=keyvault)
                 report.subscription = subscription_name
                 if not keyvault.monitor_diagnostic_settings:
                     report.status = "FAIL"

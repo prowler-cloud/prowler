@@ -11,7 +11,7 @@ class iam_policy_attached_only_to_group_or_roles(Check):
                     if user.attached_policies:
                         for policy in user.attached_policies:
                             report = Check_Report_AWS(
-                                metadata=self.metadata(), resource_metadata=user
+                                metadata=self.metadata(), resource=user
                             )
                             report.region = iam_client.region
                             report.status = "FAIL"
@@ -21,7 +21,7 @@ class iam_policy_attached_only_to_group_or_roles(Check):
                     if user.inline_policies:
                         for policy in user.inline_policies:
                             report = Check_Report_AWS(
-                                metadata=self.metadata(), resource_metadata=user
+                                metadata=self.metadata(), resource=user
                             )
                             report.region = iam_client.region
                             report.status = "FAIL"
@@ -30,9 +30,7 @@ class iam_policy_attached_only_to_group_or_roles(Check):
                             findings.append(report)
 
                 else:
-                    report = Check_Report_AWS(
-                        metadata=self.metadata(), resource_metadata=user
-                    )
+                    report = Check_Report_AWS(metadata=self.metadata(), resource=user)
                     report.region = iam_client.region
                     report.status = "PASS"
                     report.status_extended = (

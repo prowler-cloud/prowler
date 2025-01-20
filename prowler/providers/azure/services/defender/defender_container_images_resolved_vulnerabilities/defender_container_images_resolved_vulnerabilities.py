@@ -24,7 +24,7 @@ class defender_container_images_resolved_vulnerabilities(Check):
             ):
                 report = Check_Report_Azure(
                     metadata=self.metadata(),
-                    resource_metadata=assessments[
+                    resource=assessments[
                         "Azure running container images should have vulnerabilities resolved (powered by Microsoft Defender Vulnerability Management)"
                     ],
                 )

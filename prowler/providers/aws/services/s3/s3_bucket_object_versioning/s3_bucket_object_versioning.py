@@ -6,9 +6,7 @@ class s3_bucket_object_versioning(Check):
     def execute(self):
         findings = []
         for bucket in s3_client.buckets.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=bucket
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=bucket)
             if bucket.versioning:
                 report.status = "PASS"
                 report.status_extended = (

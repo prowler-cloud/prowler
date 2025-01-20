@@ -6,9 +6,7 @@ class rds_instance_deprecated_engine_version(Check):
     def execute(self):
         findings = []
         for db_instance in rds_client.db_instances.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=db_instance
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=db_instance)
             report.status = "FAIL"
             report.status_extended = f"RDS instance {db_instance.id} is using a deprecated engine {db_instance.engine} with version {db_instance.engine_version}."
             if (

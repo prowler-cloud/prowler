@@ -6,9 +6,7 @@ class ecs_cluster_container_insights_enabled(Check):
     def execute(self):
         findings = []
         for cluster in ecs_client.clusters.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=cluster
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=cluster)
             report.status = "FAIL"
             report.status_extended = (
                 f"ECS cluster {cluster.name} does not have container insights enabled."

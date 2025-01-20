@@ -7,9 +7,7 @@ class lightsail_instance_public(Check):
         findings = []
 
         for instance in lightsail_client.instances.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=instance
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=instance)
             report.status = "PASS"
             report.status_extended = (
                 f"Instance '{instance.name}' is not publicly exposed."

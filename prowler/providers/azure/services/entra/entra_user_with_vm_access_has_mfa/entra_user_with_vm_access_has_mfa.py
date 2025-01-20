@@ -38,7 +38,7 @@ class entra_user_with_vm_access_has_mfa(Check):
                             and assignment.agent_id == user.id
                         ):
                             report = Check_Report_Azure(
-                                metadata=self.metadata(), resource_metadata=user
+                                metadata=self.metadata(), resource=user
                             )
                             report.subscription = subscription_name
                             report.status = "FAIL"

@@ -8,7 +8,7 @@ class dns_rsasha1_in_use_to_key_sign_in_dnssec(Check):
         for managed_zone in dns_client.managed_zones:
             report = Check_Report_GCP(
                 metadata=self.metadata(),
-                resource_metadata=managed_zone,
+                resource=managed_zone,
                 location=dns_client.region,
             )
             report.status = "PASS"

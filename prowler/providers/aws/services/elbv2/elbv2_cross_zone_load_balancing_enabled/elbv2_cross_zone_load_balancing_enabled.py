@@ -9,9 +9,7 @@ class elbv2_cross_zone_load_balancing_enabled(Check):
         findings = []
         for lb in elbv2_client.loadbalancersv2.values():
             if lb.type != "application":
-                report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=lb
-                )
+                report = Check_Report_AWS(metadata=self.metadata(), resource=lb)
                 report.status = "FAIL"
                 report.status_extended = (
                     f"ELBv2 {lb.name} does not have cross-zone load balancing enabled."

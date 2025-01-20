@@ -7,9 +7,7 @@ class keyvault_private_endpoints(Check):
         findings = []
         for subscription, key_vaults in keyvault_client.key_vaults.items():
             for keyvault in key_vaults:
-                report = Check_Report_Azure(
-                    metadata=self.metadata(), resource_metadata=keyvault
-                )
+                report = Check_Report_Azure(metadata=self.metadata(), resource=keyvault)
                 report.subscription = subscription
                 report.status = "FAIL"
                 report.status_extended = f"Keyvault {keyvault.name} from subscription {subscription} is not using private endpoints."

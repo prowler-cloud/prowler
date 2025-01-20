@@ -8,7 +8,7 @@ class autoscaling_group_multiple_az(Check):
     def execute(self):
         findings = []
         for group in autoscaling_client.groups:
-            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=group)
+            report = Check_Report_AWS(metadata=self.metadata(), resource=group)
 
             report.status = "FAIL"
             report.status_extended = (

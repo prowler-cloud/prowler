@@ -8,9 +8,7 @@ class apiserver_tls_config(Check):
     def execute(self) -> Check_Report_Kubernetes:
         findings = []
         for pod in apiserver_client.apiserver_pods:
-            report = Check_Report_Kubernetes(
-                metadata=self.metadata(), resource_metadata=pod
-            )
+            report = Check_Report_Kubernetes(metadata=self.metadata(), resource=pod)
             report.status = "PASS"
             report.status_extended = (
                 f"TLS certificate and key are set appropriately in pod {pod.name}."

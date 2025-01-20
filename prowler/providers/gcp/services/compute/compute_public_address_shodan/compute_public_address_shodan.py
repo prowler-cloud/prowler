@@ -14,7 +14,7 @@ class compute_public_address_shodan(Check):
             for address in compute_client.addresses:
                 if address.type == "EXTERNAL":
                     report = Check_Report_GCP(
-                        metadata=self.metadata(), resource_metadata=address
+                        metadata=self.metadata(), resource=address
                     )
                     try:
                         shodan_info = api.host(address.ip)

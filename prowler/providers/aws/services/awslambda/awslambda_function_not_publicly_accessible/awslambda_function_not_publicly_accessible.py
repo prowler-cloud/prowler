@@ -7,9 +7,7 @@ class awslambda_function_not_publicly_accessible(Check):
     def execute(self):
         findings = []
         for function in awslambda_client.functions.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=function
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=function)
 
             report.status = "PASS"
             report.status_extended = f"Lambda function {function.name} has a policy resource-based policy not public."

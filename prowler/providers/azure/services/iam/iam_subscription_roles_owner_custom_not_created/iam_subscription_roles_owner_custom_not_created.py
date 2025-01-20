@@ -10,7 +10,7 @@ class iam_subscription_roles_owner_custom_not_created(Check):
         for subscription, roles in iam_client.custom_roles.items():
             for custom_role in roles:
                 report = Check_Report_Azure(
-                    metadata=self.metadata(), resource_metadata=custom_role
+                    metadata=self.metadata(), resource=custom_role
                 )
                 report.subscription = subscription
                 report.status = "PASS"

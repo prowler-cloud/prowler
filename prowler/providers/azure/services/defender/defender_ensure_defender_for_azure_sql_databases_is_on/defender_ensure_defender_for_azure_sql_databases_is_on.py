@@ -8,7 +8,7 @@ class defender_ensure_defender_for_azure_sql_databases_is_on(Check):
         for subscription, pricings in defender_client.pricings.items():
             if "SqlServers" in pricings:
                 report = Check_Report_Azure(
-                    metadata=self.metadata(), resource_metadata=pricings["SqlServers"]
+                    metadata=self.metadata(), resource=pricings["SqlServers"]
                 )
                 report.subscription = subscription
                 report.resource_name = "Defender plan Azure SQL DB Servers"

@@ -8,9 +8,7 @@ class aks_cluster_rbac_enabled(Check):
 
         for subscription_name, clusters in aks_client.clusters.items():
             for cluster in clusters.values():
-                report = Check_Report_Azure(
-                    metadata=self.metadata(), resource_metadata=cluster
-                )
+                report = Check_Report_Azure(metadata=self.metadata(), resource=cluster)
                 report.subscription = subscription_name
                 report.status = "PASS"
                 report.status_extended = f"RBAC is enabled for cluster '{cluster.name}' in subscription '{subscription_name}'."

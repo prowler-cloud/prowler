@@ -16,9 +16,7 @@ class app_ensure_php_version_is_latest(Check):
                 if "php" in framework.lower() or getattr(
                     app.configurations, "php_version", ""
                 ):
-                    report = Check_Report_Azure(
-                        metadata=self.metadata(), resource_metadata=app
-                    )
+                    report = Check_Report_Azure(metadata=self.metadata(), resource=app)
                     report.subscription = subscription_name
                     report.status = "FAIL"
 

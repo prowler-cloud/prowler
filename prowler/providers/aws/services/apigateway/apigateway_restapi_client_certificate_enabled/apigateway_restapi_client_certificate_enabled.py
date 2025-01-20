@@ -9,9 +9,7 @@ class apigateway_restapi_client_certificate_enabled(Check):
         findings = []
         for rest_api in apigateway_client.rest_apis:
             for stage in rest_api.stages:
-                report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=stage
-                )
+                report = Check_Report_AWS(metadata=self.metadata(), resource=stage)
                 report.resource_id = rest_api.name
                 report.region = rest_api.region
                 if stage.client_certificate:

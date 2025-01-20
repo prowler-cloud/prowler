@@ -11,9 +11,7 @@ class app_ftp_deployment_disabled(Check):
             apps,
         ) in app_client.apps.items():
             for app in apps.values():
-                report = Check_Report_Azure(
-                    metadata=self.metadata(), resource_metadata=app
-                )
+                report = Check_Report_Azure(metadata=self.metadata(), resource=app)
                 report.subscription = subscription_name
                 report.status = "FAIL"
                 report.status_extended = f"FTP is enabled for app '{app.name}' in subscription '{subscription_name}'."

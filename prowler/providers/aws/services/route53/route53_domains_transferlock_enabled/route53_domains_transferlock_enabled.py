@@ -9,9 +9,7 @@ class route53_domains_transferlock_enabled(Check):
         findings = []
 
         for domain in route53domains_client.domains.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=domain
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=domain)
             if domain.status_list and "clientTransferProhibited" in domain.status_list:
                 report.status = "PASS"
                 report.status_extended = (

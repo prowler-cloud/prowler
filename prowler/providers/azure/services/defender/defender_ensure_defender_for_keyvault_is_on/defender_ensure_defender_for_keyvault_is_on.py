@@ -8,7 +8,7 @@ class defender_ensure_defender_for_keyvault_is_on(Check):
         for subscription, pricings in defender_client.pricings.items():
             if "KeyVaults" in pricings:
                 report = Check_Report_Azure(
-                    metadata=self.metadata(), resource_metadata=pricings["KeyVaults"]
+                    metadata=self.metadata(), resource=pricings["KeyVaults"]
                 )
                 report.subscription = subscription
                 report.resource_name = "Defender plan KeyVaults"

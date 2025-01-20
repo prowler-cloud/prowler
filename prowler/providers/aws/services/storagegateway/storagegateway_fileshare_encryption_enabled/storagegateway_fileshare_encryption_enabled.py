@@ -8,9 +8,7 @@ class storagegateway_fileshare_encryption_enabled(Check):
     def execute(self):
         findings = []
         for fileshare in storagegateway_client.fileshares:
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=fileshare
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=fileshare)
             report.status = "FAIL"
             report.status_extended = (
                 f"StorageGateway File Share {fileshare.id} is not using KMS CMK."

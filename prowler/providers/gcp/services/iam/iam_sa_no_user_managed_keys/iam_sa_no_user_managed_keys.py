@@ -8,7 +8,7 @@ class iam_sa_no_user_managed_keys(Check):
         for account in iam_client.service_accounts:
             report = Check_Report_GCP(
                 metadata=self.metadata(),
-                resource_metadata=account,
+                resource=account,
                 resource_id=account.email,
                 location=iam_client.region,
             )

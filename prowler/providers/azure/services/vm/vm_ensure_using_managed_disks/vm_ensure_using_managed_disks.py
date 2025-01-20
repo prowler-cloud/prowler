@@ -8,9 +8,7 @@ class vm_ensure_using_managed_disks(Check):
 
         for subscription_name, vms in vm_client.virtual_machines.items():
             for vm in vms.values():
-                report = Check_Report_Azure(
-                    metadata=self.metadata(), resource_metadata=vm
-                )
+                report = Check_Report_Azure(metadata=self.metadata(), resource=vm)
                 report.status = "PASS"
                 report.subscription = subscription_name
                 report.status_extended = f"VM {vm.resource_name} is using managed disks in subscription {subscription_name}"

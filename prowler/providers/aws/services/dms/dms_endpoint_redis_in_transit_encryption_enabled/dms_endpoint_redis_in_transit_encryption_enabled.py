@@ -26,9 +26,7 @@ class dms_endpoint_redis_in_transit_encryption_enabled(Check):
         findings = []
         for endpoint in dms_client.endpoints.values():
             if endpoint.engine_name == "redis":
-                report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=endpoint
-                )
+                report = Check_Report_AWS(metadata=self.metadata(), resource=endpoint)
                 report.status = "FAIL"
                 report.status_extended = f"DMS Endpoint {endpoint.id} for Redis OSS is not encrypted in transit."
                 if endpoint.redis_ssl_protocol == "ssl-encryption":

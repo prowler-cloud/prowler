@@ -7,9 +7,7 @@ class s3_bucket_cross_account_access(Check):
     def execute(self):
         findings = []
         for bucket in s3_client.buckets.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=bucket
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=bucket)
             report.status = "PASS"
             report.status_extended = f"S3 Bucket {bucket.name} has a bucket policy but it does not allow cross account access."
 

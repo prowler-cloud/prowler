@@ -9,9 +9,7 @@ class awslambda_function_invoke_api_operations_cloudtrail_logging_enabled(Check)
     def execute(self):
         findings = []
         for function in awslambda_client.functions.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=function
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=function)
 
             report.status = "FAIL"
             report.status_extended = (

@@ -8,9 +8,7 @@ class storagegateway_gateway_fault_tolerant(Check):
     def execute(self):
         findings = []
         for gateway in storagegateway_client.gateways:
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=gateway
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=gateway)
             report.status = "FAIL"
             report.status_extended = f"StorageGateway Gateway {gateway.name} may not be fault tolerant as it is hosted on {gateway.environment}."
             if gateway.environment != "EC2":

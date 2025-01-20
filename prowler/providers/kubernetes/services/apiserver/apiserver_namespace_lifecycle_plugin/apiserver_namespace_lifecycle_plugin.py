@@ -8,9 +8,7 @@ class apiserver_namespace_lifecycle_plugin(Check):
     def execute(self) -> Check_Report_Kubernetes:
         findings = []
         for pod in apiserver_client.apiserver_pods:
-            report = Check_Report_Kubernetes(
-                metadata=self.metadata(), resource_metadata=pod
-            )
+            report = Check_Report_Kubernetes(metadata=self.metadata(), resource=pod)
             report.status = "PASS"
             report.status_extended = (
                 f"NamespaceLifecycle admission control plugin is set in pod {pod.name}."

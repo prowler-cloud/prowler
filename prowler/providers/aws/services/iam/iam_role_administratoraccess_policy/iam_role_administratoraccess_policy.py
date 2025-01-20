@@ -10,9 +10,7 @@ class iam_role_administratoraccess_policy(Check):
                 if (
                     not role.is_service_role
                 ):  # Avoid service roles since they cannot be modified by the user
-                    report = Check_Report_AWS(
-                        metadata=self.metadata(), resource_metadata=role
-                    )
+                    report = Check_Report_AWS(metadata=self.metadata(), resource=role)
                     report.region = iam_client.region
                     report.status = "PASS"
                     report.status_extended = f"IAM Role {role.name} does not have AdministratorAccess policy."

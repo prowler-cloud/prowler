@@ -17,9 +17,7 @@ class app_ensure_java_version_is_latest(Check):
                 )
 
                 if "java" in linux_framework.lower() or windows_framework_version:
-                    report = Check_Report_Azure(
-                        metadata=self.metadata(), resource_metadata=app
-                    )
+                    report = Check_Report_Azure(metadata=self.metadata(), resource=app)
                     report.subscription = subscription_name
                     report.status = "FAIL"
                     java_latest_version = app_client.audit_config.get(

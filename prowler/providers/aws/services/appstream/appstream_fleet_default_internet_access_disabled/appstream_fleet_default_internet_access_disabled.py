@@ -10,7 +10,7 @@ class appstream_fleet_default_internet_access_disabled(Check):
         """Execute the appstream_fleet_default_internet_access_disabled check"""
         findings = []
         for fleet in appstream_client.fleets:
-            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=fleet)
+            report = Check_Report_AWS(metadata=self.metadata(), resource=fleet)
 
             if fleet.enable_default_internet_access:
                 report.status = "FAIL"

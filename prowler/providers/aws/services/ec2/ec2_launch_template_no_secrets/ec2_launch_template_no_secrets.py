@@ -15,9 +15,7 @@ class ec2_launch_template_no_secrets(Check):
             "secrets_ignore_patterns", []
         )
         for template in ec2_client.launch_templates:
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=template
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=template)
 
             versions_with_secrets = []
 

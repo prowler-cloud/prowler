@@ -6,7 +6,7 @@ class sns_topics_kms_encryption_at_rest_enabled(Check):
     def execute(self):
         findings = []
         for topic in sns_client.topics:
-            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=topic)
+            report = Check_Report_AWS(metadata=self.metadata(), resource=topic)
             report.status = "PASS"
             report.status_extended = f"SNS topic {topic.name} is encrypted."
             if not topic.kms_master_key_id:

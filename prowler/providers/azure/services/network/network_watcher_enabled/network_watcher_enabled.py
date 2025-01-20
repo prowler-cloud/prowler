@@ -7,7 +7,7 @@ class network_watcher_enabled(Check):
         findings = []
         for subscription, network_watchers in network_client.network_watchers.items():
             report = Check_Report_Azure(
-                metadata=self.metadata(), resource_metadata=network_watchers
+                metadata=self.metadata(), resource=network_watchers
             )
             report.subscription = subscription
             report.resource_name = "Network Watcher"

@@ -9,7 +9,7 @@ class keyvault_rbac_secret_expiration_set(Check):
             for keyvault in key_vaults:
                 if keyvault.properties.enable_rbac_authorization and keyvault.secrets:
                     report = Check_Report_Azure(
-                        metadata=self.metadata(), resource_metadata=keyvault
+                        metadata=self.metadata(), resource=keyvault
                     )
                     report.subscription = subscription
                     report.status = "PASS"

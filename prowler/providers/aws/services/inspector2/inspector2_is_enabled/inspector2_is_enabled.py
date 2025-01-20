@@ -11,9 +11,7 @@ class inspector2_is_enabled(Check):
     def execute(self):
         findings = []
         for inspector in inspector2_client.inspectors:
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=inspector
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=inspector)
             if inspector.status == "ENABLED":
                 report.status = "PASS"
                 report.status_extended = "Inspector2 is enabled for EC2 instances, ECR container images, Lambda functions and code."

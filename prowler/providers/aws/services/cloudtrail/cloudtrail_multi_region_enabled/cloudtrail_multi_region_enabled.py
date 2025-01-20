@@ -12,7 +12,7 @@ class cloudtrail_multi_region_enabled(Check):
                 for trail in cloudtrail_client.trails.values():
                     if trail.region == region or trail.is_multiregion:
                         report = Check_Report_AWS(
-                            metadata=self.metadata(), resource_metadata=trail
+                            metadata=self.metadata(), resource=trail
                         )
                         report.region = region
                         if trail.is_logging:

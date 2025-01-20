@@ -7,7 +7,7 @@ class sagemaker_endpoint_config_prod_variant_instances(Check):
         findings = []
         for endpoint_config in sagemaker_client.endpoint_configs.values():
             report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=endpoint_config
+                metadata=self.metadata(), resource=endpoint_config
             )
             report.status = "PASS"
             report.status_extended = f"Sagemaker Endpoint Config {endpoint_config.name} has all production variants with more than one initial instance."

@@ -70,9 +70,10 @@ class TestCompliance:
         ]
 
         finding = Check_Report(
-            load_check_metadata(
+            metadata=load_check_metadata(
                 f"{path.dirname(path.realpath(__file__))}/../fixtures/metadata.json"
-            ).json()
+            ).json(),
+            resource={},
         )
         finding.resource_details = "Test resource details"
         finding.resource_id = "test-resource"
@@ -149,9 +150,10 @@ class TestCompliance:
         ]
 
         finding = Check_Report(
-            load_check_metadata(
+            metadata=load_check_metadata(
                 f"{path.dirname(path.realpath(__file__))}/../fixtures/metadata.json"
-            ).json()
+            ).json(),
+            resource={},
         )
         finding.resource_details = "Test resource details"
         finding.resource_id = "test-resource"
@@ -228,9 +230,10 @@ class TestCompliance:
         ]
 
         finding = Check_Report(
-            load_check_metadata(
+            metadata=load_check_metadata(
                 f"{path.dirname(path.realpath(__file__))}/../fixtures/metadata.json"
-            ).json()
+            ).json(),
+            resource={},
         )
         finding.resource_details = "Test resource details"
         finding.resource_id = "test-resource"
@@ -307,11 +310,11 @@ class TestCompliance:
         ]
 
         finding = Check_Report(
-            load_check_metadata(
+            metadata=load_check_metadata(
                 f"{path.dirname(path.realpath(__file__))}/../fixtures/metadata.json"
-            ).json()
+            ).json(),
+            resource={},
         )
-        print(finding)
         finding.resource_details = "Test resource details"
         finding.resource_id = "test-resource"
         finding.resource_arn = "test-arn"

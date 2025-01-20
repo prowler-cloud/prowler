@@ -8,9 +8,7 @@ class ssm_managed_compliant_patching(Check):
     def execute(self):
         findings = []
         for resource in ssm_client.compliance_resources.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=resource
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=resource)
             # Find tags of the instance in ec2_client
             for instance in ec2_client.instances:
                 if instance.id == resource.id:

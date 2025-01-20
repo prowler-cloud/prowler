@@ -6,9 +6,7 @@ class mq_broker_auto_minor_version_upgrades(Check):
     def execute(self):
         findings = []
         for broker in mq_client.brokers.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=broker
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=broker)
             report.status = "PASS"
             report.status_extended = f"MQ Broker {broker.name} does have automated minor version upgrades enabled."
 

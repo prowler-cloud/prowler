@@ -11,9 +11,7 @@ class emr_cluster_master_nodes_no_public_ip(Check):
                 ClusterStatus.TERMINATED,
                 ClusterStatus.TERMINATED_WITH_ERRORS,
             ):
-                report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=cluster
-                )
+                report = Check_Report_AWS(metadata=self.metadata(), resource=cluster)
                 if cluster.public:
                     report.status = "FAIL"
                     report.status_extended = (

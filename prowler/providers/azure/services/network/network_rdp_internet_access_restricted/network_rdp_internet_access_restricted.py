@@ -8,7 +8,7 @@ class network_rdp_internet_access_restricted(Check):
         for subscription, security_groups in network_client.security_groups.items():
             for security_group in security_groups:
                 report = Check_Report_Azure(
-                    metadata=self.metadata(), resource_metadata=security_group
+                    metadata=self.metadata(), resource=security_group
                 )
                 report.subscription = subscription
                 report.status = "PASS"

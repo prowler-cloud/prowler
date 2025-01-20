@@ -10,9 +10,7 @@ class cloudtrail_kms_encryption_enabled(Check):
         if cloudtrail_client.trails is not None:
             for trail in cloudtrail_client.trails.values():
                 if trail.name:
-                    report = Check_Report_AWS(
-                        metadata=self.metadata(), resource_metadata=trail
-                    )
+                    report = Check_Report_AWS(metadata=self.metadata(), resource=trail)
                     report.region = trail.home_region
                     report.status = "FAIL"
                     if trail.is_multiregion:

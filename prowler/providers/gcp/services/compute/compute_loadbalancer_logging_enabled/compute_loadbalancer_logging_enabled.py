@@ -8,7 +8,7 @@ class compute_loadbalancer_logging_enabled(Check):
         for lb in compute_client.load_balancers:
             report = Check_Report_GCP(
                 metadata=self.metadata(),
-                resource_metadata=lb,
+                resource=lb,
                 location=compute_client.region,
             )
             report.status = "PASS"

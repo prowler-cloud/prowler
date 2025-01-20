@@ -13,7 +13,7 @@ class iam_sa_user_managed_key_rotate_90_days(Check):
                     last_rotated = (datetime.now() - key.valid_after).days
                     report = Check_Report_GCP(
                         metadata=self.metadata(),
-                        resource_metadata=account,
+                        resource=account,
                         resource_id=key.name,
                         resource_name=account.email,
                         location=iam_client.region,

@@ -12,9 +12,7 @@ class ec2_elastic_ip_shodan(Check):
         if shodan_api_key:
             api = shodan.Shodan(shodan_api_key)
             for eip in ec2_client.elastic_ips:
-                report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=eip
-                )
+                report = Check_Report_AWS(metadata=self.metadata(), resource=eip)
                 if eip.public_ip:
                     try:
                         shodan_info = api.host(eip.public_ip)

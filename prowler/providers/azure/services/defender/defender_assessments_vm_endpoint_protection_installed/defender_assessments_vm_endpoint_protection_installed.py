@@ -16,7 +16,7 @@ class defender_assessments_vm_endpoint_protection_installed(Check):
             ):
                 report = Check_Report_Azure(
                     metadata=self.metadata(),
-                    resource_metadata=assessments[
+                    resource=assessments[
                         "Install endpoint protection solution on virtual machines"
                     ],
                 )

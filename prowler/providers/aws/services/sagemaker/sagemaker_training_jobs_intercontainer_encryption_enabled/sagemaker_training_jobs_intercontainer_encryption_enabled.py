@@ -6,9 +6,7 @@ class sagemaker_training_jobs_intercontainer_encryption_enabled(Check):
     def execute(self):
         findings = []
         for training_job in sagemaker_client.sagemaker_training_jobs:
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=training_job
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=training_job)
             report.status = "PASS"
             report.status_extended = f"Sagemaker training job {training_job.name} has intercontainer encryption enabled."
             if not training_job.container_traffic_encryption:

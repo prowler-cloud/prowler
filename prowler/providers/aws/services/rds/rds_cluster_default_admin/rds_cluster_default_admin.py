@@ -8,7 +8,7 @@ class rds_cluster_default_admin(Check):
         for db_cluster in rds_client.db_clusters:
             report = Check_Report_AWS(
                 metadata=self.metadata(),
-                resource_metadata=rds_client.db_clusters[db_cluster],
+                resource=rds_client.db_clusters[db_cluster],
             )
             report.status = "FAIL"
             report.status_extended = f"RDS Cluster {rds_client.db_clusters[db_cluster].id} is using the default master username."

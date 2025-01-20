@@ -7,9 +7,7 @@ class vpc_endpoint_for_ec2_enabled(Check):
         findings = []
         for vpc_id, vpc in vpc_client.vpcs.items():
             if vpc_client.provider.scan_unused_services or vpc.in_use:
-                report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=vpc
-                )
+                report = Check_Report_AWS(metadata=self.metadata(), resource=vpc)
                 report.status = "FAIL"
                 report.status_extended = f"VPC {vpc.id} has no EC2 endpoint."
                 for endpoint in vpc_client.vpc_endpoints:

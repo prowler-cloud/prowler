@@ -6,9 +6,7 @@ class vpc_vpn_connection_tunnels_up(Check):
     def execute(self):
         findings = []
         for vpn_connection in vpc_client.vpn_connections.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=vpn_connection
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=vpn_connection)
 
             if (
                 vpn_connection.tunnels[0].status != "UP"

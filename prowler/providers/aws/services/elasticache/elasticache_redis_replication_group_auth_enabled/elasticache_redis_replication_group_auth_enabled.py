@@ -10,9 +10,7 @@ class elasticache_redis_replication_group_auth_enabled(Check):
     def execute(self):
         findings = []
         for repl_group in elasticache_client.replication_groups.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=repl_group
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=repl_group)
 
             if version.parse(repl_group.engine_version) < version.parse("6.0"):
                 if not repl_group.auth_token_enabled:

@@ -8,7 +8,7 @@ class defender_ensure_defender_for_arm_is_on(Check):
         for subscription, pricings in defender_client.pricings.items():
             if "Arm" in pricings:
                 report = Check_Report_Azure(
-                    metadata=self.metadata(), resource_metadata=pricings["Arm"]
+                    metadata=self.metadata(), resource=pricings["Arm"]
                 )
                 report.subscription = subscription
                 report.resource_name = "Defender plan ARM"

@@ -10,7 +10,7 @@ class rbac_cluster_admin_usage(Check):
             # Check if the binding refers to the cluster-admin role
             if binding.roleRef.name == "cluster-admin":
                 report = Check_Report_Kubernetes(
-                    metadata=self.metadata(), resource_metadata=binding.metadata
+                    metadata=self.metadata(), resource=binding.metadata
                 )
                 report.namespace = (
                     "cluster-wide"

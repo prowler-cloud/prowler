@@ -8,7 +8,7 @@ class compute_firewall_rdp_access_from_the_internet_allowed(Check):
         for firewall in compute_client.firewalls:
             report = Check_Report_GCP(
                 metadata=self.metadata(),
-                resource_metadata=firewall,
+                resource=firewall,
                 location=compute_client.region,
             )
             report.status = "PASS"

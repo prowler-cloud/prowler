@@ -8,9 +8,7 @@ class aks_clusters_created_with_private_nodes(Check):
 
         for subscription_name, clusters in aks_client.clusters.items():
             for cluster in clusters.values():
-                report = Check_Report_Azure(
-                    metadata=self.metadata(), resource_metadata=cluster
-                )
+                report = Check_Report_Azure(metadata=self.metadata(), resource=cluster)
                 report.subscription = subscription_name
                 report.status = "PASS"
                 report.status_extended = f"Cluster '{cluster.name}' was created with private nodes in subscription '{subscription_name}'"

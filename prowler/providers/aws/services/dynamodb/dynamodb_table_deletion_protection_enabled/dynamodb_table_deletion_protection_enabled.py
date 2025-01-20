@@ -6,7 +6,7 @@ class dynamodb_table_deletion_protection_enabled(Check):
     def execute(self):
         findings = []
         for table in dynamodb_client.tables.values():
-            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=table)
+            report = Check_Report_AWS(metadata=self.metadata(), resource=table)
             report.status = "FAIL"
             report.status_extended = f"DynamoDB table {table.name} does not have deletion protection enabled."
 
