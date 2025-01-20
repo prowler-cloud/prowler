@@ -184,28 +184,28 @@ export const regions = [
   { key: "us-east4", label: "GCP - US East (Northern Virginia)" },
 ];
 
-export const permissionsData: PermissionInfo[] = [
+export const permissionFormFields: PermissionInfo[] = [
   {
     field: "manage_users",
     label: "Invite and Manage Users",
-    description: "Allows inviting new users and managing existing user access",
+    description: "Allows inviting new users and managing existing user details",
   },
   {
     field: "manage_account",
     label: "Manage Account",
-    description: "Provides access to account settings and configuration",
+    description: "Provides access to account settings and RBAC configuration",
   },
   {
     field: "unlimited_visibility",
     label: "Unlimited Visibility",
     description:
-      "Provides complete visibility across all resources and results",
+      "Provides complete visibility across all the providers and its related resources",
   },
   {
     field: "manage_providers",
     label: "Manage Cloud Providers",
     description:
-      "Permits configuration and management of cloud provider connections",
+      "Allows configuration and management of cloud provider connections",
   },
   // {
   //   field: "manage_integrations",
@@ -216,7 +216,7 @@ export const permissionsData: PermissionInfo[] = [
   {
     field: "manage_scans",
     label: "Manage Scans",
-    description: "Allows initiating and configuring security scans",
+    description: "Allows launching and configuring scans security scans",
   },
 
   {

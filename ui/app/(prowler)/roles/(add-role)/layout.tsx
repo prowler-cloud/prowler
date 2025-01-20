@@ -3,7 +3,6 @@ import "@/styles/globals.css";
 import { Spacer } from "@nextui-org/react";
 import React from "react";
 
-import { PermissionsInfo } from "@/components/roles";
 import { WorkflowAddEditRole } from "@/components/roles/workflow";
 import { NavigationHeader } from "@/components/ui";
 
@@ -28,8 +27,6 @@ export default function RoleLayout({ children }: RoleLayoutProps) {
           {children}
         </div>
       </div>
-      <Spacer y={16} />
-      <PermissionsInfo />
     </>
   );
 }
