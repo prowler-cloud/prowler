@@ -96,12 +96,12 @@ export const EditRoleForm = ({
 
       updatedFields.manage_users = values.manage_users;
       updatedFields.manage_providers = values.manage_providers;
+      updatedFields.manage_account = values.manage_account;
       // updatedFields.manage_integrations = values.manage_integrations;
       updatedFields.manage_scans = values.manage_scans;
       updatedFields.unlimited_visibility = values.unlimited_visibility;
 
       if (process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true") {
-        updatedFields.manage_account = values.manage_account;
         updatedFields.manage_billing = values.manage_billing;
       }
 
@@ -165,11 +165,9 @@ export const EditRoleForm = ({
   const permissions = [
     { field: "manage_users", label: "Invite and Manage Users" },
     ...(process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true"
-      ? [
-          { field: "manage_account", label: "Manage Account" },
-          { field: "manage_billing", label: "Manage Billing" },
-        ]
+      ? [{ field: "manage_billing", label: "Manage Billing" }]
       : []),
+    { field: "manage_account", label: "Manage Account" },
     { field: "manage_providers", label: "Manage Cloud Providers" },
     // TODO: Add back when we have integrations ready
     // { field: "manage_integrations", label: "Manage Integrations" },
