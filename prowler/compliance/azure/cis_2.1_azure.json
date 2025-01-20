@@ -3115,7 +3115,9 @@
     {
       "Id": "9.4",
       "Description": "Ensure that Register with Entra ID is enabled on App Service",
-      "Checks": [],
+      "Checks": [
+        "app_register_with_identity"
+      ],
       "Attributes": [
         {
           "Section": "9. AppService",
