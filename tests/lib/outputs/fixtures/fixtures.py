@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Union
 
 from prowler.config.config import prowler_version
 from prowler.lib.check.models import CheckMetadata, Code, Recommendation, Remediation
@@ -19,7 +20,7 @@ def generate_finding_output(
     resource_name: str = "",
     resource_tags: dict = {},
     compliance: dict = {"test-compliance": "test-compliance"},
-    timestamp: datetime = None,
+    timestamp: Union[int, datetime] = None,
     provider: str = "aws",
     partition: str = "aws",
     description: str = "check description",
