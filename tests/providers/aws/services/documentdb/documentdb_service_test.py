@@ -115,3 +115,62 @@ class Test_DocumentDB_Service:
                 tags=[{"Key": "environment", "Value": "test"}],
             )
         }
+<<<<<<< HEAD
+=======
+
+    # Test DocumentDB Describe DB Clusters
+    def test_describe_db_clusters(self):
+        aws_provider = set_mocked_aws_provider()
+        docdb = DocumentDB(aws_provider)
+        assert docdb.db_clusters == {
+            DOC_DB_CLUSTER_ARN: DBCluster(
+                id=DOC_DB_CLUSTER_NAME,
+                arn=DOC_DB_CLUSTER_ARN,
+                engine="docdb",
+                status="available",
+                backup_retention_period=1,
+                encrypted=False,
+                cloudwatch_logs=[],
+                multi_az=True,
+                parameter_group="default.docdb3.6",
+                deletion_protection=True,
+                region=AWS_REGION_US_EAST_1,
+                tags=[{"Key": "environment", "Value": "test"}],
+            )
+        }
+
+    # Test DocumentDB Describe DB Cluster Snapshots
+    def test_describe_db_cluster_snapshots(self):
+        aws_provider = set_mocked_aws_provider()
+        docdb = DocumentDB(aws_provider)
+        assert docdb.db_cluster_snapshots == [
+            ClusterSnapshot(
+                id="test-cluster-snapshot",
+                arn=f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:cluster-snapshot:test-cluster-snapshot",
+                cluster_id=DOC_DB_CLUSTER_ID,
+                public=True,
+                encrypted=True,
+                region=AWS_REGION_US_EAST_1,
+                tags=[{"Key": "snapshot", "Value": "test"}],
+            )
+        ]
+
+    # Test DocumentDB Describe DB Snapshot Attributes
+    def test_describe_db_cluster_snapshot_attributes(self):
+        aws_provider = set_mocked_aws_provider()
+        docdb = DocumentDB(aws_provider)
+        docdb.db_cluster_snapshots = [
+            ClusterSnapshot(
+                id="test-cluster-snapshot",
+                arn=f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:cluster-snapshot:test-cluster-snapshot",
+                cluster_id=DOC_DB_CLUSTER_ID,
+                encrypted=True,
+                region=AWS_REGION_US_EAST_1,
+                tags=[{"Key": "snapshot", "Value": "test"}],
+            )
+        ]
+        docdb._describe_db_cluster_snapshot_attributes(
+            docdb.regional_clients[AWS_REGION_US_EAST_1]
+        )
+        assert docdb.db_cluster_snapshots[0].public is True
+>>>>>>> bbba0abac (fix(aws): list tags for DocumentDB clusters (#6605))
