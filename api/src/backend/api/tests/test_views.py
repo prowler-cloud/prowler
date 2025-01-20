@@ -261,6 +261,16 @@ class TestUserViewSet:
         assert response.status_code == status.HTTP_204_NO_CONTENT
         assert not User.objects.filter(id=create_test_user.id).exists()
 
+    def test_users_destroy_other_user(
+        self, authenticated_client, create_test_user, users_fixture
+    ):
+        user = users_fixture[2]
+        response = authenticated_client.delete(
+            reverse("user-detail", kwargs={"pk": str(user.id)})
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert User.objects.filter(id=create_test_user.id).exists()
+
     def test_users_destroy_invalid_user(self, authenticated_client, create_test_user):
         another_user = User.objects.create_user(
             password="otherpassword", email="other@example.com"
@@ -268,7 +278,7 @@ class TestUserViewSet:
         response = authenticated_client.delete(
             reverse("user-detail", kwargs={"pk": another_user.id})
         )
-        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert User.objects.filter(id=another_user.id).exists()
 
     @pytest.mark.parametrize(

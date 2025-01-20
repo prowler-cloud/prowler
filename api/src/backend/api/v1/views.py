@@ -277,8 +277,8 @@ class SchemaView(SpectacularAPIView):
     ),
     destroy=extend_schema(
         tags=["User"],
-        summary="Delete a user account",
-        description="Remove a user account from the system.",
+        summary="Delete the user account",
+        description="Remove the current user account from the system.",
     ),
     me=extend_schema(
         tags=["User"],
@@ -341,6 +341,12 @@ class UserViewSet(BaseUserViewset):
             data=serializer.data,
             status=status.HTTP_200_OK,
         )
+
+    def destroy(self, request, *args, **kwargs):
+        if kwargs["pk"] != str(self.request.user.id):
+            raise ValidationError("Only the current user can be deleted.")
+
+        return super().destroy(request, *args, **kwargs)
 
     @extend_schema(
         parameters=[

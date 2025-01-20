@@ -5381,8 +5381,8 @@ paths:
           description: ''
     delete:
       operationId: users_destroy
-      description: Remove a user account from the system.
-      summary: Delete a user account
+      description: Remove the current user account from the system.
+      summary: Delete the user account
       parameters:
       - in: path
         name: id
