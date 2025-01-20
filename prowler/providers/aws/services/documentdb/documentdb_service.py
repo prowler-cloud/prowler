@@ -64,6 +64,17 @@ class DocumentDB(AWSService):
     def _list_tags_for_resource(self):
         logger.info("DocumentDB - List Tags...")
         try:
+            for cluster_arn, cluster in self.db_clusters.items():
+                try:
+                    regional_client = self.regional_clients[cluster.region]
+                    response = regional_client.list_tags_for_resource(
+                        ResourceName=cluster_arn
+                    )["TagList"]
+                    cluster.tags = response
+                except Exception as error:
+                    logger.error(
+                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
             for instance_arn, instance in self.db_instances.items():
                 try:
                     regional_client = self.regional_clients[instance.region]
