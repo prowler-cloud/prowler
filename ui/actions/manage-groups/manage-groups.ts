@@ -192,7 +192,6 @@ export const updateProviderGroup = async (
     });
 
     if (!response.ok) {
-      const errorResponse = await response.json();
       throw new Error(
         `Failed to update provider group: ${response.status} ${response.statusText}`,
       );
@@ -202,7 +201,6 @@ export const updateProviderGroup = async (
     revalidatePath("/manage-groups");
     return parseStringify(data);
   } catch (error) {
-    console.error("Unexpected error:", error);
     return {
       error: getErrorMessage(error),
     };
