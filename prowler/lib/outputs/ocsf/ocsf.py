@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 from typing import List
 
 from py_ocsf_models.events.base_event import SeverityID, StatusID
@@ -68,7 +69,11 @@ class OCSF(Output):
                     activity_name=finding_activity.name,
                     finding_info=FindingInformation(
                         created_time_dt=finding.timestamp,
-                        created_time=int(finding.timestamp.timestamp()),
+                        created_time=(
+                            int(finding.timestamp.timestamp())
+                            if isinstance(finding.timestamp, datetime)
+                            else finding.timestamp
+                        ),
                         desc=finding.metadata.Description,
                         title=finding.metadata.CheckTitle,
                         uid=finding.uid,
@@ -77,7 +82,11 @@ class OCSF(Output):
                         types=finding.metadata.CheckType,
                     ),
                     time_dt=finding.timestamp,
-                    time=int(finding.timestamp.timestamp()),
+                    time=(
+                        int(finding.timestamp.timestamp())
+                        if isinstance(finding.timestamp, datetime)
+                        else finding.timestamp
+                    ),
                     remediation=Remediation(
                         desc=finding.metadata.Remediation.Recommendation.Text,
                         references=list(

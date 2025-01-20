@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from io import StringIO
 
 import requests
@@ -36,7 +36,15 @@ class TestOCSF:
                 muted=False,
                 region=AWS_REGION_EU_WEST_1,
                 resource_tags={"Name": "test", "Environment": "dev"},
-            )
+            ),
+            # Test with int timestamp (UNIX timestamp)
+            generate_finding_output(
+                status="FAIL",
+                severity="medium",
+                muted=False,
+                region=AWS_REGION_EU_WEST_1,
+                timestamp=1619600000,
+            ),
         ]
 
         ocsf = OCSF(findings)
@@ -100,6 +108,14 @@ class TestOCSF:
             "notes": findings[0].metadata.Notes,
             "compliance": findings[0].compliance,
         }
+
+        # Test with int timestamp (UNIX timestamp)
+        output_data = ocsf.data[1]
+
+        assert output_data.time == 1619600000
+        assert output_data.time_dt == datetime.fromtimestamp(
+            1619600000, tz=timezone.utc
+        )
 
     def test_validate_ocsf(self):
         mock_file = StringIO()
