@@ -3,9 +3,9 @@ import "@/styles/globals.css";
 import { Spacer } from "@nextui-org/react";
 import React from "react";
 
+import { PermissionsInfo } from "@/components/roles";
 import { WorkflowAddEditRole } from "@/components/roles/workflow";
 import { NavigationHeader } from "@/components/ui";
-import { PermissionsInfo } from "@/components/roles";
 
 interface RoleLayoutProps {
   children: React.ReactNode;

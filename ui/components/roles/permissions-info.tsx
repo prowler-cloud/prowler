@@ -1,7 +1,8 @@
 "use client";
 
-import React from "react";
 import { Card } from "@nextui-org/react";
+import React from "react";
+
 import { permissionsData } from "@/lib";
 
 const PermissionCard = ({
