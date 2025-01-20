@@ -1052,7 +1052,7 @@ class ScanViewSet(BaseRLSViewSet):
         """
         if self.request.method in SAFE_METHODS:
             # No permissions required for GET requests
-            self.required_permissions = [Permissions.MANAGE_PROVIDERS]
+            self.required_permissions = []
         else:
             # Require permission for non-GET requests
             self.required_permissions = [Permissions.MANAGE_SCANS]
