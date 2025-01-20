@@ -158,10 +158,10 @@ export const updateProviderGroup = async (
   const providersJson = formData.get("providers") as string;
   const rolesJson = formData.get("roles") as string;
 
-  const providers = providersJson ? JSON.parse(providersJson) : [];
-  const roles = rolesJson ? JSON.parse(rolesJson) : [];
+  const providers = providersJson ? JSON.parse(providersJson) : null;
+  const roles = rolesJson ? JSON.parse(rolesJson) : null;
 
-  const payload: ManageGroupPayload = {
+  const payload: Partial<ManageGroupPayload> = {
     data: {
       type: "provider-groups",
       id: providerGroupId,
@@ -170,14 +170,15 @@ export const updateProviderGroup = async (
     },
   };
 
-  // Add relationships only if there are items
-  if (providers.length >= 0) {
-    payload.data.relationships!.providers = { data: providers };
+  // Add relationships only if changes are detected
+  if (providers) {
+    payload.data!.relationships!.providers = { data: providers };
   }
 
-  if (roles.length >= 0) {
-    payload.data.relationships!.roles = { data: roles };
+  if (roles) {
+    payload.data!.relationships!.roles = { data: roles };
   }
+
   try {
     const url = `${keyServer}/provider-groups/${providerGroupId}`;
     const response = await fetch(url, {
@@ -192,8 +193,6 @@ export const updateProviderGroup = async (
 
     if (!response.ok) {
       const errorResponse = await response.json();
-      // eslint-disable-next-line no-console
-      console.error("Error response:", errorResponse);
       throw new Error(
         `Failed to update provider group: ${response.status} ${response.statusText}`,
       );
@@ -203,7 +202,6 @@ export const updateProviderGroup = async (
     revalidatePath("/manage-groups");
     return parseStringify(data);
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error("Unexpected error:", error);
     return {
       error: getErrorMessage(error),
