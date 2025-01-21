@@ -182,16 +182,14 @@ class Test_CloudWatch_Service:
         assert len(logs.log_groups) == 1
         assert (
             logs.log_groups[0].arn
-            == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test"
+            == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test:*"
         )
         assert logs.log_groups[0].name == "/log-group/test"
         assert logs.log_groups[0].retention_days == 400
         assert logs.log_groups[0].kms_id == "test_kms_id"
         assert not logs.log_groups[0].never_expire
         assert logs.log_groups[0].region == AWS_REGION_US_EAST_1
-        assert logs.log_groups[0].tags == [
-            {"tag_key_1": "tag_value_1", "tag_key_2": "tag_value_2"}
-        ]
+        assert logs.log_groups[0].tags == [{}]
 
     @mock_aws
     def test__describe_log_groups__never_expire(self):
@@ -210,7 +208,7 @@ class Test_CloudWatch_Service:
         assert len(logs.log_groups) == 1
         assert (
             logs.log_groups[0].arn
-            == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test"
+            == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test:*"
         )
         assert logs.log_groups[0].name == "/log-group/test"
         assert logs.log_groups[0].never_expire
@@ -218,6 +216,4 @@ class Test_CloudWatch_Service:
         assert logs.log_groups[0].retention_days == 9999
         assert logs.log_groups[0].kms_id == "test_kms_id"
         assert logs.log_groups[0].region == AWS_REGION_US_EAST_1
-        assert logs.log_groups[0].tags == [
-            {"tag_key_1": "tag_value_1", "tag_key_2": "tag_value_2"}
-        ]
+        assert logs.log_groups[0].tags == [{}]

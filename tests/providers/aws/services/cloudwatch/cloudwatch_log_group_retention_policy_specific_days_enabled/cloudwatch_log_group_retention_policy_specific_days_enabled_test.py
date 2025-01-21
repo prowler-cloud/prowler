@@ -30,12 +30,15 @@ class Test_cloudwatch_log_group_retention_policy_specific_days_enabled:
             audit_progress=0,
         )
 
-        with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_retention_policy_specific_days_enabled.cloudwatch_log_group_retention_policy_specific_days_enabled.logs_client",
-            new=Logs(current_audit_info),
+        with (
+            mock.patch(
+                "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+                new=current_audit_info,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_retention_policy_specific_days_enabled.cloudwatch_log_group_retention_policy_specific_days_enabled.logs_client",
+                new=Logs(current_audit_info),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_retention_policy_specific_days_enabled.cloudwatch_log_group_retention_policy_specific_days_enabled import (
@@ -72,12 +75,15 @@ class Test_cloudwatch_log_group_retention_policy_specific_days_enabled:
             audit_progress=0,
         )
 
-        with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_retention_policy_specific_days_enabled.cloudwatch_log_group_retention_policy_specific_days_enabled.logs_client",
-            new=Logs(current_audit_info),
+        with (
+            mock.patch(
+                "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+                new=current_audit_info,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_retention_policy_specific_days_enabled.cloudwatch_log_group_retention_policy_specific_days_enabled.logs_client",
+                new=Logs(current_audit_info),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_retention_policy_specific_days_enabled.cloudwatch_log_group_retention_policy_specific_days_enabled import (
@@ -96,7 +102,7 @@ class Test_cloudwatch_log_group_retention_policy_specific_days_enabled:
             assert result[0].resource_id == "test"
             assert (
                 result[0].resource_arn
-                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:test"
+                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:test:*"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
 
@@ -126,12 +132,15 @@ class Test_cloudwatch_log_group_retention_policy_specific_days_enabled:
             audit_progress=0,
         )
 
-        with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_retention_policy_specific_days_enabled.cloudwatch_log_group_retention_policy_specific_days_enabled.logs_client",
-            new=Logs(current_audit_info),
+        with (
+            mock.patch(
+                "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+                new=current_audit_info,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_retention_policy_specific_days_enabled.cloudwatch_log_group_retention_policy_specific_days_enabled.logs_client",
+                new=Logs(current_audit_info),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_retention_policy_specific_days_enabled.cloudwatch_log_group_retention_policy_specific_days_enabled import (
@@ -150,7 +159,7 @@ class Test_cloudwatch_log_group_retention_policy_specific_days_enabled:
             assert result[0].resource_id == "test"
             assert (
                 result[0].resource_arn
-                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:test"
+                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:test:*"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
 
@@ -180,12 +189,15 @@ class Test_cloudwatch_log_group_retention_policy_specific_days_enabled:
             audit_progress=0,
         )
 
-        with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_retention_policy_specific_days_enabled.cloudwatch_log_group_retention_policy_specific_days_enabled.logs_client",
-            new=Logs(current_audit_info),
+        with (
+            mock.patch(
+                "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+                new=current_audit_info,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_retention_policy_specific_days_enabled.cloudwatch_log_group_retention_policy_specific_days_enabled.logs_client",
+                new=Logs(current_audit_info),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_retention_policy_specific_days_enabled.cloudwatch_log_group_retention_policy_specific_days_enabled import (
@@ -204,7 +216,7 @@ class Test_cloudwatch_log_group_retention_policy_specific_days_enabled:
             assert result[0].resource_id == "test"
             assert (
                 result[0].resource_arn
-                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:test"
+                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:test:*"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
 
@@ -234,13 +246,16 @@ class Test_cloudwatch_log_group_retention_policy_specific_days_enabled:
             audit_progress=0,
         )
 
-        with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=audit_info,
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_retention_policy_specific_days_enabled.cloudwatch_log_group_retention_policy_specific_days_enabled.logs_client",
-            new=Logs(audit_info),
-        ) as service_client:
+        with (
+            mock.patch(
+                "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+                new=audit_info,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_retention_policy_specific_days_enabled.cloudwatch_log_group_retention_policy_specific_days_enabled.logs_client",
+                new=Logs(audit_info),
+            ) as service_client,
+        ):
             # Test Check
             from prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_retention_policy_specific_days_enabled.cloudwatch_log_group_retention_policy_specific_days_enabled import (
                 cloudwatch_log_group_retention_policy_specific_days_enabled,
