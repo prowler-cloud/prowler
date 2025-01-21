@@ -93,7 +93,7 @@ class Test_servicecatalog_portfolio_shared_within_organization_only:
     def test_organizations_not_active(self):
         client("servicecatalog", region_name=AWS_REGION_EU_WEST_1)
         aws_provider = set_mocked_aws_provider(
-            [AWS_REGION_EU_WEST_1],
+            [AWS_REGION_EU_WEST_1], create_default_organization=False
         )
 
         with (

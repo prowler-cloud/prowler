@@ -10,7 +10,6 @@ from prowler.providers.aws.lib.service.service import AWSService
 
 class OpenSearchService(AWSService):
     def __init__(self, provider):
-        # Call AWSService's __init__
         super().__init__("opensearch", provider)
         self.opensearch_domains = {}
         self.__threading_call__(self._list_domain_names)
