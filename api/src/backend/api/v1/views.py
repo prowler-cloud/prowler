@@ -1,4 +1,9 @@
+from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
+from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
+from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from celery.result import AsyncResult
+from config.settings.social_login import GOOGLE_OAUTH_CALLBACK_URL
+from dj_rest_auth.registration.views import SocialLoginView
 from django.conf import settings as django_settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.search import SearchQuery
@@ -122,6 +127,7 @@ from api.v1.serializers import (
     TenantSerializer,
     TokenRefreshSerializer,
     TokenSerializer,
+    TokenSocialLoginSerializer,
     UserCreateSerializer,
     UserRoleRelationshipSerializer,
     UserSerializer,
@@ -252,6 +258,58 @@ class SchemaView(SpectacularAPIView):
             },
         ]
         return super().get(request, *args, **kwargs)
+
+
+@extend_schema(exclude=True)
+class GoogleSocialLoginView(SocialLoginView):
+    adapter_class = GoogleOAuth2Adapter
+    client_class = OAuth2Client
+    callback_url = GOOGLE_OAUTH_CALLBACK_URL
+
+    def get_response(self):
+        original_response = super().get_response()
+
+        if self.user and self.user.is_authenticated:
+            serializer = TokenSocialLoginSerializer(data={"email": self.user.email})
+            try:
+                serializer.is_valid(raise_exception=True)
+            except TokenError as e:
+                raise InvalidToken(e.args[0])
+            return Response(
+                data={
+                    "type": "google-social-tokens",
+                    "attributes": serializer.validated_data,
+                },
+                status=status.HTTP_200_OK,
+            )
+        return original_response
+
+
+@extend_schema(exclude=True)
+class GithubSocialLoginView(SocialLoginView):
+    adapter_class = GitHubOAuth2Adapter
+    client_class = OAuth2Client
+    callback_url = django_settings.GITHUB_OAUTH_CALLBACK_URL
+
+    def get_response(self):
+        original_response = super().get_response()
+
+        if self.user and self.user.is_authenticated:
+            serializer = TokenSocialLoginSerializer(data={"email": self.user.email})
+
+            try:
+                serializer.is_valid(raise_exception=True)
+            except TokenError as e:
+                raise InvalidToken(e.args[0])
+
+            return Response(
+                data={
+                    "type": "github-social-tokens",
+                    "attributes": serializer.validated_data,
+                },
+                status=status.HTTP_200_OK,
+            )
+        return original_response
 
 
 @extend_schema_view(
@@ -2226,5 +2284,72 @@ class ScheduleViewSet(BaseRLSViewSet):
                 "Content-Location": reverse(
                     "task-detail", kwargs={"pk": prowler_task.id}
                 )
+            },
+        )
+
+
+# TODOVICTOR Remove all of this (testing)
+
+from urllib.parse import urljoin
+
+import requests
+from django.shortcuts import render
+from django.urls import reverse
+from django.views import View
+from rest_framework.views import APIView
+
+
+@extend_schema(exclude=True)
+class GoogleLoginCallback(APIView):
+    def get(self, request, *args, **kwargs):
+        """
+        If you are building a fullstack application (eq. with React app next to Django)
+        you can place this endpoint in your frontend application to receive
+        the JWT tokens there - and store them in the state
+        """
+        code = request.GET.get("code")
+        if code is None:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        token_endpoint_url = urljoin("http://localhost:8000", reverse("token-google"))
+        response = requests.post(url=token_endpoint_url, data={"code": code})
+        return Response(
+            data=response.json()[
+                f"{'data' if response.status_code == 200 else 'errors'}"
+            ],
+            status=response.status_code,
+        )
+
+
+@extend_schema(exclude=True)
+class GithubLoginCallback(APIView):
+    def get(self, request, *args, **kwargs):
+        """
+        If you are building a fullstack application (eq. with React app next to Django)
+        you can place this endpoint in your frontend application to receive
+        the JWT tokens there - and store them in the state
+        """
+
+        code = request.GET.get("code")
+
+        if code is None:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+        token_endpoint_url = urljoin("http://localhost:8000", reverse("token-github"))
+        response = requests.post(url=token_endpoint_url, data={"code": code})
+
+        return Response(data=response.json()["data"], status=response.status_code)
+
+
+@extend_schema(exclude=True)
+class LoginPage(View):
+    def get(self, request, *args, **kwargs):
+        return render(
+            request,
+            "login.html",
+            {
+                "google_callback_uri": django_settings.GOOGLE_OAUTH_CALLBACK_URL,
+                "google_client_id": django_settings.GOOGLE_OAUTH_CLIENT_ID,
+                "github_callback_uri": django_settings.GITHUB_OAUTH_CALLBACK_URL,
+                "github_client_id": django_settings.GITHUB_OAUTH_CLIENT_ID,
             },
         )
