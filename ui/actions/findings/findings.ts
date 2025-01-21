@@ -28,13 +28,7 @@ export const getFindings = async ({
   if (sort) url.searchParams.append("sort", sort);
 
   Object.entries(filters).forEach(([key, value]) => {
-    const excludedFilters = ["region__in", "service__in", "resource_type__in"];
-    if (
-      key !== "filter[search]" &&
-      !excludedFilters.some((filter) => key.includes(filter))
-    ) {
-      url.searchParams.append(key, String(value));
-    }
+    url.searchParams.append(key, String(value));
   });
 
   try {
