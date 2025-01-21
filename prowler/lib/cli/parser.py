@@ -26,7 +26,7 @@ class ProwlerArgumentParser:
         self.parser = argparse.ArgumentParser(
             prog="prowler",
             formatter_class=RawTextHelpFormatter,
-            usage="prowler [-h] [--version] {aws,azure,gcp,kubernetes,dashboard} ...",
+            usage="prowler [-h] [--version] {aws,azure,gcp,kubernetes,microsoft365,dashboard} ...",
             epilog="""
 Available Cloud Providers:
   {aws,azure,gcp,kubernetes}
@@ -73,7 +73,7 @@ Detailed documentation at https://docs.prowler.com
         # Init Providers Arguments
         init_providers_parser(self)
 
-        # Dahboard Parser
+        # Dashboard Parser
         init_dashboard_parser(self)
 
     def parse(self, args=None) -> argparse.Namespace:

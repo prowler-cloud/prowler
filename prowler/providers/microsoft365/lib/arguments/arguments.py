@@ -11,7 +11,7 @@ def init_parser(self):
     # Regions
     microsoft365_regions_subparser = microsoft365_parser.add_argument_group("Regions")
     microsoft365_regions_subparser.add_argument(
-        "--microsoft365-region",
+        "--region",
         nargs="?",
         default="Microsoft365Global",
         type=validate_microsoft365_region,

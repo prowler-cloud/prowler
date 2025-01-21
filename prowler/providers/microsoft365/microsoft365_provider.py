@@ -38,9 +38,6 @@ from prowler.providers.microsoft365.exceptions.exceptions import (
     Microsoft365TenantIdAndClientIdNotBelongingToClientSecretError,
     Microsoft365TenantIdAndClientSecretNotBelongingToClientIdError,
 )
-from prowler.providers.microsoft365.lib.arguments.arguments import (
-    validate_microsoft365_region,
-)
 from prowler.providers.microsoft365.lib.mutelist.mutelist import Microsoft365Mutelist
 from prowler.providers.microsoft365.lib.regions.microsoft365_regions import (
     get_regions_config,
@@ -143,7 +140,6 @@ class Microsoft365Provider(Provider):
         # Set up the Microsoft365 session
         self._session = self.setup_session(
             microsoft365_credentials,
-            self._region_config,
         )
 
         # Set up the identity
@@ -246,7 +242,6 @@ class Microsoft365Provider(Provider):
 
         """
         try:
-            validate_microsoft365_region(region)
             config = get_regions_config(region)
 
             return Microsoft365RegionConfig(
@@ -299,7 +294,6 @@ class Microsoft365Provider(Provider):
     @staticmethod
     def setup_session(
         microsoft365_credentials: dict,
-        region_config: Microsoft365RegionConfig,
     ):
         """Returns the Microsoft365 credentials object.
 

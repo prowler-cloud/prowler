@@ -8,7 +8,7 @@ class admincenter_users_admins_reduced_license_footprint(Check):
     def execute(self) -> Check_Report_Microsoft365:
         findings = []
         allowed_licenses = ["AAD_PREMIUM", "AAD_PREMIUM_P2"]
-        for user_principal_name, user in admincenter_client.users.items():
+        for user in admincenter_client.users.values():
             admin_roles = [
                 role
                 for role in user.directory_roles
