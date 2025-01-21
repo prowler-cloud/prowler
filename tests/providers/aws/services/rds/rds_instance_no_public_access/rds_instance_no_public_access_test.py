@@ -122,12 +122,13 @@ class Test_rds_instance_no_public_access:
             with mock.patch(
                 "prowler.providers.aws.services.rds.rds_instance_no_public_access.rds_instance_no_public_access.rds_client",
                 new=RDS(audit_info),
-            ):
+            ) as rds_client:
                 # Test Check
                 from prowler.providers.aws.services.rds.rds_instance_no_public_access.rds_instance_no_public_access import (
                     rds_instance_no_public_access,
                 )
 
+                rds_client.db_instances[0].security_groups = []
                 check = rds_instance_no_public_access()
                 result = check.execute()
 
@@ -185,12 +186,15 @@ class Test_rds_instance_no_public_access:
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=audit_info,
         ):
-            with mock.patch(
-                "prowler.providers.aws.services.rds.rds_instance_no_public_access.rds_instance_no_public_access.rds_client",
-                new=RDS(audit_info),
-            ), mock.patch(
-                "prowler.providers.aws.services.rds.rds_instance_no_public_access.rds_instance_no_public_access.ec2_client",
-                new=EC2(audit_info),
+            with (
+                mock.patch(
+                    "prowler.providers.aws.services.rds.rds_instance_no_public_access.rds_instance_no_public_access.rds_client",
+                    new=RDS(audit_info),
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.rds.rds_instance_no_public_access.rds_instance_no_public_access.ec2_client",
+                    new=EC2(audit_info),
+                ),
             ):
                 # Test Check
                 from prowler.providers.aws.services.rds.rds_instance_no_public_access.rds_instance_no_public_access import (

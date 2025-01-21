@@ -239,7 +239,7 @@ class Test_Lambda_Service:
                 for function, function_code in awslambda.__get_function_code__():
                     if function.arn == lambda_arn_1 or function.arn == lambda_arn_2:
                         assert search(
-                            f"s3://awslambda-{function.region}-tasks.s3-{function.region}.amazonaws.com",
+                            f"https://awslambda-{function.region}-tasks.s3.{function.region}.amazonaws.com",
                             function_code.location,
                         )
                         assert function_code
