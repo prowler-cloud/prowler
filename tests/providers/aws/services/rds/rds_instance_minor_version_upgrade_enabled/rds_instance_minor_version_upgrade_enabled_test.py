@@ -63,6 +63,7 @@ class Test_rds_instance_minor_version_upgrade_enabled:
             Engine="postgres",
             DBName="staging-postgres",
             DBInstanceClass="db.m1.small",
+            AutoMinorVersionUpgrade=False,
         )
 
         from prowler.providers.aws.services.rds.rds_service import RDS
@@ -76,11 +77,16 @@ class Test_rds_instance_minor_version_upgrade_enabled:
             with mock.patch(
                 "prowler.providers.aws.services.rds.rds_instance_minor_version_upgrade_enabled.rds_instance_minor_version_upgrade_enabled.rds_client",
                 new=RDS(aws_provider),
-            ):
+            ) as rds_client:
                 # Test Check
                 from prowler.providers.aws.services.rds.rds_instance_minor_version_upgrade_enabled.rds_instance_minor_version_upgrade_enabled import (
                     rds_instance_minor_version_upgrade_enabled,
                 )
+
+                # Moto does not support the AutoMinorVersionUpgrade parameter
+                rds_client.db_instances[
+                    next(iter(rds_client.db_instances))
+                ].auto_minor_version_upgrade = False
 
                 check = rds_instance_minor_version_upgrade_enabled()
                 result = check.execute()
