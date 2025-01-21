@@ -38,7 +38,65 @@ from api.rls import Tenant
 # Tokens
 
 
-class TokenSerializer(TokenObtainPairSerializer):
+def generate_tokens(user: User, tenant_id: str) -> dict:
+    try:
+        refresh = RefreshToken.for_user(user)
+    except InvalidKeyError:
+        # Handle invalid key error
+        raise ValidationError(
+            {
+                "detail": "Token generation failed due to invalid key configuration. Provide valid "
+                "DJANGO_TOKEN_SIGNING_KEY and DJANGO_TOKEN_VERIFYING_KEY in the environment."
+            }
+        )
+    except Exception as e:
+        raise ValidationError({"detail": str(e)})
+
+    # Post-process the tokens
+    # Set the tenant_id
+    refresh["tenant_id"] = tenant_id
+
+    # Set the nbf (not before) claim to the iat (issued at) claim. At this moment, simplejwt does not provide a
+    # way to set the nbf claim
+    refresh.payload["nbf"] = refresh["iat"]
+
+    # Get the access token
+    access = refresh.access_token
+
+    if settings.SIMPLE_JWT["UPDATE_LAST_LOGIN"]:
+        update_last_login(None, user)
+
+    return {"access": str(access), "refresh": str(refresh)}
+
+
+class BaseTokenSerializer(TokenObtainPairSerializer):
+    def custom_validate(self, attrs, social: bool = False):
+        email = attrs.get("email")
+        password = attrs.get("password")
+        tenant_id = str(attrs.get("tenant_id", ""))
+
+        # Authenticate user
+        user = (
+            User.objects.get(email=email)
+            if social
+            else authenticate(username=email, password=password)
+        )
+        if user is None:
+            raise ValidationError("Invalid credentials")
+
+        if tenant_id:
+            if not user.is_member_of_tenant(tenant_id):
+                raise ValidationError("Tenant does not exist or user is not a member.")
+        else:
+            first_membership = user.memberships.order_by("date_joined").first()
+            if first_membership is None:
+                raise ValidationError("User has no memberships.")
+            tenant_id = str(first_membership.tenant_id)
+
+        return generate_tokens(user, tenant_id)
+
+
+class TokenSerializer(BaseTokenSerializer):
     email = serializers.EmailField(write_only=True)
     password = serializers.CharField(write_only=True)
     tenant_id = serializers.UUIDField(
@@ -56,53 +114,25 @@ class TokenSerializer(TokenObtainPairSerializer):
         resource_name = "tokens"
 
     def validate(self, attrs):
-        email = attrs.get("email")
-        password = attrs.get("password")
-        tenant_id = str(attrs.get("tenant_id", ""))
+        return super().custom_validate(attrs)
 
-        # Authenticate user
-        user = authenticate(username=email, password=password)
-        if user is None:
-            raise ValidationError("Invalid credentials")
 
-        if tenant_id:
-            if not user.is_member_of_tenant(tenant_id):
-                raise ValidationError("Tenant does not exist or user is not a member.")
-        else:
-            first_membership = user.memberships.order_by("date_joined").first()
-            if first_membership is None:
-                raise ValidationError("User has no memberships.")
-            tenant_id = str(first_membership.tenant_id)
+class TokenSocialLoginSerializer(BaseTokenSerializer):
+    email = serializers.EmailField(write_only=True)
 
-        # Generate tokens
-        try:
-            refresh = RefreshToken.for_user(user)
-        except InvalidKeyError:
-            # Handle invalid key error
-            raise ValidationError(
-                {
-                    "detail": "Token generation failed due to invalid key configuration. Provide valid "
-                    "DJANGO_TOKEN_SIGNING_KEY and DJANGO_TOKEN_VERIFYING_KEY in the environment."
-                }
-            )
-        except Exception as e:
-            raise ValidationError({"detail": str(e)})
+    # Output tokens
+    refresh = serializers.CharField(read_only=True)
+    access = serializers.CharField(read_only=True)
 
-        # Post-process the tokens
-        # Set the tenant_id
-        refresh["tenant_id"] = tenant_id
+    class JSONAPIMeta:
+        resource_name = "tokens"
 
-        # Set the nbf (not before) claim to the iat (issued at) claim. At this moment, simplejwt does not provide a
-        # way to set the nbf claim
-        refresh.payload["nbf"] = refresh["iat"]
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields.pop("password", None)
 
-        # Get the access token
-        access = refresh.access_token
-
-        if settings.SIMPLE_JWT["UPDATE_LAST_LOGIN"]:
-            update_last_login(None, user)
-
-        return {"access": str(access), "refresh": str(refresh)}
+    def validate(self, attrs):
+        return super().custom_validate(attrs, social=True)
 
 
 # TODO: Check if we can change the parent class to TokenRefreshSerializer from rest_framework_simplejwt.serializers
@@ -138,6 +168,30 @@ class TokenRefreshSerializer(serializers.Serializer):
             return {"access": str(access_token), "refresh": str(refresh)}
         except TokenError:
             raise ValidationError({"refresh": "Invalid or expired token"})
+
+
+class TokenSwitchTenantSerializer(serializers.Serializer):
+    tenant_id = serializers.UUIDField(
+        write_only=True, help_text="The tenant ID for which to request a new token."
+    )
+    access = serializers.CharField(read_only=True)
+    refresh = serializers.CharField(read_only=True)
+
+    class JSONAPIMeta:
+        resource_name = "tokens-switch-tenant"
+
+    def validate(self, attrs):
+        request = self.context["request"]
+        user = request.user
+
+        if not user.is_authenticated:
+            raise ValidationError("Invalid or expired token.")
+
+        tenant_id = str(attrs.get("tenant_id"))
+        if not user.is_member_of_tenant(tenant_id):
+            raise ValidationError("Tenant does not exist or user is not a member.")
+
+        return generate_tokens(user, tenant_id)
 
 
 # Base
