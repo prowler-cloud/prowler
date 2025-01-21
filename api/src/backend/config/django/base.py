@@ -4,6 +4,7 @@ from config.custom_logging import LOGGING  # noqa
 from config.env import BASE_DIR, env  # noqa
 from config.settings.celery import *  # noqa
 from config.settings.partitions import *  # noqa
+from config.settings.social_login import *  # noqa
 
 SECRET_KEY = env("SECRET_KEY", default="secret")
 DEBUG = env.bool("DJANGO_DEBUG", default=False)
@@ -29,6 +30,13 @@ INSTALLED_APPS = [
     "django_celery_results",
     "django_celery_beat",
     "rest_framework_simplejwt.token_blacklist",
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.google",
+    "allauth.socialaccount.providers.github",
+    "dj_rest_auth.registration",
+    "rest_framework.authtoken"
 ]
 
 MIDDLEWARE = [
@@ -42,7 +50,10 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "api.middleware.APILoggingMiddleware",
+    "allauth.account.middleware.AccountMiddleware"
 ]
+
+SITE_ID = 1
 
 CORS_ALLOWED_ORIGINS = ["http://localhost", "http://127.0.0.1"]
 
