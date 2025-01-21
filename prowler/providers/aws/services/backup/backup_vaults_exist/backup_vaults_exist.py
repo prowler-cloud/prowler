@@ -6,9 +6,7 @@ class backup_vaults_exist(Check):
     def execute(self):
         findings = []
         if backup_client.backup_vaults is not None:
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource=backup_client.backup_vaults
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource={})
             report.resource_arn = backup_client.backup_vault_arn_template
             report.resource_id = backup_client.audited_account
             report.region = backup_client.region

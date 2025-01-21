@@ -121,6 +121,7 @@ class Finding(BaseModel):
         )
         try:
             output_data["provider"] = provider.type
+            output_data["resource_metadata"] = check_output.resource
 
             if provider.type == "aws":
                 output_data["account_uid"] = get_nested_attribute(

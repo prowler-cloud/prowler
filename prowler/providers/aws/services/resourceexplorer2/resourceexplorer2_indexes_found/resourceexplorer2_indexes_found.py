@@ -10,7 +10,7 @@ class resourceexplorer2_indexes_found(Check):
         if resource_explorer_2_client.indexes is not None:
             report = Check_Report_AWS(
                 metadata=self.metadata(),
-                resource=resource_explorer_2_client.indexes,
+                resource={},
             )
             report.status = "FAIL"
             report.status_extended = "No Resource Explorer Indexes found."

@@ -422,8 +422,6 @@ class Check_Report:
         self.check_metadata = CheckMetadata.parse_raw(metadata)
         if isinstance(resource, dict):
             self.resource = resource
-        elif isinstance(resource, list):
-            self.resource = dict(enumerate(resource))
         elif hasattr(resource, "dict"):
             self.resource = resource.dict()
         elif hasattr(resource, "to_dict"):
@@ -432,7 +430,7 @@ class Check_Report:
             self.resource = resource.__dict__
         else:
             logger.error(
-                f"Resource metadata {type(resource)} could not be converted to dict"
+                f"Resource metadata {type(resource)} in {self.check_metadata.CheckID} could not be converted to dict"
             )
             self.resource = {}
         self.status_extended = ""
