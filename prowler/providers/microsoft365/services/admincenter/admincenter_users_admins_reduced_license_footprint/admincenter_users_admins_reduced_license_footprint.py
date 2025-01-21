@@ -9,11 +9,13 @@ class admincenter_users_admins_reduced_license_footprint(Check):
         findings = []
         allowed_licenses = ["AAD_PREMIUM", "AAD_PREMIUM_P2"]
         for user in admincenter_client.users.values():
-            admin_roles = [
-                role
-                for role in user.directory_roles
-                if "Administrator" in role or "Globar Reader" in role
-            ]
+            admin_roles = ", ".join(
+                [
+                    role
+                    for role in user.directory_roles
+                    if "Administrator" in role or "Globar Reader" in role
+                ]
+            )
 
             if admin_roles:
                 report = Check_Report_Microsoft365(self.metadata())
@@ -22,7 +24,7 @@ class admincenter_users_admins_reduced_license_footprint(Check):
                 report.tenant_id = admincenter_client.audited_tenant
                 report.tenant_domain = admincenter_client.audited_domain
                 report.status = "FAIL"
-                report.status_extended = f"User {user.name} has administrative roles {admin_roles} and an invalid license {user.license}."
+                report.status_extended = f"User {user.name} has administrative roles {admin_roles} and an invalid license {user.license if user.license else ''}."
 
                 if user.license in allowed_licenses:
                     report.status = "PASS"
