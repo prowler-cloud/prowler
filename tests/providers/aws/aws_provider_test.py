@@ -327,7 +327,7 @@ class TestAWSProvider:
     @mock_aws
     def test_aws_provider_organizations_delegated_administrator(self):
         organizations_client = client("organizations", region_name=AWS_REGION_EU_WEST_1)
-        organization = organizations_client.create_organization()["Organization"]
+        organization = organizations_client.describe_organization()["Organization"]
         organizations_client.tag_resource(
             ResourceId=AWS_ACCOUNT_NUMBER,
             Tags=[
@@ -404,7 +404,7 @@ class TestAWSProvider:
             PolicyArn=policy["Arn"],
         )
         organizations_client = client("organizations", region_name=AWS_REGION_EU_WEST_1)
-        organization = organizations_client.create_organization()["Organization"]
+        organization = organizations_client.describe_organization()["Organization"]
         organizations_client.tag_resource(
             ResourceId=AWS_ACCOUNT_NUMBER,
             Tags=[

@@ -70,12 +70,15 @@ class Test_servicecatalog_portfolio_shared_within_organization_only:
     def test_no_portfolios(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.servicecatalog.servicecatalog_portfolio_shared_within_organization_only.servicecatalog_portfolio_shared_within_organization_only.servicecatalog_client",
-            new=ServiceCatalog(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.servicecatalog.servicecatalog_portfolio_shared_within_organization_only.servicecatalog_portfolio_shared_within_organization_only.servicecatalog_client",
+                new=ServiceCatalog(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.servicecatalog.servicecatalog_portfolio_shared_within_organization_only.servicecatalog_portfolio_shared_within_organization_only import (
                 servicecatalog_portfolio_shared_within_organization_only,
@@ -90,18 +93,22 @@ class Test_servicecatalog_portfolio_shared_within_organization_only:
     def test_organizations_not_active(self):
         client("servicecatalog", region_name=AWS_REGION_EU_WEST_1)
         aws_provider = set_mocked_aws_provider(
-            [AWS_REGION_EU_WEST_1], create_default_organization=False
+            [AWS_REGION_EU_WEST_1],
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.servicecatalog.servicecatalog_portfolio_shared_within_organization_only.servicecatalog_portfolio_shared_within_organization_only.servicecatalog_client",
-            new=ServiceCatalog(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.servicecatalog.servicecatalog_portfolio_shared_within_organization_only.servicecatalog_portfolio_shared_within_organization_only.organizations_client",
-            new=Organizations(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.servicecatalog.servicecatalog_portfolio_shared_within_organization_only.servicecatalog_portfolio_shared_within_organization_only.servicecatalog_client",
+                new=ServiceCatalog(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.servicecatalog.servicecatalog_portfolio_shared_within_organization_only.servicecatalog_portfolio_shared_within_organization_only.organizations_client",
+                new=Organizations(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.servicecatalog.servicecatalog_portfolio_shared_within_organization_only.servicecatalog_portfolio_shared_within_organization_only import (
                 servicecatalog_portfolio_shared_within_organization_only,
@@ -116,18 +123,20 @@ class Test_servicecatalog_portfolio_shared_within_organization_only:
     def test_portfolio_share_account(self):
         client("servicecatalog", region_name=AWS_REGION_EU_WEST_1)
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
-        conn = client("organizations")
-        conn.create_organization()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.servicecatalog.servicecatalog_portfolio_shared_within_organization_only.servicecatalog_portfolio_shared_within_organization_only.servicecatalog_client",
-            new=ServiceCatalog(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.servicecatalog.servicecatalog_portfolio_shared_within_organization_only.servicecatalog_portfolio_shared_within_organization_only.organizations_client",
-            new=Organizations(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.servicecatalog.servicecatalog_portfolio_shared_within_organization_only.servicecatalog_portfolio_shared_within_organization_only.servicecatalog_client",
+                new=ServiceCatalog(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.servicecatalog.servicecatalog_portfolio_shared_within_organization_only.servicecatalog_portfolio_shared_within_organization_only.organizations_client",
+                new=Organizations(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.servicecatalog.servicecatalog_portfolio_shared_within_organization_only.servicecatalog_portfolio_shared_within_organization_only import (
                 servicecatalog_portfolio_shared_within_organization_only,
@@ -155,17 +164,21 @@ class Test_servicecatalog_portfolio_shared_within_organization_only:
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
         conn = client("organizations")
-        conn.create_organization()
+        conn.describe_organization()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.servicecatalog.servicecatalog_portfolio_shared_within_organization_only.servicecatalog_portfolio_shared_within_organization_only.servicecatalog_client",
-            new=ServiceCatalog(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.servicecatalog.servicecatalog_portfolio_shared_within_organization_only.servicecatalog_portfolio_shared_within_organization_only.organizations_client",
-            new=Organizations(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.servicecatalog.servicecatalog_portfolio_shared_within_organization_only.servicecatalog_portfolio_shared_within_organization_only.servicecatalog_client",
+                new=ServiceCatalog(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.servicecatalog.servicecatalog_portfolio_shared_within_organization_only.servicecatalog_portfolio_shared_within_organization_only.organizations_client",
+                new=Organizations(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.servicecatalog.servicecatalog_portfolio_shared_within_organization_only.servicecatalog_portfolio_shared_within_organization_only import (
                 servicecatalog_portfolio_shared_within_organization_only,

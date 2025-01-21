@@ -22,11 +22,11 @@ class Test_Organizations_Service:
 
     @mock_aws
     def test_describe_organization(self):
-        conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
-        response = conn.create_organization()
         aws_provider = set_mocked_aws_provider(
-            [AWS_REGION_EU_WEST_1], create_default_organization=False
+            [AWS_REGION_EU_WEST_1],
         )
+        conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
+        response = conn.describe_organization()
         organizations = Organizations(aws_provider)
         assert organizations.organization.arn == response["Organization"]["Arn"]
         assert organizations.organization.id == response["Organization"]["Id"]
@@ -39,15 +39,14 @@ class Test_Organizations_Service:
 
     @mock_aws
     def test_list_policies(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
-        conn.create_organization()
         response = conn.create_policy(
             Content=scp_restrict_regions_with_deny(),
             Description="Test",
             Name="Test",
             Type="SERVICE_CONTROL_POLICY",
         )
-        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         organizations = Organizations(aws_provider)
         for policy in organizations.policies:
             if policy.arn == response["Policy"]["PolicySummary"]["Arn"]:
@@ -58,15 +57,14 @@ class Test_Organizations_Service:
 
     @mock_aws
     def test_describe_policy(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
-        conn.create_organization()
         response = conn.create_policy(
             Content=scp_restrict_regions_with_deny(),
             Description="Test",
             Name="Test",
             Type="SERVICE_CONTROL_POLICY",
         )
-        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         organizations = Organizations(aws_provider)
         policy = organizations._describe_policy(
             response["Policy"]["PolicySummary"]["Id"]
