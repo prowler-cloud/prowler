@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sign In</title>
+    <style>
+        body {
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .center {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            width: 400px;
+            padding: 20px;
+            border: 1px solid gray;
+            border-radius: 4px;
+        }
+
+        .title {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div class="center">
+    <div class="container">
+        <h1 class="title">Sign in</h1>
+        <a href="https://accounts.google.com/o/oauth2/v2/auth?redirect_uri={{ google_callback_uri }}&prompt=consent&response_type=code&client_id={{ google_client_id }}&scope=openid%20email%20profile&access_type=offline">
+            Sign in with Google
+        </a><br>
+                <a href="https://github.com/login/oauth/authorize?client_id={{ github_client_id }}&redirect_uri={{ github_callback_uri }}&scope=user:email">
+            Sign in with GitHub
+        </a>
+    </div>
+</div>
+</body>
+</html>
