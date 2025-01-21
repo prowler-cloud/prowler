@@ -42,21 +42,6 @@ def mock_make_api_call(self, operation_name, kwarg):
                 },
             ]
         }
-    if operation_name == "DescribeDomainConfig":
-        return {
-            "DomainConfig": {
-                "AccessPolicies": {
-                    "Options": policy_json,
-                },
-                "LogPublishingOptions": {
-                    "Options": {
-                        "SEARCH_SLOW_LOGS": {"Enabled": True},
-                        "INDEX_SLOW_LOGS": {"Enabled": True},
-                        "AUDIT_LOGS": {"Enabled": True},
-                    },
-                },
-            }
-        }
     if operation_name == "DescribeDomain":
         return {
             "DomainStatus": {
@@ -79,18 +64,18 @@ def mock_make_api_call(self, operation_name, kwarg):
                 "EncryptionAtRestOptions": {"Enabled": True},
                 "NodeToNodeEncryptionOptions": {"Enabled": True},
                 "AdvancedOptions": {"string": "string"},
-                "LogPublishingOptions": {
-                    "string": {
-                        "CloudWatchLogsLogGroupArn": "string",
-                        "Enabled": True | False,
-                    }
-                },
                 "ServiceSoftwareOptions": {"UpdateAvailable": True},
                 "DomainEndpointOptions": {"EnforceHTTPS": True},
                 "AdvancedSecurityOptions": {
                     "Enabled": True,
                     "InternalUserDatabaseEnabled": True,
                     "SAMLOptions": {"Enabled": True},
+                },
+                "AccessPolicies": policy_json,
+                "LogPublishingOptions": {
+                    "SEARCH_SLOW_LOGS": {"Enabled": True},
+                    "INDEX_SLOW_LOGS": {"Enabled": True},
+                    "AUDIT_LOGS": {"Enabled": True},
                 },
             }
         }
@@ -144,27 +129,6 @@ class TestOpenSearchServiceService:
         assert opensearch.opensearch_domains[domain_arn].name == test_domain_name
         assert opensearch.opensearch_domains[domain_arn].region == AWS_REGION_EU_WEST_1
 
-    # Test OpenSearchService describe domain config
-    def test_describe_domain_config(self):
-        aws_provider = set_mocked_aws_provider([])
-        opensearch = OpenSearchService(aws_provider)
-        assert len(opensearch.opensearch_domains) == 1
-        assert opensearch.opensearch_domains[domain_arn].name == test_domain_name
-        assert opensearch.opensearch_domains[domain_arn].region == AWS_REGION_EU_WEST_1
-        assert opensearch.opensearch_domains[domain_arn].access_policy
-        assert (
-            opensearch.opensearch_domains[domain_arn].logging[0].name
-            == "SEARCH_SLOW_LOGS"
-        )
-        assert opensearch.opensearch_domains[domain_arn].logging[0].enabled
-        assert (
-            opensearch.opensearch_domains[domain_arn].logging[1].name
-            == "INDEX_SLOW_LOGS"
-        )
-        assert opensearch.opensearch_domains[domain_arn].logging[1].enabled
-        assert opensearch.opensearch_domains[domain_arn].logging[2].name == "AUDIT_LOGS"
-        assert opensearch.opensearch_domains[domain_arn].logging[2].enabled
-
     # Test OpenSearchService describe domain
     @mock_aws
     def test_describe_domain(self):
@@ -193,6 +157,19 @@ class TestOpenSearchServiceService:
         assert opensearch.opensearch_domains[domain_arn].zone_awareness_enabled
         assert opensearch.opensearch_domains[domain_arn].dedicated_master_enabled
         assert opensearch.opensearch_domains[domain_arn].dedicated_master_count == 1
+        assert opensearch.opensearch_domains[domain_arn].access_policy
+        assert (
+            opensearch.opensearch_domains[domain_arn].logging[0].name
+            == "SEARCH_SLOW_LOGS"
+        )
+        assert opensearch.opensearch_domains[domain_arn].logging[0].enabled
+        assert (
+            opensearch.opensearch_domains[domain_arn].logging[1].name
+            == "INDEX_SLOW_LOGS"
+        )
+        assert opensearch.opensearch_domains[domain_arn].logging[1].enabled
+        assert opensearch.opensearch_domains[domain_arn].logging[2].name == "AUDIT_LOGS"
+        assert opensearch.opensearch_domains[domain_arn].logging[2].enabled
         assert opensearch.opensearch_domains[domain_arn].tags == [
             {"Key": "test", "Value": "test"},
         ]
