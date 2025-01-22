@@ -11,9 +11,8 @@ export const CredentialsRoleHelper = () => {
     <div className="flex flex-col gap-2">
       <div className="flex flex-col gap-4">
         <p className="text-sm text-gray-600 dark:text-gray-400">
-          A <strong>new read-only IAM role</strong> must be manually deployed
-          for each account to be added. The following links provide detailed
-          instructions for this process:
+          A <strong>new read-only IAM role</strong> must be manually created.
+          Use one of the following templates to create the IAM role:
         </p>
         <div className="flex flex-col gap-2">
           <Link
@@ -21,14 +20,14 @@ export const CredentialsRoleHelper = () => {
             target="_blank"
             className="text-sm font-medium text-blue-500 hover:underline"
           >
-            CloudFormation Instructions
+            CloudFormation Template
           </Link>
           <Link
             href="https://github.com/prowler-cloud/prowler/blob/master/permissions/templates/terraform/main.tf"
             target="_blank"
             className="text-sm font-medium text-blue-500 hover:underline"
           >
-            Terraform Instructions
+            Terraform Code
           </Link>
         </div>
         <p className="text-xs font-bold text-gray-600 dark:text-gray-400">

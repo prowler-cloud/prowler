@@ -19,6 +19,7 @@ interface CustomInputProps<T extends FieldValues> {
   password?: boolean;
   confirmPassword?: boolean;
   defaultValue?: string;
+  isReadOnly?: boolean;
   isRequired?: boolean;
   isInvalid?: boolean;
   isDisabled?: boolean;
@@ -36,6 +37,7 @@ export const CustomInput = <T extends FieldValues>({
   confirmPassword = false,
   password = false,
   defaultValue,
+  isReadOnly = false,
   isRequired = true,
   isInvalid,
   isDisabled = false,
@@ -106,6 +108,7 @@ export const CustomInput = <T extends FieldValues>({
               defaultValue={defaultValue}
               endContent={endContent}
               isDisabled={isDisabled}
+              isReadOnly={isReadOnly}
               {...field}
             />
           </FormControl>

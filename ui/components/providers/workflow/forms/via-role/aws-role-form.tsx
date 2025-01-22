@@ -114,6 +114,7 @@ export const AWSCredentialsRoleForm = ({
         placeholder="Enter the External ID"
         variant="bordered"
         defaultValue={externalId}
+        isDisabled
         isRequired
         isInvalid={!!control._formState.errors.external_id}
       />
