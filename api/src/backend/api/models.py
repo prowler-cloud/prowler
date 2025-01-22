@@ -11,6 +11,7 @@ from django.core.validators import MinLengthValidator
 from django.db import models
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
+from django_celery_beat.models import PeriodicTask
 from django_celery_results.models import TaskResult
 from psqlextra.manager import PostgresManager
 from psqlextra.models import PostgresPartitionedModel
@@ -410,6 +411,9 @@ class Scan(RowLevelSecurityProtectedModel):
     started_at = models.DateTimeField(null=True, blank=True)
     completed_at = models.DateTimeField(null=True, blank=True)
     next_scan_at = models.DateTimeField(null=True, blank=True)
+    scheduler_task = models.ForeignKey(
+        PeriodicTask, on_delete=models.CASCADE, null=True, blank=True
+    )
     # TODO: mutelist foreign key
 
     class Meta(RowLevelSecurityProtectedModel.Meta):
