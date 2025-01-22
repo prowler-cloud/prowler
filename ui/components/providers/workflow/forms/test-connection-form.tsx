@@ -131,7 +131,7 @@ export const TestConnectionForm = ({
 
               if (!isUpdated) {
                 setIsRedirecting(true);
-                router.push(`/scans`);
+                router.push("/scans");
                 return;
               } else {
                 setConnectionStatus({

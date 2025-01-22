@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { Control, useForm, UseFormSetValue } from "react-hook-form";
 import * as z from "zod";
 
@@ -17,7 +18,6 @@ import {
 } from "@/types";
 
 import { AWSCredentialsRoleForm } from "./via-role/aws-role-form";
-import { useSession } from "next-auth/react";
 
 export const UpdateViaRoleForm = ({
   searchParams,
@@ -122,6 +122,7 @@ export const UpdateViaRoleForm = ({
         );
       }
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error("Error during submission:", error);
       toast({
         variant: "destructive",

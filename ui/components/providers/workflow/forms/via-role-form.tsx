@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { Control, useForm, UseFormSetValue } from "react-hook-form";
 import * as z from "zod";
 
@@ -17,7 +18,6 @@ import {
 } from "@/types";
 
 import { AWSCredentialsRoleForm } from "./via-role/aws-role-form";
-import { useSession } from "next-auth/react";
 
 export const ViaRoleForm = ({
   searchParams,
@@ -68,8 +68,6 @@ export const ViaRoleForm = ({
   const isLoading = form.formState.isSubmitting;
 
   const onSubmitClient = async (values: FormSchemaType) => {
-    console.log("Form values:", values);
-
     const formData = new FormData();
 
     Object.entries(values).forEach(([key, value]) => {
@@ -96,9 +94,6 @@ export const ViaRoleForm = ({
         formData.append(key, String(value));
       }
     });
-
-    console.log("FormData being sent:");
-    formData.forEach((value, key) => console.log(`${key}: ${value}`));
 
     try {
       const data = await addCredentialsProvider(formData);
@@ -134,6 +129,7 @@ export const ViaRoleForm = ({
         );
       }
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error("Error during submission:", error);
       toast({
         variant: "destructive",

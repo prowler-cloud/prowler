@@ -1,5 +1,5 @@
-import { Control, UseFormSetValue, useWatch } from "react-hook-form";
 import { Select, SelectItem, Spacer } from "@nextui-org/react";
+import { Control, UseFormSetValue, useWatch } from "react-hook-form";
 
 import { CustomInput } from "@/components/ui/custom";
 import { AWSCredentialsRole } from "@/types";

@@ -2,8 +2,8 @@ import { redirect } from "next/navigation";
 import React, { Suspense } from "react";
 
 import { getProvider } from "@/actions/providers";
-import { TestConnectionForm } from "@/components/providers/workflow/forms";
 import { SkeletonProviderWorkflow } from "@/components/providers/workflow";
+import { TestConnectionForm } from "@/components/providers/workflow/forms";
 
 interface Props {
   searchParams: { type: string; id: string; updated: string };
