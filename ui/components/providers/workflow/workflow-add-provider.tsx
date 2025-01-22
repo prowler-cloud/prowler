@@ -10,18 +10,19 @@ const steps = [
   {
     title: "Add your cloud account",
     description:
-      "Select the cloud provider of the account you want to connect and choose whether to use IAM role or credentials for access.",
+      "Select the cloud provider for the account to connect and specify whether to use an IAM role or credentials for access.",
     href: "/providers/connect-account",
   },
   {
     title: "Add credentials to your cloud account",
-    description: "Add the credentials needed to connect to your cloud account.",
+    description:
+      "Provide the credentials required to connect to the cloud account.",
     href: "/providers/add-credentials",
   },
   {
     title: "Check connection and launch scan",
     description:
-      "Test your connection to verify that the credentials provided are valid for accessing your cloud account and launch a scan.",
+      "Verify the connection to ensure that the provided credentials are valid for accessing the cloud account and initiating a scan.",
     href: "/providers/test-connection",
   },
 ];
@@ -41,8 +42,8 @@ export const WorkflowAddProvider = () => {
         Add a cloud account
       </h1>
       <p className="mb-5 text-small text-default-500">
-        Follow the steps to configure your cloud account. This allows you to
-        launch the first scan when the process is complete.
+        Complete the steps to configure the cloud account, enabling the launch
+        of the first scan once completed.
       </p>
       <Progress
         classNames={{
