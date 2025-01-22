@@ -1182,6 +1182,7 @@
           "il-central-1",
           "me-central-1",
           "me-south-1",
+          "mx-central-1",
           "sa-east-1",
           "us-east-1",
           "us-east-2",
@@ -5688,6 +5689,13 @@
         "aws-us-gov": [
           "us-gov-west-1"
         ]
+      }
+    },
+    "iotthingsgraph": {
+      "regions": {
+        "aws": [],
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "iottwinmaker": {
