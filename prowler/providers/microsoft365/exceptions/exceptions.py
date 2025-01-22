@@ -220,3 +220,10 @@ class Microsoft365SetUpSessionError(Microsoft365CredentialsError):
         super().__init__(
             6016, file=file, original_exception=original_exception, message=message
         )
+
+
+class Microsoft365InteractiveBrowserCredentialError(Microsoft365CredentialsError):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            6017, file=file, original_exception=original_exception, message=message
+        )

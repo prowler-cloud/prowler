@@ -6,7 +6,11 @@ from os import getenv
 from uuid import UUID
 
 from azure.core.exceptions import ClientAuthenticationError, HttpResponseError
-from azure.identity import ClientSecretCredential, CredentialUnavailableError
+from azure.identity import (
+    ClientSecretCredential,
+    DefaultAzureCredential,
+    InteractiveBrowserCredential,
+)
 from colorama import Fore, Style
 from msal import ConfidentialClientApplication
 from msgraph import GraphServiceClient
@@ -29,6 +33,7 @@ from prowler.providers.microsoft365.exceptions.exceptions import (
     Microsoft365EnvironmentVariableError,
     Microsoft365GetTokenIdentityError,
     Microsoft365HTTPResponseError,
+    Microsoft365InteractiveBrowserCredentialError,
     Microsoft365InvalidProviderIdError,
     Microsoft365NotValidClientIdError,
     Microsoft365NotValidClientSecretError,
@@ -37,6 +42,9 @@ from prowler.providers.microsoft365.exceptions.exceptions import (
     Microsoft365SetUpSessionError,
     Microsoft365TenantIdAndClientIdNotBelongingToClientSecretError,
     Microsoft365TenantIdAndClientSecretNotBelongingToClientIdError,
+)
+from prowler.providers.microsoft365.lib.arguments.arguments import (
+    validate_microsoft365_region,
 )
 from prowler.providers.microsoft365.lib.mutelist.mutelist import Microsoft365Mutelist
 from prowler.providers.microsoft365.lib.regions.microsoft365_regions import (
@@ -81,7 +89,7 @@ class Microsoft365Provider(Provider):
     """
 
     _type: str = "microsoft365"
-    _session: ClientSecretCredential
+    _session: DefaultAzureCredential  # Must be used besides being named for Azure
     _identity: Microsoft365IdentityInfo
     _audit_config: dict
     _region_config: Microsoft365RegionConfig
@@ -91,55 +99,53 @@ class Microsoft365Provider(Provider):
 
     def __init__(
         self,
-        tenant_id: str = None,
+        # Authentication credentials
+        tenant_id: str = "",
+        client_id: str = "",
+        client_secret: str = "",
+        # Authentication methods
+        m365_cli_auth: bool = False,
+        m365_app_auth: bool = False,
+        m365_browser_auth: bool = False,
+        # Provider configuration
         region: str = "Microsoft365Global",
-        client_id: str = None,
-        client_secret: str = None,
-        config_content: dict = None,
         config_path: str = None,
+        config_content: dict = None,
         mutelist_path: str = None,
         mutelist_content: dict = None,
         fixer_config: dict = {},
     ):
         """
-        Initializes the Microsoft365 provider.
+        Microsoft365 Provider constructor
 
         Args:
-            tenant_id (str): The Microsoft365 Active Directory tenant ID.
-            region (str): The Microsoft365 region.
-            client_id (str): The Microsoft365 client ID.
-            client_secret (str): The Microsoft365 client secret.
-            config_path (str): The path to the configuration file.
-            config_content (dict): The configuration content.
-            fixer_config (dict): The fixer configuration.
-            mutelist_path (str): The path to the mutelist file.
-            mutelist_content (dict): The mutelist content.
-
-        Returns:
-            None
-
-        Raises:
-            Microsoft365ArgumentTypeValidationError: If there is an error in the argument type validation.
-            Microsoft365SetUpRegionConfigError: If there is an error in setting up the region configuration.
-            Microsoft365ConfigCredentialsError: If there is an error in configuring the Microsoft365 credentials from a dictionary.
-            Microsoft365GetTokenIdentityError: If there is an error in getting the token from the Microsoft365 identity.
-            Microsoft365HTTPResponseError: If there is an HTTP response error.
+            tenant_id (str): Microsoft365 tenant ID
+            client_id (str): Microsoft365 client ID
+            client_secret (str): Microsoft365 client secret
+            m365_cli_auth (bool): Use Azure CLI authentication
+            m365_app_auth (bool): Use environment variables authentication
+            m365_browser_auth (bool): Use browser authentication
+            region (str): Microsoft365 region
+            config_path (str): Path to the audit configuration file
+            config_content (dict): Audit configuration content
+            mutelist_path (str): Path to the mutelist file
+            mutelist_content (dict): Mutelist content
+            fixer_config (dict): Fixer configuration
         """
         logger.info("Setting Microsoft365 provider ...")
 
         logger.info("Checking if region is different than default one")
         self._region_config = self.setup_region_config(region)
 
-        # Get the dict from the static credentials
-        microsoft365_credentials = None
-        if tenant_id and client_id and client_secret:
-            microsoft365_credentials = self.validate_static_credentials(
-                tenant_id=tenant_id, client_id=client_id, client_secret=client_secret
-            )
-
         # Set up the Microsoft365 session
         self._session = self.setup_session(
-            microsoft365_credentials,
+            m365_cli_auth,
+            m365_app_auth,
+            m365_browser_auth,
+            tenant_id,
+            client_id,
+            client_secret,
+            self._region_config,
         )
 
         # Set up the identity
@@ -242,6 +248,7 @@ class Microsoft365Provider(Provider):
 
         """
         try:
+            validate_microsoft365_region(region)
             config = get_regions_config(region)
 
             return Microsoft365RegionConfig(
@@ -291,16 +298,30 @@ class Microsoft365Provider(Provider):
 
     # TODO: setup_session or setup_credentials?
     # This should be setup_credentials, since it is setting up the credentials for the provider
-    @staticmethod
     def setup_session(
-        microsoft365_credentials: dict,
+        self,
+        m365_cli_auth: bool,
+        m365_app_auth: bool,
+        m365_browser_auth: bool,
+        tenant_id: str,
+        client_id: str,
+        client_secret: str,
+        region_config: Microsoft365RegionConfig,
     ):
         """Returns the Microsoft365 credentials object.
 
         Set up the Microsoft365 session with the specified authentication method.
 
         Args:
-            app_env_auth (bool): Flag indicating whether to use application authentication with environment variables.
+            m365_cli_auth (bool): Flag indicating whether to use Azure CLI authentication.
+            m365_app_auth (bool): Flag indicating whether to use application authentication with environment variables.
+            m365_browser_auth (bool): Flag indicating whether to use interactive browser authentication.
+            tenant_id (str): The Microsoft365 Active Directory tenant ID.
+            m365_credentials (dict): The Microsoft365 configuration object. It contains the following keys:
+                - tenant_id: The Microsoft365 Active Directory tenant ID.
+                - client_id: The Microsoft365 client ID.
+                - client_secret: The Microsoft365 client secret
+            region_config (Microsoft365RegionConfig): The region configuration object.
 
         Returns:
             credentials: The Microsoft365 credentials object.
@@ -309,47 +330,83 @@ class Microsoft365Provider(Provider):
             Exception: If failed to retrieve Microsoft365 credentials.
 
         """
+        microsoft365_credentials = None
+
         try:
-            Microsoft365Provider.check_application_creds_env_vars()
-            credentials = ClientSecretCredential(
-                client_id=getenv("APP_CLIENT_ID"),
-                tenant_id=getenv("APP_TENANT_ID"),
-                client_secret=getenv("APP_CLIENT_SECRET"),
-            )
-        except Microsoft365EnvironmentVariableError as environment_credentials_error:
-            logger.critical(
-                f"{environment_credentials_error.__class__.__name__}[{environment_credentials_error.__traceback__.tb_lineno}] -- {environment_credentials_error}"
-            )
-            raise environment_credentials_error
-        try:
-            if microsoft365_credentials:
-                try:
-                    credentials = ClientSecretCredential(
-                        tenant_id=microsoft365_credentials["tenant_id"],
-                        client_id=microsoft365_credentials["client_id"],
-                        client_secret=microsoft365_credentials["client_secret"],
-                    )
-                    return credentials
-                except ClientAuthenticationError as error:
-                    logger.error(
-                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
-                    )
-                    raise Microsoft365ClientAuthenticationError(
-                        file=os.path.basename(__file__), original_exception=error
-                    )
-                except CredentialUnavailableError as error:
-                    logger.error(
-                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
-                    )
-                    raise Microsoft365CredentialsUnavailableError(
-                        file=os.path.basename(__file__), original_exception=error
-                    )
-                except Exception as error:
-                    logger.error(
-                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
-                    )
-                    raise Microsoft365ConfigCredentialsError(
-                        file=os.path.basename(__file__), original_exception=error
+            # Try to get credentials from cli arguments
+            if m365_app_auth and tenant_id and client_id and client_secret:
+                self.validate_arguments(tenant_id, client_id, client_secret)
+                self._auth_method = "Client Secret Credentials"
+                microsoft365_credentials = {
+                    "tenant_id": tenant_id,
+                    "client_id": client_id,
+                    "client_secret": client_secret,
+                }
+            elif m365_cli_auth and tenant_id:
+                self._auth_method = "CLI Authentication"
+                microsoft365_credentials = {
+                    "tenant_id": tenant_id,
+                }
+            # If not credentials are provided, try to get them from environment variables
+            else:
+                microsoft365_credentials = ClientSecretCredential(
+                    tenant_id=getenv("APP_TENANT_ID", ""),
+                    client_id=getenv("APP_CLIENT_ID", ""),
+                    client_secret=getenv("APP_CLIENT_SECRET", ""),
+                )
+                if not m365_browser_auth and (m365_app_auth or m365_cli_auth):
+                    # Since the authentication method to be used will come as True, we have to negate it since
+                    # DefaultAzureCredential sets just one authentication method, excluding the others
+                    try:
+                        microsoft365_credentials = DefaultAzureCredential(
+                            exclude_environment_credential=True,
+                            exclude_cli_credential=not m365_cli_auth,
+                            # M365 does not support managed identity authentication
+                            exclude_managed_identity_credential=True,
+                            # Azure Auth using Visual Studio is not supported
+                            exclude_visual_studio_code_credential=True,
+                            # Azure Auth using Shared Token Cache is not supported
+                            exclude_shared_token_cache_credential=True,
+                            # Azure Auth using PowerShell is not supported
+                            exclude_powershell_credential=True,
+                            # set Authority of a Microsoft Entra endpoint
+                            authority=region_config.authority,
+                        )
+                    except ClientAuthenticationError as error:
+                        logger.error(
+                            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+                        )
+                        raise Microsoft365ClientAuthenticationError(
+                            file=os.path.basename(__file__), original_exception=error
+                        )
+                    except Exception as error:
+                        logger.error(
+                            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+                        )
+                        raise Microsoft365ConfigCredentialsError(
+                            file=os.path.basename(__file__), original_exception=error
+                        )
+                # Browser auth creds cannot be set with DefaultAzureCredentials()
+                elif m365_browser_auth:
+                    try:
+                        microsoft365_credentials = InteractiveBrowserCredential(
+                            tenant_id=tenant_id
+                        )
+                        self._auth_method = "Browser Authentication"
+                    except Exception as error:
+                        logger.critical(
+                            "Failed to retrieve azure credentials using browser authentication"
+                        )
+                        logger.critical(
+                            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+                        )
+                        raise Microsoft365InteractiveBrowserCredentialError(
+                            file=os.path.basename(__file__), original_exception=error
+                        )
+                if not microsoft365_credentials:
+                    raise Microsoft365EnvironmentVariableError(
+                        file=os.path.basename(__file__),
+                        message="No authentication method selected and no environment variables were found.",
                     )
         except Exception as error:
             logger.critical("Failed to retrieve Microsoft365 credentials")
@@ -359,7 +416,7 @@ class Microsoft365Provider(Provider):
             raise Microsoft365SetUpSessionError(
                 file=os.path.basename(__file__), original_exception=error
             )
-        return credentials
+        return microsoft365_credentials
 
     @staticmethod
     def test_connection(
@@ -541,15 +598,18 @@ class Microsoft365Provider(Provider):
         logger.info(
             "Microsoft365 provider: checking service principal environment variables  ..."
         )
+        all_present = True
         for env_var in ["APP_CLIENT_ID", "APP_TENANT_ID", "APP_CLIENT_SECRET"]:
             if not getenv(env_var):
                 logger.critical(
                     f"Microsoft365 provider: Missing environment variable {env_var} needed to authenticate against Microsoft365"
                 )
+                all_present = False
                 raise Microsoft365EnvironmentVariableError(
                     file=os.path.basename(__file__),
                     message=f"Missing environment variable {env_var} required to authenticate.",
                 )
+        return all_present
 
     def setup_identity(
         self,
