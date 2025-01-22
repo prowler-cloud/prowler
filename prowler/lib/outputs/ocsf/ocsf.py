@@ -113,7 +113,7 @@ class OCSF(Output):
                                 region=finding.region,
                                 data={
                                     "details": finding.resource_details,
-                                    "metadata": finding.resource,
+                                    "metadata": finding.resource_metadata,
                                 },
                             )
                         ]
@@ -127,7 +127,7 @@ class OCSF(Output):
                                 type=finding.metadata.ResourceType,
                                 data={
                                     "details": finding.resource_details,
-                                    "metadata": finding.resource,
+                                    "metadata": finding.resource_metadata,
                                 },
                                 namespace=finding.region.replace("namespace: ", ""),
                             )
@@ -193,10 +193,15 @@ class OCSF(Output):
             ):
                 self._file_descriptor.write("[")
                 for finding in self._data:
-                    self._file_descriptor.write(
-                        finding.json(exclude_none=True, indent=4)
-                    )
-                    self._file_descriptor.write(",")
+                    try:
+                        self._file_descriptor.write(
+                            finding.json(exclude_none=True, indent=4)
+                        )
+                        self._file_descriptor.write(",")
+                    except Exception as error:
+                        logger.error(
+                            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
                 if self._file_descriptor.tell() > 0:
                     if self._file_descriptor.tell() != 1:
                         self._file_descriptor.seek(
@@ -206,7 +211,6 @@ class OCSF(Output):
                     self._file_descriptor.write("]")
                 self._file_descriptor.close()
         except Exception as error:
-            print(finding)
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )

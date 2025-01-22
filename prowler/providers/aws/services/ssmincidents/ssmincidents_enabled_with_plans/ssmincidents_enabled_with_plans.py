@@ -10,7 +10,7 @@ class ssmincidents_enabled_with_plans(Check):
         if ssmincidents_client.replication_set is not None:
             report = Check_Report_AWS(
                 metadata=self.metadata(),
-                resource=ssmincidents_client.replication_set,
+                resource={},
             )
             report.status = "FAIL"
             report.status_extended = "No SSM Incidents replication set exists."
@@ -18,8 +18,15 @@ class ssmincidents_enabled_with_plans(Check):
             report.resource_id = ssmincidents_client.audited_account
             report.region = ssmincidents_client.region
             if ssmincidents_client.replication_set:
+                report = Check_Report_AWS(
+                    metadata=self.metadata(),
+                    resource=ssmincidents_client.replication_set[0],
+                )
+                report.resource_id = ssmincidents_client.audited_account
+                report.region = ssmincidents_client.region
                 report.resource_arn = ssmincidents_client.replication_set[0].arn
                 report.resource_tags = []  # Not supported for replication sets
+                report.status = "FAIL"
                 report.status_extended = f"SSM Incidents replication set {ssmincidents_client.replication_set[0].arn} exists but not ACTIVE."
                 if ssmincidents_client.replication_set[0].status == "ACTIVE":
                     report.status_extended = f"SSM Incidents replication set {ssmincidents_client.replication_set[0].arn} is ACTIVE but no response plans exist."

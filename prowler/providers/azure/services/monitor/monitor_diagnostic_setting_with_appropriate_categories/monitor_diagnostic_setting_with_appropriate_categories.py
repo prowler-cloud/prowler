@@ -10,9 +10,7 @@ class monitor_diagnostic_setting_with_appropriate_categories(Check):
             subscription_name,
             diagnostic_settings,
         ) in monitor_client.diagnostics_settings.items():
-            report = Check_Report_Azure(
-                metadata=self.metadata(), resource=diagnostic_settings
-            )
+            report = Check_Report_Azure(metadata=self.metadata(), resource={})
             report.subscription = subscription_name
             report.resource_name = "Monitor"
             report.resource_id = "Monitor"
