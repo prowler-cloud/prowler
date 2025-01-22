@@ -1,13 +1,8 @@
 from asyncio import gather, get_event_loop
-from dataclasses import dataclass
 from typing import List, Optional
 from uuid import UUID
 
 from msgraph import GraphServiceClient
-from msgraph.generated.models.default_user_role_permissions import (
-    DefaultUserRolePermissions,
-)
-from msgraph.generated.models.setting_value import SettingValue
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -326,8 +321,17 @@ class User(BaseModel):
     authentication_methods: List[AuthMethod] = []
 
 
-@dataclass
-class AuthorizationPolicy:
+class DefaultUserRolePermissions(BaseModel):
+    allowed_to_create_apps: Optional[bool]
+    allowed_to_create_security_groups: Optional[bool]
+    allowed_to_create_tenants: Optional[bool]
+    allowed_to_read_bitlocker_keys_for_owned_device: Optional[bool]
+    allowed_to_read_other_users: Optional[bool]
+    odata_type: Optional[str]
+    permission_grant_policies_assigned: Optional[List[str]] = None
+
+
+class AuthorizationPolicy(BaseModel):
     id: str
     name: str
     description: str
@@ -336,8 +340,13 @@ class AuthorizationPolicy:
     guest_user_role_id: UUID
 
 
-@dataclass
-class GroupSetting:
+class SettingValue(BaseModel):
+    name: Optional[str]
+    odata_type: Optional[str]
+    value: Optional[str]
+
+
+class GroupSetting(BaseModel):
     name: Optional[str]
     template_id: Optional[str]
     settings: List[SettingValue]
