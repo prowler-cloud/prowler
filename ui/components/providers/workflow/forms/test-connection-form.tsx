@@ -203,8 +203,8 @@ export const TestConnectionForm = ({
           <p className="text-xl font-medium text-primary">
             Scan initiated successfully
           </p>
-          <p className="mt-2 text-gray-500">
-            Redirecting to scans dashboard...
+          <p className="mt-2 text-small font-bold text-gray-500">
+            Redirecting to scans job details...
           </p>
         </div>
       </div>

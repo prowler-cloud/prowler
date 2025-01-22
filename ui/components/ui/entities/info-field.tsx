@@ -27,7 +27,7 @@ export const InfoField = ({
       <span className="text-xs font-bold text-gray-500 dark:text-prowler-theme-pale/70">
         {label}
       </span>
-      <div className="rounded-lg bg-gray-50 px-3 py-2 text-small text-gray-900 dark:bg-prowler-blue-400 dark:text-prowler-theme-pale">
+      <div className="rounded-lg bg-gray-50 px-3 py-2 text-small text-gray-900 dark:bg-slate-800 dark:text-prowler-theme-pale">
         {children}
       </div>
     </div>
