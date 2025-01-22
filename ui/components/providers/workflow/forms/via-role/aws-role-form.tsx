@@ -4,6 +4,8 @@ import { Control, UseFormSetValue, useWatch } from "react-hook-form";
 import { CustomInput } from "@/components/ui/custom";
 import { AWSCredentialsRole } from "@/types";
 
+import { CredentialsRoleHelper } from "../../credentials-role-helper";
+
 export const AWSCredentialsRoleForm = ({
   control,
   setValue,
@@ -21,11 +23,11 @@ export const AWSCredentialsRoleForm = ({
 
   return (
     <>
-      <div className="mb-4 text-left">
+      <div className="flex flex-col gap-2">
         <div className="text-2xl font-bold leading-9 text-default-foreground">
           Connect assuming IAM Role
         </div>
-        <div className="py-2 text-small text-default-500">
+        <div className="text-small text-default-500">
           Please provide the information for your AWS credentials.
         </div>
       </div>
@@ -87,6 +89,8 @@ export const AWSCredentialsRoleForm = ({
           />
         </>
       )}
+      <CredentialsRoleHelper />
+
       <Spacer y={2} />
       <span className="text-xs font-bold text-default-500">Assume Role</span>
 
@@ -114,7 +118,7 @@ export const AWSCredentialsRoleForm = ({
         isInvalid={!!control._formState.errors.external_id}
       />
 
-      <span className="text-sm text-default-500">Optional fields</span>
+      <span className="text-xs text-default-500">Optional fields</span>
       <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
         <CustomInput
           control={control}
