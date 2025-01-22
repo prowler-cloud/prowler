@@ -3,7 +3,7 @@ import os
 import re
 import sys
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass, is_dataclass
 from enum import Enum
 from typing import Any, Dict, Set
 
@@ -416,7 +416,7 @@ class Check_Report:
         Args:
             metadata: The metadata of the check.
             resource: Basic information about the resource. Defaults to None.
-                      Only accepted dict, list, BaseModels (dict attribute), custom models (with to_dict attribute) or objects with __dict__.
+                      Only accepted dict, list, BaseModels (dict attribute), custom models (with to_dict attribute) and dataclasses.
         """
         self.status = ""
         self.check_metadata = CheckMetadata.parse_raw(metadata)
@@ -426,8 +426,8 @@ class Check_Report:
             self.resource = resource.dict()
         elif hasattr(resource, "to_dict"):
             self.resource = resource.to_dict()
-        elif hasattr(resource, "__dict__"):
-            self.resource = resource.__dict__
+        elif is_dataclass(resource):
+            self.resource = asdict(resource)
         else:
             logger.error(
                 f"Resource metadata {type(resource)} in {self.check_metadata.CheckID} could not be converted to dict"

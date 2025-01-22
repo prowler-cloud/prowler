@@ -193,10 +193,15 @@ class OCSF(Output):
             ):
                 self._file_descriptor.write("[")
                 for finding in self._data:
-                    self._file_descriptor.write(
-                        finding.json(exclude_none=True, indent=4)
-                    )
-                    self._file_descriptor.write(",")
+                    try:
+                        self._file_descriptor.write(
+                            finding.json(exclude_none=True, indent=4)
+                        )
+                        self._file_descriptor.write(",")
+                    except Exception as error:
+                        logger.error(
+                            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
                 if self._file_descriptor.tell() > 0:
                     if self._file_descriptor.tell() != 1:
                         self._file_descriptor.seek(
