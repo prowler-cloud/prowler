@@ -19,16 +19,10 @@ const steps = [
     href: "/providers/add-credentials",
   },
   {
-    title: "Test connection",
+    title: "Check connection and launch scan",
     description:
-      "Test your connection to verify that the credentials provided are valid for accessing your cloud account.",
+      "Test your connection to verify that the credentials provided are valid for accessing your cloud account and launch a scan.",
     href: "/providers/test-connection",
-  },
-  {
-    title: "Success",
-    description:
-      "Your cloud account has been successfully connected and the scan has been launched.",
-    href: "/providers/launch-scan",
   },
 ];
 

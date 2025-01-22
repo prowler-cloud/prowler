@@ -175,13 +175,13 @@ export const addCredentialsProvider = async (formData: FormData) => {
       secretType = "role";
       secret = {
         role_arn: formData.get("role_arn"),
+        external_id: formData.get("external_id"),
         aws_access_key_id: formData.get("aws_access_key_id") || undefined,
         aws_secret_access_key:
           formData.get("aws_secret_access_key") || undefined,
         aws_session_token: formData.get("aws_session_token") || undefined,
         session_duration:
           parseInt(formData.get("session_duration") as string, 10) || 3600,
-        external_id: formData.get("external_id") || undefined,
         role_session_name: formData.get("role_session_name") || undefined,
       };
     } else {

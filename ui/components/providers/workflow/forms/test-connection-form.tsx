@@ -66,6 +66,7 @@ export const TestConnectionForm = ({
     error: string | null;
   } | null>(null);
   const [isResettingCredentials, setIsResettingCredentials] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -129,9 +130,9 @@ export const TestConnectionForm = ({
               const isUpdated = urlParams.get("updated") === "true";
 
               if (!isUpdated) {
-                router.push(
-                  `/providers/launch-scan?type=${providerType}&id=${providerId}`,
-                );
+                setIsRedirecting(true);
+                router.push("/scans");
+                return;
               } else {
                 setConnectionStatus({
                   connected: true,
@@ -191,6 +192,25 @@ export const TestConnectionForm = ({
     }
   };
 
+  if (isRedirecting) {
+    return (
+      <div className="flex flex-col items-center justify-center space-y-6 py-12">
+        <div className="relative">
+          <div className="h-24 w-24 animate-pulse rounded-full bg-primary/20" />
+          <div className="absolute inset-0 h-24 w-24 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        </div>
+        <div className="text-center">
+          <p className="text-xl font-medium text-primary">
+            Scan initiated successfully
+          </p>
+          <p className="mt-2 text-gray-500">
+            Redirecting to scans dashboard...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <Form {...form}>
       <form
@@ -198,13 +218,11 @@ export const TestConnectionForm = ({
         className="flex flex-col space-y-4"
       >
         <div className="text-left">
-          <div className="text-2xl font-bold leading-9 text-default-foreground">
-            Test connection
+          <div className="mb-2 text-xl font-medium">
+            Check connection and launch scan
           </div>
-          <p className="py-2 text-default-500">
-            Ensure all required credentials and configurations are completed
-            accurately. A successful connection will enable the option to
-            initiate a scan in the following step.
+          <p className="py-2 text-small text-default-500">
+            A successful connection will launch a daily scheduled scan.
           </p>
         </div>
 
@@ -224,12 +242,12 @@ export const TestConnectionForm = ({
                 />
               </div>
               <div className="flex items-center">
-                <p className="text-danger">
+                <p className="text-small text-danger">
                   {connectionStatus.error || "Unknown error"}
                 </p>
               </div>
             </div>
-            <p className="text-md text-danger">
+            <p className="text-small text-danger">
               It seems there was an issue with your credentials. Please review
               your credentials and try again.
             </p>
@@ -243,11 +261,11 @@ export const TestConnectionForm = ({
           providerUID={providerData.data.attributes.uid}
         />
 
-        {!isResettingCredentials && !connectionStatus?.error && (
-          <p className="py-2 text-default-500">
+        {/* {!isResettingCredentials && !connectionStatus?.error && (
+          <p className="py-2 text-small text-default-500">
             Test connection and launch scan
           </p>
-        )}
+        )} */}
 
         <input type="hidden" name="providerId" value={providerId} />
 
@@ -308,7 +326,7 @@ export const TestConnectionForm = ({
                 <span>
                   {isUpdated && connectionStatus?.connected
                     ? "Go to providers"
-                    : "Launch"}
+                    : "Launch scan"}
                 </span>
               )}
             </CustomButton>

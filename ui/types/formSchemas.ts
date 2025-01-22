@@ -133,17 +133,28 @@ export const addCredentialsFormSchema = (providerType: string) =>
 
 export const addCredentialsRoleFormSchema = (providerType: string) =>
   providerType === "aws"
-    ? z.object({
-        providerId: z.string(),
-        providerType: z.string(),
-        role_arn: z.string().optional(),
-        aws_access_key_id: z.string().optional(),
-        aws_secret_access_key: z.string().optional(),
-        aws_session_token: z.string().optional(),
-        session_duration: z.number().optional(),
-        external_id: z.string().optional(),
-        role_session_name: z.string().optional(),
-      })
+    ? z
+        .object({
+          providerId: z.string(),
+          providerType: z.string(),
+          role_arn: z.string().optional(),
+          external_id: z.string().optional(),
+          aws_access_key_id: z.string().optional(),
+          aws_secret_access_key: z.string().optional(),
+          aws_session_token: z.string().optional(),
+          session_duration: z.number().optional(),
+          role_session_name: z.string().optional(),
+          credentials_type: z.string().optional(),
+        })
+        .refine(
+          (data) =>
+            data.credentials_type !== "access-secret-key" ||
+            (data.aws_access_key_id && data.aws_secret_access_key),
+          {
+            message: "AWS Access Key ID and Secret Access Key are required.",
+            path: ["aws_access_key_id"],
+          },
+        )
     : z.object({
         providerId: z.string(),
         providerType: z.string(),
