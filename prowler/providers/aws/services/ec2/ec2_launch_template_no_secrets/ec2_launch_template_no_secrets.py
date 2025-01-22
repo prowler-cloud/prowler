@@ -47,7 +47,15 @@ class ec2_launch_template_no_secrets(Check):
                 )
 
                 if version_secrets:
-                    versions_with_secrets.append(str(version.version_number))
+                    secrets_string = ", ".join(
+                        [
+                            f"{secret['type']} on line {secret['line_number']}"
+                            for secret in version_secrets
+                        ]
+                    )
+                    versions_with_secrets.append(
+                        f"Version {version.version_number}: {secrets_string}"
+                    )
 
             if len(versions_with_secrets) > 0:
                 report.status = "FAIL"
