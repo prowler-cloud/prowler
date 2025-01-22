@@ -9,7 +9,7 @@ from tasks.jobs.scan import aggregate_findings, perform_prowler_scan
 
 from api.db_utils import rls_transaction
 from api.decorators import set_tenant
-from api.models import Provider, Scan
+from api.models import Scan, StateChoices
 
 
 @shared_task(base=RLSTask, name="provider-connection-check")
@@ -78,7 +78,7 @@ def perform_scan_task(
 
 
 @shared_task(base=RLSTask, bind=True, name="scan-perform-scheduled", queue="scans")
-def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
+def perform_scheduled_scan_task(self, tenant_id: str, scan_id: str):
     """
     Task to perform a scheduled Prowler scan on a given provider.
 
@@ -90,7 +90,7 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
     Args:
         self: The task instance (automatically passed when bind=True).
         tenant_id (str): The tenant ID under which the scan is being performed.
-        provider_id (str): The primary key of the Provider instance to scan.
+        scan_id (str): The primary key of the Scan instance to scan.
 
     Returns:
         dict: The result of the scan execution, typically including the status and results
@@ -100,28 +100,39 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
     task_id = self.request.id
 
     with rls_transaction(tenant_id):
-        provider_instance = Provider.objects.get(pk=provider_id)
+        scan_instance = Scan.objects.get(pk=scan_id)
+
+        scan_instance.task_id = task_id
+        scan_instance.save()
+
+        provider_id = str(scan_instance.provider_id)
         periodic_task_instance = PeriodicTask.objects.get(
             name=f"scan-perform-scheduled-{provider_id}"
         )
-        next_scan_date = datetime.combine(
+        next_scan_datetime = datetime.combine(
             datetime.now(timezone.utc), periodic_task_instance.start_time.time()
         ) + timedelta(hours=24)
 
-        scan_instance = Scan.objects.create(
+    try:
+        result = perform_prowler_scan(
             tenant_id=tenant_id,
-            name="Daily scheduled scan",
-            provider=provider_instance,
-            trigger=Scan.TriggerChoices.SCHEDULED,
-            next_scan_at=next_scan_date,
-            task_id=task_id,
+            scan_id=str(scan_instance.id),
+            provider_id=provider_id,
         )
+    except Exception as e:
+        raise e
+    finally:
+        with rls_transaction(tenant_id):
+            Scan.objects.create(
+                tenant_id=tenant_id,
+                name="Daily scheduled scan",
+                provider_id=provider_id,
+                trigger=Scan.TriggerChoices.SCHEDULED,
+                state=StateChoices.SCHEDULED,
+                scheduled_at=next_scan_datetime,
+                scheduler_task_id=periodic_task_instance.id,
+            )
 
-    result = perform_prowler_scan(
-        tenant_id=tenant_id,
-        scan_id=str(scan_instance.id),
-        provider_id=provider_id,
-    )
     perform_scan_summary_task.apply_async(
         kwargs={
             "tenant_id": tenant_id,
