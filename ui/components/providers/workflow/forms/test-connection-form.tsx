@@ -66,6 +66,7 @@ export const TestConnectionForm = ({
     error: string | null;
   } | null>(null);
   const [isResettingCredentials, setIsResettingCredentials] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -129,9 +130,9 @@ export const TestConnectionForm = ({
               const isUpdated = urlParams.get("updated") === "true";
 
               if (!isUpdated) {
-                router.push(
-                  `/providers/launch-scan?type=${providerType}&id=${providerId}`,
-                );
+                setIsRedirecting(true);
+                router.push(`/scans`);
+                return;
               } else {
                 setConnectionStatus({
                   connected: true,
@@ -191,6 +192,25 @@ export const TestConnectionForm = ({
     }
   };
 
+  if (isRedirecting) {
+    return (
+      <div className="flex flex-col items-center justify-center space-y-6 py-12">
+        <div className="relative">
+          <div className="h-24 w-24 animate-pulse rounded-full bg-primary/20" />
+          <div className="absolute inset-0 h-24 w-24 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        </div>
+        <div className="text-center">
+          <p className="text-xl font-medium text-primary">
+            Scan initiated successfully
+          </p>
+          <p className="mt-2 text-gray-500">
+            Redirecting to scans dashboard...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <Form {...form}>
       <form
@@ -241,11 +261,11 @@ export const TestConnectionForm = ({
           providerUID={providerData.data.attributes.uid}
         />
 
-        {!isResettingCredentials && !connectionStatus?.error && (
+        {/* {!isResettingCredentials && !connectionStatus?.error && (
           <p className="py-2 text-small text-default-500">
             Test connection and launch scan
           </p>
-        )}
+        )} */}
 
         <input type="hidden" name="providerId" value={providerId} />
 
@@ -306,7 +326,7 @@ export const TestConnectionForm = ({
                 <span>
                   {isUpdated && connectionStatus?.connected
                     ? "Go to providers"
-                    : "Launch"}
+                    : "Launch scan"}
                 </span>
               )}
             </CustomButton>
