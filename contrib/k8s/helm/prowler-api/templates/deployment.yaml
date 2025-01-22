@@ -43,7 +43,7 @@ spec:
           envFrom:
             - secretRef:
                 name: {{ include "prowler-api.fullname" $ }}
-          command: 
+          command:
             {{- toYaml $config.command | nindent 12 }}
           {{- if $config.ports }}
           ports:

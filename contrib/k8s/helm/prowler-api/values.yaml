@@ -31,13 +31,13 @@ containers:
     command: ["../docker-entrypoint.sh", "beat"]
 
 secrets:
-  POSTGRES_HOST: 
+  POSTGRES_HOST:
   POSTGRES_PORT: 5432
-  POSTGRES_ADMIN_USER: 
-  POSTGRES_ADMIN_PASSWORD: 
-  POSTGRES_USER: 
-  POSTGRES_PASSWORD: 
-  POSTGRES_DB: 
+  POSTGRES_ADMIN_USER:
+  POSTGRES_ADMIN_PASSWORD:
+  POSTGRES_USER:
+  POSTGRES_PASSWORD:
+  POSTGRES_DB:
   # Valkey settings
   VALKEY_HOST: valkey-headless
   VALKEY_PORT: "6379"
@@ -63,11 +63,11 @@ secrets:
   DJANGO_STALE_WHILE_REVALIDATE: "60"
   DJANGO_MANAGE_DB_PARTITIONS: "False"
   # openssl genrsa -out private.pem 2048
-  DJANGO_TOKEN_SIGNING_KEY:  
+  DJANGO_TOKEN_SIGNING_KEY:
   # openssl rsa -in private.pem -pubout -out public.pem
-  DJANGO_TOKEN_VERIFYING_KEY: 
+  DJANGO_TOKEN_VERIFYING_KEY:
   # openssl rand -base64 32
-  DJANGO_SECRETS_ENCRYPTION_KEY: 
+  DJANGO_SECRETS_ENCRYPTION_KEY:
   DJANGO_BROKER_VISIBILITY_TIMEOUT: 86400
 
 releaseConfigRoot: /home/prowler/.cache/pypoetry/virtualenvs/prowler-api-NnJNioq7-py3.12/lib/python3.12/site-packages/
@@ -534,7 +534,7 @@ serviceAccount:
   name: ""
 
 # This is for setting Kubernetes Annotations to a Pod.
-# For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/ 
+# For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
 podAnnotations: {}
 # This is for setting Kubernetes Labels to a Pod.
 # For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
