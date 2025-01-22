@@ -16,19 +16,25 @@ def init_parser(self):
         microsoft365_auth_subparser.add_mutually_exclusive_group()
     )
     microsoft365_auth_modes_group.add_argument(
-        "--m365-app-env-auth",
-        action="store_true",
-        help="Use application authentication with environment variables to log in against Microsoft365",
-    )
-    microsoft365_auth_modes_group.add_argument(
         "--m365-cli-auth",
         action="store_true",
         help="Use Azure CLI authentication to log in against Microsoft365",
     )
     microsoft365_auth_modes_group.add_argument(
+        "--m365-env-app-auth",
+        action="store_true",
+        help="Use application authentication with environment variables to log in against Microsoft365",
+    )
+    microsoft365_auth_modes_group.add_argument(
         "--m365-browser-auth",
         action="store_true",
         help="Use interactive browser authentication to log in against Microsoft365",
+    )
+    microsoft365_parser.add_argument(
+        "--tenant-id",
+        nargs="?",
+        default=None,
+        help="Microsoft365 Tenant ID to be used with --browser-auth option",
     )
     # Regions
     microsoft365_regions_subparser = microsoft365_parser.add_argument_group("Regions")

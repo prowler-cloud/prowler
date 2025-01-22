@@ -217,6 +217,10 @@ class Provider(ABC):
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
+                        m365_env_app_auth=arguments.m365_env_app_auth,
+                        m365_cli_auth=arguments.m365_cli_auth,
+                        m365_browser_auth=arguments.m365_browser_auth,
+                        tenant_id=arguments.tenant_id,
                     )
 
         except TypeError as error:
