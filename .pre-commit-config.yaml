@@ -27,6 +27,7 @@ repos:
     hooks:
       - id: shellcheck
         exclude: contrib
+
   ## PYTHON
   - repo: https://github.com/myint/autoflake
     rev: v2.3.1
@@ -61,8 +62,25 @@ repos:
     rev: 1.8.0
     hooks:
       - id: poetry-check
+        name: API - poetry-check
+        args: ["--directory=./api"]
+        pass_filenames: false
+
       - id: poetry-lock
-        args: ["--no-update"]
+        name: API - poetry-lock
+        args: ["--no-update", "--directory=./api"]
+        pass_filenames: false
+
+      - id: poetry-check
+        name: SDK - poetry-check
+        args: ["--directory=./"]
+        pass_filenames: false
+
+      - id: poetry-lock
+        name: SDK - poetry-lock
+        args: ["--no-update", "--directory=./"]
+        pass_filenames: false
+
 
   - repo: https://github.com/hadolint/hadolint
     rev: v2.13.0-beta
