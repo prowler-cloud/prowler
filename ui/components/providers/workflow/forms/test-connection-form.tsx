@@ -198,8 +198,8 @@ export const TestConnectionForm = ({
         className="flex flex-col space-y-4"
       >
         <div className="text-left">
-          <div className="text-md font-medium text-default-foreground">
-            Test connection and launch scan
+          <div className="mb-2 text-xl font-medium">
+            Check connection and launch scan
           </div>
           <p className="py-2 text-small text-default-500">
             A successful connection will launch a daily scheduled scan.

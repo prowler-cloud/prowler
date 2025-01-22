@@ -25,7 +25,7 @@ export const AWSCredentialsRoleForm = ({
         <div className="text-2xl font-bold leading-9 text-default-foreground">
           Connect assuming IAM Role
         </div>
-        <div className="py-2 text-default-500">
+        <div className="py-2 text-small text-default-500">
           Please provide the information for your AWS credentials.
         </div>
       </div>
