@@ -198,13 +198,11 @@ export const TestConnectionForm = ({
         className="flex flex-col space-y-4"
       >
         <div className="text-left">
-          <div className="text-2xl font-bold leading-9 text-default-foreground">
-            Test connection
+          <div className="text-md font-medium text-default-foreground">
+            Test connection and launch scan
           </div>
-          <p className="py-2 text-default-500">
-            Ensure all required credentials and configurations are completed
-            accurately. A successful connection will enable the option to
-            initiate a scan in the following step.
+          <p className="py-2 text-small text-default-500">
+            A successful connection will launch a daily scheduled scan.
           </p>
         </div>
 
@@ -224,12 +222,12 @@ export const TestConnectionForm = ({
                 />
               </div>
               <div className="flex items-center">
-                <p className="text-danger">
+                <p className="text-small text-danger">
                   {connectionStatus.error || "Unknown error"}
                 </p>
               </div>
             </div>
-            <p className="text-md text-danger">
+            <p className="text-small text-danger">
               It seems there was an issue with your credentials. Please review
               your credentials and try again.
             </p>
@@ -244,7 +242,7 @@ export const TestConnectionForm = ({
         />
 
         {!isResettingCredentials && !connectionStatus?.error && (
-          <p className="py-2 text-default-500">
+          <p className="py-2 text-small text-default-500">
             Test connection and launch scan
           </p>
         )}

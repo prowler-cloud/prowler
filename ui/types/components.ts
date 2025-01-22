@@ -182,6 +182,7 @@ export type AWSCredentialsRole = {
   external_id?: string;
   role_session_name?: string;
   session_duration?: number;
+  credentials_type?: "aws-sdk-default" | "access-secret-key";
 };
 
 export type AzureCredentials = {

@@ -96,7 +96,7 @@ export const LaunchScanForm = ({
           <div className="text-2xl font-bold leading-9 text-default-foreground">
             Scan started
           </div>
-          <div className="py-2 text-default-500">
+          <div className="py-2 text-small text-default-500">
             The scan has just started. From now on, a new scan will be launched
             every 24 hours, starting from this moment.
           </div>
