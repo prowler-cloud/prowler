@@ -368,7 +368,7 @@ class Microsoft365Provider(Provider):
             sp_env_auth (bool): Flag indicating whether to use application authentication with environment variables.
             browser_auth (bool): Flag indicating whether to use interactive browser authentication.
             tenant_id (str): The Microsoft365 Active Directory tenant ID.
-            credentials (dict): The Microsoft365 configuration object. It contains the following keys:
+            microsoft365_credentials (dict): The Microsoft365 configuration object. It contains the following keys:
                 - tenant_id: The Microsoft365 Active Directory tenant ID.
                 - client_id: The Microsoft365 client ID.
                 - client_secret: The Microsoft365 client secret
@@ -493,6 +493,9 @@ class Microsoft365Provider(Provider):
 
         Args:
 
+            az_cli_auth (bool): Flag indicating whether to use Azure CLI authentication.
+            sp_env_auth (bool): Flag indicating whether to use application authentication with environment variables.
+            browser_auth (bool): Flag indicating whether to use interactive browser authentication.
             tenant_id (str): The Microsoft365 Active Directory tenant ID.
             region (str): The Microsoft365 region.
             raise_on_exception (bool): Flag indicating whether to raise an exception if the connection fails.
