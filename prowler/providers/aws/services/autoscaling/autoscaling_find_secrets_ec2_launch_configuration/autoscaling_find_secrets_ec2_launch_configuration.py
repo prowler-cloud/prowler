@@ -4,7 +4,7 @@ from base64 import b64decode
 from prowler.config.config import encoding_format_utf_8
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.lib.logger import logger
-from prowler.lib.utils.utils import default_detect_secrets_plugins, detect_secrets_scan
+from prowler.lib.utils.utils import detect_secrets_scan
 from prowler.providers.aws.services.autoscaling.autoscaling_client import (
     autoscaling_client,
 )
@@ -49,7 +49,7 @@ class autoscaling_find_secrets_ec2_launch_configuration(Check):
                     data=user_data,
                     excluded_secrets=secrets_ignore_patterns,
                     detect_secrets_plugins=autoscaling_client.audit_config.get(
-                        "detect_secrets_plugins", default_detect_secrets_plugins
+                        "detect_secrets_plugins"
                     ),
                 )
 

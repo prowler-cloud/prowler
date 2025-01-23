@@ -37,7 +37,7 @@ class cloudwatch_log_group_no_secrets_in_logs(Check):
                             data=log_stream_data,
                             excluded_secrets=secrets_ignore_patterns,
                             detect_secrets_plugins=logs_client.audit_config.get(
-                                "detect_secrets_plugins", {}
+                                "detect_secrets_plugins",
                             ),
                         )
 
@@ -73,7 +73,7 @@ class cloudwatch_log_group_no_secrets_in_logs(Check):
                                     event_detect_secrets_output = detect_secrets_scan(
                                         data=log_event_data,
                                         detect_secrets_plugins=logs_client.audit_config.get(
-                                            "detect_secrets_plugins", {}
+                                            "detect_secrets_plugins"
                                         ),
                                     )
                                     if event_detect_secrets_output:

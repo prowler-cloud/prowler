@@ -32,7 +32,7 @@ class codebuild_project_no_secrets_in_variables(Check):
                             data=json.dumps({env_var.name: env_var.value}),
                             excluded_secrets=secrets_ignore_patterns,
                             detect_secrets_plugins=codebuild_client.audit_config.get(
-                                "detect_secrets_plugins", {}
+                                "detect_secrets_plugins",
                             ),
                         )
                         if detect_secrets_output:

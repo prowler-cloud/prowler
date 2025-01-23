@@ -28,7 +28,7 @@ class awslambda_function_no_secrets_in_variables(Check):
                     data=json.dumps(function.environment, indent=2),
                     excluded_secrets=secrets_ignore_patterns,
                     detect_secrets_plugins=awslambda_client.audit_config.get(
-                        "detect_secrets_plugins", {}
+                        "detect_secrets_plugins",
                     ),
                 )
                 if detect_secrets_output:
