@@ -1,6 +1,3 @@
-from argparse import ArgumentTypeError
-
-
 def init_parser(self):
     """Init the Microsoft365 Provider CLI parser"""
     microsoft365_parser = self.subparsers.add_parser(
@@ -21,9 +18,9 @@ def init_parser(self):
         help="Use Azure CLI authentication to log in against Microsoft365",
     )
     microsoft365_auth_modes_group.add_argument(
-        "--env-app-auth",
+        "--sp-env-auth",
         action="store_true",
-        help="Use application authentication with environment variables to log in against Microsoft365",
+        help="Use Service Principal environment variables authentication to log in against Microsoft365",
     )
     microsoft365_auth_modes_group.add_argument(
         "--browser-auth",
@@ -42,20 +39,10 @@ def init_parser(self):
         "--region",
         nargs="?",
         default="Microsoft365Global",
-        type=validate_microsoft365_region,
-        help="microsoft365 region from `az cloud list --output table`, by default Microsoft365Global",
+        choices=[
+            "Microsoft365Global",
+            "Microsoft365GlobalChina",
+            "Microsoft365USGovernment",
+        ],
+        help="Microsoft365 region to be used, default is Microsoft365Global",
     )
-
-
-def validate_microsoft365_region(region):
-    """validate_microsoft365_region validates if the region passed as argument is valid"""
-    regions_allowed = [
-        "Microsoft365GlobalChina",
-        "Microsoft365USGovernment",
-        "Microsoft365Global",
-    ]
-    if region not in regions_allowed:
-        raise ArgumentTypeError(
-            f"Region {region} not allowed, allowed regions are {' '.join(regions_allowed)}"
-        )
-    return region

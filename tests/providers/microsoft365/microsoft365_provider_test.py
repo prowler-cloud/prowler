@@ -63,7 +63,7 @@ class TestMicrosoft365Provider:
             ),
         ):
             microsoft365_provider = Microsoft365Provider(
-                env_app_auth=True,
+                sp_env_auth=True,
                 az_cli_auth=False,
                 browser_auth=False,
                 tenant_id=tenant_id,
@@ -162,7 +162,7 @@ class TestMicrosoft365Provider:
             ),
         ):
             microsoft365_provider = Microsoft365Provider(
-                env_app_auth=False,
+                sp_env_auth=False,
                 az_cli_auth=True,
                 browser_auth=False,
                 region=azure_region,
@@ -211,7 +211,7 @@ class TestMicrosoft365Provider:
             ),
         ):
             microsoft365_provider = Microsoft365Provider(
-                env_app_auth=False,
+                sp_env_auth=False,
                 az_cli_auth=False,
                 browser_auth=True,
                 tenant_id=TENANT_ID,

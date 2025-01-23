@@ -217,7 +217,7 @@ class Provider(ABC):
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
-                        env_app_auth=arguments.env_app_auth,
+                        sp_env_auth=arguments.sp_env_auth,
                         az_cli_auth=arguments.az_cli_auth,
                         browser_auth=arguments.browser_auth,
                         tenant_id=arguments.tenant_id,
