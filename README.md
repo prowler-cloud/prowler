@@ -71,10 +71,10 @@ It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, Fe
 
 | Provider | Checks | Services | [Compliance Frameworks](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/compliance/) | [Categories](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/misc/#categories) |
 |---|---|---|---|---|
-| AWS | 564 -> `prowler aws --list-checks` | 82 -> `prowler aws --list-services` | 30 -> `prowler aws --list-compliance` | 10 -> `prowler aws --list-categories` |
-| GCP | 77 -> `prowler gcp --list-checks`  | 13 -> `prowler gcp --list-services` | 4 -> `prowler gcp --list-compliance` | 3 -> `prowler gcp --list-categories`|
-| Azure | 140 -> `prowler azure --list-checks` | 18 -> `prowler azure --list-services` | 4 -> `prowler azure --list-compliance` | 3 -> `prowler azure --list-categories` |
-| Kubernetes | 83 -> `prowler kubernetes --list-checks` | 7 -> `prowler kubernetes --list-services` | 1 -> `prowler kubernetes --list-compliance` | 7 -> `prowler kubernetes --list-categories` |
+| AWS | 564 | 82 | 30 | 10 |
+| GCP | 77 | 13 | 4 | 3 |
+| Azure | 140 | 18 | 5 | 3 |
+| Kubernetes | 83 | 7 | 2 | 7 |
 
 # 💻 Installation
 
