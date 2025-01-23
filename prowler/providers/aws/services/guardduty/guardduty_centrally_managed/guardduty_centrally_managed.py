@@ -7,9 +7,7 @@ class guardduty_centrally_managed(Check):
         findings = []
         for detector in guardduty_client.detectors:
             if detector.id and detector.enabled_in_account:
-                report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=detector
-                )
+                report = Check_Report_AWS(metadata=self.metadata(), resource=detector)
                 report.status = "FAIL"
                 report.status_extended = (
                     f"GuardDuty detector {detector.id} is not centrally managed."

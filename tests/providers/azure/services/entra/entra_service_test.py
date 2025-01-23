@@ -1,4 +1,5 @@
 from unittest.mock import patch
+from uuid import uuid4
 
 from prowler.providers.azure.models import AzureIdentityInfo
 from prowler.providers.azure.services.entra.entra_service import (
@@ -28,9 +29,8 @@ async def mock_entra_get_authorization_policy(_):
             id="id-1",
             name="Name 1",
             description="Description 1",
-            default_user_role_permissions=None,
             guest_invite_settings="none",
-            guest_user_role_id=None,
+            guest_user_role_id=uuid4(),
         )
     }
 

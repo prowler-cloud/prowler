@@ -8,7 +8,7 @@ class compute_project_os_login_enabled(Check):
         for project in compute_client.compute_projects:
             report = Check_Report_GCP(
                 metadata=self.metadata(),
-                resource_metadata=project,
+                resource=project,
                 project_id=project.id,
                 location=compute_client.region,
             )

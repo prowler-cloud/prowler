@@ -6,9 +6,7 @@ class s3_bucket_kms_encryption(Check):
     def execute(self):
         findings = []
         for bucket in s3_client.buckets.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=bucket
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=bucket)
             if bucket.encryption == "aws:kms" or bucket.encryption == "aws:kms:dsse":
                 report.status = "PASS"
                 report.status_extended = f"S3 Bucket {bucket.name} has Server Side Encryption with {bucket.encryption}."

@@ -10,7 +10,7 @@ class policy_ensure_asc_enforcement_enabled(Check):
             if "SecurityCenterBuiltIn" in policies:
                 report = Check_Report_Azure(
                     metadata=self.metadata(),
-                    resource_metadata=policies["SecurityCenterBuiltIn"],
+                    resource=policies["SecurityCenterBuiltIn"],
                 )
                 report.subscription = subscription_name
                 report.status = "PASS"

@@ -6,9 +6,7 @@ class neptune_cluster_backup_enabled(Check):
     def execute(self):
         findings = []
         for cluster in neptune_client.clusters.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=cluster
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=cluster)
             report.resource_id = cluster.name
             report.status = "FAIL"
             report.status_extended = (

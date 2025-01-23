@@ -6,9 +6,7 @@ class bigquery_dataset_cmk_encryption(Check):
     def execute(self) -> Check_Report_GCP:
         findings = []
         for dataset in bigquery_client.datasets:
-            report = Check_Report_GCP(
-                metadata=self.metadata(), resource_metadata=dataset
-            )
+            report = Check_Report_GCP(metadata=self.metadata(), resource=dataset)
             report.status = "PASS"
             report.status_extended = f"Dataset {dataset.name} is encrypted with Customer-Managed Keys (CMKs)."
             if not dataset.cmk_encryption:

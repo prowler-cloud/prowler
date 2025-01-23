@@ -13,9 +13,7 @@ class network_public_ip_shodan(Check):
             api = shodan.Shodan(shodan_api_key)
             for subscription, public_ips in network_client.public_ip_addresses.items():
                 for ip in public_ips:
-                    report = Check_Report_Azure(
-                        metadata=self.metadata(), resource_metadata=ip
-                    )
+                    report = Check_Report_Azure(metadata=self.metadata(), resource=ip)
                     report.subscription = subscription
                     try:
                         shodan_info = api.host(ip.ip_address)

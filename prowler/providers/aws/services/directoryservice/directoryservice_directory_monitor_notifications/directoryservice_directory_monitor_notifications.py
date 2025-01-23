@@ -8,9 +8,7 @@ class directoryservice_directory_monitor_notifications(Check):
     def execute(self):
         findings = []
         for directory in directoryservice_client.directories.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=directory
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=directory)
             if directory.event_topics:
                 report.status = "PASS"
                 report.status_extended = (

@@ -7,9 +7,7 @@ class eventbridge_schema_registry_cross_account_access(Check):
     def execute(self):
         findings = []
         for registry in schema_client.registries.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=registry
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=registry)
             report.status = "PASS"
             report.status_extended = f"EventBridge schema registry {registry.name} does not allow cross-account access."
             if is_policy_public(

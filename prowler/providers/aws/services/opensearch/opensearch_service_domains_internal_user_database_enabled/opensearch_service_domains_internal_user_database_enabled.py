@@ -8,9 +8,7 @@ class opensearch_service_domains_internal_user_database_enabled(Check):
     def execute(self):
         findings = []
         for domain in opensearch_client.opensearch_domains.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=domain
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=domain)
             report.status = "PASS"
             report.status_extended = f"Opensearch domain {domain.name} does not have internal user database enabled."
             if domain.internal_user_database:

@@ -11,9 +11,7 @@ class defender_ensure_iot_hub_defender_is_on(Check):
             iot_security_solutions,
         ) in defender_client.iot_security_solutions.items():
             if not iot_security_solutions:
-                report = Check_Report_Azure(
-                    metadata=self.metadata(), resource_metadata={}
-                )
+                report = Check_Report_Azure(metadata=self.metadata(), resource={})
                 report.status = "FAIL"
                 report.subscription = subscription_name
                 report.resource_name = "IoT Hub Defender"
@@ -24,7 +22,7 @@ class defender_ensure_iot_hub_defender_is_on(Check):
                 for iot_security_solution in iot_security_solutions.values():
                     report = Check_Report_Azure(
                         metadata=self.metadata(),
-                        resource_metadata=iot_security_solution,
+                        resource=iot_security_solution,
                     )
                     report.subscription = subscription_name
                     report.status = "PASS"

@@ -24,7 +24,7 @@ class Test_entra_global_admin_in_less_than_five_users:
 
             entra_client.directory_roles = {}
 
-            entra_client.uses = {}
+            entra_client.users = {}
 
             check = entra_global_admin_in_less_than_five_users()
             result = check.execute()

@@ -11,9 +11,7 @@ class app_function_not_publicly_accessible(Check):
             functions,
         ) in app_client.functions.items():
             for function in functions.values():
-                report = Check_Report_Azure(
-                    metadata=self.metadata(), resource_metadata=function
-                )
+                report = Check_Report_Azure(metadata=self.metadata(), resource=function)
                 report.subscription = subscription_name
                 report.status = "FAIL"
                 report.status_extended = (

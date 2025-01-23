@@ -16,16 +16,14 @@ class monitor_alert_create_update_public_ip_address_rule(Check):
                     alert_rule, "Microsoft.Network/publicIPAddresses/write"
                 ):
                     report = Check_Report_Azure(
-                        metadata=self.metadata(), resource_metadata=alert_rule
+                        metadata=self.metadata(), resource=alert_rule
                     )
                     report.subscription = subscription_name
                     report.status = "PASS"
                     report.status_extended = f"There is an alert configured for creating/updating Public IP address rule in subscription {subscription_name}."
                     break
             else:
-                report = Check_Report_Azure(
-                    metadata=self.metadata(), resource_metadata={}
-                )
+                report = Check_Report_Azure(metadata=self.metadata(), resource={})
                 report.subscription = subscription_name
                 report.resource_name = "Monitor"
                 report.resource_id = "Monitor"

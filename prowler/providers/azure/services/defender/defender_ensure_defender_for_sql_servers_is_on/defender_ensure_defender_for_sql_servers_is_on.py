@@ -9,7 +9,7 @@ class defender_ensure_defender_for_sql_servers_is_on(Check):
             if "SqlServerVirtualMachines" in pricings:
                 report = Check_Report_Azure(
                     metadata=self.metadata(),
-                    resource_metadata=pricings["SqlServerVirtualMachines"],
+                    resource=pricings["SqlServerVirtualMachines"],
                 )
                 report.subscription = subscription
                 report.resource_name = "Defender plan SQL Server VMs"

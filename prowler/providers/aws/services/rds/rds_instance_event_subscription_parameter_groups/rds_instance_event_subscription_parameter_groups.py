@@ -7,9 +7,7 @@ class rds_instance_event_subscription_parameter_groups(Check):
         findings = []
         if rds_client.provider.scan_unused_services or rds_client.db_instances:
             for db_event in rds_client.db_event_subscriptions:
-                report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=db_event
-                )
+                report = Check_Report_AWS(metadata=self.metadata(), resource=db_event)
                 report.status = "FAIL"
                 report.status_extended = "RDS parameter group event categories of configuration change is not subscribed."
                 report.resource_id = rds_client.audited_account
@@ -21,7 +19,7 @@ class rds_instance_event_subscription_parameter_groups(Check):
                         "configuration change",
                     ]:
                         report = Check_Report_AWS(
-                            metadata=self.metadata(), resource_metadata=db_event
+                            metadata=self.metadata(), resource=db_event
                         )
                         report.status = "PASS"
                         report.status_extended = (

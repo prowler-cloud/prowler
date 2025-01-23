@@ -8,9 +8,7 @@ class awslambda_function_inside_vpc(Check):
     def execute(self) -> List[Check_Report_AWS]:
         findings = []
         for function_arn, function in awslambda_client.functions.items():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=function
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=function)
 
             report.status = "PASS"
             report.status_extended = (

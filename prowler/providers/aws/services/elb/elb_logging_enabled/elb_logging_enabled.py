@@ -6,7 +6,7 @@ class elb_logging_enabled(Check):
     def execute(self):
         findings = []
         for lb in elb_client.loadbalancers.values():
-            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=lb)
+            report = Check_Report_AWS(metadata=self.metadata(), resource=lb)
             report.status = "FAIL"
             report.status_extended = (
                 f"ELB {lb.name} does not have access logs configured."

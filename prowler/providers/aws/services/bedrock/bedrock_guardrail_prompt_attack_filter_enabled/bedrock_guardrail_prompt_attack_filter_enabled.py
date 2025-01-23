@@ -6,9 +6,7 @@ class bedrock_guardrail_prompt_attack_filter_enabled(Check):
     def execute(self):
         findings = []
         for guardrail in bedrock_client.guardrails.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=guardrail
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=guardrail)
             report.status = "PASS"
             report.status_extended = f"Bedrock Guardrail {guardrail.name} is configured to detect and block prompt attacks with a HIGH strength."
             if not guardrail.prompt_attack_filter_strength:

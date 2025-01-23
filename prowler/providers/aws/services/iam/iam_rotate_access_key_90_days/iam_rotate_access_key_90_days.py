@@ -25,9 +25,7 @@ class iam_rotate_access_key_90_days(Check):
                 user["access_key_1_last_rotated"] == "N/A"
                 and user["access_key_2_last_rotated"] == "N/A"
             ):
-                report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=user
-                )
+                report = Check_Report_AWS(metadata=self.metadata(), resource=user)
                 report.region = iam_client.region
                 report.resource_id = user["user"]
                 report.resource_arn = user["arn"]
@@ -50,7 +48,7 @@ class iam_rotate_access_key_90_days(Check):
                     if access_key_1_last_rotated.days > maximum_expiration_days:
                         old_access_keys = True
                         report = Check_Report_AWS(
-                            metadata=self.metadata(), resource_metadata=user
+                            metadata=self.metadata(), resource=user
                         )
                         report.region = iam_client.region
                         report.resource_id = f"{user['user']}-access-key-1"
@@ -69,7 +67,7 @@ class iam_rotate_access_key_90_days(Check):
                     if access_key_2_last_rotated.days > maximum_expiration_days:
                         old_access_keys = True
                         report = Check_Report_AWS(
-                            metadata=self.metadata(), resource_metadata=user
+                            metadata=self.metadata(), resource=user
                         )
                         report.region = iam_client.region
                         report.resource_id = f"{user['user']}-access-key-2"
@@ -80,9 +78,7 @@ class iam_rotate_access_key_90_days(Check):
                         findings.append(report)
 
                 if not old_access_keys:
-                    report = Check_Report_AWS(
-                        metadata=self.metadata(), resource_metadata=user
-                    )
+                    report = Check_Report_AWS(metadata=self.metadata(), resource=user)
                     report.region = iam_client.region
                     report.resource_id = user["user"]
                     report.resource_arn = user["arn"]

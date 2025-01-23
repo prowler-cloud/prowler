@@ -9,9 +9,7 @@ class route53_domains_privacy_protection_enabled(Check):
         findings = []
 
         for domain in route53domains_client.domains.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=domain
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=domain)
             if domain.admin_privacy:
                 report.status = "PASS"
                 report.status_extended = (

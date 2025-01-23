@@ -6,7 +6,7 @@ class elb_connection_draining_enabled(Check):
     def execute(self) -> list[Check_Report_AWS]:
         findings = []
         for lb in elb_client.loadbalancers.values():
-            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=lb)
+            report = Check_Report_AWS(metadata=self.metadata(), resource=lb)
             report.status = "PASS"
             report.status_extended = f"ELB {lb.name} has connection draining enabled."
 

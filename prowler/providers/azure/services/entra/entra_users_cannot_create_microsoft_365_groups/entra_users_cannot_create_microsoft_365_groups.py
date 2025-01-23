@@ -8,7 +8,7 @@ class entra_users_cannot_create_microsoft_365_groups(Check):
 
         for tenant_domain, group_settings in entra_client.group_settings.items():
             report = Check_Report_Azure(
-                metadata=self.metadata(), resource_metadata=group_settings
+                metadata=self.metadata(), resource=group_settings
             )
             report.status = "FAIL"
             report.subscription = f"Tenant: {tenant_domain}"

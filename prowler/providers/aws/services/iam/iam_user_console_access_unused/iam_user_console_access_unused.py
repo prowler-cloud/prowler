@@ -11,7 +11,7 @@ class iam_user_console_access_unused(Check):
         )
         findings = []
         for user in iam_client.users:
-            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=user)
+            report = Check_Report_AWS(metadata=self.metadata(), resource=user)
             report.region = iam_client.region
             if user.console_access and user.password_last_used:
                 time_since_insertion = (

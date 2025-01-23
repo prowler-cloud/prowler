@@ -9,9 +9,7 @@ class apigateway_restapi_public_with_authorizer(Check):
         findings = []
         for rest_api in apigateway_client.rest_apis:
             if rest_api.public_endpoint:
-                report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=rest_api
-                )
+                report = Check_Report_AWS(metadata=self.metadata(), resource=rest_api)
                 report.resource_id = rest_api.name
 
                 report.status = "PASS"

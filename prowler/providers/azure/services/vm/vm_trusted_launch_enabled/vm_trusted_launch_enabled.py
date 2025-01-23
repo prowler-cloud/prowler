@@ -8,9 +8,7 @@ class vm_trusted_launch_enabled(Check):
 
         for subscription_name, vms in vm_client.virtual_machines.items():
             for vm in vms.values():
-                report = Check_Report_Azure(
-                    metadata=self.metadata(), resource_metadata=vm
-                )
+                report = Check_Report_Azure(metadata=self.metadata(), resource=vm)
                 report.subscription = subscription_name
                 report.status = "FAIL"
                 report.status_extended = f"VM {vm.resource_name} has trusted launch disabled in subscription {subscription_name}"

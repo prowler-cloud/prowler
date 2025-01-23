@@ -8,9 +8,7 @@ class opensearch_service_domains_updated_to_the_latest_service_software_version(
     def execute(self):
         findings = []
         for domain in opensearch_client.opensearch_domains.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=domain
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=domain)
             report.status = "PASS"
             report.status_extended = f"Opensearch domain {domain.name} with version {domain.version} does not have internal updates available."
             if domain.update_available:

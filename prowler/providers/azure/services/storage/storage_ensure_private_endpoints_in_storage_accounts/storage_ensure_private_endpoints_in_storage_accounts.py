@@ -8,7 +8,7 @@ class storage_ensure_private_endpoints_in_storage_accounts(Check):
         for subscription, storage_accounts in storage_client.storage_accounts.items():
             for storage_account in storage_accounts:
                 report = Check_Report_Azure(
-                    metadata=self.metadata(), resource_metadata=storage_account
+                    metadata=self.metadata(), resource=storage_account
                 )
                 report.subscription = subscription
                 if storage_account.private_endpoint_connections:
