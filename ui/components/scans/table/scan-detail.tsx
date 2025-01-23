@@ -2,9 +2,15 @@
 
 import { Snippet } from "@nextui-org/react";
 
-import { DateWithTime, InfoField } from "@/components/ui/entities";
+import {
+  DateWithTime,
+  EntityInfoShort,
+  InfoField,
+} from "@/components/ui/entities";
 import { StatusBadge } from "@/components/ui/table/status-badge";
-import { ScanProps, TaskDetails } from "@/types";
+import { ProviderProps, ScanProps, TaskDetails } from "@/types";
+import { ConnectionFalse } from "@/components/icons/Icons";
+import { ConnectionTrue } from "@/components/icons";
 
 const renderValue = (value: string | null | undefined) => {
   return value && value.trim() !== "" ? value : "-";
@@ -44,18 +50,17 @@ export const ScanDetail = ({
 }: {
   scanDetails: ScanProps & {
     taskDetails?: TaskDetails;
+    providerDetails?: ProviderProps;
   };
 }) => {
   const scan = scanDetails.attributes;
   const taskDetails = scanDetails.taskDetails;
+  const providerDetails = scanDetails.providerDetails?.attributes;
 
   return (
     <div className="flex flex-col gap-6 rounded-lg">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="line-clamp-2 text-lg font-medium leading-tight text-gray-800 dark:text-prowler-theme-pale/90">
-          {renderValue(scan.name)}
-        </h2>
         <StatusBadge
           size="lg"
           status={scan.state}
@@ -118,6 +123,42 @@ export const ScanDetail = ({
             </InfoField>
           )}
         </div>
+      </Section>
+
+      {/* Provider Details */}
+      <Section title="Provider Details">
+        {providerDetails ? (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <EntityInfoShort
+              cloudProvider={
+                providerDetails.provider as
+                  | "aws"
+                  | "azure"
+                  | "gcp"
+                  | "kubernetes"
+              }
+              entityAlias={providerDetails.alias}
+              entityId={providerDetails.uid}
+            />
+            <InfoField label="Connection Status" variant="simple">
+              {providerDetails.connection.connected ? (
+                <ConnectionTrue className="text-system-success" size={24} />
+              ) : (
+                <ConnectionFalse className="text-danger" size={24} />
+              )}
+            </InfoField>
+            <InfoField label="Last Checked">
+              <DateWithTime
+                inline
+                dateTime={providerDetails.connection.last_checked_at}
+              />
+            </InfoField>
+          </div>
+        ) : (
+          <span className="text-sm text-gray-500">
+            No provider details available
+          </span>
+        )}
       </Section>
     </div>
   );
