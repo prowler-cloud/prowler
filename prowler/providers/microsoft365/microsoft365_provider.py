@@ -105,9 +105,9 @@ class Microsoft365Provider(Provider):
 
     def __init__(
         self,
-        m365_env_app_auth: bool,
-        m365_cli_auth: bool,
-        m365_browser_auth: bool,
+        env_app_auth: bool,
+        cli_auth: bool,
+        browser_auth: bool,
         tenant_id: str = None,
         client_id: str = None,
         client_secret: str = None,
@@ -148,9 +148,9 @@ class Microsoft365Provider(Provider):
 
         # Validate the authentication arguments
         self.validate_arguments(
-            m365_cli_auth,
-            m365_env_app_auth,
-            m365_browser_auth,
+            cli_auth,
+            env_app_auth,
+            browser_auth,
             tenant_id,
             client_id,
             client_secret,
@@ -168,9 +168,9 @@ class Microsoft365Provider(Provider):
 
         # Set up the Microsoft365 session
         self._session = self.setup_session(
-            m365_cli_auth,
-            m365_env_app_auth,
-            m365_browser_auth,
+            cli_auth,
+            env_app_auth,
+            browser_auth,
             tenant_id,
             microsoft365_credentials,
             self._region_config,
@@ -178,9 +178,9 @@ class Microsoft365Provider(Provider):
 
         # Set up the identity
         self._identity = self.setup_identity(
-            m365_cli_auth,
-            m365_env_app_auth,
-            m365_browser_auth,
+            cli_auth,
+            env_app_auth,
+            browser_auth,
             client_id,
         )
 
@@ -246,9 +246,9 @@ class Microsoft365Provider(Provider):
 
     @staticmethod
     def validate_arguments(
-        m365_cli_auth: bool,
-        m365_env_app_auth: bool,
-        m365_browser_auth: bool,
+        cli_auth: bool,
+        env_app_auth: bool,
+        browser_auth: bool,
         tenant_id: str,
         client_id: str,
         client_secret: str,
@@ -257,9 +257,9 @@ class Microsoft365Provider(Provider):
         Validates the authentication arguments for the Microsoft365 provider.
 
         Args:
-            m365_cli_auth (bool): Flag indicating whether Azure CLI authentication is enabled.
-            m365_env_app_auth (bool): Flag indicating whether application authentication with environment variables is enabled.
-            m365_browser_auth (bool): Flag indicating whether browser authentication is enabled.
+            cli_auth (bool): Flag indicating whether Azure CLI authentication is enabled.
+            env_app_auth (bool): Flag indicating whether application authentication with environment variables is enabled.
+            browser_auth (bool): Flag indicating whether browser authentication is enabled.
             tenant_id (str): The Microsoft365 Tenant ID.
             client_id (str): The Microsoft365 Client ID.
             client_secret (str): The Microsoft365 Client Secret.
@@ -269,17 +269,17 @@ class Microsoft365Provider(Provider):
         """
 
         if not client_id and not client_secret:
-            if not m365_browser_auth and tenant_id:
+            if not browser_auth and tenant_id:
                 raise Microsoft365BrowserAuthNoFlagError(
                     file=os.path.basename(__file__),
                     message="Microsoft365 Tenant ID (--m365-browser-auth) is required for browser authentication mode",
                 )
-            elif not m365_cli_auth and not m365_env_app_auth and not m365_browser_auth:
+            elif not cli_auth and not env_app_auth and not browser_auth:
                 raise Microsoft365NoAuthenticationMethodError(
                     file=os.path.basename(__file__),
                     message="Microsoft365 provider requires at least one authentication method set: [--m365-cli-auth | --m365-env-app-auth | --m365-browser-auth]",
                 )
-            elif m365_browser_auth and not tenant_id:
+            elif browser_auth and not tenant_id:
                 raise Microsoft365BrowserAuthNoTenantIDError(
                     file=os.path.basename(__file__),
                     message="Microsoft365 Tenant ID (--tenant-id) is required for browser authentication mode",
@@ -356,9 +356,9 @@ class Microsoft365Provider(Provider):
     # This should be setup_credentials, since it is setting up the credentials for the provider
     @staticmethod
     def setup_session(
-        m365_cli_auth: bool,
-        m365_env_app_auth: bool,
-        m365_browser_auth: bool,
+        cli_auth: bool,
+        env_app_auth: bool,
+        browser_auth: bool,
         tenant_id: str,
         microsoft365_credentials: dict,
         region_config: Microsoft365RegionConfig,
@@ -368,11 +368,11 @@ class Microsoft365Provider(Provider):
         Set up the Microsoft365 session with the specified authentication method.
 
         Args:
-            m365_cli_auth (bool): Flag indicating whether to use Azure CLI authentication.
-            m365_env_app_auth (bool): Flag indicating whether to use application authentication with environment variables.
-            m365_browser_auth (bool): Flag indicating whether to use interactive browser authentication.
+            cli_auth (bool): Flag indicating whether to use Azure CLI authentication.
+            env_app_auth (bool): Flag indicating whether to use application authentication with environment variables.
+            browser_auth (bool): Flag indicating whether to use interactive browser authentication.
             tenant_id (str): The Microsoft365 Active Directory tenant ID.
-            m365_credentials (dict): The Microsoft365 configuration object. It contains the following keys:
+            credentials (dict): The Microsoft365 configuration object. It contains the following keys:
                 - tenant_id: The Microsoft365 Active Directory tenant ID.
                 - client_id: The Microsoft365 client ID.
                 - client_secret: The Microsoft365 client secret
@@ -386,10 +386,10 @@ class Microsoft365Provider(Provider):
 
         """
         # Browser auth creds cannot be set with DefaultAzureCredentials()
-        if not m365_browser_auth:
+        if not browser_auth:
             try:
                 if (
-                    m365_env_app_auth
+                    env_app_auth
                     and Microsoft365Provider.check_application_creds_env_vars()
                 ):
                     try:
@@ -420,11 +420,11 @@ class Microsoft365Provider(Provider):
                         raise Microsoft365ConfigCredentialsError(
                             file=os.path.basename(__file__), original_exception=error
                         )
-                elif m365_cli_auth:
+                elif cli_auth:
                     try:
                         credentials = DefaultAzureCredential(
                             exclude_environment_credential=True,
-                            exclude_cli_credential=not m365_cli_auth,
+                            exclude_cli_credential=not cli_auth,
                             # Microsoft365 Auth using Managed Identity is not supported
                             exclude_managed_identity_credential=True,
                             # Microsoft365 Auth using Visual Studio is not supported
@@ -677,18 +677,18 @@ class Microsoft365Provider(Provider):
 
     def setup_identity(
         self,
-        m365_cli_auth,
-        m365_env_app_auth,
-        m365_browser_auth,
+        cli_auth,
+        env_app_auth,
+        browser_auth,
         client_id,
     ):
         """
         Sets up the identity for the Microsoft365 provider.
 
         Args:
-            m365_cli_auth (bool): Flag indicating if Azure CLI authentication is used.
-            m365_env_app_auth (bool): Flag indicating if application authentication with environment variables is used.
-            m365_browser_auth (bool): Flag indicating if interactive browser authentication is used.
+            cli_auth (bool): Flag indicating if Azure CLI authentication is used.
+            env_app_auth (bool): Flag indicating if application authentication with environment variables is used.
+            browser_auth (bool): Flag indicating if interactive browser authentication is used.
             client_id (str): The Microsoft365 client ID.
 
         Returns:
@@ -702,7 +702,7 @@ class Microsoft365Provider(Provider):
         # the identity can access AAD and retrieve the tenant domain name.
         # With cli also should be possible but right now it does not work, microsoft365 python package issue is coming
         # At the time of writting this with az cli creds is not working, despite that is included
-        if m365_cli_auth or m365_env_app_auth or m365_browser_auth or client_id:
+        if cli_auth or env_app_auth or browser_auth or client_id:
 
             async def get_microsoft365_identity():
                 # Trying to recover tenant domain info
@@ -739,7 +739,7 @@ class Microsoft365Provider(Provider):
                     )
                 # since that exception is not considered as critical, we keep filling another identity fields
                 # The id of the sp can be retrieved from environment variables
-                if m365_env_app_auth or client_id:
+                if env_app_auth or client_id:
                     identity.identity_id = getenv("APP_CLIENT_ID")
                     identity.identity_type = "Application"
                     identity.tenant_id = getenv("APP_TENANT_ID")
