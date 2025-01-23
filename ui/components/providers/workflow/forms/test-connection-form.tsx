@@ -68,6 +68,9 @@ export const TestConnectionForm = ({
   const [isResettingCredentials, setIsResettingCredentials] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
 
+  // const urlParams = new URLSearchParams(window.location.search);
+  // const isUpdated = urlParams.get("updated") === "true";
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -116,7 +119,9 @@ export const TestConnectionForm = ({
           error: connected ? null : error || "Unknown error",
         });
 
-        if (connected) {
+        if (connected && isUpdated) return router.push("/providers");
+
+        if (connected && !isUpdated) {
           try {
             const data = await scheduleDaily(formData);
             if (data.error) {
@@ -126,9 +131,6 @@ export const TestConnectionForm = ({
                 message: data.error,
               });
             } else {
-              const urlParams = new URLSearchParams(window.location.search);
-              const isUpdated = urlParams.get("updated") === "true";
-
               if (!isUpdated) {
                 setIsRedirecting(true);
                 router.push("/scans");

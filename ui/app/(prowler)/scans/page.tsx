@@ -62,6 +62,8 @@ export default async function Scans({
         <>
           {thereIsNoProvidersConnected ? (
             <>
+              <Header title="Scans" icon="lucide:scan-search" />
+
               <Spacer y={8} />
               <NoProvidersConnected />
               <Spacer y={8} />
@@ -76,7 +78,6 @@ export default async function Scans({
               <Spacer y={8} />
             </>
           )}
-          <Header title="Scans" icon="lucide:scan-search" />
 
           <div className="grid grid-cols-12 items-start gap-4">
             <div className="col-span-12">

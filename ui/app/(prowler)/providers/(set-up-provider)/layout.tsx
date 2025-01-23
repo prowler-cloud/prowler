@@ -14,7 +14,7 @@ export default function ProviderLayout({ children }: ProviderLayoutProps) {
   return (
     <>
       <NavigationHeader
-        title="Connect your cloud provider"
+        title="Connect a Cloud Provider"
         icon="icon-park-outline:close-small"
         href="/providers"
       />
