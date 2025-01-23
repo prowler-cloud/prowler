@@ -22,10 +22,10 @@ export default async function Providers({
 
   return (
     <>
-      <Header title="Providers" icon="fluent:cloud-sync-24-regular" />
+      <Header title="Cloud Providers" icon="fluent:cloud-sync-24-regular" />
 
       <Spacer y={4} />
-      <FilterControls search providers />
+      <FilterControls search />
       <Spacer y={8} />
       <div className="flex items-center gap-4 md:justify-end">
         <ManageGroupsButton />

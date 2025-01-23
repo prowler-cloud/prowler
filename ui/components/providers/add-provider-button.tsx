@@ -7,13 +7,13 @@ export const AddProviderButton = () => {
   return (
     <CustomButton
       asLink="/providers/connect-account"
-      ariaLabel="Add Account"
+      ariaLabel="Add Cloud Provider"
       variant="solid"
       color="action"
       size="md"
       endContent={<AddIcon size={20} />}
     >
-      Add Account
+      Add Cloud Provider
     </CustomButton>
   );
 };
