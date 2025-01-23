@@ -381,7 +381,6 @@ class Microsoft365Provider(Provider):
             Exception: If failed to retrieve Microsoft365 credentials.
 
         """
-        # Browser auth creds cannot be set with DefaultAzureCredentials()
         if not browser_auth:
             try:
                 if (
@@ -479,8 +478,11 @@ class Microsoft365Provider(Provider):
 
     @staticmethod
     def test_connection(
-        tenant_id=None,
-        region="Microsoft365Global",
+        az_cli_auth: bool = False,
+        sp_env_auth: bool = False,
+        browser_auth: bool = False,
+        tenant_id: str = None,
+        region: str = "Microsoft365Global",
         raise_on_exception=True,
         client_id=None,
         client_secret=None,
@@ -518,6 +520,14 @@ class Microsoft365Provider(Provider):
             True
         """
         try:
+            Microsoft365Provider.validate_arguments(
+                az_cli_auth,
+                sp_env_auth,
+                browser_auth,
+                tenant_id,
+                client_id,
+                client_secret,
+            )
             region_config = Microsoft365Provider.setup_region_config(region)
 
             # Get the dict from the static credentials
@@ -533,6 +543,11 @@ class Microsoft365Provider(Provider):
 
             # Set up the Microsoft365 session
             credentials = Microsoft365Provider.setup_session(
+                az_cli_auth,
+                sp_env_auth,
+                browser_auth,
+                tenant_id,
+                region_config,
                 microsoft365_credentials,
                 region_config,
             )
