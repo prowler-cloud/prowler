@@ -43,7 +43,11 @@ class autoscaling_find_secrets_ec2_launch_configuration(Check):
                     continue
 
                 has_secrets = detect_secrets_scan(
-                    data=user_data, excluded_secrets=secrets_ignore_patterns
+                    data=user_data,
+                    excluded_secrets=secrets_ignore_patterns,
+                    detect_secrets_plugins=autoscaling_client.audit_config.get(
+                        "detect_secrets_plugins"
+                    ),
                 )
 
                 if has_secrets:
