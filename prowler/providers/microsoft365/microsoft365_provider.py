@@ -420,10 +420,10 @@ class Microsoft365Provider(Provider):
                         raise Microsoft365ConfigCredentialsError(
                             file=os.path.basename(__file__), original_exception=error
                         )
-                else:
+                elif m365_cli_auth:
                     try:
                         credentials = DefaultAzureCredential(
-                            exclude_environment_credential=not m365_env_app_auth,
+                            exclude_environment_credential=True,
                             exclude_cli_credential=not m365_cli_auth,
                             # Microsoft365 Auth using Managed Identity is not supported
                             exclude_managed_identity_credential=True,
@@ -662,14 +662,18 @@ class Microsoft365Provider(Provider):
         logger.info(
             "Microsoft365 provider: checking service principal environment variables  ..."
         )
-        env_vars_missing = False
+        missing_env_vars = []
         for env_var in ["APP_CLIENT_ID", "APP_TENANT_ID", "APP_CLIENT_SECRET"]:
             if not getenv(env_var):
-                logger.critical(
-                    f"Microsoft365 provider: Missing environment variable {env_var} needed to authenticate against Microsoft365"
-                )
-                env_vars_missing = True
-        return not env_vars_missing
+                missing_env_vars.append(env_var)
+
+        if missing_env_vars:
+            raise Microsoft365CredentialsUnavailableError(
+                file=os.path.basename(__file__),
+                message=f"Missing environment variables needed to authenticate against Microsoft365: {', '.join(missing_env_vars)}",
+            )
+        else:
+            return True
 
     def setup_identity(
         self,

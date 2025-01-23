@@ -2,7 +2,11 @@ from unittest.mock import patch
 from uuid import uuid4
 
 import pytest
-from azure.identity import ClientSecretCredential
+from azure.identity import (
+    ClientSecretCredential,
+    DefaultAzureCredential,
+    InteractiveBrowserCredential,
+)
 from mock import MagicMock
 
 from prowler.config.config import (
@@ -17,6 +21,8 @@ from prowler.providers.microsoft365.models import (
     Microsoft365RegionConfig,
 )
 from tests.providers.microsoft365.microsoft365_fixtures import (
+    CLIENT_ID,
+    CLIENT_SECRET,
     DOMAIN,
     IDENTITY_ID,
     IDENTITY_TYPE,
@@ -40,9 +46,9 @@ class TestMicrosoft365Provider:
             patch(
                 "prowler.providers.microsoft365.microsoft365_provider.Microsoft365Provider.setup_session",
                 return_value=ClientSecretCredential(
-                    client_id=IDENTITY_ID,
+                    client_id=CLIENT_ID,
                     tenant_id=TENANT_ID,
-                    client_secret="client_secret",
+                    client_secret=CLIENT_SECRET,
                 ),
             ),
             patch(
@@ -57,12 +63,15 @@ class TestMicrosoft365Provider:
             ),
         ):
             microsoft365_provider = Microsoft365Provider(
-                tenant_id,
-                azure_region,
-                config_path=default_config_file_path,
-                fixer_config=fixer_config,
+                m365_env_app_auth=True,
+                m365_cli_auth=False,
+                m365_browser_auth=False,
+                tenant_id=tenant_id,
                 client_id=client_id,
                 client_secret=client_secret,
+                region=azure_region,
+                config_path=default_config_file_path,
+                fixer_config=fixer_config,
             )
 
             assert microsoft365_provider.region_config == Microsoft365RegionConfig(
@@ -119,3 +128,110 @@ class TestMicrosoft365Provider:
 
             assert exception.type is Exception
             assert exception.value.args[0] == "Simulated Exception"
+
+    def test_microsoft365_provider_cli_auth(self):
+        """Test Microsoft365 Provider initialization with CLI authentication"""
+        azure_region = "Microsoft365Global"
+        fixer_config = load_and_validate_config_file(
+            "microsoft365", default_fixer_config_file_path
+        )
+
+        with (
+            patch(
+                "prowler.providers.microsoft365.microsoft365_provider.Microsoft365Provider.setup_session",
+                return_value=DefaultAzureCredential(
+                    exclude_environment_credential=True,
+                    exclude_cli_credential=False,
+                    exclude_managed_identity_credential=True,
+                    exclude_visual_studio_code_credential=True,
+                    exclude_shared_token_cache_credential=True,
+                    exclude_powershell_credential=True,
+                    exclude_browser_credential=True,
+                ),
+            ),
+            patch(
+                "prowler.providers.microsoft365.microsoft365_provider.Microsoft365Provider.setup_identity",
+                return_value=Microsoft365IdentityInfo(
+                    identity_id=IDENTITY_ID,
+                    identity_type="User",
+                    tenant_id=TENANT_ID,
+                    tenant_domain=DOMAIN,
+                    location=LOCATION,
+                ),
+            ),
+        ):
+            microsoft365_provider = Microsoft365Provider(
+                m365_env_app_auth=False,
+                m365_cli_auth=True,
+                m365_browser_auth=False,
+                region=azure_region,
+                config_path=default_config_file_path,
+                fixer_config=fixer_config,
+            )
+
+            assert microsoft365_provider.region_config == Microsoft365RegionConfig(
+                name="Microsoft365Global",
+                authority=None,
+                base_url="https://graph.microsoft.com",
+                credential_scopes=["https://graph.microsoft.com/.default"],
+            )
+            assert microsoft365_provider.identity == Microsoft365IdentityInfo(
+                identity_id=IDENTITY_ID,
+                identity_type="User",
+                tenant_id=TENANT_ID,
+                tenant_domain=DOMAIN,
+                location=LOCATION,
+            )
+            assert isinstance(microsoft365_provider.session, DefaultAzureCredential)
+
+    def test_microsoft365_provider_browser_auth(self):
+        """Test Microsoft365 Provider initialization with Browser authentication"""
+        azure_region = "Microsoft365Global"
+        fixer_config = load_and_validate_config_file(
+            "microsoft365", default_fixer_config_file_path
+        )
+
+        with (
+            patch(
+                "prowler.providers.microsoft365.microsoft365_provider.Microsoft365Provider.setup_session",
+                return_value=InteractiveBrowserCredential(
+                    tenant_id=TENANT_ID,
+                ),
+            ),
+            patch(
+                "prowler.providers.microsoft365.microsoft365_provider.Microsoft365Provider.setup_identity",
+                return_value=Microsoft365IdentityInfo(
+                    identity_id=IDENTITY_ID,
+                    identity_type="User",
+                    tenant_id=TENANT_ID,
+                    tenant_domain=DOMAIN,
+                    location=LOCATION,
+                ),
+            ),
+        ):
+            microsoft365_provider = Microsoft365Provider(
+                m365_env_app_auth=False,
+                m365_cli_auth=False,
+                m365_browser_auth=True,
+                tenant_id=TENANT_ID,
+                region=azure_region,
+                config_path=default_config_file_path,
+                fixer_config=fixer_config,
+            )
+
+            assert microsoft365_provider.region_config == Microsoft365RegionConfig(
+                name="Microsoft365Global",
+                authority=None,
+                base_url="https://graph.microsoft.com",
+                credential_scopes=["https://graph.microsoft.com/.default"],
+            )
+            assert microsoft365_provider.identity == Microsoft365IdentityInfo(
+                identity_id=IDENTITY_ID,
+                identity_type="User",
+                tenant_id=TENANT_ID,
+                tenant_domain=DOMAIN,
+                location=LOCATION,
+            )
+            assert isinstance(
+                microsoft365_provider.session, InteractiveBrowserCredential
+            )
