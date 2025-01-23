@@ -550,7 +550,6 @@ class Microsoft365Provider(Provider):
                 sp_env_auth,
                 browser_auth,
                 tenant_id,
-                region_config,
                 microsoft365_credentials,
                 region_config,
             )

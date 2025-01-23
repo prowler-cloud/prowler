@@ -2,6 +2,7 @@ from unittest.mock import patch
 from uuid import uuid4
 
 import pytest
+from azure.core.credentials import AccessToken
 from azure.identity import (
     ClientSecretCredential,
     DefaultAzureCredential,
@@ -15,6 +16,10 @@ from prowler.config.config import (
     load_and_validate_config_file,
 )
 from prowler.providers.common.models import Connection
+from prowler.providers.microsoft365.exceptions.exceptions import (
+    Microsoft365HTTPResponseError,
+    Microsoft365NoAuthenticationMethodError,
+)
 from prowler.providers.microsoft365.microsoft365_provider import Microsoft365Provider
 from prowler.providers.microsoft365.models import (
     Microsoft365IdentityInfo,
@@ -87,48 +92,6 @@ class TestMicrosoft365Provider:
                 tenant_domain=DOMAIN,
                 location=LOCATION,
             )
-
-    def test_test_connection_tenant_id_client_id_client_secret(self):
-        with (
-            patch(
-                "prowler.providers.microsoft365.microsoft365_provider.Microsoft365Provider.setup_session"
-            ) as mock_setup_session,
-            patch(
-                "prowler.providers.microsoft365.microsoft365_provider.Microsoft365Provider.validate_static_credentials"
-            ) as mock_validate_static_credentials,
-        ):
-            # Mock setup_session to return a mocked session object
-            mock_session = MagicMock()
-            mock_setup_session.return_value = mock_session
-
-            # Mock ValidateStaticCredentials to avoid real API calls
-            mock_validate_static_credentials.return_value = None
-
-            test_connection = Microsoft365Provider.test_connection(
-                tenant_id=str(uuid4()),
-                region="Microsoft365Global",
-                raise_on_exception=False,
-                client_id=str(uuid4()),
-                client_secret=str(uuid4()),
-            )
-
-            assert isinstance(test_connection, Connection)
-            assert test_connection.is_connected
-            assert test_connection.error is None
-
-    def test_test_connection_with_exception(self):
-        with patch(
-            "prowler.providers.microsoft365.microsoft365_provider.Microsoft365Provider.setup_session"
-        ) as mock_setup_session:
-            mock_setup_session.side_effect = Exception("Simulated Exception")
-
-            with pytest.raises(Exception) as exception:
-                Microsoft365Provider.test_connection(
-                    raise_on_exception=True,
-                )
-
-            assert exception.type is Exception
-            assert exception.value.args[0] == "Simulated Exception"
 
     def test_microsoft365_provider_cli_auth(self):
         """Test Microsoft365 Provider initialization with CLI authentication"""
@@ -236,3 +199,116 @@ class TestMicrosoft365Provider:
             assert isinstance(
                 microsoft365_provider.session, InteractiveBrowserCredential
             )
+
+    def test_test_connection_browser_auth(self):
+        with (
+            patch(
+                "prowler.providers.microsoft365.microsoft365_provider.DefaultAzureCredential"
+            ) as mock_default_credential,
+            patch(
+                "prowler.providers.microsoft365.microsoft365_provider.Microsoft365Provider.setup_session"
+            ) as mock_setup_session,
+            patch(
+                "prowler.providers.microsoft365.microsoft365_provider.GraphServiceClient"
+            ) as mock_graph_client,
+        ):
+
+            # Mock the return value of DefaultAzureCredential
+            mock_credentials = MagicMock()
+            mock_credentials.get_token.return_value = AccessToken(
+                token="fake_token", expires_on=9999999999
+            )
+            mock_default_credential.return_value = mock_credentials
+
+            # Mock setup_session to return a mocked session object
+            mock_session = MagicMock()
+            mock_setup_session.return_value = mock_session
+
+            # Mock GraphServiceClient to avoid real API calls
+            mock_client = MagicMock()
+            mock_graph_client.return_value = mock_client
+
+            test_connection = Microsoft365Provider.test_connection(
+                browser_auth=True,
+                tenant_id=str(uuid4()),
+                region="Microsoft365Global",
+                raise_on_exception=False,
+            )
+
+            assert isinstance(test_connection, Connection)
+            assert test_connection.is_connected
+            assert test_connection.error is None
+
+    def test_test_connection_tenant_id_client_id_client_secret(self):
+        with (
+            patch(
+                "prowler.providers.microsoft365.microsoft365_provider.Microsoft365Provider.setup_session"
+            ) as mock_setup_session,
+            patch(
+                "prowler.providers.microsoft365.microsoft365_provider.Microsoft365Provider.validate_static_credentials"
+            ) as mock_validate_static_credentials,
+        ):
+            # Mock setup_session to return a mocked session object
+            mock_session = MagicMock()
+            mock_setup_session.return_value = mock_session
+
+            # Mock ValidateStaticCredentials to avoid real API calls
+            mock_validate_static_credentials.return_value = None
+
+            test_connection = Microsoft365Provider.test_connection(
+                tenant_id=str(uuid4()),
+                region="Microsoft365Global",
+                raise_on_exception=False,
+                client_id=str(uuid4()),
+                client_secret=str(uuid4()),
+            )
+
+            assert isinstance(test_connection, Connection)
+            assert test_connection.is_connected
+            assert test_connection.error is None
+
+    def test_test_connection_with_httpresponseerror(self):
+        with patch(
+            "prowler.providers.microsoft365.microsoft365_provider.Microsoft365Provider.setup_session"
+        ) as mock_setup_session:
+
+            mock_setup_session.side_effect = Microsoft365HTTPResponseError(
+                file="test_file", original_exception="Simulated HttpResponseError"
+            )
+
+            with pytest.raises(Microsoft365HTTPResponseError) as exception:
+                Microsoft365Provider.test_connection(
+                    az_cli_auth=True,
+                    raise_on_exception=True,
+                )
+
+            assert exception.type == Microsoft365HTTPResponseError
+            assert (
+                exception.value.args[0]
+                == "[6003] Error in HTTP response from Microsoft365 - Simulated HttpResponseError"
+            )
+
+    def test_test_connection_with_exception(self):
+        with patch(
+            "prowler.providers.microsoft365.microsoft365_provider.Microsoft365Provider.setup_session"
+        ) as mock_setup_session:
+            mock_setup_session.side_effect = Exception("Simulated Exception")
+
+            with pytest.raises(Exception) as exception:
+                Microsoft365Provider.test_connection(
+                    sp_env_auth=True,
+                    raise_on_exception=True,
+                )
+
+            assert exception.type is Exception
+            assert exception.value.args[0] == "Simulated Exception"
+
+    def test_test_connection_without_any_method(self):
+        with pytest.raises(Microsoft365NoAuthenticationMethodError) as exception:
+            Microsoft365Provider.test_connection()
+
+        assert exception.type == Microsoft365NoAuthenticationMethodError
+        assert (
+            "Microsoft365 provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth]"
+            in exception.value.args[0]
+        )
