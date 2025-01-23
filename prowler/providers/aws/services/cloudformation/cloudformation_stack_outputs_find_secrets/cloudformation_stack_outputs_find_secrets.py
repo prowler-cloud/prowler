@@ -31,7 +31,11 @@ class cloudformation_stack_outputs_find_secrets(Check):
                     data += f"{output}\n"
 
                 detect_secrets_output = detect_secrets_scan(
-                    data=data, excluded_secrets=secrets_ignore_patterns
+                    data=data,
+                    excluded_secrets=secrets_ignore_patterns,
+                    detect_secrets_plugins=cloudformation_client.audit_config.get(
+                        "detect_secrets_plugins",
+                    ),
                 )
                 # If secrets are found, update the report status
                 if detect_secrets_output:

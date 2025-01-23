@@ -37,7 +37,11 @@ class ec2_instance_secrets_user_data(Check):
                         )
                         continue
                     detect_secrets_output = detect_secrets_scan(
-                        data=user_data, excluded_secrets=secrets_ignore_patterns
+                        data=user_data,
+                        excluded_secrets=secrets_ignore_patterns,
+                        detect_secrets_plugins=ec2_client.audit_config.get(
+                            "detect_secrets_plugins"
+                        ),
                     )
                     if detect_secrets_output:
                         secrets_string = ", ".join(
