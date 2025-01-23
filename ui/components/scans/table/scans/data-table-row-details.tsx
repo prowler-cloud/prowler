@@ -3,13 +3,13 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import { getProvider } from "@/actions/providers";
 import { getScan } from "@/actions/scans";
 import { getTask } from "@/actions/task";
-import { ScanDetail, SkeletonTableScans } from "@/components/scans/table";
+import { ScanDetail } from "@/components/scans/table";
+import { Alert } from "@/components/ui/alert/Alert";
 import { checkTaskStatus } from "@/lib";
 import { ScanProps } from "@/types";
-import { Alert } from "@/components/ui/alert/Alert";
-import { getProvider } from "@/actions/providers";
 
 export const DataTableRowDetails = ({ entityId }: { entityId: string }) => {
   const router = useRouter();
@@ -78,7 +78,8 @@ export const DataTableRowDetails = ({ entityId }: { entityId: string }) => {
   if (isLoading) {
     return (
       <Alert className="text-center text-small font-bold text-gray-500">
-        No scan details available until the scan is completed.
+        Scan details are loading and will be available once the scan is
+        completed.
       </Alert>
     );
   }

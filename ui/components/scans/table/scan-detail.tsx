@@ -2,6 +2,8 @@
 
 import { Snippet } from "@nextui-org/react";
 
+import { ConnectionTrue } from "@/components/icons";
+import { ConnectionFalse } from "@/components/icons/Icons";
 import {
   DateWithTime,
   EntityInfoShort,
@@ -9,8 +11,6 @@ import {
 } from "@/components/ui/entities";
 import { StatusBadge } from "@/components/ui/table/status-badge";
 import { ProviderProps, ScanProps, TaskDetails } from "@/types";
-import { ConnectionFalse } from "@/components/icons/Icons";
-import { ConnectionTrue } from "@/components/icons";
 
 const renderValue = (value: string | null | undefined) => {
   return value && value.trim() !== "" ? value : "-";

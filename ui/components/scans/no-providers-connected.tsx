@@ -2,8 +2,8 @@
 
 import React from "react";
 
-import { CustomButton } from "../ui/custom";
 import { InfoIcon } from "../icons/Icons";
+import { CustomButton } from "../ui/custom";
 
 export const NoProvidersConnected = () => {
   return (
