@@ -66,7 +66,7 @@ export default async function Scans({
             <>
               <Spacer y={8} />
               <NoProvidersConnected />
-              <Spacer y={4} />
+              <Spacer y={8} />
             </>
           ) : (
             <>
