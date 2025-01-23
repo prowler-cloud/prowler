@@ -12,18 +12,21 @@ class cloudwatch_log_group_not_publicly_accessible(Check):
             and logs_client.log_groups is not None
         ):
             for resource_policies in logs_client.resource_policies.values():
-                for resource_policy in resource_policies:
-                    if is_policy_public(
-                        resource_policy.policy, logs_client.audited_account
-                    ):
-                        for statement in resource_policy.policy.get("Statement", []):
-                            public_resources = statement.get("Resource", [])
-                            if isinstance(public_resources, str):
-                                public_resources = [public_resources]
-                            for resource in public_resources:
-                                for log_group in logs_client.log_groups.values():
-                                    if log_group.arn in resource or resource == "*":
-                                        public_log_groups.append(log_group.arn)
+                if resource_policies is not None:
+                    for resource_policy in resource_policies:
+                        if is_policy_public(
+                            resource_policy.policy, logs_client.audited_account
+                        ):
+                            for statement in resource_policy.policy.get(
+                                "Statement", []
+                            ):
+                                public_resources = statement.get("Resource", [])
+                                if isinstance(public_resources, str):
+                                    public_resources = [public_resources]
+                                for resource in public_resources:
+                                    for log_group in logs_client.log_groups.values():
+                                        if log_group.arn in resource or resource == "*":
+                                            public_log_groups.append(log_group.arn)
             for log_group in logs_client.log_groups.values():
                 report = Check_Report_AWS(metadata=self.metadata(), resource=log_group)
                 report.status = "PASS"
