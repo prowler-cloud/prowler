@@ -756,7 +756,6 @@ class Microsoft365Provider(Provider):
                 if sp_env_auth or client_id:
                     identity.identity_id = getenv("M365_CLIENT_ID")
                     identity.identity_type = "Application"
-                    identity.tenant_id = getenv("M365_TENANT_ID")
                 # Same here, if user can access AAD, some fields are retrieved if not, default value, for az cli
                 # should work but it doesn't, pending issue
                 else:
@@ -777,6 +776,11 @@ class Microsoft365Provider(Provider):
                         logger.error(
                             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                         )
+
+                # Retrieve tenant id from the client
+                client = GraphServiceClient(credentials=credentials)
+                organization_info = await client.organization.get()
+                identity.tenant_id = organization_info.value[0].id
 
             asyncio.get_event_loop().run_until_complete(get_microsoft365_identity())
             return identity
