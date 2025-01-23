@@ -8,9 +8,7 @@ class accessanalyzer_enabled_without_findings(Check):
     def execute(self):
         findings = []
         for analyzer in accessanalyzer_client.analyzers:
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=analyzer
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=analyzer)
             if analyzer.status == "ACTIVE":
                 report.status = "PASS"
                 report.status_extended = f"IAM Access Analyzer {analyzer.name} does not have active findings."

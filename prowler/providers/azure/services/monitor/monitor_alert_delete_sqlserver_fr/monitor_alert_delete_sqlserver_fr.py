@@ -16,16 +16,14 @@ class monitor_alert_delete_sqlserver_fr(Check):
                     alert_rule, "Microsoft.Sql/servers/firewallRules/delete"
                 ):
                     report = Check_Report_Azure(
-                        metadata=self.metadata(), resource_metadata=alert_rule
+                        metadata=self.metadata(), resource=alert_rule
                     )
                     report.subscription = subscription_name
                     report.status = "PASS"
                     report.status_extended = f"There is an alert configured for deleting SQL Server firewall rule in subscription {subscription_name}."
                     break
             else:
-                report = Check_Report_Azure(
-                    metadata=self.metadata(), resource_metadata={}
-                )
+                report = Check_Report_Azure(metadata=self.metadata(), resource={})
                 report.subscription = subscription_name
                 report.resource_name = "Monitor"
                 report.resource_id = "Monitor"

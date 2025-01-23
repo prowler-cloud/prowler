@@ -11,9 +11,7 @@ class mysql_flexible_server_audit_log_connection_activated(Check):
             servers,
         ) in mysql_client.flexible_servers.items():
             for server in servers.values():
-                report = Check_Report_Azure(
-                    metadata=self.metadata(), resource_metadata=server
-                )
+                report = Check_Report_Azure(metadata=self.metadata(), resource=server)
                 report.subscription = subscription_name
                 report.status = "FAIL"
                 report.status_extended = f"Audit log is disabled for server {server.name} in subscription {subscription_name}."

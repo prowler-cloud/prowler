@@ -9,7 +9,7 @@ class logging_sink_created(Check):
         for sink in logging_client.sinks:
             report = Check_Report_GCP(
                 metadata=self.metadata(),
-                resource_metadata=sink,
+                resource=sink,
                 location=logging_client.region,
             )
             projects_with_sink.add(sink.project_id)
@@ -24,7 +24,7 @@ class logging_sink_created(Check):
             if project not in projects_with_sink:
                 report = Check_Report_GCP(
                     metadata=self.metadata(),
-                    resource_metadata=logging_client.projects[project],
+                    resource=logging_client.projects[project],
                     project_id=project,
                     location=logging_client.region,
                 )

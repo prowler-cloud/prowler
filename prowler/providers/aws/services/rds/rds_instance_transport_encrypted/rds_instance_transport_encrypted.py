@@ -17,9 +17,7 @@ class rds_instance_transport_encrypted(Check):
             "aurora-mysql",
         ]
         for db_instance in rds_client.db_instances.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=db_instance
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=db_instance)
             report.status = "FAIL"
             report.status_extended = (
                 f"RDS Instance {db_instance.id} connections are not encrypted."
@@ -58,7 +56,7 @@ class rds_instance_transport_encrypted(Check):
         for db_cluster in rds_client.db_clusters:
             report = Check_Report_AWS(
                 metadata=self.metadata(),
-                resource_metadata=rds_client.db_clusters[db_cluster],
+                resource=rds_client.db_clusters[db_cluster],
             )
             report.status = "FAIL"
             report.status_extended = f"RDS Cluster {rds_client.db_clusters[db_cluster].id} connections are not encrypted."

@@ -8,7 +8,7 @@ class entra_trusted_named_locations_exists(Check):
 
         for tenant, named_locations in entra_client.named_locations.items():
             report = Check_Report_Azure(
-                metadata=self.metadata(), resource_metadata=named_locations
+                metadata=self.metadata(), resource=named_locations
             )
             report.status = "FAIL"
             report.subscription = f"Tenant: {tenant}"
@@ -20,7 +20,7 @@ class entra_trusted_named_locations_exists(Check):
             for named_location in named_locations.values():
                 if named_location.ip_ranges_addresses and named_location.is_trusted:
                     report = Check_Report_Azure(
-                        metadata=self.metadata(), resource_metadata=named_location
+                        metadata=self.metadata(), resource=named_location
                     )
                     report.subscription = f"Tenant: {tenant}"
                     report.status = "PASS"

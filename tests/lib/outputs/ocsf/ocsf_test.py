@@ -86,7 +86,7 @@ class TestOCSF:
         assert output_data.resources[0].region == findings[0].region
         assert output_data.resources[0].data == {
             "details": findings[0].resource_details,
-            # "metadata": {}, TODO: add metadata to the resource details
+            "metadata": {},
         }
         assert output_data.metadata.profiles == ["cloud", "datetime"]
         assert output_data.metadata.tenant_uid == "test-organization-id"
@@ -210,7 +210,7 @@ class TestOCSF:
                         "region": "eu-west-1",
                         "data": {
                             "details": "resource_details",
-                            # "metadata": {} TODO: add metadata to the resource details
+                            "metadata": {},
                         },
                         "group": {"name": "test-service"},
                         "labels": [],
@@ -337,7 +337,7 @@ class TestOCSF:
         assert resource_details[0].region == finding_output.region
         assert resource_details[0].data == {
             "details": finding_output.resource_details,
-            # "metadata": {}, TODO: add metadata to the resource details
+            "metadata": {},
         }
 
         resource_details_group = resource_details[0].group

@@ -7,9 +7,7 @@ class guardduty_s3_protection_enabled(Check):
         findings = []
         for detector in guardduty_client.detectors:
             if detector.status:
-                report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=detector
-                )
+                report = Check_Report_AWS(metadata=self.metadata(), resource=detector)
                 report.status = "FAIL"
                 report.status_extended = (
                     "GuardDuty detector does not have S3 Protection enabled."

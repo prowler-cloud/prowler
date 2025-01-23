@@ -15,7 +15,7 @@ class sqlserver_tde_encryption_enabled(Check):
                         if database.name.lower() == "master":
                             continue
                         report = Check_Report_Azure(
-                            metadata=self.metadata(), resource_metadata=database
+                            metadata=self.metadata(), resource=database
                         )
                         report.subscription = subscription
                         if database.tde_encryption.status == "Enabled":

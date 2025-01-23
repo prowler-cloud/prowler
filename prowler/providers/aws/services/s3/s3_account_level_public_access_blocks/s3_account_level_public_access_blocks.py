@@ -8,7 +8,7 @@ class s3_account_level_public_access_blocks(Check):
         findings = []
         report = Check_Report_AWS(
             metadata=self.metadata(),
-            resource_metadata=s3control_client.account_public_access_block,
+            resource=s3control_client.account_public_access_block,
         )
         if (
             s3control_client.account_public_access_block

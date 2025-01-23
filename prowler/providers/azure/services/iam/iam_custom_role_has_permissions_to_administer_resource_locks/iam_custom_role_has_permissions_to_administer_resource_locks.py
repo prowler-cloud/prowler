@@ -14,7 +14,7 @@ class iam_custom_role_has_permissions_to_administer_resource_locks(Check):
                 if exits_role_with_permission_over_locks:
                     break
                 report = Check_Report_Azure(
-                    metadata=self.metadata(), resource_metadata=custom_role
+                    metadata=self.metadata(), resource=custom_role
                 )
                 report.subscription = subscription
                 report.status = "FAIL"

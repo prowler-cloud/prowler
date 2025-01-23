@@ -7,9 +7,7 @@ class appsync_graphql_api_no_api_key_authentication(Check):
         findings = []
         for api in appsync_client.graphql_apis.values():
             if api.type == "GRAPHQL":
-                report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=api
-                )
+                report = Check_Report_AWS(metadata=self.metadata(), resource=api)
                 report.status = "PASS"
                 report.status_extended = f"AppSync GraphQL API {api.name} is not using an API KEY for authentication."
                 if api.authentication_type == "API_KEY":

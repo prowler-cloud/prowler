@@ -13,9 +13,7 @@ class defender_additional_email_configured_with_a_security_contact(Check):
             security_contacts,
         ) in defender_client.security_contacts.items():
             for contact in security_contacts.values():
-                report = Check_Report_Azure(
-                    metadata=self.metadata(), resource_metadata=contact
-                )
+                report = Check_Report_Azure(metadata=self.metadata(), resource=contact)
                 report.status = "PASS"
                 report.subscription = subscription_name
                 report.status_extended = f"There is another correct email configured for subscription {subscription_name}."

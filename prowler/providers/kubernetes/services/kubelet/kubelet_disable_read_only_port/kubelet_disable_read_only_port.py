@@ -6,9 +6,7 @@ class kubelet_disable_read_only_port(Check):
     def execute(self) -> Check_Report_Kubernetes:
         findings = []
         for cm in kubelet_client.kubelet_config_maps:
-            report = Check_Report_Kubernetes(
-                metadata=self.metadata(), resource_metadata=cm
-            )
+            report = Check_Report_Kubernetes(metadata=self.metadata(), resource=cm)
             if "readOnlyPort" not in cm.kubelet_args:
                 report.status = "MANUAL"
                 report.status_extended = f"Kubelet does not have the argument `readOnlyPort` in config file {cm.name}, verify it in the node's arguments."

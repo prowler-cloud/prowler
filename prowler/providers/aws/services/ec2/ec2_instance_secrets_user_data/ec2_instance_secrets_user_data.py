@@ -16,9 +16,7 @@ class ec2_instance_secrets_user_data(Check):
         )
         for instance in ec2_client.instances:
             if instance.state != "terminated":
-                report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=instance
-                )
+                report = Check_Report_AWS(metadata=self.metadata(), resource=instance)
                 if instance.user_data:
                     user_data = b64decode(instance.user_data)
                     try:

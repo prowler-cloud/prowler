@@ -13,9 +13,7 @@ class rds_cluster_non_default_port(Check):
             50000: ["db2"],
         }
         for db_cluster in rds_client.db_clusters.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=db_cluster
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=db_cluster)
             report.status = "PASS"
             report.status_extended = (
                 f"RDS Cluster {db_cluster.id} is not using the default port "

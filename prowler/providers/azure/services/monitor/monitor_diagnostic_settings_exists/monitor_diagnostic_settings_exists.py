@@ -10,9 +10,7 @@ class monitor_diagnostic_settings_exists(Check):
             subscription_name,
             diagnostic_settings,
         ) in monitor_client.diagnostics_settings.items():
-            report = Check_Report_Azure(
-                metadata=self.metadata(), resource_metadata=diagnostic_settings
-            )
+            report = Check_Report_Azure(metadata=self.metadata(), resource={})
             report.subscription = subscription_name
             report.resource_name = "Diagnostic Settings"
             report.resource_id = "diagnostic_settings"
