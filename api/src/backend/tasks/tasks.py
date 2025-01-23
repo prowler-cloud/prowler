@@ -1,11 +1,10 @@
-from datetime import datetime, timedelta, timezone
-
 from celery import shared_task
 from config.celery import RLSTask
 from django_celery_beat.models import PeriodicTask
 from tasks.jobs.connection import check_provider_connection
 from tasks.jobs.deletion import delete_provider, delete_tenant
 from tasks.jobs.scan import aggregate_findings, perform_prowler_scan
+from tasks.utils import get_next_execution_datetime
 
 from api.db_utils import rls_transaction
 from api.decorators import set_tenant
@@ -103,11 +102,14 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
         periodic_task_instance = PeriodicTask.objects.get(
             name=f"scan-perform-scheduled-{provider_id}"
         )
-        next_scan_datetime = datetime.combine(
-            datetime.now(timezone.utc), periodic_task_instance.start_time.time()
-        ) + timedelta(hours=24)
-        scan_instance = Scan.objects.get(
-            state=StateChoices.SCHEDULED, scheduler_task_id=periodic_task_instance.id
+        next_scan_datetime = get_next_execution_datetime(task_id, provider_id)
+        scan_instance, _ = Scan.objects.get_or_create(
+            tenant_id=tenant_id,
+            provider_id=provider_id,
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state__in=(StateChoices.SCHEDULED, StateChoices.AVAILABLE),
+            scheduler_task_id=periodic_task_instance.id,
+            defaults={"state": StateChoices.SCHEDULED},
         )
 
         scan_instance.task_id = task_id
@@ -123,7 +125,7 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
         raise e
     finally:
         with rls_transaction(tenant_id):
-            Scan.objects.create(
+            Scan.objects.get_or_create(
                 tenant_id=tenant_id,
                 name="Daily scheduled scan",
                 provider_id=provider_id,

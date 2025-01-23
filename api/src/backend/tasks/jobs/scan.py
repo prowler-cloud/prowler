@@ -237,8 +237,11 @@ def perform_prowler_scan(
 
                     status = FindingStatus[finding.status]
                     delta = _create_finding_delta(last_status, status)
-                    # For the findings prior to the change, when a first finding is found with delta!="new" it will be assigned a current date as first_seen_at and the successive findings with the same UID will always get the date of the previous finding.
-                    # For new findings, when a finding (delta="new") is found for the first time, the first_seen_at attribute will be assigned the current date, the following findings will get that date.
+                    # For the findings prior to the change, when a first finding is found with delta!="new" it will be
+                    # assigned a current date as first_seen_at and the successive findings with the same UID will
+                    # always get the date of the previous finding.
+                    # For new findings, when a finding (delta="new") is found for the first time, the first_seen_at
+                    # attribute will be assigned the current date, the following findings will get that date.
                     if not last_first_seen_at:
                         last_first_seen_at = datetime.now(tz=timezone.utc)
 
