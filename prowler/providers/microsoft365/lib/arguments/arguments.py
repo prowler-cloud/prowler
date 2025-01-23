@@ -16,7 +16,7 @@ def init_parser(self):
         microsoft365_auth_subparser.add_mutually_exclusive_group()
     )
     microsoft365_auth_modes_group.add_argument(
-        "--cli-auth",
+        "--az-cli-auth",
         action="store_true",
         help="Use Azure CLI authentication to log in against Microsoft365",
     )

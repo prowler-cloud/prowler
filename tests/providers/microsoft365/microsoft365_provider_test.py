@@ -63,9 +63,9 @@ class TestMicrosoft365Provider:
             ),
         ):
             microsoft365_provider = Microsoft365Provider(
-                m365_env_app_auth=True,
-                m365_cli_auth=False,
-                m365_browser_auth=False,
+                env_app_auth=True,
+                az_cli_auth=False,
+                browser_auth=False,
                 tenant_id=tenant_id,
                 client_id=client_id,
                 client_secret=client_secret,
@@ -89,12 +89,14 @@ class TestMicrosoft365Provider:
             )
 
     def test_test_connection_tenant_id_client_id_client_secret(self):
-        with patch(
-            "prowler.providers.microsoft365.microsoft365_provider.Microsoft365Provider.setup_session"
-        ) as mock_setup_session, patch(
-            "prowler.providers.microsoft365.microsoft365_provider.Microsoft365Provider.validate_static_credentials"
-        ) as mock_validate_static_credentials:
-
+        with (
+            patch(
+                "prowler.providers.microsoft365.microsoft365_provider.Microsoft365Provider.setup_session"
+            ) as mock_setup_session,
+            patch(
+                "prowler.providers.microsoft365.microsoft365_provider.Microsoft365Provider.validate_static_credentials"
+            ) as mock_validate_static_credentials,
+        ):
             # Mock setup_session to return a mocked session object
             mock_session = MagicMock()
             mock_setup_session.return_value = mock_session
@@ -118,7 +120,6 @@ class TestMicrosoft365Provider:
         with patch(
             "prowler.providers.microsoft365.microsoft365_provider.Microsoft365Provider.setup_session"
         ) as mock_setup_session:
-
             mock_setup_session.side_effect = Exception("Simulated Exception")
 
             with pytest.raises(Exception) as exception:
@@ -161,9 +162,9 @@ class TestMicrosoft365Provider:
             ),
         ):
             microsoft365_provider = Microsoft365Provider(
-                m365_env_app_auth=False,
-                m365_cli_auth=True,
-                m365_browser_auth=False,
+                env_app_auth=False,
+                az_cli_auth=True,
+                browser_auth=False,
                 region=azure_region,
                 config_path=default_config_file_path,
                 fixer_config=fixer_config,
@@ -210,9 +211,9 @@ class TestMicrosoft365Provider:
             ),
         ):
             microsoft365_provider = Microsoft365Provider(
-                m365_env_app_auth=False,
-                m365_cli_auth=False,
-                m365_browser_auth=True,
+                env_app_auth=False,
+                az_cli_auth=False,
+                browser_auth=True,
                 tenant_id=TENANT_ID,
                 region=azure_region,
                 config_path=default_config_file_path,

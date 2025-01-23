@@ -11,8 +11,6 @@ class admincenter_groups_not_public_visibility(Check):
             report = Check_Report_Microsoft365(self.metadata())
             report.resource_id = group.id
             report.resource_name = group.name
-            report.tenant_id = admincenter_client.audited_tenant
-            report.tenant_domain = admincenter_client.audited_domain
             report.status = "FAIL"
             report.status_extended = f"Group {group.name} has {group.visibility} visibility and should be Private."
 

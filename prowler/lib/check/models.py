@@ -490,16 +490,12 @@ class Check_Report_Microsoft365(Check_Report):
 
     resource_name: str
     resource_id: str
-    tenant_id: str
-    tenant_domain: str
     location: str
 
     def __init__(self, metadata):
         super().__init__(metadata)
         self.resource_name = ""
         self.resource_id = ""
-        self.tenant_id = ""
-        self.tenant_domain = ""
         self.location = "global"
 
 
