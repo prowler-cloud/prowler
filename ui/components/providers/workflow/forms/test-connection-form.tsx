@@ -68,9 +68,6 @@ export const TestConnectionForm = ({
   const [isResettingCredentials, setIsResettingCredentials] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
 
-  // const urlParams = new URLSearchParams(window.location.search);
-  // const isUpdated = urlParams.get("updated") === "true";
-
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -123,7 +120,9 @@ export const TestConnectionForm = ({
 
         if (connected && !isUpdated) {
           try {
+            // Schedule daily scan by default
             const data = await scheduleDaily(formData);
+
             if (data.error) {
               setApiErrorMessage(data.error);
               form.setError("providerId", {
@@ -131,16 +130,8 @@ export const TestConnectionForm = ({
                 message: data.error,
               });
             } else {
-              if (!isUpdated) {
-                setIsRedirecting(true);
-                router.push("/scans");
-                return;
-              } else {
-                setConnectionStatus({
-                  connected: true,
-                  error: null,
-                });
-              }
+              setIsRedirecting(true);
+              router.push("/scans");
             }
           } catch (error) {
             form.setError("providerId", {
@@ -221,10 +212,14 @@ export const TestConnectionForm = ({
       >
         <div className="text-left">
           <div className="mb-2 text-xl font-medium">
-            Check connection and launch scan
+            {!isUpdated
+              ? "Check connection and launch scan"
+              : "Check connection"}
           </div>
           <p className="py-2 text-small text-default-500">
-            A successful connection will launch a daily scheduled scan.
+            {!isUpdated
+              ? "A successful connection will launch a daily scheduled scan."
+              : "A successful connection will redirect you to the providers page."}
           </p>
         </div>
 
@@ -269,6 +264,12 @@ export const TestConnectionForm = ({
           </p>
         )} */}
 
+        {isUpdated && !connectionStatus?.error && (
+          <p className="py-2 text-small text-default-500">
+            Check the new credentials and test the connection.
+          </p>
+        )}
+
         <input type="hidden" name="providerId" value={providerId} />
 
         <div className="flex w-full justify-end sm:space-x-6">
@@ -309,27 +310,18 @@ export const TestConnectionForm = ({
               type={
                 isUpdated && connectionStatus?.connected ? "button" : "submit"
               }
-              onPress={
-                isUpdated && connectionStatus?.connected
-                  ? () => router.push("/providers")
-                  : undefined
-              }
               ariaLabel={"Save"}
               className="w-1/2"
               variant="solid"
               color="action"
               size="lg"
               isLoading={isLoading}
-              endContent={!isLoading && <RocketIcon size={24} />}
+              endContent={!isLoading && !isUpdated && <RocketIcon size={24} />}
             >
               {isLoading ? (
                 <>Loading</>
               ) : (
-                <span>
-                  {isUpdated && connectionStatus?.connected
-                    ? "Go to providers"
-                    : "Launch scan"}
-                </span>
+                <span>{isUpdated ? "Check connection" : "Launch scan"}</span>
               )}
             </CustomButton>
           )}
