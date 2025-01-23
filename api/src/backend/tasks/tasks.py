@@ -78,7 +78,7 @@ def perform_scan_task(
 
 
 @shared_task(base=RLSTask, bind=True, name="scan-perform-scheduled", queue="scans")
-def perform_scheduled_scan_task(self, tenant_id: str, scan_id: str):
+def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
     """
     Task to perform a scheduled Prowler scan on a given provider.
 
@@ -90,7 +90,7 @@ def perform_scheduled_scan_task(self, tenant_id: str, scan_id: str):
     Args:
         self: The task instance (automatically passed when bind=True).
         tenant_id (str): The tenant ID under which the scan is being performed.
-        scan_id (str): The primary key of the Scan instance to scan.
+        provider_id (str): The primary key of the Provider instance to scan.
 
     Returns:
         dict: The result of the scan execution, typically including the status and results
@@ -100,18 +100,18 @@ def perform_scheduled_scan_task(self, tenant_id: str, scan_id: str):
     task_id = self.request.id
 
     with rls_transaction(tenant_id):
-        scan_instance = Scan.objects.get(pk=scan_id)
-
-        scan_instance.task_id = task_id
-        scan_instance.save()
-
-        provider_id = str(scan_instance.provider_id)
         periodic_task_instance = PeriodicTask.objects.get(
             name=f"scan-perform-scheduled-{provider_id}"
         )
         next_scan_datetime = datetime.combine(
             datetime.now(timezone.utc), periodic_task_instance.start_time.time()
         ) + timedelta(hours=24)
+        scan_instance = Scan.objects.get(
+            state=StateChoices.SCHEDULED, scheduler_task_id=periodic_task_instance.id
+        )
+
+        scan_instance.task_id = task_id
+        scan_instance.save()
 
     try:
         result = perform_prowler_scan(

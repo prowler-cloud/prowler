@@ -53,7 +53,7 @@ def schedule_provider_scan(provider_instance: Provider):
         kwargs=json.dumps(
             {
                 "tenant_id": tenant_id,
-                "scan_id": str(scheduled_scan.id),
+                "provider_id": provider_id,
             }
         ),
         one_off=False,
@@ -65,6 +65,6 @@ def schedule_provider_scan(provider_instance: Provider):
     return perform_scheduled_scan_task.apply_async(
         kwargs={
             "tenant_id": str(provider_instance.tenant_id),
-            "scan_id": str(scheduled_scan.id),
+            "provider_id": provider_id,
         },
     )

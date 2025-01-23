@@ -18,25 +18,28 @@ def migrate_daily_scheduled_scan_tasks(apps, schema_editor):
         tenant_id = task_kwargs["tenant_id"]
         provider_id = task_kwargs["provider_id"]
 
-        next_scan_date = datetime.combine(
-            datetime.now(timezone.utc), daily_scheduled_scan_task.start_time.time()
-        ) + timedelta(hours=24)
+        current_time = datetime.now(timezone.utc)
+        scheduled_time_today = datetime.combine(
+            current_time.date(),
+            daily_scheduled_scan_task.start_time.time(),
+            tzinfo=timezone.utc,
+        )
+
+        if current_time < scheduled_time_today:
+            next_scan_date = scheduled_time_today
+        else:
+            next_scan_date = scheduled_time_today + timedelta(days=1)
 
         with rls_transaction(tenant_id):
-            scheduled_scan = Scan.objects.create(
+            Scan.objects.create(
                 tenant_id=tenant_id,
                 name="Daily scheduled scan",
                 provider_id=provider_id,
                 trigger=Scan.TriggerChoices.SCHEDULED,
                 state=StateChoices.SCHEDULED,
-                next_scan_at=next_scan_date,
+                scheduled_at=next_scan_date,
                 scheduler_task_id=daily_scheduled_scan_task.id,
             )
-
-        daily_scheduled_scan_task.kwargs = json.dumps(
-            {"tenant_id": tenant_id, "scan_id": str(scheduled_scan.id)}
-        )
-        daily_scheduled_scan_task.save()
 
 
 class Migration(migrations.Migration):
