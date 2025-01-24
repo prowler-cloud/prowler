@@ -87,8 +87,8 @@ class Microsoft365BaseException(ProwlerException):
             "remediation": "Check the Microsoft365 Tenant ID and ensure it is properly set up.",
         },
         (6020, "Microsoft365BrowserAuthNoFlagError"): {
-            "message": "Microsoft365 provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth]",
-            "remediation": "Check the Microsoft365 authentication methods and ensure at least one is properly set up.",
+            "message": "Microsoft365 tenant ID error: browser authentication flag (--browser-auth) not found",
+            "remediation": "To use browser authentication, ensure the tenant ID is properly set.",
         },
         (6021, "Microsoft365NotTenantIdButClientIdAndClienSecretError"): {
             "message": "Tenant Id is required for Microsoft365 static credentials. Make sure you are using the correct credentials.",
