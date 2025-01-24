@@ -9,7 +9,9 @@ class admincenter_users_between_two_and_four_global_admins(Check):
         findings = []
 
         directory_roles = admincenter_client.directory_roles
-        report = Check_Report_Microsoft365(self.metadata())
+        report = Check_Report_Microsoft365(
+            metadata=self.metadata(), resource=admincenter_client.directory_roles
+        )
         report.status = "FAIL"
         report.resource_name = "Global Administrator"
 

@@ -18,7 +18,9 @@ class admincenter_users_admins_reduced_license_footprint(Check):
             )
 
             if admin_roles:
-                report = Check_Report_Microsoft365(self.metadata())
+                report = Check_Report_Microsoft365(
+                    metadata=self.metadata(), resource=user
+                )
                 report.resource_id = user.id
                 report.resource_name = user.name
                 report.status = "FAIL"

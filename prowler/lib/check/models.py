@@ -537,18 +537,25 @@ class Check_Report_Kubernetes(Check_Report):
 
 @dataclass
 class Check_Report_Microsoft365(Check_Report):
-    # TODO change class name to CheckReportMicrosoft365
     """Contains the Microsoft365 Check's finding information."""
 
     resource_name: str
     resource_id: str
     location: str
 
-    def __init__(self, metadata):
-        super().__init__(metadata)
-        self.resource_name = ""
-        self.resource_id = ""
-        self.location = "global"
+    def __init__(self, metadata: Dict, resource: Any) -> None:
+        """Initialize the Microsoft365 Check's finding information.
+
+        Args:
+            metadata: The metadata of the check.
+            resource: Basic information about the resource. Defaults to None.
+        """
+        super().__init__(metadata, resource)
+        self.resource_name = getattr(
+            resource, "name", getattr(resource, "resource_name", "")
+        )
+        self.resource_id = getattr(resource, "id", getattr(resource, "resource_id", ""))
+        self.location = getattr(resource, "location", "global")
 
 
 # Testing Pending

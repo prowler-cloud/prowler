@@ -8,7 +8,7 @@ class admincenter_groups_not_public_visibility(Check):
     def execute(self) -> Check_Report_Microsoft365:
         findings = []
         for group in admincenter_client.groups.values():
-            report = Check_Report_Microsoft365(self.metadata())
+            report = Check_Report_Microsoft365(metadata=self.metadata(), resource=group)
             report.resource_id = group.id
             report.resource_name = group.name
             report.status = "FAIL"
