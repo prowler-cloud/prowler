@@ -211,6 +211,17 @@ class Provider(ABC):
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
                     )
+                elif "microsoft365" in provider_class_name.lower():
+                    provider_class(
+                        region=arguments.region,
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        sp_env_auth=arguments.sp_env_auth,
+                        az_cli_auth=arguments.az_cli_auth,
+                        browser_auth=arguments.browser_auth,
+                        tenant_id=arguments.tenant_id,
+                        fixer_config=fixer_config,
+                    )
 
         except TypeError as error:
             logger.critical(
