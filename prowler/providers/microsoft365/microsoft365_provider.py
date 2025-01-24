@@ -27,7 +27,6 @@ from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
 from prowler.providers.microsoft365.exceptions.exceptions import (
     Microsoft365ArgumentTypeValidationError,
-    Microsoft365BrowserAuthNoFlagError,
     Microsoft365BrowserAuthNoTenantIDError,
     Microsoft365ClientAuthenticationError,
     Microsoft365ClientIdAndClientSecretNotBelongingToTenantIdError,
@@ -267,7 +266,7 @@ class Microsoft365Provider(Provider):
 
         if not client_id and not client_secret:
             if not browser_auth and tenant_id:
-                raise Microsoft365BrowserAuthNoFlagError(
+                raise Microsoft365BrowserAuthNoTenantIDError(
                     file=os.path.basename(__file__),
                     message="Microsoft365 Tenant ID (--browser-auth) is required for browser authentication mode",
                 )
