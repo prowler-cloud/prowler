@@ -821,7 +821,7 @@ aws:
         aws_provider = AwsProvider()
         response = aws_provider.generate_regional_clients("ec2")
 
-        assert len(response.keys()) == 30
+        assert len(response.keys()) == 32
 
     @mock_aws
     def test_generate_regional_clients_with_enabled_regions(self):
@@ -1712,13 +1712,13 @@ aws:
         assert not recovered_regions
 
     def test_get_regions_all_count(self):
-        assert len(AwsProvider.get_regions(partition=None)) == 35
+        assert len(AwsProvider.get_regions(partition=None)) == 36
 
     def test_get_regions_cn_count(self):
         assert len(AwsProvider.get_regions("aws-cn")) == 2
 
     def test_get_regions_aws_count(self):
-        assert len(AwsProvider.get_regions(partition="aws")) == 31
+        assert len(AwsProvider.get_regions(partition="aws")) == 32
 
     def test_get_all_regions(self):
         with patch(

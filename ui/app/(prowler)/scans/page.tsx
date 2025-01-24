@@ -51,8 +51,6 @@ export default async function Scans({
 
   return (
     <>
-      <Header title="Scans" icon="lucide:scan-search" />
-
       {thereIsNoProviders && (
         <>
           <Spacer y={4} />
@@ -64,19 +62,25 @@ export default async function Scans({
         <>
           {thereIsNoProvidersConnected ? (
             <>
+              <Header title="Scans" icon="lucide:scan-search" />
+
               <Spacer y={8} />
               <NoProvidersConnected />
+              <Spacer y={8} />
             </>
           ) : (
             <>
+              <Header title="Scans" icon="lucide:scan-search" />
+
               <LaunchScanWorkflow providers={providerInfo} />
+              <Spacer y={4} />
+              <ScanWarningBar />
               <Spacer y={8} />
             </>
           )}
+
           <div className="grid grid-cols-12 items-start gap-4">
             <div className="col-span-12">
-              <ScanWarningBar />
-              <Spacer y={4} />
               <div className="flex flex-row items-center justify-between">
                 <DataTableFilterCustom filters={filterScans || []} />
                 <ButtonRefreshData

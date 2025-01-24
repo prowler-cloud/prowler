@@ -12,7 +12,10 @@ class s3_bucket_public_write_acl(Check):
             and s3control_client.account_public_access_block.ignore_public_acls
             and s3control_client.account_public_access_block.restrict_public_buckets
         ):
-            report = Check_Report_AWS(self.metadata())
+            report = Check_Report_AWS(
+                metadata=self.metadata(),
+                resource=s3control_client.account_public_access_block,
+            )
             report.status = "PASS"
             report.status_extended = "All S3 public access blocked at account level."
             report.region = s3control_client.region
@@ -21,13 +24,9 @@ class s3_bucket_public_write_acl(Check):
             findings.append(report)
         else:
             # 2. If public access is not blocked at account level, check it at each bucket level
-            for arn, bucket in s3_client.buckets.items():
+            for bucket in s3_client.buckets.values():
                 if bucket.public_access_block:
-                    report = Check_Report_AWS(self.metadata())
-                    report.region = bucket.region
-                    report.resource_id = bucket.name
-                    report.resource_arn = arn
-                    report.resource_tags = bucket.tags
+                    report = Check_Report_AWS(metadata=self.metadata(), resource=bucket)
                     report.status = "PASS"
                     report.status_extended = (
                         f"S3 Bucket {bucket.name} is not publicly writable."

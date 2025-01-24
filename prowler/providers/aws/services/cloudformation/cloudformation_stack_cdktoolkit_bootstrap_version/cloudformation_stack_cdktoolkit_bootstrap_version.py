@@ -23,11 +23,7 @@ class cloudformation_stack_cdktoolkit_bootstrap_version(Check):
                             bootstrap_version = int(output.split(":")[1])
                             break
                 if bootstrap_version:
-                    report = Check_Report_AWS(self.metadata())
-                    report.region = stack.region
-                    report.resource_id = stack.name
-                    report.resource_arn = stack.arn
-                    report.resource_tags = stack.tags
+                    report = Check_Report_AWS(metadata=self.metadata(), resource=stack)
                     report.status = "PASS"
                     report.status_extended = f"CloudFormation Stack CDKToolkit has a Bootstrap version {bootstrap_version}, which meets the recommended version."
                     if bootstrap_version < recommended_cdk_bootstrap_version:

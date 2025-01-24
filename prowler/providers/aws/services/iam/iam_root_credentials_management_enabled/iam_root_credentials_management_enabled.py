@@ -13,7 +13,10 @@ class iam_root_credentials_management_enabled(Check):
             and organizations_client.organization.status == "ACTIVE"
             and iam_client.organization_features is not None
         ):
-            report = Check_Report_AWS(self.metadata())
+            report = Check_Report_AWS(
+                metadata=self.metadata(),
+                resource=iam_client.organization_features,
+            )
             report.region = iam_client.region
             report.resource_arn = iam_client.audited_account_arn
             report.resource_id = iam_client.audited_account

@@ -13,7 +13,9 @@ class iam_root_mfa_enabled(Check):
             if iam_client.credential_report:
                 for user in iam_client.credential_report:
                     if user["user"] == "<root_account>":
-                        report = Check_Report_AWS(self.metadata())
+                        report = Check_Report_AWS(
+                            metadata=self.metadata(), resource=user
+                        )
                         report.region = iam_client.region
                         report.resource_id = user["user"]
                         report.resource_arn = user["arn"]

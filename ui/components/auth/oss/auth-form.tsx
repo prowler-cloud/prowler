@@ -210,6 +210,7 @@ export const AuthForm = ({
                       defaultValue={invitationToken}
                       isRequired={false}
                       isInvalid={!!form.formState.errors.invitationToken}
+                      isDisabled={invitationToken !== null && true}
                     />
                   )}
                 </>

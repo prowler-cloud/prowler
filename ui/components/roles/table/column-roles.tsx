@@ -26,11 +26,7 @@ export const ColumnsRoles: ColumnDef<RolesProps["data"][number]>[] = [
     ),
     cell: ({ row }) => {
       const data = getRoleAttributes(row);
-      return (
-        <p className="font-semibold">
-          {data.name[0].toUpperCase() + data.name.slice(1).toLowerCase()}
-        </p>
-      );
+      return <p className="font-semibold">{data.name}</p>;
     },
   },
   {

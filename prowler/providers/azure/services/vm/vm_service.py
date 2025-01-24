@@ -8,7 +8,6 @@ from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.azure.lib.service.service import AzureService
 
 
-########################## VirtualMachines
 class VirtualMachines(AzureService):
     def __init__(self, provider: AzureProvider):
         super().__init__(ComputeManagementClient, provider)
@@ -27,7 +26,7 @@ class VirtualMachines(AzureService):
                 for vm in virtual_machines_list:
                     virtual_machines[subscription_name].update(
                         {
-                            vm.vm_id: VirtualMachine(
+                            vm.id: VirtualMachine(
                                 resource_id=vm.id,
                                 resource_name=vm.name,
                                 storage_profile=getattr(vm, "storage_profile", None),

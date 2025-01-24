@@ -18,7 +18,7 @@ export const DateWithTime: React.FC<DateWithTimeProps> = ({
   const formattedTime = format(date, "p 'UTC'");
 
   return (
-    <div className="mw-fit">
+    <div className="mw-fit py-[2px]">
       <div
         className={`flex ${inline ? "flex-row items-center gap-2" : "flex-col"}`}
       >

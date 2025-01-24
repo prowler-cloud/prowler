@@ -82,6 +82,7 @@ class TestFinding:
         check_output.status_extended = "mock_status_extended"
         check_output.muted = False
         check_output.check_metadata = mock_check_metadata(provider="aws")
+        check_output.resource = {}
 
         # Mock output options
         output_options = MagicMock()
@@ -178,6 +179,7 @@ class TestFinding:
         check_output.status_extended = "mock_status_extended"
         check_output.muted = False
         check_output.check_metadata = mock_check_metadata(provider="azure")
+        check_output.resource = {}
 
         # Mock output options
         output_options = MagicMock()
@@ -266,6 +268,7 @@ class TestFinding:
         check_output.status_extended = "mock_status_extended"
         check_output.muted = False
         check_output.check_metadata = mock_check_metadata(provider="gcp")
+        check_output.resource = {}
 
         # Mock output options
         output_options = MagicMock()
@@ -344,6 +347,7 @@ class TestFinding:
         check_output.muted = False
         check_output.check_metadata = mock_check_metadata(provider="kubernetes")
         check_output.timestamp = datetime.now()
+        check_output.resource = {}
 
         # Mock Output Options
         output_options = MagicMock()

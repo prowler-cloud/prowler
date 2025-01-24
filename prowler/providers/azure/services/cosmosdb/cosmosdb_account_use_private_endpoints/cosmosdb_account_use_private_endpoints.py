@@ -7,12 +7,9 @@ class cosmosdb_account_use_private_endpoints(Check):
         findings = []
         for subscription, accounts in cosmosdb_client.accounts.items():
             for account in accounts:
-                report = Check_Report_Azure(self.metadata())
+                report = Check_Report_Azure(metadata=self.metadata(), resource=account)
                 report.subscription = subscription
-                report.resource_name = account.name
-                report.resource_id = account.id
                 report.status = "FAIL"
-                report.location = account.location
                 report.status_extended = f"CosmosDB account {account.name} from subscription {subscription} is not using private endpoints connections"
                 if account.private_endpoint_connections:
                     report.status = "PASS"

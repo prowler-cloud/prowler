@@ -5,13 +5,9 @@ from prowler.providers.aws.services.rds.rds_client import rds_client
 class rds_instance_deprecated_engine_version(Check):
     def execute(self):
         findings = []
-        for db_instance_arn, db_instance in rds_client.db_instances.items():
-            report = Check_Report_AWS(self.metadata())
-            report.region = db_instance.region
+        for db_instance in rds_client.db_instances.values():
+            report = Check_Report_AWS(metadata=self.metadata(), resource=db_instance)
             report.status = "FAIL"
-            report.resource_id = db_instance.id
-            report.resource_arn = db_instance_arn
-            report.resource_tags = db_instance.tags
             report.status_extended = f"RDS instance {db_instance.id} is using a deprecated engine {db_instance.engine} with version {db_instance.engine_version}."
             if (
                 hasattr(

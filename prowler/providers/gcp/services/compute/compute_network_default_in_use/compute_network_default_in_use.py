@@ -5,26 +5,29 @@ from prowler.providers.gcp.services.compute.compute_client import compute_client
 class compute_network_default_in_use(Check):
     def execute(self) -> Check_Report_GCP:
         findings = []
-        projects_with_default_network = set()
+        projects_with_default_network = {}
 
         # Identify projects with the default network
         for network in compute_client.networks:
             if network.name == "default":
-                projects_with_default_network.add(network.project_id)
+                projects_with_default_network[network.project_id] = network
 
         # Generate reports for all projects
         for project in compute_client.project_ids:
-            report = Check_Report_GCP(self.metadata())
-            report.project_id = project
-            report.resource_id = "default"
-            report.resource_name = "default"
-            report.location = compute_client.region
-
+            report = Check_Report_GCP(
+                metadata=self.metadata(),
+                resource=compute_client.projects[project],
+                project_id=project,
+                resource_id="default",
+                resource_name="default",
+                location=compute_client.region,
+            )
             if project in projects_with_default_network:
                 report.status = "FAIL"
                 report.status_extended = (
                     f"Default network is in use in project {project}."
                 )
+                report.resource = projects_with_default_network[project]
             else:
                 report.status = "PASS"
                 report.status_extended = (

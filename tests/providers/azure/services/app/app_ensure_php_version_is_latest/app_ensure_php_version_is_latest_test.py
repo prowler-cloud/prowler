@@ -64,8 +64,9 @@ class Test_app_ensure_php_version_is_latest:
 
             app_client.apps = {
                 AZURE_SUBSCRIPTION_ID: {
-                    "app_id-1": WebApp(
+                    resource_id: WebApp(
                         resource_id=resource_id,
+                        name="app_id-1",
                         auth_enabled=True,
                         configurations=None,
                         client_cert_mode="Ignore",
@@ -99,8 +100,9 @@ class Test_app_ensure_php_version_is_latest:
 
             app_client.apps = {
                 AZURE_SUBSCRIPTION_ID: {
-                    "app_id-1": WebApp(
+                    resource_id: WebApp(
                         resource_id=resource_id,
+                        name="app_id-1",
                         auth_enabled=True,
                         configurations=mock.MagicMock(linux_fx_version="php|8.0"),
                         client_cert_mode="Ignore",
@@ -143,8 +145,9 @@ class Test_app_ensure_php_version_is_latest:
 
             app_client.apps = {
                 AZURE_SUBSCRIPTION_ID: {
-                    "app_id-1": WebApp(
+                    resource_id: WebApp(
                         resource_id=resource_id,
+                        name="app_id-1",
                         auth_enabled=True,
                         configurations=mock.MagicMock(linux_fx_version="php|8.2"),
                         client_cert_mode="Ignore",

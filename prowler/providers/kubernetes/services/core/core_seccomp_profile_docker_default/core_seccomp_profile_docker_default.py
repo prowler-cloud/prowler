@@ -6,15 +6,12 @@ class core_seccomp_profile_docker_default(Check):
     def execute(self) -> Check_Report_Kubernetes:
         findings = []
         for pod in core_client.pods.values():
-            report = Check_Report_Kubernetes(self.metadata())
-            report.namespace = pod.namespace
-            report.resource_name = pod.name
-            report.resource_id = pod.uid
+            report = Check_Report_Kubernetes(metadata=self.metadata(), resource=pod)
 
             pod_seccomp_correct = (
                 pod.security_context
-                and pod.security_context.seccomp_profile
-                and pod.security_context.seccomp_profile.type == "RuntimeDefault"
+                and pod.security_context["seccomp_profile"]
+                and pod.security_context["seccomp_profile"]["type"] == "RuntimeDefault"
             )
             containers_seccomp_correct = True
 
@@ -22,8 +19,8 @@ class core_seccomp_profile_docker_default(Check):
             for container in pod.containers.values():
                 if not (
                     container.security_context
-                    and container.security_context.seccomp_profile
-                    and container.security_context.seccomp_profile.type
+                    and container.security_context["seccomp_profile"]
+                    and container.security_context["seccomp_profile"]["type"]
                     == "RuntimeDefault"
                 ):
                     containers_seccomp_correct = False

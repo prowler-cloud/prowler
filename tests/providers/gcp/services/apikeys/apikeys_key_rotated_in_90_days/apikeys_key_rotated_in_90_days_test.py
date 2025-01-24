@@ -7,7 +7,7 @@ from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, set_mocked_gcp_prov
 
 class Test_apikeys_key_rotated_in_90_days:
     def test_apikeys_no_keys(self):
-        apikeys_client = mock.MagicMock
+        apikeys_client = mock.MagicMock()
         apikeys_client.keys = []
 
         with mock.patch(
@@ -38,7 +38,7 @@ class Test_apikeys_key_rotated_in_90_days:
             project_id=GCP_PROJECT_ID,
         )
 
-        apikeys_client = mock.MagicMock
+        apikeys_client = mock.MagicMock()
         apikeys_client.project_ids = [GCP_PROJECT_ID]
         apikeys_client.keys = [key]
         apikeys_client.region = "global"
@@ -78,7 +78,7 @@ class Test_apikeys_key_rotated_in_90_days:
             project_id=GCP_PROJECT_ID,
         )
 
-        apikeys_client = mock.MagicMock
+        apikeys_client = mock.MagicMock()
         apikeys_client.project_ids = [GCP_PROJECT_ID]
         apikeys_client.keys = [key]
         apikeys_client.region = "global"

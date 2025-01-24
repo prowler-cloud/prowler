@@ -9,10 +9,7 @@ class inspector2_active_findings_exist(Check):
         findings = []
         for inspector in inspector2_client.inspectors:
             if inspector.status == "ENABLED":
-                report = Check_Report_AWS(self.metadata())
-                report.resource_id = inspector.id
-                report.resource_arn = inspector.arn
-                report.region = inspector.region
+                report = Check_Report_AWS(metadata=self.metadata(), resource=inspector)
                 report.status = "PASS"
                 report.status_extended = (
                     "Inspector2 is enabled with no active findings."

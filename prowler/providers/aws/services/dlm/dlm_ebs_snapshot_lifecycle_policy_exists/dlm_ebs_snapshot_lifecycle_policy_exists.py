@@ -11,7 +11,10 @@ class dlm_ebs_snapshot_lifecycle_policy_exists(Check):
                 region in ec2_client.regions_with_snapshots
                 and ec2_client.regions_with_snapshots[region]
             ):
-                report = Check_Report_AWS(self.metadata())
+                report = Check_Report_AWS(
+                    metadata=self.metadata(),
+                    resource=dlm_client.lifecycle_policies,
+                )
                 report.status = "FAIL"
                 report.status_extended = "No EBS Snapshot lifecycle policies found."
                 report.region = region

@@ -47,8 +47,8 @@ class Test_entra_security_defaults_enabled:
             assert result[0].status == "FAIL"
             assert result[0].status_extended == "Entra security defaults is diabled."
             assert result[0].subscription == f"Tenant: {DOMAIN}"
-            assert result[0].resource_name == "Security Default"
-            assert result[0].resource_id == "Security Default"
+            assert result[0].resource_name == ""
+            assert result[0].resource_id == ""
 
     def test_entra_security_default_enabled(self):
         entra_client = mock.MagicMock

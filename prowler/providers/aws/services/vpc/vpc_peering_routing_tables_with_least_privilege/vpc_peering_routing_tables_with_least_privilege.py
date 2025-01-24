@@ -6,11 +6,7 @@ class vpc_peering_routing_tables_with_least_privilege(Check):
     def execute(self):
         findings = []
         for peer in vpc_client.vpc_peering_connections:
-            report = Check_Report_AWS(self.metadata())
-            report.region = peer.region
-            report.resource_tags = peer.tags
-            report.resource_id = peer.id
-            report.resource_arn = peer.arn
+            report = Check_Report_AWS(metadata=self.metadata(), resource=peer)
             report.status = "PASS"
             report.status_extended = (
                 f"VPC Peering Connection {peer.id} comply with least privilege access."

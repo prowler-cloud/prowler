@@ -26,6 +26,11 @@ export type NextUIColors =
   | "danger"
   | "default";
 
+export interface PermissionInfo {
+  field: string;
+  label: string;
+  description: string;
+}
 export interface FindingsByStatusData {
   data: {
     type: "findings-overview";
@@ -177,6 +182,7 @@ export type AWSCredentialsRole = {
   external_id?: string;
   role_session_name?: string;
   session_duration?: number;
+  credentials_type?: "aws-sdk-default" | "access-secret-key";
 };
 
 export type AzureCredentials = {
@@ -514,6 +520,7 @@ export interface ScanProps {
     } | null;
     duration: number;
     started_at: string;
+    inserted_at: string;
     completed_at: string;
     scheduled_at: string;
     next_scan_at: string;
@@ -584,6 +591,7 @@ export interface FindingProps {
     raw_result: object | null;
     inserted_at: string;
     updated_at: string;
+    first_seen_at: string | null;
   };
   relationships: {
     resources: {
@@ -608,8 +616,10 @@ export interface FindingProps {
         };
         duration: number;
         started_at: string;
+        inserted_at: string;
         completed_at: string;
         scheduled_at: string | null;
+        next_scan_at: string;
       };
     };
     resource: {

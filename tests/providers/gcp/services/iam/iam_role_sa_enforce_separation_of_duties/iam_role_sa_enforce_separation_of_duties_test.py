@@ -1,15 +1,25 @@
 from re import search
 from unittest import mock
 
+from prowler.providers.gcp.models import GCPProject
 from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, set_mocked_gcp_provider
 
 
 class Test_iam_role_sa_enforce_separation_of_duties:
     def test_iam_no_bindings(self):
-        cloudresourcemanager_client = mock.MagicMock
+        cloudresourcemanager_client = mock.MagicMock()
         cloudresourcemanager_client.bindings = []
         cloudresourcemanager_client.project_ids = [GCP_PROJECT_ID]
         cloudresourcemanager_client.region = "global"
+        cloudresourcemanager_client.projects = {
+            GCP_PROJECT_ID: GCPProject(
+                id=GCP_PROJECT_ID,
+                number="123456789012",
+                name="test",
+                labels={},
+                lifecycle_state="ACTIVE",
+            )
+        }
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -56,10 +66,19 @@ class Test_iam_role_sa_enforce_separation_of_duties:
             project_id=GCP_PROJECT_ID,
         )
 
-        cloudresourcemanager_client = mock.MagicMock
+        cloudresourcemanager_client = mock.MagicMock()
         cloudresourcemanager_client.project_ids = [GCP_PROJECT_ID]
         cloudresourcemanager_client.bindings = [binding1, binding2, binding3]
         cloudresourcemanager_client.region = "global"
+        cloudresourcemanager_client.projects = {
+            GCP_PROJECT_ID: GCPProject(
+                id=GCP_PROJECT_ID,
+                number="123456789012",
+                name="test",
+                labels={},
+                lifecycle_state="ACTIVE",
+            )
+        }
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -107,10 +126,19 @@ class Test_iam_role_sa_enforce_separation_of_duties:
             project_id=GCP_PROJECT_ID,
         )
 
-        cloudresourcemanager_client = mock.MagicMock
+        cloudresourcemanager_client = mock.MagicMock()
         cloudresourcemanager_client.project_ids = [GCP_PROJECT_ID]
         cloudresourcemanager_client.bindings = [binding1, binding2, binding3]
         cloudresourcemanager_client.region = "global"
+        cloudresourcemanager_client.projects = {
+            GCP_PROJECT_ID: GCPProject(
+                id=GCP_PROJECT_ID,
+                number="123456789012",
+                name="test",
+                labels={},
+                lifecycle_state="ACTIVE",
+            )
+        }
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",

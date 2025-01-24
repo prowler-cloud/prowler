@@ -28,9 +28,7 @@ export const getFindings = async ({
   if (sort) url.searchParams.append("sort", sort);
 
   Object.entries(filters).forEach(([key, value]) => {
-    if (key !== "filter[search]") {
-      url.searchParams.append(key, String(value));
-    }
+    url.searchParams.append(key, String(value));
   });
 
   try {
@@ -51,7 +49,7 @@ export const getFindings = async ({
   }
 };
 
-export const getServicesRegions = async ({
+export const getMetadataInfo = async ({
   query = "",
   sort = "",
   filters = {},
@@ -59,13 +57,18 @@ export const getServicesRegions = async ({
   const session = await auth();
 
   const keyServer = process.env.API_BASE_URL;
-  const url = new URL(`${keyServer}/findings/findings_services_regions`);
+  const url = new URL(`${keyServer}/findings/metadata`);
 
   if (query) url.searchParams.append("filter[search]", query);
   if (sort) url.searchParams.append("sort", sort);
 
   Object.entries(filters).forEach(([key, value]) => {
-    if (key !== "filter[search]") {
+    // Define filters to exclude
+    const excludedFilters = ["region__in", "service__in", "resource_type__in"];
+    if (
+      key !== "filter[search]" &&
+      !excludedFilters.some((filter) => key.includes(filter))
+    ) {
       url.searchParams.append(key, String(value));
     }
   });

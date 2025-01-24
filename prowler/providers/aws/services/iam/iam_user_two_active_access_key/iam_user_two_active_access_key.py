@@ -9,7 +9,7 @@ class iam_user_two_active_access_key(Check):
             findings = []
             response = iam_client.credential_report
             for user in response:
-                report = Check_Report_AWS(self.metadata())
+                report = Check_Report_AWS(metadata=self.metadata(), resource=user)
                 report.resource_id = user["user"]
                 report.resource_arn = user["arn"]
                 report.region = iam_client.region

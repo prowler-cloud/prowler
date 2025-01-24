@@ -261,6 +261,16 @@ class TestUserViewSet:
         assert response.status_code == status.HTTP_204_NO_CONTENT
         assert not User.objects.filter(id=create_test_user.id).exists()
 
+    def test_users_destroy_other_user(
+        self, authenticated_client, create_test_user, users_fixture
+    ):
+        user = users_fixture[2]
+        response = authenticated_client.delete(
+            reverse("user-detail", kwargs={"pk": str(user.id)})
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert User.objects.filter(id=create_test_user.id).exists()
+
     def test_users_destroy_invalid_user(self, authenticated_client, create_test_user):
         another_user = User.objects.create_user(
             password="otherpassword", email="other@example.com"
@@ -268,7 +278,7 @@ class TestUserViewSet:
         response = authenticated_client.delete(
             reverse("user-detail", kwargs={"pk": another_user.id})
         )
-        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert User.objects.filter(id=another_user.id).exists()
 
     @pytest.mark.parametrize(
@@ -340,7 +350,7 @@ class TestTenantViewSet:
     def test_tenants_list(self, authenticated_client, tenants_fixture):
         response = authenticated_client.get(reverse("tenant-list"))
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.json()["data"]) == len(tenants_fixture)
+        assert len(response.json()["data"]) == 2  # Test user belongs to 2 tenants
 
     def test_tenants_retrieve(self, authenticated_client, tenants_fixture):
         tenant1, *_ = tenants_fixture
@@ -470,11 +480,11 @@ class TestTenantViewSet:
         (
             [
                 ("name", "Tenant One", 1),
-                ("name.icontains", "Tenant", 3),
-                ("inserted_at", TODAY, 3),
-                ("inserted_at.gte", "2024-01-01", 3),
+                ("name.icontains", "Tenant", 2),
+                ("inserted_at", TODAY, 2),
+                ("inserted_at.gte", "2024-01-01", 2),
                 ("inserted_at.lte", "2024-01-01", 0),
-                ("updated_at.gte", "2024-01-01", 3),
+                ("updated_at.gte", "2024-01-01", 2),
                 ("updated_at.lte", "2024-01-01", 0),
             ]
         ),
@@ -510,7 +520,9 @@ class TestTenantViewSet:
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == page_size
         assert response.json()["meta"]["pagination"]["page"] == 1
-        assert response.json()["meta"]["pagination"]["pages"] == len(tenants_fixture)
+        assert (
+            response.json()["meta"]["pagination"]["pages"] == 2
+        )  # Test user belongs to 2 tenants
 
     def test_tenants_list_page_number(self, authenticated_client, tenants_fixture):
         page_size = 1
@@ -523,13 +535,13 @@ class TestTenantViewSet:
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == page_size
         assert response.json()["meta"]["pagination"]["page"] == page_number
-        assert response.json()["meta"]["pagination"]["pages"] == len(tenants_fixture)
+        assert response.json()["meta"]["pagination"]["pages"] == 2
 
     def test_tenants_list_sort_name(self, authenticated_client, tenants_fixture):
         _, tenant2, _ = tenants_fixture
         response = authenticated_client.get(reverse("tenant-list"), {"sort": "-name"})
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.json()["data"]) == 3
+        assert len(response.json()["data"]) == 2
         assert response.json()["data"][0]["attributes"]["name"] == tenant2.name
 
     def test_tenants_list_memberships_as_owner(
@@ -2339,7 +2351,10 @@ class TestResourceViewSet:
             response.json()["errors"][0]["detail"] == "invalid sort parameter: invalid"
         )
 
-    def test_resources_retrieve(self, authenticated_client, resources_fixture):
+    def test_resources_retrieve(
+        self, authenticated_client, tenants_fixture, resources_fixture
+    ):
+        tenant = tenants_fixture[0]
         resource_1, *_ = resources_fixture
         response = authenticated_client.get(
             reverse("resource-detail", kwargs={"pk": resource_1.id}),
@@ -2350,7 +2365,9 @@ class TestResourceViewSet:
         assert response.json()["data"]["attributes"]["region"] == resource_1.region
         assert response.json()["data"]["attributes"]["service"] == resource_1.service
         assert response.json()["data"]["attributes"]["type"] == resource_1.type
-        assert response.json()["data"]["attributes"]["tags"] == resource_1.get_tags()
+        assert response.json()["data"]["attributes"]["tags"] == resource_1.get_tags(
+            tenant_id=str(tenant.id)
+        )
 
     def test_resources_invalid_retrieve(self, authenticated_client):
         response = authenticated_client.get(
@@ -2437,6 +2454,15 @@ class TestFindingViewSet:
                 ("search", "ec2", 2),
                 # full text search on finding tags
                 ("search", "value2", 2),
+                ("resource_tag_key", "key", 2),
+                ("resource_tag_key__in", "key,key2", 2),
+                ("resource_tag_key__icontains", "key", 2),
+                ("resource_tag_value", "value", 2),
+                ("resource_tag_value__in", "value,value2", 2),
+                ("resource_tag_value__icontains", "value", 2),
+                ("resource_tags", "key:value", 2),
+                ("resource_tags", "not:exists", 0),
+                ("resource_tags", "not:exists,key:value", 2),
             ]
         ),
     )
@@ -2575,30 +2601,34 @@ class TestFindingViewSet:
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_findings_services_regions_retrieve(
-        self, authenticated_client, findings_fixture
-    ):
+    def test_findings_metadata_retrieve(self, authenticated_client, findings_fixture):
         finding_1, *_ = findings_fixture
         response = authenticated_client.get(
-            reverse("finding-findings_services_regions"),
+            reverse("finding-metadata"),
             {"filter[inserted_at]": finding_1.updated_at.strftime("%Y-%m-%d")},
         )
         data = response.json()
 
         expected_services = {"ec2", "s3"}
         expected_regions = {"eu-west-1", "us-east-1"}
+        expected_tags = {"key": ["value"], "key2": ["value2"]}
+        expected_resource_types = {"prowler-test"}
 
-        assert data["data"]["type"] == "finding-dynamic-filters"
+        assert data["data"]["type"] == "findings-metadata"
         assert data["data"]["id"] is None
         assert set(data["data"]["attributes"]["services"]) == expected_services
         assert set(data["data"]["attributes"]["regions"]) == expected_regions
+        assert (
+            set(data["data"]["attributes"]["resource_types"]) == expected_resource_types
+        )
+        assert data["data"]["attributes"]["tags"] == expected_tags
 
-    def test_findings_services_regions_severity_retrieve(
+    def test_findings_metadata_severity_retrieve(
         self, authenticated_client, findings_fixture
     ):
         finding_1, *_ = findings_fixture
         response = authenticated_client.get(
-            reverse("finding-findings_services_regions"),
+            reverse("finding-metadata"),
             {
                 "filter[severity__in]": ["low", "medium"],
                 "filter[inserted_at]": finding_1.updated_at.strftime("%Y-%m-%d"),
@@ -2608,26 +2638,34 @@ class TestFindingViewSet:
 
         expected_services = {"s3"}
         expected_regions = {"eu-west-1"}
+        expected_tags = {"key": ["value"], "key2": ["value2"]}
+        expected_resource_types = {"prowler-test"}
 
-        assert data["data"]["type"] == "finding-dynamic-filters"
+        assert data["data"]["type"] == "findings-metadata"
         assert data["data"]["id"] is None
         assert set(data["data"]["attributes"]["services"]) == expected_services
         assert set(data["data"]["attributes"]["regions"]) == expected_regions
+        assert (
+            set(data["data"]["attributes"]["resource_types"]) == expected_resource_types
+        )
+        assert data["data"]["attributes"]["tags"] == expected_tags
 
-    def test_findings_services_regions_future_date(self, authenticated_client):
+    def test_findings_metadata_future_date(self, authenticated_client):
         response = authenticated_client.get(
-            reverse("finding-findings_services_regions"),
+            reverse("finding-metadata"),
             {"filter[inserted_at]": "2048-01-01"},
         )
         data = response.json()
-        assert data["data"]["type"] == "finding-dynamic-filters"
+        assert data["data"]["type"] == "findings-metadata"
         assert data["data"]["id"] is None
         assert data["data"]["attributes"]["services"] == []
         assert data["data"]["attributes"]["regions"] == []
+        assert data["data"]["attributes"]["tags"] == {}
+        assert data["data"]["attributes"]["resource_types"] == []
 
-    def test_findings_services_regions_invalid_date(self, authenticated_client):
+    def test_findings_metadata_invalid_date(self, authenticated_client):
         response = authenticated_client.get(
-            reverse("finding-findings_services_regions"),
+            reverse("finding-metadata"),
             {"filter[inserted_at]": "2048-01-011"},
         )
         assert response.json() == {
@@ -3261,8 +3299,8 @@ class TestRoleViewSet:
         response = authenticated_client.get(reverse("role-list"))
         assert response.status_code == status.HTTP_200_OK
         assert (
-            len(response.json()["data"]) == len(roles_fixture) + 2
-        )  # 2 default admin roles, one for each tenant
+            len(response.json()["data"]) == len(roles_fixture) + 1
+        )  # 1 default admin role
 
     def test_role_retrieve(self, authenticated_client, roles_fixture):
         role = roles_fixture[0]
@@ -3300,9 +3338,7 @@ class TestRoleViewSet:
                     "name": "Test Role",
                     "manage_users": "false",
                     "manage_account": "false",
-                    "manage_billing": "false",
                     "manage_providers": "true",
-                    "manage_integrations": "true",
                     "manage_scans": "true",
                     "unlimited_visibility": "true",
                 },
@@ -3329,9 +3365,7 @@ class TestRoleViewSet:
                     "name": "Test Role",
                     "manage_users": "false",
                     "manage_account": "false",
-                    "manage_billing": "false",
                     "manage_providers": "true",
-                    "manage_integrations": "true",
                     "manage_scans": "true",
                     "unlimited_visibility": "true",
                 },
@@ -3379,6 +3413,26 @@ class TestRoleViewSet:
         errors = response.json()["errors"]
         assert errors[0]["source"]["pointer"] == "/data/attributes/name"
 
+    def test_admin_role_partial_update(self, authenticated_client, admin_role_fixture):
+        role = admin_role_fixture
+        data = {
+            "data": {
+                "id": str(role.id),
+                "type": "roles",
+                "attributes": {
+                    "name": "Updated Role",
+                },
+            }
+        }
+        response = authenticated_client.patch(
+            reverse("role-detail", kwargs={"pk": role.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        role.refresh_from_db()
+        assert role.name != "Updated Role"
+
     def test_role_partial_update(self, authenticated_client, roles_fixture):
         role = roles_fixture[1]
         data = {
@@ -3386,7 +3440,7 @@ class TestRoleViewSet:
                 "id": str(role.id),
                 "type": "roles",
                 "attributes": {
-                    "name": "Updated Provider Group Name",
+                    "name": "Updated Role",
                 },
             }
         }
@@ -3397,7 +3451,7 @@ class TestRoleViewSet:
         )
         assert response.status_code == status.HTTP_200_OK
         role.refresh_from_db()
-        assert role.name == "Updated Provider Group Name"
+        assert role.name == "Updated Role"
 
     def test_role_partial_update_invalid(self, authenticated_client, roles_fixture):
         role = roles_fixture[2]
@@ -3418,6 +3472,14 @@ class TestRoleViewSet:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         errors = response.json()["errors"]
         assert errors[0]["source"]["pointer"] == "/data/attributes/name"
+
+    def test_role_destroy_admin(self, authenticated_client, admin_role_fixture):
+        role = admin_role_fixture
+        response = authenticated_client.delete(
+            reverse("role-detail", kwargs={"pk": role.id})
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert Role.objects.filter(id=role.id).exists()
 
     def test_role_destroy(self, authenticated_client, roles_fixture):
         role = roles_fixture[2]
@@ -3477,9 +3539,7 @@ class TestRoleViewSet:
                     "name": "Role with Users and PGs",
                     "manage_users": "true",
                     "manage_account": "false",
-                    "manage_billing": "true",
                     "manage_providers": "true",
-                    "manage_integrations": "false",
                     "manage_scans": "false",
                     "unlimited_visibility": "false",
                 },
@@ -3593,9 +3653,7 @@ class TestRoleViewSet:
                     "name": "Invalid Users Role",
                     "manage_users": "false",
                     "manage_account": "false",
-                    "manage_billing": "false",
                     "manage_providers": "true",
-                    "manage_integrations": "true",
                     "manage_scans": "true",
                     "unlimited_visibility": "true",
                 },

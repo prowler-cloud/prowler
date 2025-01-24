@@ -874,7 +874,7 @@ class ResourceSerializer(RLSSerializer):
         }
     )
     def get_tags(self, obj):
-        return obj.get_tags()
+        return obj.get_tags(self.context.get("tenant_id"))
 
     def get_fields(self):
         """`type` is a Python reserved keyword."""
@@ -905,6 +905,7 @@ class FindingSerializer(RLSSerializer):
             "raw_result",
             "inserted_at",
             "updated_at",
+            "first_seen_at",
             "url",
             # Relationships
             "scan",
@@ -917,12 +918,25 @@ class FindingSerializer(RLSSerializer):
     }
 
 
+# To be removed when the related endpoint is removed as well
 class FindingDynamicFilterSerializer(serializers.Serializer):
     services = serializers.ListField(child=serializers.CharField(), allow_empty=True)
     regions = serializers.ListField(child=serializers.CharField(), allow_empty=True)
 
     class Meta:
         resource_name = "finding-dynamic-filters"
+
+
+class FindingMetadataSerializer(serializers.Serializer):
+    services = serializers.ListField(child=serializers.CharField(), allow_empty=True)
+    regions = serializers.ListField(child=serializers.CharField(), allow_empty=True)
+    resource_types = serializers.ListField(
+        child=serializers.CharField(), allow_empty=True
+    )
+    tags = serializers.JSONField(help_text="Tags are described as key-value pairs.")
+
+    class Meta:
+        resource_name = "findings-metadata"
 
 
 # Provider secrets
@@ -997,7 +1011,7 @@ class KubernetesProviderSecret(serializers.Serializer):
 
 class AWSRoleAssumptionProviderSecret(serializers.Serializer):
     role_arn = serializers.CharField()
-    external_id = serializers.CharField(required=False)
+    external_id = serializers.CharField()
     role_session_name = serializers.CharField(required=False)
     session_duration = serializers.IntegerField(
         required=False, min_value=900, max_value=43200
@@ -1044,6 +1058,10 @@ class AWSRoleAssumptionProviderSecret(serializers.Serializer):
                         "description": "The Amazon Resource Name (ARN) of the role to assume. Required for AWS role "
                         "assumption.",
                     },
+                    "external_id": {
+                        "type": "string",
+                        "description": "An identifier to enhance security for role assumption.",
+                    },
                     "aws_access_key_id": {
                         "type": "string",
                         "description": "The AWS access key ID. Only required if the environment lacks pre-configured "
@@ -1065,11 +1083,6 @@ class AWSRoleAssumptionProviderSecret(serializers.Serializer):
                         "default": 3600,
                         "description": "The duration (in seconds) for the role session.",
                     },
-                    "external_id": {
-                        "type": "string",
-                        "description": "An optional identifier to enhance security for role assumption; may be "
-                        "required by the role administrator.",
-                    },
                     "role_session_name": {
                         "type": "string",
                         "description": "An identifier for the role session, useful for tracking sessions in AWS logs. "
@@ -1083,7 +1096,7 @@ class AWSRoleAssumptionProviderSecret(serializers.Serializer):
                         "pattern": "^[a-zA-Z0-9=,.@_-]+$",
                     },
                 },
-                "required": ["role_arn"],
+                "required": ["role_arn", "external_id"],
             },
             {
                 "type": "object",
@@ -1233,6 +1246,12 @@ class InvitationSerializer(RLSSerializer):
 
     roles = serializers.ResourceRelatedField(many=True, queryset=Role.objects.all())
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        tenant_id = self.context.get("tenant_id")
+        if tenant_id is not None:
+            self.fields["roles"].queryset = Role.objects.filter(tenant_id=tenant_id)
+
     class Meta:
         model = Invitation
         fields = [
@@ -1251,6 +1270,12 @@ class InvitationSerializer(RLSSerializer):
 
 class InvitationBaseWriteSerializer(BaseWriteSerializer):
     roles = serializers.ResourceRelatedField(many=True, queryset=Role.objects.all())
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        tenant_id = self.context.get("tenant_id")
+        if tenant_id is not None:
+            self.fields["roles"].queryset = Role.objects.filter(tenant_id=tenant_id)
 
     def validate_email(self, value):
         user = User.objects.filter(email=value).first()
@@ -1367,6 +1392,17 @@ class RoleSerializer(RLSSerializer, BaseWriteSerializer):
         queryset=ProviderGroup.objects.all(), many=True, required=False
     )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        tenant_id = self.context.get("tenant_id")
+        if tenant_id is not None:
+            self.fields["users"].queryset = User.objects.filter(
+                membership__tenant__id=tenant_id
+            )
+            self.fields["provider_groups"].queryset = ProviderGroup.objects.filter(
+                tenant_id=self.context.get("tenant_id")
+            )
+
     def get_permission_state(self, obj) -> str:
         return obj.permission_state
 
@@ -1394,9 +1430,11 @@ class RoleSerializer(RLSSerializer, BaseWriteSerializer):
             "name",
             "manage_users",
             "manage_account",
-            "manage_billing",
+            # Disable for the first release
+            # "manage_billing",
+            # "manage_integrations",
+            # /Disable for the first release
             "manage_providers",
-            "manage_integrations",
             "manage_scans",
             "permission_state",
             "unlimited_visibility",
