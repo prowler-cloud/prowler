@@ -382,16 +382,28 @@ class Microsoft365Provider(Provider):
 
         """
         if not browser_auth:
+            if sp_env_auth:
+                try:
+                    Microsoft365Provider.check_service_principal_creds_env_vars()
+                    credentials = ClientSecretCredential(
+                        tenant_id=getenv("M365_TENANT_ID"),
+                        client_id=getenv("M365_CLIENT_ID"),
+                        client_secret=getenv("M365_CLIENT_SECRET"),
+                    )
+                except (
+                    Microsoft365EnvironmentVariableError
+                ) as environment_credentials_error:
+                    logger.critical(
+                        f"{environment_credentials_error.__class__.__name__}[{environment_credentials_error.__traceback__.tb_lineno}] -- {environment_credentials_error}"
+                    )
+                    raise environment_credentials_error
             try:
-                if (
-                    sp_env_auth
-                    and Microsoft365Provider.check_application_creds_env_vars()
-                ):
+                if microsoft365_credentials:
                     try:
                         credentials = ClientSecretCredential(
-                            tenant_id=getenv("M365_TENANT_ID"),
-                            client_id=getenv("M365_CLIENT_ID"),
-                            client_secret=getenv("M365_CLIENT_SECRET"),
+                            tenant_id=microsoft365_credentials["tenant_id"],
+                            client_id=microsoft365_credentials["client_id"],
+                            client_secret=microsoft365_credentials["client_secret"],
                         )
                         return credentials
                     except ClientAuthenticationError as error:
@@ -660,7 +672,7 @@ class Microsoft365Provider(Provider):
             return Connection(error=error)
 
     @staticmethod
-    def check_application_creds_env_vars():
+    def check_service_principal_creds_env_vars():
         """
         Checks the presence of required environment variables for application authentication against Microsoft365.
 
@@ -669,24 +681,20 @@ class Microsoft365Provider(Provider):
         - M365_TENANT_ID: Microsoft365 tenant ID
         - M365_CLIENT_SECRET: Microsoft365 client secret
 
-        Returns:
-            bool: True if all environment variables are present, False otherwise.
+        If any of the environment variables is missing, it logs a critical error and exits the program.
         """
         logger.info(
             "Microsoft365 provider: checking service principal environment variables  ..."
         )
-        missing_env_vars = []
         for env_var in ["M365_CLIENT_ID", "M365_TENANT_ID", "M365_CLIENT_SECRET"]:
             if not getenv(env_var):
-                missing_env_vars.append(env_var)
-
-        if missing_env_vars:
-            raise Microsoft365CredentialsUnavailableError(
-                file=os.path.basename(__file__),
-                message=f"Missing environment variables needed to authenticate against Microsoft365: {', '.join(missing_env_vars)}",
-            )
-        else:
-            return True
+                logger.critical(
+                    f"Microsoft365 provider: Missing environment variable {env_var} needed to authenticate against Microsoft365"
+                )
+                raise Microsoft365EnvironmentVariableError(
+                    file=os.path.basename(__file__),
+                    message=f"Missing environment variable {env_var} required to authenticate.",
+                )
 
     def setup_identity(
         self,
@@ -751,10 +759,10 @@ class Microsoft365Provider(Provider):
                         f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                     )
                 # since that exception is not considered as critical, we keep filling another identity fields
-                # The id of the sp can be retrieved from environment variables
                 if sp_env_auth or client_id:
+                    # The id of the sp can be retrieved from environment variables
                     identity.identity_id = getenv("M365_CLIENT_ID")
-                    identity.identity_type = "Application"
+                    identity.identity_type = "Service Principal"
                 # Same here, if user can access AAD, some fields are retrieved if not, default value, for az cli
                 # should work but it doesn't, pending issue
                 else:
