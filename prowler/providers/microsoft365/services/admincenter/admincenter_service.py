@@ -47,7 +47,9 @@ class AdminCenter(Microsoft365Service):
                     mailbox_settings.user_purpose
                 except ODataError as error:
                     if error.error.code == "MailboxNotEnabledForRESTAPI":
-                        pass
+                        logger.warning(
+                            f"MailboxNotEnabledForRESTAPI for user {user.id}"
+                        )
                     else:
                         logger.error(
                             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

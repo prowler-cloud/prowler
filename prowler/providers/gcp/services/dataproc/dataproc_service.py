@@ -6,7 +6,6 @@ from prowler.providers.gcp.lib.service.service import GCPService
 from prowler.providers.gcp.services.compute.compute_client import compute_client
 
 
-################## Dataproc
 class Dataproc(GCPService):
     def __init__(self, provider: GcpProvider):
         super().__init__(__class__.__name__, provider)

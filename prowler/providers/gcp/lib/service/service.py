@@ -30,6 +30,7 @@ class GCPService:
         )
         # Only project ids that have their API enabled will be scanned
         self.project_ids = self.__is_api_active__(provider.project_ids)
+        self.projects = provider.projects
         self.default_project_id = provider.default_project_id
         self.audit_config = provider.audit_config
         self.fixer_config = provider.fixer_config
@@ -55,7 +56,9 @@ class GCPService:
         project_ids = []
         for project_id in audited_project_ids:
             try:
-                client = discovery.build("serviceusage", "v1")
+                client = discovery.build(
+                    "serviceusage", "v1", credentials=self.credentials
+                )
                 request = client.services().get(
                     name=f"projects/{project_id}/services/{self.service}.googleapis.com"
                 )

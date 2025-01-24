@@ -22,33 +22,31 @@ class Test_Organizations_Service:
 
     @mock_aws
     def test_describe_organization(self):
-        conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
-        response = conn.create_organization()
         aws_provider = set_mocked_aws_provider(
-            [AWS_REGION_EU_WEST_1], create_default_organization=False
+            [AWS_REGION_EU_WEST_1],
         )
+        conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
+        response = conn.describe_organization()
         organizations = Organizations(aws_provider)
-        assert len(organizations.organizations) == 1
-        assert organizations.organizations[0].arn == response["Organization"]["Arn"]
-        assert organizations.organizations[0].id == response["Organization"]["Id"]
+        assert organizations.organization.arn == response["Organization"]["Arn"]
+        assert organizations.organization.id == response["Organization"]["Id"]
         assert (
-            organizations.organizations[0].master_id
+            organizations.organization.master_id
             == response["Organization"]["MasterAccountId"]
         )
-        assert organizations.organizations[0].status == "ACTIVE"
-        assert organizations.organizations[0].delegated_administrators == []
+        assert organizations.organization.status == "ACTIVE"
+        assert organizations.organization.delegated_administrators == []
 
     @mock_aws
     def test_list_policies(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
-        conn.create_organization()
         response = conn.create_policy(
             Content=scp_restrict_regions_with_deny(),
             Description="Test",
             Name="Test",
             Type="SERVICE_CONTROL_POLICY",
         )
-        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         organizations = Organizations(aws_provider)
         for policy in organizations.policies:
             if policy.arn == response["Policy"]["PolicySummary"]["Arn"]:
@@ -59,15 +57,14 @@ class Test_Organizations_Service:
 
     @mock_aws
     def test_describe_policy(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
-        conn.create_organization()
         response = conn.create_policy(
             Content=scp_restrict_regions_with_deny(),
             Description="Test",
             Name="Test",
             Type="SERVICE_CONTROL_POLICY",
         )
-        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         organizations = Organizations(aws_provider)
         policy = organizations._describe_policy(
             response["Policy"]["PolicySummary"]["Id"]

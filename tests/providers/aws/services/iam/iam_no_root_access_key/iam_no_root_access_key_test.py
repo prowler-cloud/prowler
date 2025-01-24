@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 
 from boto3 import client
@@ -39,11 +38,10 @@ class Test_iam_no_root_access_key_test:
                 check = iam_no_root_access_key()
                 result = check.execute()
 
-                # raise Exception
                 assert result[0].status == "PASS"
-                assert search(
-                    "User <root_account> does not have access keys.",
-                    result[0].status_extended,
+                assert (
+                    result[0].status_extended
+                    == "Root account does not have access keys."
                 )
                 assert result[0].resource_id == "<root_account>"
                 assert (
@@ -82,11 +80,10 @@ class Test_iam_no_root_access_key_test:
                 check = iam_no_root_access_key()
                 result = check.execute()
 
-                # raise Exception
                 assert result[0].status == "FAIL"
-                assert search(
-                    "User <root_account> has one active access key.",
-                    result[0].status_extended,
+                assert (
+                    result[0].status_extended
+                    == "Root account has one active access key."
                 )
                 assert result[0].resource_id == "<root_account>"
                 assert (
@@ -125,11 +122,10 @@ class Test_iam_no_root_access_key_test:
                 check = iam_no_root_access_key()
                 result = check.execute()
 
-                # raise Exception
                 assert result[0].status == "FAIL"
-                assert search(
-                    "User <root_account> has one active access key.",
-                    result[0].status_extended,
+                assert (
+                    result[0].status_extended
+                    == "Root account has one active access key."
                 )
                 assert result[0].resource_id == "<root_account>"
                 assert (
@@ -168,11 +164,10 @@ class Test_iam_no_root_access_key_test:
                 check = iam_no_root_access_key()
                 result = check.execute()
 
-                # raise Exception
                 assert result[0].status == "FAIL"
-                assert search(
-                    "User <root_account> has two active access key.",
-                    result[0].status_extended,
+                assert (
+                    result[0].status_extended
+                    == "Root account has two active access keys."
                 )
                 assert result[0].resource_id == "<root_account>"
                 assert (

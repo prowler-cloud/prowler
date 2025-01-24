@@ -28,14 +28,15 @@ class TestComputeService:
             assert len(compute_client.zones) == 1
             assert "zone1" in compute_client.zones
 
-            assert len(compute_client.projects) == 1
-            assert compute_client.projects[0].id == GCP_PROJECT_ID
-            assert compute_client.projects[0].enable_oslogin
+            assert len(compute_client.compute_projects) == 1
+            assert compute_client.compute_projects[0].id == GCP_PROJECT_ID
+            assert compute_client.compute_projects[0].enable_oslogin
 
             assert len(compute_client.instances) == 2
             assert compute_client.instances[0].name == "instance1"
             assert compute_client.instances[0].id.__class__.__name__ == "str"
             assert compute_client.instances[0].zone == "zone1"
+            assert compute_client.instances[0].region == "zone1"
             assert compute_client.instances[0].public_ip
             assert compute_client.instances[0].project_id == GCP_PROJECT_ID
             assert compute_client.instances[0].metadata == {}
@@ -57,6 +58,7 @@ class TestComputeService:
             assert compute_client.instances[1].name == "instance2"
             assert compute_client.instances[1].id.__class__.__name__ == "str"
             assert compute_client.instances[1].zone == "zone1"
+            assert compute_client.instances[1].region == "zone1"
             assert not compute_client.instances[1].public_ip
             assert compute_client.instances[1].project_id == GCP_PROJECT_ID
             assert compute_client.instances[1].metadata == {}

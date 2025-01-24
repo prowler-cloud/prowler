@@ -25,7 +25,9 @@
       "Url": "https://docs.aws.amazon.com/glue/latest/dg/monitor-continuous-logging-enable.html"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "This check is being removed since logs for all AWS Glue jobs are now always sent to Amazon CloudWatch."

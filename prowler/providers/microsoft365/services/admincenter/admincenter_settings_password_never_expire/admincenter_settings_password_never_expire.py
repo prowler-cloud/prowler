@@ -8,11 +8,9 @@ class admincenter_settings_password_never_expire(Check):
     def execute(self) -> Check_Report_Microsoft365:
         findings = []
         for domain in admincenter_client.domains.values():
-            report = Check_Report_Microsoft365(self.metadata())
+            report = Check_Report_Microsoft365(self.metadata(), resource=domain)
             report.resource_id = domain.id
             report.resource_name = domain.id
-            report.tenant_id = admincenter_client.audited_tenant
-            report.tenant_domain = admincenter_client.audited_domain
             report.status = "FAIL"
             report.status_extended = (
                 f"Domain {domain.id} does not have a Password never expires policy."

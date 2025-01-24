@@ -53,7 +53,7 @@ class Test_vm_ensure_using_managed_disks:
         vm_client.virtual_machines = {
             AZURE_SUBSCRIPTION_ID: {
                 vm_id: VirtualMachine(
-                    resource_id="/subscriptions/resource_id",
+                    resource_id=vm_id,
                     resource_name="VMTest",
                     location="location",
                     security_profile=mock.MagicMock(
@@ -104,7 +104,7 @@ class Test_vm_ensure_using_managed_disks:
         vm_client.virtual_machines = {
             AZURE_SUBSCRIPTION_ID: {
                 vm_id: VirtualMachine(
-                    resource_id="/subscriptions/resource_id",
+                    resource_id=vm_id,
                     resource_name="VMTest",
                     location="location",
                     security_profile=mock.MagicMock(
@@ -155,7 +155,7 @@ class Test_vm_ensure_using_managed_disks:
         vm_client.virtual_machines = {
             AZURE_SUBSCRIPTION_ID: {
                 vm_id: VirtualMachine(
-                    resource_id="/subscriptions/resource_id",
+                    resource_id=vm_id,
                     resource_name="VMTest",
                     location="location",
                     security_profile=mock.MagicMock(

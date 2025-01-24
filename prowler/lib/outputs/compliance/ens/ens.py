@@ -30,7 +30,7 @@ def get_ens_table(
         check = bulk_checks_metadata[finding.check_metadata.CheckID]
         check_compliances = check.Compliance
         for compliance in check_compliances:
-            if compliance.Framework == "ENS" and compliance.Provider == "AWS":
+            if compliance.Framework == "ENS":
                 for requirement in compliance.Requirements:
                     for attribute in requirement.Attributes:
                         marco_categoria = f"{attribute.Marco}/{attribute.Categoria}"
@@ -95,11 +95,12 @@ def get_ens_table(
         print(
             f"\nEstado de Cumplimiento de {Fore.YELLOW}{compliance_framework.upper()}{Style.RESET_ALL}:"
         )
+        total_findings_count = len(fail_count) + len(pass_count) + len(muted_count)
         overview_table = [
             [
-                f"{Fore.RED}{round(len(fail_count) / len(findings) * 100, 2)}% ({len(fail_count)}) NO CUMPLE{Style.RESET_ALL}",
-                f"{Fore.GREEN}{round(len(pass_count) / len(findings) * 100, 2)}% ({len(pass_count)}) CUMPLE{Style.RESET_ALL}",
-                f"{orange_color}{round(len(muted_count) / len(findings) * 100, 2)}% ({len(muted_count)}) MUTED{Style.RESET_ALL}",
+                f"{Fore.RED}{round(len(fail_count) / total_findings_count * 100, 2)}% ({len(fail_count)}) NO CUMPLE{Style.RESET_ALL}",
+                f"{Fore.GREEN}{round(len(pass_count) / total_findings_count * 100, 2)}% ({len(pass_count)}) CUMPLE{Style.RESET_ALL}",
+                f"{orange_color}{round(len(muted_count) / total_findings_count * 100, 2)}% ({len(muted_count)}) MUTED{Style.RESET_ALL}",
             ]
         ]
         print(tabulate(overview_table, tablefmt="rounded_grid"))

@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "stepfunctions_statemachine_logging_enabled",
+  "CheckTitle": "Step Functions state machines should have logging enabled",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "stepfunctions",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:states:{region}:{account-id}:stateMachine/{stateMachine-id}",
+  "Severity": "medium",
+  "ResourceType": "AwsStepFunctionStateMachine",
+  "Description": "This control checks if AWS Step Functions state machines have logging enabled. The control fails if the state machine doesn't have the loggingConfiguration property defined.",
+  "Risk": "Without logging enabled, important operational data may be lost, making it difficult to troubleshoot issues, monitor performance, and ensure compliance with auditing requirements.",
+  "RelatedUrl": "https://docs.aws.amazon.com/step-functions/latest/dg/logging.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws stepfunctions update-state-machine --state-machine-arn <state-machine-arn> --logging-configuration file://logging-config.json",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/stepfunctions-controls.html#stepfunctions-1",
+      "Terraform": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sfn_state_machine#logging_configuration"
+    },
+    "Recommendation": {
+      "Text": "Configure logging for your Step Functions state machines to ensure that operational data is captured and available for debugging, monitoring, and auditing purposes.",
+      "Url": "https://docs.aws.amazon.com/step-functions/latest/dg/logging.html"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

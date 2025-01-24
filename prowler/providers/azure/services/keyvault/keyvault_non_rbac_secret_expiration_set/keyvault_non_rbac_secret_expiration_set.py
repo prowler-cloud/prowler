@@ -11,11 +11,10 @@ class keyvault_non_rbac_secret_expiration_set(Check):
                     not keyvault.properties.enable_rbac_authorization
                     and keyvault.secrets
                 ):
-                    report = Check_Report_Azure(self.metadata())
+                    report = Check_Report_Azure(
+                        metadata=self.metadata(), resource=keyvault
+                    )
                     report.subscription = subscription
-                    report.resource_name = keyvault.name
-                    report.resource_id = keyvault.id
-                    report.location = keyvault.location
                     report.status = "PASS"
                     report.status_extended = f"Keyvault {keyvault.name} from subscription {subscription} has all the secrets with expiration date set."
                     has_secret_without_expiration = False

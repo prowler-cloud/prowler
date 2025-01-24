@@ -8,11 +8,7 @@ class ecr_repositories_not_publicly_accessible(Check):
         findings = []
         for registry in ecr_client.registries.values():
             for repository in registry.repositories:
-                report = Check_Report_AWS(self.metadata())
-                report.region = repository.region
-                report.resource_id = repository.name
-                report.resource_arn = repository.arn
-                report.resource_tags = repository.tags
+                report = Check_Report_AWS(metadata=self.metadata(), resource=repository)
                 report.status = "PASS"
                 report.status_extended = (
                     f"Repository {repository.name} is not publicly accessible."

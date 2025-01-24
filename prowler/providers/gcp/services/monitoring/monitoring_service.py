@@ -5,7 +5,6 @@ from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.gcp.lib.service.service import GCPService
 
 
-################## Monitoring
 class Monitoring(GCPService):
     def __init__(self, provider: GcpProvider):
         super().__init__(__class__.__name__, provider, api_version="v3")

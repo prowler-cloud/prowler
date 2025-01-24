@@ -3,7 +3,7 @@
   "CheckID": "admincenter_users_admins_reduced_license_footprint",
   "CheckTitle": "Ensure administrative accounts use licenses with a reduced application footprint",
   "CheckType": [],
-  "ServiceName": "Admin Center",
+  "ServiceName": "admincenter",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

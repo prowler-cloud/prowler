@@ -8,12 +8,9 @@ class aks_network_policy_enabled(Check):
 
         for subscription_name, clusters in aks_client.clusters.items():
             for cluster_id, cluster in clusters.items():
-                report = Check_Report_Azure(self.metadata())
-                report.status = "PASS"
+                report = Check_Report_Azure(metadata=self.metadata(), resource=cluster)
                 report.subscription = subscription_name
-                report.resource_name = cluster.name
-                report.resource_id = cluster_id
-                report.location = cluster.location
+                report.status = "PASS"
                 report.status_extended = f"Network policy is enabled for cluster '{cluster.name}' in subscription '{subscription_name}'."
 
                 if not getattr(cluster, "network_policy", False):

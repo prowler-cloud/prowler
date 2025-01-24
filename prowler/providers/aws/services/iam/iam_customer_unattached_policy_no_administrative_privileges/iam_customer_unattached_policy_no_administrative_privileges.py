@@ -9,11 +9,8 @@ class iam_customer_unattached_policy_no_administrative_privileges(Check):
         for policy in iam_client.policies:
             # Check only for cutomer unattached policies
             if not policy.attached and policy.type == "Custom":
-                report = Check_Report_AWS(self.metadata())
+                report = Check_Report_AWS(metadata=self.metadata(), resource=policy)
                 report.region = iam_client.region
-                report.resource_arn = policy.arn
-                report.resource_id = policy.name
-                report.resource_tags = policy.tags
                 report.status = "PASS"
                 report.status_extended = f"{policy.type} policy {policy.name} is unattached and does not allow '*:*' administrative privileges."
                 if policy.document:

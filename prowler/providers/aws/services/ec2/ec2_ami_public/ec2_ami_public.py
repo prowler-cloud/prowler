@@ -6,17 +6,14 @@ class ec2_ami_public(Check):
     def execute(self):
         findings = []
         for image in ec2_client.images:
-            report = Check_Report_AWS(self.metadata())
-            report.region = image.region
-            report.resource_id = image.id
-            report.resource_arn = image.arn
-            report.resource_tags = image.tags
+            report = Check_Report_AWS(metadata=self.metadata(), resource=image)
             report.status = "PASS"
-            report.status_extended = f"EC2 AMI {image.id} is not public."
+            report.status_extended = (
+                f"EC2 AMI {image.name if image.name else image.id} is not public."
+            )
             if image.public:
                 report.status = "FAIL"
-                report.status_extended = f"EC2 AMI {image.id} is currently public."
-                report.resource_id = image.id
+                report.status_extended = f"EC2 AMI {image.name if image.name else image.id} is currently public."
 
             findings.append(report)
 

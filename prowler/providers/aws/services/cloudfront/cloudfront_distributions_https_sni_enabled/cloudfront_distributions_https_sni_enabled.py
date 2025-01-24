@@ -12,11 +12,9 @@ class cloudfront_distributions_https_sni_enabled(Check):
         findings = []
         for distribution in cloudfront_client.distributions.values():
             if distribution.certificate:
-                report = Check_Report_AWS(self.metadata())
-                report.region = distribution.region
-                report.resource_arn = distribution.arn
-                report.resource_id = distribution.id
-                report.resource_tags = distribution.tags
+                report = Check_Report_AWS(
+                    metadata=self.metadata(), resource=distribution
+                )
 
                 if distribution.ssl_support_method == SSLSupportMethod.sni_only:
                     report.status = "PASS"

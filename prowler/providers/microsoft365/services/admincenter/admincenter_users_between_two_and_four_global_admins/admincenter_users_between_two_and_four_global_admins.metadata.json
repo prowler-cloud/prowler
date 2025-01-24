@@ -3,7 +3,7 @@
   "CheckID": "admincenter_users_between_two_and_four_global_admins",
   "CheckTitle": "Ensure that between two and four global admins are designated",
   "CheckType": [],
-  "ServiceName": "Admin Center",
+  "ServiceName": "admincenter",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
@@ -23,10 +23,7 @@
       "Url": "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/manage-roles-portal"
     }
   },
-  "Categories": [
-    "identity-management",
-    "privilege-management"
-  ],
+  "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

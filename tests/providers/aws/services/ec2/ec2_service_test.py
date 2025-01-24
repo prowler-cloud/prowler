@@ -36,6 +36,10 @@ def mock_make_api_call(self, operation_name, kwarg):
                             "foobar123".encode(encoding_format_utf_8)
                         ).decode(encoding_format_utf_8),
                         "NetworkInterfaces": [{"AssociatePublicIpAddress": True}],
+                        "MetadataOptions": {
+                            "HttpEndpoint": "enabled",
+                            "HttpTokens": "optional",
+                        },
                     },
                 }
             ]
@@ -741,6 +745,8 @@ class Test_EC2_Service:
         )
 
         assert version.template_data.associate_public_ip_address
+        assert version.template_data.http_endpoint == "enabled"
+        assert version.template_data.http_tokens == "optional"
 
     # Test EC2 Describe VPN Endpoints
     @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)

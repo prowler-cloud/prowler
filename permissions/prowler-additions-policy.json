@@ -7,6 +7,7 @@
         "appstream:Describe*",
         "appstream:List*",
         "backup:List*",
+        "backup:Get*",
         "bedrock:List*",
         "bedrock:Get*",
         "cloudtrail:GetInsightSelectors",
@@ -29,6 +30,7 @@
         "glue:GetConnections",
         "glue:GetSecurityConfiguration*",
         "glue:SearchTables",
+        "glue:GetMLTransforms",
         "lambda:GetFunction*",
         "logs:FilterLogEvents",
         "lightsail:GetRelationalDatabases",
@@ -39,15 +41,18 @@
         "shield:GetSubscriptionState",
         "securityhub:BatchImportFindings",
         "securityhub:GetFindings",
+        "servicecatalog:Describe*",
+        "servicecatalog:List*",
         "ssm:GetDocument",
         "ssm-incidents:List*",
+        "states:ListTagsForResource",
         "support:Describe*",
         "tag:GetTagKeys",
         "wellarchitected:List*"
       ],
       "Resource": "*",
       "Effect": "Allow",
-      "Sid": "AllowMoreReadForProwler"
+      "Sid": "AllowMoreReadOnly"
     },
     {
       "Effect": "Allow",
@@ -55,9 +60,10 @@
         "apigateway:GET"
       ],
       "Resource": [
-        "arn:aws:apigateway:*::/restapis/*",
-        "arn:aws:apigateway:*::/apis/*"
-      ]
+        "arn:*:apigateway:*::/restapis/*",
+        "arn:*:apigateway:*::/apis/*"
+      ],
+      "Sid": "AllowAPIGatewayReadOnly"
     }
   ]
 }

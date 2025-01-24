@@ -74,6 +74,10 @@ class AWSBaseException(ProwlerException):
             "message": "The provided AWS Session Token is expired",
             "remediation": "Get a new AWS Session Token and configure it for the provider.",
         },
+        (1917, "AWSInvalidPartitionError"): {
+            "message": "The provided AWS partition is invalid",
+            "remediation": "Check the provided AWS partition and ensure it is valid.",
+        },
     }
 
     def __init__(self, code, file=None, original_exception=None, message=None):
@@ -219,4 +223,11 @@ class AWSSessionTokenExpiredError(AWSCredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             1016, file=file, original_exception=original_exception, message=message
+        )
+
+
+class AWSInvalidPartitionError(AWSBaseException):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1917, file=file, original_exception=original_exception, message=message
         )

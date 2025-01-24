@@ -167,6 +167,7 @@ class Test_dynamodb_table_protected_by_backup_plan:
 
         dynamodb_client.tables = {
             f"arn:aws:dynamodb:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:table/test1": Table(
+                arn=f"arn:aws:dynamodb:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:table/test1",
                 name="test1",
                 region=AWS_REGION_US_EAST_1,
             )
@@ -225,6 +226,7 @@ class Test_dynamodb_table_protected_by_backup_plan:
         dynamodb_client.audited_partition = "aws"
         dynamodb_client.tables = {
             f"arn:aws:dynamodb:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:table/test1": Table(
+                arn=f"arn:aws:dynamodb:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:table/test1",
                 name="test1",
                 region=AWS_REGION_US_EAST_1,
             )
@@ -280,6 +282,7 @@ class Test_dynamodb_table_protected_by_backup_plan:
 
         dynamodb_client.tables = {
             f"arn:aws:dynamodb:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:table/test1": Table(
+                arn=f"arn:aws:dynamodb:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:table/test1",
                 name="test1",
                 region=AWS_REGION_US_EAST_1,
             )
