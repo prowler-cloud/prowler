@@ -15,7 +15,14 @@ class cloudsql_instance_ssl_connections(Check):
             report.status_extended = (
                 f"Database Instance {instance.name} requires SSL connections."
             )
+<<<<<<< HEAD
             if not instance.ssl:
+=======
+            if (
+                not instance.require_ssl
+                or instance.ssl_mode == "ALLOW_UNENCRYPTED_AND_ENCRYPTED"
+            ):
+>>>>>>> bcc246d95 (fix(cloudsql): add trusted client certificates case for `cloudsql_instance_ssl_connections` (#6682))
                 report.status = "FAIL"
                 report.status_extended = f"Database Instance {instance.name} does not require SSL connections."
             findings.append(report)
