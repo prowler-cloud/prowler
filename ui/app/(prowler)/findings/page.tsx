@@ -1,7 +1,7 @@
 import { Spacer } from "@nextui-org/react";
 import React, { Suspense } from "react";
 
-import { getFindings, getServicesRegions } from "@/actions/findings";
+import { getFindings, getMetadataInfo } from "@/actions/findings";
 import { getProviders } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
 import { filterFindings } from "@/components/filters/data-filters";
@@ -35,7 +35,6 @@ export default async function Findings({
   // Extract all filter parameters and combine with default filters
   const defaultFilters = {
     "filter[status__in]": "FAIL, PASS",
-    "filter[delta__in]": "new",
   };
 
   const filters: Record<string, string> = {
@@ -47,15 +46,17 @@ export default async function Findings({
 
   const query = filters["filter[search]"] || "";
 
-  const servicesRegionsData = await getServicesRegions({
+  const metadataInfoData = await getMetadataInfo({
     query,
     sort: encodedSort,
     filters,
   });
 
   // Extract unique regions and services from the new endpoint
-  const uniqueRegions = servicesRegionsData?.data?.attributes?.regions || [];
-  const uniqueServices = servicesRegionsData?.data?.attributes?.services || [];
+  const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
+  const uniqueServices = metadataInfoData?.data?.attributes?.services || [];
+  const uniqueResourceTypes =
+    metadataInfoData?.data?.attributes?.resource_types || [];
   // Get findings data
   const providersData = await getProviders({});
   const scansData = await getScans({});
@@ -72,7 +73,7 @@ export default async function Findings({
   // Extract scan UUIDs with "completed" state and more than one resource
   const completedScans = scansData?.data
     ?.filter(
-      (scan: any) =>
+      (scan: ScanProps) =>
         scan.attributes.state === "completed" &&
         scan.attributes.unique_resource_count > 1,
     )
@@ -103,6 +104,11 @@ export default async function Findings({
             key: "service__in",
             labelCheckboxGroup: "Services",
             values: uniqueServices,
+          },
+          {
+            key: "resource_type__in",
+            labelCheckboxGroup: "Resource Type",
+            values: uniqueResourceTypes,
           },
           {
             key: "provider_uid__in",

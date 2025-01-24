@@ -64,8 +64,9 @@ class Test_app_ensure_java_version_is_latest:
 
             app_client.apps = {
                 AZURE_SUBSCRIPTION_ID: {
-                    "app_id-1": WebApp(
+                    resource_id: WebApp(
                         resource_id=resource_id,
+                        name="app_id-1",
                         auth_enabled=True,
                         configurations=None,
                         client_cert_mode="Ignore",
@@ -99,8 +100,9 @@ class Test_app_ensure_java_version_is_latest:
 
             app_client.apps = {
                 AZURE_SUBSCRIPTION_ID: {
-                    "app_id-1": WebApp(
+                    resource_id: WebApp(
                         resource_id=resource_id,
+                        name="app_id-1",
                         auth_enabled=True,
                         configurations=mock.MagicMock(
                             linux_fx_version="Tomcat|9.0-java17", java_version=None
@@ -145,8 +147,9 @@ class Test_app_ensure_java_version_is_latest:
 
             app_client.apps = {
                 AZURE_SUBSCRIPTION_ID: {
-                    "app_id-1": WebApp(
+                    resource_id: WebApp(
                         resource_id=resource_id,
+                        name="app_id-1",
                         auth_enabled=True,
                         configurations=mock.MagicMock(
                             linux_fx_version="Tomcat|9.0-java11", java_version=None
@@ -191,8 +194,9 @@ class Test_app_ensure_java_version_is_latest:
 
             app_client.apps = {
                 AZURE_SUBSCRIPTION_ID: {
-                    "app_id-1": WebApp(
+                    resource_id: WebApp(
                         resource_id=resource_id,
+                        name="app_id-1",
                         auth_enabled=True,
                         configurations=mock.MagicMock(
                             linux_fx_version="", java_version="17"
@@ -236,8 +240,9 @@ class Test_app_ensure_java_version_is_latest:
 
             app_client.apps = {
                 AZURE_SUBSCRIPTION_ID: {
-                    "app_id-1": WebApp(
+                    resource_id: WebApp(
                         resource_id=resource_id,
+                        name="app_id-1",
                         auth_enabled=True,
                         configurations=mock.MagicMock(
                             linux_fx_version="", java_version="11"
@@ -282,8 +287,9 @@ class Test_app_ensure_java_version_is_latest:
 
             app_client.apps = {
                 AZURE_SUBSCRIPTION_ID: {
-                    "app_id-1": WebApp(
+                    resource_id: WebApp(
                         resource_id=resource_id,
+                        name="app_id-1",
                         auth_enabled=True,
                         configurations=mock.MagicMock(
                             linux_fx_version="php|8.0", java_version=None

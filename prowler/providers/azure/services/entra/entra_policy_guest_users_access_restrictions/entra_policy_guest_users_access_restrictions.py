@@ -8,11 +8,11 @@ class entra_policy_guest_users_access_restrictions(Check):
         findings = []
 
         for tenant_domain, auth_policy in entra_client.authorization_policy.items():
-            report = Check_Report_Azure(self.metadata())
-            report.status = "FAIL"
+            report = Check_Report_Azure(metadata=self.metadata(), resource=auth_policy)
             report.subscription = f"Tenant: {tenant_domain}"
             report.resource_name = getattr(auth_policy, "name", "Authorization Policy")
             report.resource_id = getattr(auth_policy, "id", "authorizationPolicy")
+            report.status = "FAIL"
             report.status_extended = "Guest user access is not restricted to properties and memberships of their own directory objects"
 
             if (

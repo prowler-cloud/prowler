@@ -10,11 +10,10 @@ class shield_advanced_protection_in_cloudfront_distributions(Check):
         findings = []
         if shield_client.enabled:
             for distribution in cloudfront_client.distributions.values():
-                report = Check_Report_AWS(self.metadata())
+                report = Check_Report_AWS(
+                    metadata=self.metadata(), resource=distribution
+                )
                 report.region = shield_client.region
-                report.resource_id = distribution.id
-                report.resource_arn = distribution.arn
-                report.resource_tags = distribution.tags
                 report.status = "FAIL"
                 report.status_extended = f"CloudFront distribution {distribution.id} is not protected by AWS Shield Advanced."
 

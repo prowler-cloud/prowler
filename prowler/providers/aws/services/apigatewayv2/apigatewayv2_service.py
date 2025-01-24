@@ -1,5 +1,6 @@
 from typing import Optional
 
+from botocore.exceptions import ClientError
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -7,7 +8,6 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################## ApiGatewayV2
 class ApiGatewayV2(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
@@ -71,6 +71,15 @@ class ApiGatewayV2(AWSService):
                             tags=[stage.get("Tags")],
                         )
                     )
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "NotFoundException":
+                logger.warning(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"

@@ -8,12 +8,11 @@ class keyvault_key_expiration_set_in_non_rbac(Check):
         for subscription, key_vaults in keyvault_client.key_vaults.items():
             for keyvault in key_vaults:
                 if not keyvault.properties.enable_rbac_authorization and keyvault.keys:
-                    report = Check_Report_Azure(self.metadata())
+                    report = Check_Report_Azure(
+                        metadata=self.metadata(), resource=keyvault
+                    )
                     report.subscription = subscription
-                    report.resource_name = keyvault.name
-                    report.resource_id = keyvault.id
                     report.status = "PASS"
-                    report.location = keyvault.location
                     report.status_extended = f"Keyvault {keyvault.name} from subscription {subscription} has all the keys with expiration date set."
                     has_key_without_expiration = False
                     for key in keyvault.keys:

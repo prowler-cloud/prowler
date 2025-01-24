@@ -12,12 +12,8 @@ class rds_instance_non_default_port(Check):
             1433: ["sqlserver"],
             50000: ["db2"],
         }
-        for db_instance_arn, db_instance in rds_client.db_instances.items():
-            report = Check_Report_AWS(self.metadata())
-            report.region = db_instance.region
-            report.resource_id = db_instance.id
-            report.resource_arn = db_instance_arn
-            report.resource_tags = db_instance.tags
+        for db_instance in rds_client.db_instances.values():
+            report = Check_Report_AWS(metadata=self.metadata(), resource=db_instance)
             report.status = "PASS"
             report.status_extended = (
                 f"RDS Instance {db_instance.id} is not using the default port "

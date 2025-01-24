@@ -17,10 +17,7 @@ class etcd_unique_ca(Check):
                         apiserver_ca_files.append(command.split("=")[1])
         for pod in etcd_client.etcd_pods:
             etcd_ca_files = []
-            report = Check_Report_Kubernetes(self.metadata())
-            report.namespace = pod.namespace
-            report.resource_name = pod.name
-            report.resource_id = pod.uid
+            report = Check_Report_Kubernetes(metadata=self.metadata(), resource=pod)
             report.status = "MANUAL"
             report.status_extended = f"Etcd uses a different CA file from the Kubernetes cluster CA in pod {pod.name}, but verify if the content is the same."
             for container in pod.containers.values():

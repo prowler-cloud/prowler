@@ -9,11 +9,13 @@ class iam_no_service_roles_at_project_level(Check):
         findings = []
         failed_projects = set()
         for binding in cloudresourcemanager_client.bindings:
-            report = Check_Report_GCP(self.metadata())
-            report.project_id = binding.project_id
-            report.resource_id = binding.role
-            report.resource_name = binding.role
-            report.location = cloudresourcemanager_client.region
+            report = Check_Report_GCP(
+                metadata=self.metadata(),
+                resource=binding,
+                resource_id=binding.role,
+                resource_name=binding.role,
+                location=cloudresourcemanager_client.region,
+            )
             if binding.role in [
                 "roles/iam.serviceAccountUser",
                 "roles/iam.serviceAccountTokenCreator",
@@ -25,12 +27,14 @@ class iam_no_service_roles_at_project_level(Check):
 
         for project in cloudresourcemanager_client.project_ids:
             if project not in failed_projects:
-                report = Check_Report_GCP(self.metadata())
-                report.project_id = project
-                report.resource_id = project
-                report.resource_name = project
+                report = Check_Report_GCP(
+                    metadata=self.metadata(),
+                    resource=cloudresourcemanager_client.projects[project],
+                    project_id=project,
+                    resource_name=project,
+                    location=cloudresourcemanager_client.region,
+                )
                 report.status = "PASS"
-                report.location = cloudresourcemanager_client.region
                 report.status_extended = f"No IAM Users assigned to service roles at project level {project}."
                 findings.append(report)
         return findings

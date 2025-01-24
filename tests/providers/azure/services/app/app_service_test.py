@@ -12,7 +12,7 @@ from tests.providers.azure.azure_fixtures import (
 # def mock_app_get_apps(_):
 #     return {
 #         AZURE_SUBSCRIPTION_ID: {
-#             "app_id-1": WebApp(
+#             "/subscriptions/resource_id": WebApp(
 #                 resource_id="/subscriptions/resource_id",
 #                 configurations=SiteConfigResource(),
 #                 identity=ManagedServiceIdentity(type="SystemAssigned"),
@@ -64,12 +64,15 @@ from tests.providers.azure.azure_fixtures import (
 # )
 class Test_App_Service:
     def test_app_service_(self):
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), patch(
-            "prowler.providers.azure.services.monitor.monitor_service.Monitor",
-            new=MagicMock(),
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            patch(
+                "prowler.providers.azure.services.monitor.monitor_service.Monitor",
+                new=MagicMock(),
+            ),
         ):
             from prowler.providers.azure.services.app.app_service import WebApp
             from prowler.providers.azure.services.monitor.monitor_service import (
@@ -79,8 +82,9 @@ class Test_App_Service:
             app_service = MagicMock()
             app_service.apps = {
                 AZURE_SUBSCRIPTION_ID: {
-                    "app_id-1": WebApp(
+                    "/subscriptions/resource_id": WebApp(
                         resource_id="/subscriptions/resource_id",
+                        name="app_id-1",
                         configurations=SiteConfigResource(),
                         identity=ManagedServiceIdentity(type="SystemAssigned"),
                         auth_enabled=True,
@@ -130,56 +134,68 @@ class Test_App_Service:
         # )
         assert len(app_service.apps) == 1
         assert (
-            app_service.apps[AZURE_SUBSCRIPTION_ID]["app_id-1"].resource_id
+            app_service.apps[AZURE_SUBSCRIPTION_ID][
+                "/subscriptions/resource_id"
+            ].resource_id
             == "/subscriptions/resource_id"
         )
-        assert app_service.apps[AZURE_SUBSCRIPTION_ID]["app_id-1"].auth_enabled
+        assert app_service.apps[AZURE_SUBSCRIPTION_ID][
+            "/subscriptions/resource_id"
+        ].auth_enabled
         assert (
-            app_service.apps[AZURE_SUBSCRIPTION_ID]["app_id-1"].client_cert_mode
+            app_service.apps[AZURE_SUBSCRIPTION_ID][
+                "/subscriptions/resource_id"
+            ].client_cert_mode
             == "Required"
         )
         assert (
-            app_service.apps[AZURE_SUBSCRIPTION_ID]["app_id-1"].location
+            app_service.apps[AZURE_SUBSCRIPTION_ID][
+                "/subscriptions/resource_id"
+            ].location
             == "West Europe"
         )
-        assert app_service.apps[AZURE_SUBSCRIPTION_ID]["app_id-1"].https_only
+        assert app_service.apps[AZURE_SUBSCRIPTION_ID][
+            "/subscriptions/resource_id"
+        ].https_only
         assert (
-            app_service.apps[AZURE_SUBSCRIPTION_ID]["app_id-1"].identity.type
+            app_service.apps[AZURE_SUBSCRIPTION_ID][
+                "/subscriptions/resource_id"
+            ].identity.type
             == "SystemAssigned"
         )
         assert (
             app_service.apps[AZURE_SUBSCRIPTION_ID][
-                "app_id-1"
+                "/subscriptions/resource_id"
             ].configurations.__class__.__name__
             == "SiteConfigResource"
         )
         assert (
-            app_service.apps[AZURE_SUBSCRIPTION_ID]["app_id-1"]
+            app_service.apps[AZURE_SUBSCRIPTION_ID]["/subscriptions/resource_id"]
             .monitor_diagnostic_settings[0]
             .id
             == "id2/id2"
         )
         assert (
-            app_service.apps[AZURE_SUBSCRIPTION_ID]["app_id-1"]
+            app_service.apps[AZURE_SUBSCRIPTION_ID]["/subscriptions/resource_id"]
             .monitor_diagnostic_settings[0]
             .logs[0]
             .category
             == "AppServiceHTTPLogs"
         )
         assert (
-            app_service.apps[AZURE_SUBSCRIPTION_ID]["app_id-1"]
+            app_service.apps[AZURE_SUBSCRIPTION_ID]["/subscriptions/resource_id"]
             .monitor_diagnostic_settings[0]
             .storage_account_name
             == "storage_account_name2"
         )
         assert (
-            app_service.apps[AZURE_SUBSCRIPTION_ID]["app_id-1"]
+            app_service.apps[AZURE_SUBSCRIPTION_ID]["/subscriptions/resource_id"]
             .monitor_diagnostic_settings[0]
             .storage_account_id
             == "storage_account_id2"
         )
         assert (
-            app_service.apps[AZURE_SUBSCRIPTION_ID]["app_id-1"]
+            app_service.apps[AZURE_SUBSCRIPTION_ID]["/subscriptions/resource_id"]
             .monitor_diagnostic_settings[0]
             .name
             == "name_diagnostic_setting2"

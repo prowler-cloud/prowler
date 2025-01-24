@@ -1,8 +1,6 @@
 import socket
-from dataclasses import dataclass
 from typing import List, Optional
 
-from kubernetes.client.models import V1PodSecurityContext, V1SecurityContext
 from pydantic import BaseModel
 
 from kubernetes import client
@@ -11,7 +9,6 @@ from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
 from prowler.providers.kubernetes.lib.service.service import KubernetesService
 
 
-################## Core ##################
 class Core(KubernetesService):
     def __init__(self, provider: KubernetesProvider):
         super().__init__(provider)
@@ -63,7 +60,11 @@ class Core(KubernetesService):
                                 if container.env
                                 else None
                             ),
-                            security_context=container.security_context,
+                            security_context=(
+                                container.security_context.to_dict()
+                                if container.security_context
+                                else {}
+                            ),
                         )
                     self.pods[pod.metadata.uid] = Pod(
                         name=pod.metadata.name,
@@ -79,7 +80,11 @@ class Core(KubernetesService):
                         host_pid=pod.spec.host_pid,
                         host_ipc=pod.spec.host_ipc,
                         host_network=pod.spec.host_network,
-                        security_context=pod.spec.security_context,
+                        security_context=(
+                            pod.spec.security_context.to_dict()
+                            if pod.spec.security_context
+                            else {}
+                        ),
                         containers=pod_containers,
                     )
         except Exception as error:
@@ -144,18 +149,16 @@ class Core(KubernetesService):
             )
 
 
-@dataclass
-class Container:
+class Container(BaseModel):
     name: str
     image: str
     command: Optional[List[str]]
     ports: Optional[List[dict]]
     env: Optional[List[dict]]
-    security_context: Optional[V1SecurityContext]
+    security_context: dict
 
 
-@dataclass
-class Pod:
+class Pod(BaseModel):
     name: str
     uid: str
     namespace: str
@@ -169,7 +172,7 @@ class Pod:
     host_pid: Optional[str]
     host_ipc: Optional[str]
     host_network: Optional[str]
-    security_context: Optional[V1PodSecurityContext]
+    security_context: Optional[dict]
     containers: Optional[dict]
 
 

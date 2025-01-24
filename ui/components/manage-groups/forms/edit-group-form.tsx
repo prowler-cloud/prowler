@@ -50,10 +50,12 @@ export const EditGroupForm = ({
     try {
       const updatedFields: Partial<FormValues> = {};
 
+      // Detect changes in the name
       if (values.name !== providerGroupData.name) {
         updatedFields.name = values.name;
       }
 
+      // Detect changes in providers
       if (
         JSON.stringify(values.providers) !==
         JSON.stringify(providerGroupData.providers)
@@ -61,12 +63,14 @@ export const EditGroupForm = ({
         updatedFields.providers = values.providers;
       }
 
+      // Detect changes in roles
       if (
         JSON.stringify(values.roles) !== JSON.stringify(providerGroupData.roles)
       ) {
         updatedFields.roles = values.roles;
       }
 
+      // If no changes, notify the user and exit
       if (Object.keys(updatedFields).length === 0) {
         toast({
           title: "No changes detected",
@@ -75,6 +79,7 @@ export const EditGroupForm = ({
         return;
       }
 
+      // Create FormData dynamically
       const formData = new FormData();
       if (updatedFields.name) {
         formData.append("name", updatedFields.name);
@@ -94,6 +99,7 @@ export const EditGroupForm = ({
         formData.append("roles", JSON.stringify(rolesData));
       }
 
+      // Call the update action
       const data = await updateProviderGroup(providerGroupId, formData);
 
       if (data?.errors && data.errors.length > 0) {
@@ -142,12 +148,6 @@ export const EditGroupForm = ({
         onSubmit={form.handleSubmit(onSubmitClient)}
         className="flex flex-col space-y-4"
       >
-        <p className="text-small font-medium text-default-700">
-          Edit the group information, including name, associated providers, and
-          roles.
-        </p>
-        <Divider orientation="horizontal" className="mb-2" />
-
         {/* Field for the name */}
         <div className="flex flex-col gap-2">
           <CustomInput
@@ -155,7 +155,7 @@ export const EditGroupForm = ({
             name="name"
             type="text"
             label="Provider group name"
-            labelPlacement="outside"
+            labelPlacement="inside"
             placeholder="Enter the provider group name"
             variant="bordered"
             isRequired
@@ -200,6 +200,11 @@ export const EditGroupForm = ({
           </p>
         )}
 
+        <Divider orientation="horizontal" className="mb-2" />
+        <p className="text-small text-default-500">
+          The roles associated with the group can be edited directly here or
+          from the Roles page.
+        </p>
         {/* Roles selection */}
         <Controller
           name="roles"
@@ -234,7 +239,6 @@ export const EditGroupForm = ({
             {form.formState.errors.roles.message}
           </p>
         )}
-        <Divider orientation="horizontal" className="mb-2" />
 
         <div className="flex w-full justify-end sm:space-x-6">
           <CustomButton

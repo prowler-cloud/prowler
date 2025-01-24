@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel
 
 
@@ -14,6 +16,7 @@ class AWSCISModel(BaseModel):
     Requirements_Id: str
     Requirements_Description: str
     Requirements_Attributes_Section: str
+    Requirements_Attributes_SubSection: Optional[str]
     Requirements_Attributes_Profile: str
     Requirements_Attributes_AssessmentStatus: str
     Requirements_Attributes_Description: str
@@ -34,6 +37,38 @@ class AWSCISModel(BaseModel):
 class AzureCISModel(BaseModel):
     """
     AzureCISModel generates a finding's output in Azure CIS Compliance format.
+    """
+
+    Provider: str
+    Description: str
+    SubscriptionId: str
+    Location: str
+    AssessmentDate: str
+    Requirements_Id: str
+    Requirements_Description: str
+    Requirements_Attributes_Section: str
+    Requirements_Attributes_SubSection: Optional[str]
+    Requirements_Attributes_Profile: str
+    Requirements_Attributes_AssessmentStatus: str
+    Requirements_Attributes_Description: str
+    Requirements_Attributes_RationaleStatement: str
+    Requirements_Attributes_ImpactStatement: str
+    Requirements_Attributes_RemediationProcedure: str
+    Requirements_Attributes_AuditProcedure: str
+    Requirements_Attributes_AdditionalInformation: str
+    Requirements_Attributes_DefaultValue: str
+    Requirements_Attributes_References: str
+    Status: str
+    StatusExtended: str
+    ResourceId: str
+    ResourceName: str
+    CheckId: str
+    Muted: bool
+
+
+class Microsoft365CISModel(BaseModel):
+    """
+    Microsoft365CISModel generates a finding's output in Microsoft365 CIS Compliance format.
     """
 
     Provider: str
@@ -75,6 +110,7 @@ class GCPCISModel(BaseModel):
     Requirements_Id: str
     Requirements_Description: str
     Requirements_Attributes_Section: str
+    Requirements_Attributes_SubSection: Optional[str]
     Requirements_Attributes_Profile: str
     Requirements_Attributes_AssessmentStatus: str
     Requirements_Attributes_Description: str
@@ -105,6 +141,7 @@ class KubernetesCISModel(BaseModel):
     Requirements_Id: str
     Requirements_Description: str
     Requirements_Attributes_Section: str
+    Requirements_Attributes_SubSection: Optional[str]
     Requirements_Attributes_Profile: str
     Requirements_Attributes_AssessmentStatus: str
     Requirements_Attributes_Description: str

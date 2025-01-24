@@ -8,7 +8,6 @@ from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.azure.lib.service.service import AzureService
 
 
-########################## IAM
 class IAM(AzureService):
     def __init__(self, provider: AzureProvider):
         super().__init__(AuthorizationManagementClient, provider)

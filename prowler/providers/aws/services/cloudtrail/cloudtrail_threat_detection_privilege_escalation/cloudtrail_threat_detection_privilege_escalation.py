@@ -122,7 +122,9 @@ class cloudtrail_threat_detection_privilege_escalation(Check):
             aws_identity_arn = aws_identity[0]
             if len(actions) / len(privilege_escalation_actions) > threshold:
                 found_potential_privilege_escalation = True
-                report = Check_Report_AWS(self.metadata())
+                report = Check_Report_AWS(
+                    metadata=self.metadata(), resource=cloudtrail_client.trails
+                )
                 report.region = cloudtrail_client.region
                 report.resource_id = aws_identity_arn.split("/")[-1]
                 report.resource_arn = aws_identity_arn
@@ -130,7 +132,9 @@ class cloudtrail_threat_detection_privilege_escalation(Check):
                 report.status_extended = f"Potential privilege escalation attack detected from AWS {aws_identity_type} {aws_identity_arn.split('/')[-1]} with an threshold of {identity_threshold}."
                 findings.append(report)
         if not found_potential_privilege_escalation:
-            report = Check_Report_AWS(self.metadata())
+            report = Check_Report_AWS(
+                metadata=self.metadata(), resource=cloudtrail_client.trails
+            )
             report.region = cloudtrail_client.region
             report.resource_id = cloudtrail_client.audited_account
             report.resource_arn = cloudtrail_client._get_trail_arn_template(

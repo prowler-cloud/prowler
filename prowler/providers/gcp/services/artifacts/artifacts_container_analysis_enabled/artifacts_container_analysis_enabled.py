@@ -8,11 +8,14 @@ class artifacts_container_analysis_enabled(Check):
     def execute(self) -> Check_Report_GCP:
         findings = []
         for project_id in serviceusage_client.project_ids:
-            report = Check_Report_GCP(self.metadata())
-            report.project_id = project_id
-            report.resource_id = "containeranalysis.googleapis.com"
-            report.resource_name = "AR Container Analysis"
-            report.location = serviceusage_client.region
+            report = Check_Report_GCP(
+                metadata=self.metadata(),
+                resource=serviceusage_client.projects[project_id],
+                resource_id="containeranalysis.googleapis.com",
+                resource_name="AR Container Analysis",
+                project_id=project_id,
+                location=serviceusage_client.region,
+            )
             report.status = "FAIL"
             report.status_extended = (
                 f"AR Container Analysis is not enabled in project {project_id}."

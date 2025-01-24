@@ -56,6 +56,7 @@ class Test_s3_bucket_lifecycle_enabled:
             s3_client = mock.MagicMock()
             s3_client.buckets = {
                 bucket_arn: Bucket(
+                    arn=bucket_arn,
                     name=bucket_name,
                     region=AWS_REGION_US_EAST_1,
                 )
@@ -101,6 +102,7 @@ class Test_s3_bucket_lifecycle_enabled:
             bucket_arn = f"arn:aws:s3::{AWS_ACCOUNT_NUMBER}:{bucket_name}"
             s3_client.buckets = {
                 bucket_arn: Bucket(
+                    arn=bucket_arn,
                     name=bucket_name,
                     region=AWS_REGION_US_EAST_1,
                     lifecycle=[
@@ -149,6 +151,7 @@ class Test_s3_bucket_lifecycle_enabled:
             bucket_arn = f"arn:aws:s3::{AWS_ACCOUNT_NUMBER}:{bucket_name}"
             s3_client.buckets = {
                 bucket_arn: Bucket(
+                    arn=bucket_arn,
                     name=bucket_name,
                     region=AWS_REGION_US_EAST_1,
                     lifecycle=[

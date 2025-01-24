@@ -10,14 +10,13 @@ class defender_auto_provisioning_log_analytics_agent_vms_on(Check):
             subscription_name,
             auto_provisioning_settings,
         ) in defender_client.auto_provisioning_settings.items():
-
             for auto_provisioning_setting in auto_provisioning_settings.values():
-
-                report = Check_Report_Azure(self.metadata())
-                report.status = "PASS"
+                report = Check_Report_Azure(
+                    metadata=self.metadata(),
+                    resource=auto_provisioning_setting,
+                )
                 report.subscription = subscription_name
-                report.resource_name = auto_provisioning_setting.resource_name
-                report.resource_id = auto_provisioning_setting.resource_id
+                report.status = "PASS"
                 report.status_extended = f"Defender Auto Provisioning Log Analytics Agents from subscription {subscription_name} is set to ON."
 
                 if auto_provisioning_setting.auto_provision != "On":

@@ -17,10 +17,9 @@ class rbac_minimize_webhook_config_access(Check):
         for crb in rbac_client.cluster_role_bindings.values():
             for subject in crb.subjects:
                 if subject.kind in ["User", "Group"]:
-                    report = Check_Report_Kubernetes(self.metadata())
-                    report.namespace = "cluster-wide"
-                    report.resource_name = subject.name
-                    report.resource_id = subject.uid if hasattr(subject, "uid") else ""
+                    report = Check_Report_Kubernetes(
+                        metadata=self.metadata(), resource=subject
+                    )
                     report.status = "PASS"
                     report.status_extended = f"User or group '{subject.name}' does not have access to create, update, or delete webhook configurations."
                     for cr in rbac_client.cluster_roles.values():

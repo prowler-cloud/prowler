@@ -25,7 +25,8 @@
   },
   "Categories": [
     "logging",
-    "forensics-ready"
+    "forensics-ready",
+    "gen-ai"
   ],
   "DependsOn": [],
   "RelatedTo": [],

@@ -220,3 +220,40 @@ class Microsoft365SetUpSessionError(Microsoft365CredentialsError):
         super().__init__(
             6016, file=file, original_exception=original_exception, message=message
         )
+
+
+class Microsoft365DefaultAzureCredentialError(Microsoft365CredentialsError):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            6017, file=file, original_exception=original_exception, message=message
+        )
+
+
+class Microsoft365InteractiveBrowserCredentialError(Microsoft365CredentialsError):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            6018, file=file, original_exception=original_exception, message=message
+        )
+
+
+class Microsoft365BrowserAuthNoTenantIDError(Microsoft365CredentialsError):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            6019, file=file, original_exception=original_exception, message=message
+        )
+
+
+class Microsoft365BrowserAuthNoFlagError(Microsoft365CredentialsError):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            6020, file=file, original_exception=original_exception, message=message
+        )
+
+
+class Microsoft365NotTenantIdButClientIdAndClienSecretError(
+    Microsoft365CredentialsError
+):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            6021, file=file, original_exception=original_exception, message=message
+        )

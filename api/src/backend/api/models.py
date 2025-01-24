@@ -515,8 +515,8 @@ class Resource(RowLevelSecurityProtectedModel):
         through="ResourceTagMapping",
     )
 
-    def get_tags(self) -> dict:
-        return {tag.key: tag.value for tag in self.tags.all()}
+    def get_tags(self, tenant_id: str) -> dict:
+        return {tag.key: tag.value for tag in self.tags.filter(tenant_id=tenant_id)}
 
     def clear_tags(self):
         self.tags.clear()
@@ -615,6 +615,7 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
     id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
+    first_seen_at = models.DateTimeField(editable=False, null=True)
 
     uid = models.CharField(max_length=300)
     delta = FindingDeltaEnumField(

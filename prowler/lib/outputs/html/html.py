@@ -554,7 +554,7 @@ class HTML(Output):
                 <div class="col-md-2">
                     <div class="card">
                         <div class="card-header">
-                            Azure Assessment Summary
+                            Microsoft365 Assessment Summary
                         </div>
                         <ul class="list-group list-group-flush">
                             <li class="list-group-item">
@@ -566,14 +566,14 @@ class HTML(Output):
                 <div class="col-md-4">
                 <div class="card">
                     <div class="card-header">
-                        Azure Credentials
+                        Microsoft365 Credentials
                     </div>
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item">
-                            <b>Azure Identity Type:</b> {provider.identity.identity_type}
+                            <b>Microsoft365 Identity Type:</b> {provider.identity.identity_type}
                             </li>
                             <li class="list-group-item">
-                                <b>Azure Identity ID:</b> {provider.identity.identity_id}
+                                <b>Microsoft365 Identity ID:</b> {provider.identity.identity_id}
                             </li>
                         </ul>
                     </div>

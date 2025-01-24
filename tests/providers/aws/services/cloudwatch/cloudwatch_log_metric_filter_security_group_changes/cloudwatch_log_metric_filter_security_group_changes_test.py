@@ -36,18 +36,23 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
             audit_progress=0,
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_log_metric_filter_security_group_changes.logs_client",
-            new=Logs(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_client",
-            new=CloudWatch(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_log_metric_filter_security_group_changes.cloudtrail_client",
-            new=Cloudtrail(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_log_metric_filter_security_group_changes.logs_client",
+                new=Logs(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_client",
+                new=CloudWatch(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_log_metric_filter_security_group_changes.cloudtrail_client",
+                new=Cloudtrail(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_log_metric_filter_security_group_changes import (
@@ -100,18 +105,23 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
             audit_progress=0,
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_log_metric_filter_security_group_changes.logs_client",
-            new=Logs(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_client",
-            new=CloudWatch(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_log_metric_filter_security_group_changes.cloudtrail_client",
-            new=Cloudtrail(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_log_metric_filter_security_group_changes.logs_client",
+                new=Logs(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_client",
+                new=CloudWatch(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_log_metric_filter_security_group_changes.cloudtrail_client",
+                new=Cloudtrail(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_log_metric_filter_security_group_changes import (
@@ -170,18 +180,23 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
             audit_progress=0,
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_log_metric_filter_security_group_changes.logs_client",
-            new=Logs(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_client",
-            new=CloudWatch(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_log_metric_filter_security_group_changes.cloudtrail_client",
-            new=Cloudtrail(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_log_metric_filter_security_group_changes.logs_client",
+                new=Logs(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_client",
+                new=CloudWatch(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_log_metric_filter_security_group_changes.cloudtrail_client",
+                new=Cloudtrail(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_log_metric_filter_security_group_changes import (
@@ -252,18 +267,23 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
             audit_progress=0,
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_log_metric_filter_security_group_changes.logs_client",
-            new=Logs(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_client",
-            new=CloudWatch(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_log_metric_filter_security_group_changes.cloudtrail_client",
-            new=Cloudtrail(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_log_metric_filter_security_group_changes.logs_client",
+                new=Logs(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_client",
+                new=CloudWatch(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_log_metric_filter_security_group_changes.cloudtrail_client",
+                new=Cloudtrail(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_log_metric_filter_security_group_changes import (
@@ -282,7 +302,7 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
             assert result[0].resource_id == "/log-group/test"
             assert (
                 result[0].resource_arn
-                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test"
+                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test:*"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
 
@@ -345,18 +365,23 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
             audit_progress=0,
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_log_metric_filter_security_group_changes.logs_client",
-            new=Logs(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_client",
-            new=CloudWatch(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_log_metric_filter_security_group_changes.cloudtrail_client",
-            new=Cloudtrail(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_log_metric_filter_security_group_changes.logs_client",
+                new=Logs(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_client",
+                new=CloudWatch(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_log_metric_filter_security_group_changes.cloudtrail_client",
+                new=Cloudtrail(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_log_metric_filter_security_group_changes import (
@@ -375,7 +400,7 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
             assert result[0].resource_id == "/log-group/test"
             assert (
                 result[0].resource_arn
-                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test"
+                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test:*"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
 
@@ -438,18 +463,23 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
             audit_progress=0,
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_log_metric_filter_security_group_changes.logs_client",
-            new=Logs(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_client",
-            new=CloudWatch(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_log_metric_filter_security_group_changes.cloudtrail_client",
-            new=Cloudtrail(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_log_metric_filter_security_group_changes.logs_client",
+                new=Logs(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_client",
+                new=CloudWatch(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_log_metric_filter_security_group_changes.cloudtrail_client",
+                new=Cloudtrail(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_log_metric_filter_security_group_changes import (
@@ -468,7 +498,7 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
             assert result[0].resource_id == "/log-group/test"
             assert (
                 result[0].resource_arn
-                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test"
+                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test:*"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
 
@@ -531,18 +561,23 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
             audit_progress=0,
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_log_metric_filter_security_group_changes.logs_client",
-            new=Logs(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_client",
-            new=CloudWatch(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_log_metric_filter_security_group_changes.cloudtrail_client",
-            new=Cloudtrail(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_log_metric_filter_security_group_changes.logs_client",
+                new=Logs(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_client",
+                new=CloudWatch(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_log_metric_filter_security_group_changes.cloudtrail_client",
+                new=Cloudtrail(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_security_group_changes.cloudwatch_log_metric_filter_security_group_changes import (
@@ -561,6 +596,6 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
             assert result[0].resource_id == "/log-group/test"
             assert (
                 result[0].resource_arn
-                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test"
+                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test:*"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
