@@ -18,12 +18,12 @@ def get_next_execution_datetime(task_id: int, provider_id: str) -> datetime:
 
     interval = periodic_task_instance.interval
 
-    scheduled_time_today = make_aware(
+    current_scheduled_time = make_aware(
         datetime.combine(
             datetime.now(timezone.utc).date(),
-            periodic_task_instance.start_time.time(),
+            task_instance.date_created.time(),
         ),
         timezone=timezone.utc,
     )
 
-    return scheduled_time_today + timedelta(**{interval.period: interval.every})
+    return current_scheduled_time + timedelta(**{interval.period: interval.every})
