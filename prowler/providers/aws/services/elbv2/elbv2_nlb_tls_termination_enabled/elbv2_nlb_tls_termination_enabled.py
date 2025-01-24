@@ -7,9 +7,7 @@ class elbv2_nlb_tls_termination_enabled(Check):
         findings = []
         for lb in elbv2_client.loadbalancersv2.values():
             if lb.type == "network":
-                report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=lb
-                )
+                report = Check_Report_AWS(metadata=self.metadata(), resource=lb)
                 report.status = "FAIL"
                 report.status_extended = f"ELBv2 NLB {lb.name} is not configured to terminate TLS connections."
                 for listener in lb.listeners.values():

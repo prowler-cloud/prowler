@@ -12,7 +12,7 @@ class sqlserver_tde_encrypted_with_cmk(Check):
                 )
                 if len(databases) > 0:
                     report = Check_Report_Azure(
-                        metadata=self.metadata(), resource_metadata=sql_server
+                        metadata=self.metadata(), resource=sql_server
                     )
                     report.subscription = subscription
                     found_disabled = False

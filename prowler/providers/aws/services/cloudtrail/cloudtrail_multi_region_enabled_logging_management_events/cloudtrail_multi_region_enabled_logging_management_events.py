@@ -10,7 +10,7 @@ class cloudtrail_multi_region_enabled_logging_management_events(Check):
         if cloudtrail_client.trails is not None:
             for region in cloudtrail_client.regional_clients.keys():
                 report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=cloudtrail_client.trails
+                    metadata=self.metadata(), resource=cloudtrail_client.trails
                 )
                 report.status = "FAIL"
                 report.status_extended = "No CloudTrail trails enabled and logging management events were found."
@@ -48,7 +48,7 @@ class cloudtrail_multi_region_enabled_logging_management_events(Check):
                                         trail_is_logging_management_events = True
                     if trail_is_logging_management_events:
                         report = Check_Report_AWS(
-                            metadata=self.metadata(), resource_metadata=trail
+                            metadata=self.metadata(), resource=trail
                         )
                         report.region = region
                         report.status = "PASS"

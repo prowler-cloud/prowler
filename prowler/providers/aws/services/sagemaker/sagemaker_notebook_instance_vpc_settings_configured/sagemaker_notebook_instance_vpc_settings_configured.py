@@ -7,7 +7,7 @@ class sagemaker_notebook_instance_vpc_settings_configured(Check):
         findings = []
         for notebook_instance in sagemaker_client.sagemaker_notebook_instances:
             report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=notebook_instance
+                metadata=self.metadata(), resource=notebook_instance
             )
             report.status = "PASS"
             report.status_extended = (

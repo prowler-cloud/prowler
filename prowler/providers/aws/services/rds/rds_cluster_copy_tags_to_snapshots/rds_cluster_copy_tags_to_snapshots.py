@@ -6,9 +6,7 @@ class rds_cluster_copy_tags_to_snapshots(Check):
     def execute(self):
         findings = []
         for db_cluster in rds_client.db_clusters.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=db_cluster
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=db_cluster)
             if db_cluster.copy_tags_to_snapshot:
                 report.status = "PASS"
                 report.status_extended = (

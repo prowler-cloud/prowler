@@ -8,7 +8,7 @@ class storage_ensure_azure_services_are_trusted_to_access_is_enabled(Check):
         for subscription, storage_accounts in storage_client.storage_accounts.items():
             for storage_account in storage_accounts:
                 report = Check_Report_Azure(
-                    metadata=self.metadata(), resource_metadata=storage_account
+                    metadata=self.metadata(), resource=storage_account
                 )
                 report.subscription = subscription
                 report.status = "PASS"

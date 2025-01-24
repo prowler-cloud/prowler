@@ -7,9 +7,7 @@ class guardduty_lambda_protection_enabled(Check):
         findings = []
         for detector in guardduty_client.detectors:
             if detector.status:
-                report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=detector
-                )
+                report = Check_Report_AWS(metadata=self.metadata(), resource=detector)
                 report.status = "FAIL"
                 report.status_extended = f"GuardDuty detector {detector.id} does not have Lambda Protection enabled."
                 if detector.lambda_protection:

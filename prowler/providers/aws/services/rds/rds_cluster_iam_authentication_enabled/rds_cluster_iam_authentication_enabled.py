@@ -20,7 +20,7 @@ class rds_cluster_iam_authentication_enabled(Check):
             ):
                 report = Check_Report_AWS(
                     metadata=self.metadata(),
-                    resource_metadata=rds_client.db_clusters[db_cluster],
+                    resource=rds_client.db_clusters[db_cluster],
                 )
 
                 if rds_client.db_clusters[db_cluster].iam_auth:

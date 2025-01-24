@@ -36,7 +36,6 @@ class Scan:
     _service_checks_to_execute: dict[str, set[str]]
     _service_checks_completed: dict[str, set[str]]
     _progress: float = 0.0
-    _findings: list = []
     _duration: int = 0
     _status: list[str] = None
 
@@ -216,10 +215,6 @@ class Scan:
     def duration(self) -> int:
         return self._duration
 
-    @property
-    def findings(self) -> list:
-        return self._findings
-
     def scan(
         self,
         custom_checks_metadata: dict = {},
@@ -281,9 +276,6 @@ class Scan:
                         for finding in check_findings:
                             if finding.status not in self._status:
                                 check_findings.remove(finding)
-
-                    # Store findings
-                    self._findings.extend(check_findings)
 
                     # Remove the executed check
                     self._service_checks_to_execute[service].remove(check_name)

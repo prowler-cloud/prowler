@@ -20,7 +20,7 @@ class organizations_delegated_administrators(Check):
         ):
             report = Check_Report_AWS(
                 metadata=self.metadata(),
-                resource_metadata=organizations_client.organization,
+                resource=organizations_client.organization,
             )
             report.region = organizations_client.region
             if (

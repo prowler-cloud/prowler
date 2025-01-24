@@ -14,11 +14,11 @@ export default function ProviderLayout({ children }: ProviderLayoutProps) {
   return (
     <>
       <NavigationHeader
-        title="Connect your cloud account"
+        title="Connect a Cloud Provider"
         icon="icon-park-outline:close-small"
         href="/providers"
       />
-      <Spacer y={16} />
+      <Spacer y={8} />
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
         <div className="order-1 my-auto hidden h-full lg:col-span-4 lg:col-start-2 lg:block">
           <WorkflowAddProvider />

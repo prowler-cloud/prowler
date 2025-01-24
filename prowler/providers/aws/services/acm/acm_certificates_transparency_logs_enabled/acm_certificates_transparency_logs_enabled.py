@@ -8,7 +8,7 @@ class acm_certificates_transparency_logs_enabled(Check):
         for certificate in acm_client.certificates.values():
             if certificate.in_use or acm_client.provider.scan_unused_services:
                 report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=certificate
+                    metadata=self.metadata(), resource=certificate
                 )
                 if certificate.type == "IMPORTED":
                     report.status = "PASS"

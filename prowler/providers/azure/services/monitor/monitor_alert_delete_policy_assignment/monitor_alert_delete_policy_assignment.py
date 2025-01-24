@@ -16,16 +16,14 @@ class monitor_alert_delete_policy_assignment(Check):
                     alert_rule, "Microsoft.Authorization/policyAssignments/delete"
                 ):
                     report = Check_Report_Azure(
-                        metadata=self.metadata(), resource_metadata=alert_rule
+                        metadata=self.metadata(), resource=alert_rule
                     )
                     report.subscription = subscription_name
                     report.status = "PASS"
                     report.status_extended = f"There is an alert configured for deleting policy assignment in subscription {subscription_name}."
                     break
             else:
-                report = Check_Report_Azure(
-                    metadata=self.metadata(), resource_metadata={}
-                )
+                report = Check_Report_Azure(metadata=self.metadata(), resource={})
                 report.subscription = subscription_name
                 report.resource_name = "Monitor"
                 report.resource_id = "Monitor"

@@ -6,7 +6,7 @@ class efs_encryption_at_rest_enabled(Check):
     def execute(self):
         findings = []
         for fs in efs_client.filesystems.values():
-            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=fs)
+            report = Check_Report_AWS(metadata=self.metadata(), resource=fs)
             report.status = "FAIL"
             report.status_extended = (
                 f"EFS {fs.id} does not have encryption at rest enabled."

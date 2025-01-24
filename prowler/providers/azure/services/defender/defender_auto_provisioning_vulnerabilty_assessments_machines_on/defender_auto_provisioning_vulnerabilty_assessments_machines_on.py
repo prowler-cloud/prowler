@@ -16,7 +16,7 @@ class defender_auto_provisioning_vulnerabilty_assessments_machines_on(Check):
             ):
                 report = Check_Report_Azure(
                     metadata=self.metadata(),
-                    resource_metadata=assessments[
+                    resource=assessments[
                         "Machines should have a vulnerability assessment solution"
                     ],
                 )

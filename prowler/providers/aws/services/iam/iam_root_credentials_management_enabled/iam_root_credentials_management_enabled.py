@@ -15,7 +15,7 @@ class iam_root_credentials_management_enabled(Check):
         ):
             report = Check_Report_AWS(
                 metadata=self.metadata(),
-                resource_metadata=iam_client.organization_features,
+                resource=iam_client.organization_features,
             )
             report.region = iam_client.region
             report.resource_arn = iam_client.audited_account_arn

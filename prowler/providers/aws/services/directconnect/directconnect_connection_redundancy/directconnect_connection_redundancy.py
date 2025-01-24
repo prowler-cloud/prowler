@@ -19,7 +19,7 @@ class directconnect_connection_redundancy(Check):
 
             for region, connections in regions.items():
                 report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=connections
+                    metadata=self.metadata(), resource=connections
                 )
                 report.region = region
                 report.resource_arn = directconnect_client._get_connection_arn_template(
