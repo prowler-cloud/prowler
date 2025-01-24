@@ -432,7 +432,7 @@ class Microsoft365Provider(Provider):
                     # DefaultAzureCredential sets just one authentication method, excluding the others
                     try:
                         credentials = DefaultAzureCredential(
-                            exclude_environment_credential=True,
+                            exclude_environment_credential=not sp_env_auth,
                             exclude_cli_credential=not az_cli_auth,
                             # Microsoft365 Auth using Managed Identity is not supported
                             exclude_managed_identity_credential=True,
