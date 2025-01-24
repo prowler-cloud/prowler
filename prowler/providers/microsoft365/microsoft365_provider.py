@@ -427,7 +427,9 @@ class Microsoft365Provider(Provider):
                         raise Microsoft365ConfigCredentialsError(
                             file=os.path.basename(__file__), original_exception=error
                         )
-                elif az_cli_auth:
+                else:
+                    # Since the authentication method to be used will come as True, we have to negate it since
+                    # DefaultAzureCredential sets just one authentication method, excluding the others
                     try:
                         credentials = DefaultAzureCredential(
                             exclude_environment_credential=True,
