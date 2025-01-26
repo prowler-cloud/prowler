@@ -32,7 +32,7 @@
     "next-themes": "^0.2.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-hook-form": "^7.52.2",
+    "react-hook-form": "^7.54.2",
     "recharts": "^2.13.0-alpha.4",
     "server-only": "^0.0.1",
     "shadcn-ui": "^0.2.3",
