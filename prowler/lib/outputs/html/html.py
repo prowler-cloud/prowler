@@ -583,6 +583,51 @@ class HTML(Output):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
             )
             return ""
+        
+    def get_nhn_assessment_summary(provider: Provider) -> str:
+        """
+        get_nhn_assessment_summary gets the HTML assessment summary for the provider
+
+        Args:
+            provider (Provider): the provider object
+
+        Returns:
+            str: the HTML assessment summary
+        """
+        try:
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            NHN Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>NHN Tenant Domain:</b> {provider.identity.tenant_domain}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        NHN Credentials
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <b>NHN Identity Type:</b> {provider.identity.identity_type}
+                            </li>
+                            <li class="list-group-item">
+                                <b>NHN Identity ID:</b> {provider.identity.identity_id}
+                            </li>
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
 
     @staticmethod
     def get_assessment_summary(provider: Provider) -> str:

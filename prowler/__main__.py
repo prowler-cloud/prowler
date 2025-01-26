@@ -52,6 +52,7 @@ from prowler.lib.outputs.compliance.cis.cis_azure import AzureCIS
 from prowler.lib.outputs.compliance.cis.cis_gcp import GCPCIS
 from prowler.lib.outputs.compliance.cis.cis_kubernetes import KubernetesCIS
 from prowler.lib.outputs.compliance.cis.cis_microsoft365 import Microsoft365CIS
+from prowler.lib.outputs.compliance.cis.cis_nhn import NHNCIS
 from prowler.lib.outputs.compliance.compliance import display_compliance_table
 from prowler.lib.outputs.compliance.ens.ens_aws import AWSENS
 from prowler.lib.outputs.compliance.ens.ens_azure import AzureENS
@@ -80,6 +81,7 @@ from prowler.providers.common.quick_inventory import run_provider_quick_inventor
 from prowler.providers.gcp.models import GCPOutputOptions
 from prowler.providers.kubernetes.models import KubernetesOutputOptions
 from prowler.providers.microsoft365.models import Microsoft365OutputOptions
+from prowler.providers.nhn.models import NHNOutputOptions
 
 
 def prowler():
@@ -263,6 +265,10 @@ def prowler():
         )
     elif provider == "microsoft365":
         output_options = Microsoft365OutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "nhn":
+        output_options = NHNOutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
 
@@ -643,6 +649,36 @@ def prowler():
                     f"{output_options.output_filename}_{compliance_name}.csv"
                 )
                 cis = Microsoft365CIS(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    create_file_descriptor=True,
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(cis)
+                cis.batch_write_data_to_file()
+            else:
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                generic_compliance = GenericCompliance(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    create_file_descriptor=True,
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(generic_compliance)
+                generic_compliance.batch_write_data_to_file()
+
+    elif provider == "nhn":
+        for compliance_name in input_compliance_frameworks:
+            if compliance_name.startswith("cis_"):
+                # Generate CIS Finding Object
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                cis = NHNCIS(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
                     create_file_descriptor=True,
