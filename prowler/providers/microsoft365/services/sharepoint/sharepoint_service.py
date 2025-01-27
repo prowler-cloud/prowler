@@ -12,50 +12,47 @@ from prowler.providers.microsoft365.microsoft365_provider import Microsoft365Pro
 class SharePoint(Microsoft365Service):
     def __init__(self, provider: Microsoft365Provider):
         super().__init__(provider)
-
         loop = get_event_loop()
-
+        self.tenant_domain = provider.identity.tenant_domain
         attributes = loop.run_until_complete(
             gather(
                 self._get_settings(),
                 self._get_one_drive_shared_content(),
             )
         )
-
-        self.settings = attributes[0]
-        self.one_drive_shared_content = attributes[1]
+        self.settings = {self.tenant_domain: attributes[0]}
+        self.one_drive_shared_content = {self.tenant_domain: attributes[1]}
 
     async def _get_settings(self):
         logger.info("Microsoft365 - Getting SharePoint global settings...")
-        settings = {}
         try:
             global_settings = await self.client.admin.sharepoint.settings.get()
-            settings.update(
-                {
-                    SharePointSettings(
-                        sharingCapability=global_settings.get("sharingCapability"),
-                        sharingAllowedDomainList=global_settings.get(
-                            "sharingAllowedDomainList"
-                        ),
-                        sharingBlockedDomainList=global_settings.get(
-                            "sharingBlockedDomainList"
-                        ),
-                        modernAuthentication=global_settings.get(
-                            "isLegacyAuthProtocolsEnabled"
-                        ),
-                    )
-                }
+            settings = SharePointSettings(
+                sharingCapability=global_settings.get("sharingCapability"),
+                sharingAllowedDomainList=global_settings.get(
+                    "sharingAllowedDomainList"
+                ),
+                sharingBlockedDomainList=global_settings.get(
+                    "sharingBlockedDomainList"
+                ),
+                modernAuthentication=global_settings.get(
+                    "isLegacyAuthProtocolsEnabled"
+                ),
             )
-
+            return settings
+        except ODataError as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return None
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-        return settings
+            return None
 
     async def _get_one_drive_shared_content(self):
         logger.info("Microsoft365 - Getting OneDrive shared content...")
-        onedrivesettings = {}
         try:
             search_request = {
                 "requests": [
@@ -75,23 +72,20 @@ class SharePoint(Microsoft365Service):
                 hits_containers[0].get("total", 0) if hits_containers else 0
             )
 
-            onedrivesettings.update(
-                {
-                    OneDriveSharedContent(
-                        totalSharedContent=total_shared_items,
-                    )
-                }
+            shared_content = OneDriveSharedContent(
+                totalSharedContent=total_shared_items
             )
-
+            return shared_content
         except ODataError as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+            return None
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-        return onedrivesettings
+            return None
 
 
 class SharePointSettings(BaseModel):
