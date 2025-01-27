@@ -26,7 +26,7 @@
     "intl-messageformat": "^10.5.0",
     "jose": "^5.9.3",
     "jwt-decode": "^4.0.0",
-    "lucide-react": "^0.471.0",
+    "lucide-react": "^0.474.0",
     "next": "^14.2.22",
     "next-auth": "^5.0.0-beta.25",
     "next-themes": "^0.2.1",
