@@ -3,7 +3,6 @@ from datetime import datetime, timedelta, timezone
 
 import django.db.models.deletion
 from django.db import migrations, models
-from django.utils.timezone import make_aware
 from django_celery_beat.models import PeriodicTask
 
 from api.db_utils import rls_transaction
@@ -19,12 +18,10 @@ def migrate_daily_scheduled_scan_tasks(apps, schema_editor):
         provider_id = task_kwargs["provider_id"]
 
         current_time = datetime.now(timezone.utc)
-        scheduled_time_today = make_aware(
-            datetime.combine(
-                current_time.date(),
-                daily_scheduled_scan_task.start_time.time(),
-                tzinfo=timezone.utc,
-            )
+        scheduled_time_today = datetime.combine(
+            current_time.date(),
+            daily_scheduled_scan_task.start_time.time(),
+            tzinfo=timezone.utc,
         )
 
         if current_time < scheduled_time_today:
