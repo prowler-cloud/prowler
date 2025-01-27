@@ -74,6 +74,26 @@ class Microsoft365BaseException(ProwlerException):
             "message": "Error setting up session",
             "remediation": "Check the session setup and ensure it is properly set up.",
         },
+        (6017, "Microsoft365DefaultAzureCredentialError"): {
+            "message": "Error with DefaultAzureCredential",
+            "remediation": "Ensure DefaultAzureCredential is correctly configured.",
+        },
+        (6018, "Microsoft365InteractiveBrowserCredentialError"): {
+            "message": "Error with InteractiveBrowserCredential",
+            "remediation": "Ensure InteractiveBrowserCredential is correctly configured.",
+        },
+        (6019, "Microsoft365BrowserAuthNoTenantIDError"): {
+            "message": "Microsoft365 Tenant ID (--tenant-id) is required for browser authentication mode",
+            "remediation": "Check the Microsoft365 Tenant ID and ensure it is properly set up.",
+        },
+        (6020, "Microsoft365BrowserAuthNoFlagError"): {
+            "message": "Microsoft365 tenant ID error: browser authentication flag (--browser-auth) not found",
+            "remediation": "To use browser authentication, ensure the tenant ID is properly set.",
+        },
+        (6021, "Microsoft365NotTenantIdButClientIdAndClienSecretError"): {
+            "message": "Tenant Id is required for Microsoft365 static credentials. Make sure you are using the correct credentials.",
+            "remediation": "Check the Microsoft365 Tenant ID and ensure it is properly set up.",
+        },
     }
 
     def __init__(self, code, file=None, original_exception=None, message=None):

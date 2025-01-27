@@ -269,7 +269,7 @@ class Microsoft365Provider(Provider):
             if not browser_auth and tenant_id:
                 raise Microsoft365BrowserAuthNoFlagError(
                     file=os.path.basename(__file__),
-                    message="Microsoft365 Tenant ID (--browser-auth) is required for browser authentication mode",
+                    message="Microsoft365 tenant ID error: browser authentication flag (--browser-auth) not found",
                 )
             elif not az_cli_auth and not sp_env_auth and not browser_auth:
                 raise Microsoft365NoAuthenticationMethodError(
@@ -385,11 +385,6 @@ class Microsoft365Provider(Provider):
             if sp_env_auth:
                 try:
                     Microsoft365Provider.check_service_principal_creds_env_vars()
-                    credentials = ClientSecretCredential(
-                        tenant_id=getenv("M365_TENANT_ID"),
-                        client_id=getenv("M365_CLIENT_ID"),
-                        client_secret=getenv("M365_CLIENT_SECRET"),
-                    )
                 except (
                     Microsoft365EnvironmentVariableError
                 ) as environment_credentials_error:
@@ -427,10 +422,12 @@ class Microsoft365Provider(Provider):
                         raise Microsoft365ConfigCredentialsError(
                             file=os.path.basename(__file__), original_exception=error
                         )
-                elif az_cli_auth:
+                else:
+                    # Since the authentication method to be used will come as True, we have to negate it since
+                    # DefaultAzureCredential sets just one authentication method, excluding the others
                     try:
                         credentials = DefaultAzureCredential(
-                            exclude_environment_credential=True,
+                            exclude_environment_credential=not sp_env_auth,
                             exclude_cli_credential=not az_cli_auth,
                             # Microsoft365 Auth using Managed Identity is not supported
                             exclude_managed_identity_credential=True,
@@ -674,19 +671,19 @@ class Microsoft365Provider(Provider):
     @staticmethod
     def check_service_principal_creds_env_vars():
         """
-        Checks the presence of required environment variables for application authentication against Microsoft365.
+        Checks the presence of required environment variables for service principal authentication against Azure.
 
         This method checks for the presence of the following environment variables:
-        - M365_CLIENT_ID: Microsoft365 client ID
-        - M365_TENANT_ID: Microsoft365 tenant ID
-        - M365_CLIENT_SECRET: Microsoft365 client secret
+        - AZURE_CLIENT_ID: Azure client ID
+        - AZURE_TENANT_ID: Azure tenant ID
+        - AZURE_CLIENT_SECRET: Azure client secret
 
         If any of the environment variables is missing, it logs a critical error and exits the program.
         """
         logger.info(
             "Microsoft365 provider: checking service principal environment variables  ..."
         )
-        for env_var in ["M365_CLIENT_ID", "M365_TENANT_ID", "M365_CLIENT_SECRET"]:
+        for env_var in ["AZURE_CLIENT_ID", "AZURE_TENANT_ID", "AZURE_CLIENT_SECRET"]:
             if not getenv(env_var):
                 logger.critical(
                     f"Microsoft365 provider: Missing environment variable {env_var} needed to authenticate against Microsoft365"
@@ -761,7 +758,7 @@ class Microsoft365Provider(Provider):
                 # since that exception is not considered as critical, we keep filling another identity fields
                 if sp_env_auth or client_id:
                     # The id of the sp can be retrieved from environment variables
-                    identity.identity_id = getenv("M365_CLIENT_ID")
+                    identity.identity_id = getenv("AZURE_CLIENT_ID")
                     identity.identity_type = "Service Principal"
                 # Same here, if user can access AAD, some fields are retrieved if not, default value, for az cli
                 # should work but it doesn't, pending issue
