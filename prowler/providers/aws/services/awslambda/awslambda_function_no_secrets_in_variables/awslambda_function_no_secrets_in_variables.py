@@ -1,4 +1,3 @@
-import hashlib
 import json
 
 from prowler.lib.check.models import Check, Check_Report_AWS
@@ -28,19 +27,13 @@ class awslambda_function_no_secrets_in_variables(Check):
                         "detect_secrets_plugins",
                     ),
                 )
-                original_env_vars = {}
+                original_env_vars = []
                 for name, value in function.environment.items():
-                    original_env_vars.update(
-                        {
-                            hashlib.sha1(  # nosec B324 SHA1 is used here for non-security-critical unique identifiers
-                                value.encode("utf-8")
-                            ).hexdigest(): name
-                        }
-                    )
+                    original_env_vars.append(name)
                 if detect_secrets_output:
                     secrets_string = ", ".join(
                         [
-                            f"{secret['type']} in variable {original_env_vars[secret['hashed_secret']]}"
+                            f"{secret['type']} in variable {original_env_vars[secret['line_number'] - 2]}"
                             for secret in detect_secrets_output
                         ]
                     )
