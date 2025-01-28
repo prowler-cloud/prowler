@@ -13,14 +13,6 @@ DATABASES = {
         "PASSWORD": env("POSTGRES_PASSWORD", default="postgres"),
         "HOST": env("POSTGRES_HOST", default="localhost"),
         "PORT": env("POSTGRES_PORT", default="5432"),
-        "OPTIONS": {
-            "pool": {
-                "min_size": DB_CP_MIN_SIZE,  # noqa: F405
-                "max_size": DB_CP_MAX_SIZE,  # noqa: F405
-                "max_idle": DB_CP_MAX_IDLE,  # noqa: F405
-                "max_lifetime": DB_CP_MAX_LIFETIME,  # noqa: F405
-            }
-        },
     },
 }
 
