@@ -1,4 +1,3 @@
-import hashlib
 import json
 
 from prowler.lib.check.models import Check, Check_Report_AWS
