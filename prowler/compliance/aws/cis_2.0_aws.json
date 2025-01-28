@@ -303,7 +303,9 @@
     {
       "Id": "1.22",
       "Description": "Ensure access to AWSCloudShellFullAccess is restricted",
-      "Checks": [],
+      "Checks": [
+        "iam_policy_cloudshell_admin_not_attached"
+      ],
       "Attributes": [
         {
           "Section": "1. Identity and Access Management",
@@ -492,7 +494,8 @@
       "Id": "2.1.2",
       "Description": "Ensure MFA Delete is enabled on S3 buckets",
       "Checks": [
-        "s3_bucket_no_mfa_delete"
+        "s3_bucket_no_mfa_delete",
+        "cloudtrail_bucket_requires_mfa_delete"
       ],
       "Attributes": [
         {
@@ -581,7 +584,8 @@
       "Id": "2.3.1",
       "Description": "Ensure that encryption is enabled for RDS Instances",
       "Checks": [
-        "rds_instance_storage_encrypted"
+        "rds_instance_storage_encrypted",
+        "rds_instance_transport_encrypted"
       ],
       "Attributes": [
         {
@@ -1347,7 +1351,8 @@
       "Id": "5.6",
       "Description": "Ensure that EC2 Metadata Service only allows IMDSv2",
       "Checks": [
-        "ec2_instance_imdsv2_enabled"
+        "ec2_instance_imdsv2_enabled",
+        "ec2_instance_account_imdsv2_enabled"
       ],
       "Attributes": [
         {
