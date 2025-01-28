@@ -22,11 +22,13 @@ class AdminCenter(Microsoft365Service):
             gather(
                 self._get_directory_roles(),
                 self._get_groups(),
+                self._get_domains(),
             )
         )
 
         self.directory_roles = attributes[0]
         self.groups = attributes[1]
+        self.domains = attributes[2]
 
     async def _get_users(self):
         logger.info("Microsoft365 - Getting users...")
@@ -130,6 +132,28 @@ class AdminCenter(Microsoft365Service):
             )
         return groups
 
+    async def _get_domains(self):
+        logger.info("Microsoft365 - Getting domains...")
+        domains = {}
+        try:
+            domains_list = await self.client.domains.get()
+            domains.update({})
+            for domain in domains_list.value:
+                domains.update(
+                    {
+                        domain.id: Domain(
+                            id=domain.id,
+                            password_validity_period=domain.password_validity_period_in_days,
+                        )
+                    }
+                )
+
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return domains
+
 
 class User(BaseModel):
     id: str
@@ -149,3 +173,8 @@ class Group(BaseModel):
     id: str
     name: str
     visibility: str
+
+
+class Domain(BaseModel):
+    id: str
+    password_validity_period: int

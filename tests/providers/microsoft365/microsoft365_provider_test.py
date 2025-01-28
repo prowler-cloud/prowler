@@ -212,7 +212,6 @@ class TestMicrosoft365Provider:
                 "prowler.providers.microsoft365.microsoft365_provider.GraphServiceClient"
             ) as mock_graph_client,
         ):
-
             # Mock the return value of DefaultAzureCredential
             mock_credentials = MagicMock()
             mock_credentials.get_token.return_value = AccessToken(
@@ -271,7 +270,6 @@ class TestMicrosoft365Provider:
         with patch(
             "prowler.providers.microsoft365.microsoft365_provider.Microsoft365Provider.setup_session"
         ) as mock_setup_session:
-
             mock_setup_session.side_effect = Microsoft365HTTPResponseError(
                 file="test_file", original_exception="Simulated HttpResponseError"
             )
