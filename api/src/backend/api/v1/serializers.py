@@ -1735,7 +1735,7 @@ class OverviewProviderSerializer(serializers.Serializer):
             "properties": {
                 "pass": {"type": "integer"},
                 "fail": {"type": "integer"},
-                "manual": {"type": "integer"},
+                "muted": {"type": "integer"},
                 "total": {"type": "integer"},
             },
         }
@@ -1744,7 +1744,7 @@ class OverviewProviderSerializer(serializers.Serializer):
         return {
             "pass": obj["findings_passed"],
             "fail": obj["findings_failed"],
-            "manual": obj["findings_manual"],
+            "muted": obj["findings_muted"],
             "total": obj["total_findings"],
         }
 
