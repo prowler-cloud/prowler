@@ -714,8 +714,6 @@ paths:
           items:
             type: string
             enum:
-            - id
-            - -id
             - status
             - -status
             - severity
@@ -1242,8 +1240,6 @@ paths:
           items:
             type: string
             enum:
-            - id
-            - -id
             - status
             - -status
             - severity
@@ -1714,8 +1710,6 @@ paths:
           items:
             type: string
             enum:
-            - id
-            - -id
             - status
             - -status
             - severity
@@ -6753,7 +6747,7 @@ components:
                   type: integer
                 fail:
                   type: integer
-                manual:
+                muted:
                   type: integer
                 total:
                   type: integer

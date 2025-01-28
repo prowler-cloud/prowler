@@ -1744,7 +1744,7 @@ class OverviewProviderSerializer(serializers.Serializer):
         return {
             "pass": obj["findings_passed"],
             "fail": obj["findings_failed"],
-            "manual": obj["findings_muted"],
+            "muted": obj["findings_muted"],
             "total": obj["total_findings"],
         }
 
