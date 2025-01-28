@@ -362,13 +362,13 @@ isodate = ">=0.6.1,<1.0.0"
 
 [[package]]
 name = "azure-mgmt-compute"
-version = "33.1.0"
+version = "34.0.0"
 description = "Microsoft Azure Compute Management Client Library for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "azure_mgmt_compute-33.1.0-py3-none-any.whl", hash = "sha256:9b119a1b7f621aee951074ef110b16d545d7b45c9cfb303becf04210bd772c91"},
-    {file = "azure_mgmt_compute-33.1.0.tar.gz", hash = "sha256:f5a5e18a5a7a0354562bbfa589b5db4aaf1e8ac3a194a2a910db55900d2535e9"},
+    {file = "azure_mgmt_compute-34.0.0-py3-none-any.whl", hash = "sha256:f8f7b1c5c187a26fae4d1f099adf93561244242f28899484d9a42747bf0d5af4"},
+    {file = "azure_mgmt_compute-34.0.0.tar.gz", hash = "sha256:58cd01d025efa02870b84dbfb69834a3b23501a135658c03854d2434e8dfee1e"},
 ]
 
 [package.dependencies]
@@ -395,13 +395,13 @@ isodate = ">=0.6.1,<1.0.0"
 
 [[package]]
 name = "azure-mgmt-containerservice"
-version = "33.0.0"
+version = "34.0.0"
 description = "Microsoft Azure Container Service Management Client Library for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "azure_mgmt_containerservice-33.0.0-py3-none-any.whl", hash = "sha256:5b36cb25075c9fc3070135b5a45debae9eca3183b00f8c21faddb37b2daf4a60"},
-    {file = "azure_mgmt_containerservice-33.0.0.tar.gz", hash = "sha256:868583dcdb8a4905de03a84a9b7903d76a1cb59acd9c3736f02bc743b5047c9e"},
+    {file = "azure_mgmt_containerservice-34.0.0-py3-none-any.whl", hash = "sha256:34be8172241e3c2c444682407970a938f60e3b2bd06304eaae0a1ba641f2262d"},
+    {file = "azure_mgmt_containerservice-34.0.0.tar.gz", hash = "sha256:822d07828b746a5ea5408a8b3770f41dc424d6c4c28de53c29611b62bef8aea3"},
 ]
 
 [package.dependencies]
@@ -689,17 +689,17 @@ files = [
 
 [[package]]
 name = "boto3"
-version = "1.35.94"
+version = "1.35.99"
 description = "The AWS SDK for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "boto3-1.35.94-py3-none-any.whl", hash = "sha256:516c514fb447d6f216833d06a0781c003fcf43099a4ca2f5a363a8afe0942070"},
-    {file = "boto3-1.35.94.tar.gz", hash = "sha256:5aa606239f0fe0dca0506e0ad6bbe4c589048e7e6c2486cee5ec22b6aa7ec2f8"},
+    {file = "boto3-1.35.99-py3-none-any.whl", hash = "sha256:83e560faaec38a956dfb3d62e05e1703ee50432b45b788c09e25107c5058bd71"},
+    {file = "boto3-1.35.99.tar.gz", hash = "sha256:e0abd794a7a591d90558e92e29a9f8837d25ece8e3c120e530526fe27eba5fca"},
 ]
 
 [package.dependencies]
-botocore = ">=1.35.94,<1.36.0"
+botocore = ">=1.35.99,<1.36.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.10.0,<0.11.0"
 
@@ -708,13 +708,13 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "botocore"
-version = "1.35.94"
+version = "1.35.99"
 description = "Low-level, data-driven core of boto 3."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "botocore-1.35.94-py3-none-any.whl", hash = "sha256:d784d944865d8279c79d2301fc09ac28b5221d4e7328fb4e23c642c253b9932c"},
-    {file = "botocore-1.35.94.tar.gz", hash = "sha256:2b3309b356541faa4d88bb957dcac1d8004aa44953c0b7d4521a6cc5d3d5d6ba"},
+    {file = "botocore-1.35.99-py3-none-any.whl", hash = "sha256:b22d27b6b617fc2d7342090d6129000af2efd20174215948c0d7ae2da0fab445"},
+    {file = "botocore-1.35.99.tar.gz", hash = "sha256:1eab44e969c39c5f3d9a3104a0836c24715579a455f12b3979a31d7cde51b3c3"},
 ]
 
 [package.dependencies]
@@ -1925,13 +1925,13 @@ grpcio-gcp = ["grpcio-gcp (>=0.2.2,<1.0.dev0)"]
 
 [[package]]
 name = "google-api-python-client"
-version = "2.158.0"
+version = "2.159.0"
 description = "Google API Client Library for Python"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "google_api_python_client-2.158.0-py2.py3-none-any.whl", hash = "sha256:36f8c8d2e79e50f76790ca5946d2f3f8333e210dc8539a6c88e0742416474ad2"},
-    {file = "google_api_python_client-2.158.0.tar.gz", hash = "sha256:b6664597a9955e04977a62752e33fe44cb35c580e190c1cb08a041893172bd67"},
+    {file = "google_api_python_client-2.159.0-py2.py3-none-any.whl", hash = "sha256:baef0bb631a60a0bd7c0bf12a5499e3a40cd4388484de7ee55c1950bf820a0cf"},
+    {file = "google_api_python_client-2.159.0.tar.gz", hash = "sha256:55197f430f25c907394b44fa078545ffef89d33fd4dca501b7db9f0d8e224bd6"},
 ]
 
 [package.dependencies]
@@ -2661,13 +2661,13 @@ dev = ["bumpver", "isort", "mypy", "pylint", "pytest", "yapf"]
 
 [[package]]
 name = "msgraph-sdk"
-version = "1.16.0"
+version = "1.17.0"
 description = "The Microsoft Graph Python SDK"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 files = [
-    {file = "msgraph_sdk-1.16.0-py3-none-any.whl", hash = "sha256:1dd26ece74c43167818e2ff58b062180233ce7187ad2a061057af1195395c56c"},
-    {file = "msgraph_sdk-1.16.0.tar.gz", hash = "sha256:980d19617d8d8b20545ef77fa5629fef768ce4ea1f2d1a124c5a9dd88d77940c"},
+    {file = "msgraph_sdk-1.17.0-py3-none-any.whl", hash = "sha256:5582a258ded19a486ab407a67b5f65d666758a63864da77bd20c2581d1c00fba"},
+    {file = "msgraph_sdk-1.17.0.tar.gz", hash = "sha256:577e41942b0f794b8cf2f54db030bc039a750a81b515dcd0ba1d66fd961fa7bf"},
 ]
 
 [package.dependencies]
@@ -3405,7 +3405,7 @@ files = [
 
 [[package]]
 name = "prowler"
-version = "5.1.6"
+version = "5.2.1"
 description = "Prowler is an Open Source security tool to perform AWS, GCP and Azure security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness. It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, FedRAMP, PCI-DSS, GDPR, HIPAA, FFIEC, SOC2, GXP, AWS Well-Architected Framework Security Pillar, AWS Foundational Technical Review (FTR), ENS (Spanish National Security Scheme) and your custom security frameworks."
 optional = false
 python-versions = ">=3.9,<3.13"
@@ -3419,9 +3419,9 @@ azure-identity = "1.19.0"
 azure-keyvault-keys = "4.10.0"
 azure-mgmt-applicationinsights = "4.0.0"
 azure-mgmt-authorization = "4.0.0"
-azure-mgmt-compute = "33.1.0"
+azure-mgmt-compute = "34.0.0"
 azure-mgmt-containerregistry = "10.3.0"
-azure-mgmt-containerservice = "33.0.0"
+azure-mgmt-containerservice = "34.0.0"
 azure-mgmt-cosmosdb = "9.7.0"
 azure-mgmt-keyvault = "10.3.1"
 azure-mgmt-monitor = "6.0.2"
@@ -3435,19 +3435,19 @@ azure-mgmt-storage = "21.2.1"
 azure-mgmt-subscription = "3.1.1"
 azure-mgmt-web = "7.3.1"
 azure-storage-blob = "12.24.0"
-boto3 = "1.35.94"
-botocore = "1.35.94"
+boto3 = "1.35.99"
+botocore = "1.35.99"
 colorama = "0.4.6"
 cryptography = "43.0.1"
 dash = "2.18.2"
 dash-bootstrap-components = "1.6.0"
 detect-secrets = "1.5.0"
-google-api-python-client = "2.158.0"
+google-api-python-client = "2.159.0"
 google-auth-httplib2 = ">=0.1,<0.3"
 jsonschema = "4.23.0"
 kubernetes = "31.0.0"
 microsoft-kiota-abstractions = "1.6.8"
-msgraph-sdk = "1.16.0"
+msgraph-sdk = "1.17.0"
 numpy = "2.0.2"
 pandas = "2.2.3"
 py-ocsf-models = "0.2.0"
@@ -3463,8 +3463,8 @@ tzlocal = "5.2"
 [package.source]
 type = "git"
 url = "https://github.com/prowler-cloud/prowler.git"
-reference = "v5.1"
-resolved_reference = "ddf4881971a5e1bafa244429937e19403b3f0268"
+reference = "v5.2"
+resolved_reference = "b5d83640ae5b865c8ab5569d407193221159054a"
 
 [[package]]
 name = "psutil"
@@ -5100,4 +5100,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.13"
-content-hash = "952b86609d55795904bd3e85fdd309d251535cee7e864de12ecf6035924e7826"
+content-hash = "bc2dc83aea447bfe71d6c81d675bd708178dbd858c38fdd48428b3110d869ec3"
