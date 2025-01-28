@@ -2,7 +2,6 @@ from unittest.mock import patch
 
 from boto3 import client
 from moto import mock_aws
-
 from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
 
 TASK_NAME = "test-task"
@@ -140,7 +139,6 @@ class Test_ecs_task_definitions_no_environment_secrets:
             assert result[0].resource_arn == task_arn
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
-
 
     @mock_aws
     def test_container_env_var_with_keyword(self):
