@@ -495,7 +495,8 @@
       "Id": "2.1.3",
       "Description": "Ensure MFA Delete is enabled on S3 buckets",
       "Checks": [
-        "s3_bucket_no_mfa_delete"
+        "s3_bucket_no_mfa_delete",
+        "cloudtrail_bucket_requires_mfa_delete"
       ],
       "Attributes": [
         {
@@ -584,7 +585,8 @@
       "Id": "2.3.1",
       "Description": "Ensure that encryption is enabled for RDS Instances",
       "Checks": [
-        "rds_instance_storage_encrypted"
+        "rds_instance_storage_encrypted",
+        "rds_instance_transport_encrypted"
       ],
       "Attributes": [
         {
