@@ -194,7 +194,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.2.0"
+        spectacular_settings.VERSION = "1.3.1"
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -1306,9 +1306,8 @@ class FindingViewSet(BaseRLSViewSet):
     }
     http_method_names = ["get"]
     filterset_class = FindingFilter
-    ordering = ["-id"]
+    ordering = ["-inserted_at"]
     ordering_fields = [
-        "id",
         "status",
         "severity",
         "check_id",
@@ -2006,7 +2005,7 @@ class OverviewViewSet(BaseRLSViewSet):
                 uid=OuterRef("uid"),
                 scan__provider=OuterRef("scan__provider"),
             )
-            .order_by("-id")  # Most recent by id
+            .order_by("-inserted_at")  # Most recent
             .values("id")[:1]
         )
 
@@ -2075,7 +2074,7 @@ class OverviewViewSet(BaseRLSViewSet):
                 state=StateChoices.COMPLETED,
                 provider_id=OuterRef("scan__provider_id"),
             )
-            .order_by("-id")
+            .order_by("-inserted_at")
             .values("id")[:1]
         )
 
@@ -2120,7 +2119,7 @@ class OverviewViewSet(BaseRLSViewSet):
                 state=StateChoices.COMPLETED,
                 provider_id=OuterRef("scan__provider_id"),
             )
-            .order_by("-id")
+            .order_by("-inserted_at")
             .values("id")[:1]
         )
 
@@ -2156,7 +2155,7 @@ class OverviewViewSet(BaseRLSViewSet):
                 state=StateChoices.COMPLETED,
                 provider_id=OuterRef("scan__provider_id"),
             )
-            .order_by("-id")
+            .order_by("-inserted_at")
             .values("id")[:1]
         )
 
