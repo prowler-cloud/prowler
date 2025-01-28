@@ -428,6 +428,10 @@ class Scan(RowLevelSecurityProtectedModel):
                 fields=["provider", "state", "trigger", "scheduled_at"],
                 name="scans_prov_state_trig_sche_idx",
             ),
+            models.Index(
+                fields=["tenant_id", "provider_id", "state", "inserted_at"],
+                name="scans_prov_state_insert_idx",
+            ),
         ]
 
     class JSONAPIMeta:
@@ -1093,6 +1097,10 @@ class ScanSummary(RowLevelSecurityProtectedModel):
             models.UniqueConstraint(
                 fields=("tenant", "scan", "check_id", "service", "severity", "region"),
                 name="unique_scan_summary",
+            ),
+            models.Index(
+                fields=["tenant_id", "scan_id"],
+                name="scan_summaries_tenant_scan_idx",
             ),
             RowLevelSecurityConstraint(
                 field="tenant_id",
