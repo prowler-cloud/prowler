@@ -266,7 +266,7 @@ class Test_ecs_task_definitions_no_environment_secrets:
                         {
                             "name": ENV_VAR_NAME_NO_SECRETS,
                             "value": ENV_VAR_VALUE_WITH_SECRETS2,
-                        }
+                        },
                     ],
                 }
             ],
@@ -322,7 +322,7 @@ class Test_ecs_task_definitions_no_environment_secrets:
                         {
                             "name": ENV_VAR_NAME_WITH_KEYWORD2,
                             "value": ENV_VAR_VALUE_WITH_SECRETS2,
-                        }
+                        },
                     ],
                 }
             ],
