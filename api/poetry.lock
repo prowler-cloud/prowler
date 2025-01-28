@@ -606,13 +606,13 @@ msrest = ">=0.7.1"
 
 [[package]]
 name = "azure-mgmt-web"
-version = "8.0.0"
+version = "7.3.1"
 description = "Microsoft Azure Web Apps Management Client Library for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "azure_mgmt_web-8.0.0-py3-none-any.whl", hash = "sha256:0536aac05bfc673b56ed930f2966b77856e84df675d376e782a7af6bb92449af"},
-    {file = "azure_mgmt_web-8.0.0.tar.gz", hash = "sha256:c8d9c042c09db7aacb20270a9effed4d4e651e365af32d80897b84dc7bf35098"},
+    {file = "azure-mgmt-web-7.3.1.tar.gz", hash = "sha256:87b771436bc99a7a8df59d0ad185b96879a06dce14764a06b3fc3dafa8fcb56b"},
+    {file = "azure_mgmt_web-7.3.1-py3-none-any.whl", hash = "sha256:ccf881e3ab31c3fdbf9cbff32773d9c0006b5dcd621ea074d7ec89e51049fb72"},
 ]
 
 [package.dependencies]
@@ -623,13 +623,13 @@ typing-extensions = ">=4.6.0"
 
 [[package]]
 name = "azure-storage-blob"
-version = "12.24.1"
+version = "12.24.0"
 description = "Microsoft Azure Blob Storage Client Library for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "azure_storage_blob-12.24.1-py3-none-any.whl", hash = "sha256:77fb823fdbac7f3c11f7d86a5892e2f85e161e8440a7489babe2195bf248f09e"},
-    {file = "azure_storage_blob-12.24.1.tar.gz", hash = "sha256:052b2a1ea41725ba12e2f4f17be85a54df1129e13ea0321f5a2fcc851cbf47d4"},
+    {file = "azure_storage_blob-12.24.0-py3-none-any.whl", hash = "sha256:4f0bb4592ea79a2d986063696514c781c9e62be240f09f6397986e01755bc071"},
+    {file = "azure_storage_blob-12.24.0.tar.gz", hash = "sha256:eaaaa1507c8c363d6e1d1342bd549938fdf1adec9b1ada8658c8f5bf3aea844e"},
 ]
 
 [package.dependencies]
@@ -2647,13 +2647,13 @@ dev = ["bumpver", "isort", "mypy", "pylint", "pytest", "yapf"]
 
 [[package]]
 name = "msgraph-sdk"
-version = "1.18.0"
+version = "1.17.0"
 description = "The Microsoft Graph Python SDK"
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "msgraph_sdk-1.18.0-py3-none-any.whl", hash = "sha256:f09b015bb9d7690bc6f30c9a28f9a414107aaf06be4952c27b3653dcdf33f2a3"},
-    {file = "msgraph_sdk-1.18.0.tar.gz", hash = "sha256:ef49166ada7b459b5a843ceb3d253c1ab99d8987ebf3112147eb6cbcaa101793"},
+    {file = "msgraph_sdk-1.17.0-py3-none-any.whl", hash = "sha256:5582a258ded19a486ab407a67b5f65d666758a63864da77bd20c2581d1c00fba"},
+    {file = "msgraph_sdk-1.17.0.tar.gz", hash = "sha256:577e41942b0f794b8cf2f54db030bc039a750a81b515dcd0ba1d66fd961fa7bf"},
 ]
 
 [package.dependencies]
@@ -3391,11 +3391,7 @@ files = [
 
 [[package]]
 name = "prowler"
-<<<<<<< HEAD
 version = "5.2.1"
-=======
-version = "5.3.0"
->>>>>>> 84955c066 (revert: Update Django DB manager to use psycopg3 and connection pooling (#6717))
 description = "Prowler is an Open Source security tool to perform AWS, GCP and Azure security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness. It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, FedRAMP, PCI-DSS, GDPR, HIPAA, FFIEC, SOC2, GXP, AWS Well-Architected Framework Security Pillar, AWS Foundational Technical Review (FTR), ENS (Spanish National Security Scheme) and your custom security frameworks."
 optional = false
 python-versions = ">=3.9,<3.13"
@@ -3423,13 +3419,8 @@ azure-mgmt-security = "7.0.0"
 azure-mgmt-sql = "3.0.1"
 azure-mgmt-storage = "21.2.1"
 azure-mgmt-subscription = "3.1.1"
-<<<<<<< HEAD
 azure-mgmt-web = "7.3.1"
 azure-storage-blob = "12.24.0"
-=======
-azure-mgmt-web = "8.0.0"
-azure-storage-blob = "12.24.1"
->>>>>>> 84955c066 (revert: Update Django DB manager to use psycopg3 and connection pooling (#6717))
 boto3 = "1.35.99"
 botocore = "1.35.99"
 colorama = "0.4.6"
@@ -3442,7 +3433,7 @@ google-auth-httplib2 = ">=0.1,<0.3"
 jsonschema = "4.23.0"
 kubernetes = "31.0.0"
 microsoft-kiota-abstractions = "1.6.8"
-msgraph-sdk = "1.18.0"
+msgraph-sdk = "1.17.0"
 numpy = "2.0.2"
 pandas = "2.2.3"
 py-ocsf-models = "0.2.0"
@@ -3458,13 +3449,8 @@ tzlocal = "5.2"
 [package.source]
 type = "git"
 url = "https://github.com/prowler-cloud/prowler.git"
-<<<<<<< HEAD
 reference = "v5.2"
-resolved_reference = "b5d83640ae5b865c8ab5569d407193221159054a"
-=======
-reference = "master"
-resolved_reference = "47bc2ed2dc472fc24ecab35970205448ab3b090d"
->>>>>>> 84955c066 (revert: Update Django DB manager to use psycopg3 and connection pooling (#6717))
+resolved_reference = "1fe125867c9879619a6e0ed50d69b1a9c7f7935e"
 
 [[package]]
 name = "psutil"
@@ -5084,8 +5070,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.13"
-<<<<<<< HEAD
-content-hash = "bc2dc83aea447bfe71d6c81d675bd708178dbd858c38fdd48428b3110d869ec3"
-=======
-content-hash = "af973deaabe32ea4179c44ae702f6a8cc359aabe6f1641dcf2b05534b0bbb3d5"
->>>>>>> 84955c066 (revert: Update Django DB manager to use psycopg3 and connection pooling (#6717))
+content-hash = "6470908880bf38f32a95d7c7cc624af343f6615945cb9cd92158672aa5371bc7"
