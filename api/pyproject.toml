@@ -8,7 +8,7 @@ description = "Prowler's API (Django/DRF)"
 license = "Apache-2.0"
 name = "prowler-api"
 package-mode = false
-version = "1.3.0"
+version = "1.3.1"
 
 [tool.poetry.dependencies]
 celery = {extras = ["pytest"], version = "^5.4.0"}
