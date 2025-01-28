@@ -6,10 +6,8 @@ from datetime import datetime, timedelta, timezone
 from django.conf import settings
 from django.contrib.auth.models import BaseUserManager
 from django.db import connection, models, transaction
-from psycopg import connect as psycopg_connect
-from psycopg.adapt import Dumper
-from psycopg.types import TypeInfo
-from psycopg.types.string import TextLoader
+from psycopg2 import connect as psycopg2_connect
+from psycopg2.extensions import AsIs, new_type, register_adapter, register_type
 from rest_framework_json_api.serializers import ValidationError
 
 DB_USER = settings.DATABASES["default"]["USER"] if not settings.TESTING else "test"
@@ -22,7 +20,6 @@ DB_PROWLER_USER = (
 DB_PROWLER_PASSWORD = (
     settings.DATABASES["prowler_user"]["PASSWORD"] if not settings.TESTING else "test"
 )
-
 TASK_RUNNER_DB_TABLE = "django_celery_results_taskresult"
 POSTGRES_TENANT_VAR = "api.tenant_id"
 POSTGRES_USER_VAR = "api.user_id"
@@ -32,25 +29,21 @@ SET_CONFIG_QUERY = "SELECT set_config(%s, %s::text, TRUE);"
 
 @contextmanager
 def psycopg_connection(database_alias: str):
-    """
-    Context manager returning a psycopg 3 connection
-    for the specified 'database_alias' in Django settings.
-    """
-    pg_conn = None
+    psycopg2_connection = None
     try:
         admin_db = settings.DATABASES[database_alias]
 
-        pg_conn = psycopg_connect(
+        psycopg2_connection = psycopg2_connect(
             dbname=admin_db["NAME"],
             user=admin_db["USER"],
             password=admin_db["PASSWORD"],
             host=admin_db["HOST"],
             port=admin_db["PORT"],
         )
-        yield pg_conn
+        yield psycopg2_connection
     finally:
-        if pg_conn is not None:
-            pg_conn.close()
+        if psycopg2_connection is not None:
+            psycopg2_connection.close()
 
 
 @contextmanager
@@ -66,7 +59,7 @@ def rls_transaction(value: str, parameter: str = POSTGRES_TENANT_VAR):
     with transaction.atomic():
         with connection.cursor() as cursor:
             try:
-                # Just in case the value is a UUID object
+                # just in case the value is an UUID object
                 uuid.UUID(str(value))
             except ValueError:
                 raise ValidationError("Must be a valid UUID")
@@ -194,24 +187,32 @@ class EnumType:
         return self.value
 
 
-def register_enum(apps, schema_editor, enum_class):
-    """
-    psycopg 3 approach: register a loader + dumper for the given enum_class,
-    so we can read/write the custom Postgres ENUM seamlessly.
-    """
-    with psycopg_connection(schema_editor.connection.alias) as conn:
-        ti = TypeInfo.fetch(conn, enum_class.enum_type_name)
+def enum_adapter(enum_obj):
+    return AsIs(f"'{enum_obj.value}'::{enum_obj.__class__.enum_type_name}")
 
-        class EnumLoader(TextLoader):
-            def load(self, data):
-                return data
 
-        class EnumDumper(Dumper):
-            def dump(self, obj):
-                return f"'{obj.value}'::{obj.__class__.enum_type_name}"
+def get_enum_oid(connection, enum_type_name: str):
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT oid FROM pg_type WHERE typname = %s;", (enum_type_name,))
+        result = cursor.fetchone()
+    if result is None:
+        raise ValueError(f"Enum type '{enum_type_name}' not found")
+    return result[0]
 
-        conn.adapters.register_loader(ti.oid, EnumLoader)
-        conn.adapters.register_dumper(enum_class, EnumDumper)
+
+def register_enum(apps, schema_editor, enum_class):  # noqa: F841
+    with psycopg_connection(schema_editor.connection.alias) as connection:
+        enum_oid = get_enum_oid(connection, enum_class.enum_type_name)
+        enum_instance = new_type(
+            (enum_oid,),
+            enum_class.enum_type_name,
+            lambda value, cur: value,  # noqa: F841
+        )
+        register_type(enum_instance, connection)
+        register_adapter(enum_class, enum_adapter)
+
+
+# Postgres enum definition for member role
 
 
 class MemberRoleEnum(EnumType):
