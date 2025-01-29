@@ -1098,15 +1098,17 @@ class ScanSummary(RowLevelSecurityProtectedModel):
                 fields=("tenant", "scan", "check_id", "service", "severity", "region"),
                 name="unique_scan_summary",
             ),
-            models.Index(
-                fields=["tenant_id", "scan_id"],
-                name="scan_summaries_tenant_scan_idx",
-            ),
             RowLevelSecurityConstraint(
                 field="tenant_id",
                 name="rls_on_%(class)s",
                 statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
             ),
+        ]
+        indexes = [
+            models.Index(
+                fields=["tenant_id", "scan_id"],
+                name="scan_summaries_tenant_scan_idx",
+            )
         ]
 
     class JSONAPIMeta:

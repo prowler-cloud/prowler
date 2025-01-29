@@ -16,9 +16,9 @@ class Migration(migrations.Migration):
                 name="scans_prov_state_insert_idx",
             ),
         ),
-        migrations.AddConstraint(
+        migrations.AddIndex(
             model_name="scansummary",
-            constraint=models.Index(
+            index=models.Index(
                 fields=["tenant_id", "scan_id"], name="scan_summaries_tenant_scan_idx"
             ),
         ),
