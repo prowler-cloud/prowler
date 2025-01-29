@@ -65,6 +65,7 @@ class Test_sns_subscription_not_using_http_endpoints:
                 owner=AWS_ACCOUNT_NUMBER,
                 protocol="https",
                 endpoint="https://www.endpoint.com",
+                region=AWS_REGION_EU_WEST_1,
             )
         )
         sns_client.topics = []
@@ -100,6 +101,7 @@ class Test_sns_subscription_not_using_http_endpoints:
                 owner=AWS_ACCOUNT_NUMBER,
                 protocol="https",
                 endpoint="https://www.endpoint.com",
+                region=AWS_REGION_EU_WEST_1,
             )
         )
         sns_client.topics = []
@@ -143,6 +145,7 @@ class Test_sns_subscription_not_using_http_endpoints:
                 owner=AWS_ACCOUNT_NUMBER,
                 protocol="http",
                 endpoint="http://www.endpoint.com",
+                region=AWS_REGION_EU_WEST_1,
             )
         )
         sns_client.topics = []
@@ -186,6 +189,7 @@ class Test_sns_subscription_not_using_http_endpoints:
                 owner=AWS_ACCOUNT_NUMBER,
                 protocol="https",
                 endpoint="https://www.endpoint.com",
+                region=AWS_REGION_EU_WEST_1,
             )
         )
         subscriptions.append(
@@ -195,6 +199,7 @@ class Test_sns_subscription_not_using_http_endpoints:
                 owner=AWS_ACCOUNT_NUMBER,
                 protocol="http",
                 endpoint="http://www.endpoint.com",
+                region=AWS_REGION_EU_WEST_1,
             )
         )
         sns_client.topics = []
