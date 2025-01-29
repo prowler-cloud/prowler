@@ -124,7 +124,7 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
   },
   {
     accessorKey: "next_scan_at",
-    header: "Scheduled at",
+    header: "Next scan",
     cell: ({ row }) => {
       const {
         attributes: { next_scan_at },
