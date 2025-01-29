@@ -449,11 +449,9 @@ class Check_Report_AWS(Check_Report):
 
     def __init__(self, metadata: Dict, resource: Any) -> None:
         super().__init__(metadata, resource)
-        self.resource_id = (
-            getattr(resource, "id", None) or getattr(resource, "name", None) or ""
-        )
-        self.resource_arn = getattr(resource, "arn", "")
-        self.region = getattr(resource, "region", "")
+        self.resource_id = getattr(resource, "id", getattr(resource, "name"))
+        self.resource_arn = getattr(resource, "arn")
+        self.region = getattr(resource, "region")
 
 
 @dataclass
@@ -474,9 +472,9 @@ class Check_Report_Azure(Check_Report):
         """
         super().__init__(metadata, resource)
         self.resource_name = getattr(
-            resource, "name", getattr(resource, "resource_name", "")
+            resource, "name", getattr(resource, "resource_name")
         )
-        self.resource_id = getattr(resource, "id", getattr(resource, "resource_id", ""))
+        self.resource_id = getattr(resource, "id", getattr(resource, "resource_id"))
         self.subscription = ""
         self.location = getattr(resource, "location", "global")
 
@@ -500,18 +498,13 @@ class Check_Report_GCP(Check_Report):
         project_id=None,
     ) -> None:
         super().__init__(metadata, resource)
-        self.resource_id = (
-            resource_id
-            or getattr(resource, "id", None)
-            or getattr(resource, "name", None)
-            or ""
+        self.resource_id = resource_id or getattr(
+            resource, "id", getattr(resource, "name")
         )
-        self.resource_name = resource_name or getattr(resource, "name", "")
-        self.project_id = project_id or getattr(resource, "project_id", "")
-        self.location = (
-            location
-            or getattr(resource, "location", "")
-            or getattr(resource, "region", "")
+        self.resource_name = resource_name or getattr(resource, "name")
+        self.project_id = project_id or getattr(resource, "project_id")
+        self.location = location or getattr(
+            resource, "location", getattr(resource, "region")
         )
 
 
@@ -526,10 +519,8 @@ class Check_Report_Kubernetes(Check_Report):
 
     def __init__(self, metadata: Dict, resource: Any) -> None:
         super().__init__(metadata, resource)
-        self.resource_id = (
-            getattr(resource, "uid", None) or getattr(resource, "name", None) or ""
-        )
-        self.resource_name = getattr(resource, "name", "")
+        self.resource_id = getattr(resource, "uid", getattr(resource, "name"))
+        self.resource_name = getattr(resource, "name")
         self.namespace = getattr(resource, "namespace", "cluster-wide")
         if not self.namespace:
             self.namespace = "cluster-wide"
@@ -552,9 +543,9 @@ class Check_Report_Microsoft365(Check_Report):
         """
         super().__init__(metadata, resource)
         self.resource_name = getattr(
-            resource, "name", getattr(resource, "resource_name", "")
+            resource, "name", getattr(resource, "resource_name")
         )
-        self.resource_id = getattr(resource, "id", getattr(resource, "resource_id", ""))
+        self.resource_id = getattr(resource, "id", getattr(resource, "resource_id"))
         self.location = getattr(resource, "location", "global")
 
 
