@@ -81,7 +81,9 @@ def set_report_color(status: str, muted: bool = False) -> str:
     elif status == "MANUAL":
         color = Fore.YELLOW
     else:
-        raise Exception("Invalid Report Status. Must be PASS, FAIL or MANUAL.")
+        raise Exception(
+            f"Invalid Report Status: {status}. Must be PASS, FAIL or MANUAL."
+        )
     return color
 
 
