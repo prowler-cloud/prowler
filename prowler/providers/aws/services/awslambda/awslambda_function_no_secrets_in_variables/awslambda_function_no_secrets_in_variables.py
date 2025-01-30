@@ -40,7 +40,7 @@ class awslambda_function_no_secrets_in_variables(Check):
                 if detect_secrets_output:
                     secrets_string = ", ".join(
                         [
-                            f"{secret['type']} in variable {original_env_vars[secret['hashed_secret']]}"
+                            f"{secret['type']} in variable {original_env_vars.get(secret['hashed_secret'], 'UNKNOWN')}"
                             for secret in detect_secrets_output
                         ]
                     )
