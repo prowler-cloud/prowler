@@ -475,8 +475,8 @@ class Check_Report_Azure(CheckReport):
 
     resource_name: str
     resource_id: str
-    subscription: str = None
     location: str
+    subscription: str = None
 
     def __init__(self, metadata: Dict, resource: Any) -> None:
         """Initialize the Azure Check's finding information.
@@ -519,19 +519,25 @@ class Check_Report_GCP(CheckReport):
     ) -> None:
         super().__init__(metadata, resource)
 
-        try:
-            self.resource_id = getattr(resource, "id")
-        except AttributeError:
-            self.resource_id = getattr(resource, "name")
-
-        self.resource_id = resource_id or getattr(
-            resource, "id", getattr(resource, "name")
-        )
         self.resource_name = resource_name or getattr(resource, "name")
+
+        if resource_id:
+            self.resource_id = resource_id
+        else:
+            try:
+                self.resource_id = getattr(resource, "id")
+            except AttributeError:
+                self.resource_id = self.resource_name
+
         self.project_id = project_id or getattr(resource, "project_id")
-        self.location = location or getattr(
-            resource, "location", getattr(resource, "region")
-        )
+
+        if location:
+            self.location = location
+        else:
+            try:
+                self.location = getattr(resource, "location")
+            except AttributeError:
+                self.location = getattr(resource, "region")
 
 
 @dataclass

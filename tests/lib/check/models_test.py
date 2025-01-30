@@ -5,6 +5,7 @@ import pytest
 from prowler.lib.check.models import (
     Check_Report_AWS,
     Check_Report_Azure,
+    Check_Report_GCP,
     CheckMetadata,
     CheckReport,
 )
@@ -473,3 +474,90 @@ class TestCheckReportAzure:
         assert report.resource_name == "test_name"
         assert report.location == "global"
         assert report.subscription is None
+
+
+class TestCheckReportGCP:
+    def test_check_report_gcp(self):
+        resource = mock.Mock
+        resource.id = "test_id"
+        resource.name = "test_name"
+        resource.project_id = "test_project"
+        resource.location = "test_location"
+        report = Check_Report_GCP(metadata=mock_metadata.json(), resource=resource)
+        assert report.resource_id == "test_id"
+        assert report.resource_name == "test_name"
+        assert report.location == "test_location"
+        assert report.project_id == "test_project"
+
+    def test_check_report_gcp_resource_id(self):
+        resource = mock.Mock
+        resource.id = "test_id"
+        resource.name = "test_name"
+        resource.project_id = "test_project"
+        resource.location = "test_location"
+        report = Check_Report_GCP(
+            metadata=mock_metadata.json(), resource=resource, resource_id="resource_1"
+        )
+        assert report.resource_id == "resource_1"
+        assert report.resource_name == "test_name"
+        assert report.location == "test_location"
+        assert report.project_id == "test_project"
+
+    def test_check_report_gcp_no_resource_id(self):
+        resource = mock.Mock
+        resource.name = "test_name"
+        resource.project_id = "test_project"
+        resource.location = "test_location"
+        report = Check_Report_GCP(
+            metadata=mock_metadata.json(),
+            resource=resource,
+        )
+        assert report.resource_id == "test_name"
+        assert report.resource_name == "test_name"
+        assert report.location == "test_location"
+        assert report.project_id == "test_project"
+
+    def test_check_report_gcp_resource_name(self):
+        resource = mock.Mock
+        resource.id = "test_id"
+        resource.name = "test_name"
+        resource.project_id = "test_project"
+        resource.location = "test_location"
+        report = Check_Report_GCP(
+            metadata=mock_metadata.json(), resource=resource, resource_name="resource_1"
+        )
+        assert report.resource_id == "test_id"
+        assert report.resource_name == "resource_1"
+        assert report.location == "test_location"
+        assert report.project_id == "test_project"
+
+    def test_check_report_gcp_no_project_id(self):
+        resource = mock.Mock
+        resource.id = "test_id"
+        resource.name = "test_name"
+        resource.location = "test_location"
+        with pytest.raises(AttributeError):
+            Check_Report_GCP(metadata=mock_metadata.json(), resource=resource)
+
+    def test_check_report_gcp_no_location(self):
+        resource = mock.Mock
+        resource.id = "test_id"
+        resource.name = "test_name"
+        resource.project_id = "test_project"
+        with pytest.raises(AttributeError):
+            Check_Report_GCP(metadata=mock_metadata.json(), resource=resource)
+
+    def test_check_report_gcp_region(self):
+        resource = mock.Mock
+        resource.id = "test_id"
+        resource.name = "test_name"
+        resource.region = "test_region"
+        resource.project_id = "test_project"
+        report = Check_Report_GCP(
+            metadata=mock_metadata.json(),
+            resource=resource,
+        )
+        assert report.resource_id == "test_id"
+        assert report.resource_name == "test_name"
+        assert report.location == "test_region"
+        assert report.project_id == "test_project"
