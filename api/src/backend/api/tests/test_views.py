@@ -2611,7 +2611,7 @@ class TestFindingViewSet:
 
         expected_services = {"ec2", "s3"}
         expected_regions = {"eu-west-1", "us-east-1"}
-        # Temporary disabled until we implement tag filtering in the UI
+        # Temporarily disabled until we implement tag filtering in the UI
         # expected_tags = {"key": ["value"], "key2": ["value2"]}
         expected_resource_types = {"prowler-test"}
 

@@ -1419,7 +1419,7 @@ class FindingViewSet(BaseRLSViewSet):
             .order_by("type")
         )
 
-        # Temporary disabled until we implement tag filtering in the UI
+        # Temporarily disabled until we implement tag filtering in the UI
         # tag_data = (
         #     relevant_resources
         #     .filter(tags__key__isnull=False, tags__value__isnull=False)

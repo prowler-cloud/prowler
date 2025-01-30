@@ -933,7 +933,7 @@ class FindingMetadataSerializer(serializers.Serializer):
     resource_types = serializers.ListField(
         child=serializers.CharField(), allow_empty=True
     )
-    # Temporary disabled until we implement tag filtering in the UI
+    # Temporarily disabled until we implement tag filtering in the UI
     # tags = serializers.JSONField(help_text="Tags are described as key-value pairs.")
 
     class Meta:

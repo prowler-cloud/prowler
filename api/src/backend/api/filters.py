@@ -319,7 +319,7 @@ class FindingFilter(FilterSet):
         field_name="resources__type", lookup_expr="icontains"
     )
 
-    # Temporary disabled until we implement tag filtering in the UI
+    # Temporarily disabled until we implement tag filtering in the UI
     # resource_tag_key = CharFilter(field_name="resources__tags__key")
     # resource_tag_key__in = CharInFilter(
     #     field_name="resources__tags__key", lookup_expr="in"
