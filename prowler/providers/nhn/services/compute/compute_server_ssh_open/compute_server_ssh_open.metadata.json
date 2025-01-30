@@ -1,0 +1,33 @@
+{
+    "Provider": "nhn",
+    "CheckID": "nhn_compute_server_public_ip",
+    "CheckTitle": "Check for Public IP in NHN compute servers",
+    "CheckType": [], 
+    "ServiceName": "compute",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "",
+    "Risk": "",
+    "Severity": "high",
+    "ResourceType": "VMInstance",
+    "Description": "Checks if an NHN Compute server allows SSH (port 22) access from the public internet.",
+    "Remediation": {
+        "Code": {
+            "CLI": "",
+            "NativeIaC": "",
+            "Other": "",
+            "Terraform": ""
+          },
+        "Recommendation": {
+        "Text": "Restrict SSH access by modifying security group rules to allow only trusted IPs or disable SSH if not needed.",
+        "Url": ""
+        }
+    },
+    "Categories": [],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": "",
+    "RelatedUrl": "",
+    "Enabled": true,
+    "Compliances": []
+  }
+  

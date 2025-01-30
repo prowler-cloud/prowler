@@ -1,0 +1,33 @@
+{
+    "Provider": "nhn",
+    "CheckID": "nhn_compute_server_public_ip",
+    "CheckTitle": "Check for Public IP in NHN compute servers",
+    "CheckType": [], 
+    "ServiceName": "compute",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "",
+    "Risk": "",
+    "Severity": "low",
+    "ResourceType": "VMInstance",
+    "Description": "Check if a floating (public) IP is assigned to an NHN compute server.",
+    "Remediation": {
+        "Code": {
+            "CLI": "",
+            "NativeIaC": "",
+            "Other": "",
+            "Terraform": ""
+          },
+        "Recommendation": {
+        "Text": "Remove or unassign floating IP if not required to reduce external exposure.", 
+        "Url": ""
+        }
+    },
+    "Categories": [],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": "",
+    "RelatedUrl": "",
+    "Enabled": true,
+    "Compliances": []
+  }
+  

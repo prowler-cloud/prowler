@@ -174,6 +174,7 @@ class NhnProvider(Provider):
                 },
             }
         }
+        # https://docs.nhncloud.com/ko/Compute/Compute/ko/identity-api/ 여기서 응답보고 넣기
         try:
             response = requests.post(url, json=data, timeout=10)
             if response.status_code == 200:
