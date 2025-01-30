@@ -4,7 +4,7 @@ from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.search import SearchQuery
 from django.db import transaction
 from django.db.models import Count, F, OuterRef, Prefetch, Q, Subquery, Sum
-from django.db.models.functions import Coalesce, JSONObject
+from django.db.models.functions import Coalesce
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_control
@@ -193,7 +193,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.3.1"
+        spectacular_settings.VERSION = "1.3.2"
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -1392,48 +1392,59 @@ class FindingViewSet(BaseRLSViewSet):
 
     @action(detail=False, methods=["get"], url_name="metadata")
     def metadata(self, request):
+        tenant_id = self.request.tenant_id
         queryset = self.get_queryset()
         filtered_queryset = self.filter_queryset(queryset)
 
-        result = filtered_queryset.aggregate(
-            services=ArrayAgg("resources__service", flat=True, distinct=True),
-            regions=ArrayAgg("resources__region", flat=True, distinct=True),
-            tags=ArrayAgg(
-                JSONObject(
-                    key=F("resources__tags__key"), value=F("resources__tags__value")
-                ),
-                distinct=True,
-                filter=Q(resources__tags__key__isnull=False),
-            ),
-            resource_types=ArrayAgg("resources__type", flat=True, distinct=True),
-        )
-        if result["services"] is None:
-            result["services"] = []
-        if result["regions"] is None:
-            result["regions"] = []
-        if result["regions"] is None:
-            result["regions"] = []
-        if result["resource_types"] is None:
-            result["resource_types"] = []
-        if result["tags"] is None:
-            result["tags"] = []
+        relevant_resources = Resource.objects.filter(
+            tenant_id=tenant_id, findings__in=filtered_queryset
+        ).distinct()
 
-        tags_dict = {}
-        for t in result["tags"]:
-            key, value = t["key"], t["value"]
-            if key not in tags_dict:
-                tags_dict[key] = []
-            tags_dict[key].append(value)
-
-        result["tags"] = tags_dict
-
-        serializer = self.get_serializer(
-            data=result,
+        services = (
+            relevant_resources.values_list("service", flat=True)
+            .distinct()
+            .order_by("service")
         )
 
+        regions = (
+            relevant_resources.exclude(region="")
+            .values_list("region", flat=True)
+            .distinct()
+            .order_by("region")
+        )
+
+        resource_types = (
+            relevant_resources.values_list("type", flat=True)
+            .distinct()
+            .order_by("type")
+        )
+
+        # Temporarily disabled until we implement tag filtering in the UI
+        # tag_data = (
+        #     relevant_resources
+        #     .filter(tags__key__isnull=False, tags__value__isnull=False)
+        #     .exclude(tags__key="")
+        #     .exclude(tags__value="")
+        #     .values("tags__key", "tags__value")
+        #     .distinct()
+        #     .order_by("tags__key", "tags__value")
+        # )
+        #
+        # tags_dict = {}
+        # for row in tag_data:
+        #     k, v = row["tags__key"], row["tags__value"]
+        #     tags_dict.setdefault(k, []).append(v)
+
+        result = {
+            "services": list(services),
+            "regions": list(regions),
+            "resource_types": list(resource_types),
+            # "tags": tags_dict
+        }
+
+        serializer = self.get_serializer(data=result)
         serializer.is_valid(raise_exception=True)
-
-        return Response(data=serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @extend_schema_view(

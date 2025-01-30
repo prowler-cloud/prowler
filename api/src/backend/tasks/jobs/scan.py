@@ -152,6 +152,9 @@ def perform_prowler_scan(
 
         for progress, findings in prowler_scan.scan():
             for finding in findings:
+                if finding is None:
+                    logger.error(f"None finding detected on scan {scan_id}.")
+                    continue
                 for attempt in range(CELERY_DEADLOCK_ATTEMPTS):
                     try:
                         with rls_transaction(tenant_id):
@@ -176,7 +179,10 @@ def perform_prowler_scan(
 
                         # Update resource fields if necessary
                         updated_fields = []
-                        if resource_instance.region != finding.region:
+                        if (
+                            finding.region
+                            and resource_instance.region != finding.region
+                        ):
                             resource_instance.region = finding.region
                             updated_fields.append("region")
                         if resource_instance.service != finding.service_name:
