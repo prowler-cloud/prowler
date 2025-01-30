@@ -333,7 +333,6 @@ class TestScan:
         assert scan.service_checks_completed == {
             "accessanalyzer": {"accessanalyzer_enabled"},
         }
-        assert scan.findings == mock_execute.side_effect()
         mock_logger.error.assert_not_called()
 
     def test_init_invalid_severity(

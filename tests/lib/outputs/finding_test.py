@@ -1,6 +1,9 @@
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 
+import pytest
+from pydantic import ValidationError
+
 from prowler.lib.check.models import (
     CheckMetadata,
     Code,
@@ -417,3 +420,44 @@ class TestFinding:
         assert metadata is not None
         assert isinstance(metadata, dict)
         self.assert_keys_lowercase(metadata)
+
+    @patch(
+        "prowler.lib.outputs.finding.get_check_compliance",
+        new=mock_get_check_compliance,
+    )
+    def test_generate_output_validation_error(self):
+        # Mock provider
+        provider = MagicMock()
+        provider.type = "aws"
+        provider.identity.profile = "mock_auth"
+        provider.identity.account = "mock_account_uid"
+        provider.identity.partition = "aws"
+        provider.organizations_metadata.account_name = "mock_account_name"
+        provider.organizations_metadata.account_email = "mock_account_email"
+        provider.organizations_metadata.organization_arn = "mock_account_org_uid"
+        provider.organizations_metadata.organization_id = "mock_account_org_name"
+        provider.organizations_metadata.account_tags = {"tag1": "value1"}
+
+        # Mock check result
+        check_output = MagicMock()
+        check_output.resource_id = "test_resource_id"
+        check_output.resource_arn = "test_resource_arn"
+        check_output.resource_details = "test_resource_details"
+        check_output.resource_tags = {"tag1": "value1"}
+        check_output.region = "us-west-1"
+        check_output.partition = "aws"
+        check_output.status_extended = "mock_status_extended"
+        check_output.muted = False
+        check_output.check_metadata = mock_check_metadata(provider="aws")
+        check_output.resource = {}
+
+        # Mock output options
+        output_options = MagicMock()
+        output_options.unix_timestamp = False
+
+        # Bad Status Value
+        check_output.status = "Invalid"
+
+        # Generate the finding
+        with pytest.raises(ValidationError):
+            Finding.generate_output(provider, check_output, output_options)

@@ -23,7 +23,7 @@ packages = [
   {include = "dashboard"}
 ]
 readme = "README.md"
-version = "5.2.0"
+version = "5.3.0"
 
 [tool.poetry.dependencies]
 alive-progress = "3.2.0"
@@ -46,8 +46,8 @@ azure-mgmt-security = "7.0.0"
 azure-mgmt-sql = "3.0.1"
 azure-mgmt-storage = "21.2.1"
 azure-mgmt-subscription = "3.1.1"
-azure-mgmt-web = "7.3.1"
-azure-storage-blob = "12.24.0"
+azure-mgmt-web = "8.0.0"
+azure-storage-blob = "12.24.1"
 boto3 = "1.35.99"
 botocore = "1.35.99"
 colorama = "0.4.6"
@@ -60,7 +60,7 @@ google-auth-httplib2 = ">=0.1,<0.3"
 jsonschema = "4.23.0"
 kubernetes = "31.0.0"
 microsoft-kiota-abstractions = "1.6.8"
-msgraph-sdk = "1.17.0"
+msgraph-sdk = "1.18.0"
 numpy = "2.0.2"
 pandas = "2.2.3"
 py-ocsf-models = "0.2.0"

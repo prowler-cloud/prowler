@@ -10,8 +10,8 @@ from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.search import SearchQuery
 from django.db import transaction
 from django.db.models import Count, F, OuterRef, Prefetch, Q, Subquery, Sum
-from django.db.models.functions import JSONObject
 from django.http import HttpResponse
+from django.db.models.functions import Coalesce, JSONObject
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_control
@@ -81,7 +81,6 @@ from api.models import (
     ScanSummary,
     SeverityChoices,
     StateChoices,
-    StatusChoices,
     Task,
     User,
     UserRoleRelationship,
@@ -203,7 +202,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.2.0"
+        spectacular_settings.VERSION = "1.3.1"
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -1412,9 +1411,8 @@ class FindingViewSet(BaseRLSViewSet):
     }
     http_method_names = ["get"]
     filterset_class = FindingFilter
-    ordering = ["-id"]
+    ordering = ["-inserted_at"]
     ordering_fields = [
-        "id",
         "status",
         "severity",
         "check_id",
@@ -2105,68 +2103,53 @@ class OverviewViewSet(BaseRLSViewSet):
     @action(detail=False, methods=["get"], url_name="providers")
     def providers(self, request):
         tenant_id = self.request.tenant_id
-        # Subquery to get the most recent finding for each uid
-        latest_finding_ids = (
-            Finding.objects.filter(
+
+        latest_scan_ids = (
+            Scan.objects.filter(
                 tenant_id=tenant_id,
-                uid=OuterRef("uid"),
-                scan__provider=OuterRef("scan__provider"),
+                state=StateChoices.COMPLETED,
             )
-            .order_by("-id")  # Most recent by id
-            .values("id")[:1]
+            .order_by("provider_id", "-inserted_at")
+            .distinct("provider_id")
+            .values_list("id", flat=True)
         )
 
-        # Filter findings to only include the most recent for each uid
-        recent_findings = Finding.objects.filter(
-            tenant_id=tenant_id, id__in=Subquery(latest_finding_ids)
-        )
-
-        # Aggregate findings by provider
         findings_aggregated = (
-            recent_findings.values("scan__provider__provider")
+            ScanSummary.objects.filter(tenant_id=tenant_id, scan_id__in=latest_scan_ids)
+            .values("scan__provider__provider")
             .annotate(
-                findings_passed=Count("id", filter=Q(status=StatusChoices.PASS.value)),
-                findings_failed=Count("id", filter=Q(status=StatusChoices.FAIL.value)),
-                findings_manual=Count(
-                    "id", filter=Q(status=StatusChoices.MANUAL.value)
-                ),
-                total_findings=Count("id"),
+                findings_passed=Coalesce(Sum("_pass"), 0),
+                findings_failed=Coalesce(Sum("fail"), 0),
+                findings_muted=Coalesce(Sum("muted"), 0),
+                total_findings=Coalesce(Sum("total"), 0),
             )
-            .order_by("-findings_failed")
         )
 
-        # Aggregate total resources by provider
         resources_aggregated = (
             Resource.objects.filter(tenant_id=tenant_id)
             .values("provider__provider")
             .annotate(total_resources=Count("id"))
         )
+        resources_dict = {
+            row["provider__provider"]: row["total_resources"]
+            for row in resources_aggregated
+        }
 
-        # Combine findings and resources data
         overview = []
-        for findings in findings_aggregated:
-            provider = findings["scan__provider__provider"]
-            total_resources = next(
-                (
-                    res["total_resources"]
-                    for res in resources_aggregated
-                    if res["provider__provider"] == provider
-                ),
-                0,
-            )
+        for row in findings_aggregated:
+            provider_type = row["scan__provider__provider"]
             overview.append(
                 {
-                    "provider": provider,
-                    "total_resources": total_resources,
-                    "total_findings": findings["total_findings"],
-                    "findings_passed": findings["findings_passed"],
-                    "findings_failed": findings["findings_failed"],
-                    "findings_manual": findings["findings_manual"],
+                    "provider": provider_type,
+                    "total_resources": resources_dict.get(provider_type, 0),
+                    "total_findings": row["total_findings"],
+                    "findings_passed": row["findings_passed"],
+                    "findings_failed": row["findings_failed"],
+                    "findings_muted": row["findings_muted"],
                 }
             )
 
         serializer = OverviewProviderSerializer(overview, many=True)
-
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["get"], url_name="findings")
@@ -2181,7 +2164,7 @@ class OverviewViewSet(BaseRLSViewSet):
                 state=StateChoices.COMPLETED,
                 provider_id=OuterRef("scan__provider_id"),
             )
-            .order_by("-id")
+            .order_by("-inserted_at")
             .values("id")[:1]
         )
 
@@ -2226,7 +2209,7 @@ class OverviewViewSet(BaseRLSViewSet):
                 state=StateChoices.COMPLETED,
                 provider_id=OuterRef("scan__provider_id"),
             )
-            .order_by("-id")
+            .order_by("-inserted_at")
             .values("id")[:1]
         )
 
@@ -2262,7 +2245,7 @@ class OverviewViewSet(BaseRLSViewSet):
                 state=StateChoices.COMPLETED,
                 provider_id=OuterRef("scan__provider_id"),
             )
-            .order_by("-id")
+            .order_by("-inserted_at")
             .values("id")[:1]
         )
 
