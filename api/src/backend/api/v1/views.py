@@ -1,10 +1,17 @@
+import glob
+import os
+
+import boto3
+from botocore.exceptions import ClientError, NoCredentialsError, ParamValidationError
 from celery.result import AsyncResult
+from config.env import env
 from django.conf import settings as django_settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.search import SearchQuery
 from django.db import transaction
 from django.db.models import Count, F, OuterRef, Prefetch, Q, Subquery, Sum
 from django.db.models.functions import JSONObject
+from django.http import HttpResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_control
@@ -115,6 +122,7 @@ from api.v1.serializers import (
     RoleSerializer,
     RoleUpdateSerializer,
     ScanCreateSerializer,
+    ScanReportSerializer,
     ScanSerializer,
     ScanUpdateSerializer,
     ScheduleDailyCreateSerializer,
@@ -127,6 +135,7 @@ from api.v1.serializers import (
     UserSerializer,
     UserUpdateSerializer,
 )
+from prowler.config.config import tmp_output_directory
 
 CACHE_DECORATOR = cache_control(
     max_age=django_settings.CACHE_MAX_AGE,
@@ -1074,6 +1083,8 @@ class ScanViewSet(BaseRLSViewSet):
             return ScanCreateSerializer
         elif self.action == "partial_update":
             return ScanUpdateSerializer
+        elif self.action == "report":
+            return ScanReportSerializer
         return super().get_serializer_class()
 
     def partial_update(self, request, *args, **kwargs):
@@ -1127,6 +1138,101 @@ class ScanViewSet(BaseRLSViewSet):
                 )
             },
         )
+
+    @extend_schema(
+        tags=["Scan"],
+        summary="Download ZIP report",
+        description="Returns a ZIP file containing the requested report",
+        request=ScanReportSerializer,
+        responses={
+            200: OpenApiResponse(description="Report obtanined successfully"),
+            404: OpenApiResponse(description="Report not found"),
+        },
+    )
+    @action(detail=True, methods=["get"], url_name="report")
+    def report(self, request, pk=None):
+        s3_client = None
+        try:
+            s3_client = boto3.client("s3")
+            s3_client.list_buckets()
+        except (ClientError, NoCredentialsError, ParamValidationError):
+            try:
+                s3_client = boto3.client(
+                    "s3",
+                    aws_access_key_id=env.str("ARTIFACTS_AWS_ACCESS_KEY_ID"),
+                    aws_secret_access_key=env.str("ARTIFACTS_AWS_SECRET_ACCESS_KEY"),
+                    aws_session_token=env.str("ARTIFACTS_AWS_SESSION_TOKEN"),
+                    region_name=env.str("ARTIFACTS_AWS_DEFAULT_REGION"),
+                )
+                s3_client.list_buckets()
+            except (ClientError, NoCredentialsError, ParamValidationError) as e:
+                s3_client = None
+
+        if s3_client:
+            bucket_name = env.str("ARTIFACTS_AWS_S3_OUTPUT_BUCKET")
+            s3_prefix = f"{request.tenant_id}/{pk}/"
+
+            try:
+                response = s3_client.list_objects_v2(
+                    Bucket=bucket_name, Prefix=s3_prefix
+                )
+                if response["KeyCount"] == 0:
+                    return Response(
+                        {"detail": "No files found in S3 storage"},
+                        status=status.HTTP_404_NOT_FOUND,
+                    )
+
+                zip_files = [
+                    obj["Key"]
+                    for obj in response.get("Contents", [])
+                    if obj["Key"].endswith(".zip")
+                ]
+                if not zip_files:
+                    return Response(
+                        {"detail": "No ZIP files found in S3 storage"},
+                        status=status.HTTP_404_NOT_FOUND,
+                    )
+
+                s3_key = zip_files[0]
+                s3_object = s3_client.get_object(Bucket=bucket_name, Key=s3_key)
+                file_content = s3_object["Body"].read()
+                filename = os.path.basename(s3_key)
+
+            except ClientError:
+                return Response(
+                    {"detail": "Error accessing cloud storage"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+
+        else:
+            local_path = os.path.join(
+                tmp_output_directory,
+                str(request.tenant_id),
+                str(pk),
+                "*.zip",
+            )
+            zip_files = glob.glob(local_path)
+            if not zip_files:
+                return Response(
+                    {"detail": "No local files found"}, status=status.HTTP_404_NOT_FOUND
+                )
+
+            try:
+                file_path = zip_files[0]
+                with open(file_path, "rb") as f:
+                    file_content = f.read()
+                filename = os.path.basename(file_path)
+            except IOError:
+                return Response(
+                    {"detail": "Error reading local file"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+
+        response = HttpResponse(
+            file_content, content_type="application/x-zip-compressed"
+        )
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        return response
 
 
 @extend_schema_view(

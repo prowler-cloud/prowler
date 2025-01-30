@@ -58,6 +58,7 @@ aws_services_json_file = "aws_regions_by_service.json"
 # gcp_zones_json_file = "gcp_zones.json"
 
 default_output_directory = getcwd() + "/output"
+tmp_output_directory = "/tmp/prowler_api_output"
 output_file_timestamp = timestamp.strftime("%Y%m%d%H%M%S")
 timestamp_iso = timestamp.isoformat(sep=" ", timespec="seconds")
 csv_file_suffix = ".csv"

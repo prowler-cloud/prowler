@@ -4235,6 +4235,38 @@ paths:
               schema:
                 $ref: '#/components/schemas/ScanUpdateResponse'
           description: ''
+  /api/v1/scans/{id}/report:
+    get:
+      operationId: scans_report_retrieve
+      description: Returns a ZIP file containing the requested report
+      summary: Download ZIP report
+      parameters:
+      - in: query
+        name: fields[scans]
+        schema:
+          type: array
+          items:
+            type: string
+            enum: []
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scan.
+        required: true
+      tags:
+      - Scan
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: Report obtanined successfully
+        '404':
+          description: Report not found
   /api/v1/schedules/daily:
     post:
       operationId: schedules_daily_create

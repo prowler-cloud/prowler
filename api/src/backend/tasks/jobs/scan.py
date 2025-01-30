@@ -1,8 +1,13 @@
+import os
 import time
+import zipfile
 from copy import deepcopy
 from datetime import datetime, timezone
 
+import boto3
+from botocore.exceptions import ClientError
 from celery.utils.log import get_task_logger
+from config.env import env
 from config.settings.celery import CELERY_DEADLOCK_ATTEMPTS
 from django.db import IntegrityError, OperationalError
 from django.db.models import Case, Count, IntegerField, Sum, When
@@ -25,15 +30,117 @@ from api.models import (
 from api.models import StatusChoices as FindingStatus
 from api.utils import initialize_prowler_provider
 from api.v1.serializers import ScanTaskSerializer
+from prowler.config.config import (
+    csv_file_suffix,
+    html_file_suffix,
+    json_asff_file_suffix,
+    json_ocsf_file_suffix,
+    output_file_timestamp,
+    tmp_output_directory,
+)
+from prowler.lib.outputs.asff.asff import ASFF
+from prowler.lib.outputs.csv.csv import CSV
 from prowler.lib.outputs.finding import Finding as ProwlerFinding
+from prowler.lib.outputs.html.html import HTML
+from prowler.lib.outputs.ocsf.ocsf import OCSF
 from prowler.lib.scan.scan import Scan as ProwlerScan
 
 logger = get_task_logger(__name__)
 
+# Predefined mapping for output formats and their configurations
+OUTPUT_FORMATS_MAPPING = {
+    "csv": {
+        "class": CSV,
+        "suffix": csv_file_suffix,
+        "kwargs": {},
+    },
+    "json-asff": {"class": ASFF, "suffix": json_asff_file_suffix, "kwargs": {}},
+    "json-ocsf": {"class": OCSF, "suffix": json_ocsf_file_suffix, "kwargs": {}},
+    "html": {"class": HTML, "suffix": html_file_suffix, "kwargs": {"stats": {}}},
+}
+
+# Mapping provider types to their identity components for output paths
+PROVIDER_IDENTITY_MAP = {
+    "aws": lambda p: p.identity.account,
+    "azure": lambda p: p.identity.tenant_domain,
+    "gcp": lambda p: p.identity.profile,
+    "kubernetes": lambda p: p.identity.context.replace(":", "_").replace("/", "_"),
+}
+
+
+def _compress_output_files(output_directory: str) -> str:
+    """
+    Compress output files from all configured output formats into a ZIP archive.
+
+    Args:
+        output_directory (str): The directory where the output files are located.
+            The function looks up all known suffixes in OUTPUT_FORMATS_MAPPING
+            and compresses those files into a single ZIP.
+
+    Returns:
+        str: The full path to the newly created ZIP archive.
+    """
+    zip_path = f"{output_directory}.zip"
+
+    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
+        for suffix in [config["suffix"] for config in OUTPUT_FORMATS_MAPPING.values()]:
+            zipf.write(
+                f"{output_directory}{suffix}",
+                f"artifacts/{output_directory.split('/')[-1]}{suffix}",
+            )
+
+    return zip_path
+
+
+def _upload_to_s3(tenant_id: str, zip_path: str, scan_id: str) -> str:
+    """
+    Upload the specified ZIP file to an S3 bucket.
+
+    If the S3 bucket environment variables are not configured,
+    the function returns None without performing an upload.
+
+    Args:
+        tenant_id (str): The tenant identifier, used as part of the S3 key prefix.
+        zip_path (str): The local file system path to the ZIP file to be uploaded.
+        scan_id (str): The scan identifier, used as part of the S3 key prefix.
+
+    Returns:
+        str: The S3 URI of the uploaded file (e.g., "s3://<bucket>/<key>") if successful.
+        None: If the required environment variables for the S3 bucket are not set.
+
+    Raises:
+        botocore.exceptions.ClientError: If the upload attempt to S3 fails for any reason.
+    """
+    if not env.str("ARTIFACTS_AWS_S3_OUTPUT_BUCKET", ""):
+        return
+
+    if env.str("ARTIFACTS_AWS_ACCESS_KEY_ID", ""):
+        s3 = boto3.client(
+            "s3",
+            aws_access_key_id=env.str("ARTIFACTS_AWS_ACCESS_KEY_ID"),
+            aws_secret_access_key=env.str("ARTIFACTS_AWS_SECRET_ACCESS_KEY"),
+            aws_session_token=env.str("ARTIFACTS_AWS_SESSION_TOKEN"),
+            region_name=env.str("ARTIFACTS_AWS_DEFAULT_REGION"),
+        )
+    else:
+        s3 = boto3.client("s3")
+
+    s3_key = f"{tenant_id}/{scan_id}/{os.path.basename(zip_path)}"
+    try:
+        s3.upload_file(
+            Filename=zip_path,
+            Bucket=env.str("ARTIFACTS_AWS_S3_OUTPUT_BUCKET"),
+            Key=s3_key,
+        )
+        return f"s3://{env.str("ARTIFACTS_AWS_S3_OUTPUT_BUCKET")}/{s3_key}"
+    except ClientError as e:
+        logger.error(f"S3 upload failed: {str(e)}")
+        raise e
+
 
 def _create_finding_delta(
     last_status: FindingStatus | None | str, new_status: FindingStatus | None
-) -> Finding.DeltaChoices:
+) -> Finding.DeltaChoices | None:
     """
     Determine the delta status of a finding based on its previous and current status.
 
@@ -53,7 +160,11 @@ def _create_finding_delta(
 
 
 def _store_resources(
-    finding: ProwlerFinding, tenant_id: str, provider_instance: Provider
+    finding: ProwlerFinding,
+    tenant_id: str,
+    provider_instance: Provider,
+    resource_cache: dict,
+    tag_cache: dict,
 ) -> tuple[Resource, tuple[str, str]]:
     """
     Store resource information from a finding, including tags, in the database.
@@ -65,40 +176,91 @@ def _store_resources(
 
     Returns:
         tuple:
-            - Resource: The resource instance created or retrieved from the database.
+            - Resource: The resource instance created or updated from the database.
             - tuple[str, str]: A tuple containing the resource UID and region.
 
     """
-    with rls_transaction(tenant_id):
-        resource_instance, created = Resource.objects.get_or_create(
-            tenant_id=tenant_id,
-            provider=provider_instance,
-            uid=finding.resource_uid,
-            defaults={
-                "region": finding.region,
-                "service": finding.service_name,
-                "type": finding.resource_type,
-            },
-        )
+    resource_uid = finding.resource_uid
 
-        if not created:
-            resource_instance.region = finding.region
-            resource_instance.service = finding.service_name
-            resource_instance.type = finding.resource_type
-            resource_instance.save()
+    # Check cache or create/update resource
+    if resource_uid in resource_cache:
+        resource_instance = resource_cache[resource_uid]
+        update_fields = []
+        for field, value in [
+            ("region", finding.region),
+            ("service", finding.service_name),
+            ("type", finding.resource_type),
+            ("name", finding.resource_name),
+        ]:
+            if getattr(resource_instance, field) != value:
+                setattr(resource_instance, field, value)
+                update_fields.append(field)
+        if update_fields:
+            with rls_transaction(tenant_id):
+                resource_instance.save(update_fields=update_fields)
+    else:
+        with rls_transaction(tenant_id):
+            resource_instance, _ = Resource.objects.update_or_create(
+                tenant_id=tenant_id,
+                provider=provider_instance,
+                uid=resource_uid,
+                defaults={
+                    "region": finding.region,
+                    "service": finding.service_name,
+                    "type": finding.resource_type,
+                    "name": finding.resource_name,
+                },
+            )
+        resource_cache[resource_uid] = resource_instance
+
+    # Process tags with caching
+    tags = []
+    for key, value in finding.resource_tags.items():
+        tag_key = (key, value)
+        if tag_key not in tag_cache:
+            with rls_transaction(tenant_id):
+                tag_instance, _ = ResourceTag.objects.get_or_create(
+                    tenant_id=tenant_id, key=key, value=value
+                )
+                tag_cache[tag_key] = tag_instance
+        tags.append(tag_cache[tag_key])
+
     with rls_transaction(tenant_id):
-        tags = [
-            ResourceTag.objects.get_or_create(
-                tenant_id=tenant_id, key=key, value=value
-            )[0]
-            for key, value in finding.resource_tags.items()
-        ]
         resource_instance.upsert_or_delete_tags(tags=tags)
+
     return resource_instance, (resource_instance.uid, resource_instance.region)
 
 
+def _generate_output_directory(
+    prowler_provider: object, tenant_id: str, scan_id: str
+) -> str:
+    """
+    Generate a dynamic output directory path based on the given provider type.
+
+    Args:
+        prowler_provider (object): An object that has a `type` attribute indicating
+            the provider type (e.g., "aws", "azure", etc.).
+        tenant_id (str): A unique identifier for the tenant. Used to build the output path.
+        scan_id (str): A unique identifier for the scan. Included in the output path.
+
+    Returns:
+        str: The complete path to the output directory, including the tenant ID, scan ID,
+            provider identity, and a timestamp.
+
+    """
+    provider_type = prowler_provider.type
+    get_identity = PROVIDER_IDENTITY_MAP.get(provider_type, lambda _: "unknown")
+    return (
+        f"{tmp_output_directory}/{tenant_id}/{scan_id}/prowler-output-"
+        f"{get_identity(prowler_provider)}-{output_file_timestamp}"
+    )
+
+
 def perform_prowler_scan(
-    tenant_id: str, scan_id: str, provider_id: str, checks_to_execute: list[str] = None
+    tenant_id: str,
+    scan_id: str,
+    provider_id: str,
+    checks_to_execute: list[str] = None,
 ):
     """
     Perform a scan using Prowler and store the findings and resources in the database.
@@ -120,6 +282,9 @@ def perform_prowler_scan(
     exception = None
     unique_resources = set()
     start_time = time.time()
+    resource_cache = {}
+    tag_cache = {}
+    last_status_cache = {}
 
     with rls_transaction(tenant_id):
         provider_instance = Provider.objects.get(pk=provider_id)
@@ -129,6 +294,7 @@ def perform_prowler_scan(
         scan_instance.save()
 
     try:
+        # Provider initialization
         with rls_transaction(tenant_id):
             try:
                 prowler_provider = initialize_prowler_provider(provider_instance)
@@ -144,105 +310,66 @@ def perform_prowler_scan(
                 )
                 provider_instance.save()
 
-        prowler_scan = ProwlerScan(provider=prowler_provider, checks=checks_to_execute)
+        # Scan configuration
+        prowler_scan = ProwlerScan(
+            provider=prowler_provider, checks=checks_to_execute or []
+        )
+        output_directory = _generate_output_directory(
+            prowler_provider, tenant_id, scan_id
+        )
+        os.makedirs("/".join(output_directory.split("/")[:-1]), exist_ok=True)
 
-        resource_cache = {}
-        tag_cache = {}
-        last_status_cache = {}
+        all_findings = []
 
-        for progress, findings in prowler_scan.scan():
+        # Main scan loop
+        for progress, findings, stats in prowler_scan.scan():
+            # Process findings
             for finding in findings:
+                # Resource processing with retries
                 for attempt in range(CELERY_DEADLOCK_ATTEMPTS):
                     try:
-                        with rls_transaction(tenant_id):
-                            # Process resource
-                            resource_uid = finding.resource_uid
-                            if resource_uid not in resource_cache:
-                                # Get or create the resource
-                                resource_instance, _ = Resource.objects.get_or_create(
-                                    tenant_id=tenant_id,
-                                    provider=provider_instance,
-                                    uid=resource_uid,
-                                    defaults={
-                                        "region": finding.region,
-                                        "service": finding.service_name,
-                                        "type": finding.resource_type,
-                                        "name": finding.resource_name,
-                                    },
-                                )
-                                resource_cache[resource_uid] = resource_instance
-                            else:
-                                resource_instance = resource_cache[resource_uid]
-
-                        # Update resource fields if necessary
-                        updated_fields = []
-                        if resource_instance.region != finding.region:
-                            resource_instance.region = finding.region
-                            updated_fields.append("region")
-                        if resource_instance.service != finding.service_name:
-                            resource_instance.service = finding.service_name
-                            updated_fields.append("service")
-                        if resource_instance.type != finding.resource_type:
-                            resource_instance.type = finding.resource_type
-                            updated_fields.append("type")
-                        if updated_fields:
-                            with rls_transaction(tenant_id):
-                                resource_instance.save(update_fields=updated_fields)
+                        resource_instance, resource_uid_region = _store_resources(
+                            finding,
+                            tenant_id,
+                            provider_instance,
+                            resource_cache,
+                            tag_cache,
+                        )
+                        unique_resources.add(resource_uid_region)
+                        break
                     except (OperationalError, IntegrityError) as db_err:
                         if attempt < CELERY_DEADLOCK_ATTEMPTS - 1:
                             logger.warning(
-                                f"{'Deadlock error' if isinstance(db_err, OperationalError) else 'Integrity error'} "
-                                f"detected when processing resource {resource_uid} on scan {scan_id}. Retrying..."
+                                f"Database error ({type(db_err).__name__}) "
+                                f"processing resource {finding.resource_uid}, retrying..."
                             )
                             time.sleep(0.1 * (2**attempt))
-                            continue
                         else:
                             raise db_err
 
-                # Update tags
-                tags = []
-                with rls_transaction(tenant_id):
-                    for key, value in finding.resource_tags.items():
-                        tag_key = (key, value)
-                        if tag_key not in tag_cache:
-                            tag_instance, _ = ResourceTag.objects.get_or_create(
-                                tenant_id=tenant_id, key=key, value=value
-                            )
-                            tag_cache[tag_key] = tag_instance
-                        else:
-                            tag_instance = tag_cache[tag_key]
-                        tags.append(tag_instance)
-                    resource_instance.upsert_or_delete_tags(tags=tags)
-
-                unique_resources.add((resource_instance.uid, resource_instance.region))
-
-                # Process finding
+                # Finding processing
                 with rls_transaction(tenant_id):
                     finding_uid = finding.uid
-                    last_first_seen_at = None
                     if finding_uid not in last_status_cache:
-                        most_recent_finding = (
+                        most_recent = (
                             Finding.objects.filter(uid=finding_uid)
                             .order_by("-id")
                             .values("status", "first_seen_at")
                             .first()
                         )
-                        last_status = None
-                        if most_recent_finding:
-                            last_status = most_recent_finding["status"]
-                            last_first_seen_at = most_recent_finding["first_seen_at"]
-                        last_status_cache[finding_uid] = last_status, last_first_seen_at
+                        last_status, first_seen = (
+                            (most_recent["status"], most_recent["first_seen_at"])
+                            if most_recent
+                            else (None, None)
+                        )
+                        last_status_cache[finding_uid] = (last_status, first_seen)
                     else:
-                        last_status, last_first_seen_at = last_status_cache[finding_uid]
+                        last_status, first_seen = last_status_cache[finding_uid]
 
                     status = FindingStatus[finding.status]
                     delta = _create_finding_delta(last_status, status)
-                    # For the findings prior to the change, when a first finding is found with delta!="new" it will be assigned a current date as first_seen_at and the successive findings with the same UID will always get the date of the previous finding.
-                    # For new findings, when a finding (delta="new") is found for the first time, the first_seen_at attribute will be assigned the current date, the following findings will get that date.
-                    if not last_first_seen_at:
-                        last_first_seen_at = datetime.now(tz=timezone.utc)
+                    first_seen = first_seen or datetime.now(tz=timezone.utc)
 
-                    # Create the finding
                     finding_instance = Finding.objects.create(
                         tenant_id=tenant_id,
                         uid=finding_uid,
@@ -255,92 +382,96 @@ def perform_prowler_scan(
                         raw_result=finding.raw,
                         check_id=finding.check_id,
                         scan=scan_instance,
-                        first_seen_at=last_first_seen_at,
+                        first_seen_at=first_seen,
                     )
                     finding_instance.add_resources([resource_instance])
 
-                # Update compliance data if applicable
-                if finding.status.value == "MUTED":
-                    continue
+                # Update compliance status
+                if finding.status.value != "MUTED":
+                    region_data = check_status_by_region.setdefault(finding.region, {})
+                    if region_data.get(finding.check_id) != "FAIL":
+                        region_data[finding.check_id] = finding.status.value
 
-                region_dict = check_status_by_region.setdefault(finding.region, {})
-                current_status = region_dict.get(finding.check_id)
-                if current_status == "FAIL":
-                    continue
-                region_dict[finding.check_id] = finding.status.value
-
-            # Update scan progress
+            # Progress updates and output generation
             with rls_transaction(tenant_id):
                 scan_instance.progress = progress
                 scan_instance.save()
 
+            all_findings.extend(findings)
+
+        # Generate output files
+        for mode, config in OUTPUT_FORMATS_MAPPING.items():
+            kwargs = dict(config["kwargs"])
+            if mode == "html":
+                kwargs["provider"] = prowler_provider
+                kwargs["stats"] = stats
+            config["class"](
+                findings=all_findings,
+                create_file_descriptor=True,
+                file_path=output_directory,
+                file_extension=config["suffix"],
+            ).batch_write_data_to_file(**kwargs)
+
         scan_instance.state = StateChoices.COMPLETED
 
+        # Compress output files
+        zip_path = _compress_output_files(output_directory)
+
+        # Save to configured storage
+        _upload_to_s3(tenant_id, zip_path, scan_id)
+
     except Exception as e:
-        logger.error(f"Error performing scan {scan_id}: {e}")
+        logger.error(f"Scan {scan_id} failed: {str(e)}")
         exception = e
         scan_instance.state = StateChoices.FAILED
 
     finally:
+        # Final scan updates
         with rls_transaction(tenant_id):
             scan_instance.duration = time.time() - start_time
             scan_instance.completed_at = datetime.now(tz=timezone.utc)
             scan_instance.unique_resource_count = len(unique_resources)
             scan_instance.save()
 
-    if exception is None:
-        try:
-            regions = prowler_provider.get_regions()
-        except AttributeError:
-            regions = set()
-
+    # Compliance processing
+    if not exception:
         compliance_template = PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE[
             provider_instance.provider
         ]
-        compliance_overview_by_region = {
-            region: deepcopy(compliance_template) for region in regions
+        compliance_overview = {
+            region: deepcopy(compliance_template)
+            for region in getattr(prowler_provider, "get_regions", lambda: set())()
         }
 
-        for region, check_status in check_status_by_region.items():
-            compliance_data = compliance_overview_by_region.setdefault(
-                region, deepcopy(compliance_template)
-            )
-            for check_name, status in check_status.items():
+        for region, checks in check_status_by_region.items():
+            for check_id, status in checks.items():
                 generate_scan_compliance(
-                    compliance_data,
+                    compliance_overview.setdefault(
+                        region, deepcopy(compliance_template)
+                    ),
                     provider_instance.provider,
-                    check_name,
+                    check_id,
                     status,
                 )
 
-        # Prepare compliance overview objects
-        compliance_overview_objects = []
-        for region, compliance_data in compliance_overview_by_region.items():
-            for compliance_id, compliance in compliance_data.items():
-                compliance_overview_objects.append(
-                    ComplianceOverview(
-                        tenant_id=tenant_id,
-                        scan=scan_instance,
-                        region=region,
-                        compliance_id=compliance_id,
-                        framework=compliance["framework"],
-                        version=compliance["version"],
-                        description=compliance["description"],
-                        requirements=compliance["requirements"],
-                        requirements_passed=compliance["requirements_status"]["passed"],
-                        requirements_failed=compliance["requirements_status"]["failed"],
-                        requirements_manual=compliance["requirements_status"]["manual"],
-                        total_requirements=compliance["total_requirements"],
-                    )
+        ComplianceOverview.objects.bulk_create(
+            [
+                ComplianceOverview(
+                    tenant_id=tenant_id,
+                    scan=scan_instance,
+                    region=region,
+                    compliance_id=compliance_id,
+                    **compliance_data,
                 )
-        with rls_transaction(tenant_id):
-            ComplianceOverview.objects.bulk_create(compliance_overview_objects)
+                for region, data in compliance_overview.items()
+                for compliance_id, compliance_data in data.items()
+            ]
+        )
 
-    if exception is not None:
+    if exception:
         raise exception
 
-    serializer = ScanTaskSerializer(instance=scan_instance)
-    return serializer.data
+    return ScanTaskSerializer(instance=scan_instance).data
 
 
 def aggregate_findings(tenant_id: str, scan_id: str):
@@ -372,124 +503,103 @@ def aggregate_findings(tenant_id: str, scan_id: str):
         - muted_changed: Muted findings with a delta of 'changed'.
     """
     with rls_transaction(tenant_id):
-        findings = Finding.objects.filter(scan_id=scan_id)
-
-        aggregation = findings.values(
-            "check_id",
-            "resources__service",
-            "severity",
-            "resources__region",
-        ).annotate(
-            fail=Sum(
-                Case(
-                    When(status="FAIL", then=1),
-                    default=0,
-                    output_field=IntegerField(),
-                )
-            ),
-            _pass=Sum(
-                Case(
-                    When(status="PASS", then=1),
-                    default=0,
-                    output_field=IntegerField(),
-                )
-            ),
-            muted=Sum(
-                Case(
-                    When(status="MUTED", then=1),
-                    default=0,
-                    output_field=IntegerField(),
-                )
-            ),
-            total=Count("id"),
-            new=Sum(
-                Case(
-                    When(delta="new", then=1),
-                    default=0,
-                    output_field=IntegerField(),
-                )
-            ),
-            changed=Sum(
-                Case(
-                    When(delta="changed", then=1),
-                    default=0,
-                    output_field=IntegerField(),
-                )
-            ),
-            unchanged=Sum(
-                Case(
-                    When(delta__isnull=True, then=1),
-                    default=0,
-                    output_field=IntegerField(),
-                )
-            ),
-            fail_new=Sum(
-                Case(
-                    When(delta="new", status="FAIL", then=1),
-                    default=0,
-                    output_field=IntegerField(),
-                )
-            ),
-            fail_changed=Sum(
-                Case(
-                    When(delta="changed", status="FAIL", then=1),
-                    default=0,
-                    output_field=IntegerField(),
-                )
-            ),
-            pass_new=Sum(
-                Case(
-                    When(delta="new", status="PASS", then=1),
-                    default=0,
-                    output_field=IntegerField(),
-                )
-            ),
-            pass_changed=Sum(
-                Case(
-                    When(delta="changed", status="PASS", then=1),
-                    default=0,
-                    output_field=IntegerField(),
-                )
-            ),
-            muted_new=Sum(
-                Case(
-                    When(delta="new", status="MUTED", then=1),
-                    default=0,
-                    output_field=IntegerField(),
-                )
-            ),
-            muted_changed=Sum(
-                Case(
-                    When(delta="changed", status="MUTED", then=1),
-                    default=0,
-                    output_field=IntegerField(),
-                )
-            ),
+        aggregation = (
+            Finding.objects.filter(scan_id=scan_id)
+            .values(
+                "check_id",
+                "resources__service",
+                "severity",
+                "resources__region",
+            )
+            .annotate(
+                fail=Sum(
+                    Case(
+                        When(status="FAIL", then=1),
+                        default=0,
+                        output_field=IntegerField(),
+                    )
+                ),
+                _pass=Sum(
+                    Case(
+                        When(status="PASS", then=1),
+                        default=0,
+                        output_field=IntegerField(),
+                    )
+                ),
+                muted=Sum(
+                    Case(
+                        When(status="MUTED", then=1),
+                        default=0,
+                        output_field=IntegerField(),
+                    )
+                ),
+                total=Count("id"),
+                new=Sum(
+                    Case(
+                        When(delta="new", then=1),
+                        default=0,
+                        output_field=IntegerField(),
+                    )
+                ),
+                changed=Sum(
+                    Case(
+                        When(delta="changed", then=1),
+                        default=0,
+                        output_field=IntegerField(),
+                    )
+                ),
+                unchanged=Sum(
+                    Case(
+                        When(delta__isnull=True, then=1),
+                        default=0,
+                        output_field=IntegerField(),
+                    )
+                ),
+                **{
+                    f"{status}_new": Sum(
+                        Case(
+                            When(delta="new", status=status.upper(), then=1),
+                            default=0,
+                            output_field=IntegerField(),
+                        )
+                    )
+                    for status in ["fail", "pass", "muted"]
+                },
+                **{
+                    f"{status}_changed": Sum(
+                        Case(
+                            When(delta="changed", status=status.upper(), then=1),
+                            default=0,
+                            output_field=IntegerField(),
+                        )
+                    )
+                    for status in ["fail", "pass", "muted"]
+                },
+            )
         )
 
-    with rls_transaction(tenant_id):
-        scan_aggregations = {
-            ScanSummary(
-                tenant_id=tenant_id,
-                scan_id=scan_id,
-                check_id=agg["check_id"],
-                service=agg["resources__service"],
-                severity=agg["severity"],
-                region=agg["resources__region"],
-                fail=agg["fail"],
-                _pass=agg["_pass"],
-                muted=agg["muted"],
-                total=agg["total"],
-                new=agg["new"],
-                changed=agg["changed"],
-                unchanged=agg["unchanged"],
-                fail_new=agg["fail_new"],
-                fail_changed=agg["fail_changed"],
-                pass_new=agg["pass_new"],
-                pass_changed=agg["pass_changed"],
-                muted_new=agg["muted_new"],
-                muted_changed=agg["muted_changed"],
-            )
-            for agg in aggregation
-        }
-        ScanSummary.objects.bulk_create(scan_aggregations, batch_size=3000)
+        ScanSummary.objects.bulk_create(
+            [
+                ScanSummary(
+                    tenant_id=tenant_id,
+                    scan_id=scan_id,
+                    check_id=agg["check_id"],
+                    service=agg["resources__service"],
+                    severity=agg["severity"],
+                    region=agg["resources__region"],
+                    **{
+                        k: v or 0
+                        for k, v in agg.items()
+                        if k
+                        not in {
+                            "check_id",
+                            "resources__service",
+                            "severity",
+                            "resources__region",
+                        }
+                    },
+                )
+                for agg in aggregation
+            ],
+            batch_size=3000,
+        )

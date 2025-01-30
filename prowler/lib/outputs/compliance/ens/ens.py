@@ -55,9 +55,9 @@ def get_ens_table(
                                     and index not in fail_count
                                 ):
                                     fail_count.append(index)
-                                    marcos[marco_categoria][
-                                        "Estado"
-                                    ] = f"{Fore.RED}NO CUMPLE{Style.RESET_ALL}"
+                                    marcos[marco_categoria]["Estado"] = (
+                                        f"{Fore.RED}NO CUMPLE{Style.RESET_ALL}"
+                                    )
                             elif finding.status == "PASS" and index not in pass_count:
                                 pass_count.append(index)
                         if attribute.Nivel == "opcional":
