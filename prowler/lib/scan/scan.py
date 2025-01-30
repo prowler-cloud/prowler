@@ -1,5 +1,5 @@
 import datetime
-from typing import Dict, Generator, List, Optional, Set, Tuple
+from typing import Dict, Generator, List, Optional, Set
 
 from prowler.lib.check.check import (
     execute,
@@ -255,7 +255,7 @@ class Scan:
             if checks
         }
 
-    def scan(self) -> Generator[Tuple[float, List[Finding], dict], None, None]:
+    def scan(self, custom_checks_metadata: dict = {}) -> Generator[float, List[Finding], dict]:
         """
         Executes the scan by iterating over the checks to execute and executing each check.
         Yields the progress and findings for each check.
@@ -283,7 +283,7 @@ class Scan:
             service = get_service_from_check(check_name)
             try:
                 check_module = self._import_check_module(check_name, service)
-                findings = self._execute_check(check_module, check_name)
+                findings = self._execute_check(check_module, check_name, custom_checks_metadata)
                 filtered_findings = self._filter_findings_by_status(findings)
             except Exception as error:
                 logger.error(f"{check_name} failed: {error}")
@@ -321,10 +321,10 @@ class Scan:
             )
             raise
 
-    def _execute_check(self, check_module, check_name: str) -> List[Finding]:
+    def _execute_check(self, check_module, check_name: str,  custom_checks_metadata: dict = {}) -> List[Finding]:
         """Execute a single check and return its findings."""
         check_func = getattr(check_module, check_name)
-        return execute(check_func(), self._provider, {}, None)
+        return execute(check_func(), self._provider, custom_checks_metadata)
 
     def _filter_findings_by_status(self, findings: List[Finding]) -> List[Finding]:
         """Filter findings based on configured status filters."""

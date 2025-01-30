@@ -1,7 +1,6 @@
 from importlib.machinery import FileFinder
 from pkgutil import ModuleInfo
 from unittest import mock
-
 import pytest
 from mock import MagicMock, patch
 
@@ -196,9 +195,9 @@ class TestScan:
         mock_provider.type = "aws"
         scan = Scan(mock_provider, checks=checks_to_execute)
 
-        assert scan.provider == mock_provider
+        assert scan._provider == mock_provider
         # Check that the checks to execute are sorted and without duplicates
-        assert scan.checks_to_execute == [
+        assert scan._checks_to_execute == [
             "accessanalyzer_enabled",
             "accessanalyzer_enabled_without_findings",
             "account_maintain_current_contact_details",
@@ -258,14 +257,16 @@ class TestScan:
             "config_recorder_all_regions_enabled",
             "workspaces_vpc_2private_1public_subnets_nat",
         ]
-        assert scan.service_checks_to_execute == get_service_checks_mapping(
+        assert scan._service_checks_map == get_service_checks_mapping(
             checks_to_execute
         )
-        assert scan.service_checks_completed == {}
-        assert scan.progress == 0
-        assert scan.duration == 0
-        assert scan.get_completed_services() == set()
-        assert scan.get_completed_checks() == set()
+        assert scan._completed_checks == set()
+        assert scan._progress == 0
+        assert scan._duration == 0
+        all_values = set().union(*scan.remaining_services.values())
+        for check in scan._checks_to_execute:
+            assert check in all_values
+        assert scan.completed_checks == 0
 
     def test_init_with_no_checks(
         mock_provider,
@@ -281,18 +282,24 @@ class TestScan:
         mock_load_checks_to_execute.assert_called_once()
         mock_recover_checks_from_provider.assert_called_once_with("aws")
 
-        assert scan.provider == mock_provider
-        assert scan.checks_to_execute == ["accessanalyzer_enabled"]
-        assert scan.service_checks_to_execute == get_service_checks_mapping(
+        assert scan._provider == mock_provider
+        assert scan._checks_to_execute == ["accessanalyzer_enabled"]
+        assert scan._service_checks_map == get_service_checks_mapping(
             ["accessanalyzer_enabled"]
         )
-        assert scan.service_checks_completed == {}
-        assert scan.progress == 0
-        assert scan.get_completed_services() == set()
-        assert scan.get_completed_checks() == set()
+        assert scan._completed_checks == set()
+        assert scan._progress == 0
+        all_values = set().union(*scan.remaining_services.values())
+        for check in scan._checks_to_execute:
+            assert check in all_values
+        assert scan.completed_checks == 0
 
     @patch("importlib.import_module")
+    @patch("prowler.lib.scan.scan.list_services")
+    @patch("prowler.lib.scan.scan.extract_findings_statistics")
     def test_scan(
+        mock_extract_findings_statistics,
+        mock_list_services,
         mock_import_module,
         mock_global_provider,
         mock_execute,
@@ -328,11 +335,9 @@ class TestScan:
         assert results[0][0] == 100.0
         assert scan.progress == 100.0
         # Since the scan is mocked, the duration will always be 0 for now
-        assert scan.duration == 0
-        assert scan._number_of_checks_completed == 1
-        assert scan.service_checks_completed == {
-            "accessanalyzer": {"accessanalyzer_enabled"},
-        }
+        assert scan._duration == 0
+        assert scan.completed_checks == 1
+        assert scan._completed_checks == {"accessanalyzer_enabled"}
         mock_logger.error.assert_not_called()
 
     def test_init_invalid_severity(
@@ -396,7 +401,9 @@ class TestScan:
             Scan(mock_provider, checks=checks_to_execute, status=["invalid_status"])
 
     @patch("importlib.import_module")
+    @patch("prowler.lib.scan.scan.list_services")
     def test_scan_filter_status(
+        mock_list_services,
         mock_import_module,
         mock_global_provider,
         mock_recover_checks_from_provider,
@@ -422,4 +429,21 @@ class TestScan:
         mock_recover_checks_from_provider.assert_called_once_with("aws")
         results = list(scan.scan(custom_checks_metadata))
 
-        assert results[0] == (100.0, [])
+        assert results[0] == (100.0, [], {
+                "all_fails_are_muted": True,
+                "findings_count": 0,
+                "resources_count": 0,
+                "total_critical_severity_fail": 0,
+                "total_critical_severity_pass": 0,
+                "total_fail": 0,
+                "total_high_severity_fail": 0,
+                "total_high_severity_pass": 0,
+                "total_low_severity_fail": 0,
+                "total_low_severity_pass": 0,
+                "total_medium_severity_fail": 0,
+                "total_medium_severity_pass": 0,
+                "total_muted_fail": 0,
+                "total_muted_pass": 0,
+                "total_pass": 0,
+            },
+        )

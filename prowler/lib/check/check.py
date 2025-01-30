@@ -139,13 +139,9 @@ def remove_custom_checks_module(input_folder: str, provider: str):
 def list_services(provider: str) -> set:
     available_services = set()
     checks_tuple = recover_checks_from_provider(provider)
+    split_character = "\\" if os.name == "nt" else "/"
     for _, check_path in checks_tuple:
-        # Format: /absolute_path/prowler/providers/{provider}/services/{service_name}/{check_name}
-        if os.name == "nt":
-            service_name = check_path.split("\\")[-2]
-        else:
-            service_name = check_path.split("/")[-2]
-        available_services.add(service_name)
+        available_services.add(check_path.split(split_character)[-2])
     return sorted(available_services)
 
 
