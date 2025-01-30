@@ -560,6 +560,7 @@ class Check_Report_Kubernetes(CheckReport):
         self.namespace = getattr(resource, "namespace", "cluster-wide")
 
 
+# TODO: review this logic and add tests
 @dataclass
 class Check_Report_Microsoft365(CheckReport):
     """Contains the Microsoft365 Check's finding information."""
