@@ -551,12 +551,12 @@ class Check_Report_Kubernetes(CheckReport):
 
     def __init__(self, metadata: Dict, resource: Any) -> None:
         super().__init__(metadata, resource)
+        self.resource_name = getattr(resource, "name")
         try:
             self.resource_id = getattr(resource, "uid")
         except AttributeError:
-            self.resource_id = getattr(resource, "name")
+            self.resource_id = self.resource_name
 
-        self.resource_name = getattr(resource, "name")
         self.namespace = getattr(resource, "namespace", "cluster-wide")
 
 

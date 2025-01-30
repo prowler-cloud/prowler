@@ -6,6 +6,7 @@ from prowler.lib.check.models import (
     Check_Report_AWS,
     Check_Report_Azure,
     Check_Report_GCP,
+    Check_Report_Kubernetes,
     CheckMetadata,
     CheckReport,
 )
@@ -561,3 +562,45 @@ class TestCheckReportGCP:
         assert report.resource_name == "test_name"
         assert report.location == "test_region"
         assert report.project_id == "test_project"
+
+
+class TestCheckReportKubernetes:
+    def test_check_report_kubernetes(self):
+        resource = mock.Mock
+        resource.uid = "test_uid"
+        resource.name = "test_name"
+        resource.namespace = "test_namespace"
+        report = Check_Report_Kubernetes(
+            metadata=mock_metadata.json(), resource=resource
+        )
+        assert report.resource_id == "test_uid"
+        assert report.resource_name == "test_name"
+        assert report.namespace == "test_namespace"
+
+    def test_check_report_kubernetes_no_name(self):
+        resource = mock.Mock
+        resource.uid = "test_uid"
+        resource.namespace = "test_namespace"
+        with pytest.raises(AttributeError):
+            Check_Report_Kubernetes(metadata=mock_metadata.json(), resource=resource)
+
+    def test_check_report_kubernetes_no_uid(self):
+        resource = mock.Mock
+        resource.name = "test_name"
+        resource.namespace = "test_namespace"
+        report = Check_Report_Kubernetes(
+            metadata=mock_metadata.json(), resource=resource
+        )
+        assert report.resource_id == "test_name"
+        assert report.resource_name == "test_name"
+        assert report.namespace == "test_namespace"
+
+    def test_check_report_kubernetes_no_namespace(self):
+        resource = mock.Mock
+        resource.name = "test_name"
+        report = Check_Report_Kubernetes(
+            metadata=mock_metadata.json(), resource=resource
+        )
+        assert report.resource_id == "test_name"
+        assert report.resource_name == "test_name"
+        assert report.namespace == "cluster-wide"
