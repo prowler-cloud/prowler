@@ -37,6 +37,7 @@ uuid6 = "2024.7.10"
 [tool.poetry.group.dev.dependencies]
 bandit = "1.7.9"
 coverage = "7.5.4"
+django-silk = "5.3.2"
 docker = "7.1.0"
 freezegun = "1.5.1"
 mypy = "1.10.1"
