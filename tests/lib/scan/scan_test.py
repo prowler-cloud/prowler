@@ -13,7 +13,7 @@ from prowler.lib.scan.exceptions.exceptions import (
     ScanInvalidSeverityError,
     ScanInvalidStatusError,
 )
-from prowler.lib.scan.scan import Scan, get_service_checks_to_execute
+from prowler.lib.scan.scan import Scan, get_service_checks_mapping
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 from tests.providers.aws.utils import set_mocked_aws_provider
 
@@ -258,7 +258,7 @@ class TestScan:
             "config_recorder_all_regions_enabled",
             "workspaces_vpc_2private_1public_subnets_nat",
         ]
-        assert scan.service_checks_to_execute == get_service_checks_to_execute(
+        assert scan.service_checks_to_execute == get_service_checks_mapping(
             checks_to_execute
         )
         assert scan.service_checks_completed == {}
@@ -283,7 +283,7 @@ class TestScan:
 
         assert scan.provider == mock_provider
         assert scan.checks_to_execute == ["accessanalyzer_enabled"]
-        assert scan.service_checks_to_execute == get_service_checks_to_execute(
+        assert scan.service_checks_to_execute == get_service_checks_mapping(
             ["accessanalyzer_enabled"]
         )
         assert scan.service_checks_completed == {}

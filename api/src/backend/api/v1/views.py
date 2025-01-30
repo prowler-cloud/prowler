@@ -1164,7 +1164,7 @@ class ScanViewSet(BaseRLSViewSet):
                     region_name=env.str("ARTIFACTS_AWS_DEFAULT_REGION"),
                 )
                 s3_client.list_buckets()
-            except (ClientError, NoCredentialsError, ParamValidationError) as e:
+            except (ClientError, NoCredentialsError, ParamValidationError):
                 s3_client = None
 
         if s3_client:
