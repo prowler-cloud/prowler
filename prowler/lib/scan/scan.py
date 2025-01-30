@@ -296,12 +296,16 @@ class Scan:
                         self.get_completed_checks(),
                     )
 
-                    findings = [
-                        Finding.generate_output(
-                            self._provider, finding, output_options=None
-                        )
-                        for finding in check_findings
-                    ]
+                    findings = []
+                    for finding in check_findings:
+                        try:
+                            findings.append(
+                                Finding.generate_output(
+                                    self._provider, finding, output_options=None
+                                )
+                            )
+                        except Exception:
+                            continue
 
                     yield self.progress, findings
                 # If check does not exists in the provider or is from another provider
