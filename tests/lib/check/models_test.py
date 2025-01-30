@@ -3,10 +3,10 @@ from unittest import mock
 import pytest
 
 from prowler.lib.check.models import (
-    Check_Report,
     Check_Report_AWS,
     Check_Report_Azure,
     CheckMetadata,
+    CheckReport,
 )
 from tests.lib.check.compliance_check_test import custom_compliance_metadata
 
@@ -335,7 +335,7 @@ class TestCheckMetada:
 class TestCheckReport:
     def test_check_report_resource_dict(self):
         resource = {"id": "test_id"}
-        check_report = Check_Report(metadata=mock_metadata.json(), resource=resource)
+        check_report = CheckReport(metadata=mock_metadata.json(), resource=resource)
         assert check_report.status == ""
         assert check_report.check_metadata == mock_metadata
         assert check_report.resource == resource
@@ -347,7 +347,7 @@ class TestCheckReport:
     # def test_check_report_resource_dict_method(self):
     #     resource = mock.Mock()
     #     resource.dict = lambda: {"id": "test_id"}
-    #     check_report = Check_Report(metadata=mock_metadata.json(), resource=resource)
+    #     check_report = CheckReport(metadata=mock_metadata.json(), resource=resource)
     #     assert check_report.status == ""
     #     assert check_report.check_metadata == mock_metadata
     #     assert check_report.resource == {"id": "test_id"}

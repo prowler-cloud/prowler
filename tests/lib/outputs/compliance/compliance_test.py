@@ -6,7 +6,7 @@ from prowler.lib.check.compliance_models import (
     Compliance,
     Compliance_Requirement,
 )
-from prowler.lib.check.models import Check_Report, load_check_metadata
+from prowler.lib.check.models import CheckReport, load_check_metadata
 from prowler.lib.outputs.compliance.compliance import get_check_compliance
 
 
@@ -69,7 +69,7 @@ class TestCompliance:
             ),
         ]
 
-        finding = Check_Report(
+        finding = CheckReport(
             metadata=load_check_metadata(
                 f"{path.dirname(path.realpath(__file__))}/../fixtures/metadata.json"
             ).json(),
@@ -149,7 +149,7 @@ class TestCompliance:
             ),
         ]
 
-        finding = Check_Report(
+        finding = CheckReport(
             metadata=load_check_metadata(
                 f"{path.dirname(path.realpath(__file__))}/../fixtures/metadata.json"
             ).json(),
@@ -229,7 +229,7 @@ class TestCompliance:
             ),
         ]
 
-        finding = Check_Report(
+        finding = CheckReport(
             metadata=load_check_metadata(
                 f"{path.dirname(path.realpath(__file__))}/../fixtures/metadata.json"
             ).json(),
@@ -309,7 +309,7 @@ class TestCompliance:
             ),
         ]
 
-        finding = Check_Report(
+        finding = CheckReport(
             metadata=load_check_metadata(
                 f"{path.dirname(path.realpath(__file__))}/../fixtures/metadata.json"
             ).json(),

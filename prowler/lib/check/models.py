@@ -399,7 +399,7 @@ class Check(ABC, CheckMetadata):
 
 
 @dataclass
-class Check_Report:
+class CheckReport:
     """Contains the Check's finding information."""
 
     status: str
@@ -440,7 +440,7 @@ class Check_Report:
 
 
 @dataclass
-class Check_Report_AWS(Check_Report):
+class Check_Report_AWS(CheckReport):
     """
     Contains the AWS Check's finding information.
 
@@ -470,7 +470,7 @@ class Check_Report_AWS(Check_Report):
 
 
 @dataclass
-class Check_Report_Azure(Check_Report):
+class Check_Report_Azure(CheckReport):
     """Contains the Azure Check's finding information."""
 
     resource_name: str
@@ -502,7 +502,7 @@ class Check_Report_Azure(Check_Report):
 
 
 @dataclass
-class Check_Report_GCP(Check_Report):
+class Check_Report_GCP(CheckReport):
     """Contains the GCP Check's finding information."""
 
     resource_name: str
@@ -537,7 +537,7 @@ class Check_Report_GCP(Check_Report):
 
 
 @dataclass
-class Check_Report_Kubernetes(Check_Report):
+class Check_Report_Kubernetes(CheckReport):
     # TODO change class name to CheckReportKubernetes
     """Contains the Kubernetes Check's finding information."""
 
@@ -557,7 +557,7 @@ class Check_Report_Kubernetes(Check_Report):
 
 
 @dataclass
-class Check_Report_Microsoft365(Check_Report):
+class Check_Report_Microsoft365(CheckReport):
     """Contains the Microsoft365 Check's finding information."""
 
     resource_name: str

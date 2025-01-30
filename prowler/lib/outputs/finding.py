@@ -4,7 +4,7 @@ from typing import Optional, Union
 from pydantic import BaseModel, Field, ValidationError
 
 from prowler.config.config import prowler_version
-from prowler.lib.check.models import Check_Report, CheckMetadata
+from prowler.lib.check.models import CheckMetadata, CheckReport
 from prowler.lib.logger import logger
 from prowler.lib.outputs.common import Status, fill_common_finding_data
 from prowler.lib.outputs.compliance.compliance import get_check_compliance
@@ -91,13 +91,13 @@ class Finding(BaseModel):
 
     @classmethod
     def generate_output(
-        cls, provider: Provider, check_output: Check_Report, output_options
+        cls, provider: Provider, check_output: CheckReport, output_options
     ) -> "Finding":
         """Generates the output for a finding based on the provider and output options
 
         Args:
             provider (Provider): the provider object
-            check_output (Check_Report): the check output object
+            check_output (CheckReport): the check output object
             output_options: the output options object, depending on the provider
         Returns:
             finding_output (Finding): the finding output object
