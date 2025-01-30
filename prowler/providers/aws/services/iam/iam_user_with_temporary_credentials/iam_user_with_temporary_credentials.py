@@ -15,7 +15,7 @@ class iam_user_with_temporary_credentials(Check):
 
             report = Check_Report_AWS(
                 metadata=self.metadata(),
-                resource={"user_name": user_name, "user_arn": user_arn},
+                resource={"name": user_name, "arn": user_arn},
             )
             report.resource_id = user_name
             report.resource_arn = user_arn
