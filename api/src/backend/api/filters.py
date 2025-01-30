@@ -319,26 +319,27 @@ class FindingFilter(FilterSet):
         field_name="resources__type", lookup_expr="icontains"
     )
 
-    resource_tag_key = CharFilter(field_name="resources__tags__key")
-    resource_tag_key__in = CharInFilter(
-        field_name="resources__tags__key", lookup_expr="in"
-    )
-    resource_tag_key__icontains = CharFilter(
-        field_name="resources__tags__key", lookup_expr="icontains"
-    )
-    resource_tag_value = CharFilter(field_name="resources__tags__value")
-    resource_tag_value__in = CharInFilter(
-        field_name="resources__tags__value", lookup_expr="in"
-    )
-    resource_tag_value__icontains = CharFilter(
-        field_name="resources__tags__value", lookup_expr="icontains"
-    )
-    resource_tags = CharInFilter(
-        method="filter_resource_tag",
-        lookup_expr="in",
-        help_text="Filter by resource tags `key:value` pairs.\nMultiple values may be "
-        "separated by commas.",
-    )
+    # Temporary disabled until we implement tag filtering in the UI
+    # resource_tag_key = CharFilter(field_name="resources__tags__key")
+    # resource_tag_key__in = CharInFilter(
+    #     field_name="resources__tags__key", lookup_expr="in"
+    # )
+    # resource_tag_key__icontains = CharFilter(
+    #     field_name="resources__tags__key", lookup_expr="icontains"
+    # )
+    # resource_tag_value = CharFilter(field_name="resources__tags__value")
+    # resource_tag_value__in = CharInFilter(
+    #     field_name="resources__tags__value", lookup_expr="in"
+    # )
+    # resource_tag_value__icontains = CharFilter(
+    #     field_name="resources__tags__value", lookup_expr="icontains"
+    # )
+    # resource_tags = CharInFilter(
+    #     method="filter_resource_tag",
+    #     lookup_expr="in",
+    #     help_text="Filter by resource tags `key:value` pairs.\nMultiple values may be "
+    #     "separated by commas.",
+    # )
 
     scan = UUIDFilter(method="filter_scan_id")
     scan__in = UUIDInFilter(method="filter_scan_id_in")
@@ -373,12 +374,6 @@ class FindingFilter(FilterSet):
                 "filter_class": CharFilter,
             },
         }
-
-    @property
-    def qs(self):
-        # Force distinct results to prevent duplicates with many-to-many relationships
-        parent_qs = super().qs
-        return parent_qs.distinct()
 
     #  Convert filter values to UUIDv7 values for use with partitioning
     def filter_scan_id(self, queryset, name, value):
