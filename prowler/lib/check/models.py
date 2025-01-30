@@ -441,7 +441,16 @@ class Check_Report:
 
 @dataclass
 class Check_Report_AWS(Check_Report):
-    """Contains the AWS Check's finding information."""
+    """
+    Contains the AWS Check's finding information.
+
+    Attributes:
+        resource_id (str): The resource ID.
+        resource_arn (str): The resource ARN.
+        region (str): The region of the resource.
+    Raises:
+        AttributeError: If the any of the required attributes are not present.
+    """
 
     resource_id: str
     resource_arn: str
@@ -449,7 +458,13 @@ class Check_Report_AWS(Check_Report):
 
     def __init__(self, metadata: Dict, resource: Any) -> None:
         super().__init__(metadata, resource)
-        self.resource_id = getattr(resource, "id", getattr(resource, "name"))
+        # Use resource.name as fallback if no resource.id
+        # If no name or id, an exception is raised
+        try:
+            self.resource_id = getattr(resource, "id")
+        except AttributeError:
+            self.resource_id = getattr(resource, "name")
+        # ARN and Region must be present
         self.resource_arn = getattr(resource, "arn")
         self.region = getattr(resource, "region")
 
@@ -471,10 +486,17 @@ class Check_Report_Azure(Check_Report):
             resource: Basic information about the resource. Defaults to None.
         """
         super().__init__(metadata, resource)
-        self.resource_name = getattr(
-            resource, "name", getattr(resource, "resource_name")
-        )
-        self.resource_id = getattr(resource, "id", getattr(resource, "resource_id"))
+        try:
+            self.resource_id = getattr(resource, "id")
+        except AttributeError:
+            self.resource_id = getattr(resource, "resource_id")
+
+        try:
+            self.resource_name = getattr(resource, "name")
+        except AttributeError:
+            self.resource_name = getattr(resource, "resource_name")
+
+        # TODO: review self.subscription
         self.subscription = ""
         self.location = getattr(resource, "location", "global")
 
@@ -498,6 +520,12 @@ class Check_Report_GCP(Check_Report):
         project_id=None,
     ) -> None:
         super().__init__(metadata, resource)
+
+        try:
+            self.resource_id = getattr(resource, "id")
+        except AttributeError:
+            self.resource_id = getattr(resource, "name")
+
         self.resource_id = resource_id or getattr(
             resource, "id", getattr(resource, "name")
         )
@@ -519,11 +547,13 @@ class Check_Report_Kubernetes(Check_Report):
 
     def __init__(self, metadata: Dict, resource: Any) -> None:
         super().__init__(metadata, resource)
-        self.resource_id = getattr(resource, "uid", getattr(resource, "name"))
+        try:
+            self.resource_id = getattr(resource, "uid")
+        except AttributeError:
+            self.resource_id = getattr(resource, "name")
+
         self.resource_name = getattr(resource, "name")
         self.namespace = getattr(resource, "namespace", "cluster-wide")
-        if not self.namespace:
-            self.namespace = "cluster-wide"
 
 
 @dataclass
