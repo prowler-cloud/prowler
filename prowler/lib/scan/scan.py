@@ -292,10 +292,16 @@ class Scan:
             self._update_scan_state(check_name, service, filtered_findings)
             stats = extract_findings_statistics(filtered_findings)
 
-            findings = [
-                Finding.generate_output(self._provider, finding, output_options=None)
-                for finding in filtered_findings
-            ]
+            findings = []
+            for finding in filtered_findings:
+                try:
+                    findings.append(
+                        Finding.generate_output(
+                            self._provider, finding, output_options=None
+                        )
+                    )
+                except Exception:
+                    continue
 
             yield self.progress, findings, stats
 
