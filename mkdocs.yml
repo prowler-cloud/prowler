@@ -124,7 +124,7 @@ extra:
       make our documentation better.
   analytics:
     provider: google
-    property: G-H5TFH6WJRQ
+    property: G-KBKV70W5Y2
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/prowler-cloud
