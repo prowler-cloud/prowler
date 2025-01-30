@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional, Union
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 
 from prowler.config.config import prowler_version
 from prowler.lib.check.models import Check_Report, CheckMetadata
@@ -257,7 +257,13 @@ class Finding(BaseModel):
             )
 
             return cls(**output_data)
+        except ValidationError as validation_error:
+            logger.error(
+                f"{validation_error.__class__.__name__}[{validation_error.__traceback__.tb_lineno}]: {validation_error} - {output_data}"
+            )
+            raise validation_error
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+            raise error

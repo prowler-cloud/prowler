@@ -97,6 +97,7 @@ class SNS(AWSService):
                             owner=sub["Owner"],
                             protocol=sub["Protocol"],
                             endpoint=sub["Endpoint"],
+                            region=sub["SubscriptionArn"].split(":")[3],
                         )
                         for sub in response["Subscriptions"]
                     ]
@@ -117,6 +118,7 @@ class Subscription(BaseModel):
     owner: str
     protocol: str
     endpoint: str
+    region: str
 
 
 class Topic(BaseModel):
