@@ -54,6 +54,9 @@ class rds_instance_critical_event_subscription(Check):
                     }:
                         report.status = "FAIL"
                         report.status_extended = "RDS instance event category of maintenance is not subscribed."
+                    else:
+                        report.status = "FAIL"
+                        report.status_extended = "RDS instance event categories of maintenance, configuration change, and failure are not subscribed."
                 findings.append(report)
 
         return findings
