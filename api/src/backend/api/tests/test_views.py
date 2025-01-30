@@ -2454,15 +2454,16 @@ class TestFindingViewSet:
                 ("search", "ec2", 2),
                 # full text search on finding tags
                 ("search", "value2", 2),
-                ("resource_tag_key", "key", 2),
-                ("resource_tag_key__in", "key,key2", 2),
-                ("resource_tag_key__icontains", "key", 2),
-                ("resource_tag_value", "value", 2),
-                ("resource_tag_value__in", "value,value2", 2),
-                ("resource_tag_value__icontains", "value", 2),
-                ("resource_tags", "key:value", 2),
-                ("resource_tags", "not:exists", 0),
-                ("resource_tags", "not:exists,key:value", 2),
+                # Temporary disabled until we implement tag filtering in the UI
+                # ("resource_tag_key", "key", 2),
+                # ("resource_tag_key__in", "key,key2", 2),
+                # ("resource_tag_key__icontains", "key", 2),
+                # ("resource_tag_value", "value", 2),
+                # ("resource_tag_value__in", "value,value2", 2),
+                # ("resource_tag_value__icontains", "value", 2),
+                # ("resource_tags", "key:value", 2),
+                # ("resource_tags", "not:exists", 0),
+                # ("resource_tags", "not:exists,key:value", 2),
             ]
         ),
     )
