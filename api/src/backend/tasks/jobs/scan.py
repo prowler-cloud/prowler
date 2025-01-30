@@ -228,8 +228,10 @@ def perform_prowler_scan(
                     last_first_seen_at = None
                     if finding_uid not in last_status_cache:
                         most_recent_finding = (
-                            Finding.objects.filter(uid=finding_uid)
-                            .order_by("-id")
+                            Finding.all_objects.filter(
+                                tenant_id=tenant_id, uid=finding_uid
+                            )
+                            .order_by("-inserted_at")
                             .values("status", "first_seen_at")
                             .first()
                         )
@@ -378,7 +380,7 @@ def aggregate_findings(tenant_id: str, scan_id: str):
         - muted_changed: Muted findings with a delta of 'changed'.
     """
     with rls_transaction(tenant_id):
-        findings = Finding.objects.filter(scan_id=scan_id)
+        findings = Finding.objects.filter(tenant_id=tenant_id, scan_id=scan_id)
 
         aggregation = findings.values(
             "check_id",
