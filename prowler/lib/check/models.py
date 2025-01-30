@@ -475,7 +475,7 @@ class Check_Report_Azure(CheckReport):
 
     resource_name: str
     resource_id: str
-    subscription: str
+    subscription: str = None
     location: str
 
     def __init__(self, metadata: Dict, resource: Any) -> None:
@@ -496,8 +496,6 @@ class Check_Report_Azure(CheckReport):
         except AttributeError:
             self.resource_name = getattr(resource, "resource_name")
 
-        # TODO: review self.subscription
-        self.subscription = ""
         self.location = getattr(resource, "location", "global")
 
 

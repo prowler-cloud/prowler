@@ -424,6 +424,7 @@ class TestCheckReportAzure:
         assert report.resource_id == "test_id"
         assert report.resource_name == "test_name"
         assert report.location == "test_location"
+        assert report.subscription is None
 
     def test_check_report_azure_no_id(self):
         resource = mock.Mock
@@ -442,6 +443,7 @@ class TestCheckReportAzure:
         assert report.resource_id == "test_id"
         assert report.resource_name == "test_name"
         assert report.location == "global"
+        assert report.subscription is None
 
     def test_check_report_azure_no_name(self):
         resource = mock.Mock
@@ -460,6 +462,7 @@ class TestCheckReportAzure:
         assert report.resource_id == "test_id"
         assert report.resource_name == "test_name"
         assert report.location == "global"
+        assert report.subscription is None
 
     def test_check_report_azure_no_location(self):
         resource = mock.Mock
@@ -469,3 +472,4 @@ class TestCheckReportAzure:
         assert report.resource_id == "test_id"
         assert report.resource_name == "test_name"
         assert report.location == "global"
+        assert report.subscription is None
