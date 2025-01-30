@@ -332,18 +332,21 @@ def prowler():
     # Outputs
     # TODO: this part is needed since the checks generates a Check_Report_XXX and the output uses Finding
     # This will be refactored for the outputs generate directly the Finding
-    finding_outputs = [
-        Finding.generate_output(global_provider, finding, output_options)
-        for finding in findings
-    ]
+    finding_outputs = []
+    for finding in findings:
+        try:
+            finding_outputs.append(
+                Finding.generate_output(global_provider, finding, output_options)
+            )
+        except Exception:
+            continue
 
     generated_outputs = {"regular": [], "compliance": []}
 
     if args.output_formats:
         for mode in args.output_formats:
             filename = (
-                f"{output_options.output_directory}/"
-                f"{output_options.output_filename}"
+                f"{output_options.output_directory}/{output_options.output_filename}"
             )
             if mode == "csv":
                 csv_output = CSV(
