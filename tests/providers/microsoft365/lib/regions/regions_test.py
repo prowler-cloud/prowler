@@ -1,9 +1,9 @@
 from azure.identity import AzureAuthorityHosts
 
-from prowler.providers.azure.lib.regions.regions import (
-    AZURE_CHINA_CLOUD,
-    AZURE_GENERIC_CLOUD,
-    AZURE_US_GOV_CLOUD,
+from prowler.providers.microsoft365.lib.regions.regions import (
+    MICROSOFT365_CHINA_CLOUD,
+    MICROSOFT365_GENERIC_CLOUD,
+    MICROSOFT365_US_GOV_CLOUD,
     get_regions_config,
 )
 
@@ -11,25 +11,25 @@ from prowler.providers.azure.lib.regions.regions import (
 class Test_azure_regions:
     def test_get_regions_config(self):
         allowed_regions = [
-            "AzureCloud",
-            "AzureChinaCloud",
-            "AzureUSGovernment",
+            "Microsoft365Global",
+            "Microsoft365China",
+            "Microsoft365USGovernment",
         ]
         expected_output = {
-            "AzureCloud": {
+            "Microsoft365Global": {
                 "authority": None,
-                "base_url": AZURE_GENERIC_CLOUD,
-                "credential_scopes": [AZURE_GENERIC_CLOUD + "/.default"],
+                "base_url": MICROSOFT365_GENERIC_CLOUD,
+                "credential_scopes": [MICROSOFT365_GENERIC_CLOUD + "/.default"],
             },
-            "AzureChinaCloud": {
+            "Microsoft365China": {
                 "authority": AzureAuthorityHosts.AZURE_CHINA,
-                "base_url": AZURE_CHINA_CLOUD,
-                "credential_scopes": [AZURE_CHINA_CLOUD + "/.default"],
+                "base_url": MICROSOFT365_CHINA_CLOUD,
+                "credential_scopes": [MICROSOFT365_CHINA_CLOUD + "/.default"],
             },
-            "AzureUSGovernment": {
+            "Microsoft365USGovernment": {
                 "authority": AzureAuthorityHosts.AZURE_GOVERNMENT,
-                "base_url": AZURE_US_GOV_CLOUD,
-                "credential_scopes": [AZURE_US_GOV_CLOUD + "/.default"],
+                "base_url": MICROSOFT365_US_GOV_CLOUD,
+                "credential_scopes": [MICROSOFT365_US_GOV_CLOUD + "/.default"],
             },
         }
 
