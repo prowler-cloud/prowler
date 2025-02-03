@@ -26,7 +26,7 @@ export default async function Findings({
   searchParams: SearchParamsProps;
 }) {
   const searchParamsKey = JSON.stringify(searchParams || {});
-  const defaultSort = "severity,status";
+  const defaultSort = "severity,status,-inserted_at";
   const sort = searchParams.sort?.toString() || defaultSort;
 
   // Make sure the sort is correctly encoded
