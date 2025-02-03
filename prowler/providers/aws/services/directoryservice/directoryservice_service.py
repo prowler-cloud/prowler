@@ -131,9 +131,15 @@ class DirectoryService(AWSService):
                             self.directories[directory.id].event_topics = event_topics
                         except ClientError as error:
                             if error.response["Error"]["Code"] == "ClientException":
-                                logger.warning(
-                                    f"{directory.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                                )
+                                error_message = error.response["Error"]["Message"]
+                                if "is in Deleting state" in error_message:
+                                    logger.warning(
+                                        f"{directory.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                                    )
+                                else:
+                                    logger.error(
+                                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                                    )
                             else:
                                 logger.error(
                                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -221,9 +227,15 @@ class DirectoryService(AWSService):
                         )
                     except ClientError as error:
                         if error.response["Error"]["Code"] == "ClientException":
-                            logger.warning(
-                                f"{directory.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                            )
+                            error_message = error.response["Error"]["Message"]
+                            if "is in Deleting state" in error_message:
+                                logger.warning(
+                                    f"{directory.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                                )
+                            else:
+                                logger.error(
+                                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                                )
                         else:
                             logger.error(
                                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
