@@ -8,7 +8,7 @@ from prowler.providers.microsoft365.lib.regions.regions import (
 )
 
 
-class Test_azure_regions:
+class Test_microsoft365_regions:
     def test_get_regions_config(self):
         allowed_regions = [
             "Microsoft365Global",
