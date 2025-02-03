@@ -1271,6 +1271,14 @@ class ResourceViewSet(BaseRLSViewSet):
         tags=["Finding"],
         summary="List all findings",
         description="Retrieve a list of all findings with options for filtering by various criteria.",
+        parameters=[
+            OpenApiParameter(
+                name="filter[inserted_at]",
+                description="At least one of the variations of the `filter[inserted_at]` filter must be provided.",
+                required=True,
+                type=OpenApiTypes.DATE,
+            )
+        ],
     ),
     retrieve=extend_schema(
         tags=["Finding"],
@@ -1288,6 +1296,14 @@ class ResourceViewSet(BaseRLSViewSet):
         tags=["Finding"],
         summary="Retrieve metadata values from findings",
         description="Fetch unique metadata values from a set of findings. This is useful for dynamic filtering.",
+        parameters=[
+            OpenApiParameter(
+                name="filter[inserted_at]",
+                description="At least one of the variations of the `filter[inserted_at]` filter must be provided.",
+                required=True,
+                type=OpenApiTypes.DATE,
+            )
+        ],
         filters=True,
     ),
 )

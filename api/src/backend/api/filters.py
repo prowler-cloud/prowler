@@ -1,4 +1,4 @@
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from django.conf import settings
 from django.db.models import Q
@@ -346,8 +346,12 @@ class FindingFilter(FilterSet):
 
     inserted_at = DateFilter(method="filter_inserted_at", lookup_expr="date")
     inserted_at__date = DateFilter(method="filter_inserted_at", lookup_expr="date")
-    inserted_at__gte = DateFilter(method="filter_inserted_at_gte")
-    inserted_at__lte = DateFilter(method="filter_inserted_at_lte")
+    inserted_at__gte = DateFilter(
+        method="filter_inserted_at_gte", help_text="Maximum date range is 7 days."
+    )
+    inserted_at__lte = DateFilter(
+        method="filter_inserted_at_lte", help_text="Maximum date range is 7 days."
+    )
 
     class Meta:
         model = Finding
@@ -374,6 +378,49 @@ class FindingFilter(FilterSet):
                 "filter_class": CharFilter,
             },
         }
+
+    def filter_queryset(self, queryset):
+        if not (
+            self.data.get("inserted_at")
+            or self.data.get("inserted_at__gte")
+            or self.data.get("inserted_at__lte")
+        ):
+            raise ValidationError(
+                [
+                    {
+                        "detail": "At least one date filter is required: filter[inserted_at], filter[inserted_at.gte], "
+                        "or filter[inserted_at.lte].",
+                        "status": 400,
+                        "source": {"pointer": "/data/attributes/inserted_at"},
+                        "code": "required",
+                    }
+                ]
+            )
+
+        gte_date = (
+            datetime.strptime(self.data.get("inserted_at__gte"), "%Y-%m-%d").date()
+            if self.data.get("inserted_at__gte")
+            else datetime.now(timezone.utc).date()
+        )
+        lte_date = (
+            datetime.strptime(self.data.get("inserted_at__lte"), "%Y-%m-%d").date()
+            if self.data.get("inserted_at__lte")
+            else datetime.now(timezone.utc).date()
+        )
+
+        if lte_date - gte_date > timedelta(days=settings.FINDINGS_MAX_DAYS_IN_RANGE):
+            raise ValidationError(
+                [
+                    {
+                        "detail": f"The date range cannot exceed {settings.FINDINGS_MAX_DAYS_IN_RANGE} days.",
+                        "status": 400,
+                        "source": {"pointer": "/data/attributes/inserted_at"},
+                        "code": "invalid",
+                    }
+                ]
+            )
+
+        return super().filter_queryset(queryset)
 
     #  Convert filter values to UUIDv7 values for use with partitioning
     def filter_scan_id(self, queryset, name, value):
