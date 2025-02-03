@@ -347,10 +347,12 @@ class FindingFilter(FilterSet):
     inserted_at = DateFilter(method="filter_inserted_at", lookup_expr="date")
     inserted_at__date = DateFilter(method="filter_inserted_at", lookup_expr="date")
     inserted_at__gte = DateFilter(
-        method="filter_inserted_at_gte", help_text="Maximum date range is 7 days."
+        method="filter_inserted_at_gte",
+        help_text=f"Maximum date range is {settings.FINDINGS_MAX_DAYS_IN_RANGE} days.",
     )
     inserted_at__lte = DateFilter(
-        method="filter_inserted_at_lte", help_text="Maximum date range is 7 days."
+        method="filter_inserted_at_lte",
+        help_text=f"Maximum date range is {settings.FINDINGS_MAX_DAYS_IN_RANGE} days.",
     )
 
     class Meta:
