@@ -1380,6 +1380,12 @@ class FindingViewSet(BaseRLSViewSet):
 
         return queryset
 
+    def filter_queryset(self, queryset):
+        # Do not apply filters when retrieving specific finding
+        if self.action == "retrieve":
+            return queryset
+        return super().filter_queryset(queryset)
+
     def inserted_at_to_uuidv7(self, inserted_at):
         if inserted_at is None:
             return None

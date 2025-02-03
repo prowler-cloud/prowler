@@ -382,8 +382,9 @@ class FindingFilter(FilterSet):
         }
 
     def filter_queryset(self, queryset):
-        if not (
+        if not (self.data.get("scan") or self.data.get("scan__in")) and not (
             self.data.get("inserted_at")
+            or self.data.get("inserted_at__date")
             or self.data.get("inserted_at__gte")
             or self.data.get("inserted_at__lte")
         ):
@@ -410,7 +411,9 @@ class FindingFilter(FilterSet):
             else datetime.now(timezone.utc).date()
         )
 
-        if lte_date - gte_date > timedelta(days=settings.FINDINGS_MAX_DAYS_IN_RANGE):
+        if abs(lte_date - gte_date) > timedelta(
+            days=settings.FINDINGS_MAX_DAYS_IN_RANGE
+        ):
             raise ValidationError(
                 [
                     {
