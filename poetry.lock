@@ -2592,13 +2592,13 @@ test = ["pytest", "pytest-cov"]
 
 [[package]]
 name = "moto"
-version = "5.0.27"
+version = "5.0.28"
 description = "A library that allows you to easily mock out tests based on AWS infrastructure"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "moto-5.0.27-py3-none-any.whl", hash = "sha256:27042fd94c8def0166d9f2ae8d39d9488d4b3115542b5fca88566c0424549013"},
-    {file = "moto-5.0.27.tar.gz", hash = "sha256:6c123de7e0e5e6508a10c399ba3ecf2d5143f263f8e804fd4a7091941c3f5207"},
+    {file = "moto-5.0.28-py3-none-any.whl", hash = "sha256:2dfbea1afe3b593e13192059a1a7fc4b3cf7fdf92e432070c22346efa45aa0f0"},
+    {file = "moto-5.0.28.tar.gz", hash = "sha256:4d3437693411ec943c13c77de5b0b520c4b0a9ac850fead4ba2a54709e086e8b"},
 ]
 
 [package.dependencies]
@@ -5090,4 +5090,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "c387413f38df1dc2286d8e16077fdccd2573943bf7cbdaeca2389be0ee0c339c"
+content-hash = "53fc689d1b35c64fba7bf9bfa72724d15e6ee12cfc97a5f062876daf0ba09901"
