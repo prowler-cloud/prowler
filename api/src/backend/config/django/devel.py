@@ -13,14 +13,6 @@ DATABASES = {
         "PASSWORD": env("POSTGRES_PASSWORD", default="prowler"),
         "HOST": env("POSTGRES_HOST", default="postgres-db"),
         "PORT": env("POSTGRES_PORT", default="5432"),
-        "OPTIONS": {
-            "pool": {
-                "min_size": DB_CP_MIN_SIZE,  # noqa: F405
-                "max_size": DB_CP_MAX_SIZE,  # noqa: F405
-                "max_idle": DB_CP_MAX_IDLE,  # noqa: F405
-                "max_lifetime": DB_CP_MAX_LIFETIME,  # noqa: F405
-            }
-        },
     },
     "admin": {
         "ENGINE": "psqlextra.backend",
@@ -29,14 +21,6 @@ DATABASES = {
         "PASSWORD": env("POSTGRES_ADMIN_PASSWORD", default="S3cret"),
         "HOST": env("POSTGRES_HOST", default="postgres-db"),
         "PORT": env("POSTGRES_PORT", default="5432"),
-        "OPTIONS": {
-            "pool": {
-                "min_size": DB_CP_MIN_SIZE,  # noqa: F405
-                "max_size": DB_CP_MAX_SIZE,  # noqa: F405
-                "max_idle": DB_CP_MAX_IDLE,  # noqa: F405
-                "max_lifetime": DB_CP_MAX_LIFETIME,  # noqa: F405
-            }
-        },
     },
 }
 DATABASES["default"] = DATABASES["prowler_user"]
@@ -53,3 +37,9 @@ REST_FRAMEWORK["DEFAULT_FILTER_BACKENDS"] = tuple(  # noqa: F405
 ) + ("api.filters.CustomDjangoFilterBackend",)
 
 SECRETS_ENCRYPTION_KEY = "ZMiYVo7m4Fbe2eXXPyrwxdJss2WSalXSv3xHBcJkPl0="
+
+MIDDLEWARE += [  # noqa: F405
+    "silk.middleware.SilkyMiddleware",
+]
+
+INSTALLED_APPS += ["silk"]  # noqa: F405

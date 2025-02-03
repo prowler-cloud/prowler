@@ -432,6 +432,10 @@ class Scan(RowLevelSecurityProtectedModel):
                 fields=["provider", "state", "trigger", "scheduled_at"],
                 name="scans_prov_state_trig_sche_idx",
             ),
+            models.Index(
+                fields=["tenant_id", "provider_id", "state", "inserted_at"],
+                name="scans_prov_state_insert_idx",
+            ),
         ]
 
     class JSONAPIMeta:
@@ -1103,6 +1107,12 @@ class ScanSummary(RowLevelSecurityProtectedModel):
                 name="rls_on_%(class)s",
                 statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
             ),
+        ]
+        indexes = [
+            models.Index(
+                fields=["tenant_id", "scan_id"],
+                name="scan_summaries_tenant_scan_idx",
+            )
         ]
 
     class JSONAPIMeta:

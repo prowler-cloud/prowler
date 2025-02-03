@@ -81,9 +81,7 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
   },
   {
     accessorKey: "status",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={"Status"} param="state" />
-    ),
+    header: "Status",
     cell: ({ row }) => {
       const {
         attributes: { state },
@@ -126,13 +124,7 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
   },
   {
     accessorKey: "next_scan_at",
-    header: ({ column }) => (
-      <DataTableColumnHeader
-        column={column}
-        title={"Next scan"}
-        param="next_scan_at"
-      />
-    ),
+    header: "Next scan",
     cell: ({ row }) => {
       const {
         attributes: { next_scan_at },

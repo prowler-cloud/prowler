@@ -13,6 +13,8 @@ def stdout_report(finding, color, verbose, status, fix):
         details = finding.location.lower()
     if finding.check_metadata.Provider == "kubernetes":
         details = finding.namespace.lower()
+    if finding.check_metadata.Provider == "microsoft365":
+        details = finding.location
 
     if (verbose or fix) and (not status or finding.status in status):
         if finding.muted:
@@ -81,7 +83,9 @@ def set_report_color(status: str, muted: bool = False) -> str:
     elif status == "MANUAL":
         color = Fore.YELLOW
     else:
-        raise Exception("Invalid Report Status. Must be PASS, FAIL or MANUAL.")
+        raise Exception(
+            f"Invalid Report Status: {status}. Must be PASS, FAIL or MANUAL."
+        )
     return color
 
 
