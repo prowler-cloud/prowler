@@ -117,11 +117,9 @@ export const ScanDetail = ({
           <InfoField label="Completed At">
             <DateWithTime inline dateTime={scan.completed_at || "-"} />
           </InfoField>
-          {scan.next_scan_at && (
-            <InfoField label="Scheduled At">
-              <DateWithTime inline dateTime={scan.next_scan_at} />
-            </InfoField>
-          )}
+          <InfoField label="Scheduled At">
+            <DateWithTime inline dateTime={scan.scheduled_at || "-"} />
+          </InfoField>
         </div>
       </Section>
 
