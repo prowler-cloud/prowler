@@ -26,11 +26,10 @@ export default async function Findings({
   searchParams: SearchParamsProps;
 }) {
   const searchParamsKey = JSON.stringify(searchParams || {});
-  const defaultSort = "severity,status";
-  const sort = searchParams.sort?.toString() || defaultSort;
+  const sort = searchParams.sort?.toString();
 
   // Make sure the sort is correctly encoded
-  const encodedSort = sort.replace(/^\+/, "");
+  const encodedSort = sort?.replace(/^\+/, "");
 
   // Extract all filter parameters and combine with default filters
   const defaultFilters = {
@@ -137,7 +136,7 @@ const SSRDataTable = async ({
   searchParams: SearchParamsProps;
 }) => {
   const page = parseInt(searchParams.page?.toString() || "1", 10);
-  const defaultSort = "severity,status";
+  const defaultSort = "severity,status,-inserted_at";
   const sort = searchParams.sort?.toString() || defaultSort;
 
   // Make sure the sort is correctly encoded
