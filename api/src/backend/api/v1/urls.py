@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.urls import include, path
 from drf_spectacular.views import SpectacularRedocView
 from rest_framework_nested import routers
@@ -113,6 +112,3 @@ urlpatterns = [
     path("schema", SchemaView.as_view(), name="schema"),
     path("docs", SpectacularRedocView.as_view(url_name="schema"), name="docs"),
 ]
-
-if settings.DEBUG:
-    urlpatterns += [path("silk/", include("silk.urls", namespace="silk"))]
