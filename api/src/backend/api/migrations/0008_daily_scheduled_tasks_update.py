@@ -45,7 +45,7 @@ class Migration(migrations.Migration):
     atomic = False
 
     dependencies = [
-        ("api", "0006_findings_first_seen"),
+        ("api", "0007_scan_and_scan_summaries_indexes"),
         ("django_celery_beat", "0019_alter_periodictasks_options"),
     ]
 
