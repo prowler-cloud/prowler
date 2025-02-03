@@ -137,7 +137,7 @@ const SSRDataTable = async ({
   searchParams: SearchParamsProps;
 }) => {
   const page = parseInt(searchParams.page?.toString() || "1", 10);
-  const defaultSort = "severity,status";
+  const defaultSort = "severity,-inserted_at";
   const sort = searchParams.sort?.toString() || defaultSort;
 
   // Make sure the sort is correctly encoded
