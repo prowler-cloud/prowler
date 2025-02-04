@@ -51,6 +51,7 @@ class KMS(AWSService):
                 key.origin = response["KeyMetadata"]["Origin"]
                 key.manager = response["KeyMetadata"]["KeyManager"]
                 key.spec = response["KeyMetadata"]["CustomerMasterKeySpec"]
+                key.multi_region = response["KeyMetadata"]["MultiRegion"]
             except Exception as error:
                 logger.error(
                     f"{regional_client.region} -- {error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
@@ -58,22 +59,22 @@ class KMS(AWSService):
 
     def _get_key_rotation_status(self):
         logger.info("KMS - Get Key Rotation Status...")
-        try:
-            for key in self.keys:
-                if (
-                    key.origin
-                    and key.manager
-                    and "EXTERNAL" not in key.origin
-                    and "AWS" not in key.manager
-                ):
-                    regional_client = self.regional_clients[key.region]
+        for key in self.keys:
+            if (
+                key.origin
+                and key.manager
+                and "EXTERNAL" not in key.origin
+                and "AWS" not in key.manager
+            ):
+                regional_client = self.regional_clients[key.region]
+                try:
                     key.rotation_enabled = regional_client.get_key_rotation_status(
                         KeyId=key.id
                     )["KeyRotationEnabled"]
-        except Exception as error:
-            logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
-            )
+                except Exception as error:
+                    logger.error(
+                        f"{regional_client.region} -- {error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
+                    )
 
     def _get_key_policy(self):
         logger.info("KMS - Get Key Policy...")

@@ -73,7 +73,9 @@ class Test_kms_cmk_are_used:
             ]
     )
     @mock_aws
-    def test_kms_cmk_are_used_when_describe_key_fails_on_2_keys_out_of_x_keys(self, no_of_keys_created: int, expected_no_of_results: int) -> None:
+    def test_kms_cmk_are_used_when_describe_key_fails_on_2_keys_out_of_x_keys(
+        self, no_of_keys_created: int, expected_no_of_results: int
+    ) -> None:
         # Generate KMS Client
         kms_client = client("kms", region_name=AWS_REGION_US_EAST_1)
         kms_client.__dict__["region"] = AWS_REGION_US_EAST_1
@@ -86,12 +88,12 @@ class Test_kms_cmk_are_used:
             )
 
         orig_describe_key = kms_client.describe_key
-
         def mock_describe_key(KeyId: str, count: List[int] = [0]) -> Any:
-            count[0] += 1
             if count[0] == 2 or count[0] == 4:
+                count[0] += 1
                 raise Exception("FakeClientError")
             else:
+                count[0] += 1
                 return orig_describe_key(KeyId=KeyId)
 
         kms_client.describe_key = mock_describe_key
