@@ -29,7 +29,6 @@ def set_mocked_microsoft365_provider(
     audit_config: dict = None,
     azure_region_config: Microsoft365RegionConfig = Microsoft365RegionConfig(),
 ) -> Microsoft365Provider:
-
     provider = MagicMock()
     provider.type = "microsoft365"
     provider.session.credentials = credentials
