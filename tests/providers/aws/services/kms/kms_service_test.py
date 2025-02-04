@@ -92,8 +92,8 @@ class Test_KMS_Service:
         # Generate KMS Client
         kms_client = client("kms", region_name=AWS_REGION_US_EAST_1)
         # Create KMS keys
-        key1 = kms_client.create_key()["KeyMetadata"]
-        key2 = kms_client.create_key()["KeyMetadata"]
+        key1 = kms_client.create_key(MultiRegion=False)["KeyMetadata"]
+        key2 = kms_client.create_key(MultiRegion=False)["KeyMetadata"]
         kms_client.enable_key_rotation(KeyId=key2["KeyId"])
         # KMS client for this test class
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
@@ -140,8 +140,8 @@ class Test_KMS_Service:
         # Generate KMS Client
         kms_client = client("kms", region_name=AWS_REGION_US_EAST_1)
         # Create KMS keys
-        key1 = kms_client.create_key(Policy=default_policy)["KeyMetadata"]
-        key2 = kms_client.create_key(Policy=public_policy)["KeyMetadata"]
+        key1 = kms_client.create_key(MultiRegion=False, Policy=default_policy)["KeyMetadata"]
+        key2 = kms_client.create_key(MultiRegion=False, Policy=public_policy)["KeyMetadata"]
         # KMS client for this test class
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         kms = KMS(aws_provider)
