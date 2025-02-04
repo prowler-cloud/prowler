@@ -147,6 +147,12 @@ class ElastiCache(AWSService):
                     logger.warning(
                         f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
+                except (
+                    regional_client.exceptions.InvalidReplicationGroupStateFault
+                ) as error:
+                    logger.warning(
+                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {"ElastiCache replication group is in a state that does not support listing tags"}"
+                    )
                 except Exception as error:
                     logger.error(
                         f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -162,6 +168,12 @@ class ElastiCache(AWSService):
                 ) as error:
                     logger.warning(
                         f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+                except (
+                    regional_client.exceptions.InvalidReplicationGroupStateFault
+                ) as error:
+                    logger.warning(
+                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {"ElastiCache replication group is in a state that does not support listing tags"}"
                     )
                 except Exception as error:
                     logger.error(
