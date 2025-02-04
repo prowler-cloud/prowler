@@ -14,6 +14,7 @@ from prowler.config.config import (
 from prowler.providers.common.models import Connection
 from prowler.providers.gcp.exceptions.exceptions import (
     GCPInvalidProviderIdError,
+    GCPNoAccesibleProjectsError,
     GCPTestConnectionError,
 )
 from prowler.providers.gcp.gcp_provider import GcpProvider
@@ -40,7 +41,7 @@ class TestGCPProvider:
                 id="project/55555555",
                 name="test-project",
                 labels={"test": "value"},
-                lifecycle_state="",
+                lifecycle_state="ACTIVE",
             )
         }
 
@@ -50,18 +51,23 @@ class TestGCPProvider:
             execute=MagicMock(return_value={"projects": projects})
         )
 
-        with patch(
-            "prowler.providers.gcp.gcp_provider.GcpProvider.setup_session",
-            return_value=(None, "test-project"),
-        ), patch(
-            "prowler.providers.gcp.gcp_provider.GcpProvider.get_projects",
-            return_value=projects,
-        ), patch(
-            "prowler.providers.gcp.gcp_provider.GcpProvider.update_projects_with_organizations",
-            return_value=None,
-        ), patch(
-            "prowler.providers.gcp.gcp_provider.discovery.build",
-            return_value=mocked_service,
+        with (
+            patch(
+                "prowler.providers.gcp.gcp_provider.GcpProvider.setup_session",
+                return_value=(None, "test-project"),
+            ),
+            patch(
+                "prowler.providers.gcp.gcp_provider.GcpProvider.get_projects",
+                return_value=projects,
+            ),
+            patch(
+                "prowler.providers.gcp.gcp_provider.GcpProvider.update_projects_with_organizations",
+                return_value=None,
+            ),
+            patch(
+                "prowler.providers.gcp.gcp_provider.discovery.build",
+                return_value=mocked_service,
+            ),
         ):
             gcp_provider = GcpProvider(
                 project_id,
@@ -109,7 +115,7 @@ class TestGCPProvider:
                 id="project/55555555",
                 name="test-project",
                 labels={"test": "value"},
-                lifecycle_state="",
+                lifecycle_state="ACTIVE",
             )
         }
 
@@ -118,18 +124,23 @@ class TestGCPProvider:
         mocked_service.projects.list.return_value = MagicMock(
             execute=MagicMock(return_value={"projects": projects})
         )
-        with patch(
-            "prowler.providers.gcp.gcp_provider.GcpProvider.setup_session",
-            return_value=(None, None),
-        ), patch(
-            "prowler.providers.gcp.gcp_provider.GcpProvider.get_projects",
-            return_value=projects,
-        ), patch(
-            "prowler.providers.gcp.gcp_provider.GcpProvider.update_projects_with_organizations",
-            return_value=None,
-        ), patch(
-            "prowler.providers.gcp.gcp_provider.discovery.build",
-            return_value=mocked_service,
+        with (
+            patch(
+                "prowler.providers.gcp.gcp_provider.GcpProvider.setup_session",
+                return_value=(None, None),
+            ),
+            patch(
+                "prowler.providers.gcp.gcp_provider.GcpProvider.get_projects",
+                return_value=projects,
+            ),
+            patch(
+                "prowler.providers.gcp.gcp_provider.GcpProvider.update_projects_with_organizations",
+                return_value=None,
+            ),
+            patch(
+                "prowler.providers.gcp.gcp_provider.discovery.build",
+                return_value=mocked_service,
+            ),
         ):
             gcp_provider = GcpProvider(
                 arguments.organization_id,
@@ -183,7 +194,7 @@ class TestGCPProvider:
                 id="project/55555555",
                 name="test-project",
                 labels={"test": "value"},
-                lifecycle_state="",
+                lifecycle_state="ACTIVE",
             )
         }
 
@@ -192,21 +203,27 @@ class TestGCPProvider:
         mocked_service.projects.list.return_value = MagicMock(
             execute=MagicMock(return_value={"projects": projects})
         )
-        with patch(
-            "prowler.providers.gcp.gcp_provider.GcpProvider.get_projects",
-            return_value=projects,
-        ), patch(
-            "prowler.providers.gcp.gcp_provider.GcpProvider.update_projects_with_organizations",
-            return_value=None,
-        ), patch(
-            "os.path.abspath",
-            return_value="test_credentials_file",
-        ), patch(
-            "prowler.providers.gcp.gcp_provider.default",
-            return_value=(mocked_credentials, MagicMock()),
-        ), patch(
-            "prowler.providers.gcp.gcp_provider.discovery.build",
-            return_value=mocked_service,
+        with (
+            patch(
+                "prowler.providers.gcp.gcp_provider.GcpProvider.get_projects",
+                return_value=projects,
+            ),
+            patch(
+                "prowler.providers.gcp.gcp_provider.GcpProvider.update_projects_with_organizations",
+                return_value=None,
+            ),
+            patch(
+                "os.path.abspath",
+                return_value="test_credentials_file",
+            ),
+            patch(
+                "prowler.providers.gcp.gcp_provider.default",
+                return_value=(mocked_credentials, MagicMock()),
+            ),
+            patch(
+                "prowler.providers.gcp.gcp_provider.discovery.build",
+                return_value=mocked_service,
+            ),
         ):
             gcp_provider = GcpProvider(
                 arguments.organization_id,
@@ -247,7 +264,7 @@ class TestGCPProvider:
                 id="project/55555555",
                 name="test-project",
                 labels={"test": "value"},
-                lifecycle_state="",
+                lifecycle_state="ACTIVE",
             )
         }
 
@@ -256,21 +273,27 @@ class TestGCPProvider:
         mocked_service.projects.list.return_value = MagicMock(
             execute=MagicMock(return_value={"projects": projects})
         )
-        with patch(
-            "prowler.providers.gcp.gcp_provider.GcpProvider.get_projects",
-            return_value=projects,
-        ), patch(
-            "prowler.providers.gcp.gcp_provider.GcpProvider.update_projects_with_organizations",
-            return_value=None,
-        ), patch(
-            "os.path.abspath",
-            return_value="test_credentials_file",
-        ), patch(
-            "prowler.providers.gcp.gcp_provider.default",
-            return_value=(mocked_credentials, MagicMock()),
-        ), patch(
-            "prowler.providers.gcp.gcp_provider.discovery.build",
-            return_value=mocked_service,
+        with (
+            patch(
+                "prowler.providers.gcp.gcp_provider.GcpProvider.get_projects",
+                return_value=projects,
+            ),
+            patch(
+                "prowler.providers.gcp.gcp_provider.GcpProvider.update_projects_with_organizations",
+                return_value=None,
+            ),
+            patch(
+                "os.path.abspath",
+                return_value="test_credentials_file",
+            ),
+            patch(
+                "prowler.providers.gcp.gcp_provider.default",
+                return_value=(mocked_credentials, MagicMock()),
+            ),
+            patch(
+                "prowler.providers.gcp.gcp_provider.discovery.build",
+                return_value=mocked_service,
+            ),
         ):
             gcp_provider = GcpProvider(
                 arguments.organization_id,
@@ -319,7 +342,7 @@ class TestGCPProvider:
                 id="project/55555555",
                 name="test-project",
                 labels={"test": "value"},
-                lifecycle_state="",
+                lifecycle_state="ACTIVE",
                 organization=GCPOrganization(
                     id="test-organization-id",
                     name="test-organization",
@@ -333,21 +356,27 @@ class TestGCPProvider:
         mocked_service.projects.list.return_value = MagicMock(
             execute=MagicMock(return_value={"projects": projects})
         )
-        with patch(
-            "prowler.providers.gcp.gcp_provider.GcpProvider.get_projects",
-            return_value=projects,
-        ), patch(
-            "prowler.providers.gcp.gcp_provider.GcpProvider.update_projects_with_organizations",
-            return_value=None,
-        ), patch(
-            "os.path.abspath",
-            return_value="test_credentials_file",
-        ), patch(
-            "prowler.providers.gcp.gcp_provider.default",
-            return_value=(mocked_credentials, MagicMock()),
-        ), patch(
-            "prowler.providers.gcp.gcp_provider.discovery.build",
-            return_value=mocked_service,
+        with (
+            patch(
+                "prowler.providers.gcp.gcp_provider.GcpProvider.get_projects",
+                return_value=projects,
+            ),
+            patch(
+                "prowler.providers.gcp.gcp_provider.GcpProvider.update_projects_with_organizations",
+                return_value=None,
+            ),
+            patch(
+                "os.path.abspath",
+                return_value="test_credentials_file",
+            ),
+            patch(
+                "prowler.providers.gcp.gcp_provider.default",
+                return_value=(mocked_credentials, MagicMock()),
+            ),
+            patch(
+                "prowler.providers.gcp.gcp_provider.discovery.build",
+                return_value=mocked_service,
+            ),
         ):
             gcp_provider = GcpProvider(
                 arguments.organization_id,
@@ -368,6 +397,150 @@ class TestGCPProvider:
                 gcp_provider.projects["test-project"].organization.id
                 == "test-organization-id"
             )
+
+    def test_setup_session_with_inactive_project(self):
+        mocked_credentials = MagicMock()
+
+        mocked_credentials.refresh.return_value = None
+        mocked_credentials._service_account_email = "test-service-account-email"
+
+        arguments = Namespace()
+        arguments.project_id = ["project/55555555"]
+        arguments.excluded_project_id = []
+        arguments.organization_id = None
+        arguments.list_project_id = False
+        arguments.credentials_file = "test_credentials_file"
+        arguments.impersonate_service_account = ""
+        arguments.config_file = default_config_file_path
+        arguments.fixer_config = default_fixer_config_file_path
+
+        projects = {
+            "test-project": GCPProject(
+                number="55555555",
+                id="project/55555555",
+                name="test-project",
+                labels={"test": "value"},
+                lifecycle_state="DELETE_REQUESTED",
+            )
+        }
+
+        mocked_service = MagicMock()
+
+        mocked_service.projects.list.return_value = MagicMock(
+            execute=MagicMock(return_value={"projects": projects})
+        )
+        with (
+            patch(
+                "prowler.providers.gcp.gcp_provider.GcpProvider.get_projects",
+                return_value=projects,
+            ),
+            patch(
+                "prowler.providers.gcp.gcp_provider.GcpProvider.update_projects_with_organizations",
+                return_value=None,
+            ),
+            patch(
+                "os.path.abspath",
+                return_value="test_credentials_file",
+            ),
+            patch(
+                "prowler.providers.gcp.gcp_provider.default",
+                return_value=(mocked_credentials, MagicMock()),
+            ),
+            patch(
+                "prowler.providers.gcp.gcp_provider.discovery.build",
+                return_value=mocked_service,
+            ),
+        ):
+            with pytest.raises(Exception) as e:
+                GcpProvider(
+                    arguments.organization_id,
+                    arguments.project_id,
+                    arguments.excluded_project_id,
+                    arguments.credentials_file,
+                    arguments.impersonate_service_account,
+                    arguments.list_project_id,
+                    arguments.config_file,
+                    arguments.fixer_config,
+                    client_id=None,
+                    client_secret=None,
+                    refresh_token=None,
+                )
+            assert e.type == GCPNoAccesibleProjectsError
+
+    def test_setup_session_with_inactive_default_project(self):
+        mocked_credentials = MagicMock()
+
+        mocked_credentials.refresh.return_value = None
+        mocked_credentials._service_account_email = "test-service-account-email"
+
+        arguments = Namespace()
+        arguments.project_id = ["default_project", "active_project"]
+        arguments.excluded_project_id = []
+        arguments.organization_id = None
+        arguments.list_project_id = False
+        arguments.credentials_file = "test_credentials_file"
+        arguments.impersonate_service_account = ""
+        arguments.config_file = default_config_file_path
+        arguments.fixer_config = default_fixer_config_file_path
+
+        projects = {
+            "default_project": GCPProject(
+                number="55555555",
+                id="default_project",
+                name="default_project",
+                labels={"test": "value"},
+                lifecycle_state="DELETE_REQUESTED",
+            ),
+            "active_project": GCPProject(
+                number="12345678",
+                id="active_project",
+                name="active_project",
+                labels={"test": "value"},
+                lifecycle_state="ACTIVE",
+            ),
+        }
+
+        mocked_service = MagicMock()
+
+        mocked_service.projects.list.return_value = MagicMock(
+            execute=MagicMock(return_value={"projects": projects})
+        )
+        with (
+            patch(
+                "prowler.providers.gcp.gcp_provider.GcpProvider.get_projects",
+                return_value=projects,
+            ),
+            patch(
+                "prowler.providers.gcp.gcp_provider.GcpProvider.update_projects_with_organizations",
+                return_value=None,
+            ),
+            patch(
+                "os.path.abspath",
+                return_value="test_credentials_file",
+            ),
+            patch(
+                "prowler.providers.gcp.gcp_provider.default",
+                return_value=(mocked_credentials, "default_project"),
+            ),
+            patch(
+                "prowler.providers.gcp.gcp_provider.discovery.build",
+                return_value=mocked_service,
+            ),
+        ):
+            gcp_provider = GcpProvider(
+                arguments.organization_id,
+                arguments.project_id,
+                arguments.excluded_project_id,
+                arguments.credentials_file,
+                arguments.impersonate_service_account,
+                arguments.list_project_id,
+                arguments.config_file,
+                arguments.fixer_config,
+                client_id=None,
+                client_secret=None,
+                refresh_token=None,
+            )
+            assert gcp_provider.default_project_id == "active_project"
 
     def test_print_credentials_default_options(self, capsys):
         mocked_credentials = MagicMock()
@@ -391,7 +564,7 @@ class TestGCPProvider:
                 id="project/55555555",
                 name="test-project",
                 labels={"test": "value"},
-                lifecycle_state="",
+                lifecycle_state="ACTIVE",
             )
         }
 
@@ -400,21 +573,27 @@ class TestGCPProvider:
         mocked_service.projects.list.return_value = MagicMock(
             execute=MagicMock(return_value={"projects": projects})
         )
-        with patch(
-            "prowler.providers.gcp.gcp_provider.GcpProvider.get_projects",
-            return_value=projects,
-        ), patch(
-            "prowler.providers.gcp.gcp_provider.GcpProvider.update_projects_with_organizations",
-            return_value=None,
-        ), patch(
-            "os.path.abspath",
-            return_value="test_credentials_file",
-        ), patch(
-            "prowler.providers.gcp.gcp_provider.default",
-            return_value=(mocked_credentials, MagicMock()),
-        ), patch(
-            "prowler.providers.gcp.gcp_provider.discovery.build",
-            return_value=mocked_service,
+        with (
+            patch(
+                "prowler.providers.gcp.gcp_provider.GcpProvider.get_projects",
+                return_value=projects,
+            ),
+            patch(
+                "prowler.providers.gcp.gcp_provider.GcpProvider.update_projects_with_organizations",
+                return_value=None,
+            ),
+            patch(
+                "os.path.abspath",
+                return_value="test_credentials_file",
+            ),
+            patch(
+                "prowler.providers.gcp.gcp_provider.default",
+                return_value=(mocked_credentials, MagicMock()),
+            ),
+            patch(
+                "prowler.providers.gcp.gcp_provider.discovery.build",
+                return_value=mocked_service,
+            ),
         ):
             gcp_provider = GcpProvider(
                 arguments.organization_id,
@@ -462,7 +641,7 @@ class TestGCPProvider:
                 id="project/55555555",
                 name="test-project",
                 labels={"test": "value"},
-                lifecycle_state="",
+                lifecycle_state="ACTIVE",
             )
         }
 
@@ -471,21 +650,27 @@ class TestGCPProvider:
         mocked_service.projects.list.return_value = MagicMock(
             execute=MagicMock(return_value={"projects": projects})
         )
-        with patch(
-            "prowler.providers.gcp.gcp_provider.GcpProvider.get_projects",
-            return_value=projects,
-        ), patch(
-            "prowler.providers.gcp.gcp_provider.GcpProvider.update_projects_with_organizations",
-            return_value=None,
-        ), patch(
-            "os.path.abspath",
-            return_value="test_credentials_file",
-        ), patch(
-            "prowler.providers.gcp.gcp_provider.default",
-            return_value=(mocked_credentials, MagicMock()),
-        ), patch(
-            "prowler.providers.gcp.gcp_provider.discovery.build",
-            return_value=mocked_service,
+        with (
+            patch(
+                "prowler.providers.gcp.gcp_provider.GcpProvider.get_projects",
+                return_value=projects,
+            ),
+            patch(
+                "prowler.providers.gcp.gcp_provider.GcpProvider.update_projects_with_organizations",
+                return_value=None,
+            ),
+            patch(
+                "os.path.abspath",
+                return_value="test_credentials_file",
+            ),
+            patch(
+                "prowler.providers.gcp.gcp_provider.default",
+                return_value=(mocked_credentials, MagicMock()),
+            ),
+            patch(
+                "prowler.providers.gcp.gcp_provider.discovery.build",
+                return_value=mocked_service,
+            ),
         ):
             gcp_provider = GcpProvider(
                 arguments.organization_id,
@@ -533,14 +718,14 @@ class TestGCPProvider:
                 id="project/55555555",
                 name="test-project",
                 labels={"test": "value"},
-                lifecycle_state="",
+                lifecycle_state="ACTIVE",
             ),
             "test-excluded-project": GCPProject(
                 number="12345678",
                 id="project/12345678",
                 name="test-excluded-project",
                 labels={"test": "value"},
-                lifecycle_state="",
+                lifecycle_state="ACTIVE",
             ),
         }
 
@@ -550,21 +735,27 @@ class TestGCPProvider:
             execute=MagicMock(return_value={"projects": projects})
         )
 
-        with patch(
-            "prowler.providers.gcp.gcp_provider.GcpProvider.get_projects",
-            return_value=projects,
-        ), patch(
-            "prowler.providers.gcp.gcp_provider.GcpProvider.update_projects_with_organizations",
-            return_value=None,
-        ), patch(
-            "os.path.abspath",
-            return_value="test_credentials_file",
-        ), patch(
-            "prowler.providers.gcp.gcp_provider.default",
-            return_value=(mocked_credentials, MagicMock()),
-        ), patch(
-            "prowler.providers.gcp.gcp_provider.discovery.build",
-            return_value=mocked_service,
+        with (
+            patch(
+                "prowler.providers.gcp.gcp_provider.GcpProvider.get_projects",
+                return_value=projects,
+            ),
+            patch(
+                "prowler.providers.gcp.gcp_provider.GcpProvider.update_projects_with_organizations",
+                return_value=None,
+            ),
+            patch(
+                "os.path.abspath",
+                return_value="test_credentials_file",
+            ),
+            patch(
+                "prowler.providers.gcp.gcp_provider.default",
+                return_value=(mocked_credentials, MagicMock()),
+            ),
+            patch(
+                "prowler.providers.gcp.gcp_provider.discovery.build",
+                return_value=mocked_service,
+            ),
         ):
             gcp_provider = GcpProvider(
                 arguments.organization_id,
@@ -626,6 +817,18 @@ class TestGCPProvider:
             assert e.type == GCPTestConnectionError
             assert "Test exception" in e.value.args[0]
 
+    def test_test_connection_with_exception_service_account_key(self):
+        with patch(
+            "prowler.providers.gcp.gcp_provider.GcpProvider.setup_session",
+            side_effect=Exception("Test exception"),
+        ):
+            with pytest.raises(Exception) as e:
+                GcpProvider.test_connection(
+                    service_account_key={"test": "key"},
+                )
+            assert e.type == GCPTestConnectionError
+            assert "Test exception" in e.value.args[0]
+
     def test_test_connection_valid_project_id(self):
         project_id = "test-project-id"
         mocked_service = MagicMock()
@@ -634,12 +837,15 @@ class TestGCPProvider:
             execute=MagicMock(return_value={"projectId": project_id})
         )
 
-        with patch(
-            "prowler.providers.gcp.gcp_provider.GcpProvider.setup_session",
-            return_value=(None, project_id),
-        ), patch(
-            "prowler.providers.gcp.gcp_provider.discovery.build",
-            return_value=mocked_service,
+        with (
+            patch(
+                "prowler.providers.gcp.gcp_provider.GcpProvider.setup_session",
+                return_value=(None, project_id),
+            ),
+            patch(
+                "prowler.providers.gcp.gcp_provider.discovery.build",
+                return_value=mocked_service,
+            ),
         ):
             output = GcpProvider.test_connection(
                 client_id="test-client-id",
@@ -658,7 +864,7 @@ class TestGCPProvider:
                 id="project/55555555",
                 name="test-project",
                 labels={"test": "value"},
-                lifecycle_state="",
+                lifecycle_state="ACTIVE",
             ),
         }
 
@@ -666,16 +872,19 @@ class TestGCPProvider:
             execute=MagicMock(return_value={"projects": projects})
         )
 
-        with patch(
-            "prowler.providers.gcp.gcp_provider.GcpProvider.setup_session",
-            return_value=(None, "test-valid-project"),
-        ), patch(
-            "prowler.providers.gcp.gcp_provider.discovery.build",
-            return_value=mocked_service,
-        ), patch(
-            "prowler.providers.gcp.gcp_provider.GcpProvider.validate_project_id"
-        ) as mock_validate_project_id:
-
+        with (
+            patch(
+                "prowler.providers.gcp.gcp_provider.GcpProvider.setup_session",
+                return_value=(None, "test-valid-project"),
+            ),
+            patch(
+                "prowler.providers.gcp.gcp_provider.discovery.build",
+                return_value=mocked_service,
+            ),
+            patch(
+                "prowler.providers.gcp.gcp_provider.GcpProvider.validate_project_id"
+            ) as mock_validate_project_id,
+        ):
             mock_validate_project_id.side_effect = GCPInvalidProviderIdError(
                 "Invalid project ID"
             )

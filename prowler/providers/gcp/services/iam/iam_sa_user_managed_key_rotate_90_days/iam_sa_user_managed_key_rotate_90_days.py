@@ -11,11 +11,13 @@ class iam_sa_user_managed_key_rotate_90_days(Check):
             for key in account.keys:
                 if key.type == "USER_MANAGED":
                     last_rotated = (datetime.now() - key.valid_after).days
-                    report = Check_Report_GCP(self.metadata())
-                    report.project_id = account.project_id
-                    report.resource_id = key.name
-                    report.resource_name = account.email
-                    report.location = iam_client.region
+                    report = Check_Report_GCP(
+                        metadata=self.metadata(),
+                        resource=account,
+                        resource_id=key.name,
+                        resource_name=account.email,
+                        location=iam_client.region,
+                    )
                     report.status = "PASS"
                     report.status_extended = f"User-managed key {key.name} for account {account.email} was rotated over the last 90 days ({last_rotated} days ago)."
                     if last_rotated > 90:

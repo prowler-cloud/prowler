@@ -7,8 +7,7 @@ class macie_is_enabled(Check):
     def execute(self):
         findings = []
         for session in macie_client.sessions:
-            report = Check_Report_AWS(self.metadata())
-            report.region = session.region
+            report = Check_Report_AWS(metadata=self.metadata(), resource=session)
             report.resource_arn = macie_client._get_session_arn_template(session.region)
             report.resource_id = macie_client.audited_account
             if session.status == "ENABLED":

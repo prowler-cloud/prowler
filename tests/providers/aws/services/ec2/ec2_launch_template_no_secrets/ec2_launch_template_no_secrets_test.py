@@ -155,7 +155,7 @@ class Test_ec2_launch_template_no_secrets:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Potential secret found in User Data for EC2 Launch Template tester1 in template versions: 123."
+                == "Potential secret found in User Data for EC2 Launch Template tester1 in template versions: Version 123: Secret Keyword on line 1."
             )
             assert result[0].resource_id == "lt-1234567890"
             assert result[0].region == AWS_REGION_US_EAST_1
@@ -203,6 +203,7 @@ class Test_ec2_launch_template_no_secrets:
         )
 
         ec2_client.launch_templates = [launch_template]
+        ec2_client.audit_config = {"detect_secrets_plugins": None}
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -223,7 +224,7 @@ class Test_ec2_launch_template_no_secrets:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Potential secret found in User Data for EC2 Launch Template {launch_template_name} in template versions: 1, 2."
+                == f"Potential secret found in User Data for EC2 Launch Template {launch_template_name} in template versions: Version 1: Secret Keyword on line 1, Hex High Entropy String on line 3, Secret Keyword on line 3, Secret Keyword on line 4, Version 2: Secret Keyword on line 1, Hex High Entropy String on line 3, Secret Keyword on line 3, Secret Keyword on line 4."
             )
             assert result[0].resource_id == launch_template_id
             assert result[0].region == AWS_REGION_US_EAST_1
@@ -277,6 +278,7 @@ class Test_ec2_launch_template_no_secrets:
         )
 
         ec2_client.launch_templates = [launch_template]
+        ec2_client.audit_config = {"detect_secrets_plugins": None}
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -297,7 +299,7 @@ class Test_ec2_launch_template_no_secrets:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Potential secret found in User Data for EC2 Launch Template {launch_template_name} in template versions: 1."
+                == f"Potential secret found in User Data for EC2 Launch Template {launch_template_name} in template versions: Version 1: Secret Keyword on line 1, Hex High Entropy String on line 3, Secret Keyword on line 3, Secret Keyword on line 4."
             )
             assert result[0].resource_id == launch_template_id
             assert result[0].region == AWS_REGION_US_EAST_1
@@ -341,6 +343,7 @@ class Test_ec2_launch_template_no_secrets:
         )
 
         ec2_client.launch_templates = [launch_template]
+        ec2_client.audit_config = {"detect_secrets_plugins": None}
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -361,7 +364,7 @@ class Test_ec2_launch_template_no_secrets:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Potential secret found in User Data for EC2 Launch Template {launch_template_name} in template versions: 1."
+                == f"Potential secret found in User Data for EC2 Launch Template {launch_template_name} in template versions: Version 1: Secret Keyword on line 1, Hex High Entropy String on line 3, Secret Keyword on line 3, Secret Keyword on line 4."
             )
             assert result[0].resource_id == launch_template_id
             assert result[0].region == AWS_REGION_US_EAST_1
@@ -482,6 +485,7 @@ class Test_ec2_launch_template_no_secrets:
             launch_template_secrets,
             launch_template_no_secrets,
         ]
+        ec2_client.audit_config = {"detect_secrets_plugins": None}
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -502,7 +506,7 @@ class Test_ec2_launch_template_no_secrets:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Potential secret found in User Data for EC2 Launch Template {launch_template_name1} in template versions: 1."
+                == f"Potential secret found in User Data for EC2 Launch Template {launch_template_name1} in template versions: Version 1: Secret Keyword on line 1, Hex High Entropy String on line 3, Secret Keyword on line 3, Secret Keyword on line 4."
             )
             assert result[0].resource_id == launch_template_id1
             assert result[0].region == AWS_REGION_US_EAST_1

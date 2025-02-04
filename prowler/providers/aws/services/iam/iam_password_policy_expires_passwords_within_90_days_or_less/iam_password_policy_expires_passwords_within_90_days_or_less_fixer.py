@@ -5,7 +5,8 @@ from prowler.providers.aws.services.iam.iam_client import iam_client
 def fixer(resource_id: str) -> bool:
     """
     Enable IAM password policy to expire passwords within 90 days or less or the configurable value in prowler/config/fixer_config.yaml.
-    Requires the iam:UpdateAccountPasswordPolicy permission:
+    Requires the iam:UpdateAccountPasswordPolicy permission.
+    Permissions:
     {
         "Version": "2012-10-17",
         "Statement": [
@@ -16,6 +17,8 @@ def fixer(resource_id: str) -> bool:
             }
         ]
     }
+    Args:
+        resource_id (str): AWS account ID
     Returns:
         bool: True if IAM password policy is updated, False otherwise
     """

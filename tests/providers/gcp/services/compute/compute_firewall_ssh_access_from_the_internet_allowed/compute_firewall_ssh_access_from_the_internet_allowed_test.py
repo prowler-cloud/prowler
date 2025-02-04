@@ -6,7 +6,7 @@ from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, set_mocked_gcp_prov
 
 class Test_compute_firewall_ssh_access_from_the_internet_allowed:
     def test_compute_no_instances(self):
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         compute_client.firewalls = []
 
         with mock.patch(
@@ -36,7 +36,7 @@ class Test_compute_firewall_ssh_access_from_the_internet_allowed:
             project_id=GCP_PROJECT_ID,
         )
 
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.firewalls = [firewall]
         compute_client.region = "global"
@@ -75,7 +75,7 @@ class Test_compute_firewall_ssh_access_from_the_internet_allowed:
             project_id=GCP_PROJECT_ID,
         )
 
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.firewalls = [firewall]
         compute_client.region = "global"
@@ -114,7 +114,7 @@ class Test_compute_firewall_ssh_access_from_the_internet_allowed:
             project_id=GCP_PROJECT_ID,
         )
 
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.firewalls = [firewall]
         compute_client.region = "global"
@@ -153,7 +153,7 @@ class Test_compute_firewall_ssh_access_from_the_internet_allowed:
             project_id=GCP_PROJECT_ID,
         )
 
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.firewalls = [firewall]
         compute_client.region = "global"
@@ -192,7 +192,7 @@ class Test_compute_firewall_ssh_access_from_the_internet_allowed:
             project_id=GCP_PROJECT_ID,
         )
 
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.firewalls = [firewall]
         compute_client.region = "global"
@@ -231,7 +231,7 @@ class Test_compute_firewall_ssh_access_from_the_internet_allowed:
             project_id=GCP_PROJECT_ID,
         )
 
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.firewalls = [firewall]
         compute_client.region = "global"
@@ -270,7 +270,7 @@ class Test_compute_firewall_ssh_access_from_the_internet_allowed:
             project_id=GCP_PROJECT_ID,
         )
 
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.firewalls = [firewall]
         compute_client.region = "global"
@@ -309,7 +309,7 @@ class Test_compute_firewall_ssh_access_from_the_internet_allowed:
             project_id=GCP_PROJECT_ID,
         )
 
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.firewalls = [firewall]
         compute_client.region = "global"
@@ -348,7 +348,7 @@ class Test_compute_firewall_ssh_access_from_the_internet_allowed:
             project_id=GCP_PROJECT_ID,
         )
 
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.firewalls = [firewall]
         compute_client.region = "global"
@@ -390,7 +390,7 @@ class Test_compute_firewall_ssh_access_from_the_internet_allowed:
             project_id=GCP_PROJECT_ID,
         )
 
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.firewalls = [firewall]
         compute_client.region = "global"
@@ -433,7 +433,7 @@ class Test_compute_firewall_ssh_access_from_the_internet_allowed:
             project_id=GCP_PROJECT_ID,
         )
 
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.firewalls = [firewall]
         compute_client.region = "global"

@@ -483,3 +483,52 @@ class Test_rds_instance_critical_event_subscription:
                     == f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:es:TestSub"
                 )
                 assert result[0].resource_tags == []
+
+    @mock_aws
+    def test_rds_instance_event_invalid(self):
+        conn = client("rds", region_name=AWS_REGION_US_EAST_1)
+        conn.create_db_parameter_group(
+            DBParameterGroupName="test",
+            DBParameterGroupFamily="default.aurora-postgresql14",
+            Description="test parameter group",
+        )
+        conn.create_event_subscription(
+            SubscriptionName="TestSub",
+            SnsTopicArn=f"arn:aws:sns:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:test",
+            SourceType="db-instance",
+            EventCategories=["invalid"],
+            Enabled=True,
+        )
+        from prowler.providers.aws.services.rds.rds_service import RDS
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.rds.rds_instance_critical_event_subscription.rds_instance_critical_event_subscription.rds_client",
+                new=RDS(aws_provider),
+            ):
+                # Test Check
+                from prowler.providers.aws.services.rds.rds_instance_critical_event_subscription.rds_instance_critical_event_subscription import (
+                    rds_instance_critical_event_subscription,
+                )
+
+                check = rds_instance_critical_event_subscription()
+                result = check.execute()
+
+                assert len(result) == 1
+                assert result[0].status == "FAIL"
+                assert (
+                    result[0].status_extended
+                    == "RDS instance event categories of maintenance, configuration change, and failure are not subscribed."
+                )
+                assert result[0].resource_id == "TestSub"
+                assert result[0].region == AWS_REGION_US_EAST_1
+                assert (
+                    result[0].resource_arn
+                    == f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:es:TestSub"
+                )
+                assert result[0].resource_tags == []

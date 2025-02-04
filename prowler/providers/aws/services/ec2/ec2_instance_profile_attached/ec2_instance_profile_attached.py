@@ -7,11 +7,7 @@ class ec2_instance_profile_attached(Check):
         findings = []
         for instance in ec2_client.instances:
             if instance.state != "terminated":
-                report = Check_Report_AWS(self.metadata())
-                report.region = instance.region
-                report.resource_id = instance.id
-                report.resource_arn = instance.arn
-                report.resource_tags = instance.tags
+                report = Check_Report_AWS(metadata=self.metadata(), resource=instance)
                 report.status = "FAIL"
                 report.status_extended = f"EC2 Instance {instance.id} not associated with an Instance Profile Role."
                 if instance.instance_profile:

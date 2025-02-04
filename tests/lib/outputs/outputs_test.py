@@ -21,7 +21,6 @@ from prowler.lib.outputs.utils import (
 
 
 class TestOutputs:
-
     def test_set_report_color(self):
         test_status = ["PASS", "FAIL", "MANUAL"]
         test_colors = [Fore.GREEN, Fore.RED, Fore.YELLOW]
@@ -35,8 +34,9 @@ class TestOutputs:
         with pytest.raises(Exception) as exc:
             set_report_color(test_status)
 
-        assert "Invalid Report Status. Must be PASS, FAIL or MANUAL" in str(exc.value)
-        assert exc.type == Exception
+        assert "Invalid Report Status: INVALID. Must be PASS, FAIL or MANUAL" in str(
+            exc.value
+        )
 
     def test_unroll_list_no_separator(self):
         list = ["test", "test1", "test2"]

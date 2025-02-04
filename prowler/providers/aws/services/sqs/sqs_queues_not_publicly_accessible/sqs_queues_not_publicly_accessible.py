@@ -7,11 +7,7 @@ class sqs_queues_not_publicly_accessible(Check):
     def execute(self):
         findings = []
         for queue in sqs_client.queues:
-            report = Check_Report_AWS(self.metadata())
-            report.region = queue.region
-            report.resource_id = queue.id
-            report.resource_arn = queue.arn
-            report.resource_tags = queue.tags
+            report = Check_Report_AWS(metadata=self.metadata(), resource=queue)
             report.status = "PASS"
             report.status_extended = f"SQS queue {queue.id} is not public."
             if queue.policy:

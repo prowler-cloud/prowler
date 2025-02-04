@@ -1,4 +1,4 @@
-name: "Pull Request Labeler"
+name: Prowler - PR Labeler
 
 on:
     pull_request_target:

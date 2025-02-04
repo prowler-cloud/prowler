@@ -7,8 +7,9 @@ class ec2_ebs_default_encryption(Check):
         findings = []
         for ebs_encryption in ec2_client.ebs_encryption_by_default:
             if ebs_encryption.volumes or ec2_client.provider.scan_unused_services:
-                report = Check_Report_AWS(self.metadata())
-                report.region = ebs_encryption.region
+                report = Check_Report_AWS(
+                    metadata=self.metadata(), resource=ebs_encryption
+                )
                 report.resource_arn = ec2_client._get_volume_arn_template(
                     ebs_encryption.region
                 )

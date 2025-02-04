@@ -6,12 +6,11 @@ class ecs_task_definitions_logging_block_mode(Check):
     def execute(self):
         findings = []
         for task_definition in ecs_client.task_definitions.values():
-            report = Check_Report_AWS(self.metadata())
-            containers = 0
-            report.region = task_definition.region
+            report = Check_Report_AWS(
+                metadata=self.metadata(), resource=task_definition
+            )
             report.resource_id = f"{task_definition.name}:{task_definition.revision}"
-            report.resource_arn = task_definition.arn
-            report.resource_tags = task_definition.tags
+            containers = 0
             report.status = "PASS"
             report.status_extended = f"ECS task definition {task_definition.name} with revision {task_definition.revision} containers has logging configured with non blocking mode."
             failed_containers = []

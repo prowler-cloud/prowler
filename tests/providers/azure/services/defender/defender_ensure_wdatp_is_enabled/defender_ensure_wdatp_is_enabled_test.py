@@ -59,7 +59,7 @@ class Test_defender_ensure_wdatp_is_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Microsoft Defender for Endpoint integration is disabeld for subscription {AZURE_SUBSCRIPTION_ID}."
+                == f"Microsoft Defender for Endpoint integration is disabled for subscription {AZURE_SUBSCRIPTION_ID}."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == "WDATP"

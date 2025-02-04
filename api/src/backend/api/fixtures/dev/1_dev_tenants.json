@@ -1,0 +1,50 @@
+[
+  {
+    "model": "api.tenant",
+    "pk": "12646005-9067-4d2a-a098-8bb378604362",
+    "fields": {
+      "inserted_at": "2024-03-21T23:00:00Z",
+      "updated_at": "2024-03-21T23:00:00Z",
+      "name": "Tenant1"
+    }
+  },
+  {
+    "model": "api.tenant",
+    "pk": "0412980b-06e3-436a-ab98-3c9b1d0333d3",
+    "fields": {
+      "inserted_at": "2024-03-21T23:00:00Z",
+      "updated_at": "2024-03-21T23:00:00Z",
+      "name": "Tenant2"
+    }
+  },
+  {
+    "model": "api.membership",
+    "pk": "2b0db93a-7e0b-4edf-a851-ea448676b7eb",
+    "fields": {
+      "user": "8b38e2eb-6689-4f1e-a4ba-95b275130200",
+      "tenant": "0412980b-06e3-436a-ab98-3c9b1d0333d3",
+      "role": "owner",
+      "date_joined": "2024-09-19T11:03:59.712Z"
+    }
+  },
+  {
+    "model": "api.membership",
+    "pk": "797d7cee-abc9-4598-98bb-4bf4bfb97f27",
+    "fields": {
+      "user": "8b38e2eb-6689-4f1e-a4ba-95b275130200",
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "role": "owner",
+      "date_joined": "2024-09-19T11:02:59.712Z"
+    }
+  },
+  {
+    "model": "api.membership",
+    "pk": "dea37563-7009-4dcf-9f18-25efb41462a7",
+    "fields": {
+      "user": "b6493a3a-c997-489b-8b99-278bf74de9f6",
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "role": "member",
+      "date_joined": "2024-09-19T11:03:59.712Z"
+    }
+  }
+]

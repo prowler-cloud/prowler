@@ -3,7 +3,7 @@
   "CheckID": "neptune_cluster_iam_authentication_enabled",
   "CheckTitle": "Check if Neptune Clusters have IAM authentication enabled.",
   "CheckType": [],
-  "ServiceName": "rds",
+  "ServiceName": "neptune",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-cluster",
   "Severity": "medium",

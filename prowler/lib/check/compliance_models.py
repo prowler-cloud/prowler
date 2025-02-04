@@ -83,6 +83,7 @@ class CIS_Requirement_Attribute(BaseModel):
     """CIS Requirement Attribute"""
 
     Section: str
+    SubSection: Optional[str]
     Profile: CIS_Requirement_Attribute_Profile
     AssessmentStatus: CIS_Requirement_Attribute_AssessmentStatus
     Description: str

@@ -25,7 +25,7 @@ class iam_user_accesskey_unused(Check):
                 user["access_key_1_active"] != "true"
                 and user["access_key_2_active"] != "true"
             ):
-                report = Check_Report_AWS(self.metadata())
+                report = Check_Report_AWS(metadata=self.metadata(), resource=user)
                 report.region = iam_client.region
                 report.resource_id = user["user"]
                 report.resource_arn = user["arn"]
@@ -45,7 +45,9 @@ class iam_user_accesskey_unused(Check):
                         ) - parser.parse(user["access_key_1_last_used_date"])
                         if access_key_1_last_used_date.days > maximum_expiration_days:
                             old_access_keys = True
-                            report = Check_Report_AWS(self.metadata())
+                            report = Check_Report_AWS(
+                                metadata=self.metadata(), resource=user
+                            )
                             report.region = iam_client.region
                             report.resource_id = user["user"] + "/AccessKey1"
                             report.resource_arn = user["arn"]
@@ -61,7 +63,9 @@ class iam_user_accesskey_unused(Check):
                         ) - parser.parse(user["access_key_2_last_used_date"])
                         if access_key_2_last_used_date.days > maximum_expiration_days:
                             old_access_keys = True
-                            report = Check_Report_AWS(self.metadata())
+                            report = Check_Report_AWS(
+                                metadata=self.metadata(), resource=user
+                            )
                             report.region = iam_client.region
                             report.resource_id = user["user"] + "/AccessKey2"
                             report.resource_arn = user["arn"]
@@ -71,7 +75,7 @@ class iam_user_accesskey_unused(Check):
                             findings.append(report)
 
                 if not old_access_keys:
-                    report = Check_Report_AWS(self.metadata())
+                    report = Check_Report_AWS(metadata=self.metadata(), resource=user)
                     report.region = iam_client.region
                     report.resource_id = user["user"]
                     report.resource_arn = user["arn"]

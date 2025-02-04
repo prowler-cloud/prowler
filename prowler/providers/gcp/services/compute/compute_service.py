@@ -5,7 +5,6 @@ from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.gcp.lib.service.service import GCPService
 
 
-################## Compute
 class Compute(GCPService):
     def __init__(self, provider: GcpProvider):
         super().__init__(__class__.__name__, provider)
@@ -16,7 +15,7 @@ class Compute(GCPService):
         self.subnets = []
         self.addresses = []
         self.firewalls = []
-        self.projects = []
+        self.compute_projects = []
         self.load_balancers = []
         self._get_url_maps()
         self._describe_backend_service()
@@ -73,7 +72,7 @@ class Compute(GCPService):
                 for item in response["commonInstanceMetadata"].get("items", []):
                     if item["key"] == "enable-oslogin" and item["value"] == "TRUE":
                         enable_oslogin = True
-                self.projects.append(
+                self.compute_projects.append(
                     Project(id=project_id, enable_oslogin=enable_oslogin)
                 )
             except Exception as error:
@@ -101,6 +100,7 @@ class Compute(GCPService):
                                 name=instance["name"],
                                 id=instance["id"],
                                 zone=zone,
+                                region=zone.rsplit("-", 1)[0],
                                 public_ip=public_ip,
                                 metadata=instance.get("metadata", {}),
                                 shielded_enabled_vtpm=instance.get(
@@ -306,6 +306,7 @@ class Instance(BaseModel):
     name: str
     id: str
     zone: str
+    region: str
     public_ip: bool
     project_id: str
     metadata: dict

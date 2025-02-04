@@ -22,6 +22,11 @@ provider/kubernetes:
       - any-glob-to-any-file: "prowler/providers/kubernetes/**"
       - any-glob-to-any-file: "tests/providers/kubernetes/**"
 
+provider/github:
+  - changed-files:
+      - any-glob-to-any-file: "prowler/providers/github/**"
+      - any-glob-to-any-file: "tests/providers/github/**"
+
 github_actions:
   - changed-files:
       - any-glob-to-any-file: ".github/workflows/*"
@@ -79,3 +84,11 @@ output/csv:
   - changed-files:
       - any-glob-to-any-file: "prowler/lib/outputs/csv/**"
       - any-glob-to-any-file: "tests/lib/outputs/csv/**"
+
+component/api:
+  - changed-files:
+      - any-glob-to-any-file: "api/**"
+
+component/ui:
+  - changed-files:
+      - any-glob-to-any-file: "ui/**"
