@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Link } from "@nextui-org/react";
+import { Checkbox, Link } from "@nextui-org/react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -11,7 +11,12 @@ import { NotificationIcon, ProwlerExtended } from "@/components/icons";
 import { ThemeSwitch } from "@/components/ThemeSwitch";
 import { useToast } from "@/components/ui";
 import { CustomButton, CustomInput } from "@/components/ui/custom";
-import { Form } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormMessage,
+} from "@/components/ui/form";
 import { ApiError, authFormSchema } from "@/types";
 
 export const AuthForm = ({
@@ -213,13 +218,44 @@ export const AuthForm = ({
                       isDisabled={invitationToken !== null && true}
                     />
                   )}
+
+                  {process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true" && (
+                    <FormField
+                      control={form.control}
+                      name="termsAndConditions"
+                      render={({ field }) => (
+                        <>
+                          <FormControl>
+                            <Checkbox
+                              isRequired
+                              className="py-4"
+                              size="sm"
+                              checked={field.value}
+                              onChange={(e) => field.onChange(e.target.checked)}
+                            >
+                              I agree with the&nbsp;
+                              <Link
+                                href="https://prowler.com/terms-of-service/"
+                                size="sm"
+                                target="_blank"
+                              >
+                                Terms of Service
+                              </Link>
+                              &nbsp;of Prowler
+                            </Checkbox>
+                          </FormControl>
+                          <FormMessage className="text-system-error dark:text-system-error" />
+                        </>
+                      )}
+                    />
+                  )}
                 </>
               )}
 
-              {form.formState.errors?.email && (
+              {type === "sign-in" && form.formState.errors?.email && (
                 <div className="flex flex-row items-center gap-2 text-system-error">
                   <NotificationIcon size={16} />
-                  <p className="text-s">No user found</p>
+                  <p className="text-small">Invalid email or password</p>
                 </div>
               )}
 
