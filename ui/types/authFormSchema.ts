@@ -33,9 +33,12 @@ export const authFormSchema = (type: string) =>
 
       // Fields for Sign In and Sign Up
       email: z.string().email(),
-      password: z.string().min(12, {
-        message: "It must contain at least 12 characters.",
-      }),
+      password:
+        type === "sign-in"
+          ? z.string()
+          : z.string().min(12, {
+              message: "It must contain at least 12 characters.",
+            }),
     })
     .refine(
       (data) => type === "sign-in" || data.password === data.confirmPassword,

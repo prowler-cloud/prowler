@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Checkbox, Link } from "@nextui-org/react";
+import { Checkbox, Link, Spacer } from "@nextui-org/react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -172,6 +172,7 @@ export const AuthForm = ({
                   />
                 </>
               )}
+
               <CustomInput
                 control={form.control}
                 name="email"
@@ -179,13 +180,17 @@ export const AuthForm = ({
                 label="Email"
                 placeholder="Enter your email"
                 isInvalid={!!form.formState.errors.email}
+                showFormMessage={type !== "sign-in"}
               />
 
               <CustomInput
                 control={form.control}
                 name="password"
                 password
-                isInvalid={!!form.formState.errors.password}
+                isInvalid={
+                  !!form.formState.errors.password ||
+                  !!form.formState.errors.email
+                }
               />
 
               {/* {type === "sign-in" && (
@@ -258,6 +263,8 @@ export const AuthForm = ({
                   <p className="text-small">Invalid email or password</p>
                 </div>
               )}
+
+              {type === "sign-in" && <Spacer y={2} />}
 
               <CustomButton
                 type="submit"
