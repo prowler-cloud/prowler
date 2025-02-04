@@ -2050,8 +2050,6 @@ optional = false
 python-versions = "*"
 files = [
     {file = "jsonpath-ng-1.7.0.tar.gz", hash = "sha256:f6f5f7fd4e5ff79c785f1573b394043b39849fb2bb47bcead935d12b00beab3c"},
-    {file = "jsonpath_ng-1.7.0-py2-none-any.whl", hash = "sha256:898c93fc173f0c336784a3fa63d7434297544b7198124a68f9a3ef9597b0ae6e"},
-    {file = "jsonpath_ng-1.7.0-py3-none-any.whl", hash = "sha256:f3d7f9e848cba1b6da28c55b1c26ff915dc9e0b1ba7e752a53d6da8d5cbd00b6"},
 ]
 
 [package.dependencies]
@@ -2614,13 +2612,13 @@ test = ["pytest", "pytest-cov"]
 
 [[package]]
 name = "moto"
-version = "5.0.27"
+version = "5.0.28"
 description = "A library that allows you to easily mock out tests based on AWS infrastructure"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "moto-5.0.27-py3-none-any.whl", hash = "sha256:27042fd94c8def0166d9f2ae8d39d9488d4b3115542b5fca88566c0424549013"},
-    {file = "moto-5.0.27.tar.gz", hash = "sha256:6c123de7e0e5e6508a10c399ba3ecf2d5143f263f8e804fd4a7091941c3f5207"},
+    {file = "moto-5.0.28-py3-none-any.whl", hash = "sha256:2dfbea1afe3b593e13192059a1a7fc4b3cf7fdf92e432070c22346efa45aa0f0"},
+    {file = "moto-5.0.28.tar.gz", hash = "sha256:4d3437693411ec943c13c77de5b0b520c4b0a9ac850fead4ba2a54709e086e8b"},
 ]
 
 [package.dependencies]
@@ -3575,13 +3573,13 @@ test = ["enum34", "ipaddress", "mock", "pywin32", "wmi"]
 
 [[package]]
 name = "py-ocsf-models"
-version = "0.2.0"
+version = "0.3.0"
 description = "This is a Python implementation of the OCSF models. The models are used to represent the data of the OCSF Schema defined in https://schema.ocsf.io/."
 optional = false
 python-versions = "<3.13,>=3.9"
 files = [
-    {file = "py_ocsf_models-0.2.0-py3-none-any.whl", hash = "sha256:ac75fd21077694b343ebaad3479194db113c274879b114277560ff287d5cd7b5"},
-    {file = "py_ocsf_models-0.2.0.tar.gz", hash = "sha256:3e12648d05329e6776a0e6b1ffea87a3eb60aa7d8cb2c4afd69e5724f443ce03"},
+    {file = "py_ocsf_models-0.3.0-py3-none-any.whl", hash = "sha256:3d31e379be5e4271f7faf62dee9c36798559a1f7f98dff142c0e4cfdb35e291c"},
+    {file = "py_ocsf_models-0.3.0.tar.gz", hash = "sha256:ad46b7d9761b74010f06a894df2d9541989252b7ff738cd5c7edbf4283df2279"},
 ]
 
 [package.dependencies]
@@ -5206,4 +5204,8 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
+<<<<<<< HEAD
 content-hash = "53401f345a72f27b8f1be3dc09ed822d1f65f1fbbf1fd5ca1cb99445d5cfae94"
+=======
+content-hash = "d4d817d0a3690b7a39222bf79420e3adb764b47c6c1d2ee0c73a7599333114b1"
+>>>>>>> dd6d8c71f (chore(deps-dev): bump moto from 5.0.27 to 5.0.28 (#6804))
