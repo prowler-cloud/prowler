@@ -1,9 +1,16 @@
+import glob
+import os
+
+import boto3
+from botocore.exceptions import ClientError, NoCredentialsError, ParamValidationError
 from celery.result import AsyncResult
+from config.env import env
 from django.conf import settings as django_settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.search import SearchQuery
 from django.db import transaction
 from django.db.models import Count, F, OuterRef, Prefetch, Q, Subquery, Sum
+from django.http import HttpResponse
 from django.db.models.functions import Coalesce
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -35,7 +42,6 @@ from tasks.tasks import (
     check_provider_connection_task,
     delete_provider_task,
     delete_tenant_task,
-    perform_scan_summary_task,
     perform_scan_task,
 )
 
@@ -114,6 +120,7 @@ from api.v1.serializers import (
     RoleSerializer,
     RoleUpdateSerializer,
     ScanCreateSerializer,
+    ScanReportSerializer,
     ScanSerializer,
     ScanUpdateSerializer,
     ScheduleDailyCreateSerializer,
@@ -1073,6 +1080,8 @@ class ScanViewSet(BaseRLSViewSet):
             return ScanCreateSerializer
         elif self.action == "partial_update":
             return ScanUpdateSerializer
+        elif self.action == "report":
+            return ScanReportSerializer
         return super().get_serializer_class()
 
     def partial_update(self, request, *args, **kwargs):
@@ -1090,6 +1099,82 @@ class ScanViewSet(BaseRLSViewSet):
         )
         return Response(data=read_serializer.data, status=status.HTTP_200_OK)
 
+    @extend_schema(
+        tags=["Scan"],
+        summary="Download ZIP report",
+        description="Returns a ZIP file containing the requested report",
+        request=ScanReportSerializer,
+        responses={
+            200: OpenApiResponse(description="Report obtained successfully"),
+            423: OpenApiResponse(
+                description="There is a problem with the AWS credentials"
+            ),
+        },
+    )
+    @action(detail=True, methods=["get"], url_name="report")
+    def report(self, request, pk=None):
+        scan_instance = Scan.objects.get(pk=pk)
+        output_path = scan_instance.output_path
+        if 1 == 2 and scan_instance.upload_to_s3:
+            s3_client = None
+            try:
+                s3_client = boto3.client("s3")
+                s3_client.list_buckets()
+            except (ClientError, NoCredentialsError, ParamValidationError):
+                try:
+                    s3_client = boto3.client(
+                        "s3",
+                        aws_access_key_id=env.str("DJANGO_ARTIFACTS_AWS_ACCESS_KEY_ID"),
+                        aws_secret_access_key=env.str(
+                            "DJANGO_ARTIFACTS_AWS_SECRET_ACCESS_KEY"
+                        ),
+                        aws_session_token=env.str("DJANGO_ARTIFACTS_AWS_SESSION_TOKEN"),
+                        region_name=env.str("DJANGO_ARTIFACTS_AWS_DEFAULT_REGION"),
+                    )
+                    s3_client.list_buckets()
+                except (ClientError, NoCredentialsError, ParamValidationError):
+                    return Response(
+                        {"detail": "There is a problem with the AWS credentials."},
+                        status=status.HTTP_423_LOCKED,
+                    )
+
+            bucket_name = env.str("DJANGO_ARTIFACTS_AWS_S3_OUTPUT_BUCKET")
+
+            try:
+                key = output_path[len(f"s3://{bucket_name}/") :]
+                s3_object = s3_client.get_object(Bucket=bucket_name, Key=key)
+                file_content = s3_object["Body"].read()
+                filename = os.path.basename(output_path.split("/")[-1])
+            except ClientError:
+                return Response(
+                    {"detail": "Error accessing cloud storage"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+
+        else:
+            zip_files = glob.glob(output_path)
+            if not zip_files:
+                return Response(
+                    {"detail": "No local files found"}, status=status.HTTP_404_NOT_FOUND
+                )
+
+            try:
+                file_path = zip_files[0]
+                with open(file_path, "rb") as f:
+                    file_content = f.read()
+                filename = os.path.basename(file_path)
+            except IOError:
+                return Response(
+                    {"detail": "Error reading local file"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+
+        response = HttpResponse(
+            file_content, content_type="application/x-zip-compressed"
+        )
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        return response
+
     def create(self, request, *args, **kwargs):
         input_serializer = self.get_serializer(data=request.data)
         input_serializer.is_valid(raise_exception=True)
@@ -1104,10 +1189,6 @@ class ScanViewSet(BaseRLSViewSet):
                     # Disabled for now
                     # checks_to_execute=scan.scanner_args.get("checks_to_execute"),
                 },
-                link=perform_scan_summary_task.si(
-                    tenant_id=self.request.tenant_id,
-                    scan_id=str(scan.id),
-                ),
             )
 
         scan.task_id = task.id

@@ -88,9 +88,7 @@ class RowLevelSecurityConstraint(models.BaseConstraint):
                 f"{grant_queries}{self.grant_sql_query.format(statement=statement)}"
             )
 
-        full_create_sql_query = (
-            f"{self.rls_sql_query}" f"{policy_queries}" f"{grant_queries}"
-        )
+        full_create_sql_query = f"{self.rls_sql_query}{policy_queries}{grant_queries}"
 
         table_name = model._meta.db_table
         if self.partition_name:

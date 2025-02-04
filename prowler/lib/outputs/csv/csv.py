@@ -98,7 +98,8 @@ class CSV(Output):
                     fieldnames=self._data[0].keys(),
                     delimiter=";",
                 )
-                csv_writer.writeheader()
+                if self._file_descriptor.tell() == 0:
+                    csv_writer.writeheader()
                 for finding in self._data:
                     csv_writer.writerow(finding)
                 self._file_descriptor.close()
