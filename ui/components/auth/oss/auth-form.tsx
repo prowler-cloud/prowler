@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Checkbox, Link, Spacer } from "@nextui-org/react";
+import { Checkbox, Link } from "@nextui-org/react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -148,7 +148,7 @@ export const AuthForm = ({
 
           <Form {...form}>
             <form
-              className="flex flex-col gap-3"
+              className="flex flex-col gap-4"
               onSubmit={form.handleSubmit(onSubmit)}
             >
               {type === "sign-up" && (
@@ -258,13 +258,11 @@ export const AuthForm = ({
               )}
 
               {type === "sign-in" && form.formState.errors?.email && (
-                <div className="flex flex-row items-center gap-2 text-system-error">
+                <div className="flex flex-row items-center text-system-error">
                   <NotificationIcon size={16} />
                   <p className="text-small">Invalid email or password</p>
                 </div>
               )}
-
-              {type === "sign-in" && <Spacer y={2} />}
 
               <CustomButton
                 type="submit"
