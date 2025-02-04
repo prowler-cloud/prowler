@@ -144,6 +144,7 @@ class TestOCSF:
         url = "https://schema.ocsf.io/api/v2/validate"
         headers = {"content-type": "application/json"}
         response = requests.post(url, headers=headers, json=json_data[0])
+        print(response.json())
         assert response.json()["error_count"] == 0
 
     @freeze_time(datetime.now())
@@ -174,7 +175,7 @@ class TestOCSF:
                         "vendor_name": "Prowler",
                         "version": prowler_version,
                     },
-                    "version": "1.3.0",
+                    "version": "1.4.0",
                     "profiles": ["cloud", "datetime"],
                     "tenant_uid": "test-organization-id",
                 },
