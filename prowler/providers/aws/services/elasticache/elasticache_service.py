@@ -173,7 +173,7 @@ class ElastiCache(AWSService):
                     regional_client.exceptions.InvalidReplicationGroupStateFault
                 ) as error:
                     logger.warning(
-                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {"ElastiCache replication group is in a state that does not support listing tags"}"
+                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
                 except Exception as error:
                     logger.error(
