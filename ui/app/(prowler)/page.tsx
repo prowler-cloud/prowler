@@ -129,7 +129,7 @@ const SSRFindingsBySeverity = async ({
 
 const SSRDataNewFindingsTable = async () => {
   const page = 1;
-  const sort = "severity,updated_at";
+  const sort = "severity,-inserted_at";
 
   const defaultFilters = {
     "filter[status__in]": "FAIL",

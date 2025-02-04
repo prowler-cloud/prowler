@@ -317,15 +317,15 @@ def perform_prowler_scan(
         output_directory = _generate_output_directory(
             prowler_provider, tenant_id, scan_id
         )
+        # Create the output directory
         os.makedirs("/".join(output_directory.split("/")[:-1]), exist_ok=True)
 
         all_findings = []
-
-        # Main scan loop
         for progress, findings, stats in prowler_scan.scan():
-            # Process findings
             for finding in findings:
-                # Resource processing with retries
+                if finding is None:
+                    logger.error(f"None finding detected on scan {scan_id}.")
+                    continue
                 for attempt in range(CELERY_DEADLOCK_ATTEMPTS):
                     try:
                         resource_instance, resource_uid_region = _store_resources(
@@ -353,7 +353,7 @@ def perform_prowler_scan(
                     if finding_uid not in last_status_cache:
                         most_recent = (
                             Finding.objects.filter(uid=finding_uid)
-                            .order_by("-id")
+                            .order_by("-inserted_at")
                             .values("status", "first_seen_at")
                             .first()
                         )
@@ -503,79 +503,99 @@ def aggregate_findings(tenant_id: str, scan_id: str):
         - muted_changed: Muted findings with a delta of 'changed'.
     """
     with rls_transaction(tenant_id):
-        aggregation = (
-            Finding.objects.filter(scan_id=scan_id)
-            .values(
-                "check_id",
-                "resources__service",
-                "severity",
-                "resources__region",
-            )
-            .annotate(
-                fail=Sum(
-                    Case(
-                        When(status="FAIL", then=1),
-                        default=0,
-                        output_field=IntegerField(),
-                    )
-                ),
-                _pass=Sum(
-                    Case(
-                        When(status="PASS", then=1),
-                        default=0,
-                        output_field=IntegerField(),
-                    )
-                ),
-                muted=Sum(
-                    Case(
-                        When(status="MUTED", then=1),
-                        default=0,
-                        output_field=IntegerField(),
-                    )
-                ),
-                total=Count("id"),
-                new=Sum(
-                    Case(
-                        When(delta="new", then=1),
-                        default=0,
-                        output_field=IntegerField(),
-                    )
-                ),
-                changed=Sum(
-                    Case(
-                        When(delta="changed", then=1),
-                        default=0,
-                        output_field=IntegerField(),
-                    )
-                ),
-                unchanged=Sum(
-                    Case(
-                        When(delta__isnull=True, then=1),
-                        default=0,
-                        output_field=IntegerField(),
-                    )
-                ),
-                **{
-                    f"{status}_new": Sum(
-                        Case(
-                            When(delta="new", status=status.upper(), then=1),
-                            default=0,
-                            output_field=IntegerField(),
-                        )
-                    )
-                    for status in ["fail", "pass", "muted"]
-                },
-                **{
-                    f"{status}_changed": Sum(
-                        Case(
-                            When(delta="changed", status=status.upper(), then=1),
-                            default=0,
-                            output_field=IntegerField(),
-                        )
-                    )
-                    for status in ["fail", "pass", "muted"]
-                },
-            )
+        findings = Finding.objects.filter(tenant_id=tenant_id, scan_id=scan_id)
+
+        aggregation = findings.values(
+            "check_id",
+            "resources__service",
+            "severity",
+            "resources__region",
+        ).annotate(
+            fail=Sum(
+                Case(
+                    When(status="FAIL", then=1),
+                    default=0,
+                    output_field=IntegerField(),
+                )
+            ),
+            _pass=Sum(
+                Case(
+                    When(status="PASS", then=1),
+                    default=0,
+                    output_field=IntegerField(),
+                )
+            ),
+            muted=Sum(
+                Case(
+                    When(status="MUTED", then=1),
+                    default=0,
+                    output_field=IntegerField(),
+                )
+            ),
+            total=Count("id"),
+            new=Sum(
+                Case(
+                    When(delta="new", then=1),
+                    default=0,
+                    output_field=IntegerField(),
+                )
+            ),
+            changed=Sum(
+                Case(
+                    When(delta="changed", then=1),
+                    default=0,
+                    output_field=IntegerField(),
+                )
+            ),
+            unchanged=Sum(
+                Case(
+                    When(delta__isnull=True, then=1),
+                    default=0,
+                    output_field=IntegerField(),
+                )
+            ),
+            fail_new=Sum(
+                Case(
+                    When(delta="new", status="FAIL", then=1),
+                    default=0,
+                    output_field=IntegerField(),
+                )
+            ),
+            fail_changed=Sum(
+                Case(
+                    When(delta="changed", status="FAIL", then=1),
+                    default=0,
+                    output_field=IntegerField(),
+                )
+            ),
+            pass_new=Sum(
+                Case(
+                    When(delta="new", status="PASS", then=1),
+                    default=0,
+                    output_field=IntegerField(),
+                )
+            ),
+            pass_changed=Sum(
+                Case(
+                    When(delta="changed", status="PASS", then=1),
+                    default=0,
+                    output_field=IntegerField(),
+                )
+            ),
+            muted_new=Sum(
+                Case(
+                    When(delta="new", status="MUTED", then=1),
+                    default=0,
+                    output_field=IntegerField(),
+                )
+            ),
+            muted_changed=Sum(
+                Case(
+                    When(delta="changed", status="MUTED", then=1),
+                    default=0,
+                    output_field=IntegerField(),
+                )
+            ),
         )
 
         ScanSummary.objects.bulk_create(

@@ -133,3 +133,5 @@ While the scan is running, start exploring the findings in these sections:
 <img src="../../img/issues.png" alt="Issues" width="300" style="text-align: center;"/>
 
 - **Browse All Findings**: Detailed list of findings detected, where you can filter by severity, service, and more. <img src="../../img/findings.png" alt="Findings" width="700"/>
+
+To view all `new` findings that have not been seen prior to this scan, click the `Delta` filter and select `new`. To view all `changed` findings that have had a status change (from `PASS` to `FAIL` for example), click the `Delta` filter and select `changed`.

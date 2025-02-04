@@ -541,6 +541,7 @@ class Check_Report_Microsoft365(Check_Report):
 
     resource_name: str
     resource_id: str
+    tenant_id: str
     location: str
 
     def __init__(self, metadata: Dict, resource: Any) -> None:
@@ -555,6 +556,7 @@ class Check_Report_Microsoft365(Check_Report):
             resource, "name", getattr(resource, "resource_name", "")
         )
         self.resource_id = getattr(resource, "id", getattr(resource, "resource_id", ""))
+        self.tenant_id = getattr(resource, "tenant_id", "")
         self.location = getattr(resource, "location", "global")
 
 

@@ -1,15 +1,14 @@
-from datetime import datetime, timedelta, timezone
-
 from celery import shared_task
 from config.celery import RLSTask
 from django_celery_beat.models import PeriodicTask
 from tasks.jobs.connection import check_provider_connection
 from tasks.jobs.deletion import delete_provider, delete_tenant
 from tasks.jobs.scan import aggregate_findings, perform_prowler_scan
+from tasks.utils import get_next_execution_datetime
 
 from api.db_utils import rls_transaction
 from api.decorators import set_tenant
-from api.models import Provider, Scan
+from api.models import Scan, StateChoices
 
 
 @shared_task(base=RLSTask, name="provider-connection-check")
@@ -100,28 +99,42 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
     task_id = self.request.id
 
     with rls_transaction(tenant_id):
-        provider_instance = Provider.objects.get(pk=provider_id)
         periodic_task_instance = PeriodicTask.objects.get(
             name=f"scan-perform-scheduled-{provider_id}"
         )
-        next_scan_date = datetime.combine(
-            datetime.now(timezone.utc), periodic_task_instance.start_time.time()
-        ) + timedelta(hours=24)
-
-        scan_instance = Scan.objects.create(
+        next_scan_datetime = get_next_execution_datetime(task_id, provider_id)
+        scan_instance, _ = Scan.objects.get_or_create(
             tenant_id=tenant_id,
-            name="Daily scheduled scan",
-            provider=provider_instance,
+            provider_id=provider_id,
             trigger=Scan.TriggerChoices.SCHEDULED,
-            next_scan_at=next_scan_date,
-            task_id=task_id,
+            state__in=(StateChoices.SCHEDULED, StateChoices.AVAILABLE),
+            scheduler_task_id=periodic_task_instance.id,
+            defaults={"state": StateChoices.SCHEDULED},
         )
 
-    result = perform_prowler_scan(
-        tenant_id=tenant_id,
-        scan_id=str(scan_instance.id),
-        provider_id=provider_id,
-    )
+        scan_instance.task_id = task_id
+        scan_instance.save()
+
+    try:
+        result = perform_prowler_scan(
+            tenant_id=tenant_id,
+            scan_id=str(scan_instance.id),
+            provider_id=provider_id,
+        )
+    except Exception as e:
+        raise e
+    finally:
+        with rls_transaction(tenant_id):
+            Scan.objects.get_or_create(
+                tenant_id=tenant_id,
+                name="Daily scheduled scan",
+                provider_id=provider_id,
+                trigger=Scan.TriggerChoices.SCHEDULED,
+                state=StateChoices.SCHEDULED,
+                scheduled_at=next_scan_datetime,
+                scheduler_task_id=periodic_task_instance.id,
+            )
+
     perform_scan_summary_task.apply_async(
         kwargs={
             "tenant_id": tenant_id,

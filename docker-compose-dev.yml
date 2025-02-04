@@ -36,6 +36,9 @@ services:
         required: false
     ports:
       - 3000:3000
+    volumes:
+      - "./ui:/app"
+      - "/app/node_modules"
 
   postgres:
     image: postgres:16.3-alpine3.20
