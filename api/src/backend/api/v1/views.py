@@ -4,7 +4,7 @@ from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.search import SearchQuery
 from django.db import transaction
 from django.db.models import Count, F, OuterRef, Prefetch, Q, Subquery, Sum
-from django.db.models.functions import JSONObject
+from django.db.models.functions import Coalesce
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_control
@@ -74,7 +74,6 @@ from api.models import (
     ScanSummary,
     SeverityChoices,
     StateChoices,
-    StatusChoices,
     Task,
     User,
     UserRoleRelationship,
@@ -194,7 +193,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.2.0"
+        spectacular_settings.VERSION = "1.4.0"
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -1306,9 +1305,8 @@ class FindingViewSet(BaseRLSViewSet):
     }
     http_method_names = ["get"]
     filterset_class = FindingFilter
-    ordering = ["-id"]
+    ordering = ["-inserted_at"]
     ordering_fields = [
-        "id",
         "status",
         "severity",
         "check_id",
@@ -1394,48 +1392,59 @@ class FindingViewSet(BaseRLSViewSet):
 
     @action(detail=False, methods=["get"], url_name="metadata")
     def metadata(self, request):
+        tenant_id = self.request.tenant_id
         queryset = self.get_queryset()
         filtered_queryset = self.filter_queryset(queryset)
 
-        result = filtered_queryset.aggregate(
-            services=ArrayAgg("resources__service", flat=True, distinct=True),
-            regions=ArrayAgg("resources__region", flat=True, distinct=True),
-            tags=ArrayAgg(
-                JSONObject(
-                    key=F("resources__tags__key"), value=F("resources__tags__value")
-                ),
-                distinct=True,
-                filter=Q(resources__tags__key__isnull=False),
-            ),
-            resource_types=ArrayAgg("resources__type", flat=True, distinct=True),
-        )
-        if result["services"] is None:
-            result["services"] = []
-        if result["regions"] is None:
-            result["regions"] = []
-        if result["regions"] is None:
-            result["regions"] = []
-        if result["resource_types"] is None:
-            result["resource_types"] = []
-        if result["tags"] is None:
-            result["tags"] = []
+        relevant_resources = Resource.objects.filter(
+            tenant_id=tenant_id, findings__in=filtered_queryset
+        ).distinct()
 
-        tags_dict = {}
-        for t in result["tags"]:
-            key, value = t["key"], t["value"]
-            if key not in tags_dict:
-                tags_dict[key] = []
-            tags_dict[key].append(value)
-
-        result["tags"] = tags_dict
-
-        serializer = self.get_serializer(
-            data=result,
+        services = (
+            relevant_resources.values_list("service", flat=True)
+            .distinct()
+            .order_by("service")
         )
 
+        regions = (
+            relevant_resources.exclude(region="")
+            .values_list("region", flat=True)
+            .distinct()
+            .order_by("region")
+        )
+
+        resource_types = (
+            relevant_resources.values_list("type", flat=True)
+            .distinct()
+            .order_by("type")
+        )
+
+        # Temporarily disabled until we implement tag filtering in the UI
+        # tag_data = (
+        #     relevant_resources
+        #     .filter(tags__key__isnull=False, tags__value__isnull=False)
+        #     .exclude(tags__key="")
+        #     .exclude(tags__value="")
+        #     .values("tags__key", "tags__value")
+        #     .distinct()
+        #     .order_by("tags__key", "tags__value")
+        # )
+        #
+        # tags_dict = {}
+        # for row in tag_data:
+        #     k, v = row["tags__key"], row["tags__value"]
+        #     tags_dict.setdefault(k, []).append(v)
+
+        result = {
+            "services": list(services),
+            "regions": list(regions),
+            "resource_types": list(resource_types),
+            # "tags": tags_dict
+        }
+
+        serializer = self.get_serializer(data=result)
         serializer.is_valid(raise_exception=True)
-
-        return Response(data=serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @extend_schema_view(
@@ -1999,68 +2008,53 @@ class OverviewViewSet(BaseRLSViewSet):
     @action(detail=False, methods=["get"], url_name="providers")
     def providers(self, request):
         tenant_id = self.request.tenant_id
-        # Subquery to get the most recent finding for each uid
-        latest_finding_ids = (
-            Finding.objects.filter(
+
+        latest_scan_ids = (
+            Scan.objects.filter(
                 tenant_id=tenant_id,
-                uid=OuterRef("uid"),
-                scan__provider=OuterRef("scan__provider"),
+                state=StateChoices.COMPLETED,
             )
-            .order_by("-id")  # Most recent by id
-            .values("id")[:1]
+            .order_by("provider_id", "-inserted_at")
+            .distinct("provider_id")
+            .values_list("id", flat=True)
         )
 
-        # Filter findings to only include the most recent for each uid
-        recent_findings = Finding.objects.filter(
-            tenant_id=tenant_id, id__in=Subquery(latest_finding_ids)
-        )
-
-        # Aggregate findings by provider
         findings_aggregated = (
-            recent_findings.values("scan__provider__provider")
+            ScanSummary.objects.filter(tenant_id=tenant_id, scan_id__in=latest_scan_ids)
+            .values("scan__provider__provider")
             .annotate(
-                findings_passed=Count("id", filter=Q(status=StatusChoices.PASS.value)),
-                findings_failed=Count("id", filter=Q(status=StatusChoices.FAIL.value)),
-                findings_manual=Count(
-                    "id", filter=Q(status=StatusChoices.MANUAL.value)
-                ),
-                total_findings=Count("id"),
+                findings_passed=Coalesce(Sum("_pass"), 0),
+                findings_failed=Coalesce(Sum("fail"), 0),
+                findings_muted=Coalesce(Sum("muted"), 0),
+                total_findings=Coalesce(Sum("total"), 0),
             )
-            .order_by("-findings_failed")
         )
 
-        # Aggregate total resources by provider
         resources_aggregated = (
             Resource.objects.filter(tenant_id=tenant_id)
             .values("provider__provider")
             .annotate(total_resources=Count("id"))
         )
+        resources_dict = {
+            row["provider__provider"]: row["total_resources"]
+            for row in resources_aggregated
+        }
 
-        # Combine findings and resources data
         overview = []
-        for findings in findings_aggregated:
-            provider = findings["scan__provider__provider"]
-            total_resources = next(
-                (
-                    res["total_resources"]
-                    for res in resources_aggregated
-                    if res["provider__provider"] == provider
-                ),
-                0,
-            )
+        for row in findings_aggregated:
+            provider_type = row["scan__provider__provider"]
             overview.append(
                 {
-                    "provider": provider,
-                    "total_resources": total_resources,
-                    "total_findings": findings["total_findings"],
-                    "findings_passed": findings["findings_passed"],
-                    "findings_failed": findings["findings_failed"],
-                    "findings_manual": findings["findings_manual"],
+                    "provider": provider_type,
+                    "total_resources": resources_dict.get(provider_type, 0),
+                    "total_findings": row["total_findings"],
+                    "findings_passed": row["findings_passed"],
+                    "findings_failed": row["findings_failed"],
+                    "findings_muted": row["findings_muted"],
                 }
             )
 
         serializer = OverviewProviderSerializer(overview, many=True)
-
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["get"], url_name="findings")
@@ -2075,7 +2069,7 @@ class OverviewViewSet(BaseRLSViewSet):
                 state=StateChoices.COMPLETED,
                 provider_id=OuterRef("scan__provider_id"),
             )
-            .order_by("-id")
+            .order_by("-inserted_at")
             .values("id")[:1]
         )
 
@@ -2120,7 +2114,7 @@ class OverviewViewSet(BaseRLSViewSet):
                 state=StateChoices.COMPLETED,
                 provider_id=OuterRef("scan__provider_id"),
             )
-            .order_by("-id")
+            .order_by("-inserted_at")
             .values("id")[:1]
         )
 
@@ -2156,7 +2150,7 @@ class OverviewViewSet(BaseRLSViewSet):
                 state=StateChoices.COMPLETED,
                 provider_id=OuterRef("scan__provider_id"),
             )
-            .order_by("-id")
+            .order_by("-inserted_at")
             .values("id")[:1]
         )
 

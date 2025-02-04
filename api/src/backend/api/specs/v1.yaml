@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Prowler API
-  version: 1.2.0
+  version: 1.4.0
   description: |-
     Prowler API specification.
 
@@ -479,51 +479,6 @@ paths:
         explode: false
         style: form
       - in: query
-        name: filter[resource_tag_key]
-        schema:
-          type: string
-      - in: query
-        name: filter[resource_tag_key__icontains]
-        schema:
-          type: string
-      - in: query
-        name: filter[resource_tag_key__in]
-        schema:
-          type: array
-          items:
-            type: string
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
-        name: filter[resource_tag_value]
-        schema:
-          type: string
-      - in: query
-        name: filter[resource_tag_value__icontains]
-        schema:
-          type: string
-      - in: query
-        name: filter[resource_tag_value__in]
-        schema:
-          type: array
-          items:
-            type: string
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
-        name: filter[resource_tags]
-        schema:
-          type: array
-          items:
-            type: string
-        description: |-
-          Filter by resource tags `key:value` pairs.
-          Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
         name: filter[resource_type]
         schema:
           type: string
@@ -714,8 +669,6 @@ paths:
           items:
             type: string
             enum:
-            - id
-            - -id
             - status
             - -status
             - severity
@@ -1031,51 +984,6 @@ paths:
         explode: false
         style: form
       - in: query
-        name: filter[resource_tag_key]
-        schema:
-          type: string
-      - in: query
-        name: filter[resource_tag_key__icontains]
-        schema:
-          type: string
-      - in: query
-        name: filter[resource_tag_key__in]
-        schema:
-          type: array
-          items:
-            type: string
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
-        name: filter[resource_tag_value]
-        schema:
-          type: string
-      - in: query
-        name: filter[resource_tag_value__icontains]
-        schema:
-          type: string
-      - in: query
-        name: filter[resource_tag_value__in]
-        schema:
-          type: array
-          items:
-            type: string
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
-        name: filter[resource_tags]
-        schema:
-          type: array
-          items:
-            type: string
-        description: |-
-          Filter by resource tags `key:value` pairs.
-          Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
         name: filter[resource_type]
         schema:
           type: string
@@ -1242,8 +1150,6 @@ paths:
           items:
             type: string
             enum:
-            - id
-            - -id
             - status
             - -status
             - severity
@@ -1284,7 +1190,6 @@ paths:
             - services
             - regions
             - resource_types
-            - tags
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
@@ -1503,51 +1408,6 @@ paths:
         explode: false
         style: form
       - in: query
-        name: filter[resource_tag_key]
-        schema:
-          type: string
-      - in: query
-        name: filter[resource_tag_key__icontains]
-        schema:
-          type: string
-      - in: query
-        name: filter[resource_tag_key__in]
-        schema:
-          type: array
-          items:
-            type: string
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
-        name: filter[resource_tag_value]
-        schema:
-          type: string
-      - in: query
-        name: filter[resource_tag_value__icontains]
-        schema:
-          type: string
-      - in: query
-        name: filter[resource_tag_value__in]
-        schema:
-          type: array
-          items:
-            type: string
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
-        name: filter[resource_tags]
-        schema:
-          type: array
-          items:
-            type: string
-        description: |-
-          Filter by resource tags `key:value` pairs.
-          Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
         name: filter[resource_type]
         schema:
           type: string
@@ -1714,8 +1574,6 @@ paths:
           items:
             type: string
             enum:
-            - id
-            - -id
             - status
             - -status
             - severity
@@ -6087,13 +5945,10 @@ components:
               type: array
               items:
                 type: string
-            tags:
-              description: Tags are described as key-value pairs.
           required:
           - services
           - regions
           - resource_types
-          - tags
     FindingMetadataResponse:
       type: object
       properties:
@@ -6753,7 +6608,7 @@ components:
                   type: integer
                 fail:
                   type: integer
-                manual:
+                muted:
                   type: integer
                 total:
                   type: integer

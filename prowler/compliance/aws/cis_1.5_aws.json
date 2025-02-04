@@ -584,7 +584,8 @@
       "Id": "2.3.1",
       "Description": "Ensure that encryption is enabled for RDS Instances",
       "Checks": [
-        "rds_instance_storage_encrypted"
+        "rds_instance_storage_encrypted",
+        "rds_instance_transport_encrypted"
       ],
       "Attributes": [
         {
