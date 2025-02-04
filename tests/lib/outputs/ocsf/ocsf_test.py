@@ -174,7 +174,7 @@ class TestOCSF:
                         "vendor_name": "Prowler",
                         "version": prowler_version,
                     },
-                    "version": "1.3.0",
+                    "version": "1.4.0",
                     "profiles": ["cloud", "datetime"],
                     "tenant_uid": "test-organization-id",
                 },
