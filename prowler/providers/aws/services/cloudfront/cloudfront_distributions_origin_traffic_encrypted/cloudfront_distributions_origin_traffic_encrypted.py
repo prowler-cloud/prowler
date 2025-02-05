@@ -15,7 +15,7 @@ class cloudfront_distributions_origin_traffic_encrypted(Check):
 
             viewer_protocol_policy = (
                 distribution.viewer_protocol_policy
-                if distribution.viewer_protocol_policy
+                if distribution.viewer_protocol_policy != ""
                 else distribution.default_cache_config.viewer_protocol_policy.value
             )
 
