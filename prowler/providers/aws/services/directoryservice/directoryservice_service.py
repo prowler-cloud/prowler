@@ -130,21 +130,22 @@ class DirectoryService(AWSService):
                                 )
                             self.directories[directory.id].event_topics = event_topics
                         except ClientError as error:
-                            if error.response["Error"]["Code"] == "ClientException":
-                                error_message = error.response["Error"]["Message"]
-                                if "is in Deleting state" in error_message:
-                                    logger.warning(
-                                        f"{directory.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                                    )
-                                else:
-                                    logger.error(
-                                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                                    )
+                            if (
+                                "is in Deleting state"
+                                in error.response["Error"]["Message"]
+                            ):
+                                logger.warning(
+                                    f"{directory.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                                )
                             else:
                                 logger.error(
                                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                                 )
-                        continue
+                        except Exception as error:
+                            logger.error(
+                                f"{regional_client.region} -- {error.__class__.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                            )
+
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -226,21 +227,18 @@ class DirectoryService(AWSService):
                             ]["ManualSnapshotsLimitReached"],
                         )
                     except ClientError as error:
-                        if error.response["Error"]["Code"] == "ClientException":
-                            error_message = error.response["Error"]["Message"]
-                            if "is in Deleting state" in error_message:
-                                logger.warning(
-                                    f"{directory.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                                )
-                            else:
-                                logger.error(
-                                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                                )
+                        if "is in Deleting state" in error.response["Error"]["Message"]:
+                            logger.warning(
+                                f"{directory.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                            )
                         else:
                             logger.error(
                                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                             )
-                        continue
+                    except Exception as error:
+                        logger.error(
+                            f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
 
         except Exception as error:
             logger.error(
