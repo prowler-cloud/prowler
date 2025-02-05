@@ -25,7 +25,7 @@ class Entra(Microsoft365Service):
     async def _get_authorization_policy(self):
         logger.info("Entra - Getting authorization policy...")
 
-        authorization_policy = {}
+        authorization_policy = None
         try:
             auth_policy = await self.client.policies.authorization_policy.get()
 
@@ -33,52 +33,48 @@ class Entra(Microsoft365Service):
                 auth_policy, "default_user_role_permissions", None
             )
 
-            authorization_policy.update(
-                {
-                    auth_policy.id: AuthorizationPolicy(
-                        id=auth_policy.id,
-                        name=auth_policy.display_name,
-                        description=auth_policy.description,
-                        default_user_role_permissions=DefaultUserRolePermissions(
-                            allowed_to_create_apps=getattr(
-                                default_user_role_permissions,
-                                "allowed_to_create_apps",
-                                None,
-                            ),
-                            allowed_to_create_security_groups=getattr(
-                                default_user_role_permissions,
-                                "allowed_to_create_security_groups",
-                                None,
-                            ),
-                            allowed_to_create_tenants=getattr(
-                                default_user_role_permissions,
-                                "allowed_to_create_tenants",
-                                None,
-                            ),
-                            allowed_to_read_bitlocker_keys_for_owned_device=getattr(
-                                default_user_role_permissions,
-                                "allowed_to_read_bitlocker_keys_for_owned_device",
-                                None,
-                            ),
-                            allowed_to_read_other_users=getattr(
-                                default_user_role_permissions,
-                                "allowed_to_read_other_users",
-                                None,
-                            ),
-                            odata_type=getattr(
-                                default_user_role_permissions, "odata_type", None
-                            ),
-                            permission_grant_policies_assigned=[
-                                policy_assigned
-                                for policy_assigned in getattr(
-                                    default_user_role_permissions,
-                                    "permission_grant_policies_assigned",
-                                    [],
-                                )
-                            ],
-                        ),
-                    )
-                }
+            authorization_policy = AuthorizationPolicy(
+                id=auth_policy.id,
+                name=auth_policy.display_name,
+                description=auth_policy.description,
+                default_user_role_permissions=DefaultUserRolePermissions(
+                    allowed_to_create_apps=getattr(
+                        default_user_role_permissions,
+                        "allowed_to_create_apps",
+                        None,
+                    ),
+                    allowed_to_create_security_groups=getattr(
+                        default_user_role_permissions,
+                        "allowed_to_create_security_groups",
+                        None,
+                    ),
+                    allowed_to_create_tenants=getattr(
+                        default_user_role_permissions,
+                        "allowed_to_create_tenants",
+                        None,
+                    ),
+                    allowed_to_read_bitlocker_keys_for_owned_device=getattr(
+                        default_user_role_permissions,
+                        "allowed_to_read_bitlocker_keys_for_owned_device",
+                        None,
+                    ),
+                    allowed_to_read_other_users=getattr(
+                        default_user_role_permissions,
+                        "allowed_to_read_other_users",
+                        None,
+                    ),
+                    odata_type=getattr(
+                        default_user_role_permissions, "odata_type", None
+                    ),
+                    permission_grant_policies_assigned=[
+                        policy_assigned
+                        for policy_assigned in getattr(
+                            default_user_role_permissions,
+                            "permission_grant_policies_assigned",
+                            [],
+                        )
+                    ],
+                ),
             )
         except Exception as error:
             logger.error(
