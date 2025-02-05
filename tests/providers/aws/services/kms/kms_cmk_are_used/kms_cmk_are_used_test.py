@@ -70,7 +70,7 @@ class Test_kms_cmk_are_used:
             (5, 3),
             (7, 5),
             (10, 8),
-        ]
+        ],
     )
     @mock_aws
     def test_kms_cmk_are_used_when_describe_key_fails_on_2_keys_out_of_x_keys(

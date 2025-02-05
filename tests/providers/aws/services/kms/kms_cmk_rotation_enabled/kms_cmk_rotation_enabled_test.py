@@ -74,7 +74,7 @@ class Test_kms_cmk_rotation_enabled:
             (5, 3),
             (7, 5),
             (10, 8),
-        ]
+        ],
     )
     @mock_aws
     def test_kms_cmk_rotation_enabled_when_get_key_rotation_status_fails_on_2_keys_out_of_x_keys(
