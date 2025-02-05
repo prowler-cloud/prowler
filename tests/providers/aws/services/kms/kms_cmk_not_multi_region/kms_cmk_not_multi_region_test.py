@@ -1,29 +1,33 @@
 from unittest import mock
+
 from boto3 import client
 from moto import mock_aws
 
 from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
 
 
-class Test_kms_cmk_not_multiregional:
+class Test_kms_cmk_not_multi_region:
     @mock_aws
     def test_kms_no_keys(self) -> None:
         from prowler.providers.aws.services.kms.kms_service import KMS
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.kms.kms_cmk_not_multiregional.kms_cmk_not_multiregional.kms_client",
-            new=KMS(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.kms.kms_cmk_not_multi_region.kms_cmk_not_multi_region.kms_client",
+                new=KMS(aws_provider),
+            ),
         ):
-            from prowler.providers.aws.services.kms.kms_cmk_not_multiregional.kms_cmk_not_multiregional import (
-                kms_cmk_not_multiregional,
+            from prowler.providers.aws.services.kms.kms_cmk_not_multi_region.kms_cmk_not_multi_region import (
+                kms_cmk_not_multi_region,
             )
 
-            check = kms_cmk_not_multiregional()
+            check = kms_cmk_not_multi_region()
             result = check.execute()
 
             assert len(result) == 0
@@ -40,25 +44,27 @@ class Test_kms_cmk_not_multiregional:
             [AWS_REGION_US_EAST_1], scan_unused_services=False
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.kms.kms_cmk_not_multiregional.kms_cmk_not_multiregional.kms_client",
-            new=KMS(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.kms.kms_cmk_not_multi_region.kms_cmk_not_multi_region.kms_client",
+                new=KMS(aws_provider),
+            ),
         ):
-            from prowler.providers.aws.services.kms.kms_cmk_not_multiregional.kms_cmk_not_multiregional import (
-                kms_cmk_not_multiregional,
+            from prowler.providers.aws.services.kms.kms_cmk_not_multi_region.kms_cmk_not_multi_region import (
+                kms_cmk_not_multi_region,
             )
 
-            check = kms_cmk_not_multiregional()
+            check = kms_cmk_not_multi_region()
             result = check.execute()
 
             assert len(result) == 0
 
     @mock_aws
     def test_kms_cmk_is_multi_regional(self) -> None:
-
         kms_client = client("kms", region_name=AWS_REGION_US_EAST_1)
         key = kms_client.create_key(MultiRegion=True)["KeyMetadata"]
 
@@ -70,18 +76,21 @@ class Test_kms_cmk_not_multiregional:
             [AWS_REGION_US_EAST_1], scan_unused_services=False
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.kms.kms_cmk_not_multiregional.kms_cmk_not_multiregional.kms_client",
-            new=KMS(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.kms.kms_cmk_not_multi_region.kms_cmk_not_multi_region.kms_client",
+                new=KMS(aws_provider),
+            ),
         ):
-            from prowler.providers.aws.services.kms.kms_cmk_not_multiregional.kms_cmk_not_multiregional import (
-                kms_cmk_not_multiregional,
+            from prowler.providers.aws.services.kms.kms_cmk_not_multi_region.kms_cmk_not_multi_region import (
+                kms_cmk_not_multi_region,
             )
 
-            check = kms_cmk_not_multiregional()
+            check = kms_cmk_not_multi_region()
             result = check.execute()
 
             assert len(result) == 1
@@ -95,7 +104,6 @@ class Test_kms_cmk_not_multiregional:
 
     @mock_aws
     def test_kms_cmk_is_single_regional(self) -> None:
-
         kms_client = client("kms", region_name=AWS_REGION_US_EAST_1)
         key = kms_client.create_key(MultiRegion=False)["KeyMetadata"]
 
@@ -107,18 +115,21 @@ class Test_kms_cmk_not_multiregional:
             [AWS_REGION_US_EAST_1], scan_unused_services=False
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.kms.kms_cmk_not_multiregional.kms_cmk_not_multiregional.kms_client",
-            new=KMS(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.kms.kms_cmk_not_multi_region.kms_cmk_not_multi_region.kms_client",
+                new=KMS(aws_provider),
+            ),
         ):
-            from prowler.providers.aws.services.kms.kms_cmk_not_multiregional.kms_cmk_not_multiregional import (
-                kms_cmk_not_multiregional,
+            from prowler.providers.aws.services.kms.kms_cmk_not_multi_region.kms_cmk_not_multi_region import (
+                kms_cmk_not_multi_region,
             )
 
-            check = kms_cmk_not_multiregional()
+            check = kms_cmk_not_multi_region()
             result = check.execute()
 
             assert len(result) == 1

@@ -1,13 +1,13 @@
 from typing import List
+
 from prowler.lib.check.models import Check, Check_Report_AWS
-from prowler.providers.aws.services.kms import kms_client
+from prowler.providers.aws.services.kms.kms_client import kms_client
 
 
-class kms_cmk_not_multiregional(Check):
-    """kms_cmk_not_multiregional verifies if a KMS key is multi-regional"""
+class kms_cmk_not_multi_region(Check):
+    """kms_cmk_not_multi_region verifies if a KMS key is multi-regional"""
 
     def execute(self) -> List[Check_Report_AWS]:
-
         findings = []
 
         for key in kms_client.keys:
