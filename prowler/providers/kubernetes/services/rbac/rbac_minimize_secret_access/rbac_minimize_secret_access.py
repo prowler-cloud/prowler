@@ -1,6 +1,6 @@
 from prowler.lib.check.models import Check, Check_Report_Kubernetes
 from prowler.providers.kubernetes.services.rbac.lib.role_permissions import (
-    is_rule_allowing_permisions,
+    is_rule_allowing_permissions,
 )
 from prowler.providers.kubernetes.services.rbac.rbac_client import rbac_client
 
@@ -13,15 +13,14 @@ class rbac_minimize_secret_access(Check):
         findings = []
         # Check ClusterRoleBindings for seceret access
         for cr in rbac_client.cluster_roles.values():
-            report = Check_Report_Kubernetes(self.metadata())
-            report.namespace = "cluster-wide"
-            report.resource_name = cr.metadata.name
-            report.resource_id = cr.metadata.uid
+            report = Check_Report_Kubernetes(
+                metadata=self.metadata(), resource=cr.metadata
+            )
             report.status = "PASS"
             report.status_extended = (
                 f"ClusterRole {cr.metadata.name} does not have secret access."
             )
-            if is_rule_allowing_permisions(cr.rules, resources, verbs):
+            if is_rule_allowing_permissions(cr.rules, resources, verbs):
                 report.status = "FAIL"
                 report.status_extended = (
                     f"ClusterRole {cr.metadata.name} has secret access."
@@ -30,16 +29,15 @@ class rbac_minimize_secret_access(Check):
 
         # Check RoleBindings for secret access
         for role in rbac_client.roles.values():
-            report = Check_Report_Kubernetes(self.metadata())
-            report.namespace = role.metadata.namespace
-            report.resource_name = role.metadata.name
-            report.resource_id = role.metadata.uid
+            report = Check_Report_Kubernetes(
+                metadata=self.metadata(), resource=role.metadata
+            )
             report.status = "PASS"
             report.status_extended = (
                 f"Role {role.metadata.name} does not have secret access."
             )
 
-            if is_rule_allowing_permisions(cr.rules, resources, verbs):
+            if is_rule_allowing_permissions(cr.rules, resources, verbs):
                 report.status = "FAIL"
                 report.status_extended = f"Role {role.metadata.name} has secret access."
             findings.append(report)

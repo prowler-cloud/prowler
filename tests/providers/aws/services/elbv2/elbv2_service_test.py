@@ -224,6 +224,7 @@ class Test_ELBv2_Service:
         )
         elbv2 = ELBv2(aws_provider)
         assert len(elbv2.loadbalancersv2) == 1
+        assert elbv2.loadbalancersv2[lb["LoadBalancerArn"]].arn == lb["LoadBalancerArn"]
         assert (
             elbv2.loadbalancersv2[lb["LoadBalancerArn"]].desync_mitigation_mode
             == "defensive"

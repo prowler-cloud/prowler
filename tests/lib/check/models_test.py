@@ -32,6 +32,35 @@ mock_metadata = CheckMetadata(
     Compliance=[],
 )
 
+mock_metadata_lambda = CheckMetadata(
+    Provider="aws",
+    CheckID="awslambda_function_url_public",
+    CheckTitle="Check 1",
+    CheckType=["type1"],
+    ServiceName="lambda",
+    SubServiceName="subservice1",
+    ResourceIdTemplate="template1",
+    Severity="high",
+    ResourceType="resource1",
+    Description="Description 1",
+    Risk="risk1",
+    RelatedUrl="url1",
+    Remediation={
+        "Code": {
+            "CLI": "cli1",
+            "NativeIaC": "native1",
+            "Other": "other1",
+            "Terraform": "terraform1",
+        },
+        "Recommendation": {"Text": "text1", "Url": "url1"},
+    },
+    Categories=["categoryone"],
+    DependsOn=["dependency1"],
+    RelatedTo=["related1"],
+    Notes="notes1",
+    Compliance=[],
+)
+
 
 class TestCheckMetada:
 
@@ -187,6 +216,46 @@ class TestCheckMetada:
 
         # Assertions
         assert result == {"accessanalyzer_enabled"}
+
+    @mock.patch("prowler.lib.check.models.load_check_metadata")
+    @mock.patch("prowler.lib.check.models.recover_checks_from_provider")
+    def test_list_by_service_lambda(self, mock_recover_checks, mock_load_metadata):
+        # Mock the return value of recover_checks_from_provider
+        mock_recover_checks.return_value = [
+            ("awslambda_function_url_public", "/path/to/awslambda_function_url_public")
+        ]
+
+        # Mock the return value of load_check_metadata
+        mock_load_metadata.return_value = mock_metadata_lambda
+
+        bulk_metadata = CheckMetadata.get_bulk(provider="aws")
+
+        result = CheckMetadata.list(
+            bulk_checks_metadata=bulk_metadata, service="lambda"
+        )
+
+        # Assertions
+        assert result == {"awslambda_function_url_public"}
+
+    @mock.patch("prowler.lib.check.models.load_check_metadata")
+    @mock.patch("prowler.lib.check.models.recover_checks_from_provider")
+    def test_list_by_service_awslambda(self, mock_recover_checks, mock_load_metadata):
+        # Mock the return value of recover_checks_from_provider
+        mock_recover_checks.return_value = [
+            ("awslambda_function_url_public", "/path/to/awslambda_function_url_public")
+        ]
+
+        # Mock the return value of load_check_metadata
+        mock_load_metadata.return_value = mock_metadata_lambda
+
+        bulk_metadata = CheckMetadata.get_bulk(provider="aws")
+
+        result = CheckMetadata.list(
+            bulk_checks_metadata=bulk_metadata, service="awslambda"
+        )
+
+        # Assertions
+        assert result == {"awslambda_function_url_public"}
 
     @mock.patch("prowler.lib.check.models.load_check_metadata")
     @mock.patch("prowler.lib.check.models.recover_checks_from_provider")

@@ -10,8 +10,5 @@ class Microsoft365Service:
     ):
         self.client = GraphServiceClient(credentials=provider.session)
 
-        # self.locations = provider.locations
-        self.audited_tenant = provider.identity.tenant_id
-        self.audited_domain = provider.identity.tenant_domain
         self.audit_config = provider.audit_config
         self.fixer_config = provider.fixer_config

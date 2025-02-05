@@ -14,12 +14,15 @@ class Test_cloudwatch_log_group_not_publicly_accessible:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_not_publicly_accessible.cloudwatch_log_group_not_publicly_accessible.logs_client",
-            new=Logs(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_not_publicly_accessible.cloudwatch_log_group_not_publicly_accessible.logs_client",
+                new=Logs(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_not_publicly_accessible.cloudwatch_log_group_not_publicly_accessible import (
@@ -44,12 +47,15 @@ class Test_cloudwatch_log_group_not_publicly_accessible:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_not_publicly_accessible.cloudwatch_log_group_not_publicly_accessible.logs_client",
-            new=Logs(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_not_publicly_accessible.cloudwatch_log_group_not_publicly_accessible.logs_client",
+                new=Logs(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_not_publicly_accessible.cloudwatch_log_group_not_publicly_accessible import (
@@ -68,7 +74,7 @@ class Test_cloudwatch_log_group_not_publicly_accessible:
             assert result[0].resource_id == "test-log-group"
             assert (
                 result[0].resource_arn
-                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:123456789012:log-group:test-log-group"
+                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:123456789012:log-group:test-log-group:*"
             )
 
     @mock_aws
@@ -100,12 +106,15 @@ class Test_cloudwatch_log_group_not_publicly_accessible:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_not_publicly_accessible.cloudwatch_log_group_not_publicly_accessible.logs_client",
-            new=Logs(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_not_publicly_accessible.cloudwatch_log_group_not_publicly_accessible.logs_client",
+                new=Logs(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_not_publicly_accessible.cloudwatch_log_group_not_publicly_accessible import (
@@ -124,7 +133,7 @@ class Test_cloudwatch_log_group_not_publicly_accessible:
             assert result[0].resource_id == "test-log-group"
             assert (
                 result[0].resource_arn
-                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:123456789012:log-group:test-log-group"
+                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:123456789012:log-group:test-log-group:*"
             )
 
     @mock_aws
@@ -151,12 +160,15 @@ class Test_cloudwatch_log_group_not_publicly_accessible:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_not_publicly_accessible.cloudwatch_log_group_not_publicly_accessible.logs_client",
-            new=Logs(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_not_publicly_accessible.cloudwatch_log_group_not_publicly_accessible.logs_client",
+                new=Logs(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_not_publicly_accessible.cloudwatch_log_group_not_publicly_accessible import (
@@ -175,5 +187,5 @@ class Test_cloudwatch_log_group_not_publicly_accessible:
             assert result[0].resource_id == "test-log-group"
             assert (
                 result[0].resource_arn
-                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:123456789012:log-group:test-log-group"
+                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:123456789012:log-group:test-log-group:*"
             )

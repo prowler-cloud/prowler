@@ -17,15 +17,14 @@ class app_function_identity_without_admin_privileges(Check):
             subscription_name,
             functions,
         ) in app_client.functions.items():
-            for function_id, function in functions.items():
+            for function in functions.values():
                 if function.identity:
-                    report = Check_Report_Azure(self.metadata())
+                    report = Check_Report_Azure(
+                        metadata=self.metadata(), resource=function
+                    )
+                    report.subscription = subscription_name
                     report.status = "PASS"
                     report.status_extended = f"Function {function.name} has a managed identity enabled but without admin privileges."
-                    report.subscription = subscription_name
-                    report.resource_name = function.name
-                    report.resource_id = function_id
-                    report.location = function.location
 
                     admin_roles_assigned = []
 

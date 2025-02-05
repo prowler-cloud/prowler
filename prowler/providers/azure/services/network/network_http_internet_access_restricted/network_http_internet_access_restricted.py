@@ -7,12 +7,11 @@ class network_http_internet_access_restricted(Check):
         findings = []
         for subscription, security_groups in network_client.security_groups.items():
             for security_group in security_groups:
-                report = Check_Report_Azure(self.metadata())
+                report = Check_Report_Azure(
+                    metadata=self.metadata(), resource=security_group
+                )
                 report.subscription = subscription
-                report.resource_name = security_group.name
-                report.resource_id = security_group.id
                 report.status = "PASS"
-                report.location = security_group.location
                 report.status_extended = f"Security Group {security_group.name} from subscription {subscription} has HTTP internet access restricted."
                 rule_fail_condition = any(
                     (

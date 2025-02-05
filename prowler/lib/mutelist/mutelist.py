@@ -2,11 +2,85 @@ import re
 from abc import ABC, abstractmethod
 
 import yaml
+from jsonschema import validate
 
 from prowler.lib.logger import logger
-from prowler.lib.mutelist.models import mutelist_schema
 from prowler.lib.outputs.common import Status
 from prowler.lib.outputs.utils import unroll_dict, unroll_tags
+
+mutelist_schema = {
+    "type": "object",
+    "properties": {
+        "Accounts": {
+            "type": "object",
+            "patternProperties": {
+                ".*": {  # Match any account
+                    "type": "object",
+                    "properties": {
+                        "Checks": {
+                            "type": "object",
+                            "patternProperties": {
+                                ".*": {  # Match any check
+                                    "type": "object",
+                                    "properties": {
+                                        "Regions": {
+                                            "type": "array",
+                                            "items": {"type": "string"},
+                                        },
+                                        "Resources": {
+                                            "type": "array",
+                                            "items": {"type": "string"},
+                                        },
+                                        "Tags": {  # Optional field
+                                            "type": "array",
+                                            "items": {"type": "string"},
+                                        },
+                                        "Exceptions": {  # Optional field
+                                            "type": "object",
+                                            "properties": {
+                                                "Accounts": {  # Optional field
+                                                    "type": "array",
+                                                    "items": {"type": "string"},
+                                                },
+                                                "Regions": {  # Optional field
+                                                    "type": "array",
+                                                    "items": {"type": "string"},
+                                                },
+                                                "Resources": {  # Optional field
+                                                    "type": "array",
+                                                    "items": {"type": "string"},
+                                                },
+                                                "Tags": {  # Optional field
+                                                    "type": "array",
+                                                    "items": {"type": "string"},
+                                                },
+                                            },
+                                            "additionalProperties": False,
+                                        },
+                                        "Description": {  # Optional field
+                                            "type": "string",
+                                        },
+                                    },
+                                    "required": [
+                                        "Regions",
+                                        "Resources",
+                                    ],  # Mandatory within a check
+                                    "additionalProperties": False,
+                                }
+                            },
+                            "additionalProperties": False,
+                        },
+                    },
+                    "required": ["Checks"],  # Mandatory within an account
+                    "additionalProperties": False,
+                }
+            },
+            "additionalProperties": False,
+        }
+    },
+    "required": ["Accounts"],  # Accounts is mandatory at the root level
+    "additionalProperties": False,
+}
 
 
 class Mutelist(ABC):
@@ -70,7 +144,7 @@ class Mutelist(ABC):
 
     def validate_mutelist(self) -> bool:
         try:
-            self._mutelist = mutelist_schema.validate(self._mutelist)
+            validate(self._mutelist, schema=mutelist_schema)
             return True
         except Exception as error:
             logger.error(
@@ -106,6 +180,7 @@ class Mutelist(ABC):
                             - 'i-123456789'
                         Tags:
                             - 'Name=AdminInstance | Environment=Prod'
+                        Description: 'Field to describe why the findings associated with these values are muted'
         ```
         The check `ec2_instance_detailed_monitoring_enabled` will be muted for all accounts and regions and for the resource_id 'i-123456789' with at least one of the tags 'Name=AdminInstance' or 'Environment=Prod'.
 

@@ -5,7 +5,7 @@ from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, set_mocked_gcp_prov
 
 class Test_bigquery_dataset_cmk_encryption:
     def test_bigquery_no_datasets(self):
-        bigquery_client = mock.MagicMock
+        bigquery_client = mock.MagicMock()
         bigquery_client.datasets = []
 
         with mock.patch(
@@ -24,7 +24,7 @@ class Test_bigquery_dataset_cmk_encryption:
             assert len(result) == 0
 
     def test_one_compliant_dataset(self):
-        bigquery_client = mock.MagicMock
+        bigquery_client = mock.MagicMock()
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -64,7 +64,7 @@ class Test_bigquery_dataset_cmk_encryption:
             assert result[0].location == dataset.region
 
     def test_one_non_compliant_dataset(self):
-        bigquery_client = mock.MagicMock
+        bigquery_client = mock.MagicMock()
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",

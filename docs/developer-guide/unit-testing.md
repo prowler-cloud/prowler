@@ -51,14 +51,14 @@ For the AWS provider we have ways to test a Prowler check based on the following
     We use and contribute to the [Moto](https://github.com/getmoto/moto) library which allows us to easily mock out tests based on AWS infrastructure. **It's awesome!**
 
 - AWS API calls covered by [Moto](https://github.com/getmoto/moto):
-    - Service tests with `@mock_<service>`
-    - Checks tests with `@mock_<service>`
+    - Service tests with `@mock_aws`
+    - Checks tests with `@mock_aws`
 - AWS API calls not covered by Moto:
     - Service test with `mock_make_api_call`
     - Checks tests with [MagicMock](https://docs.python.org/3/library/unittest.mock.html#unittest.mock.MagicMock)
 - AWS API calls partially covered by Moto:
-    - Service test with `@mock_<service>` and `mock_make_api_call`
-    - Checks tests with `@mock_<service>` and `mock_make_api_call`
+    - Service test with `@mock_aws` and `mock_make_api_call`
+    - Checks tests with `@mock_aws` and `mock_make_api_call`
 
 In the following section we are going to explain all of the above scenarios with examples. The main difference between those scenarios comes from if the [Moto](https://github.com/getmoto/moto) library covers the AWS API calls made by the service. You can check the covered API calls [here](https://github.com/getmoto/moto/blob/master/IMPLEMENTATION_COVERAGE.md).
 
@@ -70,7 +70,7 @@ This section is going to be divided based on the API coverage of the [Moto](http
 
 #### API calls covered
 
-If the [Moto](https://github.com/getmoto/moto) library covers the API calls we want to test, we can use the `@mock_<service>` decorator. This will mocked out all the API calls made to AWS keeping the state within the code decorated, in this case the test function.
+If the [Moto](https://github.com/getmoto/moto) library covers the API calls we want to test, we can use the `@mock_aws` decorator. This will mocked out all the API calls made to AWS keeping the state within the code decorated, in this case the test function.
 
 ```python
 # We need to import the unittest.mock to allow us to patch some objects
@@ -80,8 +80,8 @@ from unittest import mock
 # Boto3 client and session to call the AWS APIs
 from boto3 import client, session
 
-# Moto decorator for the IAM service we want to mock
-from moto import mock_iam
+# Moto decorator
+from moto import mock_aws
 
 # Constants used
 AWS_ACCOUNT_NUMBER = "123456789012"
@@ -91,10 +91,8 @@ AWS_REGION = "us-east-1"
 # We always name the test classes like Test_<check_name>
 class Test_iam_password_policy_uppercase:
 
-  # We include the Moto decorator for the service we want to use
-  # You can include more than one if two or more services are
-  # involved in test
-  @mock_iam
+  # We include the Moto decorator
+  @mock_aws
   # We name the tests with test_<service>_<check_name>_<test_action>
   def test_iam_password_policy_no_uppercase_flag(self):
     # First, we have to create an IAM client
@@ -238,7 +236,7 @@ To do so, you need to mock the `botocore.client.BaseClient._make_api_call` funct
 import boto3
 import botocore
 from unittest.mock import patch
-from moto import mock_iam
+from moto import mock_aws
 
 # Original botocore _make_api_call function
 orig = botocore.client.BaseClient._make_api_call
@@ -671,8 +669,9 @@ class Test_app_ensure_http_is_redirected_to_https:
             # Create the custom App object to be tested
             app_client.apps = {
                 AZURE_SUBSCRIPTION_ID: {
-                    "app_id-1": WebApp(
+                    resource_id: WebApp(
                         resource_id=resource_id,
+                        name="app_id-1",
                         auth_enabled=True,
                         configurations=mock.MagicMock(),
                         client_cert_mode="Ignore",
@@ -718,8 +717,9 @@ class Test_app_ensure_http_is_redirected_to_https:
 
             app_client.apps = {
                 AZURE_SUBSCRIPTION_ID: {
-                    "app_id-1": WebApp(
+                    resource_id: WebApp(
                         resource_id=resource_id,
+                        name="app_id-1",
                         auth_enabled=True,
                         configurations=mock.MagicMock(),
                         client_cert_mode="Ignore",

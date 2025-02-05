@@ -6,10 +6,10 @@ class network_watcher_enabled(Check):
     def execute(self) -> list[Check_Report_Azure]:
         findings = []
         for subscription, network_watchers in network_client.network_watchers.items():
-            report = Check_Report_Azure(self.metadata())
+            report = Check_Report_Azure(metadata=self.metadata(), resource={})
             report.subscription = subscription
             report.resource_name = "Network Watcher"
-            report.location = "Global"
+            report.location = "global"
             report.resource_id = f"/subscriptions/{network_client.subscriptions[subscription]}/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_*"
 
             missing_locations = set(network_client.locations[subscription]) - set(

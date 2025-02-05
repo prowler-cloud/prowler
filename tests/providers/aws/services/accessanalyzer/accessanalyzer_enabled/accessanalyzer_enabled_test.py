@@ -34,6 +34,11 @@ class Test_accessanalyzer_enabled:
         # Include analyzers to check
         accessanalyzer_client = mock.MagicMock
         accessanalyzer_client.region = AWS_REGION_1
+        accessanalyzer_client.audited_partition = "aws"
+        accessanalyzer_client.audited_account = AWS_ACCOUNT_NUMBER
+        accessanalyzer_client.get_unknown_arn = (
+            lambda x: f"arn:aws:accessanalyzer:{x}:{AWS_ACCOUNT_NUMBER}:unknown"
+        )
         accessanalyzer_client.analyzers = [
             Analyzer(
                 arn=AWS_ACCOUNT_ARN,
@@ -47,6 +52,9 @@ class Test_accessanalyzer_enabled:
         with mock.patch(
             "prowler.providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer",
             accessanalyzer_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer.get_unknown_arn",
+            return_value="arn:aws:accessanalyzer:eu-west-1:123456789012:unknown",
         ):
             from prowler.providers.aws.services.accessanalyzer.accessanalyzer_enabled.accessanalyzer_enabled import (
                 accessanalyzer_enabled,
@@ -61,8 +69,8 @@ class Test_accessanalyzer_enabled:
                 result[0].status_extended
                 == f"IAM Access Analyzer in account {AWS_ACCOUNT_NUMBER} is not enabled."
             )
-            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-            assert result[0].resource_arn == AWS_ACCOUNT_ARN
+            assert result[0].resource_id == "123456789012"
+            assert result[0].resource_arn == "arn:aws:iam::123456789012:root"
             assert result[0].region == AWS_REGION_1
             assert result[0].resource_tags == []
 
@@ -71,6 +79,11 @@ class Test_accessanalyzer_enabled:
         accessanalyzer_client = mock.MagicMock
         accessanalyzer_client.region = AWS_REGION_2
         accessanalyzer_client.audit_config = {"mute_non_default_regions": True}
+        accessanalyzer_client.audited_partition = "aws"
+        accessanalyzer_client.audited_account = AWS_ACCOUNT_NUMBER
+        accessanalyzer_client.get_unknown_arn = (
+            lambda x: f"arn:aws:accessanalyzer:{x}:{AWS_ACCOUNT_NUMBER}:unknown"
+        )
         accessanalyzer_client.analyzers = [
             Analyzer(
                 arn=AWS_ACCOUNT_ARN,
@@ -84,6 +97,9 @@ class Test_accessanalyzer_enabled:
         with mock.patch(
             "prowler.providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer",
             accessanalyzer_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer.get_unknown_arn",
+            return_value="arn:aws:accessanalyzer:eu-west-1:123456789012:unknown",
         ):
             from prowler.providers.aws.services.accessanalyzer.accessanalyzer_enabled.accessanalyzer_enabled import (
                 accessanalyzer_enabled,
@@ -99,18 +115,23 @@ class Test_accessanalyzer_enabled:
                 result[0].status_extended
                 == f"IAM Access Analyzer in account {AWS_ACCOUNT_NUMBER} is not enabled."
             )
-            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-            assert result[0].resource_arn == AWS_ACCOUNT_ARN
+            assert result[0].resource_id == "123456789012"
+            assert result[0].resource_arn == "arn:aws:iam::123456789012:root"
             assert result[0].region == AWS_REGION_1
             assert result[0].resource_tags == []
 
     def test_two_analyzers(self):
         accessanalyzer_client = mock.MagicMock
         accessanalyzer_client.region = AWS_REGION_1
+        accessanalyzer_client.audited_partition = "aws"
+        accessanalyzer_client.audited_account = AWS_ACCOUNT_NUMBER
+        accessanalyzer_client.get_unknown_arn = (
+            lambda x: f"arn:aws:accessanalyzer:{x}:{AWS_ACCOUNT_NUMBER}:analyzer/unknown"
+        )
         accessanalyzer_client.analyzers = [
             Analyzer(
-                arn=AWS_ACCOUNT_ARN,
-                name=AWS_ACCOUNT_NUMBER,
+                arn=f"arn:aws:accessanalyzer:{AWS_REGION_1}:{AWS_ACCOUNT_NUMBER}:analyzer/unknown",
+                name="analyzer/unknown",
                 status="NOT_AVAILABLE",
                 tags=[],
                 type="",
@@ -130,6 +151,9 @@ class Test_accessanalyzer_enabled:
         with mock.patch(
             "prowler.providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer",
             new=accessanalyzer_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer.get_unknown_arn",
+            return_value="arn:aws:accessanalyzer:eu-west-1:123456789012:analyzer/unknown",
         ):
             # Test Check
             from prowler.providers.aws.services.accessanalyzer.accessanalyzer_enabled.accessanalyzer_enabled import (
@@ -146,8 +170,11 @@ class Test_accessanalyzer_enabled:
                 result[0].status_extended
                 == f"IAM Access Analyzer in account {AWS_ACCOUNT_NUMBER} is not enabled."
             )
-            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-            assert result[0].resource_arn == AWS_ACCOUNT_ARN
+            assert result[0].resource_id == "analyzer/unknown"
+            assert (
+                result[0].resource_arn
+                == "arn:aws:accessanalyzer:eu-west-1:123456789012:analyzer/unknown"
+            )
             assert result[0].resource_tags == []
             assert result[0].region == AWS_REGION_1
 

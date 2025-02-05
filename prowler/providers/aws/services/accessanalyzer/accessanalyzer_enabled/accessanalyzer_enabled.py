@@ -8,11 +8,7 @@ class accessanalyzer_enabled(Check):
     def execute(self):
         findings = []
         for analyzer in accessanalyzer_client.analyzers:
-            report = Check_Report_AWS(self.metadata())
-            report.region = analyzer.region
-            report.resource_id = analyzer.name
-            report.resource_arn = analyzer.arn
-            report.resource_tags = analyzer.tags
+            report = Check_Report_AWS(metadata=self.metadata(), resource=analyzer)
             if analyzer.status == "ACTIVE":
                 report.status = "PASS"
                 report.status_extended = (
@@ -22,7 +18,7 @@ class accessanalyzer_enabled(Check):
             else:
                 if analyzer.status == "NOT_AVAILABLE":
                     report.status = "FAIL"
-                    report.status_extended = f"IAM Access Analyzer in account {analyzer.name} is not enabled."
+                    report.status_extended = f"IAM Access Analyzer in account {accessanalyzer_client.audited_account} is not enabled."
 
                 else:
                     report.status = "FAIL"

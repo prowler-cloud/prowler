@@ -21,13 +21,16 @@ class Test_iam_rotate_access_key_90_days_test:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.iam.iam_rotate_access_key_90_days.iam_rotate_access_key_90_days.iam_client",
-            new=IAM(aws_provider),
-        ) as service_client:
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.iam.iam_rotate_access_key_90_days.iam_rotate_access_key_90_days.iam_client",
+                new=IAM(aws_provider),
+            ) as service_client,
+        ):
             from prowler.providers.aws.services.iam.iam_rotate_access_key_90_days.iam_rotate_access_key_90_days import (
                 iam_rotate_access_key_90_days,
             )
@@ -62,13 +65,16 @@ class Test_iam_rotate_access_key_90_days_test:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.iam.iam_rotate_access_key_90_days.iam_rotate_access_key_90_days.iam_client",
-            new=IAM(aws_provider),
-        ) as service_client:
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.iam.iam_rotate_access_key_90_days.iam_rotate_access_key_90_days.iam_client",
+                new=IAM(aws_provider),
+            ) as service_client,
+        ):
             from prowler.providers.aws.services.iam.iam_rotate_access_key_90_days.iam_rotate_access_key_90_days import (
                 iam_rotate_access_key_90_days,
             )
@@ -86,7 +92,7 @@ class Test_iam_rotate_access_key_90_days_test:
                 result[0].status_extended
                 == f"User {user} has not rotated access key 1 in over 90 days (100 days)."
             )
-            assert result[0].resource_id == user
+            assert result[0].resource_id == f"{user}-access-key-1"
             assert result[0].resource_arn == arn
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == [{"Key": "test-tag", "Value": "test"}]
@@ -106,13 +112,16 @@ class Test_iam_rotate_access_key_90_days_test:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.iam.iam_rotate_access_key_90_days.iam_rotate_access_key_90_days.iam_client",
-            new=IAM(aws_provider),
-        ) as service_client:
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.iam.iam_rotate_access_key_90_days.iam_rotate_access_key_90_days.iam_client",
+                new=IAM(aws_provider),
+            ) as service_client,
+        ):
             from prowler.providers.aws.services.iam.iam_rotate_access_key_90_days.iam_rotate_access_key_90_days import (
                 iam_rotate_access_key_90_days,
             )
@@ -130,7 +139,7 @@ class Test_iam_rotate_access_key_90_days_test:
                 result[0].status_extended
                 == f"User {user} has not rotated access key 2 in over 90 days (100 days)."
             )
-            assert result[0].resource_id == user
+            assert result[0].resource_id == f"{user}-access-key-2"
             assert result[0].resource_arn == arn
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == [{"Key": "test-tag", "Value": "test"}]
@@ -150,13 +159,16 @@ class Test_iam_rotate_access_key_90_days_test:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.iam.iam_rotate_access_key_90_days.iam_rotate_access_key_90_days.iam_client",
-            new=IAM(aws_provider),
-        ) as service_client:
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.iam.iam_rotate_access_key_90_days.iam_rotate_access_key_90_days.iam_client",
+                new=IAM(aws_provider),
+            ) as service_client,
+        ):
             from prowler.providers.aws.services.iam.iam_rotate_access_key_90_days.iam_rotate_access_key_90_days import (
                 iam_rotate_access_key_90_days,
             )
@@ -179,7 +191,7 @@ class Test_iam_rotate_access_key_90_days_test:
                 result[0].status_extended
                 == f"User {user} has not rotated access key 1 in over 90 days (100 days)."
             )
-            assert result[0].resource_id == user
+            assert result[0].resource_id == f"{user}-access-key-1"
             assert result[0].resource_arn == arn
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == [{"Key": "test-tag", "Value": "test"}]
@@ -188,7 +200,7 @@ class Test_iam_rotate_access_key_90_days_test:
                 result[1].status_extended
                 == f"User {user} has not rotated access key 2 in over 90 days (100 days)."
             )
-            assert result[1].resource_id == user
+            assert result[1].resource_id == f"{user}-access-key-2"
             assert result[1].resource_arn == arn
             assert result[1].region == AWS_REGION_US_EAST_1
             assert result[1].resource_tags == [{"Key": "test-tag", "Value": "test"}]

@@ -24,7 +24,8 @@
     }
   },
   "Categories": [
-    "internet-exposed"
+    "internet-exposed",
+    "gen-ai"
   ],
   "DependsOn": [],
   "RelatedTo": [],

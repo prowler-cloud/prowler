@@ -62,6 +62,7 @@ class Test_entra_users_cannot_create_microsoft_365_groups:
         ):
             from prowler.providers.azure.services.entra.entra_service import (
                 GroupSetting,
+                SettingValue,
             )
             from prowler.providers.azure.services.entra.entra_users_cannot_create_microsoft_365_groups.entra_users_cannot_create_microsoft_365_groups import (
                 entra_users_cannot_create_microsoft_365_groups,
@@ -70,9 +71,7 @@ class Test_entra_users_cannot_create_microsoft_365_groups:
             id = str(uuid4())
             template_id = str(uuid4())
 
-            setting = mock.MagicMock
-            setting.name = "EnableGroupCreation"
-            setting.value = "false"
+            setting = SettingValue(name="EnableGroupCreation", value="false")
 
             entra_client.group_settings = {
                 DOMAIN: {
@@ -107,6 +106,7 @@ class Test_entra_users_cannot_create_microsoft_365_groups:
         ):
             from prowler.providers.azure.services.entra.entra_service import (
                 GroupSetting,
+                SettingValue,
             )
             from prowler.providers.azure.services.entra.entra_users_cannot_create_microsoft_365_groups.entra_users_cannot_create_microsoft_365_groups import (
                 entra_users_cannot_create_microsoft_365_groups,
@@ -115,9 +115,7 @@ class Test_entra_users_cannot_create_microsoft_365_groups:
             id = str(uuid4())
             template_id = str(uuid4())
 
-            setting = mock.MagicMock
-            setting.name = "EnableGroupCreation"
-            setting.value = "true"
+            setting = SettingValue(name="EnableGroupCreation", value="true")
 
             entra_client.group_settings = {
                 DOMAIN: {

@@ -1,0 +1,41 @@
+name: UI - Pull Request
+
+on:
+  push:
+    branches:
+      - "master"
+      - "v5.*"
+    paths:
+      - "ui/**"
+  pull_request:
+    branches:
+      - master
+      - "v5.*"
+    paths:
+      - 'ui/**'
+
+jobs:
+  test-and-coverage:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        node-version: [20.x]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Install dependencies
+        working-directory: ./ui
+        run: npm install
+      - name: Run Healthcheck
+        working-directory: ./ui
+        run: npm run healthcheck
+      - name: Build the application
+        working-directory: ./ui
+        run: npm run build

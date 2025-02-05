@@ -11,11 +11,9 @@ class iam_inline_policy_no_full_access_to_kms(Check):
 
         for policy in iam_client.policies:
             if policy.type == "Inline":
-                report = Check_Report_AWS(self.metadata())
+                report = Check_Report_AWS(metadata=self.metadata(), resource=policy)
                 report.region = iam_client.region
-                report.resource_arn = policy.arn
                 report.resource_id = f"{policy.entity}/{policy.name}"
-                report.resource_tags = policy.tags
                 report.status = "PASS"
 
                 resource_type_str = report.resource_arn.split(":")[-1].split("/")[0]

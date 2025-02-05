@@ -60,11 +60,13 @@ class S3(AWSService):
                         if provider.identity.audited_regions:
                             if bucket_region in provider.identity.audited_regions:
                                 self.buckets[arn] = Bucket(
+                                    arn=arn,
                                     name=bucket["Name"],
                                     region=bucket_region,
                                 )
                         else:
                             self.buckets[arn] = Bucket(
+                                arn=arn,
                                 name=bucket["Name"],
                                 region=bucket_region,
                             )
@@ -673,6 +675,7 @@ class ReplicationRule(BaseModel):
 
 
 class Bucket(BaseModel):
+    arn: str
     name: str
     versioning: bool = False
     logging: bool = False

@@ -6,7 +6,7 @@ from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, set_mocked_gcp_prov
 
 class Test_compute_instance_confidential_computing_enabled:
     def test_compute_no_instances(self):
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = []
 
@@ -32,6 +32,7 @@ class Test_compute_instance_confidential_computing_enabled:
             name="test",
             id="1234567890",
             zone="us-central1-a",
+            region="us-central1",
             public_ip=True,
             metadata={},
             shielded_enabled_vtpm=True,
@@ -43,7 +44,7 @@ class Test_compute_instance_confidential_computing_enabled:
             project_id=GCP_PROJECT_ID,
         )
 
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = [instance]
 
@@ -69,7 +70,7 @@ class Test_compute_instance_confidential_computing_enabled:
             )
             assert result[0].resource_id == instance.id
             assert result[0].resource_name == instance.name
-            assert result[0].location == instance.zone
+            assert result[0].location == "us-central1"
             assert result[0].project_id == GCP_PROJECT_ID
 
     def test_one_instance_with_shielded_vtpm_disabled(self):
@@ -79,6 +80,7 @@ class Test_compute_instance_confidential_computing_enabled:
             name="test",
             id="1234567890",
             zone="us-central1-a",
+            region="us-central1",
             public_ip=True,
             metadata={},
             shielded_enabled_vtpm=False,
@@ -90,7 +92,7 @@ class Test_compute_instance_confidential_computing_enabled:
             project_id=GCP_PROJECT_ID,
         )
 
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = [instance]
 
@@ -116,5 +118,5 @@ class Test_compute_instance_confidential_computing_enabled:
             )
             assert result[0].resource_id == instance.id
             assert result[0].resource_name == instance.name
-            assert result[0].location == instance.zone
+            assert result[0].location == "us-central1"
             assert result[0].project_id == GCP_PROJECT_ID

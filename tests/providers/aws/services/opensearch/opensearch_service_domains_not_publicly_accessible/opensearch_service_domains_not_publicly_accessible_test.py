@@ -84,12 +84,15 @@ class Test_opensearch_service_domains_not_publicly_accessible:
             OpenSearchService,
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.opensearch.opensearch_service_domains_not_publicly_accessible.opensearch_service_domains_not_publicly_accessible.opensearch_client",
-            new=OpenSearchService(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.opensearch.opensearch_service_domains_not_publicly_accessible.opensearch_service_domains_not_publicly_accessible.opensearch_client",
+                new=OpenSearchService(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.opensearch.opensearch_service_domains_not_publicly_accessible.opensearch_service_domains_not_publicly_accessible import (
                 opensearch_service_domains_not_publicly_accessible,
@@ -102,13 +105,9 @@ class Test_opensearch_service_domains_not_publicly_accessible:
     @mock_aws
     def test_policy_data_restricted(self):
         opensearch_client = client("opensearch", region_name=AWS_REGION_US_WEST_2)
-        domain_arn = opensearch_client.create_domain(DomainName=domain_name)[
-            "DomainStatus"
-        ]["ARN"]
-        opensearch_client.update_domain_config(
-            DomainName=domain_name,
-            AccessPolicies=str(policy_data_restricted),
-        )
+        domain_arn = opensearch_client.create_domain(
+            DomainName=domain_name, AccessPolicies=str(policy_data_restricted)
+        )["DomainStatus"]["ARN"]
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_WEST_2])
 
@@ -116,12 +115,15 @@ class Test_opensearch_service_domains_not_publicly_accessible:
             OpenSearchService,
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.opensearch.opensearch_service_domains_not_publicly_accessible.opensearch_service_domains_not_publicly_accessible.opensearch_client",
-            new=OpenSearchService(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.opensearch.opensearch_service_domains_not_publicly_accessible.opensearch_service_domains_not_publicly_accessible.opensearch_client",
+                new=OpenSearchService(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.opensearch.opensearch_service_domains_not_publicly_accessible.opensearch_service_domains_not_publicly_accessible import (
                 opensearch_service_domains_not_publicly_accessible,
@@ -143,13 +145,9 @@ class Test_opensearch_service_domains_not_publicly_accessible:
     @mock_aws
     def test_policy_data_not_restricted_with_principal_AWS(self):
         opensearch_client = client("opensearch", region_name=AWS_REGION_US_WEST_2)
-        domain_arn = opensearch_client.create_domain(DomainName=domain_name)[
-            "DomainStatus"
-        ]["ARN"]
-        opensearch_client.update_domain_config(
-            DomainName=domain_name,
-            AccessPolicies=dumps(policy_data_not_restricted),
-        )
+        domain_arn = opensearch_client.create_domain(
+            DomainName=domain_name, AccessPolicies=dumps(policy_data_not_restricted)
+        )["DomainStatus"]["ARN"]
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_WEST_2])
 
@@ -157,12 +155,15 @@ class Test_opensearch_service_domains_not_publicly_accessible:
             OpenSearchService,
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.opensearch.opensearch_service_domains_not_publicly_accessible.opensearch_service_domains_not_publicly_accessible.opensearch_client",
-            new=OpenSearchService(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.opensearch.opensearch_service_domains_not_publicly_accessible.opensearch_service_domains_not_publicly_accessible.opensearch_client",
+                new=OpenSearchService(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.opensearch.opensearch_service_domains_not_publicly_accessible.opensearch_service_domains_not_publicly_accessible import (
                 opensearch_service_domains_not_publicly_accessible,
@@ -184,13 +185,10 @@ class Test_opensearch_service_domains_not_publicly_accessible:
     @mock_aws
     def test_policy_data_not_restricted_with_principal_no_AWS(self):
         opensearch_client = client("opensearch", region_name=AWS_REGION_US_WEST_2)
-        domain_arn = opensearch_client.create_domain(DomainName=domain_name)[
-            "DomainStatus"
-        ]["ARN"]
-        opensearch_client.update_domain_config(
+        domain_arn = opensearch_client.create_domain(
             DomainName=domain_name,
             AccessPolicies=dumps(policy_data_not_restricted_principal),
-        )
+        )["DomainStatus"]["ARN"]
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_WEST_2])
 
@@ -198,12 +196,15 @@ class Test_opensearch_service_domains_not_publicly_accessible:
             OpenSearchService,
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.opensearch.opensearch_service_domains_not_publicly_accessible.opensearch_service_domains_not_publicly_accessible.opensearch_client",
-            new=OpenSearchService(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.opensearch.opensearch_service_domains_not_publicly_accessible.opensearch_service_domains_not_publicly_accessible.opensearch_client",
+                new=OpenSearchService(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.opensearch.opensearch_service_domains_not_publicly_accessible.opensearch_service_domains_not_publicly_accessible import (
                 opensearch_service_domains_not_publicly_accessible,
@@ -225,13 +226,10 @@ class Test_opensearch_service_domains_not_publicly_accessible:
     @mock_aws
     def test_policy_data_not_restricted_ip_full(self):
         opensearch_client = client("opensearch", region_name=AWS_REGION_US_WEST_2)
-        domain_arn = opensearch_client.create_domain(DomainName=domain_name)[
-            "DomainStatus"
-        ]["ARN"]
-        opensearch_client.update_domain_config(
+        domain_arn = opensearch_client.create_domain(
             DomainName=domain_name,
             AccessPolicies=dumps(policy_data_source_ip_full),
-        )
+        )["DomainStatus"]["ARN"]
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_WEST_2])
 
@@ -239,12 +237,15 @@ class Test_opensearch_service_domains_not_publicly_accessible:
             OpenSearchService,
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.opensearch.opensearch_service_domains_not_publicly_accessible.opensearch_service_domains_not_publicly_accessible.opensearch_client",
-            new=OpenSearchService(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.opensearch.opensearch_service_domains_not_publicly_accessible.opensearch_service_domains_not_publicly_accessible.opensearch_client",
+                new=OpenSearchService(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.opensearch.opensearch_service_domains_not_publicly_accessible.opensearch_service_domains_not_publicly_accessible import (
                 opensearch_service_domains_not_publicly_accessible,
@@ -266,13 +267,10 @@ class Test_opensearch_service_domains_not_publicly_accessible:
     @mock_aws
     def test_policy_data_not_restricted_whole_internet(self):
         opensearch_client = client("opensearch", region_name=AWS_REGION_US_WEST_2)
-        domain_arn = opensearch_client.create_domain(DomainName=domain_name)[
-            "DomainStatus"
-        ]["ARN"]
-        opensearch_client.update_domain_config(
+        domain_arn = opensearch_client.create_domain(
             DomainName=domain_name,
             AccessPolicies=dumps(policy_data_source_whole_internet),
-        )
+        )["DomainStatus"]["ARN"]
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_WEST_2])
 
@@ -280,12 +278,15 @@ class Test_opensearch_service_domains_not_publicly_accessible:
             OpenSearchService,
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.opensearch.opensearch_service_domains_not_publicly_accessible.opensearch_service_domains_not_publicly_accessible.opensearch_client",
-            new=OpenSearchService(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.opensearch.opensearch_service_domains_not_publicly_accessible.opensearch_service_domains_not_publicly_accessible.opensearch_client",
+                new=OpenSearchService(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.opensearch.opensearch_service_domains_not_publicly_accessible.opensearch_service_domains_not_publicly_accessible import (
                 opensearch_service_domains_not_publicly_accessible,

@@ -72,6 +72,7 @@ class Test_entra_conditional_access_policy_require_mfa_for_management_api:
             )
 
             policy = ConditionalAccessPolicy(
+                id=policy_id,
                 name="Test Policy",
                 state="enabled",
                 users={"include": ["All"]},
@@ -112,6 +113,7 @@ class Test_entra_conditional_access_policy_require_mfa_for_management_api:
             )
 
             policy = ConditionalAccessPolicy(
+                id=policy_id,
                 name="Test Policy",
                 state="enabled",
                 users={"include": ["All"]},
@@ -152,6 +154,7 @@ class Test_entra_conditional_access_policy_require_mfa_for_management_api:
             )
 
             policy = ConditionalAccessPolicy(
+                id=policy_id,
                 name="Test Policy",
                 state="disabled",
                 users={"include": ["All"]},
@@ -192,6 +195,7 @@ class Test_entra_conditional_access_policy_require_mfa_for_management_api:
             )
 
             policy = ConditionalAccessPolicy(
+                id=policy_id,
                 name="Test Policy",
                 state="enabled",
                 users={"include": ["All"]},
@@ -232,6 +236,7 @@ class Test_entra_conditional_access_policy_require_mfa_for_management_api:
             )
 
             policy = ConditionalAccessPolicy(
+                id=policy_id,
                 name="Test Policy",
                 state="enabled",
                 users={"include": []},

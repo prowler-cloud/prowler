@@ -1,3 +1,4 @@
+import hashlib
 from json import dumps
 
 from prowler.lib.check.models import Check, Check_Report_AWS
@@ -12,11 +13,10 @@ class ecs_task_definitions_no_environment_secrets(Check):
             "secrets_ignore_patterns", []
         )
         for task_definition in ecs_client.task_definitions.values():
-            report = Check_Report_AWS(self.metadata())
-            report.region = task_definition.region
+            report = Check_Report_AWS(
+                metadata=self.metadata(), resource=task_definition
+            )
             report.resource_id = f"{task_definition.name}:{task_definition.revision}"
-            report.resource_arn = task_definition.arn
-            report.resource_tags = task_definition.tags
             report.status = "PASS"
             extended_status_parts = []
 
@@ -25,17 +25,29 @@ class ecs_task_definitions_no_environment_secrets(Check):
 
                 if container.environment:
                     dump_env_vars = {}
+                    original_env_vars = {}
                     for env_var in container.environment:
                         dump_env_vars.update({env_var.name: env_var.value})
+                        original_env_vars.update(
+                            {
+                                hashlib.sha1(  # nosec B324 SHA1 is used here for non-security-critical unique identifiers
+                                    env_var.value.encode("utf-8")
+                                ).hexdigest(): env_var.name
+                            }
+                        )
 
                     env_data = dumps(dump_env_vars, indent=2)
                     detect_secrets_output = detect_secrets_scan(
-                        data=env_data, excluded_secrets=secrets_ignore_patterns
+                        data=env_data,
+                        excluded_secrets=secrets_ignore_patterns,
+                        detect_secrets_plugins=ecs_client.audit_config.get(
+                            "detect_secrets_plugins",
+                        ),
                     )
                     if detect_secrets_output:
                         secrets_string = ", ".join(
                             [
-                                f"{secret['type']} on line {secret['line_number']}"
+                                f"{secret['type']} on the environment variable {original_env_vars[secret['hashed_secret']]}"
                                 for secret in detect_secrets_output
                             ]
                         )

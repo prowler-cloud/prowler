@@ -6,11 +6,7 @@ class gke_cluster_no_default_service_account(Check):
     def execute(self) -> Check_Report_GCP:
         findings = []
         for cluster in gke_client.clusters.values():
-            report = Check_Report_GCP(self.metadata())
-            report.project_id = cluster.project_id
-            report.resource_id = cluster.id
-            report.resource_name = cluster.name
-            report.location = cluster.location
+            report = Check_Report_GCP(metadata=self.metadata(), resource=cluster)
             report.status = "PASS"
             report.status_extended = f"GKE cluster {cluster.name} is not using the Compute Engine default service account."
             if not cluster.node_pools and cluster.service_account == "default":

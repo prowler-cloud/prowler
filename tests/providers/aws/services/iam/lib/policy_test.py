@@ -1923,6 +1923,22 @@ class Test_Policy:
         }
         assert not is_policy_public(policy, TRUSTED_AWS_ACCOUNT_NUMBER)
 
+    def test_is_policy_public_eks(
+        self,
+    ):
+        policy = {
+            "Statement": [
+                {
+                    "Sid": "test",
+                    "Effect": "Allow",
+                    "Principal": {"Service": "eks.amazonaws.com"},
+                    "Action": "lambda:GetFunction",
+                    "Resource": "*",
+                }
+            ]
+        }
+        assert not is_policy_public(policy, TRUSTED_AWS_ACCOUNT_NUMBER)
+
     def test_is_policy_public_cross_cross_service_confused_deputy(
         self,
     ):

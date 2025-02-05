@@ -1,4 +1,4 @@
-def is_rule_allowing_permisions(rules, resources, verbs):
+def is_rule_allowing_permissions(rules, resources, verbs):
     """
     Check Kubernetes role permissions.
 
@@ -17,6 +17,9 @@ def is_rule_allowing_permisions(rules, resources, verbs):
     if rules:
         # Iterate through each rule in the list of rules
         for rule in rules:
+            # Ensure apiGroups are relevant ("" or "v1" for secrets)
+            if rule.apiGroups and all(api not in ["", "v1"] for api in rule.apiGroups):
+                continue  # Skip rules with unrelated apiGroups
             # Check if the rule has resources, verbs, and matches any of the specified resources and verbs
             if (
                 rule.resources

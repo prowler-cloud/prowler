@@ -9,12 +9,9 @@ class vm_ensure_unattached_disks_encrypted_with_cmk(Check):
         for subscription_name, disks in vm_client.disks.items():
             for disk_id, disk in disks.items():
                 if not disk.vms_attached:
-                    report = Check_Report_Azure(self.metadata())
-                    report.status = "PASS"
+                    report = Check_Report_Azure(metadata=self.metadata(), resource=disk)
                     report.subscription = subscription_name
-                    report.resource_name = disk.resource_name
-                    report.resource_id = disk.resource_id
-                    report.location = disk.location
+                    report.status = "PASS"
                     report.status_extended = f"Disk '{disk_id}' is encrypted with a customer-managed key in subscription {subscription_name}."
 
                     if (

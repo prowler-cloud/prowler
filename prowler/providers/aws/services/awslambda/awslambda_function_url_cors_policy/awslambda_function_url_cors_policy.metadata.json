@@ -3,7 +3,7 @@
   "CheckID": "awslambda_function_url_cors_policy",
   "CheckTitle": "Check Lambda Function URL CORS configuration.",
   "CheckType": [],
-  "ServiceName": "lambda",
+  "ServiceName": "awslambda",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:lambda:region:account-id:function/function-name",
   "Severity": "medium",

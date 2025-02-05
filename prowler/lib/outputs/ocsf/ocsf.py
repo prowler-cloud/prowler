@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 from typing import List
 
 from py_ocsf_models.events.base_event import SeverityID, StatusID
@@ -68,7 +69,11 @@ class OCSF(Output):
                     activity_name=finding_activity.name,
                     finding_info=FindingInformation(
                         created_time_dt=finding.timestamp,
-                        created_time=int(finding.timestamp.timestamp()),
+                        created_time=(
+                            int(finding.timestamp.timestamp())
+                            if isinstance(finding.timestamp, datetime)
+                            else finding.timestamp
+                        ),
                         desc=finding.metadata.Description,
                         title=finding.metadata.CheckTitle,
                         uid=finding.uid,
@@ -77,7 +82,11 @@ class OCSF(Output):
                         types=finding.metadata.CheckType,
                     ),
                     time_dt=finding.timestamp,
-                    time=int(finding.timestamp.timestamp()),
+                    time=(
+                        int(finding.timestamp.timestamp())
+                        if isinstance(finding.timestamp, datetime)
+                        else finding.timestamp
+                    ),
                     remediation=Remediation(
                         desc=finding.metadata.Remediation.Recommendation.Text,
                         references=list(
@@ -111,7 +120,10 @@ class OCSF(Output):
                                 # TODO: this should be included only if using the Cloud profile
                                 cloud_partition=finding.partition,
                                 region=finding.region,
-                                data={"details": finding.resource_details},
+                                data={
+                                    "details": finding.resource_details,
+                                    "metadata": finding.resource_metadata,
+                                },
                             )
                         ]
                         if finding.metadata.Provider != "kubernetes"
@@ -122,7 +134,10 @@ class OCSF(Output):
                                 uid=finding.resource_uid,
                                 group=Group(name=finding.metadata.ServiceName),
                                 type=finding.metadata.ResourceType,
-                                data={"details": finding.resource_details},
+                                data={
+                                    "details": finding.resource_details,
+                                    "metadata": finding.resource_metadata,
+                                },
                                 namespace=finding.region.replace("namespace: ", ""),
                             )
                         ]
@@ -187,10 +202,15 @@ class OCSF(Output):
             ):
                 self._file_descriptor.write("[")
                 for finding in self._data:
-                    self._file_descriptor.write(
-                        finding.json(exclude_none=True, indent=4)
-                    )
-                    self._file_descriptor.write(",")
+                    try:
+                        self._file_descriptor.write(
+                            finding.json(exclude_none=True, indent=4)
+                        )
+                        self._file_descriptor.write(",")
+                    except Exception as error:
+                        logger.error(
+                            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
                 if self._file_descriptor.tell() > 0:
                     if self._file_descriptor.tell() != 1:
                         self._file_descriptor.seek(

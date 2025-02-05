@@ -6,10 +6,7 @@ class core_minimize_containers_capabilities_assigned(Check):
     def execute(self) -> Check_Report_Kubernetes:
         findings = []
         for pod in core_client.pods.values():
-            report = Check_Report_Kubernetes(self.metadata())
-            report.namespace = pod.namespace
-            report.resource_name = pod.name
-            report.resource_id = pod.uid
+            report = Check_Report_Kubernetes(metadata=self.metadata(), resource=pod)
             report.status = "PASS"
             report.status_extended = (
                 f"Pod {pod.name} without capabilities issues found."
@@ -18,11 +15,11 @@ class core_minimize_containers_capabilities_assigned(Check):
             for container in pod.containers.values():
                 if (
                     container.security_context
-                    and container.security_context.capabilities
+                    and container.security_context["capabilities"]
                 ):
                     if (
-                        container.security_context.capabilities.add
-                        or not container.security_context.capabilities.drop
+                        container.security_context["capabilities"]["add"]
+                        or not container.security_context["capabilities"]["drop"]
                     ):
                         report.status = "FAIL"
                         report.status_extended = f"Pod {pod.name} has capabilities assigned or not all dropped in container {container.name}."
