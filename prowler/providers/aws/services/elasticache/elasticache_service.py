@@ -77,9 +77,15 @@ class ElastiCache(AWSService):
                     cluster.tags = regional_client.list_tags_for_resource(
                         ResourceName=cluster.arn
                     )["TagList"]
-<<<<<<< HEAD
                 except ClientError as error:
                     if error.response["Error"]["Code"] == "CacheClusterNotFound":
+                        logger.warning(
+                            f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                    if (
+                        error.response["Error"]["Code"]
+                        == "InvalidReplicationGroupStateFault"
+                    ):
                         logger.warning(
                             f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
@@ -87,40 +93,6 @@ class ElastiCache(AWSService):
                         logger.error(
                             f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
-=======
-                except regional_client.exceptions.CacheClusterNotFoundFault as error:
-                    logger.warning(
-                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
-                except (
-                    regional_client.exceptions.InvalidReplicationGroupStateFault
-                ) as error:
-                    logger.warning(
-                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
-                except Exception as error:
-                    logger.error(
-                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
-            for repl_group in self.replication_groups.values():
-                try:
-                    regional_client = self.regional_clients[repl_group.region]
-                    repl_group.tags = regional_client.list_tags_for_resource(
-                        ResourceName=repl_group.arn
-                    )["TagList"]
-                except (
-                    regional_client.exceptions.ReplicationGroupNotFoundFault
-                ) as error:
-                    logger.warning(
-                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
-                except (
-                    regional_client.exceptions.InvalidReplicationGroupStateFault
-                ) as error:
-                    logger.warning(
-                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
->>>>>>> 2934752ee (fix(elasticache): InvalidReplicationGroupStateFault error (#6815))
                 except Exception as error:
                     logger.error(
                         f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
