@@ -15,7 +15,7 @@ class entra_security_defaults_enabled(Check):
             )
             report.subscription = f"Tenant: {tenant}"
             report.status = "FAIL"
-            report.status_extended = "Entra security defaults is diabled."
+            report.status_extended = "Entra security defaults is disabled."
 
             if getattr(security_default, "is_enabled", False):
                 report.status = "PASS"
