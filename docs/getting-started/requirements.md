@@ -114,9 +114,8 @@ Prowler for Microsoft365 currently supports the following authentication types:
 To allow Prowler assume the service principal identity to start the scan it is needed to configure the following environment variables:
 
 ```console
-export APP_CLIENT_ID="XXXXXXXXX"
-export APP_CLIENT_SECRET="XXXXXXXXX"
-export APP_TENANT_ID="XXXXXXX"
-```
+export AZURE_CLIENT_ID="XXXXXXXXX"
+export AZURE_CLIENT_SECRET="XXXXXXXXX"
+export AZURE_TENANT_ID="XXXXXXXXX"
 
 Follow the instructions in the [Create Prowler Service Principal](../tutorials/microsoft365/create-prowler-service-principal.md) section to create a service principal.

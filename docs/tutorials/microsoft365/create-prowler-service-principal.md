@@ -9,7 +9,7 @@ To allow Prowler assume an identity to start the scan with the required privileg
 5. Once in the application page, in the left menu bar, select "Certificates & secrets"
 6. In the "Certificates & secrets" view, click on "+ New client secret"
 7. Fill the "Description" and "Expires" fields and click on "Add"
-8. Copy the value of the secret, it is going to be used as `APP_CLIENT_SECRET` environment variable.
+8. Copy the value of the secret, it is going to be used as `AZURE_CLIENT_SECRET` environment variable.
 
 ![Register an Application page](../../img/create-sp.gif)
 
