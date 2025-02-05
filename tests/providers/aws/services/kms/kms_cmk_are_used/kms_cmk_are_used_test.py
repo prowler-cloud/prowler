@@ -89,7 +89,7 @@ class Test_kms_cmk_are_used:
 
         orig_describe_key = kms_client.describe_key
         def mock_describe_key(KeyId: str, count: List[int] = [0]) -> Any:
-            if count[0] == 2 or count[0] == 4:
+            if count[0] in [2, 4]: 
                 count[0] += 1
                 raise Exception("FakeClientError")
             else:

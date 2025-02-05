@@ -91,7 +91,7 @@ class Test_kms_cmk_rotation_enabled:
 
         orig_get_key_rotation_status = kms_client.get_key_rotation_status
         def mock_get_key_rotation_status(KeyId: str, count: List[int] = [0]) -> Any:
-            if count[0] == 2 or count[0] == 4:  #in [2, 4]:
+            if count[0] in [2, 4]:
                 count[0] += 1
                 raise Exception("FakeClientError")
             else:

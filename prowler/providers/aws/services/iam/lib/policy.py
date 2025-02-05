@@ -230,6 +230,9 @@ def is_policy_public(
                     )
                     if is_public:
                         break
+    else:
+        return True
+
     return is_public
 
 

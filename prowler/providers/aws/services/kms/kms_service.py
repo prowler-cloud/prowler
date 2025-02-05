@@ -78,21 +78,21 @@ class KMS(AWSService):
 
     def _get_key_policy(self):
         logger.info("KMS - Get Key Policy...")
-        try:
-            for key in self.keys:
-                if (
-                    key.manager and key.manager == "CUSTOMER"
-                ):  # only customer KMS have policies
-                    regional_client = self.regional_clients[key.region]
+        for key in self.keys:
+            if (
+                key.manager and key.manager == "CUSTOMER"
+            ):  # only customer KMS have policies
+                regional_client = self.regional_clients[key.region]
+                try:
                     key.policy = json.loads(
                         regional_client.get_key_policy(
                             KeyId=key.id, PolicyName="default"
                         )["Policy"]
                     )
-        except Exception as error:
-            logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
-            )
+                except Exception as error:
+                    logger.error(
+                        f"{regional_client.region} -- {error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
+                    )
 
     def _list_resource_tags(self):
         logger.info("KMS - List Tags...")
