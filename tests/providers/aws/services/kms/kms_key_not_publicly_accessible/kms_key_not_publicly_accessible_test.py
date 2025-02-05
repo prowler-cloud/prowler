@@ -172,12 +172,12 @@ class Test_kms_key_not_publicly_accessible:
             assert result[0].resource_arn == key["Arn"]
 
     @pytest.mark.parametrize(
-            "no_of_keys_created,expected_no_of_passes",
-            [
-                (5, 3),
-                (7, 5),
-                (10, 8),
-            ]
+        "no_of_keys_created,expected_no_of_passes",
+        [
+            (5, 3),
+            (7, 5),
+            (10, 8),
+        ]
     )
     @mock_aws
     def test_kms_key_not_publicly_accessible_when_get_key_policy_fails_on_2_keys_out_of_x_keys(
@@ -191,6 +191,7 @@ class Test_kms_key_not_publicly_accessible:
             kms_client.create_key(MultiRegion=False)
 
         orig_get_key_policy = kms_client.get_key_policy
+
         def mock_get_key_policy(KeyId: str, PolicyName: str, count: List[int] = [0]) -> Any:
             if count[0] in [2, 4]:
                 count[0] += 1

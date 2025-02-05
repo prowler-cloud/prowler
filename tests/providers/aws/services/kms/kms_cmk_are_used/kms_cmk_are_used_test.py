@@ -65,12 +65,12 @@ class Test_kms_cmk_are_used:
             assert result[0].resource_arn == key["Arn"]
 
     @pytest.mark.parametrize(
-            "no_of_keys_created,expected_no_of_results",
-            [
-                (5, 3),
-                (7, 5),
-                (10, 8),
-            ]
+        "no_of_keys_created,expected_no_of_results",
+        [
+            (5, 3),
+            (7, 5),
+            (10, 8),
+        ]
     )
     @mock_aws
     def test_kms_cmk_are_used_when_describe_key_fails_on_2_keys_out_of_x_keys(
@@ -88,8 +88,9 @@ class Test_kms_cmk_are_used:
             )
 
         orig_describe_key = kms_client.describe_key
+
         def mock_describe_key(KeyId: str, count: List[int] = [0]) -> Any:
-            if count[0] in [2, 4]: 
+            if count[0] in [2, 4]:
                 count[0] += 1
                 raise Exception("FakeClientError")
             else:

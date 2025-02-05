@@ -69,12 +69,12 @@ class Test_kms_cmk_rotation_enabled:
             assert result[0].resource_arn == key["Arn"]
 
     @pytest.mark.parametrize(
-            "no_of_keys_created,expected_no_of_passes",
-            [
-                (5, 3),
-                (7, 5),
-                (10, 8),
-            ]
+        "no_of_keys_created,expected_no_of_passes",
+        [
+            (5, 3),
+            (7, 5),
+            (10, 8),
+        ]
     )
     @mock_aws
     def test_kms_cmk_rotation_enabled_when_get_key_rotation_status_fails_on_2_keys_out_of_x_keys(
@@ -90,6 +90,7 @@ class Test_kms_cmk_rotation_enabled:
                 kms_client.enable_key_rotation(KeyId=key["KeyId"])
 
         orig_get_key_rotation_status = kms_client.get_key_rotation_status
+
         def mock_get_key_rotation_status(KeyId: str, count: List[int] = [0]) -> Any:
             if count[0] in [2, 4]:
                 count[0] += 1
