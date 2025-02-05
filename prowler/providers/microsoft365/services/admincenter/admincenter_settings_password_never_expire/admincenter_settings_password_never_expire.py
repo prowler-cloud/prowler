@@ -9,7 +9,6 @@ class admincenter_settings_password_never_expire(Check):
         findings = []
         for domain in admincenter_client.domains.values():
             report = Check_Report_Microsoft365(self.metadata(), resource=domain)
-            report.resource_id = domain.id
             report.resource_name = domain.id
             report.status = "FAIL"
             report.status_extended = (
