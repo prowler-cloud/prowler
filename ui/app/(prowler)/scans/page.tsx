@@ -8,7 +8,6 @@ import {
   ButtonRefreshData,
   NoProvidersAdded,
   NoProvidersConnected,
-  ScanWarningBar,
 } from "@/components/scans";
 import { LaunchScanWorkflow } from "@/components/scans/launch-workflow";
 import { SkeletonTableScans } from "@/components/scans/table";
@@ -73,8 +72,6 @@ export default async function Scans({
               <Header title="Scans" icon="lucide:scan-search" />
 
               <LaunchScanWorkflow providers={providerInfo} />
-              <Spacer y={4} />
-              <ScanWarningBar />
               <Spacer y={8} />
             </>
           )}

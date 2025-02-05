@@ -1,6 +1,6 @@
 from azure.identity import AzureAuthorityHosts
 
-from prowler.providers.microsoft365.lib.regions.microsoft365_regions import (
+from prowler.providers.microsoft365.lib.regions.regions import (
     MICROSOFT365_CHINA_CLOUD,
     MICROSOFT365_GENERIC_CLOUD,
     MICROSOFT365_US_GOV_CLOUD,

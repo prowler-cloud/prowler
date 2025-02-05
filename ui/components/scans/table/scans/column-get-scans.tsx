@@ -123,13 +123,13 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
     },
   },
   {
-    accessorKey: "next_scan_at",
-    header: "Next scan",
+    accessorKey: "scheduled_at",
+    header: "Scheduled at",
     cell: ({ row }) => {
       const {
-        attributes: { next_scan_at },
+        attributes: { scheduled_at },
       } = getScanData(row);
-      return <DateWithTime dateTime={next_scan_at} />;
+      return <DateWithTime dateTime={scheduled_at} />;
     },
   },
   {
