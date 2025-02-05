@@ -82,6 +82,13 @@ class ElastiCache(AWSService):
                         logger.warning(
                             f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
+                    if (
+                        error.response["Error"]["Code"]
+                        == "InvalidReplicationGroupStateFault"
+                    ):
+                        logger.warning(
+                            f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
                     else:
                         logger.error(
                             f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
