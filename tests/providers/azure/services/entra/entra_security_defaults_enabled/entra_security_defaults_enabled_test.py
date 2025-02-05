@@ -45,7 +45,7 @@ class Test_entra_security_defaults_enabled:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert result[0].status_extended == "Entra security defaults is diabled."
+            assert result[0].status_extended == "Entra security defaults is disabled."
             assert result[0].subscription == f"Tenant: {DOMAIN}"
             assert result[0].resource_name == "Security Default"
             assert result[0].resource_id == "Security Default"
@@ -109,7 +109,7 @@ class Test_entra_security_defaults_enabled:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert result[0].status_extended == "Entra security defaults is diabled."
+            assert result[0].status_extended == "Entra security defaults is disabled."
             assert result[0].subscription == f"Tenant: {DOMAIN}"
             assert result[0].resource_name == "Sec Default"
             assert result[0].resource_id == id
