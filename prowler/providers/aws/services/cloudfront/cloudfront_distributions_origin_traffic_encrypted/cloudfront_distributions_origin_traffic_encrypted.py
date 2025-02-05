@@ -13,16 +13,10 @@ class cloudfront_distributions_origin_traffic_encrypted(Check):
             report.status_extended = f"CloudFront Distribution {distribution.id} does encrypt traffic to custom origins."
             unencrypted_origins = []
 
-            viewer_protocol_policy = (
-                distribution.viewer_protocol_policy
-                if distribution.viewer_protocol_policy != ""
-                else distribution.default_cache_config.viewer_protocol_policy.value
-            )
-
             for origin in distribution.origins:
                 if origin.s3_origin_config:
                     # For S3, only check the viewer protocol policy
-                    if viewer_protocol_policy == "allow-all":
+                    if distribution.viewer_protocol_policy == "allow-all":
                         unencrypted_origins.append(origin.id)
                 else:
                     # Regular check for custom origins (ALB, EC2, API Gateway, etc.)
@@ -31,7 +25,7 @@ class cloudfront_distributions_origin_traffic_encrypted(Check):
                         or origin.origin_protocol_policy == "http-only"
                     ) or (
                         origin.origin_protocol_policy == "match-viewer"
-                        and viewer_protocol_policy == "allow-all"
+                        and distribution.viewer_protocol_policy == "allow-all"
                     ):
                         unencrypted_origins.append(origin.id)
 

@@ -111,18 +111,10 @@ class CloudFront(AWSService):
                         "DefaultRootObject", ""
                     )
                 )
-                cache_behaviors = distribution_config["DistributionConfig"].get(
-                    "CacheBehaviors", {}
-                )
-                viewer_protocol_policy = ""
-
-                if cache_behaviors.get("Quantity", 0) > 0:
-                    viewer_protocol_policy = cache_behaviors["Items"][0].get(
-                        "ViewerProtocolPolicy", ""
-                    )
-
                 distributions[distribution_id].viewer_protocol_policy = (
-                    viewer_protocol_policy
+                    distribution_config["DistributionConfig"][
+                        "DefaultCacheBehavior"
+                    ].get("ViewerProtocolPolicy", "")
                 )
 
                 # Default Cache Config
