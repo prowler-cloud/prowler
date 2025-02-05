@@ -1,8 +1,6 @@
-from typing import Any, List
 from unittest import mock
 from boto3 import client
 from moto import mock_aws
-import pytest
 
 from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
 
