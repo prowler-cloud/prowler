@@ -9,11 +9,7 @@ class eventbridge_bus_cross_account_access(Check):
     def execute(self):
         findings = []
         for bus in eventbridge_client.buses.values():
-            report = Check_Report_AWS(self.metadata())
-            report.resource_id = bus.name
-            report.resource_arn = bus.arn
-            report.resource_tags = bus.tags
-            report.region = bus.region
+            report = Check_Report_AWS(metadata=self.metadata(), resource=bus)
             report.status = "PASS"
             report.status_extended = (
                 f"EventBridge event bus {bus.name} does not allow cross-account access."

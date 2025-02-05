@@ -6,7 +6,7 @@ from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, set_mocked_gcp_prov
 
 class Test_compute_network_not_legacy:
     def test_compute_no_networks(self):
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.networks = []
         compute_client.region = "global"
@@ -36,7 +36,7 @@ class Test_compute_network_not_legacy:
             subnet_mode="custom",
         )
 
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.networks = [network]
         compute_client.region = "global"
@@ -76,7 +76,7 @@ class Test_compute_network_not_legacy:
             subnet_mode="legacy",
         )
 
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.networks = [network]
         compute_client.region = "global"

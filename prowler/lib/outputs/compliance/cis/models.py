@@ -142,6 +142,7 @@ class Microsoft365CISModel(BaseModel):
     Requirements_Attributes_RemediationProcedure: str
     Requirements_Attributes_AuditProcedure: str
     Requirements_Attributes_AdditionalInformation: str
+    Requirements_Attributes_DefaultValue: str
     Requirements_Attributes_References: str
     Status: str
     StatusExtended: str

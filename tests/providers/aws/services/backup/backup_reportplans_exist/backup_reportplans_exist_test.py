@@ -34,7 +34,7 @@ class Test_backup_reportplans_exist:
             assert len(result) == 0
 
     def test_no_backup_report_plans(self):
-        backup_client = mock.MagicMock
+        backup_client = mock.MagicMock()
         backup_client.audited_account = AWS_ACCOUNT_NUMBER
         backup_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
         backup_client.region = AWS_REGION
@@ -85,7 +85,7 @@ class Test_backup_reportplans_exist:
             assert result[0].region == AWS_REGION
 
     def test_one_backup_report_plan(self):
-        backup_client = mock.MagicMock
+        backup_client = mock.MagicMock()
         backup_client.audited_account = AWS_ACCOUNT_NUMBER
         backup_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
         backup_client.region = AWS_REGION

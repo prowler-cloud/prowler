@@ -1,7 +1,7 @@
 from enum import Enum
-from typing import Optional
+from typing import Dict, List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -49,6 +49,7 @@ class Kinesis(AWSService):
             stream.encrypted_at_rest = EncryptionType(
                 stream_description.get("EncryptionType", "NONE")
             )
+            stream.retention_period = stream_description.get("RetentionPeriodHours", 24)
         except Exception as error:
             logger.error(
                 f"{stream.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -91,5 +92,6 @@ class Stream(BaseModel):
     region: str
     name: str
     status: StreamStatus
-    tags: Optional[list]
+    tags: Optional[List[Dict[str, str]]] = Field(default_factory=list)
     encrypted_at_rest: EncryptionType = EncryptionType.NONE
+    retention_period: int = 24  # 1 day

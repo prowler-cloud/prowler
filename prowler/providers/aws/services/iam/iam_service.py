@@ -102,6 +102,8 @@ class IAM(AWSService):
         self._get_last_accessed_services()
         self.user_temporary_credentials_usage = {}
         self._get_user_temporary_credentials_usage()
+        self.organization_features = []
+        self._list_organizations_features()
         # List missing tags
         self.__threading_call__(self._list_tags, self.users)
         self.__threading_call__(self._list_tags, self.roles)
@@ -110,7 +112,8 @@ class IAM(AWSService):
             [policy for policy in self.policies if policy.type == "Custom"],
         )
         self.__threading_call__(self._list_tags, self.server_certificates)
-        self.__threading_call__(self._list_tags, self.saml_providers.values())
+        if self.saml_providers is not None:
+            self.__threading_call__(self._list_tags, self.saml_providers.values())
 
     def _get_client(self):
         return self.client
@@ -392,21 +395,38 @@ class IAM(AWSService):
         logger.info("IAM - List MFA Devices...")
         try:
             for user in self.users:
-                list_mfa_devices_paginator = self.client.get_paginator(
-                    "list_mfa_devices"
-                )
-                mfa_devices = []
-                for page in list_mfa_devices_paginator.paginate(UserName=user.name):
-                    for mfa_device in page["MFADevices"]:
-                        mfa_serial_number = mfa_device["SerialNumber"]
-                        try:
-                            mfa_type = mfa_serial_number.split(":")[5].split("/")[0]
-                        except IndexError:
-                            mfa_type = "hardware"
-                        mfa_devices.append(
-                            MFADevice(serial_number=mfa_serial_number, type=mfa_type)
+                try:
+                    list_mfa_devices_paginator = self.client.get_paginator(
+                        "list_mfa_devices"
+                    )
+                    mfa_devices = []
+                    for page in list_mfa_devices_paginator.paginate(UserName=user.name):
+                        for mfa_device in page["MFADevices"]:
+                            mfa_serial_number = mfa_device["SerialNumber"]
+                            try:
+                                mfa_type = mfa_serial_number.split(":")[5].split("/")[0]
+                            except IndexError:
+                                mfa_type = "hardware"
+                            mfa_devices.append(
+                                MFADevice(
+                                    serial_number=mfa_serial_number, type=mfa_type
+                                )
+                            )
+                    user.mfa_devices = mfa_devices
+                except ClientError as error:
+                    if error.response["Error"]["Code"] == "NoSuchEntity":
+                        logger.warning(
+                            f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
-                user.mfa_devices = mfa_devices
+                    else:
+                        logger.error(
+                            f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+
+                except Exception as error:
+                    logger.error(
+                        f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -959,6 +979,46 @@ class IAM(AWSService):
                     temporary_credentials_usage
                 )
 
+        except Exception as error:
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _list_organizations_features(self):
+        logger.info("IAM - List Organization Features...")
+        try:
+            organization_features = self.client.list_organizations_features()
+            self.organization_features = organization_features.get(
+                "EnabledFeatures", []
+            )
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "OrganizationNotFoundException":
+                logger.warning(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            elif error.response["Error"]["Code"] == "ServiceAccessNotEnabledException":
+                logger.warning(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            elif (
+                error.response["Error"]["Code"]
+                == "OrganizationNotInAllFeaturesModeException"
+            ):
+                logger.warning(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            elif (
+                error.response["Error"]["Code"]
+                == "AccountNotManagementOrDelegatedAdministratorException"
+            ):
+                logger.warning(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+                self.organization_features = None
+            else:
+                logger.error(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

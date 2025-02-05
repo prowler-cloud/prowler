@@ -8,10 +8,7 @@ class iam_user_hardware_mfa_enabled(Check):
         response = iam_client.users
 
         for user in response:
-            report = Check_Report_AWS(self.metadata())
-            report.resource_id = user.name
-            report.resource_arn = user.arn
-            report.resource_tags = user.tags
+            report = Check_Report_AWS(metadata=self.metadata(), resource=user)
             report.region = iam_client.region
             if user.mfa_devices:
                 report.status = "PASS"

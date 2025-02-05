@@ -11,7 +11,6 @@ from prowler.config.config import (
     load_and_validate_config_file,
     load_and_validate_fixer_config_file,
 )
-from prowler.providers.aws.aws_provider import get_aws_available_regions
 
 MOCK_PROWLER_VERSION = "3.3.0"
 MOCK_OLD_PROWLER_VERSION = "0.0.0"
@@ -33,16 +32,6 @@ old_config_aws = {
     "ec2_allowed_instance_owners": ["amazon-elb"],
     "trusted_account_ids": [],
     "log_group_retention_days": 365,
-    "critical_pii_entities": [
-        "CREDIT_CARD",  # Credit card numbers are highly sensitive financial information.
-        "CRYPTO",  # Crypto wallet numbers (e.g., Bitcoin addresses) can give access to cryptocurrency.
-        "IBAN_CODE",  # International Bank Account Numbers are critical financial information.
-        "US_BANK_NUMBER",  # US bank account numbers are sensitive and should be protected.
-        "US_SSN",  # US Social Security Numbers are critical PII used for identity verification.
-        "US_PASSPORT",  # US passport numbers can be used for identity theft.
-        "US_ITIN",  # US Individual Taxpayer Identification Numbers are sensitive personal identifiers.
-    ],
-    "pii_language": "en",  # Language for recognizing PII entities
     "max_idle_disconnect_timeout_in_seconds": 600,
     "max_disconnect_timeout_in_seconds": 300,
     "max_session_duration_seconds": 36000,
@@ -90,7 +79,7 @@ config_aws = {
     "max_ec2_instance_age_in_days": 180,
     "ec2_allowed_interface_types": ["api_gateway_managed", "vpc_endpoint"],
     "ec2_allowed_instance_owners": ["amazon-elb"],
-    "ec2_sg_high_risk_ports": [
+    "ec2_high_risk_ports": [
         25,
         110,
         135,
@@ -107,16 +96,6 @@ config_aws = {
     "fargate_windows_latest_version": "1.0.0",
     "trusted_account_ids": [],
     "log_group_retention_days": 365,
-    "critical_pii_entities": [
-        "CREDIT_CARD",  # Credit card numbers are highly sensitive financial information.
-        "CRYPTO",  # Crypto wallet numbers (e.g., Bitcoin addresses) can give access to cryptocurrency.
-        "IBAN_CODE",  # International Bank Account Numbers are critical financial information.
-        "US_BANK_NUMBER",  # US bank account numbers are sensitive and should be protected.
-        "US_SSN",  # US Social Security Numbers are critical PII used for identity verification.
-        "US_PASSPORT",  # US passport numbers can be used for identity theft.
-        "US_ITIN",  # US Individual Taxpayer Identification Numbers are sensitive personal identifiers.
-    ],
-    "pii_language": "en",  # Language for recognizing PII entities
     "max_idle_disconnect_timeout_in_seconds": 600,
     "max_disconnect_timeout_in_seconds": 300,
     "max_session_duration_seconds": 36000,
@@ -317,6 +296,8 @@ config_aws = {
     "days_to_expire_threshold": 7,
     "insecure_key_algorithms": [
         "RSA-1024",
+        "P-192",
+        "SHA-1",
     ],
     "eks_required_log_types": [
         "api",
@@ -339,6 +320,7 @@ config_azure = {
     "php_latest_version": "8.2",
     "python_latest_version": "3.12",
     "java_latest_version": "17",
+    "recommended_minimal_tls_versions": ["1.2", "1.3"],
 }
 
 config_gcp = {"shodan_api_key": None}
@@ -366,9 +348,6 @@ config_kubernetes = {
 
 
 class Test_Config:
-    def test_get_aws_available_regions(self):
-        assert len(get_aws_available_regions()) == 34
-
     @mock.patch(
         "prowler.config.config.requests.get", new=mock_prowler_get_latest_release
     )

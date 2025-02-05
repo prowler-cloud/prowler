@@ -6,14 +6,14 @@ from prowler.lib.outputs.finding import Finding
 
 class Microsoft365CIS(ComplianceOutput):
     """
-    This class represents the Microsoft365 CIS compliance output.
+    This class represents the Azure CIS compliance output.
 
     Attributes:
         - _data (list): A list to store transformed data from findings.
         - _file_descriptor (TextIOWrapper): A file descriptor to write data to a file.
 
     Methods:
-        - transform: Transforms findings into Microsoft365 CIS compliance format.
+        - transform: Transforms findings into Azure CIS compliance format.
     """
 
     def transform(
@@ -23,7 +23,7 @@ class Microsoft365CIS(ComplianceOutput):
         compliance_name: str,
     ) -> None:
         """
-        Transforms a list of findings into Microsoft365 CIS compliance format.
+        Transforms a list of findings into Azure CIS compliance format.
 
         Parameters:
             - findings (list): A list of findings.
@@ -42,7 +42,7 @@ class Microsoft365CIS(ComplianceOutput):
                         compliance_row = Microsoft365CISModel(
                             Provider=finding.provider,
                             Description=compliance.Description,
-                            Subscription=finding.account_name,
+                            SubscriptionId=finding.account_uid,
                             Location=finding.region,
                             AssessmentDate=str(finding.timestamp),
                             Requirements_Id=requirement.Id,
@@ -56,6 +56,7 @@ class Microsoft365CIS(ComplianceOutput):
                             Requirements_Attributes_RemediationProcedure=attribute.RemediationProcedure,
                             Requirements_Attributes_AuditProcedure=attribute.AuditProcedure,
                             Requirements_Attributes_AdditionalInformation=attribute.AdditionalInformation,
+                            Requirements_Attributes_DefaultValue=attribute.DefaultValue,
                             Requirements_Attributes_References=attribute.References,
                             Status=finding.status,
                             StatusExtended=finding.status_extended,
@@ -72,7 +73,7 @@ class Microsoft365CIS(ComplianceOutput):
                     compliance_row = Microsoft365CISModel(
                         Provider=compliance.Provider.lower(),
                         Description=compliance.Description,
-                        Subscription="",
+                        SubscriptionId="",
                         Location="",
                         AssessmentDate=str(finding.timestamp),
                         Requirements_Id=requirement.Id,
@@ -86,6 +87,7 @@ class Microsoft365CIS(ComplianceOutput):
                         Requirements_Attributes_RemediationProcedure=attribute.RemediationProcedure,
                         Requirements_Attributes_AuditProcedure=attribute.AuditProcedure,
                         Requirements_Attributes_AdditionalInformation=attribute.AdditionalInformation,
+                        Requirements_Attributes_DefaultValue=attribute.DefaultValue,
                         Requirements_Attributes_References=attribute.References,
                         Status="MANUAL",
                         StatusExtended="Manual check",

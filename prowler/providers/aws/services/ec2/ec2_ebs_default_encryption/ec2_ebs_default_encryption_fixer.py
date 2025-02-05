@@ -5,7 +5,8 @@ from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 def fixer(region):
     """
     Enable EBS encryption by default in a region. NOTE: Custom KMS keys for EBS Default Encryption may be overwritten.
-    Requires the ec2:EnableEbsEncryptionByDefault permission:
+    Requires the ec2:EnableEbsEncryptionByDefault permission.
+    Permissions:
     {
         "Version": "2012-10-17",
         "Statement": [

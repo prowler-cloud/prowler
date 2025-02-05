@@ -1,42 +1,47 @@
-name: Automatic Backport
+name: Prowler - Automatic Backport
 
 on:
   pull_request_target:
     branches: ['master']
     types: ['labeled', 'closed']
 
+env:
+  # The prefix of the label that triggers the backport must not contain the branch name
+  # so, for example, if the branch is 'master', the label should be 'backport-to-<branch>'
+  BACKPORT_LABEL_PREFIX: backport-to-
+  BACKPORT_LABEL_IGNORE: was-backported
+
 jobs:
   backport:
     name: Backport PR
-    if: github.event.pull_request.merged == true && !(contains(github.event.pull_request.labels.*.name, 'backport'))
+    if: github.event.pull_request.merged == true && !(contains(github.event.pull_request.labels.*.name, 'backport')) && !(contains(github.event.pull_request.labels.*.name, 'was-backported'))
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       pull-requests: write
       contents: write
     steps:
-      # Workaround not to fail the workflow if the PR does not need a backport
-      # https://github.com/sorenlouv/backport-github-action/issues/127#issuecomment-2258561266
-      - name: Check for backport labels
-        id: check_labels
-        run: |-
-          labels='${{ toJSON(github.event.pull_request.labels.*.name) }}'
-          echo "$labels"
-          matched=$(echo "${labels}" | jq '. | map(select(startswith("backport-to-"))) | length')
-          echo "matched=$matched"
-          echo "matched=$matched" >> $GITHUB_OUTPUT
+      - name: Check labels
+        id: preview_label_check
+        uses: docker://agilepathway/pull-request-label-checker:v1.6.55
+        with:
+          allow_failure: true
+          prefix_mode: true
+          any_of: ${{ env.BACKPORT_LABEL_PREFIX }}
+          none_of: ${{ env.BACKPORT_LABEL_IGNORE }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Backport Action
-        if: fromJSON(steps.check_labels.outputs.matched) > 0
+        if: steps.preview_label_check.outputs.label_check == 'success'
         uses: sorenlouv/backport-github-action@v9.5.1
         with:
           github_token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
-          auto_backport_label_prefix: backport-to-
+          auto_backport_label_prefix: ${{ env.BACKPORT_LABEL_PREFIX }}
 
       - name: Info log
-        if: ${{ success() && fromJSON(steps.check_labels.outputs.matched) > 0 }}
+        if: ${{ success() && steps.preview_label_check.outputs.label_check == 'success' }}
         run: cat ~/.backport/backport.info.log
 
       - name: Debug log
-        if: ${{ failure() && fromJSON(steps.check_labels.outputs.matched) > 0 }}
+        if: ${{ failure() && steps.preview_label_check.outputs.label_check == 'success' }}
         run: cat ~/.backport/backport.debug.log

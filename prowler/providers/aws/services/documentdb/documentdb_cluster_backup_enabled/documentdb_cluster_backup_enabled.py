@@ -8,11 +8,7 @@ class documentdb_cluster_backup_enabled(Check):
     def execute(self):
         findings = []
         for cluster in documentdb_client.db_clusters.values():
-            report = Check_Report_AWS(self.metadata())
-            report.region = cluster.region
-            report.resource_id = cluster.id
-            report.resource_arn = cluster.arn
-            report.resource_tags = cluster.tags
+            report = Check_Report_AWS(metadata=self.metadata(), resource=cluster)
             report.status = "FAIL"
             report.status_extended = (
                 f"DocumentDB Cluster {cluster.id} does not have backup enabled."

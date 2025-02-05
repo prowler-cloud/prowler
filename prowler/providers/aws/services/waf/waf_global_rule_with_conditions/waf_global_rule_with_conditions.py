@@ -6,11 +6,7 @@ class waf_global_rule_with_conditions(Check):
     def execute(self):
         findings = []
         for rule in waf_client.rules.values():
-            report = Check_Report_AWS(self.metadata())
-            report.region = rule.region
-            report.resource_id = rule.id
-            report.resource_arn = rule.arn
-            report.resource_tags = rule.tags
+            report = Check_Report_AWS(metadata=self.metadata(), resource=rule)
             report.status = "FAIL"
             report.status_extended = (
                 f"AWS WAF Global Rule {rule.name} does not have any conditions."

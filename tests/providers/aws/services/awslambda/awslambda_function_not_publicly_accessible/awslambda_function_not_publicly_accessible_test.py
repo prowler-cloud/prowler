@@ -107,7 +107,7 @@ class Test_awslambda_function_not_publicly_accessible:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Lambda function {function_name} has a policy resource-based policy with public access."
+                == f"Lambda function {function_name} has a resource-based policy with public access."
             )
             assert result[0].resource_tags == [{"tag1": "value1", "tag2": "value2"}]
 
@@ -184,7 +184,7 @@ class Test_awslambda_function_not_publicly_accessible:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Lambda function {function_name} has a policy resource-based policy not public."
+                == f"Lambda function {function_name} has a resource-based policy without public access."
             )
             assert result[0].resource_tags == [{"tag1": "value1", "tag2": "value2"}]
 
@@ -260,7 +260,7 @@ class Test_awslambda_function_not_publicly_accessible:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Lambda function {function_name} has a policy resource-based policy not public."
+                == f"Lambda function {function_name} has a resource-based policy without public access."
             )
             assert result[0].resource_tags == [{"tag1": "value1", "tag2": "value2"}]
 
@@ -319,7 +319,7 @@ class Test_awslambda_function_not_publicly_accessible:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Lambda function {function_name} has a policy resource-based policy with public access."
+                == f"Lambda function {function_name} has a resource-based policy with public access."
             )
             assert result[0].resource_tags == []
 
@@ -492,7 +492,7 @@ class Test_awslambda_function_not_publicly_accessible:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Lambda function test-public-lambda has a policy resource-based policy with public access."
+                == "Lambda function test-public-lambda has a resource-based policy with public access."
             )
             assert result[0].resource_tags == [{"tag1": "value1", "tag2": "value2"}]
 
@@ -552,7 +552,7 @@ class Test_awslambda_function_not_publicly_accessible:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Lambda function {function_name} has a policy resource-based policy not public."
+                == f"Lambda function {function_name} has a resource-based policy without public access."
             )
             assert result[0].resource_tags == []
 
@@ -612,7 +612,7 @@ class Test_awslambda_function_not_publicly_accessible:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Lambda function {function_name} has a policy resource-based policy not public."
+                == f"Lambda function {function_name} has a resource-based policy without public access."
             )
             assert result[0].resource_tags == []
 
@@ -681,7 +681,7 @@ class Test_awslambda_function_not_publicly_accessible:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Lambda function {function_name} has a policy resource-based policy with public access."
+                == f"Lambda function {function_name} has a resource-based policy with public access."
             )
             assert result[0].resource_id == function_name
             assert result[0].resource_arn == function_arn

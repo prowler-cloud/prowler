@@ -36,11 +36,10 @@ class dms_replication_task_source_logging_enabled(Check):
             replication_task_arn,
             replication_task,
         ) in dms_client.replication_tasks.items():
-            report = Check_Report_AWS(self.metadata())
-            report.resource_id = replication_task.id
+            report = Check_Report_AWS(
+                metadata=self.metadata(), resource=replication_task
+            )
             report.resource_arn = replication_task_arn
-            report.region = replication_task.region
-            report.resource_tags = replication_task.tags
 
             if not replication_task.logging_enabled:
                 report.status = "FAIL"

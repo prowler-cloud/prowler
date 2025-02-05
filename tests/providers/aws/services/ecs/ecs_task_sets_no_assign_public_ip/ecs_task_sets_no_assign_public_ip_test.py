@@ -109,12 +109,15 @@ class Test_ecs_task_sets_no_assign_public_ip:
 
         mocked_aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=mocked_aws_provider,
-        ), patch(
-            "prowler.providers.aws.services.ecs.ecs_task_set_no_assign_public_ip.ecs_task_set_no_assign_public_ip.ecs_client",
-            new=ECS(mocked_aws_provider),
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mocked_aws_provider,
+            ),
+            patch(
+                "prowler.providers.aws.services.ecs.ecs_task_set_no_assign_public_ip.ecs_task_set_no_assign_public_ip.ecs_client",
+                new=ECS(mocked_aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.ecs.ecs_task_set_no_assign_public_ip.ecs_task_set_no_assign_public_ip import (
                 ecs_task_set_no_assign_public_ip,
@@ -127,6 +130,20 @@ class Test_ecs_task_sets_no_assign_public_ip:
     @mock_aws
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     def test_task_set_with_no_public_ip(self):
+        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
+        vpc = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
+        vpc_id = vpc["Vpc"]["VpcId"]
+        subnet = ec2_client.create_subnet(
+            VpcId=vpc_id,
+            CidrBlock="10.0.1.0/24",
+            AvailabilityZone=f"{AWS_REGION_US_EAST_1}a",
+        )["Subnet"]["SubnetId"]
+        sg = ec2_client.create_security_group(
+            GroupName="alb-sg",
+            Description="Security group for ALB",
+            VpcId=vpc_id,
+        )
+        sg_id = sg["GroupId"]
         ecs_client = client("ecs", region_name=AWS_REGION_US_EAST_1)
 
         ecs_client.create_cluster(clusterName="sample-cluster")
@@ -138,8 +155,8 @@ class Test_ecs_task_sets_no_assign_public_ip:
             launchType="FARGATE",
             networkConfiguration={
                 "awsvpcConfiguration": {
-                    "subnets": ["subnet-123456"],
-                    "securityGroups": ["sg-123456"],
+                    "subnets": [subnet],
+                    "securityGroups": [sg_id],
                     "assignPublicIp": "DISABLED",
                 }
             },
@@ -149,12 +166,15 @@ class Test_ecs_task_sets_no_assign_public_ip:
 
         mocked_aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=mocked_aws_provider,
-        ), patch(
-            "prowler.providers.aws.services.ecs.ecs_task_set_no_assign_public_ip.ecs_task_set_no_assign_public_ip.ecs_client",
-            new=ECS(mocked_aws_provider),
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mocked_aws_provider,
+            ),
+            patch(
+                "prowler.providers.aws.services.ecs.ecs_task_set_no_assign_public_ip.ecs_task_set_no_assign_public_ip.ecs_client",
+                new=ECS(mocked_aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.ecs.ecs_task_set_no_assign_public_ip.ecs_task_set_no_assign_public_ip import (
                 ecs_task_set_no_assign_public_ip,
@@ -179,6 +199,20 @@ class Test_ecs_task_sets_no_assign_public_ip:
     @mock_aws
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     def test_task_set_public_ip(self):
+        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
+        vpc = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
+        vpc_id = vpc["Vpc"]["VpcId"]
+        subnet = ec2_client.create_subnet(
+            VpcId=vpc_id,
+            CidrBlock="10.0.1.0/24",
+            AvailabilityZone=f"{AWS_REGION_US_EAST_1}a",
+        )["Subnet"]["SubnetId"]
+        sg = ec2_client.create_security_group(
+            GroupName="alb-sg",
+            Description="Security group for ALB",
+            VpcId=vpc_id,
+        )
+        sg_id = sg["GroupId"]
         ecs_client = client("ecs", region_name=AWS_REGION_US_EAST_1)
 
         ecs_client.create_cluster(clusterName="sample-cluster")
@@ -190,8 +224,8 @@ class Test_ecs_task_sets_no_assign_public_ip:
             launchType="FARGATE",
             networkConfiguration={
                 "awsvpcConfiguration": {
-                    "subnets": ["subnet-123456"],
-                    "securityGroups": ["sg-123456"],
+                    "subnets": [subnet],
+                    "securityGroups": [sg_id],
                     "assignPublicIp": "DISABLED",
                 }
             },
@@ -201,12 +235,15 @@ class Test_ecs_task_sets_no_assign_public_ip:
 
         mocked_aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=mocked_aws_provider,
-        ), patch(
-            "prowler.providers.aws.services.ecs.ecs_task_set_no_assign_public_ip.ecs_task_set_no_assign_public_ip.ecs_client",
-            new=ECS(mocked_aws_provider),
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mocked_aws_provider,
+            ),
+            patch(
+                "prowler.providers.aws.services.ecs.ecs_task_set_no_assign_public_ip.ecs_task_set_no_assign_public_ip.ecs_client",
+                new=ECS(mocked_aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.ecs.ecs_task_set_no_assign_public_ip.ecs_task_set_no_assign_public_ip import (
                 ecs_task_set_no_assign_public_ip,

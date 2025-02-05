@@ -1,7 +1,7 @@
 from unittest import mock
 from uuid import uuid4
 
-from azure.mgmt.network.models._models import FlowLog, RetentionPolicyParameters
+from azure.mgmt.network.models import FlowLog, RetentionPolicyParameters
 
 from prowler.providers.azure.services.network.network_service import NetworkWatcher
 from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION_ID

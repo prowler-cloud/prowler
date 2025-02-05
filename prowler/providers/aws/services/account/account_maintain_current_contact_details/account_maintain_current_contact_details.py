@@ -6,7 +6,9 @@ from prowler.providers.aws.services.account.account_client import account_client
 
 class account_maintain_current_contact_details(Check):
     def execute(self):
-        report = Check_Report_AWS(self.metadata())
+        report = Check_Report_AWS(
+            metadata=self.metadata(), resource=account_client.contact_base
+        )
         report.region = account_client.region
         report.resource_id = account_client.audited_account
         report.resource_arn = account_client.audited_account_arn

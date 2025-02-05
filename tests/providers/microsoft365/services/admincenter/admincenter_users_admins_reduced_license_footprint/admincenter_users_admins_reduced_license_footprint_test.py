@@ -13,12 +13,15 @@ class Test_admincenter_users_admins_reduced_license_footprint:
         admincenter_client.audited_tenant = "audited_tenant"
         admincenter_client.audited_domain = DOMAIN
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_microsoft365_provider(),
-        ), mock.patch(
-            "prowler.providers.microsoft365.services.admincenter.admincenter_users_admins_reduced_license_footprint.admincenter_users_admins_reduced_license_footprint.admincenter_client",
-            new=admincenter_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_microsoft365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.microsoft365.services.admincenter.admincenter_users_admins_reduced_license_footprint.admincenter_users_admins_reduced_license_footprint.admincenter_client",
+                new=admincenter_client,
+            ),
         ):
             from prowler.providers.microsoft365.services.admincenter.admincenter_users_admins_reduced_license_footprint.admincenter_users_admins_reduced_license_footprint import (
                 admincenter_users_admins_reduced_license_footprint,
@@ -35,12 +38,15 @@ class Test_admincenter_users_admins_reduced_license_footprint:
         admincenter_client.audited_tenant = "audited_tenant"
         admincenter_client.audited_domain = DOMAIN
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_microsoft365_provider(),
-        ), mock.patch(
-            "prowler.providers.microsoft365.services.admincenter.admincenter_users_admins_reduced_license_footprint.admincenter_users_admins_reduced_license_footprint.admincenter_client",
-            new=admincenter_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_microsoft365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.microsoft365.services.admincenter.admincenter_users_admins_reduced_license_footprint.admincenter_users_admins_reduced_license_footprint.admincenter_client",
+                new=admincenter_client,
+            ),
         ):
             from prowler.providers.microsoft365.services.admincenter.admincenter_service import (
                 User,
@@ -69,12 +75,15 @@ class Test_admincenter_users_admins_reduced_license_footprint:
         admincenter_client.audited_tenant = "audited_tenant"
         admincenter_client.audited_domain = DOMAIN
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_microsoft365_provider(),
-        ), mock.patch(
-            "prowler.providers.microsoft365.services.admincenter.admincenter_users_admins_reduced_license_footprint.admincenter_users_admins_reduced_license_footprint.admincenter_client",
-            new=admincenter_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_microsoft365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.microsoft365.services.admincenter.admincenter_users_admins_reduced_license_footprint.admincenter_users_admins_reduced_license_footprint.admincenter_client",
+                new=admincenter_client,
+            ),
         ):
             from prowler.providers.microsoft365.services.admincenter.admincenter_service import (
                 User,
@@ -100,7 +109,7 @@ class Test_admincenter_users_admins_reduced_license_footprint:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "User User1 has administrative roles ['Global Administrator'] and a valid license: AAD_PREMIUM."
+                == "User User1 has administrative roles Global Administrator and a valid license: AAD_PREMIUM."
             )
             assert result[0].resource_name == "User1"
             assert result[0].resource_id == id_user1
@@ -110,12 +119,15 @@ class Test_admincenter_users_admins_reduced_license_footprint:
         admincenter_client.audited_tenant = "audited_tenant"
         admincenter_client.audited_domain = DOMAIN
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_microsoft365_provider(),
-        ), mock.patch(
-            "prowler.providers.microsoft365.services.admincenter.admincenter_users_admins_reduced_license_footprint.admincenter_users_admins_reduced_license_footprint.admincenter_client",
-            new=admincenter_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_microsoft365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.microsoft365.services.admincenter.admincenter_users_admins_reduced_license_footprint.admincenter_users_admins_reduced_license_footprint.admincenter_client",
+                new=admincenter_client,
+            ),
         ):
             from prowler.providers.microsoft365.services.admincenter.admincenter_service import (
                 User,
@@ -141,7 +153,7 @@ class Test_admincenter_users_admins_reduced_license_footprint:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "User User1 has administrative roles ['Global Administrator'] and an invalid license O365 BUSINESS."
+                == "User User1 has administrative roles Global Administrator and an invalid license O365 BUSINESS."
             )
             assert result[0].resource_name == "User1"
             assert result[0].resource_id == id_user1

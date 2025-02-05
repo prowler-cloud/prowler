@@ -93,8 +93,6 @@ class Logs(AWSService):
             if (
                 "cloudwatch_log_group_no_secrets_in_logs"
                 in provider.audit_metadata.expected_checks
-                or "cloudwatch_log_group_no_critical_pii_in_logs"
-                in provider.audit_metadata.expected_checks
             ):
                 self.events_per_log_group_threshold = (
                     1000  # The threshold for number of events to return per log group.

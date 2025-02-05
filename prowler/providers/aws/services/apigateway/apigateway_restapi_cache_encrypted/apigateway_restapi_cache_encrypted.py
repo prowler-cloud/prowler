@@ -10,11 +10,9 @@ class apigateway_restapi_cache_encrypted(Check):
         for rest_api in apigateway_client.rest_apis:
             for stage in rest_api.stages:
                 if stage.cache_enabled:
-                    report = Check_Report_AWS(self.metadata())
+                    report = Check_Report_AWS(metadata=self.metadata(), resource=stage)
                     report.region = rest_api.region
                     report.resource_id = rest_api.name
-                    report.resource_arn = stage.arn
-                    report.resource_tags = stage.tags
                     report.status = "PASS"
                     report.status_extended = f"API Gateway {rest_api.name} ID {rest_api.id} in stage {stage.name} has cache encryption enabled."
                     if not stage.cache_data_encrypted:

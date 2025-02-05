@@ -37,13 +37,12 @@ class entra_user_with_vm_access_has_mfa(Check):
                             ]
                             and assignment.agent_id == user.id
                         ):
-                            report = Check_Report_Azure(self.metadata())
+                            report = Check_Report_Azure(
+                                metadata=self.metadata(), resource=user
+                            )
+                            report.subscription = subscription_name
                             report.status = "FAIL"
                             report.status_extended = f"User {user.name} without MFA can access VMs in subscription {subscription_name}"
-                            report.subscription = subscription_name
-                            report.resource_name = user_domain_name
-                            report.resource_id = user.id
-
                             if len(user.authentication_methods) > 1:
                                 report.status = "PASS"
                                 report.status_extended = f"User {user.name} can access VMs in subscription {subscription_name} but it has MFA."

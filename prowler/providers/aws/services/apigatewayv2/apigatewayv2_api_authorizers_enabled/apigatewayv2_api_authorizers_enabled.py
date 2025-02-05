@@ -8,11 +8,8 @@ class apigatewayv2_api_authorizers_enabled(Check):
     def execute(self):
         findings = []
         for api in apigatewayv2_client.apis:
-            report = Check_Report_AWS(self.metadata())
-            report.region = api.region
+            report = Check_Report_AWS(metadata=self.metadata(), resource=api)
             report.resource_id = api.name
-            report.resource_arn = api.arn
-            report.resource_tags = api.tags
             report.status = "FAIL"
             report.status_extended = f"API Gateway V2 {api.name} ID {api.id} does not have an authorizer configured."
             if api.authorizer:
