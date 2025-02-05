@@ -44,18 +44,18 @@ class Test_cloudfront_distributions_origin_traffic_encrypted:
                 origins=[
                     Origin(
                         id=id,
-                        domain_name="asdf.s3.us-east-1.amazonaws.com",
+                        domain_name="asdf.elb.us-east-1.amazonaws.com",
                         origin_protocol_policy="",
                         origin_ssl_protocols=[],
                     )
                 ],
                 default_cache_config=DefaultCacheConfigBehaviour(
                     realtime_log_config_arn="",
-                    viewer_protocol_policy=ViewerProtocolPolicy.allow_all,
+                    viewer_protocol_policy=ViewerProtocolPolicy.https_only,
                     field_level_encryption_id="",
                 ),
                 default_root_object="",
-                viewer_protocol_policy="",
+                viewer_protocol_policy="allow_all",
             )
         }
 
@@ -93,7 +93,7 @@ class Test_cloudfront_distributions_origin_traffic_encrypted:
                 origins=[
                     Origin(
                         id=id,
-                        domain_name="asdf.s3.us-east-1.amazonaws.com",
+                        domain_name="asdf.elb.us-east-1.amazonaws.com",
                         origin_protocol_policy="http-only",
                         origin_ssl_protocols=[],
                     )
@@ -141,7 +141,7 @@ class Test_cloudfront_distributions_origin_traffic_encrypted:
                 origins=[
                     Origin(
                         id=id,
-                        domain_name="asdf.s3.us-east-1.amazonaws.com",
+                        domain_name="asdf.elb.us-east-1.amazonaws.com",
                         origin_protocol_policy="match-viewer",
                         origin_ssl_protocols=[],
                     )
@@ -190,13 +190,16 @@ class Test_cloudfront_distributions_origin_traffic_encrypted:
                     Origin(
                         id="origin1",
                         domain_name="asdf.s3.us-east-1.amazonaws.com",
-                        origin_protocol_policy="https-only",
+                        s3_origin_config={
+                            "OriginAccessIdentity": "origin-access-identity/cloudfront/1234567890123456"
+                        },
                         origin_ssl_protocols=[],
+                        origin_protocol_policy="http-only",
                     )
                 ],
                 default_cache_config=DefaultCacheConfigBehaviour(
                     realtime_log_config_arn="",
-                    viewer_protocol_policy=ViewerProtocolPolicy.allow_all,
+                    viewer_protocol_policy=ViewerProtocolPolicy.redirect_to_https,
                     field_level_encryption_id="",
                 ),
                 default_root_object="index.html",
