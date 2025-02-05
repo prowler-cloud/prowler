@@ -1,0 +1,34 @@
+{
+    "Provider": "aws",
+    "CheckID": "kms_cmk_not_multiregional",
+    "CheckTitle": "AWS KMS customer managed keys should not be multi-regional",
+    "CheckType": [
+      "Data Protection"
+    ],
+    "ServiceName": "kms",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "arn:partition:kms:region:account-id:key/resource-id",
+    "Severity": "high",
+    "ResourceType": "AwsKmsKey",
+    "Description": "Ensure no customer managed key is multi-regional.",
+    "Risk": "Multi-region keys increase the risk of data exposure because managing access controls and auditing across multi regions becomes more complex, potentially allowing more attack surfaces to compromise sensitive data.",
+    "RelatedUrl": "https://docs.aws.amazon.com/kms/latest/developerguide/mrk-when-to-use.html",
+    "Remediation": {
+      "Code": {
+        "CLI": "",
+        "NativeIaC": "",
+        "Other": "https://docs.aws.amazon.com/kms/latest/developerguide/multi-region-keys-overview.html#multi-region-concepts",
+        "Terraform": ""
+      },
+      "Recommendation": {
+        "Text": "Delete the multi-region key and create a new single-region key",
+        "Url": "https://docs.aws.amazon.com/kms/latest/developerguide/create-symmetric-cmk.html"
+      }
+    },
+  "Categories": [
+    "encryption"
+  ],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+  }
