@@ -12,14 +12,10 @@ class entra_security_defaults_enabled(Check):
         ) in entra_client.security_default.items():
             report = Check_Report_Azure(self.metadata())
             report.status = "FAIL"
-<<<<<<< HEAD
             report.subscription = f"Tenant: {tenant}"
             report.resource_name = getattr(security_default, "name", "Security Default")
             report.resource_id = getattr(security_default, "id", "Security Default")
-            report.status_extended = "Entra security defaults is diabled."
-=======
             report.status_extended = "Entra security defaults is disabled."
->>>>>>> 567c729e9 (fix(findings) Spelling mistakes correction (#6822))
 
             if getattr(security_default, "is_enabled", False):
                 report.status = "PASS"
