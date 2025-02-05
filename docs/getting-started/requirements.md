@@ -107,7 +107,13 @@ Those credentials must be associated to a user or service account with proper pe
 
 Prowler for Microsoft365 currently supports the following authentication types:
 
-- [Service principal application](https://learn.microsoft.com/en-us/graph/auth-register-app-v2) by environment variables.
+- [Service principal application](https://learn.microsoft.com/en-us/entra/identity-platform/app-objects-and-service-principals?tabs=browser#service-principal-object) (recommended).
+- Current az cli credentials stored.
+- Interactive browser authentication.
+
+
+???+ warning
+    For Prowler App only the Service Principal authentication method is supported.
 
 ### Service Principal authentication
 
@@ -117,5 +123,11 @@ To allow Prowler assume the service principal identity to start the scan it is n
 export AZURE_CLIENT_ID="XXXXXXXXX"
 export AZURE_CLIENT_SECRET="XXXXXXXXX"
 export AZURE_TENANT_ID="XXXXXXXXX"
+```
 
+If you try to execute Prowler with the `--sp-env-auth` flag and those variables are empty or not exported, the execution is going to fail.
 Follow the instructions in the [Create Prowler Service Principal](../tutorials/microsoft365/create-prowler-service-principal.md) section to create a service principal.
+
+### Interactive Browser authentication
+
+To use `--browser-auth`  the user needs to authenticate against Azure using the default browser to start the scan, also `tenant-id` is required.

@@ -547,10 +547,18 @@ kubectl logs prowler-XXXXX --namespace prowler-ns
 
 ### Microsoft365
 
-With Microsoft365 you can only authenticate using Service Principal authentication using an app and setting some :
+With Microsoft365 you need to specify which auth method is going to be used:
 
 ```console
-prowler microsoft365
+# To use service principal authentication
+prowler microsoft365 --sp-env-auth
+
+# To use az cli authentication
+prowler microsoft365 --az-cli-auth
+
+# To use browser authentication
+prowler microsoft365 --browser-auth --tenant-id "XXXXXXXX"
+
 ```
 
 See more details about Microsoft365 Authentication in [Requirements](getting-started/requirements.md#microsoft365)
