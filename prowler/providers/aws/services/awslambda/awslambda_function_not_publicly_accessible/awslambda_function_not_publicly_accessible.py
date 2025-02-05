@@ -13,6 +13,7 @@ class awslambda_function_not_publicly_accessible(Check):
             report.resource_tags = function.tags
 
             report.status = "PASS"
+<<<<<<< HEAD
             report.status_extended = f"Lambda function {function.name} has a policy resource-based policy not public."
 
             public_access = False
@@ -45,8 +46,16 @@ class awslambda_function_not_publicly_accessible(Check):
                         break
 
             if public_access:
+=======
+            report.status_extended = f"Lambda function {function.name} has a resource-based policy without public access."
+            if is_policy_public(
+                function.policy,
+                awslambda_client.audited_account,
+                is_cross_account_allowed=True,
+            ):
+>>>>>>> 3f03dd20e (fix(aws) wording of report.status_extended in awslambda_function_not_publicly_accessible (#6824))
                 report.status = "FAIL"
-                report.status_extended = f"Lambda function {function.name} has a policy resource-based policy with public access."
+                report.status_extended = f"Lambda function {function.name} has a resource-based policy with public access."
 
             findings.append(report)
 
