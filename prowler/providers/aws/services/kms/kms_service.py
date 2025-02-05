@@ -52,6 +52,7 @@ class KMS(AWSService):
                     key.origin = response["KeyMetadata"]["Origin"]
                     key.manager = response["KeyMetadata"]["KeyManager"]
                     key.spec = response["KeyMetadata"]["CustomerMasterKeySpec"]
+                    key.multi_region = response["KeyMetadata"]["MultiRegion"]
                 except Exception as error:
                     logger.error(
                         f"{regional_client.region} -- {error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
@@ -126,4 +127,5 @@ class Key(BaseModel):
     policy: Optional[dict]
     spec: Optional[str]
     region: str
+    multi_region: Optional[bool]
     tags: Optional[list] = []
