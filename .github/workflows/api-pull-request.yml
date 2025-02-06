@@ -173,9 +173,6 @@ jobs:
           flags: api
   test-container-build:
     runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
     steps:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
