@@ -1,7 +1,5 @@
 from prowler.lib.check.models import Check, Check_Report_NHN
-from prowler.providers.nhn.nhn_provider import NhnProvider
-from prowler.providers.common.provider import Provider
-from prowler.providers.nhn.services.compute.compute_service import NHNComputeService
+from prowler.providers.nhn.services.compute.compute_client import compute_client
 
 class compute_server_public_ip(Check):
     """
@@ -12,20 +10,11 @@ class compute_server_public_ip(Check):
         print("NHN Compute Server Public IP Check")
         findings = []
 
-        # 1) provider, service
-        # provider: NhnProvider = self.provider
-        provider = Provider.get_global_provider()
-        compute_service = NHNComputeService(
-            session=provider.session,
-            tenant_id=provider._tenant_id
-        )
-
-        # 2) 서버 목록
-        servers = compute_service.list_servers()
+        servers = compute_client.list_servers()
 
         for srv in servers:
             srv_id = srv["id"]
-            detail = compute_service.get_server_detail(srv_id)
+            detail = compute_client.get_server_detail(srv_id)
             server_info = detail.get("server", {})
             report = Check_Report_NHN(
                 metadata=self.metadata(),

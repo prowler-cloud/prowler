@@ -1,6 +1,6 @@
-# prowler/providers/nhn/services/compute/compute_service.py
 import requests
 from prowler.lib.logger import logger
+from prowler.providers.nhn.nhn_provider import NhnProvider
 
 class NHNComputeService:
     """
@@ -13,13 +13,13 @@ class NHNComputeService:
     에 맞춰 메서드를 작성하면 됩니다.
     """
 
-    def __init__(self, session: str, tenant_id: str):
+    def __init__(self, provider: NhnProvider):
         """
         session: NhnProvider.session (ex: 'Bearer <token>')
         tenant_id: NhnProvider._tenant_id
         """
-        self.session = session
-        self.tenant_id = tenant_id
+        self.session = provider.session
+        self.tenant_id = provider._tenant_id
         # 아래 endpoint는 예시입니다. NHN 문서나 콘솔에서 확인해야 합니다.
         self.endpoint = "https://kr1-api-instance.infrastructure.cloud.toast.com"
 
