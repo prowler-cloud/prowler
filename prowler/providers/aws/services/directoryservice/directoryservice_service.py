@@ -107,21 +107,45 @@ class DirectoryService(AWSService):
                 if directory.region == regional_client.region:
                     # Operation is not supported for Shared MicrosoftAD directories.
                     if directory.type != DirectoryType.SharedMicrosoftAD:
-                        describe_event_topics_parameters = {"DirectoryId": directory.id}
-                        event_topics = []
-                        describe_event_topics = regional_client.describe_event_topics(
-                            **describe_event_topics_parameters
-                        )
-                        for event_topic in describe_event_topics["EventTopics"]:
-                            event_topics.append(
-                                EventTopics(
-                                    topic_arn=event_topic["TopicArn"],
-                                    topic_name=event_topic["TopicName"],
-                                    status=event_topic["Status"],
-                                    created_date_time=event_topic["CreatedDateTime"],
+                        try:
+                            describe_event_topics_parameters = {
+                                "DirectoryId": directory.id
+                            }
+                            event_topics = []
+                            describe_event_topics = (
+                                regional_client.describe_event_topics(
+                                    **describe_event_topics_parameters
                                 )
                             )
-                        self.directories[directory.id].event_topics = event_topics
+                            for event_topic in describe_event_topics["EventTopics"]:
+                                event_topics.append(
+                                    EventTopics(
+                                        topic_arn=event_topic["TopicArn"],
+                                        topic_name=event_topic["TopicName"],
+                                        status=event_topic["Status"],
+                                        created_date_time=event_topic[
+                                            "CreatedDateTime"
+                                        ],
+                                    )
+                                )
+                            self.directories[directory.id].event_topics = event_topics
+                        except ClientError as error:
+                            if (
+                                "is in Deleting state"
+                                in error.response["Error"]["Message"]
+                            ):
+                                logger.warning(
+                                    f"{directory.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                                )
+                            else:
+                                logger.error(
+                                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                                )
+                        except Exception as error:
+                            logger.error(
+                                f"{regional_client.region} -- {error.__class__.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                            )
+
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -202,6 +226,15 @@ class DirectoryService(AWSService):
                                 "SnapshotLimits"
                             ]["ManualSnapshotsLimitReached"],
                         )
+                    except ClientError as error:
+                        if "is in Deleting state" in error.response["Error"]["Message"]:
+                            logger.warning(
+                                f"{directory.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                            )
+                        else:
+                            logger.error(
+                                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                            )
                     except Exception as error:
                         logger.error(
                             f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
