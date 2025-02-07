@@ -8,6 +8,7 @@ from django.db.models.functions import Coalesce
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_control
+from django_cte import With
 from drf_spectacular.settings import spectacular_settings
 from drf_spectacular.utils import (
     OpenApiParameter,
@@ -1414,27 +1415,37 @@ class FindingViewSet(BaseRLSViewSet):
 
     @action(detail=False, methods=["get"], url_name="metadata")
     def metadata(self, request):
+        tenant_id = self.request.tenant_id
         queryset = self.get_queryset()
         filtered_queryset = self.filter_queryset(queryset)
 
-        aggregation = filtered_queryset.aggregate(
-            services=ArrayAgg("resources__service", distinct=True, flat=True),
-            regions=ArrayAgg("resources__region", distinct=True, flat=True),
-            resource_types=ArrayAgg("resources__type", distinct=True, flat=True),
+        findings_cte = With(filtered_queryset.order_by().values("id"))
+
+        relevant_resources = (
+            Resource.all_objects.with_cte(findings_cte)
+            .filter(tenant_id=tenant_id, findings__id__in=findings_cte.query)
+            .only("service", "region", "type")
         )
 
-        # Regions could be empty strings
-        regions = [region for region in aggregation["regions"] or [] if region]
+        aggregation = relevant_resources.aggregate(
+            services=ArrayAgg("service", flat=True),
+            regions=ArrayAgg("region", flat=True),
+            resource_types=ArrayAgg("type", flat=True),
+        )
+
+        services = sorted(set(aggregation["services"] or []))
+        regions = sorted({region for region in aggregation["regions"] or [] if region})
+        resource_types = sorted(set(aggregation["resource_types"] or []))
 
         result = {
-            "services": aggregation["services"] or [],
+            "services": services,
             "regions": regions,
-            "resource_types": aggregation["resource_types"] or [],
+            "resource_types": resource_types,
         }
 
         serializer = self.get_serializer(data=result)
         serializer.is_valid(raise_exception=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=200)
 
 
 @extend_schema_view(

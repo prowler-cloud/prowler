@@ -13,6 +13,7 @@ from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 from django_celery_beat.models import PeriodicTask
 from django_celery_results.models import TaskResult
+from django_cte import CTEManager
 from psqlextra.manager import PostgresManager
 from psqlextra.models import PostgresPartitionedModel
 from psqlextra.types import PostgresPartitioningMethod
@@ -85,7 +86,7 @@ class PermissionChoices(models.TextChoices):
     NONE = "none", _("No permissions")
 
 
-class ActiveProviderManager(models.Manager):
+class ActiveProviderManager(CTEManager):
     def get_queryset(self):
         return super().get_queryset().filter(self.active_provider_filter())
 
@@ -481,7 +482,7 @@ class ResourceTag(RowLevelSecurityProtectedModel):
 
 class Resource(RowLevelSecurityProtectedModel):
     objects = ActiveProviderManager()
-    all_objects = models.Manager()
+    all_objects = CTEManager()
 
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
@@ -610,7 +611,7 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
     """
 
     objects = ActiveProviderPartitionedManager()
-    all_objects = models.Manager()
+    all_objects = CTEManager()
 
     class PartitioningMeta:
         method = PostgresPartitioningMethod.RANGE
