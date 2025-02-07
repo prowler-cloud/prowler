@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from typing import Dict
 
 from azure.mgmt.web import WebSiteManagementClient
-from azure.mgmt.web.models import ManagedServiceIdentity, SiteConfigResource
 
 from prowler.lib.logger import logger
 from prowler.providers.azure.azure_provider import AzureProvider
@@ -37,6 +36,11 @@ class App(AzureService):
                             None,
                         )
 
+                        # Get app configurations
+                        app_configurations = client.web_apps.get_configuration(
+                            resource_group_name=app.resource_group, name=app.name
+                        )
+
                         apps[subscription_name].update(
                             {
                                 app.id: WebApp(
@@ -47,9 +51,30 @@ class App(AzureService):
                                         if platform_auth
                                         else False
                                     ),
-                                    configurations=client.web_apps.get_configuration(
-                                        resource_group_name=app.resource_group,
-                                        name=app.name,
+                                    configurations=SiteConfigResource(
+                                        id=app_configurations.id,
+                                        name=app_configurations.name,
+                                        linux_fx_version=getattr(
+                                            app_configurations, "linux_fx_version", ""
+                                        ),
+                                        java_version=getattr(
+                                            app_configurations, "java_version", ""
+                                        ),
+                                        php_version=getattr(
+                                            app_configurations, "php_version", ""
+                                        ),
+                                        python_version=getattr(
+                                            app_configurations, "python_version", ""
+                                        ),
+                                        http20_enabled=getattr(
+                                            app_configurations, "http20_enabled", False
+                                        ),
+                                        ftps_state=getattr(
+                                            app_configurations, "ftps_state", ""
+                                        ),
+                                        min_tls_version=getattr(
+                                            app_configurations, "min_tls_version", ""
+                                        ),
                                     ),
                                     client_cert_mode=self._get_client_cert_mode(
                                         getattr(app, "client_cert_enabled", False),
@@ -59,7 +84,21 @@ class App(AzureService):
                                         app.name, app.resource_group, subscription_name
                                     ),
                                     https_only=getattr(app, "https_only", False),
-                                    identity=getattr(app, "identity", None),
+                                    identity=ManagedServiceIdentity(
+                                        principal_id=getattr(
+                                            getattr(app, "identity", {}),
+                                            "principal_id",
+                                            "",
+                                        ),
+                                        tenant_id=getattr(
+                                            getattr(app, "identity", {}),
+                                            "tenant_id",
+                                            "",
+                                        ),
+                                        type=getattr(
+                                            getattr(app, "identity", {}), "type", ""
+                                        ),
+                                    ),
                                     location=app.location,
                                     kind=app.kind,
                                 )
@@ -169,6 +208,26 @@ class App(AzureService):
                 f"Subscription name: {self.subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return monitor_diagnostics_settings
+
+
+@dataclass
+class ManagedServiceIdentity:
+    principal_id: str
+    tenant_id: str
+    type: str
+
+
+@dataclass
+class SiteConfigResource:
+    id: str
+    name: str
+    linux_fx_version: str
+    java_version: str
+    php_version: str
+    python_version: str
+    http20_enabled: bool
+    ftps_state: str
+    min_tls_version: str
 
 
 @dataclass
