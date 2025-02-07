@@ -346,6 +346,9 @@ paths:
         schema:
           type: string
           format: date
+        description: At least one of the variations of the `filter[inserted_at]` filter
+          must be provided.
+        required: true
       - in: query
         name: filter[inserted_at__date]
         schema:
@@ -356,11 +359,13 @@ paths:
         schema:
           type: string
           format: date
+        description: Maximum date range is 7 days.
       - in: query
         name: filter[inserted_at__lte]
         schema:
           type: string
           format: date
+        description: Maximum date range is 7 days.
       - in: query
         name: filter[provider]
         schema:
@@ -861,11 +866,13 @@ paths:
         schema:
           type: string
           format: date
+        description: Maximum date range is 7 days.
       - in: query
         name: filter[inserted_at__lte]
         schema:
           type: string
           format: date
+        description: Maximum date range is 7 days.
       - in: query
         name: filter[provider]
         schema:
@@ -1275,6 +1282,9 @@ paths:
         schema:
           type: string
           format: date
+        description: At least one of the variations of the `filter[inserted_at]` filter
+          must be provided.
+        required: true
       - in: query
         name: filter[inserted_at__date]
         schema:
@@ -1285,11 +1295,13 @@ paths:
         schema:
           type: string
           format: date
+        description: Maximum date range is 7 days.
       - in: query
         name: filter[inserted_at__lte]
         schema:
           type: string
           format: date
+        description: Maximum date range is 7 days.
       - in: query
         name: filter[provider]
         schema:
