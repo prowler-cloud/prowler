@@ -100,7 +100,7 @@ By default, the `kubeconfig` file is located at `~/.kube/config`.
 <img src="../../img/kubernetes-credentials.png" alt="Kubernetes Credentials" width="700"/>
 
 ???+ note
-    If you are using an **Amazon EKS-generated kubeconfig**, follow these additional steps to ensure proper authentication:
+    If you are adding an **Amazon EKS** cluster, follow these additional steps to ensure proper authentication:
 
     1. Apply the necessary Kubernetes resources to your EKS cluster (you can find the files in the [`kubernetes` directory of the Prowler repository](https://github.com/prowler-cloud/prowler/tree/master/kubernetes)):
     ```console
@@ -121,7 +121,7 @@ By default, the `kubeconfig` file is located at `~/.kube/config`.
     ```
     Replace <SA_TOKEN> with the generated token and <CLUSTER_ARN> with your EKS cluster ARN.
 
-    4. Upload the modified kubeconfig to Prowler Cloud and run a scan to verify the integration.
+    4. Now you can add the modified `kubeconfig` as the credentials of the AWS EKS Cluster in Prowler Cloud. Then simply test the connection.
 
 ---
 
