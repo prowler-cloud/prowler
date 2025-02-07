@@ -25,6 +25,11 @@ class NhnProvider(Provider):
     """
 
     _type:str = "nhn"
+    _identity: NHNIdentityInfo
+    _audit_config: dict
+    _mutelist: NHNMutelist
+    # TODO: this is not optional, enforce for all providers
+    audit_metadata: Audit_Metadata
     
     def __init__(
         self,
@@ -35,7 +40,6 @@ class NhnProvider(Provider):
         fixer_config: Optional[dict] = None,
         mutelist_path: Optional[str] = None,
         mutelist_content: Optional[dict] = None,
-        # 필요한 인자들을 추가할 수 있습니다.
     ):
         """
         NhnProvider 생성자.
@@ -212,10 +216,3 @@ class NhnProvider(Provider):
         #         logger.error(f"Test connection failed: {r.status_code} - {r.text}")
         # except Exception as e:
         #     logger.error(f"Test connection error: {e}")
-
-    def get_checks_to_execute_by_audit_resources(self) -> set:
-        """
-        AWS에서는 S3, EC2 등 자원에 따라 체크를 구분해 '동적 체크 목록'을 가져오지만,
-        NHN에서도 리소스 유형에 따라 체크를 분기하고 싶다면 override할 수 있습니다.
-        """
-        return super().get_checks_to_execute_by_audit_resources()

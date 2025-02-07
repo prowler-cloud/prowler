@@ -1,7 +1,7 @@
 {
     "Provider": "nhn",
-    "CheckID": "nhn_compute_server_public_ip",
-    "CheckTitle": "Check for Public IP in NHN compute servers",
+    "CheckID": "compute_instance_public_ip",
+    "CheckTitle": "Check for Public IP in NHN Compute Instances",
     "CheckType": [], 
     "ServiceName": "compute",
     "SubServiceName": "",
@@ -9,7 +9,7 @@
     "Risk": "",
     "Severity": "low",
     "ResourceType": "VMInstance",
-    "Description": "Check if a floating (public) IP is assigned to an NHN compute server.",
+    "Description": "Check if a floating (public) IP is assigned to an NHN compute instance.",
     "Remediation": {
         "Code": {
             "CLI": "",

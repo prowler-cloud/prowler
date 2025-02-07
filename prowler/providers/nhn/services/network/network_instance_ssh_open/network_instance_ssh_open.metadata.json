@@ -1,7 +1,7 @@
 {
     "Provider": "nhn",
-    "CheckID": "nhn_compute_server_public_ip",
-    "CheckTitle": "Check for Public IP in NHN compute servers",
+    "CheckID": "network_instance_ssh_open",
+    "CheckTitle": "Check for SSH Access from Public Internet in NHN Compute Instances",
     "CheckType": [], 
     "ServiceName": "compute",
     "SubServiceName": "",
