@@ -1392,54 +1392,22 @@ class FindingViewSet(BaseRLSViewSet):
 
     @action(detail=False, methods=["get"], url_name="metadata")
     def metadata(self, request):
-        tenant_id = self.request.tenant_id
         queryset = self.get_queryset()
         filtered_queryset = self.filter_queryset(queryset)
 
-        relevant_resources = Resource.objects.filter(
-            tenant_id=tenant_id, findings__in=filtered_queryset
-        ).distinct()
-
-        services = (
-            relevant_resources.values_list("service", flat=True)
-            .distinct()
-            .order_by("service")
+        aggregation = filtered_queryset.aggregate(
+            services=ArrayAgg("resources__service", distinct=True, flat=True),
+            regions=ArrayAgg("resources__region", distinct=True, flat=True),
+            resource_types=ArrayAgg("resources__type", distinct=True, flat=True),
         )
 
-        regions = (
-            relevant_resources.exclude(region="")
-            .values_list("region", flat=True)
-            .distinct()
-            .order_by("region")
-        )
-
-        resource_types = (
-            relevant_resources.values_list("type", flat=True)
-            .distinct()
-            .order_by("type")
-        )
-
-        # Temporarily disabled until we implement tag filtering in the UI
-        # tag_data = (
-        #     relevant_resources
-        #     .filter(tags__key__isnull=False, tags__value__isnull=False)
-        #     .exclude(tags__key="")
-        #     .exclude(tags__value="")
-        #     .values("tags__key", "tags__value")
-        #     .distinct()
-        #     .order_by("tags__key", "tags__value")
-        # )
-        #
-        # tags_dict = {}
-        # for row in tag_data:
-        #     k, v = row["tags__key"], row["tags__value"]
-        #     tags_dict.setdefault(k, []).append(v)
+        # Regions could be empty strings
+        regions = [region for region in aggregation["regions"] or [] if region]
 
         result = {
-            "services": list(services),
-            "regions": list(regions),
-            "resource_types": list(resource_types),
-            # "tags": tags_dict
+            "services": aggregation["services"] or [],
+            "regions": regions,
+            "resource_types": aggregation["resource_types"] or [],
         }
 
         serializer = self.get_serializer(data=result)
