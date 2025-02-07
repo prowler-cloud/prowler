@@ -548,6 +548,7 @@ prowler kubernetes --kubeconfig-file path
 
 For in-cluster execution, you can use the supplied yaml to run Prowler as a job within a new Prowler namespace:
 ```console
+kubectl apply -f kubernetes/prowler-sa.yaml
 kubectl apply -f kubernetes/job.yaml
 kubectl apply -f kubernetes/prowler-role.yaml
 kubectl apply -f kubernetes/prowler-rolebinding.yaml
