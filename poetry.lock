@@ -629,13 +629,13 @@ msrest = ">=0.7.1"
 
 [[package]]
 name = "azure-mgmt-web"
-version = "7.3.1"
+version = "8.0.0"
 description = "Microsoft Azure Web Apps Management Client Library for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "azure-mgmt-web-7.3.1.tar.gz", hash = "sha256:87b771436bc99a7a8df59d0ad185b96879a06dce14764a06b3fc3dafa8fcb56b"},
-    {file = "azure_mgmt_web-7.3.1-py3-none-any.whl", hash = "sha256:ccf881e3ab31c3fdbf9cbff32773d9c0006b5dcd621ea074d7ec89e51049fb72"},
+    {file = "azure_mgmt_web-8.0.0-py3-none-any.whl", hash = "sha256:0536aac05bfc673b56ed930f2966b77856e84df675d376e782a7af6bb92449af"},
+    {file = "azure_mgmt_web-8.0.0.tar.gz", hash = "sha256:c8d9c042c09db7aacb20270a9effed4d4e651e365af32d80897b84dc7bf35098"},
 ]
 
 [package.dependencies]
@@ -5230,4 +5230,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "b5872c87e5162ae8fadb1cc27c4d19b17a21ccc9ea872b85754d25792a4b0cf6"
+content-hash = "fb0029aa4e503c48e62f87c03ae3b9d78964bea2380ac82d1021fd3e961e1f64"
