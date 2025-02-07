@@ -1442,7 +1442,7 @@ class FindingViewSet(BaseRLSViewSet):
 
         serializer = self.get_serializer(data=result)
         serializer.is_valid(raise_exception=True)
-        return Response(serializer.data, status=200)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @extend_schema_view(
