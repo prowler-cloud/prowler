@@ -110,6 +110,7 @@ class Test_iam_root_credentials_management_enabled_test:
                 assert result[0].resource_id == AWS_ACCOUNT_NUMBER
                 assert result[0].resource_arn == AWS_ACCOUNT_ARN
                 assert result[0].region == AWS_REGION_US_EAST_1
+                assert result[0].resource == {}
 
     @mock.patch(
         "botocore.client.BaseClient._make_api_call", new=mock_make_api_call_disabled
@@ -154,3 +155,4 @@ class Test_iam_root_credentials_management_enabled_test:
                 assert result[0].resource_id == AWS_ACCOUNT_NUMBER
                 assert result[0].resource_arn == AWS_ACCOUNT_ARN
                 assert result[0].region == AWS_REGION_US_EAST_1
+                assert result[0].resource == {}
