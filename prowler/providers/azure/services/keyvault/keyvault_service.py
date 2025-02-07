@@ -1,9 +1,11 @@
 from dataclasses import dataclass
+from datetime import datetime
+from typing import Union
 
 from azure.core.exceptions import HttpResponseError
 from azure.keyvault.keys import KeyClient
 from azure.mgmt.keyvault import KeyVaultManagementClient
-from azure.mgmt.keyvault.v2023_07_01.models import SecretAttributes, VaultProperties
+from azure.mgmt.keyvault.v2023_07_01.models import VaultProperties
 
 from prowler.lib.logger import logger
 from prowler.providers.azure.azure_provider import AzureProvider
@@ -116,7 +118,20 @@ class KeyVault(AzureService):
                         name=getattr(secret, "name", ""),
                         enabled=getattr(secret.properties.attributes, "enabled", False),
                         location=getattr(secret, "location", ""),
-                        attributes=getattr(secret.properties, "attributes", None),
+                        attributes=SecretAttributes(
+                            enabled=getattr(
+                                secret.properties.attributes, "enabled", False
+                            ),
+                            created=getattr(
+                                secret.properties.attributes, "created", None
+                            ),
+                            updated=getattr(
+                                secret.properties.attributes, "updated", None
+                            ),
+                            expires=getattr(
+                                secret.properties.attributes, "expires", None
+                            ),
+                        ),
                     )
                 )
         except Exception as error:
@@ -159,6 +174,14 @@ class Key:
     location: str
     attributes: KeyAttributes
     rotation_policy: str = None
+
+
+@dataclass
+class SecretAttributes:
+    enabled: bool
+    created: Union[datetime, None]
+    updated: Union[datetime, None]
+    expires: Union[datetime, None]
 
 
 @dataclass
