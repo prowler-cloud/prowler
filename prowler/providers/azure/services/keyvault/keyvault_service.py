@@ -1,11 +1,10 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Union
+from typing import List, Union
 
 from azure.core.exceptions import HttpResponseError
 from azure.keyvault.keys import KeyClient
 from azure.mgmt.keyvault import KeyVaultManagementClient
-from azure.mgmt.keyvault.v2023_07_01.models import VaultProperties
 
 from prowler.lib.logger import logger
 from prowler.providers.azure.azure_provider import AzureProvider
@@ -45,7 +44,30 @@ class KeyVault(AzureService):
                             name=getattr(keyvault, "name", ""),
                             location=getattr(keyvault, "location", ""),
                             resource_group=resource_group,
-                            properties=keyvault_properties,
+                            properties=VaultProperties(
+                                tenant_id=getattr(keyvault_properties, "tenant_id", ""),
+                                enable_rbac_authorization=getattr(
+                                    keyvault_properties,
+                                    "enable_rbac_authorization",
+                                    False,
+                                ),
+                                private_endpoint_connections=[
+                                    PrivateEndpointConnection(id=conn.id)
+                                    for conn in getattr(
+                                        keyvault_properties,
+                                        "private_endpoint_connections",
+                                        [],
+                                    )
+                                ],
+                                enable_soft_delete=getattr(
+                                    keyvault_properties, "enable_soft_delete", False
+                                ),
+                                enable_purge_protection=getattr(
+                                    keyvault_properties,
+                                    "enable_purge_protection",
+                                    False,
+                                ),
+                            ),
                             keys=keys,
                             secrets=secrets,
                             monitor_diagnostic_settings=self._get_vault_monitor_settings(
@@ -191,6 +213,20 @@ class Secret:
     enabled: bool
     location: str
     attributes: SecretAttributes
+
+
+@dataclass
+class PrivateEndpointConnection:
+    id: str
+
+
+@dataclass
+class VaultProperties:
+    tenant_id: str
+    enable_rbac_authorization: bool
+    private_endpoint_connections: List[PrivateEndpointConnection]
+    enable_soft_delete: bool
+    enable_purge_protection: bool
 
 
 @dataclass
