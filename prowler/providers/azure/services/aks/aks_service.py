@@ -66,6 +66,7 @@ class AKS(AzureService):
         return clusters
 
 
+@dataclass
 class ManagedClusterAgentPoolProfile:
     name: str
     enable_node_public_ip: bool
