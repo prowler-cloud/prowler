@@ -3,11 +3,7 @@ from dataclasses import dataclass
 from azure.core.exceptions import HttpResponseError
 from azure.keyvault.keys import KeyClient
 from azure.mgmt.keyvault import KeyVaultManagementClient
-from azure.mgmt.keyvault.v2023_07_01.models import (
-    KeyAttributes,
-    SecretAttributes,
-    VaultProperties,
-)
+from azure.mgmt.keyvault.v2023_07_01.models import SecretAttributes, VaultProperties
 
 from prowler.lib.logger import logger
 from prowler.providers.azure.azure_provider import AzureProvider
@@ -74,7 +70,12 @@ class KeyVault(AzureService):
                         name=getattr(key, "name", ""),
                         enabled=getattr(key.attributes, "enabled", False),
                         location=getattr(key, "location", ""),
-                        attributes=getattr(key, "attributes", None),
+                        attributes=KeyAttributes(
+                            enabled=getattr(key.attributes, "enabled", False),
+                            created=getattr(key.attributes, "created", 0),
+                            updated=getattr(key.attributes, "updated", 0),
+                            expires=getattr(key.attributes, "expires", 0),
+                        ),
                     )
                 )
         except Exception as error:
@@ -140,6 +141,14 @@ class KeyVault(AzureService):
                 f"Subscription name: {self.subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return monitor_diagnostics_settings
+
+
+@dataclass
+class KeyAttributes:
+    enabled: bool
+    created: int
+    updated: int
+    expires: int
 
 
 @dataclass
