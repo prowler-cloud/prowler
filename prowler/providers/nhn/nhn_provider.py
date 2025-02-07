@@ -11,20 +11,37 @@ from prowler.lib.logger import logger
 from prowler.lib.utils.utils import print_boxes
 from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
-from prowler.providers.nhn.models import NHNIdentityInfo, NHNOutputOptions
+from prowler.providers.nhn.models import NHNIdentityInfo
 from prowler.providers.nhn.lib.mutelist.mutelist import NHNMutelist
 
 class NhnProvider(Provider):
     """
-    NhnProvider는 NHN 클라우드용 Prowler Provider 클래스입니다.
+    NHN Provider class to handle the NHN provider
 
-    - 인증 세션(토큰 발급)
-    - identity (tenant_id, username 등)
-    - mutelist, audit_config 등 설정 로드
-    - print_credentials, test_connection 등 유틸 메서드
+    Attributes:
+    - _type: str -> The type of the provider, which is set to "nhn".
+    - _session: requests.Session -> The session object associated with the NHN provider.
+    - _identity: NHNIdentityInfo -> The identity information for the NHN provider.
+    - _audit_config: dict -> The audit configuration for the NHN provider.
+    - _mutelist: NHNMutelist -> The mutelist object associated with the NHN provider.
+    - audit_metadata: Audit_Metadata -> The audit metadata for the NHN provider.
+
+    Methods:
+    - __init__: Initializes the NHN provider.
+    - type: Returns the type of the NHN provider.
+    - identity: Returns the identity of the NHN provider.(ex: tenant_id, username)
+    - session: Returns the session object associated with the NHN provider.(ex: Bearer token)
+    - audit_config: Returns the audit configuration for the NHN provider.
+    - fixer_config: Returns the fixer configuration.
+    - mutelist: Returns the mutelist object associated with the NHN provider.
+    - validate_arguments: Validates the NHN provider arguments.(ex: username, password, tenant_id)
+    - print_credentials: Prints the NHN credentials information.(ex: username, tenant_id)
+    - setup_session: Set up the NHN session with the specified authentication method.
+    - test_connection: tests the provider connection
     """
 
-    _type:str = "nhn"
+    _type: str = "nhn"
+    _session: Optional[requests.Session] = None
     _identity: NHNIdentityInfo
     _audit_config: dict
     _mutelist: NHNMutelist
@@ -42,128 +59,125 @@ class NhnProvider(Provider):
         mutelist_content: Optional[dict] = None,
     ):
         """
-        NhnProvider 생성자.
+        Initializes the NHN provider.
 
         Args:
-            - username: NHN Cloud 계정 ID
-            - password: NHN Cloud 계정 비밀번호
-            - tenant_id: NHN Cloud Tenant ID
-            - config_path: Prowler config 파일 경로
-            - fixer_config: Fixer 관련 설정 (선택)
-            - mutelist_path: Mutelist 파일 경로
-            - mutelist_content: Mutelist 내용을 담은 dict
+            - username: The NHN Cloud client ID
+            - password: The NHN Cloud client password
+            - tenant_id: The NHN Cloud Tenant ID
+            - config_path: The path to the configuration file.
+            - fixer_config: The fixer configuration.
+            - mutelist_path: The path to the mutelist file.
+            - mutelist_content: The mutelist content.
         """
         logger.info("Initializing NhnProvider...")
 
-        # 1) 인자 값 저장
+        # 1) Store argument values
         self._username = username or ""
         self._password = password or ""
         self._tenant_id = tenant_id or ""
 
-        # 2) audit_config, fixer_config, mutelist
+         # 2) Load audit_config, fixer_config, mutelist
         self._fixer_config = fixer_config if fixer_config else {}
         if not config_path:
             config_path = default_config_file_path
         self._audit_config = load_and_validate_config_file(self._type, config_path)
 
         if mutelist_content:
-            # NHN 전용 mutelist 클래스를 만들었다면 여기서 불러서 생성
-            # self._mutelist = NHNMutelist(mutelist_content=mutelist_content)
             self._mutelist = NHNMutelist(mutelist_content=mutelist_content)
         else:
             if not mutelist_path:
                 mutelist_path = get_default_mute_file_path(self._type)
             self._mutelist = NHNMutelist(mutelist_path=mutelist_path)
-            # self._mutelist = {}  # 예시
 
-        # 3) 세션/토큰 초기화
+        # 3) Initialize session/token
         self._token = None
         self._session = None
         self.setup_session()
 
-        # 4) identity를 객체로 관리 (NHNIdentityInfo)
-        #    - GCP나 Azure 예시처럼 self._identity = GCPIdentityInfo(...)
-        #    - NHNIdentityInfo가 pydantic.BaseModel을 상속받았다고 가정
+        # 4) Create NHNIdentityInfo object
         self._identity = NHNIdentityInfo(
             tenant_id=self._tenant_id,
             username=self._username,
-            # 필요하다면 token 필드도 저장
         )
 
-        # 5) Prowler에서 "글로벌 프로바이더"로 등록
         Provider.set_global_provider(self)
 
-    # ---------- #
-    # Properties #
-    # ---------- #
     @property
     def type(self) -> str:
-        """프로바이더 타입: 'nhn'"""
+        """
+        Returns the type of the provider ("nhn").
+        """
         return self._type
 
     @property
     def identity(self) -> str:
         """
-        Prowler에서 "identity" 정보를 참조할 때 사용.
-        예: self.identity.tenant_id, self.identity.username 등
+        Returns the NHNIdentityInfo object, which may contain tenant_id, username, etc.
         """
         return self._identity
 
     @property
     def session(self) -> str:
         """
-        'session'은 AWS, Azure, GCP 등에서는 boto3나 Azure Credential 객체가 들어감.
-        NHN에서는 토큰 또는 세션 오브젝트를 반환할 수 있음.
-        여기서는 단순히 토큰 문자열을 세션처럼 쓰겠다고 가정.
+        Returns the requests.Session object for NHN API calls.
         """
         return self._session
 
     @property
     def audit_config(self) -> dict:
-        """Prowler의 audit_config를 반환."""
+        """
+        Returns the audit configuration loaded from file or default settings.
+        """
         return self._audit_config
     
     @property
     def fixer_config(self) -> dict:
+        """
+        Returns any fixer configuration provided to the NHN provider.
+        """
         return self._fixer_config
 
     @property
     def mutelist(self) -> dict:
         """
-        Prowler가 provider.mutelist를 참조할 때,
-        NHNMutelist 객체를 반환해야 함.
+        Returns the NHNMutelist object for handling any muted checks.
         """
         return self._mutelist
     
-    # ------------------ #
-    # Provider Overrides #
-    # ------------------ #
     def validate_arguments(self) -> None:
         """
-        Prowler의 provider.py에서는 이 메서드를 통해
-        CLI 인자가 유효한지 (필수값 누락 등) 검사할 수 있음.
+        Ensures that username, password, and tenant_id are not empty.
         """
         if not self._username or not self._password or not self._tenant_id:
             raise ValueError("NHN Provider requires username, password, and tenant_id.")
         
     def print_credentials(self) -> None:
         """
-        Prowler가 시작할 때, 현재 Provider 자격 정보(계정, Tenant ID 등)를 출력.
+        Prints the NHN credentials in a simple box format.
         """
         report_lines = [
             f"NHN Provider credentials:",
             f"  Username: {self._username}",
             f"  TenantID: {self._tenant_id}",
         ]
-        # 실제 토큰은 보안상 노출 자제
-        # if self._token:
-        #     report_lines.append(f"  Token(Truncated): {self._token[:10]}...")
         print_boxes(report_lines, "NHN Provider")
 
     def setup_session(self) -> None:
         """
-        실제 NHN Cloud 인증(Keystone 등) 로직을 구현.
-        예: Keystone v2.0 API를 호출해 토큰 발급
+        Implement NHN Cloud Authentication method by calling Keystone v2.0 API(POST /v2.0/tokens).
+        ex) https://api-identity-infrastructure.nhncloudservice.com/v2.0/tokens
+        {
+            "auth": {
+                "tenantId": "f5073eaa26b64cffbee89411df94ce01",
+                "passwordCredentials": {
+                    "username": "user@example.com",
+                    "password": "secretsecret"
+                }
+            }
+        }
+
+        On success, it creates a requests.Session and sets the X-Auth-Token header.
         """
         if not self._username or not self._password:
             logger.warning("NHN Provider - username/password not set.")
@@ -178,16 +192,18 @@ class NhnProvider(Provider):
                 },
             }
         }
-        # https://docs.nhncloud.com/ko/Compute/Compute/ko/identity-api/ 여기서 응답보고 넣기
         try:
             response = requests.post(url, json=data, timeout=10)
             if response.status_code == 200:
                 resp_json = response.json()
-                # Keystone 토큰
                 self._token = resp_json["access"]["token"]["id"]
-                # session에 토큰을 넣거나, requests.Session 객체를 만들어 Authorization 헤더 설정 가능
-                self._session = f"Bearer {self._token}"
-                logger.info(f"NHN token acquired successfully.")
+                sess = requests.Session()
+                sess.headers.update({
+                    "X-Auth-Token": self._token,
+                    "Content-Type": "application/json"
+                })
+                self._session = sess
+                logger.info(f"NHN token acquired successfully and session is set up.")
             else:
                 logger.error(
                     f"Failed to get token. Status: {response.status_code}, Body: {response.text}"
@@ -196,23 +212,85 @@ class NhnProvider(Provider):
             logger.critical(f"[setup_session] Error: {e}")
             sys.exit(1)
 
-    def test_connection(self) -> None:
+
+    @staticmethod
+    def test_connection(
+        username: str,
+        password: str,
+        tenant_id: str,
+        raise_on_exception: bool = True,
+    ) -> Connection:
         """
-        Provider에서 연결 테스트를 수행하는 경우(선택).
-        예: 발급받은 토큰으로 간단한 API를 호출하여 유효성 확인.
+        Test connection to NHN Cloud by performing:
+          1) Keystone token request
+          2) (Optional) a small test API call to confirm credentials are valid
+
+        Args:
+            username (str): NHN Cloud user ID (email)
+            password (str): NHN Cloud user password
+            tenant_id (str): NHN Cloud tenant ID
+            raise_on_exception (bool): If True, raise the caught exception;
+                                       if False, return Connection(error=exception).
+
+        Returns:
+            Connection:
+                Connection(is_connected=True) if success,
+                otherwise Connection(error=Exception or custom error).
         """
-        if not self._token:
-            print("No token found. Please check your username/password/tenant_id.")
-            return
+        try:
+            # 1) Validate arguments (예: username/password/tenant_id)
+            if not username or not password or not tenant_id:
+                error_msg = "NHN test_connection error: missing username/password/tenant_id"
+                logger.error(error_msg)
+                raise ValueError(error_msg)
+
+            # 2) Request Keystone token
+            token_url = "https://api-identity-infrastructure.nhncloudservice.com/v2.0/tokens"
+            data = {
+                "auth": {
+                    "tenantId": tenant_id,
+                    "passwordCredentials": {
+                        "username": username,
+                        "password": password,
+                    }
+                }
+            }
+            resp = requests.post(token_url, json=data, timeout=10)
+            if resp.status_code != 200:
+                # Fail
+                error_msg = f"Failed to get token. Status: {resp.status_code}, Body: {resp.text}"
+                logger.error(error_msg)
+                if raise_on_exception:
+                    raise Exception(error_msg)
+                return Connection(error=Exception(error_msg))
+
+            # Success
+            token_json = resp.json()
+            keystone_token = token_json["access"]["token"]["id"]
+            logger.info("NHN test_connection: Successfully acquired Keystone token.")
+
+            # 3) (Optional) Test API call to confirm credentials are valid
+            compute_endpoint = f"https://kr1-api-instance.infrastructure.cloud.toast.com/v2/{tenant_id}"
+            
+            # Check servers list
+            headers = {
+                "X-Auth-Token": keystone_token,
+                "Content-Type": "application/json",
+            }
+            servers_resp = requests.get(f"{compute_endpoint}/servers", headers=headers, timeout=10)
+            if servers_resp.status_code == 200:
+                logger.info("NHN test_connection: /servers call success. Credentials valid.")
+                return Connection(is_connected=True)
+            else:
+                error_msg = f"/servers call failed. Status: {servers_resp.status_code}, Body: {servers_resp.text}"
+                logger.error(error_msg)
+                if raise_on_exception:
+                    raise Exception(error_msg)
+                return Connection(error=Exception(error_msg))
+
+        except Exception as e:
+            logger.critical(f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}]: {e}")
+            if raise_on_exception:
+                raise e
+            return Connection(error=e)
         
-        # 예시: 토큰으로 호출 가능한 간단한 API
-        # url = "https://some-nhn-api/v1/something"
-        # headers = {"X-Auth-Token": self._token}
-        # try:
-        #     r = requests.get(url, headers=headers, timeout=10)
-        #     if r.status_code == 200:
-        #         logger.info("Test connection successful!")
-        #     else:
-        #         logger.error(f"Test connection failed: {r.status_code} - {r.text}")
-        # except Exception as e:
-        #     logger.error(f"Test connection error: {e}")
