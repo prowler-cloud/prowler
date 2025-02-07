@@ -233,7 +233,7 @@ class Provider(RowLevelSecurityProtectedModel):
             raise ModelValidationError(
                 detail="The value must either be a valid Kubernetes UID (up to 63 characters, "
                 "starting and ending with a lowercase letter or number, containing only "
-                "lowercase alphanumeric characters and hyphens) or a valid AWS EKS ARN, GCP GKE ID or Azure AKS ID.",
+                "lowercase alphanumeric characters and hyphens) or a valid AWS EKS Cluster ARN, GCP GKE Context Name or Azure AKS Cluster Name.",
                 code="kubernetes-uid",
                 pointer="/data/attributes/uid",
             )
