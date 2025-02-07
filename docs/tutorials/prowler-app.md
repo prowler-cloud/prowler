@@ -113,6 +113,8 @@ By default, the `kubeconfig` file is located at `~/.kube/config`.
     ```console
     kubectl create token prowler-sa -n prowler-ns --duration=0
     ```
+        - **Security Note:** The `--duration=0` option generates a non-expiring token, which may pose a security risk if not managed properly. Users should decide on an appropriate expiration time based on their security policies. If a limited-time token is preferred, set `--duration=<TIME>` (e.g., `--duration=24h`).
+        - **Important:** If the token expires, Prowler Cloud will no longer be able to authenticate with the cluster. In this case, you will need to generate a new token and **remove and re-add the provider in Prowler Cloud** with the updated `kubeconfig`.
 
     3. Update your `kubeconfig` to use the ServiceAccount token:
     ```console
