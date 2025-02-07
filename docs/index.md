@@ -377,6 +377,19 @@ Go to [http://localhost:3000](http://localhost:3000) after installing the app (s
 <img src="img/sign-up-button.png" alt="Sign Up Button" width="320"/>
 <img src="img/sign-up.png" alt="Sign Up" width="285"/>
 
+???+ note "User creation and default tenant behavior"
+
+    When creating a new user, the behavior depends on whether an invitation is provided:
+
+    - **Without an invitation**:
+
+        - A new tenant is automatically created.
+        - The new user is assigned to this tenant.
+        - A set of **RBAC admin permissions** is generated and assigned to the user for the newly created tenant.
+    - **With an invitation**: The user is added to the specified tenant with the permissions defined in the invitation.
+
+    This mechanism ensures that the first user in a newly created tenant has administrative permissions within that tenant.
+
 #### **Log In**
 Log in with your email and password to start using the Prowler App.
 
