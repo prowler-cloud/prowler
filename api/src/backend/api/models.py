@@ -227,7 +227,7 @@ class Provider(RowLevelSecurityProtectedModel):
     @staticmethod
     def validate_kubernetes_uid(value):
         if not re.match(
-            r"^[A-Za-z0-9_.:\/-]{1,250}$",
+            r"^[a-z0-9][A-Za-z0-9_.:\/-]{1,250}$",
             value,
         ):
             raise ModelValidationError(
