@@ -1,4 +1,5 @@
 import { Spacer } from "@nextui-org/react";
+import { format, subDays } from "date-fns";
 import React, { Suspense } from "react";
 
 import { getFindings, getMetadataInfo } from "@/actions/findings";
@@ -13,8 +14,6 @@ import {
 import { Header } from "@/components/ui";
 import { DataTable, DataTableFilterCustom } from "@/components/ui/table";
 import { createDict } from "@/lib";
-import { subDays, format } from "date-fns";
-
 import {
   FindingProps,
   ProviderProps,
@@ -35,10 +34,15 @@ export default async function Findings({
 
   const twoDaysAgo = format(subDays(new Date(), 2), "yyyy-MM-dd");
 
+  // Check if the searchParams contain any date or scan filter
+  const hasDateOrScanFilter = Object.keys(searchParams).some(
+    (key) => key.includes("inserted_at") || key.includes("scan__in"),
+  );
+
   // Default filters for getMetadataInfo
-  const defaultFilters = {
-    "filter[inserted_at__gte]": twoDaysAgo,
-  };
+  const defaultFilters: Record<string, string> = hasDateOrScanFilter
+    ? {} // Do not apply default filters if there are date or scan filters
+    : { "filter[inserted_at__gte]": twoDaysAgo };
 
   // Extract all filter parameters and combine with default filters
   const filters: Record<string, string> = {
@@ -156,10 +160,15 @@ const SSRDataTable = async ({
 
   const twoDaysAgo = format(subDays(new Date(), 2), "yyyy-MM-dd");
 
+  // Check if the searchParams contain any date or scan filter
+  const hasDateOrScanFilter = Object.keys(searchParams).some(
+    (key) => key.includes("inserted_at") || key.includes("scan__in"),
+  );
+
   // Default filters for getFindings
-  const defaultFilters = {
-    "filter[inserted_at__gte]": twoDaysAgo,
-  };
+  const defaultFilters: Record<string, string> = hasDateOrScanFilter
+    ? {} // Do not apply default filters if there are date or scan filters
+    : { "filter[inserted_at__gte]": twoDaysAgo };
 
   const filters: Record<string, string> = {
     ...defaultFilters,
