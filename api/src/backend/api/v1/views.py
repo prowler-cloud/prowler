@@ -8,7 +8,6 @@ from django.db.models.functions import Coalesce
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_control
-from django_cte import With
 from drf_spectacular.settings import spectacular_settings
 from drf_spectacular.utils import (
     OpenApiParameter,
@@ -1419,13 +1418,11 @@ class FindingViewSet(BaseRLSViewSet):
         queryset = self.get_queryset()
         filtered_queryset = self.filter_queryset(queryset)
 
-        findings_cte = With(filtered_queryset.order_by().values("id"))
+        filtered_ids = filtered_queryset.order_by().values("id")
 
-        relevant_resources = (
-            Resource.all_objects.with_cte(findings_cte)
-            .filter(tenant_id=tenant_id, findings__id__in=findings_cte.query)
-            .only("service", "region", "type")
-        )
+        relevant_resources = Resource.all_objects.filter(
+            tenant_id=tenant_id, findings__id__in=Subquery(filtered_ids)
+        ).only("service", "region", "type")
 
         aggregation = relevant_resources.aggregate(
             services=ArrayAgg("service", flat=True),
