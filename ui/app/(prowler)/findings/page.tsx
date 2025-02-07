@@ -13,6 +13,8 @@ import {
 import { Header } from "@/components/ui";
 import { DataTable, DataTableFilterCustom } from "@/components/ui/table";
 import { createDict } from "@/lib";
+import { subDays, format } from "date-fns";
+
 import {
   FindingProps,
   ProviderProps,
@@ -31,7 +33,16 @@ export default async function Findings({
   // Make sure the sort is correctly encoded
   const encodedSort = sort?.replace(/^\+/, "");
 
+  const twoDaysAgo = format(subDays(new Date(), 2), "yyyy-MM-dd");
+
+  // Default filters for getMetadataInfo
+  const defaultFilters = {
+    "filter[inserted_at__gte]": twoDaysAgo,
+  };
+
+  // Extract all filter parameters and combine with default filters
   const filters: Record<string, string> = {
+    ...defaultFilters,
     ...Object.fromEntries(
       Object.entries(searchParams)
         .filter(([key]) => key.startsWith("filter["))
@@ -44,11 +55,15 @@ export default async function Findings({
 
   const query = filters["filter[search]"] || "";
 
-  const metadataInfoData = await getMetadataInfo({
-    query,
-    sort: encodedSort,
-    filters,
-  });
+  const [metadataInfoData, providersData, scansData] = await Promise.all([
+    getMetadataInfo({
+      query,
+      sort: encodedSort,
+      filters,
+    }),
+    getProviders({}),
+    getScans({}),
+  ]);
 
   // Extract unique regions and services from the new endpoint
   const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
@@ -56,8 +71,6 @@ export default async function Findings({
   const uniqueResourceTypes =
     metadataInfoData?.data?.attributes?.resource_types || [];
   // Get findings data
-  const providersData = await getProviders({});
-  const scansData = await getScans({});
 
   // Extract provider UIDs
   const providerUIDs = Array.from(
@@ -141,7 +154,15 @@ const SSRDataTable = async ({
   // Make sure the sort is correctly encoded
   const encodedSort = sort.replace(/^\+/, "");
 
+  const twoDaysAgo = format(subDays(new Date(), 2), "yyyy-MM-dd");
+
+  // Default filters for getFindings
+  const defaultFilters = {
+    "filter[inserted_at__gte]": twoDaysAgo,
+  };
+
   const filters: Record<string, string> = {
+    ...defaultFilters,
     ...Object.fromEntries(
       Object.entries(searchParams)
         .filter(([key]) => key.startsWith("filter["))
@@ -190,10 +211,18 @@ const SSRDataTable = async ({
   };
 
   return (
-    <DataTable
-      columns={ColumnFindings}
-      data={expandedResponse?.data || []}
-      metadata={findingsData?.meta}
-    />
+    <>
+      {findingsData?.errors && (
+        <div className="mb-4 flex rounded-lg border border-red-500 bg-red-100 p-2 text-small text-red-700">
+          <p className="mr-2 font-semibold">Error:</p>
+          <p>{findingsData.errors[0].detail}</p>
+        </div>
+      )}
+      <DataTable
+        columns={ColumnFindings}
+        data={expandedResponse?.data || []}
+        metadata={findingsData?.meta}
+      />
+    </>
   );
 };
