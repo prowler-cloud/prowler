@@ -1418,50 +1418,26 @@ class FindingViewSet(BaseRLSViewSet):
         queryset = self.get_queryset()
         filtered_queryset = self.filter_queryset(queryset)
 
-        relevant_resources = Resource.objects.filter(
-            tenant_id=tenant_id, findings__in=filtered_queryset
-        ).distinct()
+        filtered_ids = filtered_queryset.order_by().values("id")
 
-        services = (
-            relevant_resources.values_list("service", flat=True)
-            .distinct()
-            .order_by("service")
+        relevant_resources = Resource.all_objects.filter(
+            tenant_id=tenant_id, findings__id__in=Subquery(filtered_ids)
+        ).only("service", "region", "type")
+
+        aggregation = relevant_resources.aggregate(
+            services=ArrayAgg("service", flat=True),
+            regions=ArrayAgg("region", flat=True),
+            resource_types=ArrayAgg("type", flat=True),
         )
 
-        regions = (
-            relevant_resources.exclude(region="")
-            .values_list("region", flat=True)
-            .distinct()
-            .order_by("region")
-        )
-
-        resource_types = (
-            relevant_resources.values_list("type", flat=True)
-            .distinct()
-            .order_by("type")
-        )
-
-        # Temporarily disabled until we implement tag filtering in the UI
-        # tag_data = (
-        #     relevant_resources
-        #     .filter(tags__key__isnull=False, tags__value__isnull=False)
-        #     .exclude(tags__key="")
-        #     .exclude(tags__value="")
-        #     .values("tags__key", "tags__value")
-        #     .distinct()
-        #     .order_by("tags__key", "tags__value")
-        # )
-        #
-        # tags_dict = {}
-        # for row in tag_data:
-        #     k, v = row["tags__key"], row["tags__value"]
-        #     tags_dict.setdefault(k, []).append(v)
+        services = sorted(set(aggregation["services"] or []))
+        regions = sorted({region for region in aggregation["regions"] or [] if region})
+        resource_types = sorted(set(aggregation["resource_types"] or []))
 
         result = {
-            "services": list(services),
-            "regions": list(regions),
-            "resource_types": list(resource_types),
-            # "tags": tags_dict
+            "services": services,
+            "regions": regions,
+            "resource_types": resource_types,
         }
 
         serializer = self.get_serializer(data=result)
