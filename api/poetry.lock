@@ -620,13 +620,13 @@ msrest = ">=0.7.1"
 
 [[package]]
 name = "azure-mgmt-web"
-version = "7.3.1"
+version = "8.0.0"
 description = "Microsoft Azure Web Apps Management Client Library for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "azure-mgmt-web-7.3.1.tar.gz", hash = "sha256:87b771436bc99a7a8df59d0ad185b96879a06dce14764a06b3fc3dafa8fcb56b"},
-    {file = "azure_mgmt_web-7.3.1-py3-none-any.whl", hash = "sha256:ccf881e3ab31c3fdbf9cbff32773d9c0006b5dcd621ea074d7ec89e51049fb72"},
+    {file = "azure_mgmt_web-8.0.0-py3-none-any.whl", hash = "sha256:0536aac05bfc673b56ed930f2966b77856e84df675d376e782a7af6bb92449af"},
+    {file = "azure_mgmt_web-8.0.0.tar.gz", hash = "sha256:c8d9c042c09db7aacb20270a9effed4d4e651e365af32d80897b84dc7bf35098"},
 ]
 
 [package.dependencies]
@@ -637,13 +637,13 @@ typing-extensions = ">=4.6.0"
 
 [[package]]
 name = "azure-storage-blob"
-version = "12.24.0"
+version = "12.24.1"
 description = "Microsoft Azure Blob Storage Client Library for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "azure_storage_blob-12.24.0-py3-none-any.whl", hash = "sha256:4f0bb4592ea79a2d986063696514c781c9e62be240f09f6397986e01755bc071"},
-    {file = "azure_storage_blob-12.24.0.tar.gz", hash = "sha256:eaaaa1507c8c363d6e1d1342bd549938fdf1adec9b1ada8658c8f5bf3aea844e"},
+    {file = "azure_storage_blob-12.24.1-py3-none-any.whl", hash = "sha256:77fb823fdbac7f3c11f7d86a5892e2f85e161e8440a7489babe2195bf248f09e"},
+    {file = "azure_storage_blob-12.24.1.tar.gz", hash = "sha256:052b2a1ea41725ba12e2f4f17be85a54df1129e13ea0321f5a2fcc851cbf47d4"},
 ]
 
 [package.dependencies]
@@ -1943,13 +1943,13 @@ grpcio-gcp = ["grpcio-gcp (>=0.2.2,<1.0.dev0)"]
 
 [[package]]
 name = "google-api-python-client"
-version = "2.159.0"
+version = "2.160.0"
 description = "Google API Client Library for Python"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "google_api_python_client-2.159.0-py2.py3-none-any.whl", hash = "sha256:baef0bb631a60a0bd7c0bf12a5499e3a40cd4388484de7ee55c1950bf820a0cf"},
-    {file = "google_api_python_client-2.159.0.tar.gz", hash = "sha256:55197f430f25c907394b44fa078545ffef89d33fd4dca501b7db9f0d8e224bd6"},
+    {file = "google_api_python_client-2.160.0-py2.py3-none-any.whl", hash = "sha256:63d61fb3e4cf3fb31a70a87f45567c22f6dfe87bbfa27252317e3e2c42900db4"},
+    {file = "google_api_python_client-2.160.0.tar.gz", hash = "sha256:a8ccafaecfa42d15d5b5c3134ced8de08380019717fc9fb1ed510ca58eca3b7e"},
 ]
 
 [package.dependencies]
@@ -2361,13 +2361,13 @@ zookeeper = ["kazoo (>=2.8.0)"]
 
 [[package]]
 name = "kubernetes"
-version = "31.0.0"
+version = "32.0.0"
 description = "Kubernetes python client"
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "kubernetes-31.0.0-py2.py3-none-any.whl", hash = "sha256:bf141e2d380c8520eada8b351f4e319ffee9636328c137aa432bc486ca1200e1"},
-    {file = "kubernetes-31.0.0.tar.gz", hash = "sha256:28945de906c8c259c1ebe62703b56a03b714049372196f854105afe4e6d014c0"},
+    {file = "kubernetes-32.0.0-py2.py3-none-any.whl", hash = "sha256:60fd8c29e8e43d9c553ca4811895a687426717deba9c0a66fb2dcc3f5ef96692"},
+    {file = "kubernetes-32.0.0.tar.gz", hash = "sha256:319fa840345a482001ac5d6062222daeb66ec4d1bcb3087402aed685adf0aecb"},
 ]
 
 [package.dependencies]
@@ -2523,13 +2523,13 @@ files = [
 
 [[package]]
 name = "microsoft-kiota-abstractions"
-version = "1.6.8"
+version = "1.9.2"
 description = "Core abstractions for kiota generated libraries in Python"
 optional = false
-python-versions = "<4.0,>=3.8"
+python-versions = "<4.0,>=3.9"
 files = [
-    {file = "microsoft_kiota_abstractions-1.6.8-py3-none-any.whl", hash = "sha256:12819dee24d5aaa31e99683d938f65e50cbc446de087df244cd26c3326ec4e15"},
-    {file = "microsoft_kiota_abstractions-1.6.8.tar.gz", hash = "sha256:7070affabfa7182841646a0c8491cbb240af366aff2b9132f0caa45c4837dd78"},
+    {file = "microsoft_kiota_abstractions-1.9.2-py3-none-any.whl", hash = "sha256:a8853d272a84da59d6a2fe11a76c28e9c55bdab268a345ba48e918cb6822b607"},
+    {file = "microsoft_kiota_abstractions-1.9.2.tar.gz", hash = "sha256:29cdafe8d0672f23099556e0b120dca6231c752cca9393e1e0092fa9ca594572"},
 ]
 
 [package.dependencies]
@@ -2539,99 +2539,94 @@ std-uritemplate = ">=2.0.0"
 
 [[package]]
 name = "microsoft-kiota-authentication-azure"
-version = "1.6.8"
+version = "1.9.2"
 description = "Core abstractions for kiota generated libraries in Python"
 optional = false
-python-versions = "<4.0,>=3.8"
+python-versions = "<4.0,>=3.9"
 files = [
-    {file = "microsoft_kiota_authentication_azure-1.6.8-py3-none-any.whl", hash = "sha256:50455789b7133e27fbccec839d93e40d2637d18593a93921ae1338880c5b5b3b"},
-    {file = "microsoft_kiota_authentication_azure-1.6.8.tar.gz", hash = "sha256:fef23f43cd4d3b9ef839c8b3d1f675ec4a1120c150f963d8c4551c5e19ac3b36"},
+    {file = "microsoft_kiota_authentication_azure-1.9.2-py3-none-any.whl", hash = "sha256:56840f8b15df8aedfd143fb2deb7cc7fae4ac0bafb1a50546b7313a7b3ab4ca0"},
+    {file = "microsoft_kiota_authentication_azure-1.9.2.tar.gz", hash = "sha256:171045f522a93d9340fbddc4cabb218f14f1d9d289e82e535b3d9291986c3d5a"},
 ]
 
 [package.dependencies]
 aiohttp = ">=3.8.0"
 azure-core = ">=1.21.1"
-microsoft-kiota-abstractions = ">=1.6.8,<1.7.0"
+microsoft-kiota-abstractions = ">=1.9.2,<1.10.0"
 opentelemetry-api = ">=1.27.0"
 opentelemetry-sdk = ">=1.27.0"
 
 [[package]]
 name = "microsoft-kiota-http"
-version = "1.6.8"
+version = "1.9.2"
 description = "Core abstractions for kiota generated libraries in Python"
 optional = false
-python-versions = "<4.0,>=3.8"
+python-versions = "<4.0,>=3.9"
 files = [
-    {file = "microsoft_kiota_http-1.6.8-py3-none-any.whl", hash = "sha256:7ff76a308351d885453185d6a6538c47a64ebdc7661cce46a904e89e2ceb9a1d"},
-    {file = "microsoft_kiota_http-1.6.8.tar.gz", hash = "sha256:67242690b79a30c0cadf823675249269e4bc020283e3d65b33af7d771df64df8"},
+    {file = "microsoft_kiota_http-1.9.2-py3-none-any.whl", hash = "sha256:3a2d930a70d0184d9f4848473f929ee892462cae1acfaf33b2d193f1828c76c2"},
+    {file = "microsoft_kiota_http-1.9.2.tar.gz", hash = "sha256:2ba3d04a3d1d5d600736eebc1e33533d54d87799ac4fbb92c9cce4a97809af61"},
 ]
 
 [package.dependencies]
-httpx = {version = ">=0.28", extras = ["http2"]}
-microsoft-kiota-abstractions = ">=1.6.8,<1.7.0"
+httpx = {version = ">=0.25,<1.0.0", extras = ["http2"]}
+microsoft-kiota-abstractions = ">=1.9.2,<1.10.0"
 opentelemetry-api = ">=1.27.0"
 opentelemetry-sdk = ">=1.27.0"
-urllib3 = ">=2.2.2,<3.0.0"
 
 [[package]]
 name = "microsoft-kiota-serialization-form"
-version = "1.6.8"
+version = "1.9.2"
 description = "Core abstractions for kiota generated libraries in Python"
 optional = false
-python-versions = "<4.0,>=3.8"
+python-versions = "<4.0,>=3.9"
 files = [
-    {file = "microsoft_kiota_serialization_form-1.6.8-py3-none-any.whl", hash = "sha256:ca7dd19e173aa87c68b38c5056cc0921570c8c86f3ba5511d1616cf97e2f0f67"},
-    {file = "microsoft_kiota_serialization_form-1.6.8.tar.gz", hash = "sha256:bb9eb98b3abf596b4bfe208014dff948361ff48a757316ac58e19c31ab8d640a"},
+    {file = "microsoft_kiota_serialization_form-1.9.2-py3-none-any.whl", hash = "sha256:7b997efb2c8750b1d4fbc00878ba2a3e6e1df3fcefc8815226c90fcc9c54f218"},
+    {file = "microsoft_kiota_serialization_form-1.9.2.tar.gz", hash = "sha256:badfbe65d8ec3369bd58b01022d13ef590edf14babeef94188efe3f4ec24fe41"},
 ]
 
 [package.dependencies]
-microsoft-kiota-abstractions = ">=1.6.8,<1.7.0"
-pendulum = ">=3.0.0b1"
+microsoft-kiota-abstractions = ">=1.9.2,<1.10.0"
 
 [[package]]
 name = "microsoft-kiota-serialization-json"
-version = "1.6.8"
+version = "1.9.2"
 description = "Core abstractions for kiota generated libraries in Python"
 optional = false
-python-versions = "<4.0,>=3.8"
+python-versions = "<4.0,>=3.9"
 files = [
-    {file = "microsoft_kiota_serialization_json-1.6.8-py3-none-any.whl", hash = "sha256:2734c2ad64cc089441279e4962f6fedf41af040730f6eab1533890cd5377aff5"},
-    {file = "microsoft_kiota_serialization_json-1.6.8.tar.gz", hash = "sha256:89e2dd0eb4eaaa6ab74fa89ab5d84c5a53464e73b85eb7085f0aa4560a2b8183"},
+    {file = "microsoft_kiota_serialization_json-1.9.2-py3-none-any.whl", hash = "sha256:8f4ecf485607fff3df5ce8fa9b9c957bc7f4bff1658b183703e180af753098e3"},
+    {file = "microsoft_kiota_serialization_json-1.9.2.tar.gz", hash = "sha256:19f7beb69c67b2cb77ca96f77824ee78a693929e20237bb5476ea54f69118bf1"},
 ]
 
 [package.dependencies]
-microsoft-kiota-abstractions = ">=1.6.8,<1.7.0"
-pendulum = ">=3.0.0b1"
+microsoft-kiota-abstractions = ">=1.9.2,<1.10.0"
 
 [[package]]
 name = "microsoft-kiota-serialization-multipart"
-version = "1.6.8"
+version = "1.9.2"
 description = "Core abstractions for kiota generated libraries in Python"
 optional = false
-python-versions = "<4.0,>=3.8"
+python-versions = "<4.0,>=3.9"
 files = [
-    {file = "microsoft_kiota_serialization_multipart-1.6.8-py3-none-any.whl", hash = "sha256:1ecdd15dd1f78aed031d7d1828b6fbc00c633542d863c23f96fdd0a61bfb189a"},
-    {file = "microsoft_kiota_serialization_multipart-1.6.8.tar.gz", hash = "sha256:3d95c6d7186588af7a1d3aa852ce42077f80487b8b3c60e36fe109a8b4918c03"},
+    {file = "microsoft_kiota_serialization_multipart-1.9.2-py3-none-any.whl", hash = "sha256:641ad374046f1c7adff90d110bdc68d77418adb1e479a716f4ffea3647f0ead6"},
+    {file = "microsoft_kiota_serialization_multipart-1.9.2.tar.gz", hash = "sha256:b1851409205668d83f5c7a35a8b6fca974b341985b4a92841e95aaec93b7ca0a"},
 ]
 
 [package.dependencies]
-microsoft-kiota-abstractions = ">=1.6.8,<1.7.0"
-pendulum = ">=3.0.0b1"
+microsoft-kiota-abstractions = ">=1.9.2,<1.10.0"
 
 [[package]]
 name = "microsoft-kiota-serialization-text"
-version = "1.6.8"
+version = "1.9.2"
 description = "Core abstractions for kiota generated libraries in Python"
 optional = false
-python-versions = "<4.0,>=3.8"
+python-versions = "<4.0,>=3.9"
 files = [
-    {file = "microsoft_kiota_serialization_text-1.6.8-py3-none-any.whl", hash = "sha256:4e5e287a614d362f864b5061dca0861c3f70b8792ec72967d1bff23944da1e80"},
-    {file = "microsoft_kiota_serialization_text-1.6.8.tar.gz", hash = "sha256:687d4858337eaf4f351b12ed1c6c934d869560f54ee3855bfdde589660e07208"},
+    {file = "microsoft_kiota_serialization_text-1.9.2-py3-none-any.whl", hash = "sha256:6e63129ea29eb9b976f4ed56fc6595d204e29fc309958b639299e9f9f4e5edb4"},
+    {file = "microsoft_kiota_serialization_text-1.9.2.tar.gz", hash = "sha256:4289508ebac0cefdc4fa21c545051769a9409913972355ccda9116b647f978f2"},
 ]
 
 [package.dependencies]
-microsoft-kiota-abstractions = ">=1.6.8,<1.7.0"
-python-dateutil = "2.9.0.post0"
+microsoft-kiota-abstractions = ">=1.9.2,<1.10.0"
 
 [[package]]
 name = "msal"
@@ -2689,13 +2684,13 @@ dev = ["bumpver", "isort", "mypy", "pylint", "pytest", "yapf"]
 
 [[package]]
 name = "msgraph-sdk"
-version = "1.17.0"
+version = "1.18.0"
 description = "The Microsoft Graph Python SDK"
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "msgraph_sdk-1.17.0-py3-none-any.whl", hash = "sha256:5582a258ded19a486ab407a67b5f65d666758a63864da77bd20c2581d1c00fba"},
-    {file = "msgraph_sdk-1.17.0.tar.gz", hash = "sha256:577e41942b0f794b8cf2f54db030bc039a750a81b515dcd0ba1d66fd961fa7bf"},
+    {file = "msgraph_sdk-1.18.0-py3-none-any.whl", hash = "sha256:f09b015bb9d7690bc6f30c9a28f9a414107aaf06be4952c27b3653dcdf33f2a3"},
+    {file = "msgraph_sdk-1.18.0.tar.gz", hash = "sha256:ef49166ada7b459b5a843ceb3d253c1ab99d8987ebf3112147eb6cbcaa101793"},
 ]
 
 [package.dependencies]
@@ -3152,105 +3147,6 @@ files = [
 ]
 
 [[package]]
-name = "pendulum"
-version = "3.0.0"
-description = "Python datetimes made easy"
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "pendulum-3.0.0-cp310-cp310-macosx_10_12_x86_64.whl", hash = "sha256:2cf9e53ef11668e07f73190c805dbdf07a1939c3298b78d5a9203a86775d1bfd"},
-    {file = "pendulum-3.0.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:fb551b9b5e6059377889d2d878d940fd0bbb80ae4810543db18e6f77b02c5ef6"},
-    {file = "pendulum-3.0.0-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:6c58227ac260d5b01fc1025176d7b31858c9f62595737f350d22124a9a3ad82d"},
-    {file = "pendulum-3.0.0-cp310-cp310-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:60fb6f415fea93a11c52578eaa10594568a6716602be8430b167eb0d730f3332"},
-    {file = "pendulum-3.0.0-cp310-cp310-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:b69f6b4dbcb86f2c2fe696ba991e67347bcf87fe601362a1aba6431454b46bde"},
-    {file = "pendulum-3.0.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:138afa9c373ee450ede206db5a5e9004fd3011b3c6bbe1e57015395cd076a09f"},
-    {file = "pendulum-3.0.0-cp310-cp310-musllinux_1_1_aarch64.whl", hash = "sha256:83d9031f39c6da9677164241fd0d37fbfc9dc8ade7043b5d6d62f56e81af8ad2"},
-    {file = "pendulum-3.0.0-cp310-cp310-musllinux_1_1_x86_64.whl", hash = "sha256:0c2308af4033fa534f089595bcd40a95a39988ce4059ccd3dc6acb9ef14ca44a"},
-    {file = "pendulum-3.0.0-cp310-none-win_amd64.whl", hash = "sha256:9a59637cdb8462bdf2dbcb9d389518c0263799189d773ad5c11db6b13064fa79"},
-    {file = "pendulum-3.0.0-cp311-cp311-macosx_10_12_x86_64.whl", hash = "sha256:3725245c0352c95d6ca297193192020d1b0c0f83d5ee6bb09964edc2b5a2d508"},
-    {file = "pendulum-3.0.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:6c035f03a3e565ed132927e2c1b691de0dbf4eb53b02a5a3c5a97e1a64e17bec"},
-    {file = "pendulum-3.0.0-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:597e66e63cbd68dd6d58ac46cb7a92363d2088d37ccde2dae4332ef23e95cd00"},
-    {file = "pendulum-3.0.0-cp311-cp311-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:99a0f8172e19f3f0c0e4ace0ad1595134d5243cf75985dc2233e8f9e8de263ca"},
-    {file = "pendulum-3.0.0-cp311-cp311-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:77d8839e20f54706aed425bec82a83b4aec74db07f26acd039905d1237a5e1d4"},
-    {file = "pendulum-3.0.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:afde30e8146292b059020fbc8b6f8fd4a60ae7c5e6f0afef937bbb24880bdf01"},
-    {file = "pendulum-3.0.0-cp311-cp311-musllinux_1_1_aarch64.whl", hash = "sha256:660434a6fcf6303c4efd36713ca9212c753140107ee169a3fc6c49c4711c2a05"},
-    {file = "pendulum-3.0.0-cp311-cp311-musllinux_1_1_x86_64.whl", hash = "sha256:dee9e5a48c6999dc1106eb7eea3e3a50e98a50651b72c08a87ee2154e544b33e"},
-    {file = "pendulum-3.0.0-cp311-none-win_amd64.whl", hash = "sha256:d4cdecde90aec2d67cebe4042fd2a87a4441cc02152ed7ed8fb3ebb110b94ec4"},
-    {file = "pendulum-3.0.0-cp311-none-win_arm64.whl", hash = "sha256:773c3bc4ddda2dda9f1b9d51fe06762f9200f3293d75c4660c19b2614b991d83"},
-    {file = "pendulum-3.0.0-cp312-cp312-macosx_10_12_x86_64.whl", hash = "sha256:409e64e41418c49f973d43a28afe5df1df4f1dd87c41c7c90f1a63f61ae0f1f7"},
-    {file = "pendulum-3.0.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:a38ad2121c5ec7c4c190c7334e789c3b4624798859156b138fcc4d92295835dc"},
-    {file = "pendulum-3.0.0-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:fde4d0b2024b9785f66b7f30ed59281bd60d63d9213cda0eb0910ead777f6d37"},
-    {file = "pendulum-3.0.0-cp312-cp312-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:4b2c5675769fb6d4c11238132962939b960fcb365436b6d623c5864287faa319"},
-    {file = "pendulum-3.0.0-cp312-cp312-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:8af95e03e066826f0f4c65811cbee1b3123d4a45a1c3a2b4fc23c4b0dff893b5"},
-    {file = "pendulum-3.0.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:2165a8f33cb15e06c67070b8afc87a62b85c5a273e3aaa6bc9d15c93a4920d6f"},
-    {file = "pendulum-3.0.0-cp312-cp312-musllinux_1_1_aarch64.whl", hash = "sha256:ad5e65b874b5e56bd942546ea7ba9dd1d6a25121db1c517700f1c9de91b28518"},
-    {file = "pendulum-3.0.0-cp312-cp312-musllinux_1_1_x86_64.whl", hash = "sha256:17fe4b2c844bbf5f0ece69cfd959fa02957c61317b2161763950d88fed8e13b9"},
-    {file = "pendulum-3.0.0-cp312-none-win_amd64.whl", hash = "sha256:78f8f4e7efe5066aca24a7a57511b9c2119f5c2b5eb81c46ff9222ce11e0a7a5"},
-    {file = "pendulum-3.0.0-cp312-none-win_arm64.whl", hash = "sha256:28f49d8d1e32aae9c284a90b6bb3873eee15ec6e1d9042edd611b22a94ac462f"},
-    {file = "pendulum-3.0.0-cp37-cp37m-macosx_10_12_x86_64.whl", hash = "sha256:d4e2512f4e1a4670284a153b214db9719eb5d14ac55ada5b76cbdb8c5c00399d"},
-    {file = "pendulum-3.0.0-cp37-cp37m-macosx_11_0_arm64.whl", hash = "sha256:3d897eb50883cc58d9b92f6405245f84b9286cd2de6e8694cb9ea5cb15195a32"},
-    {file = "pendulum-3.0.0-cp37-cp37m-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:2e169cc2ca419517f397811bbe4589cf3cd13fca6dc38bb352ba15ea90739ebb"},
-    {file = "pendulum-3.0.0-cp37-cp37m-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:f17c3084a4524ebefd9255513692f7e7360e23c8853dc6f10c64cc184e1217ab"},
-    {file = "pendulum-3.0.0-cp37-cp37m-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:826d6e258052715f64d05ae0fc9040c0151e6a87aae7c109ba9a0ed930ce4000"},
-    {file = "pendulum-3.0.0-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:d2aae97087872ef152a0c40e06100b3665d8cb86b59bc8471ca7c26132fccd0f"},
-    {file = "pendulum-3.0.0-cp37-cp37m-musllinux_1_1_aarch64.whl", hash = "sha256:ac65eeec2250d03106b5e81284ad47f0d417ca299a45e89ccc69e36130ca8bc7"},
-    {file = "pendulum-3.0.0-cp37-cp37m-musllinux_1_1_x86_64.whl", hash = "sha256:a5346d08f3f4a6e9e672187faa179c7bf9227897081d7121866358af369f44f9"},
-    {file = "pendulum-3.0.0-cp37-none-win_amd64.whl", hash = "sha256:235d64e87946d8f95c796af34818c76e0f88c94d624c268693c85b723b698aa9"},
-    {file = "pendulum-3.0.0-cp38-cp38-macosx_10_12_x86_64.whl", hash = "sha256:6a881d9c2a7f85bc9adafcfe671df5207f51f5715ae61f5d838b77a1356e8b7b"},
-    {file = "pendulum-3.0.0-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:d7762d2076b9b1cb718a6631ad6c16c23fc3fac76cbb8c454e81e80be98daa34"},
-    {file = "pendulum-3.0.0-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:4e8e36a8130819d97a479a0e7bf379b66b3b1b520e5dc46bd7eb14634338df8c"},
-    {file = "pendulum-3.0.0-cp38-cp38-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:7dc843253ac373358ffc0711960e2dd5b94ab67530a3e204d85c6e8cb2c5fa10"},
-    {file = "pendulum-3.0.0-cp38-cp38-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:0a78ad3635d609ceb1e97d6aedef6a6a6f93433ddb2312888e668365908c7120"},
-    {file = "pendulum-3.0.0-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:b30a137e9e0d1f751e60e67d11fc67781a572db76b2296f7b4d44554761049d6"},
-    {file = "pendulum-3.0.0-cp38-cp38-musllinux_1_1_aarch64.whl", hash = "sha256:c95984037987f4a457bb760455d9ca80467be792236b69d0084f228a8ada0162"},
-    {file = "pendulum-3.0.0-cp38-cp38-musllinux_1_1_x86_64.whl", hash = "sha256:d29c6e578fe0f893766c0d286adbf0b3c726a4e2341eba0917ec79c50274ec16"},
-    {file = "pendulum-3.0.0-cp38-none-win_amd64.whl", hash = "sha256:deaba8e16dbfcb3d7a6b5fabdd5a38b7c982809567479987b9c89572df62e027"},
-    {file = "pendulum-3.0.0-cp39-cp39-macosx_10_12_x86_64.whl", hash = "sha256:b11aceea5b20b4b5382962b321dbc354af0defe35daa84e9ff3aae3c230df694"},
-    {file = "pendulum-3.0.0-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:a90d4d504e82ad236afac9adca4d6a19e4865f717034fc69bafb112c320dcc8f"},
-    {file = "pendulum-3.0.0-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:825799c6b66e3734227756fa746cc34b3549c48693325b8b9f823cb7d21b19ac"},
-    {file = "pendulum-3.0.0-cp39-cp39-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:ad769e98dc07972e24afe0cff8d365cb6f0ebc7e65620aa1976fcfbcadc4c6f3"},
-    {file = "pendulum-3.0.0-cp39-cp39-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:a6fc26907eb5fb8cc6188cc620bc2075a6c534d981a2f045daa5f79dfe50d512"},
-    {file = "pendulum-3.0.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:0c717eab1b6d898c00a3e0fa7781d615b5c5136bbd40abe82be100bb06df7a56"},
-    {file = "pendulum-3.0.0-cp39-cp39-musllinux_1_1_aarch64.whl", hash = "sha256:3ddd1d66d1a714ce43acfe337190be055cdc221d911fc886d5a3aae28e14b76d"},
-    {file = "pendulum-3.0.0-cp39-cp39-musllinux_1_1_x86_64.whl", hash = "sha256:822172853d7a9cf6da95d7b66a16c7160cb99ae6df55d44373888181d7a06edc"},
-    {file = "pendulum-3.0.0-cp39-none-win_amd64.whl", hash = "sha256:840de1b49cf1ec54c225a2a6f4f0784d50bd47f68e41dc005b7f67c7d5b5f3ae"},
-    {file = "pendulum-3.0.0-pp310-pypy310_pp73-macosx_10_12_x86_64.whl", hash = "sha256:3b1f74d1e6ffe5d01d6023870e2ce5c2191486928823196f8575dcc786e107b1"},
-    {file = "pendulum-3.0.0-pp310-pypy310_pp73-macosx_11_0_arm64.whl", hash = "sha256:729e9f93756a2cdfa77d0fc82068346e9731c7e884097160603872686e570f07"},
-    {file = "pendulum-3.0.0-pp310-pypy310_pp73-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:e586acc0b450cd21cbf0db6bae386237011b75260a3adceddc4be15334689a9a"},
-    {file = "pendulum-3.0.0-pp310-pypy310_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:22e7944ffc1f0099a79ff468ee9630c73f8c7835cd76fdb57ef7320e6a409df4"},
-    {file = "pendulum-3.0.0-pp310-pypy310_pp73-musllinux_1_1_aarch64.whl", hash = "sha256:fa30af36bd8e50686846bdace37cf6707bdd044e5cb6e1109acbad3277232e04"},
-    {file = "pendulum-3.0.0-pp310-pypy310_pp73-musllinux_1_1_x86_64.whl", hash = "sha256:440215347b11914ae707981b9a57ab9c7b6983ab0babde07063c6ee75c0dc6e7"},
-    {file = "pendulum-3.0.0-pp310-pypy310_pp73-win_amd64.whl", hash = "sha256:314c4038dc5e6a52991570f50edb2f08c339debdf8cea68ac355b32c4174e820"},
-    {file = "pendulum-3.0.0-pp37-pypy37_pp73-macosx_10_12_x86_64.whl", hash = "sha256:5acb1d386337415f74f4d1955c4ce8d0201978c162927d07df8eb0692b2d8533"},
-    {file = "pendulum-3.0.0-pp37-pypy37_pp73-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:a789e12fbdefaffb7b8ac67f9d8f22ba17a3050ceaaa635cd1cc4645773a4b1e"},
-    {file = "pendulum-3.0.0-pp37-pypy37_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:860aa9b8a888e5913bd70d819306749e5eb488e6b99cd6c47beb701b22bdecf5"},
-    {file = "pendulum-3.0.0-pp37-pypy37_pp73-musllinux_1_1_aarch64.whl", hash = "sha256:5ebc65ea033ef0281368217fbf59f5cb05b338ac4dd23d60959c7afcd79a60a0"},
-    {file = "pendulum-3.0.0-pp37-pypy37_pp73-musllinux_1_1_x86_64.whl", hash = "sha256:d9fef18ab0386ef6a9ac7bad7e43ded42c83ff7ad412f950633854f90d59afa8"},
-    {file = "pendulum-3.0.0-pp38-pypy38_pp73-macosx_10_12_x86_64.whl", hash = "sha256:1c134ba2f0571d0b68b83f6972e2307a55a5a849e7dac8505c715c531d2a8795"},
-    {file = "pendulum-3.0.0-pp38-pypy38_pp73-macosx_11_0_arm64.whl", hash = "sha256:385680812e7e18af200bb9b4a49777418c32422d05ad5a8eb85144c4a285907b"},
-    {file = "pendulum-3.0.0-pp38-pypy38_pp73-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:9eec91cd87c59fb32ec49eb722f375bd58f4be790cae11c1b70fac3ee4f00da0"},
-    {file = "pendulum-3.0.0-pp38-pypy38_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:4386bffeca23c4b69ad50a36211f75b35a4deb6210bdca112ac3043deb7e494a"},
-    {file = "pendulum-3.0.0-pp38-pypy38_pp73-musllinux_1_1_aarch64.whl", hash = "sha256:dfbcf1661d7146d7698da4b86e7f04814221081e9fe154183e34f4c5f5fa3bf8"},
-    {file = "pendulum-3.0.0-pp38-pypy38_pp73-musllinux_1_1_x86_64.whl", hash = "sha256:04a1094a5aa1daa34a6b57c865b25f691848c61583fb22722a4df5699f6bf74c"},
-    {file = "pendulum-3.0.0-pp38-pypy38_pp73-win_amd64.whl", hash = "sha256:5b0ec85b9045bd49dd3a3493a5e7ddfd31c36a2a60da387c419fa04abcaecb23"},
-    {file = "pendulum-3.0.0-pp39-pypy39_pp73-macosx_10_12_x86_64.whl", hash = "sha256:0a15b90129765b705eb2039062a6daf4d22c4e28d1a54fa260892e8c3ae6e157"},
-    {file = "pendulum-3.0.0-pp39-pypy39_pp73-macosx_11_0_arm64.whl", hash = "sha256:bb8f6d7acd67a67d6fedd361ad2958ff0539445ef51cbe8cd288db4306503cd0"},
-    {file = "pendulum-3.0.0-pp39-pypy39_pp73-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:fd69b15374bef7e4b4440612915315cc42e8575fcda2a3d7586a0d88192d0c88"},
-    {file = "pendulum-3.0.0-pp39-pypy39_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:dc00f8110db6898360c53c812872662e077eaf9c75515d53ecc65d886eec209a"},
-    {file = "pendulum-3.0.0-pp39-pypy39_pp73-musllinux_1_1_aarch64.whl", hash = "sha256:83a44e8b40655d0ba565a5c3d1365d27e3e6778ae2a05b69124db9e471255c4a"},
-    {file = "pendulum-3.0.0-pp39-pypy39_pp73-musllinux_1_1_x86_64.whl", hash = "sha256:1a3604e9fbc06b788041b2a8b78f75c243021e0f512447806a6d37ee5214905d"},
-    {file = "pendulum-3.0.0-pp39-pypy39_pp73-win_amd64.whl", hash = "sha256:92c307ae7accebd06cbae4729f0ba9fa724df5f7d91a0964b1b972a22baa482b"},
-    {file = "pendulum-3.0.0.tar.gz", hash = "sha256:5d034998dea404ec31fae27af6b22cff1708f830a1ed7353be4d1019bb9f584e"},
-]
-
-[package.dependencies]
-python-dateutil = ">=2.6"
-tzdata = ">=2020.1"
-
-[package.extras]
-test = ["time-machine (>=2.6.0)"]
-
-[[package]]
 name = "platformdirs"
 version = "4.3.6"
 description = "A small Python package for determining appropriate platform-specific dirs, e.g. a `user data dir`."
@@ -3462,7 +3358,7 @@ files = [
 
 [[package]]
 name = "prowler"
-version = "5.2.2"
+version = "5.3.0"
 description = "Prowler is an Open Source security tool to perform AWS, GCP and Azure security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness. It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, FedRAMP, PCI-DSS, GDPR, HIPAA, FFIEC, SOC2, GXP, AWS Well-Architected Framework Security Pillar, AWS Foundational Technical Review (FTR), ENS (Spanish National Security Scheme) and your custom security frameworks."
 optional = false
 python-versions = ">=3.9,<3.13"
@@ -3490,8 +3386,8 @@ azure-mgmt-security = "7.0.0"
 azure-mgmt-sql = "3.0.1"
 azure-mgmt-storage = "21.2.1"
 azure-mgmt-subscription = "3.1.1"
-azure-mgmt-web = "7.3.1"
-azure-storage-blob = "12.24.0"
+azure-mgmt-web = "8.0.0"
+azure-storage-blob = "12.24.1"
 boto3 = "1.35.99"
 botocore = "1.35.99"
 colorama = "0.4.6"
@@ -3499,18 +3395,18 @@ cryptography = "43.0.1"
 dash = "2.18.2"
 dash-bootstrap-components = "1.6.0"
 detect-secrets = "1.5.0"
-google-api-python-client = "2.159.0"
+google-api-python-client = "2.160.0"
 google-auth-httplib2 = ">=0.1,<0.3"
 jsonschema = "4.23.0"
-kubernetes = "31.0.0"
-microsoft-kiota-abstractions = "1.6.8"
-msgraph-sdk = "1.17.0"
+kubernetes = "32.0.0"
+microsoft-kiota-abstractions = "1.9.2"
+msgraph-sdk = "1.18.0"
 numpy = "2.0.2"
 pandas = "2.2.3"
-py-ocsf-models = "0.2.0"
+py-ocsf-models = "0.3.0"
 pydantic = "1.10.18"
 python-dateutil = "^2.9.0.post0"
-pytz = "2024.2"
+pytz = "2025.1"
 schema = "0.7.7"
 shodan = "1.31.0"
 slack-sdk = "3.34.0"
@@ -3520,8 +3416,8 @@ tzlocal = "5.2"
 [package.source]
 type = "git"
 url = "https://github.com/prowler-cloud/prowler.git"
-reference = "v5.2"
-resolved_reference = "1a5428445aaea28b4a6425f7aa8c76838f46f171"
+reference = "v5.3"
+resolved_reference = "dfd377f89e034e6be47acc95c3e6666278f8054e"
 
 [[package]]
 name = "psutil"
@@ -3585,7 +3481,6 @@ files = [
     {file = "psycopg2_binary-2.9.9-cp311-cp311-win32.whl", hash = "sha256:dc4926288b2a3e9fd7b50dc6a1909a13bbdadfc67d93f3374d984e56f885579d"},
     {file = "psycopg2_binary-2.9.9-cp311-cp311-win_amd64.whl", hash = "sha256:b76bedd166805480ab069612119ea636f5ab8f8771e640ae103e05a4aae3e417"},
     {file = "psycopg2_binary-2.9.9-cp312-cp312-macosx_10_9_x86_64.whl", hash = "sha256:8532fd6e6e2dc57bcb3bc90b079c60de896d2128c5d9d6f24a63875a95a088cf"},
-    {file = "psycopg2_binary-2.9.9-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:b0605eaed3eb239e87df0d5e3c6489daae3f7388d455d0c0b4df899519c6a38d"},
     {file = "psycopg2_binary-2.9.9-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:8f8544b092a29a6ddd72f3556a9fcf249ec412e10ad28be6a0c0d948924f2212"},
     {file = "psycopg2_binary-2.9.9-cp312-cp312-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:2d423c8d8a3c82d08fe8af900ad5b613ce3632a1249fd6a223941d0735fce493"},
     {file = "psycopg2_binary-2.9.9-cp312-cp312-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:2e5afae772c00980525f6d6ecf7cbca55676296b580c0e6abb407f15f3706996"},
@@ -3594,8 +3489,6 @@ files = [
     {file = "psycopg2_binary-2.9.9-cp312-cp312-musllinux_1_1_i686.whl", hash = "sha256:cb16c65dcb648d0a43a2521f2f0a2300f40639f6f8c1ecbc662141e4e3e1ee07"},
     {file = "psycopg2_binary-2.9.9-cp312-cp312-musllinux_1_1_ppc64le.whl", hash = "sha256:911dda9c487075abd54e644ccdf5e5c16773470a6a5d3826fda76699410066fb"},
     {file = "psycopg2_binary-2.9.9-cp312-cp312-musllinux_1_1_x86_64.whl", hash = "sha256:57fede879f08d23c85140a360c6a77709113efd1c993923c59fde17aa27599fe"},
-    {file = "psycopg2_binary-2.9.9-cp312-cp312-win32.whl", hash = "sha256:64cf30263844fa208851ebb13b0732ce674d8ec6a0c86a4e160495d299ba3c93"},
-    {file = "psycopg2_binary-2.9.9-cp312-cp312-win_amd64.whl", hash = "sha256:81ff62668af011f9a48787564ab7eded4e9fb17a4a6a74af5ffa6a457400d2ab"},
     {file = "psycopg2_binary-2.9.9-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:2293b001e319ab0d869d660a704942c9e2cce19745262a8aba2115ef41a0a42a"},
     {file = "psycopg2_binary-2.9.9-cp37-cp37m-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:03ef7df18daf2c4c07e2695e8cfd5ee7f748a1d54d802330985a78d2a5a6dca9"},
     {file = "psycopg2_binary-2.9.9-cp37-cp37m-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:0a602ea5aff39bb9fac6308e9c9d82b9a35c2bf288e184a816002c9fae930b77"},
@@ -3635,13 +3528,13 @@ files = [
 
 [[package]]
 name = "py-ocsf-models"
-version = "0.2.0"
+version = "0.3.0"
 description = "This is a Python implementation of the OCSF models. The models are used to represent the data of the OCSF Schema defined in https://schema.ocsf.io/."
 optional = false
 python-versions = "<3.13,>=3.9"
 files = [
-    {file = "py_ocsf_models-0.2.0-py3-none-any.whl", hash = "sha256:ac75fd21077694b343ebaad3479194db113c274879b114277560ff287d5cd7b5"},
-    {file = "py_ocsf_models-0.2.0.tar.gz", hash = "sha256:3e12648d05329e6776a0e6b1ffea87a3eb60aa7d8cb2c4afd69e5724f443ce03"},
+    {file = "py_ocsf_models-0.3.0-py3-none-any.whl", hash = "sha256:3d31e379be5e4271f7faf62dee9c36798559a1f7f98dff142c0e4cfdb35e291c"},
+    {file = "py_ocsf_models-0.3.0.tar.gz", hash = "sha256:ad46b7d9761b74010f06a894df2d9541989252b7ff738cd5c7edbf4283df2279"},
 ]
 
 [package.dependencies]
@@ -4069,13 +3962,13 @@ files = [
 
 [[package]]
 name = "pytz"
-version = "2024.2"
+version = "2025.1"
 description = "World timezone definitions, modern and historical"
 optional = false
 python-versions = "*"
 files = [
-    {file = "pytz-2024.2-py2.py3-none-any.whl", hash = "sha256:31c7c1817eb7fae7ca4b8c7ee50c72f93aa2dd863de768e1ef4245d426aa0725"},
-    {file = "pytz-2024.2.tar.gz", hash = "sha256:2aa355083c50a0f93fa581709deac0c9ad65cca8a9e9beac660adcbd493c798a"},
+    {file = "pytz-2025.1-py2.py3-none-any.whl", hash = "sha256:89dd22dca55b46eac6eda23b2d72721bf1bdfef212645d81513ef5d03038de57"},
+    {file = "pytz-2025.1.tar.gz", hash = "sha256:c2db42be2a2518b28e65f9207c4d05e6ff547d1efa4086469ef855e4ab70178e"},
 ]
 
 [[package]]
@@ -5152,4 +5045,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.13"
-content-hash = "4d015c14bb849873c82fd3804c55013c51860689bba99fa095b9896062903357"
+content-hash = "f6be3280891827b3162055248a10561638ee42f406f048d7a886cd3532f714a5"
