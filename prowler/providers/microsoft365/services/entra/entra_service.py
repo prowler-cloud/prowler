@@ -15,12 +15,11 @@ class Entra(Microsoft365Service):
         loop = get_event_loop()
 
         attributes = loop.run_until_complete(
-            gather(
-                self._get_authorization_policy(),
-            )
+            gather(self._get_authorization_policy(), self._get_security_default())
         )
 
         self.authorization_policy = attributes[0]
+        self.security_defaults = attributes[1]
 
     async def _get_authorization_policy(self):
         logger.info("Entra - Getting authorization policy...")
@@ -82,6 +81,29 @@ class Entra(Microsoft365Service):
             )
 
         return authorization_policy
+
+    async def _get_security_default(self):
+        logger.info("Entra - Getting security default...")
+        try:
+            security_defaults = (
+                await self.client.policies.identity_security_defaults_enforcement_policy.get()
+            )
+            return SecurityDefaults(
+                id=security_defaults.id,
+                name=security_defaults.display_name,
+                is_enabled=security_defaults.is_enabled,
+            )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return None
+
+
+class SecurityDefaults(BaseModel):
+    id: str
+    name: str
+    is_enabled: bool
 
 
 class DefaultUserRolePermissions(BaseModel):
