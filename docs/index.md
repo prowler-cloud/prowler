@@ -404,7 +404,7 @@ While the scan is running, start exploring the findings in these sections:
 
 ### Prowler CLI
 
-To run Prowler, you will need to specify the provider (e.g `aws`, `gcp`, `azure` or `kubernetes`):
+To run Prowler, you will need to specify the provider (e.g `aws`, `gcp`, `azure`, `microsoft365` or `kubernetes`):
 
 ???+ note
     If no provider specified, AWS will be used for backward compatibility with most of v2 options.
