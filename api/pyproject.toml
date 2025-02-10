@@ -33,6 +33,7 @@ pytest-celery = {extras = ["redis"], version = "^1.0.1"}
 # Needed for prowler compatibility
 python = ">=3.11,<3.13"
 uuid6 = "2024.7.10"
+sentry-sdk = {extras = ["django"], version = "^2.20.0"}
 
 [tool.poetry.group.dev.dependencies]
 bandit = "1.7.9"
