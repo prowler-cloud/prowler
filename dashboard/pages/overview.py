@@ -1720,7 +1720,7 @@ def generate_table(data, index, color_mapping_severity, color_mapping_status):
                                                     [
                                                         html.P(
                                                             html.Strong(
-                                                                "Recomendation: ",
+                                                                "Recommendation: ",
                                                                 style={
                                                                     "margin-right": "5px"
                                                                 },
@@ -1744,7 +1744,7 @@ def generate_table(data, index, color_mapping_severity, color_mapping_status):
                                                     [
                                                         html.P(
                                                             html.Strong(
-                                                                "RecomendationUrl: ",
+                                                                "RecommendationUrl: ",
                                                                 style={
                                                                     "margin-right": "5px"
                                                                 },

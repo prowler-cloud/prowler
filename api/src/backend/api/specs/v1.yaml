@@ -346,6 +346,9 @@ paths:
         schema:
           type: string
           format: date
+        description: At least one of the variations of the `filter[inserted_at]` filter
+          must be provided.
+        required: true
       - in: query
         name: filter[inserted_at__date]
         schema:
@@ -356,11 +359,13 @@ paths:
         schema:
           type: string
           format: date
+        description: Maximum date range is 7 days.
       - in: query
         name: filter[inserted_at__lte]
         schema:
           type: string
           format: date
+        description: Maximum date range is 7 days.
       - in: query
         name: filter[provider]
         schema:
@@ -861,11 +866,13 @@ paths:
         schema:
           type: string
           format: date
+        description: Maximum date range is 7 days.
       - in: query
         name: filter[inserted_at__lte]
         schema:
           type: string
           format: date
+        description: Maximum date range is 7 days.
       - in: query
         name: filter[provider]
         schema:
@@ -1275,6 +1282,9 @@ paths:
         schema:
           type: string
           format: date
+        description: At least one of the variations of the `filter[inserted_at]` filter
+          must be provided.
+        required: true
       - in: query
         name: filter[inserted_at__date]
         schema:
@@ -1285,11 +1295,13 @@ paths:
         schema:
           type: string
           format: date
+        description: Maximum date range is 7 days.
       - in: query
         name: filter[inserted_at__lte]
         schema:
           type: string
           format: date
+        description: Maximum date range is 7 days.
       - in: query
         name: filter[provider]
         schema:
@@ -7665,7 +7677,7 @@ components:
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
-              maxLength: 63
+              maxLength: 250
               minLength: 3
             alias:
               type: string
@@ -7777,7 +7789,7 @@ components:
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
-              maxLength: 63
+              maxLength: 250
               minLength: 3
           required:
           - uid
@@ -7821,7 +7833,7 @@ components:
                   type: string
                   minLength: 3
                   title: Unique identifier for the provider, set by the provider
-                  maxLength: 63
+                  maxLength: 250
               required:
               - uid
       required:

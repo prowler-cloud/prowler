@@ -5,6 +5,7 @@ from unittest.mock import ANY, Mock, patch
 import jwt
 import pytest
 from conftest import API_JSON_CONTENT_TYPE, TEST_PASSWORD, TEST_USER
+from django.conf import settings
 from django.urls import reverse
 from rest_framework import status
 
@@ -25,6 +26,12 @@ from api.models import (
 from api.rls import Tenant
 
 TODAY = str(datetime.today().date())
+
+
+def today_after_n_days(n_days: int) -> str:
+    return datetime.strftime(
+        datetime.today().date() + timedelta(days=n_days), "%Y-%m-%d"
+    )
 
 
 @pytest.mark.django_db
@@ -877,6 +884,16 @@ class TestProviderViewSet:
                     "provider": "kubernetes",
                     "uid": "kubernetes-test-123456789",
                     "alias": "test",
+                },
+                {
+                    "provider": "kubernetes",
+                    "uid": "arn:aws:eks:us-east-1:111122223333:cluster/test-cluster-long-name-123456789",
+                    "alias": "EKS",
+                },
+                {
+                    "provider": "kubernetes",
+                    "uid": "gke_aaaa-dev_europe-test1_dev-aaaa-test-cluster-long-name-123456789",
+                    "alias": "GKE",
                 },
                 {
                     "provider": "azure",
@@ -2379,12 +2396,33 @@ class TestResourceViewSet:
 @pytest.mark.django_db
 class TestFindingViewSet:
     def test_findings_list_none(self, authenticated_client):
-        response = authenticated_client.get(reverse("finding-list"))
+        response = authenticated_client.get(
+            reverse("finding-list"), {"filter[inserted_at]": TODAY}
+        )
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == 0
 
-    def test_findings_list(self, authenticated_client, findings_fixture):
+    def test_findings_list_no_date_filter(self, authenticated_client):
         response = authenticated_client.get(reverse("finding-list"))
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["errors"][0]["code"] == "required"
+
+    def test_findings_date_range_too_large(self, authenticated_client):
+        response = authenticated_client.get(
+            reverse("finding-list"),
+            {
+                "filter[inserted_at.lte]": today_after_n_days(
+                    -(settings.FINDINGS_MAX_DAYS_IN_RANGE + 1)
+                ),
+            },
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["errors"][0]["code"] == "invalid"
+
+    def test_findings_list(self, authenticated_client, findings_fixture):
+        response = authenticated_client.get(
+            reverse("finding-list"), {"filter[inserted_at]": TODAY}
+        )
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == len(findings_fixture)
         assert (
@@ -2404,7 +2442,8 @@ class TestFindingViewSet:
         self, include_values, expected_resources, authenticated_client, findings_fixture
     ):
         response = authenticated_client.get(
-            reverse("finding-list"), {"include": include_values}
+            reverse("finding-list"),
+            {"include": include_values, "filter[inserted_at]": TODAY},
         )
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == len(findings_fixture)
@@ -2439,13 +2478,13 @@ class TestFindingViewSet:
                 ("service.icontains", "ec", 1),
                 ("inserted_at", "2024-01-01", 0),
                 ("inserted_at.date", "2024-01-01", 0),
-                ("inserted_at.gte", "2024-01-01", 2),
+                ("inserted_at.gte", today_after_n_days(-1), 2),
                 (
                     "inserted_at.lte",
-                    "2028-12-31",
+                    today_after_n_days(1),
                     2,
-                ),  # TODO: To avoid having to modify this value and to ensure that the tests always work, we should set the time before the fixtures are inserted
-                ("updated_at.lte", "2024-01-01", 0),
+                ),
+                ("updated_at.lte", today_after_n_days(-1), 0),
                 ("resource_type.icontains", "prowler", 2),
                 # full text search on finding
                 ("search", "dev-qa", 1),
@@ -2475,9 +2514,13 @@ class TestFindingViewSet:
         filter_value,
         expected_count,
     ):
+        filters = {f"filter[{filter_name}]": filter_value}
+        if "inserted_at" not in filter_name:
+            filters["filter[inserted_at]"] = TODAY
+
         response = authenticated_client.get(
             reverse("finding-list"),
-            {f"filter[{filter_name}]": filter_value},
+            filters,
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -2486,9 +2529,7 @@ class TestFindingViewSet:
     def test_finding_filter_by_scan_id(self, authenticated_client, findings_fixture):
         response = authenticated_client.get(
             reverse("finding-list"),
-            {
-                "filter[scan]": findings_fixture[0].scan.id,
-            },
+            {"filter[scan]": findings_fixture[0].scan.id},
         )
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == 2
@@ -2511,6 +2552,7 @@ class TestFindingViewSet:
             reverse("finding-list"),
             {
                 "filter[provider]": findings_fixture[0].scan.provider.id,
+                "filter[inserted_at]": TODAY,
             },
         )
         assert response.status_code == status.HTTP_200_OK
@@ -2525,7 +2567,8 @@ class TestFindingViewSet:
                 "filter[provider.in]": [
                     findings_fixture[0].scan.provider.id,
                     findings_fixture[1].scan.provider.id,
-                ]
+                ],
+                "filter[inserted_at]": TODAY,
             },
         )
         assert response.status_code == status.HTTP_200_OK
@@ -2559,13 +2602,13 @@ class TestFindingViewSet:
     )
     def test_findings_sort(self, authenticated_client, sort_field):
         response = authenticated_client.get(
-            reverse("finding-list"), {"sort": sort_field}
+            reverse("finding-list"), {"sort": sort_field, "filter[inserted_at]": TODAY}
         )
         assert response.status_code == status.HTTP_200_OK
 
     def test_findings_sort_invalid(self, authenticated_client):
         response = authenticated_client.get(
-            reverse("finding-list"), {"sort": "invalid"}
+            reverse("finding-list"), {"sort": "invalid", "filter[inserted_at]": TODAY}
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert response.json()["errors"][0]["code"] == "invalid"
@@ -2633,7 +2676,7 @@ class TestFindingViewSet:
             reverse("finding-metadata"),
             {
                 "filter[severity__in]": ["low", "medium"],
-                "filter[inserted_at]": finding_1.updated_at.strftime("%Y-%m-%d"),
+                "filter[inserted_at]": finding_1.inserted_at.strftime("%Y-%m-%d"),
             },
         )
         data = response.json()
