@@ -5,7 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("api", "0008_daily_scheduled_tasks_update"),
+        ("api", "0009_increase_provider_uid_maximum_length"),
     ]
 
     operations = [
