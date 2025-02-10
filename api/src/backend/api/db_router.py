@@ -21,3 +21,9 @@ class MainRouter:
 
     def allow_migrate(self, db, app_label, model_name=None, **hints):  # noqa: F841
         return db == self.admin_db
+
+    def allow_relation(self, obj1, obj2, **hints):  # noqa: F841
+        # Allow relations if both objects are in either "default" or "admin" db connectors
+        if {obj1._state.db, obj2._state.db} <= {self.default_db, self.admin_db}:
+            return True
+        return None

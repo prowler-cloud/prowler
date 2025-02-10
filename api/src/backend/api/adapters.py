@@ -1,6 +1,7 @@
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from django.db import transaction
 
+from api.db_router import MainRouter
 from api.db_utils import rls_transaction
 from api.models import Membership, Role, Tenant, User, UserRoleRelationship
 
@@ -26,18 +27,18 @@ class ProwlerSocialAccountAdapter(DefaultSocialAccountAdapter):
         Called after the user data is fully populated from the provider
         and is about to be saved to the DB for the first time.
         """
-        with transaction.atomic():
-            # Let allauth create/save the user
+        with transaction.atomic(using=MainRouter.admin_db):
             user = super().save_user(request, sociallogin, form)
-            # Handle all the extra logic required for new users in the application
-            tenant = Tenant.objects.create(
+            user.save(using=MainRouter.admin_db)
+
+            tenant = Tenant.objects.using(MainRouter.admin_db).create(
                 name=f"{user.email.split('@')[0]} default tenant"
             )
             with rls_transaction(str(tenant.id)):
-                Membership.objects.create(
+                Membership.objects.using(MainRouter.admin_db).create(
                     user=user, tenant=tenant, role=Membership.RoleChoices.OWNER
                 )
-                role = Role.objects.create(
+                role = Role.objects.using(MainRouter.admin_db).create(
                     name="admin",
                     tenant_id=tenant.id,
                     manage_users=True,
@@ -48,7 +49,7 @@ class ProwlerSocialAccountAdapter(DefaultSocialAccountAdapter):
                     manage_scans=True,
                     unlimited_visibility=True,
                 )
-                UserRoleRelationship.objects.create(
+                UserRoleRelationship.objects.using(MainRouter.admin_db).create(
                     user=user,
                     role=role,
                     tenant_id=tenant.id,
