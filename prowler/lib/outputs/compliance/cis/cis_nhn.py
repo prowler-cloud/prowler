@@ -10,7 +10,14 @@ from prowler.lib.outputs.finding import Finding
 
 class NHNCIS(ComplianceOutput):
     """
-    이 클래스는 NHN 클라우드 CIS 컴플라이언스 출력을 담당합니다.
+    This class represents the NHN CIS compliance output.
+    
+    Attributes:
+        - _data (list): A list to store transformed data from findings.
+        - _file_descriptor (TextIOWrapper): A file descriptor to write data to a file.
+
+    Methods:
+        - transform: Transforms findings into NHN CIS compliance format.
     """
 
     def transform(
@@ -20,26 +27,31 @@ class NHNCIS(ComplianceOutput):
         compliance_name: str,
     ) -> None:
         """
-        NHN CIS 포맷으로 findings를 변환해서 self._data에 추가한다.
+        Transforms a list of findings into NHN CIS compliance format.
+
+        Parameters:
+            - findings (list): A list of findings.
+            - compliance (Compliance): A compliance model.
+            - compliance_name (str): The name of the compliance model.
+
+        Returns:
+            - None
         """
         for finding in findings:
-            # finding이 어떤 CIS 요구사항(requirement)에 해당하는지 확인
+            # Get the compliance requirements for the finding
             finding_requirements = finding.compliance.get(compliance_name, [])
             for requirement in compliance.Requirements:
                 if requirement.Id in finding_requirements:
-                    # requirement마다 attribute를 순회하면서 데이터 생성
                     for attribute in requirement.Attributes:
                         compliance_row = NHNCISModel(
                             Provider=finding.provider,
                             Description=compliance.Description,
-                            # ---- 예시 필드들 ----
-                            SubscriptionId=finding.account_uid,  # NHN이라면 tenant/account를 지정
+                            SubscriptionId=finding.account_uid,
                             Location=finding.region,
                             AssessmentDate=str(finding.timestamp),
                             Requirements_Id=requirement.Id,
                             Requirements_Description=requirement.Description,
                             Requirements_Attributes_Section=attribute.Section,
-                            # ... 이하 Microsoft365처럼 필요한 필드들 계속 ...
                             Status=finding.status,
                             StatusExtended=finding.status_extended,
                             ResourceId=finding.resource_uid,
@@ -48,10 +60,9 @@ class NHNCIS(ComplianceOutput):
                             Muted=finding.muted,
                         )
                         self._data.append(compliance_row)
-
-        # 2) MANUAL 요구사항 처리
+        # Add manual requirements to the compliance output
         for requirement in compliance.Requirements:
-            if not requirement.Checks:  # 체크가 없는 요구사항은 수동 검사
+            if not requirement.Checks:
                 for attribute in requirement.Attributes:
                     compliance_row = NHNCISModel(
                         Provider=compliance.Provider.lower(),
@@ -62,7 +73,6 @@ class NHNCIS(ComplianceOutput):
                         Requirements_Id=requirement.Id,
                         Requirements_Description=requirement.Description,
                         Requirements_Attributes_Section=attribute.Section,
-                        # ... 이하 생략, 위와 동일 ...
                         Status="MANUAL",
                         StatusExtended="Manual check",
                         ResourceId="manual_check",
