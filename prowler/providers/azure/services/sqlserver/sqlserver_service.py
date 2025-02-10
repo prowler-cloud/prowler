@@ -8,7 +8,6 @@ from azure.mgmt.sql.models import (
     ServerExternalAdministrator,
     ServerSecurityAlertPolicy,
     ServerVulnerabilityAssessment,
-    TransparentDataEncryption,
 )
 
 from prowler.lib.logger import logger
@@ -118,7 +117,13 @@ class SQLServer(AzureService):
                         type=database.type,
                         location=database.location,
                         managed_by=database.managed_by,
-                        tde_encryption=tde_encrypted,
+                        tde_encryption=TransparentDataEncryption(
+                            id=tde_encrypted.id,
+                            name=tde_encrypted.name,
+                            type=tde_encrypted.type,
+                            location=tde_encrypted.location,
+                            status=tde_encrypted.status,
+                        ),
                     )
                 )
         except Exception as error:
@@ -169,6 +174,15 @@ class SQLServer(AzureService):
         location = client.servers.get(resouce_group_name, server_name).location
 
         return location
+
+
+@dataclass
+class TransparentDataEncryption:
+    id: str
+    name: str
+    type: str
+    location: str
+    status: str
 
 
 @dataclass
