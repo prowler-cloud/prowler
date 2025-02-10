@@ -7677,7 +7677,7 @@ components:
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
-              maxLength: 63
+              maxLength: 250
               minLength: 3
             alias:
               type: string
@@ -7789,7 +7789,7 @@ components:
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
-              maxLength: 63
+              maxLength: 250
               minLength: 3
           required:
           - uid
@@ -7833,7 +7833,7 @@ components:
                   type: string
                   minLength: 3
                   title: Unique identifier for the provider, set by the provider
-                  maxLength: 63
+                  maxLength: 250
               required:
               - uid
       required:
