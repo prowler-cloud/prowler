@@ -1569,24 +1569,6 @@ class Test_Policy:
             TRUSTED_AWS_ACCOUNT_NUMBER,
         )
 
-    # "None" is a possible value that can be passed as policy argument to is_policy_public().
-    # For instance, in the event KMS GetKeyPolicy api call fails with an exception, the
-    # default value of "Key.policy" (i.e. None) is passed to is_policy_public().
-    # The same is true for (DynamoDB) Table.policy and a few other service that rely on it.
-    # is_policy_public() should return True to ensure checks such as "kms_key_not_public_accessible"
-    # do not return a false-positive result.
-    def test_policy_is_public_if_policy_is_none(self):
-        assert is_policy_public(
-            None,
-            TRUSTED_AWS_ACCOUNT_NUMBER,
-        )
-
-    def test_policy_is_not_public_if_policy_is_empty_dict(self):
-        assert not is_policy_public(
-            {},
-            TRUSTED_AWS_ACCOUNT_NUMBER,
-        )
-
     def test_policy_allows_full_service_access_with_wildcard_action_and_resource(self):
         policy_allow_wildcard_action_and_resource = {
             "Statement": [

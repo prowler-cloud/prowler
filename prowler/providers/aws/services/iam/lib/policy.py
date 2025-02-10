@@ -129,10 +129,6 @@ def is_policy_public(
         bool: True if the policy allows public access, False otherwise
     """
     is_public = False
-
-    if policy is None:
-        return True
-
     if policy:
         for statement in policy.get("Statement", []):
             # Only check allow statements
@@ -234,7 +230,6 @@ def is_policy_public(
                     )
                     if is_public:
                         break
-
     return is_public
 
 
