@@ -5,6 +5,7 @@ from unittest.mock import ANY, Mock, patch
 import jwt
 import pytest
 from conftest import API_JSON_CONTENT_TYPE, TEST_PASSWORD, TEST_USER
+from django.conf import settings
 from django.urls import reverse
 from rest_framework import status
 
@@ -25,6 +26,12 @@ from api.models import (
 from api.rls import Tenant
 
 TODAY = str(datetime.today().date())
+
+
+def today_after_n_days(n_days: int) -> str:
+    return datetime.strftime(
+        datetime.today().date() + timedelta(days=n_days), "%Y-%m-%d"
+    )
 
 
 @pytest.mark.django_db
@@ -261,6 +268,16 @@ class TestUserViewSet:
         assert response.status_code == status.HTTP_204_NO_CONTENT
         assert not User.objects.filter(id=create_test_user.id).exists()
 
+    def test_users_destroy_other_user(
+        self, authenticated_client, create_test_user, users_fixture
+    ):
+        user = users_fixture[2]
+        response = authenticated_client.delete(
+            reverse("user-detail", kwargs={"pk": str(user.id)})
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert User.objects.filter(id=create_test_user.id).exists()
+
     def test_users_destroy_invalid_user(self, authenticated_client, create_test_user):
         another_user = User.objects.create_user(
             password="otherpassword", email="other@example.com"
@@ -268,7 +285,7 @@ class TestUserViewSet:
         response = authenticated_client.delete(
             reverse("user-detail", kwargs={"pk": another_user.id})
         )
-        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert User.objects.filter(id=another_user.id).exists()
 
     @pytest.mark.parametrize(
@@ -867,6 +884,16 @@ class TestProviderViewSet:
                     "provider": "kubernetes",
                     "uid": "kubernetes-test-123456789",
                     "alias": "test",
+                },
+                {
+                    "provider": "kubernetes",
+                    "uid": "arn:aws:eks:us-east-1:111122223333:cluster/test-cluster-long-name-123456789",
+                    "alias": "EKS",
+                },
+                {
+                    "provider": "kubernetes",
+                    "uid": "gke_aaaa-dev_europe-test1_dev-aaaa-test-cluster-long-name-123456789",
+                    "alias": "GKE",
                 },
                 {
                     "provider": "azure",
@@ -2369,12 +2396,33 @@ class TestResourceViewSet:
 @pytest.mark.django_db
 class TestFindingViewSet:
     def test_findings_list_none(self, authenticated_client):
-        response = authenticated_client.get(reverse("finding-list"))
+        response = authenticated_client.get(
+            reverse("finding-list"), {"filter[inserted_at]": TODAY}
+        )
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == 0
 
-    def test_findings_list(self, authenticated_client, findings_fixture):
+    def test_findings_list_no_date_filter(self, authenticated_client):
         response = authenticated_client.get(reverse("finding-list"))
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["errors"][0]["code"] == "required"
+
+    def test_findings_date_range_too_large(self, authenticated_client):
+        response = authenticated_client.get(
+            reverse("finding-list"),
+            {
+                "filter[inserted_at.lte]": today_after_n_days(
+                    -(settings.FINDINGS_MAX_DAYS_IN_RANGE + 1)
+                ),
+            },
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["errors"][0]["code"] == "invalid"
+
+    def test_findings_list(self, authenticated_client, findings_fixture):
+        response = authenticated_client.get(
+            reverse("finding-list"), {"filter[inserted_at]": TODAY}
+        )
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == len(findings_fixture)
         assert (
@@ -2394,7 +2442,8 @@ class TestFindingViewSet:
         self, include_values, expected_resources, authenticated_client, findings_fixture
     ):
         response = authenticated_client.get(
-            reverse("finding-list"), {"include": include_values}
+            reverse("finding-list"),
+            {"include": include_values, "filter[inserted_at]": TODAY},
         )
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == len(findings_fixture)
@@ -2429,13 +2478,13 @@ class TestFindingViewSet:
                 ("service.icontains", "ec", 1),
                 ("inserted_at", "2024-01-01", 0),
                 ("inserted_at.date", "2024-01-01", 0),
-                ("inserted_at.gte", "2024-01-01", 2),
+                ("inserted_at.gte", today_after_n_days(-1), 2),
                 (
                     "inserted_at.lte",
-                    "2028-12-31",
+                    today_after_n_days(1),
                     2,
-                ),  # TODO: To avoid having to modify this value and to ensure that the tests always work, we should set the time before the fixtures are inserted
-                ("updated_at.lte", "2024-01-01", 0),
+                ),
+                ("updated_at.lte", today_after_n_days(-1), 0),
                 ("resource_type.icontains", "prowler", 2),
                 # full text search on finding
                 ("search", "dev-qa", 1),
@@ -2444,15 +2493,16 @@ class TestFindingViewSet:
                 ("search", "ec2", 2),
                 # full text search on finding tags
                 ("search", "value2", 2),
-                ("resource_tag_key", "key", 2),
-                ("resource_tag_key__in", "key,key2", 2),
-                ("resource_tag_key__icontains", "key", 2),
-                ("resource_tag_value", "value", 2),
-                ("resource_tag_value__in", "value,value2", 2),
-                ("resource_tag_value__icontains", "value", 2),
-                ("resource_tags", "key:value", 2),
-                ("resource_tags", "not:exists", 0),
-                ("resource_tags", "not:exists,key:value", 2),
+                # Temporary disabled until we implement tag filtering in the UI
+                # ("resource_tag_key", "key", 2),
+                # ("resource_tag_key__in", "key,key2", 2),
+                # ("resource_tag_key__icontains", "key", 2),
+                # ("resource_tag_value", "value", 2),
+                # ("resource_tag_value__in", "value,value2", 2),
+                # ("resource_tag_value__icontains", "value", 2),
+                # ("resource_tags", "key:value", 2),
+                # ("resource_tags", "not:exists", 0),
+                # ("resource_tags", "not:exists,key:value", 2),
             ]
         ),
     )
@@ -2464,9 +2514,13 @@ class TestFindingViewSet:
         filter_value,
         expected_count,
     ):
+        filters = {f"filter[{filter_name}]": filter_value}
+        if "inserted_at" not in filter_name:
+            filters["filter[inserted_at]"] = TODAY
+
         response = authenticated_client.get(
             reverse("finding-list"),
-            {f"filter[{filter_name}]": filter_value},
+            filters,
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -2475,9 +2529,7 @@ class TestFindingViewSet:
     def test_finding_filter_by_scan_id(self, authenticated_client, findings_fixture):
         response = authenticated_client.get(
             reverse("finding-list"),
-            {
-                "filter[scan]": findings_fixture[0].scan.id,
-            },
+            {"filter[scan]": findings_fixture[0].scan.id},
         )
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == 2
@@ -2500,6 +2552,7 @@ class TestFindingViewSet:
             reverse("finding-list"),
             {
                 "filter[provider]": findings_fixture[0].scan.provider.id,
+                "filter[inserted_at]": TODAY,
             },
         )
         assert response.status_code == status.HTTP_200_OK
@@ -2514,7 +2567,8 @@ class TestFindingViewSet:
                 "filter[provider.in]": [
                     findings_fixture[0].scan.provider.id,
                     findings_fixture[1].scan.provider.id,
-                ]
+                ],
+                "filter[inserted_at]": TODAY,
             },
         )
         assert response.status_code == status.HTTP_200_OK
@@ -2548,13 +2602,13 @@ class TestFindingViewSet:
     )
     def test_findings_sort(self, authenticated_client, sort_field):
         response = authenticated_client.get(
-            reverse("finding-list"), {"sort": sort_field}
+            reverse("finding-list"), {"sort": sort_field, "filter[inserted_at]": TODAY}
         )
         assert response.status_code == status.HTTP_200_OK
 
     def test_findings_sort_invalid(self, authenticated_client):
         response = authenticated_client.get(
-            reverse("finding-list"), {"sort": "invalid"}
+            reverse("finding-list"), {"sort": "invalid", "filter[inserted_at]": TODAY}
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert response.json()["errors"][0]["code"] == "invalid"
@@ -2601,7 +2655,8 @@ class TestFindingViewSet:
 
         expected_services = {"ec2", "s3"}
         expected_regions = {"eu-west-1", "us-east-1"}
-        expected_tags = {"key": ["value"], "key2": ["value2"]}
+        # Temporarily disabled until we implement tag filtering in the UI
+        # expected_tags = {"key": ["value"], "key2": ["value2"]}
         expected_resource_types = {"prowler-test"}
 
         assert data["data"]["type"] == "findings-metadata"
@@ -2611,7 +2666,7 @@ class TestFindingViewSet:
         assert (
             set(data["data"]["attributes"]["resource_types"]) == expected_resource_types
         )
-        assert data["data"]["attributes"]["tags"] == expected_tags
+        # assert data["data"]["attributes"]["tags"] == expected_tags
 
     def test_findings_metadata_severity_retrieve(
         self, authenticated_client, findings_fixture
@@ -2621,14 +2676,15 @@ class TestFindingViewSet:
             reverse("finding-metadata"),
             {
                 "filter[severity__in]": ["low", "medium"],
-                "filter[inserted_at]": finding_1.updated_at.strftime("%Y-%m-%d"),
+                "filter[inserted_at]": finding_1.inserted_at.strftime("%Y-%m-%d"),
             },
         )
         data = response.json()
 
         expected_services = {"s3"}
         expected_regions = {"eu-west-1"}
-        expected_tags = {"key": ["value"], "key2": ["value2"]}
+        # Temporary disabled until we implement tag filtering in the UI
+        # expected_tags = {"key": ["value"], "key2": ["value2"]}
         expected_resource_types = {"prowler-test"}
 
         assert data["data"]["type"] == "findings-metadata"
@@ -2638,7 +2694,7 @@ class TestFindingViewSet:
         assert (
             set(data["data"]["attributes"]["resource_types"]) == expected_resource_types
         )
-        assert data["data"]["attributes"]["tags"] == expected_tags
+        # assert data["data"]["attributes"]["tags"] == expected_tags
 
     def test_findings_metadata_future_date(self, authenticated_client):
         response = authenticated_client.get(
@@ -2650,7 +2706,8 @@ class TestFindingViewSet:
         assert data["data"]["id"] is None
         assert data["data"]["attributes"]["services"] == []
         assert data["data"]["attributes"]["regions"] == []
-        assert data["data"]["attributes"]["tags"] == {}
+        # Temporary disabled until we implement tag filtering in the UI
+        # assert data["data"]["attributes"]["tags"] == {}
         assert data["data"]["attributes"]["resource_types"] == []
 
     def test_findings_metadata_invalid_date(self, authenticated_client):
@@ -4270,18 +4327,15 @@ class TestOverviewViewSet:
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
     def test_overview_providers_list(
-        self, authenticated_client, findings_fixture, resources_fixture
+        self, authenticated_client, scan_summaries_fixture, resources_fixture
     ):
         response = authenticated_client.get(reverse("overview-providers"))
         assert response.status_code == status.HTTP_200_OK
-        # Only findings from one provider
         assert len(response.json()["data"]) == 1
-        assert response.json()["data"][0]["attributes"]["findings"]["total"] == len(
-            findings_fixture
-        )
-        assert response.json()["data"][0]["attributes"]["findings"]["pass"] == 0
-        assert response.json()["data"][0]["attributes"]["findings"]["fail"] == 2
-        assert response.json()["data"][0]["attributes"]["findings"]["manual"] == 0
+        assert response.json()["data"][0]["attributes"]["findings"]["total"] == 4
+        assert response.json()["data"][0]["attributes"]["findings"]["pass"] == 2
+        assert response.json()["data"][0]["attributes"]["findings"]["fail"] == 1
+        assert response.json()["data"][0]["attributes"]["findings"]["muted"] == 1
         assert response.json()["data"][0]["attributes"]["resources"]["total"] == len(
             resources_fixture
         )

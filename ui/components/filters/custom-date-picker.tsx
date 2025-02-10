@@ -16,7 +16,7 @@ export const CustomDatePicker = () => {
   const searchParams = useSearchParams();
 
   const [value, setValue] = React.useState(() => {
-    const dateParam = searchParams.get("filter[updated_at]");
+    const dateParam = searchParams.get("filter[inserted_at]");
     return dateParam ? today(getLocalTimeZone()) : null;
   });
 
@@ -30,9 +30,9 @@ export const CustomDatePicker = () => {
     (date: any) => {
       const params = new URLSearchParams(searchParams.toString());
       if (date) {
-        params.set("filter[updated_at]", date.toString());
+        params.set("filter[inserted_at]", date.toString());
       } else {
-        params.delete("filter[updated_at]");
+        params.delete("filter[inserted_at]");
       }
       router.push(`?${params.toString()}`, { scroll: false });
     },

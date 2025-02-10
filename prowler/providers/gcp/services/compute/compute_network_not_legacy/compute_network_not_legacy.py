@@ -8,7 +8,7 @@ class compute_network_not_legacy(Check):
         for network in compute_client.networks:
             report = Check_Report_GCP(
                 metadata=self.metadata(),
-                resource_metadata=network,
+                resource=network,
                 location=compute_client.region,
             )
             report.status = "PASS"

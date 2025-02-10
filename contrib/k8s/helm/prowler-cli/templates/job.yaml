@@ -39,4 +39,3 @@ spec:
                 path: {{ $value }}
             {{- end }}
           {{- end }}
-

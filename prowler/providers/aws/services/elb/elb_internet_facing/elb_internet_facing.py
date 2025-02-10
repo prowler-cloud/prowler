@@ -6,7 +6,7 @@ class elb_internet_facing(Check):
     def execute(self):
         findings = []
         for lb in elb_client.loadbalancers.values():
-            report = Check_Report_AWS(metadata=self.metadata(), resource_metadata=lb)
+            report = Check_Report_AWS(metadata=self.metadata(), resource=lb)
             report.status = "PASS"
             report.status_extended = f"ELB {lb.name} is not internet facing."
             if lb.scheme == "internet-facing":

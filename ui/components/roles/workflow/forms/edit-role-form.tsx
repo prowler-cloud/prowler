@@ -1,8 +1,9 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Checkbox, Divider } from "@nextui-org/react";
-import { SaveIcon } from "lucide-react";
+import { Checkbox, Divider, Tooltip } from "@nextui-org/react";
+import { clsx } from "clsx";
+import { InfoIcon, SaveIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -16,6 +17,7 @@ import {
   CustomInput,
 } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
+import { permissionFormFields } from "@/lib";
 import { ApiError, editRoleFormSchema } from "@/types";
 
 type FormValues = z.infer<typeof editRoleFormSchema>;
@@ -95,16 +97,21 @@ export const EditRoleForm = ({
       }
 
       updatedFields.manage_users = values.manage_users;
-      updatedFields.manage_account = values.manage_account;
-      updatedFields.manage_billing = values.manage_billing;
       updatedFields.manage_providers = values.manage_providers;
-      updatedFields.manage_integrations = values.manage_integrations;
+      updatedFields.manage_account = values.manage_account;
+      // updatedFields.manage_integrations = values.manage_integrations;
       updatedFields.manage_scans = values.manage_scans;
       updatedFields.unlimited_visibility = values.unlimited_visibility;
 
+      if (process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true") {
+        updatedFields.manage_billing = values.manage_billing;
+      }
+
       if (
         JSON.stringify(values.groups) !==
-        JSON.stringify(roleData.data.relationships?.provider_groups?.data)
+        JSON.stringify(
+          roleData.data.relationships?.provider_groups?.data.map((g) => g.id),
+        )
       ) {
         updatedFields.groups = values.groups;
       }
@@ -157,21 +164,6 @@ export const EditRoleForm = ({
     }
   };
 
-  const permissions = [
-    { field: "manage_users", label: "Invite and Manage Users" },
-    ...(process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true"
-      ? [
-          { field: "manage_account", label: "Manage Account" },
-          { field: "manage_billing", label: "Manage Billing" },
-        ]
-      : []),
-    { field: "manage_providers", label: "Manage Cloud Providers" },
-    // TODO: Add back when we have integrations ready
-    // { field: "manage_integrations", label: "Manage Integrations" },
-    { field: "manage_scans", label: "Manage Scans" },
-    { field: "unlimited_visibility", label: "Unlimited Visibility" },
-  ];
-
   return (
     <Form {...form}>
       <form
@@ -195,7 +187,7 @@ export const EditRoleForm = ({
 
           {/* Select All Checkbox */}
           <Checkbox
-            isSelected={permissions.every((perm) =>
+            isSelected={permissionFormFields.every((perm) =>
               form.watch(perm.field as keyof FormValues),
             )}
             onChange={(e) => onSelectAllChange(e.target.checked)}
@@ -209,19 +201,37 @@ export const EditRoleForm = ({
 
           {/* Permissions Grid */}
           <div className="grid grid-cols-2 gap-4">
-            {permissions.map(({ field, label }) => (
-              <Checkbox
-                key={field}
-                {...form.register(field as keyof FormValues)}
-                isSelected={!!form.watch(field as keyof FormValues)}
-                classNames={{
-                  label: "text-small",
-                  wrapper: "checkbox-update",
-                }}
-              >
-                {label}
-              </Checkbox>
-            ))}
+            {permissionFormFields
+              .filter(
+                (permission) =>
+                  permission.field !== "manage_billing" ||
+                  process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true",
+              )
+              .map(({ field, label, description }) => (
+                <div key={field} className="flex items-center gap-2">
+                  <Checkbox
+                    {...form.register(field as keyof FormValues)}
+                    isSelected={!!form.watch(field as keyof FormValues)}
+                    classNames={{
+                      label: "text-small",
+                      wrapper: "checkbox-update",
+                    }}
+                  >
+                    {label}
+                  </Checkbox>
+                  <Tooltip content={description} placement="right">
+                    <div className="flex w-fit items-center justify-center">
+                      <InfoIcon
+                        className={clsx(
+                          "cursor-pointer text-default-400 group-data-[selected=true]:text-foreground",
+                        )}
+                        aria-hidden={"true"}
+                        width={16}
+                      />
+                    </div>
+                  </Tooltip>
+                </div>
+              ))}
           </div>
         </div>
         <Divider className="my-4" />

@@ -6,9 +6,7 @@ class rds_snapshots_public_access(Check):
     def execute(self):
         findings = []
         for db_snap in rds_client.db_snapshots:
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=db_snap
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=db_snap)
             if db_snap.public:
                 report.status = "FAIL"
                 report.status_extended = (
@@ -23,9 +21,7 @@ class rds_snapshots_public_access(Check):
             findings.append(report)
 
         for db_snap in rds_client.db_cluster_snapshots:
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=db_snap
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=db_snap)
             if db_snap.public:
                 report.status = "FAIL"
                 report.status_extended = f"RDS Cluster Snapshot {db_snap.id} is public."

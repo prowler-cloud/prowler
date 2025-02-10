@@ -8,7 +8,7 @@ class defender_ensure_defender_for_app_services_is_on(Check):
         for subscription, pricings in defender_client.pricings.items():
             if "AppServices" in pricings:
                 report = Check_Report_Azure(
-                    metadata=self.metadata(), resource_metadata=pricings["AppServices"]
+                    metadata=self.metadata(), resource=pricings["AppServices"]
                 )
                 report.subscription = subscription
                 report.resource_name = "Defender plan App Services"

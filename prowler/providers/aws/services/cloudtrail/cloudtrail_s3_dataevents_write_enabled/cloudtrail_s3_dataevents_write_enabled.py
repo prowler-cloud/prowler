@@ -29,7 +29,7 @@ class cloudtrail_s3_dataevents_write_enabled(Check):
                                 ):
                                     report = Check_Report_AWS(
                                         metadata=self.metadata(),
-                                        resource_metadata=trail,
+                                        resource=trail,
                                     )
                                     report.region = trail.home_region
                                     report.status = "PASS"
@@ -45,7 +45,7 @@ class cloudtrail_s3_dataevents_write_enabled(Check):
                                 and field_selector["Equals"][0] == "AWS::S3::Object"
                             ):
                                 report = Check_Report_AWS(
-                                    metadata=self.metadata(), resource_metadata=trail
+                                    metadata=self.metadata(), resource=trail
                                 )
                                 report.region = trail.home_region
                                 report.status = "PASS"
@@ -55,7 +55,7 @@ class cloudtrail_s3_dataevents_write_enabled(Check):
                 s3_client.buckets or cloudtrail_client.provider.scan_unused_services
             ):
                 report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=cloudtrail_client.trails
+                    metadata=self.metadata(), resource=cloudtrail_client.trails
                 )
                 report.region = cloudtrail_client.region
                 report.resource_arn = cloudtrail_client.trail_arn_template

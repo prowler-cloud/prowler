@@ -8,9 +8,7 @@ class networkfirewall_multi_az(Check):
     def execute(self):
         findings = []
         for firewall in networkfirewall_client.network_firewalls.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=firewall
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=firewall)
             report.status = "FAIL"
             report.status_extended = (
                 f"Network Firewall {firewall.name} is not deployed across multiple AZ."

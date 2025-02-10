@@ -14,8 +14,8 @@ export const filterScans = [
     values: ["aws", "azure", "gcp", "kubernetes"],
   },
   {
-    key: "state",
-    labelCheckboxGroup: "State",
+    key: "state__in",
+    labelCheckboxGroup: "Status",
     values: [
       "available",
       "scheduled",

@@ -455,7 +455,8 @@
       ],
       "Attributes": [
         {
-          "Section": "2.1. Simple Storage Service (S3)",
+          "Section": "2. Storage",
+          "SubSection": "2.1. Simple Storage Service (S3)",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Amazon S3 provides a variety of no, or low, cost encryption options to protect data at rest.",
@@ -476,7 +477,8 @@
       ],
       "Attributes": [
         {
-          "Section": "2.1. Simple Storage Service (S3)",
+          "Section": "2. Storage",
+          "SubSection": "2.1. Simple Storage Service (S3)",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "At the Amazon S3 bucket level, you can configure permissions through a bucket policy making the objects accessible only through HTTPS.",
@@ -497,7 +499,8 @@
       ],
       "Attributes": [
         {
-          "Section": "2.1. Simple Storage Service (S3)",
+          "Section": "2. Storage",
+          "SubSection": "2.1. Simple Storage Service (S3)",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Once MFA Delete is enabled on your sensitive and classified S3 bucket it requires the user to have two forms of authentication.",
@@ -518,7 +521,8 @@
       ],
       "Attributes": [
         {
-          "Section": "2.1. Simple Storage Service (S3)",
+          "Section": "2. Storage",
+          "SubSection": "2.1. Simple Storage Service (S3)",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Amazon S3 buckets can contain sensitive data, that for security purposes should be discovered, monitored, classified and protected. Macie along with other 3rd party tools can automatically provide an inventory of Amazon S3 buckets.",
@@ -540,7 +544,8 @@
       ],
       "Attributes": [
         {
-          "Section": "2.1. Simple Storage Service (S3)",
+          "Section": "2. Storage",
+          "SubSection": "2.1. Simple Storage Service (S3)",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Amazon S3 provides `Block public access (bucket settings)` and `Block public access (account settings)` to help you manage public access to Amazon S3 resources. By default, S3 buckets and objects are created with public access disabled. However, an IAM principal with sufficient S3 permissions can enable public access at the bucket and/or object level. While enabled, `Block public access (bucket settings)` prevents an individual bucket, and its contained objects, from becoming publicly accessible. Similarly, `Block public access (account settings)` prevents all buckets, and contained objects, from becoming publicly accessible across the entire account.",
@@ -561,7 +566,8 @@
       ],
       "Attributes": [
         {
-          "Section": "2.2. Elastic Compute Cloud (EC2)",
+          "Section": "2. Storage",
+          "SubSection": "2.2. Elastic Compute Cloud (EC2)",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Elastic Compute Cloud (EC2) supports encryption at rest when using the Elastic Block Store (EBS) service. While disabled by default, forcing encryption at EBS volume creation is supported.",
@@ -578,11 +584,13 @@
       "Id": "2.3.1",
       "Description": "Ensure that encryption is enabled for RDS Instances",
       "Checks": [
-        "rds_instance_storage_encrypted"
+        "rds_instance_storage_encrypted",
+        "rds_instance_transport_encrypted"
       ],
       "Attributes": [
         {
-          "Section": "2.3. Relational Database Service (RDS)",
+          "Section": "2. Storage",
+          "SubSection": "2.3. Relational Database Service (RDS)",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Amazon RDS encrypted DB instances use the industry standard AES-256 encryption algorithm to encrypt your data on the server that hosts your Amazon RDS DB instances. After your data is encrypted, Amazon RDS handles authentication of access and decryption of your data transparently with a minimal impact on performance.",

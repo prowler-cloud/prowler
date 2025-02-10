@@ -514,7 +514,8 @@
       ],
       "Attributes": [
         {
-          "Section": "2.1. Security Defaults (Per-User MFA)",
+          "Section": "2. Identity",
+          "SubSection": "2.1. Security Defaults (Per-User MFA)",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "[**IMPORTANT - Please read the section overview:** If your organization pays for Microsoft Entra ID licensing (included in Microsoft 365 E3, E5, or F5, and EM&S E3 or E5 licenses) and **CAN** use Conditional Access, ignore the recommendations in this section and proceed to the Conditional Access section.]Security defaults in Microsoft Entra ID make it easier to be secure and help protect your organization. Security defaults contain preconfigured security settings for common attacks.Security defaults is available to everyone. The goal is to ensure that all organizations have a basic level of security enabled at no extra cost. You may turn on security defaults in the Azure portal.",
@@ -536,7 +537,8 @@
       ],
       "Attributes": [
         {
-          "Section": "2.1. Security Defaults (Per-User MFA)",
+          "Section": "2. Identity",
+          "SubSection": "2.1. Security Defaults (Per-User MFA)",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "[**IMPORTANT - Please read the section overview:** If your organization pays for Microsoft Entra ID licensing (included in Microsoft 365 E3, E5, or F5, and EM&S E3 or E5 licenses) and **CAN** use Conditional Access, ignore the recommendations in this section and proceed to the Conditional Access section.]Enable multi-factor authentication for all roles, groups, and users that have write access or permissions to Azure resources. These include custom created objects or built-in roles such as;- Service Co-Administrators- Subscription Owners- Contributors",
@@ -558,7 +560,8 @@
       ],
       "Attributes": [
         {
-          "Section": "2.1. Security Defaults (Per-User MFA)",
+          "Section": "2. Identity",
+          "SubSection": "2.1. Security Defaults (Per-User MFA)",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "[**IMPORTANT - Please read the section overview:** If your organization pays for Microsoft Entra ID licensing (included in Microsoft 365 E3, E5, or F5, and EM&S E3 or E5 licenses) and **CAN** use Conditional Access, ignore the recommendations in this section and proceed to the Conditional Access section.]Enable multi-factor authentication for all non-privileged users.",
@@ -578,7 +581,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "2.1. Security Defaults (Per-User MFA)",
+          "Section": "2. Identity",
+          "SubSection": "2.1. Security Defaults (Per-User MFA)",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "[**IMPORTANT - Please read the section overview:** If your organization pays for Microsoft Entra ID licensing (included in Microsoft 365 E3, E5, or F5, and EM&S E3 or E5 licenses) and **CAN** use Conditional Access, ignore the recommendations in this section and proceed to the Conditional Access section.]Do not allow users to remember multi-factor authentication on devices.",
@@ -600,7 +604,8 @@
       ],
       "Attributes": [
         {
-          "Section": "2.2. Conditional Access",
+          "Section": "2. Identity",
+          "SubSection": "2.2. Conditional Access",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Microsoft Entra ID Conditional Access allows an organization to configure `Named locations` and configure whether those locations are trusted or untrusted. These settings provide organizations the means to specify Geographical locations for use in conditional access policies, or define actual IP addresses and IP ranges and whether or not those IP addresses and/or ranges are trusted by the organization.",
@@ -620,7 +625,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "2.2. Conditional Access",
+          "Section": "2. Identity",
+          "SubSection": "2.2. Conditional Access",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "**CAUTION**: If these policies are created without first auditing and testing the result, misconfiguration can potentially lock out administrators or create undesired access issues.Conditional Access Policies can be used to block access from geographic locations that are deemed out-of-scope for your organization or application. The scope and variables for this policy should be carefully examined and defined.",
@@ -640,7 +646,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "2.2. Conditional Access",
+          "Section": "2. Identity",
+          "SubSection": "2.2. Conditional Access",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Conditional Access Policies can be used to prevent the Device code authentication flow. Device code flow should be permitted only for users that regularly perform duties that explicitly require the use of Device Code to authenticate, such as utilizing Azure with PowerShell.",
@@ -660,7 +667,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "2.2. Conditional Access",
+          "Section": "2. Identity",
+          "SubSection": "2.2. Conditional Access",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "For designated users, they will be prompted to use their multi-factor authentication (MFA) process on login.",
@@ -680,7 +688,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "2.2. Conditional Access",
+          "Section": "2. Identity",
+          "SubSection": "2.2. Conditional Access",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "For designated users, they will be prompted to use their multi-factor authentication (MFA) process on logins.",
@@ -700,7 +709,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "2.2. Conditional Access",
+          "Section": "2. Identity",
+          "SubSection": "2.2. Conditional Access",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Entra ID tracks the behavior of sign-in events. If the Entra ID domain is licensed with P2, the sign-in behavior can be used as a detection mechanism for additional scrutiny during the sign-in event. If this policy is set up, then Risky Sign-in events will prompt users to use multi-factor authentication (MFA) tokens on login for additional verification.",
@@ -722,7 +732,8 @@
       ],
       "Attributes": [
         {
-          "Section": "2.2. Conditional Access",
+          "Section": "2. Identity",
+          "SubSection": "2.2. Conditional Access",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "This recommendation ensures that users accessing the Windows Azure Service Management API (i.e. Azure Powershell, Azure CLI, Azure Resource Manager API, etc.) are required to use multi-factor authentication (MFA) credentials when accessing resources through the Windows Azure Service Management API.",
@@ -744,7 +755,8 @@
       ],
       "Attributes": [
         {
-          "Section": "2.2. Conditional Access",
+          "Section": "2. Identity",
+          "SubSection": "2.2. Conditional Access",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "This recommendation ensures that users accessing Microsoft Admin Portals (i.e. Microsoft 365 Admin, Microsoft 365 Defender, Exchange Admin Center, Azure Portal, etc.) are required to use multi-factor authentication (MFA) credentials when logging into an Admin Portal.",
@@ -766,7 +778,8 @@
       ],
       "Attributes": [
         {
-          "Section": "3.1. Microsoft Defender For Cloud",
+          "Section": "3. Security",
+          "SubSection": "3.1. Microsoft Defender For Cloud",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Ensure that the latest OS patches for all virtual machines are applied.",
@@ -788,7 +801,8 @@
       ],
       "Attributes": [
         {
-          "Section": "3.1. Microsoft Defender For Cloud",
+          "Section": "3. Security",
+          "SubSection": "3.1. Microsoft Defender For Cloud",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "The Microsoft Cloud Security Benchmark (or 'MCSB') is an Azure Policy Initiative containing many security policies to evaluate resource configuration against best practice recommendations. If a policy in the MCSB is set with effect type `Disabled`, it is not evaluated and may prevent administrators from being informed of valuable security recommendations.",
@@ -810,7 +824,8 @@
       ],
       "Attributes": [
         {
-          "Section": "3.1. Microsoft Defender For Cloud",
+          "Section": "3. Security",
+          "SubSection": "3.1. Microsoft Defender For Cloud",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Enable security alert emails to subscription owners.",
@@ -832,7 +847,8 @@
       ],
       "Attributes": [
         {
-          "Section": "3.1. Microsoft Defender For Cloud",
+          "Section": "3. Security",
+          "SubSection": "3.1. Microsoft Defender For Cloud",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Microsoft Defender for Cloud emails the subscription owners whenever a high-severity alert is triggered for their subscription. You should provide a security contact email address as an additional email address.",
@@ -854,7 +870,8 @@
       ],
       "Attributes": [
         {
-          "Section": "3.1. Microsoft Defender For Cloud",
+          "Section": "3. Security",
+          "SubSection": "3.1. Microsoft Defender For Cloud",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Enables emailing security alerts to the subscription owner or other designated security contact.",
@@ -874,7 +891,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "3.1. Microsoft Defender For Cloud",
+          "Section": "3. Security",
+          "SubSection": "3.1. Microsoft Defender For Cloud",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "An organization's attack surface is the collection of assets with a public network identifier or URI that an external threat actor can see or access from outside your cloud. It is the set of points on the boundary of a system, a system element, system component, or an environment where an attacker can try to enter, cause an effect on, or extract data from, that system, system element, system component, or environment. The larger the attack surface, the harder it is to protect.This tool can be configured to scan your organization's online infrastructure such as specified domains, hosts, CIDR blocks, and SSL certificates, and store them in an Inventory. Inventory items can be added, reviewed, approved, and removed, and may contain enrichments ('insights') and additional information collected from the tool's different scan engines and open-source intelligence sources.A Defender EASM workspace will generate an Inventory of publicly exposed assets by crawling and scanning the internet using _Seeds_ you provide when setting up the tool. Seeds can be FQDNs, IP CIDR blocks, and WHOIS records.Defender EASM will generate Insights within 24-48 hours after Seeds are provided, and these insights include vulnerability data (CVEs), ports and protocols, and weak or expired SSL certificates that could be used by an attacker for reconnaisance or exploitation.Results are classified High/Medium/Low and some of them include proposed mitigations.",
@@ -896,7 +914,8 @@
       ],
       "Attributes": [
         {
-          "Section": "3.1. Microsoft Defender For Cloud",
+          "Section": "3. Security",
+          "SubSection": "3.1. Microsoft Defender For Cloud",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "[**NOTE:** As of August 1, 2023 customers with an existing subscription to Defender for DNS can continue to use the service, but new subscribers will receive alerts about suspicious DNS activity as part of Defender for Servers P2.]Microsoft Defender for DNS scans all network traffic exiting from within a subscription.",
@@ -918,7 +937,8 @@
       ],
       "Attributes": [
         {
-          "Section": "3.1.1 Microsoft Cloud Security Posture Management (CSPM)",
+          "Section": "3. Security",
+          "SubSection": "3.1.1 Microsoft Cloud Security Posture Management (CSPM)",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Enable automatic provisioning of the monitoring agent to collect security data.**DEPRECATION PLANNED:** The Log Analytics Agent is slated for deprecation in August 2024. The Microsoft Defender for Endpoint agent, in tandem with new agentless capabilities will be providing replacement functionality. More detail is available here: [https://techcommunity.microsoft.com/t5/microsoft-defender-for-cloud/microsoft-defender-for-cloud-strategy-and-plan-towards-log/ba-p/3883341](https://techcommunity.microsoft.com/t5/microsoft-defender-for-cloud/microsoft-defender-for-cloud-strategy-and-plan-towards-log/ba-p/3883341).",
@@ -940,7 +960,8 @@
       ],
       "Attributes": [
         {
-          "Section": "3.1.1 Microsoft Cloud Security Posture Management (CSPM)",
+          "Section": "3. Security",
+          "SubSection": "3.1.1 Microsoft Cloud Security Posture Management (CSPM)",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "This integration setting enables Microsoft Defender for Cloud Apps (formerly 'Microsoft Cloud App Security' or 'MCAS' - see additional info) to communicate with Microsoft Defender for Cloud.",
@@ -962,7 +983,8 @@
       ],
       "Attributes": [
         {
-          "Section": "3.1.3. Defender Plan: Servers",
+          "Section": "3. Security",
+          "SubSection": "3.1.3. Defender Plan: Servers",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Turning on Microsoft Defender for Servers enables threat detection for Servers, providing threat intelligence, anomaly detection, and behavior analytics in the Microsoft Defender for Cloud.",
@@ -984,7 +1006,8 @@
       ],
       "Attributes": [
         {
-          "Section": "3.1.3. Defender Plan: Servers",
+          "Section": "3. Security",
+          "SubSection": "3.1.3. Defender Plan: Servers",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Enable vulnerability assessment for machines on both Azure and hybrid (Arc enabled) machines.",
@@ -1004,7 +1027,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "3.1.3. Defender Plan: Servers",
+          "Section": "3. Security",
+          "SubSection": "3.1.3. Defender Plan: Servers",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "The Endpoint protection component enables Microsoft Defender for Endpoint (formerly 'Advanced Threat Protection' or 'ATP' or 'WDATP' - see additional info) to communicate with Microsoft Defender for Cloud.**IMPORTANT:** When enabling integration between DfE & DfC it needs to be taken into account that this will have some side effects that may be undesirable.1. For server 2019 & above if defender is installed (default for these server SKUs) this will trigger a deployment of the new unified agent and link to any of the extended configuration in the Defender portal.1. If the new unified agent is required for server SKUs of Win 2016 or Linux and lower there is additional integration that needs to be switched on and agents need to be aligned.",
@@ -1024,7 +1048,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "3.1.3. Defender Plan: Servers",
+          "Section": "3. Security",
+          "SubSection": "3.1.3. Defender Plan: Servers",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Using disk snapshots, the agentless scanner scans for installed software, vulnerabilities, and plain text secrets.",
@@ -1044,7 +1069,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "3.1.3. Defender Plan: Servers",
+          "Section": "3. Security",
+          "SubSection": "3.1.3. Defender Plan: Servers",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "File Integrity Monitoring (FIM) is a feature that monitors critical system files in Windows or Linux for potential signs of attack or compromise.",
@@ -1066,7 +1092,8 @@
       ],
       "Attributes": [
         {
-          "Section": "3.1.4. Defender Plan: Containers",
+          "Section": "3. Security",
+          "SubSection": "3.1.4. Defender Plan: Containers",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Turning on Microsoft Defender for Containers enables threat detection for Container Registries including Kubernetes, providing threat intelligence, anomaly detection, and behavior analytics in the Microsoft Defender for Cloud. The following services will be enabled for container instances:- Defender agent in Azure- Azure Policy for Kubernetes- Agentless discovery for Kubernetes- Agentless container vulnerability assessment",
@@ -1086,7 +1113,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "3.1.4. Defender Plan: Containers",
+          "Section": "3. Security",
+          "SubSection": "3.1.4. Defender Plan: Containers",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Enable automatic discovery and configuration scanning of the Microsoft Kubernetes clusters.",
@@ -1106,7 +1134,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "3.1.4. Defender Plan: Containers",
+          "Section": "3. Security",
+          "SubSection": "3.1.4. Defender Plan: Containers",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Enable automatic vulnerability management for images stored in ACR or running in AKS clusters.",
@@ -1128,7 +1157,8 @@
       ],
       "Attributes": [
         {
-          "Section": "3.1.5. Defender Plan: Storage",
+          "Section": "3. Security",
+          "SubSection": "3.1.5. Defender Plan: Storage",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Turning on Microsoft Defender for Storage enables threat detection for Storage, providing threat intelligence, anomaly detection, and behavior analytics in the Microsoft Defender for Cloud.",
@@ -1150,7 +1180,8 @@
       ],
       "Attributes": [
         {
-          "Section": "3.1.6. Defender Plan: App Service",
+          "Section": "3. Security",
+          "SubSection": "3.1.6. Defender Plan: App Service",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Turning on Microsoft Defender for App Service enables threat detection for App Service, providing threat intelligence, anomaly detection, and behavior analytics in the Microsoft Defender for Cloud.",
@@ -1172,7 +1203,8 @@
       ],
       "Attributes": [
         {
-          "Section": "3.1.7. Defender Plan: Databases",
+          "Section": "3. Security",
+          "SubSection": "3.1.7. Defender Plan: Databases",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Microsoft Defender for Azure Cosmos DB scans all incoming network requests for threats to your Azure Cosmos DB resources.",
@@ -1194,7 +1226,8 @@
       ],
       "Attributes": [
         {
-          "Section": "3.1.7. Defender Plan: Databases",
+          "Section": "3. Security",
+          "SubSection": "3.1.7. Defender Plan: Databases",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Turning on Microsoft Defender for Open-source relational databases enables threat detection for Open-source relational databases, providing threat intelligence, anomaly detection, and behavior analytics in the Microsoft Defender for Cloud.",
@@ -1216,7 +1249,8 @@
       ],
       "Attributes": [
         {
-          "Section": "3.1.7. Defender Plan: Databases",
+          "Section": "3. Security",
+          "SubSection": "3.1.7. Defender Plan: Databases",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Turning on Microsoft Defender for Azure SQL Databases enables threat detection for Managed Instance Azure SQL databases, providing threat intelligence, anomaly detection, and behavior analytics in Microsoft Defender for Cloud.",
@@ -1238,7 +1272,8 @@
       ],
       "Attributes": [
         {
-          "Section": "3.1.7. Defender Plan: Databases",
+          "Section": "3. Security",
+          "SubSection": "3.1.7. Defender Plan: Databases",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Turning on Microsoft Defender for SQL servers on machines enables threat detection for SQL servers on machines, providing threat intelligence, anomaly detection, and behavior analytics in Microsoft Defender for Cloud.",
@@ -1260,7 +1295,8 @@
       ],
       "Attributes": [
         {
-          "Section": "3.1.8. Defender Plan: Key Vault",
+          "Section": "3. Security",
+          "SubSection": "3.1.8. Defender Plan: Key Vault",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Turning on Microsoft Defender for Key Vault enables threat detection for Key Vault, providing threat intelligence, anomaly detection, and behavior analytics in the Microsoft Defender for Cloud.",
@@ -1282,7 +1318,8 @@
       ],
       "Attributes": [
         {
-          "Section": "3.1.9. Defender Plan: Resource Manager",
+          "Section": "3. Security",
+          "SubSection": "3.1.9. Defender Plan: Resource Manager",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Microsoft Defender for Resource Manager scans incoming administrative requests to change your infrastructure from both CLI and the Azure portal.",
@@ -1304,7 +1341,8 @@
       ],
       "Attributes": [
         {
-          "Section": "3.2. Microsoft Defender for IoT",
+          "Section": "3. Security",
+          "SubSection": "3.2. Microsoft Defender for IoT",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Microsoft Defender for IoT acts as a central security hub for IoT devices within your organization.",
@@ -1326,7 +1364,8 @@
       ],
       "Attributes": [
         {
-          "Section": "3.3. Key Vault",
+          "Section": "3. Security",
+          "SubSection": "3.3. Key Vault",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Ensure that all Keys in Role Based Access Control (RBAC) Azure Key Vaults have an expiration date set.",
@@ -1348,7 +1387,8 @@
       ],
       "Attributes": [
         {
-          "Section": "3.3. Key Vault",
+          "Section": "3. Security",
+          "SubSection": "3.3. Key Vault",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Ensure that all Keys in Non Role Based Access Control (RBAC) Azure Key Vaults have an expiration date set.",
@@ -1370,7 +1410,8 @@
       ],
       "Attributes": [
         {
-          "Section": "3.3. Key Vault",
+          "Section": "3. Security",
+          "SubSection": "3.3. Key Vault",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Ensure that all Secrets in Role Based Access Control (RBAC) Azure Key Vaults have an expiration date set.",
@@ -1392,7 +1433,8 @@
       ],
       "Attributes": [
         {
-          "Section": "3.3. Key Vault",
+          "Section": "3. Security",
+          "SubSection": "3.3. Key Vault",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Ensure that all Secrets in Non Role Based Access Control (RBAC) Azure Key Vaults have an expiration date set.",
@@ -1414,7 +1456,8 @@
       ],
       "Attributes": [
         {
-          "Section": "3.3. Key Vault",
+          "Section": "3. Security",
+          "SubSection": "3.3. Key Vault",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "The Key Vault contains object keys, secrets, and certificates. Accidental unavailability of a Key Vault can cause immediate data loss or loss of security functions (authentication, validation, verification, non-repudiation, etc.) supported by the Key Vault objects.It is recommended the Key Vault be made recoverable by enabling the 'Do Not Purge' and 'Soft Delete' functions. This is in order to prevent loss of encrypted data, including storage accounts, SQL databases, and/or dependent services provided by Key Vault objects (Keys, Secrets, Certificates) etc. This may happen in the case of accidental deletion by a user or from disruptive activity by a malicious user.**NOTE:** In February 2025, Microsoft will enable soft-delete protection on all key vaults, and users will no longer be able to opt out of or turn off soft-delete. **WARNING:** A current limitation is that role assignments disappearing when Key Vault is deleted. All role assignments will need to be recreated after recovery.",
@@ -1436,7 +1479,8 @@
       ],
       "Attributes": [
         {
-          "Section": "3.3. Key Vault",
+          "Section": "3. Security",
+          "SubSection": "3.3. Key Vault",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "The recommended way to access Key Vaults is to use the Azure Role-Based Access Control (RBAC) permissions model.Azure RBAC is an authorization system built on Azure Resource Manager that provides fine-grained access management of Azure resources. It allows users to manage Key, Secret, and Certificate permissions. It provides one place to manage all permissions across all key vaults.",
@@ -1458,7 +1502,8 @@
       ],
       "Attributes": [
         {
-          "Section": "3.3. Key Vault",
+          "Section": "3. Security",
+          "SubSection": "3.3. Key Vault",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Private endpoints will secure network traffic from Azure Key Vault to the resources requesting secrets and keys.",
@@ -1480,7 +1525,8 @@
       ],
       "Attributes": [
         {
-          "Section": "3.3. Key Vault",
+          "Section": "3. Security",
+          "SubSection": "3.3. Key Vault",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Automatic Key Rotation is available in Public Preview. The currently supported applications are Key Vault, Managed Disks, and Storage accounts accessing keys within Key Vault. The number of supported applications will incrementally increased.",
@@ -1862,7 +1908,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.1. Azure SQL Database",
+          "Section": "5. Database Services",
+          "SubSection": "5.1. Azure SQL Database",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Enable auditing on SQL Servers.",
@@ -1884,7 +1931,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.1. Azure SQL Database",
+          "Section": "5. Database Services",
+          "SubSection": "5.1. Azure SQL Database",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Ensure that no SQL Databases allow ingress from 0.0.0.0/0 (ANY IP).",
@@ -1906,7 +1954,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.1. Azure SQL Database",
+          "Section": "5. Database Services",
+          "SubSection": "5.1. Azure SQL Database",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Transparent Data Encryption (TDE) with Customer-managed key support provides increased transparency and control over the TDE Protector, increased security with an HSM-backed external service, and promotion of separation of duties.With TDE, data is encrypted at rest with a symmetric key (called the database encryption key) stored in the database or data warehouse distribution. To protect this data encryption key (DEK) in the past, only a certificate that the Azure SQL Service managed could be used. Now, with Customer-managed key support for TDE, the DEK can be protected with an asymmetric key that is stored in the Azure Key Vault. The Azure Key Vault is a highly available and scalable cloud-based key store which offers central key management, leverages FIPS 140-2 Level 2 validated hardware security modules (HSMs), and allows separation of management of keys and data for additional security.Based on business needs or criticality of data/databases hosted on a SQL server, it is recommended that the TDE protector is encrypted by a key that is managed by the data owner (Customer-managed key).",
@@ -1928,7 +1977,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.1. Azure SQL Database",
+          "Section": "5. Database Services",
+          "SubSection": "5.1. Azure SQL Database",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Use Microsoft Entra authentication for authentication with SQL Database to manage credentials in a single place.",
@@ -1950,7 +2000,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.1. Azure SQL Database",
+          "Section": "5. Database Services",
+          "SubSection": "5.1. Azure SQL Database",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Enable Transparent Data Encryption on every SQL server.",
@@ -1972,7 +2023,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.1. Azure SQL Database",
+          "Section": "5. Database Services",
+          "SubSection": "5.1. Azure SQL Database",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "SQL Server Audit Retention should be configured to be greater than 90 days.",
@@ -1992,7 +2044,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "5.1. Azure SQL Database",
+          "Section": "5. Database Services",
+          "SubSection": "5.1. Azure SQL Database",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Disabling public network access restricts the service from accessing public networks.",
@@ -2014,7 +2067,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.2. Azure SQL Database for PostgreSQL",
+          "Section": "5. Database Services",
+          "SubSection": "5.2. Azure SQL Database for PostgreSQL",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Enable `require_secure_transport` on `PostgreSQL flexible servers`.",
@@ -2036,7 +2090,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.2. Azure SQL Database for PostgreSQL",
+          "Section": "5. Database Services",
+          "SubSection": "5.2. Azure SQL Database for PostgreSQL",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Enable `log_checkpoints` on `PostgreSQL flexible servers`.",
@@ -2058,7 +2113,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.2. Azure SQL Database for PostgreSQL",
+          "Section": "5. Database Services",
+          "SubSection": "5.2. Azure SQL Database for PostgreSQL",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Enable connection throttling on `PostgreSQL flexible servers`.",
@@ -2080,7 +2136,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.2. Azure SQL Database for PostgreSQL",
+          "Section": "5. Database Services",
+          "SubSection": "5.2. Azure SQL Database for PostgreSQL",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Ensure `logfiles.retention_days` on `PostgreSQL flexible servers` is set to an appropriate value.",
@@ -2102,7 +2159,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.2. Azure SQL Database for PostgreSQL",
+          "Section": "5. Database Services",
+          "SubSection": "5.2. Azure SQL Database for PostgreSQL",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Disable access from Azure services to `PostgreSQL flexible server`.",
@@ -2124,7 +2182,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.2. Azure SQL Database for PostgreSQL",
+          "Section": "5. Database Services",
+          "SubSection": "5.2. Azure SQL Database for PostgreSQL",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Enable `log_connections` on `PostgreSQL single servers`.**NOTE:** This recommendation currently only applies to Single Server, not Flexible Server. See additional information below for details about the planned retirement of Azure PostgreSQL Single Server.",
@@ -2146,7 +2205,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.2. Azure SQL Database for PostgreSQL",
+          "Section": "5. Database Services",
+          "SubSection": "5.2. Azure SQL Database for PostgreSQL",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Enable `log_disconnections` on `PostgreSQL Servers`.**NOTE:** This recommendation currently only applies to Single Server, not Flexible Server. See additional information below for details about the planned retirement of Azure PostgreSQL Single Server.",
@@ -2166,7 +2226,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "5.2. Azure SQL Database for PostgreSQL",
+          "Section": "5. Database Services",
+          "SubSection": "5.2. Azure SQL Database for PostgreSQL",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Azure Database for PostgreSQL servers should be created with 'infrastructure double encryption' enabled.**NOTE:** This recommendation currently only applies to Single Server, not Flexible Server. See additional information below for details about the planned retirement of Azure PostgreSQL Single Server.",
@@ -2188,7 +2249,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.3. Azure for MySQL",
+          "Section": "5. Database Services",
+          "SubSection": "5.3. Azure for MySQL",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Enable `require_secure_transport` on `MySQL flexible servers`.",
@@ -2208,7 +2270,8 @@
       "Checks": [],
       "Attributes": [
         {
-          "Section": "5.3. Azure for MySQL",
+          "Section": "5. Database Services",
+          "SubSection": "5.3. Azure for MySQL",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Ensure `tls_version` on `MySQL flexible servers` is set to use TLS version 1.2 or higher.",
@@ -2230,7 +2293,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.3. Azure for MySQL",
+          "Section": "5. Database Services",
+          "SubSection": "5.3. Azure for MySQL",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Enable `audit_log_enabled` on `MySQL flexible servers`.",
@@ -2252,7 +2316,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.3. Azure for MySQL",
+          "Section": "5. Database Services",
+          "SubSection": "5.3. Azure for MySQL",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Set `audit_log_events` to include `CONNECTION` on `MySQL flexible servers`.",
@@ -2274,7 +2339,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.4. Azure Cosmos DB",
+          "Section": "5. Database Services",
+          "SubSection": "5.4. Azure Cosmos DB",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Limiting your Cosmos DB to only communicate on whitelisted networks lowers its attack footprint.",
@@ -2296,7 +2362,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.4. Azure Cosmos DB",
+          "Section": "5. Database Services",
+          "SubSection": "5.4. Azure Cosmos DB",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Private endpoints limit network traffic to approved sources.",
@@ -2318,7 +2385,8 @@
       ],
       "Attributes": [
         {
-          "Section": "5.4. Azure Cosmos DB",
+          "Section": "5. Database Services",
+          "SubSection": "5.4. Azure Cosmos DB",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Cosmos DB can use tokens or Entra ID for client authentication which in turn will use Azure RBAC for authorization. Using Entra ID is significantly more secure because Entra ID handles the credentials and allows for MFA and centralized management, and the Azure RBAC is better integrated with the rest of Azure.",
@@ -2380,7 +2448,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6.1. Configuring Diagnostic Settings",
+          "Section": "6. Logging and Monitoring",
+          "SubSection": "6.1. Configuring Diagnostic Settings",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Enable Diagnostic settings for exporting activity logs.Diagnostic settings are available for each individual resource within a subscription. Settings should be configured for all appropriate resources for your environment.",
@@ -2402,7 +2471,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6.1. Configuring Diagnostic Settings",
+          "Section": "6. Logging and Monitoring",
+          "SubSection": "6.1. Configuring Diagnostic Settings",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "**Prerequisite**: A Diagnostic Setting must exist. If a Diagnostic Setting does not exist, the navigation and options within this recommendation will not be available. Please review the recommendation at the beginning of this subsection titled: 'Ensure that a 'Diagnostic Setting' exists.'The diagnostic setting should be configured to log the appropriate activities from the control/management plane.",
@@ -2424,7 +2494,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6.1. Configuring Diagnostic Settings",
+          "Section": "6. Logging and Monitoring",
+          "SubSection": "6.1. Configuring Diagnostic Settings",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Storage accounts with the activity log exports can be configured to use Customer Managed Keys (CMK).",
@@ -2446,7 +2517,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6.1. Configuring Diagnostic Settings",
+          "Section": "6. Logging and Monitoring",
+          "SubSection": "6.1. Configuring Diagnostic Settings",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Enable AuditEvent logging for key vault instances to ensure interactions with key vaults are logged and available.",
@@ -2468,7 +2540,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6.1. Configuring Diagnostic Settings",
+          "Section": "6. Logging and Monitoring",
+          "SubSection": "6.1. Configuring Diagnostic Settings",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Ensure that network flow logs are captured and fed into a central log analytics workspace.",
@@ -2490,7 +2563,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6.1. Configuring Diagnostic Settings",
+          "Section": "6. Logging and Monitoring",
+          "SubSection": "6.1. Configuring Diagnostic Settings",
           "Profile": "Level 2",
           "AssessmentStatus": "Manual",
           "Description": "Enable AppServiceHTTPLogs diagnostic log category for Azure App Service instances to ensure all http requests are captured and centrally logged.",
@@ -2512,7 +2586,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6.2. Monitoring using Activity Log Alerts",
+          "Section": "6. Logging and Monitoring",
+          "SubSection": "6.2. Monitoring using Activity Log Alerts",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Create an activity log alert for the Create Policy Assignment event.",
@@ -2534,7 +2609,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6.2. Monitoring using Activity Log Alerts",
+          "Section": "6. Logging and Monitoring",
+          "SubSection": "6.2. Monitoring using Activity Log Alerts",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Create an activity log alert for the Delete Policy Assignment event.",
@@ -2556,7 +2632,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6.2. Monitoring using Activity Log Alerts",
+          "Section": "6. Logging and Monitoring",
+          "SubSection": "6.2. Monitoring using Activity Log Alerts",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Create an Activity Log Alert for the Create or Update Network Security Group event.",
@@ -2578,7 +2655,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6.2. Monitoring using Activity Log Alerts",
+          "Section": "6. Logging and Monitoring",
+          "SubSection": "6.2. Monitoring using Activity Log Alerts",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Create an activity log alert for the Delete Network Security Group event.",
@@ -2600,7 +2678,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6.2. Monitoring using Activity Log Alerts",
+          "Section": "6. Logging and Monitoring",
+          "SubSection": "6.2. Monitoring using Activity Log Alerts",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Create an activity log alert for the Create or Update Security Solution event.",
@@ -2622,7 +2701,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6.2. Monitoring using Activity Log Alerts",
+          "Section": "6. Logging and Monitoring",
+          "SubSection": "6.2. Monitoring using Activity Log Alerts",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Create an activity log alert for the Delete Security Solution event.",
@@ -2644,7 +2724,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6.2. Monitoring using Activity Log Alerts",
+          "Section": "6. Logging and Monitoring",
+          "SubSection": "6.2. Monitoring using Activity Log Alerts",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Create an activity log alert for the Create or Update SQL Server Firewall Rule event.",
@@ -2666,7 +2747,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6.2. Monitoring using Activity Log Alerts",
+          "Section": "6. Logging and Monitoring",
+          "SubSection": "6.2. Monitoring using Activity Log Alerts",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Create an activity log alert for the 'Delete SQL Server Firewall Rule.",
@@ -2688,7 +2770,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6.2. Monitoring using Activity Log Alerts",
+          "Section": "6. Logging and Monitoring",
+          "SubSection": "6.2. Monitoring using Activity Log Alerts",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Create an activity log alert for the Create or Update Public IP Addresses rule.",
@@ -2710,7 +2793,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6.2. Monitoring using Activity Log Alerts",
+          "Section": "6. Logging and Monitoring",
+          "SubSection": "6.2. Monitoring using Activity Log Alerts",
           "Profile": "Level 1",
           "AssessmentStatus": "Automated",
           "Description": "Create an activity log alert for the Delete Public IP Address rule.",
@@ -2732,7 +2816,8 @@
       ],
       "Attributes": [
         {
-          "Section": "6.3. Configuring Application Insights",
+          "Section": "6. Logging and Monitoring",
+          "SubSection": "6.3. Configuring Application Insights",
           "Profile": "Level 2",
           "AssessmentStatus": "Automated",
           "Description": "Application Insights within Azure act as an Application Performance Monitoring solution providing valuable data into how well an application performs and additional information when performing incident response. The types of log data collected include application metrics, telemetry data, and application trace logging data providing organizations with detailed information about application activity and application transactions. Both data sets help organizations adopt a proactive and retroactive means to handle security and performance related metrics within their modern applications.",
@@ -3135,7 +3220,9 @@
     {
       "Id": "9.1",
       "Description": "Ensure 'HTTPS Only' is set to `On`",
-      "Checks": [],
+      "Checks": [
+        "app_ensure_http_is_redirected_to_https"
+      ],
       "Attributes": [
         {
           "Section": "9. AppService",
@@ -3177,7 +3264,9 @@
     {
       "Id": "9.3",
       "Description": "Ensure 'FTP State' is set to 'FTPS Only' or 'Disabled'",
-      "Checks": [],
+      "Checks": [
+        "app_ftp_deployment_disabled"
+      ],
       "Attributes": [
         {
           "Section": "9. AppService",
@@ -3219,7 +3308,9 @@
     {
       "Id": "9.5",
       "Description": "Ensure that Register with Entra ID is enabled on App Service",
-      "Checks": [],
+      "Checks": [
+        "app_register_with_identity"
+      ],
       "Attributes": [
         {
           "Section": "9. AppService",

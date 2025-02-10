@@ -8,27 +8,22 @@ import { VerticalSteps } from "./vertical-steps";
 
 const steps = [
   {
-    title: "Add your cloud account",
+    title: "Add your cloud provider",
     description:
-      "Select the cloud provider of the account you want to connect and choose whether to use IAM role or credentials for access.",
+      "Select the cloud provider for the account to connect and specify whether to use an IAM role or credentials for access.",
     href: "/providers/connect-account",
   },
   {
-    title: "Add credentials to your cloud account",
-    description: "Add the credentials needed to connect to your cloud account.",
+    title: "Add credentials to your cloud provider",
+    description:
+      "Provide the credentials required to connect to the cloud provider.",
     href: "/providers/add-credentials",
   },
   {
-    title: "Test connection",
+    title: "Check connection and launch scan",
     description:
-      "Test your connection to verify that the credentials provided are valid for accessing your cloud account.",
+      "Verify the connection to ensure that the provided credentials are valid for accessing the cloud provider and initiating a scan.",
     href: "/providers/test-connection",
-  },
-  {
-    title: "Success",
-    description:
-      "Your cloud account has been successfully connected and the scan has been launched.",
-    href: "/providers/launch-scan",
   },
 ];
 
@@ -44,11 +39,11 @@ export const WorkflowAddProvider = () => {
   return (
     <section className="max-w-sm">
       <h1 className="mb-2 text-xl font-medium" id="getting-started">
-        Add a cloud account
+        Add a cloud provider
       </h1>
       <p className="mb-5 text-small text-default-500">
-        Follow the steps to configure your cloud account. This allows you to
-        launch the first scan when the process is complete.
+        Complete the steps to configure the cloud provider, enabling the launch
+        of the first scan once completed.
       </p>
       <Progress
         classNames={{

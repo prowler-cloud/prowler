@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Link } from "@nextui-org/react";
+import { Checkbox, Link } from "@nextui-org/react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -11,7 +11,12 @@ import { NotificationIcon, ProwlerExtended } from "@/components/icons";
 import { ThemeSwitch } from "@/components/ThemeSwitch";
 import { useToast } from "@/components/ui";
 import { CustomButton, CustomInput } from "@/components/ui/custom";
-import { Form } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormMessage,
+} from "@/components/ui/form";
 import { ApiError, authFormSchema } from "@/types";
 
 export const AuthForm = ({
@@ -143,7 +148,7 @@ export const AuthForm = ({
 
           <Form {...form}>
             <form
-              className="flex flex-col gap-3"
+              className="flex flex-col gap-4"
               onSubmit={form.handleSubmit(onSubmit)}
             >
               {type === "sign-up" && (
@@ -167,6 +172,7 @@ export const AuthForm = ({
                   />
                 </>
               )}
+
               <CustomInput
                 control={form.control}
                 name="email"
@@ -174,13 +180,17 @@ export const AuthForm = ({
                 label="Email"
                 placeholder="Enter your email"
                 isInvalid={!!form.formState.errors.email}
+                showFormMessage={type !== "sign-in"}
               />
 
               <CustomInput
                 control={form.control}
                 name="password"
                 password
-                isInvalid={!!form.formState.errors.password}
+                isInvalid={
+                  !!form.formState.errors.password ||
+                  !!form.formState.errors.email
+                }
               />
 
               {/* {type === "sign-in" && (
@@ -213,13 +223,44 @@ export const AuthForm = ({
                       isDisabled={invitationToken !== null && true}
                     />
                   )}
+
+                  {process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true" && (
+                    <FormField
+                      control={form.control}
+                      name="termsAndConditions"
+                      render={({ field }) => (
+                        <>
+                          <FormControl>
+                            <Checkbox
+                              isRequired
+                              className="py-4"
+                              size="sm"
+                              checked={field.value}
+                              onChange={(e) => field.onChange(e.target.checked)}
+                            >
+                              I agree with the&nbsp;
+                              <Link
+                                href="https://prowler.com/terms-of-service/"
+                                size="sm"
+                                target="_blank"
+                              >
+                                Terms of Service
+                              </Link>
+                              &nbsp;of Prowler
+                            </Checkbox>
+                          </FormControl>
+                          <FormMessage className="text-system-error dark:text-system-error" />
+                        </>
+                      )}
+                    />
+                  )}
                 </>
               )}
 
-              {form.formState.errors?.email && (
-                <div className="flex flex-row items-center gap-2 text-system-error">
+              {type === "sign-in" && form.formState.errors?.email && (
+                <div className="flex flex-row items-center text-system-error">
                   <NotificationIcon size={16} />
-                  <p className="text-s">No user found</p>
+                  <p className="text-small">Invalid email or password</p>
                 </div>
               )}
 

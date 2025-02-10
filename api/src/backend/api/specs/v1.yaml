@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Prowler API
-  version: 1.2.0
+  version: 1.4.0
   description: |-
     Prowler API specification.
 
@@ -346,6 +346,9 @@ paths:
         schema:
           type: string
           format: date
+        description: At least one of the variations of the `filter[inserted_at]` filter
+          must be provided.
+        required: true
       - in: query
         name: filter[inserted_at__date]
         schema:
@@ -356,11 +359,13 @@ paths:
         schema:
           type: string
           format: date
+        description: Maximum date range is 7 days.
       - in: query
         name: filter[inserted_at__lte]
         schema:
           type: string
           format: date
+        description: Maximum date range is 7 days.
       - in: query
         name: filter[provider]
         schema:
@@ -476,51 +481,6 @@ paths:
           items:
             type: string
         description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
-        name: filter[resource_tag_key]
-        schema:
-          type: string
-      - in: query
-        name: filter[resource_tag_key__icontains]
-        schema:
-          type: string
-      - in: query
-        name: filter[resource_tag_key__in]
-        schema:
-          type: array
-          items:
-            type: string
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
-        name: filter[resource_tag_value]
-        schema:
-          type: string
-      - in: query
-        name: filter[resource_tag_value__icontains]
-        schema:
-          type: string
-      - in: query
-        name: filter[resource_tag_value__in]
-        schema:
-          type: array
-          items:
-            type: string
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
-        name: filter[resource_tags]
-        schema:
-          type: array
-          items:
-            type: string
-        description: |-
-          Filter by resource tags `key:value` pairs.
-          Multiple values may be separated by commas.
         explode: false
         style: form
       - in: query
@@ -714,8 +674,6 @@ paths:
           items:
             type: string
             enum:
-            - id
-            - -id
             - status
             - -status
             - severity
@@ -908,11 +866,13 @@ paths:
         schema:
           type: string
           format: date
+        description: Maximum date range is 7 days.
       - in: query
         name: filter[inserted_at__lte]
         schema:
           type: string
           format: date
+        description: Maximum date range is 7 days.
       - in: query
         name: filter[provider]
         schema:
@@ -1028,51 +988,6 @@ paths:
           items:
             type: string
         description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
-        name: filter[resource_tag_key]
-        schema:
-          type: string
-      - in: query
-        name: filter[resource_tag_key__icontains]
-        schema:
-          type: string
-      - in: query
-        name: filter[resource_tag_key__in]
-        schema:
-          type: array
-          items:
-            type: string
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
-        name: filter[resource_tag_value]
-        schema:
-          type: string
-      - in: query
-        name: filter[resource_tag_value__icontains]
-        schema:
-          type: string
-      - in: query
-        name: filter[resource_tag_value__in]
-        schema:
-          type: array
-          items:
-            type: string
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
-        name: filter[resource_tags]
-        schema:
-          type: array
-          items:
-            type: string
-        description: |-
-          Filter by resource tags `key:value` pairs.
-          Multiple values may be separated by commas.
         explode: false
         style: form
       - in: query
@@ -1242,8 +1157,6 @@ paths:
           items:
             type: string
             enum:
-            - id
-            - -id
             - status
             - -status
             - severity
@@ -1284,7 +1197,6 @@ paths:
             - services
             - regions
             - resource_types
-            - tags
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
@@ -1370,6 +1282,9 @@ paths:
         schema:
           type: string
           format: date
+        description: At least one of the variations of the `filter[inserted_at]` filter
+          must be provided.
+        required: true
       - in: query
         name: filter[inserted_at__date]
         schema:
@@ -1380,11 +1295,13 @@ paths:
         schema:
           type: string
           format: date
+        description: Maximum date range is 7 days.
       - in: query
         name: filter[inserted_at__lte]
         schema:
           type: string
           format: date
+        description: Maximum date range is 7 days.
       - in: query
         name: filter[provider]
         schema:
@@ -1500,51 +1417,6 @@ paths:
           items:
             type: string
         description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
-        name: filter[resource_tag_key]
-        schema:
-          type: string
-      - in: query
-        name: filter[resource_tag_key__icontains]
-        schema:
-          type: string
-      - in: query
-        name: filter[resource_tag_key__in]
-        schema:
-          type: array
-          items:
-            type: string
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
-        name: filter[resource_tag_value]
-        schema:
-          type: string
-      - in: query
-        name: filter[resource_tag_value__icontains]
-        schema:
-          type: string
-      - in: query
-        name: filter[resource_tag_value__in]
-        schema:
-          type: array
-          items:
-            type: string
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
-        name: filter[resource_tags]
-        schema:
-          type: array
-          items:
-            type: string
-        description: |-
-          Filter by resource tags `key:value` pairs.
-          Multiple values may be separated by commas.
         explode: false
         style: form
       - in: query
@@ -1714,8 +1586,6 @@ paths:
           items:
             type: string
             enum:
-            - id
-            - -id
             - status
             - -status
             - severity
@@ -5381,8 +5251,8 @@ paths:
           description: ''
     delete:
       operationId: users_destroy
-      description: Remove a user account from the system.
-      summary: Delete a user account
+      description: Remove the current user account from the system.
+      summary: Delete the user account
       parameters:
       - in: path
         name: id
@@ -6087,13 +5957,10 @@ components:
               type: array
               items:
                 type: string
-            tags:
-              description: Tags are described as key-value pairs.
           required:
           - services
           - regions
           - resource_types
-          - tags
     FindingMetadataResponse:
       type: object
       properties:
@@ -6753,7 +6620,7 @@ components:
                   type: integer
                 fail:
                   type: integer
-                manual:
+                muted:
                   type: integer
                 total:
                   type: integer

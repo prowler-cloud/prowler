@@ -1,4 +1,4 @@
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from django.conf import settings
 from django.db.models import Q
@@ -319,34 +319,41 @@ class FindingFilter(FilterSet):
         field_name="resources__type", lookup_expr="icontains"
     )
 
-    resource_tag_key = CharFilter(field_name="resources__tags__key")
-    resource_tag_key__in = CharInFilter(
-        field_name="resources__tags__key", lookup_expr="in"
-    )
-    resource_tag_key__icontains = CharFilter(
-        field_name="resources__tags__key", lookup_expr="icontains"
-    )
-    resource_tag_value = CharFilter(field_name="resources__tags__value")
-    resource_tag_value__in = CharInFilter(
-        field_name="resources__tags__value", lookup_expr="in"
-    )
-    resource_tag_value__icontains = CharFilter(
-        field_name="resources__tags__value", lookup_expr="icontains"
-    )
-    resource_tags = CharInFilter(
-        method="filter_resource_tag",
-        lookup_expr="in",
-        help_text="Filter by resource tags `key:value` pairs.\nMultiple values may be "
-        "separated by commas.",
-    )
+    # Temporarily disabled until we implement tag filtering in the UI
+    # resource_tag_key = CharFilter(field_name="resources__tags__key")
+    # resource_tag_key__in = CharInFilter(
+    #     field_name="resources__tags__key", lookup_expr="in"
+    # )
+    # resource_tag_key__icontains = CharFilter(
+    #     field_name="resources__tags__key", lookup_expr="icontains"
+    # )
+    # resource_tag_value = CharFilter(field_name="resources__tags__value")
+    # resource_tag_value__in = CharInFilter(
+    #     field_name="resources__tags__value", lookup_expr="in"
+    # )
+    # resource_tag_value__icontains = CharFilter(
+    #     field_name="resources__tags__value", lookup_expr="icontains"
+    # )
+    # resource_tags = CharInFilter(
+    #     method="filter_resource_tag",
+    #     lookup_expr="in",
+    #     help_text="Filter by resource tags `key:value` pairs.\nMultiple values may be "
+    #     "separated by commas.",
+    # )
 
     scan = UUIDFilter(method="filter_scan_id")
     scan__in = UUIDInFilter(method="filter_scan_id_in")
 
     inserted_at = DateFilter(method="filter_inserted_at", lookup_expr="date")
     inserted_at__date = DateFilter(method="filter_inserted_at", lookup_expr="date")
-    inserted_at__gte = DateFilter(method="filter_inserted_at_gte")
-    inserted_at__lte = DateFilter(method="filter_inserted_at_lte")
+    inserted_at__gte = DateFilter(
+        method="filter_inserted_at_gte",
+        help_text=f"Maximum date range is {settings.FINDINGS_MAX_DAYS_IN_RANGE} days.",
+    )
+    inserted_at__lte = DateFilter(
+        method="filter_inserted_at_lte",
+        help_text=f"Maximum date range is {settings.FINDINGS_MAX_DAYS_IN_RANGE} days.",
+    )
 
     class Meta:
         model = Finding
@@ -374,11 +381,51 @@ class FindingFilter(FilterSet):
             },
         }
 
-    @property
-    def qs(self):
-        # Force distinct results to prevent duplicates with many-to-many relationships
-        parent_qs = super().qs
-        return parent_qs.distinct()
+    def filter_queryset(self, queryset):
+        if not (self.data.get("scan") or self.data.get("scan__in")) and not (
+            self.data.get("inserted_at")
+            or self.data.get("inserted_at__date")
+            or self.data.get("inserted_at__gte")
+            or self.data.get("inserted_at__lte")
+        ):
+            raise ValidationError(
+                [
+                    {
+                        "detail": "At least one date filter is required: filter[inserted_at], filter[inserted_at.gte], "
+                        "or filter[inserted_at.lte].",
+                        "status": 400,
+                        "source": {"pointer": "/data/attributes/inserted_at"},
+                        "code": "required",
+                    }
+                ]
+            )
+
+        gte_date = (
+            datetime.strptime(self.data.get("inserted_at__gte"), "%Y-%m-%d").date()
+            if self.data.get("inserted_at__gte")
+            else datetime.now(timezone.utc).date()
+        )
+        lte_date = (
+            datetime.strptime(self.data.get("inserted_at__lte"), "%Y-%m-%d").date()
+            if self.data.get("inserted_at__lte")
+            else datetime.now(timezone.utc).date()
+        )
+
+        if abs(lte_date - gte_date) > timedelta(
+            days=settings.FINDINGS_MAX_DAYS_IN_RANGE
+        ):
+            raise ValidationError(
+                [
+                    {
+                        "detail": f"The date range cannot exceed {settings.FINDINGS_MAX_DAYS_IN_RANGE} days.",
+                        "status": 400,
+                        "source": {"pointer": "/data/attributes/inserted_at"},
+                        "code": "invalid",
+                    }
+                ]
+            )
+
+        return super().filter_queryset(queryset)
 
     #  Convert filter values to UUIDv7 values for use with partitioning
     def filter_scan_id(self, queryset, name, value):

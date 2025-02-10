@@ -13,7 +13,7 @@ class dlm_ebs_snapshot_lifecycle_policy_exists(Check):
             ):
                 report = Check_Report_AWS(
                     metadata=self.metadata(),
-                    resource_metadata=dlm_client.lifecycle_policies,
+                    resource=dlm_client.lifecycle_policies,
                 )
                 report.status = "FAIL"
                 report.status_extended = "No EBS Snapshot lifecycle policies found."

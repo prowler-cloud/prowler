@@ -55,8 +55,9 @@ class Test_mysql_flexible_server_audit_log_connection_activated:
         mysql_client = mock.MagicMock
         mysql_client.flexible_servers = {
             AZURE_SUBSCRIPTION_ID: {
-                server_name: FlexibleServer(
+                "/subscriptions/resource_id": FlexibleServer(
                     resource_id="/subscriptions/resource_id",
+                    name=server_name,
                     location="location",
                     version="version",
                     configurations={
@@ -102,8 +103,9 @@ class Test_mysql_flexible_server_audit_log_connection_activated:
         mysql_client = mock.MagicMock
         mysql_client.flexible_servers = {
             AZURE_SUBSCRIPTION_ID: {
-                server_name: FlexibleServer(
+                "/subscriptions/resource_id": FlexibleServer(
                     resource_id="/subscriptions/resource_id",
+                    name=server_name,
                     location="location",
                     version="version",
                     configurations={
@@ -149,8 +151,9 @@ class Test_mysql_flexible_server_audit_log_connection_activated:
         mysql_client = mock.MagicMock
         mysql_client.flexible_servers = {
             AZURE_SUBSCRIPTION_ID: {
-                server_name: FlexibleServer(
+                "/subscriptions/resource_id": FlexibleServer(
                     resource_id="/subscriptions/resource_id",
+                    name=server_name,
                     location="location",
                     version="version",
                     configurations={

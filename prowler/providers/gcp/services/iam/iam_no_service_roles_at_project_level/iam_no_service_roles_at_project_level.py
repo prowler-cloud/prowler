@@ -11,7 +11,7 @@ class iam_no_service_roles_at_project_level(Check):
         for binding in cloudresourcemanager_client.bindings:
             report = Check_Report_GCP(
                 metadata=self.metadata(),
-                resource_metadata=binding,
+                resource=binding,
                 resource_id=binding.role,
                 resource_name=binding.role,
                 location=cloudresourcemanager_client.region,
@@ -29,7 +29,7 @@ class iam_no_service_roles_at_project_level(Check):
             if project not in failed_projects:
                 report = Check_Report_GCP(
                     metadata=self.metadata(),
-                    resource_metadata=cloudresourcemanager_client.projects[project],
+                    resource=cloudresourcemanager_client.projects[project],
                     project_id=project,
                     resource_name=project,
                     location=cloudresourcemanager_client.region,

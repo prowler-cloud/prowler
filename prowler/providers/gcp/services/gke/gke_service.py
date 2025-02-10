@@ -5,7 +5,6 @@ from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.gcp.lib.service.service import GCPService
 
 
-################## GKE
 class GKE(GCPService):
     def __init__(self, provider: GcpProvider):
         super().__init__("container", provider, api_version="v1beta1")

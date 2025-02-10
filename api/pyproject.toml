@@ -8,7 +8,7 @@ description = "Prowler's API (Django/DRF)"
 license = "Apache-2.0"
 name = "prowler-api"
 package-mode = false
-version = "1.1.0"
+version = "1.4.0"
 
 [tool.poetry.dependencies]
 celery = {extras = ["pytest"], version = "^5.4.0"}
@@ -28,7 +28,7 @@ drf-nested-routers = "^0.94.1"
 drf-spectacular = "0.27.2"
 drf-spectacular-jsonapi = "0.5.1"
 gunicorn = "23.0.0"
-prowler = "^5.0"
+prowler = {git = "https://github.com/prowler-cloud/prowler.git", branch = "master"}
 psycopg2-binary = "2.9.9"
 pytest-celery = {extras = ["redis"], version = "^1.0.1"}
 # Needed for prowler compatibility
@@ -38,6 +38,7 @@ uuid6 = "2024.7.10"
 [tool.poetry.group.dev.dependencies]
 bandit = "1.7.9"
 coverage = "7.5.4"
+django-silk = "5.3.2"
 docker = "7.1.0"
 freezegun = "1.5.1"
 mypy = "1.10.1"

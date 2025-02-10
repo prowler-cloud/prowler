@@ -8,7 +8,7 @@ class fsx_file_system_copy_tags_to_backups_enabled(Check):
         for file_system in fsx_client.file_systems.values():
             if file_system.copy_tags_to_backups is not None:
                 report = Check_Report_AWS(
-                    metadata=self.metadata(), resource_metadata=file_system
+                    metadata=self.metadata(), resource=file_system
                 )
                 report.status = "PASS"
                 report.status_extended = f"FSx file system {file_system.id} has copy tags to backups enabled."

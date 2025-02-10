@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
-    "@nextui-org/react": "^2.6.11",
+    "@nextui-org/react": "2.4.8",
     "@nextui-org/system": "2.2.1",
     "@nextui-org/theme": "2.2.5",
     "@radix-ui/react-alert-dialog": "^1.1.1",
@@ -39,7 +39,7 @@
     "sharp": "^0.33.5",
     "tailwind-merge": "^2.5.3",
     "tailwindcss-animate": "^1.0.7",
-    "uuid": "^10.0.0",
+    "uuid": "^11.0.5",
     "zod": "^3.23.8",
     "zustand": "^4.5.5"
   },
@@ -88,6 +88,9 @@
     "format:check": "./node_modules/.bin/prettier --check ./app",
     "format:write": "./node_modules/.bin/prettier --config .prettierrc.json --write ./app",
     "prepare": "husky"
+  },
+  "overrides": {
+    "@react-types/shared": "3.26.0"
   },
   "version": "0.0.1"
 }

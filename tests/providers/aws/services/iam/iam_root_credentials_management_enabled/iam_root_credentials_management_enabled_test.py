@@ -1,7 +1,6 @@
 from unittest import mock
 
 import botocore
-from boto3 import client
 from moto import mock_aws
 
 from tests.providers.aws.utils import (
@@ -49,12 +48,15 @@ class Test_iam_root_credentials_management_enabled_test:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
-            with mock.patch(
-                "prowler.providers.aws.services.iam.iam_root_credentials_management_enabled.iam_root_credentials_management_enabled.iam_client",
-                new=IAM(aws_provider),
-            ), mock.patch(
-                "prowler.providers.aws.services.iam.iam_root_credentials_management_enabled.iam_root_credentials_management_enabled.organizations_client",
-                new=Organizations(aws_provider),
+            with (
+                mock.patch(
+                    "prowler.providers.aws.services.iam.iam_root_credentials_management_enabled.iam_root_credentials_management_enabled.iam_client",
+                    new=IAM(aws_provider),
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.iam.iam_root_credentials_management_enabled.iam_root_credentials_management_enabled.organizations_client",
+                    new=Organizations(aws_provider),
+                ),
             ):
                 from prowler.providers.aws.services.iam.iam_root_credentials_management_enabled.iam_root_credentials_management_enabled import (
                     iam_root_credentials_management_enabled,
@@ -70,9 +72,6 @@ class Test_iam_root_credentials_management_enabled_test:
     )
     @mock_aws
     def test__root_credentials_management_enabled(self):
-        # Create Organization
-        conn = client("organizations")
-        conn.create_organization()
         from prowler.providers.aws.services.iam.iam_service import IAM
         from prowler.providers.aws.services.organizations.organizations_service import (
             Organizations,
@@ -84,12 +83,15 @@ class Test_iam_root_credentials_management_enabled_test:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
-            with mock.patch(
-                "prowler.providers.aws.services.iam.iam_root_credentials_management_enabled.iam_root_credentials_management_enabled.iam_client",
-                new=IAM(aws_provider),
-            ), mock.patch(
-                "prowler.providers.aws.services.iam.iam_root_credentials_management_enabled.iam_root_credentials_management_enabled.organizations_client",
-                new=Organizations(aws_provider),
+            with (
+                mock.patch(
+                    "prowler.providers.aws.services.iam.iam_root_credentials_management_enabled.iam_root_credentials_management_enabled.iam_client",
+                    new=IAM(aws_provider),
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.iam.iam_root_credentials_management_enabled.iam_root_credentials_management_enabled.organizations_client",
+                    new=Organizations(aws_provider),
+                ),
             ):
                 from prowler.providers.aws.services.iam.iam_root_credentials_management_enabled.iam_root_credentials_management_enabled import (
                     iam_root_credentials_management_enabled,
@@ -114,9 +116,6 @@ class Test_iam_root_credentials_management_enabled_test:
     )
     @mock_aws
     def test__root_credentials_management_disabled(self):
-        # Create Organization
-        conn = client("organizations")
-        conn.create_organization()
         from prowler.providers.aws.services.iam.iam_service import IAM
         from prowler.providers.aws.services.organizations.organizations_service import (
             Organizations,
@@ -128,12 +127,15 @@ class Test_iam_root_credentials_management_enabled_test:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
-            with mock.patch(
-                "prowler.providers.aws.services.iam.iam_root_credentials_management_enabled.iam_root_credentials_management_enabled.iam_client",
-                new=IAM(aws_provider),
-            ), mock.patch(
-                "prowler.providers.aws.services.iam.iam_root_credentials_management_enabled.iam_root_credentials_management_enabled.organizations_client",
-                new=Organizations(aws_provider),
+            with (
+                mock.patch(
+                    "prowler.providers.aws.services.iam.iam_root_credentials_management_enabled.iam_root_credentials_management_enabled.iam_client",
+                    new=IAM(aws_provider),
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.iam.iam_root_credentials_management_enabled.iam_root_credentials_management_enabled.organizations_client",
+                    new=Organizations(aws_provider),
+                ),
             ):
                 from prowler.providers.aws.services.iam.iam_root_credentials_management_enabled.iam_root_credentials_management_enabled import (
                     iam_root_credentials_management_enabled,

@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from io import StringIO
 
 import requests
@@ -36,7 +36,15 @@ class TestOCSF:
                 muted=False,
                 region=AWS_REGION_EU_WEST_1,
                 resource_tags={"Name": "test", "Environment": "dev"},
-            )
+            ),
+            # Test with int timestamp (UNIX timestamp)
+            generate_finding_output(
+                status="FAIL",
+                severity="medium",
+                muted=False,
+                region=AWS_REGION_EU_WEST_1,
+                timestamp=1619600000,
+            ),
         ]
 
         ocsf = OCSF(findings)
@@ -78,7 +86,7 @@ class TestOCSF:
         assert output_data.resources[0].region == findings[0].region
         assert output_data.resources[0].data == {
             "details": findings[0].resource_details,
-            # "metadata": {}, TODO: add metadata to the resource details
+            "metadata": {},
         }
         assert output_data.metadata.profiles == ["cloud", "datetime"]
         assert output_data.metadata.tenant_uid == "test-organization-id"
@@ -100,6 +108,14 @@ class TestOCSF:
             "notes": findings[0].metadata.Notes,
             "compliance": findings[0].compliance,
         }
+
+        # Test with int timestamp (UNIX timestamp)
+        output_data = ocsf.data[1]
+
+        assert output_data.time == 1619600000
+        assert output_data.time_dt == datetime.fromtimestamp(
+            1619600000, tz=timezone.utc
+        )
 
     def test_validate_ocsf(self):
         mock_file = StringIO()
@@ -159,7 +175,7 @@ class TestOCSF:
                         "vendor_name": "Prowler",
                         "version": prowler_version,
                     },
-                    "version": "1.3.0",
+                    "version": "1.4.0",
                     "profiles": ["cloud", "datetime"],
                     "tenant_uid": "test-organization-id",
                 },
@@ -194,7 +210,7 @@ class TestOCSF:
                         "region": "eu-west-1",
                         "data": {
                             "details": "resource_details",
-                            # "metadata": {} TODO: add metadata to the resource details
+                            "metadata": {},
                         },
                         "group": {"name": "test-service"},
                         "labels": [],
@@ -321,7 +337,7 @@ class TestOCSF:
         assert resource_details[0].region == finding_output.region
         assert resource_details[0].data == {
             "details": finding_output.resource_details,
-            # "metadata": {}, TODO: add metadata to the resource details
+            "metadata": {},
         }
 
         resource_details_group = resource_details[0].group

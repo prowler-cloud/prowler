@@ -1,214 +1,163 @@
 "use client";
 
-import { Card, CardBody, CardHeader, Divider } from "@nextui-org/react";
+import { Snippet } from "@nextui-org/react";
 
-import { DateWithTime, SnippetId } from "@/components/ui/entities";
+import { ConnectionTrue } from "@/components/icons";
+import { ConnectionFalse } from "@/components/icons/Icons";
+import {
+  DateWithTime,
+  EntityInfoShort,
+  InfoField,
+} from "@/components/ui/entities";
 import { StatusBadge } from "@/components/ui/table/status-badge";
-import { ScanProps, TaskDetails } from "@/types";
+import { ProviderProps, ScanProps, TaskDetails } from "@/types";
 
-interface ScanDetailsProps {
+const renderValue = (value: string | null | undefined) => {
+  return value && value.trim() !== "" ? value : "-";
+};
+
+const formatDuration = (seconds: number) => {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const remainingSeconds = seconds % 60;
+
+  const parts = [];
+  if (hours > 0) parts.push(`${hours}h`);
+  if (minutes > 0) parts.push(`${minutes}m`);
+  if (remainingSeconds > 0 || parts.length === 0)
+    parts.push(`${remainingSeconds}s`);
+
+  return parts.join(" ");
+};
+
+const Section = ({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) => (
+  <div className="flex flex-col gap-4 rounded-lg p-4 shadow dark:bg-prowler-blue-400">
+    <h3 className="text-md font-medium text-gray-800 dark:text-prowler-theme-pale/90">
+      {title}
+    </h3>
+    {children}
+  </div>
+);
+
+export const ScanDetail = ({
+  scanDetails,
+}: {
   scanDetails: ScanProps & {
     taskDetails?: TaskDetails;
+    providerDetails?: ProviderProps;
   };
-}
-
-export const ScanDetail = ({ scanDetails }: ScanDetailsProps) => {
-  const scanOnDemand = scanDetails.attributes;
+}) => {
+  const scan = scanDetails.attributes;
   const taskDetails = scanDetails.taskDetails;
+  const providerDetails = scanDetails.providerDetails?.attributes;
 
   return (
     <div className="flex flex-col gap-6 rounded-lg">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-prowler-theme-pale/90">
-          Scan Details
-        </h2>
         <StatusBadge
           size="lg"
-          status={scanOnDemand.state}
-          loadingProgress={scanOnDemand.progress}
+          status={scan.state}
+          loadingProgress={scan.progress}
         />
       </div>
 
-      <Divider className="border-gray-300 dark:border-gray-600" />
-
-      {/* Details Section */}
-      <div className="flex flex-col gap-4 rounded-lg p-4 shadow dark:bg-prowler-blue-400">
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <div className="flex flex-col gap-4">
-            <DetailItem label="Scan Name" value={scanOnDemand.name} />
-            <DetailItem
-              label="ID"
-              value={<SnippetId label="Type" entityId={scanDetails.id} />}
-            />
-            <DetailItem label="Trigger" value={scanOnDemand.trigger} />
-            <DetailItem
-              label="Resource Count"
-              value={scanOnDemand.unique_resource_count.toString()}
-            />
-            <DetailItem label="Progress" value={`${scanOnDemand.progress}%`} />
-            <DetailItem
-              label="Duration"
-              value={`${scanOnDemand.duration} seconds`}
-            />
-          </div>
-          <div className="flex flex-col gap-4">
-            <DateItem
-              label="Started At"
-              value={
-                scanOnDemand.started_at ? (
-                  <DateWithTime dateTime={scanOnDemand.started_at.toString()} />
-                ) : (
-                  "Not Started"
-                )
-              }
-            />
-            <DateItem
-              label="Completed At"
-              value={
-                scanOnDemand.completed_at ? (
-                  <DateWithTime
-                    dateTime={scanOnDemand.completed_at.toString()}
-                  />
-                ) : (
-                  "Not Completed"
-                )
-              }
-            />
-            <DateItem
-              label="Scheduled At"
-              value={
-                scanOnDemand.scheduled_at ? (
-                  <DateWithTime
-                    dateTime={scanOnDemand.scheduled_at.toString()}
-                  />
-                ) : (
-                  "Not Scheduled"
-                )
-              }
-            />
-            <DetailItem
-              label="Provider ID"
-              value={
-                <SnippetId
-                  label="Provider ID"
-                  entityId={scanDetails.relationships.provider.data.id}
-                />
-              }
-            />
-            <DetailItem
-              label="Task ID"
-              value={
-                scanDetails.relationships.task?.data?.id ? (
-                  <SnippetId
-                    label="Task ID"
-                    entityId={scanDetails.relationships.task.data.id}
-                  />
-                ) : (
-                  "N/A"
-                )
-              }
-            />
-          </div>
+      {/* Scan Details */}
+      <Section title="Scan Details">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <InfoField label="Scan Name">{renderValue(scan.name)}</InfoField>
+          <InfoField label="Resources Scanned">
+            {scan.unique_resource_count}
+          </InfoField>
+          <InfoField label="Progress">{scan.progress}%</InfoField>
         </div>
-      </div>
 
-      {/* Scan Arguments Section */}
-      {/* <Card className="rounded-lg p-4 shadow dark:bg-prowler-blue-400">
-        <CardHeader className="pb-4">
-          <h3 className="text-lg font-bold text-gray-800 dark:text-prowler-theme-pale/90">
-            Scan Arguments
-          </h3>
-        </CardHeader>
-        <Divider className="border-gray-300 dark:border-gray-600" />
-        <CardBody className="pt-4">
-          <div className="flex flex-col gap-2">
-            <span className="text-sm font-semibold text-gray-600 dark:text-gray-300">
-              Checks
-            </span>
-            <span className="text-gray-800 dark:text-prowler-theme-pale/90">
-              {(scanOnDemand.scanner_args as any)?.checks_to_execute?.join(
-                ", ",
-              ) || "N/A"}
-            </span>
-          </div>
-        </CardBody>
-      </Card> */}
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <InfoField label="Trigger">{renderValue(scan.trigger)}</InfoField>
+          <InfoField label="State">{renderValue(scan.state)}</InfoField>
+          <InfoField label="Duration">
+            {formatDuration(scan.duration)}
+          </InfoField>
+        </div>
 
-      {/* Task Details Section */}
-      {taskDetails && (
-        <Card className="rounded-lg p-4 shadow dark:bg-prowler-blue-400">
-          <CardHeader className="pb-4">
-            <h3 className="text-lg font-bold text-gray-800 dark:text-prowler-theme-pale/90">
-              State Details
-            </h3>
-          </CardHeader>
-          <Divider className="border-gray-300 dark:border-gray-600" />
-          <CardBody className="pt-4">
-            <div className="flex flex-col gap-4">
-              <DetailItem label="State" value={taskDetails.attributes.state} />
-              <DetailItem
-                label="Completed At"
-                value={taskDetails.attributes.completed_at || "N/A"}
-              />
-              {taskDetails.attributes.result && (
-                <>
-                  <DetailItem
-                    label="Error Type"
-                    value={taskDetails.attributes.result.exc_type || "N/A"}
-                  />
-                  {taskDetails.attributes.result.exc_message && (
-                    <DetailItem
-                      label="Error Message"
-                      value={taskDetails.attributes.result.exc_message.join(
-                        ", ",
-                      )}
-                    />
-                  )}
-                </>
-              )}
-              <DetailItem
-                label="Checks to Execute"
-                value={
-                  taskDetails.attributes.task_args.checks_to_execute?.join(
-                    ", ",
-                  ) || "N/A"
-                }
-              />
+        {scan.state === "failed" && taskDetails?.attributes.result && (
+          <>
+            {taskDetails.attributes.result.exc_message && (
+              <InfoField label="Error Message" variant="simple">
+                <Snippet hideSymbol>
+                  <span className="whitespace-pre-line text-xs">
+                    {taskDetails.attributes.result.exc_message.join("\n")}
+                  </span>
+                </Snippet>
+              </InfoField>
+            )}
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <InfoField label="Error Type">
+                {renderValue(taskDetails.attributes.result.exc_type)}
+              </InfoField>
+              <InfoField label="Scan ID" variant="simple">
+                <Snippet hideSymbol>
+                  {renderValue(taskDetails?.attributes.task_args.scan_id)}
+                </Snippet>
+              </InfoField>
             </div>
-          </CardBody>
-        </Card>
-      )}
+          </>
+        )}
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <InfoField label="Started At">
+            <DateWithTime inline dateTime={scan.started_at || "-"} />
+          </InfoField>
+          <InfoField label="Completed At">
+            <DateWithTime inline dateTime={scan.completed_at || "-"} />
+          </InfoField>
+          <InfoField label="Scheduled At">
+            <DateWithTime inline dateTime={scan.scheduled_at || "-"} />
+          </InfoField>
+        </div>
+      </Section>
+
+      {/* Provider Details */}
+      <Section title="Provider Details">
+        {providerDetails ? (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <EntityInfoShort
+              cloudProvider={
+                providerDetails.provider as
+                  | "aws"
+                  | "azure"
+                  | "gcp"
+                  | "kubernetes"
+              }
+              entityAlias={providerDetails.alias}
+              entityId={providerDetails.uid}
+            />
+            <InfoField label="Connection Status" variant="simple">
+              {providerDetails.connection.connected ? (
+                <ConnectionTrue className="text-system-success" size={24} />
+              ) : (
+                <ConnectionFalse className="text-danger" size={24} />
+              )}
+            </InfoField>
+            <InfoField label="Last Checked">
+              <DateWithTime
+                inline
+                dateTime={providerDetails.connection.last_checked_at}
+              />
+            </InfoField>
+          </div>
+        ) : (
+          <span className="text-sm text-gray-500">
+            No provider details available
+          </span>
+        )}
+      </Section>
     </div>
   );
 };
-
-const DateItem = ({
-  label,
-  value,
-}: {
-  label: string;
-  value: React.ReactNode;
-}) => (
-  <div className="flex items-center justify-between">
-    <p className="text-sm font-semibold text-gray-600 dark:text-gray-300">
-      {label}:
-    </p>
-    <p className="text-gray-800 dark:text-prowler-theme-pale/90">{value}</p>
-  </div>
-);
-
-const DetailItem = ({
-  label,
-  value,
-}: {
-  label: string;
-  value: React.ReactNode;
-}) => (
-  <div className="flex items-center justify-between">
-    <p className="text-sm font-semibold text-gray-600 dark:text-gray-300">
-      {label}:
-    </p>
-    <p className="text-gray-800 dark:text-prowler-theme-pale/90">{value}</p>
-  </div>
-);

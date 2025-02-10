@@ -438,7 +438,7 @@ class TestAzureProvider:
                     raise_on_exception=True,
                 )
 
-            assert exception.type == Exception
+            assert exception.type is Exception
             assert exception.value.args[0] == "Simulated Exception"
 
     @pytest.mark.parametrize(

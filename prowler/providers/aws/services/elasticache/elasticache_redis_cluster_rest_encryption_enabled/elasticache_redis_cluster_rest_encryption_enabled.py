@@ -8,9 +8,7 @@ class elasticache_redis_cluster_rest_encryption_enabled(Check):
     def execute(self):
         findings = []
         for repl_group in elasticache_client.replication_groups.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource_metadata=repl_group
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=repl_group)
             report.status = "FAIL"
             report.status_extended = f"Elasticache Redis cache cluster {repl_group.id} does not have at rest encryption enabled."
             if repl_group.encrypted:

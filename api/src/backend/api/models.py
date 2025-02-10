@@ -11,6 +11,7 @@ from django.core.validators import MinLengthValidator
 from django.db import models
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
+from django_celery_beat.models import PeriodicTask
 from django_celery_results.models import TaskResult
 from psqlextra.manager import PostgresManager
 from psqlextra.models import PostgresPartitionedModel
@@ -226,13 +227,13 @@ class Provider(RowLevelSecurityProtectedModel):
     @staticmethod
     def validate_kubernetes_uid(value):
         if not re.match(
-            r"(^[a-z0-9]([-a-z0-9]{1,61}[a-z0-9])?$)|(^arn:aws(-cn|-us-gov|-iso|-iso-b)?:[a-zA-Z0-9\-]+:([a-z]{2}-[a-z]+-\d{1})?:(\d{12})?:[a-zA-Z0-9\-_\/:\.\*]+(:\d+)?$)",
+            r"^[a-z0-9][A-Za-z0-9_.:\/-]{1,250}$",
             value,
         ):
             raise ModelValidationError(
                 detail="The value must either be a valid Kubernetes UID (up to 63 characters, "
                 "starting and ending with a lowercase letter or number, containing only "
-                "lowercase alphanumeric characters and hyphens) or a valid EKS ARN.",
+                "lowercase alphanumeric characters and hyphens) or a valid AWS EKS Cluster ARN, GCP GKE Context Name or Azure AKS Cluster Name.",
                 code="kubernetes-uid",
                 pointer="/data/attributes/uid",
             )
@@ -246,7 +247,7 @@ class Provider(RowLevelSecurityProtectedModel):
     )
     uid = models.CharField(
         "Unique identifier for the provider, set by the provider",
-        max_length=63,
+        max_length=250,
         blank=False,
         validators=[MinLengthValidator(3)],
     )
@@ -410,6 +411,9 @@ class Scan(RowLevelSecurityProtectedModel):
     started_at = models.DateTimeField(null=True, blank=True)
     completed_at = models.DateTimeField(null=True, blank=True)
     next_scan_at = models.DateTimeField(null=True, blank=True)
+    scheduler_task = models.ForeignKey(
+        PeriodicTask, on_delete=models.CASCADE, null=True, blank=True
+    )
     # TODO: mutelist foreign key
 
     class Meta(RowLevelSecurityProtectedModel.Meta):
@@ -427,6 +431,10 @@ class Scan(RowLevelSecurityProtectedModel):
             models.Index(
                 fields=["provider", "state", "trigger", "scheduled_at"],
                 name="scans_prov_state_trig_sche_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "provider_id", "state", "inserted_at"],
+                name="scans_prov_state_insert_idx",
             ),
         ]
 
@@ -1099,6 +1107,12 @@ class ScanSummary(RowLevelSecurityProtectedModel):
                 name="rls_on_%(class)s",
                 statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
             ),
+        ]
+        indexes = [
+            models.Index(
+                fields=["tenant_id", "scan_id"],
+                name="scan_summaries_tenant_scan_idx",
+            )
         ]
 
     class JSONAPIMeta:

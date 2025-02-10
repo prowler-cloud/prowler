@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional, Union
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 
 from prowler.config.config import prowler_version
 from prowler.lib.check.models import Check_Report, CheckMetadata
@@ -35,7 +35,7 @@ class Finding(BaseModel):
     status_extended: str
     muted: bool = False
     resource_uid: str
-    # resource_metadata: dict = Field(default_factory=dict) TODO: add resource_metadata to the finding
+    resource_metadata: dict = Field(default_factory=dict)
     resource_name: str
     resource_details: str
     resource_tags: dict = Field(default_factory=dict)
@@ -121,6 +121,7 @@ class Finding(BaseModel):
         )
         try:
             output_data["provider"] = provider.type
+            output_data["resource_metadata"] = check_output.resource
 
             if provider.type == "aws":
                 output_data["account_uid"] = get_nested_attribute(
@@ -233,6 +234,20 @@ class Finding(BaseModel):
                 )
                 output_data["region"] = f"namespace: {check_output.namespace}"
 
+            elif provider.type == "microsoft365":
+                output_data["auth_method"] = (
+                    f"{provider.identity.identity_type}: {provider.identity.identity_id}"
+                )
+                output_data["account_uid"] = get_nested_attribute(
+                    provider, "identity.tenant_id"
+                )
+                output_data["account_name"] = get_nested_attribute(
+                    provider, "identity.tenant_domain"
+                )
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_uid"] = check_output.resource_id
+                output_data["region"] = check_output.location
+
             # check_output Unique ID
             # TODO: move this to a function
             # TODO: in Azure, GCP and K8s there are fidings without resource_name
@@ -242,7 +257,13 @@ class Finding(BaseModel):
             )
 
             return cls(**output_data)
+        except ValidationError as validation_error:
+            logger.error(
+                f"{validation_error.__class__.__name__}[{validation_error.__traceback__.tb_lineno}]: {validation_error} - {output_data}"
+            )
+            raise validation_error
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+            raise error
