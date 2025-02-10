@@ -113,7 +113,7 @@ Prowler for Microsoft365 currently supports the following authentication types:
 
 
 ???+ warning
-    For Prowler App only the Service Principal authentication method is supported.
+    For Prowler App only the Service Principal with an application authentication method is supported.
 
 ### Service Principal authentication
 
@@ -126,8 +126,8 @@ export AZURE_TENANT_ID="XXXXXXXXX"
 ```
 
 If you try to execute Prowler with the `--sp-env-auth` flag and those variables are empty or not exported, the execution is going to fail.
-Follow the instructions in the [Create Prowler Service Principal](../tutorials/microsoft365/create-prowler-service-principal.md) section to create a service principal.
+Follow the instructions in the [Create Prowler Service Principal](../tutorials/azure/create-prowler-service-principal.md) section to create a service principal.
 
 ### Interactive Browser authentication
 
-To use `--browser-auth`  the user needs to authenticate against Azure using the default browser to start the scan, also `tenant-id` is required.
+To use `--browser-auth`  the user needs to authenticate against Azure using the default browser to start the scan, also `--tenant-id` flag is required.

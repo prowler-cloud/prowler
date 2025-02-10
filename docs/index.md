@@ -164,7 +164,7 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
 
     * `Python >= 3.9`
     * `Python pip >= 21.0.0`
-    * AWS, GCP, Azure and/or Kubernetes credentials
+    * AWS, GCP, Azure, Microsoft365 and/or Kubernetes credentials
 
     _Commands_:
 
@@ -545,7 +545,7 @@ kubectl logs prowler-XXXXX --namespace prowler-ns
 ???+ note
     By default, `prowler` will scan all namespaces in your active Kubernetes context. Use the flag `--context` to specify the context to be scanned and `--namespaces` to specify the namespaces to be scanned.
 
-### Microsoft365
+#### Microsoft365
 
 With Microsoft365 you need to specify which auth method is going to be used:
 
