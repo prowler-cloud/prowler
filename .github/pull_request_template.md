@@ -17,6 +17,11 @@ Please include a summary of the change and which issue is fixed. List any depend
 - [ ] Review if backport is needed.
 - [ ] Review if is needed to change the [Readme.md](https://github.com/prowler-cloud/prowler/blob/master/README.md)
 
+#### API
+- [ ] Verify if API specs need to be regenerated.
+- [ ] Check if version updates are required (e.g., specs, Poetry, etc.).
+- [ ] Ensure new entries are added to [CHANGELOG.md](https://github.com/prowler-cloud/prowler/blob/master/api/CHANGELOG.md), if applicable.
+
 ### License
 
 By submitting this pull request, I confirm that my contribution is made under the terms of the Apache 2.0 license.
