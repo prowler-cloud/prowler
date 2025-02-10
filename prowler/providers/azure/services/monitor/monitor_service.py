@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from typing import List
 
 from azure.mgmt.monitor import MonitorManagementClient
-from azure.mgmt.monitor.models import LogSettings
 
 from prowler.lib.logger import logger
 from prowler.providers.azure.azure_provider import AzureProvider
@@ -48,7 +47,14 @@ class Monitor(AzureService):
                             if getattr(setting, "storage_account_id", None)
                             else None
                         ),
-                        logs=setting.logs,
+                        logs=[
+                            LogSettings(
+                                category=log_settings.category,
+                                category_group=log_settings.category_group,
+                                enabled=log_settings.enabled,
+                            )
+                            for log_settings in getattr(setting, "logs", [])
+                        ],
                         storage_account_id=setting.storage_account_id,
                     )
                 )
@@ -93,11 +99,18 @@ class Monitor(AzureService):
 
 
 @dataclass
+class LogSettings:
+    category: str
+    category_group: str
+    enabled: bool
+
+
+@dataclass
 class DiagnosticSetting:
     id: str
     storage_account_id: str
     storage_account_name: str
-    logs: LogSettings
+    logs: List[LogSettings]
     name: str
 
 
