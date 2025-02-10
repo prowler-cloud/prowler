@@ -4,7 +4,13 @@ from typing import Optional, Union
 from pydantic import BaseModel, Field, ValidationError
 
 from prowler.config.config import prowler_version
-from prowler.lib.check.models import Check_Report, CheckMetadata, Remediation, Code, Recommendation
+from prowler.lib.check.models import (
+    Check_Report,
+    CheckMetadata,
+    Remediation,
+    Code,
+    Recommendation,
+)
 from prowler.lib.logger import logger
 from prowler.lib.outputs.common import Status, fill_common_finding_data
 from prowler.lib.outputs.compliance.compliance import get_check_compliance
@@ -270,9 +276,7 @@ class Finding(BaseModel):
             raise error
 
     @classmethod
-    def transform_api_finding(
-        cls, finding
-    ) -> "Finding":
+    def transform_api_finding(cls, finding) -> "Finding":
         """
         Transform a FindingModel instance into an API-friendly Finding object.
 
@@ -308,12 +312,18 @@ class Finding(BaseModel):
             RelatedUrl=finding.check_metadata["relatedurl"],
             Remediation=Remediation(
                 Recommendation=Recommendation(
-                    Text=finding.check_metadata["remediation"]["recommendation"]["text"],
+                    Text=finding.check_metadata["remediation"]["recommendation"][
+                        "text"
+                    ],
                     Url=finding.check_metadata["remediation"]["recommendation"]["url"],
                 ),
                 Code=Code(
-                    NativeIaC=finding.check_metadata["remediation"]["code"]["nativeiac"],
-                    Terraform=finding.check_metadata["remediation"]["code"]["terraform"],
+                    NativeIaC=finding.check_metadata["remediation"]["code"][
+                        "nativeiac"
+                    ],
+                    Terraform=finding.check_metadata["remediation"]["code"][
+                        "terraform"
+                    ],
                     CLI=finding.check_metadata["remediation"]["code"]["cli"],
                     Other=finding.check_metadata["remediation"]["code"]["other"],
                 ),
@@ -331,15 +341,15 @@ class Finding(BaseModel):
         output_data["resource_name"] = finding.resources.first().name
         output_data["resource_details"] = ""
         resource_tags = finding.resources.first().tags.all()
-        output_data["resource_tags"] = unroll_tags([{"key": tag.key, "value": tag.value} for tag in resource_tags])
+        output_data["resource_tags"] = unroll_tags(
+            [{"key": tag.key, "value": tag.value} for tag in resource_tags]
+        )
         output_data["region"] = finding.resources.first().region
         output_data["compliance"] = {}
 
         return cls(**output_data)
 
-    def _transform_findings_stats(
-            scan_summaries: list[dict]
-    ) -> dict:
+    def _transform_findings_stats(scan_summaries: list[dict]) -> dict:
         """
         Aggregate and transform scan summary data into findings statistics.
 
