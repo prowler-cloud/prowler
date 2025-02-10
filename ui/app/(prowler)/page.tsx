@@ -182,8 +182,8 @@ const SSRDataNewFindingsTable = async () => {
             Latest new failing findings
           </h3>
           <p className="text-xs text-gray-500">
-            Showing the latest 10 new failing findings by severity from the last 2
-            days.
+            Showing the latest 10 new failing findings by severity from the last
+            2 days.
           </p>
         </div>
         <div className="absolute -top-6 right-0">
