@@ -1,7 +1,8 @@
 from dataclasses import dataclass
+from typing import List
 
 from azure.mgmt.monitor import MonitorManagementClient
-from azure.mgmt.monitor.models import AlertRuleAllOfCondition, LogSettings
+from azure.mgmt.monitor.models import LogSettings
 
 from prowler.lib.logger import logger
 from prowler.providers.azure.azure_provider import AzureProvider
@@ -69,7 +70,17 @@ class Monitor(AzureService):
                         AlertRule(
                             id=rule.id,
                             name=rule.name,
-                            condition=rule.condition,
+                            condition=AlertRuleAllOfCondition(
+                                all_of=[
+                                    AlertRuleAnyOfOrLeafCondition(
+                                        field=condition.field,
+                                        equals=condition.equals,
+                                    )
+                                    for condition in getattr(
+                                        getattr(rule, "condition", None), "all_of", []
+                                    )
+                                ]
+                            ),
                             enabled=rule.enabled,
                             description=rule.description,
                         )
@@ -88,6 +99,17 @@ class DiagnosticSetting:
     storage_account_name: str
     logs: LogSettings
     name: str
+
+
+@dataclass
+class AlertRuleAnyOfOrLeafCondition:
+    field: str
+    equals: str
+
+
+@dataclass
+class AlertRuleAllOfCondition:
+    all_of: List[AlertRuleAnyOfOrLeafCondition]
 
 
 @dataclass
