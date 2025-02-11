@@ -1,4 +1,3 @@
-import requests
 from pydantic import BaseModel
 from prowler.lib.logger import logger
 from prowler.providers.nhn.nhn_provider import NhnProvider
