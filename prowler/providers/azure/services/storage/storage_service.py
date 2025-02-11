@@ -43,12 +43,14 @@ class Storage(AzureService):
                             allow_blob_public_access=storage_account.allow_blob_public_access,
                             network_rule_set=NetworkRuleSet(
                                 bypass=getattr(
-                                    storage_account.network_rule_set, "bypass", ""
+                                    storage_account.network_rule_set,
+                                    "bypass",
+                                    "AzureServices",
                                 ),
                                 default_action=getattr(
                                     storage_account.network_rule_set,
                                     "default_action",
-                                    "",
+                                    "Allow",
                                 ),
                             ),
                             encryption_type=storage_account.encryption.key_source,
