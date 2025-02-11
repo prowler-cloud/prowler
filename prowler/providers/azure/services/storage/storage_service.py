@@ -42,8 +42,14 @@ class Storage(AzureService):
                             infrastructure_encryption=storage_account.encryption.require_infrastructure_encryption,
                             allow_blob_public_access=storage_account.allow_blob_public_access,
                             network_rule_set=NetworkRuleSet(
-                                bypass=storage_account.network_rule_set.bypass,
-                                default_action=storage_account.network_rule_set.default_action,
+                                bypass=getattr(
+                                    storage_account.network_rule_set, "bypass", ""
+                                ),
+                                default_action=getattr(
+                                    storage_account.network_rule_set,
+                                    "default_action",
+                                    "",
+                                ),
                             ),
                             encryption_type=storage_account.encryption.key_source,
                             minimum_tls_version=storage_account.minimum_tls_version,
@@ -82,8 +88,14 @@ class Storage(AzureService):
                         type=properties.type,
                         default_service_version=properties.default_service_version,
                         container_delete_retention_policy=DeleteRetentionPolicy(
-                            enabled=properties.container_delete_retention_policy.enabled,
-                            days=properties.container_delete_retention_policy.days,
+                            enabled=getattr(
+                                properties.container_delete_retention_policy,
+                                "enabled",
+                                False,
+                            ),
+                            days=getattr(
+                                properties.container_delete_retention_policy, "days", 0
+                            ),
                         ),
                     )
         except Exception as error:
