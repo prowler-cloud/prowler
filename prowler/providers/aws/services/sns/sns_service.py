@@ -97,7 +97,11 @@ class SNS(AWSService):
                             owner=sub["Owner"],
                             protocol=sub["Protocol"],
                             endpoint=sub["Endpoint"],
-                            region=(sub["SubscriptionArn"].split(":")[3] if ":" in sub["SubscriptionArn"] else "unknown"),
+                            region=(
+                                sub["SubscriptionArn"].split(":")[3]
+                                if ":" in sub["SubscriptionArn"]
+                                else "unknown"
+                            ),
                         )
                         for sub in response["Subscriptions"]
                     ]
