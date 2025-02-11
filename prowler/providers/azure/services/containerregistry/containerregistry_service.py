@@ -35,7 +35,11 @@ class ContainerRegistry(AzureService):
                                 login_server=getattr(registry, "login_server", ""),
                                 public_network_access=(
                                     False
-                                    if getattr(registry, "public_network_accessEnabled")
+                                    if getattr(
+                                        registry,
+                                        "public_network_access_enabled",
+                                        "Enabled",
+                                    )
                                     == "Disabled"
                                     else True
                                 ),
