@@ -681,7 +681,7 @@ class Bucket(BaseModel):
     logging: bool = False
     public_access_block: Optional[PublicAccessBlock]
     acl_grantees: List[ACL_Grantee] = Field(default_factory=list)
-    policy: Dict = Field(default_factory=dict)
+    policy: Optional[dict] = None
     encryption: Optional[str]
     region: str
     logging_target_bucket: Optional[str]

@@ -9,6 +9,8 @@ class opensearch_service_domains_not_publicly_accessible(Check):
     def execute(self):
         findings = []
         for domain in opensearch_client.opensearch_domains.values():
+            if domain.access_policy is None:
+                continue
             report = Check_Report_AWS(metadata=self.metadata(), resource=domain)
             report.status = "PASS"
             report.status_extended = (
