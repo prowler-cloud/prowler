@@ -133,6 +133,7 @@ from api.v1.serializers import (
     TokenRefreshSerializer,
     TokenSerializer,
     TokenSocialLoginSerializer,
+    TokenSwitchTenantSerializer,
     UserCreateSerializer,
     UserRoleRelationshipSerializer,
     UserSerializer,
@@ -195,6 +196,36 @@ class CustomTokenRefreshView(GenericAPIView):
 
         return Response(
             data={"type": "tokens-refresh", "attributes": serializer.validated_data},
+            status=status.HTTP_200_OK,
+        )
+
+
+@extend_schema(
+    tags=["Token"],
+    summary="Switch tenant using a valid tenant ID",
+    description="Switch tenant by providing a valid tenant ID. The authenticated user must belong to the tenant.",
+)
+class CustomTokenSwitchTenantView(GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    resource_name = "tokens-switch-tenant"
+    serializer_class = TokenSwitchTenantSerializer
+    http_method_names = ["post"]
+
+    def post(self, request):
+        serializer = TokenSwitchTenantSerializer(
+            data=request.data, context={"request": request}
+        )
+
+        try:
+            serializer.is_valid(raise_exception=True)
+        except TokenError as e:
+            raise InvalidToken(e.args[0])
+
+        return Response(
+            data={
+                "type": "tokens-switch-tenant",
+                "attributes": serializer.validated_data,
+            },
             status=status.HTTP_200_OK,
         )
 

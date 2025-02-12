@@ -6,6 +6,7 @@ from api.v1.views import (
     ComplianceOverviewViewSet,
     CustomTokenObtainView,
     CustomTokenRefreshView,
+    CustomTokenSwitchTenantView,
     FindingViewSet,
     GithubLoginCallback,
     GithubSocialLoginView,
@@ -61,6 +62,7 @@ users_router.register(r"memberships", MembershipViewSet, basename="user-membersh
 urlpatterns = [
     path("tokens", CustomTokenObtainView.as_view(), name="token-obtain"),
     path("tokens/refresh", CustomTokenRefreshView.as_view(), name="token-refresh"),
+    path("tokens/switch", CustomTokenSwitchTenantView.as_view(), name="token-switch"),
     path(
         "providers/secrets",
         ProviderSecretViewSet.as_view({"get": "list", "post": "create"}),
