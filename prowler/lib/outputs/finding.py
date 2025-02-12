@@ -294,7 +294,7 @@ class Finding(BaseModel):
             Finding: A new Finding instance populated with data from the provided model.
         """
         output_data = {}
-        output_data["auth_method"] = ""  # Pepe
+        output_data["auth_method"] = ""
         output_data["timestamp"] = finding.inserted_at
         output_data["account_uid"] = finding.scan.provider.uid
         output_data["account_name"] = ""
