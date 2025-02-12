@@ -73,7 +73,7 @@ class Microsoft365CISModel(BaseModel):
 
     Provider: str
     Description: str
-    SubscriptionId: str
+    TenantId: str
     Location: str
     AssessmentDate: str
     Requirements_Id: str
