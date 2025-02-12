@@ -84,6 +84,9 @@ class Storage(AzureService):
                     properties = client.blob_services.get_service_properties(
                         account.resouce_group_name, account.name
                     )
+                    container_delete_retention_policy = getattr(
+                        properties, "container_delete_retention_policy", None
+                    )
                     account.blob_properties = BlobProperties(
                         id=properties.id,
                         name=properties.name,
@@ -91,13 +94,11 @@ class Storage(AzureService):
                         default_service_version=properties.default_service_version,
                         container_delete_retention_policy=DeleteRetentionPolicy(
                             enabled=getattr(
-                                properties.container_delete_retention_policy,
+                                container_delete_retention_policy,
                                 "enabled",
                                 False,
                             ),
-                            days=getattr(
-                                properties.container_delete_retention_policy, "days", 0
-                            ),
+                            days=getattr(container_delete_retention_policy, "days", 0),
                         ),
                     )
         except Exception as error:
