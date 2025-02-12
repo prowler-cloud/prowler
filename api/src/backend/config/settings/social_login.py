@@ -1,6 +1,5 @@
 from config.env import env
 
-
 # Google Oauth settings
 GOOGLE_OAUTH_CLIENT_ID = env("DJANGO_GOOGLE_OAUTH_CLIENT_ID", default="")
 GOOGLE_OAUTH_CLIENT_SECRET = env("DJANGO_GOOGLE_OAUTH_CLIENT_SECRET", default="")
@@ -29,13 +28,12 @@ SOCIALACCOUNT_ADAPTER = "api.adapters.ProwlerSocialAccountAdapter"
 SOCIALACCOUNT_PROVIDERS = {
     "google": {
         "APP": {
-                "client_id": GOOGLE_OAUTH_CLIENT_ID,
-                "secret": GOOGLE_OAUTH_CLIENT_SECRET,
-                "key": "",
+            "client_id": GOOGLE_OAUTH_CLIENT_ID,
+            "secret": GOOGLE_OAUTH_CLIENT_SECRET,
+            "key": "",
         },
         "SCOPE": [
             "email",
-            # TODOVICTOR Review scopes
             "profile",
         ],
         "AUTH_PARAMS": {
@@ -49,9 +47,8 @@ SOCIALACCOUNT_PROVIDERS = {
         },
         "SCOPE": [
             "user",
-            # TODOVICTOR Review scopes
             "repo",
             "read:org",
         ],
-    }
+    },
 }

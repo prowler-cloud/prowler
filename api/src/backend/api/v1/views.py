@@ -1,6 +1,3 @@
-from urllib.parse import urljoin
-
-import requests
 from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
@@ -13,10 +10,8 @@ from django.contrib.postgres.search import SearchQuery
 from django.db import transaction
 from django.db.models import Count, F, OuterRef, Prefetch, Q, Subquery, Sum
 from django.db.models.functions import Coalesce
-from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.views import View
 from django.views.decorators.cache import cache_control
 from drf_spectacular.settings import spectacular_settings
 from drf_spectacular.utils import (
@@ -38,7 +33,6 @@ from rest_framework.exceptions import (
 )
 from rest_framework.generics import GenericAPIView, get_object_or_404
 from rest_framework.permissions import SAFE_METHODS
-from rest_framework.views import APIView
 from rest_framework_json_api.views import RelationshipView, Response
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from tasks.beat import schedule_provider_scan
@@ -2319,64 +2313,5 @@ class ScheduleViewSet(BaseRLSViewSet):
                 "Content-Location": reverse(
                     "task-detail", kwargs={"pk": prowler_task.id}
                 )
-            },
-        )
-
-
-# TODOVICTOR Remove all of this (testing)
-
-
-@extend_schema(exclude=True)
-class GoogleLoginCallback(APIView):
-    def get(self, request, *args, **kwargs):
-        """
-        If you are building a fullstack application (eq. with React app next to Django)
-        you can place this endpoint in your frontend application to receive
-        the JWT tokens there - and store them in the state
-        """
-        code = request.GET.get("code")
-        if code is None:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-        token_endpoint_url = urljoin("http://localhost:8000", reverse("token-google"))
-        response = requests.post(url=token_endpoint_url, data={"code": code})
-        return Response(
-            data=response.json()[
-                f"{'data' if response.status_code == 200 else 'errors'}"
-            ],
-            status=response.status_code,
-        )
-
-
-@extend_schema(exclude=True)
-class GithubLoginCallback(APIView):
-    def get(self, request, *args, **kwargs):
-        """
-        If you are building a fullstack application (eq. with React app next to Django)
-        you can place this endpoint in your frontend application to receive
-        the JWT tokens there - and store them in the state
-        """
-
-        code = request.GET.get("code")
-
-        if code is None:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-
-        token_endpoint_url = urljoin("http://localhost:8000", reverse("token-github"))
-        response = requests.post(url=token_endpoint_url, data={"code": code})
-
-        return Response(data=response.json()["data"], status=response.status_code)
-
-
-@extend_schema(exclude=True)
-class LoginPage(View):
-    def get(self, request, *args, **kwargs):
-        return render(
-            request,
-            "login.html",
-            {
-                "google_callback_uri": django_settings.GOOGLE_OAUTH_CALLBACK_URL,
-                "google_client_id": django_settings.GOOGLE_OAUTH_CLIENT_ID,
-                "github_callback_uri": django_settings.GITHUB_OAUTH_CALLBACK_URL,
-                "github_client_id": django_settings.GITHUB_OAUTH_CLIENT_ID,
             },
         )
