@@ -88,6 +88,7 @@ class ECR(AWSService):
                             logger.warning(
                                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                             )
+                            repository.policy = {}
 
         except Exception as error:
             if "RepositoryPolicyNotFoundException" not in str(error):

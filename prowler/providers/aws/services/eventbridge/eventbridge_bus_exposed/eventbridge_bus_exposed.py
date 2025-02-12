@@ -9,7 +9,13 @@ class eventbridge_bus_exposed(Check):
     def execute(self):
         findings = []
         for bus in eventbridge_client.buses.values():
+<<<<<<< HEAD
             report = Check_Report_AWS(self.metadata())
+=======
+            if bus.policy is None:
+                continue
+            report = Check_Report_AWS(metadata=self.metadata(), resource=bus)
+>>>>>>> d1053375b (fix(aws): handle `AccessDenied` when retrieving resource policy (#6908))
             report.status = "PASS"
             report.status_extended = (
                 f"EventBridge event bus {bus.name} is not exposed to everyone."

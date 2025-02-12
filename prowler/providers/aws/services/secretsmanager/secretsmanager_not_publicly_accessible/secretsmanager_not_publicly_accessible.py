@@ -9,11 +9,17 @@ class secretsmanager_not_publicly_accessible(Check):
     def execute(self):
         findings = []
         for secret in secretsmanager_client.secrets.values():
+<<<<<<< HEAD
             report = Check_Report_AWS(self.metadata())
             report.region = secret.region
             report.resource_id = secret.name
             report.resource_arn = secret.arn
             report.resource_tags = secret.tags
+=======
+            if secret.policy is None:
+                continue
+            report = Check_Report_AWS(metadata=self.metadata(), resource=secret)
+>>>>>>> d1053375b (fix(aws): handle `AccessDenied` when retrieving resource policy (#6908))
             report.status = "PASS"
             report.status_extended = (
                 f"SecretsManager secret {secret.name} is not publicly accessible."

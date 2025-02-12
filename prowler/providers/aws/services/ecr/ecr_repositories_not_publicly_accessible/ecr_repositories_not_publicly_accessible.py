@@ -8,11 +8,17 @@ class ecr_repositories_not_publicly_accessible(Check):
         findings = []
         for registry in ecr_client.registries.values():
             for repository in registry.repositories:
+<<<<<<< HEAD
                 report = Check_Report_AWS(self.metadata())
                 report.region = repository.region
                 report.resource_id = repository.name
                 report.resource_arn = repository.arn
                 report.resource_tags = repository.tags
+=======
+                if repository.policy is None:
+                    continue
+                report = Check_Report_AWS(metadata=self.metadata(), resource=repository)
+>>>>>>> d1053375b (fix(aws): handle `AccessDenied` when retrieving resource policy (#6908))
                 report.status = "PASS"
                 report.status_extended = (
                     f"Repository {repository.name} is not publicly accessible."
