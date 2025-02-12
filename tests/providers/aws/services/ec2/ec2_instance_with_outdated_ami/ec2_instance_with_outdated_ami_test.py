@@ -116,7 +116,7 @@ class Test_ec2_instance_with_outdated_ami:
             assert result[0].resource_id == "i-0123456789abcdef0"
             assert (
                 result[0].status_extended
-                == "EC2 Instance i-0123456789abcdef0 is not using outdated AMIs."
+                == "EC2 Instance i-0123456789abcdef0 is not using an outdated AMI."
             )
 
     @mock.patch(
