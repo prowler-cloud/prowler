@@ -92,16 +92,12 @@ class SNS(AWSService):
                     )
                     subscriptions: list[Subscription] = [
                         Subscription(
-                            id=sub["SubscriptionArn"].split(":")[-1],
+                            id=(parts := sub["SubscriptionArn"].split(":"))[-1],
                             arn=sub["SubscriptionArn"],
                             owner=sub["Owner"],
                             protocol=sub["Protocol"],
                             endpoint=sub["Endpoint"],
-                            region=(
-                                sub["SubscriptionArn"].split(":")[3]
-                                if ":" in sub["SubscriptionArn"]
-                                else "unknown"
-                            ),
+                            region=parts[3] if len(parts) > 3 else "unknown",
                         )
                         for sub in response["Subscriptions"]
                     ]
