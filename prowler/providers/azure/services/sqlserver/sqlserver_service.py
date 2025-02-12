@@ -48,8 +48,16 @@ class SQLServer(AzureService):
                             public_network_access=sql_server.public_network_access,
                             minimal_tls_version=sql_server.minimal_tls_version,
                             administrators=ServerExternalAdministrator(
-                                sid=sql_server.administrators.sid,
-                                administrator_type=sql_server.administrators.administrator_type,
+                                sid=getattr(
+                                    getattr(sql_server, "administrators", None),
+                                    "sid",
+                                    "",
+                                ),
+                                administrator_type=getattr(
+                                    getattr(sql_server, "administrators", None),
+                                    "administrator_type",
+                                    "",
+                                ),
                             ),
                             auditing_policies=auditing_policies,
                             firewall_rules=firewall_rules,
