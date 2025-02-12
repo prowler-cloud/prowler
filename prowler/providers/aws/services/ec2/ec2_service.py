@@ -348,7 +348,9 @@ class EC2(AWSService):
 
     def _describe_images(self, regional_client):
         try:
-            for image in regional_client.describe_images(Owners=["self"])["Images"]:
+            for image in regional_client.describe_images(
+                Owners=["self"], IncludeDeprecated=True
+            )["Images"]:
                 arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:image/{image['ImageId']}"
                 if not self.audit_resources or (
                     is_resource_filtered(arn, self.audit_resources)
@@ -361,6 +363,7 @@ class EC2(AWSService):
                             public=image.get("Public", False),
                             region=regional_client.region,
                             tags=image.get("Tags"),
+                            deprecation_time=image.get("DeprecationTime"),
                         )
                     )
         except Exception as error:
@@ -744,6 +747,7 @@ class Image(BaseModel):
     arn: str
     name: str
     public: bool
+    deprecation_time: Optional[str]
     region: str
     tags: Optional[list] = []
 

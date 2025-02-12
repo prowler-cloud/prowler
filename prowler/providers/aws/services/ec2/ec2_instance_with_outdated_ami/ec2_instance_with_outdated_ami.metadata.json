@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "ec2_instance_with_outdated_ami",
+  "CheckTitle": "Check for EC2 Instances Using Outdated AMIs",
+  "CheckType": [],
+  "ServiceName": "ec2",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:instance/resource-id",
+  "Severity": "high",
+  "ResourceType": "AwsEc2Instance",
+  "Description": "This check identifies EC2 instances using outdated Amazon Machine Images (AMIs) by auditing instances to gather AMI IDs, comparing them against the latest available versions, verifying suppo and security update status, and checking for deprecation.",
+  "Risk": "Using outdated AMIs can expose EC2 instances to security vulnerabilities, lack of support, and missing critical updates, increasing the risk of exploitation.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws ec2 describe-images --image-ids <ami-id>",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/finding-an-ami.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Regularly update your EC2 instances to use the latest AMIs to ensure they receive the latest security patches and updates.",
+      "Url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/finding-an-ami.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
