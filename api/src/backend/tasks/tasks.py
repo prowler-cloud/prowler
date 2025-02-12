@@ -223,7 +223,7 @@ def generate_outputs(scan_id: str, provider_id: str, tenant_id: str):
     )
 
     # Retrieve findings queryset
-    findings_qs = Finding.objects.filter(scan_id=scan_id)
+    findings_qs = Finding.objects.filter(scan_id=scan_id).order_by("uid")
 
     # Process findings in batches
     for batch, is_last_batch in batched(findings_qs.iterator(), 50):

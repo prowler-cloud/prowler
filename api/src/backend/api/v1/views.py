@@ -1115,6 +1115,12 @@ class ScanViewSet(BaseRLSViewSet):
     def report(self, request, pk=None):
         scan_instance = Scan.objects.get(pk=pk)
         output_path = scan_instance.output_path
+
+        if not output_path:
+            return Response(
+                {"detail": "No files found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
         if scan_instance.upload_to_s3:
             s3_client = None
             try:
