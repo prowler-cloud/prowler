@@ -164,7 +164,7 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
 
     * `Python >= 3.9`
     * `Python pip >= 21.0.0`
-    * AWS, GCP, Azure and/or Kubernetes credentials
+    * AWS, GCP, Azure, Microsoft365 and/or Kubernetes credentials
 
     _Commands_:
 
@@ -417,7 +417,7 @@ While the scan is running, start exploring the findings in these sections:
 
 ### Prowler CLI
 
-To run Prowler, you will need to specify the provider (e.g `aws`, `gcp`, `azure` or `kubernetes`):
+To run Prowler, you will need to specify the provider (e.g `aws`, `gcp`, `azure`, `microsoft365` or `kubernetes`):
 
 ???+ note
     If no provider specified, AWS will be used for backward compatibility with most of v2 options.
@@ -558,6 +558,24 @@ kubectl logs prowler-XXXXX --namespace prowler-ns
 
 ???+ note
     By default, `prowler` will scan all namespaces in your active Kubernetes context. Use the flag `--context` to specify the context to be scanned and `--namespaces` to specify the namespaces to be scanned.
+
+#### Microsoft365
+
+With Microsoft365 you need to specify which auth method is going to be used:
+
+```console
+# To use service principal authentication
+prowler microsoft365 --sp-env-auth
+
+# To use az cli authentication
+prowler microsoft365 --az-cli-auth
+
+# To use browser authentication
+prowler microsoft365 --browser-auth --tenant-id "XXXXXXXX"
+
+```
+
+See more details about Microsoft365 Authentication in [Requirements](getting-started/requirements.md#microsoft365)
 
 ## Prowler v2 Documentation
 For **Prowler v2 Documentation**, please check it out [here](https://github.com/prowler-cloud/prowler/blob/8818f47333a0c1c1a457453c87af0ea5b89a385f/README.md).
