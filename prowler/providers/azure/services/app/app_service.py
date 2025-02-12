@@ -1,5 +1,5 @@
-from dataclasses import dataclass
-from typing import Dict
+from dataclasses import dataclass, field
+from typing import Dict, List
 
 from azure.mgmt.web import WebSiteManagementClient
 
@@ -240,7 +240,7 @@ class WebApp:
     client_cert_mode: str = "Ignore"
     auth_enabled: bool = False
     https_only: bool = False
-    monitor_diagnostic_settings: list[DiagnosticSetting] = None
+    monitor_diagnostic_settings: List[DiagnosticSetting] = field(default_factory=list)
     kind: str = "app"
 
 
