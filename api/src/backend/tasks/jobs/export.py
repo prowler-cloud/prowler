@@ -10,13 +10,13 @@ from prowler.config.config import (
     html_file_suffix,
     json_ocsf_file_suffix,
     output_file_timestamp,
+    tmp_output_directory,
 )
 from prowler.lib.outputs.csv.csv import CSV
 from prowler.lib.outputs.html.html import HTML
 from prowler.lib.outputs.ocsf.ocsf import OCSF
 
 logger = get_task_logger(__name__)
-tmp_output_directory = "/tmp/prowler_api_output"
 
 
 # Predefined mapping for output formats and their configurations
