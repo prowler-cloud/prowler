@@ -74,12 +74,13 @@ class HTML(Output):
                 and not self._file_descriptor.closed
                 and self._data
             ):
-                HTML.write_header(self._file_descriptor, provider, stats)
+                if self._file_descriptor.tell() == 0:
+                    HTML.write_header(self._file_descriptor, provider, stats)
                 for finding in self._data:
                     self._file_descriptor.write(finding)
-                HTML.write_footer(self._file_descriptor)
-                # Close file descriptor
-                self._file_descriptor.close()
+                if self.close_file:
+                    HTML.write_footer(self._file_descriptor)
+                    self._file_descriptor.close()
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
