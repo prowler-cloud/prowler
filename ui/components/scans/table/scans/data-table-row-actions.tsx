@@ -20,6 +20,7 @@ import { VerticalDotsIcon } from "@/components/icons";
 import { CustomAlertModal } from "@/components/ui/custom";
 
 import { EditScanForm } from "../../forms";
+import { DownloadIcon } from "lucide-react";
 
 interface DataTableRowActionsProps<ScanProps> {
   row: Row<ScanProps>;
@@ -33,6 +34,7 @@ export function DataTableRowActions<ScanProps>({
   const [isEditOpen, setIsEditOpen] = useState(false);
   const scanId = (row.original as { id: string }).id;
   const scanName = (row.original as any).attributes?.name;
+  const scanState = (row.original as any).attributes?.state;
   return (
     <>
       <CustomAlertModal
@@ -63,6 +65,18 @@ export function DataTableRowActions<ScanProps>({
             color="default"
             variant="flat"
           >
+            <DropdownSection title="Export artifacts">
+              <DropdownItem
+                key="export"
+                description="Available only for completed scans"
+                textValue="Export Scan Artifacts"
+                startContent={<DownloadIcon className={iconClasses} />}
+                onPress={() => setIsEditOpen(true)}
+                isDisabled={scanState !== "completed"}
+              >
+                Export .zip
+              </DropdownItem>
+            </DropdownSection>
             <DropdownSection title="Actions">
               <DropdownItem
                 key="edit"
