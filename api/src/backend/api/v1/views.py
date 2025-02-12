@@ -1,8 +1,6 @@
 from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
-from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from celery.result import AsyncResult
-from config.settings.social_login import GOOGLE_OAUTH_CALLBACK_URL
 from dj_rest_auth.registration.views import SocialLoginView
 from django.conf import settings as django_settings
 from django.contrib.postgres.aggregates import ArrayAgg
@@ -35,14 +33,6 @@ from rest_framework.generics import GenericAPIView, get_object_or_404
 from rest_framework.permissions import SAFE_METHODS
 from rest_framework_json_api.views import RelationshipView, Response
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
-from tasks.beat import schedule_provider_scan
-from tasks.tasks import (
-    check_provider_connection_task,
-    delete_provider_task,
-    delete_tenant_task,
-    perform_scan_summary_task,
-    perform_scan_task,
-)
 
 from api.base_views import BaseRLSViewSet, BaseTenantViewset, BaseUserViewset
 from api.db_router import MainRouter
@@ -86,7 +76,7 @@ from api.models import (
 from api.pagination import ComplianceOverviewPagination
 from api.rbac.permissions import Permissions, get_providers, get_role
 from api.rls import Tenant
-from api.utils import validate_invitation
+from api.utils import CustomOAuth2Client, validate_invitation
 from api.uuid_utils import datetime_to_uuid7
 from api.v1.serializers import (
     ComplianceOverviewFullSerializer,
@@ -132,6 +122,15 @@ from api.v1.serializers import (
     UserRoleRelationshipSerializer,
     UserSerializer,
     UserUpdateSerializer,
+)
+from config.settings.social_login import GITHUB_OAUTH_CALLBACK_URL, GOOGLE_OAUTH_CALLBACK_URL
+from tasks.beat import schedule_provider_scan
+from tasks.tasks import (
+    check_provider_connection_task,
+    delete_provider_task,
+    delete_tenant_task,
+    perform_scan_summary_task,
+    perform_scan_task,
 )
 
 CACHE_DECORATOR = cache_control(
@@ -293,7 +292,7 @@ class SchemaView(SpectacularAPIView):
 @extend_schema(exclude=True)
 class GoogleSocialLoginView(SocialLoginView):
     adapter_class = GoogleOAuth2Adapter
-    client_class = OAuth2Client
+    client_class = CustomOAuth2Client
     callback_url = GOOGLE_OAUTH_CALLBACK_URL
 
     def get_response(self):
@@ -318,8 +317,8 @@ class GoogleSocialLoginView(SocialLoginView):
 @extend_schema(exclude=True)
 class GithubSocialLoginView(SocialLoginView):
     adapter_class = GitHubOAuth2Adapter
-    client_class = OAuth2Client
-    callback_url = django_settings.GITHUB_OAUTH_CALLBACK_URL
+    client_class = CustomOAuth2Client
+    callback_url = GITHUB_OAUTH_CALLBACK_URL
 
     def get_response(self):
         original_response = super().get_response()

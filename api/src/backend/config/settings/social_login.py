@@ -10,7 +10,7 @@ GITHUB_OAUTH_CLIENT_SECRET = env("DJANGO_GITHUB_OAUTH_CLIENT_SECRET", default=""
 GITHUB_OAUTH_CALLBACK_URL = env("DJANGO_GITHUB_OAUTH_CALLBACK_URL", default="")
 
 # Allauth settings
-ACCOUNT_AUTHENTICATION_METHOD = "email"  # Use Email / Password authentication
+ACCOUNT_LOGIN_METHODS = {"email"}  # Use Email / Password authentication
 ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = "none"  # Do not require email confirmation
