@@ -6,7 +6,7 @@ from tests.providers.microsoft365.microsoft365_fixtures import (
 )
 
 
-class Test_entra_security_defaults_enabled:
+class Test_entra_security_defaults_disabled:
     def test_entra_tenant_empty(self):
         entra_client = mock.MagicMock
 
@@ -14,20 +14,22 @@ class Test_entra_security_defaults_enabled:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_microsoft365_provider(),
         ), mock.patch(
-            "prowler.providers.microsoft365.services.entra.entra_security_defaults_enabled.entra_security_defaults_enabled.entra_client",
+            "prowler.providers.microsoft365.services.entra.entra_security_defaults_disabled.entra_security_defaults_disabled.entra_client",
             new=entra_client,
         ):
-            from prowler.providers.microsoft365.services.entra.entra_security_defaults_enabled.entra_security_defaults_enabled import (
-                entra_security_defaults_enabled,
+            from prowler.providers.microsoft365.services.entra.entra_security_defaults_disabled.entra_security_defaults_disabled import (
+                entra_security_defaults_disabled,
             )
 
             entra_client.security_defaults = None
 
-            check = entra_security_defaults_enabled()
+            check = entra_security_defaults_disabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert result[0].status_extended == "Entra Security Defaults is disabled."
+            assert (
+                result[0].status_extended == "Entra Security Defaults is not disabled."
+            )
             assert result[0].resource_name == ""
             assert result[0].resource_id == ""
 
@@ -38,11 +40,11 @@ class Test_entra_security_defaults_enabled:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_microsoft365_provider(),
         ), mock.patch(
-            "prowler.providers.microsoft365.services.entra.entra_security_defaults_enabled.entra_security_defaults_enabled.entra_client",
+            "prowler.providers.microsoft365.services.entra.entra_security_defaults_disabled.entra_security_defaults_disabled.entra_client",
             new=entra_client,
         ):
-            from prowler.providers.microsoft365.services.entra.entra_security_defaults_enabled.entra_security_defaults_enabled import (
-                entra_security_defaults_enabled,
+            from prowler.providers.microsoft365.services.entra.entra_security_defaults_disabled.entra_security_defaults_disabled import (
+                entra_security_defaults_disabled,
             )
             from prowler.providers.microsoft365.services.entra.entra_service import (
                 SecurityDefaults,
@@ -54,11 +56,13 @@ class Test_entra_security_defaults_enabled:
                 id=id, name="Sec Default", is_enabled=True
             )
 
-            check = entra_security_defaults_enabled()
+            check = entra_security_defaults_disabled()
             result = check.execute()
             assert len(result) == 1
-            assert result[0].status == "PASS"
-            assert result[0].status_extended == "Entra Security Defaults is enabled."
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended == "Entra Security Defaults is not disabled."
+            )
             assert result[0].resource_name == "Sec Default"
             assert result[0].resource_id == id
 
@@ -69,11 +73,11 @@ class Test_entra_security_defaults_enabled:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_microsoft365_provider(),
         ), mock.patch(
-            "prowler.providers.microsoft365.services.entra.entra_security_defaults_enabled.entra_security_defaults_enabled.entra_client",
+            "prowler.providers.microsoft365.services.entra.entra_security_defaults_disabled.entra_security_defaults_disabled.entra_client",
             new=entra_client,
         ):
-            from prowler.providers.microsoft365.services.entra.entra_security_defaults_enabled.entra_security_defaults_enabled import (
-                entra_security_defaults_enabled,
+            from prowler.providers.microsoft365.services.entra.entra_security_defaults_disabled.entra_security_defaults_disabled import (
+                entra_security_defaults_disabled,
             )
             from prowler.providers.microsoft365.services.entra.entra_service import (
                 SecurityDefaults,
@@ -85,10 +89,10 @@ class Test_entra_security_defaults_enabled:
                 id=id, name="Sec Default", is_enabled=False
             )
 
-            check = entra_security_defaults_enabled()
+            check = entra_security_defaults_disabled()
             result = check.execute()
             assert len(result) == 1
-            assert result[0].status == "FAIL"
+            assert result[0].status == "PASS"
             assert result[0].status_extended == "Entra Security Defaults is disabled."
             assert result[0].resource_name == "Sec Default"
             assert result[0].resource_id == id
