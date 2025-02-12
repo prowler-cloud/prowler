@@ -1,9 +1,10 @@
 from pydantic import BaseModel
+
 from prowler.lib.logger import logger
 from prowler.providers.nhn.nhn_provider import NhnProvider
 
-class NHNComputeService:
 
+class NHNComputeService:
     def __init__(self, provider: NhnProvider):
         self.session = provider.session
         self.tenant_id = provider._tenant_id
@@ -32,7 +33,7 @@ class NHNComputeService:
         except Exception as e:
             logger.error(f"Error getting server detail {server_id}: {e}")
             return {}
-        
+
     def _check_public_ip(self, server_info: dict) -> bool:
         addresses = server_info.get("addresses", {})
         for _, ip_list in addresses.items():
@@ -40,23 +41,27 @@ class NHNComputeService:
                 if ip_info.get("OS-EXT-IPS:type") == "floating":
                     return True
         return False
-    
+
     def _check_security_groups(self, server_info: dict) -> bool:
         secruity_groups = server_info.get("security_groups", [])
         sg_names = []
         for sg_info in secruity_groups:
             name = sg_info.get("name", "")
             sg_names.append(name)
-            
+
         for name in sg_names:
             if name != "default":
                 return False
         return True
-    
+
     def _check_login_user(self, server_info: dict) -> bool:
         metadata = server_info.get("metadata", {})
         login_user = metadata.get("login_username", "")
-        if login_user == "Administrator" or login_user == "root" or login_user == "admin":
+        if (
+            login_user == "Administrator"
+            or login_user == "root"
+            or login_user == "admin"
+        ):
             return True
         return False
 
@@ -80,6 +85,7 @@ class NHNComputeService:
                 login_user=server_login_user,
             )
             self.instances.append(instance)
+
 
 class Instance(BaseModel):
     id: str

@@ -1,8 +1,6 @@
-import pytest
-from unittest.mock import patch, MagicMock
-from uuid import uuid4
+from unittest.mock import MagicMock, patch
 
-from prowler.providers.nhn.services.compute.compute_service import NHNComputeService, Instance
+from prowler.providers.nhn.services.compute.compute_service import NHNComputeService
 from tests.providers.nhn.nhn_fixtures import set_mocked_nhn_provider
 
 
@@ -43,9 +41,7 @@ class TestNHNComputeService:
                     ]
                 },
                 "security_groups": [{"name": "default"}],
-                "metadata": {
-                    "login_username": "root"
-                }
+                "metadata": {"login_username": "root"},
             }
         }
 
@@ -59,14 +55,16 @@ class TestNHNComputeService:
                     ]
                 },
                 "security_groups": [{"name": "default"}, {"name": "other-sg"}],
-                "metadata": {
-                    "login_username": "regularuser"
-                }
+                "metadata": {"login_username": "regularuser"},
             }
         }
 
         def get_side_effect(url, timeout=10):
-            if "/v2/tenant123/servers" in url and not url.endswith("server1") and not url.endswith("server2"):
+            if (
+                "/v2/tenant123/servers" in url
+                and not url.endswith("server1")
+                and not url.endswith("server2")
+            ):
                 return mocked_response_servers
             elif url.endswith("server1"):
                 return mocked_response_server1

@@ -8,10 +8,11 @@ from prowler.lib.outputs.finding import Finding
 #    NHN 클라우드 특정 필드가 있다면 아래처럼 만들 수 있음.
 #    (우선은 Microsoft365CISModel과 비슷한 구조로 작성)
 
+
 class NHNCIS(ComplianceOutput):
     """
     This class represents the NHN CIS compliance output.
-    
+
     Attributes:
         - _data (list): A list to store transformed data from findings.
         - _file_descriptor (TextIOWrapper): A file descriptor to write data to a file.

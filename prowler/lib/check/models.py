@@ -557,6 +557,7 @@ class Check_Report_Microsoft365(Check_Report):
         self.resource_id = getattr(resource, "id", getattr(resource, "resource_id", ""))
         self.location = getattr(resource, "location", "global")
 
+
 @dataclass
 class Check_Report_NHN(Check_Report):
     """Contains the NHN Check's finding information."""
@@ -578,6 +579,7 @@ class Check_Report_NHN(Check_Report):
         )
         self.resource_id = getattr(resource, "id", getattr(resource, "resource_id", ""))
         self.location = getattr(resource, "location", "global")
+
 
 # Testing Pending
 def load_check_metadata(metadata_file: str) -> CheckMetadata:

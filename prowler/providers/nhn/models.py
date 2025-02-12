@@ -1,6 +1,8 @@
 from pydantic import BaseModel
+
 from prowler.config.config import output_file_timestamp
 from prowler.providers.common.models import ProviderOutputOptions
+
 
 class NHNIdentityInfo(BaseModel):
     """
@@ -10,13 +12,15 @@ class NHNIdentityInfo(BaseModel):
         - identity_id (str): An optional identity ID if used by NHN services.
         - identity_type (str): The type or role of the identity, if needed.
         - tenant_id (str): The tenant ID for the NHN Cloud account.
-        - tenant_domain (str): The tenant domain if applicable. 
+        - tenant_domain (str): The tenant domain if applicable.
           (Some NHN services might require a domain or project domain.)
     """
+
     identity_id: str = ""
     identity_type: str = ""
     tenant_id: str = ""
     tenant_domain: str = ""
+
 
 class NHNOutputOptions(ProviderOutputOptions):
     """
@@ -31,6 +35,7 @@ class NHNOutputOptions(ProviderOutputOptions):
     Methods:
         - __init__: Customizes the output filename logic for NHN.
     """
+
     def __init__(self, arguments, bulk_checks_metadata, identity: NHNIdentityInfo):
         super().__init__(arguments, bulk_checks_metadata)
 
@@ -43,9 +48,7 @@ class NHNOutputOptions(ProviderOutputOptions):
                 )
             # Otherwise just 'prowler-output-nhn-<timestamp>'
             else:
-                self.output_filename = (
-                    f"prowler-output-nhn-{output_file_timestamp}"
-                )
+                self.output_filename = f"prowler-output-nhn-{output_file_timestamp}"
         # If --output-filename was explicitly given, respect that
         else:
             self.output_filename = arguments.output_filename

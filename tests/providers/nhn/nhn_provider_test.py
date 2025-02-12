@@ -1,7 +1,10 @@
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
-from prowler.providers.nhn.nhn_provider import NhnProvider
+
 from prowler.providers.common.models import Connection
+from prowler.providers.nhn.nhn_provider import NhnProvider
+
 
 class TestNhnProvider:
     @patch("prowler.providers.nhn.nhn_provider.load_and_validate_config_file")
@@ -34,7 +37,10 @@ class TestNhnProvider:
         assert provider.session is not None
         assert provider.session.headers["X-Auth-Token"] == "fake_keystone_token"
 
-    @patch("prowler.providers.nhn.nhn_provider.load_and_validate_config_file", return_value={})
+    @patch(
+        "prowler.providers.nhn.nhn_provider.load_and_validate_config_file",
+        return_value={},
+    )
     def test_nhn_provider_init_missing_args(self, mock_load_config):
         """
         Test initialization when username/password/tenant_id is missing => ValueError
@@ -43,7 +49,10 @@ class TestNhnProvider:
             NhnProvider(username="", password="secret", tenant_id="tenant")
         assert "requires username, password, and tenant_id" in str(exc_info.value)
 
-    @patch("prowler.providers.nhn.nhn_provider.load_and_validate_config_file", return_value={})
+    @patch(
+        "prowler.providers.nhn.nhn_provider.load_and_validate_config_file",
+        return_value={},
+    )
     @patch("requests.post")
     def test_nhn_provider_init_token_fail(self, mock_post, mock_load_config):
         """

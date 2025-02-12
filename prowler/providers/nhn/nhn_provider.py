@@ -1,6 +1,7 @@
 import sys
-import requests
 from typing import Optional
+
+import requests
 
 from prowler.config.config import (
     default_config_file_path,
@@ -11,8 +12,9 @@ from prowler.lib.logger import logger
 from prowler.lib.utils.utils import print_boxes
 from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
-from prowler.providers.nhn.models import NHNIdentityInfo
 from prowler.providers.nhn.lib.mutelist.mutelist import NHNMutelist
+from prowler.providers.nhn.models import NHNIdentityInfo
+
 
 class NhnProvider(Provider):
     """
@@ -47,7 +49,7 @@ class NhnProvider(Provider):
     _mutelist: NHNMutelist
     # TODO: this is not optional, enforce for all providers
     audit_metadata: Audit_Metadata
-    
+
     def __init__(
         self,
         username: Optional[str] = None,
@@ -77,7 +79,7 @@ class NhnProvider(Provider):
         self._password = password or ""
         self._tenant_id = tenant_id or ""
 
-         # 2) Load audit_config, fixer_config, mutelist
+        # 2) Load audit_config, fixer_config, mutelist
         self._fixer_config = fixer_config if fixer_config else {}
         if not config_path:
             config_path = default_config_file_path
@@ -130,7 +132,7 @@ class NhnProvider(Provider):
         Returns the audit configuration loaded from file or default settings.
         """
         return self._audit_config
-    
+
     @property
     def fixer_config(self) -> dict:
         """
@@ -144,20 +146,20 @@ class NhnProvider(Provider):
         Returns the NHNMutelist object for handling any muted checks.
         """
         return self._mutelist
-    
+
     def validate_arguments(self) -> None:
         """
         Ensures that username, password, and tenant_id are not empty.
         """
         if not self._username or not self._password or not self._tenant_id:
             raise ValueError("NHN Provider requires username, password, and tenant_id.")
-        
+
     def print_credentials(self) -> None:
         """
         Prints the NHN credentials in a simple box format.
         """
         report_lines = [
-            f"NHN Provider credentials:",
+            "NHN Provider credentials:",
             f"  Username: {self._username}",
             f"  TenantID: {self._tenant_id}",
         ]
@@ -198,12 +200,11 @@ class NhnProvider(Provider):
                 resp_json = response.json()
                 self._token = resp_json["access"]["token"]["id"]
                 sess = requests.Session()
-                sess.headers.update({
-                    "X-Auth-Token": self._token,
-                    "Content-Type": "application/json"
-                })
+                sess.headers.update(
+                    {"X-Auth-Token": self._token, "Content-Type": "application/json"}
+                )
                 self._session = sess
-                logger.info(f"NHN token acquired successfully and session is set up.")
+                logger.info("NHN token acquired successfully and session is set up.")
             else:
                 logger.error(
                     f"Failed to get token. Status: {response.status_code}, Body: {response.text}"
@@ -211,7 +212,6 @@ class NhnProvider(Provider):
         except Exception as e:
             logger.critical(f"[setup_session] Error: {e}")
             sys.exit(1)
-
 
     @staticmethod
     def test_connection(
@@ -240,19 +240,23 @@ class NhnProvider(Provider):
         try:
             # 1) Validate arguments (예: username/password/tenant_id)
             if not username or not password or not tenant_id:
-                error_msg = "NHN test_connection error: missing username/password/tenant_id"
+                error_msg = (
+                    "NHN test_connection error: missing username/password/tenant_id"
+                )
                 logger.error(error_msg)
                 raise ValueError(error_msg)
 
             # 2) Request Keystone token
-            token_url = "https://api-identity-infrastructure.nhncloudservice.com/v2.0/tokens"
+            token_url = (
+                "https://api-identity-infrastructure.nhncloudservice.com/v2.0/tokens"
+            )
             data = {
                 "auth": {
                     "tenantId": tenant_id,
                     "passwordCredentials": {
                         "username": username,
                         "password": password,
-                    }
+                    },
                 }
             }
             resp = requests.post(token_url, json=data, timeout=10)
@@ -271,15 +275,19 @@ class NhnProvider(Provider):
 
             # 3) (Optional) Test API call to confirm credentials are valid
             compute_endpoint = f"https://kr1-api-instance.infrastructure.cloud.toast.com/v2/{tenant_id}"
-            
+
             # Check servers list
             headers = {
                 "X-Auth-Token": keystone_token,
                 "Content-Type": "application/json",
             }
-            servers_resp = requests.get(f"{compute_endpoint}/servers", headers=headers, timeout=10)
+            servers_resp = requests.get(
+                f"{compute_endpoint}/servers", headers=headers, timeout=10
+            )
             if servers_resp.status_code == 200:
-                logger.info("NHN test_connection: /servers call success. Credentials valid.")
+                logger.info(
+                    "NHN test_connection: /servers call success. Credentials valid."
+                )
                 return Connection(is_connected=True)
             else:
                 error_msg = f"/servers call failed. Status: {servers_resp.status_code}, Body: {servers_resp.text}"
@@ -293,4 +301,3 @@ class NhnProvider(Provider):
             if raise_on_exception:
                 raise e
             return Connection(error=e)
-        
