@@ -242,12 +242,10 @@ def generate_outputs(scan_id: str, provider_id: str, tenant_id: str):
 
             writer_class = config["class"]
             if writer_class in output_writers:
-                # Reuse the existing writer and update with the new batch
                 writer = output_writers[writer_class]
-                writer.findings = finding_outputs
+                writer.transform(finding_outputs)
                 writer.close_file = is_last_batch
             else:
-                # Create a new writer for this format
                 writer = writer_class(
                     findings=finding_outputs,
                     file_path=output_directory,
@@ -258,6 +256,7 @@ def generate_outputs(scan_id: str, provider_id: str, tenant_id: str):
 
             # Write the current batch using the writer
             writer.batch_write_data_to_file(**kwargs)
+            writer._data = []
 
     # Compress output files
     output_directory = _compress_output_files(output_directory)
