@@ -3491,8 +3491,8 @@ tzlocal = "5.2"
 [package.source]
 type = "git"
 url = "https://github.com/prowler-cloud/prowler.git"
-reference = "master"
-resolved_reference = "47bc2ed2dc472fc24ecab35970205448ab3b090d"
+reference = "PRWLR-5956-Export-Artifacts-only"
+resolved_reference = "492e9f24a2666d203950cfd85959d7d3f621b957"
 
 [[package]]
 name = "psutil"
