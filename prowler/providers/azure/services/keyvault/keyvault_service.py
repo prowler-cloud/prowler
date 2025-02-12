@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import List, Union
+from typing import List, Optional, Union
 
 from azure.core.exceptions import HttpResponseError
 from azure.keyvault.keys import KeyClient
@@ -118,11 +118,17 @@ class KeyVault(AzureService):
                 policy = key_client.get_key_rotation_policy(prop.name)
                 for key in keys:
                     if key.name == prop.name:
-                        key.rotation_policy = policy
+                        key.rotation_policy = KeyRotationPolicy(
+                            id=getattr(policy, "id", ""),
+                            lifetime_actions=[
+                                KeyRotationLifetimeAction(action=action.action)
+                                for action in getattr(policy, "lifetime_actions", [])
+                            ],
+                        )
 
         # TODO: handle different errors here since we are catching all HTTP Errors here
         except HttpResponseError:
-            logger.error(
+            logger.warning(
                 f"Subscription name: {subscription} -- has no access policy configured for keyvault {keyvault_name}"
             )
         return keys
@@ -189,13 +195,24 @@ class KeyAttributes:
 
 
 @dataclass
+class KeyRotationLifetimeAction:
+    action: str
+
+
+@dataclass
+class KeyRotationPolicy:
+    id: str
+    lifetime_actions: list[KeyRotationLifetimeAction]
+
+
+@dataclass
 class Key:
     id: str
     name: str
     enabled: bool
     location: str
     attributes: KeyAttributes
-    rotation_policy: str = None
+    rotation_policy: Optional[KeyRotationPolicy] = None
 
 
 @dataclass
