@@ -198,3 +198,40 @@ export const updateScan = async (formData: FormData) => {
     };
   }
 };
+
+export const getExportsZip = async (scanId: string) => {
+  const session = await auth();
+
+  const keyServer = process.env.API_BASE_URL;
+  const url = new URL(`${keyServer}/scans/${scanId}/report`);
+
+  try {
+    const response = await fetch(url.toString(), {
+      headers: {
+        Authorization: `Bearer ${session?.accessToken}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(
+        errorData?.errors?.[0]?.detail || "Failed to fetch report",
+      );
+    }
+
+    // Get the blob data as an array buffer
+    const arrayBuffer = await response.arrayBuffer();
+    // Convert to base64
+    const base64 = Buffer.from(arrayBuffer).toString("base64");
+
+    return {
+      success: true,
+      data: base64,
+      filename: `scan-${scanId}-report.zip`,
+    };
+  } catch (error) {
+    return {
+      error: getErrorMessage(error),
+    };
+  }
+};
