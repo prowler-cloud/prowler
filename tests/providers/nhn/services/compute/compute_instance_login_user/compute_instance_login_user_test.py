@@ -47,13 +47,6 @@ class Test_compute_instance_login_user:
         mock_instance.name = instance_name
         mock_instance.login_user = False  # => means not admin login
         compute_client.instances = [mock_instance]
-        # compute_client.instances = [
-        #     mock.MagicMock(
-        #         id=instance_id,
-        #         name=instance_name,
-        #         login_user=False,   # => means not admin login
-        #     )
-        # ]
 
         with (
             mock.patch(
@@ -89,13 +82,6 @@ class Test_compute_instance_login_user:
         mock_instance.name = instance_name
         mock_instance.login_user = True  # => admin or root user
         compute_client.instances = [mock_instance]
-        # compute_client.instances = [
-        #     mock.MagicMock(
-        #         id=instance_id,
-        #         name=instance_name,
-        #         login_user=True,   # => admin or root user
-        #     )
-        # ]
 
         with (
             mock.patch(

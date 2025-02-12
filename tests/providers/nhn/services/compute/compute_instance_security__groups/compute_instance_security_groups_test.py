@@ -47,14 +47,6 @@ class Test_compute_instance_security_groups:
         mock_instance.name = instance_name
         mock_instance.security_groups = False  # => means has variety of security groups
         compute_client.instances = [mock_instance]
-        # compute_client.instances = [
-        #     mock.MagicMock(
-        #         id=instance_id,
-        #         name=instance_name,
-        #         security_groups=False,   # => means has variety of security groups
-        #     )
-        # ]
-
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -91,13 +83,6 @@ class Test_compute_instance_security_groups:
             True  # => means has only the default security group
         )
         compute_client.instances = [mock_instance]
-        # compute_client.instances = [
-        #     mock.MagicMock(
-        #         id=instance_id,
-        #         name=instance_name,
-        #         security_groups=True,   # => means has only the default security group
-        #     )
-        # ]
 
         with (
             mock.patch(

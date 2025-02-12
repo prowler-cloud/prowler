@@ -47,13 +47,6 @@ class Test_compute_instance_public_ip:
         mock_instance.name = instance_name
         mock_instance.public_ip = False  # => means does not have public IP
         compute_client.instances = [mock_instance]
-        # compute_client.instances = [
-        #     mock.MagicMock(
-        #         id=instance_id,
-        #         name=instance_name,
-        #         public_ip=False,   # => means does not have public IP
-        #     )
-        # ]
 
         with (
             mock.patch(
@@ -89,13 +82,6 @@ class Test_compute_instance_public_ip:
         mock_instance.name = instance_name
         mock_instance.public_ip = True  # => means has public IP
         compute_client.instances = [mock_instance]
-        # compute_client.instances = [
-        #     mock.MagicMock(
-        #         id=instance_id,
-        #         name=instance_name,
-        #         public_ip=True,   # => means has public IP
-        #     )
-        # ]
 
         with (
             mock.patch(

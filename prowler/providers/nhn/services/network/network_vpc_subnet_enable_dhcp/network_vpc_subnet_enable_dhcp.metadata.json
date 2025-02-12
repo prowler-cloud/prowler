@@ -1,15 +1,15 @@
 {
     "Provider": "nhn",
-    "CheckID": "network_instance_ssh_open",
-    "CheckTitle": "Check for SSH Access from Public Internet in NHN Compute Instances",
+    "CheckID": "network_vpc_subnet_enable_dhcp",
+    "CheckTitle": "Check if DHCP is enabled for subnets in VPC",
     "CheckType": [], 
-    "ServiceName": "compute",
+    "ServiceName": "network",
     "SubServiceName": "",
     "ResourceIdTemplate": "",
     "Risk": "",
-    "Severity": "high",
-    "ResourceType": "VMInstance",
-    "Description": "Checks if an NHN Compute server allows SSH (port 22) access from the public internet.",
+    "Severity": "Medium",
+    "ResourceType": "VPC",
+    "Description": "This check verifies if DHCP is enabled for the subnets in the VPC.",
     "Remediation": {
         "Code": {
             "CLI": "",
@@ -18,7 +18,7 @@
             "Terraform": ""
           },
         "Recommendation": {
-        "Text": "Restrict SSH access by modifying security group rules to allow only trusted IPs or disable SSH if not needed.",
+        "Text": "Ensure that DHCP is enabled for all subnets where automatic IP address allocation is needed.",
         "Url": ""
         }
     },
