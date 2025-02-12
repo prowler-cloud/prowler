@@ -1,6 +1,10 @@
 from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from celery.result import AsyncResult
+from config.settings.social_login import (
+    GITHUB_OAUTH_CALLBACK_URL,
+    GOOGLE_OAUTH_CALLBACK_URL,
+)
 from dj_rest_auth.registration.views import SocialLoginView
 from django.conf import settings as django_settings
 from django.contrib.postgres.aggregates import ArrayAgg
@@ -33,6 +37,14 @@ from rest_framework.generics import GenericAPIView, get_object_or_404
 from rest_framework.permissions import SAFE_METHODS
 from rest_framework_json_api.views import RelationshipView, Response
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from tasks.beat import schedule_provider_scan
+from tasks.tasks import (
+    check_provider_connection_task,
+    delete_provider_task,
+    delete_tenant_task,
+    perform_scan_summary_task,
+    perform_scan_task,
+)
 
 from api.base_views import BaseRLSViewSet, BaseTenantViewset, BaseUserViewset
 from api.db_router import MainRouter
@@ -122,15 +134,6 @@ from api.v1.serializers import (
     UserRoleRelationshipSerializer,
     UserSerializer,
     UserUpdateSerializer,
-)
-from config.settings.social_login import GITHUB_OAUTH_CALLBACK_URL, GOOGLE_OAUTH_CALLBACK_URL
-from tasks.beat import schedule_provider_scan
-from tasks.tasks import (
-    check_provider_connection_task,
-    delete_provider_task,
-    delete_tenant_task,
-    perform_scan_summary_task,
-    perform_scan_task,
 )
 
 CACHE_DECORATOR = cache_control(
@@ -229,7 +232,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.4.0"
+        spectacular_settings.VERSION = "1.5.0"
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
