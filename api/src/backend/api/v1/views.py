@@ -1115,22 +1115,22 @@ class ScanViewSet(BaseRLSViewSet):
     def report(self, request, pk=None):
         scan_instance = Scan.objects.get(pk=pk)
         output_path = scan_instance.output_path
-        if 1 == 2 and scan_instance.upload_to_s3:
+        if scan_instance.upload_to_s3:
             s3_client = None
             try:
-                s3_client = boto3.client("s3")
+                s3_client = boto3.client(
+                    "s3",
+                    aws_access_key_id=env.str("DJANGO_ARTIFACTS_AWS_ACCESS_KEY_ID"),
+                    aws_secret_access_key=env.str(
+                        "DJANGO_ARTIFACTS_AWS_SECRET_ACCESS_KEY"
+                    ),
+                    aws_session_token=env.str("DJANGO_ARTIFACTS_AWS_SESSION_TOKEN"),
+                    region_name=env.str("DJANGO_ARTIFACTS_AWS_DEFAULT_REGION"),
+                )
                 s3_client.list_buckets()
             except (ClientError, NoCredentialsError, ParamValidationError):
                 try:
-                    s3_client = boto3.client(
-                        "s3",
-                        aws_access_key_id=env.str("DJANGO_ARTIFACTS_AWS_ACCESS_KEY_ID"),
-                        aws_secret_access_key=env.str(
-                            "DJANGO_ARTIFACTS_AWS_SECRET_ACCESS_KEY"
-                        ),
-                        aws_session_token=env.str("DJANGO_ARTIFACTS_AWS_SESSION_TOKEN"),
-                        region_name=env.str("DJANGO_ARTIFACTS_AWS_DEFAULT_REGION"),
-                    )
+                    s3_client = boto3.client("s3")
                     s3_client.list_buckets()
                 except (ClientError, NoCredentialsError, ParamValidationError):
                     return Response(

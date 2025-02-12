@@ -16,8 +16,8 @@ from prowler.lib.outputs.html.html import HTML
 from prowler.lib.outputs.ocsf.ocsf import OCSF
 
 logger = get_task_logger(__name__)
-
 tmp_output_directory = "/tmp/prowler_api_output"
+
 
 # Predefined mapping for output formats and their configurations
 OUTPUT_FORMATS_MAPPING = {
@@ -28,14 +28,6 @@ OUTPUT_FORMATS_MAPPING = {
     },
     "json-ocsf": {"class": OCSF, "suffix": json_ocsf_file_suffix, "kwargs": {}},
     "html": {"class": HTML, "suffix": html_file_suffix, "kwargs": {"stats": {}}},
-}
-
-# Mapping provider types to their identity components for output paths
-PROVIDER_IDENTITY_MAP = {
-    "aws": lambda p: p.identity.account,
-    "azure": lambda p: p.identity.tenant_domain,
-    "gcp": lambda p: p.identity.profile,
-    "kubernetes": lambda p: p.identity.context.replace(":", "_").replace("/", "_"),
 }
 
 

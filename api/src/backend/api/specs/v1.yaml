@@ -4112,12 +4112,13 @@ paths:
       summary: Download ZIP report
       parameters:
       - in: query
-        name: fields[scans]
+        name: fields[scan-reports]
         schema:
           type: array
           items:
             type: string
-            enum: []
+            enum:
+            - id
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false

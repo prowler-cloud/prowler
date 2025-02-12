@@ -819,12 +819,12 @@ class ScanTaskSerializer(RLSSerializer):
         ]
 
 
-class ScanReportSerializer(RLSSerializer):
+class ScanReportSerializer(serializers.Serializer):
+    id = serializers.CharField(source="scan")
+
     class Meta:
-        model = Scan
-        fields = [
-            "id",
-        ]
+        resource_name = "scan-reports"
+        fields = ["id"]
 
 
 class ResourceTagSerializer(RLSSerializer):
