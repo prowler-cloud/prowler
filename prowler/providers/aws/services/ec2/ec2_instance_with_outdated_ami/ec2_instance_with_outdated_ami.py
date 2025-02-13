@@ -31,16 +31,16 @@ class ec2_instance_with_outdated_ami(Check):
                 (image for image in ec2_client.images if image.id == instance.image_id),
                 None,
             )
-            if ami.public:
+            if ami.amazon_public:
                 report = Check_Report_AWS(metadata=self.metadata(), resource=instance)
                 report.status = "PASS"
                 report.status_extended = (
                     f"EC2 Instance {instance.id} is not using an outdated AMI."
                 )
 
-                if ami and ami.deprecation_time:
+                if ami.deprecation_time:
                     deprecation_datetime = datetime.strptime(
-                        ami.deprecation_time, "%Y-%m-%dT%H:%M:%SZ"
+                        ami.deprecation_time, "%Y-%m-%dT%H:%M:%S.%fZ"
                     ).replace(tzinfo=timezone.utc)
 
                     if deprecation_datetime < datetime.now(timezone.utc):
