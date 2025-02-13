@@ -92,11 +92,15 @@ class SNS(AWSService):
                     )
                     subscriptions: list[Subscription] = [
                         Subscription(
-                            id=sub["SubscriptionArn"].split(":")[-1],
+                            id=(parts := sub["SubscriptionArn"].split(":"))[-1],
                             arn=sub["SubscriptionArn"],
                             owner=sub["Owner"],
                             protocol=sub["Protocol"],
                             endpoint=sub["Endpoint"],
+<<<<<<< HEAD
+=======
+                            region=parts[3] if len(parts) > 3 else "unknown",
+>>>>>>> 0ff4df083 (fix(aws): SNS threw IndexError if SubscriptionArn is PendingConfirmation (#6896))
                         )
                         for sub in response["Subscriptions"]
                     ]
