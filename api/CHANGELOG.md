@@ -4,8 +4,10 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ---
 
-## [Unreleased]
+## [v1.5.0] (Prowler UNRELEASED)
 
+### Added
+- Social login integration with Google and GitHub [(#6906)](https://github.com/prowler-cloud/prowler/pull/6906)
 
 ---
 
