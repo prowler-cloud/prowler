@@ -1,0 +1,45 @@
+from typing import List
+
+from prowler.lib.check.models import Check, Check_Report_Microsoft365
+from prowler.providers.microsoft365.services.sharepoint.sharepoint_client import (
+    sharepoint_client,
+)
+
+
+class sharepoint_modern_authentication_required(Check):
+    """
+    Check if Microsoft 365 SharePoint requires modern authentication.
+
+    This check verifies that modern authentication is enforced for SharePoint applications in Microsoft 365.
+    Modern authentication leverages OAuth 2.0 and supports advanced security features such as multi-factor
+    authentication (MFA) and conditional access. Legacy authentication protocols (e.g., basic authentication)
+    do not support these features and increase the risk of credential compromise.
+
+    The check fails if modern authentication is not enforced, indicating that legacy protocols may be used.
+    """
+
+    def execute(self) -> List[Check_Report_Microsoft365]:
+        """
+        Execute the SharePoint modern authentication requirement check.
+
+        Iterates over the SharePoint configuration retrieved from the Microsoft 365 SharePoint client and
+        generates a report indicating whether modern authentication is required for SharePoint applications.
+
+        Returns:
+            List[Check_Report_Microsoft365]: A list containing the report object with the result of the check.
+        """
+        findings = []
+        for settings in sharepoint_client.settings.values():
+            report = Check_Report_Microsoft365(
+                metadata=self.metadata(), resource=settings
+            )
+            report.status = "PASS"
+            report.status_extended = "Microsoft 365 SharePoint does not allow access to apps that don't use modern authentication."
+
+            if settings.modernAuthentication:
+                report.status = "FAIL"
+                report.status_extended = "Microsoft 365 SharePoint allows access to apps that don't use modern authentication."
+
+            findings.append(report)
+
+        return findings

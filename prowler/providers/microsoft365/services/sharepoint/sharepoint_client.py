@@ -3,4 +3,4 @@ from prowler.providers.microsoft365.services.sharepoint.sharepoint_service impor
     SharePoint,
 )
 
-admincenter_client = SharePoint(Provider.get_global_provider())
+sharepoint_client = SharePoint(Provider.get_global_provider())

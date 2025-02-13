@@ -20,26 +20,28 @@ class SharePoint(Microsoft365Service):
                 self._get_one_drive_shared_content(),
             )
         )
-        self.settings = {self.tenant_domain: attributes[0]}
-        self.one_drive_shared_content = {self.tenant_domain: attributes[1]}
+        self.settings = attributes[0]
+        self.one_drive_shared_content = attributes[1]
 
     async def _get_settings(self):
         logger.info("Microsoft365 - Getting SharePoint global settings...")
+        settings = {}
         try:
             global_settings = await self.client.admin.sharepoint.settings.get()
-            settings = SharePointSettings(
-                sharingCapability=global_settings.get("sharingCapability"),
-                sharingAllowedDomainList=global_settings.get(
-                    "sharingAllowedDomainList"
+
+            sharepoint_settings = SharePointSettings(
+                id=self.tenant_domain,
+                sharingCapability=(
+                    str(global_settings.sharing_capability)
+                    if global_settings.sharing_capability
+                    else None
                 ),
-                sharingBlockedDomainList=global_settings.get(
-                    "sharingBlockedDomainList"
-                ),
-                modernAuthentication=global_settings.get(
-                    "isLegacyAuthProtocolsEnabled"
-                ),
+                sharingAllowedDomainList=global_settings.sharing_allowed_domain_list,
+                sharingBlockedDomainList=global_settings.sharing_blocked_domain_list,
+                modernAuthentication=global_settings.is_legacy_auth_protocols_enabled,
             )
-            return settings
+            settings[self.tenant_domain] = sharepoint_settings
+
         except ODataError as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -50,6 +52,7 @@ class SharePoint(Microsoft365Service):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             return None
+        return settings
 
     async def _get_one_drive_shared_content(self):
         logger.info("Microsoft365 - Getting OneDrive shared content...")
@@ -67,10 +70,14 @@ class SharePoint(Microsoft365Service):
             }
 
             response = await self.client.search.query.post(body=search_request)
-            hits_containers = response.get("value", [])[0].get("hitsContainers", [])
-            total_shared_items = (
-                hits_containers[0].get("total", 0) if hits_containers else 0
-            )
+            values = response.get("value", [])
+            if not values:
+                total_shared_items = 0
+            else:
+                hits_containers = values[0].get("hitsContainers", [])
+                total_shared_items = (
+                    hits_containers[0].get("total", 0) if hits_containers else 0
+                )
 
             shared_content = OneDriveSharedContent(
                 totalSharedContent=total_shared_items
@@ -89,6 +96,7 @@ class SharePoint(Microsoft365Service):
 
 
 class SharePointSettings(BaseModel):
+    id: str
     sharingCapability: str
     sharingAllowedDomainList: Optional[List[str]]
     sharingBlockedDomainList: Optional[List[str]]
