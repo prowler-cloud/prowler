@@ -8,10 +8,11 @@ description = "Prowler's API (Django/DRF)"
 license = "Apache-2.0"
 name = "prowler-api"
 package-mode = false
-version = "1.4.0"
+version = "1.5.0"
 
 [tool.poetry.dependencies]
 celery = {extras = ["pytest"], version = "^5.4.0"}
+dj-rest-auth = {extras = ["with_social", "jwt"], version = "7.0.1"}
 django = "5.1.5"
 django-celery-beat = "^2.7.0"
 django-celery-results = "^2.5.1"
