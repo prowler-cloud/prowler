@@ -49,4 +49,4 @@ class ec2_instance_with_outdated_ami(Check):
 
                 findings.append(report)
 
-            return findings
+        return findings
