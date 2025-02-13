@@ -2,6 +2,7 @@
 
 For in-cluster execution, you can use the supplied yaml files inside `/kubernetes`:
 
+* [prowler-sa.yaml](https://github.com/prowler-cloud/prowler/blob/master/kubernetes/prowler-sa.yaml)
 * [job.yaml](https://github.com/prowler-cloud/prowler/blob/master/kubernetes/job.yaml)
 * [prowler-role.yaml](https://github.com/prowler-cloud/prowler/blob/master/kubernetes/prowler-role.yaml)
 * [prowler-rolebinding.yaml](https://github.com/prowler-cloud/prowler/blob/master/kubernetes/prowler-rolebinding.yaml)
