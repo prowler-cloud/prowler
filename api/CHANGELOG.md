@@ -9,6 +9,13 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ---
 
+## [v1.5.0] (Prowler v5.4.0) - 2025-XX-XX
+
+### Added
+- Add API scan report system, now all scans launched from the API will generate a compressed file with the report in OCSF, CSV and HTML formats [(#6878)](https://github.com/prowler-cloud/prowler/pull/6878).
+
+---
+
 ## [v1.4.0] (Prowler v5.3.0) - 2025-02-10
 
 ### Changed

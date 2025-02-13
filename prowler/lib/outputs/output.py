@@ -23,7 +23,6 @@ class Output(ABC):
         file_descriptor: Property to access the file descriptor.
         transform: Abstract method to transform findings into a specific format.
         batch_write_data_to_file: Abstract method to write data to a file in batches.
-        create_file_descriptor: Method to create a file descriptor for writing data to a file.
     """
 
     _data: list
@@ -33,21 +32,24 @@ class Output(ABC):
     def __init__(
         self,
         findings: List[Finding],
-        create_file_descriptor: bool = False,
         file_path: str = None,
         file_extension: str = "",
     ) -> None:
         self._data = []
+        self.close_file = False
+        self.file_path = file_path
+        self.file_descriptor = None
 
         if not file_extension and file_path:
             self._file_extension = "".join(Path(file_path).suffixes)
         if file_extension:
             self._file_extension = file_extension
+            self.file_path = f"{file_path}{self.file_extension}"
 
         if findings:
             self.transform(findings)
-            if create_file_descriptor and file_path:
-                self.create_file_descriptor(file_path)
+            if not self.file_descriptor and file_path:
+                self.create_file_descriptor(self.file_path)
 
     @property
     def data(self):

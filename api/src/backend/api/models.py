@@ -414,6 +414,8 @@ class Scan(RowLevelSecurityProtectedModel):
     scheduler_task = models.ForeignKey(
         PeriodicTask, on_delete=models.CASCADE, null=True, blank=True
     )
+    output_path = models.CharField(blank=True, null=True, max_length=200)
+    upload_to_s3 = models.BooleanField(blank=True, null=True)
     # TODO: mutelist foreign key
 
     class Meta(RowLevelSecurityProtectedModel.Meta):
