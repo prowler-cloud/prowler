@@ -819,6 +819,14 @@ class ScanTaskSerializer(RLSSerializer):
         ]
 
 
+class ScanReportSerializer(RLSSerializer):
+    class Meta:
+        model = Scan
+        fields = [
+            "id",
+        ]
+
+
 class ResourceTagSerializer(RLSSerializer):
     """
     Serializer for the ResourceTag model

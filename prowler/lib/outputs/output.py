@@ -38,16 +38,18 @@ class Output(ABC):
         file_extension: str = "",
     ) -> None:
         self._data = []
+        self.file_path = file_path
 
         if not file_extension and file_path:
             self._file_extension = "".join(Path(file_path).suffixes)
         if file_extension:
             self._file_extension = file_extension
+            self.file_path = f"{file_path}{self.file_extension}"
 
         if findings:
             self.transform(findings)
             if create_file_descriptor and file_path:
-                self.create_file_descriptor(file_path)
+                self.create_file_descriptor(self.file_path)
 
     @property
     def data(self):
