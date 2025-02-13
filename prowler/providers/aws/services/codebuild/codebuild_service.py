@@ -84,21 +84,13 @@ class Codebuild(AWSService):
             if project_info["source"]["type"] != "NO_SOURCE":
                 project.source = Source(
                     type=project_info["source"]["type"],
-                    location=(
-                        project_info["source"]["location"]
-                        if project_info["source"].get("location") is not None
-                        else ""
-                    ),
+                    location=project_info["source"].get("location", ""),
                 )
             project.secondary_sources = []
             for secondary_source in project_info.get("secondarySources", []):
                 source_obj = Source(
                     type=secondary_source["type"],
-                    location=(
-                        secondary_source["location"]
-                        if secondary_source.get("location") is not None
-                        else ""
-                    ),
+                    location=secondary_source.get("location", ""),
                 )
                 project.secondary_sources.append(source_obj)
             environment = project_info.get("environment", {})
