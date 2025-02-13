@@ -57,6 +57,7 @@ class TestNHNComputeService:
         }
 
         def get_side_effect(url, timeout=10):
+            print(f"Called with timeout={timeout}")
             if (
                 "/v2/tenant123/servers" in url
                 and not url.endswith("server1")

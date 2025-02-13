@@ -35,7 +35,7 @@ class TestNHNNetworkService:
                 "routingtables": [],
                 "subnets": [
                     {"name": "subnet1", "router:external": True, "enable_dhcp": False},
-                ]
+                ],
             }
         }
 
@@ -46,17 +46,22 @@ class TestNHNNetworkService:
                 "routingtables": [{"id": "rt1"}],
                 "subnets": [
                     {"name": "subnet2", "router:external": False, "enable_dhcp": True},
-                ]
+                ],
             }
         }
-        
+
         def get_side_effect(url, timeout=10):
-            if url.endswith("vpc1"):
+            print(f"Called with timeout={timeout}")
+            if (
+                "/v2.0/vpcs" in url
+                and not url.endswith("vpc1")
+                and not url.endswith("vpc2")
+            ):
+                return mocked_response_vpcs
+            elif url.endswith("vpc1"):
                 return mocked_response_vpc1
             elif url.endswith("vpc2"):
                 return mocked_response_vpc2
-            elif url.endswith("/v2.0/vpcs"):
-                return mocked_response_vpcs
             else:
                 mock_404 = MagicMock()
                 mock_404.status_code = 404
