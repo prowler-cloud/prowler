@@ -27,28 +27,26 @@ class ec2_instance_with_outdated_ami(Check):
         """
         findings = []
         for instance in ec2_client.instances:
-            report = Check_Report_AWS(metadata=self.metadata(), resource=instance)
-            report.status = "PASS"
-            report.status_extended = (
-                f"EC2 Instance {instance.id} is not using an outdated AMI."
-            )
-
             ami = next(
                 (image for image in ec2_client.images if image.id == instance.image_id),
                 None,
             )
+            if ami.public:
+                report = Check_Report_AWS(metadata=self.metadata(), resource=instance)
+                report.status = "PASS"
+                report.status_extended = (
+                    f"EC2 Instance {instance.id} is not using an outdated AMI."
+                )
 
-            if ami and ami.deprecation_time:
-                deprecation_datetime = datetime.strptime(
-                    ami.deprecation_time, "%Y-%m-%dT%H:%M:%SZ"
-                ).replace(tzinfo=timezone.utc)
+                if ami and ami.deprecation_time:
+                    deprecation_datetime = datetime.strptime(
+                        ami.deprecation_time, "%Y-%m-%dT%H:%M:%SZ"
+                    ).replace(tzinfo=timezone.utc)
 
-                if deprecation_datetime < datetime.now(timezone.utc):
-                    report.status = "FAIL"
-                    report.status_extended = (
-                        f"EC2 Instance {instance.id} is using outdated AMI {ami.id}."
-                    )
+                    if deprecation_datetime < datetime.now(timezone.utc):
+                        report.status = "FAIL"
+                        report.status_extended = f"EC2 Instance {instance.id} is using outdated AMI {ami.id}."
 
-            findings.append(report)
+                findings.append(report)
 
-        return findings
+            return findings
