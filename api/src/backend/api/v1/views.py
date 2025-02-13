@@ -1132,7 +1132,6 @@ class ScanViewSet(BaseRLSViewSet):
                 )
 
             bucket_name = env.str("DJANGO_ARTIFACTS_AWS_S3_OUTPUT_BUCKET")
-
             try:
                 key = output_path[len(f"s3://{bucket_name}/") :]
                 s3_object = s3_client.get_object(Bucket=bucket_name, Key=key)
@@ -1143,7 +1142,6 @@ class ScanViewSet(BaseRLSViewSet):
                     {"detail": "Error accessing cloud storage"},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 )
-
         else:
             zip_files = glob.glob(output_path)
             if not zip_files:

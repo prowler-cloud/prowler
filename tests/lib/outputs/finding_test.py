@@ -1,4 +1,5 @@
 from datetime import datetime
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -53,6 +54,49 @@ def mock_check_metadata(provider):
 
 def mock_get_check_compliance(*_):
     return {"mock_compliance_key": "mock_compliance_value"}
+
+
+class DummyTag:
+    def __init__(self, key, value):
+        self.key = key
+        self.value = value
+
+class DummyTags:
+    def __init__(self, tags):
+        self._tags = tags
+
+    def all(self):
+        return self._tags
+
+class DummyResource:
+    def __init__(self, uid, name, region, tags):
+        self.uid = uid
+        self.name = name
+        self.region = region
+        self.tags = DummyTags(tags)
+
+class DummyResources:
+    """Simulate a collection with a first() method."""
+    def __init__(self, resource):
+        self._resource = resource
+
+    def first(self):
+        return self._resource
+
+class DummyProvider:
+    def __init__(self, uid):
+        self.uid = uid
+
+class DummyScan:
+    def __init__(self, provider):
+        self.provider = provider
+
+class DummyAPIFinding:
+    """
+    A dummy API finding model to simulate the database model.
+    Attributes will be added dynamically.
+    """
+    pass
 
 
 class TestFinding:
@@ -461,3 +505,208 @@ class TestFinding:
         # Generate the finding
         with pytest.raises(ValidationError):
             Finding.generate_output(provider, check_output, output_options)
+
+    def test_transform_api_finding(self):
+        """
+        Test that a dummy API Finding is correctly
+        transformed into a Finding instance.
+        """
+        # Set up the dummy API finding attributes
+        inserted_at = 1234567890
+        provider = DummyProvider(uid="account123")
+        scan = DummyScan(provider=provider)
+
+        # Create a dummy resource with one tag
+        tag = DummyTag("env", "prod")
+        resource = DummyResource(uid="res-uid-1", name="ResourceName1", region="us-east-1", tags=[tag])
+        resources = DummyResources(resource)
+
+        # Create a dummy check_metadata dict with all required fields
+        check_metadata = {
+            "provider": "test_provider",
+            "checkid": "check-001",
+            "checktitle": "Test Check",
+            "checktype": ["type1"],
+            "servicename": "TestService",
+            "subservicename": "SubService",
+            "severity": "high",
+            "resourcetype": "TestResource",
+            "description": "A test check",
+            "risk": "High risk",
+            "relatedurl": "http://example.com",
+            "remediation": {
+                "recommendation": {
+                    "text": "Fix it",
+                    "url": "http://fix.com"
+                },
+                "code": {
+                    "nativeiac": "iac_code",
+                    "terraform": "terraform_code",
+                    "cli": "cli_code",
+                    "other": "other_code",
+                },
+            },
+            "resourceidtemplate": "template",
+            "categories": ["cat-one", "cat-two"],
+            "dependson": ["dep1"],
+            "relatedto": ["rel1"],
+            "notes": "Some notes",
+        }
+
+        # Create the dummy API finding and assign required attributes
+        dummy_finding = DummyAPIFinding()
+        dummy_finding.inserted_at = inserted_at
+        dummy_finding.scan = scan
+        dummy_finding.uid = "finding-uid-1"
+        dummy_finding.status = "FAIL"  # will be converted to Status("FAIL")
+        dummy_finding.status_extended = "extended"
+        dummy_finding.check_metadata = check_metadata
+        dummy_finding.resources = resources
+
+        # Call the transform_api_finding classmethod
+        finding_obj = Finding.transform_api_finding(dummy_finding)
+
+        # Fields directly set in transform_api_finding
+        assert finding_obj.auth_method == ""
+        assert finding_obj.timestamp == inserted_at
+        assert finding_obj.account_uid == "account123"
+        assert finding_obj.account_name == ""
+
+        # Check that metadata was built correctly
+        meta = finding_obj.metadata
+        assert meta.Provider == "test_provider"
+        assert meta.CheckID == "check-001"
+        assert meta.CheckTitle == "Test Check"
+        assert meta.CheckType == ["type1"]
+        assert meta.ServiceName == "TestService"
+        assert meta.SubServiceName == "SubService"
+        assert meta.Severity == "high"
+        assert meta.ResourceType == "TestResource"
+        assert meta.Description == "A test check"
+        assert meta.Risk == "High risk"
+        assert meta.RelatedUrl == "http://example.com"
+        assert meta.Remediation.Recommendation.Text == "Fix it"
+        assert meta.Remediation.Recommendation.Url == "http://fix.com"
+        assert meta.Remediation.Code.NativeIaC == "iac_code"
+        assert meta.Remediation.Code.Terraform == "terraform_code"
+        assert meta.Remediation.Code.CLI == "cli_code"
+        assert meta.Remediation.Code.Other == "other_code"
+        assert meta.ResourceIdTemplate == "template"
+        assert meta.Categories == ["cat-one", "cat-two"]
+        assert meta.DependsOn == ["dep1"]
+        assert meta.RelatedTo == ["rel1"]
+        assert meta.Notes == "Some notes"
+
+        # Check other Finding fields
+        assert finding_obj.uid == "finding-uid-1"
+        assert finding_obj.status == Status("FAIL")
+        assert finding_obj.status_extended == "extended"
+        # From the dummy resource
+        assert finding_obj.resource_uid == "res-uid-1"
+        assert finding_obj.resource_name == "ResourceName1"
+        assert finding_obj.resource_details == ""
+        # unroll_tags is called on a list with one tag -> expect {"env": "prod"}
+        assert finding_obj.resource_tags == {"env": "prod"}
+        assert finding_obj.region == "us-east-1"
+        # compliance is hardcoded to an empty dict
+        assert finding_obj.compliance == {}
+
+    def test_transform_findings_stats_all_fails_muted(self):
+        """
+        Test _transform_findings_stats when every failing finding is muted.
+        """
+        # Create a dummy scan object with a unique_resource_count
+        dummy_scan = SimpleNamespace(unique_resource_count=10)
+        # Build summaries covering each severity branch.
+        ss1 = SimpleNamespace(_pass=1, fail=2, total=3, muted=2, severity="critical", scan=dummy_scan)
+        ss2 = SimpleNamespace(_pass=2, fail=0, total=2, muted=0, severity="high", scan=dummy_scan)
+        ss3 = SimpleNamespace(_pass=2, fail=3, total=5, muted=3, severity="medium", scan=dummy_scan)
+        ss4 = SimpleNamespace(_pass=3, fail=0, total=3, muted=0, severity="low", scan=dummy_scan)
+
+        summaries = [ss1, ss2, ss3, ss4]
+        stats = Finding._transform_findings_stats(summaries)
+
+        # Expected calculations:
+        # total_pass = 1+2+2+3 = 8
+        # total_fail = 2+0+3+0 = 5
+        # findings_count = 3+2+5+3 = 13
+        # muted_pass = (ss1: 1) + (ss3: 2) = 3
+        # muted_fail = (ss1: 2) + (ss3: 3) = 5
+        expected = {
+            "total_pass": 8,
+            "total_muted_pass": 3,
+            "total_fail": 5,
+            "total_muted_fail": 5,
+            "resources_count": 10,
+            "findings_count": 13,
+            "total_critical_severity_fail": 2,
+            "total_critical_severity_pass": 1,
+            "total_high_severity_fail": 0,
+            "total_high_severity_pass": 2,
+            "total_medium_severity_fail": 3,
+            "total_medium_severity_pass": 2,
+            "total_low_severity_fail": 0,
+            "total_low_severity_pass": 3,
+            "all_fails_are_muted": True,  # total_fail equals muted_fail and total_fail > 0
+        }
+        assert stats == expected
+
+    def test_transform_findings_stats_not_all_fails_muted(self):
+        """
+        Test _transform_findings_stats when at least one failing finding is not muted.
+        """
+        dummy_scan = SimpleNamespace(unique_resource_count=5)
+        # Build summaries: one summary has fail > 0 but muted == 0
+        ss1 = SimpleNamespace(_pass=1, fail=2, total=3, muted=0, severity="critical", scan=dummy_scan)
+        ss2 = SimpleNamespace(_pass=2, fail=1, total=3, muted=1, severity="high", scan=dummy_scan)
+        summaries = [ss1, ss2]
+        stats = Finding._transform_findings_stats(summaries)
+
+        # Expected calculations:
+        # total_pass = 1+2 = 3
+        # total_fail = 2+1 = 3
+        # findings_count = 3+3 = 6
+        # muted_pass = (ss2: 2) since ss1 muted is 0
+        # muted_fail = (ss2: 1)
+        # Severity breakdown: critical: pass 1, fail 2; high: pass 2, fail 1
+        expected = {
+            "total_pass": 3,
+            "total_muted_pass": 2,
+            "total_fail": 3,
+            "total_muted_fail": 1,
+            "resources_count": 5,
+            "findings_count": 6,
+            "total_critical_severity_fail": 2,
+            "total_critical_severity_pass": 1,
+            "total_high_severity_fail": 1,
+            "total_high_severity_pass": 2,
+            "total_medium_severity_fail": 0,
+            "total_medium_severity_pass": 0,
+            "total_low_severity_fail": 0,
+            "total_low_severity_pass": 0,
+            "all_fails_are_muted": False,  # 3 (total_fail) != 1 (muted_fail)
+        }
+        assert stats == expected
+
+    def test_transform_api_finding_validation_error(self):
+        """
+        Test that if required data is missing (causing a ValidationError)
+        the function logs the error and re-raises the exception.
+        For example, if the metadata dict is missing required keys.
+        """
+        # Create a dummy API finding that is missing some required metadata
+        dummy_finding = DummyAPIFinding()
+        dummy_finding.inserted_at = 1234567890
+        dummy_finding.scan = DummyScan(provider=DummyProvider(uid="account123"))
+        dummy_finding.uid = "finding-uid-invalid"
+        dummy_finding.status = "PASS"
+        dummy_finding.status_extended = "extended"
+        # Missing required metadata keys – using an empty dict
+        dummy_finding.check_metadata = {}
+        # Provide a dummy resources with a minimal resource
+        tag = DummyTag("env", "prod")
+        resource = DummyResource(uid="res-uid-1", name="ResourceName1", region="us-east-1", tags=[tag])
+        dummy_finding.resources = DummyResources(resource)
+
+        with pytest.raises(KeyError):
+            Finding.transform_api_finding(dummy_finding)

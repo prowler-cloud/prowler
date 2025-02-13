@@ -1,11 +1,14 @@
 import json
 from datetime import datetime, timedelta, timezone
-from unittest.mock import ANY, Mock, patch
+from io import BytesIO
+from unittest.mock import ANY, Mock, mock_open, patch
 
 import jwt
 import pytest
+from botocore.exceptions import ClientError
 from conftest import API_JSON_CONTENT_TYPE, TEST_PASSWORD, TEST_USER
 from django.conf import settings
+from django.http import HttpResponse
 from django.urls import reverse
 from rest_framework import status
 
@@ -2155,6 +2158,127 @@ class TestScanViewSet:
     def test_scans_sort_invalid(self, authenticated_client):
         response = authenticated_client.get(reverse("scan-list"), {"sort": "invalid"})
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_report_no_output(self, authenticated_client, scans_fixture):
+        """
+        If the scan's output_path is empty, the view should return a 404 response.
+        """
+        scan = scans_fixture[0]
+        url = reverse("scan-report", kwargs={"pk": scan.pk})
+        response = authenticated_client.get(url)
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert response.data["detail"] == "No files found"
+
+    def test_report_s3_get_client_fail(self, authenticated_client, scans_fixture):
+        """
+        If output_path starts with "s3://", but get_s3_client() fails, the view should return a 403.
+        """
+        scan = scans_fixture[0]
+        scan.output_path = "s3://bucket/path/to/file.zip"
+        scan.save()
+        url = reverse("scan-report", kwargs={"pk": scan.pk})
+        # Patch get_s3_client to raise one of the expected exceptions
+        client_err = ClientError({"Error": {"Code": "AccessDenied"}}, "get_s3_client")
+        with patch("api.v1.views.get_s3_client", side_effect=client_err):
+            response = authenticated_client.get(url)
+            assert response.status_code == status.HTTP_403_FORBIDDEN
+            assert response.data["detail"] == "There is a problem with the AWS credentials."
+
+    def test_report_s3_get_object_fail(self, authenticated_client, scans_fixture):
+        """
+        If output_path starts with "s3://", and get_s3_client() succeeds but get_object() fails,
+        the view should return a 500 error.
+        """
+        scan = scans_fixture[0]
+        scan.output_path = "s3://bucket/path/to/file.zip"
+        scan.save()
+        url = reverse("scan-report", kwargs={"pk": scan.pk})
+        client_err = ClientError({"Error": {"Code": "NoSuchKey"}}, "get_object")
+        with patch("api.v1.views.get_s3_client") as mock_get_s3_client, \
+             patch("api.v1.views.env.str", return_value="bucket"):
+            s3_client = mock_get_s3_client.return_value
+            s3_client.get_object.side_effect = client_err
+            response = authenticated_client.get(url)
+            assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+            assert response.data["detail"] == "Error accessing cloud storage"
+
+    def test_report_s3_success(self, authenticated_client, scans_fixture):
+        """
+        If output_path starts with "s3://", and S3 functions succeed, the view should return an
+        HttpResponse with the ZIP content.
+        """
+        fake_file_content = b"fake s3 zip content"
+        scan = scans_fixture[0]
+        scan.output_path = "s3://bucket/path/to/file.zip"
+        scan.save()
+        url = reverse("scan-report", kwargs={"pk": scan.pk})
+        # Create a dummy S3 object with a 'Body' that returns our fake file content
+        dummy_body = BytesIO(fake_file_content)
+        dummy_s3_object = {"Body": dummy_body}
+        with patch("api.v1.views.get_s3_client") as mock_get_s3_client, \
+             patch("api.v1.views.env.str", return_value="bucket"):
+            s3_client = mock_get_s3_client.return_value
+            s3_client.get_object.return_value = dummy_s3_object
+            response = authenticated_client.get(url)
+            # The view returns an HttpResponse (not a DRF Response) for file downloads
+            assert isinstance(response, HttpResponse)
+            assert response.status_code == 200
+            assert response.content == fake_file_content
+            # Check that the Content-Disposition header includes the filename "file.zip"
+            content_disp = response.get("Content-Disposition", "")
+            assert content_disp.startswith('attachment; filename="')
+            assert "file.zip" in content_disp
+
+    def test_report_local_no_files(self, authenticated_client, scans_fixture):
+        """
+        If output_path does not start with "s3://" and glob.glob finds no matching files,
+        the view should return a 404 response.
+        """
+        scan = scans_fixture[0]
+        scan.output_path = "/non/existent/path/*.zip"
+        scan.save()
+        url = reverse("scan-report", kwargs={"pk": scan.pk})
+        with patch("api.v1.views.glob.glob", return_value=[]):
+            response = authenticated_client.get(url)
+            assert response.status_code == status.HTTP_404_NOT_FOUND
+            assert response.data["detail"] == "No local files found"
+
+    def test_report_local_ioerror(self, authenticated_client, scans_fixture):
+        """
+        If output_path does not start with "s3://", glob.glob finds a file but reading it raises an IOError,
+        the view should return a 500 response.
+        """
+        scan = scans_fixture[0]
+        scan.output_path = "/path/to/file.zip"
+        scan.save()
+        url = reverse("scan-report", kwargs={"pk": scan.pk})
+        with patch("api.v1.views.glob.glob", return_value=["/path/to/file.zip"]), \
+             patch("api.v1.views.open", side_effect=IOError):
+            response = authenticated_client.get(url)
+            assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+            assert response.data["detail"] == "Error reading local file"
+
+    def test_report_local_success(self, authenticated_client, scans_fixture):
+        """
+        If output_path does not start with "s3://", and a local file is found and read successfully,
+        the view should return an HttpResponse with the file contents.
+        """
+        fake_file_content = b"local zip file content"
+        scan = scans_fixture[0]
+        scan.output_path = "/path/to/file.zip"
+        scan.save()
+        url = reverse("scan-report", kwargs={"pk": scan.pk})
+        m_open = mock_open(read_data=fake_file_content)
+        with patch("api.v1.views.glob.glob", return_value=["/path/to/file.zip"]), \
+             patch("api.v1.views.open", m_open):
+            response = authenticated_client.get(url)
+            assert isinstance(response, HttpResponse)
+            assert response.status_code == 200
+            assert response.content == fake_file_content
+            content_disp = response.get("Content-Disposition", "")
+            assert content_disp.startswith('attachment; filename="')
+            # The filename should be the basename of the file path
+            assert "file.zip" in content_disp
 
 
 @pytest.mark.django_db
