@@ -1,8 +1,7 @@
-import os
-
 from celery import chain, shared_task
+from celery.utils.log import get_task_logger
 from config.celery import RLSTask
-from api.utils import initialize_prowler_provider
+from config.django.base import FINDINGS_BATCH_SIZE, TMP_OUTPUT_DIRECTORY
 from django_celery_beat.models import PeriodicTask
 from tasks.jobs.connection import check_provider_connection
 from tasks.jobs.deletion import delete_provider, delete_tenant
@@ -18,7 +17,10 @@ from tasks.utils import get_next_execution_datetime
 from api.db_utils import rls_transaction
 from api.decorators import set_tenant
 from api.models import Finding, Provider, Scan, ScanSummary, StateChoices
+from api.utils import initialize_prowler_provider
 from prowler.lib.outputs.finding import Finding as FindingOutput
+
+logger = get_task_logger(__name__)
 
 
 @shared_task(base=RLSTask, name="provider-connection-check")
@@ -212,9 +214,14 @@ def generate_outputs(scan_id: str, provider_id: str, tenant_id: str):
         scan_id (str): The scan identifier.
         provider_id (str): The provider_id id to be used in generating outputs.
     """
+    # Initialize the prowler provider
+    prowler_provider = initialize_prowler_provider(Provider.objects.get(id=provider_id))
+
+    # Get the provider UID
+    provider_uid = Provider.objects.get(id=provider_id).uid
+
     # Generate and ensure the output directory exists
-    output_directory = _generate_output_directory(provider_id, tenant_id, scan_id)
-    os.makedirs("/".join(output_directory.split("/")[:-1]), exist_ok=True)
+    output_directory = _generate_output_directory(TMP_OUTPUT_DIRECTORY, provider_uid, tenant_id, scan_id)
 
     # Define auxiliary variables
     output_writers = {}
@@ -226,7 +233,7 @@ def generate_outputs(scan_id: str, provider_id: str, tenant_id: str):
     findings_qs = Finding.objects.filter(scan_id=scan_id).order_by("uid")
 
     # Process findings in batches
-    for batch, is_last_batch in batched(findings_qs.iterator(), 50):
+    for batch, is_last_batch in batched(findings_qs.iterator(), FINDINGS_BATCH_SIZE):
         finding_outputs = [
             FindingOutput.transform_api_finding(finding) for finding in batch
         ]
@@ -235,9 +242,7 @@ def generate_outputs(scan_id: str, provider_id: str, tenant_id: str):
         for mode, config in OUTPUT_FORMATS_MAPPING.items():
             kwargs = dict(config.get("kwargs", {}))
             if mode == "html":
-                kwargs["provider"] = initialize_prowler_provider(
-                    Provider.objects.get(id=provider_id)
-                )
+                kwargs["provider"] = prowler_provider
                 kwargs["stats"] = scan_summary
 
             writer_class = config["class"]
@@ -256,6 +261,8 @@ def generate_outputs(scan_id: str, provider_id: str, tenant_id: str):
 
             # Write the current batch using the writer
             writer.batch_write_data_to_file(**kwargs)
+
+            # TODO: Refactor the output classes to avoid this manual reset
             writer._data = []
 
     # Compress output files
@@ -270,14 +277,13 @@ def generate_outputs(scan_id: str, provider_id: str, tenant_id: str):
     else:
         uploaded = False
 
-    # Update the scan instance with the output path and upload status
-    Scan.objects.filter(id=scan_id).update(
-        output_path=output_directory, upload_to_s3=uploaded
-    )
+    # Update the scan instance with the output path
+    Scan.objects.filter(id=scan_id).update(output_path=output_directory)
+
+    logger.info(f"Scan output files generated, output location: {output_directory}")
 
     return {
-        "output_path": output_directory,
-        "upload_to_s3": uploaded,
+        "upload": uploaded,
         "scan_id": scan_id,
         "provider_id": provider_id,
     }

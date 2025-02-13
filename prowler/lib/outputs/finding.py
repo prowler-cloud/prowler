@@ -337,14 +337,15 @@ class Finding(BaseModel):
         output_data["uid"] = finding.uid
         output_data["status"] = Status(finding.status)
         output_data["status_extended"] = finding.status_extended
-        output_data["resource_uid"] = finding.resources.first().uid
-        output_data["resource_name"] = finding.resources.first().name
+        resource = finding.resources.first()
+        output_data["resource_uid"] = resource.uid
+        output_data["resource_name"] = resource.name
         output_data["resource_details"] = ""
-        resource_tags = finding.resources.first().tags.all()
+        resource_tags = resource.tags.all()
         output_data["resource_tags"] = unroll_tags(
             [{"key": tag.key, "value": tag.value} for tag in resource_tags]
         )
-        output_data["region"] = finding.resources.first().region
+        output_data["region"] = resource.region
         output_data["compliance"] = {}
 
         return cls(**output_data)

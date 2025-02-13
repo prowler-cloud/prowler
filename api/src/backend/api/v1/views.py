@@ -87,6 +87,7 @@ from api.models import (
 from api.pagination import ComplianceOverviewPagination
 from api.rbac.permissions import Permissions, get_providers, get_role
 from api.rls import Tenant
+from tasks.jobs.export import get_s3_client
 from api.utils import validate_invitation
 from api.uuid_utils import datetime_to_uuid7
 from api.v1.serializers import (
@@ -1106,7 +1107,7 @@ class ScanViewSet(BaseRLSViewSet):
         request=ScanReportSerializer,
         responses={
             200: OpenApiResponse(description="Report obtained successfully"),
-            423: OpenApiResponse(
+            403: OpenApiResponse(
                 description="There is a problem with the AWS credentials"
             ),
         },
@@ -1121,28 +1122,14 @@ class ScanViewSet(BaseRLSViewSet):
                 {"detail": "No files found"}, status=status.HTTP_404_NOT_FOUND
             )
 
-        if scan_instance.upload_to_s3:
-            s3_client = None
+        if scan_instance.output_path.startswith("s3://"):
             try:
-                s3_client = boto3.client(
-                    "s3",
-                    aws_access_key_id=env.str("DJANGO_ARTIFACTS_AWS_ACCESS_KEY_ID"),
-                    aws_secret_access_key=env.str(
-                        "DJANGO_ARTIFACTS_AWS_SECRET_ACCESS_KEY"
-                    ),
-                    aws_session_token=env.str("DJANGO_ARTIFACTS_AWS_SESSION_TOKEN"),
-                    region_name=env.str("DJANGO_ARTIFACTS_AWS_DEFAULT_REGION"),
-                )
-                s3_client.list_buckets()
+                s3_client = get_s3_client()
             except (ClientError, NoCredentialsError, ParamValidationError):
-                try:
-                    s3_client = boto3.client("s3")
-                    s3_client.list_buckets()
-                except (ClientError, NoCredentialsError, ParamValidationError):
-                    return Response(
-                        {"detail": "There is a problem with the AWS credentials."},
-                        status=status.HTTP_423_LOCKED,
-                    )
+                return Response(
+                    {"detail": "There is a problem with the AWS credentials."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
 
             bucket_name = env.str("DJANGO_ARTIFACTS_AWS_S3_OUTPUT_BUCKET")
 

@@ -14,9 +14,4 @@ class Migration(migrations.Migration):
             name="output_path",
             field=models.CharField(blank=True, max_length=200, null=True),
         ),
-        migrations.AddField(
-            model_name="scan",
-            name="upload_to_s3",
-            field=models.BooleanField(blank=True, null=True),
-        ),
     ]

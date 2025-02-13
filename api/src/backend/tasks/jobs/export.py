@@ -2,15 +2,16 @@ import os
 import zipfile
 
 import boto3
-from botocore.exceptions import ClientError
+import config.django.base as base
+from botocore.exceptions import ClientError, NoCredentialsError, ParamValidationError
 from celery.utils.log import get_task_logger
 from config.env import env
+
 from prowler.config.config import (
     csv_file_suffix,
     html_file_suffix,
     json_ocsf_file_suffix,
     output_file_timestamp,
-    tmp_output_directory,
 )
 from prowler.lib.outputs.csv.csv import CSV
 from prowler.lib.outputs.html.html import HTML
@@ -53,6 +54,41 @@ def _compress_output_files(output_directory: str) -> str:
     return zip_path
 
 
+def get_s3_client():
+    """
+    Create and return a boto3 S3 client using AWS credentials from environment variables.
+
+    This function attempts to initialize an S3 client by reading the AWS access key, secret key,
+    session token, and region from environment variables. It then validates the client by listing
+    available S3 buckets. If an error occurs during this process (for example, due to missing or
+    invalid credentials), it falls back to creating an S3 client without explicitly provided credentials,
+    which may rely on other configuration sources (e.g., IAM roles).
+
+    Returns:
+        boto3.client: A configured S3 client instance.
+
+    Raises:
+        ClientError, NoCredentialsError, or ParamValidationError if both attempts to create a client fail.
+    """
+    s3_client = None
+    try:
+        s3_client = boto3.client(
+            "s3",
+            aws_access_key_id=env.str("DJANGO_ARTIFACTS_AWS_ACCESS_KEY_ID"),
+            aws_secret_access_key=env.str(
+                "DJANGO_ARTIFACTS_AWS_SECRET_ACCESS_KEY"
+            ),
+            aws_session_token=env.str("DJANGO_ARTIFACTS_AWS_SESSION_TOKEN"),
+            region_name=env.str("DJANGO_ARTIFACTS_AWS_DEFAULT_REGION"),
+        )
+        s3_client.list_buckets()
+    except (ClientError, NoCredentialsError, ParamValidationError):
+        s3_client = boto3.client("s3")
+        s3_client.list_buckets()
+
+    return s3_client
+
+
 def _upload_to_s3(tenant_id: str, zip_path: str, scan_id: str) -> str:
     """
     Upload the specified ZIP file to an S3 bucket.
@@ -68,35 +104,25 @@ def _upload_to_s3(tenant_id: str, zip_path: str, scan_id: str) -> str:
     Raises:
         botocore.exceptions.ClientError: If the upload attempt to S3 fails for any reason.
     """
-    if not env.str("DJANGO_ARTIFACTS_AWS_S3_OUTPUT_BUCKET", ""):
+    if not base.DJANGO_ARTIFACTS_AWS_S3_OUTPUT_BUCKET:
         return
 
-    if env.str("DJANGO_ARTIFACTS_AWS_ACCESS_KEY_ID", ""):
-        s3 = boto3.client(
-            "s3",
-            aws_access_key_id=env.str("DJANGO_ARTIFACTS_AWS_ACCESS_KEY_ID"),
-            aws_secret_access_key=env.str("DJANGO_ARTIFACTS_AWS_SECRET_ACCESS_KEY"),
-            aws_session_token=env.str("DJANGO_ARTIFACTS_AWS_SESSION_TOKEN"),
-            region_name=env.str("DJANGO_ARTIFACTS_AWS_DEFAULT_REGION"),
-        )
-    else:
-        s3 = boto3.client("s3")
-
+    s3 = get_s3_client()
     s3_key = f"{tenant_id}/{scan_id}/{os.path.basename(zip_path)}"
     try:
         s3.upload_file(
             Filename=zip_path,
-            Bucket=env.str("DJANGO_ARTIFACTS_AWS_S3_OUTPUT_BUCKET"),
+            Bucket=base.DJANGO_ARTIFACTS_AWS_S3_OUTPUT_BUCKET,
             Key=s3_key,
         )
-        return f"s3://{env.str('DJANGO_ARTIFACTS_AWS_S3_OUTPUT_BUCKET')}/{s3_key}"
+        return f"s3://{base.DJANGO_ARTIFACTS_AWS_S3_OUTPUT_BUCKET}/{s3_key}"
     except ClientError as e:
         logger.error(f"S3 upload failed: {str(e)}")
         raise e
 
 
 def _generate_output_directory(
-    prowler_provider: object, tenant_id: str, scan_id: str
+    output_directory, prowler_provider: object, tenant_id: str, scan_id: str
 ) -> str:
     """
     Generate a file system path for the output directory of a prowler scan.
@@ -107,11 +133,11 @@ def _generate_output_directory(
     store the output files of a prowler scan.
 
     Note:
-        This function depends on two external variables:
-          - `tmp_output_directory`: The base directory where temporary outputs are stored.
+        This function depends on one external variable:
           - `output_file_timestamp`: A timestamp (as a string) used to uniquely identify the output.
 
     Args:
+        output_directory (str): The base output directory.
         prowler_provider (object): An identifier or descriptor for the prowler provider.
                                    Typically, this is a string indicating the provider (e.g., "aws").
         tenant_id (str): The unique identifier for the tenant.
@@ -121,10 +147,13 @@ def _generate_output_directory(
         str: The constructed file system path for the prowler scan output directory.
 
     Example:
-        >>> _generate_output_directory("aws", "tenant-1234", "scan-5678")
-        '/tmp/tenant-1234/scan-5678/prowler-output-aws-2023-02-15T12:34:56'
+        >>> _generate_output_directory("/tmp", "aws", "tenant-1234", "scan-5678")
+        '/tmp/tenant-1234/aws/scan-5678/prowler-output-2023-02-15T12:34:56'
     """
-    return (
-        f"{tmp_output_directory}/{tenant_id}/{scan_id}/prowler-output-"
+    path = (
+        f"{output_directory}/{tenant_id}/{scan_id}/prowler-output-"
         f"{prowler_provider}-{output_file_timestamp}"
     )
+    os.makedirs("/".join(path.split("/")[:-1]), exist_ok=True)
+
+    return path
