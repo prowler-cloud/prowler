@@ -199,7 +199,7 @@ class SQLServer(AzureService):
                     end_ip_address=rule.end_ip_address,
                 )
             )
-        return firewall_rules
+        return firewall_rules_objects
 
     def _get_server_security_alert_policies(
         self, subscription, resource_group, server_name
