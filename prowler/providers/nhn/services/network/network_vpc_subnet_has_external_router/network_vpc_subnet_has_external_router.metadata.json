@@ -1,0 +1,33 @@
+{
+    "Provider": "nhn",
+    "CheckID": "network_vpc_subnet_has_external_router",
+    "CheckTitle": "Check for External Router in NHN VPC Subnet",
+    "CheckType": [], 
+    "ServiceName": "network",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "",
+    "Risk": "",
+    "Severity": "medium",
+    "ResourceType": "VPC",
+    "Description": "Checks if a VPC allows access from the public internet, by verifying if an external router is configured.",
+    "Remediation": {
+        "Code": {
+            "CLI": "",
+            "NativeIaC": "",
+            "Other": "",
+            "Terraform": ""
+          },
+        "Recommendation": {
+        "Text": "Review the external router settings for the VPC Subnet.",
+        "Url": ""
+        }
+    },
+    "Categories": [],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": "",
+    "RelatedUrl": "",
+    "Enabled": true,
+    "Compliances": []
+  }
+  

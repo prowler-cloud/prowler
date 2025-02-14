@@ -248,6 +248,20 @@ class Finding(BaseModel):
                 output_data["resource_uid"] = check_output.resource_id
                 output_data["region"] = check_output.location
 
+            elif provider.type == "nhn":
+                output_data["auth_method"] = (
+                    f"{provider.identity.identity_type}: {provider.identity.identity_id}"
+                )
+                output_data["account_uid"] = get_nested_attribute(
+                    provider, "identity.tenant_id"
+                )
+                output_data["account_name"] = get_nested_attribute(
+                    provider, "identity.tenant_domain"
+                )
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_uid"] = check_output.resource_id
+                output_data["region"] = check_output.location
+
             # check_output Unique ID
             # TODO: move this to a function
             # TODO: in Azure, GCP and K8s there are fidings without resource_name
