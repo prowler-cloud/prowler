@@ -152,37 +152,37 @@ export const sectionItems: SidebarItem[] = [
     items: [
       {
         key: "cloud-misconfigurations",
-        href: "/findings?filter[status__in]=FAIL&sort=severity",
+        href: "/findings?filter[status__in]=FAIL&sort=severity,-inserted_at",
         icon: "solar:danger-triangle-linear",
         title: "Cloud Misconfigurations",
       },
       {
         key: "iam-issues",
-        href: "/findings?filter[status__in]=FAIL&filter[severity__in]=critical%2Chigh%2Cmedium&filter[provider_type__in]=aws%2Cazure%2Cgcp%2Ckubernetes&filter[service__in]=iam%2Crbac",
+        href: "/findings?filter[status__in]=FAIL&filter[severity__in]=critical%2Chigh%2Cmedium&filter[provider_type__in]=aws%2Cazure%2Cgcp%2Ckubernetes&filter[service__in]=iam%2Crbac&sort=-inserted_at",
         icon: "solar:shield-user-linear",
         title: "IAM Issues",
       },
       {
         key: "aws-findings",
-        href: "/findings?filter[status__in]=FAIL&filter[severity__in]=critical%2Chigh%2Cmedium&filter[provider_type__in]=aws&sort=severity",
+        href: "/findings?filter[status__in]=FAIL&filter[severity__in]=critical%2Chigh%2Cmedium&filter[provider_type__in]=aws&sort=severity,-inserted_at",
         icon: "ri:amazon-line",
         title: "AWS Top Failed Findings",
       },
       {
         key: "azure-findings",
-        href: "/findings?filter[status__in]=FAIL&filter[severity__in]=critical%2Chigh%2Cmedium&filter[provider_type__in]=azure&sort=severity",
+        href: "/findings?filter[status__in]=FAIL&filter[severity__in]=critical%2Chigh%2Cmedium&filter[provider_type__in]=azure&sort=severity,-inserted_at",
         icon: "ri:microsoft-line",
         title: "Azure Top Failed Findings",
       },
       {
         key: "gcp-findings",
-        href: "/findings?filter[status__in]=FAIL&filter[severity__in]=critical%2Chigh%2Cmedium&filter[provider_type__in]=gcp&sort=severity",
+        href: "/findings?filter[status__in]=FAIL&filter[severity__in]=critical%2Chigh%2Cmedium&filter[provider_type__in]=gcp&sort=severity,-inserted_at",
         icon: "ri:google-line",
         title: "GCP Top Failed Findings",
       },
       {
         key: "kubernetes-findings",
-        href: "/findings?filter[status__in]=FAIL&filter[severity__in]=critical%2Chigh%2Cmedium&filter[provider_type__in]=kubernetes&sort=severity",
+        href: "/findings?filter[status__in]=FAIL&filter[severity__in]=critical%2Chigh%2Cmedium&filter[provider_type__in]=kubernetes&sort=severity,-inserted_at",
         icon: "ri:steering-2-line",
         title: "Kubernetes Top Failed Findings",
       },
