@@ -611,6 +611,7 @@ class Test_EC2_Service:
             ec2.images[0].arn
             == f"arn:{aws_provider.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:image/{ec2.images[0].id}"
         )
+        assert ec2.images[0].deprecation_time == instance.image.deprecation_time
         assert not ec2.images[0].public
         assert ec2.images[0].region == AWS_REGION_US_EAST_1
         assert ec2.images[0].tags == [
