@@ -48,7 +48,7 @@ class Entra(AzureService):
                 for user in users_list.value:
                     users[tenant].update(
                         {
-                            user.user_principal_name: User(
+                            user.id: User(
                                 id=user.id,
                                 name=user.display_name,
                                 authentication_methods=[
@@ -261,11 +261,9 @@ class Entra(AzureService):
                             directory_role.display_name: DirectoryRole(
                                 id=directory_role.id,
                                 members=[
-                                    self.users[tenant][member.user_principal_name]
+                                    self.users[tenant][member.id]
                                     for member in directory_role_members.value
-                                    if self.users[tenant].get(
-                                        member.user_principal_name, None
-                                    )
+                                    if self.users[tenant].get(member.id, None)
                                 ],
                             )
                         }
