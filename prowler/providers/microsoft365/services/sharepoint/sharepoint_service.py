@@ -32,7 +32,7 @@ class SharePoint(Microsoft365Service):
             sharepoint_settings = SharePointSettings(
                 id=self.tenant_domain,
                 sharingCapability=(
-                    str(global_settings.sharing_capability)
+                    str(global_settings.sharing_capability).split(".")[-1]
                     if global_settings.sharing_capability
                     else None
                 ),
