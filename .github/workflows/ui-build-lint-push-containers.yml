@@ -67,7 +67,7 @@ jobs:
         id: vars
         run: |
           shortSha=$(git rev-parse --short ${{ github.sha }})
-          echo "SHORT_SHA=shortSha" >> $GITHUB_ENV
+          echo "SHORT_SHA=${shortSha}" >> $GITHUB_ENV
 
       - name: Login to DockerHub
         uses: docker/login-action@v3
