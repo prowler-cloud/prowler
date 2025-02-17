@@ -19,6 +19,7 @@ async def mock_sharepoint_get_settings(_):
             sharingCapability="ExternalUserAndGuestSharing",
             sharingAllowedDomainList=["allowed-domain.com"],
             sharingBlockedDomainList=["blocked-domain.com"],
+            sharingDomainRestrictionMode="allowList",
             modernAuthentication=True,
         )
     }
@@ -58,6 +59,7 @@ class Test_SharePoint_Service:
         assert settings.sharingCapability == "ExternalUserAndGuestSharing"
         assert settings.sharingAllowedDomainList == ["allowed-domain.com"]
         assert settings.sharingBlockedDomainList == ["blocked-domain.com"]
+        assert settings.sharingDomainRestrictionMode == "allowList"
         assert settings.modernAuthentication is True
 
     def test_get_one_drive_shared_content(self):

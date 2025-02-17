@@ -37,6 +37,7 @@ class Test_sharepoint_modern_authentication_required:
                     sharingCapability="ExternalUserAndGuestSharing",
                     sharingAllowedDomainList=["allowed-domain.com"],
                     sharingBlockedDomainList=["blocked-domain.com"],
+                    sharingDomainRestrictionMode="allowList",
                     modernAuthentication=False,
                 )
             }
@@ -80,6 +81,7 @@ class Test_sharepoint_modern_authentication_required:
                     sharingCapability="ExternalUserAndGuestSharing",
                     sharingAllowedDomainList=["allowed-domain.com"],
                     sharingBlockedDomainList=["blocked-domain.com"],
+                    sharingDomainRestrictionMode="allowList",
                     modernAuthentication=True,
                 )
             }

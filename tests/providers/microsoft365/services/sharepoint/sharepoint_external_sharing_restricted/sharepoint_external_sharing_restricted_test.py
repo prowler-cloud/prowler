@@ -37,6 +37,7 @@ class Test_sharepoint_external_sharing_restricted:
                     sharingCapability="ExternalUserSharingOnly",
                     sharingAllowedDomainList=["allowed-domain.com"],
                     sharingBlockedDomainList=["blocked-domain.com"],
+                    sharingDomainRestrictionMode="allowList",
                     modernAuthentication=True,
                 )
             }
@@ -77,6 +78,7 @@ class Test_sharepoint_external_sharing_restricted:
                     sharingCapability="ExternalUserAndGuestSharing",
                     sharingAllowedDomainList=["allowed-domain.com"],
                     sharingBlockedDomainList=["blocked-domain.com"],
+                    sharingDomainRestrictionMode="allowList",
                     modernAuthentication=True,
                 )
             }
