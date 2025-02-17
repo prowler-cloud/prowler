@@ -60,6 +60,11 @@ class Test_admincenter_groups_not_public_visibility:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert result[0].status_extended == "Group Group1 has Private visibility."
+            assert result[0].resource == {
+                "id": id_group1,
+                "name": "Group1",
+                "visibility": "Private",
+            }
             assert result[0].resource_name == "Group1"
             assert result[0].resource_id == id_group1
 
@@ -93,5 +98,10 @@ class Test_admincenter_groups_not_public_visibility:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert result[0].status_extended == "Group Group1 has Private visibility."
+            assert result[0].resource == {
+                "id": id_group1,
+                "name": "Group1",
+                "visibility": "Private",
+            }
             assert result[0].resource_name == "Group1"
             assert result[0].resource_id == id_group1
