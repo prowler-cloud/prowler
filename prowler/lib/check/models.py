@@ -547,8 +547,8 @@ class CheckReportMicrosoft365(Check_Report):
         self,
         metadata: Dict,
         resource: Any,
-        resource_name: str = "",
-        resource_id: str = "",
+        resource_name: str,
+        resource_id: str,
         resource_location: str = "global",
     ) -> None:
         """Initialize the Microsoft365 Check's finding information.
