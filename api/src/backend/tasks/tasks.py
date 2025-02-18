@@ -1,7 +1,7 @@
 from celery import chain, shared_task
 from celery.utils.log import get_task_logger
 from config.celery import RLSTask
-from config.django.base import FINDINGS_BATCH_SIZE, TMP_OUTPUT_DIRECTORY
+from config.django.base import DJANGO_FINDINGS_BATCH_SIZE, DJANGO_TMP_OUTPUT_DIRECTORY
 from django_celery_beat.models import PeriodicTask
 from tasks.jobs.connection import check_provider_connection
 from tasks.jobs.deletion import delete_provider, delete_tenant
@@ -221,7 +221,7 @@ def generate_outputs(scan_id: str, provider_id: str, tenant_id: str):
     provider_uid = Provider.objects.get(id=provider_id).uid
 
     # Generate and ensure the output directory exists
-    output_directory = _generate_output_directory(TMP_OUTPUT_DIRECTORY, provider_uid, tenant_id, scan_id)
+    output_directory = _generate_output_directory(DJANGO_TMP_OUTPUT_DIRECTORY, provider_uid, tenant_id, scan_id)
 
     # Define auxiliary variables
     output_writers = {}
@@ -233,7 +233,7 @@ def generate_outputs(scan_id: str, provider_id: str, tenant_id: str):
     findings_qs = Finding.objects.filter(scan_id=scan_id).order_by("uid")
 
     # Process findings in batches
-    for batch, is_last_batch in batched(findings_qs.iterator(), FINDINGS_BATCH_SIZE):
+    for batch, is_last_batch in batched(findings_qs.iterator(), DJANGO_FINDINGS_BATCH_SIZE):
         finding_outputs = [
             FindingOutput.transform_api_finding(finding) for finding in batch
         ]
