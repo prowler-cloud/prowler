@@ -2182,7 +2182,10 @@ class TestScanViewSet:
         with patch("api.v1.views.get_s3_client", side_effect=client_err):
             response = authenticated_client.get(url)
             assert response.status_code == status.HTTP_403_FORBIDDEN
-            assert response.data["detail"] == "There is a problem with the AWS credentials."
+            assert (
+                response.data["detail"]
+                == "There is a problem with the AWS credentials."
+            )
 
     def test_report_s3_get_object_fail(self, authenticated_client, scans_fixture):
         """
@@ -2194,8 +2197,9 @@ class TestScanViewSet:
         scan.save()
         url = reverse("scan-report", kwargs={"pk": scan.pk})
         client_err = ClientError({"Error": {"Code": "NoSuchKey"}}, "get_object")
-        with patch("api.v1.views.get_s3_client") as mock_get_s3_client, \
-             patch("api.v1.views.env.str", return_value="bucket"):
+        with patch("api.v1.views.get_s3_client") as mock_get_s3_client, patch(
+            "api.v1.views.env.str", return_value="bucket"
+        ):
             s3_client = mock_get_s3_client.return_value
             s3_client.get_object.side_effect = client_err
             response = authenticated_client.get(url)
@@ -2215,8 +2219,9 @@ class TestScanViewSet:
         # Create a dummy S3 object with a 'Body' that returns our fake file content
         dummy_body = BytesIO(fake_file_content)
         dummy_s3_object = {"Body": dummy_body}
-        with patch("api.v1.views.get_s3_client") as mock_get_s3_client, \
-             patch("api.v1.views.env.str", return_value="bucket"):
+        with patch("api.v1.views.get_s3_client") as mock_get_s3_client, patch(
+            "api.v1.views.env.str", return_value="bucket"
+        ):
             s3_client = mock_get_s3_client.return_value
             s3_client.get_object.return_value = dummy_s3_object
             response = authenticated_client.get(url)
@@ -2252,8 +2257,9 @@ class TestScanViewSet:
         scan.output_path = "/path/to/file.zip"
         scan.save()
         url = reverse("scan-report", kwargs={"pk": scan.pk})
-        with patch("api.v1.views.glob.glob", return_value=["/path/to/file.zip"]), \
-             patch("api.v1.views.open", side_effect=IOError):
+        with patch("api.v1.views.glob.glob", return_value=["/path/to/file.zip"]), patch(
+            "api.v1.views.open", side_effect=IOError
+        ):
             response = authenticated_client.get(url)
             assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
             assert response.data["detail"] == "Error reading local file"
@@ -2269,8 +2275,9 @@ class TestScanViewSet:
         scan.save()
         url = reverse("scan-report", kwargs={"pk": scan.pk})
         m_open = mock_open(read_data=fake_file_content)
-        with patch("api.v1.views.glob.glob", return_value=["/path/to/file.zip"]), \
-             patch("api.v1.views.open", m_open):
+        with patch("api.v1.views.glob.glob", return_value=["/path/to/file.zip"]), patch(
+            "api.v1.views.open", m_open
+        ):
             response = authenticated_client.get(url)
             assert isinstance(response, HttpResponse)
             assert response.status_code == 200

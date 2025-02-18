@@ -221,7 +221,9 @@ def generate_outputs(scan_id: str, provider_id: str, tenant_id: str):
     provider_uid = Provider.objects.get(id=provider_id).uid
 
     # Generate and ensure the output directory exists
-    output_directory = _generate_output_directory(DJANGO_TMP_OUTPUT_DIRECTORY, provider_uid, tenant_id, scan_id)
+    output_directory = _generate_output_directory(
+        DJANGO_TMP_OUTPUT_DIRECTORY, provider_uid, tenant_id, scan_id
+    )
 
     # Define auxiliary variables
     output_writers = {}
@@ -233,7 +235,9 @@ def generate_outputs(scan_id: str, provider_id: str, tenant_id: str):
     findings_qs = Finding.objects.filter(scan_id=scan_id).order_by("uid")
 
     # Process findings in batches
-    for batch, is_last_batch in batched(findings_qs.iterator(), DJANGO_FINDINGS_BATCH_SIZE):
+    for batch, is_last_batch in batched(
+        findings_qs.iterator(), DJANGO_FINDINGS_BATCH_SIZE
+    ):
         finding_outputs = [
             FindingOutput.transform_api_finding(finding) for finding in batch
         ]

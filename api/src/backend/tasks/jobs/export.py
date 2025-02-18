@@ -75,9 +75,7 @@ def get_s3_client():
         s3_client = boto3.client(
             "s3",
             aws_access_key_id=env.str("DJANGO_ARTIFACTS_AWS_ACCESS_KEY_ID"),
-            aws_secret_access_key=env.str(
-                "DJANGO_ARTIFACTS_AWS_SECRET_ACCESS_KEY"
-            ),
+            aws_secret_access_key=env.str("DJANGO_ARTIFACTS_AWS_SECRET_ACCESS_KEY"),
             aws_session_token=env.str("DJANGO_ARTIFACTS_AWS_SESSION_TOKEN"),
             region_name=env.str("DJANGO_ARTIFACTS_AWS_DEFAULT_REGION"),
         )

@@ -1,13 +1,11 @@
 import glob
 import os
 
-import boto3
+from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
+from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from botocore.exceptions import ClientError, NoCredentialsError, ParamValidationError
 from celery.result import AsyncResult
 from config.env import env
-from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
-from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
-from celery.result import AsyncResult
 from config.settings.social_login import (
     GITHUB_OAUTH_CALLBACK_URL,
     GOOGLE_OAUTH_CALLBACK_URL,
@@ -18,8 +16,8 @@ from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.search import SearchQuery
 from django.db import transaction
 from django.db.models import Count, F, OuterRef, Prefetch, Q, Subquery, Sum
-from django.http import HttpResponse
 from django.db.models.functions import Coalesce
+from django.http import HttpResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_control
@@ -46,6 +44,7 @@ from rest_framework.permissions import SAFE_METHODS
 from rest_framework_json_api.views import RelationshipView, Response
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from tasks.beat import schedule_provider_scan
+from tasks.jobs.export import get_s3_client
 from tasks.tasks import (
     check_provider_connection_task,
     delete_provider_task,
@@ -95,7 +94,6 @@ from api.models import (
 from api.pagination import ComplianceOverviewPagination
 from api.rbac.permissions import Permissions, get_providers, get_role
 from api.rls import Tenant
-from tasks.jobs.export import get_s3_client
 from api.utils import CustomOAuth2Client, validate_invitation
 from api.uuid_utils import datetime_to_uuid7
 from api.v1.serializers import (
