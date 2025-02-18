@@ -79,7 +79,7 @@ bandit = "1.8.3"
 black = "24.10.0"
 coverage = "7.6.12"
 docker = "7.1.0"
-flake8 = "7.1.1"
+flake8 = "7.1.2"
 freezegun = "1.5.1"
 mock = "5.1.0"
 moto = {extras = ["all"], version = "5.0.28"}
