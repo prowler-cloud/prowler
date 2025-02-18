@@ -100,9 +100,11 @@ By default, the `kubeconfig` file is located at `~/.kube/config`.
 <img src="../../img/kubernetes-credentials.png" alt="Kubernetes Credentials" width="700"/>
 
 ???+ note
-    If you are adding an **Amazon EKS** cluster, follow these additional steps to ensure proper authentication:
+    If you are adding an **EKS**, **GKE**, **AKS** or external cluster, follow these additional steps to ensure proper authentication:
 
-    1. Apply the necessary Kubernetes resources to your EKS cluster (you can find the files in the [`kubernetes` directory of the Prowler repository](https://github.com/prowler-cloud/prowler/tree/master/kubernetes)):
+    ** Make sure your cluster allow traffic from the Prowler Cloud IP address `52.48.254.174/32` **
+
+    1. Apply the necessary Kubernetes resources to your EKS, GKE, AKS or external cluster (you can find the files in the [`kubernetes` directory of the Prowler repository](https://github.com/prowler-cloud/prowler/tree/master/kubernetes)):
     ```console
     kubectl apply -f kubernetes/prowler-sa.yaml
     kubectl apply -f kubernetes/prowler-role.yaml
@@ -119,11 +121,11 @@ By default, the `kubeconfig` file is located at `~/.kube/config`.
     3. Update your `kubeconfig` to use the ServiceAccount token:
     ```console
     kubectl config set-credentials prowler-sa --token=<SA_TOKEN>
-    kubectl config set-context <CLUSTER_ARN> --user=prowler-sa
+    kubectl config set-context <CONTEXT_NAME> --user=prowler-sa
     ```
-    Replace <SA_TOKEN> with the generated token and <CLUSTER_ARN> with your EKS cluster ARN.
+    Replace <SA_TOKEN> with the generated token and <CONTEXT_NAME> with your KubeConfig Context Name of your EKS, GKE or AKS cluster.
 
-    4. Now you can add the modified `kubeconfig` as the credentials of the AWS EKS Cluster in Prowler Cloud. Then simply test the connection.
+    4. Now you can add the modified `kubeconfig` in Prowler Cloud. Then simply test the connection.
 
 ---
 

@@ -5,6 +5,14 @@ import boto3
 from botocore.exceptions import ClientError, NoCredentialsError, ParamValidationError
 from celery.result import AsyncResult
 from config.env import env
+from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
+from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
+from celery.result import AsyncResult
+from config.settings.social_login import (
+    GITHUB_OAUTH_CALLBACK_URL,
+    GOOGLE_OAUTH_CALLBACK_URL,
+)
+from dj_rest_auth.registration.views import SocialLoginView
 from django.conf import settings as django_settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.search import SearchQuery
@@ -88,7 +96,7 @@ from api.pagination import ComplianceOverviewPagination
 from api.rbac.permissions import Permissions, get_providers, get_role
 from api.rls import Tenant
 from tasks.jobs.export import get_s3_client
-from api.utils import validate_invitation
+from api.utils import CustomOAuth2Client, validate_invitation
 from api.uuid_utils import datetime_to_uuid7
 from api.v1.serializers import (
     ComplianceOverviewFullSerializer,
@@ -129,6 +137,8 @@ from api.v1.serializers import (
     TenantSerializer,
     TokenRefreshSerializer,
     TokenSerializer,
+    TokenSocialLoginSerializer,
+    TokenSwitchTenantSerializer,
     UserCreateSerializer,
     UserRoleRelationshipSerializer,
     UserSerializer,
@@ -195,13 +205,43 @@ class CustomTokenRefreshView(GenericAPIView):
         )
 
 
+@extend_schema(
+    tags=["Token"],
+    summary="Switch tenant using a valid tenant ID",
+    description="Switch tenant by providing a valid tenant ID. The authenticated user must belong to the tenant.",
+)
+class CustomTokenSwitchTenantView(GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    resource_name = "tokens-switch-tenant"
+    serializer_class = TokenSwitchTenantSerializer
+    http_method_names = ["post"]
+
+    def post(self, request):
+        serializer = TokenSwitchTenantSerializer(
+            data=request.data, context={"request": request}
+        )
+
+        try:
+            serializer.is_valid(raise_exception=True)
+        except TokenError as e:
+            raise InvalidToken(e.args[0])
+
+        return Response(
+            data={
+                "type": "tokens-switch-tenant",
+                "attributes": serializer.validated_data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
 @extend_schema(exclude=True)
 class SchemaView(SpectacularAPIView):
     serializer_class = None
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.4.0"
+        spectacular_settings.VERSION = "1.5.0"
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -259,6 +299,58 @@ class SchemaView(SpectacularAPIView):
             },
         ]
         return super().get(request, *args, **kwargs)
+
+
+@extend_schema(exclude=True)
+class GoogleSocialLoginView(SocialLoginView):
+    adapter_class = GoogleOAuth2Adapter
+    client_class = CustomOAuth2Client
+    callback_url = GOOGLE_OAUTH_CALLBACK_URL
+
+    def get_response(self):
+        original_response = super().get_response()
+
+        if self.user and self.user.is_authenticated:
+            serializer = TokenSocialLoginSerializer(data={"email": self.user.email})
+            try:
+                serializer.is_valid(raise_exception=True)
+            except TokenError as e:
+                raise InvalidToken(e.args[0])
+            return Response(
+                data={
+                    "type": "google-social-tokens",
+                    "attributes": serializer.validated_data,
+                },
+                status=status.HTTP_200_OK,
+            )
+        return original_response
+
+
+@extend_schema(exclude=True)
+class GithubSocialLoginView(SocialLoginView):
+    adapter_class = GitHubOAuth2Adapter
+    client_class = CustomOAuth2Client
+    callback_url = GITHUB_OAUTH_CALLBACK_URL
+
+    def get_response(self):
+        original_response = super().get_response()
+
+        if self.user and self.user.is_authenticated:
+            serializer = TokenSocialLoginSerializer(data={"email": self.user.email})
+
+            try:
+                serializer.is_valid(raise_exception=True)
+            except TokenError as e:
+                raise InvalidToken(e.args[0])
+
+            return Response(
+                data={
+                    "type": "github-social-tokens",
+                    "attributes": serializer.validated_data,
+                },
+                status=status.HTTP_200_OK,
+            )
+        return original_response
 
 
 @extend_schema_view(
