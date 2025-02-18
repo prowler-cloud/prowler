@@ -697,7 +697,12 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
                 ],
                 name="findings_filter_idx",
             ),
+            models.Index(fields=["tenant_id", "id"], name="findings_tenant_and_id_idx"),
             GinIndex(fields=["text_search"], name="gin_findings_search_idx"),
+            models.Index(fields=["tenant_id", "scan_id"], name="find_tenant_scan_idx"),
+            models.Index(
+                fields=["tenant_id", "scan_id", "id"], name="find_tenant_scan_id_idx"
+            ),
         ]
 
     class JSONAPIMeta:
