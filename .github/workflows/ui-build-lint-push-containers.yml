@@ -110,4 +110,4 @@ jobs:
           token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
           repository: ${{ secrets.DISPATCH_OWNER }}/${{ secrets.DISPATCH_REPO }}
           event-type: prowler-ui-deployment
-          client-payload: '{"short_sha": "${{ env.SHORT_SHA }}"}'
+          client-payload: '{"sha": "${{ github.sha }}", "short_sha": "${{ env.SHORT_SHA }}"}'
