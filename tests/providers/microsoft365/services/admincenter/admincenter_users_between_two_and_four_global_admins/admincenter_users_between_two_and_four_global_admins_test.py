@@ -92,6 +92,7 @@ class Test_admincenter_users_between_two_and_four_global_admins:
             }
             assert result[0].resource_name == "Global Administrator"
             assert result[0].resource_id == id
+            assert result[0].location == "global"
 
     def test_admincenter_more_than_five_global_admins(self):
         admincenter_client = mock.MagicMock
@@ -194,6 +195,7 @@ class Test_admincenter_users_between_two_and_four_global_admins:
             }
             assert result[0].resource_name == "Global Administrator"
             assert result[0].resource_id == id
+            assert result[0].location == "global"
 
     def test_admincenter_one_global_admin(self):
         admincenter_client = mock.MagicMock
@@ -251,3 +253,4 @@ class Test_admincenter_users_between_two_and_four_global_admins:
             }
             assert result[0].resource_name == "Global Administrator"
             assert result[0].resource_id == id
+            assert result[0].location == "global"

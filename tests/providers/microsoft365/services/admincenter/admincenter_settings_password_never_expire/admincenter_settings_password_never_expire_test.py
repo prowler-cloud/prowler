@@ -75,6 +75,7 @@ class Test_admincenter_settings_password_never_expire:
             }
             assert result[0].resource_name == id_domain
             assert result[0].resource_id == id_domain
+            assert result[0].location == "global"
 
     def test_admincenter_password_not_expire(self):
         admincenter_client = mock.MagicMock
@@ -118,3 +119,4 @@ class Test_admincenter_settings_password_never_expire:
             }
             assert result[0].resource_name == id_domain
             assert result[0].resource_id == id_domain
+            assert result[0].location == "global"

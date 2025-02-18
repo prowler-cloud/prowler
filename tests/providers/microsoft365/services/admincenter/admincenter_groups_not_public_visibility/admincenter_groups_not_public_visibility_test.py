@@ -67,6 +67,7 @@ class Test_admincenter_groups_not_public_visibility:
             }
             assert result[0].resource_name == "Group1"
             assert result[0].resource_id == id_group1
+            assert result[0].location == "global"
 
     def test_admincenter_user_admin_compliant_license(self):
         admincenter_client = mock.MagicMock
@@ -105,3 +106,4 @@ class Test_admincenter_groups_not_public_visibility:
             }
             assert result[0].resource_name == "Group1"
             assert result[0].resource_id == id_group1
+            assert result[0].location == "global"

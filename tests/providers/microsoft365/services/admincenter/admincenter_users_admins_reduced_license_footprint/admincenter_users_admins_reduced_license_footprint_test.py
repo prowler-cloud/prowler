@@ -120,6 +120,7 @@ class Test_admincenter_users_admins_reduced_license_footprint:
             }
             assert result[0].resource_name == "User1"
             assert result[0].resource_id == id_user1
+            assert result[0].location == "global"
 
     def test_admincenter_user_admin_non_compliant_license(self):
         admincenter_client = mock.MagicMock
@@ -171,3 +172,4 @@ class Test_admincenter_users_admins_reduced_license_footprint:
             }
             assert result[0].resource_name == "User1"
             assert result[0].resource_id == id_user1
+            assert result[0].location == "global"
