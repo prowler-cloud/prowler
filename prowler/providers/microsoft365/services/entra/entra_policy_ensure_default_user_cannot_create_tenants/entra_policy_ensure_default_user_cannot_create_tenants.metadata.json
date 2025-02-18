@@ -15,16 +15,16 @@
     "Code": {
       "CLI": "Update-MgPolicyAuthorizationPolicy -DefaultUserRolePermissions @{ AllowedToCreateTenants = $false }",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. Navigate to Microsoft Entra admin center https://entra.microsoft.com 2. Click to expand Identity > Users > User settings 3. Set 'Restrict non-admin users from creating tenants' to 'Yes' then 'Save'",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "1. Navigate to Microsoft Entra admin center https://entra.microsoft.com 2. Click to expand Identity > Users > User settings 3. Set 'Restrict non-admin users from creating tenants' to 'Yes' then 'Save'",
+      "Text": "Enforcing this setting will ensure that only authorized users are able to create new tenants.",
       "Url": "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/permissions-reference#tenant-creator"
     }
   },
   "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "Enforcing this setting will ensure that only authorized users are able to create new tenants."
+  "Notes": ""
 }
