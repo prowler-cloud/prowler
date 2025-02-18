@@ -105,6 +105,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Trigger deployment
+        if: github.event_name == 'push'
         uses: peter-evans/repository-dispatch@v3
         with:
           token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
