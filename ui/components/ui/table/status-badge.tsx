@@ -1,5 +1,8 @@
-import { Chip, CircularProgress } from "@nextui-org/react";
+import { Chip } from "@nextui-org/react";
+import clsx from "clsx";
 import React from "react";
+
+import { SpinnerIcon } from "@/components/icons";
 
 export type Status =
   | "available"
@@ -35,29 +38,25 @@ export const StatusBadge = ({
 
   return (
     <Chip
-      className="gap-1 border-none px-2 py-2 capitalize text-default-600"
+      className={clsx(
+        "relative w-full max-w-full border-none text-xs capitalize text-default-600",
+        status === "executing" && "border-1 border-solid border-transparent",
+      )}
       size={size}
       variant="flat"
       color={color}
       {...props}
     >
       {status === "executing" ? (
-        <div className="flex items-center gap-1">
-          <CircularProgress
-            size="md"
-            classNames={{
-              svg: "h-7 w-7 drop-shadow-md text-prowler-theme-green",
-              indicator: "stroke-prowler-theme-green",
-              track: "stroke-prowler-theme-green/10",
-            }}
-            aria-label="Loading..."
-            value={loadingProgress}
-            showValueLabel={true}
-          />
-          executing
+        <div className="relative flex items-center justify-center gap-1">
+          <SpinnerIcon size={16} className="animate-spin text-default-500" />
+          <span className="pointer-events-none text-[0.6rem] text-default-500">
+            {loadingProgress}%
+          </span>
+          <span>executing</span>
         </div>
       ) : (
-        status
+        <span className="flex items-center justify-center">{status}</span>
       )}
     </Chip>
   );
