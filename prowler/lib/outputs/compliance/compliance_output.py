@@ -33,6 +33,7 @@ class ComplianceOutput(Output):
         file_extension: str = "",
     ) -> None:
         self._data = []
+        self.file_descriptor = None
 
         if not file_extension and file_path:
             self._file_extension = "".join(Path(file_path).suffixes)

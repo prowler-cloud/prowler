@@ -61,12 +61,14 @@ class DummyTag:
         self.key = key
         self.value = value
 
+
 class DummyTags:
     def __init__(self, tags):
         self._tags = tags
 
     def all(self):
         return self._tags
+
 
 class DummyResource:
     def __init__(self, uid, name, region, tags):
@@ -75,27 +77,33 @@ class DummyResource:
         self.region = region
         self.tags = DummyTags(tags)
 
+
 class DummyResources:
     """Simulate a collection with a first() method."""
+
     def __init__(self, resource):
         self._resource = resource
 
     def first(self):
         return self._resource
 
+
 class DummyProvider:
     def __init__(self, uid):
         self.uid = uid
 
+
 class DummyScan:
     def __init__(self, provider):
         self.provider = provider
+
 
 class DummyAPIFinding:
     """
     A dummy API finding model to simulate the database model.
     Attributes will be added dynamically.
     """
+
     pass
 
 
@@ -518,7 +526,9 @@ class TestFinding:
 
         # Create a dummy resource with one tag
         tag = DummyTag("env", "prod")
-        resource = DummyResource(uid="res-uid-1", name="ResourceName1", region="us-east-1", tags=[tag])
+        resource = DummyResource(
+            uid="res-uid-1", name="ResourceName1", region="us-east-1", tags=[tag]
+        )
         resources = DummyResources(resource)
 
         # Create a dummy check_metadata dict with all required fields
@@ -535,10 +545,7 @@ class TestFinding:
             "risk": "High risk",
             "relatedurl": "http://example.com",
             "remediation": {
-                "recommendation": {
-                    "text": "Fix it",
-                    "url": "http://fix.com"
-                },
+                "recommendation": {"text": "Fix it", "url": "http://fix.com"},
                 "code": {
                     "nativeiac": "iac_code",
                     "terraform": "terraform_code",
@@ -618,10 +625,18 @@ class TestFinding:
         # Create a dummy scan object with a unique_resource_count
         dummy_scan = SimpleNamespace(unique_resource_count=10)
         # Build summaries covering each severity branch.
-        ss1 = SimpleNamespace(_pass=1, fail=2, total=3, muted=2, severity="critical", scan=dummy_scan)
-        ss2 = SimpleNamespace(_pass=2, fail=0, total=2, muted=0, severity="high", scan=dummy_scan)
-        ss3 = SimpleNamespace(_pass=2, fail=3, total=5, muted=3, severity="medium", scan=dummy_scan)
-        ss4 = SimpleNamespace(_pass=3, fail=0, total=3, muted=0, severity="low", scan=dummy_scan)
+        ss1 = SimpleNamespace(
+            _pass=1, fail=2, total=3, muted=2, severity="critical", scan=dummy_scan
+        )
+        ss2 = SimpleNamespace(
+            _pass=2, fail=0, total=2, muted=0, severity="high", scan=dummy_scan
+        )
+        ss3 = SimpleNamespace(
+            _pass=2, fail=3, total=5, muted=3, severity="medium", scan=dummy_scan
+        )
+        ss4 = SimpleNamespace(
+            _pass=3, fail=0, total=3, muted=0, severity="low", scan=dummy_scan
+        )
 
         summaries = [ss1, ss2, ss3, ss4]
         stats = Finding._transform_findings_stats(summaries)
@@ -657,8 +672,12 @@ class TestFinding:
         """
         dummy_scan = SimpleNamespace(unique_resource_count=5)
         # Build summaries: one summary has fail > 0 but muted == 0
-        ss1 = SimpleNamespace(_pass=1, fail=2, total=3, muted=0, severity="critical", scan=dummy_scan)
-        ss2 = SimpleNamespace(_pass=2, fail=1, total=3, muted=1, severity="high", scan=dummy_scan)
+        ss1 = SimpleNamespace(
+            _pass=1, fail=2, total=3, muted=0, severity="critical", scan=dummy_scan
+        )
+        ss2 = SimpleNamespace(
+            _pass=2, fail=1, total=3, muted=1, severity="high", scan=dummy_scan
+        )
         summaries = [ss1, ss2]
         stats = Finding._transform_findings_stats(summaries)
 
@@ -705,7 +724,9 @@ class TestFinding:
         dummy_finding.check_metadata = {}
         # Provide a dummy resources with a minimal resource
         tag = DummyTag("env", "prod")
-        resource = DummyResource(uid="res-uid-1", name="ResourceName1", region="us-east-1", tags=[tag])
+        resource = DummyResource(
+            uid="res-uid-1", name="ResourceName1", region="us-east-1", tags=[tag]
+        )
         dummy_finding.resources = DummyResources(resource)
 
         with pytest.raises(KeyError):

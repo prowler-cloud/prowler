@@ -119,7 +119,7 @@ class TestCSV:
         assert content == expected_csv
 
     def test_batch_write_data_to_file_without_findings(self):
-        assert not hasattr(CSV([]), "_file_descriptor")
+        assert not CSV([])._file_descriptor
 
     @pytest.fixture
     def mock_output_class(self):

@@ -34,11 +34,14 @@ class Output(ABC):
         findings: List[Finding],
         file_path: str = None,
         file_extension: str = "",
+        from_cli: bool = True,
     ) -> None:
         self._data = []
         self.close_file = False
         self.file_path = file_path
-        self.file_descriptor = None
+        self._file_descriptor = None
+        # This parameter is to avoid refactoring more code, the CLI does not write in batches, the API does
+        self._from_cli = from_cli
 
         if not file_extension and file_path:
             self._file_extension = "".join(Path(file_path).suffixes)
@@ -48,7 +51,7 @@ class Output(ABC):
 
         if findings:
             self.transform(findings)
-            if not self.file_descriptor and file_path:
+            if not self._file_descriptor and file_path:
                 self.create_file_descriptor(self.file_path)
 
     @property

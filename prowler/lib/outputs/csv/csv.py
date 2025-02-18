@@ -102,7 +102,7 @@ class CSV(Output):
                     csv_writer.writeheader()
                 for finding in self._data:
                     csv_writer.writerow(finding)
-                if self.close_file:
+                if self.close_file or self._from_cli:
                     self._file_descriptor.close()
         except Exception as error:
             logger.error(

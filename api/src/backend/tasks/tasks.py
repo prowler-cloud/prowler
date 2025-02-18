@@ -255,6 +255,7 @@ def generate_outputs(scan_id: str, provider_id: str, tenant_id: str):
                     findings=finding_outputs,
                     file_path=output_directory,
                     file_extension=config["suffix"],
+                    from_cli=False,
                 )
                 writer.close_file = is_last_batch
                 output_writers[writer_class] = writer

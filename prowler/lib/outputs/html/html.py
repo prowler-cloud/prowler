@@ -78,7 +78,7 @@ class HTML(Output):
                     HTML.write_header(self._file_descriptor, provider, stats)
                 for finding in self._data:
                     self._file_descriptor.write(finding)
-                if self.close_file:
+                if self.close_file or self._from_cli:
                     HTML.write_footer(self._file_descriptor)
                     self._file_descriptor.close()
         except Exception as error:

@@ -212,7 +212,7 @@ class OCSF(Output):
                         logger.error(
                             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
-                if self.close_file:
+                if self.close_file or self._from_cli:
                     if self._file_descriptor.tell() != 1:
                         self._file_descriptor.seek(
                             self._file_descriptor.tell() - 1, os.SEEK_SET
