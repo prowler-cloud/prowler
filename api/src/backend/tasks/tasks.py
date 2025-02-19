@@ -176,6 +176,7 @@ def delete_tenant_task(tenant_id: str):
     base=RLSTask,
     name="scan-output",
     queue="scans-report",
+    autoretry_for=(Exception,),
     retry_kwargs={"max_retries": 3, "countdown": 5},
 )
 @set_tenant(keep_tenant=True)
