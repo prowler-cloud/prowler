@@ -157,9 +157,14 @@ export const updateUserRole = async (formData: FormData) => {
 export const deleteUser = async (formData: FormData) => {
   const session = await auth();
   const keyServer = process.env.API_BASE_URL;
-
   const userId = formData.get("userId");
+
+  if (!userId) {
+    return { error: "User ID is required" };
+  }
+
   const url = new URL(`${keyServer}/users/${userId}`);
+
   try {
     const response = await fetch(url.toString(), {
       method: "DELETE",
@@ -167,14 +172,27 @@ export const deleteUser = async (formData: FormData) => {
         Authorization: `Bearer ${session?.accessToken}`,
       },
     });
-    const data = await response.json();
-    await wait(1000);
+
+    if (!response.ok) {
+      try {
+        const errorData = await response.json();
+        throw new Error(errorData?.message || "Failed to delete the user");
+      } catch {
+        throw new Error("Failed to delete the user");
+      }
+    }
+
+    let data = null;
+    if (response.status !== 204) {
+      data = await response.json();
+    }
+
     revalidatePath("/users");
-    return parseStringify(data);
+    return data || { success: true };
   } catch (error) {
-    return {
-      error: getErrorMessage(error),
-    };
+    // eslint-disable-next-line no-console
+    console.error("Error deleting user:", error);
+    return { error: getErrorMessage(error) };
   }
 };
 
