@@ -15,7 +15,7 @@ export function AutoRefresh({ hasExecutingScan }: AutoRefreshProps) {
 
     const interval = setInterval(() => {
       router.refresh();
-    }, 2000);
+    }, 5000);
 
     return () => clearInterval(interval);
   }, [hasExecutingScan, router]);

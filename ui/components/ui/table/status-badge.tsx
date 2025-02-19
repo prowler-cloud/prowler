@@ -28,11 +28,13 @@ export const StatusBadge = ({
   status,
   size = "sm",
   loadingProgress,
+  className,
   ...props
 }: {
   status: Status;
   size?: "sm" | "md" | "lg";
   loadingProgress?: number;
+  className?: string;
 }) => {
   const color = statusColorMap[status as keyof typeof statusColorMap];
 
@@ -41,6 +43,7 @@ export const StatusBadge = ({
       className={clsx(
         "relative w-full max-w-full border-none text-xs capitalize text-default-600",
         status === "executing" && "border-1 border-solid border-transparent",
+        className,
       )}
       size={size}
       variant="flat"

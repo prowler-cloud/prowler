@@ -2,7 +2,7 @@ import { Spacer } from "@nextui-org/react";
 import { Suspense } from "react";
 
 import { getProvider, getProviders } from "@/actions/providers";
-import { getScans } from "@/actions/scans";
+import { getScans, getScansByState } from "@/actions/scans";
 import { FilterControls, filterScans } from "@/components/filters";
 import {
   AutoRefresh,
@@ -49,7 +49,7 @@ export default async function Scans({
   );
 
   // Get scans data to check for executing scans
-  const scansData = await getScans({});
+  const scansData = await getScansByState();
   const hasExecutingScan = scansData?.data?.some(
     (scan: ScanProps) => scan.attributes.state === "executing",
   );
