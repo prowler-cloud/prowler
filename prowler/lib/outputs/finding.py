@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, Union
+from typing import Optional, Tuple, Union
 
 from pydantic import BaseModel, Field, ValidationError
 
@@ -275,8 +275,29 @@ class Finding(BaseModel):
             )
             raise error
 
+    @staticmethod
+    def _get_auth_method_and_partition(provider: Provider) -> Tuple[str, str]:
+        """
+        Extract the authentication method and partition information based on the provider type.
+        """
+        auth_method = ""
+        partition = ""
+        if provider.type == "aws":
+            auth_method = f"profile: {get_nested_attribute(provider, 'identity.profile')}"
+            partition = get_nested_attribute(provider, "identity.partition")
+        elif provider.type == "azure":
+            auth_method = f"{provider.identity.identity_type}: {provider.identity.identity_id}"
+            partition = get_nested_attribute(provider, "region_config.name")
+        elif provider.type == "gcp":
+            auth_method = f"Principal: {get_nested_attribute(provider, 'identity.profile')}"
+        elif provider.type == "kubernetes":
+            auth_method = "in-cluster" if provider.identity.context == "In-Cluster" else "kubeconfig"
+        elif provider.type == "microsoft365":
+            auth_method = f"{provider.identity.identity_type}: {provider.identity.identity_id}"
+        return auth_method, partition
+
     @classmethod
-    def transform_api_finding(cls, finding) -> "Finding":
+    def transform_api_finding(cls, finding, provider) -> "Finding":
         """
         Transform a FindingModel instance into an API-friendly Finding object.
 
@@ -289,12 +310,14 @@ class Finding(BaseModel):
 
         Args:
             finding (API Finding): An API Finding instance containing data from the database.
+            provider (Provider): the provider object.
 
         Returns:
             Finding: A new Finding instance populated with data from the provided model.
         """
         output_data = {}
-        output_data["auth_method"] = ""
+
+        output_data["auth_method"], output_data["partition"] = cls._get_auth_method_and_partition(provider)
         output_data["timestamp"] = finding.inserted_at
         output_data["account_uid"] = finding.scan.provider.uid
         output_data["account_name"] = ""

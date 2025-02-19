@@ -91,6 +91,7 @@ class DummyResources:
 class DummyProvider:
     def __init__(self, uid):
         self.uid = uid
+        self.type = "aws"
 
 
 class DummyScan:
@@ -571,10 +572,10 @@ class TestFinding:
         dummy_finding.resources = resources
 
         # Call the transform_api_finding classmethod
-        finding_obj = Finding.transform_api_finding(dummy_finding)
+        finding_obj = Finding.transform_api_finding(dummy_finding, provider)
 
         # Fields directly set in transform_api_finding
-        assert finding_obj.auth_method == ""
+        assert finding_obj.auth_method == "profile: "
         assert finding_obj.timestamp == inserted_at
         assert finding_obj.account_uid == "account123"
         assert finding_obj.account_name == ""
@@ -713,10 +714,11 @@ class TestFinding:
         the function logs the error and re-raises the exception.
         For example, if the metadata dict is missing required keys.
         """
+        provider = DummyProvider(uid="account123")
         # Create a dummy API finding that is missing some required metadata
         dummy_finding = DummyAPIFinding()
         dummy_finding.inserted_at = 1234567890
-        dummy_finding.scan = DummyScan(provider=DummyProvider(uid="account123"))
+        dummy_finding.scan = DummyScan(provider=provider)
         dummy_finding.uid = "finding-uid-invalid"
         dummy_finding.status = "PASS"
         dummy_finding.status_extended = "extended"
@@ -730,4 +732,4 @@ class TestFinding:
         dummy_finding.resources = DummyResources(resource)
 
         with pytest.raises(KeyError):
-            Finding.transform_api_finding(dummy_finding)
+            Finding.transform_api_finding(dummy_finding, provider)
