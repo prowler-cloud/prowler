@@ -28,4 +28,12 @@ class Migration(migrations.Migration):
                 fields=["tenant_id", "scan_id", "id"], name="find_tenant_scan_id_idx"
             ),
         ),
+        migrations.AddIndex(
+            model_name="finding",
+            index=models.Index(
+                condition=models.Q(("delta", "new")),
+                fields=["tenant_id", "id"],
+                name="find_delta_new_idx",
+            ),
+        ),
     ]

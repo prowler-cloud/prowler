@@ -703,6 +703,11 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
             models.Index(
                 fields=["tenant_id", "scan_id", "id"], name="find_tenant_scan_id_idx"
             ),
+            models.Index(
+                fields=["tenant_id", "id"],
+                condition=Q(delta="new"),
+                name="find_delta_new_idx",
+            ),
         ]
 
     class JSONAPIMeta:
