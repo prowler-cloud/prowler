@@ -9,11 +9,11 @@ from tests.providers.microsoft365.microsoft365_fixtures import (
 )
 
 
-class Test_sharepoint_external_sharing_restricted:
-    def test_external_sharing_restricted(self):
+class Test_sharepoint_guest_sharing_restricted:
+    def test_guest_sharing_restricted(self):
         """
-        Test when sharingCapability is set to an allowed value (e.g. "ExternalUserSharingOnly"):
-        The check should PASS because external sharing is restricted.
+        Test when resharingEnabled is False:
+        The check should PASS because guest sharing is restricted.
         """
         sharepoint_client = mock.MagicMock
 
@@ -23,39 +23,41 @@ class Test_sharepoint_external_sharing_restricted:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.sharepoint.sharepoint_external_sharing_restricted.sharepoint_external_sharing_restricted.sharepoint_client",
+                "prowler.providers.microsoft365.services.sharepoint.sharepoint_guest_sharing_restricted.sharepoint_guest_sharing_restricted.sharepoint_client",
                 new=sharepoint_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.sharepoint.sharepoint_external_sharing_restricted.sharepoint_external_sharing_restricted import (
-                sharepoint_external_sharing_restricted,
+            from prowler.providers.microsoft365.services.sharepoint.sharepoint_guest_sharing_restricted.sharepoint_guest_sharing_restricted import (
+                sharepoint_guest_sharing_restricted,
             )
 
+            # Configuramos los settings para el dominio con resharingEnabled en False (restricción aplicada)
             sharepoint_client.settings = {
                 DOMAIN: SharePointSettings(
                     id=DOMAIN,
-                    sharingCapability="ExternalUserSharingOnly",
+                    sharingCapability="irrelevant",
                     sharingAllowedDomainList=["allowed-domain.com"],
                     sharingBlockedDomainList=["blocked-domain.com"],
                     sharingDomainRestrictionMode="allowList",
-                    resharingEnabled=False,
                     modernAuthentication=True,
+                    resharingEnabled=False,
                 )
             }
 
-            check = sharepoint_external_sharing_restricted()
+            check = sharepoint_guest_sharing_restricted()
             result = check.execute()
+
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert result[0].status_extended == (
-                "External sharing is restricted to external user sharing or more restrictive."
+                "Guest sharing is restricted; guest users cannot share items they do not own."
             )
             assert result[0].resource_id == DOMAIN
 
-    def test_external_sharing_not_restricted(self):
+    def test_guest_sharing_not_restricted(self):
         """
-        Test when sharingCapability is set to a non-restricted value (e.g. "ExternalUserAndGuestSharing"):
-        The check should FAIL because external sharing is not restricted.
+        Test when resharingEnabled is True:
+        The check should FAIL because guest sharing is not restricted.
         """
         sharepoint_client = mock.MagicMock
 
@@ -65,32 +67,33 @@ class Test_sharepoint_external_sharing_restricted:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.sharepoint.sharepoint_external_sharing_restricted.sharepoint_external_sharing_restricted.sharepoint_client",
+                "prowler.providers.microsoft365.services.sharepoint.sharepoint_guest_sharing_restricted.sharepoint_guest_sharing_restricted.sharepoint_client",
                 new=sharepoint_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.sharepoint.sharepoint_external_sharing_restricted.sharepoint_external_sharing_restricted import (
-                sharepoint_external_sharing_restricted,
+            from prowler.providers.microsoft365.services.sharepoint.sharepoint_guest_sharing_restricted.sharepoint_guest_sharing_restricted import (
+                sharepoint_guest_sharing_restricted,
             )
 
             sharepoint_client.settings = {
                 DOMAIN: SharePointSettings(
                     id=DOMAIN,
-                    sharingCapability="ExternalUserAndGuestSharing",
+                    sharingCapability="irrelevant",
                     sharingAllowedDomainList=["allowed-domain.com"],
                     sharingBlockedDomainList=["blocked-domain.com"],
                     sharingDomainRestrictionMode="allowList",
-                    resharingEnabled=False,
                     modernAuthentication=True,
+                    resharingEnabled=True,
                 )
             }
 
-            check = sharepoint_external_sharing_restricted()
+            check = sharepoint_guest_sharing_restricted()
             result = check.execute()
+
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].status_extended == (
-                "External sharing is not restricted and guests users can access."
+                "Guest sharing is not restricted; guest users can share items they do not own."
             )
             assert result[0].resource_id == DOMAIN
 
@@ -108,14 +111,15 @@ class Test_sharepoint_external_sharing_restricted:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.sharepoint.sharepoint_external_sharing_restricted.sharepoint_external_sharing_restricted.sharepoint_client",
+                "prowler.providers.microsoft365.services.sharepoint.sharepoint_guest_sharing_restricted.sharepoint_guest_sharing_restricted.sharepoint_client",
                 new=sharepoint_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.sharepoint.sharepoint_external_sharing_restricted.sharepoint_external_sharing_restricted import (
-                sharepoint_external_sharing_restricted,
+            from prowler.providers.microsoft365.services.sharepoint.sharepoint_guest_sharing_restricted.sharepoint_guest_sharing_restricted import (
+                sharepoint_guest_sharing_restricted,
             )
 
-            check = sharepoint_external_sharing_restricted()
+            check = sharepoint_guest_sharing_restricted()
             result = check.execute()
+
             assert len(result) == 0

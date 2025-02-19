@@ -38,6 +38,7 @@ class Test_sharepoint_external_sharing_managed:
                     sharingAllowedDomainList=["allowed-domain.com"],
                     sharingBlockedDomainList=["blocked-domain.com"],
                     modernAuthentication=True,
+                    resharingEnabled=False,
                     sharingDomainRestrictionMode="none",
                 )
             }
@@ -81,6 +82,7 @@ class Test_sharepoint_external_sharing_managed:
                     sharingAllowedDomainList=[],
                     sharingBlockedDomainList=["blocked-domain.com"],
                     modernAuthentication=True,
+                    resharingEnabled=False,
                     sharingDomainRestrictionMode="allowList",
                 )
             }
@@ -124,6 +126,7 @@ class Test_sharepoint_external_sharing_managed:
                     sharingAllowedDomainList=["allowed-domain.com"],
                     sharingBlockedDomainList=[],
                     modernAuthentication=True,
+                    resharingEnabled=False,
                     sharingDomainRestrictionMode="blockList",
                 )
             }
@@ -167,6 +170,7 @@ class Test_sharepoint_external_sharing_managed:
                     sharingAllowedDomainList=["allowed-domain.com"],
                     sharingBlockedDomainList=["blocked-domain.com"],
                     modernAuthentication=True,
+                    resharingEnabled=False,
                     sharingDomainRestrictionMode="allowList",
                 )
             }
@@ -210,6 +214,7 @@ class Test_sharepoint_external_sharing_managed:
                     sharingAllowedDomainList=["allowed-domain.com"],
                     sharingBlockedDomainList=["blocked-domain.com"],
                     modernAuthentication=True,
+                    resharingEnabled=False,
                     sharingDomainRestrictionMode="blockList",
                 )
             }
