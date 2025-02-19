@@ -29,11 +29,11 @@ class ComplianceOutput(Output):
         self,
         findings: List[Finding],
         compliance: Compliance,
-        create_file_descriptor: bool = False,
         file_path: str = None,
         file_extension: str = "",
     ) -> None:
         self._data = []
+        self.file_descriptor = None
 
         if not file_extension and file_path:
             self._file_extension = "".join(Path(file_path).suffixes)
@@ -48,7 +48,7 @@ class ComplianceOutput(Output):
                 else compliance.Framework
             )
             self.transform(findings, compliance, compliance_name)
-            if create_file_descriptor:
+            if not self._file_descriptor and file_path:
                 self.create_file_descriptor(file_path)
 
     def batch_write_data_to_file(self) -> None:

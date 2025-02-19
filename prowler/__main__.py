@@ -351,7 +351,6 @@ def prowler():
             if mode == "csv":
                 csv_output = CSV(
                     findings=finding_outputs,
-                    create_file_descriptor=True,
                     file_path=f"{filename}{csv_file_suffix}",
                 )
                 generated_outputs["regular"].append(csv_output)
@@ -361,7 +360,6 @@ def prowler():
             if mode == "json-asff":
                 asff_output = ASFF(
                     findings=finding_outputs,
-                    create_file_descriptor=True,
                     file_path=f"{filename}{json_asff_file_suffix}",
                 )
                 generated_outputs["regular"].append(asff_output)
@@ -371,7 +369,6 @@ def prowler():
             if mode == "json-ocsf":
                 json_output = OCSF(
                     findings=finding_outputs,
-                    create_file_descriptor=True,
                     file_path=f"{filename}{json_ocsf_file_suffix}",
                 )
                 generated_outputs["regular"].append(json_output)
@@ -379,7 +376,6 @@ def prowler():
             if mode == "html":
                 html_output = HTML(
                     findings=finding_outputs,
-                    create_file_descriptor=True,
                     file_path=f"{filename}{html_file_suffix}",
                 )
                 generated_outputs["regular"].append(html_output)
@@ -402,7 +398,6 @@ def prowler():
                 cis = AWSCIS(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
-                    create_file_descriptor=True,
                     file_path=filename,
                 )
                 generated_outputs["compliance"].append(cis)
@@ -416,7 +411,6 @@ def prowler():
                 mitre_attack = AWSMitreAttack(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
-                    create_file_descriptor=True,
                     file_path=filename,
                 )
                 generated_outputs["compliance"].append(mitre_attack)
@@ -430,7 +424,6 @@ def prowler():
                 ens = AWSENS(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
-                    create_file_descriptor=True,
                     file_path=filename,
                 )
                 generated_outputs["compliance"].append(ens)
@@ -444,7 +437,6 @@ def prowler():
                 aws_well_architected = AWSWellArchitected(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
-                    create_file_descriptor=True,
                     file_path=filename,
                 )
                 generated_outputs["compliance"].append(aws_well_architected)
@@ -458,7 +450,6 @@ def prowler():
                 iso27001 = AWSISO27001(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
-                    create_file_descriptor=True,
                     file_path=filename,
                 )
                 generated_outputs["compliance"].append(iso27001)
@@ -472,7 +463,6 @@ def prowler():
                 kisa_ismsp = AWSKISAISMSP(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
-                    create_file_descriptor=True,
                     file_path=filename,
                 )
                 generated_outputs["compliance"].append(kisa_ismsp)
@@ -485,7 +475,6 @@ def prowler():
                 generic_compliance = GenericCompliance(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
-                    create_file_descriptor=True,
                     file_path=filename,
                 )
                 generated_outputs["compliance"].append(generic_compliance)
@@ -502,7 +491,6 @@ def prowler():
                 cis = AzureCIS(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
-                    create_file_descriptor=True,
                     file_path=filename,
                 )
                 generated_outputs["compliance"].append(cis)
@@ -516,7 +504,6 @@ def prowler():
                 mitre_attack = AzureMitreAttack(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
-                    create_file_descriptor=True,
                     file_path=filename,
                 )
                 generated_outputs["compliance"].append(mitre_attack)
@@ -530,7 +517,6 @@ def prowler():
                 ens = AzureENS(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
-                    create_file_descriptor=True,
                     file_path=filename,
                 )
                 generated_outputs["compliance"].append(ens)
@@ -543,7 +529,6 @@ def prowler():
                 generic_compliance = GenericCompliance(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
-                    create_file_descriptor=True,
                     file_path=filename,
                 )
                 generated_outputs["compliance"].append(generic_compliance)
@@ -560,7 +545,6 @@ def prowler():
                 cis = GCPCIS(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
-                    create_file_descriptor=True,
                     file_path=filename,
                 )
                 generated_outputs["compliance"].append(cis)
@@ -574,7 +558,6 @@ def prowler():
                 mitre_attack = GCPMitreAttack(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
-                    create_file_descriptor=True,
                     file_path=filename,
                 )
                 generated_outputs["compliance"].append(mitre_attack)
@@ -588,7 +571,6 @@ def prowler():
                 ens = GCPENS(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
-                    create_file_descriptor=True,
                     file_path=filename,
                 )
                 generated_outputs["compliance"].append(ens)
@@ -601,7 +583,6 @@ def prowler():
                 generic_compliance = GenericCompliance(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
-                    create_file_descriptor=True,
                     file_path=filename,
                 )
                 generated_outputs["compliance"].append(generic_compliance)
@@ -618,7 +599,6 @@ def prowler():
                 cis = KubernetesCIS(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
-                    create_file_descriptor=True,
                     file_path=filename,
                 )
                 generated_outputs["compliance"].append(cis)
@@ -631,7 +611,6 @@ def prowler():
                 generic_compliance = GenericCompliance(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
-                    create_file_descriptor=True,
                     file_path=filename,
                 )
                 generated_outputs["compliance"].append(generic_compliance)
@@ -648,7 +627,6 @@ def prowler():
                 cis = Microsoft365CIS(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
-                    create_file_descriptor=True,
                     file_path=filename,
                 )
                 generated_outputs["compliance"].append(cis)
@@ -661,7 +639,6 @@ def prowler():
                 generic_compliance = GenericCompliance(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
-                    create_file_descriptor=True,
                     file_path=filename,
                 )
                 generated_outputs["compliance"].append(generic_compliance)

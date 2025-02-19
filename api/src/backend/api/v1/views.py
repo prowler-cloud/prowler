@@ -1,6 +1,11 @@
+import glob
+import os
+
 from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
+from botocore.exceptions import ClientError, NoCredentialsError, ParamValidationError
 from celery.result import AsyncResult
+from config.env import env
 from config.settings.social_login import (
     GITHUB_OAUTH_CALLBACK_URL,
     GOOGLE_OAUTH_CALLBACK_URL,
@@ -12,6 +17,7 @@ from django.contrib.postgres.search import SearchQuery
 from django.db import transaction
 from django.db.models import Count, F, OuterRef, Prefetch, Q, Subquery, Sum
 from django.db.models.functions import Coalesce
+from django.http import HttpResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_control
@@ -38,11 +44,11 @@ from rest_framework.permissions import SAFE_METHODS
 from rest_framework_json_api.views import RelationshipView, Response
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from tasks.beat import schedule_provider_scan
+from tasks.jobs.export import get_s3_client
 from tasks.tasks import (
     check_provider_connection_task,
     delete_provider_task,
     delete_tenant_task,
-    perform_scan_summary_task,
     perform_scan_task,
 )
 
@@ -121,6 +127,7 @@ from api.v1.serializers import (
     RoleSerializer,
     RoleUpdateSerializer,
     ScanCreateSerializer,
+    ScanReportSerializer,
     ScanSerializer,
     ScanUpdateSerializer,
     ScheduleDailyCreateSerializer,
@@ -1164,6 +1171,8 @@ class ScanViewSet(BaseRLSViewSet):
             return ScanCreateSerializer
         elif self.action == "partial_update":
             return ScanUpdateSerializer
+        elif self.action == "report":
+            return ScanReportSerializer
         return super().get_serializer_class()
 
     def partial_update(self, request, *args, **kwargs):
@@ -1181,6 +1190,72 @@ class ScanViewSet(BaseRLSViewSet):
         )
         return Response(data=read_serializer.data, status=status.HTTP_200_OK)
 
+    @extend_schema(
+        tags=["Scan"],
+        summary="Download ZIP report",
+        description="Returns a ZIP file containing the requested report",
+        request=ScanReportSerializer,
+        responses={
+            200: OpenApiResponse(description="Report obtained successfully"),
+            403: OpenApiResponse(
+                description="There is a problem with the AWS credentials"
+            ),
+        },
+    )
+    @action(detail=True, methods=["get"], url_name="report")
+    def report(self, request, pk=None):
+        scan_instance = Scan.objects.get(pk=pk)
+        output_path = scan_instance.output_path
+
+        if not output_path:
+            return Response(
+                {"detail": "No files found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        if scan_instance.output_path.startswith("s3://"):
+            try:
+                s3_client = get_s3_client()
+            except (ClientError, NoCredentialsError, ParamValidationError):
+                return Response(
+                    {"detail": "There is a problem with the AWS credentials."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
+            bucket_name = env.str("DJANGO_ARTIFACTS_AWS_S3_OUTPUT_BUCKET")
+            try:
+                key = output_path[len(f"s3://{bucket_name}/") :]
+                s3_object = s3_client.get_object(Bucket=bucket_name, Key=key)
+                file_content = s3_object["Body"].read()
+                filename = os.path.basename(output_path.split("/")[-1])
+            except ClientError:
+                return Response(
+                    {"detail": "Error accessing cloud storage"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+        else:
+            zip_files = glob.glob(output_path)
+            if not zip_files:
+                return Response(
+                    {"detail": "No local files found"}, status=status.HTTP_404_NOT_FOUND
+                )
+
+            try:
+                file_path = zip_files[0]
+                with open(file_path, "rb") as f:
+                    file_content = f.read()
+                filename = os.path.basename(file_path)
+            except IOError:
+                return Response(
+                    {"detail": "Error reading local file"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+
+        response = HttpResponse(
+            file_content, content_type="application/x-zip-compressed"
+        )
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        return response
+
     def create(self, request, *args, **kwargs):
         input_serializer = self.get_serializer(data=request.data)
         input_serializer.is_valid(raise_exception=True)
@@ -1195,10 +1270,6 @@ class ScanViewSet(BaseRLSViewSet):
                     # Disabled for now
                     # checks_to_execute=scan.scanner_args.get("checks_to_execute"),
                 },
-                link=perform_scan_summary_task.si(
-                    tenant_id=self.request.tenant_id,
-                    scan_id=str(scan.id),
-                ),
             )
 
         scan.task_id = task.id

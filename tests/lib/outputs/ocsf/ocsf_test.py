@@ -256,7 +256,7 @@ class TestOCSF:
         assert json.loads(content) == expected_json_output
 
     def test_batch_write_data_to_file_without_findings(self):
-        assert not hasattr(OCSF([]), "_file_descriptor")
+        assert not OCSF([])._file_descriptor
 
     def test_finding_output_cloud_pass_low_muted(self):
         finding_output = generate_finding_output(
