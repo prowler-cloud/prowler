@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prowler-api-auth-updater
+  namespace: prowler-ns
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prowler-api-auth-updater
+  template:
+    metadata:
+      labels:
+        app: prowler-api-auth-updater
+    spec:
+      serviceAccountName: prowler-sa
+      containers:
+      - name: watcher
+        image: <YOUR_IMAGE_NAME>
+        env:
+        - name: PROWLER_API_URL
+          valueFrom:
+            secretKeyRef:
+              name: prowler-api-credentials
+              key: api-url
+        - name: PROWLER_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: prowler-api-credentials
+              key: username
+        - name: PROWLER_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: prowler-api-credentials
+              key: password
+        - name: K8S_EXTERNAL_HOST
+          valueFrom:
+            secretKeyRef:
+              name: prowler-api-credentials
+              key: k8s-url
+        volumeMounts:
+        - name: sa-token
+          mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+          readOnly: true
+      volumes:
+      - name: sa-token
+        projected:
+          sources:
+          - serviceAccountToken:
+              path: token
+              expirationSeconds: 3600
+              audience: "https://kubernetes.default.svc"
+          - configMap:
+              name: kube-root-ca.crt
+              items:
+                - key: ca.crt
+                  path: ca.crt
