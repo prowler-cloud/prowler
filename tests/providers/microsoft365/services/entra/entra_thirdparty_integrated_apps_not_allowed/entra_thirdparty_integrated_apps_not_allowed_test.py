@@ -38,10 +38,7 @@ class Test_entra_thirdparty_integrated_apps_not_allowed:
             assert result[0].resource == {}
             assert result[0].resource_name == "Authorization Policy"
             assert result[0].resource_id == "authorizationPolicy"
-            assert (
-                result[0].status_extended
-                == "App creation is not disabled for non-admin users."
-            )
+            assert result[0].status_extended == "Authorization Policy was not found."
             assert result[0].location == "global"
 
     def test_entra_default_user_role_permissions_not_allowed_to_create_apps(self):
