@@ -176,8 +176,6 @@ def delete_tenant_task(tenant_id: str):
     base=RLSTask,
     name="scan-output",
     queue="scans-report",
-    autoretry_for=(Exception,),
-    retry_kwargs={"max_retries": 3, "countdown": 5},
 )
 @set_tenant(keep_tenant=True)
 def generate_outputs(scan_id: str, provider_id: str, tenant_id: str):
@@ -266,7 +264,7 @@ def generate_outputs(scan_id: str, provider_id: str, tenant_id: str):
         uploaded = False
 
     # Update the scan instance with the output path
-    Finding.all_objects.filter(id=scan_id).update(output_path=output_directory)
+    Scan.all_objects.filter(id=scan_id).update(output_path=output_directory)
 
     logger.info(f"Scan output files generated, output location: {output_directory}")
 
