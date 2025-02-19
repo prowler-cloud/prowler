@@ -127,6 +127,8 @@ cd src/backend
 python manage.py migrate --database admin
 gunicorn -c config/guniconf.py config.wsgi:application
 ```
+> [!IMPORTANT]
+> Starting from Poetry v2.0.0, `poetry shell` has been deprecated in favor of `poetry env activate`.
 
 > Now, you can access the API documentation at http://localhost:8080/api/v1/docs.
 
@@ -209,6 +211,9 @@ poetry shell
 poetry install
 python prowler.py -v
 ```
+> [!IMPORTANT]
+> Starting from Poetry v2.0.0, `poetry shell` has been deprecated in favor of `poetry env activate`.
+
 > If you want to clone Prowler from Windows, use `git config core.longpaths true` to allow long file paths.
 # 📐✏️ High level architecture
 
