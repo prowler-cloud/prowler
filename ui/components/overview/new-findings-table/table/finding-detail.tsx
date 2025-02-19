@@ -105,7 +105,11 @@ export const FindingDetail = ({
                     {remediation.code.cli && (
                       <div>
                         <p className="text-sm font-semibold">CLI Command:</p>
-                        <Snippet hideSymbol size="sm" className="max-w-full">
+                        <Snippet
+                          hideSymbol
+                          size="sm"
+                          className="max-w-full bg-gray-50 py-1 dark:bg-slate-800"
+                        >
                           <p className="whitespace-pre-line">
                             {remediation.code.cli}
                           </p>
@@ -148,7 +152,11 @@ export const FindingDetail = ({
             <p className="text-sm font-semibold dark:text-prowler-theme-pale">
               Resource ID
             </p>
-            <Snippet size="sm" hideSymbol className="max-w-full">
+            <Snippet
+              size="sm"
+              hideSymbol
+              className="max-w-full bg-gray-50 py-1 dark:bg-slate-800"
+            >
               <p className="whitespace-pre-line">{resource.uid}</p>
             </Snippet>
           </div>
