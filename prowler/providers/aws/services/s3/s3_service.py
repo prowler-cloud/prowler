@@ -494,6 +494,7 @@ class S3(AWSService):
                 )
                 return False
             else:
+                # Bucket exists but we don't have access to it
                 logger.error(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
