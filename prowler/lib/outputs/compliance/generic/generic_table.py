@@ -23,7 +23,7 @@ def get_generic_compliance_table(
                 compliance.Framework.upper()
                 in compliance_framework.upper().replace("_", "-")
                 and compliance.Version in compliance_framework.upper()
-                and compliance.Provider in compliance_framework.upper()
+                and compliance.Provider.upper() in compliance_framework.upper()
             ):
                 if finding.muted:
                     if index not in muted_count:
