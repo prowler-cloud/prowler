@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/auth.config";
-import { getErrorMessage, parseStringify, wait } from "@/lib";
+import { getErrorMessage, parseStringify } from "@/lib";
 
 export const getInvitations = async ({
   page = 1,
