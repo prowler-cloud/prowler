@@ -189,9 +189,14 @@ export const getInvitationInfoById = async (invitationId: string) => {
 export const revokeInvite = async (formData: FormData) => {
   const session = await auth();
   const keyServer = process.env.API_BASE_URL;
-
   const invitationId = formData.get("invitationId");
+
+  if (!invitationId) {
+    return { error: "Invitation ID is required" };
+  }
+
   const url = new URL(`${keyServer}/tenants/invitations/${invitationId}`);
+
   try {
     const response = await fetch(url.toString(), {
       method: "DELETE",
@@ -199,13 +204,28 @@ export const revokeInvite = async (formData: FormData) => {
         Authorization: `Bearer ${session?.accessToken}`,
       },
     });
-    const data = await response.json();
-    await wait(1000);
+
+    if (!response.ok) {
+      try {
+        const errorData = await response.json();
+        throw new Error(
+          errorData?.message || "Failed to revoke the invitation",
+        );
+      } catch {
+        throw new Error("Failed to revoke the invitation");
+      }
+    }
+
+    let data = null;
+    if (response.status !== 204) {
+      data = await response.json();
+    }
+
     revalidatePath("/invitations");
-    return parseStringify(data);
+    return data || { success: true };
   } catch (error) {
-    return {
-      error: getErrorMessage(error),
-    };
+    // eslint-disable-next-line no-console
+    console.error("Error revoking invitation:", error);
+    return { error: getErrorMessage(error) };
   }
 };
