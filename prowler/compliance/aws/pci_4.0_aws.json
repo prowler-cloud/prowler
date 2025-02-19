@@ -1,5 +1,5 @@
 {
-  "Framework": "CIS-AWS",
+  "Framework": "PCI",
   "Version": "4.0",
   "Provider": "AWS",
   "Description": "The Payment Card Industry Data Security Standard (PCI DSS) is a proprietary information security standard. It's administered by the PCI Security Standards Council, which was founded by American Express, Discover Financial Services, JCB International, MasterCard Worldwide, and Visa Inc. PCI DSS applies to entities that store, process, or transmit cardholder data (CHD) or sensitive authentication data (SAD). This includes, but isn't limited to, merchants, processors, acquirers, issuers, and service providers. The PCI DSS is mandated by the card brands and administered by the Payment Card Industry Security Standards Council.",
