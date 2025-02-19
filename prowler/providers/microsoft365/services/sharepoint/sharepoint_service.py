@@ -17,11 +17,9 @@ class SharePoint(Microsoft365Service):
         attributes = loop.run_until_complete(
             gather(
                 self._get_settings(),
-                self._get_one_drive_shared_content(),
             )
         )
         self.settings = attributes[0]
-        self.one_drive_shared_content = attributes[1]
 
     async def _get_settings(self):
         logger.info("Microsoft365 - Getting SharePoint global settings...")
@@ -56,46 +54,6 @@ class SharePoint(Microsoft365Service):
             return None
         return settings
 
-    async def _get_one_drive_shared_content(self):
-        logger.info("Microsoft365 - Getting OneDrive shared content...")
-        try:
-            search_request = {
-                "requests": [
-                    {
-                        "entityTypes": ["driveItem"],
-                        "query": {"queryString": "*"},
-                        "sharePointOneDriveOptions": {
-                            "includeContent": "sharedContent"
-                        },
-                    }
-                ]
-            }
-
-            response = await self.client.search.query.post(body=search_request)
-            values = response.get("value", [])
-            if not values:
-                total_shared_items = 0
-            else:
-                hits_containers = values[0].get("hitsContainers", [])
-                total_shared_items = (
-                    hits_containers[0].get("total", 0) if hits_containers else 0
-                )
-
-            shared_content = OneDriveSharedContent(
-                totalSharedContent=total_shared_items
-            )
-            return shared_content
-        except ODataError as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-            return None
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-            return None
-
 
 class SharePointSettings(BaseModel):
     id: str
@@ -105,7 +63,3 @@ class SharePointSettings(BaseModel):
     sharingDomainRestrictionMode: str
     resharingEnabled: bool
     modernAuthentication: bool
-
-
-class OneDriveSharedContent(BaseModel):
-    totalSharedContent: int
