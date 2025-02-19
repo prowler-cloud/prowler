@@ -3,7 +3,7 @@ from django.conf import settings as django_settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.search import SearchQuery
 from django.db import transaction
-from django.db.models import Count, Exists, F, OuterRef, Q, Subquery, Sum
+from django.db.models import Count, Exists, F, OuterRef, Prefetch, Q, Subquery, Sum
 from django.db.models.functions import Coalesce
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -1321,6 +1321,18 @@ class FindingViewSet(BaseRLSViewSet):
         "inserted_at",
         "updated_at",
     ]
+    prefetch_for_includes = {
+        "__all__": [],
+        "resources": [
+            Prefetch(
+                "resources",
+                queryset=Resource.all_objects.prefetch_related("tags", "findings"),
+            )
+        ],
+        "scan": [
+            Prefetch("scan", queryset=Scan.all_objects.select_related("findings"))
+        ],
+    }
     # RBAC required permissions (implicit -> MANAGE_PROVIDERS enable unlimited visibility or check the visibility of
     # the provider through the provider group)
     required_permissions = []

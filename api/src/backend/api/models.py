@@ -599,6 +599,12 @@ class ResourceTagMapping(RowLevelSecurityProtectedModel):
             ),
         ]
 
+        indexes = [
+            models.Index(
+                fields=["tenant_id", "resource_id"], name="resource_tag_tenant_idx"
+            ),
+        ]
+
 
 class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
     """

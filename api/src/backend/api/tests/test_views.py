@@ -2435,7 +2435,7 @@ class TestFindingViewSet:
         [
             ("resources", ["resources"]),
             ("scan", ["scans"]),
-            ("resources.provider,scan", ["resources", "scans", "providers"]),
+            ("resources,scan.provider", ["resources", "scans", "providers"]),
         ],
     )
     def test_findings_list_include(

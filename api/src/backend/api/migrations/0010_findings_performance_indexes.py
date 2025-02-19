@@ -36,4 +36,10 @@ class Migration(migrations.Migration):
                 name="find_delta_new_idx",
             ),
         ),
+        migrations.AddIndex(
+            model_name="resourcetagmapping",
+            index=models.Index(
+                fields=["tenant_id", "resource_id"], name="resource_tag_tenant_idx"
+            ),
+        ),
     ]
