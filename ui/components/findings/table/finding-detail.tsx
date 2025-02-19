@@ -101,7 +101,10 @@ export const FindingDetail = ({
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <InfoField label="Check ID" variant="simple">
-            <Snippet className="max-w-full" hideSymbol>
+            <Snippet
+              className="max-w-full bg-gray-50 py-1 dark:bg-slate-800"
+              hideSymbol
+            >
               {attributes.check_id}
             </Snippet>
           </InfoField>
@@ -160,7 +163,7 @@ export const FindingDetail = ({
             {/* CLI Command section */}
             {attributes.check_metadata.remediation.code.cli && (
               <InfoField label="CLI Command" variant="simple">
-                <Snippet>
+                <Snippet className="bg-gray-50 py-1 dark:bg-slate-800">
                   <span className="whitespace-pre-line text-xs">
                     {attributes.check_metadata.remediation.code.cli}
                   </span>
@@ -191,7 +194,7 @@ export const FindingDetail = ({
       {/* Resource Details */}
       <Section title="Resource Details">
         <InfoField label="Resource ID" variant="simple">
-          <Snippet hideSymbol>
+          <Snippet className="bg-gray-50 py-1 dark:bg-slate-800" hideSymbol>
             <span className="whitespace-pre-line text-xs">
               {renderValue(resource.uid)}
             </span>

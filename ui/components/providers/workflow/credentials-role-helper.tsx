@@ -33,7 +33,11 @@ export const CredentialsRoleHelper = () => {
         <p className="text-xs font-bold text-gray-600 dark:text-gray-400">
           The External ID will also be required:
         </p>
-        <Snippet className="max-w-full py-1" color="warning" hideSymbol>
+        <Snippet
+          className="max-w-full bg-gray-50 py-1 dark:bg-slate-800"
+          color="warning"
+          hideSymbol
+        >
           <p className="whitespace-pre-line text-xs font-bold">
             {session?.tenantId}
           </p>

@@ -62,7 +62,8 @@ export const ScanDetail = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <StatusBadge
-          size="lg"
+          size="md"
+          className="w-fit"
           status={scan.state}
           loadingProgress={scan.progress}
         />
@@ -86,11 +87,20 @@ export const ScanDetail = ({
           </InfoField>
         </div>
 
+        <InfoField label="Scan ID" variant="simple">
+          <Snippet className="bg-gray-50 py-1 dark:bg-slate-800" hideSymbol>
+            {renderValue(taskDetails?.attributes.task_args.scan_id)}
+          </Snippet>
+        </InfoField>
+
         {scan.state === "failed" && taskDetails?.attributes.result && (
           <>
             {taskDetails.attributes.result.exc_message && (
               <InfoField label="Error Message" variant="simple">
-                <Snippet hideSymbol>
+                <Snippet
+                  className="bg-gray-50 py-1 dark:bg-slate-800"
+                  hideSymbol
+                >
                   <span className="whitespace-pre-line text-xs">
                     {taskDetails.attributes.result.exc_message.join("\n")}
                   </span>
@@ -100,11 +110,6 @@ export const ScanDetail = ({
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <InfoField label="Error Type">
                 {renderValue(taskDetails.attributes.result.exc_type)}
-              </InfoField>
-              <InfoField label="Scan ID" variant="simple">
-                <Snippet hideSymbol>
-                  {renderValue(taskDetails?.attributes.task_args.scan_id)}
-                </Snippet>
               </InfoField>
             </div>
           </>
