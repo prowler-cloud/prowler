@@ -88,7 +88,7 @@ def perform_scan_task(
     )
 
     chain(
-        perform_scan_summary_task.s(tenant_id, scan_id),
+        perform_scan_summary_task.si(tenant_id, scan_id),
         generate_outputs.si(scan_id, provider_id, tenant_id=tenant_id),
     ).apply_async()
 
@@ -239,7 +239,7 @@ def generate_outputs(scan_id: str, provider_id: str, tenant_id: str):
         findings_qs.iterator(), DJANGO_FINDINGS_BATCH_SIZE
     ):
         finding_outputs = [
-            FindingOutput.transform_api_finding(finding) for finding in batch
+            FindingOutput.transform_api_finding(finding, prowler_provider) for finding in batch
         ]
 
         # Generate output files
