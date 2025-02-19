@@ -1204,12 +1204,15 @@ class ScanViewSet(BaseRLSViewSet):
     )
     @action(detail=True, methods=["get"], url_name="report")
     def report(self, request, pk=None):
-        scan_instance = Scan.objects.get(pk=pk)
+        scan_instance = self.get_object()
         output_path = scan_instance.output_path
 
-        if not output_path:
+        if scan_instance.state != StateChoices.COMPLETED:
             return Response(
-                {"detail": "No files found"}, status=status.HTTP_404_NOT_FOUND
+                {
+                    "detail": f"The scan is not finished yet. State is: {scan_instance.state}"
+                },
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         if scan_instance.output_path.startswith("s3://"):
@@ -1234,17 +1237,12 @@ class ScanViewSet(BaseRLSViewSet):
                 )
         else:
             zip_files = glob.glob(output_path)
-            if not zip_files:
-                return Response(
-                    {"detail": "No local files found"}, status=status.HTTP_404_NOT_FOUND
-                )
-
             try:
                 file_path = zip_files[0]
                 with open(file_path, "rb") as f:
                     file_content = f.read()
                 filename = os.path.basename(file_path)
-            except IOError:
+            except (IndexError, IOError):
                 return Response(
                     {"detail": "Error reading local file"},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR,

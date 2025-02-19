@@ -2082,9 +2082,9 @@ class TestScanViewSet:
                 ("started_at.gte", "2024-01-01", 3),
                 ("started_at.lte", "2024-01-01", 0),
                 ("trigger", Scan.TriggerChoices.MANUAL, 1),
-                ("state", StateChoices.AVAILABLE, 2),
+                ("state", StateChoices.AVAILABLE, 1),
                 ("state", StateChoices.FAILED, 1),
-                ("state.in", f"{StateChoices.FAILED},{StateChoices.AVAILABLE}", 3),
+                ("state.in", f"{StateChoices.FAILED},{StateChoices.AVAILABLE}", 2),
                 ("trigger", Scan.TriggerChoices.MANUAL, 1),
             ]
         ),
@@ -2159,15 +2159,18 @@ class TestScanViewSet:
         response = authenticated_client.get(reverse("scan-list"), {"sort": "invalid"})
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_report_no_output(self, authenticated_client, scans_fixture):
+    def test_report_invalid_scan(self, authenticated_client, scans_fixture):
         """
-        If the scan's output_path is empty, the view should return a 404 response.
+        If the scan doesn't exists, the view should return a 400 and its state.
         """
-        scan = scans_fixture[0]
+        scan = scans_fixture[1]
         url = reverse("scan-report", kwargs={"pk": scan.pk})
         response = authenticated_client.get(url)
-        assert response.status_code == status.HTTP_404_NOT_FOUND
-        assert response.data["detail"] == "No files found"
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert (
+            response.data["detail"]
+            == f"The scan is not finished yet. State is: {scan.state}"
+        )
 
     def test_report_s3_get_client_fail(self, authenticated_client, scans_fixture):
         """
@@ -2237,7 +2240,7 @@ class TestScanViewSet:
     def test_report_local_no_files(self, authenticated_client, scans_fixture):
         """
         If output_path does not start with "s3://" and glob.glob finds no matching files,
-        the view should return a 404 response.
+        the view should return a 500 response.
         """
         scan = scans_fixture[0]
         scan.output_path = "/non/existent/path/*.zip"
@@ -2245,8 +2248,8 @@ class TestScanViewSet:
         url = reverse("scan-report", kwargs={"pk": scan.pk})
         with patch("api.v1.views.glob.glob", return_value=[]):
             response = authenticated_client.get(url)
-            assert response.status_code == status.HTTP_404_NOT_FOUND
-            assert response.data["detail"] == "No local files found"
+            assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+            assert response.data["detail"] == "Error reading local file"
 
     def test_report_local_ioerror(self, authenticated_client, scans_fixture):
         """

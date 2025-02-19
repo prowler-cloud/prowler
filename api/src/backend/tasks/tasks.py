@@ -12,7 +12,7 @@ from tasks.jobs.export import (
     _upload_to_s3,
 )
 from tasks.jobs.scan import aggregate_findings, perform_prowler_scan
-from tasks.utils import get_next_execution_datetime
+from tasks.utils import batched, get_next_execution_datetime
 
 from api.db_utils import rls_transaction
 from api.decorators import set_tenant
@@ -172,31 +172,12 @@ def delete_tenant_task(tenant_id: str):
     return delete_tenant(pk=tenant_id)
 
 
-def batched(iterable, batch_size):
-    """
-    Yield successive batches from an iterable.
-
-    Args:
-        iterable: An iterable source of items.
-        batch_size (int): The number of items per batch.
-
-    Yields:
-        tuple: A pair (batch, is_last_batch) where:
-            - batch (list): A list of items (with length equal to batch_size,
-              except possibly for the last batch).
-            - is_last_batch (bool): True if this is the final batch, False otherwise.
-    """
-    batch = []
-    for item in iterable:
-        batch.append(item)
-        if len(batch) == batch_size:
-            yield batch, False
-            batch = []
-
-    yield batch, True
-
-
-@shared_task(base=RLSTask, name="scan-output", queue="scans")
+@shared_task(
+    base=RLSTask,
+    name="scan-output",
+    queue="scans-report",
+    retry_kwargs={"max_retries": 3, "countdown": 5},
+)
 @set_tenant(keep_tenant=True)
 def generate_outputs(scan_id: str, provider_id: str, tenant_id: str):
     """
@@ -232,14 +213,15 @@ def generate_outputs(scan_id: str, provider_id: str, tenant_id: str):
     )
 
     # Retrieve findings queryset
-    findings_qs = Finding.objects.filter(scan_id=scan_id).order_by("uid")
+    findings_qs = Finding.all_objects.filter(scan_id=scan_id).order_by("uid")
 
     # Process findings in batches
     for batch, is_last_batch in batched(
         findings_qs.iterator(), DJANGO_FINDINGS_BATCH_SIZE
     ):
         finding_outputs = [
-            FindingOutput.transform_api_finding(finding, prowler_provider) for finding in batch
+            FindingOutput.transform_api_finding(finding, prowler_provider)
+            for finding in batch
         ]
 
         # Generate output files
@@ -283,7 +265,7 @@ def generate_outputs(scan_id: str, provider_id: str, tenant_id: str):
         uploaded = False
 
     # Update the scan instance with the output path
-    Scan.objects.filter(id=scan_id).update(output_path=output_directory)
+    Finding.all_objects.filter(id=scan_id).update(output_path=output_directory)
 
     logger.info(f"Scan output files generated, output location: {output_directory}")
 
