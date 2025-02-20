@@ -164,7 +164,7 @@ class FileSystem(BaseModel):
     id: str
     arn: str
     region: str
-    policy: Optional[dict] = {}
+    policy: Optional[dict]
     backup_policy: Optional[str] = "DISABLED"
     encrypted: bool
     availability_zone_id: Optional[str]

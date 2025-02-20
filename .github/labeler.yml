@@ -92,3 +92,9 @@ component/api:
 component/ui:
   - changed-files:
       - any-glob-to-any-file: "ui/**"
+
+compliance:
+  - changed-files:
+      - any-glob-to-any-file: "prowler/compliance/**"
+      - any-glob-to-any-file: "prowler/lib/outputs/compliance/**"
+      - any-glob-to-any-file: "tests/lib/outputs/compliance/**"

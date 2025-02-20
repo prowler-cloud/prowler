@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Prowler API
-  version: 1.4.0
+  version: 1.5.0
   description: |-
     Prowler API specification.
 
@@ -4996,6 +4996,35 @@ paths:
               schema:
                 $ref: '#/components/schemas/TokenRefreshResponse'
           description: ''
+  /api/v1/tokens/switch:
+    post:
+      operationId: tokens_switch_create
+      description: Switch tenant by providing a valid tenant ID. The authenticated
+        user must belong to the tenant.
+      summary: Switch tenant using a valid tenant ID
+      tags:
+      - Token
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/TokenSwitchTenantRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenSwitchTenantRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenSwitchTenantRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/TokenSwitchTenantResponse'
+          description: ''
   /api/v1/users:
     get:
       operationId: users_list
@@ -7677,7 +7706,7 @@ components:
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
-              maxLength: 63
+              maxLength: 250
               minLength: 3
             alias:
               type: string
@@ -7789,7 +7818,7 @@ components:
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
-              maxLength: 63
+              maxLength: 250
               minLength: 3
           required:
           - uid
@@ -7833,7 +7862,7 @@ components:
                   type: string
                   minLength: 3
                   title: Unique identifier for the provider, set by the provider
-                  maxLength: 63
+                  maxLength: 250
               required:
               - uid
       required:
@@ -10047,6 +10076,81 @@ components:
           $ref: '#/components/schemas/Token'
       required:
       - data
+    TokenSwitchTenant:
+      type: object
+      required:
+      - type
+      additionalProperties: false
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/TokenSwitchTenantTypeEnum'
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+        attributes:
+          type: object
+          properties:
+            tenant_id:
+              type: string
+              format: uuid
+              writeOnly: true
+              description: The tenant ID for which to request a new token.
+            access:
+              type: string
+              readOnly: true
+            refresh:
+              type: string
+              readOnly: true
+          required:
+          - tenant_id
+    TokenSwitchTenantRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - tokens-switch-tenant
+            attributes:
+              type: object
+              properties:
+                tenant_id:
+                  type: string
+                  format: uuid
+                  writeOnly: true
+                  description: The tenant ID for which to request a new token.
+                access:
+                  type: string
+                  readOnly: true
+                  minLength: 1
+                refresh:
+                  type: string
+                  readOnly: true
+                  minLength: 1
+              required:
+              - tenant_id
+      required:
+      - data
+    TokenSwitchTenantResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/TokenSwitchTenant'
+      required:
+      - data
+    TokenSwitchTenantTypeEnum:
+      type: string
+      enum:
+      - tokens-switch-tenant
     TokenTypeEnum:
       type: string
       enum:

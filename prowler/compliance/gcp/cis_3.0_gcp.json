@@ -222,7 +222,7 @@
       "Id": "1.11",
       "Description": "Ensure That Separation of Duties Is Enforced While Assigning KMS Related Roles to Users",
       "Checks": [
-        "iam_role_kms_enforce_separation_of_duties”"
+        "iam_role_kms_enforce_separation_of_duties"
       ],
       "Attributes": [
         {
@@ -394,7 +394,7 @@
       "Id": "2.2",
       "Description": "Ensure That Sinks Are Configured for All Log Entries",
       "Checks": [
-        "cloudstorage_bucket_log_retention_policy_lock”"
+        "cloudstorage_bucket_log_retention_policy_lock"
       ],
       "Attributes": [
         {

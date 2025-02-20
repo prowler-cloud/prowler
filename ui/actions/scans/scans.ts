@@ -48,6 +48,42 @@ export const getScans = async ({
   }
 };
 
+export const getScansByState = async () => {
+  const session = await auth();
+
+  const keyServer = process.env.API_BASE_URL;
+  const url = new URL(`${keyServer}/scans`);
+
+  // Request only the necessary fields to optimize the response
+  url.searchParams.append("fields[scans]", "state");
+
+  try {
+    const response = await fetch(url.toString(), {
+      headers: {
+        Accept: "application/vnd.api+json",
+        Authorization: `Bearer ${session?.accessToken}`,
+      },
+    });
+
+    if (!response.ok) {
+      try {
+        const errorData = await response.json();
+        throw new Error(errorData?.message || "Failed to fetch scans by state");
+      } catch {
+        throw new Error("Failed to fetch scans by state");
+      }
+    }
+
+    const data = await response.json();
+
+    return parseStringify(data);
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error("Error fetching scans by state:", error);
+    return undefined;
+  }
+};
+
 export const getScan = async (scanId: string) => {
   const session = await auth();
 
@@ -77,11 +113,30 @@ export const scanOnDemand = async (formData: FormData) => {
   const keyServer = process.env.API_BASE_URL;
 
   const providerId = formData.get("providerId");
-  const scanName = formData.get("scanName");
+  const scanName = formData.get("scanName") || undefined;
+
+  if (!providerId) {
+    return { error: "Provider ID is required" };
+  }
 
   const url = new URL(`${keyServer}/scans`);
 
   try {
+    const requestBody = {
+      data: {
+        type: "scans",
+        attributes: scanName ? { name: scanName } : {},
+        relationships: {
+          provider: {
+            data: {
+              type: "providers",
+              id: providerId,
+            },
+          },
+        },
+      },
+    };
+
     const response = await fetch(url.toString(), {
       method: "POST",
       headers: {
@@ -89,32 +144,26 @@ export const scanOnDemand = async (formData: FormData) => {
         Accept: "application/vnd.api+json",
         Authorization: `Bearer ${session?.accessToken}`,
       },
-      body: JSON.stringify({
-        data: {
-          type: "scans",
-          attributes: {
-            name: scanName,
-          },
-          relationships: {
-            provider: {
-              data: {
-                type: "providers",
-                id: providerId,
-              },
-            },
-          },
-        },
-      }),
+      body: JSON.stringify(requestBody),
     });
+
+    if (!response.ok) {
+      try {
+        const errorData = await response.json();
+        throw new Error(errorData?.message || "Failed to start scan");
+      } catch {
+        throw new Error("Failed to start scan");
+      }
+    }
+
     const data = await response.json();
+
     revalidatePath("/scans");
     return parseStringify(data);
   } catch (error) {
     // eslint-disable-next-line no-console
-    console.error(error);
-    return {
-      error: getErrorMessage(error),
-    };
+    console.error("Error starting scan:", error);
+    return { error: getErrorMessage(error) };
   }
 };
 

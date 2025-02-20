@@ -25,6 +25,9 @@ class AWSCISModel(BaseModel):
     Requirements_Attributes_RemediationProcedure: str
     Requirements_Attributes_AuditProcedure: str
     Requirements_Attributes_AdditionalInformation: str
+    Requirements_Attributes_DefaultValue: Optional[
+        str
+    ]  # TODO Optional for now since it's not present in the CIS 1.5, 2.0 and 3.0 AWS benchmark
     Requirements_Attributes_References: str
     Status: str
     StatusExtended: str
@@ -73,7 +76,7 @@ class Microsoft365CISModel(BaseModel):
 
     Provider: str
     Description: str
-    SubscriptionId: str
+    TenantId: str
     Location: str
     AssessmentDate: str
     Requirements_Id: str

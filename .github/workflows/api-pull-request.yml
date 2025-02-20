@@ -6,6 +6,7 @@ on:
       - "master"
       - "v5.*"
     paths:
+      - ".github/workflows/api-pull-request.yml"
       - "api/**"
   pull_request:
     branches:
@@ -13,7 +14,6 @@ on:
       - "v5.*"
     paths:
       - "api/**"
-
 
 env:
   POSTGRES_HOST: localhost
@@ -26,7 +26,8 @@ env:
   VALKEY_HOST: localhost
   VALKEY_PORT: 6379
   VALKEY_DB: 0
-
+  API_WORKING_DIR: ./api
+  IMAGE_NAME: prowler-api
 
 jobs:
   test:
@@ -171,3 +172,18 @@ jobs:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
           flags: api
+  test-container-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build Container
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ env.API_WORKING_DIR }}
+          push: false
+          tags: ${{ env.IMAGE_NAME }}:latest
+          outputs: type=docker
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
