@@ -51,6 +51,10 @@ class VirtualMachines(AzureService):
                                 ),
                                 location=vm.location,
                                 security_profile=vm.security_profile,
+                                extensions=[
+                                    VirtualMachineExtension(id=extension.id)
+                                    for extension in getattr(vm, "resources", [])
+                                ],
                             )
                         }
                     )
@@ -129,11 +133,17 @@ class StorageProfile:
 
 
 @dataclass
+class VirtualMachineExtension:
+    id: str
+
+
+@dataclass
 class VirtualMachine:
     resource_id: str
     resource_name: str
     location: str
     security_profile: SecurityProfile
+    extensions: list[VirtualMachineExtension]
     storage_profile: Optional[StorageProfile] = None
 
 

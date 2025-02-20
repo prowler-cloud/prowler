@@ -28,6 +28,7 @@ def mock_vm_get_virtual_machines(_):
                         v_tpm_enabled=True,
                     ),
                 ),
+                extensions=[],
                 storage_profile=StorageProfile(
                     os_disk=OSDisk(
                         create_option="FromImage",
