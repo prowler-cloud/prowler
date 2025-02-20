@@ -29,7 +29,7 @@ def reset_moto():
 
 class TestSecretsManagerHasRestrictiveResourcePolicy:
 
-    def test_no_secrets(self, reset_moto):
+    def test_no_secrets(self):
         with mock_aws():
             aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
@@ -55,7 +55,7 @@ class TestSecretsManagerHasRestrictiveResourcePolicy:
 
                 assert len(result) == 0
 
-    def test_secret_with_weak_policy(self, secretsmanager_client, reset_moto):
+    def test_secret_with_weak_policy(self, secretsmanager_client):
         client_instance, secret_arn = secretsmanager_client
         client_instance.put_resource_policy(
             SecretId=secret_arn,
@@ -430,7 +430,6 @@ class TestSecretsManagerHasRestrictiveResourcePolicy:
         remove_index,
         modify_element,
         expected_status,
-        reset_moto,
     ):
         with mock_aws():
             client_instance, secret_arn = secretsmanager_client
@@ -617,7 +616,6 @@ class TestSecretsManagerHasRestrictiveResourcePolicy:
         description,
         modify_element,
         expected_status,
-        reset_moto,
     ):
         with mock_aws():
             client_instance, secret_arn = secretsmanager_client
