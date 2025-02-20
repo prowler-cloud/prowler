@@ -8,6 +8,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### Added
 - Social login integration with Google and GitHub [(#6906)](https://github.com/prowler-cloud/prowler/pull/6906)
+- Configurable Sentry integration [(#6874)](https://github.com/prowler-cloud/prowler/pull/6874)
 
 ---
 
