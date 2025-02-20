@@ -204,7 +204,7 @@ const SSRDataTable = async ({
         const resource =
           resourceDict[finding.relationships?.resources?.data?.[0]?.id];
         const provider =
-          providerDict[resource?.relationships?.provider?.data?.id];
+          providerDict[scan?.relationships?.provider?.data?.id];
 
         return {
           ...finding,
