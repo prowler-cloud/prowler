@@ -15,7 +15,7 @@
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. Navigate to Microsoft 365 admin center https://admin.microsoft.com. 2. Click to expand Users select Active users. 3. Click Add a user. 4. Fill out the appropriate fields for Name, user, etc. 5. When prompted to assign licenses select as needed Microsoft Entra ID P1 or Microsoft Entra ID P2, then click Next. 6. Under the Option settings screen you may choose from several types of privileged roles. Choose Admin center access followed by the appropriate role then click Next. 7. Select Finish adding.",
       "Terraform": ""
     },
     "Recommendation": {

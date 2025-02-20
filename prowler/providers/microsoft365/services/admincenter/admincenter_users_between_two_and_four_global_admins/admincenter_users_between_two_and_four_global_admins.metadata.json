@@ -15,7 +15,7 @@
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. Navigate to the Microsoft 365 admin center https://admin.microsoft.com 2. Select Users > Active Users. 3. In the Search field enter the name of the user to be made a Global Administrator. 4. To create a new Global Admin: 1. Select the user's name. 2. A window will appear to the right. 3. Select Manage roles. 4. Select Admin center access. 5. Check Global Administrator. 6. Click Save changes. 5. To remove Global Admins: 1. Select User. 2. Under Roles select Manage roles. 3. De-Select the appropriate role. 4. Click Save changes.",
       "Terraform": ""
     },
     "Recommendation": {
