@@ -6,7 +6,7 @@ import clsx from "clsx";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
-import React, { Suspense, useCallback } from "react";
+import React, { useCallback } from "react";
 import { useMediaQuery } from "usehooks-ts";
 
 import { logOut } from "@/actions/auth";
@@ -22,10 +22,11 @@ import { CustomButton } from "../custom";
 import Sidebar from "./sidebar";
 import { sectionItemsWithTeams } from "./sidebar-items";
 import { UserAvatar } from "./user-avatar";
+import { SkeletonProfile } from "./skeleton-profile";
 
 export const SidebarWrap = () => {
   const pathname = usePathname();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
 
   const isCollapsed = useUIStore((state) => state.isSideMenuOpen);
   const openSideMenu = useUIStore((state) => state.openSideMenu);
@@ -78,13 +79,15 @@ export const SidebarWrap = () => {
           </div>
         </Link>
         <Link href={"/users"}>
-          <Suspense fallback={<p>Loading...</p>}>
+          {status === "loading" ? (
+            <SkeletonProfile />
+          ) : (
             <UserAvatar
-              userName={session?.user.name ?? "Guest"}
-              position={session?.user.companyName ?? "Company Name"}
+              userName={session?.user.name as string}
+              position={session?.user.companyName as string}
               isCompact={isCompact}
             />
-          </Suspense>
+          )}
         </Link>
         <div
           className={clsx({
