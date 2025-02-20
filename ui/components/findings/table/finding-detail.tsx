@@ -102,7 +102,7 @@ export const FindingDetail = ({
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <InfoField label="Check ID" variant="simple">
             <Snippet
-              className="max-w-full bg-gray-50 py-1 dark:bg-slate-800"
+              className="max-w-full bg-gray-50 py-1 text-xs dark:bg-slate-800"
               hideSymbol
             >
               {attributes.check_id}
@@ -116,7 +116,7 @@ export const FindingDetail = ({
         {attributes.status === "FAIL" && (
           <InfoField label="Risk" variant="simple">
             <Snippet
-              className="max-w-full py-4"
+              className="max-w-full py-2"
               color="danger"
               hideCopyButton
               hideSymbol
@@ -130,6 +130,10 @@ export const FindingDetail = ({
 
         <InfoField label="Description">
           {renderValue(attributes.check_metadata.description)}
+        </InfoField>
+
+        <InfoField label="Status Extended">
+          {renderValue(attributes.status_extended)}
         </InfoField>
 
         {attributes.check_metadata.remediation && (
