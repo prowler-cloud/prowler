@@ -1759,13 +1759,13 @@ sidecar = ["drf-spectacular-sidecar"]
 
 [[package]]
 name = "drf-spectacular-jsonapi"
-version = "0.5.1"
+version = "0.5.2"
 description = "open api 3 schema generator for drf-json-api package based on drf-spectacular package."
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "drf-spectacular-jsonapi-0.5.1.tar.gz", hash = "sha256:e45f87f3cce2692f4f546e0785d8fcc32c6b49770fff858065c267ae8f9cfde5"},
-    {file = "drf_spectacular_jsonapi-0.5.1-py3-none-any.whl", hash = "sha256:abac728abd83e2544408cc900d682d532ca2088f2f9321d1c9101bcdfdabca78"},
+    {file = "drf-spectacular-jsonapi-0.5.2.tar.gz", hash = "sha256:d5bb8f05ea985ec3751d095c4ec677876d2832fa06dfd5ea58bb1e8897e5af47"},
+    {file = "drf_spectacular_jsonapi-0.5.2-py3-none-any.whl", hash = "sha256:d0351ced5e77df954c575010dcf79acc935cf37e45cae16e63151980b93cd806"},
 ]
 
 [package.dependencies]
@@ -5114,4 +5114,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.13"
-content-hash = "d762c984b70da32828fc0b2c8b9d4849a9342b8a9ac7060c47d6e82071b740f1"
+content-hash = "9d43f798dbb637aaf30c935cd0d1311f7c94cb6424c1a34adc33830ca11e30c4"
