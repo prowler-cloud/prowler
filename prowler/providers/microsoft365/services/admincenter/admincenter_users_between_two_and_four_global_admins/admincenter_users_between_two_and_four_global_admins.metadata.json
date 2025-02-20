@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AdministrativeRole",
+  "ResourceType": "Active users",
   "Description": "Ensure that there are between two and four global administrators designated in your tenant. This ensures monitoring, redundancy, and reduces the risk associated with having too many privileged accounts.",
   "Risk": "Having only one global administrator increases the risk of unmonitored actions and operational disruptions if that administrator is unavailable. Having more than four increases the likelihood of a breach through one of these highly privileged accounts.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/best-practices#5-limit-the-number-of-global-administrators-to-less-than-5",

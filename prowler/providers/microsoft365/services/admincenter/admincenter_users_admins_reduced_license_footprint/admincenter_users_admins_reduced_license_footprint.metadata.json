@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AdministrativeAccount",
+  "ResourceType": "Active users",
   "Description": "Administrative accounts must use licenses with a reduced application footprint, such as Microsoft Entra ID P1 or P2, or avoid licenses entirely when possible. This minimizes the attack surface associated with privileged identities.",
   "Risk": "Licensing administrative accounts with applications like email or collaborative tools increases their exposure to social engineering attacks and malicious content, putting privileged accounts at risk.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/microsoft-365/enterprise/protect-your-global-administrator-accounts?view=o365-worldwide",
