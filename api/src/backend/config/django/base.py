@@ -4,6 +4,7 @@ from config.custom_logging import LOGGING  # noqa
 from config.env import BASE_DIR, env  # noqa
 from config.settings.celery import *  # noqa
 from config.settings.partitions import *  # noqa
+from config.settings.sentry import *  # noqa
 from config.settings.social_login import *  # noqa
 
 SECRET_KEY = env("SECRET_KEY", default="secret")
@@ -218,4 +219,5 @@ CACHE_STALE_WHILE_REVALIDATE = env.int("DJANGO_STALE_WHILE_REVALIDATE", 60)
 
 
 TESTING = False
+
 FINDINGS_MAX_DAYS_IN_RANGE = env.int("DJANGO_FINDINGS_MAX_DAYS_IN_RANGE", 7)
