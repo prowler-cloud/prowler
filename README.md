@@ -130,7 +130,7 @@ gunicorn -c config/guniconf.py config.wsgi:application
 > [!IMPORTANT]
 > Starting from Poetry v2.0.0, `poetry shell` has been deprecated in favor of `poetry env activate`.
 >
-> If you poetry version is below 2.0.0 you must keep using `poetry shell` to activate your environment.
+> If your poetry version is below 2.0.0 you must keep using `poetry shell` to activate your environment.
 > In case you have any doubts, consult the Poetry environment activation guide: https://python-poetry.org/docs/managing-environments/#activating-the-environment
 
 > Now, you can access the API documentation at http://localhost:8080/api/v1/docs.
@@ -217,7 +217,7 @@ python prowler.py -v
 > [!IMPORTANT]
 > Starting from Poetry v2.0.0, `poetry shell` has been deprecated in favor of `poetry env activate`.
 >
-> If you poetry version is below 2.0.0 you must keep using `poetry shell` to activate your environment.
+> If your poetry version is below 2.0.0 you must keep using `poetry shell` to activate your environment.
 > In case you have any doubts, consult the Poetry environment activation guide: https://python-poetry.org/docs/managing-environments/#activating-the-environment
 
 > If you want to clone Prowler from Windows, use `git config core.longpaths true` to allow long file paths.
