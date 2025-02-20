@@ -171,7 +171,7 @@ else:
         data.rename(columns={"FINDING_UNIQUE_ID": "FINDING_UID"}, inplace=True)
     if "ACCOUNT_ID" in data.columns:
         data.rename(columns={"ACCOUNT_ID": "ACCOUNT_UID"}, inplace=True)
-    if "ASSERMENT_START_TIME" in data.columns:
+    if "ASSESSMENT_START_TIME" in data.columns:
         data.rename(columns={"ASSESSMENT_START_TIME": "TIMESTAMP"}, inplace=True)
     if "RESOURCE_ID" in data.columns:
         data.rename(columns={"RESOURCE_ID": "RESOURCE_UID"}, inplace=True)
