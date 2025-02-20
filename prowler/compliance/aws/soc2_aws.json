@@ -162,8 +162,7 @@
         "ec2_instance_managed_by_ssm",
         "ssm_managed_compliant_patching",
         "guardduty_no_high_severity_findings",
-        "guardduty_is_enabled",
-        "ssm_managed_compliant_patching"
+        "guardduty_is_enabled"
       ]
     },
     {
@@ -442,7 +441,6 @@
         "cloudtrail_multi_region_enabled",
         "securityhub_enabled",
         "cloudwatch_log_group_retention_policy_specific_days_enabled",
-        "cloudtrail_multi_region_enabled",
         "redshift_cluster_audit_logging",
         "vpc_flow_logs_enabled",
         "ec2_instance_imdsv2_enabled",
@@ -501,13 +499,9 @@
         "cloudwatch_changes_to_network_route_tables_alarm_configured",
         "cloudwatch_changes_to_vpcs_alarm_configured",
         "dynamodb_tables_pitr_enabled",
-        "dynamodb_tables_pitr_enabled",
-        "efs_have_backup_enabled",
         "efs_have_backup_enabled",
         "guardduty_is_enabled",
         "guardduty_no_high_severity_findings",
-        "rds_instance_backup_enabled",
-        "rds_instance_backup_enabled",
         "rds_instance_backup_enabled",
         "redshift_cluster_automated_snapshot",
         "s3_bucket_object_versioning",
@@ -601,18 +595,13 @@
       "Checks": [
         "apigateway_restapi_logging_enabled",
         "cloudtrail_multi_region_enabled",
-        "cloudtrail_multi_region_enabled",
         "cloudtrail_cloudwatch_logging_enabled",
         "dynamodb_tables_pitr_enabled",
-        "dynamodb_tables_pitr_enabled",
-        "efs_have_backup_enabled",
         "efs_have_backup_enabled",
         "elbv2_logging_enabled",
         "elb_logging_enabled",
         "rds_instance_backup_enabled",
-        "rds_instance_backup_enabled",
         "rds_instance_integration_cloudwatch_logs",
-        "rds_instance_backup_enabled",
         "redshift_cluster_automated_snapshot",
         "s3_bucket_object_versioning"
       ]

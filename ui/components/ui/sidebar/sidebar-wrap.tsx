@@ -5,13 +5,13 @@ import { Button, ScrollShadow, Spacer, Tooltip } from "@nextui-org/react";
 import clsx from "clsx";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useSession } from "next-auth/react";
-import React, { Suspense, useCallback } from "react";
+import React, { useCallback } from "react";
 import { useMediaQuery } from "usehooks-ts";
 
 import { logOut } from "@/actions/auth";
 import { AddIcon } from "@/components/icons";
 import { useUIStore } from "@/store";
+import { UserProfileProps } from "@/types";
 
 import {
   ProwlerExtended,
@@ -21,12 +21,11 @@ import { ThemeSwitch } from "../../ThemeSwitch";
 import { CustomButton } from "../custom";
 import Sidebar from "./sidebar";
 import { sectionItemsWithTeams } from "./sidebar-items";
+import { SkeletonProfile } from "./skeleton-profile";
 import { UserAvatar } from "./user-avatar";
 
-export const SidebarWrap = () => {
+export const SidebarWrap = ({ user }: { user: UserProfileProps }) => {
   const pathname = usePathname();
-  const { data: session } = useSession();
-
   const isCollapsed = useUIStore((state) => state.isSideMenuOpen);
   const openSideMenu = useUIStore((state) => state.openSideMenu);
   const closeSideMenu = useUIStore((state) => state.closeSideMenu);
@@ -78,13 +77,15 @@ export const SidebarWrap = () => {
           </div>
         </Link>
         <Link href={"/users"}>
-          <Suspense fallback={<p>Loading...</p>}>
+          {!user ? (
+            <SkeletonProfile />
+          ) : (
             <UserAvatar
-              userName={session?.user.name ?? "Guest"}
-              position={session?.user.companyName ?? "Company Name"}
+              userName={user?.data?.attributes?.name as string}
+              position={user?.data?.attributes?.company_name as string}
               isCompact={isCompact}
             />
-          </Suspense>
+          )}
         </Link>
         <div
           className={clsx({

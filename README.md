@@ -71,7 +71,7 @@ It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, Fe
 
 | Provider | Checks | Services | [Compliance Frameworks](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/compliance/) | [Categories](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/misc/#categories) |
 |---|---|---|---|---|
-| AWS | 564 | 82 | 30 | 10 |
+| AWS | 564 | 82 | 31 | 10 |
 | GCP | 77 | 13 | 4 | 3 |
 | Azure | 140 | 18 | 5 | 3 |
 | Kubernetes | 83 | 7 | 2 | 7 |
@@ -119,7 +119,7 @@ docker compose up -d
 git clone https://github.com/prowler-cloud/prowler
 cd prowler/api
 poetry install
-poetry shell
+eval $(poetry env activate)
 set -a
 source .env
 docker compose up postgres valkey -d
@@ -127,6 +127,11 @@ cd src/backend
 python manage.py migrate --database admin
 gunicorn -c config/guniconf.py config.wsgi:application
 ```
+> [!IMPORTANT]
+> Starting from Poetry v2.0.0, `poetry shell` has been deprecated in favor of `poetry env activate`.
+>
+> If your poetry version is below 2.0.0 you must keep using `poetry shell` to activate your environment.
+> In case you have any doubts, consult the Poetry environment activation guide: https://python-poetry.org/docs/managing-environments/#activating-the-environment
 
 > Now, you can access the API documentation at http://localhost:8080/api/v1/docs.
 
@@ -136,7 +141,7 @@ gunicorn -c config/guniconf.py config.wsgi:application
 git clone https://github.com/prowler-cloud/prowler
 cd prowler/api
 poetry install
-poetry shell
+eval $(poetry env activate)
 set -a
 source .env
 cd src/backend
@@ -149,7 +154,7 @@ python -m celery -A config.celery worker -l info -E
 git clone https://github.com/prowler-cloud/prowler
 cd prowler/api
 poetry install
-poetry shell
+eval $(poetry env activate)
 set -a
 source .env
 cd src/backend
@@ -170,7 +175,7 @@ npm start
 
 ## Prowler CLI
 ### Pip package
-Prowler CLI is available as a project in [PyPI](https://pypi.org/project/prowler-cloud/), thus can be installed using pip with Python >= 3.9, < 3.13:
+Prowler CLI is available as a project in [PyPI](https://pypi.org/project/prowler-cloud/), thus can be installed using pip with Python > 3.9.1, < 3.13:
 
 ```console
 pip install prowler
@@ -200,15 +205,21 @@ The container images are available here:
 
 ### From GitHub
 
-Python >= 3.9, < 3.13 is required with pip and poetry:
+Python > 3.9.1, < 3.13 is required with pip and poetry:
 
 ``` console
 git clone https://github.com/prowler-cloud/prowler
 cd prowler
-poetry shell
+eval $(poetry env activate)
 poetry install
 python prowler.py -v
 ```
+> [!IMPORTANT]
+> Starting from Poetry v2.0.0, `poetry shell` has been deprecated in favor of `poetry env activate`.
+>
+> If your poetry version is below 2.0.0 you must keep using `poetry shell` to activate your environment.
+> In case you have any doubts, consult the Poetry environment activation guide: https://python-poetry.org/docs/managing-environments/#activating-the-environment
+
 > If you want to clone Prowler from Windows, use `git config core.longpaths true` to allow long file paths.
 # 📐✏️ High level architecture
 
