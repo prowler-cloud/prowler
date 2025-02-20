@@ -28,7 +28,7 @@ start_prod_server() {
 
 start_worker() {
   echo "Starting the worker..."
-  poetry run python -m celery -A config.celery worker -l "${DJANGO_LOGGING_LEVEL:-info}" -Q celery,scans,scans-report -E --max-tasks-per-child 1
+  poetry run python -m celery -A config.celery worker -l "${DJANGO_LOGGING_LEVEL:-info}" -Q celery,scans,scan-reports -E --max-tasks-per-child 1
 }
 
 start_worker_beat() {

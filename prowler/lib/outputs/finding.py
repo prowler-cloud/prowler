@@ -1,15 +1,17 @@
 from datetime import datetime
-from typing import Optional, Tuple, Union
+from types import SimpleNamespace
+from typing import Optional, Union
 
+from django.forms.models import model_to_dict
 from pydantic import BaseModel, Field, ValidationError
 
 from prowler.config.config import prowler_version
 from prowler.lib.check.models import (
     Check_Report,
     CheckMetadata,
-    Remediation,
     Code,
     Recommendation,
+    Remediation,
 )
 from prowler.lib.logger import logger
 from prowler.lib.outputs.common import Status, fill_common_finding_data
@@ -275,39 +277,6 @@ class Finding(BaseModel):
             )
             raise error
 
-    @staticmethod
-    def _get_auth_method_and_partition(provider: Provider) -> Tuple[str, str]:
-        """
-        Extract the authentication method and partition information based on the provider type.
-        """
-        auth_method = ""
-        partition = ""
-        if provider.type == "aws":
-            auth_method = (
-                f"profile: {get_nested_attribute(provider, 'identity.profile')}"
-            )
-            partition = get_nested_attribute(provider, "identity.partition")
-        elif provider.type == "azure":
-            auth_method = (
-                f"{provider.identity.identity_type}: {provider.identity.identity_id}"
-            )
-            partition = get_nested_attribute(provider, "region_config.name")
-        elif provider.type == "gcp":
-            auth_method = (
-                f"Principal: {get_nested_attribute(provider, 'identity.profile')}"
-            )
-        elif provider.type == "kubernetes":
-            auth_method = (
-                "in-cluster"
-                if provider.identity.context == "In-Cluster"
-                else "kubeconfig"
-            )
-        elif provider.type == "microsoft365":
-            auth_method = (
-                f"{provider.identity.identity_type}: {provider.identity.identity_id}"
-            )
-        return auth_method, partition
-
     @classmethod
     def transform_api_finding(cls, finding, provider) -> "Finding":
         """
@@ -327,15 +296,16 @@ class Finding(BaseModel):
         Returns:
             Finding: A new Finding instance populated with data from the provided model.
         """
-        output_data = {}
+        # Missing Finding's API values
+        finding.muted = False
+        finding.resource_details = ""
+        finding.resource_arn = ""
 
-        output_data["auth_method"], output_data["partition"] = (
-            cls._get_auth_method_and_partition(provider)
-        )
-        output_data["timestamp"] = finding.inserted_at
-        output_data["account_uid"] = finding.scan.provider.uid
-        output_data["account_name"] = ""
-        output_data["metadata"] = CheckMetadata(
+        resource = finding.resources.first()
+        finding.resource = model_to_dict(resource)
+        finding.resource_id = resource.uid
+        finding.region = resource.region
+        finding.check_metadata = CheckMetadata(
             Provider=finding.check_metadata["provider"],
             CheckID=finding.check_metadata["checkid"],
             CheckTitle=finding.check_metadata["checktitle"],
@@ -371,21 +341,10 @@ class Finding(BaseModel):
             RelatedTo=finding.check_metadata["relatedto"],
             Notes=finding.check_metadata["notes"],
         )
-        output_data["uid"] = finding.uid
-        output_data["status"] = Status(finding.status)
-        output_data["status_extended"] = finding.status_extended
-        resource = finding.resources.first()
-        output_data["resource_uid"] = resource.uid
-        output_data["resource_name"] = resource.name
-        output_data["resource_details"] = ""
-        resource_tags = resource.tags.all()
-        output_data["resource_tags"] = unroll_tags(
-            [{"key": tag.key, "value": tag.value} for tag in resource_tags]
+        finding.resource_tags = unroll_tags(
+            [{"key": tag.key, "value": tag.value} for tag in resource.tags.all()]
         )
-        output_data["region"] = resource.region
-        output_data["compliance"] = {}
-
-        return cls(**output_data)
+        return cls.generate_output(provider, finding, SimpleNamespace())
 
     def _transform_findings_stats(scan_summaries: list[dict]) -> dict:
         """

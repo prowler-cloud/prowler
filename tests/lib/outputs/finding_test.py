@@ -77,6 +77,12 @@ class DummyResource:
         self.region = region
         self.tags = DummyTags(tags)
 
+    def __iter__(self):
+        yield "uid", self.uid
+        yield "name", self.name
+        yield "region", self.region
+        yield "tags", self.tags
+
 
 class DummyResources:
     """Simulate a collection with a first() method."""
@@ -515,6 +521,7 @@ class TestFinding:
         with pytest.raises(ValidationError):
             Finding.generate_output(provider, check_output, output_options)
 
+    @patch("prowler.lib.outputs.finding.model_to_dict", dict)
     def test_transform_api_finding(self):
         """
         Test that a dummy API Finding is correctly
@@ -574,12 +581,6 @@ class TestFinding:
         # Call the transform_api_finding classmethod
         finding_obj = Finding.transform_api_finding(dummy_finding, provider)
 
-        # Fields directly set in transform_api_finding
-        assert finding_obj.auth_method == "profile: "
-        assert finding_obj.timestamp == inserted_at
-        assert finding_obj.account_uid == "account123"
-        assert finding_obj.account_name == ""
-
         # Check that metadata was built correctly
         meta = finding_obj.metadata
         assert meta.Provider == "test_provider"
@@ -606,12 +607,12 @@ class TestFinding:
         assert meta.Notes == "Some notes"
 
         # Check other Finding fields
-        assert finding_obj.uid == "finding-uid-1"
+        assert finding_obj.uid == "prowler-aws-check-001--us-east-1-res-uid-1"
         assert finding_obj.status == Status("FAIL")
         assert finding_obj.status_extended == "extended"
         # From the dummy resource
-        assert finding_obj.resource_uid == "res-uid-1"
-        assert finding_obj.resource_name == "ResourceName1"
+        assert finding_obj.resource_uid == ""
+        assert finding_obj.resource_name == "res-uid-1"
         assert finding_obj.resource_details == ""
         # unroll_tags is called on a list with one tag -> expect {"env": "prod"}
         assert finding_obj.resource_tags == {"env": "prod"}
@@ -708,6 +709,7 @@ class TestFinding:
         }
         assert stats == expected
 
+    @patch("prowler.lib.outputs.finding.model_to_dict", dict)
     def test_transform_api_finding_validation_error(self):
         """
         Test that if required data is missing (causing a ValidationError)

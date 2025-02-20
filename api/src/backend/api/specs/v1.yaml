@@ -4136,7 +4136,7 @@ paths:
       responses:
         '200':
           description: Report obtained successfully
-        '423':
+        '403':
           description: There is a problem with the AWS credentials
   /api/v1/schedules/daily:
     post:

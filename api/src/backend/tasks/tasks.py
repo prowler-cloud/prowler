@@ -155,7 +155,7 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
             )
 
     chain(
-        perform_scan_summary_task.s(tenant_id, scan_instance.id),
+        perform_scan_summary_task.si(tenant_id, scan_instance.id),
         generate_outputs.si(str(scan_instance.id), provider_id, tenant_id=tenant_id),
     ).apply_async()
 
@@ -175,7 +175,7 @@ def delete_tenant_task(tenant_id: str):
 @shared_task(
     base=RLSTask,
     name="scan-output",
-    queue="scans-report",
+    queue="scan-reports",
 )
 @set_tenant(keep_tenant=True)
 def generate_outputs(scan_id: str, provider_id: str, tenant_id: str):
