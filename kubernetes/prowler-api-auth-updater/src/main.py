@@ -187,7 +187,7 @@ def main():
     
     # Schedule watching the directory containing the token
     token_dir = str(Path(TOKEN_PATH).parent)
-    observer.schedule(handler, token_dir, recursive=False)
+    observer.schedule(handler, token_dir, recursive=True)
     
     # Start the observer
     observer.start()
