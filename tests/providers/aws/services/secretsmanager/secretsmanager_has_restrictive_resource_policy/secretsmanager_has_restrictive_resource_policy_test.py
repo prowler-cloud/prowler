@@ -18,12 +18,14 @@ def secretsmanager_client():
         secret = client_instance.create_secret(Name="test-secret")
         yield client_instance, secret["ARN"]
 
+
 @pytest.fixture(scope="function", autouse=True)
 def reset_moto():
     mock = moto.mock_aws()
     mock.start()
     yield
     mock.stop()
+
 
 class TestSecretsManagerHasRestrictiveResourcePolicy:
 
@@ -610,7 +612,12 @@ class TestSecretsManagerHasRestrictiveResourcePolicy:
         ],
     )
     def test_secretsmanager_policies_for_services(
-        self, secretsmanager_client, description, modify_element, expected_status, reset_moto
+        self,
+        secretsmanager_client,
+        description,
+        modify_element,
+        expected_status,
+        reset_moto,
     ):
         with mock_aws():
             client_instance, secret_arn = secretsmanager_client
