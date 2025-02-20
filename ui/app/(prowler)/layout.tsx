@@ -1,8 +1,9 @@
 import "@/styles/globals.css";
 
 import { Metadata, Viewport } from "next";
-import React from "react";
+import React, { use } from "react";
 
+import { getProfileInfo } from "@/actions/users/users";
 import { SidebarWrap, Toaster } from "@/components/ui";
 import { fontSans } from "@/config/fonts";
 import { siteConfig } from "@/config/site";
@@ -33,6 +34,8 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const user = use(getProfileInfo());
+
   return (
     <html suppressHydrationWarning lang="en">
       <head />
@@ -45,7 +48,7 @@ export default function RootLayout({
       >
         <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
           <div className="flex h-dvh items-center justify-center overflow-hidden">
-            <SidebarWrap />
+            <SidebarWrap user={user} />
             <main className="no-scrollbar mb-auto h-full flex-1 flex-col overflow-y-auto px-6 py-4 xl:px-10">
               {children}
               <Toaster />
