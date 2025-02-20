@@ -1,3 +1,4 @@
+import moto
 import json
 import pytest
 from unittest import mock
@@ -17,10 +18,16 @@ def secretsmanager_client():
         secret = client_instance.create_secret(Name="test-secret")
         yield client_instance, secret["ARN"]
 
+@pytest.fixture(scope="function", autouse=True)
+def reset_moto():
+    mock = moto.mock_aws()
+    mock.start()
+    yield
+    mock.stop()
 
 class TestSecretsManagerHasRestrictiveResourcePolicy:
 
-    def test_no_secrets(self):
+    def test_no_secrets(self, reset_moto):
         with mock_aws():
             aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
@@ -46,7 +53,7 @@ class TestSecretsManagerHasRestrictiveResourcePolicy:
 
                 assert len(result) == 0
 
-    def test_secret_with_weak_policy(self, secretsmanager_client):
+    def test_secret_with_weak_policy(self, secretsmanager_client, reset_moto):
         client_instance, secret_arn = secretsmanager_client
         client_instance.put_resource_policy(
             SecretId=secret_arn,
@@ -421,6 +428,7 @@ class TestSecretsManagerHasRestrictiveResourcePolicy:
         remove_index,
         modify_element,
         expected_status,
+        reset_moto,
     ):
         with mock_aws():
             client_instance, secret_arn = secretsmanager_client
@@ -602,7 +610,7 @@ class TestSecretsManagerHasRestrictiveResourcePolicy:
         ],
     )
     def test_secretsmanager_policies_for_services(
-        self, secretsmanager_client, description, modify_element, expected_status
+        self, secretsmanager_client, description, modify_element, expected_status, reset_moto
     ):
         with mock_aws():
             client_instance, secret_arn = secretsmanager_client
