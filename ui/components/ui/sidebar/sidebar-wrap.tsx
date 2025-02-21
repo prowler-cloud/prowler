@@ -151,9 +151,10 @@ export const SidebarWrap = ({ user }: { user: UserProfileProps }) => {
           >
             {isCompact ? (
               <Icon
-                className="text-default-500"
+                className="flex-none text-default-500"
                 icon="tabler:file-type-doc"
                 width={24}
+                height={24}
                 aria-hidden="true"
               />
             ) : (
@@ -195,9 +196,10 @@ export const SidebarWrap = ({ user }: { user: UserProfileProps }) => {
           >
             {isCompact ? (
               <Icon
-                className="text-default-500"
+                className="flex-none text-default-500"
                 icon="tabler:api"
                 width={24}
+                height={24}
                 aria-hidden="true"
               />
             ) : (
@@ -232,9 +234,10 @@ export const SidebarWrap = ({ user }: { user: UserProfileProps }) => {
           >
             {isCompact ? (
               <Icon
-                className="text-default-500"
+                className="flex-none text-default-500"
                 icon="akar-icons:info"
                 width={24}
+                height={24}
                 aria-hidden="true"
               />
             ) : (
@@ -326,6 +329,7 @@ export const SidebarWrap = ({ user }: { user: UserProfileProps }) => {
         <Tooltip
           content="Light | Dark mode"
           placement={isCompact ? "right" : "top"}
+          aria-label="Theme switch tooltip"
         >
           <div
             className={clsx(
@@ -334,6 +338,7 @@ export const SidebarWrap = ({ user }: { user: UserProfileProps }) => {
                 "mt-3 justify-center": isCompact,
               },
             )}
+            aria-label="Theme switch container"
           >
             <ThemeSwitch aria-label="Toggle theme" />
           </div>
@@ -341,6 +346,7 @@ export const SidebarWrap = ({ user }: { user: UserProfileProps }) => {
         <Tooltip
           content="Open | Close sidebar"
           placement={isCompact ? "right" : "top"}
+          aria-label="Sidebar toggle tooltip"
         >
           <Button
             aria-label={isCompact ? "Open sidebar" : "Close sidebar"}
