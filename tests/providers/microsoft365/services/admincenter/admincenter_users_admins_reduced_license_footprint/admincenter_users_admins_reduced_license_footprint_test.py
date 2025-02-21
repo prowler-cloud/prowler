@@ -161,7 +161,7 @@ class Test_admincenter_users_admins_reduced_license_footprint:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "User User1 has administrative roles Global Administrator and an invalid license O365 BUSINESS."
+                == "User User1 has administrative roles Global Administrator and an invalid license: O365 BUSINESS."
             )
             assert result[0].resource == {
                 "id": id_user1,

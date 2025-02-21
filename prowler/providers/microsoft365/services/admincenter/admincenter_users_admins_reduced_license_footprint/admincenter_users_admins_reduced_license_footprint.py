@@ -46,7 +46,7 @@ class admincenter_users_admins_reduced_license_footprint(Check):
                     resource_id=user.id,
                 )
                 report.status = "FAIL"
-                report.status_extended = f"User {user.name} has administrative roles {admin_roles} and an invalid license {user.license if user.license else ''}."
+                report.status_extended = f"User {user.name} has administrative roles {admin_roles} and an invalid license: {user.license if user.license else None}."
 
                 if user.license in allowed_licenses:
                     report.status = "PASS"
