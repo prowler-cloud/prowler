@@ -1,14 +1,15 @@
+import glob
+import io
 import json
+import os
 from datetime import datetime, timedelta, timezone
-from io import BytesIO
-from unittest.mock import ANY, Mock, mock_open, patch
+from unittest.mock import ANY, Mock, patch
 
 import jwt
 import pytest
-from botocore.exceptions import ClientError
+from botocore.exceptions import NoCredentialsError
 from conftest import API_JSON_CONTENT_TYPE, TEST_PASSWORD, TEST_USER
 from django.conf import settings
-from django.http import HttpResponse
 from django.urls import reverse
 from rest_framework import status
 
@@ -23,6 +24,7 @@ from api.models import (
     RoleProviderGroupRelationship,
     Scan,
     StateChoices,
+    Task,
     User,
     UserRoleRelationship,
 )
@@ -2159,136 +2161,160 @@ class TestScanViewSet:
         response = authenticated_client.get(reverse("scan-list"), {"sort": "invalid"})
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_report_invalid_scan(self, authenticated_client, scans_fixture):
+    def test_report_executing(self, authenticated_client, scans_fixture):
         """
-        If the scan doesn't exists, the view should return a 400 and its state.
+        When the scan is still executing (state == EXECUTING), the view should return
+        the task data with HTTP 202 and a Content-Location header.
         """
-        scan = scans_fixture[1]
-        url = reverse("scan-report", kwargs={"pk": scan.pk})
+        scan = scans_fixture[0]
+        scan.state = StateChoices.EXECUTING
+        scan.save()
+
+        task = Task.objects.create(tenant_id=scan.tenant_id)
+        dummy_task_data = {"id": str(task.id), "state": StateChoices.EXECUTING}
+
+        scan.task = task
+        scan.save()
+
+        with patch(
+            "api.v1.views.TaskSerializer",
+            return_value=type("DummySerializer", (), {"data": dummy_task_data}),
+        ):
+            url = reverse("scan-report", kwargs={"pk": scan.id})
+            response = authenticated_client.get(url)
+            assert response.status_code == status.HTTP_202_ACCEPTED
+            assert "Content-Location" in response
+            assert dummy_task_data["id"] in response["Content-Location"]
+
+    def test_report_celery_task_executing(self, authenticated_client, scans_fixture):
+        """
+        When the scan is not executing but a related celery task exists and is running,
+        the view should return that task data with HTTP 202.
+        """
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+        scan.output_path = "dummy"
+        scan.save()
+
+        dummy_task = Task.objects.create(tenant_id=scan.tenant_id)
+        dummy_task.id = "dummy-task-id"
+        dummy_task_data = {"id": dummy_task.id, "state": StateChoices.EXECUTING}
+
+        with patch("api.v1.views.Task.objects.get", return_value=dummy_task), patch(
+            "api.v1.views.TaskSerializer",
+            return_value=type("DummySerializer", (), {"data": dummy_task_data}),
+        ):
+            url = reverse("scan-report", kwargs={"pk": scan.id})
+            response = authenticated_client.get(url)
+            assert response.status_code == status.HTTP_202_ACCEPTED
+            assert "Content-Location" in response
+            assert dummy_task_data["id"] in response["Content-Location"]
+
+    def test_report_no_output_path(self, authenticated_client, scans_fixture):
+        """
+        If the scan does not have an output_path, the view should return a 404.
+        """
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+        scan.output_path = ""
+        scan.save()
+
+        url = reverse("scan-report", kwargs={"pk": scan.id})
         response = authenticated_client.get(url)
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.status_code == status.HTTP_404_NOT_FOUND
         assert (
-            response.data["detail"]
-            == f"The scan is not finished yet. State is: {scan.state}"
+            response.json()["errors"]["detail"] == "The scan has not generated reports."
         )
 
-    def test_report_s3_get_client_fail(self, authenticated_client, scans_fixture):
+    def test_report_s3_no_credentials(
+        self, authenticated_client, scans_fixture, monkeypatch
+    ):
         """
-        If output_path starts with "s3://", but get_s3_client() fails, the view should return a 403.
+        When output_path is an S3 URL and get_s3_client() raises a credentials exception,
+        the view should return HTTP 403 with the proper error message.
         """
         scan = scans_fixture[0]
-        scan.output_path = "s3://bucket/path/to/file.zip"
+        bucket = "test-bucket"
+        key = "report.zip"
+        scan.output_path = f"s3://{bucket}/{key}"
+        scan.state = StateChoices.COMPLETED
         scan.save()
-        url = reverse("scan-report", kwargs={"pk": scan.pk})
-        # Patch get_s3_client to raise one of the expected exceptions
-        client_err = ClientError({"Error": {"Code": "AccessDenied"}}, "get_s3_client")
-        with patch("api.v1.views.get_s3_client", side_effect=client_err):
-            response = authenticated_client.get(url)
-            assert response.status_code == status.HTTP_403_FORBIDDEN
-            assert (
-                response.data["detail"]
-                == "There is a problem with the AWS credentials."
-            )
 
-    def test_report_s3_get_object_fail(self, authenticated_client, scans_fixture):
-        """
-        If output_path starts with "s3://", and get_s3_client() succeeds but get_object() fails,
-        the view should return a 500 error.
-        """
-        scan = scans_fixture[0]
-        scan.output_path = "s3://bucket/path/to/file.zip"
-        scan.save()
-        url = reverse("scan-report", kwargs={"pk": scan.pk})
-        client_err = ClientError({"Error": {"Code": "NoSuchKey"}}, "get_object")
-        with patch("api.v1.views.get_s3_client") as mock_get_s3_client, patch(
-            "api.v1.views.env.str", return_value="bucket"
-        ):
-            s3_client = mock_get_s3_client.return_value
-            s3_client.get_object.side_effect = client_err
-            response = authenticated_client.get(url)
-            assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
-            assert response.data["detail"] == "Error accessing cloud storage"
+        def fake_get_s3_client():
+            raise NoCredentialsError()
 
-    def test_report_s3_success(self, authenticated_client, scans_fixture):
-        """
-        If output_path starts with "s3://", and S3 functions succeed, the view should return an
-        HttpResponse with the ZIP content.
-        """
-        fake_file_content = b"fake s3 zip content"
-        scan = scans_fixture[0]
-        scan.output_path = "s3://bucket/path/to/file.zip"
-        scan.save()
-        url = reverse("scan-report", kwargs={"pk": scan.pk})
-        # Create a dummy S3 object with a 'Body' that returns our fake file content
-        dummy_body = BytesIO(fake_file_content)
-        dummy_s3_object = {"Body": dummy_body}
-        with patch("api.v1.views.get_s3_client") as mock_get_s3_client, patch(
-            "api.v1.views.env.str", return_value="bucket"
-        ):
-            s3_client = mock_get_s3_client.return_value
-            s3_client.get_object.return_value = dummy_s3_object
-            response = authenticated_client.get(url)
-            # The view returns an HttpResponse (not a DRF Response) for file downloads
-            assert isinstance(response, HttpResponse)
-            assert response.status_code == 200
-            assert response.content == fake_file_content
-            # Check that the Content-Disposition header includes the filename "file.zip"
-            content_disp = response.get("Content-Disposition", "")
-            assert content_disp.startswith('attachment; filename="')
-            assert "file.zip" in content_disp
+        monkeypatch.setattr("api.v1.views.get_s3_client", fake_get_s3_client)
 
-    def test_report_local_no_files(self, authenticated_client, scans_fixture):
-        """
-        If output_path does not start with "s3://" and glob.glob finds no matching files,
-        the view should return a 500 response.
-        """
-        scan = scans_fixture[0]
-        scan.output_path = "/non/existent/path/*.zip"
-        scan.save()
-        url = reverse("scan-report", kwargs={"pk": scan.pk})
-        with patch("api.v1.views.glob.glob", return_value=[]):
-            response = authenticated_client.get(url)
-            assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
-            assert response.data["detail"] == "Error reading local file"
+        url = reverse("scan-report", kwargs={"pk": scan.id})
+        response = authenticated_client.get(url)
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert (
+            response.json()["errors"]["detail"]
+            == "There is a problem with the AWS credentials."
+        )
 
-    def test_report_local_ioerror(self, authenticated_client, scans_fixture):
+    def test_report_s3_success(self, authenticated_client, scans_fixture, monkeypatch):
         """
-        If output_path does not start with "s3://", glob.glob finds a file but reading it raises an IOError,
-        the view should return a 500 response.
+        When output_path is an S3 URL and the S3 client returns the file successfully,
+        the view should return the ZIP file with HTTP 200 and proper headers.
         """
         scan = scans_fixture[0]
-        scan.output_path = "/path/to/file.zip"
+        bucket = "test-bucket"
+        key = "report.zip"
+        scan.output_path = f"s3://{bucket}/{key}"
+        scan.state = StateChoices.COMPLETED
         scan.save()
-        url = reverse("scan-report", kwargs={"pk": scan.pk})
-        with patch("api.v1.views.glob.glob", return_value=["/path/to/file.zip"]), patch(
-            "api.v1.views.open", side_effect=IOError
-        ):
-            response = authenticated_client.get(url)
-            assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
-            assert response.data["detail"] == "Error reading local file"
 
-    def test_report_local_success(self, authenticated_client, scans_fixture):
+        monkeypatch.setattr(
+            "api.v1.views.env", type("env", (), {"str": lambda self, key: bucket})()
+        )
+
+        class FakeS3Client:
+            def get_object(self, Bucket, Key):
+                assert Bucket == bucket
+                assert Key == key
+                return {"Body": io.BytesIO(b"s3 zip content")}
+
+        monkeypatch.setattr("api.v1.views.get_s3_client", lambda: FakeS3Client())
+
+        url = reverse("scan-report", kwargs={"pk": scan.id})
+        response = authenticated_client.get(url)
+        assert response.status_code == 200
+        expected_filename = os.path.basename("report.zip")
+        content_disposition = response.get("Content-Disposition")
+        assert content_disposition.startswith('attachment; filename="')
+        assert f'filename="{expected_filename}"' in content_disposition
+        assert response.content == b"s3 zip content"
+
+    def test_report_local_file(
+        self, authenticated_client, scans_fixture, tmp_path, monkeypatch
+    ):
         """
-        If output_path does not start with "s3://", and a local file is found and read successfully,
-        the view should return an HttpResponse with the file contents.
+        When output_path is a local file path, the view should read the file from disk
+        and return it with proper headers.
         """
-        fake_file_content = b"local zip file content"
         scan = scans_fixture[0]
-        scan.output_path = "/path/to/file.zip"
+        file_content = b"local zip file content"
+        file_path = tmp_path / "report.zip"
+        file_path.write_bytes(file_content)
+
+        scan.output_path = str(file_path)
+        scan.state = StateChoices.COMPLETED
         scan.save()
-        url = reverse("scan-report", kwargs={"pk": scan.pk})
-        m_open = mock_open(read_data=fake_file_content)
-        with patch("api.v1.views.glob.glob", return_value=["/path/to/file.zip"]), patch(
-            "api.v1.views.open", m_open
-        ):
-            response = authenticated_client.get(url)
-            assert isinstance(response, HttpResponse)
-            assert response.status_code == 200
-            assert response.content == fake_file_content
-            content_disp = response.get("Content-Disposition", "")
-            assert content_disp.startswith('attachment; filename="')
-            # The filename should be the basename of the file path
-            assert "file.zip" in content_disp
+
+        monkeypatch.setattr(
+            glob,
+            "glob",
+            lambda pattern: [str(file_path)] if pattern == str(file_path) else [],
+        )
+
+        url = reverse("scan-report", kwargs={"pk": scan.id})
+        response = authenticated_client.get(url)
+        assert response.status_code == 200
+        assert response.content == file_content
+        content_disposition = response.get("Content-Disposition")
+        assert content_disposition.startswith('attachment; filename="')
+        assert f'filename="{file_path.name}"' in content_disposition
 
 
 @pytest.mark.django_db

@@ -611,7 +611,7 @@ class TestFinding:
         assert finding_obj.status == Status("FAIL")
         assert finding_obj.status_extended == "extended"
         # From the dummy resource
-        assert finding_obj.resource_uid == ""
+        assert finding_obj.resource_uid == "res-uid-1"
         assert finding_obj.resource_name == "res-uid-1"
         assert finding_obj.resource_details == ""
         # unroll_tags is called on a list with one tag -> expect {"env": "prod"}

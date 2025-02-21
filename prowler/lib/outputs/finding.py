@@ -301,6 +301,7 @@ class Finding(BaseModel):
         finding.resource_details = ""
         resource = finding.resources.first()
         finding.resource_arn = resource.uid
+        finding.resource_name = resource.name
 
         finding.resource = model_to_dict(resource)
         finding.resource_id = resource.uid
