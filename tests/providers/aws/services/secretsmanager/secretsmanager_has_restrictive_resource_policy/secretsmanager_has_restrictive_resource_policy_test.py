@@ -1,4 +1,3 @@
-import moto
 import json
 import pytest
 from unittest import mock
@@ -11,20 +10,12 @@ from prowler.providers.aws.services.secretsmanager.secretsmanager_service import
 from tests.providers.aws.utils import AWS_REGION_EU_WEST_1, set_mocked_aws_provider
 
 
-@pytest.fixture(scope="class")
+@pytest.fixture(scope="function")
 def secretsmanager_client():
     with mock_aws():
         client_instance = client("secretsmanager", region_name=AWS_REGION_EU_WEST_1)
         secret = client_instance.create_secret(Name="test-secret")
         yield client_instance, secret["ARN"]
-
-
-@pytest.fixture(scope="function", autouse=True)
-def reset_moto():
-    mock = moto.mock_aws()
-    mock.start()
-    yield
-    mock.stop()
 
 
 class TestSecretsManagerHasRestrictiveResourcePolicy:
@@ -611,11 +602,7 @@ class TestSecretsManagerHasRestrictiveResourcePolicy:
         ],
     )
     def test_secretsmanager_policies_for_services(
-        self,
-        secretsmanager_client,
-        description,
-        modify_element,
-        expected_status,
+        self, secretsmanager_client, description, modify_element, expected_status
     ):
         with mock_aws():
             client_instance, secret_arn = secretsmanager_client
