@@ -100,7 +100,7 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
           return (
             <ListboxItem
               {...item}
-              key={item.key}
+              key={item.key + item.title}
               aria-label={item.title}
               classNames={{
                 base: clsx(
@@ -155,6 +155,7 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
               ) : null}
               {!isCompact && isNestType ? (
                 <Accordion
+                  key={`accordion-${item.key}`}
                   className={"p-0"}
                   defaultExpandedKeys={item.defaultExpanded ? [item.key] : []}
                 >
@@ -187,18 +188,17 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
                       )
                     }
                   >
-                    {item.items && item.items?.length > 0 ? (
+                    {item.items && item.items?.length > 0 && (
                       <Listbox
                         classNames={{
                           list: clsx("border-l border-default-200 pl-2"),
                         }}
                         items={item.items}
                         variant="flat"
+                        aria-label={`${item.title} items`}
                       >
                         {item.items.map(renderItem)}
                       </Listbox>
-                    ) : (
-                      renderItem(item)
                     )}
                   </AccordionItem>
                 </Accordion>
