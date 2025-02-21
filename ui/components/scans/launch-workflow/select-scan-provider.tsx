@@ -55,8 +55,8 @@ export const SelectScanProvider = <
         <>
           <FormControl>
             <Select
-              aria-label="Select a scan job"
-              placeholder="Choose a scan job"
+              aria-label="Select a cloud provider"
+              placeholder="Select a cloud provider"
               labelPlacement="outside"
               classNames={{
                 selectorIcon: "right-2",
@@ -77,7 +77,7 @@ export const SelectScanProvider = <
                     {selectedItem.alias}
                   </div>
                 ) : (
-                  "Choose a scan job"
+                  "Select a cloud provider"
                 );
               }}
             >

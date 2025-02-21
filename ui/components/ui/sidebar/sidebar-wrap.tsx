@@ -20,7 +20,7 @@ import {
 import { ThemeSwitch } from "../../ThemeSwitch";
 import { CustomButton } from "../custom";
 import Sidebar from "./sidebar";
-import { sectionItemsWithTeams } from "./sidebar-items";
+import { sectionItems } from "./sidebar-items";
 import { SkeletonProfile } from "./skeleton-profile";
 import { UserAvatar } from "./user-avatar";
 
@@ -111,7 +111,7 @@ export const SidebarWrap = ({ user }: { user: UserProfileProps }) => {
         <Sidebar
           defaultSelectedKey="overview"
           isCompact={isCompact}
-          items={sectionItemsWithTeams}
+          items={sectionItems}
           selectedKeys={[currentPath]}
         />
       </ScrollShadow>

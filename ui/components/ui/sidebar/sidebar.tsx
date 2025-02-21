@@ -31,6 +31,7 @@ export type SidebarItem = {
   endContent?: React.ReactNode;
   items?: SidebarItem[];
   className?: string;
+  defaultExpanded?: boolean;
 };
 
 export type SidebarProps = Omit<ListboxProps<SidebarItem>, "children"> & {
@@ -153,7 +154,10 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
                 </Tooltip>
               ) : null}
               {!isCompact && isNestType ? (
-                <Accordion className={"p-0"}>
+                <Accordion
+                  className={"p-0"}
+                  defaultExpandedKeys={item.defaultExpanded ? [item.key] : []}
+                >
                   <AccordionItem
                     key={item.key}
                     aria-label={item.title}
@@ -185,9 +189,8 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
                   >
                     {item.items && item.items?.length > 0 ? (
                       <Listbox
-                        className={"mt-0.5"}
                         classNames={{
-                          list: clsx("border-l border-default-200 pl-4"),
+                          list: clsx("border-l border-default-200 pl-2"),
                         }}
                         items={item.items}
                         variant="flat"
@@ -282,7 +285,7 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
         itemClasses={{
           ...itemClasses,
           base: clsx(
-            "px-3 rounded-large data-[selected=true]:bg-default-100 dark:data-[selected=true]:bg-prowler-blue-800",
+            "px-2 rounded-large data-[selected=true]:bg-default-100 dark:data-[selected=true]:bg-prowler-blue-800",
             itemClasses?.base,
           ),
           title: clsx(
