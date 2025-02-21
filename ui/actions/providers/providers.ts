@@ -380,6 +380,11 @@ export const checkConnectionProvider = async (formData: FormData) => {
 export const deleteCredentials = async (secretId: string) => {
   const session = await auth();
   const keyServer = process.env.API_BASE_URL;
+
+  if (!secretId) {
+    return { error: "Secret ID is required" };
+  }
+
   const url = new URL(`${keyServer}/providers/secrets/${secretId}`);
 
   try {
@@ -389,21 +394,41 @@ export const deleteCredentials = async (secretId: string) => {
         Authorization: `Bearer ${session?.accessToken}`,
       },
     });
-    const data = await response.json();
+
+    if (!response.ok) {
+      try {
+        const errorData = await response.json();
+        throw new Error(
+          errorData?.message || "Failed to delete the credentials",
+        );
+      } catch {
+        throw new Error("Failed to delete the credentials");
+      }
+    }
+
+    let data = null;
+    if (response.status !== 204) {
+      data = await response.json();
+    }
+
     revalidatePath("/providers");
-    return parseStringify(data);
+    return data || { success: true };
   } catch (error) {
-    return {
-      error: getErrorMessage(error),
-    };
+    // eslint-disable-next-line no-console
+    console.error("Error deleting credentials:", error);
+    return { error: getErrorMessage(error) };
   }
 };
 
 export const deleteProvider = async (formData: FormData) => {
   const session = await auth();
   const keyServer = process.env.API_BASE_URL;
-
   const providerId = formData.get("id");
+
+  if (!providerId) {
+    return { error: "Provider ID is required" };
+  }
+
   const url = new URL(`${keyServer}/providers/${providerId}`);
 
   try {
@@ -413,13 +438,26 @@ export const deleteProvider = async (formData: FormData) => {
         Authorization: `Bearer ${session?.accessToken}`,
       },
     });
-    const data = await response.json();
-    await wait(1000);
+
+    if (!response.ok) {
+      try {
+        const errorData = await response.json();
+        throw new Error(errorData?.message || "Failed to delete the provider");
+      } catch {
+        throw new Error("Failed to delete the provider");
+      }
+    }
+
+    let data = null;
+    if (response.status !== 204) {
+      data = await response.json();
+    }
+
     revalidatePath("/providers");
-    return parseStringify(data);
+    return data || { success: true };
   } catch (error) {
-    return {
-      error: getErrorMessage(error),
-    };
+    // eslint-disable-next-line no-console
+    console.error("Error deleting provider:", error);
+    return { error: getErrorMessage(error) };
   }
 };
