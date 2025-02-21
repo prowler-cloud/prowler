@@ -48,7 +48,7 @@ def _compress_output_files(output_directory: str) -> str:
         for suffix in [config["suffix"] for config in OUTPUT_FORMATS_MAPPING.values()]:
             zipf.write(
                 f"{output_directory}{suffix}",
-                f"artifacts/{output_directory.split('/')[-1]}{suffix}",
+                f"output/{output_directory.split('/')[-1]}{suffix}",
             )
 
     return zip_path
@@ -74,10 +74,10 @@ def get_s3_client():
     try:
         s3_client = boto3.client(
             "s3",
-            aws_access_key_id=env.str("DJANGO_ARTIFACTS_AWS_ACCESS_KEY_ID"),
-            aws_secret_access_key=env.str("DJANGO_ARTIFACTS_AWS_SECRET_ACCESS_KEY"),
-            aws_session_token=env.str("DJANGO_ARTIFACTS_AWS_SESSION_TOKEN"),
-            region_name=env.str("DJANGO_ARTIFACTS_AWS_DEFAULT_REGION"),
+            aws_access_key_id=env.str("DJANGO_OUTPUT_AWS_ACCESS_KEY_ID"),
+            aws_secret_access_key=env.str("DJANGO_OUTPUT_AWS_SECRET_ACCESS_KEY"),
+            aws_session_token=env.str("DJANGO_OUTPUT_AWS_SESSION_TOKEN"),
+            region_name=env.str("DJANGO_OUTPUT_AWS_DEFAULT_REGION"),
         )
         s3_client.list_buckets()
     except (ClientError, NoCredentialsError, ParamValidationError):
@@ -102,7 +102,7 @@ def _upload_to_s3(tenant_id: str, zip_path: str, scan_id: str) -> str:
     Raises:
         botocore.exceptions.ClientError: If the upload attempt to S3 fails for any reason.
     """
-    if not base.DJANGO_ARTIFACTS_AWS_S3_OUTPUT_BUCKET:
+    if not base.DJANGO_OUTPUT_AWS_S3_OUTPUT_BUCKET:
         return
 
     s3 = get_s3_client()
@@ -110,13 +110,12 @@ def _upload_to_s3(tenant_id: str, zip_path: str, scan_id: str) -> str:
     try:
         s3.upload_file(
             Filename=zip_path,
-            Bucket=base.DJANGO_ARTIFACTS_AWS_S3_OUTPUT_BUCKET,
+            Bucket=base.DJANGO_OUTPUT_AWS_S3_OUTPUT_BUCKET,
             Key=s3_key,
         )
-        return f"s3://{base.DJANGO_ARTIFACTS_AWS_S3_OUTPUT_BUCKET}/{s3_key}"
+        return f"s3://{base.DJANGO_OUTPUT_AWS_S3_OUTPUT_BUCKET}/{s3_key}"
     except ClientError as e:
         logger.error(f"S3 upload failed: {str(e)}")
-        raise e
 
 
 def _generate_output_directory(

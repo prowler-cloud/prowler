@@ -1197,22 +1197,56 @@ class ScanViewSet(BaseRLSViewSet):
         request=ScanReportSerializer,
         responses={
             200: OpenApiResponse(description="Report obtained successfully"),
+            202: OpenApiResponse(description="The task is in progress"),
             403: OpenApiResponse(
                 description="There is a problem with the AWS credentials"
             ),
+            404: OpenApiResponse(description="The scan has not generated reports"),
         },
     )
     @action(detail=True, methods=["get"], url_name="report")
     def report(self, request, pk=None):
         scan_instance = self.get_object()
-        output_path = scan_instance.output_path
 
-        if scan_instance.state != StateChoices.COMPLETED:
+        if scan_instance.state == StateChoices.EXECUTING:
+            # If the scan is still running, return the task
+            prowler_task = TaskSerializer(scan_instance.task)
             return Response(
-                {
-                    "detail": f"The scan is not finished yet. State is: {scan_instance.state}"
+                data=prowler_task.data,
+                status=status.HTTP_202_ACCEPTED,
+                headers={
+                    "Content-Location": reverse(
+                        "task-detail", kwargs={"pk": prowler_task.data["id"]}
+                    )
                 },
-                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            output_celery_task = Task.objects.get(
+                task_runner_task__task_name="scan-report",
+                task_runner_task__task_args__contains=pk,
+            )
+            prowler_task_data = TaskSerializer(output_celery_task).data
+            if prowler_task_data["state"] == StateChoices.EXECUTING:
+                # If the task is still running, return the task
+                return Response(
+                    data=prowler_task_data,
+                    status=status.HTTP_202_ACCEPTED,
+                    headers={
+                        "Content-Location": reverse(
+                            "task-detail", kwargs={"pk": prowler_task_data["id"]}
+                        )
+                    },
+                )
+        except Task.DoesNotExist:
+            # If the task does not exist, it means that the task is removed from the database
+            pass
+
+        output_path = scan_instance.output_path
+        if not output_path:
+            return Response(
+                {"detail": "The scan has not generated reports."},
+                status=status.HTTP_404_NOT_FOUND,
             )
 
         if scan_instance.output_path.startswith("s3://"):
@@ -1224,29 +1258,17 @@ class ScanViewSet(BaseRLSViewSet):
                     status=status.HTTP_403_FORBIDDEN,
                 )
 
-            bucket_name = env.str("DJANGO_ARTIFACTS_AWS_S3_OUTPUT_BUCKET")
-            try:
-                key = output_path[len(f"s3://{bucket_name}/") :]
-                s3_object = s3_client.get_object(Bucket=bucket_name, Key=key)
-                file_content = s3_object["Body"].read()
-                filename = os.path.basename(output_path.split("/")[-1])
-            except ClientError:
-                return Response(
-                    {"detail": "Error accessing cloud storage"},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                )
+            bucket_name = env.str("DJANGO_OUTPUT_AWS_S3_OUTPUT_BUCKET")
+            key = output_path[len(f"s3://{bucket_name}/") :]
+            s3_object = s3_client.get_object(Bucket=bucket_name, Key=key)
+            file_content = s3_object["Body"].read()
+            filename = os.path.basename(output_path.split("/")[-1])
         else:
             zip_files = glob.glob(output_path)
-            try:
-                file_path = zip_files[0]
-                with open(file_path, "rb") as f:
-                    file_content = f.read()
-                filename = os.path.basename(file_path)
-            except (IndexError, IOError):
-                return Response(
-                    {"detail": "Error reading local file"},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                )
+            file_path = zip_files[0]
+            with open(file_path, "rb") as f:
+                file_content = f.read()
+            filename = os.path.basename(file_path)
 
         response = HttpResponse(
             file_content, content_type="application/x-zip-compressed"

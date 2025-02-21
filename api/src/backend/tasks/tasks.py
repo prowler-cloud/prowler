@@ -1,3 +1,5 @@
+from shutil import rmtree
+
 from celery import chain, shared_task
 from celery.utils.log import get_task_logger
 from config.celery import RLSTask
@@ -174,7 +176,7 @@ def delete_tenant_task(tenant_id: str):
 
 @shared_task(
     base=RLSTask,
-    name="scan-output",
+    name="scan-report",
     queue="scan-reports",
 )
 @set_tenant(keep_tenant=True)
@@ -260,6 +262,8 @@ def generate_outputs(scan_id: str, provider_id: str, tenant_id: str):
     if uploaded:
         output_directory = uploaded
         uploaded = True
+        # Remove the local files after upload
+        rmtree(DJANGO_TMP_OUTPUT_DIRECTORY)
     else:
         uploaded = False
 

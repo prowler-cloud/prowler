@@ -299,9 +299,9 @@ class Finding(BaseModel):
         # Missing Finding's API values
         finding.muted = False
         finding.resource_details = ""
-        finding.resource_arn = ""
-
         resource = finding.resources.first()
+        finding.resource_arn = resource.uid
+
         finding.resource = model_to_dict(resource)
         finding.resource_id = resource.uid
         finding.region = resource.region

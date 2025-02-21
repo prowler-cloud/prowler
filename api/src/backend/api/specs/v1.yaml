@@ -4136,8 +4136,12 @@ paths:
       responses:
         '200':
           description: Report obtained successfully
+        '202':
+          description: The task is in progress
         '403':
           description: There is a problem with the AWS credentials
+        '404':
+          description: The scan has not generated reports
   /api/v1/schedules/daily:
     post:
       operationId: schedules_daily_create
