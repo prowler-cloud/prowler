@@ -1,0 +1,172 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "prowler.fullname" . }}-api
+  labels:
+    {{- include "prowler.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.api.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "prowler.apiSelectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        {{- toYaml .Values.api.podAnnotations | nindent 8 }}
+      labels:
+        {{- include "prowler.apiSelectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "prowler.apiServiceAccountName" . }}
+      containers:
+        - name: api
+          image: "{{ .Values.api.image.registry | default .Values.global.registry }}/{{ .Values.api.image.repository | default .Values.global.repository }}:{{ .Values.api.image.tag | default .Values.global.tag | default .Chart.AppVersion }}"
+          command:
+            {{- toYaml .Values.api.command | nindent 12 }}
+          ports:
+            - containerPort: {{ .Values.api.service.port }}
+              name: http
+          env:
+            - name: THIS_POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: DJANGO_ALLOWED_HOSTS
+              value: '{{ include "prowler.fullname" . }}-api,$(THIS_POD_IP),localhost,127.0.0.1'
+          envFrom:
+            - configMapRef:
+                name: {{ include "prowler.fullname" . }}-app-config
+            {{- with .Values.api.envFrom }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          resources:
+            {{- toYaml .Values.api.resources | nindent 12 }}
+          volumeMounts:
+            - name: {{ include "prowler.fullname" $ }}-config
+              mountPath: {{ $.Values.releaseConfigRoot }}{{ $.Values.releaseConfigPath }}
+              subPath: config.yaml
+          {{- with .Values.api.volumeMounts }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      volumes:
+        - name: {{ include "prowler.fullname" . }}-config
+          configMap:
+            name: {{ include "prowler.fullname" . }}-config
+      {{- with .Values.api.volumes }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.api.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.api.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.api.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "prowler.fullname" . }}-celery-worker
+  labels:
+    {{- include "prowler.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.celeryWorker.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "prowler.celeryWorkerSelectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        {{- toYaml .Values.celeryWorker.podAnnotations | nindent 8 }}
+      labels:
+        {{- include "prowler.celeryWorkerSelectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "prowler.celeryWorkerServiceAccountName" . }}
+      containers:
+        - name: celery-worker
+          image: "{{ .Values.celeryWorker.image.registry | default .Values.global.registry }}/{{ .Values.celeryWorker.image.repository | default .Values.global.repository }}:{{ .Values.celeryWorker.image.tag | default .Values.global.tag | default .Chart.AppVersion }}"
+          command:
+            {{- toYaml .Values.celeryWorker.command | nindent 12 }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "prowler.fullname" . }}-app-config
+            {{- if .Values.celeryWorker.envFrom }}
+            {{- toYaml .Values.celeryWorker.envFrom | nindent 12 }}
+            {{- end }}
+          resources:
+            {{- toYaml .Values.celeryWorker.resources | nindent 12 }}
+      {{- with .Values.celeryWorker.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.celeryWorker.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.celeryWorker.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "prowler.fullname" . }}-celery-beat
+  labels:
+    {{- include "prowler.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.celeryBeat.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "prowler.celeryBeatSelectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        {{- toYaml .Values.celeryBeat.podAnnotations | nindent 8 }}
+      labels:
+        {{- include "prowler.celeryBeatSelectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "prowler.celeryBeatServiceAccountName" . }}
+      containers:
+        - name: celery-beat
+          image: "{{ .Values.celeryBeat.image.registry | default .Values.global.registry }}/{{ .Values.celeryBeat.image.repository | default .Values.global.repository }}:{{ .Values.celeryBeat.image.tag | default .Values.global.tag | default .Chart.AppVersion }}"
+          command:
+            {{- toYaml .Values.celeryBeat.command | nindent 12 }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "prowler.fullname" . }}-app-config
+            {{- if .Values.celeryBeat.envFrom }}
+            {{- toYaml .Values.celeryBeat.envFrom | nindent 12 }}
+            {{- end }}
+          resources:
+            {{- toYaml .Values.celeryBeat.resources | nindent 12 }}
+      {{- with .Values.celeryBeat.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.celeryBeat.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.celeryBeat.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
