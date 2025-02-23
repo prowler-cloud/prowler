@@ -4,7 +4,8 @@ import { Metadata, Viewport } from "next";
 import React, { use } from "react";
 
 import { getProfileInfo } from "@/actions/users/users";
-import { SidebarWrap, Toaster } from "@/components/ui";
+import MainLayout from "@/components/ui/main-layout/main-layout";
+import { Toaster } from "@/components/ui/toast";
 import { fontSans } from "@/config/fonts";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
@@ -47,13 +48,8 @@ export default function RootLayout({
         )}
       >
         <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
-          <div className="flex h-dvh items-center justify-center overflow-hidden">
-            <SidebarWrap user={user} />
-            <main className="no-scrollbar mb-auto h-full flex-1 flex-col overflow-y-auto px-6 py-4 xl:px-10">
-              {children}
-              <Toaster />
-            </main>
-          </div>
+          <MainLayout user={user}>{children}</MainLayout>
+          <Toaster />
         </Providers>
       </body>
     </html>

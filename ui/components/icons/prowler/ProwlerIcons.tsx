@@ -10,6 +10,7 @@ export const ProwlerExtended: React.FC<IconSvgProps> = ({
 }) => {
   return (
     <svg
+      className="text-prowler-black dark:text-prowler-white"
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 1233.67 204.4"
       fill="none"
