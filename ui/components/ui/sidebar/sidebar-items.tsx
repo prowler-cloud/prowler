@@ -6,7 +6,7 @@ import { SidebarItem, SidebarItemType } from "./sidebar";
 
 export const sectionItems: SidebarItem[] = [
   {
-    key: "analytics",
+    key: "overview",
     title: "Analytics",
     icon: "solar:chart-outline",
     type: SidebarItemType.Nest,
@@ -36,6 +36,7 @@ export const sectionItems: SidebarItem[] = [
     title: "High-risk findings",
     icon: "solar:bug-linear",
     type: SidebarItemType.Nest,
+    defaultExpanded: false,
     items: [
       {
         key: "aws-findings",
@@ -69,6 +70,7 @@ export const sectionItems: SidebarItem[] = [
     title: "Top failed issues",
     icon: "solar:danger-circle-linear",
     type: SidebarItemType.Nest,
+    defaultExpanded: false,
     items: [
       {
         key: "misconfigurations",
@@ -86,7 +88,7 @@ export const sectionItems: SidebarItem[] = [
   },
 
   {
-    key: "all_findings",
+    key: "findings",
     href: "/findings",
     icon: "solar:document-text-linear",
     title: "Browse all findings",
@@ -106,7 +108,7 @@ export const sectionItems: SidebarItem[] = [
         title: "Cloud Providers",
       },
       {
-        key: "provider-groups",
+        key: "manage-groups",
         href: "/manage-groups",
         icon: "solar:settings-outline",
         title: "Provider Groups",

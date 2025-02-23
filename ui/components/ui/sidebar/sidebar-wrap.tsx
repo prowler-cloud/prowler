@@ -40,6 +40,25 @@ export const SidebarWrap = ({ user }: { user: UserProfileProps }) => {
 
   const currentPath = pathname === "/" ? "overview" : pathname.split("/")?.[1];
 
+  const currentKey = (() => {
+    console.log("Current pathname:", pathname);
+
+    const directMatch = sectionItems.find(
+      (item) => item.href === pathname,
+    )?.key;
+    console.log("Direct match found:", directMatch);
+
+    const nestedMatch = sectionItems
+      .flatMap((item) => item.items || [])
+      .find((subItem) => subItem.href === pathname)?.key;
+    console.log("Nested match found:", nestedMatch);
+
+    const finalKey = directMatch || nestedMatch || "default";
+    console.log("Final selected key:", finalKey);
+
+    return finalKey;
+  })();
+
   return (
     <div
       className={clsx(
@@ -109,10 +128,10 @@ export const SidebarWrap = ({ user }: { user: UserProfileProps }) => {
 
       <ScrollShadow hideScrollBar className="-mr-6 h-full max-h-full py-4 pr-6">
         <Sidebar
-          defaultSelectedKey="overview"
+          defaultSelectedKey={currentKey}
           isCompact={isCompact}
           items={sectionItems}
-          selectedKeys={[currentPath]}
+          selectedKeys={[currentKey]}
         />
       </ScrollShadow>
       <Spacer y={2} />
