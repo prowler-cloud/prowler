@@ -20,7 +20,7 @@ import {
 import { ThemeSwitch } from "../../ThemeSwitch";
 import { CustomButton } from "../custom";
 import Sidebar from "./sidebar";
-import { sectionItemsWithTeams } from "./sidebar-items";
+import { sectionItems } from "./sidebar-items";
 import { SkeletonProfile } from "./skeleton-profile";
 import { UserAvatar } from "./user-avatar";
 
@@ -39,6 +39,25 @@ export const SidebarWrap = ({ user }: { user: UserProfileProps }) => {
   }, [isCollapsed, openSideMenu, closeSideMenu]);
 
   const currentPath = pathname === "/" ? "overview" : pathname.split("/")?.[1];
+
+  const currentKey = (() => {
+    console.log("Current pathname:", pathname);
+
+    const directMatch = sectionItems.find(
+      (item) => item.href === pathname,
+    )?.key;
+    console.log("Direct match found:", directMatch);
+
+    const nestedMatch = sectionItems
+      .flatMap((item) => item.items || [])
+      .find((subItem) => subItem.href === pathname)?.key;
+    console.log("Nested match found:", nestedMatch);
+
+    const finalKey = directMatch || nestedMatch || "default";
+    console.log("Final selected key:", finalKey);
+
+    return finalKey;
+  })();
 
   return (
     <div
@@ -109,10 +128,10 @@ export const SidebarWrap = ({ user }: { user: UserProfileProps }) => {
 
       <ScrollShadow hideScrollBar className="-mr-6 h-full max-h-full py-4 pr-6">
         <Sidebar
-          defaultSelectedKey="overview"
+          defaultSelectedKey={currentKey}
           isCompact={isCompact}
-          items={sectionItemsWithTeams}
-          selectedKeys={[currentPath]}
+          items={sectionItems}
+          selectedKeys={[currentKey]}
         />
       </ScrollShadow>
       <Spacer y={2} />
@@ -151,9 +170,10 @@ export const SidebarWrap = ({ user }: { user: UserProfileProps }) => {
           >
             {isCompact ? (
               <Icon
-                className="text-default-500"
+                className="flex-none text-default-500"
                 icon="tabler:file-type-doc"
                 width={24}
+                height={24}
                 aria-hidden="true"
               />
             ) : (
@@ -195,9 +215,10 @@ export const SidebarWrap = ({ user }: { user: UserProfileProps }) => {
           >
             {isCompact ? (
               <Icon
-                className="text-default-500"
+                className="flex-none text-default-500"
                 icon="tabler:api"
                 width={24}
+                height={24}
                 aria-hidden="true"
               />
             ) : (
@@ -232,9 +253,10 @@ export const SidebarWrap = ({ user }: { user: UserProfileProps }) => {
           >
             {isCompact ? (
               <Icon
-                className="text-default-500"
+                className="flex-none text-default-500"
                 icon="akar-icons:info"
                 width={24}
+                height={24}
                 aria-hidden="true"
               />
             ) : (
@@ -326,6 +348,7 @@ export const SidebarWrap = ({ user }: { user: UserProfileProps }) => {
         <Tooltip
           content="Light | Dark mode"
           placement={isCompact ? "right" : "top"}
+          aria-label="Theme switch tooltip"
         >
           <div
             className={clsx(
@@ -334,6 +357,7 @@ export const SidebarWrap = ({ user }: { user: UserProfileProps }) => {
                 "mt-3 justify-center": isCompact,
               },
             )}
+            aria-label="Theme switch container"
           >
             <ThemeSwitch aria-label="Toggle theme" />
           </div>
@@ -341,6 +365,7 @@ export const SidebarWrap = ({ user }: { user: UserProfileProps }) => {
         <Tooltip
           content="Open | Close sidebar"
           placement={isCompact ? "right" : "top"}
+          aria-label="Sidebar toggle tooltip"
         >
           <Button
             aria-label={isCompact ? "Open sidebar" : "Close sidebar"}
