@@ -20,6 +20,7 @@ type Menu = {
   active?: boolean;
   icon: LucideIcon;
   submenus?: Submenu[];
+  defaultOpen?: boolean;
 };
 
 type Group = {
@@ -33,13 +34,14 @@ export function getMenuList(pathname: string): Group[] {
       groupLabel: "",
       menus: [
         {
-          href: "/",
+          href: "",
           label: "Analytics",
           icon: LayoutGrid,
           submenus: [
             { href: "/", label: "Overview" },
             { href: "/compliance", label: "Compliance" },
           ],
+          defaultOpen: true,
         },
       ],
     },
@@ -61,6 +63,7 @@ export function getMenuList(pathname: string): Group[] {
               label: "IAM Issues",
             },
           ],
+          defaultOpen: false,
         },
         {
           href: "",
@@ -69,11 +72,11 @@ export function getMenuList(pathname: string): Group[] {
           submenus: [
             {
               href: "/findings?filter[status__in]=FAIL&filter[severity__in]=critical%2Chigh%2Cmedium&filter[provider_type__in]=aws&sort=severity,-inserted_at",
-              label: "AWS",
+              label: "Amazon Web Services",
             },
             {
               href: "/findings?filter[status__in]=FAIL&filter[severity__in]=critical%2Chigh%2Cmedium&filter[provider_type__in]=azure&sort=severity,-inserted_at",
-              label: "Azure",
+              label: "Microsoft Azure",
             },
             {
               href: "/findings?filter[status__in]=FAIL&filter[severity__in]=critical%2Chigh%2Cmedium&filter[provider_type__in]=gcp&sort=severity,-inserted_at",
@@ -84,6 +87,7 @@ export function getMenuList(pathname: string): Group[] {
               label: "Kubernetes",
             },
           ],
+          defaultOpen: false,
         },
         {
           href: "/findings",
@@ -106,6 +110,7 @@ export function getMenuList(pathname: string): Group[] {
             { href: "/scans", label: "Scan Jobs" },
             { href: "/roles", label: "Roles" },
           ],
+          defaultOpen: true,
         },
       ],
     },
@@ -120,6 +125,7 @@ export function getMenuList(pathname: string): Group[] {
             { href: "/users", label: "Users" },
             { href: "/invitations", label: "Invitations" },
           ],
+          defaultOpen: false,
         },
       ],
     },

@@ -69,7 +69,10 @@ export function Menu({ isOpen }: MenuProps) {
                   <p className="pb-2"></p>
                 )}
                 {menus.map(
-                  ({ href, label, icon: Icon, active, submenus }, index) =>
+                  (
+                    { href, label, icon: Icon, active, submenus, defaultOpen },
+                    index,
+                  ) =>
                     !submenus || submenus.length === 0 ? (
                       <div className="w-full" key={index}>
                         <TooltipProvider disableHoverableContent>
@@ -83,7 +86,7 @@ export function Menu({ isOpen }: MenuProps) {
                                     ? "secondary"
                                     : "ghost"
                                 }
-                                className="mb-1 h-10 w-full justify-start"
+                                className="mb-1 h-9 w-full justify-start"
                                 asChild
                               >
                                 <Link href={href}>
@@ -127,6 +130,7 @@ export function Menu({ isOpen }: MenuProps) {
                           }
                           submenus={submenus}
                           isOpen={isOpen}
+                          defaultOpen={defaultOpen ?? false}
                         />
                       </div>
                     ),

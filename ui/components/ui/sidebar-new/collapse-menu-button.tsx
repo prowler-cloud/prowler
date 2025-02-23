@@ -40,6 +40,7 @@ interface CollapseMenuButtonProps {
   label: string;
   active: boolean;
   submenus: Submenu[];
+  defaultOpen: boolean;
   isOpen: boolean | undefined;
 }
 
@@ -48,27 +49,31 @@ export function CollapseMenuButton({
   label,
   active,
   submenus,
+  defaultOpen,
   isOpen,
 }: CollapseMenuButtonProps) {
   const pathname = usePathname();
   const isSubmenuActive = submenus.some((submenu) =>
     submenu.active === undefined ? submenu.href === pathname : submenu.active,
   );
-  const [isCollapsed, setIsCollapsed] = useState<boolean>(isSubmenuActive);
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(
+    isSubmenuActive || defaultOpen,
+  );
 
   return isOpen ? (
     <Collapsible
       open={isCollapsed}
       onOpenChange={setIsCollapsed}
+      defaultOpen={defaultOpen}
       className="w-full"
     >
       <CollapsibleTrigger
-        className="mb-1 [&[data-state=open]>div>div>svg]:rotate-180"
+        className="[&[data-state=open]>div>div>svg]:rotate-180"
         asChild
       >
         <Button
           variant={isSubmenuActive ? "secondary" : "ghost"}
-          className="h-10 w-full justify-start"
+          className="mb-1 h-10 w-full justify-start"
         >
           <div className="flex w-full items-center justify-between">
             <div className="flex items-center">
@@ -102,7 +107,7 @@ export function CollapseMenuButton({
           </div>
         </Button>
       </CollapsibleTrigger>
-      <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
+      <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden">
         {submenus.map(({ href, label, active }, index) => (
           <Button
             key={index}
@@ -111,16 +116,13 @@ export function CollapseMenuButton({
                 ? "secondary"
                 : "ghost"
             }
-            className="mb-1 h-10 w-full justify-start"
+            className="ml-4 h-9 w-full justify-start"
             asChild
           >
             <Link href={href}>
-              <span className="ml-2 mr-4">
-                <Dot size={18} />
-              </span>
               <p
                 className={cn(
-                  "max-w-[170px] truncate",
+                  "max-w-[170px] truncate border-l border-default-200 pl-4",
                   isOpen
                     ? "translate-x-0 opacity-100"
                     : "-translate-x-96 opacity-0",
