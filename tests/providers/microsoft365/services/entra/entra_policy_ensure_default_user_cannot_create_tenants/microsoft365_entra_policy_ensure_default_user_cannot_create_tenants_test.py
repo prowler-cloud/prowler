@@ -1,6 +1,10 @@
 from unittest import mock
 from uuid import uuid4
 
+from prowler.providers.microsoft365.services.entra.entra_service import (
+    AuthorizationPolicy,
+    DefaultUserRolePermissions,
+)
 from tests.providers.microsoft365.microsoft365_fixtures import (
     set_mocked_microsoft365_provider,
 )
@@ -29,56 +33,14 @@ class Test_entra_policy_ensure_default_user_cannot_create_tenants:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert result[0].resource_name == ""
-            assert result[0].resource_id == ""
             assert (
                 result[0].status_extended
                 == "Tenant creation is not disabled for non-admin users."
             )
-
-    def test_entra_default_user_role_permissions_not_allowed_to_create_tenants(self):
-        id = str(uuid4())
-        entra_client = mock.MagicMock
-
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_microsoft365_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_policy_ensure_default_user_cannot_create_tenants.entra_policy_ensure_default_user_cannot_create_tenants.entra_client",
-                new=entra_client,
-            ),
-        ):
-            from prowler.providers.microsoft365.services.entra.entra_policy_ensure_default_user_cannot_create_tenants.entra_policy_ensure_default_user_cannot_create_tenants import (
-                entra_policy_ensure_default_user_cannot_create_tenants,
-            )
-            from prowler.providers.microsoft365.services.entra.entra_service import (
-                AuthorizationPolicy,
-                DefaultUserRolePermissions,
-            )
-
-            entra_client.authorization_policy = AuthorizationPolicy(
-                id=id,
-                name="Test",
-                description="Test",
-                default_user_role_permissions=DefaultUserRolePermissions(
-                    allowed_to_create_tenants=False
-                ),
-                guest_invite_settings="everyone",
-                guest_user_role_id=uuid4(),
-            )
-
-            check = entra_policy_ensure_default_user_cannot_create_tenants()
-            result = check.execute()
-            assert len(result) == 1
-            assert result[0].status == "PASS"
-            assert (
-                result[0].status_extended
-                == "Tenant creation is disabled for non-admin users."
-            )
-            assert result[0].resource_name == "Test"
-            assert result[0].resource_id == id
+            assert result[0].resource == {}
+            assert result[0].resource_name == "Authorization Policy"
+            assert result[0].resource_id == "authorizationPolicy"
+            assert result[0].location == "global"
 
     def test_entra_default_user_role_permissions_allowed_to_create_tenants(self):
         id = str(uuid4())
@@ -97,10 +59,6 @@ class Test_entra_policy_ensure_default_user_cannot_create_tenants:
             from prowler.providers.microsoft365.services.entra.entra_policy_ensure_default_user_cannot_create_tenants.entra_policy_ensure_default_user_cannot_create_tenants import (
                 entra_policy_ensure_default_user_cannot_create_tenants,
             )
-            from prowler.providers.microsoft365.services.entra.entra_service import (
-                AuthorizationPolicy,
-                DefaultUserRolePermissions,
-            )
 
             entra_client.authorization_policy = AuthorizationPolicy(
                 id=id,
@@ -109,8 +67,6 @@ class Test_entra_policy_ensure_default_user_cannot_create_tenants:
                 default_user_role_permissions=DefaultUserRolePermissions(
                     allowed_to_create_tenants=True
                 ),
-                guest_invite_settings="everyone",
-                guest_user_role_id=uuid4(),
             )
 
             check = entra_policy_ensure_default_user_cannot_create_tenants()
@@ -121,5 +77,73 @@ class Test_entra_policy_ensure_default_user_cannot_create_tenants:
                 result[0].status_extended
                 == "Tenant creation is not disabled for non-admin users."
             )
+            assert result[0].resource == {
+                "id": id,
+                "name": "Test",
+                "description": "Test",
+                "default_user_role_permissions": {
+                    "allowed_to_create_apps": None,
+                    "allowed_to_create_security_groups": None,
+                    "allowed_to_create_tenants": True,
+                    "allowed_to_read_bitlocker_keys_for_owned_device": None,
+                    "allowed_to_read_other_users": None,
+                    "odata_type": None,
+                    "permission_grant_policies_assigned": None,
+                },
+            }
             assert result[0].resource_name == "Test"
             assert result[0].resource_id == id
+            assert result[0].location == "global"
+
+    def test_entra_default_user_role_permissions_not_allowed_to_create_tenants(self):
+        id = str(uuid4())
+        entra_client = mock.MagicMock
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_microsoft365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.microsoft365.services.entra.entra_policy_ensure_default_user_cannot_create_tenants.entra_policy_ensure_default_user_cannot_create_tenants.entra_client",
+                new=entra_client,
+            ),
+        ):
+            from prowler.providers.microsoft365.services.entra.entra_policy_ensure_default_user_cannot_create_tenants.entra_policy_ensure_default_user_cannot_create_tenants import (
+                entra_policy_ensure_default_user_cannot_create_tenants,
+            )
+
+            entra_client.authorization_policy = AuthorizationPolicy(
+                id=id,
+                name="Test",
+                description="Test",
+                default_user_role_permissions=DefaultUserRolePermissions(
+                    allowed_to_create_tenants=False
+                ),
+            )
+
+            check = entra_policy_ensure_default_user_cannot_create_tenants()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == "Tenant creation is disabled for non-admin users."
+            )
+            assert result[0].resource == {
+                "id": id,
+                "name": "Test",
+                "description": "Test",
+                "default_user_role_permissions": {
+                    "allowed_to_create_apps": None,
+                    "allowed_to_create_security_groups": None,
+                    "allowed_to_create_tenants": False,
+                    "allowed_to_read_bitlocker_keys_for_owned_device": None,
+                    "allowed_to_read_other_users": None,
+                    "odata_type": None,
+                    "permission_grant_policies_assigned": None,
+                },
+            }
+            assert result[0].resource_name == "Test"
+            assert result[0].resource_id == id
+            assert result[0].location == "global"

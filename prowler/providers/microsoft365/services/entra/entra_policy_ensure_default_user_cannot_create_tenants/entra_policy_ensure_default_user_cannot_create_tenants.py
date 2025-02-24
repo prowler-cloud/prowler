@@ -1,4 +1,6 @@
-from prowler.lib.check.models import Check, Check_Report_Microsoft365
+from typing import List
+
+from prowler.lib.check.models import Check, CheckReportMicrosoft365
 from prowler.providers.microsoft365.services.entra.entra_client import entra_client
 
 
@@ -12,7 +14,7 @@ class entra_policy_ensure_default_user_cannot_create_tenants(Check):
         metadata: Metadata associated with the check (inherited from Check).
     """
 
-    def execute(self) -> Check_Report_Microsoft365:
+    def execute(self) -> List[CheckReportMicrosoft365]:
         """Execute the check for tenant creation restrictions.
 
         This method examines the authorization policy settings to determine if
@@ -23,8 +25,13 @@ class entra_policy_ensure_default_user_cannot_create_tenants(Check):
             List[Check_Report_Microsoft365]: A list containing the result of the check.
         """
         findings = []
-        report = Check_Report_Microsoft365(
-            metadata=self.metadata(), resource=entra_client.authorization_policy
+        auth_policy = entra_client.authorization_policy
+
+        report = CheckReportMicrosoft365(
+            metadata=self.metadata(),
+            resource=auth_policy if auth_policy else {},
+            resource_name=auth_policy.name if auth_policy else "Authorization Policy",
+            resource_id=auth_policy.id if auth_policy else "authorizationPolicy",
         )
         report.status = "FAIL"
         report.status_extended = "Tenant creation is not disabled for non-admin users."
