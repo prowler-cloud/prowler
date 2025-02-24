@@ -173,3 +173,55 @@ class Test_admincenter_users_admins_reduced_license_footprint:
             assert result[0].resource_name == "User1"
             assert result[0].resource_id == id_user1
             assert result[0].location == "global"
+
+    def test_admincenter_user_admin_no_license(self):
+        admincenter_client = mock.MagicMock
+        admincenter_client.audited_tenant = "audited_tenant"
+        admincenter_client.audited_domain = DOMAIN
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_microsoft365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.microsoft365.services.admincenter.admincenter_users_admins_reduced_license_footprint.admincenter_users_admins_reduced_license_footprint.admincenter_client",
+                new=admincenter_client,
+            ),
+        ):
+            from prowler.providers.microsoft365.services.admincenter.admincenter_service import (
+                User,
+            )
+            from prowler.providers.microsoft365.services.admincenter.admincenter_users_admins_reduced_license_footprint.admincenter_users_admins_reduced_license_footprint import (
+                admincenter_users_admins_reduced_license_footprint,
+            )
+
+            id_user1 = str(uuid4())
+
+            admincenter_client.users = {
+                id_user1: User(
+                    id=id_user1,
+                    name="User1",
+                    directory_roles=["Global Administrator"],
+                    license=None,
+                ),
+            }
+
+            check = admincenter_users_admins_reduced_license_footprint()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == "User User1 has administrative roles Global Administrator and does not have a license."
+            )
+            assert result[0].resource == {
+                "id": id_user1,
+                "name": "User1",
+                "directory_roles": ["Global Administrator"],
+                "license": None,
+                "user_type": None,
+            }
+            assert result[0].resource_name == "User1"
+            assert result[0].resource_id == id_user1
+            assert result[0].location == "global"
