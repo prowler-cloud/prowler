@@ -9,6 +9,9 @@ All notable changes to the **Prowler API** are documented in this file.
 ### Added
 - Social login integration with Google and GitHub [(#6906)](https://github.com/prowler-cloud/prowler/pull/6906)
 
+### Changed
+- Optimized `GET /findings` endpoint to improve response time and size [(#7019)](https://github.com/prowler-cloud/prowler/pull/7019).
+
 ---
 
 ## [v1.4.0] (Prowler v5.3.0) - 2025-02-10
