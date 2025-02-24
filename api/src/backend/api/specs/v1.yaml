@@ -265,6 +265,83 @@ paths:
           basis by including a fields[TYPE] query parameter.
         explode: false
       - in: query
+        name: filter[check_id]
+        schema:
+          type: string
+      - in: query
+        name: filter[check_id__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[check_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[delta]
+        schema:
+          type: string
+          nullable: true
+          enum:
+          - changed
+          - new
+        description: |-
+          * `new` - New
+          * `changed` - Changed
+      - in: query
+        name: filter[delta__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[impact]
+        schema:
+          type: string
+          enum:
+          - critical
+          - high
+          - informational
+          - low
+          - medium
+        description: |-
+          * `critical` - Critical
+          * `high` - High
+          * `medium` - Medium
+          * `low` - Low
+          * `informational` - Informational
+      - in: query
+        name: filter[impact__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[inserted_at]
         schema:
           type: string
@@ -272,12 +349,298 @@ paths:
         description: At least one of the variations of the `filter[inserted_at]` filter
           must be provided.
         required: true
+      - in: query
+        name: filter[inserted_at__date]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__gte]
+        schema:
+          type: string
+          format: date
+        description: Maximum date range is 7 days.
+      - in: query
+        name: filter[inserted_at__lte]
+        schema:
+          type: string
+          format: date
+        description: Maximum date range is 7 days.
+      - in: query
+        name: filter[provider]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_alias]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          enum:
+          - aws
+          - azure
+          - gcp
+          - kubernetes
+        description: |-
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - aws
+            - azure
+            - gcp
+            - kubernetes
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[region]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_name]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_name__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_name__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_type]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_type__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_uid__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_uid__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resources]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[scan]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[scan__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - name: filter[search]
         required: false
         in: query
         description: A search term.
         schema:
           type: string
+      - in: query
+        name: filter[service]
+        schema:
+          type: string
+      - in: query
+        name: filter[service__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[service__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[severity]
+        schema:
+          type: string
+          enum:
+          - critical
+          - high
+          - informational
+          - low
+          - medium
+        description: |-
+          * `critical` - Critical
+          * `high` - High
+          * `medium` - Medium
+          * `low` - Low
+          * `informational` - Informational
+      - in: query
+        name: filter[severity__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[status]
+        schema:
+          type: string
+          enum:
+          - FAIL
+          - MANUAL
+          - MUTED
+          - PASS
+        description: |-
+          * `FAIL` - Fail
+          * `PASS` - Pass
+          * `MANUAL` - Manual
+          * `MUTED` - Muted
+      - in: query
+        name: filter[status__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[uid__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[updated_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[updated_at__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[updated_at__lte]
+        schema:
+          type: string
+          format: date-time
       - in: query
         name: include
         schema:
@@ -367,6 +730,8 @@ paths:
         name: id
         schema:
           type: string
+          format: uuid
+        description: A UUID string identifying this finding.
         required: true
       - in: query
         name: include
@@ -409,12 +774,380 @@ paths:
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
+      - in: query
+        name: filter[check_id]
+        schema:
+          type: string
+      - in: query
+        name: filter[check_id__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[check_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[delta]
+        schema:
+          type: string
+          nullable: true
+          enum:
+          - changed
+          - new
+        description: |-
+          * `new` - New
+          * `changed` - Changed
+      - in: query
+        name: filter[delta__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[impact]
+        schema:
+          type: string
+          enum:
+          - critical
+          - high
+          - informational
+          - low
+          - medium
+        description: |-
+          * `critical` - Critical
+          * `high` - High
+          * `medium` - Medium
+          * `low` - Low
+          * `informational` - Informational
+      - in: query
+        name: filter[impact__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[inserted_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__date]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__gte]
+        schema:
+          type: string
+          format: date
+        description: Maximum date range is 7 days.
+      - in: query
+        name: filter[inserted_at__lte]
+        schema:
+          type: string
+          format: date
+        description: Maximum date range is 7 days.
+      - in: query
+        name: filter[provider]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_alias]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          enum:
+          - aws
+          - azure
+          - gcp
+          - kubernetes
+        description: |-
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - aws
+            - azure
+            - gcp
+            - kubernetes
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[region]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_name]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_name__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_name__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_type]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_type__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_uid__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_uid__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resources]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[scan]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[scan__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - name: filter[search]
         required: false
         in: query
         description: A search term.
         schema:
           type: string
+      - in: query
+        name: filter[service]
+        schema:
+          type: string
+      - in: query
+        name: filter[service__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[service__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[severity]
+        schema:
+          type: string
+          enum:
+          - critical
+          - high
+          - informational
+          - low
+          - medium
+        description: |-
+          * `critical` - Critical
+          * `high` - High
+          * `medium` - Medium
+          * `low` - Low
+          * `informational` - Informational
+      - in: query
+        name: filter[severity__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[status]
+        schema:
+          type: string
+          enum:
+          - FAIL
+          - MANUAL
+          - MUTED
+          - PASS
+        description: |-
+          * `FAIL` - Fail
+          * `PASS` - Pass
+          * `MANUAL` - Manual
+          * `MUTED` - Muted
+      - in: query
+        name: filter[status__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[uid__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[updated_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[updated_at__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[updated_at__lte]
+        schema:
+          type: string
+          format: date-time
       - name: sort
         required: false
         in: query
@@ -468,6 +1201,83 @@ paths:
           basis by including a fields[TYPE] query parameter.
         explode: false
       - in: query
+        name: filter[check_id]
+        schema:
+          type: string
+      - in: query
+        name: filter[check_id__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[check_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[delta]
+        schema:
+          type: string
+          nullable: true
+          enum:
+          - changed
+          - new
+        description: |-
+          * `new` - New
+          * `changed` - Changed
+      - in: query
+        name: filter[delta__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[impact]
+        schema:
+          type: string
+          enum:
+          - critical
+          - high
+          - informational
+          - low
+          - medium
+        description: |-
+          * `critical` - Critical
+          * `high` - High
+          * `medium` - Medium
+          * `low` - Low
+          * `informational` - Informational
+      - in: query
+        name: filter[impact__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[inserted_at]
         schema:
           type: string
@@ -475,12 +1285,298 @@ paths:
         description: At least one of the variations of the `filter[inserted_at]` filter
           must be provided.
         required: true
+      - in: query
+        name: filter[inserted_at__date]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__gte]
+        schema:
+          type: string
+          format: date
+        description: Maximum date range is 7 days.
+      - in: query
+        name: filter[inserted_at__lte]
+        schema:
+          type: string
+          format: date
+        description: Maximum date range is 7 days.
+      - in: query
+        name: filter[provider]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_alias]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          enum:
+          - aws
+          - azure
+          - gcp
+          - kubernetes
+        description: |-
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - aws
+            - azure
+            - gcp
+            - kubernetes
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[region]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_name]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_name__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_name__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_type]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_type__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_uid__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_uid__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resources]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[scan]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[scan__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - name: filter[search]
         required: false
         in: query
         description: A search term.
         schema:
           type: string
+      - in: query
+        name: filter[service]
+        schema:
+          type: string
+      - in: query
+        name: filter[service__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[service__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[severity]
+        schema:
+          type: string
+          enum:
+          - critical
+          - high
+          - informational
+          - low
+          - medium
+        description: |-
+          * `critical` - Critical
+          * `high` - High
+          * `medium` - Medium
+          * `low` - Low
+          * `informational` - Informational
+      - in: query
+        name: filter[severity__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[status]
+        schema:
+          type: string
+          enum:
+          - FAIL
+          - MANUAL
+          - MUTED
+          - PASS
+        description: |-
+          * `FAIL` - Fail
+          * `PASS` - Pass
+          * `MANUAL` - Manual
+          * `MUTED` - Muted
+      - in: query
+        name: filter[status__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[uid__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[updated_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[updated_at__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[updated_at__lte]
+        schema:
+          type: string
+          format: date-time
       - name: sort
         required: false
         in: query

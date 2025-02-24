@@ -1401,6 +1401,7 @@ class ResourceViewSet(BaseRLSViewSet):
 @method_decorator(CACHE_DECORATOR, name="list")
 @method_decorator(CACHE_DECORATOR, name="retrieve")
 class FindingViewSet(BaseRLSViewSet):
+    queryset = Finding.all_objects.all()
     serializer_class = FindingSerializer
     filterset_class = FindingFilter
     http_method_names = ["get"]
