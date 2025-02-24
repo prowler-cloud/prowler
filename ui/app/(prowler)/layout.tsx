@@ -1,7 +1,7 @@
 import "@/styles/globals.css";
 
 import { Metadata, Viewport } from "next";
-import React, { use } from "react";
+import React, { Suspense, use } from "react";
 
 import { getProfileInfo } from "@/actions/users/users";
 import MainLayout from "@/components/ui/main-layout/main-layout";
@@ -11,6 +11,7 @@ import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
 
 import { Providers } from "../providers";
+import { SkeletonMainLayout } from "@/components/ui/main-layout/skeleton-main-layout";
 
 export const metadata: Metadata = {
   title: {
@@ -48,7 +49,9 @@ export default function RootLayout({
         )}
       >
         <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
-          <MainLayout user={user}>{children}</MainLayout>
+          <Suspense fallback={<SkeletonMainLayout />}>
+            <MainLayout user={user}>{children}</MainLayout>
+          </Suspense>
           <Toaster />
         </Providers>
       </body>

@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 
 import { Button } from "../button/button";
 import { CustomButton } from "../custom/custom-button";
+import { logOut } from "@/actions/auth";
 
 interface MenuProps {
   isOpen: boolean | undefined;
@@ -147,7 +148,7 @@ export function Menu({ isOpen }: MenuProps) {
           <Tooltip delayDuration={100}>
             <TooltipTrigger asChild>
               <Button
-                onClick={() => {}}
+                onClick={() => logOut()}
                 variant="outline"
                 className="mt-5 h-10 w-full justify-center"
               >

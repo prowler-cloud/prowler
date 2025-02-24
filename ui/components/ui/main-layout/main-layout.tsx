@@ -18,7 +18,6 @@ export default function MainLayout({
   const { getOpenState, settings } = sidebar;
   return (
     <div className="flex h-dvh items-center justify-center overflow-hidden">
-      {/* <SidebarWrap user={user} /> */}
       <Sidebar />
       <main
         className={cn(
