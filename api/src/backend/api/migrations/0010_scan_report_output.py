@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name="scan",
-            name="output_path",
+            name="output_location",
             field=models.CharField(blank=True, max_length=200, null=True),
         ),
     ]

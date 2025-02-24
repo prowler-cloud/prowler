@@ -263,12 +263,12 @@ def generate_outputs(scan_id: str, provider_id: str, tenant_id: str):
         output_directory = uploaded
         uploaded = True
         # Remove the local files after upload
-        rmtree(DJANGO_TMP_OUTPUT_DIRECTORY)
+        rmtree(DJANGO_TMP_OUTPUT_DIRECTORY, ignore_errors=True)
     else:
         uploaded = False
 
     # Update the scan instance with the output path
-    Scan.all_objects.filter(id=scan_id).update(output_path=output_directory)
+    Scan.all_objects.filter(id=scan_id).update(output_location=output_directory)
 
     logger.info(f"Scan output files generated, output location: {output_directory}")
 

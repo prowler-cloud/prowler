@@ -1199,9 +1199,9 @@ class ScanViewSet(BaseRLSViewSet):
             200: OpenApiResponse(description="Report obtained successfully"),
             202: OpenApiResponse(description="The task is in progress"),
             403: OpenApiResponse(
-                description="There is a problem with the AWS credentials"
+                description="There is a problem with credentials"
             ),
-            404: OpenApiResponse(description="The scan has not generated reports"),
+            404: OpenApiResponse(description="The scan has no reports"),
         },
     )
     @action(detail=True, methods=["get"], url_name="report")
@@ -1242,29 +1242,41 @@ class ScanViewSet(BaseRLSViewSet):
             # If the task does not exist, it means that the task is removed from the database
             pass
 
-        output_path = scan_instance.output_path
-        if not output_path:
+        output_location = scan_instance.output_location
+        if not output_location:
             return Response(
-                {"detail": "The scan has not generated reports."},
+                {"detail": "The scan has no reports."},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        if scan_instance.output_path.startswith("s3://"):
+        if scan_instance.output_location.startswith("s3://"):
             try:
                 s3_client = get_s3_client()
             except (ClientError, NoCredentialsError, ParamValidationError):
                 return Response(
-                    {"detail": "There is a problem with the AWS credentials."},
+                    {"detail": "There is a problem with credentials."},
                     status=status.HTTP_403_FORBIDDEN,
                 )
 
-            bucket_name = env.str("DJANGO_OUTPUT_AWS_S3_OUTPUT_BUCKET")
-            key = output_path[len(f"s3://{bucket_name}/") :]
-            s3_object = s3_client.get_object(Bucket=bucket_name, Key=key)
+            bucket_name = env.str("DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET")
+            key = output_location[len(f"s3://{bucket_name}/") :]
+            try:
+                s3_object = s3_client.get_object(Bucket=bucket_name, Key=key)
+            except ClientError as e:
+                error_code = e.response.get("Error", {}).get("Code")
+                if error_code == "NoSuchKey":
+                    return Response(
+                        {"detail": "The scan has no reports."},
+                        status=status.HTTP_404_NOT_FOUND,
+                    )
+                return Response(
+                    {"detail": "There is a problem with credentials."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
             file_content = s3_object["Body"].read()
-            filename = os.path.basename(output_path.split("/")[-1])
+            filename = os.path.basename(output_location.split("/")[-1])
         else:
-            zip_files = glob.glob(output_path)
+            zip_files = glob.glob(output_location)
             file_path = zip_files[0]
             with open(file_path, "rb") as f:
                 file_content = f.read()
@@ -1288,7 +1300,7 @@ class ScanViewSet(BaseRLSViewSet):
                     "scan_id": str(scan.id),
                     "provider_id": str(scan.provider_id),
                     # Disabled for now
-                    # checks_to_execute=scan.scanner_args.get("checks_to_execute"),
+                    "checks_to_execute": ["accessanalyzer_enabled"],
                 },
             )
 

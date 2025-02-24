@@ -414,7 +414,7 @@ class Scan(RowLevelSecurityProtectedModel):
     scheduler_task = models.ForeignKey(
         PeriodicTask, on_delete=models.CASCADE, null=True, blank=True
     )
-    output_path = models.CharField(blank=True, null=True, max_length=200)
+    output_location = models.CharField(blank=True, null=True, max_length=200)
     # TODO: mutelist foreign key
 
     class Meta(RowLevelSecurityProtectedModel.Meta):

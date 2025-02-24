@@ -2193,7 +2193,7 @@ class TestScanViewSet:
         """
         scan = scans_fixture[0]
         scan.state = StateChoices.COMPLETED
-        scan.output_path = "dummy"
+        scan.output_location = "dummy"
         scan.save()
 
         dummy_task = Task.objects.create(tenant_id=scan.tenant_id)
@@ -2210,13 +2210,13 @@ class TestScanViewSet:
             assert "Content-Location" in response
             assert dummy_task_data["id"] in response["Content-Location"]
 
-    def test_report_no_output_path(self, authenticated_client, scans_fixture):
+    def test_report_no_output_location(self, authenticated_client, scans_fixture):
         """
-        If the scan does not have an output_path, the view should return a 404.
+        If the scan does not have an output_location, the view should return a 404.
         """
         scan = scans_fixture[0]
         scan.state = StateChoices.COMPLETED
-        scan.output_path = ""
+        scan.output_location = ""
         scan.save()
 
         url = reverse("scan-report", kwargs={"pk": scan.id})
@@ -2230,13 +2230,13 @@ class TestScanViewSet:
         self, authenticated_client, scans_fixture, monkeypatch
     ):
         """
-        When output_path is an S3 URL and get_s3_client() raises a credentials exception,
+        When output_location is an S3 URL and get_s3_client() raises a credentials exception,
         the view should return HTTP 403 with the proper error message.
         """
         scan = scans_fixture[0]
         bucket = "test-bucket"
         key = "report.zip"
-        scan.output_path = f"s3://{bucket}/{key}"
+        scan.output_location = f"s3://{bucket}/{key}"
         scan.state = StateChoices.COMPLETED
         scan.save()
 
@@ -2250,18 +2250,18 @@ class TestScanViewSet:
         assert response.status_code == status.HTTP_403_FORBIDDEN
         assert (
             response.json()["errors"]["detail"]
-            == "There is a problem with the AWS credentials."
+            == "There is a problem with credentials."
         )
 
     def test_report_s3_success(self, authenticated_client, scans_fixture, monkeypatch):
         """
-        When output_path is an S3 URL and the S3 client returns the file successfully,
+        When output_location is an S3 URL and the S3 client returns the file successfully,
         the view should return the ZIP file with HTTP 200 and proper headers.
         """
         scan = scans_fixture[0]
         bucket = "test-bucket"
         key = "report.zip"
-        scan.output_path = f"s3://{bucket}/{key}"
+        scan.output_location = f"s3://{bucket}/{key}"
         scan.state = StateChoices.COMPLETED
         scan.save()
 
@@ -2290,7 +2290,7 @@ class TestScanViewSet:
         self, authenticated_client, scans_fixture, tmp_path, monkeypatch
     ):
         """
-        When output_path is a local file path, the view should read the file from disk
+        When output_location is a local file path, the view should read the file from disk
         and return it with proper headers.
         """
         scan = scans_fixture[0]
@@ -2298,7 +2298,7 @@ class TestScanViewSet:
         file_path = tmp_path / "report.zip"
         file_path.write_bytes(file_content)
 
-        scan.output_path = str(file_path)
+        scan.output_location = str(file_path)
         scan.state = StateChoices.COMPLETED
         scan.save()
 

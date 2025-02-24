@@ -2,7 +2,6 @@ from datetime import datetime
 from types import SimpleNamespace
 from typing import Optional, Union
 
-from django.forms.models import model_to_dict
 from pydantic import BaseModel, Field, ValidationError
 
 from prowler.config.config import prowler_version
@@ -303,8 +302,10 @@ class Finding(BaseModel):
         finding.resource_arn = resource.uid
         finding.resource_name = resource.name
 
-        finding.resource = model_to_dict(resource)
-        finding.resource_id = resource.uid
+        # TODO: Change this when the API has all the values
+        finding.resource = {}
+
+        finding.resource_id = resource.name if provider.type == "aws" else resource.uid
         finding.region = resource.region
         finding.check_metadata = CheckMetadata(
             Provider=finding.check_metadata["provider"],
