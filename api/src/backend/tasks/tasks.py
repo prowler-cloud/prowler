@@ -28,7 +28,7 @@ def check_provider_connection_task(provider_id: str):
     return check_provider_connection(provider_id=provider_id)
 
 
-@shared_task(base=RLSTask, name="provider-deletion")
+@shared_task(base=RLSTask, name="provider-deletion", queue="deletion")
 @set_tenant
 def delete_provider_task(provider_id: str):
     """
@@ -149,6 +149,6 @@ def perform_scan_summary_task(tenant_id: str, scan_id: str):
     return aggregate_findings(tenant_id=tenant_id, scan_id=scan_id)
 
 
-@shared_task(name="tenant-deletion")
+@shared_task(name="tenant-deletion", queue="deletion")
 def delete_tenant_task(tenant_id: str):
     return delete_tenant(pk=tenant_id)
