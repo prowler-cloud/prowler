@@ -1,4 +1,4 @@
-from prowler.lib.check.models import Check, Check_Report_Microsoft365
+from prowler.lib.check.models import Check, CheckReportMicrosoft365
 from prowler.providers.microsoft365.services.entra.entra_client import entra_client
 from prowler.providers.microsoft365.services.entra.entra_service import (
     ConditionalAccessPolicyState,
@@ -12,17 +12,19 @@ class entra_admin_users_sign_in_frequency_enabled(Check):
     and that persistent browser session settings are correctly configured.
     """
 
-    def execute(self) -> list[Check_Report_Microsoft365]:
+    def execute(self) -> list[CheckReportMicrosoft365]:
         """Execute the check to validate sign-in frequency enforcement for admin users.
 
         Returns:
-            list[Check_Report_Microsoft365]: A list containing the results of the check.
+            list[CheckReportMicrosoft365]: A list containing the results of the check.
         """
         findings = []
 
-        report = Check_Report_Microsoft365(
+        report = CheckReportMicrosoft365(
             metadata=self.metadata(),
             resource=entra_client.conditional_access_policies,
+            resource_name="Conditional Access Policies",
+            resource_id="conditionalAccessPolicies",
         )
         report.status = "FAIL"
         report.status_extended = (
@@ -72,6 +74,12 @@ class entra_admin_users_sign_in_frequency_enabled(Check):
                 and policy.session_controls.persistent_browser.is_enabled
                 and policy.session_controls.persistent_browser.mode == "never"
             ):
+                report = CheckReportMicrosoft365(
+                    metadata=self.metadata(),
+                    resource=entra_client.conditional_access_policies,
+                    resource_name=policy.display_name,
+                    resource_id=policy.id,
+                )
                 report.status = "PASS"
                 report.status_extended = f"Conditional Access policy {policy.display_name} enforces sign-in frequency for admin users."
                 break
