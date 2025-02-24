@@ -11,7 +11,7 @@ export default function MainLayout({
   user,
 }: {
   children: React.ReactNode;
-  user: UserProfileProps;
+  user?: UserProfileProps;
 }) {
   const sidebar = useStore(useSidebar, (x) => x);
   if (!sidebar) return null;

@@ -1,9 +1,8 @@
 import "@/styles/globals.css";
 
 import { Metadata, Viewport } from "next";
-import React, { Suspense, use } from "react";
+import React from "react";
 
-import { getProfileInfo } from "@/actions/users/users";
 import MainLayout from "@/components/ui/main-layout/main-layout";
 import { Toaster } from "@/components/ui/toast";
 import { fontSans } from "@/config/fonts";
@@ -11,7 +10,6 @@ import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
 
 import { Providers } from "../providers";
-import { SkeletonMainLayout } from "@/components/ui/main-layout/skeleton-main-layout";
 
 export const metadata: Metadata = {
   title: {
@@ -36,8 +34,6 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const user = use(getProfileInfo());
-
   return (
     <html suppressHydrationWarning lang="en">
       <head />
@@ -49,9 +45,7 @@ export default function RootLayout({
         )}
       >
         <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
-          <Suspense fallback={<SkeletonMainLayout />}>
-            <MainLayout user={user}>{children}</MainLayout>
-          </Suspense>
+          <MainLayout>{children}</MainLayout>
           <Toaster />
         </Providers>
       </body>

@@ -25,8 +25,12 @@ import {
 } from "@/components/ui/tooltip/tooltip";
 
 import { Button } from "../button/button";
+import { UserProfileProps } from "@/types";
 
-export function UserNav() {
+export function UserNav({ user }: { user: UserProfileProps }) {
+  const { data } = user;
+  const { name, email, company_name } = data.attributes;
+
   return (
     <DropdownMenu>
       <TooltipProvider disableHoverableContent>
@@ -39,7 +43,14 @@ export function UserNav() {
               >
                 <Avatar className="h-8 w-8">
                   <AvatarImage src="#" alt="Avatar" />
-                  <AvatarFallback className="bg-transparent">LC</AvatarFallback>
+                  <AvatarFallback className="bg-transparent text-xs font-bold">
+                    {name.includes(" ")
+                      ? name
+                          .split(" ")
+                          .map((word) => word.charAt(0))
+                          .join("")
+                      : name.charAt(0)}
+                  </AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
@@ -51,9 +62,14 @@ export function UserNav() {
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-small font-medium leading-none">Pablo Lara</p>
+            <p className="text-small font-medium leading-none">
+              {name}
+              {company_name && (
+                <span className="text-xs">{` | ${company_name}`}</span>
+              )}
+            </p>
             <p className="text-muted-foreground text-xs leading-none">
-              pablo@prowler.com
+              {email}
             </p>
           </div>
         </DropdownMenuLabel>
