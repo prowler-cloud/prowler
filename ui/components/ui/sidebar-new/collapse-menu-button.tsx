@@ -33,6 +33,7 @@ type Submenu = {
   href: string;
   label: string;
   active?: boolean;
+  icon: LucideIcon;
 };
 
 interface CollapseMenuButtonProps {
@@ -73,7 +74,7 @@ export function CollapseMenuButton({
       >
         <Button
           variant={isSubmenuActive ? "secondary" : "ghost"}
-          className="mb-1 h-10 w-full justify-start"
+          className="mb-1 h-7 w-full justify-start"
         >
           <div className="flex w-full items-center justify-between">
             <div className="flex items-center">
@@ -108,7 +109,7 @@ export function CollapseMenuButton({
         </Button>
       </CollapsibleTrigger>
       <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden">
-        {submenus.map(({ href, label, active }, index) => (
+        {submenus.map(({ href, label, active, icon: SubIcon }, index) => (
           <Button
             key={index}
             variant={
@@ -116,13 +117,17 @@ export function CollapseMenuButton({
                 ? "secondary"
                 : "ghost"
             }
-            className="ml-4 h-9 w-full justify-start"
+            className="ml-4 h-8 w-full justify-start"
             asChild
           >
-            <Link href={href}>
+            <Link href={href} className="flex items-center">
+              <div className="mr-4 h-full border-l border-default-200"></div>
+              <span className="mr-2">
+                <SubIcon size={16} />
+              </span>
               <p
                 className={cn(
-                  "max-w-[170px] truncate border-l border-default-200 pl-4",
+                  "max-w-[170px] truncate",
                   isOpen
                     ? "translate-x-0 opacity-100"
                     : "-translate-x-96 opacity-0",
@@ -173,15 +178,16 @@ export function CollapseMenuButton({
           {label}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {submenus.map(({ href, label, active }, index) => (
+        {submenus.map(({ href, label, active, icon: SubIcon }, index) => (
           <DropdownMenuItem key={index} asChild>
             <Link
-              className={`cursor-pointer ${
+              className={`flex cursor-pointer items-center gap-2 ${
                 ((active === undefined && pathname === href) || active) &&
                 "bg-secondary"
               }`}
               href={href}
             >
+              <SubIcon size={16} />
               <p className="max-w-[180px] truncate">{label}</p>
             </Link>
           </DropdownMenuItem>

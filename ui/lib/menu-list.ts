@@ -6,12 +6,26 @@ import {
   SquarePen,
   Tag,
   Users,
+  ShieldCheck,
+  AlertCircle,
+  Cloud,
+  Database,
+  Server,
+  Boxes,
+  CloudCog,
+  Group,
+  Timer,
+  UserCog,
+  User,
+  Mail,
+  SquareChartGantt,
 } from "lucide-react";
 
 type Submenu = {
   href: string;
   label: string;
   active?: boolean;
+  icon: LucideIcon;
 };
 
 type Menu = {
@@ -38,8 +52,8 @@ export function getMenuList(pathname: string): Group[] {
           label: "Analytics",
           icon: LayoutGrid,
           submenus: [
-            { href: "/", label: "Overview" },
-            { href: "/compliance", label: "Compliance" },
+            { href: "/", label: "Overview", icon: SquareChartGantt },
+            { href: "/compliance", label: "Compliance", icon: ShieldCheck },
           ],
           defaultOpen: true,
         },
@@ -57,10 +71,12 @@ export function getMenuList(pathname: string): Group[] {
             {
               href: "/findings?filter[status__in]=FAIL&sort=severity,-inserted_at",
               label: "Misconfigurations",
+              icon: AlertCircle,
             },
             {
               href: "/findings?filter[status__in]=FAIL&filter[severity__in]=critical%2Chigh%2Cmedium&filter[provider_type__in]=aws%2Cazure%2Cgcp%2Ckubernetes&filter[service__in]=iam%2Crbac&sort=-inserted_at",
               label: "IAM Issues",
+              icon: ShieldCheck,
             },
           ],
           defaultOpen: false,
@@ -73,18 +89,22 @@ export function getMenuList(pathname: string): Group[] {
             {
               href: "/findings?filter[status__in]=FAIL&filter[severity__in]=critical%2Chigh%2Cmedium&filter[provider_type__in]=aws&sort=severity,-inserted_at",
               label: "Amazon Web Services",
+              icon: Cloud,
             },
             {
               href: "/findings?filter[status__in]=FAIL&filter[severity__in]=critical%2Chigh%2Cmedium&filter[provider_type__in]=azure&sort=severity,-inserted_at",
               label: "Microsoft Azure",
+              icon: Database,
             },
             {
               href: "/findings?filter[status__in]=FAIL&filter[severity__in]=critical%2Chigh%2Cmedium&filter[provider_type__in]=gcp&sort=severity,-inserted_at",
               label: "Google Cloud",
+              icon: Server,
             },
             {
               href: "/findings?filter[status__in]=FAIL&filter[severity__in]=critical%2Chigh%2Cmedium&filter[provider_type__in]=kubernetes&sort=severity,-inserted_at",
               label: "Kubernetes",
+              icon: Boxes,
             },
           ],
           defaultOpen: false,
@@ -98,32 +118,32 @@ export function getMenuList(pathname: string): Group[] {
     },
 
     {
-      groupLabel: "",
+      groupLabel: "Settings",
       menus: [
         {
           href: "",
-          label: "Settings",
+          label: "Configuration",
           icon: Settings,
           submenus: [
-            { href: "/providers", label: "Cloud Providers" },
-            { href: "/manage-groups", label: "Provider Groups" },
-            { href: "/scans", label: "Scan Jobs" },
-            { href: "/roles", label: "Roles" },
+            { href: "/providers", label: "Cloud Providers", icon: CloudCog },
+            { href: "/manage-groups", label: "Provider Groups", icon: Group },
+            { href: "/scans", label: "Scan Jobs", icon: Timer },
+            { href: "/roles", label: "Roles", icon: UserCog },
           ],
           defaultOpen: true,
         },
       ],
     },
     {
-      groupLabel: "Memberships",
+      groupLabel: "Workspace",
       menus: [
         {
           href: "",
           label: "Memberships",
           icon: Users,
           submenus: [
-            { href: "/users", label: "Users" },
-            { href: "/invitations", label: "Invitations" },
+            { href: "/users", label: "Users", icon: User },
+            { href: "/invitations", label: "Invitations", icon: Mail },
           ],
           defaultOpen: false,
         },

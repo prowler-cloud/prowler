@@ -43,7 +43,7 @@ export function Sidebar() {
           <Link
             href="/"
             className={clsx(
-              "mb-10 flex w-full flex-col items-center justify-center gap-y-8 px-3",
+              "mb-6 flex w-full flex-col items-center justify-center px-3",
               {
                 "gap-0": !isOpen,
               },
