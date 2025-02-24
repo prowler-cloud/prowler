@@ -16,11 +16,7 @@ class keyvault_rbac_key_expiration_set(Check):
                     report.status_extended = f"Keyvault {keyvault.name} from subscription {subscription} has all the keys with expiration date set."
                     has_key_without_expiration = False
                     for key in keyvault.keys:
-                        if (
-                            key.attributes
-                            and not key.attributes.expires
-                            and key.enabled
-                        ):
+                        if not key.attributes.expires and key.enabled:
                             report.status = "FAIL"
                             report.status_extended = f"Keyvault {keyvault.name} from subscription {subscription} has the key {key.name} without expiration date set."
                             has_key_without_expiration = True

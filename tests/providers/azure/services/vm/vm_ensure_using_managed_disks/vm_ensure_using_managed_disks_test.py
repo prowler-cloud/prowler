@@ -63,6 +63,7 @@ class Test_vm_ensure_using_managed_disks:
                             v_tpm_enabled=True,
                         ),
                     ),
+                    extensions=[],
                     storage_profile=mock.MagicMock(
                         os_disk=mock.MagicMock(
                             create_option="FromImage",
@@ -114,6 +115,7 @@ class Test_vm_ensure_using_managed_disks:
                             v_tpm_enabled=True,
                         ),
                     ),
+                    extensions=[],
                     storage_profile=mock.MagicMock(
                         os_disk=mock.MagicMock(
                             create_option="FromImage",
@@ -165,6 +167,7 @@ class Test_vm_ensure_using_managed_disks:
                             v_tpm_enabled=True,
                         ),
                     ),
+                    extensions=[],
                     storage_profile=mock.MagicMock(
                         os_disk=mock.MagicMock(
                             create_option="FromImage",
