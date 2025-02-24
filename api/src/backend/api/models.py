@@ -552,6 +552,10 @@ class Resource(RowLevelSecurityProtectedModel):
                 fields=["uid", "region", "service", "name"],
                 name="resource_uid_reg_serv_name_idx",
             ),
+            models.Index(
+                fields=["tenant_id", "service", "region", "type"],
+                name="resource_tenant_metadata_idx",
+            ),
             GinIndex(fields=["text_search"], name="gin_resources_search_idx"),
         ]
 
