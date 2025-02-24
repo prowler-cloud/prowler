@@ -1,15 +1,25 @@
 from datetime import datetime, timezone
 
+from allauth.socialaccount.providers.oauth2.client import OAuth2Client
+from rest_framework.exceptions import NotFound, ValidationError
+
+from api.db_router import MainRouter
+from api.exceptions import InvitationTokenExpiredException
+from api.models import Invitation, Provider
 from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.common.models import Connection
 from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
-from rest_framework.exceptions import ValidationError, NotFound
 
-from api.db_router import MainRouter
-from api.exceptions import InvitationTokenExpiredException
-from api.models import Provider, Invitation
+
+class CustomOAuth2Client(OAuth2Client):
+    def __init__(self, client_id, secret, *args, **kwargs):
+        # Remove any duplicate "scope_delimiter" from kwargs
+        # Bug present in dj-rest-auth after version v7.0.1
+        # https://github.com/iMerica/dj-rest-auth/issues/673
+        kwargs.pop("scope_delimiter", None)
+        super().__init__(client_id, secret, *args, **kwargs)
 
 
 def merge_dicts(default_dict: dict, replacement_dict: dict) -> dict:
