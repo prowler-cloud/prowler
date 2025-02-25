@@ -93,7 +93,7 @@
           "name": "accessanalyzer"
         },
         "labels": [],
-        "name": "a<resource_name>",
+        "name": "<resource_name>",
         "type": "Other",
         "uid": "<resource_uid>"
       }
