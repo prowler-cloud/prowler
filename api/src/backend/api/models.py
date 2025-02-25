@@ -553,6 +553,10 @@ class Resource(RowLevelSecurityProtectedModel):
                 fields=["uid", "region", "service", "name"],
                 name="resource_uid_reg_serv_name_idx",
             ),
+            models.Index(
+                fields=["tenant_id", "service", "region", "type"],
+                name="resource_tenant_metadata_idx",
+            ),
             GinIndex(fields=["text_search"], name="gin_resources_search_idx"),
         ]
 
@@ -597,6 +601,12 @@ class ResourceTagMapping(RowLevelSecurityProtectedModel):
                 field="tenant_id",
                 name="rls_on_%(class)s",
                 statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+        indexes = [
+            models.Index(
+                fields=["tenant_id", "resource_id"], name="resource_tag_tenant_idx"
             ),
         ]
 
@@ -698,7 +708,17 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
                 ],
                 name="findings_filter_idx",
             ),
+            models.Index(fields=["tenant_id", "id"], name="findings_tenant_and_id_idx"),
             GinIndex(fields=["text_search"], name="gin_findings_search_idx"),
+            models.Index(fields=["tenant_id", "scan_id"], name="find_tenant_scan_idx"),
+            models.Index(
+                fields=["tenant_id", "scan_id", "id"], name="find_tenant_scan_id_idx"
+            ),
+            models.Index(
+                fields=["tenant_id", "id"],
+                condition=Q(delta="new"),
+                name="find_delta_new_idx",
+            ),
         ]
 
     class JSONAPIMeta:

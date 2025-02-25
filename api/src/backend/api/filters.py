@@ -447,9 +447,7 @@ class FindingFilter(FilterSet):
             )
 
         return (
-            queryset.filter(id__gte=start)
-            .filter(id__lt=end)
-            .filter(scan__id=value_uuid)
+            queryset.filter(id__gte=start).filter(id__lt=end).filter(scan_id=value_uuid)
         )
 
     def filter_scan_id_in(self, queryset, name, value):
@@ -474,31 +472,32 @@ class FindingFilter(FilterSet):
                 ]
             )
         if start == end:
-            return queryset.filter(id__gte=start).filter(scan__id__in=uuid_list)
+            return queryset.filter(id__gte=start).filter(scan_id__in=uuid_list)
         else:
             return (
                 queryset.filter(id__gte=start)
                 .filter(id__lt=end)
-                .filter(scan__id__in=uuid_list)
+                .filter(scan_id__in=uuid_list)
             )
 
     def filter_inserted_at(self, queryset, name, value):
-        value = self.maybe_date_to_datetime(value)
-        start = uuid7_start(datetime_to_uuid7(value))
+        datetime_value = self.maybe_date_to_datetime(value)
+        start = uuid7_start(datetime_to_uuid7(datetime_value))
+        end = uuid7_start(datetime_to_uuid7(datetime_value + timedelta(days=1)))
 
-        return queryset.filter(id__gte=start).filter(inserted_at__date=value)
+        return queryset.filter(id__gte=start, id__lt=end)
 
     def filter_inserted_at_gte(self, queryset, name, value):
-        value = self.maybe_date_to_datetime(value)
-        start = uuid7_start(datetime_to_uuid7(value))
+        datetime_value = self.maybe_date_to_datetime(value)
+        start = uuid7_start(datetime_to_uuid7(datetime_value))
 
-        return queryset.filter(id__gte=start).filter(inserted_at__gte=value)
+        return queryset.filter(id__gte=start)
 
     def filter_inserted_at_lte(self, queryset, name, value):
-        value = self.maybe_date_to_datetime(value)
-        end = uuid7_start(datetime_to_uuid7(value))
+        datetime_value = self.maybe_date_to_datetime(value)
+        end = uuid7_start(datetime_to_uuid7(datetime_value + timedelta(days=1)))
 
-        return queryset.filter(id__lte=end).filter(inserted_at__lte=value)
+        return queryset.filter(id__lt=end)
 
     def filter_resource_tag(self, queryset, name, value):
         overall_query = Q()

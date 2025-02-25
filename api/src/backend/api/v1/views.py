@@ -15,7 +15,7 @@ from django.conf import settings as django_settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.search import SearchQuery
 from django.db import transaction
-from django.db.models import Count, F, OuterRef, Prefetch, Q, Subquery, Sum
+from django.db.models import Count, Exists, F, OuterRef, Prefetch, Q, Subquery, Sum
 from django.db.models.functions import Coalesce
 from django.http import HttpResponse
 from django.urls import reverse
@@ -81,6 +81,7 @@ from api.models import (
     ProviderGroupMembership,
     ProviderSecret,
     Resource,
+    ResourceFindingMapping,
     Role,
     RoleProviderGroupRelationship,
     Scan,
@@ -95,7 +96,6 @@ from api.pagination import ComplianceOverviewPagination
 from api.rbac.permissions import Permissions, get_providers, get_role
 from api.rls import Tenant
 from api.utils import CustomOAuth2Client, validate_invitation
-from api.uuid_utils import datetime_to_uuid7
 from api.v1.serializers import (
     ComplianceOverviewFullSerializer,
     ComplianceOverviewSerializer,
@@ -1502,17 +1502,10 @@ class ResourceViewSet(BaseRLSViewSet):
 @method_decorator(CACHE_DECORATOR, name="list")
 @method_decorator(CACHE_DECORATOR, name="retrieve")
 class FindingViewSet(BaseRLSViewSet):
-    queryset = Finding.objects.all()
+    queryset = Finding.all_objects.all()
     serializer_class = FindingSerializer
-    prefetch_for_includes = {
-        "__all__": [],
-        "resources": [
-            Prefetch("resources", queryset=Resource.objects.select_related("findings"))
-        ],
-        "scan": [Prefetch("scan", queryset=Scan.objects.select_related("findings"))],
-    }
-    http_method_names = ["get"]
     filterset_class = FindingFilter
+    http_method_names = ["get"]
     ordering = ["-inserted_at"]
     ordering_fields = [
         "status",
@@ -1521,6 +1514,18 @@ class FindingViewSet(BaseRLSViewSet):
         "inserted_at",
         "updated_at",
     ]
+    prefetch_for_includes = {
+        "__all__": [],
+        "resources": [
+            Prefetch(
+                "resources",
+                queryset=Resource.all_objects.prefetch_related("tags", "findings"),
+            )
+        ],
+        "scan": [
+            Prefetch("scan", queryset=Scan.all_objects.select_related("findings"))
+        ],
+    }
     # RBAC required permissions (implicit -> MANAGE_PROVIDERS enable unlimited visibility or check the visibility of
     # the provider through the provider group)
     required_permissions = []
@@ -1534,41 +1539,34 @@ class FindingViewSet(BaseRLSViewSet):
         return super().get_serializer_class()
 
     def get_queryset(self):
+        tenant_id = self.request.tenant_id
         user_roles = get_role(self.request.user)
         if user_roles.unlimited_visibility:
-            # User has unlimited visibility, return all scans
-            queryset = Finding.objects.filter(tenant_id=self.request.tenant_id)
+            # User has unlimited visibility, return all findings
+            queryset = Finding.all_objects.filter(tenant_id=tenant_id)
         else:
-            # User lacks permission, filter providers based on provider groups associated with the role
-            queryset = Finding.objects.filter(
+            # User lacks permission, filter findings based on provider groups associated with the role
+            queryset = Finding.all_objects.filter(
                 scan__provider__in=get_providers(user_roles)
             )
 
         search_value = self.request.query_params.get("filter[search]", None)
         if search_value:
-            # Django's ORM will build a LEFT JOIN and OUTER JOIN on any "through" tables, resulting in duplicates
-            # The duplicates then require a `distinct` query
             search_query = SearchQuery(
                 search_value, config="simple", search_type="plain"
             )
+
+            resource_match = Resource.all_objects.filter(
+                text_search=search_query,
+                id__in=ResourceFindingMapping.objects.filter(
+                    resource_id=OuterRef("pk"),
+                    tenant_id=tenant_id,
+                ).values("resource_id"),
+            )
+
             queryset = queryset.filter(
-                Q(impact_extended__contains=search_value)
-                | Q(status_extended__contains=search_value)
-                | Q(check_id=search_value)
-                | Q(check_id__icontains=search_value)
-                | Q(text_search=search_query)
-                | Q(resources__uid=search_value)
-                | Q(resources__name=search_value)
-                | Q(resources__region=search_value)
-                | Q(resources__service=search_value)
-                | Q(resources__type=search_value)
-                | Q(resources__uid__contains=search_value)
-                | Q(resources__name__contains=search_value)
-                | Q(resources__region__contains=search_value)
-                | Q(resources__service__contains=search_value)
-                | Q(resources__tags__text_search=search_query)
-                | Q(resources__text_search=search_query)
-            ).distinct()
+                Q(text_search=search_query) | Q(Exists(resource_match))
+            )
 
         return queryset
 
@@ -1578,10 +1576,22 @@ class FindingViewSet(BaseRLSViewSet):
             return queryset
         return super().filter_queryset(queryset)
 
-    def inserted_at_to_uuidv7(self, inserted_at):
-        if inserted_at is None:
-            return None
-        return datetime_to_uuid7(inserted_at)
+    def list(self, request, *args, **kwargs):
+        base_qs = self.filter_queryset(self.get_queryset())
+        paginated_ids = self.paginate_queryset(base_qs.values_list("id", flat=True))
+        if paginated_ids is not None:
+            ids = list(paginated_ids)
+            findings = (
+                Finding.all_objects.filter(tenant_id=self.request.tenant_id, id__in=ids)
+                .select_related("scan")
+                .prefetch_related("resources")
+            )
+            # Re-sort in Python to preserve ordering:
+            findings = sorted(findings, key=lambda x: ids.index(x.id))
+            serializer = self.get_serializer(findings, many=True)
+            return self.get_paginated_response(serializer.data)
+        serializer = self.get_serializer(base_qs, many=True)
+        return Response(serializer.data)
 
     @action(detail=False, methods=["get"], url_name="findings_services_regions")
     def findings_services_regions(self, request):
