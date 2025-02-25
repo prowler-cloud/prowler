@@ -19,7 +19,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Use the aws:SourceArn and aws:SourceAccount global condition context keys in trust relationship policies to limit the permissions that a service has to a specific resource",
+      "Text": "To mitigate cross-service confused deputy attacks, it's recommended to use the aws:SourceArn and aws:SourceAccount global condition context keys in your IAM role trust policies. If the role doesn't support these fields, consider implementing alternative security measures, such as defining more restrictive resource-based policies or using service-specific trust policies, to limit the role's permissions and exposure. For detailed guidance, refer to AWS's documentation on preventing cross-service confused deputy issues.",
       "Url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/confused-deputy.html#cross-service-confused-deputy-prevention"
     }
   },
