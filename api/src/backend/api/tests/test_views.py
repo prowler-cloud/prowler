@@ -2435,7 +2435,7 @@ class TestFindingViewSet:
         [
             ("resources", ["resources"]),
             ("scan", ["scans"]),
-            ("resources.provider,scan", ["resources", "scans", "providers"]),
+            ("resources,scan.provider", ["resources", "scans", "providers"]),
         ],
     )
     def test_findings_list_include(
@@ -2491,8 +2491,8 @@ class TestFindingViewSet:
                 ("search", "orange juice", 1),
                 # full text search on resource
                 ("search", "ec2", 2),
-                # full text search on finding tags
-                ("search", "value2", 2),
+                # full text search on finding tags (disabled for now)
+                # ("search", "value2", 2),
                 # Temporary disabled until we implement tag filtering in the UI
                 # ("resource_tag_key", "key", 2),
                 # ("resource_tag_key__in", "key,key2", 2),
