@@ -1134,7 +1134,7 @@ class ProviderViewSet(BaseRLSViewSet):
             403: OpenApiResponse(description="There is a problem with credentials"),
             404: OpenApiResponse(description="The scan has no reports"),
         },
-    )
+    ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 @method_decorator(CACHE_DECORATOR, name="retrieve")

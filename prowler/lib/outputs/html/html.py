@@ -75,7 +75,9 @@ class HTML(Output):
                 and self._data
             ):
                 if self._file_descriptor.tell() == 0:
-                    HTML.write_header(self._file_descriptor, provider, stats)
+                    HTML.write_header(
+                        self._file_descriptor, provider, stats, self._from_cli
+                    )
                 for finding in self._data:
                     self._file_descriptor.write(finding)
                 if self.close_file or self._from_cli:
@@ -88,7 +90,10 @@ class HTML(Output):
 
     @staticmethod
     def write_header(
-        file_descriptor: TextIOWrapper, provider: Provider, stats: dict
+        file_descriptor: TextIOWrapper,
+        provider: Provider,
+        stats: dict,
+        from_cli: bool = True,
     ) -> None:
         """
         Writes the header of the HTML file.
@@ -97,6 +102,7 @@ class HTML(Output):
             file_descriptor (file): the file descriptor to write the header
             provider (Provider): the provider object
             stats (dict): the statistics of the findings
+            from_cli (bool): whether the request is from the CLI or not
         """
         try:
             file_descriptor.write(
@@ -154,7 +160,7 @@ class HTML(Output):
                 </div>
                 </li>
                 <li class="list-group-item">
-                <b>Parameters used:</b> {" ".join(sys.argv[1:])}
+                <b>Parameters used:</b> {" ".join(sys.argv[1:]) if from_cli else ""}
                 </li>
                 <li class="list-group-item">
                 <b>Date:</b> {timestamp.isoformat()}
