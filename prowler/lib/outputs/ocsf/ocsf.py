@@ -78,7 +78,6 @@ class OCSF(Output):
                         title=finding.metadata.CheckTitle,
                         uid=finding.uid,
                         name=finding.resource_name,
-                        product_uid="prowler",
                         types=finding.metadata.CheckType,
                     ),
                     time_dt=finding.timestamp,

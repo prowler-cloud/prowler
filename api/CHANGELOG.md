@@ -9,6 +9,7 @@ All notable changes to the **Prowler API** are documented in this file.
 ### Added
 - Social login integration with Google and GitHub [(#6906)](https://github.com/prowler-cloud/prowler/pull/6906)
 - Add API scan report system, now all scans launched from the API will generate a compressed file with the report in OCSF, CSV and HTML formats [(#6878)](https://github.com/prowler-cloud/prowler/pull/6878).
+- Configurable Sentry integration [(#6874)](https://github.com/prowler-cloud/prowler/pull/6874)
 
 ---
 
