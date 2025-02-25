@@ -1,0 +1,1181 @@
+{
+  "Framework": "ISO27001",
+  "Version": "2022",
+  "Provider": "AWS",
+  "Description": "ISO (the International Organization for Standardization) and IEC (the International Electrotechnical Commission) form the specialized system for worldwide standardization. National bodies that are members of ISO or IEC participate in the development of International Standards through technical committees established by the respective organization to deal with particular fields of technical activity. ISO and IEC technical committees collaborate in fields of mutual interest. Other international organizations, governmental and non-governmental, in liaison with ISO and IEC, also take part in the work.",
+  "Requirements": [
+    {
+      "Id": "A.5.1",
+      "Description": "Information security policy and topic-specific policies should be defined, approved by management, published, communicated to and acknowledged by relevant personnel and relevant interested parties, and reviewed at planned intervals and if significant changes occur.",
+      "Name": "Policies for information security",
+      "Checks": [
+        "securityhub_enabled",
+        "wellarchitected_workload_no_high_or_medium_risks"
+      ],
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.1",
+          "Objetive_Name": "Policies for information security",
+          "Check_Summary": "Information security policy and topic-specific policies should be defined, approved by management, published, communicated to and acknowledged by relevant personnel and relevant interested parties, and reviewed at planned intervals and if significant changes occur."
+        }
+      ]
+    },
+    {
+      "Id": "A.5.3",
+      "Description": "Conflicting duties and conflicting areas of responsibility should be segregated.",
+      "Name": "Segregation of Duties",
+      "Checks": [
+        "iam_securityaudit_role_created"
+      ],
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.3",
+          "Objetive_Name": "Segregation of Duties",
+          "Check_Summary": "Conflicting duties and conflicting areas of responsibility should be segregated."
+        }
+      ]
+    },
+    {
+      "Id": "A.5.5",
+      "Description": "The organisation should establish and maintain contact with relevant authorities.",
+      "Name": "Contact With Authorities",
+      "Checks": [
+        "account_maintain_current_contact_details",
+        "account_security_contact_information_is_registered"
+      ],
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.5",
+          "Objetive_Name": "Contact With Authorities",
+          "Check_Summary": "The organisation should establish and maintain contact with relevant authorities."
+        }
+      ]
+    },
+    {
+      "Id": "A.5.6",
+      "Description": "The organisation should establish and maintain contact with special interest groups or other specialist security forums and professional associations.",
+      "Name": "Contact With Special Interest Groups",
+      "Checks": [
+        "account_maintain_different_contact_details_to_security_billing_and_operations"
+      ],
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.6",
+          "Objetive_Name": "Contact With Special Interest Groups",
+          "Check_Summary": "The organisation should establish and maintain contact with special interest groups or other specialist security forums and professional associations."
+        }
+      ]
+    },
+    {
+      "Id": "A.5.7",
+      "Description": "Information relating to information security threats should be collected and analysed to produce threat intelligence.",
+      "Name": "Threat Intelligence",
+      "Checks": [
+        "cloudtrail_threat_detection_enumeration",
+        "cloudtrail_threat_detection_llm_jacking",
+        "cloudtrail_threat_detection_privilege_escalation"
+      ],
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.7",
+          "Objetive_Name": "Threat Intelligence",
+          "Check_Summary": "Information relating to information security threats should be collected and analysed to produce threat intelligence."
+        }
+      ]
+    },
+    {
+      "Id": "A.5.13",
+      "Description": "An appropriate set of procedures for information labelling should be developed and implemented in accordance with the information classification scheme adopted by the organisation.",
+      "Name": "Labelling Of Information",
+      "Checks": [
+        "organizations_tags_policies_enabled_and_attached",
+        "rds_cluster_copy_tags_to_snapshots",
+        "neptune_cluster_copy_tags_to_snapshots",
+        "fsx_file_system_copy_tags_to_backups_enabled",
+        "fsx_file_system_copy_tags_to_volumes_enabled"
+      ],
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.13",
+          "Objetive_Name": "Labelling Of Information",
+          "Check_Summary": "An appropriate set of procedures for information labelling should be developed and implemented in accordance with the information classification scheme adopted by the organisation."
+        }
+      ]
+    },
+    {
+      "Id": "A.5.15",
+      "Description": "Rules to control physical and logical access to information and other associated assets should be established",
+      "Name": "Access Control",
+      "Checks": [
+        "iam_password_policy_expires_passwords_within_90_days_or_less",
+        "iam_password_policy_reuse_24",
+        "iam_password_policy_minimum_length_14",
+        "iam_password_policy_number",
+        "iam_password_policy_symbol",
+        "iam_password_policy_lowercase",
+        "iam_password_policy_uppercase",
+        "iam_avoid_root_usage",
+        "iam_policy_attached_only_to_group_or_roles",
+        "iam_user_mfa_enabled_console_access",
+        "iam_root_mfa_enabled",
+        "iam_rotate_access_key_90_days",
+        "iam_user_accesskey_unused",
+        "iam_user_console_access_unused",
+        "iam_no_root_access_key",
+        "iam_password_policy_expires_passwords_within_90_days_or_less",
+        "iam_password_policy_reuse_24",
+        "iam_password_policy_minimum_length_14",
+        "iam_password_policy_number",
+        "iam_password_policy_symbol",
+        "iam_password_policy_lowercase",
+        "iam_password_policy_uppercase",
+        "iam_user_mfa_enabled_console_access",
+        "iam_rotate_access_key_90_days"
+      ],
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.15",
+          "Objetive_Name": "Access Control",
+          "Check_Summary": "Rules to control physical and logical access to information and other associated assets should be established"
+        }
+      ]
+    },
+    {
+      "Id": "A.5.16",
+      "Description": "The full lifecycle of identities should be managed.",
+      "Name": "Identity Management",
+      "Checks": [
+        "config_recorder_all_regions_enabled"
+      ],
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.16",
+          "Objetive_Name": "Identity Management",
+          "Check_Summary": "The full lifecycle of identities should be managed."
+        }
+      ]
+    },
+    {
+      "Id": "A.5.17",
+      "Description": "Allocation and management of authentication information should be controlled by a management process, including advising personnel on the appropriate handling of authentication information.",
+      "Name": "Authentication Information",
+      "Checks": [
+        "iam_user_mfa_enabled_console_access",
+        "iam_root_mfa_enabled"
+      ],
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.17",
+          "Objetive_Name": "Authentication Information",
+          "Check_Summary": "Allocation and management of authentication information should be controlled by a management process, including advising personnel on the appropriate handling of authentication information."
+        }
+      ]
+    },
+    {
+      "Id": "A.5.18",
+      "Description": "Access rights to information and other associated assets should be provisioned, reviewed, modified and removed in accordance with the organisation’s topic-specific policy on and rules for access control.",
+      "Name": "Access Rights",
+      "Checks": [
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_inline_policy_no_administrative_privileges"
+      ],
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.18",
+          "Objetive_Name": "Access Rights",
+          "Check_Summary": "Access rights to information and other associated assets should be provisioned, reviewed, modified and removed in accordance with the organisation’s topic-specific policy on and rules for access control."
+        }
+      ]
+    },
+    {
+      "Id": "A.5.19",
+      "Description": "Processes and procedures should be defined and implemented to manage the information security risks associated with the use of supplier’s products or services.",
+      "Name": "Information Security In Supplier Relationships",
+      "Checks": [
+        "guardduty_is_enabled",
+        "guardduty_no_high_severity_findings"
+      ],
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.19",
+          "Objetive_Name": "Information Security In Supplier Relationships",
+          "Check_Summary": "Processes and procedures should be defined and implemented to manage the information security risks associated with the use of supplier’s products or services."
+        }
+      ]
+    },
+    {
+      "Id": "A.5.21",
+      "Description": "Processes and procedures should be defined and implemented to manage the information security risks associated with the ICT products and services supply chain.",
+      "Name": "Managing Information Security In The ICT Supply Chain",
+      "Checks": [
+        "guardduty_is_enabled",
+        "guardduty_no_high_severity_findings"
+      ],
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.21",
+          "Objetive_Name": "Managing Information Security In The ICT Supply Chain",
+          "Check_Summary": "Processes and procedures should be defined and implemented to manage the information security risks associated with the ICT products and services supply chain."
+        }
+      ]
+    },
+    {
+      "Id": "A.5.22",
+      "Description": "The organisation should regularly monitor, review, evaluate and manage change in supplier information security practices and service delivery.",
+      "Name": "Monitor, Review And Change Management Of Supplier Services",
+      "Checks": [
+        "config_recorder_all_regions_enabled"
+      ],
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.22",
+          "Objetive_Name": "Monitor, Review And Change Management Of Supplier Services",
+          "Check_Summary": "The organisation should regularly monitor, review, evaluate and manage change in supplier information security practices and service delivery."
+        }
+      ]
+    },
+    {
+      "Id": "A.5.25",
+      "Description": "The organisation should assess information security events and decide if they are to be categorised as information security incidents.",
+      "Name": "Assessment And Decision On Information Security Events",
+      "Checks": [
+        "guardduty_is_enabled",
+        "guardduty_no_high_severity_findings",
+        "guardduty_centrally_managed"
+      ],
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.25",
+          "Objetive_Name": "Assessment And Decision On Information Security Events",
+          "Check_Summary": "The organisation should assess information security events and decide if they are to be categorised as information security incidents."
+        }
+      ]
+    },
+    {
+      "Id": "A.5.26",
+      "Description": "Information security incidents should be responded to in accordance with the documented procedures.",
+      "Name": "Response To Information Security Incidents",
+      "Checks": [
+        "ec2_instance_managed_by_ssm"
+      ],
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.26",
+          "Objetive_Name": "Response To Information Security Incidents",
+          "Check_Summary": "Information security incidents should be responded to in accordance with the documented procedures."
+        }
+      ]
+    },
+    {
+      "Id": "A.5.28",
+      "Description": "The organisation should establish and implement procedures for the identification, collection, acquisition and preservation of evidence related to information security events.",
+      "Name": "Collection Of Evidence",
+      "Checks": [
+        "guardduty_is_enabled",
+        "guardduty_no_high_severity_findings",
+        "guardduty_centrally_managed"
+      ],
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.28",
+          "Objetive_Name": "Collection Of Evidence",
+          "Check_Summary": "The organisation should establish and implement procedures for the identification, collection, acquisition and preservation of evidence related to information security events."
+        }
+      ]
+    },
+    {
+      "Id": "A.5.29",
+      "Description": "The organisation should plan how to maintain information security at an appropriate level during disruption.",
+      "Name": "Information Security During Disruption",
+      "Checks": [
+        "guardduty_is_enabled",
+        "guardduty_no_high_severity_findings",
+        "guardduty_centrally_managed"
+      ],
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.29",
+          "Objetive_Name": "Information Security During Disruption",
+          "Check_Summary": "The organisation should plan how to maintain information security at an appropriate level during disruption."
+        }
+      ]
+    },
+    {
+      "Id": "A.8.1",
+      "Description": "Information stored on, processed by or accessible via user endpoint devices should be protected.",
+      "Name": "User Endpoint Devices",
+      "Checks": [
+        "ec2_ebs_public_snapshot",
+        "ec2_instance_public_ip",
+        "opensearch_service_domains_not_publicly_accessible",
+        "emr_cluster_master_nodes_no_public_ip",
+        "emr_cluster_account_public_block_enabled",
+        "emr_cluster_publicly_accesible",
+        "glacier_vaults_policy_public_access",
+        "awslambda_function_not_publicly_accessible",
+        "awslambda_function_not_publicly_accessible",
+        "rds_instance_no_public_access",
+        "rds_snapshots_public_access",
+        "kms_key_not_publicly_accessible",
+        "opensearch_service_domains_not_publicly_accessible",
+        "redshift_cluster_public_access",
+        "s3_account_level_public_access_blocks",
+        "s3_bucket_public_access",
+        "s3_bucket_policy_public_write_access",
+        "sagemaker_notebook_instance_without_direct_internet_access_configured",
+        "appstream_fleet_default_internet_access_disabled",
+        "apigateway_restapi_public",
+        "awslambda_function_url_cors_policy",
+        "awslambda_function_url_public",
+        "cloudtrail_logs_s3_bucket_is_not_publicly_accessible",
+        "codeartifact_packages_external_public_publishing_disabled",
+        "ecr_repositories_not_publicly_accessible",
+        "efs_not_publicly_accessible",
+        "eks_cluster_not_publicly_accessible",
+        "elb_internet_facing",
+        "elbv2_internet_facing",
+        "s3_account_level_public_access_blocks",
+        "sns_topics_not_publicly_accessible",
+        "sqs_queues_not_publicly_accessible",
+        "ssm_documents_set_as_public",
+        "ec2_securitygroup_allow_wide_open_public_ipv4",
+        "ec2_ami_public"
+      ],
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.1",
+          "Objetive_Name": "User Endpoint Devices",
+          "Check_Summary": "Information stored on, processed by or accessible via user endpoint devices should be protected."
+        }
+      ]
+    },
+    {
+      "Id": "A.8.2",
+      "Description": "The allocation and use of privileged access rights should be restricted and managed.",
+      "Name": "Privileged Access Rights",
+      "Checks": [
+        "ec2_instance_profile_attached",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_customer_unattached_policy_no_administrative_privileges",
+        "iam_inline_policy_no_administrative_privileges",
+        "opensearch_service_domains_internal_user_database_enabled"
+      ],
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.2",
+          "Objetive_Name": "Privileged Access Rights",
+          "Check_Summary": "The allocation and use of privileged access rights should be restricted and managed."
+        }
+      ]
+    },
+    {
+      "Id": "A.8.3",
+      "Description": "Access to information and other associated assets should be restricted in accordance with the established topic-specific policy on access control.",
+      "Name": "Information Access Restriction",
+      "Checks": [
+        "sns_topics_kms_encryption_at_rest_enabled",
+        "s3_bucket_object_versioning",
+        "organizations_account_part_of_organizations",
+        "accessanalyzer_enabled",
+        "accessanalyzer_enabled_without_findings"
+      ],
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.3",
+          "Objetive_Name": "Information Access Restriction",
+          "Check_Summary": "Access to information and other associated assets should be restricted in accordance with the established topic-specific policy on access control."
+        }
+      ]
+    },
+    {
+      "Id": "A.8.4",
+      "Description": "Read and write access to source code, development tools and software libraries should be appropriately managed.",
+      "Name": "Access To Source Code",
+      "Checks": [
+        "codebuild_project_artifact_encryption",
+        "codebuild_project_envvar_awscred_check",
+        "codebuild_project_logging_enabled",
+        "codebuild_project_older_90_days",
+        "codebuild_project_source_repo_url_check",
+        "codebuild_project_user_controlled_buildspec"
+      ],
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.4",
+          "Objetive_Name": "Access To Source Code",
+          "Check_Summary": "Read and write access to source code, development tools and software libraries should be appropriately managed."
+        }
+      ]
+    },
+    {
+      "Id": "A.8.5",
+      "Description": "Secure authentication technologies and procedures should be implemented based on information access restrictions and the topic-specific policy on access control.",
+      "Name": "Secure Authentication",
+      "Checks": [
+        "iam_user_mfa_enabled_console_access",
+        "iam_root_mfa_enabled",
+        "directoryservice_supported_mfa_radius_enabled",
+        "iam_user_hardware_mfa_enabled",
+        "kms_cmk_rotation_enabled",
+        "kms_cmk_are_used",
+        "eks_cluster_kms_cmk_encryption_in_secrets_enabled",
+        "dynamodb_tables_kms_cmk_encryption_enabled",
+        "acm_certificates_expiration_check"
+      ],
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.5",
+          "Objetive_Name": "Secure Authentication",
+          "Check_Summary": "Secure authentication technologies and procedures should be implemented based on information access restrictions and the topic-specific policy on access control."
+        }
+      ]
+    },
+    {
+      "Id": "A.8.7",
+      "Description": "Protection against malware should be implemented and supported by appropriate user awareness.",
+      "Name": "Protection Against Malware",
+      "Checks": [
+        "guardduty_is_enabled",
+        "guardduty_no_high_severity_findings"
+      ],
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.7",
+          "Objetive_Name": "Protection Against Malware",
+          "Check_Summary": "Protection against malware should be implemented and supported by appropriate user awareness."
+        }
+      ]
+    },
+    {
+      "Id": "A.8.9",
+      "Description": "Configurations, including security configurations, of hardware, software, services and networks should be established, documented, implemented, monitored and reviewed.",
+      "Name": "Configuration Management",
+      "Checks": [
+        "guardduty_is_enabled",
+        "guardduty_no_high_severity_findings"
+      ],
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.9",
+          "Objetive_Name": "Configuration Management",
+          "Check_Summary": "Configurations, including security configurations, of hardware, software, services and networks should be established, documented, implemented, monitored and reviewed."
+        }
+      ]
+    },
+    {
+      "Id": "A.8.10",
+      "Description": "Information stored in information systems, devices or in any other storage media should be deleted when no longer required.",
+      "Name": "Information Deletion",
+      "Checks": [
+        "s3_bucket_lifecycle_enabled",
+        "s3_bucket_object_versioning",
+        "ec2_instance_older_than_specific_days"
+      ],
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.10",
+          "Objetive_Name": "Information Deletion",
+          "Check_Summary": "Information stored in information systems, devices or in any other storage media should be deleted when no longer required."
+        }
+      ]
+    },
+    {
+      "Id": "A.8.11",
+      "Description": "Data masking should be used in accordance with the organisation’s topic-specific policy on access control and other related topic-specific policies, and business requirements, taking applicable legislation into consideration.",
+      "Name": "Data Masking",
+      "Checks": [
+        "rds_instance_storage_encrypted",
+        "rds_snapshots_encrypted",
+        "rds_cluster_storage_encrypted",
+        "athena_workgroup_encryption",
+        "bedrock_model_invocation_logs_encryption_enabled",
+        "cloudfront_distributions_field_level_encryption_enabled",
+        "cloudtrail_kms_encryption_enabled",
+        "cloudwatch_log_group_kms_encryption_enabled",
+        "dms_endpoint_redis_in_transit_encryption_enabled",
+        "dynamodb_accelerator_cluster_encryption_enabled",
+        "dynamodb_tables_kms_cmk_encryption_enabled",
+        "ec2_ebs_default_encryption",
+        "ec2_ebs_volume_encryption",
+        "efs_encryption_at_rest_enabled",
+        "eks_cluster_kms_cmk_encryption_in_secrets_enabled",
+        "elasticache_redis_cluster_in_transit_encryption_enabled",
+        "elasticache_redis_cluster_rest_encryption_enabled",
+        "glue_data_catalogs_connection_passwords_encryption_enabled",
+        "glue_data_catalogs_metadata_encryption_enabled",
+        "glue_development_endpoints_cloudwatch_logs_encryption_enabled",
+        "glue_development_endpoints_job_bookmark_encryption_enabled",
+        "glue_development_endpoints_s3_encryption_enabled",
+        "glue_etl_jobs_amazon_s3_encryption_enabled",
+        "glue_etl_jobs_cloudwatch_logs_encryption_enabled",
+        "glue_etl_jobs_job_bookmark_encryption_enabled",
+        "kafka_cluster_encryption_at_rest_uses_cmk",
+        "kafka_connector_in_transit_encryption_enabled",
+        "opensearch_service_domains_encryption_at_rest_enabled",
+        "s3_bucket_default_encryption",
+        "s3_bucket_kms_encryption",
+        "sagemaker_notebook_instance_encryption_enabled",
+        "sagemaker_training_jobs_intercontainer_encryption_enabled",
+        "sagemaker_training_jobs_volume_and_output_encryption_enabled",
+        "sns_topics_kms_encryption_at_rest_enabled",
+        "sqs_queues_server_side_encryption_enabled",
+        "storagegateway_fileshare_encryption_enabled",
+        "workspaces_volume_encryption_enabled",
+        "kms_cmk_are_used",
+        "kms_cmk_not_deleted_unintentionally",
+        "kms_cmk_not_multi_region",
+        "kms_cmk_rotation_enabled"
+      ],
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.11",
+          "Objetive_Name": "Data Masking",
+          "Check_Summary": "Data masking should be used in accordance with the organisation’s topic-specific policy on access control and other related topic-specific policies, and business requirements, taking applicable legislation into consideration."
+        }
+      ]
+    },
+    {
+      "Id": "A.8.12",
+      "Description": "Data leakage prevention measures should be applied to systems, networks and any other devices that process, store or transmit sensitive information.",
+      "Name": "Data Leakage Prevention",
+      "Checks": [
+        "dynamodb_accelerator_cluster_in_transit_encryption_enabled",
+        "kafka_cluster_in_transit_encryption_enabled",
+        "opensearch_service_domains_node_to_node_encryption_enabled",
+        "redshift_cluster_in_transit_encryption_enabled",
+        "transfer_server_in_transit_encryption_enabled"
+      ],
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.12",
+          "Objetive_Name": "Data Leakage Prevention",
+          "Check_Summary": "Data leakage prevention measures should be applied to systems, networks and any other devices that process, store or transmit sensitive information."
+        }
+      ]
+    },
+    {
+      "Id": "A.8.13",
+      "Description": "Backup copies of information, software and systems should be maintained and regularly tested in accordance with the agreed topic-specific policy on backup.",
+      "Name": "Information Backup",
+      "Checks": [
+        "backup_recovery_point_encrypted",
+        "backup_plans_exist",
+        "backup_vaults_exist",
+        "backup_reportplans_exist"
+      ],
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.13",
+          "Objetive_Name": "Information Backup",
+          "Check_Summary": "Backup copies of information, software and systems should be maintained and regularly tested in accordance with the agreed topic-specific policy on backup."
+        }
+      ]
+    },
+    {
+      "Id": "A.8.14",
+      "Description": "Information processing facilities should be implemented with redundancy sufficient to meet availability",
+      "Name": "Redundancy of information processing facilities",
+      "Checks": [
+        "autoscaling_group_capacity_rebalance_enabled",
+        "autoscaling_group_multiple_az",
+        "cloudfront_distributions_multiple_origin_failover_configured",
+        "directconnect_connection_redundancy",
+        "directconnect_virtual_interface_redundancy",
+        "dms_instance_multi_az_enabled",
+        "documentdb_cluster_multi_az_enabled",
+        "dynamodb_accelerator_cluster_multi_az",
+        "dynamodb_table_protected_by_backup_plan",
+        "ec2_ebs_volume_protected_by_backup_plan",
+        "efs_multi_az_enabled",
+        "elasticache_redis_cluster_automatic_failover_enabled",
+        "elasticache_redis_cluster_multi_az_enabled",
+        "elb_is_in_multiple_az",
+        "elbv2_is_in_multiple_az",
+        "eventbridge_global_endpoint_event_replication_enabled",
+        "fsx_windows_file_system_multi_az_enabled",
+        "mq_broker_active_deployment_mode",
+        "mq_broker_cluster_deployment_mode",
+        "neptune_cluster_multi_az",
+        "networkfirewall_multi_az",
+        "opensearch_service_domains_fault_tolerant_data_nodes",
+        "opensearch_service_domains_fault_tolerant_master_nodes",
+        "rds_cluster_multi_az",
+        "rds_instance_multi_az",
+        "redshift_cluster_multi_az_enabled",
+        "s3_bucket_cross_region_replication",
+        "sagemaker_endpoint_config_prod_variant_instances",
+        "vpc_endpoint_multi_az_enabled",
+        "vpc_subnet_different_az",
+        "vpc_vpn_connection_tunnels_up"
+      ],
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.14",
+          "Objetive_Name": "Redundancy of information processing facilities",
+          "Check_Summary": "Information processing facilities should be implemented with redundancy sufficient to meet availability"
+        }
+      ]
+    },
+    {
+      "Id": "A.8.15",
+      "Description": "Logs that record activities, exceptions, faults and other relevant events should be produced, stored, protected and analysed.",
+      "Name": "Logging",
+      "Checks": [
+        "athena_workgroup_logging_enabled",
+        "apigateway_restapi_logging_enabled",
+        "apigatewayv2_api_access_logging_enabled",
+        "appsync_field_level_logging_enabled",
+        "athena_workgroup_logging_enabled",
+        "awslambda_function_invoke_api_operations_cloudtrail_logging_enabled",
+        "bedrock_model_invocation_logging_enabled",
+        "bedrock_model_invocation_logs_encryption_enabled",
+        "cloudfront_distributions_logging_enabled",
+        "cloudtrail_cloudwatch_logging_enabled",
+        "cloudtrail_kms_encryption_enabled",
+        "cloudtrail_log_file_validation_enabled",
+        "cloudtrail_logs_s3_bucket_access_logging_enabled",
+        "cloudtrail_logs_s3_bucket_is_not_publicly_accessible",
+        "cloudtrail_multi_region_enabled_logging_management_events",
+        "cloudtrail_s3_dataevents_read_enabled",
+        "cloudtrail_s3_dataevents_write_enabled",
+        "cloudwatch_changes_to_network_acls_alarm_configured",
+        "cloudwatch_changes_to_network_gateways_alarm_configured",
+        "cloudwatch_changes_to_vpcs_alarm_configured",
+        "cloudwatch_log_group_kms_encryption_enabled",
+        "cloudwatch_log_group_no_secrets_in_logs",
+        "cloudwatch_log_group_not_publicly_accessible",
+        "cloudwatch_log_group_retention_policy_specific_days_enabled",
+        "cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_authentication_failures",
+        "cloudwatch_log_metric_filter_aws_organizations_changes",
+        "cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk",
+        "cloudwatch_log_metric_filter_for_s3_bucket_policy_changes",
+        "cloudwatch_log_metric_filter_policy_changes",
+        "cloudwatch_log_metric_filter_root_usage",
+        "cloudwatch_log_metric_filter_security_group_changes",
+        "cloudwatch_log_metric_filter_sign_in_without_mfa",
+        "cloudwatch_log_metric_filter_unauthorized_api_calls",
+        "codebuild_project_logging_enabled",
+        "codebuild_project_s3_logs_encrypted",
+        "datasync_task_logging_enabled",
+        "directoryservice_directory_log_forwarding_enabled",
+        "dms_replication_task_source_logging_enabled",
+        "dms_replication_task_target_logging_enabled",
+        "documentdb_cluster_cloudwatch_log_export",
+        "ec2_client_vpn_endpoint_connection_logging_enabled",
+        "ecs_task_definitions_logging_block_mode",
+        "ecs_task_definitions_logging_enabled",
+        "eks_control_plane_logging_all_types_enabled",
+        "elasticbeanstalk_environment_cloudwatch_logging_enabled",
+        "elb_logging_enabled",
+        "elbv2_logging_enabled",
+        "glue_data_catalogs_connection_passwords_encryption_enabled",
+        "glue_data_catalogs_metadata_encryption_enabled",
+        "glue_data_catalogs_not_publicly_accessible",
+        "glue_development_endpoints_cloudwatch_logs_encryption_enabled",
+        "glue_etl_jobs_cloudwatch_logs_encryption_enabled",
+        "glue_etl_jobs_logging_enabled",
+        "guardduty_eks_audit_log_enabled",
+        "mq_broker_logging_enabled",
+        "neptune_cluster_integration_cloudwatch_logs",
+        "networkfirewall_logging_enabled",
+        "opensearch_service_domains_audit_logging_enabled",
+        "opensearch_service_domains_cloudwatch_logging_enabled",
+        "rds_cluster_integration_cloudwatch_logs",
+        "rds_instance_integration_cloudwatch_logs",
+        "redshift_cluster_audit_logging",
+        "route53_public_hosted_zones_cloudwatch_logging_enabled",
+        "s3_bucket_server_access_logging_enabled",
+        "servicecatalog_portfolio_shared_within_organization_only",
+        "stepfunctions_statemachine_logging_enabled",
+        "vpc_flow_logs_enabled",
+        "waf_global_webacl_logging_enabled",
+        "wafv2_webacl_logging_enabled",
+        "wafv2_webacl_rule_logging_enabled"
+      ],
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.15",
+          "Objetive_Name": "Logging",
+          "Check_Summary": "Logs that record activities, exceptions, faults and other relevant events should be produced, stored, protected and analysed."
+        }
+      ]
+    },
+    {
+      "Id": "A.8.16",
+      "Description": "Networks, systems and applications should be monitored for anomalous behaviour and appropriate actions taken to evaluate potential information security incidents.",
+      "Name": "Monitoring Activities",
+      "Checks": [
+        "vpc_flow_logs_enabled",
+        "waf_global_webacl_logging_enabled",
+        "wafv2_webacl_logging_enabled",
+        "wafv2_webacl_rule_logging_enabled",
+        "cloudfront_distributions_logging_enabled",
+        "cloudtrail_cloudwatch_logging_enabled",
+        "cloudtrail_kms_encryption_enabled",
+        "cloudtrail_log_file_validation_enabled",
+        "cloudtrail_logs_s3_bucket_access_logging_enabled",
+        "cloudtrail_logs_s3_bucket_is_not_publicly_accessible",
+        "cloudtrail_multi_region_enabled_logging_management_events",
+        "cloudtrail_s3_dataevents_read_enabled",
+        "cloudtrail_s3_dataevents_write_enabled",
+        "cloudwatch_changes_to_network_acls_alarm_configured",
+        "cloudwatch_changes_to_network_gateways_alarm_configured",
+        "cloudwatch_changes_to_vpcs_alarm_configured",
+        "cloudwatch_log_group_kms_encryption_enabled",
+        "cloudwatch_log_group_no_secrets_in_logs",
+        "cloudwatch_log_group_not_publicly_accessible",
+        "cloudwatch_log_group_retention_policy_specific_days_enabled",
+        "cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_authentication_failures",
+        "cloudwatch_log_metric_filter_aws_organizations_changes",
+        "cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk",
+        "cloudwatch_log_metric_filter_for_s3_bucket_policy_changes",
+        "cloudwatch_log_metric_filter_policy_changes",
+        "cloudwatch_log_metric_filter_root_usage",
+        "cloudwatch_log_metric_filter_security_group_changes",
+        "cloudwatch_log_metric_filter_sign_in_without_mfa",
+        "cloudwatch_log_metric_filter_unauthorized_api_calls"
+      ],
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.16",
+          "Objetive_Name": "Monitoring Activities",
+          "Check_Summary": "Networks, systems and applications should be monitored for anomalous behaviour and appropriate actions taken to evaluate potential information security incidents."
+        }
+      ]
+    },
+    {
+      "Id": "A.8.20",
+      "Description": "Networks and network devices should be secured, managed and controlled to protect information in systems and applications.",
+      "Name": "Network Security",
+      "Checks": [
+        "awslambda_function_inside_vpc",
+        "awslambda_function_vpc_multi_az",
+        "cloudwatch_changes_to_vpcs_alarm_configured",
+        "ec2_transitgateway_auto_accept_vpc_attachments",
+        "networkfirewall_in_all_vpc",
+        "rds_instance_inside_vpc",
+        "redshift_cluster_enhanced_vpc_routing",
+        "sagemaker_models_vpc_settings_configured",
+        "sagemaker_notebook_instance_vpc_settings_configured",
+        "sagemaker_training_jobs_vpc_settings_configured",
+        "vpc_different_regions",
+        "vpc_endpoint_connections_trust_boundaries",
+        "vpc_endpoint_for_ec2_enabled",
+        "vpc_endpoint_multi_az_enabled",
+        "vpc_endpoint_services_allowed_principals_trust_boundaries",
+        "vpc_flow_logs_enabled",
+        "vpc_peering_routing_tables_with_least_privilege",
+        "vpc_subnet_different_az",
+        "vpc_subnet_no_public_ip_by_default",
+        "vpc_subnet_separate_private_public",
+        "vpc_vpn_connection_tunnels_up",
+        "workspaces_vpc_2private_1public_subnets_nat",
+        "ec2_elastic_ip_shodan",
+        "ec2_elastic_ip_unassigned",
+        "ec2_instance_account_imdsv2_enabled",
+        "ec2_instance_imdsv2_enabled",
+        "ec2_instance_internet_facing_with_instance_profile",
+        "ec2_instance_paravirtual_type",
+        "ec2_instance_port_cassandra_exposed_to_internet",
+        "ec2_instance_port_cifs_exposed_to_internet",
+        "ec2_instance_port_elasticsearch_kibana_exposed_to_internet",
+        "ec2_instance_port_ftp_exposed_to_internet",
+        "ec2_instance_port_kafka_exposed_to_internet",
+        "ec2_instance_port_kerberos_exposed_to_internet",
+        "ec2_instance_port_ldap_exposed_to_internet",
+        "ec2_instance_port_memcached_exposed_to_internet",
+        "ec2_instance_port_mongodb_exposed_to_internet",
+        "ec2_instance_port_mysql_exposed_to_internet",
+        "ec2_instance_port_oracle_exposed_to_internet",
+        "ec2_instance_port_postgresql_exposed_to_internet",
+        "ec2_instance_port_rdp_exposed_to_internet",
+        "ec2_instance_port_redis_exposed_to_internet",
+        "ec2_instance_port_sqlserver_exposed_to_internet",
+        "ec2_instance_port_ssh_exposed_to_internet",
+        "ec2_instance_port_telnet_exposed_to_internet",
+        "ec2_instance_profile_attached",
+        "ec2_instance_public_ip",
+        "ec2_instance_secrets_user_data",
+        "ec2_instance_uses_single_eni",
+        "ec2_launch_template_imdsv2_required",
+        "ec2_launch_template_no_public_ip",
+        "ec2_launch_template_no_secrets",
+        "ec2_networkacl_allow_ingress_any_port",
+        "ec2_networkacl_allow_ingress_tcp_port_22",
+        "ec2_networkacl_allow_ingress_tcp_port_3389",
+        "ec2_networkacl_unused",
+        "ec2_securitygroup_allow_ingress_from_internet_to_all_ports",
+        "ec2_securitygroup_allow_ingress_from_internet_to_any_port",
+        "ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports",
+        "ec2_securitygroup_allow_ingress_from_internet_to_port_mongodb_27017_27018",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_elasticsearch_kibana_9200_9300_5601",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_kafka_9092",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_memcached_11211",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_mysql_3306",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_oracle_1521_2483",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_sql_server_1433_1434",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_telnet_23",
+        "ec2_securitygroup_allow_wide_open_public_ipv4",
+        "ec2_securitygroup_default_restrict_traffic",
+        "ec2_securitygroup_from_launch_wizard",
+        "ec2_securitygroup_not_used",
+        "ec2_securitygroup_with_many_ingress_egress_rules",
+        "ec2_transitgateway_auto_accept_vpc_attachments"
+      ],
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.20",
+          "Objetive_Name": "Network Security",
+          "Check_Summary": "Networks and network devices should be secured, managed and controlled to protect information in systems and applications."
+        }
+      ]
+    },
+    {
+      "Id": "A.8.21",
+      "Description": "Security mechanisms, service levels and service requirements of network services should be identified, implemented and monitored.",
+      "Name": "Security of Network Services",
+      "Checks": [
+        "awslambda_function_inside_vpc",
+        "awslambda_function_vpc_multi_az",
+        "cloudwatch_changes_to_vpcs_alarm_configured",
+        "ec2_transitgateway_auto_accept_vpc_attachments",
+        "networkfirewall_in_all_vpc",
+        "rds_instance_inside_vpc",
+        "redshift_cluster_enhanced_vpc_routing",
+        "sagemaker_models_vpc_settings_configured",
+        "sagemaker_notebook_instance_vpc_settings_configured",
+        "sagemaker_training_jobs_vpc_settings_configured",
+        "vpc_different_regions",
+        "vpc_endpoint_connections_trust_boundaries",
+        "vpc_endpoint_for_ec2_enabled",
+        "vpc_endpoint_multi_az_enabled",
+        "vpc_endpoint_services_allowed_principals_trust_boundaries",
+        "vpc_flow_logs_enabled",
+        "vpc_peering_routing_tables_with_least_privilege",
+        "vpc_subnet_different_az",
+        "vpc_subnet_no_public_ip_by_default",
+        "vpc_subnet_separate_private_public",
+        "vpc_vpn_connection_tunnels_up",
+        "workspaces_vpc_2private_1public_subnets_nat",
+        "ec2_elastic_ip_shodan",
+        "ec2_elastic_ip_unassigned",
+        "ec2_instance_account_imdsv2_enabled",
+        "ec2_instance_imdsv2_enabled",
+        "ec2_instance_internet_facing_with_instance_profile",
+        "ec2_instance_paravirtual_type",
+        "ec2_instance_port_cassandra_exposed_to_internet",
+        "ec2_instance_port_cifs_exposed_to_internet",
+        "ec2_instance_port_elasticsearch_kibana_exposed_to_internet",
+        "ec2_instance_port_ftp_exposed_to_internet",
+        "ec2_instance_port_kafka_exposed_to_internet",
+        "ec2_instance_port_kerberos_exposed_to_internet",
+        "ec2_instance_port_ldap_exposed_to_internet",
+        "ec2_instance_port_memcached_exposed_to_internet",
+        "ec2_instance_port_mongodb_exposed_to_internet",
+        "ec2_instance_port_mysql_exposed_to_internet",
+        "ec2_instance_port_oracle_exposed_to_internet",
+        "ec2_instance_port_postgresql_exposed_to_internet",
+        "ec2_instance_port_rdp_exposed_to_internet",
+        "ec2_instance_port_redis_exposed_to_internet",
+        "ec2_instance_port_sqlserver_exposed_to_internet",
+        "ec2_instance_port_ssh_exposed_to_internet",
+        "ec2_instance_port_telnet_exposed_to_internet",
+        "ec2_instance_profile_attached",
+        "ec2_instance_public_ip",
+        "ec2_instance_secrets_user_data",
+        "ec2_instance_uses_single_eni",
+        "ec2_launch_template_imdsv2_required",
+        "ec2_launch_template_no_public_ip",
+        "ec2_launch_template_no_secrets",
+        "ec2_networkacl_allow_ingress_any_port",
+        "ec2_networkacl_allow_ingress_tcp_port_22",
+        "ec2_networkacl_allow_ingress_tcp_port_3389",
+        "ec2_networkacl_unused",
+        "ec2_securitygroup_allow_ingress_from_internet_to_all_ports",
+        "ec2_securitygroup_allow_ingress_from_internet_to_any_port",
+        "ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports",
+        "ec2_securitygroup_allow_ingress_from_internet_to_port_mongodb_27017_27018",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_elasticsearch_kibana_9200_9300_5601",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_kafka_9092",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_memcached_11211",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_mysql_3306",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_oracle_1521_2483",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_sql_server_1433_1434",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_telnet_23",
+        "ec2_securitygroup_allow_wide_open_public_ipv4",
+        "ec2_securitygroup_default_restrict_traffic",
+        "ec2_securitygroup_from_launch_wizard",
+        "ec2_securitygroup_not_used",
+        "ec2_securitygroup_with_many_ingress_egress_rules",
+        "ec2_transitgateway_auto_accept_vpc_attachments"
+      ],
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.21",
+          "Objetive_Name": "Security of Network Services",
+          "Check_Summary": "Security mechanisms, service levels and service requirements of network services should be identified, implemented and monitored."
+        }
+      ]
+    },
+    {
+      "Id": "A.8.22",
+      "Description": "Security mechanisms, service levels and service requirements of network services should be identified, implemented and monitored.",
+      "Name": "Segregation of Networks",
+      "Checks": [
+        "awslambda_function_inside_vpc",
+        "awslambda_function_vpc_multi_az",
+        "cloudwatch_changes_to_vpcs_alarm_configured",
+        "ec2_transitgateway_auto_accept_vpc_attachments",
+        "networkfirewall_in_all_vpc",
+        "rds_instance_inside_vpc",
+        "redshift_cluster_enhanced_vpc_routing",
+        "sagemaker_models_vpc_settings_configured",
+        "sagemaker_notebook_instance_vpc_settings_configured",
+        "sagemaker_training_jobs_vpc_settings_configured",
+        "vpc_different_regions",
+        "vpc_endpoint_connections_trust_boundaries",
+        "vpc_endpoint_for_ec2_enabled",
+        "vpc_endpoint_multi_az_enabled",
+        "vpc_endpoint_services_allowed_principals_trust_boundaries",
+        "vpc_flow_logs_enabled",
+        "vpc_peering_routing_tables_with_least_privilege",
+        "vpc_subnet_different_az",
+        "vpc_subnet_no_public_ip_by_default",
+        "vpc_subnet_separate_private_public",
+        "vpc_vpn_connection_tunnels_up",
+        "workspaces_vpc_2private_1public_subnets_nat",
+        "ec2_elastic_ip_shodan",
+        "ec2_elastic_ip_unassigned",
+        "ec2_instance_account_imdsv2_enabled",
+        "ec2_instance_imdsv2_enabled",
+        "ec2_instance_internet_facing_with_instance_profile",
+        "ec2_instance_paravirtual_type",
+        "ec2_instance_port_cassandra_exposed_to_internet",
+        "ec2_instance_port_cifs_exposed_to_internet",
+        "ec2_instance_port_elasticsearch_kibana_exposed_to_internet",
+        "ec2_instance_port_ftp_exposed_to_internet",
+        "ec2_instance_port_kafka_exposed_to_internet",
+        "ec2_instance_port_kerberos_exposed_to_internet",
+        "ec2_instance_port_ldap_exposed_to_internet",
+        "ec2_instance_port_memcached_exposed_to_internet",
+        "ec2_instance_port_mongodb_exposed_to_internet",
+        "ec2_instance_port_mysql_exposed_to_internet",
+        "ec2_instance_port_oracle_exposed_to_internet",
+        "ec2_instance_port_postgresql_exposed_to_internet",
+        "ec2_instance_port_rdp_exposed_to_internet",
+        "ec2_instance_port_redis_exposed_to_internet",
+        "ec2_instance_port_sqlserver_exposed_to_internet",
+        "ec2_instance_port_ssh_exposed_to_internet",
+        "ec2_instance_port_telnet_exposed_to_internet",
+        "ec2_instance_profile_attached",
+        "ec2_instance_public_ip",
+        "ec2_instance_secrets_user_data",
+        "ec2_instance_uses_single_eni",
+        "ec2_launch_template_imdsv2_required",
+        "ec2_launch_template_no_public_ip",
+        "ec2_launch_template_no_secrets",
+        "ec2_networkacl_allow_ingress_any_port",
+        "ec2_networkacl_allow_ingress_tcp_port_22",
+        "ec2_networkacl_allow_ingress_tcp_port_3389",
+        "ec2_networkacl_unused",
+        "ec2_securitygroup_allow_ingress_from_internet_to_all_ports",
+        "ec2_securitygroup_allow_ingress_from_internet_to_any_port",
+        "ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports",
+        "ec2_securitygroup_allow_ingress_from_internet_to_port_mongodb_27017_27018",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_elasticsearch_kibana_9200_9300_5601",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_kafka_9092",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_memcached_11211",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_mysql_3306",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_oracle_1521_2483",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_sql_server_1433_1434",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_telnet_23",
+        "ec2_securitygroup_allow_wide_open_public_ipv4",
+        "ec2_securitygroup_default_restrict_traffic",
+        "ec2_securitygroup_from_launch_wizard",
+        "ec2_securitygroup_not_used",
+        "ec2_securitygroup_with_many_ingress_egress_rules",
+        "ec2_transitgateway_auto_accept_vpc_attachments"
+      ],
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.22",
+          "Objetive_Name": "Segregation of Networks",
+          "Check_Summary": "Security mechanisms, service levels and service requirements of network services should be identified, implemented and monitored."
+        }
+      ]
+    },
+    {
+      "Id": "A.8.23",
+      "Description": "Access to external websites should be managed to reduce exposure to malicious content.",
+      "Name": "Web Filtering",
+      "Checks": [
+        "vpc_default_security_group_closed",
+        "vpc_flow_logs_enabled",
+        "securityhub_enabled"
+      ],
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.23",
+          "Objetive_Name": "Web Filtering",
+          "Check_Summary": "Access to external websites should be managed to reduce exposure to malicious content."
+        }
+      ]
+    },
+    {
+      "Id": "A.8.24",
+      "Description": "Rules for the effective use of cryptography, including cryptographic key management, should be defined and implemented.",
+      "Name": "Use of Cryptography",
+      "Checks": [
+        "apigateway_restapi_cache_encrypted",
+        "athena_workgroup_encryption",
+        "backup_recovery_point_encrypted",
+        "backup_vaults_encrypted",
+        "bedrock_model_invocation_logs_encryption_enabled",
+        "cloudfront_distributions_field_level_encryption_enabled",
+        "cloudfront_distributions_origin_traffic_encrypted",
+        "cloudtrail_kms_encryption_enabled",
+        "cloudwatch_log_group_kms_encryption_enabled",
+        "codebuild_project_s3_logs_encrypted",
+        "codebuild_report_group_export_encrypted",
+        "dms_endpoint_redis_in_transit_encryption_enabled",
+        "documentdb_cluster_storage_encrypted",
+        "dynamodb_accelerator_cluster_encryption_enabled",
+        "dynamodb_accelerator_cluster_in_transit_encryption_enabled",
+        "dynamodb_tables_kms_cmk_encryption_enabled",
+        "ec2_ebs_default_encryption",
+        "ec2_ebs_snapshots_encrypted",
+        "ec2_ebs_volume_encryption",
+        "efs_encryption_at_rest_enabled",
+        "eks_cluster_kms_cmk_encryption_in_secrets_enabled",
+        "elasticache_redis_cluster_in_transit_encryption_enabled",
+        "elasticache_redis_cluster_rest_encryption_enabled",
+        "firehose_stream_encrypted_at_rest",
+        "glue_data_catalogs_connection_passwords_encryption_enabled",
+        "glue_data_catalogs_metadata_encryption_enabled",
+        "glue_development_endpoints_cloudwatch_logs_encryption_enabled",
+        "glue_development_endpoints_job_bookmark_encryption_enabled",
+        "glue_development_endpoints_s3_encryption_enabled",
+        "glue_etl_jobs_amazon_s3_encryption_enabled",
+        "glue_etl_jobs_cloudwatch_logs_encryption_enabled",
+        "glue_etl_jobs_job_bookmark_encryption_enabled",
+        "glue_ml_transform_encrypted_at_rest",
+        "kafka_cluster_encryption_at_rest_uses_cmk",
+        "kafka_cluster_in_transit_encryption_enabled",
+        "kafka_connector_in_transit_encryption_enabled",
+        "kinesis_stream_encrypted_at_rest",
+        "neptune_cluster_snapshot_encrypted",
+        "neptune_cluster_storage_encrypted",
+        "opensearch_service_domains_encryption_at_rest_enabled",
+        "opensearch_service_domains_node_to_node_encryption_enabled",
+        "rds_cluster_storage_encrypted",
+        "rds_instance_storage_encrypted",
+        "rds_instance_transport_encrypted",
+        "rds_snapshots_encrypted",
+        "redshift_cluster_encrypted_at_rest",
+        "redshift_cluster_in_transit_encryption_enabled",
+        "s3_bucket_default_encryption",
+        "s3_bucket_kms_encryption",
+        "sagemaker_notebook_instance_encryption_enabled",
+        "sagemaker_training_jobs_intercontainer_encryption_enabled",
+        "sagemaker_training_jobs_volume_and_output_encryption_enabled",
+        "sns_topics_kms_encryption_at_rest_enabled",
+        "sqs_queues_server_side_encryption_enabled",
+        "storagegateway_fileshare_encryption_enabled",
+        "transfer_server_in_transit_encryption_enabled",
+        "workspaces_volume_encryption_enabled",
+        "dynamodb_tables_kms_cmk_encryption_enabled",
+        "eks_cluster_kms_cmk_encryption_in_secrets_enabled",
+        "kafka_cluster_encryption_at_rest_uses_cmk",
+        "kms_cmk_are_used",
+        "kms_cmk_not_deleted_unintentionally",
+        "kms_cmk_not_multi_region",
+        "kms_cmk_rotation_enabled"
+      ],
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.24",
+          "Objetive_Name": "Use of Cryptography",
+          "Check_Summary": "Rules for the effective use of cryptography, including cryptographic key management, should be defined and implemented."
+        }
+      ]
+    },
+    {
+      "Id": "A.8.27",
+      "Description": "Principles for engineering secure systems should be established, documented, maintained and applied to any information system development activities.",
+      "Name": "Secure Systems Architecture and Engineering Principles",
+      "Checks": [
+        "ssm_document_secrets",
+        "ssm_documents_set_as_public",
+        "ssm_managed_compliant_patching"
+      ],
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.27",
+          "Objetive_Name": "Secure Systems Architecture and Engineering Principles",
+          "Check_Summary": "Principles for engineering secure systems should be established, documented, maintained and applied to any information system development activities."
+        }
+      ]
+    }
+  ]
+}
