@@ -311,6 +311,10 @@ class Finding(BaseModel):
         finding.region = resource.region
         # Azure, GCP, K8s specified field
         finding.location = resource.region
+        if provider.type == "azure":
+            finding.subscription = list(provider.identity.subscriptions.keys())[0]
+        elif provider.type == "gcp":
+            finding.project_id = list(provider.projects.keys())[0]
 
         finding.check_metadata = CheckMetadata(
             Provider=finding.check_metadata["provider"],
