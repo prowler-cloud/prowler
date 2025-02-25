@@ -1,0 +1,21 @@
+name: Prowler - Conventional Commit
+
+on:
+  pull_request:
+    types:
+      - "opened"
+      - "edited"
+      - "synchronize"
+    branches:
+      - "master"
+      - "v3"
+      - "v4.*"
+      - "v5.*"
+
+jobs:
+  conventional-commit-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: conventional-commit-check
+        id: conventional-commit-check
+        uses: agenthunt/conventional-commit-checker-action@v1.0.0
