@@ -306,7 +306,12 @@ class Finding(BaseModel):
         finding.resource = {}
 
         finding.resource_id = resource.name if provider.type == "aws" else resource.uid
+
+        # AWS specified field
         finding.region = resource.region
+        # Azure, GCP, K8s specified field
+        finding.location = resource.region
+
         finding.check_metadata = CheckMetadata(
             Provider=finding.check_metadata["provider"],
             CheckID=finding.check_metadata["checkid"],

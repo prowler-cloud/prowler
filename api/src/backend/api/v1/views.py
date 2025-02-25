@@ -1198,9 +1198,7 @@ class ScanViewSet(BaseRLSViewSet):
         responses={
             200: OpenApiResponse(description="Report obtained successfully"),
             202: OpenApiResponse(description="The task is in progress"),
-            403: OpenApiResponse(
-                description="There is a problem with credentials"
-            ),
+            403: OpenApiResponse(description="There is a problem with credentials"),
             404: OpenApiResponse(description="The scan has no reports"),
         },
     )

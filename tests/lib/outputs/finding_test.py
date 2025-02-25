@@ -71,9 +71,10 @@ class DummyTags:
 
 
 class DummyResource:
-    def __init__(self, uid, name, region, tags):
+    def __init__(self, uid, name, resource_arn, region, tags):
         self.uid = uid
         self.name = name
+        self.resource_arn = resource_arn
         self.region = region
         self.tags = DummyTags(tags)
 
@@ -521,8 +522,8 @@ class TestFinding:
         with pytest.raises(ValidationError):
             Finding.generate_output(provider, check_output, output_options)
 
-    @patch("prowler.lib.outputs.finding.model_to_dict", dict)
-    def test_transform_api_finding(self):
+    @patch("prowler.lib.outputs.finding.get_check_compliance", new=mock_get_check_compliance)
+    def test_transform_api_finding_aws(self):
         """
         Test that a dummy API Finding is correctly
         transformed into a Finding instance.
@@ -530,12 +531,13 @@ class TestFinding:
         # Set up the dummy API finding attributes
         inserted_at = 1234567890
         provider = DummyProvider(uid="account123")
+        provider.type = "aws"
         scan = DummyScan(provider=provider)
 
         # Create a dummy resource with one tag
         tag = DummyTag("env", "prod")
         resource = DummyResource(
-            uid="res-uid-1", name="ResourceName1", region="us-east-1", tags=[tag]
+            uid="res-uid-1", name="ResourceName1", resource_arn="arn", region="us-east-1", tags=[tag]
         )
         resources = DummyResources(resource)
 
@@ -607,18 +609,337 @@ class TestFinding:
         assert meta.Notes == "Some notes"
 
         # Check other Finding fields
-        assert finding_obj.uid == "prowler-aws-check-001--us-east-1-res-uid-1"
+        assert finding_obj.uid == "prowler-aws-check-001--us-east-1-ResourceName1"
         assert finding_obj.status == Status("FAIL")
         assert finding_obj.status_extended == "extended"
         # From the dummy resource
         assert finding_obj.resource_uid == "res-uid-1"
-        assert finding_obj.resource_name == "res-uid-1"
+        assert finding_obj.resource_name == "ResourceName1"
         assert finding_obj.resource_details == ""
         # unroll_tags is called on a list with one tag -> expect {"env": "prod"}
         assert finding_obj.resource_tags == {"env": "prod"}
         assert finding_obj.region == "us-east-1"
-        # compliance is hardcoded to an empty dict
-        assert finding_obj.compliance == {}
+        assert finding_obj.compliance == {"mock_compliance_key": "mock_compliance_value"}
+
+    @patch("prowler.lib.outputs.finding.get_check_compliance", new=mock_get_check_compliance)
+    def test_transform_api_finding_azure(self):
+        provider = MagicMock()
+        provider.type = "azure"
+        provider.identity.identity_type = "mock_identity_type"
+        provider.identity.identity_id = "mock_identity_id"
+        provider.identity.subscriptions = {"default": "default"}
+        provider.identity.tenant_ids = ["test-ing-432a-a828-d9c965196f87"]
+        provider.identity.tenant_domain = "mock_tenant_domain"
+        provider.region_config.name = "AzureCloud"
+
+        api_finding = DummyAPIFinding()
+        api_finding.id = "019514b3-9a66-7cde-921e-9d1ca0531ceb"
+        api_finding.inserted_at = "2025-02-17 16:17:49"
+        api_finding.updated_at = "2025-02-17 16:17:49"
+        api_finding.uid = (
+            "prowler-azure-defender_auto_provisioning_log_analytics_agent_vms_on-"
+            "test-ing-4646-bed4-e74f14020726-global-default"
+        )
+        api_finding.delta = "new"
+        api_finding.status = "FAIL"
+        api_finding.status_extended = (
+            "Defender Auto Provisioning Log Analytics Agents from subscription Azure subscription 1 is set to OFF."
+        )
+        api_finding.severity = "medium"
+        api_finding.impact = "medium"
+        api_finding.impact_extended = ""
+        api_finding.raw_result = {}
+        api_finding.check_id = "defender_auto_provisioning_log_analytics_agent_vms_on"
+        api_finding.check_metadata = {
+            "risk": "Missing critical security information about your Azure VMs, such as security alerts, security recommendations, and change tracking.",
+            "notes": "",
+            "checkid": "defender_auto_provisioning_log_analytics_agent_vms_on",
+            "provider": "azure",
+            "severity": "medium",
+            "checktype": [],
+            "dependson": [],
+            "relatedto": [],
+            "categories": [],
+            "checktitle": "Ensure that Auto provisioning of 'Log Analytics agent for Azure VMs' is Set to 'On'",
+            "compliance": None,
+            "relatedurl": "https://docs.microsoft.com/en-us/azure/security-center/security-center-data-security",
+            "description": (
+                "Ensure that Auto provisioning of 'Log Analytics agent for Azure VMs' is Set to 'On'. "
+                "The Microsoft Monitoring Agent scans for various security-related configurations and events such as system updates, "
+                "OS vulnerabilities, endpoint protection, and provides alerts."
+            ),
+            "remediation": {
+                "code": {
+                    "cli": "",
+                    "other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/SecurityCenter/automatic-provisioning-of-monitoring-agent.html",
+                    "nativeiac": "",
+                    "terraform": ""
+                },
+                "recommendation": {
+                    "url": "https://learn.microsoft.com/en-us/azure/defender-for-cloud/monitoring-components",
+                    "text": (
+                        "Ensure comprehensive visibility into possible security vulnerabilities, including missing updates, "
+                        "misconfigured operating system security settings, and active threats, allowing for timely mitigation and improved overall security posture"
+                    )
+                }
+            },
+            "servicename": "defender",
+            "checkaliases": [],
+            "resourcetype": "AzureDefenderPlan",
+            "subservicename": "",
+            "resourceidtemplate": ""
+        }
+        api_finding.tags = {}
+        api_resource = DummyResource(
+            uid="/subscriptions/test-ing-4646-bed4-e74f14020726/providers/Microsoft.Security/autoProvisioningSettings/default",
+            name="default",
+            resource_arn="arn",
+            region="global",
+            tags=[]
+        )
+        api_finding.resources = DummyResources(api_resource)
+        api_finding.subscription = "default"
+        finding_obj = Finding.transform_api_finding(api_finding, provider)
+
+        assert finding_obj.account_organization_uid == "test-ing-432a-a828-d9c965196f87"
+        assert finding_obj.account_organization_name == "mock_tenant_domain"
+        assert finding_obj.resource_uid == api_resource.uid
+        assert finding_obj.resource_name == api_resource.name
+        assert finding_obj.region == api_resource.region
+        assert finding_obj.resource_tags == {}
+        assert finding_obj.compliance == {"mock_compliance_key": "mock_compliance_value"}
+
+        assert finding_obj.status == Status("FAIL")
+        assert finding_obj.status_extended == (
+            "Defender Auto Provisioning Log Analytics Agents from subscription Azure subscription 1 is set to OFF."
+        )
+
+        meta = finding_obj.metadata
+        assert meta.Provider == "azure"
+        assert meta.CheckID == "defender_auto_provisioning_log_analytics_agent_vms_on"
+        assert meta.CheckTitle == "Ensure that Auto provisioning of 'Log Analytics agent for Azure VMs' is Set to 'On'"
+        assert meta.Severity == "medium"
+        assert meta.ResourceType == "AzureDefenderPlan"
+        assert meta.Remediation.Recommendation.Url == "https://learn.microsoft.com/en-us/azure/defender-for-cloud/monitoring-components"
+        assert meta.Remediation.Recommendation.Text.startswith("Ensure comprehensive visibility")
+
+        expected_segments = [
+            "prowler-azure",
+            "defender_auto_provisioning_log_analytics_agent_vms_on",
+            api_resource.region,
+            api_resource.name,
+        ]
+        for segment in expected_segments:
+            assert segment in finding_obj.uid
+
+    @patch("prowler.lib.outputs.finding.get_check_compliance", new=mock_get_check_compliance)
+    def test_transform_api_finding_gcp(self):
+        provider = MagicMock()
+        provider.type = "gcp"
+        provider.identity.profile = "gcp_profile"
+        dummy_project = MagicMock()
+        dummy_project.id = "project1"
+        dummy_project.name = "TestProject"
+        dummy_project.labels = {"env": "prod"}
+        dummy_org = MagicMock()
+        dummy_org.id = "org-123"
+        dummy_org.display_name = "Test Org"
+        dummy_project.organization = dummy_org
+        provider.projects = {"project1": dummy_project}
+
+        dummy_finding = DummyAPIFinding()
+        dummy_finding.inserted_at = "2025-02-17 16:17:49"
+        dummy_finding.updated_at = "2025-02-17 16:17:49"
+        dummy_finding.scan = DummyScan(provider=provider)
+        dummy_finding.uid = "finding-uid-gcp"
+        dummy_finding.status = "PASS"
+        dummy_finding.status_extended = "GCP check extended"
+        check_metadata = {
+            "provider": "gcp",
+            "checkid": "gcp-check-001",
+            "checktitle": "Test GCP Check",
+            "checktype": [],
+            "servicename": "TestGCPService",
+            "subservicename": "",
+            "severity": "medium",
+            "resourcetype": "GCPResourceType",
+            "description": "GCP check description",
+            "risk": "Medium risk",
+            "relatedurl": "http://gcp.example.com",
+            "remediation": {
+                "code": {
+                    "nativeiac": "iac_code",
+                    "terraform": "terraform_code",
+                    "cli": "cli_code",
+                    "other": "other_code"
+                },
+                "recommendation": {
+                    "text": "Fix it",
+                    "url": "http://fix-gcp.com"
+                }
+            },
+            "resourceidtemplate": "template",
+            "categories": ["cat-one", "cat-two"],
+            "dependson": ["dep1"],
+            "relatedto": ["rel1"],
+            "notes": "Some notes"
+        }
+        dummy_finding.check_metadata = check_metadata
+        dummy_finding.raw_result = {}
+        dummy_finding.project_id = "project1"
+
+        resource = DummyResource(
+            uid="gcp-resource-uid",
+            name="gcp-resource-name",
+            resource_arn="arn",
+            region="us-central1",
+            tags=[]
+        )
+        dummy_finding.resources = DummyResources(resource)
+        finding_obj = Finding.transform_api_finding(dummy_finding, provider)
+
+        assert finding_obj.auth_method == "Principal: gcp_profile"
+        assert finding_obj.account_uid == dummy_project.id
+        assert finding_obj.account_name == dummy_project.name
+        assert finding_obj.account_tags == dummy_project.labels
+        assert finding_obj.resource_name == resource.name
+        assert finding_obj.resource_uid == resource.uid
+        assert finding_obj.region == resource.region
+        assert finding_obj.account_organization_uid == dummy_project.organization.id
+        assert finding_obj.account_organization_name == dummy_project.organization.display_name
+        assert finding_obj.compliance == {"mock_compliance_key": "mock_compliance_value"}
+        assert finding_obj.status == Status("PASS")
+        assert finding_obj.status_extended == "GCP check extended"
+        expected_uid = f"prowler-gcp-{check_metadata['checkid']}-{dummy_project.id}-{resource.region}-{resource.name}"
+        assert finding_obj.uid == expected_uid
+
+    @patch("prowler.lib.outputs.finding.get_check_compliance", new=mock_get_check_compliance)
+    def test_transform_api_finding_kubernetes(self):
+        provider = MagicMock()
+        provider.type = "kubernetes"
+        provider.identity.context = "In-Cluster"
+        provider.identity.cluster = "cluster-1"
+        api_finding = DummyAPIFinding()
+        api_finding.inserted_at = 1234567890
+        api_finding.scan = DummyScan(provider=provider)
+        api_finding.uid = "finding-uid-k8s"
+        api_finding.status = "PASS"
+        api_finding.status_extended = "K8s check extended"
+        check_metadata = {
+            "provider": "kubernetes",
+            "checkid": "k8s-check-001",
+            "checktitle": "Test K8s Check",
+            "checktype": [],
+            "servicename": "TestK8sService",
+            "subservicename": "",
+            "severity": "low",
+            "resourcetype": "K8sResourceType",
+            "description": "K8s check description",
+            "risk": "Low risk",
+            "relatedurl": "http://k8s.example.com",
+            "remediation": {
+                "code": {
+                    "nativeiac": "iac_code",
+                    "terraform": "terraform_code",
+                    "cli": "cli_code",
+                    "other": "other_code"
+                },
+                "recommendation": {
+                    "text": "Fix it",
+                    "url": "http://fix-k8s.com"
+                }
+            },
+            "resourceidtemplate": "template",
+            "categories": ["cat-one"],
+            "dependson": [],
+            "relatedto": [],
+            "notes": "K8s notes"
+        }
+        api_finding.check_metadata = check_metadata
+        api_finding.raw_result = {}
+        api_finding.resource_name = "k8s-resource-name"
+        api_finding.resource_id = "k8s-resource-uid"
+        api_finding.namespace = "default"
+        resource = DummyResource(
+            uid="k8s-resource-uid",
+            name="k8s-resource-name",
+            resource_arn="arn",
+            region="",
+            tags=[]
+        )
+        api_finding.resources = DummyResources(resource)
+        finding_obj = Finding.transform_api_finding(api_finding, provider)
+        assert finding_obj.auth_method == "in-cluster"
+        assert finding_obj.resource_name == "k8s-resource-name"
+        assert finding_obj.resource_uid == "k8s-resource-uid"
+        assert finding_obj.account_name == "context: In-Cluster"
+        assert finding_obj.account_uid == "cluster-1"
+        assert finding_obj.region == "namespace: default"
+
+    @patch("prowler.lib.outputs.finding.get_check_compliance", new=mock_get_check_compliance)
+    def test_transform_api_finding_microsoft365(self):
+        provider = MagicMock()
+        provider.type = "microsoft365"
+        provider.identity.identity_type = "ms_identity_type"
+        provider.identity.identity_id = "ms_identity_id"
+        provider.identity.tenant_id = "ms-tenant-id"
+        provider.identity.tenant_domain = "ms-tenant-domain"
+        dummy_finding = DummyAPIFinding()
+        dummy_finding.inserted_at = 1234567890
+        dummy_finding.scan = DummyScan(provider=provider)
+        dummy_finding.uid = "finding-uid-m365"
+        dummy_finding.status = "PASS"
+        dummy_finding.status_extended = "M365 check extended"
+        check_metadata = {
+            "provider": "microsoft365",
+            "checkid": "m365-check-001",
+            "checktitle": "Test M365 Check",
+            "checktype": [],
+            "servicename": "TestM365Service",
+            "subservicename": "",
+            "severity": "high",
+            "resourcetype": "M365ResourceType",
+            "description": "M365 check description",
+            "risk": "High risk",
+            "relatedurl": "http://m365.example.com",
+            "remediation": {
+                "code": {
+                    "nativeiac": "iac_code",
+                    "terraform": "terraform_code",
+                    "cli": "cli_code",
+                    "other": "other_code"
+                },
+                "recommendation": {
+                    "text": "Fix it",
+                    "url": "http://fix-m365.com"
+                }
+            },
+            "resourceidtemplate": "template",
+            "categories": ["cat-one"],
+            "dependson": [],
+            "relatedto": [],
+            "notes": "M365 notes"
+        }
+        dummy_finding.check_metadata = check_metadata
+        dummy_finding.raw_result = {}
+        dummy_finding.resource_name = "ms-resource-name"
+        dummy_finding.resource_id = "ms-resource-uid"
+        dummy_finding.location = "global"
+        resource = DummyResource(
+            uid="ms-resource-uid",
+            name="ms-resource-name",
+            resource_arn="arn",
+            region="global",
+            tags=[]
+        )
+        dummy_finding.resources = DummyResources(resource)
+        finding_obj = Finding.transform_api_finding(dummy_finding, provider)
+        assert finding_obj.auth_method == "ms_identity_type: ms_identity_id"
+        assert finding_obj.account_uid == "ms-tenant-id"
+        assert finding_obj.account_name == "ms-tenant-domain"
+        assert finding_obj.resource_name == "ms-resource-name"
+        assert finding_obj.resource_uid == "ms-resource-uid"
+        assert finding_obj.region == "global"
 
     def test_transform_findings_stats_all_fails_muted(self):
         """
@@ -709,7 +1030,6 @@ class TestFinding:
         }
         assert stats == expected
 
-    @patch("prowler.lib.outputs.finding.model_to_dict", dict)
     def test_transform_api_finding_validation_error(self):
         """
         Test that if required data is missing (causing a ValidationError)
@@ -729,7 +1049,7 @@ class TestFinding:
         # Provide a dummy resources with a minimal resource
         tag = DummyTag("env", "prod")
         resource = DummyResource(
-            uid="res-uid-1", name="ResourceName1", region="us-east-1", tags=[tag]
+            uid="res-uid-1", name="ResourceName1", resource_arn="arn", region="us-east-1", tags=[tag]
         )
         dummy_finding.resources = DummyResources(resource)
 
