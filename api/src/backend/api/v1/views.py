@@ -1123,6 +1123,18 @@ class ProviderViewSet(BaseRLSViewSet):
         request=ScanCreateSerializer,
         responses={202: OpenApiResponse(response=TaskSerializer)},
     ),
+    report=extend_schema(
+        tags=["Scan"],
+        summary="Download ZIP report",
+        description="Returns a ZIP file containing the requested report",
+        request=ScanReportSerializer,
+        responses={
+            200: OpenApiResponse(description="Report obtained successfully"),
+            202: OpenApiResponse(description="The task is in progress"),
+            403: OpenApiResponse(description="There is a problem with credentials"),
+            404: OpenApiResponse(description="The scan has no reports"),
+        },
+    )
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 @method_decorator(CACHE_DECORATOR, name="retrieve")
@@ -1190,18 +1202,6 @@ class ScanViewSet(BaseRLSViewSet):
         )
         return Response(data=read_serializer.data, status=status.HTTP_200_OK)
 
-    @extend_schema(
-        tags=["Scan"],
-        summary="Download ZIP report",
-        description="Returns a ZIP file containing the requested report",
-        request=ScanReportSerializer,
-        responses={
-            200: OpenApiResponse(description="Report obtained successfully"),
-            202: OpenApiResponse(description="The task is in progress"),
-            403: OpenApiResponse(description="There is a problem with credentials"),
-            404: OpenApiResponse(description="The scan has no reports"),
-        },
-    )
     @action(detail=True, methods=["get"], url_name="report")
     def report(self, request, pk=None):
         scan_instance = self.get_object()
@@ -1298,7 +1298,7 @@ class ScanViewSet(BaseRLSViewSet):
                     "scan_id": str(scan.id),
                     "provider_id": str(scan.provider_id),
                     # Disabled for now
-                    "checks_to_execute": ["accessanalyzer_enabled"],
+                    # checks_to_execute=scan.scanner_args.get("checks_to_execute"),
                 },
             )
 
