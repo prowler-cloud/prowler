@@ -40,6 +40,7 @@ jobs:
             .env
             docker-compose*
             examples/**
+            .gitignore
 
       - name: Install poetry
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
