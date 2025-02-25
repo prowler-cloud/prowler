@@ -399,7 +399,7 @@ class Check(ABC, CheckMetadata):
 
 
 @dataclass
-class Check_Report:
+class CheckReport:
     """Contains the Check's finding information."""
 
     status: str
@@ -440,8 +440,17 @@ class Check_Report:
 
 
 @dataclass
-class Check_Report_AWS(Check_Report):
-    """Contains the AWS Check's finding information."""
+class Check_Report_AWS(CheckReport):
+    """
+    Contains the AWS Check's finding information.
+
+    Attributes:
+        resource_id (str): The resource ID.
+        resource_arn (str): The resource ARN.
+        region (str): The region of the resource.
+    Raises:
+        AttributeError: If the any of the required attributes are not present.
+    """
 
     resource_id: str
     resource_arn: str
@@ -449,21 +458,25 @@ class Check_Report_AWS(Check_Report):
 
     def __init__(self, metadata: Dict, resource: Any) -> None:
         super().__init__(metadata, resource)
-        self.resource_id = (
-            getattr(resource, "id", None) or getattr(resource, "name", None) or ""
-        )
-        self.resource_arn = getattr(resource, "arn", "")
-        self.region = getattr(resource, "region", "")
+        # Use resource.name as fallback if no resource.id
+        # If no name or id, an exception is raised
+        try:
+            self.resource_id = getattr(resource, "id")
+        except AttributeError:
+            self.resource_id = getattr(resource, "name")
+        # ARN and Region must be present
+        self.resource_arn = getattr(resource, "arn")
+        self.region = getattr(resource, "region")
 
 
 @dataclass
-class Check_Report_Azure(Check_Report):
+class Check_Report_Azure(CheckReport):
     """Contains the Azure Check's finding information."""
 
     resource_name: str
     resource_id: str
-    subscription: str
     location: str
+    subscription: str = None
 
     def __init__(self, metadata: Dict, resource: Any) -> None:
         """Initialize the Azure Check's finding information.
@@ -473,16 +486,21 @@ class Check_Report_Azure(Check_Report):
             resource: Basic information about the resource. Defaults to None.
         """
         super().__init__(metadata, resource)
-        self.resource_name = getattr(
-            resource, "name", getattr(resource, "resource_name", "")
-        )
-        self.resource_id = getattr(resource, "id", getattr(resource, "resource_id", ""))
-        self.subscription = ""
+        try:
+            self.resource_id = getattr(resource, "id")
+        except AttributeError:
+            self.resource_id = getattr(resource, "resource_id")
+
+        try:
+            self.resource_name = getattr(resource, "name")
+        except AttributeError:
+            self.resource_name = getattr(resource, "resource_name")
+
         self.location = getattr(resource, "location", "global")
 
 
 @dataclass
-class Check_Report_GCP(Check_Report):
+class Check_Report_GCP(CheckReport):
     """Contains the GCP Check's finding information."""
 
     resource_name: str
@@ -500,23 +518,30 @@ class Check_Report_GCP(Check_Report):
         project_id=None,
     ) -> None:
         super().__init__(metadata, resource)
-        self.resource_id = (
-            resource_id
-            or getattr(resource, "id", None)
-            or getattr(resource, "name", None)
-            or ""
-        )
-        self.resource_name = resource_name or getattr(resource, "name", "")
-        self.project_id = project_id or getattr(resource, "project_id", "")
-        self.location = (
-            location
-            or getattr(resource, "location", "")
-            or getattr(resource, "region", "")
-        )
+
+        self.resource_name = resource_name or getattr(resource, "name")
+
+        if resource_id:
+            self.resource_id = resource_id
+        else:
+            try:
+                self.resource_id = getattr(resource, "id")
+            except AttributeError:
+                self.resource_id = self.resource_name
+
+        self.project_id = project_id or getattr(resource, "project_id")
+
+        if location:
+            self.location = location
+        else:
+            try:
+                self.location = getattr(resource, "location")
+            except AttributeError:
+                self.location = getattr(resource, "region")
 
 
 @dataclass
-class Check_Report_Kubernetes(Check_Report):
+class Check_Report_Kubernetes(CheckReport):
     # TODO change class name to CheckReportKubernetes
     """Contains the Kubernetes Check's finding information."""
 
@@ -526,17 +551,18 @@ class Check_Report_Kubernetes(Check_Report):
 
     def __init__(self, metadata: Dict, resource: Any) -> None:
         super().__init__(metadata, resource)
-        self.resource_id = (
-            getattr(resource, "uid", None) or getattr(resource, "name", None) or ""
-        )
-        self.resource_name = getattr(resource, "name", "")
+        self.resource_name = getattr(resource, "name")
+        try:
+            self.resource_id = getattr(resource, "uid")
+        except AttributeError:
+            self.resource_id = self.resource_name
+
         self.namespace = getattr(resource, "namespace", "cluster-wide")
-        if not self.namespace:
-            self.namespace = "cluster-wide"
 
 
+# TODO: review this logic and add tests
 @dataclass
-class Check_Report_Microsoft365(Check_Report):
+class Check_Report_Microsoft365(CheckReport):
     """Contains the Microsoft365 Check's finding information."""
 
     resource_name: str
@@ -552,7 +578,7 @@ class Check_Report_Microsoft365(Check_Report):
         """
         super().__init__(metadata, resource)
         self.resource_name = getattr(
-            resource, "name", getattr(resource, "resource_name", "")
+            resource, "name", getattr(resource, "resource_name")
         )
         self.resource_id = getattr(resource, "id", getattr(resource, "resource_id", ""))
         self.location = getattr(resource, "location", "global")
