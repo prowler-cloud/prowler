@@ -5,7 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("api", "0009_increase_provider_uid_maximum_length"),
+        ("api", "0011_findings_performance_indexes_parent"),
     ]
 
     operations = [
