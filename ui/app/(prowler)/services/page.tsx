@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { getServices } from "@/actions/services";
 import { FilterControls } from "@/components/filters";
 import { ServiceCard, ServiceSkeletonGrid } from "@/components/services";
-import { Header } from "@/components/ui";
+import { ContentLayout } from "@/components/ui";
 import { SearchParamsProps } from "@/types";
 
 export default async function Services({
@@ -14,18 +14,17 @@ export default async function Services({
 }) {
   const searchParamsKey = JSON.stringify(searchParams || {});
   return (
-    <>
-      <Header
-        title="Services"
-        icon="material-symbols:linked-services-outline"
-      />
+    <ContentLayout
+      title="Services"
+      icon="material-symbols:linked-services-outline"
+    >
       <Spacer y={4} />
       <FilterControls />
       <Spacer y={4} />
       <Suspense key={searchParamsKey} fallback={<ServiceSkeletonGrid />}>
         <SSRServiceGrid />
       </Suspense>
-    </>
+    </ContentLayout>
   );
 }
 

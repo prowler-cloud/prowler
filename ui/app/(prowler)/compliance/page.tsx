@@ -10,7 +10,7 @@ import {
   ComplianceSkeletonGrid,
 } from "@/components/compliance";
 import { DataCompliance } from "@/components/compliance/data-compliance";
-import { Header } from "@/components/ui";
+import { ContentLayout } from "@/components/ui";
 import { ComplianceOverviewData, SearchParamsProps } from "@/types";
 
 export default async function Compliance({
@@ -80,15 +80,13 @@ export default async function Compliance({
   }
 
   return (
-    <>
-      <Header title="Compliance" icon="fluent-mdl2:compliance-audit" />
-      <Spacer y={4} />
+    <ContentLayout title="Compliance" icon="fluent-mdl2:compliance-audit">
       <DataCompliance scans={scanList} regions={regions} />
       <Spacer y={12} />
       <Suspense fallback={<ComplianceSkeletonGrid />}>
         <SSRComplianceGrid searchParams={searchParams} />
       </Suspense>
-    </>
+    </ContentLayout>
   );
 }
 
