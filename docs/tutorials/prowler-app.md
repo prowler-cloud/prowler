@@ -102,7 +102,7 @@ By default, the `kubeconfig` file is located at `~/.kube/config`.
 ???+ note
     If you are adding an **EKS**, **GKE**, **AKS** or external cluster, follow these additional steps to ensure proper authentication:
 
-    ** Make sure your cluster allow traffic from the Prowler Cloud IP address `52.48.254.174/32` **
+    ** Make sure your cluster allows traffic from the Prowler Cloud IP address `52.48.254.174/32` **
 
     1. Apply the necessary Kubernetes resources to your EKS, GKE, AKS or external cluster (you can find the files in the [`kubernetes` directory of the Prowler repository](https://github.com/prowler-cloud/prowler/tree/master/kubernetes)):
     ```console
@@ -128,6 +128,40 @@ By default, the `kubeconfig` file is located at `~/.kube/config`.
     4. Now you can add the modified `kubeconfig` in Prowler Cloud. Then simply test the connection.
 
 ---
+
+???+ note
+    Newer versions of Kubernetes have depreciated the creation of long-lived service account tokens. While there are work-arounds, these may be disabled on some managed Kubernetes clusters (or your user may not have the required Kubernetes permissions to change the settings)
+
+    In this scenario, we provide an API endpoint and local pod to dynamically update your kubeconfig when the ServiceAccount token rotates:
+
+    ** As above, make sure your cluster allows traffic from the Prowler Cloud IP address `52.48.254.174/32` **
+
+    1. We use the existing prowler `ServiceAccount`, `Role` and `RoleBinding`, so as above, apply the necessary Kubernetes resources to your cluster (you can find the files in the [`kubernetes` directory of the Prowler repository](https://github.com/prowler-cloud/prowler/tree/master/kubernetes)):
+    ```console
+    kubectl apply -f kubernetes/prowler-sa.yaml
+    kubectl apply -f kubernetes/prowler-role.yaml
+    kubectl apply -f kubernetes/prowler-rolebinding.yaml
+    ```
+
+    2. Fill in required details for the Token Update Service via a Kubernetes Secret, there is a template `secrets.yaml` in the[`kubernetes/prowler-api-auth-updater` directory of the Prowler repository](https://github.com/prowler-cloud/prowler/tree/master/kubernetes/prowler-api-auth-updater))
+
+
+     - api-url: The endpoint for your Prowler installation. Prowler cloud for example is https://api.prowler.com
+     - username: An account on your Prowler installation with permission to update your Provider configuration
+     - password: The credentials for the above Prowler account
+     - k8s-url: The public API endpoint for your Kubernetes cluster, for example on EKS this may look similar to https://ABCDEF11234567890ABCDEF.gr7.eu-west-1.eks.amazonaws.com
+
+
+    Then deploy the application to auto-update your prowler Kubernetes credentials.
+    ```console
+    kubectl apply -f kubernetes/prowler-api-auth-updater/secret.yaml
+    kubectl apply -f kubernetes/prowler-api-auth-updater/deployment.yaml
+    ```
+    
+    3. You can re-test the connection from the Prowler App's Providers screen.
+
+---
+
 
 ## **Step 5: Test Connection**
 After adding your credentials of your cloud account, click the `Launch` button to verify that the Prowler App can successfully connect to your provider:
