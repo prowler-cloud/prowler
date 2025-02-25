@@ -199,7 +199,8 @@ class OCSF(Output):
                 and not self._file_descriptor.closed
                 and self._data
             ):
-                self._file_descriptor.write("[")
+                if self._file_descriptor.tell() == 0:
+                    self._file_descriptor.write("[")
                 for finding in self._data:
                     try:
                         self._file_descriptor.write(
@@ -210,14 +211,14 @@ class OCSF(Output):
                         logger.error(
                             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
-                if self._file_descriptor.tell() > 0:
+                if self.close_file or self._from_cli:
                     if self._file_descriptor.tell() != 1:
                         self._file_descriptor.seek(
                             self._file_descriptor.tell() - 1, os.SEEK_SET
                         )
                     self._file_descriptor.truncate()
                     self._file_descriptor.write("]")
-                self._file_descriptor.close()
+                    self._file_descriptor.close()
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

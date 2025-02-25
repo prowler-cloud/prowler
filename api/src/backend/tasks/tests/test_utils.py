@@ -4,7 +4,7 @@ from unittest.mock import patch
 import pytest
 from django_celery_beat.models import IntervalSchedule, PeriodicTask
 from django_celery_results.models import TaskResult
-from tasks.utils import get_next_execution_datetime
+from tasks.utils import batched, get_next_execution_datetime
 
 
 @pytest.mark.django_db
@@ -74,3 +74,29 @@ class TestGetNextExecutionDatetime:
             get_next_execution_datetime(
                 task_id=task_result.task_id, provider_id="nonexistent"
             )
+
+
+class TestBatchedFunction:
+    def test_empty_iterable(self):
+        result = list(batched([], 3))
+        assert result == [([], True)]
+
+    def test_exact_batches(self):
+        result = list(batched([1, 2, 3, 4], 2))
+        expected = [([1, 2], False), ([3, 4], False), ([], True)]
+        assert result == expected
+
+    def test_inexact_batches(self):
+        result = list(batched([1, 2, 3, 4, 5], 2))
+        expected = [([1, 2], False), ([3, 4], False), ([5], True)]
+        assert result == expected
+
+    def test_batch_size_one(self):
+        result = list(batched([1, 2, 3], 1))
+        expected = [([1], False), ([2], False), ([3], False), ([], True)]
+        assert result == expected
+
+    def test_batch_size_greater_than_length(self):
+        result = list(batched([1, 2, 3], 5))
+        expected = [([1, 2, 3], True)]
+        assert result == expected

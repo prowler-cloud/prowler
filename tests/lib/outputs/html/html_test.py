@@ -492,7 +492,7 @@ class TestHTML:
         assert content == get_aws_html_header(args) + pass_html_finding + html_footer
 
     def test_batch_write_data_to_file_without_findings(self):
-        assert not hasattr(HTML([]), "_file_descriptor")
+        assert not HTML([])._file_descriptor
 
     def test_write_header(self):
         mock_file = StringIO()

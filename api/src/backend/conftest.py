@@ -486,7 +486,7 @@ def scans_fixture(tenants_fixture, providers_fixture):
         name="Scan 1",
         provider=provider,
         trigger=Scan.TriggerChoices.MANUAL,
-        state=StateChoices.AVAILABLE,
+        state=StateChoices.COMPLETED,
         tenant_id=tenant.id,
         started_at="2024-01-02T00:00:00Z",
     )

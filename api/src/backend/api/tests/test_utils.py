@@ -274,9 +274,10 @@ class TestValidateInvitation:
         expired_time = datetime.now(timezone.utc) - timedelta(days=1)
         invitation.expires_at = expired_time
 
-        with patch("api.utils.Invitation.objects.using") as mock_using, patch(
-            "api.utils.datetime"
-        ) as mock_datetime:
+        with (
+            patch("api.utils.Invitation.objects.using") as mock_using,
+            patch("api.utils.datetime") as mock_datetime,
+        ):
             mock_db = mock_using.return_value
             mock_db.get.return_value = invitation
             mock_datetime.now.return_value = datetime.now(timezone.utc)
