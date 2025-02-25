@@ -17,7 +17,7 @@ from tests.providers.microsoft365.microsoft365_fixtures import (
 
 
 class Test_entra_admin_users_sign_in_frequency_enabled:
-    def test_entra_no_conditional_access_policy(self):
+    def test_entra_no_conditional_access_policies(self):
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
