@@ -29,6 +29,7 @@ class Provider(str, Enum):
     AZURE = "azure"
     KUBERNETES = "kubernetes"
     MICROSOFT365 = "microsoft365"
+    NHN = "nhn"
 
 
 # Compliance
