@@ -2222,9 +2222,7 @@ class TestScanViewSet:
         url = reverse("scan-report", kwargs={"pk": scan.id})
         response = authenticated_client.get(url)
         assert response.status_code == status.HTTP_404_NOT_FOUND
-        assert (
-            response.json()["errors"]["detail"] == "The scan has no reports."
-        )
+        assert response.json()["errors"]["detail"] == "The scan has no reports."
 
     def test_report_s3_no_credentials(
         self, authenticated_client, scans_fixture, monkeypatch
