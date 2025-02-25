@@ -18,4 +18,6 @@ jobs:
     steps:
       - name: conventional-commit-check
         id: conventional-commit-check
-        uses: agenthunt/conventional-commit-checker-action@v1.0.0
+        uses: agenthunt/conventional-commit-checker-action@v2.0.0
+        with:
+            pr-title-regex: '^([^\s(]+)(?:\(([^)]+)\))?: (.+)'
