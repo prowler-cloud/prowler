@@ -24,7 +24,7 @@ class TestSecretsManagerHasRestrictiveResourcePolicy:
         with mock_aws():
             aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-            from prowler.providers.aws.services.secretsmanager.secretsmanager_client import (
+            from prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy import (
                 secretsmanager_client,
             )
 
@@ -34,7 +34,7 @@ class TestSecretsManagerHasRestrictiveResourcePolicy:
                 "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=aws_provider,
             ), mock.patch(
-                "prowler.providers.aws.services.secretsmanager.secretsmanager_client",
+                "prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy.secretsmanager_client",
                 new=SecretsManager(aws_provider),
             ):
                 from prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy import (
@@ -520,6 +520,12 @@ class TestSecretsManagerHasRestrictiveResourcePolicy:
                 None,
                 "PASS",
             ),
+            # test statement DenyOutsideOrganization
+            (
+                "Invalid DenyOutsideOrganization using NotPrincipal with disallowed service",
+                (1, {"NotPrincipal": {"Service": "invalid.service.com"}}),
+                "FAIL",
+            ),
             # test statement AllowAppFlowAccess
             (
                 "Invalid wildcard '*' in Action in AllowAppFlowAccess",
@@ -629,7 +635,7 @@ class TestSecretsManagerHasRestrictiveResourcePolicy:
                     {
                         "Sid": "DenyOutsideOrganization",
                         "Effect": "Deny",
-                        "Principal": "*",
+                        "NotPrincipal": {"Service": "appflow.amazonaws.com"},
                         "Action": "secretsmanager:*",
                         "Resource": "*",
                         "Condition": {

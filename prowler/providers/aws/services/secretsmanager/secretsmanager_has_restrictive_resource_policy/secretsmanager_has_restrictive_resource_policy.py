@@ -87,7 +87,19 @@ class secretsmanager_has_restrictive_resource_policy(Check):
                     True
                     if not organizations_trusted_ids
                     else any(
-                        "*" in self.extract_field(statement.get("Principal", {}))
+                        (
+                            ("*" in self.extract_field(statement.get("Principal", {})))
+                            or (
+                                "NotPrincipal" in statement
+                                and any(
+                                    allowed_service
+                                    in self.extract_field(
+                                        statement.get("NotPrincipal", {})
+                                    )
+                                    for allowed_service in not_denied_services
+                                )
+                            )
+                        )
                         and any(
                             action in self.extract_field(statement.get("Action", []))
                             for action in ["*", "secretsmanager:*"]
