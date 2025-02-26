@@ -884,7 +884,6 @@ class TestFinding:
         api_finding.raw_result = {}
         api_finding.resource_name = "k8s-resource-name"
         api_finding.resource_id = "k8s-resource-uid"
-        api_finding.namespace = "default"
         resource = DummyResource(
             uid="k8s-resource-uid",
             name="k8s-resource-name",
@@ -892,6 +891,7 @@ class TestFinding:
             region="",
             tags=[],
         )
+        resource.region = "namespace: default"
         api_finding.resources = DummyResources(resource)
         finding_obj = Finding.transform_api_finding(api_finding, provider)
         assert finding_obj.auth_method == "in-cluster"

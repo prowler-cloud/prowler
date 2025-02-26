@@ -312,7 +312,8 @@ class Finding(BaseModel):
         # Azure, GCP specified field
         finding.location = resource.region
         # K8s specified field
-        finding.namespace = resource.region.removeprefix("namespace: ")
+        if provider.type == "kubernetes":
+            finding.namespace = resource.region.removeprefix("namespace: ")
         if provider.type == "azure":
             finding.subscription = list(provider.identity.subscriptions.keys())[0]
         elif provider.type == "gcp":
