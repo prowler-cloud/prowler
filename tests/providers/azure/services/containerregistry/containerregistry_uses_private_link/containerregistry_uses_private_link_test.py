@@ -64,7 +64,6 @@ class Test_containerregistry_uses_private_link:
                         public_network_access="Enabled",
                         admin_user_enabled=True,
                         monitor_diagnostic_settings=[],
-                        network_rule_set=[],
                         private_endpoint_connections=[],
                     )
                 }
@@ -121,7 +120,6 @@ class Test_containerregistry_uses_private_link:
                         public_network_access="Enabled",
                         admin_user_enabled=False,
                         monitor_diagnostic_settings=[],
-                        network_rule_set=[],
                         private_endpoint_connections=[
                             PrivateEndpointConnection(
                                 id="/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/mock_resource_group/providers/Microsoft.ContainerRegistry/registries/mock_registry/privateEndpointConnections/myConnection",
