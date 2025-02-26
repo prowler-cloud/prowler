@@ -98,3 +98,7 @@ compliance:
       - any-glob-to-any-file: "prowler/compliance/**"
       - any-glob-to-any-file: "prowler/lib/outputs/compliance/**"
       - any-glob-to-any-file: "tests/lib/outputs/compliance/**"
+
+review-django-migrations:
+  - changed-files:
+      - any-glob-to-any-file: "api/src/backend/api/migrations/**"
