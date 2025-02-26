@@ -43,7 +43,7 @@ class NhnProvider(Provider):
     """
 
     _type: str = "nhn"
-    _session: Optional[requests.Session] = None
+    _session: Optional[requests.Session]
     _identity: NHNIdentityInfo
     _audit_config: dict
     _mutelist: NHNMutelist
@@ -184,9 +184,6 @@ class NhnProvider(Provider):
 
         On success, it creates a requests.Session and sets the X-Auth-Token header.
         """
-        if not self._username or not self._password:
-            logger.warning("NHN Provider - username/password not set.")
-            return
         url = "https://api-identity-infrastructure.nhncloudservice.com/v2.0/tokens"
         data = {
             "auth": {
@@ -209,9 +206,10 @@ class NhnProvider(Provider):
                 self._session = sess
                 logger.info("NHN token acquired successfully and session is set up.")
             else:
-                logger.error(
+                logger.critical(
                     f"Failed to get token. Status: {response.status_code}, Body: {response.text}"
                 )
+                sys.exit(1)
         except Exception as e:
             logger.critical(f"[setup_session] Error: {e}")
             sys.exit(1)
