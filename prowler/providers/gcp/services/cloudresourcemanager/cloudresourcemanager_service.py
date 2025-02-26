@@ -42,11 +42,14 @@ class CloudResourceManager(GCPService):
 
     def _get_organizations(self):
         try:
-            response = self.client.organizations().search().execute()
-            for org in response.get("organizations", []):
-                self.organizations.append(
-                    Organization(id=org["name"].split("/")[-1], name=org["displayName"])
-                )
+            if self.project_ids:
+                response = self.client.organizations().search().execute()
+                for org in response.get("organizations", []):
+                    self.organizations.append(
+                        Organization(
+                            id=org["name"].split("/")[-1], name=org["displayName"]
+                        )
+                    )
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
