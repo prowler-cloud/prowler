@@ -71,8 +71,8 @@ It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, Fe
 
 | Provider | Checks | Services | [Compliance Frameworks](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/compliance/) | [Categories](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/misc/#categories) |
 |---|---|---|---|---|
-| AWS | 564 | 82 | 31 | 10 |
-| GCP | 77 | 13 | 4 | 3 |
+| AWS | 564 | 82 | 33 | 10 |
+| GCP | 77 | 13 | 5 | 3 |
 | Azure | 140 | 18 | 6 | 3 |
 | Kubernetes | 83 | 7 | 2 | 7 |
 | Microsoft365 | 5 | 2 | 1 | 0 |
