@@ -318,7 +318,7 @@ def prowler():
             continue
 
     # Extract findings stats
-    stats = extract_findings_statistics(findings)
+    stats = extract_findings_statistics(finding_outputs)
 
     if args.slack:
         # TODO: this should be also in a config file
