@@ -9,12 +9,12 @@ class network_vpc_has_empty_routingtables(Check):
             report = Check_Report_NHN(metadata=self.metadata(), resource=network)
             report.status = "PASS"
             report.status_extended = (
-                f"VPC {network.name} does not have a empty routingtables."
+                f"VPC {network.name} does not have empty routingtables."
             )
             if network.empty_routingtables:
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"VPC {network.name} has a empty routingtables."
+                    f"VPC {network.name} has empty routingtables."
                 )
             findings.append(report)
 
