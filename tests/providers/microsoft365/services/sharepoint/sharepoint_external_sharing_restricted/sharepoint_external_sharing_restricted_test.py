@@ -31,17 +31,15 @@ class Test_sharepoint_external_sharing_restricted:
                 sharepoint_external_sharing_restricted,
             )
 
-            sharepoint_client.settings = {
-                DOMAIN: SharePointSettings(
-                    id=DOMAIN,
-                    sharingCapability="ExternalUserSharingOnly",
-                    sharingAllowedDomainList=["allowed-domain.com"],
-                    sharingBlockedDomainList=["blocked-domain.com"],
-                    sharingDomainRestrictionMode="allowList",
-                    resharingEnabled=False,
-                    modernAuthentication=True,
-                )
-            }
+            sharepoint_client.settings = SharePointSettings(
+                sharingCapability="ExternalUserSharingOnly",
+                sharingAllowedDomainList=["allowed-domain.com"],
+                sharingBlockedDomainList=["blocked-domain.com"],
+                sharingDomainRestrictionMode="allowList",
+                resharingEnabled=False,
+                modernAuthentication=True,
+            )
+            sharepoint_client.tenant_domain = DOMAIN
 
             check = sharepoint_external_sharing_restricted()
             result = check.execute()
@@ -51,6 +49,16 @@ class Test_sharepoint_external_sharing_restricted:
                 "External sharing is restricted to external user sharing or more restrictive."
             )
             assert result[0].resource_id == DOMAIN
+            assert result[0].location == "global"
+            assert result[0].resource_name == "SharePoint Settings"
+            assert result[0].resource == {
+                "sharingCapability": "ExternalUserSharingOnly",
+                "sharingAllowedDomainList": ["allowed-domain.com"],
+                "sharingBlockedDomainList": ["blocked-domain.com"],
+                "sharingDomainRestrictionMode": "allowList",
+                "resharingEnabled": False,
+                "modernAuthentication": True,
+            }
 
     def test_external_sharing_not_restricted(self):
         """
@@ -73,17 +81,15 @@ class Test_sharepoint_external_sharing_restricted:
                 sharepoint_external_sharing_restricted,
             )
 
-            sharepoint_client.settings = {
-                DOMAIN: SharePointSettings(
-                    id=DOMAIN,
-                    sharingCapability="ExternalUserAndGuestSharing",
-                    sharingAllowedDomainList=["allowed-domain.com"],
-                    sharingBlockedDomainList=["blocked-domain.com"],
-                    sharingDomainRestrictionMode="allowList",
-                    resharingEnabled=False,
-                    modernAuthentication=True,
-                )
-            }
+            sharepoint_client.settings = SharePointSettings(
+                sharingCapability="ExternalUserAndGuestSharing",
+                sharingAllowedDomainList=["allowed-domain.com"],
+                sharingBlockedDomainList=["blocked-domain.com"],
+                sharingDomainRestrictionMode="allowList",
+                resharingEnabled=False,
+                modernAuthentication=True,
+            )
+            sharepoint_client.tenant_domain = DOMAIN
 
             check = sharepoint_external_sharing_restricted()
             result = check.execute()
@@ -93,6 +99,16 @@ class Test_sharepoint_external_sharing_restricted:
                 "External sharing is not restricted and guests users can access."
             )
             assert result[0].resource_id == DOMAIN
+            assert result[0].location == "global"
+            assert result[0].resource_name == "SharePoint Settings"
+            assert result[0].resource == {
+                "sharingCapability": "ExternalUserAndGuestSharing",
+                "sharingAllowedDomainList": ["allowed-domain.com"],
+                "sharingBlockedDomainList": ["blocked-domain.com"],
+                "sharingDomainRestrictionMode": "allowList",
+                "resharingEnabled": False,
+                "modernAuthentication": True,
+            }
 
     def test_empty_settings(self):
         """
@@ -101,6 +117,7 @@ class Test_sharepoint_external_sharing_restricted:
         """
         sharepoint_client = mock.MagicMock
         sharepoint_client.settings = {}
+        sharepoint_client.tenant_domain = DOMAIN
 
         with (
             mock.patch(
@@ -118,4 +135,10 @@ class Test_sharepoint_external_sharing_restricted:
 
             check = sharepoint_external_sharing_restricted()
             result = check.execute()
-            assert len(result) == 0
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert result[0].status_extended == "SharePoint settings were not found."
+            assert result[0].resource_id == DOMAIN
+            assert result[0].location == "global"
+            assert result[0].resource_name == "SharePoint Settings"
+            assert result[0].resource == {}

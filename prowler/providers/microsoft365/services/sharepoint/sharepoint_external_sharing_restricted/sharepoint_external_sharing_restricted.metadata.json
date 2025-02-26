@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "#microsoft.graph.sharepoint.settings",
+  "ResourceType": "Sharepoint Settings",
   "Description": "Ensure that external sharing settings in SharePoint are restricted to 'New and existing guests' or a less permissive level to enforce authentication and control over shared content.",
   "Risk": "If external sharing is not restricted, unauthorized users may gain access to sensitive information, increasing the risk of data breaches and compliance violations.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/sharepoint/turn-external-sharing-on-or-off",
