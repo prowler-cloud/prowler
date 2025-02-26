@@ -87,10 +87,12 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
         attributes: { state },
       } = getScanData(row);
       return (
-        <StatusBadge
-          status={state}
-          loadingProgress={row.original.attributes.progress}
-        />
+        <div className="flex items-center justify-center">
+          <StatusBadge
+            status={state}
+            loadingProgress={row.original.attributes.progress}
+          />
+        </div>
       );
     },
   },

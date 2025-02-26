@@ -98,7 +98,7 @@ export const InvitationDetails = ({ attributes }: InvitationDetailsProps) => {
               }}
               hideSymbol
               variant="bordered"
-              className="overflow-hidden text-ellipsis whitespace-nowrap"
+              className="overflow-hidden text-ellipsis whitespace-nowrap bg-gray-50 py-1 dark:bg-slate-800"
             >
               <p className="no-scrollbar w-fit overflow-hidden overflow-x-scroll text-ellipsis whitespace-nowrap text-small">
                 {invitationLink}
