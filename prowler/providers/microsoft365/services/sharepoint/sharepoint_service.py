@@ -23,12 +23,11 @@ class SharePoint(Microsoft365Service):
 
     async def _get_settings(self):
         logger.info("Microsoft365 - Getting SharePoint global settings...")
-        settings = {}
+        settings = None
         try:
             global_settings = await self.client.admin.sharepoint.settings.get()
 
-            sharepoint_settings = SharePointSettings(
-                id=self.tenant_domain,
+            settings = SharePointSettings(
                 sharingCapability=(
                     str(global_settings.sharing_capability).split(".")[-1]
                     if global_settings.sharing_capability
@@ -40,7 +39,6 @@ class SharePoint(Microsoft365Service):
                 modernAuthentication=global_settings.is_legacy_auth_protocols_enabled,
                 resharingEnabled=global_settings.is_resharing_by_external_users_enabled,
             )
-            settings[self.tenant_domain] = sharepoint_settings
 
         except ODataError as error:
             logger.error(
@@ -56,7 +54,6 @@ class SharePoint(Microsoft365Service):
 
 
 class SharePointSettings(BaseModel):
-    id: str
     sharingCapability: str
     sharingAllowedDomainList: Optional[List[str]]
     sharingBlockedDomainList: Optional[List[str]]

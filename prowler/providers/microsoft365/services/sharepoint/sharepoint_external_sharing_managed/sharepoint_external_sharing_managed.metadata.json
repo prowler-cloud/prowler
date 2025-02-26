@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "#microsoft.graph.sharepoint.settings",
+  "ResourceType": "Sharepoint Settings",
   "Description": "Control the sharing of documents to external domains by either blocking specific domains or only allowing sharing with named trusted domains.",
   "Risk": "If domain-based sharing restrictions are not enforced, users may share documents with untrusted external entities, increasing the risk of data exfiltration or unauthorized access.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/sharepoint/turn-external-sharing-on-or-off",

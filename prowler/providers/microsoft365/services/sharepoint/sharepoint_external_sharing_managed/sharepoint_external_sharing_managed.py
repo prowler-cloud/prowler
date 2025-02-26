@@ -1,6 +1,6 @@
 from typing import List
 
-from prowler.lib.check.models import Check, Check_Report_Microsoft365
+from prowler.lib.check.models import Check, CheckReportMicrosoft365
 from prowler.providers.microsoft365.services.sharepoint.sharepoint_client import (
     sharepoint_client,
 )
@@ -19,7 +19,7 @@ class sharepoint_external_sharing_managed(Check):
     of verifying that the allowed/blocked domain list is not empty.
     """
 
-    def execute(self) -> List[Check_Report_Microsoft365]:
+    def execute(self) -> List[CheckReportMicrosoft365]:
         """
         Execute the SharePoint external sharing management check.
 
@@ -27,11 +27,17 @@ class sharepoint_external_sharing_managed(Check):
         generates a report indicating whether external sharing is managed via domain restrictions.
 
         Returns:
-            List[Check_Report_Microsoft365]: A list containing a report with the result of the check.
+            List[CheckReportMicrosoft365]: A list containing a report with the result of the check.
         """
         findings = []
-        for settings in sharepoint_client.settings.values():
-            report = Check_Report_Microsoft365(self.metadata(), resource=settings)
+        settings = sharepoint_client.settings
+        report = CheckReportMicrosoft365(
+            self.metadata(),
+            resource=settings if settings else {},
+            resource_name="SharePoint Settings",
+            resource_id=sharepoint_client.tenant_domain,
+        )
+        if settings:
             report.status = "FAIL"
             report.status_extended = "SharePoint external sharing is not managed through domain restrictions."
             if settings.sharingDomainRestrictionMode in ["allowList", "blockList"]:
@@ -48,6 +54,9 @@ class sharepoint_external_sharing_managed(Check):
                 ):
                     report.status = "PASS"
                     report.status_extended = f"SharePoint external sharing is managed through domain restrictions with mode '{settings.sharingDomainRestrictionMode}'."
+        else:
+            report.status = "FAIL"
+            report.status_extended = "SharePoint settings were not found."
 
-            findings.append(report)
+        findings.append(report)
         return findings

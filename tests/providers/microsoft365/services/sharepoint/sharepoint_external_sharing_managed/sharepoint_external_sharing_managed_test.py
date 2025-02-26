@@ -31,17 +31,15 @@ class Test_sharepoint_external_sharing_managed:
                 sharepoint_external_sharing_managed,
             )
 
-            sharepoint_client.settings = {
-                DOMAIN: SharePointSettings(
-                    id=DOMAIN,
-                    sharingCapability="ExternalUserSharingOnly",
-                    sharingAllowedDomainList=["allowed-domain.com"],
-                    sharingBlockedDomainList=["blocked-domain.com"],
-                    modernAuthentication=True,
-                    resharingEnabled=False,
-                    sharingDomainRestrictionMode="none",
-                )
-            }
+            sharepoint_client.settings = SharePointSettings(
+                sharingCapability="ExternalUserSharingOnly",
+                sharingAllowedDomainList=["allowed-domain.com"],
+                sharingBlockedDomainList=["blocked-domain.com"],
+                modernAuthentication=True,
+                resharingEnabled=False,
+                sharingDomainRestrictionMode="none",
+            )
+            sharepoint_client.tenant_domain = DOMAIN
 
             check = sharepoint_external_sharing_managed()
             result = check.execute()
@@ -53,6 +51,16 @@ class Test_sharepoint_external_sharing_managed:
                 == "SharePoint external sharing is not managed through domain restrictions."
             )
             assert result[0].resource_id == DOMAIN
+            assert result[0].location == "global"
+            assert result[0].resource_name == "SharePoint Settings"
+            assert result[0].resource == {
+                "sharingCapability": "ExternalUserSharingOnly",
+                "sharingAllowedDomainList": ["allowed-domain.com"],
+                "sharingBlockedDomainList": ["blocked-domain.com"],
+                "sharingDomainRestrictionMode": "none",
+                "resharingEnabled": False,
+                "modernAuthentication": True,
+            }
 
     def test_allow_list_empty(self):
         """
@@ -75,17 +83,15 @@ class Test_sharepoint_external_sharing_managed:
                 sharepoint_external_sharing_managed,
             )
 
-            sharepoint_client.settings = {
-                DOMAIN: SharePointSettings(
-                    id=DOMAIN,
-                    sharingCapability="ExternalUserSharingOnly",
-                    sharingAllowedDomainList=[],
-                    sharingBlockedDomainList=["blocked-domain.com"],
-                    modernAuthentication=True,
-                    resharingEnabled=False,
-                    sharingDomainRestrictionMode="allowList",
-                )
-            }
+            sharepoint_client.settings = SharePointSettings(
+                sharingCapability="ExternalUserSharingOnly",
+                sharingAllowedDomainList=[],
+                sharingBlockedDomainList=["blocked-domain.com"],
+                modernAuthentication=True,
+                resharingEnabled=False,
+                sharingDomainRestrictionMode="allowList",
+            )
+            sharepoint_client.tenant_domain = DOMAIN
 
             check = sharepoint_external_sharing_managed()
             result = check.execute()
@@ -97,6 +103,16 @@ class Test_sharepoint_external_sharing_managed:
                 == "SharePoint external sharing is managed through domain restrictions with mode 'allowList' but the list is empty."
             )
             assert result[0].resource_id == DOMAIN
+            assert result[0].location == "global"
+            assert result[0].resource_name == "SharePoint Settings"
+            assert result[0].resource == {
+                "sharingCapability": "ExternalUserSharingOnly",
+                "sharingAllowedDomainList": [],
+                "sharingBlockedDomainList": ["blocked-domain.com"],
+                "sharingDomainRestrictionMode": "allowList",
+                "resharingEnabled": False,
+                "modernAuthentication": True,
+            }
 
     def test_block_list_empty(self):
         """
@@ -119,17 +135,15 @@ class Test_sharepoint_external_sharing_managed:
                 sharepoint_external_sharing_managed,
             )
 
-            sharepoint_client.settings = {
-                DOMAIN: SharePointSettings(
-                    id=DOMAIN,
-                    sharingCapability="ExternalUserSharingOnly",
-                    sharingAllowedDomainList=["allowed-domain.com"],
-                    sharingBlockedDomainList=[],
-                    modernAuthentication=True,
-                    resharingEnabled=False,
-                    sharingDomainRestrictionMode="blockList",
-                )
-            }
+            sharepoint_client.settings = SharePointSettings(
+                sharingCapability="ExternalUserSharingOnly",
+                sharingAllowedDomainList=["allowed-domain.com"],
+                sharingBlockedDomainList=[],
+                modernAuthentication=True,
+                resharingEnabled=False,
+                sharingDomainRestrictionMode="blockList",
+            )
+            sharepoint_client.tenant_domain = DOMAIN
 
             check = sharepoint_external_sharing_managed()
             result = check.execute()
@@ -141,6 +155,16 @@ class Test_sharepoint_external_sharing_managed:
                 == "SharePoint external sharing is managed through domain restrictions with mode 'blockList' but the list is empty."
             )
             assert result[0].resource_id == DOMAIN
+            assert result[0].location == "global"
+            assert result[0].resource_name == "SharePoint Settings"
+            assert result[0].resource == {
+                "sharingCapability": "ExternalUserSharingOnly",
+                "sharingAllowedDomainList": ["allowed-domain.com"],
+                "sharingBlockedDomainList": [],
+                "sharingDomainRestrictionMode": "blockList",
+                "resharingEnabled": False,
+                "modernAuthentication": True,
+            }
 
     def test_allow_list_non_empty(self):
         """
@@ -163,17 +187,15 @@ class Test_sharepoint_external_sharing_managed:
                 sharepoint_external_sharing_managed,
             )
 
-            sharepoint_client.settings = {
-                DOMAIN: SharePointSettings(
-                    id=DOMAIN,
-                    sharingCapability="ExternalUserSharingOnly",
-                    sharingAllowedDomainList=["allowed-domain.com"],
-                    sharingBlockedDomainList=["blocked-domain.com"],
-                    modernAuthentication=True,
-                    resharingEnabled=False,
-                    sharingDomainRestrictionMode="allowList",
-                )
-            }
+            sharepoint_client.settings = SharePointSettings(
+                sharingCapability="ExternalUserSharingOnly",
+                sharingAllowedDomainList=["allowed-domain.com"],
+                sharingBlockedDomainList=["blocked-domain.com"],
+                modernAuthentication=True,
+                resharingEnabled=False,
+                sharingDomainRestrictionMode="allowList",
+            )
+            sharepoint_client.tenant_domain = DOMAIN
 
             check = sharepoint_external_sharing_managed()
             result = check.execute()
@@ -185,6 +207,16 @@ class Test_sharepoint_external_sharing_managed:
                 == "SharePoint external sharing is managed through domain restrictions with mode 'allowList'."
             )
             assert result[0].resource_id == DOMAIN
+            assert result[0].location == "global"
+            assert result[0].resource_name == "SharePoint Settings"
+            assert result[0].resource == {
+                "sharingCapability": "ExternalUserSharingOnly",
+                "sharingAllowedDomainList": ["allowed-domain.com"],
+                "sharingBlockedDomainList": ["blocked-domain.com"],
+                "sharingDomainRestrictionMode": "allowList",
+                "resharingEnabled": False,
+                "modernAuthentication": True,
+            }
 
     def test_block_list_non_empty(self):
         """
@@ -207,17 +239,15 @@ class Test_sharepoint_external_sharing_managed:
                 sharepoint_external_sharing_managed,
             )
 
-            sharepoint_client.settings = {
-                DOMAIN: SharePointSettings(
-                    id=DOMAIN,
-                    sharingCapability="ExternalUserSharingOnly",
-                    sharingAllowedDomainList=["allowed-domain.com"],
-                    sharingBlockedDomainList=["blocked-domain.com"],
-                    modernAuthentication=True,
-                    resharingEnabled=False,
-                    sharingDomainRestrictionMode="blockList",
-                )
-            }
+            sharepoint_client.settings = SharePointSettings(
+                sharingCapability="ExternalUserSharingOnly",
+                sharingAllowedDomainList=["allowed-domain.com"],
+                sharingBlockedDomainList=["blocked-domain.com"],
+                modernAuthentication=True,
+                resharingEnabled=False,
+                sharingDomainRestrictionMode="blockList",
+            )
+            sharepoint_client.tenant_domain = DOMAIN
 
             check = sharepoint_external_sharing_managed()
             result = check.execute()
@@ -229,6 +259,16 @@ class Test_sharepoint_external_sharing_managed:
                 == "SharePoint external sharing is managed through domain restrictions with mode 'blockList'."
             )
             assert result[0].resource_id == DOMAIN
+            assert result[0].location == "global"
+            assert result[0].resource_name == "SharePoint Settings"
+            assert result[0].resource == {
+                "sharingCapability": "ExternalUserSharingOnly",
+                "sharingAllowedDomainList": ["allowed-domain.com"],
+                "sharingBlockedDomainList": ["blocked-domain.com"],
+                "sharingDomainRestrictionMode": "blockList",
+                "resharingEnabled": False,
+                "modernAuthentication": True,
+            }
 
     def test_empty_settings(self):
         """
@@ -237,6 +277,7 @@ class Test_sharepoint_external_sharing_managed:
         """
         sharepoint_client = mock.MagicMock
         sharepoint_client.settings = {}
+        sharepoint_client.tenant_domain = DOMAIN
 
         with (
             mock.patch(
@@ -254,4 +295,10 @@ class Test_sharepoint_external_sharing_managed:
 
             check = sharepoint_external_sharing_managed()
             result = check.execute()
-            assert len(result) == 0
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert result[0].resource == {}
+            assert result[0].resource_name == "SharePoint Settings"
+            assert result[0].resource_id == DOMAIN
+            assert result[0].status_extended == "SharePoint settings were not found."
+            assert result[0].location == "global"
