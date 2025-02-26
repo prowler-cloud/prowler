@@ -16,10 +16,10 @@ export const getFindings = async ({
   const session = await auth();
 
   if (isNaN(Number(page)) || page < 1)
-    redirect("findings?include=resources.provider,scan");
+    redirect("findings?include=resources,scan.provider");
 
   const keyServer = process.env.API_BASE_URL;
-  const url = new URL(`${keyServer}/findings?include=resources.provider,scan`);
+  const url = new URL(`${keyServer}/findings?include=resources,scan.provider`);
 
   if (page) url.searchParams.append("page[number]", page.toString());
   if (pageSize) url.searchParams.append("page[size]", pageSize.toString());

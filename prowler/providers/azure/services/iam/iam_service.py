@@ -1,7 +1,7 @@
 from dataclasses import dataclass
+from typing import List
 
 from azure.mgmt.authorization import AuthorizationManagementClient
-from azure.mgmt.authorization.v2022_04_01.models import Permission
 
 from prowler.lib.logger import logger
 from prowler.providers.azure.azure_provider import AzureProvider
@@ -33,7 +33,16 @@ class IAM(AzureService):
                                 name=role.role_name,
                                 type=role.role_type,
                                 assignable_scopes=role.assignable_scopes,
-                                permissions=role.permissions,
+                                permissions=[
+                                    Permission(
+                                        condition=getattr(permission, "condition", ""),
+                                        condition_version=getattr(
+                                            permission, "condition_version", ""
+                                        ),
+                                        actions=getattr(permission, "actions", []),
+                                    )
+                                    for permission in getattr(role, "permissions", [])
+                                ],
                             )
                         )
                     else:
@@ -83,12 +92,19 @@ class IAM(AzureService):
 
 
 @dataclass
+class Permission:
+    actions: List[str]
+    condition: str
+    condition_version: str
+
+
+@dataclass
 class Role:
     id: str
     name: str
     type: str
-    assignable_scopes: list[str]
-    permissions: list[Permission]
+    assignable_scopes: List[str]
+    permissions: List[Permission]
 
 
 @dataclass
