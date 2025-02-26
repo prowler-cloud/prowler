@@ -305,6 +305,18 @@ def prowler():
             print(f"{Style.BRIGHT}{Fore.GREEN}\nNo findings to fix!{Style.RESET_ALL}\n")
         sys.exit()
 
+    # Outputs
+    # TODO: this part is needed since the checks generates a Check_Report_XXX and the output uses Finding
+    # This will be refactored for the outputs generate directly the Finding
+    finding_outputs = []
+    for finding in findings:
+        try:
+            finding_outputs.append(
+                Finding.generate_output(global_provider, finding, output_options)
+            )
+        except Exception:
+            continue
+
     # Extract findings stats
     stats = extract_findings_statistics(findings)
 
@@ -328,18 +340,6 @@ def prowler():
                 "Slack integration needs SLACK_API_TOKEN and SLACK_CHANNEL_NAME environment variables (see more in https://docs.prowler.cloud/en/latest/tutorials/integrations/#slack)."
             )
             sys.exit(1)
-
-    # Outputs
-    # TODO: this part is needed since the checks generates a Check_Report_XXX and the output uses Finding
-    # This will be refactored for the outputs generate directly the Finding
-    finding_outputs = []
-    for finding in findings:
-        try:
-            finding_outputs.append(
-                Finding.generate_output(global_provider, finding, output_options)
-            )
-        except Exception:
-            continue
 
     generated_outputs = {"regular": [], "compliance": []}
 

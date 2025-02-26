@@ -246,13 +246,15 @@ class TestOutputs:
         assert parse_json_tags([{}]) == {}
         assert parse_json_tags(None) == {}
 
+
+class TestExtractFindingStats:
     def test_extract_findings_statistics_different_resources(self):
         finding_1 = mock.MagicMock()
         finding_1.status = "PASS"
-        finding_1.resource_id = "test_resource_1"
+        finding_1.resource_uid = "test_resource_1"
         finding_2 = mock.MagicMock()
         finding_2.status = "FAIL"
-        finding_2.resource_id = "test_resource_2"
+        finding_2.resource_uid = "test_resource_2"
         findings = [finding_1, finding_2]
 
         stats = extract_findings_statistics(findings)
@@ -266,10 +268,10 @@ class TestOutputs:
     def test_extract_findings_statistics_same_resources(self):
         finding_1 = mock.MagicMock()
         finding_1.status = "PASS"
-        finding_1.resource_id = "test_resource_1"
+        finding_1.resource_uid = "test_resource_1"
         finding_2 = mock.MagicMock()
         finding_2.status = "PASS"
-        finding_2.resource_id = "test_resource_1"
+        finding_2.resource_uid = "test_resource_1"
         findings = [finding_1, finding_2]
 
         stats = extract_findings_statistics(findings)
@@ -283,10 +285,10 @@ class TestOutputs:
     def test_extract_findings_statistics_manual_resources(self):
         finding_1 = mock.MagicMock()
         finding_1.status = "MANUAL"
-        finding_1.resource_id = "test_resource_1"
+        finding_1.resource_uid = "test_resource_1"
         finding_2 = mock.MagicMock()
         finding_2.status = "PASS"
-        finding_2.resource_id = "test_resource_1"
+        finding_2.resource_uid = "test_resource_1"
         findings = [finding_1, finding_2]
 
         stats = extract_findings_statistics(findings)
@@ -320,15 +322,15 @@ class TestOutputs:
         finding_1 = mock.MagicMock()
         finding_1.status = "FAIL"
         finding_1.muted = True
-        finding_1.resource_id = "test_resource_1"
-        finding_1.check_metadata.Severity = "medium"
-        finding_1.check_metadata.CheckID = "glue_etl_jobs_amazon_s3_encryption_enabled"
+        finding_1.resource_uid = "test_resource_1"
+        finding_1.metadata.Severity = "medium"
+        finding_1.metadata.CheckID = "glue_etl_jobs_amazon_s3_encryption_enabled"
         finding_2 = mock.MagicMock()
         finding_2.status = "FAIL"
         finding_2.muted = True
-        finding_2.resource_id = "test_resource_2"
-        finding_2.check_metadata.Severity = "low"
-        finding_2.check_metadata.CheckID = "lightsail_static_ip_unused"
+        finding_2.resource_uid = "test_resource_2"
+        finding_2.metadata.Severity = "low"
+        finding_2.metadata.CheckID = "lightsail_static_ip_unused"
         findings = [finding_1, finding_2]
 
         stats = extract_findings_statistics(findings)
@@ -352,17 +354,15 @@ class TestOutputs:
         finding_1 = mock.MagicMock()
         finding_1.status = "FAIL"
         finding_1.muted = True
-        finding_1.resource_id = "test_resource_1"
-        finding_1.check_metadata.Severity = "critical"
-        finding_1.check_metadata.CheckID = "rds_instance_certificate_expiration"
+        finding_1.resource_uid = "test_resource_1"
+        finding_1.metadata.Severity = "critical"
+        finding_1.metadata.CheckID = "rds_instance_certificate_expiration"
         finding_2 = mock.MagicMock()
         finding_2.status = "FAIL"
         finding_2.muted = False
-        finding_2.resource_id = "test_resource_1"
-        finding_2.check_metadata.Severity = "critical"
-        finding_2.check_metadata.CheckID = (
-            "autoscaling_find_secrets_ec2_launch_configuration"
-        )
+        finding_2.resource_uid = "test_resource_1"
+        finding_2.metadata.Severity = "critical"
+        finding_2.metadata.CheckID = "autoscaling_find_secrets_ec2_launch_configuration"
         findings = [finding_1, finding_2]
 
         stats = extract_findings_statistics(findings)
@@ -386,18 +386,16 @@ class TestOutputs:
         finding_1 = mock.MagicMock()
         finding_1.status = "PASS"
         finding_1.muted = True
-        finding_1.resource_id = "test_resource_1"
-        finding_1.check_metadata.Severity = "critical"
-        finding_1.check_metadata.CheckID = (
-            "autoscaling_find_secrets_ec2_launch_configuration"
-        )
+        finding_1.resource_uid = "test_resource_1"
+        finding_1.metadata.Severity = "critical"
+        finding_1.metadata.CheckID = "autoscaling_find_secrets_ec2_launch_configuration"
 
         finding_2 = mock.MagicMock()
         finding_2.status = "PASS"
         finding_2.muted = False
-        finding_2.resource_id = "test_resource_1"
-        finding_2.check_metadata.Severity = "high"
-        finding_2.check_metadata.CheckID = "acm_certificates_expiration_check"
+        finding_2.resource_uid = "test_resource_1"
+        finding_2.metadata.Severity = "high"
+        finding_2.metadata.CheckID = "acm_certificates_expiration_check"
         findings = [finding_1, finding_2]
 
         stats = extract_findings_statistics(findings)
@@ -420,9 +418,9 @@ class TestOutputs:
         finding_1 = mock.MagicMock()
         finding_1.status = "PASS"
         finding_1.muted = True
-        finding_1.check_metadata.Severity = "critical"
-        finding_1.check_metadata.CheckID = "rds_instance_certificate_expiration"
-        finding_1.resource_id = "test_resource_1"
+        finding_1.metadata.Severity = "critical"
+        finding_1.metadata.CheckID = "rds_instance_certificate_expiration"
+        finding_1.resource_uid = "test_resource_1"
         findings = [finding_1]
 
         stats = extract_findings_statistics(findings)
@@ -441,6 +439,8 @@ class TestOutputs:
         assert stats["total_low_severity_pass"] == 0
         assert stats["findings_count"] == 1
 
+
+class TestReport:
     def test_report_with_aws_provider_not_muted_pass(self):
         # Mocking check_findings and provider
         finding_1 = MagicMock()
