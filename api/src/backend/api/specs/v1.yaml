@@ -5797,7 +5797,7 @@ components:
           properties:
             uid:
               type: string
-              maxLength: 300
+              nullable: false
             delta:
               enum:
               - new
@@ -5856,7 +5856,6 @@ components:
               readOnly: true
               nullable: true
           required:
-          - uid
           - status
           - severity
           - check_id
