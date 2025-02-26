@@ -12,6 +12,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### Changed
 - Optimized `GET /findings` endpoint to improve response time and size [(#7019)](https://github.com/prowler-cloud/prowler/pull/7019).
+- Changed `findings.uid` field type from `varchar(300)` to `text`
 
 ---
 
