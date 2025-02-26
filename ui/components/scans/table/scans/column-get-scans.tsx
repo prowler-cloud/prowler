@@ -81,18 +81,18 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
   },
   {
     accessorKey: "status",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={"Status"} param="state" />
-    ),
+    header: "Status",
     cell: ({ row }) => {
       const {
         attributes: { state },
       } = getScanData(row);
       return (
-        <StatusBadge
-          status={state}
-          loadingProgress={row.original.attributes.progress}
-        />
+        <div className="flex items-center justify-center">
+          <StatusBadge
+            status={state}
+            loadingProgress={row.original.attributes.progress}
+          />
+        </div>
       );
     },
   },
@@ -125,19 +125,13 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
     },
   },
   {
-    accessorKey: "next_scan_at",
-    header: ({ column }) => (
-      <DataTableColumnHeader
-        column={column}
-        title={"Next scan"}
-        param="next_scan_at"
-      />
-    ),
+    accessorKey: "scheduled_at",
+    header: "Scheduled at",
     cell: ({ row }) => {
       const {
-        attributes: { next_scan_at },
+        attributes: { scheduled_at },
       } = getScanData(row);
-      return <DateWithTime dateTime={next_scan_at} />;
+      return <DateWithTime dateTime={scheduled_at} />;
     },
   },
   {

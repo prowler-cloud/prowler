@@ -62,7 +62,6 @@ class TestOCSF:
         assert output_data.finding_info.desc == findings[0].metadata.Description
         assert output_data.finding_info.title == findings[0].metadata.CheckTitle
         assert output_data.finding_info.uid == findings[0].uid
-        assert output_data.finding_info.product_uid == "prowler"
         assert output_data.finding_info.types == ["test-type"]
         assert output_data.time == int(findings[0].timestamp.timestamp())
         assert output_data.time_dt == findings[0].timestamp
@@ -175,7 +174,7 @@ class TestOCSF:
                         "vendor_name": "Prowler",
                         "version": prowler_version,
                     },
-                    "version": "1.3.0",
+                    "version": "1.4.0",
                     "profiles": ["cloud", "datetime"],
                     "tenant_uid": "test-organization-id",
                 },
@@ -199,7 +198,6 @@ class TestOCSF:
                     "created_time": int(datetime.now().timestamp()),
                     "created_time_dt": datetime.now().isoformat(),
                     "desc": "check description",
-                    "product_uid": "prowler",
                     "title": "test-check-id",
                     "uid": "test-unique-finding",
                     "types": ["test-type"],
@@ -286,7 +284,6 @@ class TestOCSF:
         assert finding_information.desc == finding_output.metadata.Description
         assert finding_information.title == finding_output.metadata.CheckTitle
         assert finding_information.uid == finding_output.uid
-        assert finding_information.product_uid == "prowler"
 
         # Event time
         assert finding_ocsf.time == int(finding_output.timestamp.timestamp())

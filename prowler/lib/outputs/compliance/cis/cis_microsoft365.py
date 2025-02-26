@@ -42,7 +42,7 @@ class Microsoft365CIS(ComplianceOutput):
                         compliance_row = Microsoft365CISModel(
                             Provider=finding.provider,
                             Description=compliance.Description,
-                            SubscriptionId=finding.account_uid,
+                            TenantId=finding.account_uid,
                             Location=finding.region,
                             AssessmentDate=str(finding.timestamp),
                             Requirements_Id=requirement.Id,
@@ -73,8 +73,8 @@ class Microsoft365CIS(ComplianceOutput):
                     compliance_row = Microsoft365CISModel(
                         Provider=compliance.Provider.lower(),
                         Description=compliance.Description,
-                        SubscriptionId="",
-                        Location="",
+                        TenantId=finding.account_uid,
+                        Location=finding.region,
                         AssessmentDate=str(finding.timestamp),
                         Requirements_Id=requirement.Id,
                         Requirements_Description=requirement.Description,

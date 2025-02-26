@@ -8,6 +8,8 @@ class s3_bucket_policy_public_write_access(Check):
     def execute(self):
         findings = []
         for bucket in s3_client.buckets.values():
+            if bucket.policy is None:
+                continue
             report = Check_Report_AWS(metadata=self.metadata(), resource=bucket)
             # Check if bucket policy allow public write access
             if not bucket.policy:

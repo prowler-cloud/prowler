@@ -94,6 +94,9 @@ nav:
           - In-Cluster Execution: tutorials/kubernetes/in-cluster.md
           - Non In-Cluster Execution: tutorials/kubernetes/outside-cluster.md
           - Miscellaneous: tutorials/kubernetes/misc.md
+      - Microsoft 365:
+          - Authentication: tutorials/microsoft365/authentication.md
+          - Create Prowler Service Principal: tutorials/microsoft365/create-prowler-service-principal.md
   - Developer Guide:
       - Introduction: developer-guide/introduction.md
       - Provider: developer-guide/provider.md
@@ -124,7 +127,7 @@ extra:
       make our documentation better.
   analytics:
     provider: google
-    property: G-H5TFH6WJRQ
+    property: G-KBKV70W5Y2
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/prowler-cloud

@@ -1,10 +1,17 @@
+from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
+from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from celery.result import AsyncResult
+from config.settings.social_login import (
+    GITHUB_OAUTH_CALLBACK_URL,
+    GOOGLE_OAUTH_CALLBACK_URL,
+)
+from dj_rest_auth.registration.views import SocialLoginView
 from django.conf import settings as django_settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.search import SearchQuery
 from django.db import transaction
-from django.db.models import Count, F, OuterRef, Prefetch, Q, Subquery, Sum
-from django.db.models.functions import JSONObject
+from django.db.models import Count, Exists, F, OuterRef, Prefetch, Q, Subquery, Sum
+from django.db.models.functions import Coalesce
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_control
@@ -68,13 +75,13 @@ from api.models import (
     ProviderGroupMembership,
     ProviderSecret,
     Resource,
+    ResourceFindingMapping,
     Role,
     RoleProviderGroupRelationship,
     Scan,
     ScanSummary,
     SeverityChoices,
     StateChoices,
-    StatusChoices,
     Task,
     User,
     UserRoleRelationship,
@@ -82,8 +89,7 @@ from api.models import (
 from api.pagination import ComplianceOverviewPagination
 from api.rbac.permissions import Permissions, get_providers, get_role
 from api.rls import Tenant
-from api.utils import validate_invitation
-from api.uuid_utils import datetime_to_uuid7
+from api.utils import CustomOAuth2Client, validate_invitation
 from api.v1.serializers import (
     ComplianceOverviewFullSerializer,
     ComplianceOverviewSerializer,
@@ -122,6 +128,8 @@ from api.v1.serializers import (
     TenantSerializer,
     TokenRefreshSerializer,
     TokenSerializer,
+    TokenSocialLoginSerializer,
+    TokenSwitchTenantSerializer,
     UserCreateSerializer,
     UserRoleRelationshipSerializer,
     UserSerializer,
@@ -188,13 +196,43 @@ class CustomTokenRefreshView(GenericAPIView):
         )
 
 
+@extend_schema(
+    tags=["Token"],
+    summary="Switch tenant using a valid tenant ID",
+    description="Switch tenant by providing a valid tenant ID. The authenticated user must belong to the tenant.",
+)
+class CustomTokenSwitchTenantView(GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    resource_name = "tokens-switch-tenant"
+    serializer_class = TokenSwitchTenantSerializer
+    http_method_names = ["post"]
+
+    def post(self, request):
+        serializer = TokenSwitchTenantSerializer(
+            data=request.data, context={"request": request}
+        )
+
+        try:
+            serializer.is_valid(raise_exception=True)
+        except TokenError as e:
+            raise InvalidToken(e.args[0])
+
+        return Response(
+            data={
+                "type": "tokens-switch-tenant",
+                "attributes": serializer.validated_data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
 @extend_schema(exclude=True)
 class SchemaView(SpectacularAPIView):
     serializer_class = None
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.2.0"
+        spectacular_settings.VERSION = "1.5.0"
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -252,6 +290,58 @@ class SchemaView(SpectacularAPIView):
             },
         ]
         return super().get(request, *args, **kwargs)
+
+
+@extend_schema(exclude=True)
+class GoogleSocialLoginView(SocialLoginView):
+    adapter_class = GoogleOAuth2Adapter
+    client_class = CustomOAuth2Client
+    callback_url = GOOGLE_OAUTH_CALLBACK_URL
+
+    def get_response(self):
+        original_response = super().get_response()
+
+        if self.user and self.user.is_authenticated:
+            serializer = TokenSocialLoginSerializer(data={"email": self.user.email})
+            try:
+                serializer.is_valid(raise_exception=True)
+            except TokenError as e:
+                raise InvalidToken(e.args[0])
+            return Response(
+                data={
+                    "type": "google-social-tokens",
+                    "attributes": serializer.validated_data,
+                },
+                status=status.HTTP_200_OK,
+            )
+        return original_response
+
+
+@extend_schema(exclude=True)
+class GithubSocialLoginView(SocialLoginView):
+    adapter_class = GitHubOAuth2Adapter
+    client_class = CustomOAuth2Client
+    callback_url = GITHUB_OAUTH_CALLBACK_URL
+
+    def get_response(self):
+        original_response = super().get_response()
+
+        if self.user and self.user.is_authenticated:
+            serializer = TokenSocialLoginSerializer(data={"email": self.user.email})
+
+            try:
+                serializer.is_valid(raise_exception=True)
+            except TokenError as e:
+                raise InvalidToken(e.args[0])
+
+            return Response(
+                data={
+                    "type": "github-social-tokens",
+                    "attributes": serializer.validated_data,
+                },
+                status=status.HTTP_200_OK,
+            )
+        return original_response
 
 
 @extend_schema_view(
@@ -1272,6 +1362,14 @@ class ResourceViewSet(BaseRLSViewSet):
         tags=["Finding"],
         summary="List all findings",
         description="Retrieve a list of all findings with options for filtering by various criteria.",
+        parameters=[
+            OpenApiParameter(
+                name="filter[inserted_at]",
+                description="At least one of the variations of the `filter[inserted_at]` filter must be provided.",
+                required=True,
+                type=OpenApiTypes.DATE,
+            )
+        ],
     ),
     retrieve=extend_schema(
         tags=["Finding"],
@@ -1289,32 +1387,44 @@ class ResourceViewSet(BaseRLSViewSet):
         tags=["Finding"],
         summary="Retrieve metadata values from findings",
         description="Fetch unique metadata values from a set of findings. This is useful for dynamic filtering.",
+        parameters=[
+            OpenApiParameter(
+                name="filter[inserted_at]",
+                description="At least one of the variations of the `filter[inserted_at]` filter must be provided.",
+                required=True,
+                type=OpenApiTypes.DATE,
+            )
+        ],
         filters=True,
     ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 @method_decorator(CACHE_DECORATOR, name="retrieve")
 class FindingViewSet(BaseRLSViewSet):
-    queryset = Finding.objects.all()
+    queryset = Finding.all_objects.all()
     serializer_class = FindingSerializer
-    prefetch_for_includes = {
-        "__all__": [],
-        "resources": [
-            Prefetch("resources", queryset=Resource.objects.select_related("findings"))
-        ],
-        "scan": [Prefetch("scan", queryset=Scan.objects.select_related("findings"))],
-    }
-    http_method_names = ["get"]
     filterset_class = FindingFilter
-    ordering = ["-id"]
+    http_method_names = ["get"]
+    ordering = ["-inserted_at"]
     ordering_fields = [
-        "id",
         "status",
         "severity",
         "check_id",
         "inserted_at",
         "updated_at",
     ]
+    prefetch_for_includes = {
+        "__all__": [],
+        "resources": [
+            Prefetch(
+                "resources",
+                queryset=Resource.all_objects.prefetch_related("tags", "findings"),
+            )
+        ],
+        "scan": [
+            Prefetch("scan", queryset=Scan.all_objects.select_related("findings"))
+        ],
+    }
     # RBAC required permissions (implicit -> MANAGE_PROVIDERS enable unlimited visibility or check the visibility of
     # the provider through the provider group)
     required_permissions = []
@@ -1328,48 +1438,59 @@ class FindingViewSet(BaseRLSViewSet):
         return super().get_serializer_class()
 
     def get_queryset(self):
+        tenant_id = self.request.tenant_id
         user_roles = get_role(self.request.user)
         if user_roles.unlimited_visibility:
-            # User has unlimited visibility, return all scans
-            queryset = Finding.objects.filter(tenant_id=self.request.tenant_id)
+            # User has unlimited visibility, return all findings
+            queryset = Finding.all_objects.filter(tenant_id=tenant_id)
         else:
-            # User lacks permission, filter providers based on provider groups associated with the role
-            queryset = Finding.objects.filter(
+            # User lacks permission, filter findings based on provider groups associated with the role
+            queryset = Finding.all_objects.filter(
                 scan__provider__in=get_providers(user_roles)
             )
 
         search_value = self.request.query_params.get("filter[search]", None)
         if search_value:
-            # Django's ORM will build a LEFT JOIN and OUTER JOIN on any "through" tables, resulting in duplicates
-            # The duplicates then require a `distinct` query
             search_query = SearchQuery(
                 search_value, config="simple", search_type="plain"
             )
+
+            resource_match = Resource.all_objects.filter(
+                text_search=search_query,
+                id__in=ResourceFindingMapping.objects.filter(
+                    resource_id=OuterRef("pk"),
+                    tenant_id=tenant_id,
+                ).values("resource_id"),
+            )
+
             queryset = queryset.filter(
-                Q(impact_extended__contains=search_value)
-                | Q(status_extended__contains=search_value)
-                | Q(check_id=search_value)
-                | Q(check_id__icontains=search_value)
-                | Q(text_search=search_query)
-                | Q(resources__uid=search_value)
-                | Q(resources__name=search_value)
-                | Q(resources__region=search_value)
-                | Q(resources__service=search_value)
-                | Q(resources__type=search_value)
-                | Q(resources__uid__contains=search_value)
-                | Q(resources__name__contains=search_value)
-                | Q(resources__region__contains=search_value)
-                | Q(resources__service__contains=search_value)
-                | Q(resources__tags__text_search=search_query)
-                | Q(resources__text_search=search_query)
-            ).distinct()
+                Q(text_search=search_query) | Q(Exists(resource_match))
+            )
 
         return queryset
 
-    def inserted_at_to_uuidv7(self, inserted_at):
-        if inserted_at is None:
-            return None
-        return datetime_to_uuid7(inserted_at)
+    def filter_queryset(self, queryset):
+        # Do not apply filters when retrieving specific finding
+        if self.action == "retrieve":
+            return queryset
+        return super().filter_queryset(queryset)
+
+    def list(self, request, *args, **kwargs):
+        base_qs = self.filter_queryset(self.get_queryset())
+        paginated_ids = self.paginate_queryset(base_qs.values_list("id", flat=True))
+        if paginated_ids is not None:
+            ids = list(paginated_ids)
+            findings = (
+                Finding.all_objects.filter(tenant_id=self.request.tenant_id, id__in=ids)
+                .select_related("scan")
+                .prefetch_related("resources")
+            )
+            # Re-sort in Python to preserve ordering:
+            findings = sorted(findings, key=lambda x: ids.index(x.id))
+            serializer = self.get_serializer(findings, many=True)
+            return self.get_paginated_response(serializer.data)
+        serializer = self.get_serializer(base_qs, many=True)
+        return Response(serializer.data)
 
     @action(detail=False, methods=["get"], url_name="findings_services_regions")
     def findings_services_regions(self, request):
@@ -1394,48 +1515,35 @@ class FindingViewSet(BaseRLSViewSet):
 
     @action(detail=False, methods=["get"], url_name="metadata")
     def metadata(self, request):
+        tenant_id = self.request.tenant_id
         queryset = self.get_queryset()
         filtered_queryset = self.filter_queryset(queryset)
 
-        result = filtered_queryset.aggregate(
-            services=ArrayAgg("resources__service", flat=True, distinct=True),
-            regions=ArrayAgg("resources__region", flat=True, distinct=True),
-            tags=ArrayAgg(
-                JSONObject(
-                    key=F("resources__tags__key"), value=F("resources__tags__value")
-                ),
-                distinct=True,
-                filter=Q(resources__tags__key__isnull=False),
-            ),
-            resource_types=ArrayAgg("resources__type", flat=True, distinct=True),
-        )
-        if result["services"] is None:
-            result["services"] = []
-        if result["regions"] is None:
-            result["regions"] = []
-        if result["regions"] is None:
-            result["regions"] = []
-        if result["resource_types"] is None:
-            result["resource_types"] = []
-        if result["tags"] is None:
-            result["tags"] = []
+        filtered_ids = filtered_queryset.order_by().values("id")
 
-        tags_dict = {}
-        for t in result["tags"]:
-            key, value = t["key"], t["value"]
-            if key not in tags_dict:
-                tags_dict[key] = []
-            tags_dict[key].append(value)
+        relevant_resources = Resource.all_objects.filter(
+            tenant_id=tenant_id, findings__id__in=Subquery(filtered_ids)
+        ).only("service", "region", "type")
 
-        result["tags"] = tags_dict
-
-        serializer = self.get_serializer(
-            data=result,
+        aggregation = relevant_resources.aggregate(
+            services=ArrayAgg("service", flat=True),
+            regions=ArrayAgg("region", flat=True),
+            resource_types=ArrayAgg("type", flat=True),
         )
 
+        services = sorted(set(aggregation["services"] or []))
+        regions = sorted({region for region in aggregation["regions"] or [] if region})
+        resource_types = sorted(set(aggregation["resource_types"] or []))
+
+        result = {
+            "services": services,
+            "regions": regions,
+            "resource_types": resource_types,
+        }
+
+        serializer = self.get_serializer(data=result)
         serializer.is_valid(raise_exception=True)
-
-        return Response(data=serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @extend_schema_view(
@@ -1999,68 +2107,53 @@ class OverviewViewSet(BaseRLSViewSet):
     @action(detail=False, methods=["get"], url_name="providers")
     def providers(self, request):
         tenant_id = self.request.tenant_id
-        # Subquery to get the most recent finding for each uid
-        latest_finding_ids = (
-            Finding.objects.filter(
+
+        latest_scan_ids = (
+            Scan.objects.filter(
                 tenant_id=tenant_id,
-                uid=OuterRef("uid"),
-                scan__provider=OuterRef("scan__provider"),
+                state=StateChoices.COMPLETED,
             )
-            .order_by("-id")  # Most recent by id
-            .values("id")[:1]
+            .order_by("provider_id", "-inserted_at")
+            .distinct("provider_id")
+            .values_list("id", flat=True)
         )
 
-        # Filter findings to only include the most recent for each uid
-        recent_findings = Finding.objects.filter(
-            tenant_id=tenant_id, id__in=Subquery(latest_finding_ids)
-        )
-
-        # Aggregate findings by provider
         findings_aggregated = (
-            recent_findings.values("scan__provider__provider")
+            ScanSummary.objects.filter(tenant_id=tenant_id, scan_id__in=latest_scan_ids)
+            .values("scan__provider__provider")
             .annotate(
-                findings_passed=Count("id", filter=Q(status=StatusChoices.PASS.value)),
-                findings_failed=Count("id", filter=Q(status=StatusChoices.FAIL.value)),
-                findings_manual=Count(
-                    "id", filter=Q(status=StatusChoices.MANUAL.value)
-                ),
-                total_findings=Count("id"),
+                findings_passed=Coalesce(Sum("_pass"), 0),
+                findings_failed=Coalesce(Sum("fail"), 0),
+                findings_muted=Coalesce(Sum("muted"), 0),
+                total_findings=Coalesce(Sum("total"), 0),
             )
-            .order_by("-findings_failed")
         )
 
-        # Aggregate total resources by provider
         resources_aggregated = (
             Resource.objects.filter(tenant_id=tenant_id)
             .values("provider__provider")
             .annotate(total_resources=Count("id"))
         )
+        resources_dict = {
+            row["provider__provider"]: row["total_resources"]
+            for row in resources_aggregated
+        }
 
-        # Combine findings and resources data
         overview = []
-        for findings in findings_aggregated:
-            provider = findings["scan__provider__provider"]
-            total_resources = next(
-                (
-                    res["total_resources"]
-                    for res in resources_aggregated
-                    if res["provider__provider"] == provider
-                ),
-                0,
-            )
+        for row in findings_aggregated:
+            provider_type = row["scan__provider__provider"]
             overview.append(
                 {
-                    "provider": provider,
-                    "total_resources": total_resources,
-                    "total_findings": findings["total_findings"],
-                    "findings_passed": findings["findings_passed"],
-                    "findings_failed": findings["findings_failed"],
-                    "findings_manual": findings["findings_manual"],
+                    "provider": provider_type,
+                    "total_resources": resources_dict.get(provider_type, 0),
+                    "total_findings": row["total_findings"],
+                    "findings_passed": row["findings_passed"],
+                    "findings_failed": row["findings_failed"],
+                    "findings_muted": row["findings_muted"],
                 }
             )
 
         serializer = OverviewProviderSerializer(overview, many=True)
-
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["get"], url_name="findings")
@@ -2075,7 +2168,7 @@ class OverviewViewSet(BaseRLSViewSet):
                 state=StateChoices.COMPLETED,
                 provider_id=OuterRef("scan__provider_id"),
             )
-            .order_by("-id")
+            .order_by("-inserted_at")
             .values("id")[:1]
         )
 
@@ -2120,7 +2213,7 @@ class OverviewViewSet(BaseRLSViewSet):
                 state=StateChoices.COMPLETED,
                 provider_id=OuterRef("scan__provider_id"),
             )
-            .order_by("-id")
+            .order_by("-inserted_at")
             .values("id")[:1]
         )
 
@@ -2156,7 +2249,7 @@ class OverviewViewSet(BaseRLSViewSet):
                 state=StateChoices.COMPLETED,
                 provider_id=OuterRef("scan__provider_id"),
             )
-            .order_by("-id")
+            .order_by("-inserted_at")
             .values("id")[:1]
         )
 

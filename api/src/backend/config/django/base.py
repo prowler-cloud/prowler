@@ -4,6 +4,8 @@ from config.custom_logging import LOGGING  # noqa
 from config.env import BASE_DIR, env  # noqa
 from config.settings.celery import *  # noqa
 from config.settings.partitions import *  # noqa
+from config.settings.sentry import *  # noqa
+from config.settings.social_login import *  # noqa
 
 SECRET_KEY = env("SECRET_KEY", default="secret")
 DEBUG = env.bool("DJANGO_DEBUG", default=False)
@@ -29,6 +31,13 @@ INSTALLED_APPS = [
     "django_celery_results",
     "django_celery_beat",
     "rest_framework_simplejwt.token_blacklist",
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.google",
+    "allauth.socialaccount.providers.github",
+    "dj_rest_auth.registration",
+    "rest_framework.authtoken",
 ]
 
 MIDDLEWARE = [
@@ -42,7 +51,10 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "api.middleware.APILoggingMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
 ]
+
+SITE_ID = 1
 
 CORS_ALLOWED_ORIGINS = ["http://localhost", "http://127.0.0.1"]
 
@@ -114,12 +126,6 @@ DJANGO_GUID = {
 }
 
 DATABASE_ROUTERS = ["api.db_router.MainRouter"]
-
-# Database connection pool
-DB_CP_MIN_SIZE = env.int("DJANGO_DB_CONNECTION_POOL_MIN_SIZE", 4)
-DB_CP_MAX_SIZE = env.int("DJANGO_DB_CONNECTION_POOL_MAX_SIZE", 10)
-DB_CP_MAX_IDLE = env.int("DJANGO_DB_CONNECTION_POOL_MAX_IDLE", 36000)
-DB_CP_MAX_LIFETIME = env.int("DJANGO_DB_CONNECTION_POOL_MAX_LIFETIME", 86400)
 
 
 # Password validation
@@ -213,3 +219,5 @@ CACHE_STALE_WHILE_REVALIDATE = env.int("DJANGO_STALE_WHILE_REVALIDATE", 60)
 
 
 TESTING = False
+
+FINDINGS_MAX_DAYS_IN_RANGE = env.int("DJANGO_FINDINGS_MAX_DAYS_IN_RANGE", 7)

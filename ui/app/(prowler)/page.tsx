@@ -1,4 +1,5 @@
 import { Spacer } from "@nextui-org/react";
+import { format, subDays } from "date-fns";
 import { Suspense } from "react";
 
 import { getFindings } from "@/actions/findings/findings";
@@ -129,11 +130,14 @@ const SSRFindingsBySeverity = async ({
 
 const SSRDataNewFindingsTable = async () => {
   const page = 1;
-  const sort = "severity,updated_at";
+  const sort = "severity,-inserted_at";
+
+  const twoDaysAgo = format(subDays(new Date(), 2), "yyyy-MM-dd");
 
   const defaultFilters = {
     "filter[status__in]": "FAIL",
     "filter[delta__in]": "new",
+    "filter[inserted_at__gte]": twoDaysAgo,
   };
 
   const findingsData = await getFindings({
@@ -172,14 +176,21 @@ const SSRDataNewFindingsTable = async () => {
 
   return (
     <>
-      <div className="relative flex items-start justify-between">
-        <h3 className="mb-4 w-full text-sm font-bold uppercase">
-          Latest 10 failing findings to date by Severity
-        </h3>
+      <div className="relative flex w-full">
+        <div className="flex w-full items-center gap-2">
+          <h3 className="text-sm font-bold uppercase">
+            Latest new failing findings
+          </h3>
+          <p className="text-xs text-gray-500">
+            Showing the latest 10 new failing findings by severity from the last
+            2 days.
+          </p>
+        </div>
         <div className="absolute -top-6 right-0">
           <LinkToFindings />
         </div>
       </div>
+      <Spacer y={4} />
       <DataTable
         columns={ColumnNewFindingsToDate}
         data={expandedResponse?.data || []}

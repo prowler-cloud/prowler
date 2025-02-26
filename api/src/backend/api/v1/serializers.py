@@ -38,7 +38,65 @@ from api.rls import Tenant
 # Tokens
 
 
-class TokenSerializer(TokenObtainPairSerializer):
+def generate_tokens(user: User, tenant_id: str) -> dict:
+    try:
+        refresh = RefreshToken.for_user(user)
+    except InvalidKeyError:
+        # Handle invalid key error
+        raise ValidationError(
+            {
+                "detail": "Token generation failed due to invalid key configuration. Provide valid "
+                "DJANGO_TOKEN_SIGNING_KEY and DJANGO_TOKEN_VERIFYING_KEY in the environment."
+            }
+        )
+    except Exception as e:
+        raise ValidationError({"detail": str(e)})
+
+    # Post-process the tokens
+    # Set the tenant_id
+    refresh["tenant_id"] = tenant_id
+
+    # Set the nbf (not before) claim to the iat (issued at) claim. At this moment, simplejwt does not provide a
+    # way to set the nbf claim
+    refresh.payload["nbf"] = refresh["iat"]
+
+    # Get the access token
+    access = refresh.access_token
+
+    if settings.SIMPLE_JWT["UPDATE_LAST_LOGIN"]:
+        update_last_login(None, user)
+
+    return {"access": str(access), "refresh": str(refresh)}
+
+
+class BaseTokenSerializer(TokenObtainPairSerializer):
+    def custom_validate(self, attrs, social: bool = False):
+        email = attrs.get("email")
+        password = attrs.get("password")
+        tenant_id = str(attrs.get("tenant_id", ""))
+
+        # Authenticate user
+        user = (
+            User.objects.get(email=email)
+            if social
+            else authenticate(username=email, password=password)
+        )
+        if user is None:
+            raise ValidationError("Invalid credentials")
+
+        if tenant_id:
+            if not user.is_member_of_tenant(tenant_id):
+                raise ValidationError("Tenant does not exist or user is not a member.")
+        else:
+            first_membership = user.memberships.order_by("date_joined").first()
+            if first_membership is None:
+                raise ValidationError("User has no memberships.")
+            tenant_id = str(first_membership.tenant_id)
+
+        return generate_tokens(user, tenant_id)
+
+
+class TokenSerializer(BaseTokenSerializer):
     email = serializers.EmailField(write_only=True)
     password = serializers.CharField(write_only=True)
     tenant_id = serializers.UUIDField(
@@ -56,53 +114,25 @@ class TokenSerializer(TokenObtainPairSerializer):
         resource_name = "tokens"
 
     def validate(self, attrs):
-        email = attrs.get("email")
-        password = attrs.get("password")
-        tenant_id = str(attrs.get("tenant_id", ""))
+        return super().custom_validate(attrs)
 
-        # Authenticate user
-        user = authenticate(username=email, password=password)
-        if user is None:
-            raise ValidationError("Invalid credentials")
 
-        if tenant_id:
-            if not user.is_member_of_tenant(tenant_id):
-                raise ValidationError("Tenant does not exist or user is not a member.")
-        else:
-            first_membership = user.memberships.order_by("date_joined").first()
-            if first_membership is None:
-                raise ValidationError("User has no memberships.")
-            tenant_id = str(first_membership.tenant_id)
+class TokenSocialLoginSerializer(BaseTokenSerializer):
+    email = serializers.EmailField(write_only=True)
 
-        # Generate tokens
-        try:
-            refresh = RefreshToken.for_user(user)
-        except InvalidKeyError:
-            # Handle invalid key error
-            raise ValidationError(
-                {
-                    "detail": "Token generation failed due to invalid key configuration. Provide valid "
-                    "DJANGO_TOKEN_SIGNING_KEY and DJANGO_TOKEN_VERIFYING_KEY in the environment."
-                }
-            )
-        except Exception as e:
-            raise ValidationError({"detail": str(e)})
+    # Output tokens
+    refresh = serializers.CharField(read_only=True)
+    access = serializers.CharField(read_only=True)
 
-        # Post-process the tokens
-        # Set the tenant_id
-        refresh["tenant_id"] = tenant_id
+    class JSONAPIMeta:
+        resource_name = "tokens"
 
-        # Set the nbf (not before) claim to the iat (issued at) claim. At this moment, simplejwt does not provide a
-        # way to set the nbf claim
-        refresh.payload["nbf"] = refresh["iat"]
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields.pop("password", None)
 
-        # Get the access token
-        access = refresh.access_token
-
-        if settings.SIMPLE_JWT["UPDATE_LAST_LOGIN"]:
-            update_last_login(None, user)
-
-        return {"access": str(access), "refresh": str(refresh)}
+    def validate(self, attrs):
+        return super().custom_validate(attrs, social=True)
 
 
 # TODO: Check if we can change the parent class to TokenRefreshSerializer from rest_framework_simplejwt.serializers
@@ -138,6 +168,30 @@ class TokenRefreshSerializer(serializers.Serializer):
             return {"access": str(access_token), "refresh": str(refresh)}
         except TokenError:
             raise ValidationError({"refresh": "Invalid or expired token"})
+
+
+class TokenSwitchTenantSerializer(serializers.Serializer):
+    tenant_id = serializers.UUIDField(
+        write_only=True, help_text="The tenant ID for which to request a new token."
+    )
+    access = serializers.CharField(read_only=True)
+    refresh = serializers.CharField(read_only=True)
+
+    class JSONAPIMeta:
+        resource_name = "tokens-switch-tenant"
+
+    def validate(self, attrs):
+        request = self.context["request"]
+        user = request.user
+
+        if not user.is_authenticated:
+            raise ValidationError("Invalid or expired token.")
+
+        tenant_id = str(attrs.get("tenant_id"))
+        if not user.is_member_of_tenant(tenant_id):
+            raise ValidationError("Tenant does not exist or user is not a member.")
+
+        return generate_tokens(user, tenant_id)
 
 
 # Base
@@ -691,6 +745,43 @@ class ProviderSerializer(RLSSerializer):
         }
 
 
+class ProviderIncludeSerializer(RLSSerializer):
+    """
+    Serializer for the Provider model.
+    """
+
+    provider = ProviderEnumSerializerField()
+    connection = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Provider
+        fields = [
+            "id",
+            "inserted_at",
+            "updated_at",
+            "provider",
+            "uid",
+            "alias",
+            "connection",
+            # "scanner_args",
+        ]
+
+    @extend_schema_field(
+        {
+            "type": "object",
+            "properties": {
+                "connected": {"type": "boolean"},
+                "last_checked_at": {"type": "string", "format": "date-time"},
+            },
+        }
+    )
+    def get_connection(self, obj):
+        return {
+            "connected": obj.connected,
+            "last_checked_at": obj.connection_last_checked_at,
+        }
+
+
 class ProviderCreateSerializer(RLSSerializer, BaseWriteSerializer):
     class Meta:
         model = Provider
@@ -751,6 +842,35 @@ class ScanSerializer(RLSSerializer):
             "next_scan_at",
             "url",
         ]
+
+
+class ScanIncludeSerializer(RLSSerializer):
+    trigger = serializers.ChoiceField(
+        choices=Scan.TriggerChoices.choices, read_only=True
+    )
+    state = StateEnumSerializerField(read_only=True)
+
+    class Meta:
+        model = Scan
+        fields = [
+            "id",
+            "name",
+            "trigger",
+            "state",
+            "unique_resource_count",
+            "progress",
+            # "scanner_args",
+            "duration",
+            "inserted_at",
+            "started_at",
+            "completed_at",
+            "scheduled_at",
+            "provider",
+        ]
+
+    included_serializers = {
+        "provider": "api.v1.serializers.ProviderIncludeSerializer",
+    }
 
 
 class ScanCreateSerializer(RLSSerializer, BaseWriteSerializer):
@@ -884,6 +1004,51 @@ class ResourceSerializer(RLSSerializer):
         return fields
 
 
+class ResourceIncludeSerializer(RLSSerializer):
+    """
+    Serializer for the Resource model.
+    """
+
+    tags = serializers.SerializerMethodField()
+    type_ = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = Resource
+        fields = [
+            "id",
+            "inserted_at",
+            "updated_at",
+            "uid",
+            "name",
+            "region",
+            "service",
+            "type_",
+            "tags",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "inserted_at": {"read_only": True},
+            "updated_at": {"read_only": True},
+        }
+
+    @extend_schema_field(
+        {
+            "type": "object",
+            "description": "Tags associated with the resource",
+            "example": {"env": "prod", "owner": "johndoe"},
+        }
+    )
+    def get_tags(self, obj):
+        return obj.get_tags(self.context.get("tenant_id"))
+
+    def get_fields(self):
+        """`type` is a Python reserved keyword."""
+        fields = super().get_fields()
+        type_ = fields.pop("type_")
+        fields["type"] = type_
+        return fields
+
+
 class FindingSerializer(RLSSerializer):
     """
     Serializer for the Finding model.
@@ -913,8 +1078,8 @@ class FindingSerializer(RLSSerializer):
         ]
 
     included_serializers = {
-        "scan": ScanSerializer,
-        "resources": ResourceSerializer,
+        "scan": ScanIncludeSerializer,
+        "resources": ResourceIncludeSerializer,
     }
 
 
@@ -933,7 +1098,8 @@ class FindingMetadataSerializer(serializers.Serializer):
     resource_types = serializers.ListField(
         child=serializers.CharField(), allow_empty=True
     )
-    tags = serializers.JSONField(help_text="Tags are described as key-value pairs.")
+    # Temporarily disabled until we implement tag filtering in the UI
+    # tags = serializers.JSONField(help_text="Tags are described as key-value pairs.")
 
     class Meta:
         resource_name = "findings-metadata"
@@ -1735,7 +1901,7 @@ class OverviewProviderSerializer(serializers.Serializer):
             "properties": {
                 "pass": {"type": "integer"},
                 "fail": {"type": "integer"},
-                "manual": {"type": "integer"},
+                "muted": {"type": "integer"},
                 "total": {"type": "integer"},
             },
         }
@@ -1744,7 +1910,7 @@ class OverviewProviderSerializer(serializers.Serializer):
         return {
             "pass": obj["findings_passed"],
             "fail": obj["findings_failed"],
-            "manual": obj["findings_manual"],
+            "muted": obj["findings_muted"],
             "total": obj["total_findings"],
         }
 

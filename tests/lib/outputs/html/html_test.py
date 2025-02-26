@@ -339,7 +339,7 @@ def get_aws_html_header(args: list) -> str:
                     <th scope="col">Resource Tags</th>
                     <th scope="col">Status Extended</th>
                     <th scope="col">Risk</th>
-                    <th scope="col">Recomendation</th>
+                    <th scope="col">Recommendation</th>
                     <th scope="col">Compliance</th>
                 </tr>
             </thead>
