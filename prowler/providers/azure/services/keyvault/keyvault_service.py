@@ -1,13 +1,10 @@
 from dataclasses import dataclass
+from datetime import datetime
+from typing import List, Optional, Union
 
 from azure.core.exceptions import HttpResponseError
 from azure.keyvault.keys import KeyClient
 from azure.mgmt.keyvault import KeyVaultManagementClient
-from azure.mgmt.keyvault.v2023_07_01.models import (
-    KeyAttributes,
-    SecretAttributes,
-    VaultProperties,
-)
 
 from prowler.lib.logger import logger
 from prowler.providers.azure.azure_provider import AzureProvider
@@ -47,7 +44,30 @@ class KeyVault(AzureService):
                             name=getattr(keyvault, "name", ""),
                             location=getattr(keyvault, "location", ""),
                             resource_group=resource_group,
-                            properties=keyvault_properties,
+                            properties=VaultProperties(
+                                tenant_id=getattr(keyvault_properties, "tenant_id", ""),
+                                enable_rbac_authorization=getattr(
+                                    keyvault_properties,
+                                    "enable_rbac_authorization",
+                                    False,
+                                ),
+                                private_endpoint_connections=[
+                                    PrivateEndpointConnection(id=conn.id)
+                                    for conn in getattr(
+                                        keyvault_properties,
+                                        "private_endpoint_connections",
+                                        [],
+                                    )
+                                ],
+                                enable_soft_delete=getattr(
+                                    keyvault_properties, "enable_soft_delete", False
+                                ),
+                                enable_purge_protection=getattr(
+                                    keyvault_properties,
+                                    "enable_purge_protection",
+                                    False,
+                                ),
+                            ),
                             keys=keys,
                             secrets=secrets,
                             monitor_diagnostic_settings=self._get_vault_monitor_settings(
@@ -74,7 +94,12 @@ class KeyVault(AzureService):
                         name=getattr(key, "name", ""),
                         enabled=getattr(key.attributes, "enabled", False),
                         location=getattr(key, "location", ""),
-                        attributes=getattr(key, "attributes", None),
+                        attributes=KeyAttributes(
+                            enabled=getattr(key.attributes, "enabled", False),
+                            created=getattr(key.attributes, "created", 0),
+                            updated=getattr(key.attributes, "updated", 0),
+                            expires=getattr(key.attributes, "expires", 0),
+                        ),
                     )
                 )
         except Exception as error:
@@ -93,11 +118,17 @@ class KeyVault(AzureService):
                 policy = key_client.get_key_rotation_policy(prop.name)
                 for key in keys:
                     if key.name == prop.name:
-                        key.rotation_policy = policy
+                        key.rotation_policy = KeyRotationPolicy(
+                            id=getattr(policy, "id", ""),
+                            lifetime_actions=[
+                                KeyRotationLifetimeAction(action=action.action)
+                                for action in getattr(policy, "lifetime_actions", [])
+                            ],
+                        )
 
         # TODO: handle different errors here since we are catching all HTTP Errors here
         except HttpResponseError:
-            logger.error(
+            logger.warning(
                 f"Subscription name: {subscription} -- has no access policy configured for keyvault {keyvault_name}"
             )
         return keys
@@ -115,7 +146,20 @@ class KeyVault(AzureService):
                         name=getattr(secret, "name", ""),
                         enabled=getattr(secret.properties.attributes, "enabled", False),
                         location=getattr(secret, "location", ""),
-                        attributes=getattr(secret.properties, "attributes", None),
+                        attributes=SecretAttributes(
+                            enabled=getattr(
+                                secret.properties.attributes, "enabled", False
+                            ),
+                            created=getattr(
+                                secret.properties.attributes, "created", None
+                            ),
+                            updated=getattr(
+                                secret.properties.attributes, "updated", None
+                            ),
+                            expires=getattr(
+                                secret.properties.attributes, "expires", None
+                            ),
+                        ),
                     )
                 )
         except Exception as error:
@@ -143,13 +187,40 @@ class KeyVault(AzureService):
 
 
 @dataclass
+class KeyAttributes:
+    enabled: bool
+    created: int
+    updated: int
+    expires: int
+
+
+@dataclass
+class KeyRotationLifetimeAction:
+    action: str
+
+
+@dataclass
+class KeyRotationPolicy:
+    id: str
+    lifetime_actions: list[KeyRotationLifetimeAction]
+
+
+@dataclass
 class Key:
     id: str
     name: str
     enabled: bool
     location: str
     attributes: KeyAttributes
-    rotation_policy: str = None
+    rotation_policy: Optional[KeyRotationPolicy] = None
+
+
+@dataclass
+class SecretAttributes:
+    enabled: bool
+    created: Union[datetime, None]
+    updated: Union[datetime, None]
+    expires: Union[datetime, None]
 
 
 @dataclass
@@ -159,6 +230,20 @@ class Secret:
     enabled: bool
     location: str
     attributes: SecretAttributes
+
+
+@dataclass
+class PrivateEndpointConnection:
+    id: str
+
+
+@dataclass
+class VaultProperties:
+    tenant_id: str
+    enable_rbac_authorization: bool
+    private_endpoint_connections: List[PrivateEndpointConnection]
+    enable_soft_delete: bool
+    enable_purge_protection: bool
 
 
 @dataclass

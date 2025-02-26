@@ -2,8 +2,6 @@ from unittest import mock
 from unittest.mock import MagicMock
 from uuid import uuid4
 
-from azure.mgmt.containerregistry.models import NetworkRuleSet
-
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
     set_mocked_azure_provider,
@@ -59,7 +57,6 @@ class Test_containerregistry_not_publicly_accessible:
                         login_server="mock_login_server.azurecr.io",
                         public_network_access=True,
                         admin_user_enabled=True,
-                        network_rule_set=NetworkRuleSet(default_action="Allow"),
                         private_endpoint_connections=[],
                         monitor_diagnostic_settings=[
                             {
@@ -133,7 +130,6 @@ class Test_containerregistry_not_publicly_accessible:
                         login_server="mock_login_server.azurecr.io",
                         public_network_access=False,
                         admin_user_enabled=False,
-                        network_rule_set=NetworkRuleSet(default_action="Deny"),
                         private_endpoint_connections=[],
                         monitor_diagnostic_settings=[
                             {
