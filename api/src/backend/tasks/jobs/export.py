@@ -105,18 +105,17 @@ def _upload_to_s3(tenant_id: str, zip_path: str, scan_id: str) -> str:
     if not base.DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET:
         return
 
-    s3 = get_s3_client()
-    s3_key = f"{tenant_id}/{scan_id}/{os.path.basename(zip_path)}"
     try:
+        s3 = get_s3_client()
+        s3_key = f"{tenant_id}/{scan_id}/{os.path.basename(zip_path)}"
         s3.upload_file(
             Filename=zip_path,
             Bucket=base.DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET,
             Key=s3_key,
         )
         return f"s3://{base.DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET}/{s3_key}"
-    except ClientError as e:
+    except (ClientError, NoCredentialsError, ParamValidationError, ValueError) as e:
         logger.error(f"S3 upload failed: {str(e)}")
-        raise e
 
 
 def _generate_output_directory(

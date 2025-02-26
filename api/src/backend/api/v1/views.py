@@ -1184,6 +1184,8 @@ class ScanViewSet(BaseRLSViewSet):
         elif self.action == "partial_update":
             return ScanUpdateSerializer
         elif self.action == "report":
+            if hasattr(self, "response_serializer_class"):
+                return self.response_serializer_class
             return ScanReportSerializer
         return super().get_serializer_class()
 
@@ -1208,13 +1210,15 @@ class ScanViewSet(BaseRLSViewSet):
 
         if scan_instance.state == StateChoices.EXECUTING:
             # If the scan is still running, return the task
-            prowler_task = TaskSerializer(scan_instance.task)
+            prowler_task = Task.objects.get(id=scan_instance.task.id)
+            self.response_serializer_class = TaskSerializer
+            output_serializer = self.get_serializer(prowler_task)
             return Response(
-                data=prowler_task.data,
+                data=output_serializer.data,
                 status=status.HTTP_202_ACCEPTED,
                 headers={
                     "Content-Location": reverse(
-                        "task-detail", kwargs={"pk": prowler_task.data["id"]}
+                        "task-detail", kwargs={"pk": output_serializer.data["id"]}
                     )
                 },
             )
@@ -1224,15 +1228,16 @@ class ScanViewSet(BaseRLSViewSet):
                 task_runner_task__task_name="scan-report",
                 task_runner_task__task_args__contains=pk,
             )
-            prowler_task_data = TaskSerializer(output_celery_task).data
-            if prowler_task_data["state"] == StateChoices.EXECUTING:
+            self.response_serializer_class = TaskSerializer
+            output_serializer = self.get_serializer(output_celery_task)
+            if output_serializer.data["state"] == StateChoices.EXECUTING:
                 # If the task is still running, return the task
                 return Response(
-                    data=prowler_task_data,
+                    data=output_serializer.data,
                     status=status.HTTP_202_ACCEPTED,
                     headers={
                         "Content-Location": reverse(
-                            "task-detail", kwargs={"pk": prowler_task_data["id"]}
+                            "task-detail", kwargs={"pk": output_serializer.data["id"]}
                         )
                     },
                 )
