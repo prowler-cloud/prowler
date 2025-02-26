@@ -29,13 +29,13 @@ class ProwlerArgumentParser:
             usage="prowler [-h] [--version] {aws,azure,gcp,kubernetes,microsoft365,nhn,dashboard} ...",
             epilog="""
 Available Cloud Providers:
-  {aws,azure,gcp,kubernetes}
+  {aws,azure,gcp,kubernetes,microsoft365,nhn}
     aws                 AWS Provider
     azure               Azure Provider
     gcp                 GCP Provider
     kubernetes          Kubernetes Provider
     microsoft365        Microsoft 365 Provider
-    nhn                 NHN Cloud Platform Provider
+    nhn                 NHN Cloud Platform Provider (Not Supported)
 
 Available components:
     dashboard           Local dashboard

@@ -52,13 +52,13 @@ class NhnProvider(Provider):
 
     def __init__(
         self,
-        username: Optional[str] = None,
-        password: Optional[str] = None,
-        tenant_id: Optional[str] = None,
-        config_path: Optional[str] = None,
-        fixer_config: Optional[dict] = None,
-        mutelist_path: Optional[str] = None,
-        mutelist_content: Optional[dict] = None,
+        username: str = None,
+        password: str = None,
+        tenant_id: str = None,
+        config_path: str = None,
+        fixer_config: dict = None,
+        mutelist_path: str = None,
+        mutelist_content: dict = None,
     ):
         """
         Initializes the NHN provider.
@@ -72,12 +72,14 @@ class NhnProvider(Provider):
             - mutelist_path: The path to the mutelist file.
             - mutelist_content: The mutelist content.
         """
-        logger.info("Initializing NhnProvider...")
+        logger.info("Initializing Nhn Provider...")
+
+        self.validate_arguments(username, password, tenant_id)
 
         # 1) Store argument values
-        self._username = username or ""
-        self._password = password or ""
-        self._tenant_id = tenant_id or ""
+        self._username = username
+        self._password = password
+        self._tenant_id = tenant_id
 
         # 2) Load audit_config, fixer_config, mutelist
         self._fixer_config = fixer_config if fixer_config else {}
@@ -147,12 +149,13 @@ class NhnProvider(Provider):
         """
         return self._mutelist
 
-    def validate_arguments(self) -> None:
+    @staticmethod
+    def validate_arguments(username: str, password: str, tenant_id: str) -> None:
         """
         Ensures that username, password, and tenant_id are not empty.
         """
-        if not self._username or not self._password or not self._tenant_id:
-            raise ValueError("NHN Provider requires username, password, and tenant_id.")
+        if not username or not password or not tenant_id:
+            raise ValueError("NHN Provider requires username, password and tenant_id.")
 
     def print_credentials(self) -> None:
         """

@@ -3,11 +3,6 @@ from prowler.lib.outputs.compliance.cis.models import NHNCISModel
 from prowler.lib.outputs.compliance.compliance_output import ComplianceOutput
 from prowler.lib.outputs.finding import Finding
 
-# 1) NHNCISModel이란 pydantic 모델(혹은 dataclass)을 별도 정의할 수 있습니다.
-#    Microsoft365CISModel이 Microsoft365 전용 필드를 포함했듯이,
-#    NHN 클라우드 특정 필드가 있다면 아래처럼 만들 수 있음.
-#    (우선은 Microsoft365CISModel과 비슷한 구조로 작성)
-
 
 class NHNCIS(ComplianceOutput):
     """
