@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("api", "0011_findings_performance_indexes_parent"),
     ]
@@ -13,6 +12,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="finding",
             name="uid",
-            field=models.TextField(blank=True, null=True),
+            field=models.TextField(blank=False, null=False),
         ),
     ]
