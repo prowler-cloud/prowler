@@ -13,9 +13,7 @@ class network_vpc_has_empty_routingtables(Check):
             )
             if network.empty_routingtables:
                 report.status = "FAIL"
-                report.status_extended = (
-                    f"VPC {network.name} has empty routingtables."
-                )
+                report.status_extended = f"VPC {network.name} has empty routingtables."
             findings.append(report)
 
         return findings
