@@ -5,7 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("api", "0011_findings_performance_indexes_parent"),
+        ("api", "0012_scan_report_output"),
     ]
 
     operations = [
