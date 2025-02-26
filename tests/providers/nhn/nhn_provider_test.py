@@ -47,7 +47,7 @@ class TestNhnProvider:
         """
         with pytest.raises(ValueError) as exc_info:
             NhnProvider(username="", password="secret", tenant_id="tenant")
-        assert "requires username, password, and tenant_id" in str(exc_info.value)
+        assert "requires username, password and tenant_id" in str(exc_info.value)
 
     @patch(
         "prowler.providers.nhn.nhn_provider.load_and_validate_config_file",
