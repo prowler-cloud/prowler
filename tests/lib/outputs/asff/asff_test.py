@@ -577,7 +577,7 @@ class TestASFF:
         assert loads(content) == expected_asff
 
     def test_batch_write_data_to_file_without_findings(self):
-        assert not hasattr(ASFF([]), "_file_descriptor")
+        assert not ASFF([])._file_descriptor
 
     def test_asff_generate_status(self):
         assert ASFF.generate_status("PASS") == "PASSED"
