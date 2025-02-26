@@ -1,17 +1,21 @@
 from pydantic import BaseModel
+
 from prowler.lib.logger import logger
 from prowler.providers.nhn.nhn_provider import NhnProvider
+
 
 class Subnet(BaseModel):
     name: str
     external_router: bool
     enable_dhcp: bool
-    
+
+
 class Network(BaseModel):
     id: str
     name: str
     empty_routingtables: bool
     subnets: list[Subnet]
+
 
 class NHNNetworkService:
     def __init__(self, provider: NhnProvider):
@@ -31,7 +35,7 @@ class NHNNetworkService:
         except Exception as e:
             logger.error(f"Error listing vpcs: {e}")
             return []
-        
+
     def _get_vpc_detail(self, vpc_id: str) -> dict:
         url = f"{self.endpoint}/v2.0/vpcs/{vpc_id}"
         try:
@@ -41,17 +45,17 @@ class NHNNetworkService:
         except Exception as e:
             logger.error(f"Error getting vpc detail {vpc_id}: {e}")
             return {}
-           
+
     def _check_has_empty_routingtables(self, vpc_info: dict) -> bool:
         routingtables = vpc_info.get("routingtables", [])
         return not routingtables
-    
+
     def _check_subnet_has_external_router(self, subnet: dict) -> bool:
         return subnet.get("router:external", True)
-    
+
     def _check_subnet_enable_dhcp(self, subnet: dict) -> bool:
         return subnet.get("enable_dhcp", True)
-    
+
     def _get_networks(self):
         vpc_list = self._list_vpcs()
         for vpc in vpc_list:
@@ -65,11 +69,11 @@ class NHNNetworkService:
                 id=vpc_id,
                 name=vpc_name,
                 empty_routingtables=vpc_empty_routingtables,
-                subnets=[]
+                subnets=[],
             )
             self._get_subnets(vpc_info, network)
             self.networks.append(network)
-        
+
     def _get_subnets(self, vpc_info: dict, network: Network):
         subnet_list = vpc_info.get("subnets", [])
         # ret_subnet_list = []
@@ -80,6 +84,6 @@ class NHNNetworkService:
             subnet_instance = Subnet(
                 name=subnet_name,
                 external_router=subnet_external_router,
-                enable_dhcp=subnet_enable_dhcp
+                enable_dhcp=subnet_enable_dhcp,
             )
             network.subnets.append(subnet_instance)

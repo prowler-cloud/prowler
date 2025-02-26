@@ -1,6 +1,7 @@
 from prowler.lib.check.models import Check, Check_Report_NHN
 from prowler.providers.nhn.services.network.network_client import network_client
 
+
 class network_vpc_subnet_has_external_router(Check):
     def execute(self):
         findings = []
