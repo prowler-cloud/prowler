@@ -1504,7 +1504,7 @@
       ]
     },
     {
-      "Id": "3.2.2",
+      "Id": "3.2.1",
       "Description": "Ensure rotation for customer-created symmetric CMKs is enabled",
       "Checks": [
         "kms_cmk_rotation_enabled"
@@ -1844,7 +1844,7 @@
       ]
     },
     {
-      "Id": "3.2.3",
+      "Id": "3.2.2",
       "Description": "Ensure CloudWatch Log Groups have a retention policy of specific days",
       "Checks": [
         "cloudwatch_log_group_retention_policy_specific_days_enabled"
