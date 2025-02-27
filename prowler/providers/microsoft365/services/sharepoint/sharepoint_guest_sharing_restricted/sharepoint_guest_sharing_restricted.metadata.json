@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "#microsoft.graph.sharepoint.settings",
+  "ResourceType": "Sharepoint Settings",
   "Description": "Ensure that guest users in SharePoint cannot share items they do not own, preventing unauthorized disclosure of shared content.",
   "Risk": "If guest users are allowed to share items they don't own, there is a higher risk of unauthorized data exposure, as external users could share content beyond intended recipients.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/sharepoint/external-sharing-overview",
