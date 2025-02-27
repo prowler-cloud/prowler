@@ -4,6 +4,7 @@ from config.custom_logging import LOGGING  # noqa
 from config.env import BASE_DIR, env  # noqa
 from config.settings.celery import *  # noqa
 from config.settings.partitions import *  # noqa
+from config.settings.sentry import *  # noqa
 from config.settings.social_login import *  # noqa
 
 SECRET_KEY = env("SECRET_KEY", default="secret")
@@ -218,4 +219,20 @@ CACHE_STALE_WHILE_REVALIDATE = env.int("DJANGO_STALE_WHILE_REVALIDATE", 60)
 
 
 TESTING = False
+
 FINDINGS_MAX_DAYS_IN_RANGE = env.int("DJANGO_FINDINGS_MAX_DAYS_IN_RANGE", 7)
+
+
+# API export settings
+DJANGO_TMP_OUTPUT_DIRECTORY = env.str(
+    "DJANGO_TMP_OUTPUT_DIRECTORY", "/tmp/prowler_api_output"
+)
+DJANGO_FINDINGS_BATCH_SIZE = env.str("DJANGO_FINDINGS_BATCH_SIZE", 1000)
+
+DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET = env.str("DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET", "")
+DJANGO_OUTPUT_S3_AWS_ACCESS_KEY_ID = env.str("DJANGO_OUTPUT_S3_AWS_ACCESS_KEY_ID", "")
+DJANGO_OUTPUT_S3_AWS_SECRET_ACCESS_KEY = env.str(
+    "DJANGO_OUTPUT_S3_AWS_SECRET_ACCESS_KEY", ""
+)
+DJANGO_OUTPUT_S3_AWS_SESSION_TOKEN = env.str("DJANGO_OUTPUT_S3_AWS_SESSION_TOKEN", "")
+DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION = env.str("DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION", "")

@@ -43,6 +43,7 @@ class Test_cosmosdb_account_firewall_use_selected_networks:
                     tags=None,
                     disable_local_auth=None,
                     is_virtual_network_filter_enabled=False,
+                    private_endpoint_connections=[],
                 )
             ]
         }
@@ -86,6 +87,7 @@ class Test_cosmosdb_account_firewall_use_selected_networks:
                     tags=None,
                     disable_local_auth=None,
                     is_virtual_network_filter_enabled=True,
+                    private_endpoint_connections=[],
                 )
             ]
         }
