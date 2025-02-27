@@ -331,7 +331,7 @@
       ]
     },
     {
-      "Id": "1.1.15",
+      "Id": "4.1.3",
       "Description": "Ensure that all expired SSL/TLS certificates stored in AWS IAM are removed",
       "Checks": [
         "iam_no_expired_server_certificates_stored"
@@ -339,8 +339,8 @@
       "Attributes": [
         {
           "Title": "Expired SSL/TLS certificates removed",
-          "Section": "1. Identity and Access Management",
-          "SubSection": "1.1 Authentication",
+          "Section": "4. Encryption",
+          "SubSection": "4.1 In-Transit",
           "AttributeDescription": "To enable HTTPS connections for applications and websites hosted on AWS, an SSL/TLS server certificate is required. AWS provides two options for managing certificates: AWS Certificate Manager (ACM) – The preferred method for managing SSL/TLS certificates, automating renewals and deployment. IAM Certificate Storage – Used only when deploying SSL/TLS certificates in regions not supported by ACM. IAM securely encrypts private keys and stores them, but certificates must be obtained from an external provider. ACM certificates cannot be uploaded to IAM, and IAM certificates cannot be managed from the IAM Console.",
           "AdditionalInformation": "Removing expired SSL/TLS certificates prevents the accidental deployment of invalid certificates, which could cause service disruptions, security warnings, and loss of credibility for applications using AWS services like Elastic Load Balancer (ELB). As a best practice, expired certificates should be deleted to maintain a secure and trusted application environment.",
           "LevelOfRisk": 1
@@ -433,7 +433,7 @@
       ]
     },
     {
-      "Id": "2.1.1",
+      "Id": "4.1.1",
       "Description": "Ensure S3 Bucket Policy is set to deny HTTP requests",
       "Checks": [
         "s3_bucket_secure_transport_policy"
@@ -441,10 +441,27 @@
       "Attributes": [
         {
           "Title": "S3 bucket deny HTTP requests",
-          "Section": "2. External Exposure",
-          "SubSection": "2.1 Network",
+          "Section": "4. Encryption",
+          "SubSection": "4.1 In-Transit",
           "AttributeDescription": "Amazon S3 bucket permissions can be configured using a bucket policy to enforce access restrictions. To enhance security, objects within the bucket should be made accessible only via HTTPS, ensuring encrypted data transmission.",
           "AdditionalInformation": "By default, Amazon S3 accepts both HTTP and HTTPS requests, which can expose data to interception. To enforce secure access, HTTP requests should be explicitly denied in the bucket policy. Simply allowing HTTPS without blocking HTTP does not fully comply with security best practices, as unencrypted requests may still be accepted.",
+          "LevelOfRisk": 1
+        }
+      ]
+    },
+    {
+      "Id": "4.1.2",
+      "Description": "Ensure that EC2 Metadata Service only allows IMDSv2",
+      "Checks": [
+        "ec2_instance_imdsv2_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "EC2 Metadata Service only allows IMDSv2",
+          "Section": "4. Encryption",
+          "SubSection": "4.1 In-Transit",
+          "AttributeDescription": "AWS EC2 instances allow users to choose between Instance Metadata Service Version 1 (IMDSv1), which uses a request/response model, or Instance Metadata Service Version 2 (IMDSv2), which uses a session-based approach for enhanced security",
+          "AdditionalInformation": "Instance metadata refers to the data about an EC2 instance, such as host names, events, and security groups, that is used for managing and configuring the instance. When enabling the Metadata Service, users can opt for either IMDSv1, which operates via a simple request/response model, or IMDSv2, which implements session authentication for additional security. With IMDSv2, each request is secured by session-based authentication, ensuring that all interactions with the instance's metadata and credentials are protected. IMDSv1, on the other hand, may expose instances to Server-Side Request Forgery (SSRF) attacks. To improve security, Amazon recommends using IMDSv2",
           "LevelOfRisk": 1
         }
       ]
@@ -458,7 +475,7 @@
       "Attributes": [
         {
           "Title": "MFA delete enabled on S3 buckets",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.2 Storage",
           "AttributeDescription": "Enabling MFA Delete on a sensitive or classified Amazon S3 bucket adds an extra layer of protection by requiring two-factor authentication for critical actions, such as deleting object versions or changing the bucket’s versioning state.",
           "AdditionalInformation": "MFA Delete helps prevent accidental or malicious deletions by requiring an additional authentication step. This mitigates the risk of data loss due to compromised credentials or unauthorized access, ensuring that critical objects remain protected.",
@@ -475,7 +492,7 @@
       "Attributes": [
         {
           "Title": "Macie enabled",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.2 Storage",
           "AttributeDescription": "Amazon S3 buckets may store sensitive data that needs to be discovered, classified, monitored, and protected to maintain security and compliance. Amazon Macie, along with third-party tools, can automatically inventory S3 buckets and identify sensitive data at scale.",
           "AdditionalInformation": "Using automated data discovery and classification tools, such as Amazon Macie, enhances security by continuously monitoring S3 buckets for sensitive information. Macie leverages machine learning and pattern matching to detect and protect critical data, reducing the risk of data leaks and unauthorized access.",
@@ -484,7 +501,7 @@
       ]
     },
     {
-      "Id": "2.1.2",
+      "Id": "2.1.1",
       "Description": "Ensure the default security group of every VPC restricts all traffic",
       "Checks": [
         "ec2_securitygroup_default_restrict_traffic"
@@ -492,7 +509,7 @@
       "Attributes": [
         {
           "Title": "Default SG of VPC restrict all traffic",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.1 Network",
           "AttributeDescription": "Each Amazon VPC includes a default security group that initially denies all inbound traffic, allows all outbound traffic, and permits unrestricted communication between instances within the group. If no security group is specified when launching an instance, it is automatically assigned to this default security group. Since security groups control stateful ingress and egress traffic, it is recommended to restrict all inbound and outbound traffic in the default security group.",
           "AdditionalInformation": "Restricting all traffic in the default security group enforces least privilege access by ensuring that AWS resources are explicitly assigned to well-defined security groups. This approach reduces unintended exposure, improves network segmentation, and promotes secure resource placement within AWS environments.",
@@ -501,7 +518,7 @@
       ]
     },
     {
-      "Id": "2.1.3",
+      "Id": "2.1.2",
       "Description": "Ensure routing tables for VPC peering are least access",
       "Checks": [
         "vpc_peering_routing_tables_with_least_privilege"
@@ -509,7 +526,7 @@
       "Attributes": [
         {
           "Title": "Routing tables for VPC least access",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.1 Network",
           "AttributeDescription": "After establishing a VPC peering connection, routing tables must be updated to enable communication between the peered VPCs. Routes can be configured with granular specificity, allowing connections to be restricted to a single host or a specific subnet within the peered VPC.",
           "AdditionalInformation": "Defining highly specific routes in VPC peering connections enhances security by limiting access to only the necessary resources. This minimizes the potential impact of a security breach, ensuring that resources outside the defined routes remain inaccessible, reducing the risk of lateral movement within the network.",
@@ -518,7 +535,7 @@
       ]
     },
     {
-      "Id": "2.1.4",
+      "Id": "2.1.3",
       "Description": "Ensure no Network ACLs allow ingress from 0.0.0.0/0 to remote server administration ports",
       "Checks": [
         "ec2_networkacl_allow_ingress_any_port",
@@ -528,7 +545,7 @@
       "Attributes": [
         {
           "Title": "No Network ACLs allow ingress from 0.0.0.0/0 to remote server administration ports",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.1 Network",
           "AttributeDescription": "Network Access Control Lists (NACLs) provide stateless filtering of ingress and egress traffic to AWS resources. It is recommended that NACLs do not allow unrestricted inbound access to remote administration ports, such as SSH (port 22) and RDP (port 3389), over TCP (6), UDP (17), or ALL (-1) protocols to prevent unauthorized access.",
           "AdditionalInformation": "Exposing remote server administration ports (e.g., SSH on 22 and RDP on 3389) to the public internet increases the attack surface, making resources more vulnerable to brute-force attacks and unauthorized access. Restricting inbound access to these ports helps reduce security risks and limit potential exploitation.",
@@ -537,7 +554,7 @@
       ]
     },
     {
-      "Id": "2.1.5",
+      "Id": "2.1.4",
       "Description": "Ensure no security groups allow ingress from 0.0.0.0/0 to remote server administration ports",
       "Checks": [
         "ec2_securitygroup_allow_ingress_from_internet_to_all_ports",
@@ -547,7 +564,7 @@
       "Attributes": [
         {
           "Title": "No SG allow ingress from 0.0.0.0/0 to remote server administration ports",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.1 Network",
           "AttributeDescription": "Security groups enforce stateful filtering of ingress and egress traffic to AWS resources. To enhance security, no security group should allow unrestricted inbound access to remote administration ports, such as SSH (port 22) and RDP (port 3389), over TCP (6), UDP (17), or ALL (-1) protocols.",
           "AdditionalInformation": "Exposing remote administration ports to the public internet significantly increases the attack surface, making resources more vulnerable to brute-force attacks, exploitation, and unauthorized access. Restricting ingress traffic to these ports helps reduce security risks and prevent potential system compromises.",
@@ -564,7 +581,7 @@
       "Attributes": [
         {
           "Title": "EBS snapshots nor publicy accessible",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.2 Storage",
           "AttributeDescription": "Amazon Elastic Block Store (EBS) snapshots contain backups of EC2 volumes, which may include sensitive data such as credentials, application configurations, or customer information. EBS snapshots should never be publicly accessible to prevent unauthorized access and data exposure. By default, snapshots are private, but they can be manually shared with other AWS accounts or made public, which poses a significant security risk if misconfigured.",
           "AdditionalInformation": "Exposing EBS snapshots publicly increases the risk of data breaches, unauthorized access, and compliance violations. Attackers can scan for publicly accessible snapshots and extract sensitive information. To prevent data leaks, snapshots should be restricted to specific AWS accounts or kept private unless explicitly needed for sharing. Implementing proper access controls helps protect critical data and maintain compliance with security best practices.",
@@ -573,7 +590,7 @@
       ]
     },
     {
-      "Id": "2.2.17",
+      "Id": "4.2.1",
       "Description": "Ensure EBS volume encryption is enabled in all regions",
       "Checks": [
         "ec2_ebs_volume_encryption"
@@ -581,8 +598,8 @@
       "Attributes": [
         {
           "Title": "EBS volume encryption",
-          "Section": "2. External Exposure",
-          "SubSection": "2.2 Storage",
+          "Section": "4. Encryption",
+          "SubSection": "4.2 At-Rest",
           "AttributeDescription": "Amazon Elastic Compute Cloud (EC2) supports encryption at rest for Elastic Block Store (EBS) volumes, ensuring that stored data remains protected. While EBS encryption is disabled by default, organizations can enforce automatic encryption of newly created volumes to enhance data security and compliance.",
           "AdditionalInformation": "Enforcing EBS volume encryption reduces the risk of data exposure, unauthorized access, and compliance violations. If encryption remains intact, even if storage is compromised, data remains unreadable to unauthorized users. Encrypting data at rest ensures that sensitive information is protected against accidental disclosure, insider threats, and external attacks.",
           "LevelOfRisk": 4
@@ -590,7 +607,7 @@
       ]
     },
     {
-      "Id": "2.2.18",
+      "Id": "4.2.2",
       "Description": "Ensure that encryption-at-rest is enabled for RDS instances",
       "Checks": [
         "rds_instance_storage_encrypted"
@@ -598,8 +615,8 @@
       "Attributes": [
         {
           "Title": "RDS instances encryption at rest enabled",
-          "Section": "2. External Exposure",
-          "SubSection": "2.2 Storage",
+          "Section": "4. Encryption",
+          "SubSection": "4.2 At-Rest",
           "AttributeDescription": "Amazon Relational Database Service (RDS) supports encryption at rest using the industry-standard AES-256 encryption algorithm to secure database instances and their associated storage. Once enabled, RDS encryption automatically handles access authentication and decryption, ensuring secure data storage with minimal performance impact.",
           "AdditionalInformation": "Databases often contain sensitive and business-critical information, making encryption essential to protect against unauthorized access and data breaches. Enabling RDS encryption ensures that underlying storage, automated backups, read replicas, and snapshots are all encrypted, preventing accidental or malicious data exposure while maintaining compliance with security best practices.",
           "LevelOfRisk": 4
@@ -615,7 +632,7 @@
       "Attributes": [
         {
           "Title": "SNS topics do not allow global send or subscribe",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.3 Application",
           "AttributeDescription": "Amazon Simple Notification Service (SNS) topics enable messaging between AWS services, applications, and users. By default, SNS topics should be restricted to trusted AWS accounts or IAM roles to prevent unauthorized access. Allowing global send (sns:Publish) or subscribe (sns:Subscribe) permissions means any AWS account or unauthenticated entity could send messages or subscribe to the topic, potentially leading to spam, data leaks, or misuse of notifications.",
           "AdditionalInformation": "SNS topics with global send or subscribe permissions expose AWS environments to unauthorized message injection, data exfiltration, and Denial-of-Service (DoS) attacks. An attacker could flood an SNS topic with malicious or fraudulent messages, leading to unexpected charges or service disruptions. Restricting access ensures that only authorized AWS accounts, applications, or IAM roles can send and receive messages, reducing security risks and protecting system integrity.",
@@ -632,7 +649,7 @@
       "Attributes": [
         {
           "Title": "RDS snapshots not publicy accessible",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.2 Storage",
           "AttributeDescription": "Amazon Relational Database Service (RDS) snapshots store backups of database instances, potentially containing sensitive data such as customer records, credentials, and application configurations. By default, RDS snapshots are private, but they can be shared with other AWS accounts or made public, which can lead to data exposure if misconfigured. To prevent unauthorized access, RDS snapshots should never be publicly accessible unless explicitly required and secured.",
           "AdditionalInformation": "Publicly accessible RDS snapshots create a serious security risk, as anyone can copy the snapshot and restore the database, exposing sensitive information. Attackers actively scan for publicly available snapshots to extract credentials, personally identifiable information (PII), or business-critical data. To prevent unauthorized access and data leaks, RDS snapshots should remain private or restricted to trusted AWS accounts following the principle of least privilege.",
@@ -649,7 +666,7 @@
       "Attributes": [
         {
           "Title": "S3 bucket CloudTrail logs is not publicly accessible",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.2 Storage",
           "AttributeDescription": "AWS CloudTrail logs record account activity, including API calls, user actions, and resource modifications, making them critical for security monitoring and compliance auditing. These logs are typically stored in an Amazon S3 bucket for long-term retention and analysis. To protect sensitive security data, the S3 bucket storing CloudTrail logs should never be publicly accessible.",
           "AdditionalInformation": "If the S3 bucket containing CloudTrail logs is publicly accessible, unauthorized users could access sensitive security information, including API calls, IAM activity, and infrastructure changes. Exposing CloudTrail logs can help attackers reconstruct system activity, identify vulnerabilities, and plan targeted attacks. To prevent data leaks and unauthorized access, CloudTrail log buckets should be restricted using IAM policies, bucket policies, and S3 Block Public Access settings.",
@@ -658,7 +675,7 @@
       ]
     },
     {
-      "Id": "2.2.5",
+      "Id": "2.2.6",
       "Description": "Ensure Redshift clusters do not have a public endpoint",
       "Checks": [
         "redshift_cluster_public_access"
@@ -666,7 +683,7 @@
       "Attributes": [
         {
           "Title": "Redshift clusters dont have a public endpoint",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.2 Storage",
           "AttributeDescription": "Amazon Redshift clusters store and process large-scale data for analytics and business intelligence workloads. By default, Redshift clusters can be configured with a public endpoint, making them accessible from the internet. To minimize security risks, Redshift clusters should be restricted to private networks and should not have a public endpoint unless absolutely necessary and properly secured.",
           "AdditionalInformation": "Exposing a Redshift cluster to the public internet increases the risk of unauthorized access, data breaches, and cyberattacks. Attackers could attempt brute-force login attempts, exploit misconfigurations, or access sensitive business data. Keeping Redshift clusters within private subnets and restricting access via security groups, VPC settings, and IAM policies ensures that only trusted networks and users can connect, reducing the attack surface and enhancing data security.",
@@ -675,7 +692,7 @@
       ]
     },
     {
-      "Id": "2.1.6",
+      "Id": "2.1.5",
       "Description": "Ensure ApiGateway endpoint is not public",
       "Checks": [
         "apigateway_restapi_public"
@@ -683,7 +700,7 @@
       "Attributes": [
         {
           "Title": "ApiGateway endpoint is public",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.1 Network",
           "AttributeDescription": "AWS API Gateway allows developers to create, deploy, and manage APIs that connect applications to backend services. By default, API Gateway endpoints can be publicly accessible, meaning they can be invoked from anywhere on the internet. To enhance security, API Gateway endpoints should be restricted to private networks using VPC links, private API settings, or access control mechanisms to ensure that only authorized entities can interact with the API.",
           "AdditionalInformation": "Publicly accessible API Gateway endpoints can expose backend services to unauthorized access, data leaks, and potential exploitation. Attackers may attempt brute-force authentication, injection attacks, or abuse API functionality if access is not properly restricted. To reduce the attack surface, API Gateway endpoints should be limited to internal use or protected with authentication, IAM permissions, WAF rules, or private VPC access to ensure only trusted users and systems can invoke the API.",
@@ -700,7 +717,7 @@
       "Attributes": [
         {
           "Title": "EC2 instances launched using autoscaling group launch configurations do not have Public IP addresses",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.3 Application",
           "AttributeDescription": "Amazon EC2 instances launched via Auto Scaling groups can automatically scale workloads based on demand. By default, instances can be assigned public IP addresses, making them accessible from the internet. To enhance security, EC2 instances in Auto Scaling group launch configurations should not have public IP addresses, ensuring they remain within a private network and are only accessible through secure channels such as bastion hosts or VPN connections.",
           "AdditionalInformation": "Assigning public IP addresses to Auto Scaling group instances increases the risk of unauthorized access, brute-force attacks, and potential exploitation. Publicly accessible instances can become targets for malicious actors, leading to data breaches or service disruptions. By restricting public IP addresses, organizations can enforce network segmentation, ensuring that EC2 instances are accessed securely via private networks, VPNs, or load balancers.",
@@ -717,7 +734,7 @@
       "Attributes": [
         {
           "Title": "Lambda functions have not resource-based policy set as Public",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.3 Application",
           "AttributeDescription": "AWS Lambda functions allow running code without managing servers. Lambda supports resource-based policies that define who can invoke the function. If a Lambda function’s resource-based policy allows public access, it can be triggered by anyone on the internet, posing a significant security risk. To prevent unauthorized execution, Lambda functions should not be publicly accessible unless explicitly required and properly secured.",
           "AdditionalInformation": "Publicly accessible Lambda functions can be abused for unauthorized execution, leading to service disruptions, data exfiltration, or increased AWS costs due to excessive invocations. Attackers could exploit misconfigured functions to perform malicious actions, extract sensitive data, or abuse compute resources. To reduce security risks, Lambda functions should only be accessible to specific IAM roles, AWS services, or trusted accounts, enforcing least privilege access and maintaining secure function execution.",
@@ -734,7 +751,7 @@
       "Attributes": [
         {
           "Title": "Lambda have not public URL Function",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.3 Application",
           "AttributeDescription": "AWS Lambda function URLs provide a built-in HTTPS endpoint that allows functions to be invoked directly via HTTP requests. By default, Lambda function URLs can be publicly accessible, meaning anyone on the internet can invoke the function if proper access controls are not enforced. To minimize security risks, Lambda function URLs should not be publicly accessible unless explicitly required and properly restricted.",
           "AdditionalInformation": "Exposing Lambda function URLs to the public internet increases the risk of unauthorized access, API abuse, and potential exploitation. Attackers may invoke functions maliciously, leading to data leaks, unauthorized operations, increased costs, or denial-of-service (DoS) attacks. To enhance security, Lambda function URLs should be restricted to specific IAM roles, AWS services, or trusted clients, ensuring that only authorized users can trigger the function.",
@@ -751,7 +768,7 @@
       "Attributes": [
         {
           "Title": "DMS instances are not publicly accessible",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.3 Application",
           "AttributeDescription": "AWS Database Migration Service (DMS) instances facilitate data migration between databases across on-premises and cloud environments. By default, DMS instances can be configured with publicly accessible endpoints, making them reachable from the internet. To enhance security and prevent unauthorized access, DMS instances should not be publicly accessible unless explicitly required and properly secured.",
           "AdditionalInformation": "Publicly accessible DMS instances increase the risk of unauthorized access, data interception, and potential exploitation. Attackers could target exposed instances to steal or manipulate sensitive data during migration. Restricting public access ensures data migrations remain secure, limiting access to trusted networks, private VPCs, and authorized IAM roles, thereby reducing the attack surface and ensuring compliance with security best practices.",
@@ -760,7 +777,7 @@
       ]
     },
     {
-      "Id": "2.2.6",
+      "Id": "2.2.7",
       "Description": "Ensure DocumentDB manual cluster snapshot is not public",
       "Checks": [
         "documentdb_cluster_public_snapshot"
@@ -768,7 +785,7 @@
       "Attributes": [
         {
           "Title": "DocumentDB manual cluster snapshot is not public",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.2 Storage",
           "AttributeDescription": "AWS DocumentDB manual cluster snapshots store backups of DocumentDB clusters, containing sensitive database information such as application data, configurations, and credentials. By default, snapshots are private, but they can be manually shared or made public, which poses a significant security risk. To prevent unauthorized access, DocumentDB manual cluster snapshots should never be publicly accessible unless explicitly required and properly secured.",
           "AdditionalInformation": "Publicly accessible DocumentDB snapshots expose critical database information, increasing the risk of data breaches, unauthorized access, and compliance violations. Attackers could restore the snapshot in their own AWS account and gain full access to the database content. To protect sensitive data, DocumentDB snapshots should only be shared with specific AWS accounts or remain private, following least privilege principles and AWS security best practices.",
@@ -785,7 +802,7 @@
       "Attributes": [
         {
           "Title": "No EC2 AMIs set as Public",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.3 Application",
           "AttributeDescription": "Amazon EC2 Amazon Machine Images (AMIs) contain pre-configured operating system and application environments that can be used to launch new EC2 instances. By default, AMIs are private, but they can be manually shared or made public, which poses a security risk if sensitive data or proprietary configurations are exposed. To prevent unauthorized access and data leaks, EC2 AMIs should not be set as public unless explicitly required and properly secured.",
           "AdditionalInformation": "Publicly accessible EC2 AMIs increase the risk of data exposure, unauthorized access, and compliance violations. Attackers could copy, analyze, or exploit public AMIs to extract sensitive credentials, misconfigurations, or proprietary software. Keeping AMIs private or shared only with specific AWS accounts ensures that only trusted users or teams can access and launch instances from them, reducing security risks and preventing unintended data exposure.",
@@ -794,7 +811,7 @@
       ]
     },
     {
-      "Id": "2.2.7",
+      "Id": "2.2.8",
       "Description": "Ensure that public access to EBS snapshots is disabled",
       "Checks": [
         "ec2_ebs_snapshot_account_block_public_access"
@@ -802,7 +819,7 @@
       "Attributes": [
         {
           "Title": "Public access to EBS snapshots is disabled",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.2 Storage",
           "AttributeDescription": "Amazon Elastic Block Store (EBS) snapshots are backups of EC2 volumes that may contain sensitive data, such as credentials, application configurations, and customer records. By default, EBS snapshots are private, but they can be manually shared or made public, allowing anyone to copy or restore them. To prevent unauthorized access and data exposure, public access to EBS snapshots should always be disabled.",
           "AdditionalInformation": "Publicly accessible EBS snapshots pose a significant security risk, as attackers can restore and extract sensitive data if a snapshot is exposed. Misconfigured public snapshots have led to data breaches and compliance violations in the past. To mitigate this risk, EBS snapshots should be kept private or explicitly shared only with trusted AWS accounts, following least privilege principles to protect critical data and maintain security compliance.",
@@ -811,7 +828,7 @@
       ]
     },
     {
-      "Id": "2.1.7",
+      "Id": "2.1.6",
       "Description": "Ensure that ec2 common ports from instances are not internet-exposed",
       "Checks": [
         "ec2_instance_port_cassandra_exposed_to_internet",
@@ -835,7 +852,7 @@
       "Attributes": [
         {
           "Title": "Common ports from instances are not exposed",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.1 Network",
           "AttributeDescription": "Amazon EC2 instances can run various services that communicate over common ports such as 22 (SSH), 3389 (RDP), 80 (HTTP), and 443 (HTTPS) (and more). If these ports are open to the internet, attackers can attempt unauthorized access, brute-force attacks, or exploit known vulnerabilities. To reduce security risks, EC2 instances should be configured so that common ports are not exposed to the public internet, unless explicitly required and properly secured.",
           "AdditionalInformation": "Exposing common ports directly to the internet increases the attack surface and risks unauthorized access or system compromise. Attackers frequently scan for open ports to target misconfigured or unpatched services. To enhance security, access to EC2 common ports should be restricted using security groups, network ACLs, and VPC configurations, ensuring that only trusted networks and users can connect.",
@@ -844,7 +861,7 @@
       ]
     },
     {
-      "Id": "2.1.8",
+      "Id": "2.1.7",
       "Description": "Ensure that ec2 security groups do not allow ingress from internet to common ports",
       "Checks": [
         "ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports",
@@ -866,7 +883,7 @@
       "Attributes": [
         {
           "Title": "Common ports from security groups do not allow ingress traffic",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.1 Network",
           "AttributeDescription": "Amazon EC2 security groups act as virtual firewalls, controlling inbound and outbound traffic to instances. If a security group allows ingress (incoming traffic) from the internet (0.0.0.0/0 or ::/0) to common ports such as 22 (SSH), 3389 (RDP), 80 (HTTP), or 443 (HTTPS) (and more), it creates a significant security risk. To minimize exposure, security groups should be configured to restrict ingress access to these ports to only trusted IP addresses or internal networks.",
           "AdditionalInformation": "Allowing unrestricted inbound traffic to common ports increases the risk of brute-force attacks, unauthorized access, and exploitation of vulnerabilities. Attackers actively scan for open ports on public-facing EC2 instances to gain unauthorized control. To reduce security risks, ingress rules should be restricted using least privilege principles, IP whitelisting, VPN access, or bastion hosts, ensuring that only authorized users and networks can connect.",
@@ -883,7 +900,7 @@
       "Attributes": [
         {
           "Title": "No ECR repositories set as Public",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.3 Application",
           "AttributeDescription": "Amazon Elastic Container Registry (ECR) repositories store and manage container images for deployment in AWS services. By default, ECR repositories are private, but they can be manually configured as public, allowing anyone to pull container images. To prevent unauthorized access and potential security risks, ECR repositories should not be set as public unless explicitly required and properly secured.",
           "AdditionalInformation": "Publicly accessible ECR repositories expose container images to unauthorized users, increasing the risk of intellectual property theft, malware injection, or unauthorized use of containerized applications. Attackers could analyze public images for vulnerabilities or use misconfigured images for malicious purposes. To mitigate this risk, ECR repositories should remain private or be explicitly shared with trusted AWS accounts, ensuring secure access and compliance with best practices.",
@@ -900,7 +917,7 @@
       "Attributes": [
         {
           "Title": "No ECS services assign public IPs automatically",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.3 Application",
           "AttributeDescription": "Amazon Elastic Container Service (ECS) allows running containerized applications on AWS. By default, ECS services can be configured to assign public IP addresses to tasks or services, making them directly accessible from the internet. To enhance security, ECS services should be configured not to automatically assign public IPs, ensuring they remain within a private network and are accessed securely through internal load balancers, VPC peering, or private endpoints.",
           "AdditionalInformation": "Automatically assigning public IPs to ECS services exposes them to the internet, increasing the risk of unauthorized access, brute-force attacks, and data breaches. Attackers could target publicly exposed containers, exploit vulnerabilities, or disrupt services. To mitigate these risks, ECS services should be restricted to private subnets and accessed through secure networking configurations, such as AWS PrivateLink, VPNs, or internal ALBs.",
@@ -917,7 +934,7 @@
       "Attributes": [
         {
           "Title": "No ECS tasks sets assign public IPs autocatically",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.3 Application",
           "AttributeDescription": "Amazon Elastic Container Service (ECS) task sets manage multiple versions of a service during deployments. By default, ECS task sets can be configured to automatically assign public IP addresses, making them directly accessible from the internet. To enhance security, ECS task sets should be restricted to private subnets and should not automatically receive public IP addresses unless explicitly required and properly secured.",
           "AdditionalInformation": "Automatically assigning public IPs to ECS task sets increases the risk of unauthorized access, cyberattacks, and data exposure. Publicly exposed tasks can be targeted by attackers, leading to service disruptions or exploitation of vulnerabilities. To mitigate these risks, ECS task sets should be restricted to private networking environments, accessed only through internal load balancers, VPC endpoints, or secure VPN connections, ensuring controlled and secure communication.",
@@ -926,7 +943,7 @@
       ]
     },
     {
-      "Id": "2.2.8",
+      "Id": "2.2.9",
       "Description": "Ensure EFS mount targets are not publicly accessible",
       "Checks": [
         "efs_mount_target_not_publicly_accessible"
@@ -934,7 +951,7 @@
       "Attributes": [
         {
           "Title": "No EFS mount targets are publicly accessible",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.2 Storage",
           "AttributeDescription": "Amazon Elastic File System (EFS) provides scalable, shared file storage for AWS services. EFS mount targets allow instances to connect to the file system within a VPC. By default, EFS mount targets can be configured with public accessibility, making them reachable from the internet. To enhance security, EFS mount targets should be restricted to private networks and should not be publicly accessible unless explicitly required and properly secured.",
           "AdditionalInformation": "Publicly accessible EFS mount targets expose stored data to unauthorized access, cyberattacks, and data breaches. Attackers could exploit misconfigured security groups or network ACLs to access or modify files. To reduce security risks, EFS mount targets should be restricted to private subnets, with access limited to trusted VPCs, security groups, and IAM roles, ensuring secure file storage and controlled access.",
@@ -943,7 +960,7 @@
       ]
     },
     {
-      "Id": "2.2.9",
+      "Id": "2.2.10",
       "Description": "Ensure that EFS do not have policies which allow access to any client within the VPC",
       "Checks": [
         "efs_not_publicly_accessible"
@@ -951,7 +968,7 @@
       "Attributes": [
         {
           "Title": "No EFS have policies which allow access to any client within the VPC",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.2 Storage",
           "AttributeDescription": "Amazon Elastic File System (EFS) provides shared storage that can be accessed by multiple EC2 instances and services within a VPC. EFS access is controlled through resource-based policies that define which clients can connect. If an EFS policy allows access to any client within the VPC, it increases the risk of unauthorized access and data exposure. To enhance security, EFS policies should be restricted to specific IAM roles, security groups, or trusted resources instead of granting broad access to all VPC clients.",
           "AdditionalInformation": "Allowing any client within a VPC to access an EFS file system increases the risk of data leaks, accidental modifications, or unauthorized access by compromised instances or misconfigured services. To minimize exposure, EFS policies should enforce least privilege access, restricting permissions to specific instances, roles, or users that require access, ensuring secure file storage and controlled data access.",
@@ -960,7 +977,7 @@
       ]
     },
     {
-      "Id": "2.1.9",
+      "Id": "2.1.8",
       "Description": "Ensure EKS cluster Network Policy is Enabled and Set as Appropriate",
       "Checks": [
         "eks_cluster_network_policy_enabled"
@@ -968,7 +985,7 @@
       "Attributes": [
         {
           "Title": "EKS cluster Network Policy is Enabled and Set as Appropriate",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.1 Network",
           "AttributeDescription": "A Network Policy defines how network traffic is controlled and restricted between workloads within a cloud environment. Enforcing network policies ensures that only authorized communication occurs between services, reducing the risk of unauthorized access and lateral movement. It is recommended to enable Network Policies and configure them appropriately to enforce least privilege access and secure communication between workloads.",
           "AdditionalInformation": "Without properly configured Network Policies, workloads may be exposed to unnecessary or unauthorized network traffic, increasing the risk of data leaks, exploitation, or lateral movement by attackers. By enabling and enforcing Network Policies, organizations can limit communication between workloads, ensuring that only approved and necessary network interactions are allowed, minimizing the attack surface and enhancing overall security.",
@@ -977,7 +994,7 @@
       ]
     },
     {
-      "Id": "2.1.10",
+      "Id": "2.1.9",
       "Description": "Ensure EKS Clusters are not publicly accessible",
       "Checks": [
         "eks_cluster_not_publicly_accessible"
@@ -985,7 +1002,7 @@
       "Attributes": [
         {
           "Title": "EKS Clusters are not publicly accessible",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.1 Network",
           "AttributeDescription": "Amazon Elastic Kubernetes Service (EKS) clusters manage containerized applications and can be configured with either private or public access. If an EKS cluster is publicly accessible, it means that the Kubernetes API endpoint can be reached from the internet, increasing the risk of unauthorized access and attacks. To enhance security, EKS clusters should be restricted to private networks and accessed only through secure VPNs, VPC peering, or AWS PrivateLink.",
           "AdditionalInformation": "Exposing an EKS cluster to the public internet increases the risk of brute-force attacks, credential theft, and unauthorized access to Kubernetes workloads. Attackers could exploit misconfigured RBAC policies or API vulnerabilities to gain control over the cluster. To reduce security risks, EKS clusters should be configured with private endpoints, ensuring that only trusted networks and IAM-authenticated users can manage Kubernetes resources.",
@@ -994,7 +1011,7 @@
       ]
     },
     {
-      "Id": "2.1.11",
+      "Id": "2.1.10",
       "Description": "Ensure EKS Clusters are created with Private Nodes",
       "Checks": [
         "eks_cluster_private_nodes_enabled"
@@ -1002,7 +1019,7 @@
       "Attributes": [
         {
           "Title": "EKS Clusters are created with Private Nodes",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.1 Network",
           "AttributeDescription": "Amazon Elastic Kubernetes Service (EKS) clusters run workloads on worker nodes, which can be either public or private. If EKS clusters are created with public nodes, these nodes are assigned public IP addresses, making them accessible from the internet, which increases the risk of unauthorized access and potential attacks. To enhance security, EKS clusters should be created with private nodes that operate within private subnets and are only accessible through secured networking configurations such as VPNs, VPC peering, or AWS PrivateLink.",
           "AdditionalInformation": "Using public nodes in EKS exposes Kubernetes workloads to the internet, increasing the risk of unauthorized access, lateral movement, and potential exploitation. Attackers can target misconfigured workloads, open services, or unsecured API endpoints. By creating EKS clusters with private nodes, organizations can restrict access, limit exposure to public threats, and enforce network segmentation, ensuring that workloads remain secure and isolated within a private VPC environment.",
@@ -1011,7 +1028,7 @@
       ]
     },
     {
-      "Id": "2.2.9",
+      "Id": "2.2.11",
       "Description": "Ensure Elasticache Cluster is not using a public subnet",
       "Checks": [
         "elasticache_cluster_uses_public_subnet"
@@ -1019,7 +1036,7 @@
       "Attributes": [
         {
           "Title": "Elasticache Cluster is not using a public subnet",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.2 Storage",
           "AttributeDescription": "Amazon ElastiCache provides in-memory caching services using Redis and Memcached. By default, ElastiCache clusters can be deployed in either public or private subnets. If an ElastiCache cluster is placed in a public subnet, it becomes accessible from the internet, which significantly increases the risk of unauthorized access and data breaches. To enhance security, ElastiCache clusters should only be deployed in private subnets, ensuring restricted access within a VPC.",
           "AdditionalInformation": "Deploying an ElastiCache cluster in a public subnet exposes it to external threats, such as unauthorized access, brute-force attacks, and potential data exfiltration. Attackers could exploit misconfigurations to access cached data or disrupt services. By restricting ElastiCache clusters to private subnets, organizations can limit access to trusted resources, enforce VPC security controls, and reduce the attack surface, ensuring secure and efficient caching operations.",
@@ -1036,7 +1053,7 @@
       "Attributes": [
         {
           "Title": "No Elastic Load Balancers are facing internet",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.3 Application",
           "AttributeDescription": "Amazon Elastic Load Balancers (ELBs) distribute incoming traffic across multiple targets, such as EC2 instances, containers, and Lambda functions. By default, ELBs can be configured as either internet-facing or internal (private). If an ELB is publicly accessible, it exposes backend services to the internet, increasing the risk of unauthorized access and attacks. To enhance security, ELBs should be restricted to private networks unless explicitly required and properly secured.",
           "AdditionalInformation": "Publicly accessible Elastic Load Balancers can serve as entry points for unauthorized traffic, brute-force attacks, and potential data breaches. Attackers may exploit misconfigured security groups, open ports, or exposed application endpoints behind the load balancer. To reduce security risks, ELBs should be configured as internal (private), allowing access only from trusted networks, VPNs, or specific VPCs, ensuring that backend services remain protected and isolated from external threats.",
@@ -1053,7 +1070,7 @@
       "Attributes": [
         {
           "Title": "EMR Account Public Access Block enabled",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.3 Application",
           "AttributeDescription": "Amazon Elastic MapReduce (EMR) is a managed big data processing service that can access S3, EC2, and other AWS resources. The EMR Account Public Access Block setting helps prevent public access to EMR resources, such as data stored in S3 buckets. If this setting is not enabled, there is a risk that EMR-related data and configurations could be exposed to the public, leading to unauthorized access or data breaches. To enhance security, the Public Access Block should be enabled for the EMR account.",
           "AdditionalInformation": "Allowing public access to EMR resources increases the risk of data leaks, unauthorized access, and compliance violations. Attackers could exploit misconfigured policies or publicly accessible S3 buckets to access sensitive data processed by EMR. Enabling EMR Account Public Access Block ensures that S3 data and other EMR-related resources cannot be accessed publicly, reducing exposure and maintaining strong access controls in AWS.",
@@ -1070,7 +1087,7 @@
       "Attributes": [
         {
           "Title": "EMR cluster is not publicly accessible",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.3 Application",
           "AttributeDescription": "Amazon Elastic MapReduce (EMR) is a managed service for processing big data workloads using Apache Spark, Hadoop, and other frameworks. By default, EMR clusters can be configured with public or private access. If an EMR cluster is publicly accessible, it exposes data processing nodes and services to the internet, increasing the risk of unauthorized access and potential exploitation. To enhance security, EMR clusters should only be deployed in private subnets and restricted to trusted networks.",
           "AdditionalInformation": "Publicly accessible EMR clusters increase the risk of data breaches, unauthorized access, and attacks on running workloads. Malicious actors could exploit misconfigured security groups, open ports, or weak authentication settings to compromise the cluster. To reduce exposure, EMR clusters should be placed in private subnets, restricted using VPC security controls, IAM permissions, and firewall rules, ensuring secure data processing and access management.",
@@ -1087,7 +1104,7 @@
       "Attributes": [
         {
           "Title": "AWS EventBridge event bus is not exposed to everyone",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.3 Application",
           "AttributeDescription": "AWS EventBridge is a serverless event bus service that enables communication between AWS services, third-party applications, and custom event sources. By default, EventBridge event buses can be configured to allow events from any AWS account or external source. If an event bus is exposed to everyone, unauthorized entities could send events to your environment, potentially leading to security risks, data injection attacks, or service disruptions. To enhance security, event buses should be restricted to specific AWS accounts, services, or trusted IAM roles.",
           "AdditionalInformation": "Allowing unrestricted access to an EventBridge event bus increases the risk of malicious event injection, unauthorized access, and data manipulation. Attackers could flood the event bus with malicious events, leading to unexpected behavior, security breaches, or excessive AWS costs. To reduce exposure, event buses should be secured using IAM policies and resource-based permissions, ensuring that only trusted AWS services and accounts can send or receive events.",
@@ -1096,7 +1113,7 @@
       ]
     },
     {
-      "Id": "2.2.10",
+      "Id": "2.2.12",
       "Description": "Ensure S3 Glacier vaults have not policies which allow access to everyone",
       "Checks": [
         "glacier_vaults_policy_public_access"
@@ -1104,7 +1121,7 @@
       "Attributes": [
         {
           "Title": "S3 Glacier vaults have not policies which allow access to everyone",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.2 Storage",
           "AttributeDescription": "Amazon S3 Glacier provides low-cost, long-term storage for archival data. Glacier vaults can be configured with resource-based policies that control access. If a Glacier vault policy allows access to everyone, unauthorized users could retrieve or delete archived data, leading to data exposure or loss. To enhance security, Glacier vault policies should be restricted to specific AWS accounts, IAM roles, or trusted entities, ensuring only authorized users can access or manage archived data.",
           "AdditionalInformation": "Allowing public access to S3 Glacier vaults poses a significant security risk, increasing the chance of data breaches, unauthorized deletions, or compliance violations. Attackers could restore and download sensitive archived data if the vault is misconfigured. To prevent unauthorized access, Glacier vaults should have strict access controls, using IAM policies, encryption, and resource-based permissions, ensuring that only trusted users and systems can interact with archived data.",
@@ -1113,7 +1130,7 @@
       ]
     },
     {
-      "Id": "2.2.11",
+      "Id": "2.2.13",
       "Description": "Ensure Glue Data Catalogs are not publicly accessible",
       "Checks": [
         "glue_data_catalogs_not_publicly_accessible"
@@ -1121,7 +1138,7 @@
       "Attributes": [
         {
           "Title": "Glue Data Catalogs are not publicly accessible",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.2 Storage",
           "AttributeDescription": "AWS Glue Data Catalog is a centralized metadata repository used to store and manage schema information for data lakes and analytics workflows. By default, Glue Data Catalogs can be configured to allow public access, which poses a significant security risk if sensitive metadata is exposed. To enhance security, Glue Data Catalogs should be restricted to specific AWS accounts, IAM roles, or trusted services, ensuring that only authorized users can access or modify catalog information.",
           "AdditionalInformation": "Allowing public access to Glue Data Catalogs increases the risk of unauthorized access, data leaks, and compliance violations. Attackers could gain insights into an organization’s data structure or modify catalog entries, leading to potential data corruption or unauthorized data exposure. To reduce security risks, Glue Data Catalogs should be secured using IAM policies, resource-based permissions, and AWS Lake Formation, ensuring that only trusted accounts and services can interact with metadata.",
@@ -1138,7 +1155,7 @@
       "Attributes": [
         {
           "Title": "Kafka Cluster is not exposed to the public",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.3 Application",
           "AttributeDescription": "Amazon Managed Streaming for Apache Kafka (MSK) allows organizations to build and manage real-time data streaming applications. If a Kafka cluster is publicly accessible, it exposes data streams, configurations, and messaging topics to the internet, increasing the risk of unauthorized access, data interception, and service disruptions. To enhance security, Kafka clusters should be restricted to private networks, ensuring that only trusted AWS resources, VPCs, and IAM-authenticated users can interact with the service.",
           "AdditionalInformation": "Exposing a Kafka cluster to the public internet creates significant security risks, including unauthorized data ingestion, data leaks, and message tampering. Attackers could consume, modify, or inject malicious data into Kafka topics, disrupting real-time analytics and application workflows. To mitigate these risks, Kafka clusters should be deployed in private subnets, with access restricted via VPC security groups, IAM policies, and AWS PrivateLink, ensuring secure and controlled data streaming.",
@@ -1147,7 +1164,7 @@
       ]
     },
     {
-      "Id": "2.2.12",
+      "Id": "2.2.14",
       "Description": "Ensure there are no internet exposed KMS keys",
       "Checks": [
         "kms_key_not_publicly_accessible"
@@ -1155,7 +1172,7 @@
       "Attributes": [
         {
           "Title": "No internet exposed KMS keys",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.2 Storage",
           "AttributeDescription": "AWS Key Management Service (KMS) provides secure encryption key management for data encryption and cryptographic operations. If KMS keys are exposed to the internet, unauthorized entities could potentially use, modify, or compromise encryption keys, leading to data breaches and security vulnerabilities. To enhance security, KMS keys should be restricted to trusted AWS accounts, IAM roles, and specific AWS services, ensuring that only authorized users and systems can access and manage them.",
           "AdditionalInformation": "Exposing KMS keys to the public poses a critical security risk, as compromised keys can lead to unauthorized data decryption, loss of data integrity, and compliance violations. Attackers could potentially use public KMS keys to encrypt or decrypt sensitive data, undermining security controls. To prevent unauthorized access, KMS key policies should enforce strict access control using IAM permissions, VPC endpoint policies, and AWS PrivateLink, ensuring that encryption operations remain fully secured and isolated from the public internet.",
@@ -1172,7 +1189,7 @@
       "Attributes": [
         {
           "Title": "Lightsail database not public",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.3 Application",
           "AttributeDescription": "AWS Lightsail Databases provide managed database solutions for applications. If a Lightsail database is set to public mode, it is directly accessible from the internet, increasing the risk of unauthorized access and data breaches. To enhance security, Lightsail databases should be configured in private mode, ensuring they are accessible only from trusted instances, private networks, or VPN connections.",
           "AdditionalInformation": "Publicly accessible Lightsail databases expose sensitive data to unauthorized access, brute-force attacks, and potential exploitation. Attackers can attempt to compromise credentials, inject malicious queries, or exfiltrate data. To mitigate these risks, Lightsail databases should remain private, with access controlled through firewalls, IAM authentication, and private networking configurations, ensuring secure database connectivity and data protection.",
@@ -1189,7 +1206,7 @@
       "Attributes": [
         {
           "Title": "Lightsail instances are not publicly accessible",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.3 Application",
           "AttributeDescription": "AWS Lightsail instances provide a simple way to deploy and manage cloud-based virtual machines. If a Lightsail instance is publicly accessible, it can be directly reached from the internet, increasing the risk of unauthorized access, attacks, and data breaches. To enhance security, Lightsail instances should be restricted to private access, ensuring they are reachable only through secure connections, such as VPNs, bastion hosts, or private networking configurations.",
           "AdditionalInformation": "Publicly exposed Lightsail instances create a larger attack surface, making them vulnerable to brute-force attacks, unauthorized access, and exploitation of software vulnerabilities. Attackers could compromise credentials, gain control over the instance, or disrupt services. To mitigate these risks, Lightsail instances should be secured using firewalls, private IP configurations, security group restrictions, and IAM-based access controls, ensuring that only trusted users and networks can connect.",
@@ -1206,7 +1223,7 @@
       "Attributes": [
         {
           "Title": "MQ brokers not publicly accessible",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.3 Application",
           "AttributeDescription": "AWS MQ brokers manage message queues for applications, facilitating secure and reliable communication between distributed services. If an MQ broker is publicly accessible, it can be reached from the internet, increasing the risk of unauthorized access, message interception, and data breaches. To enhance security, MQ brokers should be restricted to private networks, ensuring they are accessible only from trusted VPCs, private endpoints, or secure VPN connections.",
           "AdditionalInformation": "Publicly exposed MQ brokers pose a significant security risk, as attackers can attempt to intercept messages, inject malicious data, or disrupt message delivery. This could lead to data manipulation, unauthorized access to sensitive information, and system-wide outages. To mitigate these risks, MQ brokers should be configured within private subnets, with access restricted using security groups, IAM policies, and VPC endpoint controls, ensuring secure and controlled message queue operations.",
@@ -1223,7 +1240,7 @@
       "Attributes": [
         {
           "Title": "NeptuneDB manual cluster snapshot is not public",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.3 Application",
           "AttributeDescription": "Amazon NeptuneDB manual cluster snapshots store backups of graph database clusters, containing sensitive data such as relationships, metadata, and application configurations. By default, NeptuneDB snapshots are private, but they can be manually shared or made public, which can expose critical database information. To enhance security, NeptuneDB manual snapshots should never be publicly accessible, ensuring they are only shared with trusted AWS accounts when necessary.",
           "AdditionalInformation": "Publicly accessible NeptuneDB snapshots pose a significant security risk, as attackers could restore the snapshot in their own AWS account and gain full access to the database contents. This could lead to data leaks, compliance violations, and unauthorized access to sensitive business information. To prevent data exposure, NeptuneDB snapshots should be restricted using IAM policies and AWS resource-based permissions, ensuring that only authorized users and services can access and manage database backups securely.",
@@ -1240,7 +1257,7 @@
       "Attributes": [
         {
           "Title": "Neptune Cluster is not using a public subnet",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.3 Application",
           "AttributeDescription": "Amazon Neptune clusters provide a fully managed graph database service designed for applications requiring complex relationship queries. By default, Neptune clusters can be deployed in either public or private subnets. If a Neptune cluster is placed in a public subnet, it becomes accessible from the internet, significantly increasing the risk of unauthorized access and data breaches. To enhance security, Neptune clusters should only be deployed in private subnets, ensuring access is restricted to trusted VPCs, IAM roles, and security group configurations.",
           "AdditionalInformation": "Deploying a Neptune cluster in a public subnet exposes the database endpoints to external threats, making them vulnerable to brute-force attacks, unauthorized queries, and data exfiltration. Attackers could exploit misconfigurations to gain access to sensitive graph data, leading to potential compliance violations and security incidents. To reduce exposure, Neptune clusters should be restricted to private subnets, with access controlled through VPC security groups, IAM authentication, and private endpoint configurations, ensuring secure database operations and protected data access.",
@@ -1257,7 +1274,7 @@
       "Attributes": [
         {
           "Title": "Amazon Opensearch/Elasticsearch domains are not publicly accessible",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.3 Application",
           "AttributeDescription": "Amazon OpenSearch (formerly Elasticsearch) domains provide search, analytics, and log management capabilities for applications. If an OpenSearch/Elasticsearch domain is publicly accessible, it can be reached from the internet, exposing sensitive data and administrative controls to unauthorized users. To enhance security, OpenSearch domains should be restricted to private networks, ensuring access is limited to trusted VPCs, IAM roles, or specific security group rules.",
           "AdditionalInformation": "Publicly accessible OpenSearch/Elasticsearch domains pose a significant security risk, as attackers could execute unauthorized queries, modify data, or gain administrative control over the cluster. This could lead to data breaches, service disruptions, and compliance violations. To mitigate these risks, OpenSearch domains should be deployed in private subnets, with access controlled using VPC restrictions, fine-grained access control (FGAC), IAM policies, and security group rules, ensuring secure and isolated search and analytics operations.",
@@ -1266,7 +1283,7 @@
       ]
     },
     {
-      "Id": "2.2.13",
+      "Id": "2.2.15",
       "Description": "Ensure that S3 buckets have not policies which allow WRITE access",
       "Checks": [
         "s3_bucket_policy_public_write_access"
@@ -1274,7 +1291,7 @@
       "Attributes": [
         {
           "Title": "S3 buckets have not policies which allow WRITE access",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.2 Storage",
           "AttributeDescription": "Amazon S3 buckets store and manage data, files, and application assets. Bucket policies control access permissions, and if an S3 bucket has a policy that allows WRITE access to everyone, unauthorized users can upload, modify, or delete objects, leading to data tampering, security breaches, or service disruptions. To enhance security, S3 bucket policies should be restricted to specific AWS accounts, IAM roles, or trusted services, ensuring only authorized users have WRITE permissions.",
           "AdditionalInformation": "Allowing unrestricted WRITE access to an S3 bucket increases the risk of unauthorized modifications, data injection attacks, and accidental data loss. Attackers could upload malicious files, delete critical data, or overwrite important configurations. To prevent unauthorized changes, S3 bucket policies should explicitly deny public WRITE access, enforce least privilege access control, and use AWS Block Public Access settings to ensure secure and controlled data storage.",
@@ -1283,7 +1300,7 @@
       ]
     },
     {
-      "Id": "2.2.14",
+      "Id": "2.2.16",
       "Description": "Ensure there are no S3 buckets listable by Everyone or Any AWS customer",
       "Checks": [
         "s3_bucket_public_list_acl"
@@ -1291,7 +1308,7 @@
       "Attributes": [
         {
           "Title": "No S3 buckets are listable by Everyone or Any AWS customer",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.2 Storage",
           "AttributeDescription": "Amazon S3 buckets store sensitive data and should have restricted access permissions. If an S3 bucket is listable by Everyone or Any AWS customer, unauthorized users can enumerate the objects within the bucket, potentially exposing sensitive information such as filenames, metadata, or even public datasets. To enhance security, S3 bucket permissions should be configured to restrict LIST access to only authorized IAM roles, AWS accounts, or specific services.",
           "AdditionalInformation": "Allowing public or AWS-wide LIST access increases the risk of data enumeration, unauthorized access, and information leaks. Attackers or unauthorized users could identify and analyze stored files, extract metadata, or infer sensitive data. To mitigate this risk, S3 bucket policies should explicitly deny public LIST access, enforce least privilege permissions, and use AWS Block Public Access settings to prevent unintended data exposure.",
@@ -1300,7 +1317,7 @@
       ]
     },
     {
-      "Id": "2.2.15",
+      "Id": "2.2.17",
       "Description": "Ensure there are no S3 buckets writable by Everyone or Any AWS customer",
       "Checks": [
         "s3_bucket_public_write_acl"
@@ -1308,7 +1325,7 @@
       "Attributes": [
         {
           "Title": "No S3 buckets writable by Everyone or Any AWS customer",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.2 Storage",
           "AttributeDescription": "Amazon S3 buckets should have strict access controls to prevent unauthorized modifications. If an S3 bucket is writable by Everyone or Any AWS customer, it allows unauthorized users to upload, modify, or delete objects, leading to data corruption, security breaches, and compliance risks. To enhance security, S3 bucket permissions should be restricted to trusted IAM roles, AWS accounts, or specific services.",
           "AdditionalInformation": "Allowing public or AWS-wide WRITE access creates a significant security risk, as attackers can inject malicious files, overwrite critical data, or delete essential objects. This could lead to data loss, malware distribution, or unauthorized system modifications. To prevent unauthorized changes, S3 bucket policies should explicitly deny public WRITE access, enforce least privilege access, and use AWS Block Public Access settings to secure data integrity and prevent unauthorized modifications.",
@@ -1325,7 +1342,7 @@
       "Attributes": [
         {
           "Title": "Amazon SageMaker Notebook instances have not direct internet access",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.3 Application",
           "AttributeDescription": "Amazon SageMaker Notebook instances provide an interactive environment for machine learning development and data analysis. By default, these instances can be configured with direct internet access, which increases the risk of unauthorized access, data leaks, and exposure to malicious external threats. To enhance security, SageMaker Notebook instances should be restricted to private networks, ensuring they are accessed only through secure VPC connections, IAM authentication, or VPNs.",
           "AdditionalInformation": "Allowing direct internet access to SageMaker Notebook instances poses a significant security risk, as attackers could exploit misconfigurations, exfiltrate data, or inject malicious code. Publicly accessible notebooks can lead to data breaches, intellectual property theft, or compromised model training workflows. To mitigate these risks, SageMaker Notebook instances should be configured within private subnets, with internet access disabled, and restricted using security groups, IAM policies, and VPC endpoint configurations to ensure secure and controlled machine learning operations.",
@@ -1334,7 +1351,7 @@
       ]
     },
     {
-      "Id": "2.2.16",
+      "Id": "2.2.18",
       "Description": "Ensure Secrets Manager secrets are not publicly accessible",
       "Checks": [
         "secretsmanager_not_publicly_accessible"
@@ -1342,7 +1359,7 @@
       "Attributes": [
         {
           "Title": "Secrets Manager secrets are not publicly accessible",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.2 Storage",
           "AttributeDescription": "AWS Secrets Manager is used to securely store and manage sensitive information, such as API keys, database credentials, and encryption keys. By default, Secrets Manager secrets should be restricted to authorized IAM roles and AWS services. If a secret is publicly accessible, it can be exposed to unauthorized users, leading to data leaks, security breaches, and potential exploitation of sensitive credentials. To enhance security, Secrets Manager secrets should be strictly controlled using IAM policies and resource-based permissions.",
           "AdditionalInformation": "Allowing public access to Secrets Manager secrets creates a critical security vulnerability, as attackers could retrieve, misuse, or exfiltrate sensitive information. Compromised secrets could lead to unauthorized access to databases, applications, or cloud services, resulting in data breaches, financial loss, or compliance violations. To mitigate this risk, Secrets Manager secrets should be restricted using least privilege IAM permissions, encrypted with AWS KMS, and accessed only by trusted AWS services and roles, ensuring secure and controlled secret management.",
@@ -1359,7 +1376,7 @@
       "Attributes": [
         {
           "Title": "SES identities are not publicly accessible",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.3 Application",
           "AttributeDescription": "Amazon Simple Email Service (SES) identities (such as email addresses or domains) are used to send and receive emails through AWS. By default, SES identities should be restricted to authorized AWS accounts and IAM roles. If an SES identity is publicly accessible, unauthorized users could send emails using the identity, leading to email spoofing, phishing attacks, or misuse of the domain for malicious purposes. To enhance security, SES identities should be properly restricted using IAM policies and verified senders.",
           "AdditionalInformation": "Allowing public access to SES identities creates a security and reputational risk, as attackers could impersonate the identity, send spam, or launch phishing campaigns. This could lead to domain blacklisting, compliance violations, and damage to the organization’s email reputation. To mitigate these risks, SES identities should be restricted to trusted AWS accounts and IAM roles, ensuring that only authorized services and users can send emails, protecting the integrity and security of email communications.",
@@ -1376,7 +1393,7 @@
       "Attributes": [
         {
           "Title": "SQS queues have not policy set as Public",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.3 Application",
           "AttributeDescription": "Amazon Simple Queue Service (SQS) queues enable asynchronous message processing between distributed systems. By default, SQS queues should be restricted to authorized AWS accounts and IAM roles. If an SQS queue has a public policy, it allows anyone on the internet to send, receive, or delete messages, leading to data leaks, unauthorized message injection, and potential denial-of-service (DoS) attacks. To enhance security, SQS queue policies should be configured to allow access only to trusted AWS accounts, IAM roles, or specific AWS services.",
           "AdditionalInformation": "Publicly accessible SQS queues pose a significant security risk, as attackers could inject malicious messages, disrupt processing workflows, or delete critical messages, leading to system failures and data integrity issues. To prevent unauthorized access, SQS policies should explicitly deny public access, enforce least privilege access control, and use IAM policies and VPC endpoint restrictions to ensure secure and controlled messaging operations.",
@@ -1393,7 +1410,7 @@
       "Attributes": [
         {
           "Title": "No SSM Documents are set as public",
-          "Section": "2. External Exposure",
+          "Section": "2. Attack Surface",
           "SubSection": "2.3 Application",
           "AttributeDescription": "AWS Systems Manager (SSM) Documents define configuration, automation, and maintenance tasks for AWS resources. By default, SSM documents should be restricted to specific AWS accounts, IAM roles, or AWS services. If an SSM document is set as public, unauthorized users could access, modify, or execute automation tasks on AWS infrastructure, leading to misconfigurations, security breaches, or unintended system modifications. To enhance security, SSM documents should be kept private and assigned only to trusted AWS entities.",
           "AdditionalInformation": "Publicly accessible SSM documents pose a significant security risk, as attackers could execute malicious commands, modify system configurations, or disrupt AWS operations. This could lead to unauthorized access, data leaks, compliance violations, or system downtime. To prevent security threats, SSM documents should explicitly deny public access, enforce least privilege permissions, and use IAM policies and resource-based access controls to ensure only trusted users and systems can manage AWS resources.",
@@ -1470,7 +1487,7 @@
       ]
     },
     {
-      "Id": "3.2.1",
+      "Id": "4.2.3",
       "Description": "Ensure CloudTrail logs are encrypted at rest using KMS CMKs",
       "Checks": [
         "cloudtrail_kms_encryption_enabled"
@@ -1478,8 +1495,8 @@
       "Attributes": [
         {
           "Title": "CloudTrail logs are encrypted at rest using KMS CMKs",
-          "Section": "3. Forensic Readiness",
-          "SubSection": "3.2 Retention",
+          "Section": "4. Encryption",
+          "SubSection": "4.2 At-Rest",
           "AttributeDescription": "AWS CloudTrail records API activity across an AWS account, and its logs contain sensitive security and operational data. AWS Key Management Service (KMS) provides encryption key management using customer-managed keys (CMKs) and Hardware Security Modules (HSMs) to ensure secure key storage and usage. CloudTrail logs can be encrypted using Server-Side Encryption (SSE) with KMS (SSE-KMS) to add an extra layer of protection and access control",
           "AdditionalInformation": "Using SSE-KMS encryption for CloudTrail logs enhances security by adding an extra layer of access control. This ensures that only authorized users with both S3 read permissions and KMS decryption rights can access log data, protecting sensitive security information from unauthorized access or tampering. It also helps maintain compliance with security and regulatory standards by enforcing strict encryption controls.",
           "LevelOfRisk": 1
