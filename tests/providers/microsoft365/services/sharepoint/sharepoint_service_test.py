@@ -18,7 +18,7 @@ async def mock_sharepoint_get_settings(_):
         sharingBlockedDomainList=["blocked-domain.com"],
         sharingDomainRestrictionMode="allowList",
         resharingEnabled=False,
-        modernAuthentication=True,
+        legacyAuth=True,
     )
 
 
@@ -43,4 +43,4 @@ class Test_SharePoint_Service:
         assert settings.sharingBlockedDomainList == ["blocked-domain.com"]
         assert settings.sharingDomainRestrictionMode == "allowList"
         assert settings.resharingEnabled is False
-        assert settings.modernAuthentication is True
+        assert settings.legacyAuth is True

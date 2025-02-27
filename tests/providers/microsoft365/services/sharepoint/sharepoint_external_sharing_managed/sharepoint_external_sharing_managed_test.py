@@ -35,7 +35,7 @@ class Test_sharepoint_external_sharing_managed:
                 sharingCapability="ExternalUserSharingOnly",
                 sharingAllowedDomainList=["allowed-domain.com"],
                 sharingBlockedDomainList=["blocked-domain.com"],
-                modernAuthentication=True,
+                legacyAuth=True,
                 resharingEnabled=False,
                 sharingDomainRestrictionMode="none",
             )
@@ -59,7 +59,7 @@ class Test_sharepoint_external_sharing_managed:
                 "sharingBlockedDomainList": ["blocked-domain.com"],
                 "sharingDomainRestrictionMode": "none",
                 "resharingEnabled": False,
-                "modernAuthentication": True,
+                "legacyAuth": True,
             }
 
     def test_allow_list_empty(self):
@@ -87,7 +87,7 @@ class Test_sharepoint_external_sharing_managed:
                 sharingCapability="ExternalUserSharingOnly",
                 sharingAllowedDomainList=[],
                 sharingBlockedDomainList=["blocked-domain.com"],
-                modernAuthentication=True,
+                legacyAuth=True,
                 resharingEnabled=False,
                 sharingDomainRestrictionMode="allowList",
             )
@@ -111,7 +111,7 @@ class Test_sharepoint_external_sharing_managed:
                 "sharingBlockedDomainList": ["blocked-domain.com"],
                 "sharingDomainRestrictionMode": "allowList",
                 "resharingEnabled": False,
-                "modernAuthentication": True,
+                "legacyAuth": True,
             }
 
     def test_block_list_empty(self):
@@ -139,7 +139,7 @@ class Test_sharepoint_external_sharing_managed:
                 sharingCapability="ExternalUserSharingOnly",
                 sharingAllowedDomainList=["allowed-domain.com"],
                 sharingBlockedDomainList=[],
-                modernAuthentication=True,
+                legacyAuth=True,
                 resharingEnabled=False,
                 sharingDomainRestrictionMode="blockList",
             )
@@ -163,7 +163,7 @@ class Test_sharepoint_external_sharing_managed:
                 "sharingBlockedDomainList": [],
                 "sharingDomainRestrictionMode": "blockList",
                 "resharingEnabled": False,
-                "modernAuthentication": True,
+                "legacyAuth": True,
             }
 
     def test_allow_list_non_empty(self):
@@ -191,7 +191,7 @@ class Test_sharepoint_external_sharing_managed:
                 sharingCapability="ExternalUserSharingOnly",
                 sharingAllowedDomainList=["allowed-domain.com"],
                 sharingBlockedDomainList=["blocked-domain.com"],
-                modernAuthentication=True,
+                legacyAuth=True,
                 resharingEnabled=False,
                 sharingDomainRestrictionMode="allowList",
             )
@@ -215,7 +215,7 @@ class Test_sharepoint_external_sharing_managed:
                 "sharingBlockedDomainList": ["blocked-domain.com"],
                 "sharingDomainRestrictionMode": "allowList",
                 "resharingEnabled": False,
-                "modernAuthentication": True,
+                "legacyAuth": True,
             }
 
     def test_block_list_non_empty(self):
@@ -243,7 +243,7 @@ class Test_sharepoint_external_sharing_managed:
                 sharingCapability="ExternalUserSharingOnly",
                 sharingAllowedDomainList=["allowed-domain.com"],
                 sharingBlockedDomainList=["blocked-domain.com"],
-                modernAuthentication=True,
+                legacyAuth=True,
                 resharingEnabled=False,
                 sharingDomainRestrictionMode="blockList",
             )
@@ -267,7 +267,7 @@ class Test_sharepoint_external_sharing_managed:
                 "sharingBlockedDomainList": ["blocked-domain.com"],
                 "sharingDomainRestrictionMode": "blockList",
                 "resharingEnabled": False,
-                "modernAuthentication": True,
+                "legacyAuth": True,
             }
 
     def test_empty_settings(self):

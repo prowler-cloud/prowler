@@ -9,7 +9,7 @@ from tests.providers.microsoft365.microsoft365_fixtures import (
 class Test_sharepoint_modern_authentication_required:
     def test_sharepoint_modern_authentication_disabled(self):
         """
-        Test when modernAuthentication is False:
+        Test when legacyAuth is False:
         The check should PASS, as SharePoint does not allow access to apps that don't use modern authentication.
         """
         sharepoint_client = mock.MagicMock
@@ -37,7 +37,7 @@ class Test_sharepoint_modern_authentication_required:
                 sharingBlockedDomainList=["blocked-domain.com"],
                 sharingDomainRestrictionMode="allowList",
                 resharingEnabled=False,
-                modernAuthentication=False,
+                legacyAuth=False,
             )
             sharepoint_client.tenant_domain = DOMAIN
 
@@ -57,12 +57,12 @@ class Test_sharepoint_modern_authentication_required:
                 "sharingBlockedDomainList": ["blocked-domain.com"],
                 "sharingDomainRestrictionMode": "allowList",
                 "resharingEnabled": False,
-                "modernAuthentication": False,
+                "legacyAuth": False,
             }
 
     def test_sharepoint_modern_authentication_enabled(self):
         """
-        Test when modernAuthentication is True:
+        Test when legacyAuth is True:
         The check should FAIL, as SharePoint allows access to apps that don't use modern authentication.
         """
         sharepoint_client = mock.MagicMock
@@ -90,7 +90,7 @@ class Test_sharepoint_modern_authentication_required:
                 sharingBlockedDomainList=["blocked-domain.com"],
                 sharingDomainRestrictionMode="allowList",
                 resharingEnabled=False,
-                modernAuthentication=True,
+                legacyAuth=True,
             )
             sharepoint_client.tenant_domain = DOMAIN
 
@@ -110,7 +110,7 @@ class Test_sharepoint_modern_authentication_required:
                 "sharingBlockedDomainList": ["blocked-domain.com"],
                 "sharingDomainRestrictionMode": "allowList",
                 "resharingEnabled": False,
-                "modernAuthentication": True,
+                "legacyAuth": True,
             }
 
     def test_sharepoint_empty_settings(self):

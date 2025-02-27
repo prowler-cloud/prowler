@@ -40,7 +40,8 @@ class sharepoint_modern_authentication_required(Check):
             report.status = "PASS"
             report.status_extended = "Microsoft 365 SharePoint does not allow access to apps that don't use modern authentication."
 
-            if settings.modernAuthentication:
+            # Legacy Auth being True means that SharePoint allow access to apps that do NOT use modern authentication
+            if settings.legacyAuth:
                 report.status = "FAIL"
                 report.status_extended = "Microsoft 365 SharePoint allows access to apps that don't use modern authentication."
 

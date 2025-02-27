@@ -36,7 +36,7 @@ class Test_sharepoint_guest_sharing_restricted:
                 sharingAllowedDomainList=["allowed-domain.com"],
                 sharingBlockedDomainList=["blocked-domain.com"],
                 sharingDomainRestrictionMode="allowList",
-                modernAuthentication=True,
+                legacyAuth=True,
                 resharingEnabled=False,
             )
             sharepoint_client.tenant_domain = DOMAIN
@@ -58,7 +58,7 @@ class Test_sharepoint_guest_sharing_restricted:
                 "sharingBlockedDomainList": ["blocked-domain.com"],
                 "sharingDomainRestrictionMode": "allowList",
                 "resharingEnabled": False,
-                "modernAuthentication": True,
+                "legacyAuth": True,
             }
 
     def test_guest_sharing_not_restricted(self):
@@ -87,7 +87,7 @@ class Test_sharepoint_guest_sharing_restricted:
                 sharingAllowedDomainList=["allowed-domain.com"],
                 sharingBlockedDomainList=["blocked-domain.com"],
                 sharingDomainRestrictionMode="allowList",
-                modernAuthentication=True,
+                legacyAuth=True,
                 resharingEnabled=True,
             )
             sharepoint_client.tenant_domain = DOMAIN
@@ -109,7 +109,7 @@ class Test_sharepoint_guest_sharing_restricted:
                 "sharingBlockedDomainList": ["blocked-domain.com"],
                 "sharingDomainRestrictionMode": "allowList",
                 "resharingEnabled": True,
-                "modernAuthentication": True,
+                "legacyAuth": True,
             }
 
     def test_empty_settings(self):

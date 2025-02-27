@@ -36,7 +36,7 @@ class SharePoint(Microsoft365Service):
                 sharingAllowedDomainList=global_settings.sharing_allowed_domain_list,
                 sharingBlockedDomainList=global_settings.sharing_blocked_domain_list,
                 sharingDomainRestrictionMode=global_settings.sharing_domain_restriction_mode,
-                modernAuthentication=global_settings.is_legacy_auth_protocols_enabled,
+                legacyAuth=global_settings.is_legacy_auth_protocols_enabled,
                 resharingEnabled=global_settings.is_resharing_by_external_users_enabled,
             )
 
@@ -59,4 +59,4 @@ class SharePointSettings(BaseModel):
     sharingBlockedDomainList: Optional[List[str]]
     sharingDomainRestrictionMode: str
     resharingEnabled: bool
-    modernAuthentication: bool
+    legacyAuth: bool
