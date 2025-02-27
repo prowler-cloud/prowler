@@ -352,7 +352,7 @@ class TestExtractFindingStats:
         assert stats["total_low_severity_pass"] == 0
         assert stats["total_informational_severity_fail"] == 0
         assert stats["total_informational_severity_pass"] == 0
-        assert stats["all_fails_are_muted"] == 0
+        assert stats["all_fails_are_muted"] is True
 
     def test_extract_findings_statistics_no_findings(self):
         stats = extract_findings_statistics([])
