@@ -1,6 +1,6 @@
 from typing import List
 
-from prowler.lib.check.models import Check, Check_Report_Microsoft365
+from prowler.lib.check.models import Check, CheckReportMicrosoft365
 from prowler.providers.microsoft365.services.sharepoint.sharepoint_client import (
     sharepoint_client,
 )
@@ -18,7 +18,7 @@ class sharepoint_modern_authentication_required(Check):
     The check fails if modern authentication is not enforced, indicating that legacy protocols may be used.
     """
 
-    def execute(self) -> List[Check_Report_Microsoft365]:
+    def execute(self) -> List[CheckReportMicrosoft365]:
         """
         Execute the SharePoint modern authentication requirement check.
 
@@ -26,20 +26,27 @@ class sharepoint_modern_authentication_required(Check):
         generates a report indicating whether modern authentication is required for SharePoint applications.
 
         Returns:
-            List[Check_Report_Microsoft365]: A list containing the report object with the result of the check.
+            List[CheckReportMicrosoft365]: A list containing the report object with the result of the check.
         """
         findings = []
-        for settings in sharepoint_client.settings.values():
-            report = Check_Report_Microsoft365(
-                metadata=self.metadata(), resource=settings
-            )
+        settings = sharepoint_client.settings
+        report = CheckReportMicrosoft365(
+            self.metadata(),
+            resource=settings if settings else {},
+            resource_name="SharePoint Settings",
+            resource_id=sharepoint_client.tenant_domain,
+        )
+        if settings:
             report.status = "PASS"
             report.status_extended = "Microsoft 365 SharePoint does not allow access to apps that don't use modern authentication."
 
             if settings.modernAuthentication:
                 report.status = "FAIL"
                 report.status_extended = "Microsoft 365 SharePoint allows access to apps that don't use modern authentication."
+        else:
+            report.status = "FAIL"
+            report.status_extended = "SharePoint settings were not found."
 
-            findings.append(report)
+        findings.append(report)
 
         return findings

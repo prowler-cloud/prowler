@@ -31,17 +31,15 @@ class Test_sharepoint_modern_authentication_required:
                 SharePointSettings,
             )
 
-            sharepoint_client.settings = {
-                DOMAIN: SharePointSettings(
-                    id=DOMAIN,
-                    sharingCapability="ExternalUserAndGuestSharing",
-                    sharingAllowedDomainList=["allowed-domain.com"],
-                    sharingBlockedDomainList=["blocked-domain.com"],
-                    sharingDomainRestrictionMode="allowList",
-                    resharingEnabled=False,
-                    modernAuthentication=False,
-                )
-            }
+            sharepoint_client.settings = SharePointSettings(
+                sharingCapability="ExternalUserAndGuestSharing",
+                sharingAllowedDomainList=["allowed-domain.com"],
+                sharingBlockedDomainList=["blocked-domain.com"],
+                sharingDomainRestrictionMode="allowList",
+                resharingEnabled=False,
+                modernAuthentication=False,
+            )
+            sharepoint_client.tenant_domain = DOMAIN
 
             check = sharepoint_modern_authentication_required()
             result = check.execute()
@@ -51,6 +49,16 @@ class Test_sharepoint_modern_authentication_required:
                 "Microsoft 365 SharePoint does not allow access to apps that don't use modern authentication."
             )
             assert result[0].resource_id == DOMAIN
+            assert result[0].location == "global"
+            assert result[0].resource_name == "SharePoint Settings"
+            assert result[0].resource == {
+                "sharingCapability": "ExternalUserAndGuestSharing",
+                "sharingAllowedDomainList": ["allowed-domain.com"],
+                "sharingBlockedDomainList": ["blocked-domain.com"],
+                "sharingDomainRestrictionMode": "allowList",
+                "resharingEnabled": False,
+                "modernAuthentication": False,
+            }
 
     def test_sharepoint_modern_authentication_enabled(self):
         """
@@ -76,17 +84,15 @@ class Test_sharepoint_modern_authentication_required:
                 SharePointSettings,
             )
 
-            sharepoint_client.settings = {
-                DOMAIN: SharePointSettings(
-                    id=DOMAIN,
-                    sharingCapability="ExternalUserAndGuestSharing",
-                    sharingAllowedDomainList=["allowed-domain.com"],
-                    sharingBlockedDomainList=["blocked-domain.com"],
-                    sharingDomainRestrictionMode="allowList",
-                    resharingEnabled=False,
-                    modernAuthentication=True,
-                )
-            }
+            sharepoint_client.settings = SharePointSettings(
+                sharingCapability="ExternalUserAndGuestSharing",
+                sharingAllowedDomainList=["allowed-domain.com"],
+                sharingBlockedDomainList=["blocked-domain.com"],
+                sharingDomainRestrictionMode="allowList",
+                resharingEnabled=False,
+                modernAuthentication=True,
+            )
+            sharepoint_client.tenant_domain = DOMAIN
 
             check = sharepoint_modern_authentication_required()
             result = check.execute()
@@ -96,6 +102,16 @@ class Test_sharepoint_modern_authentication_required:
                 "Microsoft 365 SharePoint allows access to apps that don't use modern authentication."
             )
             assert result[0].resource_id == DOMAIN
+            assert result[0].location == "global"
+            assert result[0].resource_name == "SharePoint Settings"
+            assert result[0].resource == {
+                "sharingCapability": "ExternalUserAndGuestSharing",
+                "sharingAllowedDomainList": ["allowed-domain.com"],
+                "sharingBlockedDomainList": ["blocked-domain.com"],
+                "sharingDomainRestrictionMode": "allowList",
+                "resharingEnabled": False,
+                "modernAuthentication": True,
+            }
 
     def test_sharepoint_empty_settings(self):
         """
@@ -104,6 +120,7 @@ class Test_sharepoint_modern_authentication_required:
         """
         sharepoint_client = mock.MagicMock
         sharepoint_client.settings = {}
+        sharepoint_client.tenant_domain = DOMAIN
 
         with (
             mock.patch(
@@ -121,4 +138,10 @@ class Test_sharepoint_modern_authentication_required:
 
             check = sharepoint_modern_authentication_required()
             result = check.execute()
-            assert len(result) == 0
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert result[0].status_extended == "SharePoint settings were not found."
+            assert result[0].resource_id == DOMAIN
+            assert result[0].location == "global"
+            assert result[0].resource_name == "SharePoint Settings"
+            assert result[0].resource == {}
