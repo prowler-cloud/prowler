@@ -22,7 +22,7 @@ class Entra(Microsoft365Service):
         )
 
         self.authorization_policy = attributes[0]
-        self.organization = attributes[1]
+        self.organizations = attributes[1]
 
     async def _get_authorization_policy(self):
         logger.info("Entra - Getting authorization policy...")
@@ -86,30 +86,29 @@ class Entra(Microsoft365Service):
         return authorization_policy
 
     async def _get_organization(self):
-        logger.info("Entra - Getting organization...")
-
-        organization = None
-        org_data = None
+        logger.info("Entra - Getting organizations...")
+        organizations = []
         try:
             org_data = await self.client.organization.get()
-            organization = org_data.value[0]
-            if organization.on_premises_sync_enabled is not None:
-                sync_enabled = organization.on_premises_sync_enabled
-            else:
-                sync_enabled = False
+            for org in org_data.value:
+                sync_enabled = (
+                    org.on_premises_sync_enabled
+                    if org.on_premises_sync_enabled is not None
+                    else False
+                )
 
-            organization = Organization(
-                id=organization.id,
-                name=organization.display_name,
-                on_premises_sync_enabled=sync_enabled,
-                location=organization.city,
-            )
+                organization = Organization(
+                    id=org.id,
+                    name=org.display_name,
+                    on_premises_sync_enabled=sync_enabled,
+                )
+                organizations.append(organization)
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-        return organization
+        return organizations
 
 
 class DefaultUserRolePermissions(BaseModel):
@@ -133,4 +132,3 @@ class Organization(BaseModel):
     id: str
     name: str
     on_premises_sync_enabled: bool
-    location: str

@@ -1,6 +1,6 @@
 from typing import List
 
-from prowler.lib.check.models import Check, Check_Report_Microsoft365
+from prowler.lib.check.models import Check, CheckReportMicrosoft365
 from prowler.providers.microsoft365.services.entra.entra_client import entra_client
 
 
@@ -16,7 +16,7 @@ class entra_password_hash_sync_enabled(Check):
     Note: This control applies only to hybrid deployments using Microsoft Entra Connect sync and does not apply to federated domains.
     """
 
-    def execute(self) -> List[Check_Report_Microsoft365]:
+    def execute(self) -> List[CheckReportMicrosoft365]:
         """
         Execute the password hash synchronization requirement check.
 
@@ -24,17 +24,22 @@ class entra_password_hash_sync_enabled(Check):
         password hash synchronization is enabled.
 
         Returns:
-            List[Check_Report_Microsoft365]: A list containing the report object with the result of the check.
+            List[CheckReportMicrosoft365]: A list containing the report object with the result of the check.
         """
         findings = []
-        organization = entra_client.organization
-        report = Check_Report_Microsoft365(self.metadata(), resource=organization)
-        report.status = "FAIL"
-        report.status_extended = "Password hash synchronization is not enabled for hybrid Microsoft Entra deployments."
+        for organization in entra_client.organizations:
+            report = CheckReportMicrosoft365(
+                self.metadata(),
+                resource=organization,
+                resource_id=organization.id,
+                resource_name=organization.name,
+            )
+            report.status = "FAIL"
+            report.status_extended = "Password hash synchronization is not enabled for hybrid Microsoft Entra deployments."
 
-        if organization.on_premises_sync_enabled:
-            report.status = "PASS"
-            report.status_extended = "Password hash synchronization is enabled for hybrid Microsoft Entra deployments."
+            if organization.on_premises_sync_enabled:
+                report.status = "PASS"
+                report.status_extended = "Password hash synchronization is enabled for hybrid Microsoft Entra deployments."
 
-        findings.append(report)
+            findings.append(report)
         return findings
