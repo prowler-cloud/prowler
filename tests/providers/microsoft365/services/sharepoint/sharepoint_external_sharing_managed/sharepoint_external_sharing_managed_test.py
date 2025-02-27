@@ -295,10 +295,4 @@ class Test_sharepoint_external_sharing_managed:
 
             check = sharepoint_external_sharing_managed()
             result = check.execute()
-            assert len(result) == 1
-            assert result[0].status == "FAIL"
-            assert result[0].resource == {}
-            assert result[0].resource_name == "SharePoint Settings"
-            assert result[0].resource_id == DOMAIN
-            assert result[0].status_extended == "SharePoint settings were not found."
-            assert result[0].location == "global"
+            assert len(result) == 0

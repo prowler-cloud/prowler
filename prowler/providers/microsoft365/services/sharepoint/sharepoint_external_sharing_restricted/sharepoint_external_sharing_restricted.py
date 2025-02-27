@@ -27,13 +27,13 @@ class sharepoint_external_sharing_restricted(Check):
         """
         findings = []
         settings = sharepoint_client.settings
-        report = CheckReportMicrosoft365(
-            self.metadata(),
-            resource=settings if settings else {},
-            resource_name="SharePoint Settings",
-            resource_id=sharepoint_client.tenant_domain,
-        )
         if settings:
+            report = CheckReportMicrosoft365(
+                self.metadata(),
+                resource=settings if settings else {},
+                resource_name="SharePoint Settings",
+                resource_id=sharepoint_client.tenant_domain,
+            )
             report.status = "FAIL"
             report.status_extended = (
                 "External sharing is not restricted and guests users can access."
@@ -46,9 +46,6 @@ class sharepoint_external_sharing_restricted(Check):
             ]:
                 report.status = "PASS"
                 report.status_extended = "External sharing is restricted to external user sharing or more restrictive."
-        else:
-            report.status = "FAIL"
-            report.status_extended = "SharePoint settings were not found."
 
-        findings.append(report)
+            findings.append(report)
         return findings

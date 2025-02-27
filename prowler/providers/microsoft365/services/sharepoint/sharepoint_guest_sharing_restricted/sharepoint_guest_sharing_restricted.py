@@ -28,21 +28,18 @@ class sharepoint_guest_sharing_restricted(Check):
         """
         findings = []
         settings = sharepoint_client.settings
-        report = CheckReportMicrosoft365(
-            self.metadata(),
-            resource=settings if settings else {},
-            resource_name="SharePoint Settings",
-            resource_id=sharepoint_client.tenant_domain,
-        )
         if settings:
+            report = CheckReportMicrosoft365(
+                self.metadata(),
+                resource=settings if settings else {},
+                resource_name="SharePoint Settings",
+                resource_id=sharepoint_client.tenant_domain,
+            )
             report.status = "FAIL"
             report.status_extended = "Guest sharing is not restricted; guest users can share items they do not own."
             if not settings.resharingEnabled:
                 report.status = "PASS"
                 report.status_extended = "Guest sharing is restricted; guest users cannot share items they do not own."
-        else:
-            report.status = "FAIL"
-            report.status_extended = "SharePoint settings were not found."
 
-        findings.append(report)
+            findings.append(report)
         return findings

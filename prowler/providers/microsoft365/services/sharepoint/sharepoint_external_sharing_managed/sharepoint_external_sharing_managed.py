@@ -31,13 +31,13 @@ class sharepoint_external_sharing_managed(Check):
         """
         findings = []
         settings = sharepoint_client.settings
-        report = CheckReportMicrosoft365(
-            self.metadata(),
-            resource=settings if settings else {},
-            resource_name="SharePoint Settings",
-            resource_id=sharepoint_client.tenant_domain,
-        )
         if settings:
+            report = CheckReportMicrosoft365(
+                self.metadata(),
+                resource=settings if settings else {},
+                resource_name="SharePoint Settings",
+                resource_id=sharepoint_client.tenant_domain,
+            )
             report.status = "FAIL"
             report.status_extended = "SharePoint external sharing is not managed through domain restrictions."
             if settings.sharingDomainRestrictionMode in ["allowList", "blockList"]:
@@ -54,9 +54,6 @@ class sharepoint_external_sharing_managed(Check):
                 ):
                     report.status = "PASS"
                     report.status_extended = f"SharePoint external sharing is managed through domain restrictions with mode '{settings.sharingDomainRestrictionMode}'."
-        else:
-            report.status = "FAIL"
-            report.status_extended = "SharePoint settings were not found."
 
-        findings.append(report)
+            findings.append(report)
         return findings

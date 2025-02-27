@@ -33,13 +33,7 @@ class Test_entra_thirdparty_integrated_apps_not_allowed:
 
             check = entra_thirdparty_integrated_apps_not_allowed()
             result = check.execute()
-            assert len(result) == 1
-            assert result[0].status == "FAIL"
-            assert result[0].resource == {}
-            assert result[0].resource_name == "Authorization Policy"
-            assert result[0].resource_id == "authorizationPolicy"
-            assert result[0].status_extended == "Authorization Policy was not found."
-            assert result[0].location == "global"
+            assert len(result) == 0
 
     def test_entra_default_user_role_permissions_not_allowed_to_create_apps(self):
         id = str(uuid4())

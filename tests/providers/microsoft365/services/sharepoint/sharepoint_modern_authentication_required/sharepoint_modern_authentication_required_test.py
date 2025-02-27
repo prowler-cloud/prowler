@@ -138,10 +138,4 @@ class Test_sharepoint_modern_authentication_required:
 
             check = sharepoint_modern_authentication_required()
             result = check.execute()
-            assert len(result) == 1
-            assert result[0].status == "FAIL"
-            assert result[0].status_extended == "SharePoint settings were not found."
-            assert result[0].resource_id == DOMAIN
-            assert result[0].location == "global"
-            assert result[0].resource_name == "SharePoint Settings"
-            assert result[0].resource == {}
+            assert len(result) == 0
