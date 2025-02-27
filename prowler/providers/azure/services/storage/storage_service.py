@@ -105,7 +105,10 @@ class Storage(AzureService):
                             ),
                         )
                     except Exception as error:
-                        if "Blob is not supported for the account." in str(error).strip():
+                        if (
+                            "Blob is not supported for the account."
+                            in str(error).strip()
+                        ):
                             logger.warning(
                                 f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                             )
