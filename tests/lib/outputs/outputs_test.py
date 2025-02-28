@@ -483,29 +483,35 @@ class TestExtractFindingStats:
         finding_1 = generate_finding_output(
             status="PASS",
             resource_uid="test_resource_1",
-            severity="critical",
+            severity="informational",
+            muted=True,
+        )
+        finding_2 = generate_finding_output(
+            status="FAIL",
+            resource_uid="test_resource_1",
+            severity="informational",
             muted=True,
         )
 
-        findings = [finding_1]
+        findings = [finding_1, finding_2]
 
         stats = extract_findings_statistics(findings)
         assert stats["total_pass"] == 1
         assert stats["total_muted_pass"] == 1
-        assert stats["total_fail"] == 0
-        assert stats["total_muted_fail"] == 0
+        assert stats["total_fail"] == 1
+        assert stats["total_muted_fail"] == 1
         assert stats["resources_count"] == 1
-        assert stats["findings_count"] == 1
+        assert stats["findings_count"] == 2
         assert stats["total_critical_severity_fail"] == 0
-        assert stats["total_critical_severity_pass"] == 1
+        assert stats["total_critical_severity_pass"] == 0
         assert stats["total_high_severity_fail"] == 0
         assert stats["total_high_severity_pass"] == 0
         assert stats["total_medium_severity_fail"] == 0
         assert stats["total_medium_severity_pass"] == 0
         assert stats["total_low_severity_fail"] == 0
         assert stats["total_low_severity_pass"] == 0
-        assert stats["total_informational_severity_fail"] == 0
-        assert stats["total_informational_severity_pass"] == 0
+        assert stats["total_informational_severity_fail"] == 1
+        assert stats["total_informational_severity_pass"] == 1
         assert stats["all_fails_are_muted"] is True
 
 
