@@ -23,10 +23,35 @@ class secretsmanager_has_restrictive_resource_policy(Check):
             report.resource_arn = secret.arn
             report.resource_tags = secret.tags
             report.status = "FAIL"
+            # Determine the Role ARN to be used
+            assumed_role_config = getattr(
+                secretsmanager_client.provider, "_assumed_role_configuration", None
+            )
+            if (
+                assumed_role_config
+                and getattr(assumed_role_config, "info", None)
+                and getattr(assumed_role_config.info, "role_arn", None)
+                and getattr(assumed_role_config.info.role_arn, "arn", None)
+            ):
+                final_role_arn = assumed_role_config.info.role_arn.arn
+            else:
+                identity_arn = secretsmanager_client.provider.identity.identity_arn
+                if identity_arn:
+                    # If the identity ARN is a sts assumed-role ARN, transform it
+                    match = re.match(
+                        r"arn:aws:sts::(\d+):assumed-role/([^/]+)/", identity_arn
+                    )
+                    if match:
+                        account_id, role_name = match.groups()
+                        final_role_arn = f"arn:aws:iam::{account_id}:role/{role_name}"
+                    else:
+                        final_role_arn = identity_arn
+                else:
+                    final_role_arn = "None"
+
             report.status_extended = (
                 f"SecretsManager secret '{secret.name}' does not have a resource-based policy "
-                f"or access to the policy is denied for the role "
-                f"'{getattr(getattr(secretsmanager_client.provider, '_assumed_role_configuration', None), 'info', None) and getattr(secretsmanager_client.provider._assumed_role_configuration.info, 'role_arn', None) and getattr(secretsmanager_client.provider._assumed_role_configuration.info.role_arn, 'arn', 'N/A')}'"
+                f"or access to the policy is denied for the role '{final_role_arn}'"
             )
 
             if secret.policy:
