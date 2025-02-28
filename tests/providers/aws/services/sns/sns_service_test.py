@@ -135,7 +135,7 @@ class Test_SNS_Service:
         class FakeClient:
             region = "us-east-1"
 
-            def list_tags_for_resource(self, ResourceArn):
+            def list_tags_for_resource(self, _):
                 error_response = {
                     "Error": {
                         "Code": "ResourceNotFoundException",
@@ -166,7 +166,7 @@ class Test_SNS_Service:
         class FakeClientOther:
             region = "us-west-1"
 
-            def list_tags_for_resource(self, ResourceArn):
+            def list_tags_for_resource(self, _):
                 error_response = {
                     "Error": {"Code": "SomeOtherError", "Message": "Some Other Error"}
                 }
@@ -239,7 +239,7 @@ class Test_SNS_Service:
         class FakeClient:
             region = dummy_region
 
-            def get_topic_attributes(self, TopicArn):
+            def get_topic_attributes(self, _):
                 raise Exception("Test exception in get_topic_attributes")
 
         sns.regional_clients[dummy_region] = FakeClient()
@@ -271,7 +271,7 @@ class Test_SNS_Service:
         class FakeRegionalClient:
             region = "dummy-region"
 
-            def list_subscriptions_by_topic(self, TopicArn):
+            def list_subscriptions_by_topic(self, _):
                 raise Exception("Test exception in list_subscriptions_by_topic")
 
         # Create an AWS provider with the dummy region and initialize SNS.
@@ -316,7 +316,7 @@ class Test_SNS_Service:
         class FakeNoDetailClient:
             region = dummy_region
 
-            def get_topic_attributes(self, TopicArn):
+            def get_topic_attributes(self, _):
                 return {"Attributes": {"Dummy": "value"}}
 
         sns.regional_clients[dummy_region] = FakeNoDetailClient()
@@ -346,7 +346,7 @@ class Test_SNS_Service:
         class FakeRegionalClient:
             region = "dummy-region"
 
-            def list_subscriptions_by_topic(self, TopicArn):
+            def list_subscriptions_by_topic(self, _):
                 # Return a subscription whose ARN doesn't include colon separators.
                 return {
                     "Subscriptions": [
@@ -390,7 +390,7 @@ class Test_SNS_Service:
 
         def fake_get_paginator(self, operation_name):
             class FakePaginator:
-                def paginate(inner_self):
+                def paginate(_):
                     return [{"Topics": [{"TopicArn": fake_topic_arn}]}]
 
             return FakePaginator()
@@ -434,7 +434,7 @@ def test_list_topics_with_audit_resources_filter(monkeypatch):
     # Define a fake paginator that returns one topic.
     def fake_get_paginator(operation_name):
         class FakePaginator:
-            def paginate(inner_self):
+            def paginate(_):
                 return [{"Topics": [{"TopicArn": fake_topic_arn}]}]
 
         return FakePaginator()
@@ -447,14 +447,14 @@ def test_list_topics_with_audit_resources_filter(monkeypatch):
         def get_paginator(self, operation_name):
             return fake_get_paginator(operation_name)
 
-        def get_topic_attributes(self, TopicArn):
+        def get_topic_attributes(self, _):
             # Returning empty Attributes dict to mimic no extra data.
             return {"Attributes": {}}
 
-        def list_tags_for_resource(self, ResourceArn):
+        def list_tags_for_resource(self, _):
             return {"Tags": []}
 
-        def list_subscriptions_by_topic(self, TopicArn):
+        def list_subscriptions_by_topic(self, _):
             return {"Subscriptions": []}
 
     # Create a fake regional client for the monkey_region.
