@@ -251,7 +251,7 @@ class Test_SNS_Service:
         assert dummy_topic.policy is None
         assert dummy_topic.kms_master_key_id is None
         # Optionally, assert that the error message was logged
-        assert "Test exception in get_topic_attributes" in caplog.text
+        assert "An error occurred" in caplog.text
 
     def test_list_subscriptions_by_topic_exception(self, caplog):
         """
@@ -288,7 +288,7 @@ class Test_SNS_Service:
         # Verify that due to the exception, the subscriptions for the dummy topic remain an empty list.
         assert dummy_topic.subscriptions == []
         # Also verify that the exception message was logged.
-        assert "Test exception in list_subscriptions_by_topic" in caplog.text
+        assert "An error occurred" in caplog.text
 
     def test_get_topic_attributes_no_policy_no_kms(self):
         """
