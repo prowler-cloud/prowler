@@ -111,7 +111,7 @@ def load_checks_to_execute(
             ):
                 checks_to_execute.add(check_name)
         # Only execute threat detection checks if threat-detection category is set
-        if not categories or "threat-detection" not in categories:
+        if (not categories or "threat-detection" not in categories) and not check_list:
             for threat_detection_check in check_categories.get("threat-detection", []):
                 checks_to_execute.discard(threat_detection_check)
 
