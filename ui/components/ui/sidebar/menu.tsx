@@ -41,7 +41,7 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
       </div>
       <ScrollArea className="[&>div>div[style]]:!block">
         <nav className="mt-2 h-full w-full lg:mt-6">
-          <ul className="flex min-h-[calc(100vh-16px-60px-40px-16px-32px-40px-32px)] flex-col items-start space-y-1 px-2 lg:min-h-[calc(100vh-16px-60px-40px-16px-64px-16px)]">
+          <ul className="flex min-h-[calc(100vh-16px-60px-40px-16px-32px-40px-32px-44px)] flex-col items-start space-y-1 px-2 lg:min-h-[calc(100vh-16px-60px-40px-16px-64px-16px-41px)]">
             {menuList.map(({ groupLabel, menus }, index) => (
               <li
                 className={cn(
@@ -166,6 +166,10 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
           </Tooltip>
         </TooltipProvider>
       </div>
+
+      <span className="text-muted-foreground border-border mt-2 border-t pt-2 text-center text-xs lg:mt-4">
+        {process.env.NEXT_PUBLIC_PROWLER_RELEASE_VERSION}
+      </span>
     </>
   );
 };
