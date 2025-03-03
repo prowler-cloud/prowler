@@ -95,7 +95,7 @@ class CheckMetadata(BaseModel):
         valid_category(value): Validator function to validate the categories of the check.
         severity_to_lower(severity): Validator function to convert the severity to lowercase.
         valid_severity(severity): Validator function to validate the severity of the check.
-        valid_cli_command(cli_command): Validator function to validate the CLI command.
+        valid_cli_command(remediation): Validator function to validate the CLI command is not an URL.
     """
 
     Provider: str
