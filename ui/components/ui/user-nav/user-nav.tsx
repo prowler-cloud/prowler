@@ -28,12 +28,10 @@ import { UserProfileProps } from "@/types";
 
 import { Button } from "../button/button";
 
-export function UserNav({ user }: { user: UserProfileProps }) {
-  const { data } = user;
+export const UserNav = ({ user }: { user?: UserProfileProps }) => {
+  if (!user || !user.data) return null;
 
-  if (!data) return null;
-
-  const { name, email, company_name } = data.attributes;
+  const { name, email, company_name } = user.data.attributes;
 
   return (
     <DropdownMenu>
@@ -97,4 +95,4 @@ export function UserNav({ user }: { user: UserProfileProps }) {
       </DropdownMenuContent>
     </DropdownMenu>
   );
-}
+};

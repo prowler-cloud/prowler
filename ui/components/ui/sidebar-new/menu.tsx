@@ -20,11 +20,7 @@ import { Button } from "../button/button";
 import { CustomButton } from "../custom/custom-button";
 import { ScrollArea } from "../scroll-area/scroll-area";
 
-interface MenuProps {
-  isOpen: boolean | undefined;
-}
-
-export function Menu({ isOpen }: MenuProps) {
+export const Menu = ({ isOpen }: { isOpen: boolean }) => {
   const pathname = usePathname();
   const menuList = getMenuList(pathname);
 
@@ -45,10 +41,14 @@ export function Menu({ isOpen }: MenuProps) {
       </div>
       <ScrollArea className="[&>div>div[style]]:!block">
         <nav className="mt-2 h-full w-full lg:mt-6">
-          <ul className="flex min-h-[calc(100vh-48px-36px-16px-32px)] flex-col items-start space-y-1 px-2 lg:min-h-[calc(100vh-32px-40px-32px)]">
+          <ul className="flex min-h-[calc(100vh-16px-60px-40px-16px-32px-40px-32px)] flex-col items-start space-y-1 px-2 lg:min-h-[calc(100vh-16px-60px-40px-16px-64px-16px)]">
             {menuList.map(({ groupLabel, menus }, index) => (
               <li
-                className={cn("w-full", groupLabel ? "pt-2" : "")}
+                className={cn(
+                  "w-full",
+                  groupLabel ? "pt-2" : "",
+                  "last:!mt-auto",
+                )}
                 key={index}
               >
                 {(isOpen && groupLabel) || isOpen === undefined ? (
@@ -168,4 +168,4 @@ export function Menu({ isOpen }: MenuProps) {
       </div>
     </>
   );
-}
+};
