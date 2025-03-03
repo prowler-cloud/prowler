@@ -1,15 +1,13 @@
+"use client";
+
 import {
   AlertCircle,
   Bookmark,
   Boxes,
-  Cloud,
   CloudCog,
-  Database,
   Group,
   LayoutGrid,
-  LucideIcon,
   Mail,
-  Server,
   Settings,
   ShieldCheck,
   SquareChartGantt,
@@ -21,28 +19,18 @@ import {
   Users,
 } from "lucide-react";
 
-type Submenu = {
-  href: string;
-  label: string;
-  active?: boolean;
-  icon: LucideIcon;
-};
+import {
+  APIdocIcon,
+  AWSIcon,
+  AzureIcon,
+  CircleHelpIcon,
+  DocIcon,
+  GCPIcon,
+  SupportIcon,
+} from "@/components/icons/Icons";
+import { GroupProps } from "@/types";
 
-type Menu = {
-  href: string;
-  label: string;
-  active?: boolean;
-  icon: LucideIcon;
-  submenus?: Submenu[];
-  defaultOpen?: boolean;
-};
-
-type Group = {
-  groupLabel: string;
-  menus: Menu[];
-};
-
-export const getMenuList = (): Group[] => {
+export const getMenuList = (pathname: string): GroupProps[] => {
   return [
     {
       groupLabel: "",
@@ -52,8 +40,18 @@ export const getMenuList = (): Group[] => {
           label: "Analytics",
           icon: LayoutGrid,
           submenus: [
-            { href: "/", label: "Overview", icon: SquareChartGantt },
-            { href: "/compliance", label: "Compliance", icon: ShieldCheck },
+            {
+              href: "/",
+              label: "Overview",
+              icon: SquareChartGantt,
+              active: pathname === "/",
+            },
+            {
+              href: "/compliance",
+              label: "Compliance",
+              icon: ShieldCheck,
+              active: pathname === "/compliance",
+            },
           ],
           defaultOpen: true,
         },
@@ -89,17 +87,17 @@ export const getMenuList = (): Group[] => {
             {
               href: "/findings?filter[status__in]=FAIL&filter[severity__in]=critical%2Chigh%2Cmedium&filter[provider_type__in]=aws&sort=severity,-inserted_at",
               label: "Amazon Web Services",
-              icon: Cloud,
+              icon: AWSIcon,
             },
             {
               href: "/findings?filter[status__in]=FAIL&filter[severity__in]=critical%2Chigh%2Cmedium&filter[provider_type__in]=azure&sort=severity,-inserted_at",
               label: "Microsoft Azure",
-              icon: Database,
+              icon: AzureIcon,
             },
             {
               href: "/findings?filter[status__in]=FAIL&filter[severity__in]=critical%2Chigh%2Cmedium&filter[provider_type__in]=gcp&sort=severity,-inserted_at",
               label: "Google Cloud",
-              icon: Server,
+              icon: GCPIcon,
             },
             {
               href: "/findings?filter[status__in]=FAIL&filter[severity__in]=critical%2Chigh%2Cmedium&filter[provider_type__in]=kubernetes&sort=severity,-inserted_at",
@@ -144,6 +142,40 @@ export const getMenuList = (): Group[] => {
           submenus: [
             { href: "/users", label: "Users", icon: User },
             { href: "/invitations", label: "Invitations", icon: Mail },
+          ],
+          defaultOpen: false,
+        },
+      ],
+    },
+    {
+      groupLabel: "",
+      menus: [
+        {
+          href: "",
+          label: "Support & Help",
+          icon: SupportIcon,
+          submenus: [
+            {
+              href: "https://docs.prowler.com/",
+              target: "_blank",
+              label: "Documentation",
+              icon: DocIcon,
+            },
+            {
+              href:
+                process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true"
+                  ? "https://api.prowler.com/api/v1/docs"
+                  : `${process.env.NEXT_PUBLIC_API_DOCS_URL}`,
+              target: "_blank",
+              label: "API reference",
+              icon: APIdocIcon,
+            },
+            {
+              href: "https://github.com/prowler-cloud/prowler/issues",
+              target: "_blank",
+              label: "Support",
+              icon: CircleHelpIcon,
+            },
           ],
           defaultOpen: false,
         },

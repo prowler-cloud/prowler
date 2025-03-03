@@ -1,7 +1,7 @@
 "use client";
 
 import { DropdownMenuArrow } from "@radix-ui/react-dropdown-menu";
-import { ChevronDown, LucideIcon } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -26,31 +26,17 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip/tooltip";
 import { cn } from "@/lib/utils";
+import { CollapseMenuButtonProps } from "@/types";
 
 import { Button } from "../button/button";
 
-type Submenu = {
-  href: string;
-  label: string;
-  active?: boolean;
-  icon: LucideIcon;
-};
-
-interface CollapseMenuButtonProps {
-  icon: LucideIcon;
-  label: string;
-  submenus: Submenu[];
-  defaultOpen: boolean;
-  isOpen: boolean | undefined;
-}
-
-export function CollapseMenuButton({
+export const CollapseMenuButton = ({
   icon: Icon,
   label,
   submenus,
   defaultOpen,
   isOpen,
-}: CollapseMenuButtonProps) {
+}: CollapseMenuButtonProps) => {
   const pathname = usePathname();
   const isSubmenuActive = submenus.some((submenu) =>
     submenu.active === undefined ? submenu.href === pathname : submenu.active,
@@ -107,35 +93,37 @@ export function CollapseMenuButton({
         </Button>
       </CollapsibleTrigger>
       <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
-        {submenus.map(({ href, label, active, icon: SubIcon }, index) => (
-          <Button
-            key={index}
-            variant={
-              (active === undefined && pathname === href) || active
-                ? "secondary"
-                : "ghost"
-            }
-            className="ml-4 h-8 w-full justify-start"
-            asChild
-          >
-            <Link href={href} className="flex items-center">
-              <div className="mr-4 h-full border-l border-default-200"></div>
-              <span className="mr-2">
-                <SubIcon size={16} />
-              </span>
-              <p
-                className={cn(
-                  "max-w-[170px] truncate",
-                  isOpen
-                    ? "translate-x-0 opacity-100"
-                    : "-translate-x-96 opacity-0",
-                )}
-              >
-                {label}
-              </p>
-            </Link>
-          </Button>
-        ))}
+        {submenus.map(
+          ({ href, label, active, icon: SubIcon, target }, index) => (
+            <Button
+              key={index}
+              variant={
+                (active === undefined && pathname === href) || active
+                  ? "secondary"
+                  : "ghost"
+              }
+              className="ml-4 h-8 w-full justify-start"
+              asChild
+            >
+              <Link href={href} target={target} className="flex items-center">
+                <div className="mr-4 h-full border-l border-default-200"></div>
+                <span className="mr-2">
+                  <SubIcon size={16} />
+                </span>
+                <p
+                  className={cn(
+                    "max-w-[170px] truncate",
+                    isOpen
+                      ? "translate-x-0 opacity-100"
+                      : "-translate-x-96 opacity-0",
+                  )}
+                >
+                  {label}
+                </p>
+              </Link>
+            </Button>
+          ),
+        )}
       </CollapsibleContent>
     </Collapsible>
   ) : (
@@ -194,4 +182,4 @@ export function CollapseMenuButton({
       </DropdownMenuContent>
     </DropdownMenu>
   );
-}
+};
