@@ -4,7 +4,7 @@ import { useSidebar } from "@/hooks/use-sidebar";
 import { useStore } from "@/hooks/use-store";
 import { cn } from "@/lib/utils";
 
-import { Sidebar } from "../sidebar-new/sidebar";
+import { Sidebar } from "../sidebar/sidebar";
 export default function MainLayout({
   children,
 }: {

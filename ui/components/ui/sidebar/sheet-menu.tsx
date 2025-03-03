@@ -8,7 +8,7 @@ import {
   SheetHeader,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Menu } from "@/components/ui/sidebar-new/menu";
+import { Menu } from "@/components/ui/sidebar/menu";
 
 import { Button } from "../button/button";
 

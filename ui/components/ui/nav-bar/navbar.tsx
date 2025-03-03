@@ -3,7 +3,7 @@ import { Icon } from "@iconify/react";
 import { ThemeSwitch } from "@/components/ThemeSwitch";
 import { UserProfileProps } from "@/types";
 
-import { SheetMenu } from "../sidebar-new/sheet-menu";
+import { SheetMenu } from "../sidebar/sheet-menu";
 import { UserNav } from "../user-nav/user-nav";
 interface NavbarProps {
   title: string;

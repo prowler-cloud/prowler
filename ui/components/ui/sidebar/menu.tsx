@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 
 import { logOut } from "@/actions/auth";
 import { AddIcon } from "@/components/icons";
-import { CollapseMenuButton } from "@/components/ui/sidebar-new/collapse-menu-button";
+import { CollapseMenuButton } from "@/components/ui/sidebar/collapse-menu-button";
 import {
   Tooltip,
   TooltipContent,
