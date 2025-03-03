@@ -3420,13 +3420,8 @@ tzlocal = "5.2"
 [package.source]
 type = "git"
 url = "https://github.com/prowler-cloud/prowler.git"
-<<<<<<< HEAD
 reference = "v5.3"
 resolved_reference = "dfd377f89e034e6be47acc95c3e6666278f8054e"
-=======
-reference = "master"
-resolved_reference = "931df361bf5ee287139112f485580241099094cb"
->>>>>>> d64fe374d (chore(deps): bump cryptography from 43.0.1 to 44.0.1 in /api (#7001))
 
 [[package]]
 name = "psutil"
