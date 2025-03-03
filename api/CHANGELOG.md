@@ -4,6 +4,10 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ---
 
+## [v1.6.0] (Prowler UNRELEASED)
+
+---
+
 ## [v1.5.0] (Prowler v5.4.0)
 
 ### Added
