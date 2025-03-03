@@ -1,0 +1,30 @@
+{
+  "Provider": "microsoft365",
+  "CheckID": "entra_admin_center_role_limited_access",
+  "CheckTitle": "",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "",
+  "Description": "",
+  "Risk": "Allowing non-administrative users to access Microsoft Admin Portals increases the risk of unauthorized changes, privilege escalation, and potential security misconfigurations. Attackers could exploit these privileges to manipulate settings, disable security features, or access sensitive data.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/microsoft-365/admin/add-users/about-admin-roles?view=o365-worldwide",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center https://entra.microsoft.com. 2. Click expand Protection > Conditional Access select Policies. 3. Click New Policy. Under Users include All Users. Under Users select Exclude and check Directory roles and select only administrative roles and a group of PIM eligible users. Under Target resources select Cloud apps and Select apps then select the Microsoft Admin Portals app. Confirm by clicking Select. Under Grant select Block access and click Select. 4. Under Enable policy set it to Report Only until the organization is ready to enable it. 5. Click Create.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enforce Conditional Access policies to restrict Microsoft Admin Portals to predefined administrative roles. Ensure that only necessary users have access to these portals, applying the principle of least privilege and conducting periodic access reviews to maintain security compliance.",
+      "Url": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/overview"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
