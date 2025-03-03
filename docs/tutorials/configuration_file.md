@@ -47,6 +47,7 @@ The following list includes all the AWS checks with configurable variables that 
 | `ecr_repositories_scan_vulnerabilities_in_latest_image`       | `ecr_repository_vulnerability_minimum_severity`  | String          |
 | `eks_cluster_uses_a_supported_version`                        | `eks_cluster_oldest_version_supported`           | String          |
 | `eks_control_plane_logging_all_types_enabled`                 | `eks_required_log_types`                         | List of Strings |
+| `elasticache_redis_cluster_backup_enabled`                    | `minimum_snapshot_retention_period`              | Integer         |
 | `elb_is_in_multiple_az`                                       | `elb_min_azs`                                    | Integer         |
 | `elbv2_is_in_multiple_az`                                     | `elbv2_min_azs`                                  | Integer         |
 | `guardduty_is_enabled`                                        | `mute_non_default_regions`                       | Boolean         |
