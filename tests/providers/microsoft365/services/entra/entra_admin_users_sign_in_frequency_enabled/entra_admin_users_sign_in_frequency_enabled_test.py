@@ -110,40 +110,14 @@ class Test_entra_admin_users_sign_in_frequency_enabled:
                 result[0].status_extended
                 == "No Conditional Access policy enforces sign-in frequency for admin users."
             )
-            assert result[0].resource == {
-                id: ConditionalAccessPolicy(
-                    id=id,
-                    display_name="Test",
-                    conditions=Conditions(
-                        application_conditions=ApplicationsConditions(
-                            included_applications=[], excluded_applications=[]
-                        ),
-                        user_conditions=UsersConditions(
-                            included_groups=[],
-                            excluded_groups=[],
-                            included_users=[],
-                            excluded_users=[],
-                            included_roles=[],
-                            excluded_roles=[],
-                        ),
-                    ),
-                    session_controls=SessionControls(
-                        persistent_browser=PersistentBrowser(
-                            is_enabled=False, mode="always"
-                        ),
-                        sign_in_frequency=SignInFrequency(
-                            is_enabled=False, frequency=None
-                        ),
-                    ),
-                    state=ConditionalAccessPolicyState.DISABLED,
-                )
-            }
+            assert result[0].resource == {}
             assert result[0].resource_name == "Conditional Access Policies"
             assert result[0].resource_id == "conditionalAccessPolicies"
             assert result[0].location == "global"
 
     def test_entra_sign_in_frequency_enabled(self):
         id = str(uuid4())
+        freq = 4
         display_name = "Test"
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
@@ -203,7 +177,9 @@ class Test_entra_admin_users_sign_in_frequency_enabled:
                         persistent_browser=PersistentBrowser(
                             is_enabled=True, mode="never"
                         ),
-                        sign_in_frequency=SignInFrequency(is_enabled=True, frequency=4),
+                        sign_in_frequency=SignInFrequency(
+                            is_enabled=True, frequency=freq
+                        ),
                     ),
                     state=ConditionalAccessPolicyState.ENABLED,
                 )
@@ -215,10 +191,11 @@ class Test_entra_admin_users_sign_in_frequency_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Conditional Access policy {display_name} enforces sign-in frequency for admin users."
+                == f"Conditional Access policy {display_name} enforces sign-in frequency to be {freq} hours for admin users."
             )
-            assert result[0].resource == {
-                id: ConditionalAccessPolicy(
+            assert (
+                result[0].resource
+                == ConditionalAccessPolicy(
                     id=id,
                     display_name="Test",
                     conditions=Conditions(
@@ -254,11 +231,14 @@ class Test_entra_admin_users_sign_in_frequency_enabled:
                         persistent_browser=PersistentBrowser(
                             is_enabled=True, mode="never"
                         ),
-                        sign_in_frequency=SignInFrequency(is_enabled=True, frequency=4),
+                        sign_in_frequency=SignInFrequency(
+                            is_enabled=True, frequency=freq
+                        ),
                     ),
                     state=ConditionalAccessPolicyState.ENABLED,
-                )
-            }
+                ).dict()
+            )
+
             assert result[0].resource_name == display_name
             assert result[0].resource_id == id
             assert result[0].location == "global"

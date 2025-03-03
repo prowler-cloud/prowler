@@ -23,7 +23,7 @@ class entra_admin_users_sign_in_frequency_enabled(Check):
 
         report = CheckReportMicrosoft365(
             metadata=self.metadata(),
-            resource=entra_client.conditional_access_policies,
+            resource={},
             resource_name="Conditional Access Policies",
             resource_id="conditionalAccessPolicies",
         )
@@ -53,18 +53,17 @@ class entra_admin_users_sign_in_frequency_enabled(Check):
             if (
                 policy.session_controls.sign_in_frequency.is_enabled
                 and policy.session_controls.sign_in_frequency.frequency
-                and policy.session_controls.sign_in_frequency.frequency <= 4
                 and policy.session_controls.persistent_browser.is_enabled
                 and policy.session_controls.persistent_browser.mode == "never"
             ):
                 report = CheckReportMicrosoft365(
                     metadata=self.metadata(),
-                    resource=entra_client.conditional_access_policies,
+                    resource=policy,
                     resource_name=policy.display_name,
                     resource_id=policy.id,
                 )
                 report.status = "PASS"
-                report.status_extended = f"Conditional Access policy {policy.display_name} enforces sign-in frequency for admin users."
+                report.status_extended = f"Conditional Access policy {policy.display_name} enforces sign-in frequency to be {policy.session_controls.sign_in_frequency.frequency} hours for admin users."
                 break
 
         findings.append(report)
