@@ -1,6 +1,6 @@
 {
   "Provider": "microsoft365",
-  "CheckID": "entra_admin_center_role_limited_access",
+  "CheckID": "entra_admin_portals_role_limited_access",
   "CheckTitle": "",
   "CheckType": [],
   "ServiceName": "entra",

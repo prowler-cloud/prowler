@@ -18,7 +18,7 @@ from tests.providers.microsoft365.microsoft365_fixtures import (
 )
 
 
-class Test_entra_admin_center_role_limited_access:
+class Test_entra_admin_portals_role_limited_access:
     def test_entra_no_conditional_access_policies(self):
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
@@ -29,17 +29,17 @@ class Test_entra_admin_center_role_limited_access:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_admin_center_role_limited_access.entra_admin_center_role_limited_access.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_admin_portals_role_limited_access.entra_admin_portals_role_limited_access.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_admin_center_role_limited_access.entra_admin_center_role_limited_access import (
-                entra_admin_center_role_limited_access,
+            from prowler.providers.microsoft365.services.entra.entra_admin_portals_role_limited_access.entra_admin_portals_role_limited_access import (
+                entra_admin_portals_role_limited_access,
             )
 
             entra_client.conditional_access_policies = {}
 
-            check = entra_admin_center_role_limited_access()
+            check = entra_admin_portals_role_limited_access()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -64,12 +64,12 @@ class Test_entra_admin_center_role_limited_access:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_admin_center_role_limited_access.entra_admin_center_role_limited_access.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_admin_portals_role_limited_access.entra_admin_portals_role_limited_access.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_admin_center_role_limited_access.entra_admin_center_role_limited_access import (
-                entra_admin_center_role_limited_access,
+            from prowler.providers.microsoft365.services.entra.entra_admin_portals_role_limited_access.entra_admin_portals_role_limited_access import (
+                entra_admin_portals_role_limited_access,
             )
             from prowler.providers.microsoft365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -105,7 +105,7 @@ class Test_entra_admin_center_role_limited_access:
                 )
             }
 
-            check = entra_admin_center_role_limited_access()
+            check = entra_admin_portals_role_limited_access()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -131,12 +131,12 @@ class Test_entra_admin_center_role_limited_access:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_admin_center_role_limited_access.entra_admin_center_role_limited_access.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_admin_portals_role_limited_access.entra_admin_portals_role_limited_access.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_admin_center_role_limited_access.entra_admin_center_role_limited_access import (
-                entra_admin_center_role_limited_access,
+            from prowler.providers.microsoft365.services.entra.entra_admin_portals_role_limited_access.entra_admin_portals_role_limited_access import (
+                entra_admin_portals_role_limited_access,
             )
             from prowler.providers.microsoft365.services.entra.entra_service import (
                 ConditionalAccessPolicy,
@@ -175,7 +175,7 @@ class Test_entra_admin_center_role_limited_access:
                 )
             }
 
-            check = entra_admin_center_role_limited_access()
+            check = entra_admin_portals_role_limited_access()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
