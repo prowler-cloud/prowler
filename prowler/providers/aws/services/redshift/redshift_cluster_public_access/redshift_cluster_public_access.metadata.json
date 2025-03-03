@@ -13,7 +13,7 @@
   "RelatedUrl": "https://docs.aws.amazon.com/redshift/latest/mgmt/managing-clusters-vpc.html",
   "Remediation": {
     "Code": {
-      "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Redshift/redshift-cluster-publicly-accessible.html",
+      "CLI": "aws redshift modify-cluster --cluster-identifier <cluster-name> --no-publicly-accessible",
       "NativeIaC": "https://docs.prowler.com/checks/aws/public-policies/public_9#cloudformation",
       "Other": "https://docs.prowler.com/checks/aws/public-policies/public_9#aws-console",
       "Terraform": "https://docs.prowler.com/checks/aws/public-policies/public_9#terraform"

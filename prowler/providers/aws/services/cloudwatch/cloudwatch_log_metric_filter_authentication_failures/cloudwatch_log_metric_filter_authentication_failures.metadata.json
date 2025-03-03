@@ -15,9 +15,9 @@
   "RelatedUrl": "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html",
   "Remediation": {
     "Code": {
-      "CLI": "https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_6#procedure",
+      "CLI": "",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_6#procedure",
       "Terraform": "https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_6#fix---buildtime"
     },
     "Recommendation": {

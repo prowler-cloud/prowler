@@ -13,9 +13,9 @@
   "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/documentdb-controls.html#documentdb-5",
   "Remediation": {
     "Code": {
-      "CLI": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DocumentDB/deletion-protection.html#",
+      "CLI": "aws aws docdb modify-db-cluster --region us-east-1 --db-cluster-identifier cc-prod-docdb-cluster --deletion-protection --apply-immediately",
       "NativeIaC": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DocumentDB/deletion-protection.html#",
-      "Other": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DocumentDB/deletion-protection.html#",
       "Terraform": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DocumentDB/deletion-protection.html#"
     },
     "Recommendation": {

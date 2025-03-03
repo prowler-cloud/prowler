@@ -10,12 +10,12 @@
   "ResourceType": "DatabaseInstance",
   "Description": "Check for Cloud SQL Database Instances with Public IPs",
   "Risk": "To lower the organization's attack surface, Cloud SQL databases should not have public IPs. Private IPs provide improved network security and lower latency for your application.",
-  "RelatedUrl": "",
+  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/sql-database-instances-with-public-ips.html",
   "Remediation": {
     "Code": {
-      "CLI": "https://docs.prowler.com/checks/gcp/cloud-sql-policies/bc_gcp_sql_11#cli-command",
+      "CLI": "gcloud sql instances patch cc-web-mysql-instance --project cc-mobile-project-123123 --network=cc-web-stack-network --no-assign-ip",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudSQL/sql-database-instances-with-public-ips.html",
+      "Other": "https://docs.prowler.com/checks/gcp/cloud-sql-policies/bc_gcp_sql_11#cli-command",
       "Terraform": "https://docs.prowler.com/checks/gcp/cloud-sql-policies/bc_gcp_sql_11#terraform"
     },
     "Recommendation": {

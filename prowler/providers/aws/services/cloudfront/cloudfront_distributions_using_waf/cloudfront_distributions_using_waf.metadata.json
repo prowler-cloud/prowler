@@ -15,14 +15,14 @@
   "RelatedUrl": "https://docs.aws.amazon.com/waf/latest/developerguide/cloudfront-features.html",
   "Remediation": {
     "Code": {
-      "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/cloudfront-integrated-with-waf.html",
+      "CLI": "",
       "NativeIaC": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_27#cloudformation",
       "Other": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_27#cloudfront-console",
       "Terraform": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_27#terraform"
     },
     "Recommendation": {
       "Text": "Use AWS WAF to protect your service from common web exploits. These could affect availability and performance, compromise security, or consume excessive resources.",
-      "Url": "https://docs.aws.amazon.com/waf/latest/developerguide/cloudfront-features.html"
+      "Url": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/cloudfront-integrated-with-waf.html"
     }
   },
   "Categories": [],

@@ -15,7 +15,7 @@
   "RelatedUrl": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-cloudwatch-new.html",
   "Remediation": {
     "Code": {
-      "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EC2/instance-detailed-monitoring.html",
+      "CLI": "aws ec2 monitor-instances --instance-ids i-1234567890abcdef0",
       "NativeIaC": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EC2/instance-detailed-monitoring.html",
       "Other": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-cloudwatch-new.html#enable-detailed-monitoring-instance",
       "Terraform": "https://docs.prowler.com/checks/aws/logging-policies/ensure-that-detailed-monitoring-is-enabled-for-ec2-instances#terraform"

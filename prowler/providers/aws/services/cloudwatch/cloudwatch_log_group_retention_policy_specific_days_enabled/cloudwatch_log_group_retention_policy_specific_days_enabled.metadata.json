@@ -15,9 +15,9 @@
   "RelatedUrl": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/AWS_Logs.html",
   "Remediation": {
     "Code": {
-      "CLI": "https://docs.prowler.com/checks/aws/logging-policies/logging_13#cli-command",
+      "CLI": "put-retention-policy --log-group-name <value> --retention-in-days <value> [--cli-input-json <value>] [--generate-cli-skeleton <value>]",
       "NativeIaC": "https://docs.prowler.com/checks/aws/logging-policies/logging_13#cloudformation",
-      "Other": "",
+      "Other": "https://docs.prowler.com/checks/aws/logging-policies/logging_13#cli-command",
       "Terraform": "https://docs.prowler.com/checks/aws/logging-policies/logging_13#terraform"
     },
     "Recommendation": {

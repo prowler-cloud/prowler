@@ -15,9 +15,9 @@
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "https://docs.prowler.com/checks/aws/public-policies/public_8#cli-command",
-      "NativeIaC": "",
-      "Other": "https://docs.prowler.com/checks/aws/public-policies/public_8#aws-console",
+      "CLI": "aws ec2 modify-image-attribute --region us-east-1 --image-id ami-3fad5252 --launch-permission {\"Remove\":[{\"Group\":\"all\"}]}",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/public-policies/public_8#aws-console",
+      "Other": "https://docs.prowler.com/checks/aws/public-policies/public_8#cli-command",
       "Terraform": ""
     },
     "Recommendation": {

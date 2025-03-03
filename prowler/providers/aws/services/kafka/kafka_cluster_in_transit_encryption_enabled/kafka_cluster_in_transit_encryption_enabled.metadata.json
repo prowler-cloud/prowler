@@ -15,7 +15,7 @@
   "RelatedUrl": "https://docs.aws.amazon.com/msk/latest/developerguide/msk-encryption.html",
   "Remediation": {
     "Code": {
-      "CLI": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_32/#cli",
+      "CLI": "aws kafka create-cluster --cluster-name \"ExampleClusterName\" --broker-node-group-info file://brokernodegroupinfo.json --encryption-info file://encryptioninfo.json --kafka-version \"2.2.1\" --number-of-broker-nodes 3",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/MSK/encryption-in-transit-for-msk.html",
       "Terraform": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_32/#terraform"
