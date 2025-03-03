@@ -1355,6 +1355,16 @@
         ]
       }
     },
+    "bedrock-data-automation": {
+      "regions": {
+        "aws": [
+          "us-east-1",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
     "bedrock-runtime": {
       "regions": {
         "aws": [
@@ -1368,6 +1378,7 @@
           "ca-central-1",
           "eu-central-1",
           "eu-central-2",
+          "eu-north-1",
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
@@ -8415,6 +8426,7 @@
           "cn-north-1"
         ],
         "aws-us-gov": [
+          "us-gov-east-1",
           "us-gov-west-1"
         ]
       }
