@@ -88,7 +88,7 @@ const DropdownMenuItem = React.forwardRef<
   <DropdownMenuPrimitive.Item
     ref={ref}
     className={cn(
-      "focus:bg-accent hover:text-accent-foreground focus:text-accent-foreground relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm text-default-600 outline-none transition-colors hover:bg-default-100 hover:font-bold data-[disabled]:pointer-events-none data-[disabled]:opacity-50 dark:hover:bg-prowler-blue-400",
+      "focus:bg-accent focus:text-accent-foreground relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm text-default-600 subpixel-antialiased outline-none transition-colors hover:bg-default-100 hover:[font-variation-settings:'wght'_600] data-[disabled]:pointer-events-none data-[disabled]:opacity-50 dark:hover:bg-prowler-blue-400",
       inset && "pl-8",
       className,
     )}
@@ -104,7 +104,7 @@ const DropdownMenuCheckboxItem = React.forwardRef<
   <DropdownMenuPrimitive.CheckboxItem
     ref={ref}
     className={cn(
-      "focus:bg-accent hover:text-accent-foreground focus:text-accent-foreground relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm text-default-600 outline-none transition-colors hover:bg-default-100 hover:font-bold data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      "focus:bg-accent focus:text-accent-foreground relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm text-default-600 outline-none transition-colors hover:bg-default-100 hover:font-bold data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
       className,
     )}
     checked={checked}

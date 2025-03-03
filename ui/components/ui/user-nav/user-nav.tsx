@@ -2,6 +2,7 @@
 
 import { LogOut, User } from "lucide-react";
 import Link from "next/link";
+
 import { logOut } from "@/actions/auth";
 import {
   Avatar,
@@ -23,12 +24,15 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip/tooltip";
+import { UserProfileProps } from "@/types";
 
 import { Button } from "../button/button";
-import { UserProfileProps } from "@/types";
 
 export function UserNav({ user }: { user: UserProfileProps }) {
   const { data } = user;
+
+  if (!data) return null;
+
   const { name, email, company_name } = data.attributes;
 
   return (

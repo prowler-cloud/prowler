@@ -1,6 +1,8 @@
 import { Suspense, use } from "react";
-import { Navbar } from "../nav-bar/navbar";
+
 import { getProfileInfo } from "@/actions/users/users";
+
+import { Navbar } from "../nav-bar/navbar";
 import { SkeletonContentLayout } from "./skeleton-content-layout";
 interface ContentLayoutProps {
   title: string;

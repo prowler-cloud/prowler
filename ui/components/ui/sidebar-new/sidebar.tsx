@@ -1,7 +1,6 @@
 "use client";
 
 import clsx from "clsx";
-import { PanelsTopLeft } from "lucide-react";
 import Link from "next/link";
 
 import { ProwlerShort } from "@/components/icons";
@@ -30,7 +29,7 @@ export function Sidebar() {
       <div
         onMouseEnter={() => setIsHover(true)}
         onMouseLeave={() => setIsHover(false)}
-        className="relative flex h-full flex-col overflow-y-auto px-3 py-4 shadow-md dark:shadow-primary"
+        className="no-scrollbar relative flex h-full flex-col overflow-y-auto overflow-x-hidden px-3 py-4 shadow-md dark:shadow-primary"
       >
         <Button
           className={cn(

@@ -3,15 +3,12 @@
 import { useSidebar } from "@/hooks/use-sidebar";
 import { useStore } from "@/hooks/use-store";
 import { cn } from "@/lib/utils";
-import { UserProfileProps } from "@/types";
 
 import { Sidebar } from "../sidebar-new/sidebar";
 export default function MainLayout({
   children,
-  user,
 }: {
   children: React.ReactNode;
-  user?: UserProfileProps;
 }) {
   const sidebar = useStore(useSidebar, (x) => x);
   if (!sidebar) return null;

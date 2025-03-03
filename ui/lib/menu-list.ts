@@ -1,24 +1,24 @@
 import {
+  AlertCircle,
   Bookmark,
+  Boxes,
+  Cloud,
+  CloudCog,
+  Database,
+  Group,
   LayoutGrid,
   LucideIcon,
+  Mail,
+  Server,
   Settings,
+  ShieldCheck,
+  SquareChartGantt,
   SquarePen,
   Tag,
-  Users,
-  ShieldCheck,
-  AlertCircle,
-  Cloud,
-  Database,
-  Server,
-  Boxes,
-  CloudCog,
-  Group,
   Timer,
-  UserCog,
   User,
-  Mail,
-  SquareChartGantt,
+  UserCog,
+  Users,
 } from "lucide-react";
 
 type Submenu = {
@@ -42,7 +42,7 @@ type Group = {
   menus: Menu[];
 };
 
-export function getMenuList(pathname: string): Group[] {
+export const getMenuList = (): Group[] => {
   return [
     {
       groupLabel: "",
@@ -150,4 +150,4 @@ export function getMenuList(pathname: string): Group[] {
       ],
     },
   ];
-}
+};

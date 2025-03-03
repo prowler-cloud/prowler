@@ -1,10 +1,9 @@
 "use client";
-
-import { ScrollShadow } from "@nextui-org/react";
 import { Ellipsis, LogOut } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { logOut } from "@/actions/auth";
 import { AddIcon } from "@/components/icons";
 import { CollapseMenuButton } from "@/components/ui/sidebar-new/collapse-menu-button";
 import {
@@ -18,7 +17,7 @@ import { cn } from "@/lib/utils";
 
 import { Button } from "../button/button";
 import { CustomButton } from "../custom/custom-button";
-import { logOut } from "@/actions/auth";
+import { ScrollArea } from "../scroll-area/scroll-area";
 
 interface MenuProps {
   isOpen: boolean | undefined;
@@ -43,7 +42,7 @@ export function Menu({ isOpen }: MenuProps) {
           {isOpen ? "Launch Scan" : <AddIcon size={20} />}
         </CustomButton>
       </div>
-      <ScrollShadow hideScrollBar className="[&>div>div[style]]:!block">
+      <ScrollArea className="[&>div>div[style]]:!block">
         <nav className="mt-2 h-full w-full lg:mt-6">
           <ul className="flex min-h-[calc(100vh-48px-36px-16px-32px)] flex-col items-start space-y-1 px-2 lg:min-h-[calc(100vh-32px-40px-32px)]">
             {menuList.map(({ groupLabel, menus }, index) => (
@@ -63,7 +62,7 @@ export function Menu({ isOpen }: MenuProps) {
                           <Ellipsis className="h-5 w-5" />
                         </div>
                       </TooltipTrigger>
-                      <TooltipContent side="right">
+                      <TooltipContent className="z-100" side="right">
                         <p>{groupLabel}</p>
                       </TooltipContent>
                     </Tooltip>
@@ -126,11 +125,6 @@ export function Menu({ isOpen }: MenuProps) {
                         <CollapseMenuButton
                           icon={Icon}
                           label={label}
-                          active={
-                            active === undefined
-                              ? pathname.startsWith(href)
-                              : active
-                          }
                           submenus={submenus}
                           isOpen={isOpen}
                           defaultOpen={defaultOpen ?? false}
@@ -142,7 +136,7 @@ export function Menu({ isOpen }: MenuProps) {
             ))}
           </ul>
         </nav>
-      </ScrollShadow>
+      </ScrollArea>
       <div className="flex w-full grow items-end">
         <TooltipProvider disableHoverableContent>
           <Tooltip delayDuration={100}>

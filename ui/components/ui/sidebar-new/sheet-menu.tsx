@@ -1,6 +1,7 @@
 import { MenuIcon } from "lucide-react";
 import Link from "next/link";
 
+import { ProwlerExtended } from "@/components/icons";
 import {
   Sheet,
   SheetContent,
@@ -10,7 +11,6 @@ import {
 import { Menu } from "@/components/ui/sidebar-new/menu";
 
 import { Button } from "../button/button";
-import { ProwlerExtended } from "@/components/icons";
 
 export function SheetMenu() {
   return (

@@ -1,10 +1,10 @@
 import { Icon } from "@iconify/react";
 
 import { ThemeSwitch } from "@/components/ThemeSwitch";
+import { UserProfileProps } from "@/types";
 
 import { SheetMenu } from "../sidebar-new/sheet-menu";
 import { UserNav } from "../user-nav/user-nav";
-import { UserProfileProps } from "@/types";
 interface NavbarProps {
   title: string;
   icon: string;

@@ -1,7 +1,7 @@
 "use client";
 
 import { DropdownMenuArrow } from "@radix-ui/react-dropdown-menu";
-import { ChevronDown, Dot, LucideIcon } from "lucide-react";
+import { ChevronDown, LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -39,7 +39,6 @@ type Submenu = {
 interface CollapseMenuButtonProps {
   icon: LucideIcon;
   label: string;
-  active: boolean;
   submenus: Submenu[];
   defaultOpen: boolean;
   isOpen: boolean | undefined;
@@ -48,7 +47,6 @@ interface CollapseMenuButtonProps {
 export function CollapseMenuButton({
   icon: Icon,
   label,
-  active,
   submenus,
   defaultOpen,
   isOpen,
@@ -108,7 +106,7 @@ export function CollapseMenuButton({
           </div>
         </Button>
       </CollapsibleTrigger>
-      <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden">
+      <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
         {submenus.map(({ href, label, active, icon: SubIcon }, index) => (
           <Button
             key={index}
