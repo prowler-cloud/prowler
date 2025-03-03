@@ -67,7 +67,7 @@ tabulate = "0.9.0"
 tzlocal = "5.2"
 
 [tool.poetry.group.dev.dependencies]
-bandit = "1.8.0"
+bandit = "1.8.3"
 black = "24.10.0"
 coverage = "7.6.12"
 docker = "7.1.0"
