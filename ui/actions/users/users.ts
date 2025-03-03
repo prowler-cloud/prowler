@@ -174,12 +174,11 @@ export const deleteUser = async (formData: FormData) => {
     });
 
     if (!response.ok) {
-      try {
-        const errorData = await response.json();
-        throw new Error(errorData?.message || "Failed to delete the user");
-      } catch {
-        throw new Error("Failed to delete the user");
-      }
+      // Parse error response
+      const errorData = await response.json();
+      return {
+        errors: errorData.errors || [{ detail: "Failed to delete the user" }],
+      };
     }
 
     let data = null;
