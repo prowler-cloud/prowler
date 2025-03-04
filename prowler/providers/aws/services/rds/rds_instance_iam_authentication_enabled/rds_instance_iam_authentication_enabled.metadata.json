@@ -13,7 +13,7 @@
   "RelatedUrl": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.Enabling.html",
   "Remediation": {
     "Code": {
-      "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/iam-database-authentication.html#",
+      "CLI": "aws rds modify-db-instance --region us-east-1 --db-instance-identifier cc-project5-mysql-database --enable-iam-database-authentication --apply-immediately",
       "NativeIaC": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/iam-database-authentication.html#",
       "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-10",
       "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/iam-database-authentication.html#"

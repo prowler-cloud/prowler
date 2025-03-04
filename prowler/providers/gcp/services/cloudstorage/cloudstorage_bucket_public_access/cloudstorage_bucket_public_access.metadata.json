@@ -10,12 +10,12 @@
   "ResourceType": "Bucket",
   "Description": "Ensure That Cloud Storage Bucket Is Not Anonymously or Publicly Accessible",
   "Risk": "Allowing anonymous or public access grants permissions to anyone to access bucket content. Such access might not be desired if you are storing any sensitive data. Hence, ensure that anonymous or public access to a bucket is not allowed.",
-  "RelatedUrl": "",
+  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudStorage/publicly-accessible-storage-buckets.html",
   "Remediation": {
     "Code": {
-      "CLI": "https://docs.prowler.com/checks/gcp/google-cloud-public-policies/bc_gcp_public_1#cli-command",
+      "CLI": "",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudStorage/publicly-accessible-storage-buckets.html",
+      "Other": "https://docs.prowler.com/checks/gcp/google-cloud-public-policies/bc_gcp_public_1#cli-command",
       "Terraform": "https://docs.prowler.com/checks/gcp/google-cloud-public-policies/bc_gcp_public_1#terraform"
     },
     "Recommendation": {

@@ -13,7 +13,7 @@
   "RelatedUrl": "https://docs.aws.amazon.com/lambda/latest/dg/access-control-resource-based.html",
   "Remediation": {
     "Code": {
-      "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Lambda/function-exposed.html",
+      "CLI": "aws lambda remove-permission --region us-east-1 --function-name cc-process-app-queue --statement-id FullAccess",
       "NativeIaC": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Lambda/function-exposed.html",
       "Other": "",
       "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Lambda/function-exposed.html"

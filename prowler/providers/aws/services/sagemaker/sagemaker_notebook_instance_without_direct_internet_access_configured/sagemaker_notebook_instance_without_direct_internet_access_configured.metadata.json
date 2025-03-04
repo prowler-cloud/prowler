@@ -13,7 +13,7 @@
   "RelatedUrl": "https://docs.aws.amazon.com/sagemaker/latest/dg/interface-vpc-endpoint.html",
   "Remediation": {
     "Code": {
-      "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SageMaker/notebook-direct-internet-access.html",
+      "CLI": "",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SageMaker/notebook-direct-internet-access.html",
       "Terraform": "https://docs.prowler.com/checks/aws/networking-policies/ensure-that-direct-internet-access-is-disabled-for-an-amazon-sagemaker-notebook-instance#fix---buildtime"

@@ -17,7 +17,7 @@
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Elasticsearch/node-to-node-encryption.html",
+      "CLI": "aws es update-elasticsearch-domain-config --domain-name <value> --node-to-node-encryption-options Enabled=true",
       "NativeIaC": "https://docs.prowler.com/checks/aws/elasticsearch-policies/elasticsearch_5#fix---builtime",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Elasticsearch/node-to-node-encryption.html",
       "Terraform": ""

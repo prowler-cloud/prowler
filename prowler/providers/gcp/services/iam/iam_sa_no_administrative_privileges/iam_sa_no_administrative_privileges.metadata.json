@@ -10,12 +10,12 @@
   "ResourceType": "ServiceAccount",
   "Description": "Ensure Service Account does not have admin privileges",
   "Risk": "Enrolling ServiceAccount with Admin rights gives full access to an assigned application or a VM. A ServiceAccount Access holder can perform critical actions, such as delete and update change settings, without user intervention.",
-  "RelatedUrl": "",
+  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudIAM/restrict-admin-access-for-service-accounts.html",
   "Remediation": {
     "Code": {
-      "CLI": "https://docs.prowler.com/checks/gcp/google-cloud-iam-policies/bc_gcp_iam_4#cli-command",
+      "CLI": "",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudIAM/restrict-admin-access-for-service-accounts.html",
+      "Other": "https://docs.prowler.com/checks/gcp/google-cloud-iam-policies/bc_gcp_iam_4#cli-command",
       "Terraform": "https://docs.prowler.com/checks/gcp/google-cloud-iam-policies/bc_gcp_iam_4#terraform"
     },
     "Recommendation": {

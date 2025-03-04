@@ -13,9 +13,9 @@
   "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/rds-controls.html#rds-14",
   "Remediation": {
     "Code": {
-      "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/backtrack.html#",
+      "CLI": "aws rds restore-db-cluster-to-point-in-time --region us-east-1 --source-db-cluster-identifier cc-aurora-mysql-cluster --db-cluster-identifier cc-new-aurora-mysql-cluster --restore-type copy-on-write --use-latest-restorable-time --backtrack-window 86400",
       "NativeIaC": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/backtrack.html#",
-      "Other": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/backtrack.html#",
       "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/backtrack.html#"
     },
     "Recommendation": {

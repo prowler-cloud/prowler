@@ -13,7 +13,7 @@
   "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/sns-topic-policy.html",
   "Remediation": {
     "Code": {
-      "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SNS/topics-everyone-publish.html",
+      "CLI": "",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SNS/topics-everyone-publish.html",
       "Terraform": "https://docs.prowler.com/checks/aws/general-policies/ensure-sns-topic-policy-is-not-public-by-only-allowing-specific-services-or-principals-to-access-it#terraform"

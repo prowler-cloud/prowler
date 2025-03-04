@@ -95,6 +95,7 @@ class CheckMetadata(BaseModel):
         valid_category(value): Validator function to validate the categories of the check.
         severity_to_lower(severity): Validator function to convert the severity to lowercase.
         valid_severity(severity): Validator function to validate the severity of the check.
+        valid_cli_command(remediation): Validator function to validate the CLI command is not an URL.
     """
 
     Provider: str
@@ -133,6 +134,12 @@ class CheckMetadata(BaseModel):
     @validator("Severity", pre=True, always=True)
     def severity_to_lower(severity):
         return severity.lower()
+
+    @validator("Remediation")
+    def valid_cli_command(remediation):
+        if re.match(r"^https?://", remediation.Code.CLI):
+            raise ValueError("CLI command cannot be an URL")
+        return remediation
 
     @staticmethod
     def get_bulk(provider: str) -> dict[str, "CheckMetadata"]:

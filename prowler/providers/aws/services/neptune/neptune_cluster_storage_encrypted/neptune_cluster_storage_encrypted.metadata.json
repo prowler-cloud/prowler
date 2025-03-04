@@ -13,9 +13,9 @@
   "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-1",
   "Remediation": {
     "Code": {
-      "CLI": "https://docs.prowler.com/checks/aws/general-policies/general_18/",
+      "CLI": "",
       "NativeIaC": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Neptune/encryption-enabled.html",
-      "Other": "",
+      "Other": "https://docs.prowler.com/checks/aws/general-policies/general_18/",
       "Terraform": "https://docs.prowler.com/checks/aws/general-policies/general_18/"
     },
     "Recommendation": {

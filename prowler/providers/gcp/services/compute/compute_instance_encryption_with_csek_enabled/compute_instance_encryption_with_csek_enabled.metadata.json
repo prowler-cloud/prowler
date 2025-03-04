@@ -13,7 +13,7 @@
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "https://docs.prowler.com/checks/gcp/google-cloud-general-policies/bc_gcp_general_x#cli-command",
+      "CLI": "gcloud compute disks create DISK_NAME --size=SIZE --type=TYPE --zone=ZONE --source-snapshot=SOURCE_SNAPSHOT --csek-key-file=KEY_FILE",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/enable-encryption-with-csek.html",
       "Terraform": "https://docs.prowler.com/checks/gcp/google-cloud-general-policies/bc_gcp_general_x#terraform"

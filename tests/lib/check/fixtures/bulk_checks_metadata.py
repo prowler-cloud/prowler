@@ -18,7 +18,7 @@ test_bulk_checks_metadata = {
             Code=Code(
                 NativeIaC="",
                 Terraform="",
-                CLI="https://docs.prowler.com/checks/networking_5#cli-command",
+                CLI="aws ec2 create-route",
                 Other="",
             ),
             Recommendation=Recommendation(

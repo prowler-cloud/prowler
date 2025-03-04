@@ -13,7 +13,7 @@
   "RelatedUrl": "https://docs.aws.amazon.com/sagemaker/latest/dg/studio-notebooks-and-internet-access.html",
   "Remediation": {
     "Code": {
-      "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SageMaker/notebook-instance-in-vpc.html",
+      "CLI": "",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SageMaker/notebook-instance-in-vpc.html",
       "Terraform": ""
@@ -23,7 +23,9 @@
       "Url": "https://docs.aws.amazon.com/sagemaker/latest/dg/studio-notebooks-and-internet-access.html"
     }
   },
-  "Categories": ["gen-ai"],
+  "Categories": [
+    "gen-ai"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
