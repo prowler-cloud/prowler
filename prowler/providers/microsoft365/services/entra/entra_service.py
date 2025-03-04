@@ -17,12 +17,12 @@ class Entra(Microsoft365Service):
         attributes = loop.run_until_complete(
             gather(
                 self._get_authorization_policy(),
-                self._get_admin_consent_poolicy(),
+                self._get_admin_consent_policy(),
             )
         )
 
         self.authorization_policy = attributes[0]
-        self.admin_consent_poolicy = attributes[1]
+        self.admin_consent_policy = attributes[1]
 
     async def _get_authorization_policy(self):
         logger.info("Entra - Getting authorization policy...")
@@ -85,7 +85,7 @@ class Entra(Microsoft365Service):
 
         return authorization_policy
 
-    async def _get_admin_consent_poolicy(self):
+    async def _get_admin_consent_policy(self):
         logger.info("Entra - Getting group settings...")
         admin_consent_policy = None
         try:

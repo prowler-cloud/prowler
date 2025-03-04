@@ -144,7 +144,7 @@ class Test_entra_admin_consent_workflow_enabled:
 
     def test_no_policy(self):
         """
-        Test when entra_client.admin_consent_poolicy is None:
+        Test when entra_client.admin_consent_policy is None:
         The check should return an empty list of findings.
         """
         entra_client = mock.MagicMock()

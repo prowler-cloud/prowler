@@ -28,7 +28,7 @@ async def mock_entra_get_authorization_policy(_):
     )
 
 
-async def mock_entra_get_admin_consent_poolicy(_):
+async def mock_entra_get_admin_consent_policy(_):
     return AdminConsentPolicy(
         admin_consent_enabled=True,
         notify_reviewers=True,
@@ -67,12 +67,12 @@ class Test_Entra_Service:
         )
 
     @patch(
-        "prowler.providers.microsoft365.services.entra.entra_service.Entra._get_admin_consent_poolicy",
-        new=mock_entra_get_admin_consent_poolicy,
+        "prowler.providers.microsoft365.services.entra.entra_service.Entra._get_admin_consent_policy",
+        new=mock_entra_get_admin_consent_policy,
     )
-    def test_get_admin_consent_poolicy(self):
+    def test_get_admin_consent_policy(self):
         entra_client = Entra(set_mocked_microsoft365_provider())
-        assert entra_client.admin_consent_poolicy.admin_consent_enabled
-        assert entra_client.admin_consent_poolicy.notify_reviewers
-        assert entra_client.admin_consent_poolicy.email_reminders_to_reviewers is False
-        assert entra_client.admin_consent_poolicy.duration_in_days == 30
+        assert entra_client.admin_consent_policy.admin_consent_enabled
+        assert entra_client.admin_consent_policy.notify_reviewers
+        assert entra_client.admin_consent_policy.email_reminders_to_reviewers is False
+        assert entra_client.admin_consent_policy.duration_in_days == 30
