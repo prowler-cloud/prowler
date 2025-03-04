@@ -2,6 +2,7 @@ from unittest.mock import patch
 
 from prowler.providers.microsoft365.models import Microsoft365IdentityInfo
 from prowler.providers.microsoft365.services.entra.entra_service import (
+    AdminConsentPolicy,
     AuthorizationPolicy,
     DefaultUserRolePermissions,
     Entra,
@@ -24,6 +25,15 @@ async def mock_entra_get_authorization_policy(_):
             allowed_to_read_bitlocker_keys_for_owned_device=True,
             allowed_to_read_other_users=True,
         ),
+    )
+
+
+async def mock_entra_get_admin_consent_poolicy(_):
+    return AdminConsentPolicy(
+        admin_consent_enabled=True,
+        notify_reviewers=True,
+        email_reminders_to_reviewers=False,
+        duration_in_days=30,
     )
 
 
@@ -55,3 +65,14 @@ class Test_Entra_Service:
                 allowed_to_read_other_users=True,
             )
         )
+
+    @patch(
+        "prowler.providers.microsoft365.services.entra.entra_service.Entra._get_admin_consent_poolicy",
+        new=mock_entra_get_admin_consent_poolicy,
+    )
+    def test_get_admin_consent_poolicy(self):
+        entra_client = Entra(set_mocked_microsoft365_provider())
+        assert entra_client.admin_consent_poolicy.admin_consent_enabled
+        assert entra_client.admin_consent_poolicy.notify_reviewers
+        assert entra_client.admin_consent_poolicy.email_reminders_to_reviewers is False
+        assert entra_client.admin_consent_poolicy.duration_in_days == 30
