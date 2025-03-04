@@ -74,6 +74,7 @@ from api.filters import (
 from api.models import (
     ComplianceOverview,
     Finding,
+    Integration,
     Invitation,
     Membership,
     Provider,
@@ -102,6 +103,9 @@ from api.v1.serializers import (
     FindingDynamicFilterSerializer,
     FindingMetadataSerializer,
     FindingSerializer,
+    IntegrationCreateSerializer,
+    IntegrationSerializer,
+    IntegrationUpdateSerializer,
     InvitationAcceptSerializer,
     InvitationCreateSerializer,
     InvitationSerializer,
@@ -239,7 +243,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.5.0"
+        spectacular_settings.VERSION = "1.6.0"
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -294,6 +298,11 @@ class SchemaView(SpectacularAPIView):
                 "name": "Task",
                 "description": "Endpoints for task management, allowing retrieval of task status and "
                 "revoking tasks that have not started.",
+            },
+            {
+                "name": "Integration",
+                "description": "Endpoints for managing third-party integrations, including registration, configuration,"
+                " retrieval, and deletion of integrations such as S3, JIRA, or other services.",
             },
         ]
         return super().get(request, *args, **kwargs)
@@ -2433,3 +2442,51 @@ class ScheduleViewSet(BaseRLSViewSet):
                 )
             },
         )
+
+
+@extend_schema_view(
+    list=extend_schema(
+        tags=["Integration"],
+        summary="List all integrations",
+        description="Retrieve a list of all configured integrations with options for filtering by various criteria.",
+    ),
+    retrieve=extend_schema(
+        tags=["Integration"],
+        summary="Retrieve integration details",
+        description="Fetch detailed information about a specific integration by its ID.",
+    ),
+    create=extend_schema(
+        tags=["Integration"],
+        summary="Create a new integration",
+        description="Register a new integration with the system, providing necessary configuration details.",
+    ),
+    partial_update=extend_schema(
+        tags=["Integration"],
+        summary="Partially update an integration",
+        description="Modify certain fields of an existing integration without affecting other settings.",
+    ),
+    destroy=extend_schema(
+        tags=["Integration"],
+        summary="Delete an integration",
+        description="Remove an integration from the system by its ID.",
+    ),
+)
+@method_decorator(CACHE_DECORATOR, name="list")
+@method_decorator(CACHE_DECORATOR, name="retrieve")
+class IntegrationViewSet(BaseRLSViewSet):
+    queryset = Integration.objects.all()
+    serializer_class = IntegrationSerializer
+    http_method_names = ["get", "post", "patch", "delete"]
+    ordering = ["integration_type", "-inserted_at"]
+    # RBAC required permissions
+    required_permissions = [Permissions.MANAGE_PROVIDERS]
+
+    def get_queryset(self):
+        return Integration.objects.filter(tenant_id=self.request.tenant_id)
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return IntegrationCreateSerializer
+        elif self.action == "partial_update":
+            return IntegrationUpdateSerializer
+        return super().get_serializer_class()
