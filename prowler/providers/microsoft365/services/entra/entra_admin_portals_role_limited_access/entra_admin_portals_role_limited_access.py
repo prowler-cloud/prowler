@@ -46,7 +46,7 @@ class entra_admin_portals_role_limited_access(Check):
                 continue
 
             if (
-                "Microsoft365AdminPortals"
+                "MicrosoftAdminPortals"
                 not in policy.conditions.application_conditions.included_applications
             ):
                 continue

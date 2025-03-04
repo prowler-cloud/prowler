@@ -148,7 +148,7 @@ class Test_entra_admin_portals_role_limited_access:
                     display_name=display_name,
                     conditions=Conditions(
                         application_conditions=ApplicationsConditions(
-                            included_applications=["Microsoft365AdminPortals"],
+                            included_applications=["MicrosoftAdminPortals"],
                             excluded_applications=[],
                         ),
                         user_conditions=UsersConditions(
@@ -189,7 +189,7 @@ class Test_entra_admin_portals_role_limited_access:
                     display_name=display_name,
                     conditions=Conditions(
                         application_conditions=ApplicationsConditions(
-                            included_applications=["Microsoft365AdminPortals"],
+                            included_applications=["MicrosoftAdminPortals"],
                             excluded_applications=[],
                         ),
                         user_conditions=UsersConditions(
