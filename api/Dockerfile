@@ -21,7 +21,8 @@ COPY src/backend/  ./backend/
 
 ENV PATH="/home/prowler/.local/bin:$PATH"
 
-RUN poetry install && \
+# Add `--no-root` to avoid installing the current project as a package
+RUN poetry install --no-root && \
     rm -rf ~/.cache/pip
 
 COPY docker-entrypoint.sh ./docker-entrypoint.sh
