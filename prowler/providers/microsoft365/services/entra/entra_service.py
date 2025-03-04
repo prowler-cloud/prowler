@@ -270,6 +270,7 @@ class ConditionalAccessGrantControl(Enum):
     MFA = "mfa"
     BLOCK = "block"
     DOMAIN_JOINED_DEVICE = "domainJoinedDevice"
+    PASSWORD_CHANGE = "passwordChange"
 
 
 class GrantControlOperator(Enum):
