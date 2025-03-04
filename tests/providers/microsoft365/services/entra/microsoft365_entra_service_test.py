@@ -4,11 +4,13 @@ from prowler.providers.microsoft365.models import Microsoft365IdentityInfo
 from prowler.providers.microsoft365.services.entra.entra_service import (
     ApplicationsConditions,
     AuthorizationPolicy,
+    ConditionalAccessGrantControl,
     ConditionalAccessPolicy,
     ConditionalAccessPolicyState,
     Conditions,
     DefaultUserRolePermissions,
     Entra,
+    GrantControls,
     PersistentBrowser,
     SessionControls,
     SignInFrequency,
@@ -41,11 +43,11 @@ async def mock_entra_get_conditional_access_policies(_):
             id="id-1",
             display_name="Name 1",
             conditions=Conditions(
-                applications=ApplicationsConditions(
+                application_conditions=ApplicationsConditions(
                     included_applications=["app-1", "app-2"],
                     excluded_applications=["app-3", "app-4"],
                 ),
-                users=UsersConditions(
+                user_conditions=UsersConditions(
                     included_groups=["group-1", "group-2"],
                     excluded_groups=["group-3", "group-4"],
                     included_users=["user-1", "user-2"],
@@ -53,6 +55,9 @@ async def mock_entra_get_conditional_access_policies(_):
                     included_roles=["role-1", "role-2"],
                     excluded_roles=["role-3", "role-4"],
                 ),
+            ),
+            grant_controls=GrantControls(
+                built_in_controls=[ConditionalAccessGrantControl.BLOCK]
             ),
             session_controls=SessionControls(
                 persistent_browser=PersistentBrowser(
@@ -109,11 +114,11 @@ class Test_Entra_Service:
                 id="id-1",
                 display_name="Name 1",
                 conditions=Conditions(
-                    applications=ApplicationsConditions(
+                    application_conditions=ApplicationsConditions(
                         included_applications=["app-1", "app-2"],
                         excluded_applications=["app-3", "app-4"],
                     ),
-                    users=UsersConditions(
+                    user_conditions=UsersConditions(
                         included_groups=["group-1", "group-2"],
                         excluded_groups=["group-3", "group-4"],
                         included_users=["user-1", "user-2"],
@@ -121,6 +126,9 @@ class Test_Entra_Service:
                         included_roles=["role-1", "role-2"],
                         excluded_roles=["role-3", "role-4"],
                     ),
+                ),
+                grant_controls=GrantControls(
+                    built_in_controls=[ConditionalAccessGrantControl.BLOCK]
                 ),
                 session_controls=SessionControls(
                     persistent_browser=PersistentBrowser(
