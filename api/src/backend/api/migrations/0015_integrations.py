@@ -36,13 +36,24 @@ class Migration(migrations.Migration):
                     "connection_last_checked_at",
                     models.DateTimeField(blank=True, null=True),
                 ),
-                ("type", api.db_utils.IntegrationTypeEnumField(choices=[("s3", "S3")])),
+                (
+                    "integration_type",
+                    api.db_utils.IntegrationTypeEnumField(
+                        choices=[
+                            ("amazon_s3", "Amazon S3"),
+                            ("saml", "SAML"),
+                            ("aws_security_hub", "AWS Security Hub"),
+                            ("jira", "JIRA"),
+                            ("slack", "Slack"),
+                        ]
+                    ),
+                ),
                 ("configuration", models.JSONField(default=dict)),
                 ("_credentials", models.BinaryField(db_column="credentials")),
                 (
                     "providers",
                     models.ManyToManyField(
-                        related_name="integrations", to="api.provider"
+                        related_name="integrations", to="api.provider", blank=True
                     ),
                 ),
                 (
@@ -59,6 +70,57 @@ class Migration(migrations.Migration):
             constraint=RowLevelSecurityConstraint(
                 "tenant_id",
                 name="rls_on_integration",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ),
+        migrations.CreateModel(
+            name="IntegrationProviderRelationship",
+            fields=[
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("inserted_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "integration",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="api.integration",
+                    ),
+                ),
+                (
+                    "provider",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="api.provider"
+                    ),
+                ),
+                (
+                    "tenant",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="api.tenant"
+                    ),
+                ),
+            ],
+            options={
+                "db_table": "integration_provider_mappings",
+                "constraints": [
+                    models.UniqueConstraint(
+                        fields=("integration_id", "provider_id"),
+                        name="unique_integration_provider_rel",
+                    ),
+                ],
+            },
+        ),
+        migrations.AddConstraint(
+            model_name="IntegrationProviderRelationship",
+            constraint=RowLevelSecurityConstraint(
+                "tenant_id",
+                name="rls_on_integrationproviderrelationship",
                 statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
             ),
         ),

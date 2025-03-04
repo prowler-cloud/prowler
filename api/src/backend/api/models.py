@@ -1143,7 +1143,11 @@ class ScanSummary(RowLevelSecurityProtectedModel):
 
 class Integration(RowLevelSecurityProtectedModel):
     class IntegrationChoices(models.TextChoices):
-        S3 = "s3", _("S3")
+        S3 = "amazon_s3", _("Amazon S3")
+        SAML = "saml", _("SAML")
+        AWS_SECURITY_HUB = "aws_security_hub", _("AWS Security Hub")
+        JIRA = "jira", _("JIRA")
+        SLACK = "slack", _("Slack")
 
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
@@ -1151,13 +1155,15 @@ class Integration(RowLevelSecurityProtectedModel):
     enabled = models.BooleanField(default=False)
     connected = models.BooleanField(null=True, blank=True)
     connection_last_checked_at = models.DateTimeField(null=True, blank=True)
-    type = IntegrationTypeEnumField(choices=IntegrationChoices.choices)
+    integration_type = IntegrationTypeEnumField(choices=IntegrationChoices.choices)
     configuration = models.JSONField(default=dict)
     _credentials = models.BinaryField(db_column="credentials")
 
     providers = models.ManyToManyField(
         Provider,
         related_name="integrations",
+        through="IntegrationProviderRelationship",
+        blank=True,
     )
 
     class Meta(RowLevelSecurityProtectedModel.Meta):
@@ -1189,3 +1195,24 @@ class Integration(RowLevelSecurityProtectedModel):
     def credentials(self, value):
         encrypted_data = fernet.encrypt(json.dumps(value).encode())
         self._credentials = encrypted_data
+
+
+class IntegrationProviderRelationship(RowLevelSecurityProtectedModel):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    integration = models.ForeignKey(Integration, on_delete=models.CASCADE)
+    provider = models.ForeignKey(Provider, on_delete=models.CASCADE)
+    inserted_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "integration_provider_mappings"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["integration_id", "provider_id"],
+                name="unique_integration_provider_rel",
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
