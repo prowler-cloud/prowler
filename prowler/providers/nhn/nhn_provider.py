@@ -1,4 +1,3 @@
-import sys
 from typing import Optional
 
 import requests
@@ -209,10 +208,10 @@ class NhnProvider(Provider):
                 logger.critical(
                     f"Failed to get token. Status: {response.status_code}, Body: {response.text}"
                 )
-                sys.exit(1)
+                raise ValueError("Failed to get NHN token")
         except Exception as e:
             logger.critical(f"[setup_session] Error: {e}")
-            sys.exit(1)
+            raise e
 
     @staticmethod
     def test_connection(

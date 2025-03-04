@@ -62,14 +62,14 @@ class TestNhnProvider:
         mock_post.return_value.status_code = 401
         mock_post.return_value.text = "Unauthorized"
 
-        provider = NhnProvider(
-            username="test_user",
-            password="test_pass",
-            tenant_id="tenant123",
-        )
+        with pytest.raises(ValueError) as exc_info:
+            NhnProvider(
+                username="test_user",
+                password="test_pass",
+                tenant_id="tenant123",
+            )
 
-        assert provider._token is None
-        assert provider.session is None
+        assert "Failed to get NHN token" in str(exc_info.value)
 
     @patch("prowler.providers.nhn.nhn_provider.requests")
     def test_test_connection_success(self, mock_requests):
