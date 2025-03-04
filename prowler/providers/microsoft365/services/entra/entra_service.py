@@ -178,7 +178,12 @@ class Entra(Microsoft365Service):
                             ]
                             if policy.grant_controls
                             else []
-                        )
+                        ),
+                        operator=(
+                            GrantControlOperator(
+                                getattr(policy.grant_controls, "operator", "AND")
+                            )
+                        ),
                     ),
                     session_controls=SessionControls(
                         persistent_browser=PersistentBrowser(
@@ -264,10 +269,17 @@ class SessionControls(BaseModel):
 class ConditionalAccessGrantControl(Enum):
     MFA = "mfa"
     BLOCK = "block"
+    DOMAIN_JOINED_DEVICE = "domainJoinedDevice"
+
+
+class GrantControlOperator(Enum):
+    AND = "AND"
+    OR = "OR"
 
 
 class GrantControls(BaseModel):
     built_in_controls: List[ConditionalAccessGrantControl]
+    operator: GrantControlOperator
 
 
 class ConditionalAccessPolicy(BaseModel):
