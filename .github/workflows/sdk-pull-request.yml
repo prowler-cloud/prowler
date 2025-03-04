@@ -58,7 +58,7 @@ jobs:
       - name: Install dependencies
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
-          poetry install
+          poetry install --no-root
           poetry run pip list
           VERSION=$(curl --silent "https://api.github.com/repos/hadolint/hadolint/releases/latest" | \
             grep '"tag_name":' | \
