@@ -71,6 +71,15 @@ For AWS, enter your `AWS Account ID` and choose one of the following methods to 
 
     <img src="../../img/aws-role.png" alt="AWS Role" width="700"/>
 
+???+ note
+    check if your AWS Security Token Service (STS) has the EU (Ireland) endpoint active. If not we will not be able to connect to your AWS account.
+
+    If that is the case your STS configuration may look like this:
+
+    <img src="../../img/sts-configuration.png" alt="AWS Role" width="800"/>
+
+    To solve this issue, please activate the EU (Ireland) STS endpoint.
+
 ---
 
 ### **Step 4.2: Azure Credentials**

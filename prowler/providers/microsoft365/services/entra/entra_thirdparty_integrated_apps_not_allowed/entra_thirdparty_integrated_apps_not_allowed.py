@@ -26,14 +26,15 @@ class entra_thirdparty_integrated_apps_not_allowed(Check):
         findings = []
         auth_policy = entra_client.authorization_policy
 
-        report = CheckReportMicrosoft365(
-            metadata=self.metadata(),
-            resource=auth_policy if auth_policy else {},
-            resource_name=auth_policy.name if auth_policy else "Authorization Policy",
-            resource_id=auth_policy.id if auth_policy else "authorizationPolicy",
-        )
-
         if auth_policy:
+            report = CheckReportMicrosoft365(
+                metadata=self.metadata(),
+                resource=auth_policy if auth_policy else {},
+                resource_name=(
+                    auth_policy.name if auth_policy else "Authorization Policy"
+                ),
+                resource_id=auth_policy.id if auth_policy else "authorizationPolicy",
+            )
             if getattr(
                 auth_policy, "default_user_role_permissions", None
             ) and not getattr(
@@ -48,10 +49,7 @@ class entra_thirdparty_integrated_apps_not_allowed(Check):
                 report.status_extended = (
                     "App creation is not disabled for non-admin users."
                 )
-        else:
-            report.status = "FAIL"
-            report.status_extended = "Authorization Policy was not found."
 
-        findings.append(report)
+            findings.append(report)
 
         return findings
