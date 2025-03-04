@@ -8,6 +8,7 @@ import { getScans } from "@/actions/scans";
 import {
   ComplianceCard,
   ComplianceSkeletonGrid,
+  NoScansAvailable,
 } from "@/components/compliance";
 import { DataCompliance } from "@/components/compliance/data-compliance";
 import { ContentLayout } from "@/components/ui";
@@ -48,15 +49,6 @@ export default async function Compliance({
 
   const selectedScanId = searchParams.scanId || scanList[0]?.id || null;
 
-  // If there are no scans available, return a message
-  if (!selectedScanId) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <div className="text-default-500">No scans available to select.</div>
-      </div>
-    );
-  }
-
   // Fetch compliance data for regions
   let compliancesData;
   let regions: string[] = [];
@@ -81,11 +73,17 @@ export default async function Compliance({
 
   return (
     <ContentLayout title="Compliance" icon="fluent-mdl2:compliance-audit">
-      <DataCompliance scans={scanList} regions={regions} />
-      <Spacer y={12} />
-      <Suspense fallback={<ComplianceSkeletonGrid />}>
-        <SSRComplianceGrid searchParams={searchParams} />
-      </Suspense>
+      {selectedScanId ? (
+        <>
+          <DataCompliance scans={scanList} regions={regions} />
+          <Spacer y={12} />
+          <Suspense fallback={<ComplianceSkeletonGrid />}>
+            <SSRComplianceGrid searchParams={searchParams} />
+          </Suspense>
+        </>
+      ) : (
+        <NoScansAvailable />
+      )}
     </ContentLayout>
   );
 }
