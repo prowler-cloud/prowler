@@ -50,6 +50,7 @@ nav:
       - Requirements: getting-started/requirements.md
   - Tutorials:
       - Prowler App: tutorials/prowler-app.md
+      - Prowler App RBAC: tutorials/prowler-app-rbac.md
       - Miscellaneous: tutorials/misc.md
       - Reporting: tutorials/reporting.md
       - Compliance: tutorials/compliance.md
