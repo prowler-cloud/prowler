@@ -4,7 +4,7 @@ from mock import MagicMock
 from prowler.providers.nhn.lib.mutelist.mutelist import NHNMutelist
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 
-MUTELIST_FIXTURE_PATH = "/tests/providers/nhn/lib/mutelist/fixtures/nhn_mutelist.yaml"
+MUTELIST_FIXTURE_PATH = "tests/providers/nhn/lib/mutelist/fixtures/nhn_mutelist.yaml"
 
 
 class TestNHNMutelist:
