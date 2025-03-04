@@ -6,6 +6,7 @@ from prowler.providers.microsoft365.services.entra.entra_service import (
     ConditionalAccessGrantControl,
     ConditionalAccessPolicyState,
     Conditions,
+    GrantControlOperator,
     GrantControls,
     PersistentBrowser,
     SessionControls,
@@ -45,7 +46,7 @@ class Test_entra_admin_portals_role_limited_access:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "No Conditional Access policy limits Entra Admin Center access to administrative roles."
+                == "No Conditional Access Policy limits Entra Admin Center access to administrative roles."
             )
             assert result[0].resource == {}
             assert result[0].resource_name == "Conditional Access Policies"
@@ -92,7 +93,9 @@ class Test_entra_admin_portals_role_limited_access:
                             excluded_roles=[],
                         ),
                     ),
-                    grant_controls=GrantControls(built_in_controls=[]),
+                    grant_controls=GrantControls(
+                        built_in_controls=[], operator=GrantControlOperator.AND
+                    ),
                     session_controls=SessionControls(
                         persistent_browser=PersistentBrowser(
                             is_enabled=False, mode="always"
@@ -111,7 +114,7 @@ class Test_entra_admin_portals_role_limited_access:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "No Conditional Access policy limits Entra Admin Center access to administrative roles."
+                == "No Conditional Access Policy limits Entra Admin Center access to administrative roles."
             )
             assert result[0].resource == {}
             assert result[0].resource_name == "Conditional Access Policies"
@@ -148,7 +151,7 @@ class Test_entra_admin_portals_role_limited_access:
                     display_name=display_name,
                     conditions=Conditions(
                         application_conditions=ApplicationsConditions(
-                            included_applications=["Microsoft365AdminPortals"],
+                            included_applications=["MicrosoftAdminPortals"],
                             excluded_applications=[],
                         ),
                         user_conditions=UsersConditions(
@@ -161,7 +164,8 @@ class Test_entra_admin_portals_role_limited_access:
                         ),
                     ),
                     grant_controls=GrantControls(
-                        built_in_controls=[ConditionalAccessGrantControl.BLOCK]
+                        built_in_controls=[ConditionalAccessGrantControl.BLOCK],
+                        operator=GrantControlOperator.AND,
                     ),
                     session_controls=SessionControls(
                         persistent_browser=PersistentBrowser(
@@ -181,7 +185,7 @@ class Test_entra_admin_portals_role_limited_access:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Conditional Access policy '{display_name}' limits Entra Admin Center access to administrative roles."
+                == f"Conditional Access Policy '{display_name}' limits Entra Admin Center access to administrative roles."
             )
             assert result[0].resource == {
                 id: ConditionalAccessPolicy(
@@ -189,7 +193,7 @@ class Test_entra_admin_portals_role_limited_access:
                     display_name=display_name,
                     conditions=Conditions(
                         application_conditions=ApplicationsConditions(
-                            included_applications=["Microsoft365AdminPortals"],
+                            included_applications=["MicrosoftAdminPortals"],
                             excluded_applications=[],
                         ),
                         user_conditions=UsersConditions(
@@ -202,7 +206,8 @@ class Test_entra_admin_portals_role_limited_access:
                         ),
                     ),
                     grant_controls=GrantControls(
-                        built_in_controls=[ConditionalAccessGrantControl.BLOCK]
+                        built_in_controls=[ConditionalAccessGrantControl.BLOCK],
+                        operator=GrantControlOperator.AND,
                     ),
                     session_controls=SessionControls(
                         persistent_browser=PersistentBrowser(

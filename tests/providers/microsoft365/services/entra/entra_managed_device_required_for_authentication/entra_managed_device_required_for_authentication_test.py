@@ -46,7 +46,7 @@ class Test_entra_managed_device_required_for_authentication:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "No Conditional Access policy limits Entra Admin Center access to administrative roles."
+                == "No Conditional Access Policy requires a managed device for authentication."
             )
             assert result[0].resource == {}
             assert result[0].resource_name == "Conditional Access Policies"

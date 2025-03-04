@@ -745,6 +745,43 @@ class ProviderSerializer(RLSSerializer):
         }
 
 
+class ProviderIncludeSerializer(RLSSerializer):
+    """
+    Serializer for the Provider model.
+    """
+
+    provider = ProviderEnumSerializerField()
+    connection = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Provider
+        fields = [
+            "id",
+            "inserted_at",
+            "updated_at",
+            "provider",
+            "uid",
+            "alias",
+            "connection",
+            # "scanner_args",
+        ]
+
+    @extend_schema_field(
+        {
+            "type": "object",
+            "properties": {
+                "connected": {"type": "boolean"},
+                "last_checked_at": {"type": "string", "format": "date-time"},
+            },
+        }
+    )
+    def get_connection(self, obj):
+        return {
+            "connected": obj.connected,
+            "last_checked_at": obj.connection_last_checked_at,
+        }
+
+
 class ProviderCreateSerializer(RLSSerializer, BaseWriteSerializer):
     class Meta:
         model = Provider
@@ -805,6 +842,35 @@ class ScanSerializer(RLSSerializer):
             "next_scan_at",
             "url",
         ]
+
+
+class ScanIncludeSerializer(RLSSerializer):
+    trigger = serializers.ChoiceField(
+        choices=Scan.TriggerChoices.choices, read_only=True
+    )
+    state = StateEnumSerializerField(read_only=True)
+
+    class Meta:
+        model = Scan
+        fields = [
+            "id",
+            "name",
+            "trigger",
+            "state",
+            "unique_resource_count",
+            "progress",
+            # "scanner_args",
+            "duration",
+            "inserted_at",
+            "started_at",
+            "completed_at",
+            "scheduled_at",
+            "provider",
+        ]
+
+    included_serializers = {
+        "provider": "api.v1.serializers.ProviderIncludeSerializer",
+    }
 
 
 class ScanCreateSerializer(RLSSerializer, BaseWriteSerializer):
@@ -873,6 +939,14 @@ class ScanTaskSerializer(RLSSerializer):
         ]
 
 
+class ScanReportSerializer(serializers.Serializer):
+    id = serializers.CharField(source="scan")
+
+    class Meta:
+        resource_name = "scan-reports"
+        fields = ["id"]
+
+
 class ResourceTagSerializer(RLSSerializer):
     """
     Serializer for the ResourceTag model
@@ -938,6 +1012,51 @@ class ResourceSerializer(RLSSerializer):
         return fields
 
 
+class ResourceIncludeSerializer(RLSSerializer):
+    """
+    Serializer for the Resource model.
+    """
+
+    tags = serializers.SerializerMethodField()
+    type_ = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = Resource
+        fields = [
+            "id",
+            "inserted_at",
+            "updated_at",
+            "uid",
+            "name",
+            "region",
+            "service",
+            "type_",
+            "tags",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "inserted_at": {"read_only": True},
+            "updated_at": {"read_only": True},
+        }
+
+    @extend_schema_field(
+        {
+            "type": "object",
+            "description": "Tags associated with the resource",
+            "example": {"env": "prod", "owner": "johndoe"},
+        }
+    )
+    def get_tags(self, obj):
+        return obj.get_tags(self.context.get("tenant_id"))
+
+    def get_fields(self):
+        """`type` is a Python reserved keyword."""
+        fields = super().get_fields()
+        type_ = fields.pop("type_")
+        fields["type"] = type_
+        return fields
+
+
 class FindingSerializer(RLSSerializer):
     """
     Serializer for the Finding model.
@@ -967,8 +1086,8 @@ class FindingSerializer(RLSSerializer):
         ]
 
     included_serializers = {
-        "scan": ScanSerializer,
-        "resources": ResourceSerializer,
+        "scan": ScanIncludeSerializer,
+        "resources": ResourceIncludeSerializer,
     }
 
 

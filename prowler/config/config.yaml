@@ -308,6 +308,8 @@ aws:
     "ListFoundationModelAgreementOffers",  # Lists available agreement offers for accessing foundation models (List).
     "ListFoundationModels",  # Lists the available foundation models in Bedrock (List).
     "ListProvisionedModelThroughputs",  # Lists the provisioned throughput for previously created models (List).
+    "SearchAgreements",  # Searches for agreements based on specified criteria (List).
+    "AcceptAgreementRequest",  # Accepts a request for an agreement to use a foundation model (Write).
     ]
 
   # AWS RDS Configuration
@@ -359,6 +361,11 @@ aws:
   # aws.elbv2_is_in_multiple_az
   # Minimum number of Availability Zones that an ELBv2 must be in
   elbv2_min_azs: 2
+
+  # AWS Elasticache Configuration
+  # aws.elasticache_redis_cluster_backup_enabled
+  # Minimum number of days that a Redis cluster must have backups retention period
+  minimum_snapshot_retention_period: 7
 
 
   # AWS Secrets Configuration
@@ -468,3 +475,10 @@ kubernetes:
       "TLS_RSA_WITH_AES_256_GCM_SHA384",
       "TLS_RSA_WITH_AES_128_GCM_SHA256",
     ]
+
+
+# Microsoft365 Configuration
+microsoft365:
+  # Conditional Access Policy
+  # policy.session_controls.sign_in_frequency.frequency
+  sign_in_frequency: 4

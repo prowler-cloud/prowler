@@ -23,13 +23,13 @@ class entra_admin_users_sign_in_frequency_enabled(Check):
 
         report = CheckReportMicrosoft365(
             metadata=self.metadata(),
-            resource=entra_client.conditional_access_policies,
+            resource={},
             resource_name="Conditional Access Policies",
             resource_id="conditionalAccessPolicies",
         )
         report.status = "FAIL"
         report.status_extended = (
-            "No Conditional Access policy enforces sign-in frequency for admin users."
+            "No Conditional Access Policy enforces sign-in frequency for admin users."
         )
 
         for policy in entra_client.conditional_access_policies.values():
@@ -52,19 +52,30 @@ class entra_admin_users_sign_in_frequency_enabled(Check):
 
             if (
                 policy.session_controls.sign_in_frequency.is_enabled
-                and policy.session_controls.sign_in_frequency.frequency
-                and policy.session_controls.sign_in_frequency.frequency <= 4
                 and policy.session_controls.persistent_browser.is_enabled
                 and policy.session_controls.persistent_browser.mode == "never"
             ):
+                recommended_sign_in_frequency = entra_client.audit_config.get(
+                    "sign_in_frequency", 4
+                )
                 report = CheckReportMicrosoft365(
                     metadata=self.metadata(),
-                    resource=entra_client.conditional_access_policies,
+                    resource=policy,
                     resource_name=policy.display_name,
                     resource_id=policy.id,
                 )
-                report.status = "PASS"
-                report.status_extended = f"Conditional Access policy {policy.display_name} enforces sign-in frequency for admin users."
+                if not policy.session_controls.sign_in_frequency.frequency:
+                    report.status = "FAIL"
+                    report.status_extended = f"Conditional Access Policy {policy.display_name} enforces sign-in frequency for admin users but it is set to 'Every Time'."
+                elif (
+                    policy.session_controls.sign_in_frequency.frequency
+                    > recommended_sign_in_frequency
+                ):
+                    report.status = "FAIL"
+                    report.status_extended = f"Conditional Access Policy {policy.display_name} enforces sign-in frequency to be {policy.session_controls.sign_in_frequency.frequency} hours for admin users, which is greater than the recommended {recommended_sign_in_frequency} hours."
+                else:
+                    report.status = "PASS"
+                    report.status_extended = f"Conditional Access Policy {policy.display_name} enforces sign-in frequency to be {policy.session_controls.sign_in_frequency.frequency} hours for admin users."
                 break
 
         findings.append(report)

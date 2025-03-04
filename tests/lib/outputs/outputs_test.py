@@ -18,6 +18,7 @@ from prowler.lib.outputs.utils import (
     unroll_list,
     unroll_tags,
 )
+from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 
 
 class TestOutputs:
@@ -246,65 +247,121 @@ class TestOutputs:
         assert parse_json_tags([{}]) == {}
         assert parse_json_tags(None) == {}
 
+
+class TestExtractFindingStats:
     def test_extract_findings_statistics_different_resources(self):
-        finding_1 = mock.MagicMock()
-        finding_1.status = "PASS"
-        finding_1.resource_id = "test_resource_1"
-        finding_2 = mock.MagicMock()
-        finding_2.status = "FAIL"
-        finding_2.resource_id = "test_resource_2"
+        finding_1 = generate_finding_output(
+            status="PASS",
+            resource_uid="test_resource_1",
+            severity="critical",
+            muted=False,
+        )
+        finding_2 = generate_finding_output(
+            status="FAIL",
+            resource_uid="test_resource_2",
+            severity="critical",
+            muted=False,
+        )
+
         findings = [finding_1, finding_2]
 
         stats = extract_findings_statistics(findings)
         assert stats["total_pass"] == 1
-        assert stats["total_fail"] == 1
         assert stats["total_muted_pass"] == 0
+        assert stats["total_fail"] == 1
         assert stats["total_muted_fail"] == 0
         assert stats["resources_count"] == 2
         assert stats["findings_count"] == 2
+        assert stats["total_critical_severity_fail"] == 1
+        assert stats["total_critical_severity_pass"] == 1
+        assert stats["total_high_severity_fail"] == 0
+        assert stats["total_high_severity_pass"] == 0
+        assert stats["total_medium_severity_fail"] == 0
+        assert stats["total_medium_severity_pass"] == 0
+        assert stats["total_low_severity_fail"] == 0
+        assert stats["total_low_severity_pass"] == 0
+        assert stats["total_informational_severity_fail"] == 0
+        assert stats["total_informational_severity_pass"] == 0
+        assert stats["all_fails_are_muted"] is False
 
     def test_extract_findings_statistics_same_resources(self):
-        finding_1 = mock.MagicMock()
-        finding_1.status = "PASS"
-        finding_1.resource_id = "test_resource_1"
-        finding_2 = mock.MagicMock()
-        finding_2.status = "PASS"
-        finding_2.resource_id = "test_resource_1"
+        finding_1 = generate_finding_output(
+            status="PASS",
+            resource_uid="test_resource_1",
+            severity="critical",
+            muted=False,
+        )
+        finding_2 = generate_finding_output(
+            status="PASS",
+            resource_uid="test_resource_1",
+            severity="critical",
+            muted=False,
+        )
+
         findings = [finding_1, finding_2]
 
         stats = extract_findings_statistics(findings)
         assert stats["total_pass"] == 2
-        assert stats["total_fail"] == 0
         assert stats["total_muted_pass"] == 0
+        assert stats["total_fail"] == 0
         assert stats["total_muted_fail"] == 0
         assert stats["resources_count"] == 1
         assert stats["findings_count"] == 2
+        assert stats["total_critical_severity_fail"] == 0
+        assert stats["total_critical_severity_pass"] == 2
+        assert stats["total_high_severity_fail"] == 0
+        assert stats["total_high_severity_pass"] == 0
+        assert stats["total_medium_severity_fail"] == 0
+        assert stats["total_medium_severity_pass"] == 0
+        assert stats["total_low_severity_fail"] == 0
+        assert stats["total_low_severity_pass"] == 0
+        assert stats["total_informational_severity_fail"] == 0
+        assert stats["total_informational_severity_pass"] == 0
+        assert stats["all_fails_are_muted"] is True
 
     def test_extract_findings_statistics_manual_resources(self):
-        finding_1 = mock.MagicMock()
-        finding_1.status = "MANUAL"
-        finding_1.resource_id = "test_resource_1"
-        finding_2 = mock.MagicMock()
-        finding_2.status = "PASS"
-        finding_2.resource_id = "test_resource_1"
+        finding_1 = generate_finding_output(
+            status="MANUAL",
+            resource_uid="test_resource_1",
+            severity="critical",
+            muted=False,
+        )
+        finding_2 = generate_finding_output(
+            status="PASS",
+            resource_uid="test_resource_1",
+            severity="critical",
+            muted=False,
+        )
+
         findings = [finding_1, finding_2]
 
         stats = extract_findings_statistics(findings)
         assert stats["total_pass"] == 1
-        assert stats["total_fail"] == 0
         assert stats["total_muted_pass"] == 0
+        assert stats["total_fail"] == 0
         assert stats["total_muted_fail"] == 0
         assert stats["resources_count"] == 1
         assert stats["findings_count"] == 1
+        assert stats["total_critical_severity_fail"] == 0
+        assert stats["total_critical_severity_pass"] == 1
+        assert stats["total_high_severity_fail"] == 0
+        assert stats["total_high_severity_pass"] == 0
+        assert stats["total_medium_severity_fail"] == 0
+        assert stats["total_medium_severity_pass"] == 0
+        assert stats["total_low_severity_fail"] == 0
+        assert stats["total_low_severity_pass"] == 0
+        assert stats["total_informational_severity_fail"] == 0
+        assert stats["total_informational_severity_pass"] == 0
+        assert stats["all_fails_are_muted"] is True
 
     def test_extract_findings_statistics_no_findings(self):
-        findings = []
-
-        stats = extract_findings_statistics(findings)
+        stats = extract_findings_statistics([])
         assert stats["total_pass"] == 0
-        assert stats["total_fail"] == 0
         assert stats["total_muted_pass"] == 0
+        assert stats["total_fail"] == 0
         assert stats["total_muted_fail"] == 0
+        assert stats["resources_count"] == 0
+        assert stats["findings_count"] == 0
         assert stats["total_critical_severity_fail"] == 0
         assert stats["total_critical_severity_pass"] == 0
         assert stats["total_high_severity_fail"] == 0
@@ -313,28 +370,30 @@ class TestOutputs:
         assert stats["total_medium_severity_pass"] == 0
         assert stats["total_low_severity_fail"] == 0
         assert stats["total_low_severity_pass"] == 0
-        assert stats["resources_count"] == 0
-        assert stats["findings_count"] == 0
+        assert stats["total_informational_severity_fail"] == 0
+        assert stats["total_informational_severity_pass"] == 0
+        assert stats["all_fails_are_muted"] is True
 
     def test_extract_findings_statistics_all_fail_are_muted(self):
-        finding_1 = mock.MagicMock()
-        finding_1.status = "FAIL"
-        finding_1.muted = True
-        finding_1.resource_id = "test_resource_1"
-        finding_1.check_metadata.Severity = "medium"
-        finding_1.check_metadata.CheckID = "glue_etl_jobs_amazon_s3_encryption_enabled"
-        finding_2 = mock.MagicMock()
-        finding_2.status = "FAIL"
-        finding_2.muted = True
-        finding_2.resource_id = "test_resource_2"
-        finding_2.check_metadata.Severity = "low"
-        finding_2.check_metadata.CheckID = "lightsail_static_ip_unused"
+        finding_1 = generate_finding_output(
+            status="FAIL",
+            resource_uid="test_resource_1",
+            severity="medium",
+            muted=True,
+        )
+        finding_2 = generate_finding_output(
+            status="FAIL",
+            resource_uid="test_resource_2",
+            severity="low",
+            muted=True,
+        )
+
         findings = [finding_1, finding_2]
 
         stats = extract_findings_statistics(findings)
         assert stats["total_pass"] == 0
-        assert stats["total_fail"] == 2
         assert stats["total_muted_pass"] == 0
+        assert stats["total_fail"] == 2
         assert stats["total_muted_fail"] == 2
         assert stats["resources_count"] == 2
         assert stats["findings_count"] == 2
@@ -346,31 +405,33 @@ class TestOutputs:
         assert stats["total_medium_severity_pass"] == 0
         assert stats["total_low_severity_fail"] == 1
         assert stats["total_low_severity_pass"] == 0
-        assert stats["all_fails_are_muted"]
+        assert stats["total_informational_severity_fail"] == 0
+        assert stats["total_informational_severity_pass"] == 0
+        assert stats["all_fails_are_muted"] is True
 
     def test_extract_findings_statistics_all_fail_are_not_muted(self):
-        finding_1 = mock.MagicMock()
-        finding_1.status = "FAIL"
-        finding_1.muted = True
-        finding_1.resource_id = "test_resource_1"
-        finding_1.check_metadata.Severity = "critical"
-        finding_1.check_metadata.CheckID = "rds_instance_certificate_expiration"
-        finding_2 = mock.MagicMock()
-        finding_2.status = "FAIL"
-        finding_2.muted = False
-        finding_2.resource_id = "test_resource_1"
-        finding_2.check_metadata.Severity = "critical"
-        finding_2.check_metadata.CheckID = (
-            "autoscaling_find_secrets_ec2_launch_configuration"
+        finding_1 = generate_finding_output(
+            status="FAIL",
+            resource_uid="test_resource_1",
+            severity="critical",
+            muted=True,
         )
+        finding_2 = generate_finding_output(
+            status="FAIL",
+            resource_uid="test_resource_1",
+            severity="critical",
+            muted=False,
+        )
+
         findings = [finding_1, finding_2]
 
         stats = extract_findings_statistics(findings)
         assert stats["total_pass"] == 0
-        assert stats["total_fail"] == 2
         assert stats["total_muted_pass"] == 0
+        assert stats["total_fail"] == 2
         assert stats["total_muted_fail"] == 1
         assert stats["resources_count"] == 1
+        assert stats["findings_count"] == 2
         assert stats["total_critical_severity_fail"] == 2
         assert stats["total_critical_severity_pass"] == 0
         assert stats["total_high_severity_fail"] == 0
@@ -379,33 +440,33 @@ class TestOutputs:
         assert stats["total_medium_severity_pass"] == 0
         assert stats["total_low_severity_fail"] == 0
         assert stats["total_low_severity_pass"] == 0
-        assert stats["findings_count"] == 2
-        assert not stats["all_fails_are_muted"]
+        assert stats["total_informational_severity_fail"] == 0
+        assert stats["total_informational_severity_pass"] == 0
+        assert stats["all_fails_are_muted"] is False
 
     def test_extract_findings_statistics_all_passes_are_not_muted(self):
-        finding_1 = mock.MagicMock()
-        finding_1.status = "PASS"
-        finding_1.muted = True
-        finding_1.resource_id = "test_resource_1"
-        finding_1.check_metadata.Severity = "critical"
-        finding_1.check_metadata.CheckID = (
-            "autoscaling_find_secrets_ec2_launch_configuration"
+        finding_1 = generate_finding_output(
+            status="PASS",
+            resource_uid="test_resource_1",
+            severity="critical",
+            muted=True,
+        )
+        finding_2 = generate_finding_output(
+            status="PASS",
+            resource_uid="test_resource_1",
+            severity="high",
+            muted=False,
         )
 
-        finding_2 = mock.MagicMock()
-        finding_2.status = "PASS"
-        finding_2.muted = False
-        finding_2.resource_id = "test_resource_1"
-        finding_2.check_metadata.Severity = "high"
-        finding_2.check_metadata.CheckID = "acm_certificates_expiration_check"
         findings = [finding_1, finding_2]
 
         stats = extract_findings_statistics(findings)
         assert stats["total_pass"] == 2
-        assert stats["total_fail"] == 0
         assert stats["total_muted_pass"] == 1
+        assert stats["total_fail"] == 0
         assert stats["total_muted_fail"] == 0
         assert stats["resources_count"] == 1
+        assert stats["findings_count"] == 2
         assert stats["total_critical_severity_fail"] == 0
         assert stats["total_critical_severity_pass"] == 1
         assert stats["total_high_severity_fail"] == 0
@@ -414,33 +475,47 @@ class TestOutputs:
         assert stats["total_medium_severity_pass"] == 0
         assert stats["total_low_severity_fail"] == 0
         assert stats["total_low_severity_pass"] == 0
-        assert stats["findings_count"] == 2
+        assert stats["total_informational_severity_fail"] == 0
+        assert stats["total_informational_severity_pass"] == 0
+        assert stats["all_fails_are_muted"] is True
 
     def test_extract_findings_statistics_all_passes_are_muted(self):
-        finding_1 = mock.MagicMock()
-        finding_1.status = "PASS"
-        finding_1.muted = True
-        finding_1.check_metadata.Severity = "critical"
-        finding_1.check_metadata.CheckID = "rds_instance_certificate_expiration"
-        finding_1.resource_id = "test_resource_1"
-        findings = [finding_1]
+        finding_1 = generate_finding_output(
+            status="PASS",
+            resource_uid="test_resource_1",
+            severity="informational",
+            muted=True,
+        )
+        finding_2 = generate_finding_output(
+            status="FAIL",
+            resource_uid="test_resource_1",
+            severity="informational",
+            muted=True,
+        )
+
+        findings = [finding_1, finding_2]
 
         stats = extract_findings_statistics(findings)
         assert stats["total_pass"] == 1
-        assert stats["total_fail"] == 0
         assert stats["total_muted_pass"] == 1
-        assert stats["total_muted_fail"] == 0
+        assert stats["total_fail"] == 1
+        assert stats["total_muted_fail"] == 1
         assert stats["resources_count"] == 1
+        assert stats["findings_count"] == 2
         assert stats["total_critical_severity_fail"] == 0
-        assert stats["total_critical_severity_pass"] == 1
+        assert stats["total_critical_severity_pass"] == 0
         assert stats["total_high_severity_fail"] == 0
         assert stats["total_high_severity_pass"] == 0
         assert stats["total_medium_severity_fail"] == 0
         assert stats["total_medium_severity_pass"] == 0
         assert stats["total_low_severity_fail"] == 0
         assert stats["total_low_severity_pass"] == 0
-        assert stats["findings_count"] == 1
+        assert stats["total_informational_severity_fail"] == 1
+        assert stats["total_informational_severity_pass"] == 1
+        assert stats["all_fails_are_muted"] is True
 
+
+class TestReport:
     def test_report_with_aws_provider_not_muted_pass(self):
         # Mocking check_findings and provider
         finding_1 = MagicMock()

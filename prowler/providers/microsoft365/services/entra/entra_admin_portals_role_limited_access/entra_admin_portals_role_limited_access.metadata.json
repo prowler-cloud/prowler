@@ -1,14 +1,14 @@
 {
   "Provider": "microsoft365",
   "CheckID": "entra_admin_portals_role_limited_access",
-  "CheckTitle": "",
+  "CheckTitle": "Ensure that only administrative roles have access to Microsoft Admin Portals",
   "CheckType": [],
   "ServiceName": "entra",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "",
-  "Description": "",
+  "ResourceType": "Conditional Access Policy",
+  "Description": "Ensure that only administrative roles have access to Microsoft Admin Portals to prevent unauthorized changes, privilege escalation, and security misconfigurations.",
   "Risk": "Allowing non-administrative users to access Microsoft Admin Portals increases the risk of unauthorized changes, privilege escalation, and potential security misconfigurations. Attackers could exploit these privileges to manipulate settings, disable security features, or access sensitive data.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/microsoft-365/admin/add-users/about-admin-roles?view=o365-worldwide",
   "Remediation": {

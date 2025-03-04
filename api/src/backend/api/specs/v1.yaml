@@ -4105,6 +4105,43 @@ paths:
               schema:
                 $ref: '#/components/schemas/ScanUpdateResponse'
           description: ''
+  /api/v1/scans/{id}/report:
+    get:
+      operationId: scans_report_retrieve
+      description: Returns a ZIP file containing the requested report
+      summary: Download ZIP report
+      parameters:
+      - in: query
+        name: fields[scan-reports]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scan.
+        required: true
+      tags:
+      - Scan
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: Report obtained successfully
+        '202':
+          description: The task is in progress
+        '403':
+          description: There is a problem with credentials
+        '404':
+          description: The scan has no reports
   /api/v1/schedules/daily:
     post:
       operationId: schedules_daily_create
@@ -5797,7 +5834,7 @@ components:
           properties:
             uid:
               type: string
-              maxLength: 300
+              nullable: false
             delta:
               enum:
               - new
@@ -5856,7 +5893,6 @@ components:
               readOnly: true
               nullable: true
           required:
-          - uid
           - status
           - severity
           - check_id

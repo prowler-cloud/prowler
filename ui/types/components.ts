@@ -1,3 +1,4 @@
+import { LucideIcon } from "lucide-react";
 import { SVGProps } from "react";
 
 export type IconSvgProps = SVGProps<SVGSVGElement> & {
@@ -8,6 +9,38 @@ export type IconProps = {
   icon: React.FC<IconSvgProps>;
   style?: React.CSSProperties;
 };
+
+export type IconComponent = LucideIcon | React.FC<IconSvgProps>;
+
+export type SubmenuProps = {
+  href: string;
+  target?: string;
+  label: string;
+  active?: boolean;
+  icon: IconComponent;
+};
+
+export type MenuProps = {
+  href: string;
+  label: string;
+  active?: boolean;
+  icon: IconComponent;
+  submenus?: SubmenuProps[];
+  defaultOpen?: boolean;
+};
+
+export type GroupProps = {
+  groupLabel: string;
+  menus: MenuProps[];
+};
+
+export interface CollapseMenuButtonProps {
+  icon: IconComponent;
+  label: string;
+  submenus: SubmenuProps[];
+  defaultOpen: boolean;
+  isOpen: boolean | undefined;
+}
 
 export type NextUIVariants =
   | "solid"

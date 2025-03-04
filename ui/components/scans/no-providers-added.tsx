@@ -8,7 +8,7 @@ import { CustomButton } from "../ui/custom";
 
 export const NoProvidersAdded = () => {
   return (
-    <div className="dark:bg-prowler-blue-900 flex min-h-screen items-center justify-center">
+    <div className="flex min-h-screen items-center justify-center dark:bg-prowler-blue-800">
       <div className="mx-auto w-full max-w-7xl px-4">
         <Card className="mx-auto w-full max-w-3xl rounded-lg dark:bg-prowler-blue-400">
           <CardBody className="flex flex-col items-center space-y-4 p-6 text-center sm:p-8">

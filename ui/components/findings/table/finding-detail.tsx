@@ -224,11 +224,13 @@ export const FindingDetail = ({
             <h4 className="text-sm font-bold text-gray-500 dark:text-gray-400">
               Tags
             </h4>
-            {Object.entries(resource.tags).map(([key, value]) => (
-              <InfoField key={key} label={key}>
-                {renderValue(value)}
-              </InfoField>
-            ))}
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              {Object.entries(resource.tags).map(([key, value]) => (
+                <InfoField key={key} label={key}>
+                  {renderValue(value)}
+                </InfoField>
+              ))}
+            </div>
           </div>
         )}
 
