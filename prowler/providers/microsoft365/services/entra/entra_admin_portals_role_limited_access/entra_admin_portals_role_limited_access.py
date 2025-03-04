@@ -28,7 +28,7 @@ class entra_admin_portals_role_limited_access(Check):
             resource_id="conditionalAccessPolicies",
         )
         report.status = "FAIL"
-        report.status_extended = "No Conditional Access policy limits Entra Admin Center access to administrative roles."
+        report.status_extended = "No Conditional Access Policy limits Entra Admin Center access to administrative roles."
 
         for policy in entra_client.conditional_access_policies.values():
             if policy.state not in {
@@ -62,7 +62,7 @@ class entra_admin_portals_role_limited_access(Check):
                     resource_id=policy.id,
                 )
                 report.status = "PASS"
-                report.status_extended = f"Conditional Access policy '{policy.display_name}' limits Entra Admin Center access to administrative roles."
+                report.status_extended = f"Conditional Access Policy '{policy.display_name}' limits Entra Admin Center access to administrative roles."
                 break
 
         findings.append(report)

@@ -45,7 +45,7 @@ class Test_entra_admin_portals_role_limited_access:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "No Conditional Access policy limits Entra Admin Center access to administrative roles."
+                == "No Conditional Access Policy limits Entra Admin Center access to administrative roles."
             )
             assert result[0].resource == {}
             assert result[0].resource_name == "Conditional Access Policies"
@@ -111,7 +111,7 @@ class Test_entra_admin_portals_role_limited_access:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "No Conditional Access policy limits Entra Admin Center access to administrative roles."
+                == "No Conditional Access Policy limits Entra Admin Center access to administrative roles."
             )
             assert result[0].resource == {}
             assert result[0].resource_name == "Conditional Access Policies"
@@ -181,7 +181,7 @@ class Test_entra_admin_portals_role_limited_access:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Conditional Access policy '{display_name}' limits Entra Admin Center access to administrative roles."
+                == f"Conditional Access Policy '{display_name}' limits Entra Admin Center access to administrative roles."
             )
             assert result[0].resource == {
                 id: ConditionalAccessPolicy(

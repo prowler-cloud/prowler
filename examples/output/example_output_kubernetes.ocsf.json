@@ -1,0 +1,800 @@
+[
+  {
+    "message": "AlwaysPullImages admission control plugin is not set in pod <pod>.",
+    "metadata": {
+      "event_code": "apiserver_always_pull_images_plugin",
+      "product": {
+        "name": "Prowler",
+        "uid": "prowler",
+        "vendor_name": "Prowler",
+        "version": "5.4.0"
+      },
+      "profiles": [
+        "container",
+        "datetime"
+      ],
+      "version": "1.4.0"
+    },
+    "severity_id": 3,
+    "severity": "Medium",
+    "status": "New",
+    "status_code": "FAIL",
+    "status_detail": "AlwaysPullImages admission control plugin is not set in pod <pod>.",
+    "status_id": 1,
+    "unmapped": {
+      "related_url": "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#alwayspullimages",
+      "categories": [
+        "cluster-security"
+      ],
+      "depends_on": [],
+      "related_to": [],
+      "notes": "Enabling AlwaysPullImages can increase network and registry load and decrease container startup speed. It may not be suitable for all environments.",
+      "compliance": {
+        "CIS-1.10": [
+          "1.2.11"
+        ],
+        "CIS-1.8": [
+          "1.2.11"
+        ]
+      }
+    },
+    "activity_name": "Create",
+    "activity_id": 1,
+    "finding_info": {
+      "created_time": 1739539658,
+      "created_time_dt": "2025-02-14T14:27:38.533897",
+      "desc": "This check verifies that the AlwaysPullImages admission control plugin is enabled in the Kubernetes API server. This plugin ensures that every new pod always pulls the required images, enforcing image access control and preventing the use of possibly outdated or altered images.",
+      "product_uid": "prowler",
+      "title": "Ensure that the admission control plugin AlwaysPullImages is set",
+      "types": [],
+      "uid": "<finding_uid>"
+    },
+    "resources": [
+      {
+        "data": {
+          "details": "",
+          "metadata": {
+            "name": "<pod>",
+            "uid": "<uid>",
+            "namespace": "<namespace>",
+            "labels": {
+              "component": "kube-apiserver",
+              "tier": "control-plane"
+            },
+            "annotations": {
+              "kubernetes.io/config.source": "file"
+            },
+            "node_name": "<node_name>",
+            "service_account": null,
+            "status_phase": "Running",
+            "pod_ip": "<ip>",
+            "host_ip": "<ip>",
+            "host_pid": null,
+            "host_ipc": null,
+            "host_network": "True",
+            "security_context": {
+              "app_armor_profile": null,
+              "fs_group": null,
+              "fs_group_change_policy": null,
+              "run_as_group": null,
+              "run_as_non_root": null,
+              "run_as_user": null,
+              "se_linux_change_policy": null,
+              "se_linux_options": null,
+              "seccomp_profile": {
+                "localhost_profile": null,
+                "type": "RuntimeDefault"
+              },
+              "supplemental_groups": null,
+              "supplemental_groups_policy": null,
+              "sysctls": null,
+              "windows_options": null
+            },
+            "containers": {
+              "kube-apiserver": {
+                "name": "kube-apiserver",
+                "image": "<image>",
+                "command": [
+                  "<command>"
+                ],
+                "ports": null,
+                "env": null,
+                "security_context": {}
+              }
+            }
+          }
+        },
+        "group": {
+          "name": "apiserver"
+        },
+        "labels": [],
+        "name": "<pod>",
+        "namespace": "<namespace>",
+        "type": "KubernetesAPIServer",
+        "uid": "<resource_uid>"
+      }
+    ],
+    "category_name": "Findings",
+    "category_uid": 2,
+    "class_name": "Detection Finding",
+    "class_uid": 2004,
+    "remediation": {
+      "desc": "Configure the API server to use the AlwaysPullImages admission control plugin to ensure image security and integrity.",
+      "references": [
+        "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-admission-control-plugin-alwayspullimages-is-set#kubernetes",
+        "--enable-admission-plugins=...,AlwaysPullImages,...",
+        "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers"
+      ]
+    },
+    "risk_details": "Without AlwaysPullImages, once an image is pulled to a node, any pod can use it without any authorization check, potentially leading to security risks.",
+    "time": 1739539658,
+    "time_dt": "2025-02-14T14:27:38.533897",
+    "type_uid": 200401,
+    "type_name": "Detection Finding: Create"
+  },
+  {
+    "message": "API Server does not have anonymous-auth enabled in pod <pod>.",
+    "metadata": {
+      "event_code": "apiserver_anonymous_requests",
+      "product": {
+        "name": "Prowler",
+        "uid": "prowler",
+        "vendor_name": "Prowler",
+        "version": "5.4.0"
+      },
+      "profiles": [
+        "container",
+        "datetime"
+      ],
+      "version": "1.4.0"
+    },
+    "severity_id": 4,
+    "severity": "High",
+    "status": "New",
+    "status_code": "PASS",
+    "status_detail": "API Server does not have anonymous-auth enabled in pod <pod>.",
+    "status_id": 1,
+    "unmapped": {
+      "related_url": "https://kubernetes.io/docs/admin/authentication/#anonymous-requests",
+      "categories": [
+        "trustboundaries"
+      ],
+      "depends_on": [],
+      "related_to": [],
+      "notes": "While anonymous access can be useful for health checks and discovery, consider the security implications for your specific environment.",
+      "compliance": {
+        "CIS-1.10": [
+          "1.2.1"
+        ],
+        "CIS-1.8": [
+          "1.2.1"
+        ]
+      }
+    },
+    "activity_name": "Create",
+    "activity_id": 1,
+    "finding_info": {
+      "created_time": 1739539658,
+      "created_time_dt": "2025-02-14T14:27:38.533897",
+      "desc": "Disable anonymous requests to the API server. When enabled, requests that are not rejected by other configured authentication methods are treated as anonymous requests, which are then served by the API server. Disallowing anonymous requests strengthens security by ensuring all access is authenticated.",
+      "product_uid": "prowler",
+      "title": "Ensure that the --anonymous-auth argument is set to false",
+      "types": [],
+      "uid": "<finding_uid>"
+    },
+    "resources": [
+      {
+        "data": {
+          "details": "",
+          "metadata": {
+            "name": "<pod>",
+            "uid": "<resource_uid>",
+            "namespace": "<namespace>",
+            "labels": {
+              "component": "kube-apiserver",
+              "tier": "control-plane"
+            },
+            "annotations": {
+              "kubernetes.io/config.source": "file"
+            },
+            "node_name": "<node_name>",
+            "service_account": null,
+            "status_phase": "Running",
+            "pod_ip": "<ip>",
+            "host_ip": "<ip>",
+            "host_pid": null,
+            "host_ipc": null,
+            "host_network": "True",
+            "security_context": {
+              "app_armor_profile": null,
+              "fs_group": null,
+              "fs_group_change_policy": null,
+              "run_as_group": null,
+              "run_as_non_root": null,
+              "run_as_user": null,
+              "se_linux_change_policy": null,
+              "se_linux_options": null,
+              "seccomp_profile": {
+                "localhost_profile": null,
+                "type": "RuntimeDefault"
+              },
+              "supplemental_groups": null,
+              "supplemental_groups_policy": null,
+              "sysctls": null,
+              "windows_options": null
+            },
+            "containers": {
+              "kube-apiserver": {
+                "name": "kube-apiserver",
+                "image": "<image>",
+                "command": [
+                  "<command>"
+                ],
+                "ports": null,
+                "env": null,
+                "security_context": {}
+              }
+            }
+          }
+        },
+        "group": {
+          "name": "apiserver"
+        },
+        "labels": [],
+        "name": "<pod>",
+        "namespace": "<namespace>",
+        "type": "KubernetesAPIServer",
+        "uid": "<resource_uid>"
+      }
+    ],
+    "category_name": "Findings",
+    "category_uid": 2,
+    "class_name": "Detection Finding",
+    "class_uid": 2004,
+    "remediation": {
+      "desc": "Ensure the --anonymous-auth argument in the API server is set to false. This will reject all anonymous requests, enforcing authenticated access to the server.",
+      "references": [
+        "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-anonymous-auth-argument-is-set-to-false-1#kubernetes",
+        "--anonymous-auth=false",
+        "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/"
+      ]
+    },
+    "risk_details": "Enabling anonymous access to the API server can expose the cluster to unauthorized access and potential security vulnerabilities.",
+    "time": 1739539658,
+    "time_dt": "2025-02-14T14:27:38.533897",
+    "type_uid": 200401,
+    "type_name": "Detection Finding: Create"
+  },
+  {
+    "message": "Audit log max age is not set to 30 or as appropriate in pod <pod>.",
+    "metadata": {
+      "event_code": "apiserver_audit_log_maxage_set",
+      "product": {
+        "name": "Prowler",
+        "uid": "prowler",
+        "vendor_name": "Prowler",
+        "version": "5.4.0"
+      },
+      "profiles": [
+        "container",
+        "datetime"
+      ],
+      "version": "1.4.0"
+    },
+    "severity_id": 3,
+    "severity": "Medium",
+    "status": "New",
+    "status_code": "FAIL",
+    "status_detail": "Audit log max age is not set to 30 or as appropriate in pod <pod>.",
+    "status_id": 1,
+    "unmapped": {
+      "related_url": "https://kubernetes.io/docs/concepts/cluster-administration/audit/",
+      "categories": [
+        "logging"
+      ],
+      "depends_on": [],
+      "related_to": [],
+      "notes": "Ensure the audit log retention period is set appropriately to balance between storage constraints and the need for historical data.",
+      "compliance": {
+        "CIS-1.10": [
+          "1.2.17"
+        ],
+        "CIS-1.8": [
+          "1.2.18"
+        ]
+      }
+    },
+    "activity_name": "Create",
+    "activity_id": 1,
+    "finding_info": {
+      "created_time": 1739539658,
+      "created_time_dt": "2025-02-14T14:27:38.533897",
+      "desc": "This check ensures that the Kubernetes API server is configured with an appropriate audit log retention period. Setting --audit-log-maxage to 30 or as per business requirements helps in maintaining logs for sufficient time to investigate past events.",
+      "product_uid": "prowler",
+      "title": "Ensure that the --audit-log-maxage argument is set to 30 or as appropriate",
+      "types": [],
+      "uid": "<finding_uid>"
+    },
+    "resources": [
+      {
+        "data": {
+          "details": "",
+          "metadata": {
+            "name": "<pod>",
+            "uid": "<resource_uid>",
+            "namespace": "<namespace>",
+            "labels": {
+              "component": "kube-apiserver",
+              "tier": "control-plane"
+            },
+            "annotations": {
+              "kubernetes.io/config.source": "file"
+            },
+            "node_name": "<node_name>",
+            "service_account": null,
+            "status_phase": "Running",
+            "pod_ip": "<ip>",
+            "host_ip": "<ip>",
+            "host_pid": null,
+            "host_ipc": null,
+            "host_network": "True",
+            "security_context": {
+              "app_armor_profile": null,
+              "fs_group": null,
+              "fs_group_change_policy": null,
+              "run_as_group": null,
+              "run_as_non_root": null,
+              "run_as_user": null,
+              "se_linux_change_policy": null,
+              "se_linux_options": null,
+              "seccomp_profile": {
+                "localhost_profile": null,
+                "type": "RuntimeDefault"
+              },
+              "supplemental_groups": null,
+              "supplemental_groups_policy": null,
+              "sysctls": null,
+              "windows_options": null
+            },
+            "containers": {
+              "kube-apiserver": {
+                "name": "kube-apiserver",
+                "image": "<image>",
+                "command": [
+                  "<command>"
+                ],
+                "ports": null,
+                "env": null,
+                "security_context": {}
+              }
+            }
+          }
+        },
+        "group": {
+          "name": "apiserver"
+        },
+        "labels": [],
+        "name": "<pod>",
+        "namespace": "<namespace>",
+        "type": "KubernetesAPIServer",
+        "uid": "<resource_uid>"
+      }
+    ],
+    "category_name": "Findings",
+    "category_uid": 2,
+    "class_name": "Detection Finding",
+    "class_uid": 2004,
+    "remediation": {
+      "desc": "Configure the API server audit log retention period to retain logs for at least 30 days or as per your organization's requirements.",
+      "references": [
+        "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-audit-log-maxage-argument-is-set-to-30-or-as-appropriate#kubernetes",
+        "--audit-log-maxage=30",
+        "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/"
+      ]
+    },
+    "risk_details": "Without an adequate log retention period, there may be insufficient audit history to investigate and analyze past events or security incidents.",
+    "time": 1739539658,
+    "time_dt": "2025-02-14T14:27:38.533897",
+    "type_uid": 200401,
+    "type_name": "Detection Finding: Create"
+  },
+  {
+    "message": "Audit log max backup is not set to 10 or as appropriate in pod <pod>.",
+    "metadata": {
+      "event_code": "apiserver_audit_log_maxbackup_set",
+      "product": {
+        "name": "Prowler",
+        "uid": "prowler",
+        "vendor_name": "Prowler",
+        "version": "5.4.0"
+      },
+      "profiles": [
+        "container",
+        "datetime"
+      ],
+      "version": "1.4.0"
+    },
+    "severity_id": 3,
+    "severity": "Medium",
+    "status": "New",
+    "status_code": "FAIL",
+    "status_detail": "Audit log max backup is not set to 10 or as appropriate in pod <pod>.",
+    "status_id": 1,
+    "unmapped": {
+      "related_url": "https://kubernetes.io/docs/concepts/cluster-administration/audit/",
+      "categories": [
+        "logging"
+      ],
+      "depends_on": [],
+      "related_to": [],
+      "notes": "Ensure the audit log backup retention period is set appropriately to balance between storage constraints and the need for historical data.",
+      "compliance": {
+        "CIS-1.10": [
+          "1.2.18"
+        ],
+        "CIS-1.8": [
+          "1.2.19"
+        ]
+      }
+    },
+    "activity_name": "Create",
+    "activity_id": 1,
+    "finding_info": {
+      "created_time": 1739539658,
+      "created_time_dt": "2025-02-14T14:27:38.533897",
+      "desc": "This check ensures that the Kubernetes API server is configured with an appropriate number of audit log backups. Setting --audit-log-maxbackup to 10 or as per business requirements helps maintain a sufficient log backup for investigations or analysis.",
+      "product_uid": "prowler",
+      "title": "Ensure that the --audit-log-maxbackup argument is set to 10 or as appropriate",
+      "types": [],
+      "uid": "<finding_uid>"
+    },
+    "resources": [
+      {
+        "data": {
+          "details": "",
+          "metadata": {
+            "name": "<pod>",
+            "uid": "<resource_uid>",
+            "namespace": "<namespace>",
+            "labels": {
+              "component": "kube-apiserver",
+              "tier": "control-plane"
+            },
+            "annotations": {
+              "kubernetes.io/config.source": "file"
+            },
+            "node_name": "<node_name>",
+            "service_account": null,
+            "status_phase": "Running",
+            "pod_ip": "<ip>",
+            "host_ip": "<ip>",
+            "host_pid": null,
+            "host_ipc": null,
+            "host_network": "True",
+            "security_context": {
+              "app_armor_profile": null,
+              "fs_group": null,
+              "fs_group_change_policy": null,
+              "run_as_group": null,
+              "run_as_non_root": null,
+              "run_as_user": null,
+              "se_linux_change_policy": null,
+              "se_linux_options": null,
+              "seccomp_profile": {
+                "localhost_profile": null,
+                "type": "RuntimeDefault"
+              },
+              "supplemental_groups": null,
+              "supplemental_groups_policy": null,
+              "sysctls": null,
+              "windows_options": null
+            },
+            "containers": {
+              "kube-apiserver": {
+                "name": "kube-apiserver",
+                "image": "<image>",
+                "command": [
+                  "<command>"
+                ],
+                "ports": null,
+                "env": null,
+                "security_context": {}
+              }
+            }
+          }
+        },
+        "group": {
+          "name": "apiserver"
+        },
+        "labels": [],
+        "name": "<pod>",
+        "namespace": "<namespace>",
+        "type": "KubernetesAPIServer",
+        "uid": "<resource_uid>"
+      }
+    ],
+    "category_name": "Findings",
+    "category_uid": 2,
+    "class_name": "Detection Finding",
+    "class_uid": 2004,
+    "remediation": {
+      "desc": "Configure the API server audit log backup retention to 10 or as per your organization's requirements.",
+      "references": [
+        "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-audit-log-maxbackup-argument-is-set-to-10-or-as-appropriate#kubernetes",
+        "--audit-log-maxbackup=10",
+        "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/"
+      ]
+    },
+    "risk_details": "Without an adequate number of audit log backups, there may be insufficient log history to investigate past events or security incidents.",
+    "time": 1739539658,
+    "time_dt": "2025-02-14T14:27:38.533897",
+    "type_uid": 200401,
+    "type_name": "Detection Finding: Create"
+  },
+  {
+    "message": "Audit log max size is not set to 100 MB or as appropriate in pod <pod>.",
+    "metadata": {
+      "event_code": "apiserver_audit_log_maxsize_set",
+      "product": {
+        "name": "Prowler",
+        "uid": "prowler",
+        "vendor_name": "Prowler",
+        "version": "5.4.0"
+      },
+      "profiles": [
+        "container",
+        "datetime"
+      ],
+      "version": "1.4.0"
+    },
+    "severity_id": 3,
+    "severity": "Medium",
+    "status": "New",
+    "status_code": "FAIL",
+    "status_detail": "Audit log max size is not set to 100 MB or as appropriate in pod <pod>.",
+    "status_id": 1,
+    "unmapped": {
+      "related_url": "https://kubernetes.io/docs/concepts/cluster-administration/audit/",
+      "categories": [
+        "logging"
+      ],
+      "depends_on": [],
+      "related_to": [],
+      "notes": "Adjust the audit log file size limit based on your organization's storage capabilities and logging requirements.",
+      "compliance": {
+        "CIS-1.10": [
+          "1.2.19"
+        ],
+        "CIS-1.8": [
+          "1.2.20"
+        ]
+      }
+    },
+    "activity_name": "Create",
+    "activity_id": 1,
+    "finding_info": {
+      "created_time": 1739539658,
+      "created_time_dt": "2025-02-14T14:27:38.533897",
+      "desc": "This check ensures that the Kubernetes API server is configured with an appropriate audit log file size limit. Setting --audit-log-maxsize to 100 MB or as per business requirements helps manage the size of log files and prevents them from growing excessively large.",
+      "product_uid": "prowler",
+      "title": "Ensure that the --audit-log-maxsize argument is set to 100 or as appropriate",
+      "types": [],
+      "uid": "<finding_uid>"
+    },
+    "resources": [
+      {
+        "data": {
+          "details": "",
+          "metadata": {
+            "name": "<pod>",
+            "uid": "<resource_uid>",
+            "namespace": "<namespace>",
+            "labels": {
+              "component": "kube-apiserver",
+              "tier": "control-plane"
+            },
+            "annotations": {
+              "kubernetes.io/config.source": "file"
+            },
+            "node_name": "<node_name>",
+            "service_account": null,
+            "status_phase": "Running",
+            "pod_ip": "<ip>",
+            "host_ip": "<ip>",
+            "host_pid": null,
+            "host_ipc": null,
+            "host_network": "True",
+            "security_context": {
+              "app_armor_profile": null,
+              "fs_group": null,
+              "fs_group_change_policy": null,
+              "run_as_group": null,
+              "run_as_non_root": null,
+              "run_as_user": null,
+              "se_linux_change_policy": null,
+              "se_linux_options": null,
+              "seccomp_profile": {
+                "localhost_profile": null,
+                "type": "RuntimeDefault"
+              },
+              "supplemental_groups": null,
+              "supplemental_groups_policy": null,
+              "sysctls": null,
+              "windows_options": null
+            },
+            "containers": {
+              "kube-apiserver": {
+                "name": "kube-apiserver",
+                "image": "<image>",
+                "command": [
+                  "<command>"
+                ],
+                "ports": null,
+                "env": null,
+                "security_context": {}
+              }
+            }
+          }
+        },
+        "group": {
+          "name": "apiserver"
+        },
+        "labels": [],
+        "name": "<pod>",
+        "namespace": "<namespace>",
+        "type": "KubernetesAPIServer",
+        "uid": "<resource_uid>"
+      }
+    ],
+    "category_name": "Findings",
+    "category_uid": 2,
+    "class_name": "Detection Finding",
+    "class_uid": 2004,
+    "remediation": {
+      "desc": "Configure the API server audit log file size limit to 100 MB or as per your organization's requirements.",
+      "references": [
+        "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-audit-log-maxsize-argument-is-set-to-100-or-as-appropriate#kubernetes",
+        "--audit-log-maxsize=100",
+        "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/"
+      ]
+    },
+    "risk_details": "Without an appropriate audit log file size limit, log files can grow excessively large, potentially leading to storage issues and difficulty in log analysis.",
+    "time": 1739539658,
+    "time_dt": "2025-02-14T14:27:38.533897",
+    "type_uid": 200401,
+    "type_name": "Detection Finding: Create"
+  },
+  {
+    "message": "Audit log path is not set in pod <pod>.",
+    "metadata": {
+      "event_code": "apiserver_audit_log_path_set",
+      "product": {
+        "name": "Prowler",
+        "uid": "prowler",
+        "vendor_name": "Prowler",
+        "version": "5.4.0"
+      },
+      "profiles": [
+        "container",
+        "datetime"
+      ],
+      "version": "1.4.0"
+    },
+    "severity_id": 4,
+    "severity": "High",
+    "status": "New",
+    "status_code": "FAIL",
+    "status_detail": "Audit log path is not set in pod <pod>.",
+    "status_id": 1,
+    "unmapped": {
+      "related_url": "https://kubernetes.io/docs/concepts/cluster-administration/audit/",
+      "categories": [
+        "logging"
+      ],
+      "depends_on": [],
+      "related_to": [],
+      "notes": "Audit logs are not enabled by default in Kubernetes. Configuring them is essential for security monitoring and forensic analysis.",
+      "compliance": {
+        "CIS-1.10": [
+          "1.2.16"
+        ],
+        "CIS-1.8": [
+          "1.2.17"
+        ]
+      }
+    },
+    "activity_name": "Create",
+    "activity_id": 1,
+    "finding_info": {
+      "created_time": 1739539658,
+      "created_time_dt": "2025-02-14T14:27:38.533897",
+      "desc": "This check verifies that the Kubernetes API server is configured with an audit log path. Enabling audit logs helps in maintaining a chronological record of all activities and operations which can be critical for security analysis and troubleshooting.",
+      "product_uid": "prowler",
+      "title": "Ensure that the --audit-log-path argument is set",
+      "types": [],
+      "uid": "<finding_uid>"
+    },
+    "resources": [
+      {
+        "data": {
+          "details": "",
+          "metadata": {
+            "name": "<pod>",
+            "uid": "<resource_uid>",
+            "namespace": "<namespace>",
+            "labels": {
+              "component": "kube-apiserver",
+              "tier": "control-plane"
+            },
+            "annotations": {
+              "kubernetes.io/config.source": "file"
+            },
+            "node_name": "<node_name>",
+            "service_account": null,
+            "status_phase": "Running",
+            "pod_ip": "<ip>",
+            "host_ip": "<ip>",
+            "host_pid": null,
+            "host_ipc": null,
+            "host_network": "True",
+            "security_context": {
+              "app_armor_profile": null,
+              "fs_group": null,
+              "fs_group_change_policy": null,
+              "run_as_group": null,
+              "run_as_non_root": null,
+              "run_as_user": null,
+              "se_linux_change_policy": null,
+              "se_linux_options": null,
+              "seccomp_profile": {
+                "localhost_profile": null,
+                "type": "RuntimeDefault"
+              },
+              "supplemental_groups": null,
+              "supplemental_groups_policy": null,
+              "sysctls": null,
+              "windows_options": null
+            },
+            "containers": {
+              "kube-apiserver": {
+                "name": "kube-apiserver",
+                "image": "<image>",
+                "command": [
+                  "<command>"
+                ],
+                "ports": null,
+                "env": null,
+                "security_context": {}
+              }
+            }
+          }
+        },
+        "group": {
+          "name": "apiserver"
+        },
+        "labels": [],
+        "name": "<pod>",
+        "namespace": "<namespace>",
+        "type": "KubernetesAPIServer",
+        "uid": "<resource_uid>"
+      }
+    ],
+    "category_name": "Findings",
+    "category_uid": 2,
+    "class_name": "Detection Finding",
+    "class_uid": 2004,
+    "remediation": {
+      "desc": "Enable audit logging in the API server by specifying a valid path for --audit-log-path to ensure comprehensive activity logging within the cluster.",
+      "references": [
+        "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-audit-log-path-argument-is-set#kubernetes",
+        "--audit-log-path=/var/log/apiserver/audit.log",
+        "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/"
+      ]
+    },
+    "risk_details": "Without audit logs, it becomes difficult to track changes and activities within the cluster, potentially obscuring the detection of malicious activities or operational issues.",
+    "time": 1739539658,
+    "time_dt": "2025-02-14T14:27:38.533897",
+    "type_uid": 200401,
+    "type_name": "Detection Finding: Create"
+  }
+]

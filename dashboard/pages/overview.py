@@ -165,9 +165,21 @@ else:
         )
 
     # For the timestamp, remove the two columns and keep only the date
-
     data["TIMESTAMP"] = pd.to_datetime(data["TIMESTAMP"])
-    data["ASSESSMENT_TIME"] = data["TIMESTAMP"].dt.strftime("%Y-%m-%d %H:%M:%S")
+    # Handle findings from v3 outputs
+    if "FINDING_UNIQUE_ID" in data.columns:
+        data.rename(columns={"FINDING_UNIQUE_ID": "FINDING_UID"}, inplace=True)
+    if "ACCOUNT_ID" in data.columns:
+        data.rename(columns={"ACCOUNT_ID": "ACCOUNT_UID"}, inplace=True)
+    if "ASSESSMENT_START_TIME" in data.columns:
+        data.rename(columns={"ASSESSMENT_START_TIME": "TIMESTAMP"}, inplace=True)
+    if "RESOURCE_ID" in data.columns:
+        data.rename(columns={"RESOURCE_ID": "RESOURCE_UID"}, inplace=True)
+
+    # Remove dupplicates on the finding_uid colummn but keep the last one taking into account the timestamp
+    data = data.sort_values("TIMESTAMP").drop_duplicates("FINDING_UID", keep="last")
+
+    data["ASSESSMENT_TIME"] = data["TIMESTAMP"].dt.strftime("%Y-%m-%d")
     data_valid = pd.DataFrame()
     for account in data["ACCOUNT_UID"].unique():
         all_times = data[data["ACCOUNT_UID"] == account]["ASSESSMENT_TIME"].unique()

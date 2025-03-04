@@ -12,7 +12,7 @@ import {
 import { LaunchScanWorkflow } from "@/components/scans/launch-workflow";
 import { SkeletonTableScans } from "@/components/scans/table";
 import { ColumnGetScans } from "@/components/scans/table/scans";
-import { Header } from "@/components/ui";
+import { ContentLayout } from "@/components/ui";
 import { DataTable, DataTableFilterCustom } from "@/components/ui/table";
 import { ProviderProps, ScanProps, SearchParamsProps } from "@/types";
 
@@ -66,23 +66,20 @@ export default async function Scans({
       {!thereIsNoProviders && (
         <>
           {thereIsNoProvidersConnected ? (
-            <>
-              <Header title="Scans" icon="lucide:scan-search" />
-
+            <ContentLayout title="Scans" icon="lucide:scan-search">
               <Spacer y={8} />
               <NoProvidersConnected />
               <Spacer y={8} />
-            </>
+            </ContentLayout>
           ) : (
-            <>
-              <Header title="Scans" icon="lucide:scan-search" />
+            <ContentLayout title="Scans" icon="lucide:scan-search">
               <AutoRefresh hasExecutingScan={hasExecutingScan} />
               <LaunchScanWorkflow providers={providerInfo} />
               <Spacer y={8} />
-            </>
+            </ContentLayout>
           )}
 
-          <div className="grid grid-cols-12 items-start gap-4">
+          <div className="grid grid-cols-12 items-start gap-4 px-6 py-4 sm:px-8 xl:px-10">
             <div className="col-span-12">
               <div className="flex flex-row items-center justify-between">
                 <DataTableFilterCustom filters={filterScans || []} />

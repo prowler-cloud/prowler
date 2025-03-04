@@ -1,6 +1,11 @@
+import glob
+import os
+
 from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
+from botocore.exceptions import ClientError, NoCredentialsError, ParamValidationError
 from celery.result import AsyncResult
+from config.env import env
 from config.settings.social_login import (
     GITHUB_OAUTH_CALLBACK_URL,
     GOOGLE_OAUTH_CALLBACK_URL,
@@ -10,8 +15,9 @@ from django.conf import settings as django_settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.search import SearchQuery
 from django.db import transaction
-from django.db.models import Count, F, OuterRef, Prefetch, Q, Subquery, Sum
+from django.db.models import Count, Exists, F, OuterRef, Prefetch, Q, Subquery, Sum
 from django.db.models.functions import Coalesce
+from django.http import HttpResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_control
@@ -38,11 +44,11 @@ from rest_framework.permissions import SAFE_METHODS
 from rest_framework_json_api.views import RelationshipView, Response
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from tasks.beat import schedule_provider_scan
+from tasks.jobs.export import get_s3_client
 from tasks.tasks import (
     check_provider_connection_task,
     delete_provider_task,
     delete_tenant_task,
-    perform_scan_summary_task,
     perform_scan_task,
 )
 
@@ -75,6 +81,7 @@ from api.models import (
     ProviderGroupMembership,
     ProviderSecret,
     Resource,
+    ResourceFindingMapping,
     Role,
     RoleProviderGroupRelationship,
     Scan,
@@ -89,7 +96,6 @@ from api.pagination import ComplianceOverviewPagination
 from api.rbac.permissions import Permissions, get_providers, get_role
 from api.rls import Tenant
 from api.utils import CustomOAuth2Client, validate_invitation
-from api.uuid_utils import datetime_to_uuid7
 from api.v1.serializers import (
     ComplianceOverviewFullSerializer,
     ComplianceOverviewSerializer,
@@ -121,6 +127,7 @@ from api.v1.serializers import (
     RoleSerializer,
     RoleUpdateSerializer,
     ScanCreateSerializer,
+    ScanReportSerializer,
     ScanSerializer,
     ScanUpdateSerializer,
     ScheduleDailyCreateSerializer,
@@ -1116,6 +1123,18 @@ class ProviderViewSet(BaseRLSViewSet):
         request=ScanCreateSerializer,
         responses={202: OpenApiResponse(response=TaskSerializer)},
     ),
+    report=extend_schema(
+        tags=["Scan"],
+        summary="Download ZIP report",
+        description="Returns a ZIP file containing the requested report",
+        request=ScanReportSerializer,
+        responses={
+            200: OpenApiResponse(description="Report obtained successfully"),
+            202: OpenApiResponse(description="The task is in progress"),
+            403: OpenApiResponse(description="There is a problem with credentials"),
+            404: OpenApiResponse(description="The scan has no reports"),
+        },
+    ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 @method_decorator(CACHE_DECORATOR, name="retrieve")
@@ -1164,6 +1183,10 @@ class ScanViewSet(BaseRLSViewSet):
             return ScanCreateSerializer
         elif self.action == "partial_update":
             return ScanUpdateSerializer
+        elif self.action == "report":
+            if hasattr(self, "response_serializer_class"):
+                return self.response_serializer_class
+            return ScanReportSerializer
         return super().get_serializer_class()
 
     def partial_update(self, request, *args, **kwargs):
@@ -1181,6 +1204,93 @@ class ScanViewSet(BaseRLSViewSet):
         )
         return Response(data=read_serializer.data, status=status.HTTP_200_OK)
 
+    @action(detail=True, methods=["get"], url_name="report")
+    def report(self, request, pk=None):
+        scan_instance = self.get_object()
+
+        if scan_instance.state == StateChoices.EXECUTING:
+            # If the scan is still running, return the task
+            prowler_task = Task.objects.get(id=scan_instance.task.id)
+            self.response_serializer_class = TaskSerializer
+            output_serializer = self.get_serializer(prowler_task)
+            return Response(
+                data=output_serializer.data,
+                status=status.HTTP_202_ACCEPTED,
+                headers={
+                    "Content-Location": reverse(
+                        "task-detail", kwargs={"pk": output_serializer.data["id"]}
+                    )
+                },
+            )
+
+        try:
+            output_celery_task = Task.objects.get(
+                task_runner_task__task_name="scan-report",
+                task_runner_task__task_args__contains=pk,
+            )
+            self.response_serializer_class = TaskSerializer
+            output_serializer = self.get_serializer(output_celery_task)
+            if output_serializer.data["state"] == StateChoices.EXECUTING:
+                # If the task is still running, return the task
+                return Response(
+                    data=output_serializer.data,
+                    status=status.HTTP_202_ACCEPTED,
+                    headers={
+                        "Content-Location": reverse(
+                            "task-detail", kwargs={"pk": output_serializer.data["id"]}
+                        )
+                    },
+                )
+        except Task.DoesNotExist:
+            # If the task does not exist, it means that the task is removed from the database
+            pass
+
+        output_location = scan_instance.output_location
+        if not output_location:
+            return Response(
+                {"detail": "The scan has no reports."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        if scan_instance.output_location.startswith("s3://"):
+            try:
+                s3_client = get_s3_client()
+            except (ClientError, NoCredentialsError, ParamValidationError):
+                return Response(
+                    {"detail": "There is a problem with credentials."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
+            bucket_name = env.str("DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET")
+            key = output_location[len(f"s3://{bucket_name}/") :]
+            try:
+                s3_object = s3_client.get_object(Bucket=bucket_name, Key=key)
+            except ClientError as e:
+                error_code = e.response.get("Error", {}).get("Code")
+                if error_code == "NoSuchKey":
+                    return Response(
+                        {"detail": "The scan has no reports."},
+                        status=status.HTTP_404_NOT_FOUND,
+                    )
+                return Response(
+                    {"detail": "There is a problem with credentials."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            file_content = s3_object["Body"].read()
+            filename = os.path.basename(output_location.split("/")[-1])
+        else:
+            zip_files = glob.glob(output_location)
+            file_path = zip_files[0]
+            with open(file_path, "rb") as f:
+                file_content = f.read()
+            filename = os.path.basename(file_path)
+
+        response = HttpResponse(
+            file_content, content_type="application/x-zip-compressed"
+        )
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        return response
+
     def create(self, request, *args, **kwargs):
         input_serializer = self.get_serializer(data=request.data)
         input_serializer.is_valid(raise_exception=True)
@@ -1195,10 +1305,6 @@ class ScanViewSet(BaseRLSViewSet):
                     # Disabled for now
                     # checks_to_execute=scan.scanner_args.get("checks_to_execute"),
                 },
-                link=perform_scan_summary_task.si(
-                    tenant_id=self.request.tenant_id,
-                    scan_id=str(scan.id),
-                ),
             )
 
         scan.task_id = task.id
@@ -1401,17 +1507,10 @@ class ResourceViewSet(BaseRLSViewSet):
 @method_decorator(CACHE_DECORATOR, name="list")
 @method_decorator(CACHE_DECORATOR, name="retrieve")
 class FindingViewSet(BaseRLSViewSet):
-    queryset = Finding.objects.all()
+    queryset = Finding.all_objects.all()
     serializer_class = FindingSerializer
-    prefetch_for_includes = {
-        "__all__": [],
-        "resources": [
-            Prefetch("resources", queryset=Resource.objects.select_related("findings"))
-        ],
-        "scan": [Prefetch("scan", queryset=Scan.objects.select_related("findings"))],
-    }
-    http_method_names = ["get"]
     filterset_class = FindingFilter
+    http_method_names = ["get"]
     ordering = ["-inserted_at"]
     ordering_fields = [
         "status",
@@ -1420,6 +1519,18 @@ class FindingViewSet(BaseRLSViewSet):
         "inserted_at",
         "updated_at",
     ]
+    prefetch_for_includes = {
+        "__all__": [],
+        "resources": [
+            Prefetch(
+                "resources",
+                queryset=Resource.all_objects.prefetch_related("tags", "findings"),
+            )
+        ],
+        "scan": [
+            Prefetch("scan", queryset=Scan.all_objects.select_related("findings"))
+        ],
+    }
     # RBAC required permissions (implicit -> MANAGE_PROVIDERS enable unlimited visibility or check the visibility of
     # the provider through the provider group)
     required_permissions = []
@@ -1433,41 +1544,34 @@ class FindingViewSet(BaseRLSViewSet):
         return super().get_serializer_class()
 
     def get_queryset(self):
+        tenant_id = self.request.tenant_id
         user_roles = get_role(self.request.user)
         if user_roles.unlimited_visibility:
-            # User has unlimited visibility, return all scans
-            queryset = Finding.objects.filter(tenant_id=self.request.tenant_id)
+            # User has unlimited visibility, return all findings
+            queryset = Finding.all_objects.filter(tenant_id=tenant_id)
         else:
-            # User lacks permission, filter providers based on provider groups associated with the role
-            queryset = Finding.objects.filter(
+            # User lacks permission, filter findings based on provider groups associated with the role
+            queryset = Finding.all_objects.filter(
                 scan__provider__in=get_providers(user_roles)
             )
 
         search_value = self.request.query_params.get("filter[search]", None)
         if search_value:
-            # Django's ORM will build a LEFT JOIN and OUTER JOIN on any "through" tables, resulting in duplicates
-            # The duplicates then require a `distinct` query
             search_query = SearchQuery(
                 search_value, config="simple", search_type="plain"
             )
+
+            resource_match = Resource.all_objects.filter(
+                text_search=search_query,
+                id__in=ResourceFindingMapping.objects.filter(
+                    resource_id=OuterRef("pk"),
+                    tenant_id=tenant_id,
+                ).values("resource_id"),
+            )
+
             queryset = queryset.filter(
-                Q(impact_extended__contains=search_value)
-                | Q(status_extended__contains=search_value)
-                | Q(check_id=search_value)
-                | Q(check_id__icontains=search_value)
-                | Q(text_search=search_query)
-                | Q(resources__uid=search_value)
-                | Q(resources__name=search_value)
-                | Q(resources__region=search_value)
-                | Q(resources__service=search_value)
-                | Q(resources__type=search_value)
-                | Q(resources__uid__contains=search_value)
-                | Q(resources__name__contains=search_value)
-                | Q(resources__region__contains=search_value)
-                | Q(resources__service__contains=search_value)
-                | Q(resources__tags__text_search=search_query)
-                | Q(resources__text_search=search_query)
-            ).distinct()
+                Q(text_search=search_query) | Q(Exists(resource_match))
+            )
 
         return queryset
 
@@ -1477,10 +1581,22 @@ class FindingViewSet(BaseRLSViewSet):
             return queryset
         return super().filter_queryset(queryset)
 
-    def inserted_at_to_uuidv7(self, inserted_at):
-        if inserted_at is None:
-            return None
-        return datetime_to_uuid7(inserted_at)
+    def list(self, request, *args, **kwargs):
+        base_qs = self.filter_queryset(self.get_queryset())
+        paginated_ids = self.paginate_queryset(base_qs.values_list("id", flat=True))
+        if paginated_ids is not None:
+            ids = list(paginated_ids)
+            findings = (
+                Finding.all_objects.filter(tenant_id=self.request.tenant_id, id__in=ids)
+                .select_related("scan")
+                .prefetch_related("resources")
+            )
+            # Re-sort in Python to preserve ordering:
+            findings = sorted(findings, key=lambda x: ids.index(x.id))
+            serializer = self.get_serializer(findings, many=True)
+            return self.get_paginated_response(serializer.data)
+        serializer = self.get_serializer(base_qs, many=True)
+        return Response(serializer.data)
 
     @action(detail=False, methods=["get"], url_name="findings_services_regions")
     def findings_services_regions(self, request):

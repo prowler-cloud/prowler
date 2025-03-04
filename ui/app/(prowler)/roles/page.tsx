@@ -7,7 +7,7 @@ import { filterRoles } from "@/components/filters/data-filters";
 import { AddRoleButton } from "@/components/roles";
 import { ColumnsRoles } from "@/components/roles/table";
 import { SkeletonTableRoles } from "@/components/roles/table";
-import { Header } from "@/components/ui";
+import { ContentLayout } from "@/components/ui";
 import { DataTable, DataTableFilterCustom } from "@/components/ui/table";
 import { SearchParamsProps } from "@/types";
 
@@ -19,9 +19,7 @@ export default async function Roles({
   const searchParamsKey = JSON.stringify(searchParams || {});
 
   return (
-    <>
-      <Header title="Roles" icon="mdi:account-key-outline" />
-      <Spacer y={4} />
+    <ContentLayout title="Roles" icon="mdi:account-key-outline">
       <FilterControls search />
       <Spacer y={8} />
       <AddRoleButton />
@@ -32,7 +30,7 @@ export default async function Roles({
       <Suspense key={searchParamsKey} fallback={<SkeletonTableRoles />}>
         <SSRDataTable searchParams={searchParams} />
       </Suspense>
-    </>
+    </ContentLayout>
   );
 }
 
