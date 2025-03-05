@@ -29,7 +29,7 @@ export const ComplianceScanInfo: React.FC<ComplianceScanInfoProps> = ({
         hideCopyButton
       />
       <Divider orientation="vertical" className="mx-2 h-6" />
-      <div className="flex flex-col items-start justify-center">
+      <div className="flex flex-col items-start">
         <p className="text-xs font-light">{scan.attributes.name || "- -"}</p>
         <DateWithTime inline dateTime={scan.attributes.completed_at} />
       </div>
