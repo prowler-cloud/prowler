@@ -69,11 +69,6 @@ jobs:
           shortSha=$(git rev-parse --short ${{ github.sha }})
           echo "SHORT_SHA=${shortSha}" >> $GITHUB_ENV
 
-      - name: Get latest release name
-        run: |
-          releaseName=$(curl --silent "https://api.github.com/repos/${{ github.repository }}/releases/latest" | jq -r .name)
-          echo "LATEST_RELEASE=${releaseName}" >> $GITHUB_ENV
-
       - name: Login to DockerHub
         uses: docker/login-action@v3
         with:
@@ -90,7 +85,7 @@ jobs:
         with:
           context: ${{ env.WORKING_DIRECTORY }}
           build-args: |
-            NEXT_PUBLIC_PROWLER_RELEASE_VERSION=${{ env.LATEST_RELEASE }}
+            NEXT_PUBLIC_PROWLER_RELEASE_VERSION=${{ env.SHORT_SHA }}
           # Set push: false for testing
           push: true
           tags: |
@@ -105,7 +100,7 @@ jobs:
         with:
           context: ${{ env.WORKING_DIRECTORY }}
           build-args: |
-            NEXT_PUBLIC_PROWLER_RELEASE_VERSION=${{ env.LATEST_RELEASE }}
+            NEXT_PUBLIC_PROWLER_RELEASE_VERSION=${{ env.RELEASE_TAG }}
           push: true
           tags: |
             ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ env.RELEASE_TAG }}
