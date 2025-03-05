@@ -25,6 +25,10 @@ export default async function Compliance({
 }) {
   const searchParamsKey = JSON.stringify(searchParams || {});
 
+  const filters = Object.fromEntries(
+    Object.entries(searchParams).filter(([key]) => key.startsWith("filter[")),
+  );
+
   const scansData = await getScans({
     filters: {
       "filter[state]": "completed",
@@ -64,8 +68,10 @@ export default async function Compliance({
 
   const selectedScanId =
     searchParams.scanId || expandedScansData[0]?.id || null;
+  const query = (filters["filter[search]"] as string) || "";
 
   const metadataInfoData = await getMetadataInfo({
+    query,
     filters: {
       "filter[scan]": selectedScanId,
     },
