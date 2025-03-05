@@ -95,8 +95,8 @@ const SSRComplianceGrid = async ({
   // Check if the response contains no data
   if (!compliancesData || compliancesData?.data?.length === 0) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <div className="text-default-500">
+      <div className="flex h-full items-center">
+        <div className="text-sm text-default-500">
           No compliance data available for the selected scan.
         </div>
       </div>
@@ -106,8 +106,8 @@ const SSRComplianceGrid = async ({
   // Handle errors returned by the API
   if (compliancesData?.errors?.length > 0) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <div className="text-default-500">Provide a valid scan ID.</div>
+      <div className="flex h-full items-center">
+        <div className="text-sm text-default-500">Provide a valid scan ID.</div>
       </div>
     );
   }

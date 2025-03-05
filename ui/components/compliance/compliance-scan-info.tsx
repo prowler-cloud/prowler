@@ -21,7 +21,7 @@ export const ComplianceScanInfo: React.FC<ComplianceScanInfoProps> = ({
   scan,
 }) => {
   return (
-    <div className="flex items-center">
+    <div className="flex w-fit items-center">
       <EntityInfoShort
         cloudProvider={scan.providerInfo.provider}
         entityAlias={scan.providerInfo.alias}
@@ -30,7 +30,9 @@ export const ComplianceScanInfo: React.FC<ComplianceScanInfoProps> = ({
       />
       <Divider orientation="vertical" className="mx-2 h-6" />
       <div className="flex flex-col items-start">
-        <p className="text-xs font-light">{scan.attributes.name || "- -"}</p>
+        <p className="text-xs text-default-500">
+          {scan.attributes.name || "- -"}
+        </p>
         <DateWithTime inline dateTime={scan.attributes.completed_at} />
       </div>
     </div>
