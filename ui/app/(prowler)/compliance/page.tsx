@@ -4,6 +4,7 @@ import { Spacer } from "@nextui-org/react";
 import { Suspense } from "react";
 
 import { getCompliancesOverview } from "@/actions/compliances";
+import { getMetadataInfo } from "@/actions/findings";
 import { getProvider } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
 import {
@@ -12,7 +13,9 @@ import {
   NoScansAvailable,
 } from "@/components/compliance";
 import { DataCompliance } from "@/components/compliance/data-compliance";
+import { FilterControls } from "@/components/filters";
 import { ContentLayout } from "@/components/ui";
+import { DataTableFilterCustom } from "@/components/ui/table/data-table-filter-custom";
 import { ComplianceOverviewData, ScanProps, SearchParamsProps } from "@/types";
 
 export default async function Compliance({
@@ -22,19 +25,19 @@ export default async function Compliance({
 }) {
   const searchParamsKey = JSON.stringify(searchParams || {});
 
-  const scansData = await getScans({});
+  const scansData = await getScans({
+    filters: {
+      "filter[state]": "completed",
+    },
+  });
 
   if (!scansData?.data) {
     return <NoScansAvailable />;
   }
 
-  const completedScans = scansData.data.filter(
-    (scan: ScanProps) => scan.attributes.state === "completed",
-  );
-
   // Expand scans with provider information
   const expandedScansData = await Promise.all(
-    completedScans.map(async (scan: ScanProps) => {
+    scansData.data.map(async (scan: ScanProps) => {
       const providerId = scan.relationships?.provider?.data?.id;
 
       if (!providerId) {
@@ -62,11 +65,32 @@ export default async function Compliance({
   const selectedScanId =
     searchParams.scanId || expandedScansData[0]?.id || null;
 
+  const metadataInfoData = await getMetadataInfo({
+    filters: {
+      "filter[scan]": selectedScanId,
+    },
+  });
+
+  const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
+
   return (
     <ContentLayout title="Compliance" icon="fluent-mdl2:compliance-audit">
       {selectedScanId ? (
         <>
+          <FilterControls search />
+          <Spacer y={8} />
           <DataCompliance scans={expandedScansData} />
+          <Spacer y={8} />
+          <DataTableFilterCustom
+            filters={[
+              {
+                key: "region__in",
+                labelCheckboxGroup: "Regions",
+                values: uniqueRegions,
+              },
+            ]}
+            defaultOpen={true}
+          />
           <Spacer y={12} />
           <Suspense key={searchParamsKey} fallback={<ComplianceSkeletonGrid />}>
             <SSRComplianceGrid searchParams={searchParams} />
@@ -87,9 +111,18 @@ const SSRComplianceGrid = async ({
   const scanId = searchParams.scanId?.toString() || "";
   const regionFilter = searchParams["filter[region__in]"]?.toString() || "";
 
+  // Extract all filter parameters
+  const filters = Object.fromEntries(
+    Object.entries(searchParams).filter(([key]) => key.startsWith("filter[")),
+  );
+
+  // Extract query from filters
+  const query = (filters["filter[search]"] as string) || "";
+
   const compliancesData = await getCompliancesOverview({
     scanId,
     region: regionFilter,
+    query,
   });
 
   // Check if the response contains no data
