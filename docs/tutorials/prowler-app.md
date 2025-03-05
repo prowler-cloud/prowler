@@ -172,3 +172,15 @@ While the scan is running, start exploring the findings in these sections:
 - **Browse All Findings**: Detailed list of findings detected, where you can filter by severity, service, and more. <img src="../../img/findings.png" alt="Findings" width="700"/>
 
 To view all `new` findings that have not been seen prior to this scan, click the `Delta` filter and select `new`. To view all `changed` findings that have had a status change (from `PASS` to `FAIL` for example), click the `Delta` filter and select `changed`.
+
+## **Step 9: Download the Outputs**
+
+After finishing the scan we can also download the outputs generated after the scan. The generated files are a CSV, an OSCF and an HTML with the findings information.
+
+To download these files we have to click on the Download button, this button will be available only when the scan is finished:
+
+<img src="../../img/download_output.png" alt="Download output" width="700"/>
+
+This will download a ZIP file which contains an output folder and inside are the files mentioned above:
+
+<img src="../../img/output_folder.png" alt="Output folder" width="700"/>
