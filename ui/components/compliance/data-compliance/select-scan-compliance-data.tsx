@@ -1,6 +1,5 @@
 import { Select, SelectItem } from "@nextui-org/react";
 
-import { EntityInfoShort } from "@/components/ui/entities";
 import { SelectScanComplianceDataProps } from "@/types";
 
 import { ComplianceScanInfo } from "../compliance-scan-info";

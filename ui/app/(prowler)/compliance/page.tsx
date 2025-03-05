@@ -62,17 +62,6 @@ export default async function Compliance({
   const selectedScanId =
     searchParams.scanId || expandedScansData[0]?.id || null;
 
-  // To-do: Improve this data fetching
-  let compliancesData;
-  try {
-    compliancesData = await getCompliancesOverview({
-      scanId: selectedScanId as string,
-    });
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error("Error fetching compliance data:", error);
-  }
-
   return (
     <ContentLayout title="Compliance" icon="fluent-mdl2:compliance-audit">
       {selectedScanId ? (
@@ -98,24 +87,10 @@ const SSRComplianceGrid = async ({
   const scanId = searchParams.scanId?.toString() || "";
   const regionFilter = searchParams["filter[region__in]"]?.toString() || "";
 
-  // Fetch compliance data
-  let compliancesData;
-  try {
-    compliancesData = await getCompliancesOverview({
-      scanId,
-      region: regionFilter,
-    });
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error("Error fetching compliances overview:", error);
-    return (
-      <div className="flex h-full items-center justify-center">
-        <div className="text-default-500">
-          Failed to load compliance data. Please try again later.
-        </div>
-      </div>
-    );
-  }
+  const compliancesData = await getCompliancesOverview({
+    scanId,
+    region: regionFilter,
+  });
 
   // Check if the response contains no data
   if (!compliancesData || compliancesData?.data?.length === 0) {
