@@ -211,7 +211,7 @@ class Entra(Microsoft365Service):
                                 )
                                 if policy.session_controls
                                 and policy.session_controls.sign_in_frequency
-                                else None
+                                else SignInFrequencyInterval.EVERY_TIME
                             ),
                         ),
                     ),
