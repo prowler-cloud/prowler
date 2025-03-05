@@ -4,6 +4,7 @@ import { Spacer } from "@nextui-org/react";
 import { Suspense } from "react";
 
 import { getCompliancesOverview } from "@/actions/compliances";
+import { getProvider } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
 import {
   ComplianceCard,
@@ -12,60 +13,61 @@ import {
 } from "@/components/compliance";
 import { DataCompliance } from "@/components/compliance/data-compliance";
 import { ContentLayout } from "@/components/ui";
-import { ComplianceOverviewData, SearchParamsProps } from "@/types";
+import { ComplianceOverviewData, ScanProps, SearchParamsProps } from "@/types";
 
 export default async function Compliance({
   searchParams,
 }: {
   searchParams: SearchParamsProps;
 }) {
-  let scansData;
-  let scanList: {
-    id: string;
-    name: string;
-    state: string;
-    progress: number;
-  }[] = [];
+  const searchParamsKey = JSON.stringify(searchParams || {});
 
-  try {
-    scansData = await getScans({});
-    scanList =
-      scansData?.data
-        ?.filter(
-          (scan: any) =>
-            scan.attributes.state === "completed" &&
-            scan.attributes.progress === 100,
-        )
-        .map((scan: any) => ({
-          id: scan.id,
-          name: scan.attributes.name || "Unnamed Scan",
-          state: scan.attributes.state,
-          progress: scan.attributes.progress,
-        })) || [];
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error("Error fetching scans data:", error);
+  const scansData = await getScans({});
+
+  if (!scansData?.data) {
+    return <NoScansAvailable />;
   }
 
-  const selectedScanId = searchParams.scanId || scanList[0]?.id || null;
+  const completedScans = scansData.data.filter(
+    (scan: ScanProps) => scan.attributes.state === "completed",
+  );
 
-  // Fetch compliance data for regions
+  // Expand scans with provider information
+  const expandedScansData = await Promise.all(
+    completedScans.map(async (scan: ScanProps) => {
+      const providerId = scan.relationships?.provider?.data?.id;
+
+      if (!providerId) {
+        return { ...scan, providerInfo: null };
+      }
+
+      const formData = new FormData();
+      formData.append("id", providerId);
+
+      const providerData = await getProvider(formData);
+
+      return {
+        ...scan,
+        providerInfo: providerData?.data
+          ? {
+              provider: providerData.data.attributes.provider,
+              uid: providerData.data.attributes.uid,
+              alias: providerData.data.attributes.alias,
+            }
+          : null,
+      };
+    }),
+  );
+
+  const selectedScanId =
+    searchParams.scanId || expandedScansData[0]?.id || null;
+
+  // To-do: Improve this data fetching
   let compliancesData;
-  let regions: string[] = [];
   try {
     compliancesData = await getCompliancesOverview({
       scanId: selectedScanId as string,
     });
-    regions = compliancesData?.data
-      ? Array.from(
-          new Set(
-            compliancesData.data.map(
-              (compliance: ComplianceOverviewData) =>
-                compliance.attributes.region as string,
-            ),
-          ),
-        )
-      : [];
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error("Error fetching compliance data:", error);
@@ -75,9 +77,9 @@ export default async function Compliance({
     <ContentLayout title="Compliance" icon="fluent-mdl2:compliance-audit">
       {selectedScanId ? (
         <>
-          <DataCompliance scans={scanList} regions={regions} />
+          <DataCompliance scans={expandedScansData} />
           <Spacer y={12} />
-          <Suspense fallback={<ComplianceSkeletonGrid />}>
+          <Suspense key={searchParamsKey} fallback={<ComplianceSkeletonGrid />}>
             <SSRComplianceGrid searchParams={searchParams} />
           </Suspense>
         </>

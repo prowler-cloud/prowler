@@ -1,10 +1,9 @@
 import { Select, SelectItem } from "@nextui-org/react";
 
-interface SelectScanComplianceDataProps {
-  scans: { id: string; name: string; state: string; progress: number }[];
-  selectedScanId: string;
-  onSelectionChange: (selectedKey: string) => void;
-}
+import { EntityInfoShort } from "@/components/ui/entities";
+import { SelectScanComplianceDataProps } from "@/types";
+
+import { ComplianceScanInfo } from "../compliance-scan-info";
 
 export const SelectScanComplianceData = ({
   scans,
@@ -16,10 +15,10 @@ export const SelectScanComplianceData = ({
       aria-label="Select a Scan"
       placeholder="Select a scan"
       classNames={{
+        base: "bg-white",
         selectorIcon: "right-2",
       }}
       labelPlacement="outside"
-      size="md"
       selectedKeys={new Set([selectedScanId])}
       onSelectionChange={(keys) =>
         onSelectionChange(Array.from(keys)[0] as string)
@@ -27,25 +26,15 @@ export const SelectScanComplianceData = ({
       renderValue={() => {
         const selectedItem = scans.find((item) => item.id === selectedScanId);
         return selectedItem ? (
-          <div className="flex flex-col">
-            <span className="font-bold">{selectedItem.name}</span>
-            <span className="text-sm text-gray-500">
-              State: {selectedItem.state}, Progress: {selectedItem.progress}%
-            </span>
-          </div>
+          <ComplianceScanInfo scan={selectedItem} />
         ) : (
           "Select a scan"
         );
       }}
     >
       {scans.map((scan) => (
-        <SelectItem key={scan.id} textValue={scan.name}>
-          <div className="flex flex-col">
-            <span className="font-bold">{scan.name}</span>
-            <span className="text-sm text-gray-500">
-              State: {scan.state}, Progress: {scan.progress}%
-            </span>
-          </div>
+        <SelectItem key={scan.id} textValue={scan.attributes.name || "- -"}>
+          <ComplianceScanInfo scan={scan} />
         </SelectItem>
       ))}
     </Select>

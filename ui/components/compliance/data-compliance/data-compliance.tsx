@@ -6,17 +6,19 @@ import { useCallback, useEffect, useState } from "react";
 import { SelectScanComplianceData } from "@/components/compliance/data-compliance";
 import { CrossIcon } from "@/components/icons";
 import { CustomButton, CustomDropdownFilter } from "@/components/ui/custom";
-
+import { SelectScanComplianceDataProps } from "@/types";
 interface DataComplianceProps {
-  scans: { id: string; name: string; state: string; progress: number }[];
-  regions: string[];
+  scans: SelectScanComplianceDataProps["scans"];
+  regions?: string[];
 }
 
 export const DataCompliance = ({ scans, regions }: DataComplianceProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [showClearButton, setShowClearButton] = useState(false);
+
   const scanIdParam = searchParams.get("scanId");
+
   const selectedScanId = scanIdParam || (scans.length > 0 ? scans[0].id : "");
 
   useEffect(() => {
@@ -33,6 +35,7 @@ export const DataCompliance = ({ scans, regions }: DataComplianceProps) => {
     );
     setShowClearButton(hasFilters);
   }, [searchParams]);
+
   const handleScanChange = (selectedKey: string) => {
     const params = new URLSearchParams(searchParams);
     params.set("scanId", selectedKey);
@@ -54,6 +57,7 @@ export const DataCompliance = ({ scans, regions }: DataComplianceProps) => {
     },
     [router, searchParams],
   );
+
   const clearAllFilters = useCallback(() => {
     const params = new URLSearchParams(searchParams.toString());
     Array.from(params.keys()).forEach((key) => {
@@ -63,6 +67,7 @@ export const DataCompliance = ({ scans, regions }: DataComplianceProps) => {
     });
     router.push(`?${params.toString()}`, { scroll: false });
   }, [router, searchParams]);
+
   return (
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-1 items-center gap-x-4 gap-y-4 md:grid-cols-2 xl:grid-cols-4">
@@ -74,7 +79,7 @@ export const DataCompliance = ({ scans, regions }: DataComplianceProps) => {
         <CustomDropdownFilter
           filter={{
             key: "region__in",
-            values: regions,
+            values: regions || [],
             labelCheckboxGroup: "Regions",
           }}
           onFilterChange={pushDropdownFilter}

@@ -7,12 +7,14 @@ interface EntityInfoProps {
   cloudProvider: "aws" | "azure" | "gcp" | "kubernetes";
   entityAlias?: string;
   entityId?: string;
+  hideCopyButton?: boolean;
 }
 
 export const EntityInfoShort: React.FC<EntityInfoProps> = ({
   cloudProvider,
   entityAlias,
   entityId,
+  hideCopyButton = false,
 }) => {
   return (
     <div className="flex w-full items-center justify-between space-x-2">
@@ -22,7 +24,10 @@ export const EntityInfoShort: React.FC<EntityInfoProps> = ({
           {entityAlias && (
             <span className="text-tiny text-default-500">{entityAlias}</span>
           )}
-          <SnippetId entityId={entityId ?? ""} />
+          <SnippetId
+            entityId={entityId ?? ""}
+            hideCopyButton={hideCopyButton}
+          />
         </div>
       </div>
     </div>
