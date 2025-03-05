@@ -74,12 +74,15 @@ class HTML(Output):
                 and not self._file_descriptor.closed
                 and self._data
             ):
-                HTML.write_header(self._file_descriptor, provider, stats)
+                if self._file_descriptor.tell() == 0:
+                    HTML.write_header(
+                        self._file_descriptor, provider, stats, self._from_cli
+                    )
                 for finding in self._data:
                     self._file_descriptor.write(finding)
-                HTML.write_footer(self._file_descriptor)
-                # Close file descriptor
-                self._file_descriptor.close()
+                if self.close_file or self._from_cli:
+                    HTML.write_footer(self._file_descriptor)
+                    self._file_descriptor.close()
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -87,7 +90,10 @@ class HTML(Output):
 
     @staticmethod
     def write_header(
-        file_descriptor: TextIOWrapper, provider: Provider, stats: dict
+        file_descriptor: TextIOWrapper,
+        provider: Provider,
+        stats: dict,
+        from_cli: bool = True,
     ) -> None:
         """
         Writes the header of the HTML file.
@@ -96,6 +102,7 @@ class HTML(Output):
             file_descriptor (file): the file descriptor to write the header
             provider (Provider): the provider object
             stats (dict): the statistics of the findings
+            from_cli (bool): whether the request is from the CLI or not
         """
         try:
             file_descriptor.write(
@@ -153,7 +160,7 @@ class HTML(Output):
                 </div>
                 </li>
                 <li class="list-group-item">
-                <b>Parameters used:</b> {" ".join(sys.argv[1:])}
+                <b>Parameters used:</b> {" ".join(sys.argv[1:]) if from_cli else ""}
                 </li>
                 <li class="list-group-item">
                 <b>Date:</b> {timestamp.isoformat()}
@@ -205,7 +212,7 @@ class HTML(Output):
                     <th scope="col">Resource Tags</th>
                     <th scope="col">Status Extended</th>
                     <th scope="col">Risk</th>
-                    <th scope="col">Recomendation</th>
+                    <th scope="col">Recommendation</th>
                     <th scope="col">Compliance</th>
                 </tr>
             </thead>

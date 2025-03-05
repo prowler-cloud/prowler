@@ -71,6 +71,15 @@ For AWS, enter your `AWS Account ID` and choose one of the following methods to 
 
     <img src="../../img/aws-role.png" alt="AWS Role" width="700"/>
 
+???+ note
+    check if your AWS Security Token Service (STS) has the EU (Ireland) endpoint active. If not we will not be able to connect to your AWS account.
+
+    If that is the case your STS configuration may look like this:
+
+    <img src="../../img/sts-configuration.png" alt="AWS Role" width="800"/>
+
+    To solve this issue, please activate the EU (Ireland) STS endpoint.
+
 ---
 
 ### **Step 4.2: Azure Credentials**
@@ -98,6 +107,34 @@ For Kubernetes, Prowler App uses a `kubeconfig` file to authenticate, paste the 
 By default, the `kubeconfig` file is located at `~/.kube/config`.
 
 <img src="../../img/kubernetes-credentials.png" alt="Kubernetes Credentials" width="700"/>
+
+???+ note
+    If you are adding an **EKS**, **GKE**, **AKS** or external cluster, follow these additional steps to ensure proper authentication:
+
+    ** Make sure your cluster allow traffic from the Prowler Cloud IP address `52.48.254.174/32` **
+
+    1. Apply the necessary Kubernetes resources to your EKS, GKE, AKS or external cluster (you can find the files in the [`kubernetes` directory of the Prowler repository](https://github.com/prowler-cloud/prowler/tree/master/kubernetes)):
+    ```console
+    kubectl apply -f kubernetes/prowler-sa.yaml
+    kubectl apply -f kubernetes/prowler-role.yaml
+    kubectl apply -f kubernetes/prowler-rolebinding.yaml
+    ```
+
+    2. Generate a long-lived token for authentication:
+    ```console
+    kubectl create token prowler-sa -n prowler-ns --duration=0
+    ```
+        - **Security Note:** The `--duration=0` option generates a non-expiring token, which may pose a security risk if not managed properly. Users should decide on an appropriate expiration time based on their security policies. If a limited-time token is preferred, set `--duration=<TIME>` (e.g., `--duration=24h`).
+        - **Important:** If the token expires, Prowler Cloud will no longer be able to authenticate with the cluster. In this case, you will need to generate a new token and **remove and re-add the provider in Prowler Cloud** with the updated `kubeconfig`.
+
+    3. Update your `kubeconfig` to use the ServiceAccount token:
+    ```console
+    kubectl config set-credentials prowler-sa --token=<SA_TOKEN>
+    kubectl config set-context <CONTEXT_NAME> --user=prowler-sa
+    ```
+    Replace <SA_TOKEN> with the generated token and <CONTEXT_NAME> with your KubeConfig Context Name of your EKS, GKE or AKS cluster.
+
+    4. Now you can add the modified `kubeconfig` in Prowler Cloud. Then simply test the connection.
 
 ---
 

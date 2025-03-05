@@ -8,10 +8,11 @@ description = "Prowler's API (Django/DRF)"
 license = "Apache-2.0"
 name = "prowler-api"
 package-mode = false
-version = "1.4.0"
+version = "1.5.0"
 
 [tool.poetry.dependencies]
 celery = {extras = ["pytest"], version = "^5.4.0"}
+dj-rest-auth = {extras = ["with_social", "jwt"], version = "7.0.1"}
 django = "5.1.5"
 django-celery-beat = "^2.7.0"
 django-celery-results = "^2.5.1"
@@ -32,6 +33,7 @@ psycopg2-binary = "2.9.9"
 pytest-celery = {extras = ["redis"], version = "^1.0.1"}
 # Needed for prowler compatibility
 python = ">=3.11,<3.13"
+sentry-sdk = {extras = ["django"], version = "^2.20.0"}
 uuid6 = "2024.7.10"
 
 [tool.poetry.group.dev.dependencies]
@@ -50,6 +52,7 @@ pytest-randomly = "3.15.0"
 pytest-xdist = "3.6.1"
 ruff = "0.5.0"
 safety = "3.2.9"
+tqdm = "4.67.1"
 vulture = "2.14"
 
 [tool.poetry.scripts]

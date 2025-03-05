@@ -8,7 +8,9 @@ class kms_key_not_publicly_accessible(Check):
         findings = []
         for key in kms_client.keys:
             if (
-                key.manager == "CUSTOMER" and key.state == "Enabled"
+                key.manager == "CUSTOMER"
+                and key.state == "Enabled"
+                and key.policy is not None
             ):  # only customer KMS have policies
                 report = Check_Report_AWS(metadata=self.metadata(), resource=key)
                 report.status = "PASS"

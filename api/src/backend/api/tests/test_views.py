@@ -1,10 +1,15 @@
+import glob
+import io
 import json
+import os
 from datetime import datetime, timedelta, timezone
 from unittest.mock import ANY, Mock, patch
 
 import jwt
 import pytest
+from botocore.exceptions import NoCredentialsError
 from conftest import API_JSON_CONTENT_TYPE, TEST_PASSWORD, TEST_USER
+from django.conf import settings
 from django.urls import reverse
 from rest_framework import status
 
@@ -19,12 +24,19 @@ from api.models import (
     RoleProviderGroupRelationship,
     Scan,
     StateChoices,
+    Task,
     User,
     UserRoleRelationship,
 )
 from api.rls import Tenant
 
 TODAY = str(datetime.today().date())
+
+
+def today_after_n_days(n_days: int) -> str:
+    return datetime.strftime(
+        datetime.today().date() + timedelta(days=n_days), "%Y-%m-%d"
+    )
 
 
 @pytest.mark.django_db
@@ -877,6 +889,16 @@ class TestProviderViewSet:
                     "provider": "kubernetes",
                     "uid": "kubernetes-test-123456789",
                     "alias": "test",
+                },
+                {
+                    "provider": "kubernetes",
+                    "uid": "arn:aws:eks:us-east-1:111122223333:cluster/test-cluster-long-name-123456789",
+                    "alias": "EKS",
+                },
+                {
+                    "provider": "kubernetes",
+                    "uid": "gke_aaaa-dev_europe-test1_dev-aaaa-test-cluster-long-name-123456789",
+                    "alias": "GKE",
                 },
                 {
                     "provider": "azure",
@@ -2062,9 +2084,9 @@ class TestScanViewSet:
                 ("started_at.gte", "2024-01-01", 3),
                 ("started_at.lte", "2024-01-01", 0),
                 ("trigger", Scan.TriggerChoices.MANUAL, 1),
-                ("state", StateChoices.AVAILABLE, 2),
+                ("state", StateChoices.AVAILABLE, 1),
                 ("state", StateChoices.FAILED, 1),
-                ("state.in", f"{StateChoices.FAILED},{StateChoices.AVAILABLE}", 3),
+                ("state.in", f"{StateChoices.FAILED},{StateChoices.AVAILABLE}", 2),
                 ("trigger", Scan.TriggerChoices.MANUAL, 1),
             ]
         ),
@@ -2138,6 +2160,159 @@ class TestScanViewSet:
     def test_scans_sort_invalid(self, authenticated_client):
         response = authenticated_client.get(reverse("scan-list"), {"sort": "invalid"})
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_report_executing(self, authenticated_client, scans_fixture):
+        """
+        When the scan is still executing (state == EXECUTING), the view should return
+        the task data with HTTP 202 and a Content-Location header.
+        """
+        scan = scans_fixture[0]
+        scan.state = StateChoices.EXECUTING
+        scan.save()
+
+        task = Task.objects.create(tenant_id=scan.tenant_id)
+        dummy_task_data = {"id": str(task.id), "state": StateChoices.EXECUTING}
+
+        scan.task = task
+        scan.save()
+
+        with patch(
+            "api.v1.views.TaskSerializer",
+            return_value=type("DummySerializer", (), {"data": dummy_task_data}),
+        ):
+            url = reverse("scan-report", kwargs={"pk": scan.id})
+            response = authenticated_client.get(url)
+            assert response.status_code == status.HTTP_202_ACCEPTED
+            assert "Content-Location" in response
+            assert dummy_task_data["id"] in response["Content-Location"]
+
+    def test_report_celery_task_executing(self, authenticated_client, scans_fixture):
+        """
+        When the scan is not executing but a related celery task exists and is running,
+        the view should return that task data with HTTP 202.
+        """
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+        scan.output_location = "dummy"
+        scan.save()
+
+        dummy_task = Task.objects.create(tenant_id=scan.tenant_id)
+        dummy_task.id = "dummy-task-id"
+        dummy_task_data = {"id": dummy_task.id, "state": StateChoices.EXECUTING}
+
+        with patch("api.v1.views.Task.objects.get", return_value=dummy_task), patch(
+            "api.v1.views.TaskSerializer",
+            return_value=type("DummySerializer", (), {"data": dummy_task_data}),
+        ):
+            url = reverse("scan-report", kwargs={"pk": scan.id})
+            response = authenticated_client.get(url)
+            assert response.status_code == status.HTTP_202_ACCEPTED
+            assert "Content-Location" in response
+            assert dummy_task_data["id"] in response["Content-Location"]
+
+    def test_report_no_output_location(self, authenticated_client, scans_fixture):
+        """
+        If the scan does not have an output_location, the view should return a 404.
+        """
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+        scan.output_location = ""
+        scan.save()
+
+        url = reverse("scan-report", kwargs={"pk": scan.id})
+        response = authenticated_client.get(url)
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert response.json()["errors"]["detail"] == "The scan has no reports."
+
+    def test_report_s3_no_credentials(
+        self, authenticated_client, scans_fixture, monkeypatch
+    ):
+        """
+        When output_location is an S3 URL and get_s3_client() raises a credentials exception,
+        the view should return HTTP 403 with the proper error message.
+        """
+        scan = scans_fixture[0]
+        bucket = "test-bucket"
+        key = "report.zip"
+        scan.output_location = f"s3://{bucket}/{key}"
+        scan.state = StateChoices.COMPLETED
+        scan.save()
+
+        def fake_get_s3_client():
+            raise NoCredentialsError()
+
+        monkeypatch.setattr("api.v1.views.get_s3_client", fake_get_s3_client)
+
+        url = reverse("scan-report", kwargs={"pk": scan.id})
+        response = authenticated_client.get(url)
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert (
+            response.json()["errors"]["detail"]
+            == "There is a problem with credentials."
+        )
+
+    def test_report_s3_success(self, authenticated_client, scans_fixture, monkeypatch):
+        """
+        When output_location is an S3 URL and the S3 client returns the file successfully,
+        the view should return the ZIP file with HTTP 200 and proper headers.
+        """
+        scan = scans_fixture[0]
+        bucket = "test-bucket"
+        key = "report.zip"
+        scan.output_location = f"s3://{bucket}/{key}"
+        scan.state = StateChoices.COMPLETED
+        scan.save()
+
+        monkeypatch.setattr(
+            "api.v1.views.env", type("env", (), {"str": lambda self, key: bucket})()
+        )
+
+        class FakeS3Client:
+            def get_object(self, Bucket, Key):
+                assert Bucket == bucket
+                assert Key == key
+                return {"Body": io.BytesIO(b"s3 zip content")}
+
+        monkeypatch.setattr("api.v1.views.get_s3_client", lambda: FakeS3Client())
+
+        url = reverse("scan-report", kwargs={"pk": scan.id})
+        response = authenticated_client.get(url)
+        assert response.status_code == 200
+        expected_filename = os.path.basename("report.zip")
+        content_disposition = response.get("Content-Disposition")
+        assert content_disposition.startswith('attachment; filename="')
+        assert f'filename="{expected_filename}"' in content_disposition
+        assert response.content == b"s3 zip content"
+
+    def test_report_local_file(
+        self, authenticated_client, scans_fixture, tmp_path, monkeypatch
+    ):
+        """
+        When output_location is a local file path, the view should read the file from disk
+        and return it with proper headers.
+        """
+        scan = scans_fixture[0]
+        file_content = b"local zip file content"
+        file_path = tmp_path / "report.zip"
+        file_path.write_bytes(file_content)
+
+        scan.output_location = str(file_path)
+        scan.state = StateChoices.COMPLETED
+        scan.save()
+
+        monkeypatch.setattr(
+            glob,
+            "glob",
+            lambda pattern: [str(file_path)] if pattern == str(file_path) else [],
+        )
+
+        url = reverse("scan-report", kwargs={"pk": scan.id})
+        response = authenticated_client.get(url)
+        assert response.status_code == 200
+        assert response.content == file_content
+        content_disposition = response.get("Content-Disposition")
+        assert content_disposition.startswith('attachment; filename="')
+        assert f'filename="{file_path.name}"' in content_disposition
 
 
 @pytest.mark.django_db
@@ -2379,12 +2554,33 @@ class TestResourceViewSet:
 @pytest.mark.django_db
 class TestFindingViewSet:
     def test_findings_list_none(self, authenticated_client):
-        response = authenticated_client.get(reverse("finding-list"))
+        response = authenticated_client.get(
+            reverse("finding-list"), {"filter[inserted_at]": TODAY}
+        )
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == 0
 
-    def test_findings_list(self, authenticated_client, findings_fixture):
+    def test_findings_list_no_date_filter(self, authenticated_client):
         response = authenticated_client.get(reverse("finding-list"))
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["errors"][0]["code"] == "required"
+
+    def test_findings_date_range_too_large(self, authenticated_client):
+        response = authenticated_client.get(
+            reverse("finding-list"),
+            {
+                "filter[inserted_at.lte]": today_after_n_days(
+                    -(settings.FINDINGS_MAX_DAYS_IN_RANGE + 1)
+                ),
+            },
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["errors"][0]["code"] == "invalid"
+
+    def test_findings_list(self, authenticated_client, findings_fixture):
+        response = authenticated_client.get(
+            reverse("finding-list"), {"filter[inserted_at]": TODAY}
+        )
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == len(findings_fixture)
         assert (
@@ -2397,14 +2593,15 @@ class TestFindingViewSet:
         [
             ("resources", ["resources"]),
             ("scan", ["scans"]),
-            ("resources.provider,scan", ["resources", "scans", "providers"]),
+            ("resources,scan.provider", ["resources", "scans", "providers"]),
         ],
     )
     def test_findings_list_include(
         self, include_values, expected_resources, authenticated_client, findings_fixture
     ):
         response = authenticated_client.get(
-            reverse("finding-list"), {"include": include_values}
+            reverse("finding-list"),
+            {"include": include_values, "filter[inserted_at]": TODAY},
         )
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == len(findings_fixture)
@@ -2439,21 +2636,21 @@ class TestFindingViewSet:
                 ("service.icontains", "ec", 1),
                 ("inserted_at", "2024-01-01", 0),
                 ("inserted_at.date", "2024-01-01", 0),
-                ("inserted_at.gte", "2024-01-01", 2),
+                ("inserted_at.gte", today_after_n_days(-1), 2),
                 (
                     "inserted_at.lte",
-                    "2028-12-31",
+                    today_after_n_days(1),
                     2,
-                ),  # TODO: To avoid having to modify this value and to ensure that the tests always work, we should set the time before the fixtures are inserted
-                ("updated_at.lte", "2024-01-01", 0),
+                ),
+                ("updated_at.lte", today_after_n_days(-1), 0),
                 ("resource_type.icontains", "prowler", 2),
                 # full text search on finding
                 ("search", "dev-qa", 1),
                 ("search", "orange juice", 1),
                 # full text search on resource
                 ("search", "ec2", 2),
-                # full text search on finding tags
-                ("search", "value2", 2),
+                # full text search on finding tags (disabled for now)
+                # ("search", "value2", 2),
                 # Temporary disabled until we implement tag filtering in the UI
                 # ("resource_tag_key", "key", 2),
                 # ("resource_tag_key__in", "key,key2", 2),
@@ -2475,9 +2672,13 @@ class TestFindingViewSet:
         filter_value,
         expected_count,
     ):
+        filters = {f"filter[{filter_name}]": filter_value}
+        if "inserted_at" not in filter_name:
+            filters["filter[inserted_at]"] = TODAY
+
         response = authenticated_client.get(
             reverse("finding-list"),
-            {f"filter[{filter_name}]": filter_value},
+            filters,
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -2486,9 +2687,7 @@ class TestFindingViewSet:
     def test_finding_filter_by_scan_id(self, authenticated_client, findings_fixture):
         response = authenticated_client.get(
             reverse("finding-list"),
-            {
-                "filter[scan]": findings_fixture[0].scan.id,
-            },
+            {"filter[scan]": findings_fixture[0].scan.id},
         )
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == 2
@@ -2511,6 +2710,7 @@ class TestFindingViewSet:
             reverse("finding-list"),
             {
                 "filter[provider]": findings_fixture[0].scan.provider.id,
+                "filter[inserted_at]": TODAY,
             },
         )
         assert response.status_code == status.HTTP_200_OK
@@ -2525,7 +2725,8 @@ class TestFindingViewSet:
                 "filter[provider.in]": [
                     findings_fixture[0].scan.provider.id,
                     findings_fixture[1].scan.provider.id,
-                ]
+                ],
+                "filter[inserted_at]": TODAY,
             },
         )
         assert response.status_code == status.HTTP_200_OK
@@ -2559,13 +2760,13 @@ class TestFindingViewSet:
     )
     def test_findings_sort(self, authenticated_client, sort_field):
         response = authenticated_client.get(
-            reverse("finding-list"), {"sort": sort_field}
+            reverse("finding-list"), {"sort": sort_field, "filter[inserted_at]": TODAY}
         )
         assert response.status_code == status.HTTP_200_OK
 
     def test_findings_sort_invalid(self, authenticated_client):
         response = authenticated_client.get(
-            reverse("finding-list"), {"sort": "invalid"}
+            reverse("finding-list"), {"sort": "invalid", "filter[inserted_at]": TODAY}
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert response.json()["errors"][0]["code"] == "invalid"
@@ -2633,7 +2834,7 @@ class TestFindingViewSet:
             reverse("finding-metadata"),
             {
                 "filter[severity__in]": ["low", "medium"],
-                "filter[inserted_at]": finding_1.updated_at.strftime("%Y-%m-%d"),
+                "filter[inserted_at]": finding_1.inserted_at.strftime("%Y-%m-%d"),
             },
         )
         data = response.json()

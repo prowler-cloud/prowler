@@ -1,4 +1,4 @@
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from django.conf import settings
 from django.db.models import Q
@@ -346,8 +346,14 @@ class FindingFilter(FilterSet):
 
     inserted_at = DateFilter(method="filter_inserted_at", lookup_expr="date")
     inserted_at__date = DateFilter(method="filter_inserted_at", lookup_expr="date")
-    inserted_at__gte = DateFilter(method="filter_inserted_at_gte")
-    inserted_at__lte = DateFilter(method="filter_inserted_at_lte")
+    inserted_at__gte = DateFilter(
+        method="filter_inserted_at_gte",
+        help_text=f"Maximum date range is {settings.FINDINGS_MAX_DAYS_IN_RANGE} days.",
+    )
+    inserted_at__lte = DateFilter(
+        method="filter_inserted_at_lte",
+        help_text=f"Maximum date range is {settings.FINDINGS_MAX_DAYS_IN_RANGE} days.",
+    )
 
     class Meta:
         model = Finding
@@ -375,6 +381,52 @@ class FindingFilter(FilterSet):
             },
         }
 
+    def filter_queryset(self, queryset):
+        if not (self.data.get("scan") or self.data.get("scan__in")) and not (
+            self.data.get("inserted_at")
+            or self.data.get("inserted_at__date")
+            or self.data.get("inserted_at__gte")
+            or self.data.get("inserted_at__lte")
+        ):
+            raise ValidationError(
+                [
+                    {
+                        "detail": "At least one date filter is required: filter[inserted_at], filter[inserted_at.gte], "
+                        "or filter[inserted_at.lte].",
+                        "status": 400,
+                        "source": {"pointer": "/data/attributes/inserted_at"},
+                        "code": "required",
+                    }
+                ]
+            )
+
+        gte_date = (
+            datetime.strptime(self.data.get("inserted_at__gte"), "%Y-%m-%d").date()
+            if self.data.get("inserted_at__gte")
+            else datetime.now(timezone.utc).date()
+        )
+        lte_date = (
+            datetime.strptime(self.data.get("inserted_at__lte"), "%Y-%m-%d").date()
+            if self.data.get("inserted_at__lte")
+            else datetime.now(timezone.utc).date()
+        )
+
+        if abs(lte_date - gte_date) > timedelta(
+            days=settings.FINDINGS_MAX_DAYS_IN_RANGE
+        ):
+            raise ValidationError(
+                [
+                    {
+                        "detail": f"The date range cannot exceed {settings.FINDINGS_MAX_DAYS_IN_RANGE} days.",
+                        "status": 400,
+                        "source": {"pointer": "/data/attributes/inserted_at"},
+                        "code": "invalid",
+                    }
+                ]
+            )
+
+        return super().filter_queryset(queryset)
+
     #  Convert filter values to UUIDv7 values for use with partitioning
     def filter_scan_id(self, queryset, name, value):
         try:
@@ -395,9 +447,7 @@ class FindingFilter(FilterSet):
             )
 
         return (
-            queryset.filter(id__gte=start)
-            .filter(id__lt=end)
-            .filter(scan__id=value_uuid)
+            queryset.filter(id__gte=start).filter(id__lt=end).filter(scan_id=value_uuid)
         )
 
     def filter_scan_id_in(self, queryset, name, value):
@@ -422,31 +472,32 @@ class FindingFilter(FilterSet):
                 ]
             )
         if start == end:
-            return queryset.filter(id__gte=start).filter(scan__id__in=uuid_list)
+            return queryset.filter(id__gte=start).filter(scan_id__in=uuid_list)
         else:
             return (
                 queryset.filter(id__gte=start)
                 .filter(id__lt=end)
-                .filter(scan__id__in=uuid_list)
+                .filter(scan_id__in=uuid_list)
             )
 
     def filter_inserted_at(self, queryset, name, value):
-        value = self.maybe_date_to_datetime(value)
-        start = uuid7_start(datetime_to_uuid7(value))
+        datetime_value = self.maybe_date_to_datetime(value)
+        start = uuid7_start(datetime_to_uuid7(datetime_value))
+        end = uuid7_start(datetime_to_uuid7(datetime_value + timedelta(days=1)))
 
-        return queryset.filter(id__gte=start).filter(inserted_at__date=value)
+        return queryset.filter(id__gte=start, id__lt=end)
 
     def filter_inserted_at_gte(self, queryset, name, value):
-        value = self.maybe_date_to_datetime(value)
-        start = uuid7_start(datetime_to_uuid7(value))
+        datetime_value = self.maybe_date_to_datetime(value)
+        start = uuid7_start(datetime_to_uuid7(datetime_value))
 
-        return queryset.filter(id__gte=start).filter(inserted_at__gte=value)
+        return queryset.filter(id__gte=start)
 
     def filter_inserted_at_lte(self, queryset, name, value):
-        value = self.maybe_date_to_datetime(value)
-        end = uuid7_start(datetime_to_uuid7(value))
+        datetime_value = self.maybe_date_to_datetime(value)
+        end = uuid7_start(datetime_to_uuid7(datetime_value + timedelta(days=1)))
 
-        return queryset.filter(id__lte=end).filter(inserted_at__lte=value)
+        return queryset.filter(id__lt=end)
 
     def filter_resource_tag(self, queryset, name, value):
         overall_query = Q()

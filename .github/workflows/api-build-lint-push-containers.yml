@@ -63,6 +63,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set short git commit SHA
+        id: vars
+        run: |
+          shortSha=$(git rev-parse --short ${{ github.sha }})
+          echo "SHORT_SHA=${shortSha}" >> $GITHUB_ENV
+
       - name: Login to DockerHub
         uses: docker/login-action@v3
         with:
@@ -82,6 +88,7 @@ jobs:
           push: true
           tags: |
             ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ env.LATEST_TAG }}
+            ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ env.SHORT_SHA }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -96,3 +103,12 @@ jobs:
             ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ env.STABLE_TAG }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Trigger deployment
+        if: github.event_name == 'push'
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
+          repository: ${{ secrets.CLOUD_DISPATCH }}
+          event-type: prowler-api-deploy
+          client-payload: '{"sha": "${{ github.sha }}", "short_sha": "${{ env.SHORT_SHA }}"}'

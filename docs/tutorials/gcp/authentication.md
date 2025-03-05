@@ -25,6 +25,9 @@ Prowler will follow the same credentials search as [Google authentication librar
 
 Those credentials must be associated to a user or service account with proper permissions to do all checks. To make sure, add the `Viewer` role to the member associated with the credentials.
 
+???+ note
+    Prowler will use the enabled Google Cloud APIs to get the information needed to perform the checks.
+
 ## Impersonate Service Account
 
 If you want to impersonate a GCP service account, you can use the `--impersonate-service-account` argument:
@@ -34,23 +37,3 @@ prowler gcp --impersonate-service-account <service-account-email>
 ```
 
 This argument will use the default credentials to impersonate the service account provided.
-
-## Service APIs
-
-Prowler will use the Google Cloud APIs to get the information needed to perform the checks. Make sure that the following APIs are enabled in the project:
-
-- apikeys.googleapis.com
-- artifactregistry.googleapis.com
-- bigquery.googleapis.com
-- sqladmin.googleapis.com
-- storage.googleapis.com
-- compute.googleapis.com
-- dataproc.googleapis.com
-- dns.googleapis.com
-- containerregistry.googleapis.com
-- container.googleapis.com
-- iam.googleapis.com
-- cloudkms.googleapis.com
-- logging.googleapis.com
-
-You can enable them automatically using our script [enable_apis_in_projects.sh](https://github.com/prowler-cloud/prowler/blob/master/contrib/gcp/enable_apis_in_projects.sh)

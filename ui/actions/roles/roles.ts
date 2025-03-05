@@ -222,16 +222,24 @@ export const deleteRole = async (roleId: string) => {
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData?.message || "Failed to delete the role");
+      try {
+        const errorData = await response.json();
+        throw new Error(errorData?.message || "Failed to delete the role");
+      } catch {
+        throw new Error("Failed to delete the role");
+      }
     }
 
-    const data = await response.json();
+    let data = null;
+    if (response.status !== 204) {
+      data = await response.json();
+    }
+
     revalidatePath("/roles");
-    return data;
+    return data || { success: true };
   } catch (error) {
-    return {
-      error: getErrorMessage(error),
-    };
+    // eslint-disable-next-line no-console
+    console.error("Error deleting role:", error);
+    return { error: getErrorMessage(error) };
   }
 };
