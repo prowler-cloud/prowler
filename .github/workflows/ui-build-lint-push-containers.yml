@@ -71,7 +71,7 @@ jobs:
 
       - name: Get latest release name
         run: |
-          releaseName=$(curl --silent -m 10 --connect-timeout 5 "https://api.github.com/repos/${{ github.repository }}/releases/latest" | jq -r .name)
+          releaseName=$(curl --silent "https://api.github.com/repos/${{ github.repository }}/releases/latest" | jq -r .name)
           echo "LATEST_RELEASE=${releaseName}" >> $GITHUB_ENV
 
       - name: Login to DockerHub
