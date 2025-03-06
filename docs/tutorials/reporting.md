@@ -175,7 +175,7 @@ The JSON-OCSF output format implements the [Detection Finding](https://schema.oc
      "finding_info": {
          "created_time": 1737995806,
          "created_time_dt": "2025-01-27T17:36:46.855898",
-         "desc": "Check if secrets exists in ECS task definitions environment variables.,
+         "desc": "Check if secrets exists in ECS task definitions environment variables.",
          "product_uid": "prowler",
          "title": "Check if secrets exists in ECS task definitions environment variables",
          "types": [
