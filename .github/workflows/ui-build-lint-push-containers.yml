@@ -100,7 +100,7 @@ jobs:
         with:
           context: ${{ env.WORKING_DIRECTORY }}
           build-args: |
-            NEXT_PUBLIC_PROWLER_RELEASE_VERSION="v${{ env.RELEASE_TAG }}"
+            NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${{ env.RELEASE_TAG }}
           push: true
           tags: |
             ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ env.RELEASE_TAG }}
