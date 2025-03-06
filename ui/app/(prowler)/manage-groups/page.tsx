@@ -64,7 +64,7 @@ const SSRAddGroupForm = async () => {
   const providersData =
     providersResponse?.data?.map((provider: ProviderProps) => ({
       id: provider.id,
-      name: provider.attributes.alias,
+      name: provider.attributes.alias || provider.attributes.uid,
     })) || [];
 
   const rolesData =
@@ -101,7 +101,7 @@ const SSRDataEditGroup = async ({
   const providersList =
     providersResponse?.data?.map((provider: ProviderProps) => ({
       id: provider.id,
-      name: provider.attributes.alias,
+      name: provider.attributes.alias || provider.attributes.uid,
     })) || [];
 
   const rolesList =
