@@ -344,9 +344,18 @@ def perform_prowler_scan(
                         total_requirements=compliance["total_requirements"],
                     )
                 )
-        with rls_transaction(tenant_id):
-            ComplianceOverview.objects.bulk_create(compliance_overview_objects)
+        try:
+            with rls_transaction(tenant_id):
+                ComplianceOverview.objects.bulk_create(
+                    compliance_overview_objects, batch_size=100
+                )
+        except Exception as overview_exception:
+            import sentry_sdk
 
+            sentry_sdk.capture_exception(overview_exception)
+            logger.error(
+                f"Error storing compliance overview for scan {scan_id}: {overview_exception}"
+            )
     if exception is not None:
         raise exception
 
