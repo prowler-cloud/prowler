@@ -20,7 +20,7 @@ import {
 } from "@/components/overview";
 import { ColumnNewFindingsToDate } from "@/components/overview/new-findings-table/table/column-new-findings-to-date";
 import { SkeletonTableNewFindings } from "@/components/overview/new-findings-table/table/skeleton-table-new-findings";
-import { Header } from "@/components/ui";
+import { ContentLayout } from "@/components/ui";
 import { DataTable } from "@/components/ui/table";
 import { createDict } from "@/lib/helper";
 import { FindingProps, SearchParamsProps } from "@/types";
@@ -32,8 +32,7 @@ export default function Home({
 }) {
   const searchParamsKey = JSON.stringify(searchParams || {});
   return (
-    <>
-      <Header title="Scan Overview" icon="solar:pie-chart-2-outline" />
+    <ContentLayout title="Overview" icon="solar:pie-chart-2-outline">
       <Spacer y={4} />
       <FilterControls providers />
       <div className="mx-auto space-y-8 px-0 py-6">
@@ -67,7 +66,7 @@ export default function Home({
           </div>
         </div>
       </div>
-    </>
+    </ContentLayout>
   );
 }
 
@@ -158,8 +157,7 @@ const SSRDataNewFindingsTable = async () => {
         const scan = scanDict[finding.relationships?.scan?.data?.id];
         const resource =
           resourceDict[finding.relationships?.resources?.data?.[0]?.id];
-        const provider =
-          providerDict[resource?.relationships?.provider?.data?.id];
+        const provider = providerDict[scan?.relationships?.provider?.data?.id];
 
         return {
           ...finding,

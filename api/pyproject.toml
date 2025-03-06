@@ -52,6 +52,7 @@ pytest-randomly = "3.15.0"
 pytest-xdist = "3.6.1"
 ruff = "0.5.0"
 safety = "3.2.9"
+tqdm = "4.67.1"
 vulture = "2.14"
 
 [tool.poetry.scripts]

@@ -45,18 +45,20 @@ export const AddRoleForm = ({
     },
   });
 
-  const manageProviders = form.watch("manage_providers");
-  const unlimitedVisibility = form.watch("unlimited_visibility");
+  const { watch, setValue } = form;
+
+  const manageProviders = watch("manage_providers");
+  const unlimitedVisibility = watch("unlimited_visibility");
 
   useEffect(() => {
-    if (manageProviders) {
-      form.setValue("unlimited_visibility", true, {
+    if (manageProviders && !unlimitedVisibility) {
+      setValue("unlimited_visibility", true, {
         shouldValidate: true,
         shouldDirty: true,
         shouldTouch: true,
       });
     }
-  }, [manageProviders, form]);
+  }, [manageProviders, unlimitedVisibility, setValue]);
 
   const isLoading = form.formState.isSubmitting;
 

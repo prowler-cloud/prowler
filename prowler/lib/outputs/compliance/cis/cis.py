@@ -27,10 +27,8 @@ def get_cis_table(
         check = bulk_checks_metadata[finding.check_metadata.CheckID]
         check_compliances = check.Compliance
         for compliance in check_compliances:
-            if (
-                compliance.Framework == "CIS"
-                and compliance.Version in compliance_framework
-            ):
+            version_in_name = compliance_framework.split("_")[1]
+            if compliance.Framework == "CIS" and version_in_name in compliance.Version:
                 for requirement in compliance.Requirements:
                     for attribute in requirement.Attributes:
                         section = attribute.Section

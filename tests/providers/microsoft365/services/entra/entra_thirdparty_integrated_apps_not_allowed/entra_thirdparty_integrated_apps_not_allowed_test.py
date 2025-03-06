@@ -33,14 +33,7 @@ class Test_entra_thirdparty_integrated_apps_not_allowed:
 
             check = entra_thirdparty_integrated_apps_not_allowed()
             result = check.execute()
-            assert len(result) == 1
-            assert result[0].status == "FAIL"
-            assert result[0].resource_name == "Authorization Policy"
-            assert result[0].resource_id == "authorizationPolicy"
-            assert (
-                result[0].status_extended
-                == "App creation is not disabled for non-admin users."
-            )
+            assert len(result) == 0
 
     def test_entra_default_user_role_permissions_not_allowed_to_create_apps(self):
         id = str(uuid4())
@@ -81,8 +74,15 @@ class Test_entra_thirdparty_integrated_apps_not_allowed:
                 result[0].status_extended
                 == "App creation is disabled for non-admin users."
             )
+            assert result[0].resource == {
+                "id": id,
+                "name": "Test",
+                "description": "Test",
+                "default_user_role_permissions": role_permissions,
+            }
             assert result[0].resource_name == "Test"
             assert result[0].resource_id == id
+            assert result[0].location == "global"
 
     def test_entra_default_user_role_permissions_allowed_to_create_apps(self):
         id = str(uuid4())
@@ -123,5 +123,12 @@ class Test_entra_thirdparty_integrated_apps_not_allowed:
                 result[0].status_extended
                 == "App creation is not disabled for non-admin users."
             )
+            assert result[0].resource == {
+                "id": id,
+                "name": "Test",
+                "description": "Test",
+                "default_user_role_permissions": role_permissions,
+            }
             assert result[0].resource_name == "Test"
             assert result[0].resource_id == id
+            assert result[0].location == "global"
