@@ -2151,8 +2151,8 @@ class IntegrationCreateSerializer(BaseWriteIntegrationSerializer):
 
 
 class IntegrationUpdateSerializer(BaseWriteIntegrationSerializer):
-    credentials = IntegrationCredentialField(write_only=True)
-    configuration = IntegrationConfigField()
+    credentials = IntegrationCredentialField(write_only=True, required=False)
+    configuration = IntegrationConfigField(required=False)
     providers = serializers.ResourceRelatedField(
         queryset=Provider.objects.all(), many=True, required=False
     )
