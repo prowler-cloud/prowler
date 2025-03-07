@@ -6,6 +6,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### [v1.5.0] (Prowler v5.5.0 - UNRELEASED)
 
+#### 🔄 Changed
+
+- Tweak styles for compliance cards. [(#7148)](https://github.com/prowler-cloud/prowler/pull/7148).
+  
 ---
 
 ### [v1.4.0] (Prowler v5.4.0)
