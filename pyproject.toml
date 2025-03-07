@@ -28,7 +28,7 @@ version = "5.5.0"
 [tool.poetry.dependencies]
 alive-progress = "3.2.0"
 awsipranges = "0.3.3"
-azure-identity = "1.19.0"
+azure-identity = "1.20.0"
 azure-keyvault-keys = "4.10.0"
 azure-mgmt-applicationinsights = "4.0.0"
 azure-mgmt-authorization = "4.0.0"
