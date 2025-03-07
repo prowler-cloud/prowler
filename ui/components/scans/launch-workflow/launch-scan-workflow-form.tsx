@@ -26,6 +26,7 @@ export const LaunchScanWorkflow = ({
 }: {
   providers: ProviderInfo[];
 }) => {
+  console.log("providers from launch scan workflow", providers);
   const formSchema = onDemandScanFormSchema();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -80,7 +81,7 @@ export const LaunchScanWorkflow = ({
         className="flex flex-col space-y-4"
       >
         <div className="grid grid-cols-12 gap-6">
-          <div className="col-span-4">
+          <div className="col-span-3">
             <p className="pb-1 text-sm font-medium text-default-700">
               Launch Scan
             </p>
@@ -104,9 +105,10 @@ export const LaunchScanWorkflow = ({
                     control={form.control}
                     name="scanName"
                     type="text"
-                    label="Scan Name (optional)"
+                    label="Scan label (optional)"
                     labelPlacement="outside"
-                    placeholder="Scan Name"
+                    placeholder="Scan label"
+                    size="md"
                     variant="bordered"
                     isRequired={false}
                     isInvalid={!!form.formState.errors.scanName}
