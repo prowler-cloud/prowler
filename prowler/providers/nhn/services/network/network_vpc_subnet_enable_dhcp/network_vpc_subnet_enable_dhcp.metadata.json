@@ -1,0 +1,33 @@
+{
+    "Provider": "nhn",
+    "CheckID": "network_vpc_subnet_enable_dhcp",
+    "CheckTitle": "Check if DHCP is enabled for subnets in VPC",
+    "CheckType": [], 
+    "ServiceName": "network",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "",
+    "Risk": "",
+    "Severity": "Medium",
+    "ResourceType": "VPC",
+    "Description": "This check verifies if DHCP is enabled for the subnets in the VPC.",
+    "Remediation": {
+        "Code": {
+            "CLI": "",
+            "NativeIaC": "",
+            "Other": "",
+            "Terraform": ""
+          },
+        "Recommendation": {
+        "Text": "Ensure that DHCP is enabled for all subnets where automatic IP address allocation is needed.",
+        "Url": ""
+        }
+    },
+    "Categories": [],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": "",
+    "RelatedUrl": "",
+    "Enabled": true,
+    "Compliances": []
+  }
+  
