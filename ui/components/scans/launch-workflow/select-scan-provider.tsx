@@ -8,6 +8,7 @@ import { AzureProviderBadge } from "@/components/icons/providers-badge/AzureProv
 import { GCPProviderBadge } from "@/components/icons/providers-badge/GCPProviderBadge";
 import { KS8ProviderBadge } from "@/components/icons/providers-badge/KS8ProviderBadge";
 import { FormControl, FormField, FormMessage } from "@/components/ui/form";
+import { EntityInfoShort } from "@/components/ui/entities";
 
 interface SelectScanProviderProps<
   TFieldValues extends FieldValues = FieldValues,
@@ -60,8 +61,11 @@ export const SelectScanProvider = <
               labelPlacement="outside"
               classNames={{
                 selectorIcon: "right-2",
+                label: "tracking-tight font-light !text-default-500 text-xs",
+                value: "text-default-500 text-xs",
               }}
-              size="md"
+              label="Select a cloud provider to launch a scan"
+              size="lg"
               selectedKeys={field.value ? new Set([field.value]) : new Set()}
               onSelectionChange={(keys) => {
                 const selectedValue = Array.from(keys)[0]?.toString();
@@ -73,8 +77,18 @@ export const SelectScanProvider = <
                 );
                 return selectedItem ? (
                   <div className="flex items-center gap-2">
-                    {renderBadge(selectedItem.providerType)}
-                    {selectedItem.alias}
+                    <EntityInfoShort
+                      cloudProvider={
+                        selectedItem.providerType as
+                          | "aws"
+                          | "azure"
+                          | "gcp"
+                          | "kubernetes"
+                      }
+                      entityAlias={selectedItem.alias}
+                      entityId={selectedItem.uid}
+                      hideCopyButton
+                    />
                   </div>
                 ) : (
                   "Choose a cloud provider"
@@ -88,8 +102,18 @@ export const SelectScanProvider = <
                   aria-label={item.alias}
                 >
                   <div className="flex items-center gap-2">
-                    {renderBadge(item.providerType)}
-                    {item.alias}
+                    <EntityInfoShort
+                      cloudProvider={
+                        item.providerType as
+                          | "aws"
+                          | "azure"
+                          | "gcp"
+                          | "kubernetes"
+                      }
+                      entityAlias={item.alias}
+                      entityId={item.uid}
+                      hideCopyButton
+                    />
                   </div>
                 </SelectItem>
               ))}
