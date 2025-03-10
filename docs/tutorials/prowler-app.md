@@ -175,7 +175,7 @@ To view all `new` findings that have not been seen prior to this scan, click the
 
 ## **Step 9: Download the Outputs**
 
-After finishing the scan we can also download the outputs generated after the scan. The generated files are a CSV, an OSCF and an HTML with the findings information.
+After finishing the scan we can also download the generated output file, which include a CSV, a JSON-OSCF, and a HTML report containing the findings.
 
 To download these files we have to click on the Download button, this button will be available only when the scan is finished:
 
