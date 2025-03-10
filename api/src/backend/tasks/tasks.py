@@ -1,3 +1,4 @@
+from pathlib import Path
 from shutil import rmtree
 
 from celery import chain, shared_task
@@ -267,7 +268,7 @@ def generate_outputs(scan_id: str, provider_id: str, tenant_id: str):
         output_directory = uploaded
         uploaded = True
         # Remove the local files after upload
-        rmtree(DJANGO_TMP_OUTPUT_DIRECTORY, ignore_errors=True)
+        rmtree(Path(output_directory).parent, ignore_errors=True)
     else:
         uploaded = False
 
