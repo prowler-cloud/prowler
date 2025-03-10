@@ -7,7 +7,7 @@ from django.db import migrations
 from api.db_utils import IntegrationTypeEnum, PostgresEnumMigration, register_enum
 from api.models import Integration
 
-InvitationStateEnumMigration = PostgresEnumMigration(
+IntegrationTypeEnumMigration = PostgresEnumMigration(
     enum_name="integration_type",
     enum_values=tuple(
         integration_type[0]
@@ -20,13 +20,13 @@ class Migration(migrations.Migration):
     atomic = False
 
     dependencies = [
-        ("api", "0013_alter_finding_uid"),
+        ("api", "0012_scan_report_output"),
     ]
 
     operations = [
         migrations.RunPython(
-            InvitationStateEnumMigration.create_enum_type,
-            reverse_code=InvitationStateEnumMigration.drop_enum_type,
+            IntegrationTypeEnumMigration.create_enum_type,
+            reverse_code=IntegrationTypeEnumMigration.drop_enum_type,
         ),
         migrations.RunPython(
             partial(register_enum, enum_class=IntegrationTypeEnum),

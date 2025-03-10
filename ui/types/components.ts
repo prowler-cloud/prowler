@@ -42,6 +42,18 @@ export interface CollapseMenuButtonProps {
   isOpen: boolean | undefined;
 }
 
+export interface SelectScanComplianceDataProps {
+  scans: (ScanProps & {
+    providerInfo: {
+      provider: "aws" | "azure" | "gcp" | "kubernetes";
+      uid: string;
+      alias: string;
+    };
+  })[];
+  selectedScanId: string;
+  onSelectionChange: (selectedKey: string) => void;
+}
+
 export type NextUIVariants =
   | "solid"
   | "faded"

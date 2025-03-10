@@ -6046,6 +6046,7 @@ components:
           properties:
             uid:
               type: string
+              maxLength: 300
             delta:
               enum:
               - new
