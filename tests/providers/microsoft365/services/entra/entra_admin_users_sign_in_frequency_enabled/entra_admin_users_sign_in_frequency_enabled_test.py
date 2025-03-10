@@ -5,6 +5,7 @@ from prowler.providers.microsoft365.services.entra.entra_service import (
     ApplicationsConditions,
     ConditionalAccessPolicyState,
     Conditions,
+    GrantControlOperator,
     GrantControls,
     PersistentBrowser,
     SessionControls,
@@ -93,7 +94,9 @@ class Test_entra_admin_users_sign_in_frequency_enabled:
                             excluded_roles=[],
                         ),
                     ),
-                    grant_controls=GrantControls(built_in_controls=[]),
+                    grant_controls=GrantControls(
+                        built_in_controls=[], operator=GrantControlOperator.AND
+                    ),
                     session_controls=SessionControls(
                         persistent_browser=PersistentBrowser(
                             is_enabled=False, mode="always"
@@ -181,7 +184,9 @@ class Test_entra_admin_users_sign_in_frequency_enabled:
                             excluded_roles=[],
                         ),
                     ),
-                    grant_controls=GrantControls(built_in_controls=[]),
+                    grant_controls=GrantControls(
+                        built_in_controls=[], operator=GrantControlOperator.AND
+                    ),
                     session_controls=SessionControls(
                         persistent_browser=PersistentBrowser(
                             is_enabled=True, mode="never"
@@ -239,7 +244,9 @@ class Test_entra_admin_users_sign_in_frequency_enabled:
                             excluded_roles=[],
                         ),
                     ),
-                    grant_controls=GrantControls(built_in_controls=[]),
+                    grant_controls=GrantControls(
+                        built_in_controls=[], operator=GrantControlOperator.AND
+                    ),
                     session_controls=SessionControls(
                         persistent_browser=PersistentBrowser(
                             is_enabled=True, mode="never"
@@ -320,7 +327,9 @@ class Test_entra_admin_users_sign_in_frequency_enabled:
                             excluded_roles=[],
                         ),
                     ),
-                    grant_controls=GrantControls(built_in_controls=[]),
+                    grant_controls=GrantControls(
+                        built_in_controls=[], operator=GrantControlOperator.AND
+                    ),
                     session_controls=SessionControls(
                         persistent_browser=PersistentBrowser(
                             is_enabled=True, mode="never"
@@ -378,7 +387,9 @@ class Test_entra_admin_users_sign_in_frequency_enabled:
                             excluded_roles=[],
                         ),
                     ),
-                    grant_controls=GrantControls(built_in_controls=[]),
+                    grant_controls=GrantControls(
+                        built_in_controls=[], operator=GrantControlOperator.AND
+                    ),
                     session_controls=SessionControls(
                         persistent_browser=PersistentBrowser(
                             is_enabled=True, mode="never"
@@ -456,7 +467,9 @@ class Test_entra_admin_users_sign_in_frequency_enabled:
                             excluded_roles=[],
                         ),
                     ),
-                    grant_controls=GrantControls(built_in_controls=[]),
+                    grant_controls=GrantControls(
+                        built_in_controls=[], operator=GrantControlOperator.AND
+                    ),
                     session_controls=SessionControls(
                         persistent_browser=PersistentBrowser(
                             is_enabled=True, mode="never"
@@ -514,7 +527,9 @@ class Test_entra_admin_users_sign_in_frequency_enabled:
                             excluded_roles=[],
                         ),
                     ),
-                    grant_controls=GrantControls(built_in_controls=[]),
+                    grant_controls=GrantControls(
+                        built_in_controls=[], operator=GrantControlOperator.AND
+                    ),
                     session_controls=SessionControls(
                         persistent_browser=PersistentBrowser(
                             is_enabled=True, mode="never"
@@ -595,7 +610,9 @@ class Test_entra_admin_users_sign_in_frequency_enabled:
                             excluded_roles=[],
                         ),
                     ),
-                    grant_controls=GrantControls(built_in_controls=[]),
+                    grant_controls=GrantControls(
+                        built_in_controls=[], operator=GrantControlOperator.OR
+                    ),
                     session_controls=SessionControls(
                         persistent_browser=PersistentBrowser(
                             is_enabled=True, mode="never"
@@ -653,7 +670,9 @@ class Test_entra_admin_users_sign_in_frequency_enabled:
                             excluded_roles=[],
                         ),
                     ),
-                    grant_controls=GrantControls(built_in_controls=[]),
+                    grant_controls=GrantControls(
+                        built_in_controls=[], operator=GrantControlOperator.OR
+                    ),
                     session_controls=SessionControls(
                         persistent_browser=PersistentBrowser(
                             is_enabled=True, mode="never"
