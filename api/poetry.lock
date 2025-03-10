@@ -700,14 +700,14 @@ aio = ["azure-core[aio] (>=1.30.0)"]
 
 [[package]]
 name = "bandit"
-version = "1.7.9"
+version = "1.8.3"
 description = "Security oriented static analyser for python code."
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 groups = ["dev"]
 files = [
-    {file = "bandit-1.7.9-py3-none-any.whl", hash = "sha256:52077cb339000f337fb25f7e045995c4ad01511e716e5daac37014b9752de8ec"},
-    {file = "bandit-1.7.9.tar.gz", hash = "sha256:7c395a436743018f7be0a4cbb0a4ea9b902b6d87264ddecf8cfdc73b4f78ff61"},
+    {file = "bandit-1.8.3-py3-none-any.whl", hash = "sha256:28f04dc0d258e1dd0f99dee8eefa13d1cb5e3fde1a5ab0c523971f97b289bcd8"},
+    {file = "bandit-1.8.3.tar.gz", hash = "sha256:f5847beb654d309422985c36644649924e0ea4425c76dec2e89110b87506193a"},
 ]
 
 [package.dependencies]
@@ -5433,4 +5433,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.13"
-content-hash = "569b05d8ddc6d6479c19cc00e3313d194cd096ca68975d24595879c198d78bd3"
+content-hash = "abe448148eb9ff7b3cf98b9d299802d636dece397d93879be5bcf9a66f2cf77e"
