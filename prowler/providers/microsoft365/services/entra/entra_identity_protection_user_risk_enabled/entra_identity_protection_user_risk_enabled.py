@@ -28,7 +28,7 @@ class entra_identity_protection_user_risk_enabled(Check):
             resource_id="conditionalAccessPolicies",
         )
         report.status = "FAIL"
-        report.status_extended = "No Conditional Access Policy is a user risk based Identity Protection Policy."
+        report.status_extended = "No Conditional Access Policy is an user risk based Identity Protection Policy."
 
         for policy in entra_client.conditional_access_policies.values():
             if policy.state not in {
@@ -62,7 +62,7 @@ class entra_identity_protection_user_risk_enabled(Check):
                     resource_id=policy.id,
                 )
                 report.status = "PASS"
-                report.status_extended = f"Conditional Access Policy '{policy.display_name}' is a user risk based Identity Protection Policy."
+                report.status_extended = f"Conditional Access Policy '{policy.display_name}' is an user risk based Identity Protection Policy."
                 break
 
         findings.append(report)

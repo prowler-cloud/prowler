@@ -47,7 +47,7 @@ class Test_entra_identity_protection_user_risk_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "No Conditional Access Policy is a user risk based Identity Protection Policy."
+                == "No Conditional Access Policy is an user risk based Identity Protection Policy."
             )
             assert result[0].resource == {}
             assert result[0].resource_name == "Conditional Access Policies"
@@ -118,7 +118,7 @@ class Test_entra_identity_protection_user_risk_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "No Conditional Access Policy is a user risk based Identity Protection Policy."
+                == "No Conditional Access Policy is an user risk based Identity Protection Policy."
             )
             assert result[0].resource == {}
             assert result[0].resource_name == "Conditional Access Policies"
@@ -195,7 +195,7 @@ class Test_entra_identity_protection_user_risk_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Conditional Access Policy '{display_name}' is a user risk based Identity Protection Policy."
+                == f"Conditional Access Policy '{display_name}' is an user risk based Identity Protection Policy."
             )
             assert (
                 result[0].resource
