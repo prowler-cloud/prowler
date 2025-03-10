@@ -14,6 +14,8 @@ from prowler.providers.microsoft365.services.entra.entra_service import (
     PersistentBrowser,
     SessionControls,
     SignInFrequency,
+    SignInFrequencyInterval,
+    SignInFrequencyType,
     UsersConditions,
 )
 from tests.providers.microsoft365.microsoft365_fixtures import (
@@ -67,6 +69,8 @@ async def mock_entra_get_conditional_access_policies(_):
                 sign_in_frequency=SignInFrequency(
                     is_enabled=True,
                     frequency=24,
+                    type=SignInFrequencyType.HOURS,
+                    interval=SignInFrequencyInterval.TIME_BASED,
                 ),
             ),
             state=ConditionalAccessPolicyState.ENABLED_FOR_REPORTING,
@@ -138,6 +142,8 @@ class Test_Entra_Service:
                     sign_in_frequency=SignInFrequency(
                         is_enabled=True,
                         frequency=24,
+                        type=SignInFrequencyType.HOURS,
+                        interval=SignInFrequencyInterval.TIME_BASED,
                     ),
                 ),
                 state=ConditionalAccessPolicyState.ENABLED_FOR_REPORTING,

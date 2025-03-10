@@ -208,6 +208,23 @@ class Entra(Microsoft365Service):
                                 and policy.session_controls.sign_in_frequency
                                 else None
                             ),
+                            type=(
+                                SignInFrequencyType(
+                                    policy.session_controls.sign_in_frequency.type
+                                )
+                                if policy.session_controls
+                                and policy.session_controls.sign_in_frequency
+                                and policy.session_controls.sign_in_frequency.type
+                                else None
+                            ),
+                            interval=(
+                                SignInFrequencyInterval(
+                                    policy.session_controls.sign_in_frequency.frequency_interval
+                                )
+                                if policy.session_controls
+                                and policy.session_controls.sign_in_frequency
+                                else SignInFrequencyInterval.EVERY_TIME
+                            ),
                         ),
                     ),
                     state=ConditionalAccessPolicyState(
@@ -251,9 +268,21 @@ class PersistentBrowser(BaseModel):
     mode: str
 
 
+class SignInFrequencyInterval(Enum):
+    TIME_BASED = "timeBased"
+    EVERY_TIME = "everyTime"
+
+
+class SignInFrequencyType(Enum):
+    HOURS = "hours"
+    DAYS = "days"
+
+
 class SignInFrequency(BaseModel):
     is_enabled: bool
     frequency: Optional[int]
+    type: Optional[SignInFrequencyType]
+    interval: SignInFrequencyInterval
 
 
 class SessionControls(BaseModel):

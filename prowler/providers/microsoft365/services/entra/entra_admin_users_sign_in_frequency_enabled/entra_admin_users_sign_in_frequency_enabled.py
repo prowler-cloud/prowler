@@ -3,6 +3,8 @@ from prowler.providers.microsoft365.services.entra.entra_client import entra_cli
 from prowler.providers.microsoft365.services.entra.entra_service import (
     AdminRoles,
     ConditionalAccessPolicyState,
+    SignInFrequencyInterval,
+    SignInFrequencyType,
 )
 
 
@@ -64,18 +66,25 @@ class entra_admin_users_sign_in_frequency_enabled(Check):
                     resource_name=policy.display_name,
                     resource_id=policy.id,
                 )
-                if not policy.session_controls.sign_in_frequency.frequency:
-                    report.status = "FAIL"
-                    report.status_extended = f"Conditional Access Policy {policy.display_name} enforces sign-in frequency for admin users but it is set to 'Every Time'."
-                elif (
-                    policy.session_controls.sign_in_frequency.frequency
-                    > recommended_sign_in_frequency
+                if (
+                    policy.session_controls.sign_in_frequency.interval
+                    == SignInFrequencyInterval.EVERY_TIME
                 ):
                     report.status = "FAIL"
-                    report.status_extended = f"Conditional Access Policy {policy.display_name} enforces sign-in frequency to be {policy.session_controls.sign_in_frequency.frequency} hours for admin users, which is greater than the recommended {recommended_sign_in_frequency} hours."
+                    report.status_extended = f"Conditional Access Policy {policy.display_name} enforces sign-in frequency for admin users but it is set to 'Every Time'."
                 else:
-                    report.status = "PASS"
-                    report.status_extended = f"Conditional Access Policy {policy.display_name} enforces sign-in frequency to be {policy.session_controls.sign_in_frequency.frequency} hours for admin users."
+                    frequency_in_hours = (
+                        policy.session_controls.sign_in_frequency.frequency
+                        if policy.session_controls.sign_in_frequency.type
+                        == SignInFrequencyType.HOURS
+                        else policy.session_controls.sign_in_frequency.frequency * 24
+                    )
+                    if frequency_in_hours > recommended_sign_in_frequency:
+                        report.status = "FAIL"
+                        report.status_extended = f"Conditional Access Policy '{policy.display_name}' enforces sign-in frequency to be {frequency_in_hours} hours for admin users, which is greater than the recommended {recommended_sign_in_frequency} hours."
+                    else:
+                        report.status = "PASS"
+                        report.status_extended = f"Conditional Access Policy '{policy.display_name}' enforces sign-in frequency to be {frequency_in_hours} hours for admin users."
                 break
 
         findings.append(report)
