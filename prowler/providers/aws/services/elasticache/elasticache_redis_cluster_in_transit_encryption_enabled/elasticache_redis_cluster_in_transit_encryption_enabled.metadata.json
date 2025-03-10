@@ -13,9 +13,9 @@
   "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/elasticache-controls.html#elasticache-5",
   "Remediation": {
     "Code": {
-      "CLI": "https://docs.prowler.com/checks/aws/general-policies/general_10/",
+      "CLI": "",
       "NativeIaC": "https://docs.prowler.com/checks/aws/general-policies/general_10/",
-      "Other": "",
+      "Other": "https://docs.prowler.com/checks/aws/general-policies/general_10/",
       "Terraform": "https://docs.prowler.com/checks/aws/general-policies/general_10/"
     },
     "Recommendation": {

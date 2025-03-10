@@ -12,12 +12,12 @@
   "ResourceType": "AwsEc2VpcPeeringConnection",
   "Description": "Ensure routing tables for VPC peering are least access.",
   "Risk": "Being highly selective in peering routing tables is a very effective way of minimizing the impact of breach as resources outside of these routes are inaccessible to the peered VPC.",
-  "RelatedUrl": "",
+  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/VPC/vpc-peering-access.html#",
   "Remediation": {
     "Code": {
-      "CLI": "https://docs.prowler.com/checks/aws/networking-policies/networking_5#cli-command",
+      "CLI": "",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/VPC/vpc-peering-access.html#",
+      "Other": "https://docs.prowler.com/checks/aws/networking-policies/networking_5#cli-command",
       "Terraform": ""
     },
     "Recommendation": {
