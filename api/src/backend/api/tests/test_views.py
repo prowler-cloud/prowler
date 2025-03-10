@@ -4669,6 +4669,45 @@ class TestIntegrationViewSet:
             == data["data"]["relationships"]["providers"]["data"][0]["id"]
         )
 
+    def test_integrations_create_valid_relationships(
+        self,
+        authenticated_client,
+        providers_fixture,
+    ):
+        provider1, provider2, *_ = providers_fixture
+
+        data = {
+            "data": {
+                "type": "integrations",
+                "attributes": {
+                    "integration_type": Integration.IntegrationChoices.S3,
+                    "configuration": {
+                        "bucket_name": "bucket-name",
+                        "output_directory": "output-directory",
+                    },
+                    "credentials": {
+                        "role_arn": "arn:aws",
+                        "external_id": "external-id",
+                    },
+                },
+                "relationships": {
+                    "providers": {
+                        "data": [
+                            {"type": "providers", "id": str(provider1.id)},
+                            {"type": "providers", "id": str(provider2.id)},
+                        ]
+                    }
+                },
+            }
+        }
+        response = authenticated_client.post(
+            reverse("integration-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        assert Integration.objects.first().providers.count() == 2
+
     @pytest.mark.parametrize(
         "attributes, error_code, error_pointer",
         (
@@ -4789,6 +4828,38 @@ class TestIntegrationViewSet:
         assert integration.configuration["bucket_name"] == "new_bucket_name"
         assert integration.configuration["output_directory"] == "new_output_directory"
 
+    def test_integrations_partial_update_relationships(
+        self, authenticated_client, integrations_fixture
+    ):
+        integration, *_ = integrations_fixture
+        data = {
+            "data": {
+                "type": "integrations",
+                "id": str(integration.id),
+                "attributes": {
+                    "credentials": {
+                        "aws_access_key_id": "new_value",
+                    },
+                    # integration_type is `amazon_s3`
+                    "configuration": {
+                        "bucket_name": "new_bucket_name",
+                        "output_directory": "new_output_directory",
+                    },
+                },
+                "relationships": {"providers": {"data": []}},
+            }
+        }
+
+        assert integration.providers.count() > 0
+        response = authenticated_client.patch(
+            reverse("integration-detail", kwargs={"pk": integration.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_200_OK
+        integration.refresh_from_db()
+        assert integration.providers.count() == 0
+
     def test_integrations_partial_update_invalid_content_type(
         self, authenticated_client, integrations_fixture
     ):
@@ -4846,8 +4917,11 @@ class TestIntegrationViewSet:
                 ("inserted_at.lte", "2024-01-01", 0),
                 ("integration_type", Integration.IntegrationChoices.S3, 2),
                 ("integration_type", Integration.IntegrationChoices.SLACK, 0),
-                ("integration_type__in", f"{Integration.IntegrationChoices.S3},{Integration.IntegrationChoices.SLACK}",
-                 2),
+                (
+                    "integration_type__in",
+                    f"{Integration.IntegrationChoices.S3},{Integration.IntegrationChoices.SLACK}",
+                    2,
+                ),
             ]
         ),
     )
