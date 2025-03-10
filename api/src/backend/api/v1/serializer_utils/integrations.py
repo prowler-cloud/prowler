@@ -102,7 +102,7 @@ class IntegrationCredentialField(serializers.JSONField):
         "oneOf": [
             {
                 "type": "object",
-                "title": "S3",
+                "title": "Amazon S3",
                 "properties": {
                     "bucket_name": {
                         "type": "string",
