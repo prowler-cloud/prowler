@@ -77,20 +77,7 @@ class Test_entra_policy_ensure_default_user_cannot_create_tenants:
                 result[0].status_extended
                 == "Tenant creation is not disabled for non-admin users."
             )
-            assert result[0].resource == {
-                "id": id,
-                "name": "Test",
-                "description": "Test",
-                "default_user_role_permissions": {
-                    "allowed_to_create_apps": None,
-                    "allowed_to_create_security_groups": None,
-                    "allowed_to_create_tenants": True,
-                    "allowed_to_read_bitlocker_keys_for_owned_device": None,
-                    "allowed_to_read_other_users": None,
-                    "odata_type": None,
-                    "permission_grant_policies_assigned": None,
-                },
-            }
+            assert result[0].resource == entra_client.authorization_policy.dict()
             assert result[0].resource_name == "Test"
             assert result[0].resource_id == id
             assert result[0].location == "global"
@@ -130,20 +117,7 @@ class Test_entra_policy_ensure_default_user_cannot_create_tenants:
                 result[0].status_extended
                 == "Tenant creation is disabled for non-admin users."
             )
-            assert result[0].resource == {
-                "id": id,
-                "name": "Test",
-                "description": "Test",
-                "default_user_role_permissions": {
-                    "allowed_to_create_apps": None,
-                    "allowed_to_create_security_groups": None,
-                    "allowed_to_create_tenants": False,
-                    "allowed_to_read_bitlocker_keys_for_owned_device": None,
-                    "allowed_to_read_other_users": None,
-                    "odata_type": None,
-                    "permission_grant_policies_assigned": None,
-                },
-            }
+            assert result[0].resource == entra_client.authorization_policy.dict()
             assert result[0].resource_name == "Test"
             assert result[0].resource_id == id
             assert result[0].location == "global"

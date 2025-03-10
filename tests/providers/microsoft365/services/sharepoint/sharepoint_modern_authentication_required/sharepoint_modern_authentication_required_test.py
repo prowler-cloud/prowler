@@ -51,14 +51,7 @@ class Test_sharepoint_modern_authentication_required:
             assert result[0].resource_id == DOMAIN
             assert result[0].location == "global"
             assert result[0].resource_name == "SharePoint Settings"
-            assert result[0].resource == {
-                "sharingCapability": "ExternalUserAndGuestSharing",
-                "sharingAllowedDomainList": ["allowed-domain.com"],
-                "sharingBlockedDomainList": ["blocked-domain.com"],
-                "sharingDomainRestrictionMode": "allowList",
-                "resharingEnabled": False,
-                "legacyAuth": False,
-            }
+            assert result[0].resource == sharepoint_client.settings.dict()
 
     def test_sharepoint_modern_authentication_enabled(self):
         """
@@ -104,14 +97,7 @@ class Test_sharepoint_modern_authentication_required:
             assert result[0].resource_id == DOMAIN
             assert result[0].location == "global"
             assert result[0].resource_name == "SharePoint Settings"
-            assert result[0].resource == {
-                "sharingCapability": "ExternalUserAndGuestSharing",
-                "sharingAllowedDomainList": ["allowed-domain.com"],
-                "sharingBlockedDomainList": ["blocked-domain.com"],
-                "sharingDomainRestrictionMode": "allowList",
-                "resharingEnabled": False,
-                "legacyAuth": True,
-            }
+            assert result[0].resource == sharepoint_client.settings.dict()
 
     def test_sharepoint_empty_settings(self):
         """
