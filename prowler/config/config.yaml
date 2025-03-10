@@ -480,5 +480,5 @@ kubernetes:
 # Microsoft365 Configuration
 microsoft365:
   # Conditional Access Policy
-  # policy.session_controls.sign_in_frequency.frequency
+  # policy.session_controls.sign_in_frequency.frequency in hours
   sign_in_frequency: 4
