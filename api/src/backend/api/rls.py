@@ -134,9 +134,7 @@ class RowLevelSecurityConstraint(models.BaseConstraint):
         path, _, kwargs = super().deconstruct()
         return (path, (self.target_field,), kwargs)
 
-    def validate(
-        self, model, instance, exclude=None, using=DEFAULT_DB_ALIAS
-    ):  # noqa: F841
+    def validate(self, model, instance, exclude=None, using=DEFAULT_DB_ALIAS):  # noqa: F841
         if not hasattr(instance, "tenant_id"):
             raise ValidationError(f"{model.__name__} does not have a tenant_id field.")
 
