@@ -562,8 +562,11 @@ def get_section_containers_format1(data, section_1, section_2):
 
             direct_internal_items.append(internal_section_container)
 
+        # Cut the title if it's too long
+        tittle_external = section[:70] + " ..." if len(section) > 70 else section
+
         accordion_item = dbc.AccordionItem(
-            title=f"{section}", children=direct_internal_items
+            title=f"{tittle_external}", children=direct_internal_items
         )
         section_container = html.Div(
             [
