@@ -40,11 +40,7 @@ class Test_entra_password_hash_sync_enabled:
             assert result[0].resource_id == "org1"
             assert result[0].resource_name == "Organization 1"
             assert result[0].location == "global"
-            assert result[0].resource == {
-                "id": "org1",
-                "name": "Organization 1",
-                "on_premises_sync_enabled": True,
-            }
+            assert result[0].resource == org.dict()
 
     def test_password_hash_sync_disabled(self):
         entra_client = mock.MagicMock()
@@ -84,11 +80,7 @@ class Test_entra_password_hash_sync_enabled:
             assert result[0].resource_id == "org1"
             assert result[0].resource_name == "Organization 1"
             assert result[0].location == "global"
-            assert result[0].resource == {
-                "id": "org1",
-                "name": "Organization 1",
-                "on_premises_sync_enabled": False,
-            }
+            assert result[0].resource == org1.dict()
             assert result[1].status == "PASS"
             assert (
                 result[1].status_extended
@@ -97,11 +89,7 @@ class Test_entra_password_hash_sync_enabled:
             assert result[1].resource_id == "org2"
             assert result[1].resource_name == "Organization 2"
             assert result[1].location == "global"
-            assert result[1].resource == {
-                "id": "org2",
-                "name": "Organization 2",
-                "on_premises_sync_enabled": True,
-            }
+            assert result[1].resource == org2.dict()
 
     def test_password_hash_sync_disabled_two_org(self):
         entra_client = mock.MagicMock()
@@ -136,11 +124,7 @@ class Test_entra_password_hash_sync_enabled:
             assert result[0].resource_id == "org2"
             assert result[0].resource_name == "Organization 2"
             assert result[0].location == "global"
-            assert result[0].resource == {
-                "id": "org2",
-                "name": "Organization 2",
-                "on_premises_sync_enabled": False,
-            }
+            assert result[0].resource == org.dict()
 
     def test_empty_organization(self):
         entra_client = mock.MagicMock()
