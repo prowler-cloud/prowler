@@ -47,12 +47,7 @@ class Test_entra_admin_consent_workflow_enabled:
             assert result[0].resource_id == DOMAIN
             assert result[0].location == "global"
             assert result[0].resource_name == "Admin Consent Policy"
-            assert result[0].resource == {
-                "admin_consent_enabled": True,
-                "notify_reviewers": True,
-                "email_reminders_to_reviewers": False,
-                "duration_in_days": 30,
-            }
+            assert result[0].resource == entra_client.admin_consent_policy.dict()
 
     def test_admin_consent_enabled_without_notifications(self):
         """
@@ -91,12 +86,7 @@ class Test_entra_admin_consent_workflow_enabled:
             assert result[0].resource_id == DOMAIN
             assert result[0].location == "global"
             assert result[0].resource_name == "Admin Consent Policy"
-            assert result[0].resource == {
-                "admin_consent_enabled": True,
-                "notify_reviewers": False,
-                "email_reminders_to_reviewers": False,
-                "duration_in_days": 30,
-            }
+            assert result[0].resource == entra_client.admin_consent_policy.dict()
 
     def test_admin_consent_disabled(self):
         """
@@ -135,12 +125,7 @@ class Test_entra_admin_consent_workflow_enabled:
             assert result[0].resource_id == DOMAIN
             assert result[0].location == "global"
             assert result[0].resource_name == "Admin Consent Policy"
-            assert result[0].resource == {
-                "admin_consent_enabled": False,
-                "notify_reviewers": True,
-                "email_reminders_to_reviewers": False,
-                "duration_in_days": 30,
-            }
+            assert result[0].resource == entra_client.admin_consent_policy.dict()
 
     def test_no_policy(self):
         """
