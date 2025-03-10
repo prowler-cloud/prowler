@@ -3,12 +3,8 @@
 import { Select, SelectItem } from "@nextui-org/react";
 import { Control, FieldPath, FieldValues } from "react-hook-form";
 
-import { AWSProviderBadge } from "@/components/icons/providers-badge/AWSProviderBadge";
-import { AzureProviderBadge } from "@/components/icons/providers-badge/AzureProviderBadge";
-import { GCPProviderBadge } from "@/components/icons/providers-badge/GCPProviderBadge";
-import { KS8ProviderBadge } from "@/components/icons/providers-badge/KS8ProviderBadge";
-import { FormControl, FormField, FormMessage } from "@/components/ui/form";
 import { EntityInfoShort } from "@/components/ui/entities";
+import { FormControl, FormField, FormMessage } from "@/components/ui/form";
 
 interface SelectScanProviderProps<
   TFieldValues extends FieldValues = FieldValues,
@@ -33,21 +29,6 @@ export const SelectScanProvider = <
   control,
   name,
 }: SelectScanProviderProps<TFieldValues, TName>) => {
-  const renderBadge = (providerType: string) => {
-    switch (providerType) {
-      case "aws":
-        return <AWSProviderBadge width={25} height={25} />;
-      case "azure":
-        return <AzureProviderBadge width={25} height={25} />;
-      case "gcp":
-        return <GCPProviderBadge width={25} height={25} />;
-      case "kubernetes":
-        return <KS8ProviderBadge width={25} height={25} />;
-      default:
-        return null;
-    }
-  };
-
   return (
     <FormField
       control={control}
