@@ -281,7 +281,7 @@ class RiskLevel(Enum):
 class Conditions(BaseModel):
     application_conditions: Optional[ApplicationsConditions]
     user_conditions: Optional[UsersConditions]
-    user_risk_levels: List[RiskLevel]
+    user_risk_levels: List[RiskLevel] = []
 
 
 class PersistentBrowser(BaseModel):
