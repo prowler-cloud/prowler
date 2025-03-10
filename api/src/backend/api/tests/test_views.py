@@ -4600,6 +4600,32 @@ class TestIntegrationViewSet:
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     @pytest.mark.parametrize(
+        "include_values, expected_resources",
+        [
+            ("providers", ["providers"]),
+        ],
+    )
+    def test_integrations_list_include(
+        self,
+        include_values,
+        expected_resources,
+        authenticated_client,
+        integrations_fixture,
+    ):
+        response = authenticated_client.get(
+            reverse("integration-list"), {"include": include_values}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == len(integrations_fixture)
+        assert "included" in response.json()
+
+        included_data = response.json()["included"]
+        for expected_type in expected_resources:
+            assert any(
+                d.get("type") == expected_type for d in included_data
+            ), f"Expected type '{expected_type}' not found in included data"
+
+    @pytest.mark.parametrize(
         "integration_type, configuration, credentials",
         [
             # Amazon S3 - AWS credentials

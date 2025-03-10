@@ -2090,6 +2090,10 @@ class IntegrationSerializer(RLSSerializer):
             "url",
         ]
 
+    included_serializers = {
+        "providers": "api.v1.serializers.ProviderIncludeSerializer",
+    }
+
 
 class IntegrationCreateSerializer(BaseWriteIntegrationSerializer):
     credentials = IntegrationCredentialField(write_only=True)
