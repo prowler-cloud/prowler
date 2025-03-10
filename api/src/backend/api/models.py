@@ -21,6 +21,7 @@ from uuid6 import uuid7
 from api.db_utils import (
     CustomUserManager,
     FindingDeltaEnumField,
+    IntegrationTypeEnumField,
     InvitationStateEnumField,
     MemberRoleEnumField,
     ProviderEnumField,
@@ -1138,3 +1139,80 @@ class ScanSummary(RowLevelSecurityProtectedModel):
 
     class JSONAPIMeta:
         resource_name = "scan-summaries"
+
+
+class Integration(RowLevelSecurityProtectedModel):
+    class IntegrationChoices(models.TextChoices):
+        S3 = "amazon_s3", _("Amazon S3")
+        SAML = "saml", _("SAML")
+        AWS_SECURITY_HUB = "aws_security_hub", _("AWS Security Hub")
+        JIRA = "jira", _("JIRA")
+        SLACK = "slack", _("Slack")
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+    enabled = models.BooleanField(default=False)
+    connected = models.BooleanField(null=True, blank=True)
+    connection_last_checked_at = models.DateTimeField(null=True, blank=True)
+    integration_type = IntegrationTypeEnumField(choices=IntegrationChoices.choices)
+    configuration = models.JSONField(default=dict)
+    _credentials = models.BinaryField(db_column="credentials")
+
+    providers = models.ManyToManyField(
+        Provider,
+        related_name="integrations",
+        through="IntegrationProviderRelationship",
+        blank=True,
+    )
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "integrations"
+
+        constraints = [
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "integrations"
+
+    @property
+    def credentials(self):
+        if isinstance(self._credentials, memoryview):
+            encrypted_bytes = self._credentials.tobytes()
+        elif isinstance(self._credentials, str):
+            encrypted_bytes = self._credentials.encode()
+        else:
+            encrypted_bytes = self._credentials
+        decrypted_data = fernet.decrypt(encrypted_bytes)
+        return json.loads(decrypted_data.decode())
+
+    @credentials.setter
+    def credentials(self, value):
+        encrypted_data = fernet.encrypt(json.dumps(value).encode())
+        self._credentials = encrypted_data
+
+
+class IntegrationProviderRelationship(RowLevelSecurityProtectedModel):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    integration = models.ForeignKey(Integration, on_delete=models.CASCADE)
+    provider = models.ForeignKey(Provider, on_delete=models.CASCADE)
+    inserted_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "integration_provider_mappings"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["integration_id", "provider_id"],
+                name="unique_integration_provider_rel",
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]

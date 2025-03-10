@@ -10,6 +10,7 @@ from api.v1.views import (
     FindingViewSet,
     GithubSocialLoginView,
     GoogleSocialLoginView,
+    IntegrationViewSet,
     InvitationAcceptViewSet,
     InvitationViewSet,
     MembershipViewSet,
@@ -47,6 +48,7 @@ router.register(
 )
 router.register(r"overviews", OverviewViewSet, basename="overview")
 router.register(r"schedules", ScheduleViewSet, basename="schedule")
+router.register(r"integrations", IntegrationViewSet, basename="integration")
 
 tenants_router = routers.NestedSimpleRouter(router, r"tenants", lookup="tenant")
 tenants_router.register(

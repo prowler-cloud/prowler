@@ -24,6 +24,7 @@ from api.db_utils import (
 from api.models import (
     ComplianceOverview,
     Finding,
+    Integration,
     Invitation,
     Membership,
     PermissionChoices,
@@ -648,3 +649,19 @@ class ServiceOverviewFilter(ScanSummaryFilter):
                 }
             )
         return super().is_valid()
+
+
+class IntegrationFilter(FilterSet):
+    inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
+    integration_type = ChoiceFilter(choices=Integration.IntegrationChoices.choices)
+    integration_type__in = ChoiceInFilter(
+        choices=Integration.IntegrationChoices.choices,
+        field_name="integration_type",
+        lookup_expr="in",
+    )
+
+    class Meta:
+        model = Integration
+        fields = {
+            "inserted_at": ["date", "gte", "lte"],
+        }
