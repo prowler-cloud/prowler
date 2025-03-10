@@ -57,6 +57,7 @@ from api.db_router import MainRouter
 from api.filters import (
     ComplianceOverviewFilter,
     FindingFilter,
+    IntegrationFilter,
     InvitationFilter,
     MembershipFilter,
     ProviderFilter,
@@ -2477,6 +2478,7 @@ class IntegrationViewSet(BaseRLSViewSet):
     queryset = Integration.objects.all()
     serializer_class = IntegrationSerializer
     http_method_names = ["get", "post", "patch", "delete"]
+    filterset_class = IntegrationFilter
     ordering = ["integration_type", "-inserted_at"]
     # RBAC required permissions
     required_permissions = [Permissions.MANAGE_PROVIDERS]

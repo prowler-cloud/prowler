@@ -1634,6 +1634,64 @@ paths:
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
+      - in: query
+        name: filter[inserted_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__date]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[inserted_at__lte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[integration_type]
+        schema:
+          type: string
+          enum:
+          - amazon_s3
+          - aws_security_hub
+          - jira
+          - saml
+          - slack
+        description: |-
+          * `amazon_s3` - Amazon S3
+          * `saml` - SAML
+          * `aws_security_hub` - AWS Security Hub
+          * `jira` - JIRA
+          * `slack` - Slack
+      - in: query
+        name: filter[integration_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - amazon_s3
+            - aws_security_hub
+            - jira
+            - saml
+            - slack
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `amazon_s3` - Amazon S3
+          * `saml` - SAML
+          * `aws_security_hub` - AWS Security Hub
+          * `jira` - JIRA
+          * `slack` - Slack
+        explode: false
+        style: form
       - name: filter[search]
         required: false
         in: query

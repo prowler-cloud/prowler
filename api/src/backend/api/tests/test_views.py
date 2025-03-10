@@ -4837,30 +4837,35 @@ class TestIntegrationViewSet:
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    # @pytest.mark.parametrize(
-    #     "filter_name, filter_value, expected_count",
-    #     (
-    #         [
-    #             ("name", "aws_testing_1", 1),
-    #             ("name.icontains", "aws", 2),
-    #         ]
-    #     ),
-    # )
-    # def test_provider_secrets_filters(
-    #     self,
-    #     authenticated_client,
-    #     provider_secret_fixture,
-    #     filter_name,
-    #     filter_value,
-    #     expected_count,
-    # ):
-    #     response = authenticated_client.get(
-    #         reverse("providersecret-list"),
-    #         {f"filter[{filter_name}]": filter_value},
-    #     )
-    #
-    #     assert response.status_code == status.HTTP_200_OK
-    #     assert len(response.json()["data"]) == expected_count
+    @pytest.mark.parametrize(
+        "filter_name, filter_value, expected_count",
+        (
+            [
+                ("inserted_at", TODAY, 2),
+                ("inserted_at.gte", "2024-01-01", 2),
+                ("inserted_at.lte", "2024-01-01", 0),
+                ("integration_type", Integration.IntegrationChoices.S3, 2),
+                ("integration_type", Integration.IntegrationChoices.SLACK, 0),
+                ("integration_type__in", f"{Integration.IntegrationChoices.S3},{Integration.IntegrationChoices.SLACK}",
+                 2),
+            ]
+        ),
+    )
+    def test_integrations_filters(
+        self,
+        authenticated_client,
+        integrations_fixture,
+        filter_name,
+        filter_value,
+        expected_count,
+    ):
+        response = authenticated_client.get(
+            reverse("integration-list"),
+            {f"filter[{filter_name}]": filter_value},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == expected_count
 
     @pytest.mark.parametrize(
         "filter_name",
