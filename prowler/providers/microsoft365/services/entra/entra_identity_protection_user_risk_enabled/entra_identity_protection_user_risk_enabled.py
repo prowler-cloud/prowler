@@ -4,6 +4,7 @@ from prowler.providers.microsoft365.services.entra.entra_service import (
     ConditionalAccessGrantControl,
     ConditionalAccessPolicyState,
     GrantControlOperator,
+    RiskLevel,
 )
 
 
@@ -51,19 +52,24 @@ class entra_identity_protection_user_risk_enabled(Check):
                 not in policy.grant_controls.built_in_controls
                 or ConditionalAccessGrantControl.MFA
                 not in policy.grant_controls.built_in_controls
+                or policy.grant_controls.operator != GrantControlOperator.AND
             ):
                 continue
 
-            if policy.grant_controls.operator == GrantControlOperator.AND:
+            if policy.conditions.user_risk_levels:
                 report = CheckReportMicrosoft365(
                     metadata=self.metadata(),
                     resource=policy,
                     resource_name=policy.display_name,
                     resource_id=policy.id,
                 )
-                report.status = "PASS"
-                report.status_extended = f"Conditional Access Policy '{policy.display_name}' is an user risk based Identity Protection Policy."
-                break
+                if RiskLevel.HIGH not in policy.conditions.user_risk_levels:
+                    report.status = "FAIL"
+                    report.status_extended = f"Conditional Access Policy '{policy.display_name}' is an user risk based Identity Protection Policy but does not protect against high risk potential account compromises."
+                else:
+                    report.status = "PASS"
+                    report.status_extended = f"Conditional Access Policy '{policy.display_name}' is an user risk based Identity Protection Policy and does protect against high risk potential account compromises."
+                    break
 
         findings.append(report)
 

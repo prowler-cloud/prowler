@@ -8,7 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Conditional Access Policy",
-  "Description": "Ensure that Identity Protection user risk policies are enabled to detect and respond to potential account compromises.",
+  "Description": "Ensure that Identity Protection user risk policies are enabled to detect and respond to high risk potential account compromises.",
   "Risk": "Without Identity Protection user risk policies enabled, compromised accounts may go undetected, allowing attackers to exploit breached credentials and gain unauthorized access. The absence of automated responses to user risk levels increases the likelihood of security incidents, such as data breaches or privilege escalation.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/overview",
   "Remediation": {
