@@ -13,7 +13,7 @@ version = "1.5.4"
 [tool.poetry.dependencies]
 celery = {extras = ["pytest"], version = "^5.4.0"}
 dj-rest-auth = {extras = ["with_social", "jwt"], version = "7.0.1"}
-django = "5.1.5"
+django = "5.1.7"
 django-celery-beat = "^2.7.0"
 django-celery-results = "^2.5.1"
 django-cors-headers = "4.4.0"
