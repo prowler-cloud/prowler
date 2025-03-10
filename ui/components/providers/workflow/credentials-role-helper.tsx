@@ -14,7 +14,7 @@ export const CredentialsRoleHelper = () => {
           A <strong>new read-only IAM role</strong> must be manually created.
           Use one of the following templates to create the IAM role:
         </p>
-        <div className="flex flex-col gap-2">
+        <div className="flex w-fit flex-col gap-2">
           <Link
             href="https://github.com/prowler-cloud/prowler/blob/master/permissions/templates/cloudformation/prowler-scan-role.yml"
             target="_blank"
