@@ -11,6 +11,7 @@ from prowler.providers.microsoft365.services.entra.entra_service import (
     PersistentBrowser,
     SessionControls,
     SignInFrequency,
+    SignInFrequencyInterval,
     UsersConditions,
 )
 from tests.providers.microsoft365.microsoft365_fixtures import (
@@ -101,7 +102,10 @@ class Test_entra_admin_portals_role_limited_access:
                             is_enabled=False, mode="always"
                         ),
                         sign_in_frequency=SignInFrequency(
-                            is_enabled=False, frequency=None
+                            is_enabled=False,
+                            frequency=None,
+                            type=None,
+                            interval=SignInFrequencyInterval.EVERY_TIME,
                         ),
                     ),
                     state=ConditionalAccessPolicyState.DISABLED,
@@ -172,7 +176,10 @@ class Test_entra_admin_portals_role_limited_access:
                             is_enabled=False, mode="always"
                         ),
                         sign_in_frequency=SignInFrequency(
-                            is_enabled=False, frequency=None
+                            is_enabled=False,
+                            frequency=None,
+                            type=None,
+                            interval=SignInFrequencyInterval.EVERY_TIME,
                         ),
                     ),
                     state=ConditionalAccessPolicyState.ENABLED_FOR_REPORTING,
@@ -214,7 +221,10 @@ class Test_entra_admin_portals_role_limited_access:
                             is_enabled=False, mode="always"
                         ),
                         sign_in_frequency=SignInFrequency(
-                            is_enabled=False, frequency=None
+                            is_enabled=False,
+                            frequency=None,
+                            type=None,
+                            interval=SignInFrequencyInterval.EVERY_TIME,
                         ),
                     ),
                     state=ConditionalAccessPolicyState.ENABLED_FOR_REPORTING,
