@@ -294,7 +294,7 @@ Each Prowler check has metadata associated which is stored at the same level of 
     # Code holds different methods to remediate the FAIL finding
     "Code": {
       # CLI holds the command in the provider native CLI to remediate it
-      "CLI": "aws ec2 modify-image-attribute --region us-east-1 --image-id ami-3fad5252 --launch-permission {\"Remove\":[{\"Group\":\"all\"}]}",
+      "CLI": "aws ec2 modify-image-attribute --region <REGION> --image-id ami-1234abcd --launch-permission {\"Remove\":[{\"Group\":\"all\"}]}",
       # NativeIaC holds the native IaC code to remediate it, use "https://docs.bridgecrew.io/docs"
       "NativeIaC": "",
       # Other holds the other commands, scripts or code to remediate it, use "https://www.trendmicro.com/cloudoneconformity"
