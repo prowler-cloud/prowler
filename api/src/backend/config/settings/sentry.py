@@ -20,6 +20,9 @@ IGNORED_EXCEPTIONS = [
     # The following comes from urllib3
     # eu-west-1 -- HTTPClientError[126]: An HTTP Client raised an unhandled exception: AWSHTTPSConnectionPool(host='hostname.s3.eu-west-1.amazonaws.com', port=443): Pool is closed.
     "Pool is closed",
+    # Errors from the GCP API
+    "Permission denied to get service",
+    "API has not been used in project",
 ]
 
 
