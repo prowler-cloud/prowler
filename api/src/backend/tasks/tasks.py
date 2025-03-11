@@ -264,17 +264,24 @@ def generate_outputs(scan_id: str, provider_id: str, tenant_id: str):
     # Save to configured storage
     uploaded = _upload_to_s3(tenant_id, output_directory, scan_id)
 
+    exception_raised = False
     if uploaded:
+        # Remove the local files after upload
+        try:
+            rmtree(Path(output_directory).parent, ignore_errors=True)
+        except FileNotFoundError as e:
+            logger.error(f"Error deleting output files: {e}")
+            exception_raised = True
+
         output_directory = uploaded
         uploaded = True
-        # Remove the local files after upload
-        rmtree(Path(output_directory).parent, ignore_errors=True)
     else:
         uploaded = False
 
     # Update the scan instance with the output path
     Scan.all_objects.filter(id=scan_id).update(output_location=output_directory)
 
-    logger.info(f"Scan output files generated, output location: {output_directory}")
+    if not exception_raised:
+        logger.info(f"Scan output files generated, output location: {output_directory}")
 
     return {"upload": uploaded}
