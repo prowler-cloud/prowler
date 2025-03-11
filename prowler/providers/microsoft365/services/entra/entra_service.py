@@ -14,20 +14,23 @@ class Entra(Microsoft365Service):
         super().__init__(provider)
 
         loop = get_event_loop()
-
+        self.tenant_domain = provider.identity.tenant_domain
         attributes = loop.run_until_complete(
             gather(
                 self._get_authorization_policy(),
                 self._get_conditional_access_policies(),
+                self._get_admin_consent_policy(),
+                self._get_groups(),
             )
         )
 
         self.authorization_policy = attributes[0]
         self.conditional_access_policies = attributes[1]
+        self.admin_consent_policy = attributes[2]
+        self.groups = attributes[3]
 
     async def _get_authorization_policy(self):
         logger.info("Entra - Getting authorization policy...")
-
         authorization_policy = None
         try:
             auth_policy = await self.client.policies.authorization_policy.get()
@@ -83,12 +86,10 @@ class Entra(Microsoft365Service):
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-
         return authorization_policy
 
     async def _get_conditional_access_policies(self):
         logger.info("Entra - Getting conditional access policies...")
-
         conditional_access_policies = {}
         try:
             conditional_access_policies_list = (
@@ -244,7 +245,7 @@ class Entra(Microsoft365Service):
                                 )
                                 if policy.session_controls
                                 and policy.session_controls.sign_in_frequency
-                                else SignInFrequencyInterval.EVERY_TIME
+                                else None
                             ),
                         ),
                     ),
@@ -257,6 +258,43 @@ class Entra(Microsoft365Service):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return conditional_access_policies
+
+    async def _get_admin_consent_policy(self):
+        logger.info("Entra - Getting group settings...")
+        admin_consent_policy = None
+        try:
+            policy = await self.client.policies.admin_consent_request_policy.get()
+            admin_consent_policy = AdminConsentPolicy(
+                admin_consent_enabled=policy.is_enabled,
+                notify_reviewers=policy.notify_reviewers,
+                email_reminders_to_reviewers=policy.reminders_enabled,
+                duration_in_days=policy.request_duration_in_days,
+            )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return admin_consent_policy
+
+    async def _get_groups(self):
+        logger.info("Entra - Getting groups...")
+        groups = []
+        try:
+            groups_data = await self.client.groups.get()
+            for group in groups_data.value:
+                groups.append(
+                    Group(
+                        id=group.id,
+                        name=group.display_name,
+                        groupTypes=group.group_types,
+                        membershipRule=group.membership_rule,
+                    )
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return groups
 
 
 class ConditionalAccessPolicyState(Enum):
@@ -312,7 +350,7 @@ class SignInFrequency(BaseModel):
     is_enabled: bool
     frequency: Optional[int]
     type: Optional[SignInFrequencyType]
-    interval: SignInFrequencyInterval
+    interval: Optional[SignInFrequencyInterval]
 
 
 class SessionControls(BaseModel):
@@ -361,6 +399,20 @@ class AuthorizationPolicy(BaseModel):
     name: str
     description: str
     default_user_role_permissions: Optional[DefaultUserRolePermissions]
+
+
+class Group(BaseModel):
+    id: str
+    name: str
+    groupTypes: List[str]
+    membershipRule: Optional[str]
+
+
+class AdminConsentPolicy(BaseModel):
+    admin_consent_enabled: bool
+    notify_reviewers: bool
+    email_reminders_to_reviewers: bool
+    duration_in_days: int
 
 
 class AdminRoles(Enum):

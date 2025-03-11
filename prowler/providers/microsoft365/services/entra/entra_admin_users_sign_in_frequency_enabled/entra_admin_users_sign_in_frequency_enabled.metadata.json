@@ -8,7 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Conditional Access Policy",
-  "Description": "Ensure Sign-in frequency periodic reauthentication does not exceed 4 hours for E3 tenants, or 24 hours for E5 tenants using Privileged Identity Management.",
+  "Description": "Ensure Sign-in frequency periodic reauthentication is enabled and properly configured to reduce the risk of unauthorized access and session hijacking.",
   "Risk": "Allowing persistent browser sessions and long sign-in frequencies for administrative users increases the risk of unauthorized access. Attackers could exploit session persistence to maintain access to an admin account without reauthentication, increasing the likelihood of account compromise, especially in cases of credential theft or session hijacking.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-conditional-access-session#sign-in-frequency",
   "Remediation": {

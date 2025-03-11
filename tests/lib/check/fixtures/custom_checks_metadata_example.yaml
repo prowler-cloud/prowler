@@ -58,7 +58,7 @@ CustomChecksMetadata:
         RelatedUrl: https://cloud.google.com/compute/docs/ip-addresses/reserve-static-external-ip-address
         Remediation:
           Code:
-            CLI: https://docs.prowler.com/checks/gcp/google-cloud-public-policies/bc_gcp_public_2#cli-command
+            CLI: gcloud compute instances describe INSTANCE_NAME --zone=ZONE
             NativeIaC: https://cloud.google.com/compute/docs/reference/rest/v1/instances
             Other: https://cloud.google.com/compute/docs/ip-addresses/reserve-static-external-ip-address
             Terraform: https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_instance
