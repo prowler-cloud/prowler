@@ -26,6 +26,7 @@ export const LaunchScanWorkflow = ({
 }: {
   providers: ProviderInfo[];
 }) => {
+  console.log("providers from launch scan workflow", providers);
   const formSchema = onDemandScanFormSchema();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -80,10 +81,7 @@ export const LaunchScanWorkflow = ({
         className="flex flex-col space-y-4"
       >
         <div className="grid grid-cols-12 gap-6">
-          <div className="col-span-4">
-            <p className="pb-1 text-sm font-medium text-default-700">
-              Launch Scan
-            </p>
+          <div className="col-span-3">
             <SelectScanProvider
               providers={providers}
               control={form.control}
@@ -98,15 +96,16 @@ export const LaunchScanWorkflow = ({
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -50 }}
                   transition={{ duration: 0.3 }}
-                  className="col-span-2"
+                  className="col-span-2 self-end"
                 >
                   <CustomInput
                     control={form.control}
                     name="scanName"
                     type="text"
-                    label="Scan Name (optional)"
+                    label="Scan label (optional)"
                     labelPlacement="outside"
-                    placeholder="Scan Name"
+                    placeholder="Scan label"
+                    size="sm"
                     variant="bordered"
                     isRequired={false}
                     isInvalid={!!form.formState.errors.scanName}
@@ -119,15 +118,15 @@ export const LaunchScanWorkflow = ({
                   transition={{ duration: 0.3 }}
                   className="col-span-4 flex items-end gap-4"
                 >
-                  <div className="flex flex-row items-center gap-4">
+                  <div className="flex flex-row items-end gap-4">
                     <CustomButton
                       type="submit"
                       ariaLabel="Start scan now"
                       variant="solid"
                       color="action"
-                      size="lg"
+                      size="sm"
                       isLoading={isLoading}
-                      startContent={!isLoading && <RocketIcon size={24} />}
+                      startContent={!isLoading && <RocketIcon size={16} />}
                     >
                       {isLoading ? <>Loading</> : <span>Start now</span>}
                     </CustomButton>
@@ -136,8 +135,8 @@ export const LaunchScanWorkflow = ({
                       className="w-fit border-gray-200 bg-transparent"
                       ariaLabel="Clear form"
                       variant="bordered"
-                      size="md"
-                      radius="lg"
+                      size="sm"
+                      radius="sm"
                     >
                       Cancel
                     </CustomButton>

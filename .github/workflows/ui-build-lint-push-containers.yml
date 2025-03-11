@@ -84,6 +84,8 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ${{ env.WORKING_DIRECTORY }}
+          build-args: |
+            NEXT_PUBLIC_PROWLER_RELEASE_VERSION=${{ env.SHORT_SHA }}
           # Set push: false for testing
           push: true
           tags: |
@@ -97,6 +99,8 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ${{ env.WORKING_DIRECTORY }}
+          build-args: |
+            NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${{ env.RELEASE_TAG }}
           push: true
           tags: |
             ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ env.RELEASE_TAG }}
