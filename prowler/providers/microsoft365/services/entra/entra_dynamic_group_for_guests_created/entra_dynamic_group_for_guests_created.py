@@ -26,18 +26,16 @@ class entra_dynamic_group_for_guests_created(Check):
         """
         findings = []
         if entra_client.groups:
-            dynamic_group_for_guests = False
             dynamic_group = None
             for group in entra_client.groups:
                 if "DynamicMembership" in group.groupTypes and group.membershipRule:
                     if 'user.userType -eq "Guest"' in group.membershipRule:
-                        dynamic_group_for_guests = True
                         dynamic_group = group
                         break
 
             report = CheckReportMicrosoft365(
                 self.metadata(),
-                resource=dynamic_group if dynamic_group_for_guests else {},
+                resource=dynamic_group if dynamic_group else {},
                 resource_name=dynamic_group.name if dynamic_group else "Group",
                 resource_id=dynamic_group.id if dynamic_group else "group",
             )
@@ -46,7 +44,7 @@ class entra_dynamic_group_for_guests_created(Check):
                 "No dynamic group for guest users was found in Microsoft Entra."
             )
 
-            if dynamic_group_for_guests:
+            if dynamic_group:
                 report.status = "PASS"
                 report.status_extended = (
                     "A dynamic group for guest users is created in Microsoft Entra."
