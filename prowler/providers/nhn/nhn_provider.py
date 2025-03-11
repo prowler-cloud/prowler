@@ -1,6 +1,7 @@
 from typing import Optional
 
 import requests
+from colorama import Style
 
 from prowler.config.config import (
     default_config_file_path,
@@ -161,11 +162,13 @@ class NhnProvider(Provider):
         Prints the NHN credentials in a simple box format.
         """
         report_lines = [
-            "NHN Provider credentials:",
             f"  Username: {self._username}",
             f"  TenantID: {self._tenant_id}",
         ]
-        print_boxes(report_lines, "NHN Provider")
+        report_title = (
+            f"{Style.BRIGHT}Using the NHN credentials below:{Style.RESET_ALL}"
+        )
+        print_boxes(report_lines, report_title)
 
     def setup_session(self) -> None:
         """
