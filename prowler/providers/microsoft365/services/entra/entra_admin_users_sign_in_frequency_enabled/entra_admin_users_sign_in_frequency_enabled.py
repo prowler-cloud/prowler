@@ -80,16 +80,16 @@ class entra_admin_users_sign_in_frequency_enabled(Check):
                         report.status = "FAIL"
                         report.status_extended = f"Conditional Access Policy '{policy.display_name}' enforces sign-in frequency to be {frequency_in_hours} hours for admin users, which is greater than the recommended {recommended_sign_in_frequency} hours."
                     else:
-                        report.status = "PASS"
                         report.status_extended = f"Conditional Access Policy '{policy.display_name}' enforces sign-in frequency to be {frequency_in_hours} hours for admin users."
-
-                    if (
-                        policy.state
-                        == ConditionalAccessPolicyState.ENABLED_FOR_REPORTING
-                    ):
-                        report.status = "FAIL"
-                        report.status_extended += " Finding status remains FAIL because the policy is still set to 'Report-only' instead of 'On'."
-                break
+                        if (
+                            policy.state
+                            == ConditionalAccessPolicyState.ENABLED_FOR_REPORTING
+                        ):
+                            report.status = "FAIL"
+                            report.status_extended += " Finding status remains FAIL because the policy is still set to 'Report-only' instead of 'On'."
+                        else:
+                            report.status = "PASS"
+                            break
 
         findings.append(report)
 
