@@ -1,0 +1,1611 @@
+{
+  "Framework": "ISO27001",
+  "Version": "2022",
+  "Provider": "Azure",
+  "Description": "ISO (the International Organization for Standardization) and IEC (the International Electrotechnical Commission) form the specialized system for worldwide standardization. National bodies that are members of ISO or IEC participate in the development of International Standards through technical committees established by the respective organization to deal with particular fields of technical activity. ISO and IEC technical committees collaborate in fields of mutual interest. Other international organizations, governmental and non-governmental, in liaison with ISO and IEC, also take part in the work.",
+  "Requirements": [
+    {
+      "Id": "A.5.1",
+      "Description": "Information security policy and topic-specific policies should be defined, approved by management, published, communicated to and acknowledged by relevant personnel and relevant interested parties, and reviewed at planned intervals and if significant changes occur.",
+      "Name": "Policies for information security",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.1",
+          "Objetive_Name": "Policies for information security",
+          "Check_Summary": "Information security policy and topic-specific policies should be defined, approved by management, published, communicated to and acknowledged by relevant personnel and relevant interested parties, and reviewed at planned intervals and if significant changes occur."
+        }
+      ],
+      "Checks": [
+        "policy_ensure_asc_enforcement_enabled",
+        "entra_security_defaults_enabled"
+      ]
+    },
+    {
+      "Id": "A.5.2",
+      "Description": "Information security roles and responsibilities should be defined and allocated according to the organisation needs.",
+      "Name": "Roles and Responsibilities",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.2",
+          "Objetive_Name": "Roles and Responsibilities",
+          "Check_Summary": "Information security roles and responsibilities should be defined and allocated according to the organisation needs."
+        }
+      ],
+      "Checks": [
+        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_global_admin_in_less_than_five_users",
+        "entra_non_privileged_user_has_mfa",
+        "entra_policy_default_users_cannot_create_security_groups",
+        "entra_policy_ensure_default_user_cannot_create_apps",
+        "entra_policy_ensure_default_user_cannot_create_tenants",
+        "entra_policy_guest_invite_only_for_admin_roles",
+        "entra_policy_guest_users_access_restrictions",
+        "entra_policy_restricts_user_consent_for_apps",
+        "entra_policy_user_consent_for_verified_apps",
+        "entra_privileged_user_has_mfa",
+        "entra_security_defaults_enabled",
+        "entra_user_with_vm_access_has_mfa",
+        "entra_users_cannot_create_microsoft_365_groups"
+      ]
+    },
+    {
+      "Id": "A.5.3",
+      "Description": "Conflicting duties and conflicting areas of responsibility should be segregated.",
+      "Name": "Segregation of Duties",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.3",
+          "Objetive_Name": "Segregation of Duties",
+          "Check_Summary": "Conflicting duties and conflicting areas of responsibility should be segregated."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.5.4",
+      "Description": "Management should require all personnel to apply information security in accordance with the established information security policy, topic-specific policies and procedures of the organization.",
+      "Name": "Management Responsibilities",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.4",
+          "Objetive_Name": "Management Responsibilities",
+          "Check_Summary": "Management should require all personnel to apply information security in accordance with the established information security policy, topic-specific policies and procedures of the organization."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.5.5",
+      "Description": "The organisation should establish and maintain contact with relevant authorities.",
+      "Name": "Contact With Authorities",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.5",
+          "Objetive_Name": "Contact With Authorities",
+          "Check_Summary": "The organisation should establish and maintain contact with relevant authorities."
+        }
+      ],
+      "Checks": [
+        "defender_additional_email_configured_with_a_security_contact"
+      ]
+    },
+    {
+      "Id": "A.5.6",
+      "Description": "The organisation should establish and maintain contact with special interest groups or other specialist security forums and professional associations.",
+      "Name": "Contact With Special Interest Groups",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.6",
+          "Objetive_Name": "Contact With Special Interest Groups",
+          "Check_Summary": "The organisation should establish and maintain contact with special interest groups or other specialist security forums and professional associations."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.5.7",
+      "Description": "Information relating to information security threats should be collected and analysed to produce threat intelligence.",
+      "Name": "Threat Intelligence",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.7",
+          "Objetive_Name": "Threat Intelligence",
+          "Check_Summary": "Information relating to information security threats should be collected and analysed to produce threat intelligence."
+        }
+      ],
+      "Checks": [
+        "monitor_alert_create_policy_assignment",
+        "monitor_alert_create_update_nsg",
+        "monitor_alert_create_update_public_ip_address_rule",
+        "monitor_alert_create_update_security_solution",
+        "monitor_alert_create_update_sqlserver_fr",
+        "monitor_alert_delete_nsg",
+        "monitor_alert_delete_policy_assignment",
+        "monitor_alert_delete_public_ip_address_rule",
+        "monitor_alert_delete_security_solution",
+        "monitor_alert_delete_sqlserver_fr"
+      ]
+    },
+    {
+      "Id": "A.5.8",
+      "Description": "Information security should be integrated into project management.",
+      "Name": "Information Security In Project Management",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.8",
+          "Objetive_Name": "Information Security In Project Management",
+          "Check_Summary": "Information security should be integrated into project management."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.5.9",
+      "Description": "An inventory of information and other associated assets, including owners, should be developed and maintained.",
+      "Name": "Inventory Of Information And Other Associated Assets",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.9",
+          "Objetive_Name": "Inventory Of Information And Other Associated Assets",
+          "Check_Summary": "An inventory of information and other associated assets, including owners, should be developed and maintained."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.5.10",
+      "Description": "Rules for the acceptable use and procedures for handling information and other associated assets should be identified, documented and implemented.",
+      "Name": "Acceptable Use Of Information And Other Associated Assets",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.10",
+          "Objetive_Name": "Acceptable Use Of Information And Other Associated Assets",
+          "Check_Summary": "Rules for the acceptable use and procedures for handling information and other associated assets should be identified, documented and implemented."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.5.11",
+      "Description": "Personnel and other interested parties as appropriate should return all the organisation’s assets in their possession upon change or termination of their employment, contract or agreement.",
+      "Name": "Return Of Assets",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.11",
+          "Objetive_Name": "Return Of Assets",
+          "Check_Summary": "Personnel and other interested parties as appropriate should return all the organisation’s assets in their possession upon change or termination of their employment, contract or agreement."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.5.12",
+      "Description": "Information should be classified according to the information security needs of the organisation based on confidentiality, integrity, availability and relevant interested party requirements.",
+      "Name": "Classification Of Information",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.12",
+          "Objetive_Name": "Classification Of Information",
+          "Check_Summary": "Information should be classified according to the information security needs of the organisation based on confidentiality, integrity, availability and relevant interested party requirements."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.5.13",
+      "Description": "An appropriate set of procedures for information labelling should be developed and implemented in accordance with the information classification scheme adopted by the organisation.",
+      "Name": "Labelling Of Information",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.13",
+          "Objetive_Name": "Labelling Of Information",
+          "Check_Summary": "An appropriate set of procedures for information labelling should be developed and implemented in accordance with the information classification scheme adopted by the organisation."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.5.14",
+      "Description": "Information transfer rules, procedures, or agreements should be in place for all types of transfer facilities within the organisation and between the organisation and other parties.",
+      "Name": "Information Transfer",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.14",
+          "Objetive_Name": "Information Transfer",
+          "Check_Summary": "Information transfer rules, procedures, or agreements should be in place for all types of transfer facilities within the organisation and between the organisation and other parties."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.5.15",
+      "Description": "Rules to control physical and logical access to information and other associated assets should be established",
+      "Name": "Access Control",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.15",
+          "Objetive_Name": "Access Control",
+          "Check_Summary": "Rules to control physical and logical access to information and other associated assets should be established"
+        }
+      ],
+      "Checks": [
+        "entra_global_admin_in_less_than_five_users",
+        "entra_policy_default_users_cannot_create_security_groups",
+        "entra_policy_ensure_default_user_cannot_create_apps",
+        "entra_policy_ensure_default_user_cannot_create_tenants",
+        "entra_policy_guest_invite_only_for_admin_roles",
+        "entra_policy_guest_users_access_restrictions",
+        "entra_policy_restricts_user_consent_for_apps",
+        "entra_policy_user_consent_for_verified_apps",
+        "entra_security_defaults_enabled",
+        "entra_trusted_named_locations_exists",
+        "entra_users_cannot_create_microsoft_365_groups"
+      ]
+    },
+    {
+      "Id": "A.5.16",
+      "Description": "The full lifecycle of identities should be managed.",
+      "Name": "Identity Management",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.16",
+          "Objetive_Name": "Identity Management",
+          "Check_Summary": "The full lifecycle of identities should be managed."
+        }
+      ],
+      "Checks": [
+        "defender_ensure_defender_for_containers_is_on",
+        "defender_ensure_defender_for_cosmosdb_is_on",
+        "defender_ensure_defender_for_databases_is_on",
+        "defender_ensure_defender_for_dns_is_on",
+        "defender_ensure_defender_for_keyvault_is_on",
+        "defender_ensure_defender_for_os_relational_databases_is_on",
+        "defender_ensure_defender_for_server_is_on",
+        "defender_ensure_defender_for_sql_servers_is_on",
+        "defender_ensure_defender_for_storage_is_on",
+        "defender_ensure_mcas_is_enabled",
+        "defender_ensure_notify_alerts_severity_is_high",
+        "entra_policy_guest_users_access_restrictions",
+        "entra_policy_restricts_user_consent_for_apps",
+        "entra_users_cannot_create_microsoft_365_groups",
+        "iam_custom_role_has_permissions_to_administer_resource_locks",
+        "monitor_alert_create_update_security_solution",
+        "monitor_alert_delete_security_solution",
+        "monitor_diagnostic_setting_with_appropriate_categories",
+        "monitor_diagnostic_settings_exists",
+        "monitor_storage_account_with_activity_logs_cmk_encrypted",
+        "monitor_storage_account_with_activity_logs_is_private"
+      ]
+    },
+    {
+      "Id": "A.5.17",
+      "Description": "Allocation and management of authentication information should be controlled by a management process, including advising personnel on the appropriate handling of authentication information.",
+      "Name": "Authentication Information",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.17",
+          "Objetive_Name": "Authentication Information",
+          "Check_Summary": "Allocation and management of authentication information should be controlled by a management process, including advising personnel on the appropriate handling of authentication information."
+        }
+      ],
+      "Checks": [
+        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_non_privileged_user_has_mfa",
+        "entra_privileged_user_has_mfa",
+        "entra_user_with_vm_access_has_mfa"
+      ]
+    },
+    {
+      "Id": "A.5.18",
+      "Description": "Access rights to information and other associated assets should be provisioned, reviewed, modified and removed in accordance with the organisation’s topic-specific policy on and rules for access control.",
+      "Name": "Access Rights",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.18",
+          "Objetive_Name": "Access Rights",
+          "Check_Summary": "Access rights to information and other associated assets should be provisioned, reviewed, modified and removed in accordance with the organisation’s topic-specific policy on and rules for access control."
+        }
+      ],
+      "Checks": [
+        "entra_policy_default_users_cannot_create_security_groups",
+        "entra_policy_ensure_default_user_cannot_create_apps",
+        "entra_policy_ensure_default_user_cannot_create_tenants",
+        "entra_policy_guest_invite_only_for_admin_roles",
+        "entra_policy_guest_users_access_restrictions",
+        "entra_policy_restricts_user_consent_for_apps",
+        "entra_policy_user_consent_for_verified_apps"
+      ]
+    },
+    {
+      "Id": "A.5.19",
+      "Description": "Processes and procedures should be defined and implemented to manage the information security risks associated with the use of supplier’s products or services.",
+      "Name": "Information Security In Supplier Relationships",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.19",
+          "Objetive_Name": "Information Security In Supplier Relationships",
+          "Check_Summary": "Processes and procedures should be defined and implemented to manage the information security risks associated with the use of supplier’s products or services."
+        }
+      ],
+      "Checks": [
+        "defender_container_images_resolved_vulnerabilities",
+        "defender_container_images_scan_enabled",
+        "defender_ensure_defender_for_app_services_is_on",
+        "defender_ensure_defender_for_arm_is_on",
+        "defender_ensure_defender_for_azure_sql_databases_is_on",
+        "defender_ensure_defender_for_containers_is_on",
+        "defender_ensure_defender_for_cosmosdb_is_on",
+        "defender_ensure_defender_for_databases_is_on",
+        "defender_ensure_defender_for_dns_is_on",
+        "defender_ensure_defender_for_keyvault_is_on",
+        "defender_ensure_defender_for_os_relational_databases_is_on",
+        "defender_ensure_defender_for_server_is_on",
+        "defender_ensure_defender_for_sql_servers_is_on",
+        "defender_ensure_defender_for_storage_is_on",
+        "defender_ensure_iot_hub_defender_is_on"
+      ]
+    },
+    {
+      "Id": "A.5.20",
+      "Description": "Relevant information security requirements should be established and agreed with each supplier based on the type of supplier relationship.",
+      "Name": "Addressing Information Security Within Supplier Agreements",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.20",
+          "Objetive_Name": "Addressing Information Security Within Supplier Agreements",
+          "Check_Summary": "Relevant information security requirements should be established and agreed with each supplier based on the type of supplier relationship."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.5.21",
+      "Description": "Processes and procedures should be defined and implemented to manage the information security risks associated with the ICT products and services supply chain.",
+      "Name": "Managing Information Security In The ICT Supply Chain",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.21",
+          "Objetive_Name": "Managing Information Security In The ICT Supply Chain",
+          "Check_Summary": "Processes and procedures should be defined and implemented to manage the information security risks associated with the ICT products and services supply chain."
+        }
+      ],
+      "Checks": [
+        "defender_container_images_resolved_vulnerabilities",
+        "defender_container_images_scan_enabled",
+        "defender_ensure_defender_for_app_services_is_on",
+        "defender_ensure_defender_for_arm_is_on",
+        "defender_ensure_defender_for_azure_sql_databases_is_on",
+        "defender_ensure_defender_for_containers_is_on",
+        "defender_ensure_defender_for_cosmosdb_is_on",
+        "defender_ensure_defender_for_databases_is_on",
+        "defender_ensure_defender_for_dns_is_on",
+        "defender_ensure_defender_for_keyvault_is_on",
+        "defender_ensure_defender_for_os_relational_databases_is_on",
+        "defender_ensure_defender_for_server_is_on",
+        "defender_ensure_defender_for_sql_servers_is_on",
+        "defender_ensure_defender_for_storage_is_on",
+        "defender_ensure_iot_hub_defender_is_on"
+      ]
+    },
+    {
+      "Id": "A.5.22",
+      "Description": "The organisation should regularly monitor, review, evaluate and manage change in supplier information security practices and service delivery.",
+      "Name": "Monitor, Review And Change Management Of Supplier Services",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.22",
+          "Objetive_Name": "Monitor, Review And Change Management Of Supplier Services",
+          "Check_Summary": "The organisation should regularly monitor, review, evaluate and manage change in supplier information security practices and service delivery."
+        }
+      ],
+      "Checks": [
+        "defender_ensure_defender_for_containers_is_on",
+        "defender_ensure_defender_for_cosmosdb_is_on",
+        "defender_ensure_defender_for_databases_is_on",
+        "defender_ensure_defender_for_dns_is_on",
+        "defender_ensure_defender_for_keyvault_is_on",
+        "defender_ensure_defender_for_os_relational_databases_is_on",
+        "defender_ensure_defender_for_server_is_on",
+        "defender_ensure_defender_for_sql_servers_is_on",
+        "defender_ensure_defender_for_storage_is_on",
+        "defender_ensure_mcas_is_enabled",
+        "defender_ensure_notify_alerts_severity_is_high",
+        "entra_policy_guest_users_access_restrictions",
+        "entra_policy_restricts_user_consent_for_apps",
+        "entra_users_cannot_create_microsoft_365_groups",
+        "iam_custom_role_has_permissions_to_administer_resource_locks",
+        "monitor_alert_create_update_security_solution",
+        "monitor_alert_delete_security_solution",
+        "monitor_diagnostic_setting_with_appropriate_categories",
+        "monitor_diagnostic_settings_exists",
+        "monitor_storage_account_with_activity_logs_cmk_encrypted",
+        "monitor_storage_account_with_activity_logs_is_private"
+      ]
+    },
+    {
+      "Id": "A.5.23",
+      "Description": "Processes for acquisition, use, management and exit from cloud services should be established in accordance with the organisation’s information security requirements.",
+      "Name": "Information Security For Use Of Cloud Services",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.23",
+          "Objetive_Name": "Information Security For Use Of Cloud Services",
+          "Check_Summary": "Processes for acquisition, use, management and exit from cloud services should be established in accordance with the organisation’s information security requirements."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.5.24",
+      "Description": "The organization should plan and prepare for managing information security incidents by defining, establishing and communicating information security incident management processes, roles and responsibilities.",
+      "Name": "Information Security Incident Management Planning and Preparation",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.24",
+          "Objetive_Name": "Information Security Incident Management Planning and Preparation",
+          "Check_Summary": "The organization should plan and prepare for managing information security incidents by defining, establishing and communicating information security incident management processes, roles and responsibilities."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.5.25",
+      "Description": "The organisation should assess information security events and decide if they are to be categorised as information security incidents.",
+      "Name": "Assessment And Decision On Information Security Events",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.25",
+          "Objetive_Name": "Assessment And Decision On Information Security Events",
+          "Check_Summary": "The organisation should assess information security events and decide if they are to be categorised as information security incidents."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.5.26",
+      "Description": "Information security incidents should be responded to in accordance with the documented procedures.",
+      "Name": "Response To Information Security Incidents",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.26",
+          "Objetive_Name": "Response To Information Security Incidents",
+          "Check_Summary": "Information security incidents should be responded to in accordance with the documented procedures."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.5.27",
+      "Description": "Knowledge gained from information security incidents should be used to strengthen and improve the information security controls.",
+      "Name": "Learning From Information Security Incidents",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.27",
+          "Objetive_Name": "Learning From Information Security Incidents",
+          "Check_Summary": "Knowledge gained from information security incidents should be used to strengthen and improve the information security controls."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.5.28",
+      "Description": "The organisation should establish and implement procedures for the identification, collection, acquisition and preservation of evidence related to information security events.",
+      "Name": "Collection Of Evidence",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.28",
+          "Objetive_Name": "Collection Of Evidence",
+          "Check_Summary": "The organisation should establish and implement procedures for the identification, collection, acquisition and preservation of evidence related to information security events."
+        }
+      ],
+      "Checks": [
+        "defender_container_images_resolved_vulnerabilities",
+        "defender_container_images_scan_enabled",
+        "defender_ensure_defender_for_app_services_is_on",
+        "defender_ensure_defender_for_arm_is_on",
+        "defender_ensure_defender_for_azure_sql_databases_is_on",
+        "defender_ensure_defender_for_containers_is_on",
+        "defender_ensure_defender_for_cosmosdb_is_on",
+        "defender_ensure_defender_for_databases_is_on",
+        "defender_ensure_defender_for_dns_is_on",
+        "defender_ensure_defender_for_keyvault_is_on",
+        "defender_ensure_defender_for_os_relational_databases_is_on",
+        "defender_ensure_defender_for_server_is_on",
+        "defender_ensure_defender_for_sql_servers_is_on",
+        "defender_ensure_defender_for_storage_is_on",
+        "defender_ensure_iot_hub_defender_is_on"
+      ]
+    },
+    {
+      "Id": "A.5.29",
+      "Description": "The organisation should plan how to maintain information security at an appropriate level during disruption.",
+      "Name": "Information Security During Disruption",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.29",
+          "Objetive_Name": "Information Security During Disruption",
+          "Check_Summary": "The organisation should plan how to maintain information security at an appropriate level during disruption."
+        }
+      ],
+      "Checks": [
+        "defender_container_images_resolved_vulnerabilities",
+        "defender_container_images_scan_enabled",
+        "defender_ensure_defender_for_app_services_is_on",
+        "defender_ensure_defender_for_arm_is_on",
+        "defender_ensure_defender_for_azure_sql_databases_is_on",
+        "defender_ensure_defender_for_containers_is_on",
+        "defender_ensure_defender_for_cosmosdb_is_on",
+        "defender_ensure_defender_for_databases_is_on",
+        "defender_ensure_defender_for_dns_is_on",
+        "defender_ensure_defender_for_keyvault_is_on",
+        "defender_ensure_defender_for_os_relational_databases_is_on",
+        "defender_ensure_defender_for_server_is_on",
+        "defender_ensure_defender_for_sql_servers_is_on",
+        "defender_ensure_defender_for_storage_is_on",
+        "defender_ensure_iot_hub_defender_is_on"
+      ]
+    },
+    {
+      "Id": "A.5.30",
+      "Description": "ICT readiness should be planned, implemented, maintained and tested based on business continuity objectives and ICT continuity requirements. ",
+      "Name": "Readiness For Business Continuity",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.30",
+          "Objetive_Name": "Readiness For Business Continuity",
+          "Check_Summary": "ICT readiness should be planned, implemented, maintained and tested based on business continuity objectives and ICT continuity requirements. "
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.5.31",
+      "Description": "Legal, statutory, regulatory and contractual requirements relevant to information security and the organisations approach to meet these requirements should be identified, documented and kept up to date. ",
+      "Name": "Legal, statutory, regulatory and contractual requirements",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.31",
+          "Objetive_Name": "Legal, statutory, regulatory and contractual requirements",
+          "Check_Summary": "Legal, statutory, regulatory and contractual requirements relevant to information security and the organisations approach to meet these requirements should be identified, documented and kept up to date. "
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.5.32",
+      "Description": "The organisation should implement appropriate procedures to protect intellectual property rights.  ",
+      "Name": "Intellectual Property Rights",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.32",
+          "Objetive_Name": "Intellectual Property Rights",
+          "Check_Summary": "The organisation should implement appropriate procedures to protect intellectual property rights.  "
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.5.33",
+      "Description": "Records should be protected from loss, destruction, falsification, unauthorised access and unauthorised release.",
+      "Name": "Protection Of Records",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.33",
+          "Objetive_Name": "Protection Of Records",
+          "Check_Summary": "Records should be protected from loss, destruction, falsification, unauthorised access and unauthorised release."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.5.34",
+      "Description": "The organisation should identify and meet the requirements regarding the preservation of privacy and protection of PII according to applicable laws and regulations and contractual requirements.",
+      "Name": "Privacy And Protection Of PII",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.34",
+          "Objetive_Name": "Privacy And Protection Of PII",
+          "Check_Summary": "The organisation should identify and meet the requirements regarding the preservation of privacy and protection of PII according to applicable laws and regulations and contractual requirements."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.5.35",
+      "Description": "The organisations approach to managing information security and its implementation including people, processes and technologies should be reviewed independently at planned intervals, or when significant changes occur. ",
+      "Name": "Independent Review Of Information Security",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.35",
+          "Objetive_Name": "Independent Review Of Information Security",
+          "Check_Summary": "The organisations approach to managing information security and its implementation including people, processes and technologies should be reviewed independently at planned intervals, or when significant changes occur. "
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.5.36",
+      "Description": "Compliance with the organisations information security policy, topic-specific policies, rules and standards should be regularly reviewed. ",
+      "Name": "Compliance With Policies, Rules And Standards For Information Security",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.36",
+          "Objetive_Name": "Compliance With Policies, Rules And Standards For Information Security",
+          "Check_Summary": "Compliance with the organisations information security policy, topic-specific policies, rules and standards should be regularly reviewed. "
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.5.37",
+      "Description": "Operating procedures for information processing facilities should be documented and made available to personnel who need them. ",
+      "Name": "Documented Operating Procedures",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.37",
+          "Objetive_Name": "Documented Operating Procedures",
+          "Check_Summary": "Operating procedures for information processing facilities should be documented and made available to personnel who need them. "
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.6.1",
+      "Description": "Background verification checks on all candidates to become personnel should be carried out prior to joining the organisation and on an ongoing basis taking into consideration applicable laws, regulations and ethics and be proportional to the business requirements, the classification of the information to be accessed and the perceived risks. ",
+      "Name": "Screening",
+      "Attributes": [
+        {
+          "Category": "A.6 People controls",
+          "Objetive_ID": "A.6.1",
+          "Objetive_Name": "Screening",
+          "Check_Summary": "Background verification checks on all candidates to become personnel should be carried out prior to joining the organisation and on an ongoing basis taking into consideration applicable laws, regulations and ethics and be proportional to the business requirements, the classification of the information to be accessed and the perceived risks. "
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.6.2",
+      "Description": "The employment contractual agreements should state the personnel’s and the organisations responsibilities for information security. ",
+      "Name": "Terms and Conditions Of Employment",
+      "Attributes": [
+        {
+          "Category": "A.6 People controls",
+          "Objetive_ID": "A.6.2",
+          "Objetive_Name": "Terms and Conditions Of Employment",
+          "Check_Summary": "The employment contractual agreements should state the personnel’s and the organisations responsibilities for information security. "
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.6.3",
+      "Description": "Personnel of the organisation and relevant interested parties should receive appropriate information security awareness, education and training and regular updates of the organisations information security policy, topic-specific policies and procedures, as relevant for their job function.",
+      "Name": "Information Security Awareness, Education And Training",
+      "Attributes": [
+        {
+          "Category": "A.6 People controls",
+          "Objetive_ID": "A.6.3",
+          "Objetive_Name": "Information Security Awareness, Education And Training",
+          "Check_Summary": "Personnel of the organisation and relevant interested parties should receive appropriate information security awareness, education and training and regular updates of the organisations information security policy, topic-specific policies and procedures, as relevant for their job function."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.6.4",
+      "Description": "A disciplinary process should be formalised and communicated to take actions against personnel and other relevant interested parties who have committed an information security policy violation.",
+      "Name": "Disciplinary Process",
+      "Attributes": [
+        {
+          "Category": "A.6 People controls",
+          "Objetive_ID": "A.6.4",
+          "Objetive_Name": "Disciplinary Process",
+          "Check_Summary": "A disciplinary process should be formalised and communicated to take actions against personnel and other relevant interested parties who have committed an information security policy violation."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.6.5",
+      "Description": "Information security responsibilities and duties that remain valid after termination or change of employment should be defined, enforced and communicated to relevant personnel and other interested parties.",
+      "Name": "Responsibilities After Termination Or Change Of Employment",
+      "Attributes": [
+        {
+          "Category": "A.6 People controls",
+          "Objetive_ID": "A.6.5",
+          "Objetive_Name": "Responsibilities After Termination Or Change Of Employment",
+          "Check_Summary": "Information security responsibilities and duties that remain valid after termination or change of employment should be defined, enforced and communicated to relevant personnel and other interested parties."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.6.6",
+      "Description": "Confidentiality or non-disclosure agreements reflecting the organisation’s needs for the protection of information should be identified, documented, regularly reviewed and signed by personnel and other relevant interested parties.",
+      "Name": "Confidentiality Or Non-Disclosure Agreements",
+      "Attributes": [
+        {
+          "Category": "A.6 People controls",
+          "Objetive_ID": "A.6.6",
+          "Objetive_Name": "Confidentiality Or Non-Disclosure Agreements",
+          "Check_Summary": "Confidentiality or non-disclosure agreements reflecting the organisation’s needs for the protection of information should be identified, documented, regularly reviewed and signed by personnel and other relevant interested parties."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.6.7",
+      "Description": "Security measures should be implemented when personnel are working remotely to protect information accessed, processed or stored outside the organisation’s premises.",
+      "Name": "Remote Working",
+      "Attributes": [
+        {
+          "Category": "A.6 People controls",
+          "Objetive_ID": "A.6.7",
+          "Objetive_Name": "Remote Working",
+          "Check_Summary": "Security measures should be implemented when personnel are working remotely to protect information accessed, processed or stored outside the organisation’s premises."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.6.8",
+      "Description": "The organisation should provide a mechanism for personnel to report observed or suspected information security events through appropriate channels in a timely manner.",
+      "Name": "Information Security Event Reporting",
+      "Attributes": [
+        {
+          "Category": "A.6 People controls",
+          "Objetive_ID": "A.6.8",
+          "Objetive_Name": "Information Security Event Reporting",
+          "Check_Summary": "The organisation should provide a mechanism for personnel to report observed or suspected information security events through appropriate channels in a timely manner."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.7.1",
+      "Description": "To prevent unauthorised physical access, damage and interference to the organisations information and other associated assets.",
+      "Name": "Physical Security Perimeters",
+      "Attributes": [
+        {
+          "Category": "A.7 Physical controls",
+          "Objetive_ID": "A.7.1",
+          "Objetive_Name": "Physical Security Perimeters",
+          "Check_Summary": "To prevent unauthorised physical access, damage and interference to the organisations information and other associated assets."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.7.2",
+      "Description": "Secure areas should be protected by appropriate entry controls and access points.",
+      "Name": "Physical Entry",
+      "Attributes": [
+        {
+          "Category": "A.7 Physical controls",
+          "Objetive_ID": "A.7.2",
+          "Objetive_Name": "Physical Entry",
+          "Check_Summary": "Secure areas should be protected by appropriate entry controls and access points."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.7.3",
+      "Description": "Physical security for offices, rooms and facilities should be designed and implemented.",
+      "Name": "Securing Offices, Rooms And Facilities",
+      "Attributes": [
+        {
+          "Category": "A.7 Physical controls",
+          "Objetive_ID": "A.7.3",
+          "Objetive_Name": "Securing Offices, Rooms And Facilities",
+          "Check_Summary": "Physical security for offices, rooms and facilities should be designed and implemented."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.7.4",
+      "Description": "Premises should be continuously monitored for unauthorised physical access.",
+      "Name": "Physical Security Monitoring",
+      "Attributes": [
+        {
+          "Category": "A.7 Physical controls",
+          "Objetive_ID": "A.7.4",
+          "Objetive_Name": "Physical Security Monitoring",
+          "Check_Summary": "Premises should be continuously monitored for unauthorised physical access."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.7.5",
+      "Description": "Protection against physical and environmental threats, such as natural disasters and other intentional or unintentional physical threats to infrastructure should be designed and implemented.",
+      "Name": "Protecting Against Physical and Environmental Threats",
+      "Attributes": [
+        {
+          "Category": "A.7 Physical controls",
+          "Objetive_ID": "A.7.5",
+          "Objetive_Name": "Protecting Against Physical and Environmental Threats",
+          "Check_Summary": "Protection against physical and environmental threats, such as natural disasters and other intentional or unintentional physical threats to infrastructure should be designed and implemented."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.7.6",
+      "Description": "Security measures for working in secure areas should be designed and implemented.",
+      "Name": "Working In Secure Areas",
+      "Attributes": [
+        {
+          "Category": "A.7 Physical controls",
+          "Objetive_ID": "A.7.6",
+          "Objetive_Name": "Working In Secure Areas",
+          "Check_Summary": "Security measures for working in secure areas should be designed and implemented."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.7.7",
+      "Description": "Clear desk rules for papers and removable storage media and clear screen rules for information processing facilities should be defined and appropriately enforced.",
+      "Name": "Clear Desk And Clear Screen",
+      "Attributes": [
+        {
+          "Category": "A.7 Physical controls",
+          "Objetive_ID": "A.7.7",
+          "Objetive_Name": "Clear Desk And Clear Screen",
+          "Check_Summary": "Clear desk rules for papers and removable storage media and clear screen rules for information processing facilities should be defined and appropriately enforced."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.7.8",
+      "Description": "Equipment should be sited securely and protected.",
+      "Name": "Equipment Siting And Protection",
+      "Attributes": [
+        {
+          "Category": "A.7 Physical controls",
+          "Objetive_ID": "A.7.8",
+          "Objetive_Name": "Equipment Siting And Protection",
+          "Check_Summary": "Equipment should be sited securely and protected."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.7.9",
+      "Description": "Off-site assets should be protected.",
+      "Name": "Security Of Assets Off-Premises",
+      "Attributes": [
+        {
+          "Category": "A.7 Physical controls",
+          "Objetive_ID": "A.7.9",
+          "Objetive_Name": "Security Of Assets Off-Premises",
+          "Check_Summary": "Off-site assets should be protected."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.7.10",
+      "Description": "Storage media should be managed through their life cycle of acquisition, use, transportation and disposal in accordance with the organisations classification scheme and handling requirements.",
+      "Name": "Storage Media",
+      "Attributes": [
+        {
+          "Category": "A.7 Physical controls",
+          "Objetive_ID": "A.7.10",
+          "Objetive_Name": "Storage Media",
+          "Check_Summary": "Storage media should be managed through their life cycle of acquisition, use, transportation and disposal in accordance with the organisations classification scheme and handling requirements."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.7.11",
+      "Description": "Information processing facilities should be protected from power failures and other disruptions caused by failures in supporting utilities.",
+      "Name": "Supporting Utilities",
+      "Attributes": [
+        {
+          "Category": "A.7 Physical controls",
+          "Objetive_ID": "A.7.11",
+          "Objetive_Name": "Supporting Utilities",
+          "Check_Summary": "Information processing facilities should be protected from power failures and other disruptions caused by failures in supporting utilities."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.7.12",
+      "Description": "Cables carrying power, data or supporting information services should be protected from interception",
+      "Name": "Cabling Security",
+      "Attributes": [
+        {
+          "Category": "A.7 Physical controls",
+          "Objetive_ID": "A.7.12",
+          "Objetive_Name": "Cabling Security",
+          "Check_Summary": "Cables carrying power, data or supporting information services should be protected from interception"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.7.13",
+      "Description": "Equipment should be maintained correctly to ensure availability, integrity and confidentiality of information.",
+      "Name": "Equipment Maintenance",
+      "Attributes": [
+        {
+          "Category": "A.7 Physical controls",
+          "Objetive_ID": "A.7.13",
+          "Objetive_Name": "Equipment Maintenance",
+          "Check_Summary": "Equipment should be maintained correctly to ensure availability, integrity and confidentiality of information."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.7.14",
+      "Description": "Items of equipment containing storage media should be verified to ensure that any sensitive data and licensed software has been removed or securely overwritten prior to disposal or re-use.",
+      "Name": "Secure Disposal Or Re-Use Of Equipment",
+      "Attributes": [
+        {
+          "Category": "A.7 Physical controls",
+          "Objetive_ID": "A.7.14",
+          "Objetive_Name": "Secure Disposal Or Re-Use Of Equipment",
+          "Check_Summary": "Items of equipment containing storage media should be verified to ensure that any sensitive data and licensed software has been removed or securely overwritten prior to disposal or re-use."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.8.1",
+      "Description": "Information stored on, processed by or accessible via user endpoint devices should be protected.",
+      "Name": "User Endpoint Devices",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.1",
+          "Objetive_Name": "User Endpoint Devices",
+          "Check_Summary": "Information stored on, processed by or accessible via user endpoint devices should be protected."
+        }
+      ],
+      "Checks": [
+        "aisearch_service_not_publicly_accessible",
+        "aks_clusters_public_access_disabled",
+        "app_function_not_publicly_accessible",
+        "containerregistry_not_publicly_accessible",
+        "monitor_alert_create_update_public_ip_address_rule",
+        "monitor_alert_delete_public_ip_address_rule",
+        "network_public_ip_shodan",
+        "storage_blob_public_access_level_is_disabled"
+      ]
+    },
+    {
+      "Id": "A.8.2",
+      "Description": "The allocation and use of privileged access rights should be restricted and managed.",
+      "Name": "Privileged Access Rights",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.2",
+          "Objetive_Name": "Privileged Access Rights",
+          "Check_Summary": "The allocation and use of privileged access rights should be restricted and managed."
+        }
+      ],
+      "Checks": [
+        "entra_policy_default_users_cannot_create_security_groups",
+        "entra_policy_ensure_default_user_cannot_create_apps",
+        "entra_policy_ensure_default_user_cannot_create_tenants",
+        "entra_policy_guest_invite_only_for_admin_roles",
+        "entra_policy_guest_users_access_restrictions",
+        "entra_policy_restricts_user_consent_for_apps",
+        "entra_policy_user_consent_for_verified_apps storage_blob_public_access_level_is_disabled storage_ensure_azure_services_are_trusted_to_access_is_enabled"
+      ]
+    },
+    {
+      "Id": "A.8.3",
+      "Description": "Access to information and other associated assets should be restricted in accordance with the established topic-specific policy on access control.",
+      "Name": "Information Access Restriction",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.3",
+          "Objetive_Name": "Information Access Restriction",
+          "Check_Summary": "Access to information and other associated assets should be restricted in accordance with the established topic-specific policy on access control."
+        }
+      ],
+      "Checks": [
+        "app_function_access_keys_configured entra_policy_guest_users_access_restrictions postgresql_flexible_server_allow_access_services_disabled storage_ensure_azure_services_are_trusted_to_access_is_enabled"
+      ]
+    },
+    {
+      "Id": "A.8.4",
+      "Description": "Read and write access to source code, development tools and software libraries should be appropriately managed.",
+      "Name": "Access To Source Code",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.4",
+          "Objetive_Name": "Access To Source Code",
+          "Check_Summary": "Read and write access to source code, development tools and software libraries should be appropriately managed."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.8.5",
+      "Description": "Secure authentication technologies and procedures should be implemented based on information access restrictions and the topic-specific policy on access control.",
+      "Name": "Secure Authentication",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.5",
+          "Objetive_Name": "Secure Authentication",
+          "Check_Summary": "Secure authentication technologies and procedures should be implemented based on information access restrictions and the topic-specific policy on access control."
+        }
+      ],
+      "Checks": [
+        "entra_conditional_access_policy_require_mfa_for_management_api entra_non_privileged_user_has_mfa entra_privileged_user_has_mfa entra_user_with_vm_access_has_mfa app_minimum_tls_version_12 sqlserver_tde_encryption_enabled storage_ensure_encryption_with_customer_managed_keys storage_infrastructure_encryption_is_enabled"
+      ]
+    },
+    {
+      "Id": "A.8.6",
+      "Description": "The use of resources should be monitored and adjusted in line with current and expected capacity requirements.",
+      "Name": "Capacity Management",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.6",
+          "Objetive_Name": "Capacity Management",
+          "Check_Summary": "The use of resources should be monitored and adjusted in line with current and expected capacity requirements."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.8.7",
+      "Description": "Protection against malware should be implemented and supported by appropriate user awareness.",
+      "Name": "Protection Against Malware",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.7",
+          "Objetive_Name": "Protection Against Malware",
+          "Check_Summary": "Protection against malware should be implemented and supported by appropriate user awareness."
+        }
+      ],
+      "Checks": [
+        "defender_container_images_resolved_vulnerabilities",
+        "defender_container_images_scan_enabled",
+        "defender_ensure_defender_for_app_services_is_on",
+        "defender_ensure_defender_for_arm_is_on",
+        "defender_ensure_defender_for_azure_sql_databases_is_on",
+        "defender_ensure_defender_for_containers_is_on",
+        "defender_ensure_defender_for_cosmosdb_is_on",
+        "defender_ensure_defender_for_databases_is_on",
+        "defender_ensure_defender_for_dns_is_on",
+        "defender_ensure_defender_for_keyvault_is_on",
+        "defender_ensure_defender_for_os_relational_databases_is_on",
+        "defender_ensure_defender_for_server_is_on",
+        "defender_ensure_defender_for_sql_servers_is_on",
+        "defender_ensure_defender_for_storage_is_on",
+        "defender_ensure_iot_hub_defender_is_on"
+      ]
+    },
+    {
+      "Id": "A.8.8",
+      "Description": "Information about technical vulnerabilities of information systems in use should be obtained, the organisations exposure to such vulnerabilities should be evaluated and appropriate measures should be taken.",
+      "Name": "Management of Technical Vulnerabilities",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.8",
+          "Objetive_Name": "Management of Technical Vulnerabilities",
+          "Check_Summary": "Information about technical vulnerabilities of information systems in use should be obtained, the organisations exposure to such vulnerabilities should be evaluated and appropriate measures should be taken."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.8.9",
+      "Description": "Configurations, including security configurations, of hardware, software, services and networks should be established, documented, implemented, monitored and reviewed.",
+      "Name": "Configuration Management",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.9",
+          "Objetive_Name": "Configuration Management",
+          "Check_Summary": "Configurations, including security configurations, of hardware, software, services and networks should be established, documented, implemented, monitored and reviewed."
+        }
+      ],
+      "Checks": [
+        "defender_container_images_resolved_vulnerabilities",
+        "defender_container_images_scan_enabled",
+        "defender_ensure_defender_for_app_services_is_on",
+        "defender_ensure_defender_for_arm_is_on",
+        "defender_ensure_defender_for_azure_sql_databases_is_on",
+        "defender_ensure_defender_for_containers_is_on",
+        "defender_ensure_defender_for_cosmosdb_is_on",
+        "defender_ensure_defender_for_databases_is_on",
+        "defender_ensure_defender_for_dns_is_on",
+        "defender_ensure_defender_for_keyvault_is_on",
+        "defender_ensure_defender_for_os_relational_databases_is_on",
+        "defender_ensure_defender_for_server_is_on",
+        "defender_ensure_defender_for_sql_servers_is_on",
+        "defender_ensure_defender_for_storage_is_on",
+        "defender_ensure_iot_hub_defender_is_on"
+      ]
+    },
+    {
+      "Id": "A.8.10",
+      "Description": "Information stored in information systems, devices or in any other storage media should be deleted when no longer required.",
+      "Name": "Information Deletion",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.10",
+          "Objetive_Name": "Information Deletion",
+          "Check_Summary": "Information stored in information systems, devices or in any other storage media should be deleted when no longer required."
+        }
+      ],
+      "Checks": [
+        "storage_ensure_soft_delete_is_enabled"
+      ]
+    },
+    {
+      "Id": "A.8.11",
+      "Description": "Data masking should be used in accordance with the organisation’s topic-specific policy on access control and other related topic-specific policies, and business requirements, taking applicable legislation into consideration.",
+      "Name": "Data Masking",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.11",
+          "Objetive_Name": "Data Masking",
+          "Check_Summary": "Data masking should be used in accordance with the organisation’s topic-specific policy on access control and other related topic-specific policies, and business requirements, taking applicable legislation into consideration."
+        }
+      ],
+      "Checks": [
+        "monitor_storage_account_with_activity_logs_cmk_encrypted",
+        "storage_ensure_encryption_with_customer_managed_keys",
+        "storage_infrastructure_encryption_is_enabled",
+        "vm_ensure_attached_disks_encrypted_with_cmk",
+        "vm_ensure_unattached_disks_encrypted_with_cmk"
+      ]
+    },
+    {
+      "Id": "A.8.12",
+      "Description": "Data leakage prevention measures should be applied to systems, networks and any other devices that process, store or transmit sensitive information.",
+      "Name": "Data Leakage Prevention",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.12",
+          "Objetive_Name": "Data Leakage Prevention",
+          "Check_Summary": "Data leakage prevention measures should be applied to systems, networks and any other devices that process, store or transmit sensitive information."
+        }
+      ],
+      "Checks": [
+        "app_minimum_tls_version_12 sqlserver_tde_encrypted_with_cmk sqlserver_tde_encryption_enabled storage_secure_transfer_required_is_enabled"
+      ]
+    },
+    {
+      "Id": "A.8.13",
+      "Description": "Backup copies of information, software and systems should be maintained and regularly tested in accordance with the agreed topic-specific policy on backup.",
+      "Name": "Information Backup",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.13",
+          "Objetive_Name": "Information Backup",
+          "Check_Summary": "Backup copies of information, software and systems should be maintained and regularly tested in accordance with the agreed topic-specific policy on backup."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.8.14",
+      "Description": "Information processing facilities should be implemented with redundancy sufficient to meet availability",
+      "Name": "Redundancy of information processing facilities",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.14",
+          "Objetive_Name": "Redundancy of information processing facilities",
+          "Check_Summary": "Information processing facilities should be implemented with redundancy sufficient to meet availability"
+        }
+      ],
+      "Checks": [
+        "aks_clusters_created_with_private_nodes",
+        "aks_clusters_public_access_disabled",
+        "aks_network_policy_enabled",
+        "network_bastion_host_exists",
+        "network_flow_log_captured_sent",
+        "network_rdp_internet_access_restricted",
+        "network_ssh_internet_access_restricted",
+        "network_udp_internet_access_restricted",
+        "network_watcher_enabled",
+        "storage_ensure_private_endpoints_in_storage_accounts",
+        "storage_secure_transfer_required_is_enabled",
+        "vm_ensure_using_managed_disks",
+        "vm_trusted_launch_enabled"
+      ]
+    },
+    {
+      "Id": "A.8.15",
+      "Description": "Logs that record activities, exceptions, faults and other relevant events should be produced, stored, protected and analysed.",
+      "Name": "Logging",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.15",
+          "Objetive_Name": "Logging",
+          "Check_Summary": "Logs that record activities, exceptions, faults and other relevant events should be produced, stored, protected and analysed."
+        }
+      ],
+      "Checks": [
+        "app_http_logs_enabled",
+        "defender_auto_provisioning_log_analytics_agent_vms_on",
+        "keyvault_logging_enabled",
+        "monitor_storage_account_with_activity_logs_cmk_encrypted",
+        "monitor_storage_account_with_activity_logs_is_private",
+        "mysql_flexible_server_audit_log_connection_activated",
+        "mysql_flexible_server_audit_log_enabled",
+        "network_flow_log_captured_sent",
+        "network_flow_log_more_than_90_days",
+        "postgresql_flexible_server_log_checkpoints_on",
+        "postgresql_flexible_server_log_connections_on",
+        "postgresql_flexible_server_log_disconnections_on",
+        "postgresql_flexible_server_log_retention_days_greater_3"
+      ]
+    },
+    {
+      "Id": "A.8.16",
+      "Description": "Networks, systems and applications should be monitored for anomalous behaviour and appropriate actions taken to evaluate potential information security incidents.",
+      "Name": "Monitoring Activities",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.16",
+          "Objetive_Name": "Monitoring Activities",
+          "Check_Summary": "Networks, systems and applications should be monitored for anomalous behaviour and appropriate actions taken to evaluate potential information security incidents."
+        }
+      ],
+      "Checks": [
+        "monitor_alert_create_policy_assignment",
+        "monitor_alert_create_update_nsg",
+        "monitor_alert_create_update_public_ip_address_rule",
+        "monitor_alert_create_update_security_solution",
+        "monitor_alert_create_update_sqlserver_fr",
+        "monitor_alert_delete_nsg",
+        "monitor_alert_delete_policy_assignment",
+        "monitor_alert_delete_public_ip_address_rule",
+        "monitor_alert_delete_security_solution",
+        "monitor_alert_delete_sqlserver_fr"
+      ]
+    },
+    {
+      "Id": "A.8.17",
+      "Description": "The clocks of information processing systems used by the organisation should be synchronised to approved time sources.",
+      "Name": "Clock Synchronisation",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.17",
+          "Objetive_Name": "Clock Synchronisation",
+          "Check_Summary": "The clocks of information processing systems used by the organisation should be synchronised to approved time sources."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.8.18",
+      "Description": "The use of utility programs that can be capable of overriding system and application controls should be restricted and tightly controlled",
+      "Name": "Use of Privileged Utility Programs",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.18",
+          "Objetive_Name": "Use of Privileged Utility Programs",
+          "Check_Summary": "The use of utility programs that can be capable of overriding system and application controls should be restricted and tightly controlled"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.8.19",
+      "Description": "Procedures and measures should be implemented to securely manage software installation on operational systems.",
+      "Name": "Installation of Software on Operational Systems",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.19",
+          "Objetive_Name": "Installation of Software on Operational Systems",
+          "Check_Summary": "Procedures and measures should be implemented to securely manage software installation on operational systems."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.8.20",
+      "Description": "Networks and network devices should be secured, managed and controlled to protect information in systems and applications.",
+      "Name": "Network Security",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.20",
+          "Objetive_Name": "Network Security",
+          "Check_Summary": "Networks and network devices should be secured, managed and controlled to protect information in systems and applications."
+        }
+      ],
+      "Checks": [
+        "aks_network_policy_enabled",
+        "containerregistry_not_publicly_accessible",
+        "cosmosdb_account_firewall_use_selected_networks",
+        "network_bastion_host_exists",
+        "network_flow_log_captured_sent",
+        "network_flow_log_more_than_90_days",
+        "network_http_internet_access_restricted",
+        "network_public_ip_shodan",
+        "network_rdp_internet_access_restricted",
+        "network_ssh_internet_access_restricted",
+        "network_udp_internet_access_restricted",
+        "network_watcher_enabled"
+      ]
+    },
+    {
+      "Id": "A.8.21",
+      "Description": "Security mechanisms, service levels and service requirements of network services should be identified, implemented and monitored.",
+      "Name": "Security of Network Services",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.21",
+          "Objetive_Name": "Security of Network Services",
+          "Check_Summary": "Security mechanisms, service levels and service requirements of network services should be identified, implemented and monitored."
+        }
+      ],
+      "Checks": [
+        "aks_network_policy_enabled",
+        "containerregistry_not_publicly_accessible",
+        "cosmosdb_account_firewall_use_selected_networks",
+        "network_bastion_host_exists",
+        "network_flow_log_captured_sent",
+        "network_flow_log_more_than_90_days",
+        "network_http_internet_access_restricted",
+        "network_public_ip_shodan",
+        "network_rdp_internet_access_restricted",
+        "network_ssh_internet_access_restricted",
+        "network_udp_internet_access_restricted",
+        "network_watcher_enabled"
+      ]
+    },
+    {
+      "Id": "A.8.22",
+      "Description": "Security mechanisms, service levels and service requirements of network services should be identified, implemented and monitored.",
+      "Name": "Segregation of Networks",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.22",
+          "Objetive_Name": "Segregation of Networks",
+          "Check_Summary": "Security mechanisms, service levels and service requirements of network services should be identified, implemented and monitored."
+        }
+      ],
+      "Checks": [
+        "aks_network_policy_enabled",
+        "containerregistry_not_publicly_accessible",
+        "cosmosdb_account_firewall_use_selected_networks",
+        "network_bastion_host_exists",
+        "network_flow_log_captured_sent",
+        "network_flow_log_more_than_90_days",
+        "network_http_internet_access_restricted",
+        "network_public_ip_shodan",
+        "network_rdp_internet_access_restricted",
+        "network_ssh_internet_access_restricted",
+        "network_udp_internet_access_restricted",
+        "network_watcher_enabled"
+      ]
+    },
+    {
+      "Id": "A.8.23",
+      "Description": "Access to external websites should be managed to reduce exposure to malicious content.",
+      "Name": "Web Filtering",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.23",
+          "Objetive_Name": "Web Filtering",
+          "Check_Summary": "Access to external websites should be managed to reduce exposure to malicious content."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.8.24",
+      "Description": "Rules for the effective use of cryptography, including cryptographic key management, should be defined and implemented.",
+      "Name": "Use of Cryptography",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.24",
+          "Objetive_Name": "Use of Cryptography",
+          "Check_Summary": "Rules for the effective use of cryptography, including cryptographic key management, should be defined and implemented."
+        }
+      ],
+      "Checks": [
+        "app_minimum_tls_version_12",
+        "monitor_storage_account_with_activity_logs_cmk_encrypted",
+        "sqlserver_tde_encrypted_with_cmk",
+        "sqlserver_tde_encryption_enabled",
+        "storage_ensure_encryption_with_customer_managed_keys",
+        "storage_infrastructure_encryption_is_enabled",
+        "storage_secure_transfer_required_is_enabled",
+        "vm_ensure_attached_disks_encrypted_with_cmk",
+        "vm_ensure_unattached_disks_encrypted_with_cmk"
+      ]
+    },
+    {
+      "Id": "A.8.25",
+      "Description": "Rules for the secure development of software and systems should be established and applied.",
+      "Name": "Secure Development Life Cycle",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.25",
+          "Objetive_Name": "Secure Development Life Cycle",
+          "Check_Summary": "Rules for the secure development of software and systems should be established and applied."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.8.26",
+      "Description": "Information security requirements should be identified, specified and approved when developing or acquiring applications.",
+      "Name": "Application Security Requirements",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.26",
+          "Objetive_Name": "Application Security Requirements",
+          "Check_Summary": "Information security requirements should be identified, specified and approved when developing or acquiring applications."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.8.27",
+      "Description": "Principles for engineering secure systems should be established, documented, maintained and applied to any information system development activities.",
+      "Name": "Secure Systems Architecture and Engineering Principles",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.27",
+          "Objetive_Name": "Secure Systems Architecture and Engineering Principles",
+          "Check_Summary": "Principles for engineering secure systems should be established, documented, maintained and applied to any information system development activities."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.8.29",
+      "Description": "Security testing processes should be defined and implemented in the development life cycle.",
+      "Name": "Security Testing in Development and Acceptance",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.29",
+          "Objetive_Name": "Security Testing in Development and Acceptance",
+          "Check_Summary": "Security testing processes should be defined and implemented in the development life cycle."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.8.30",
+      "Description": "The organisation should direct, monitor and review the activities related to outsourced system development.",
+      "Name": "Outsourced Development",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.30",
+          "Objetive_Name": "Outsourced Development",
+          "Check_Summary": "The organisation should direct, monitor and review the activities related to outsourced system development."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.8.31",
+      "Description": "Development, testing and production environments should be separated and secured.",
+      "Name": "Separation of Development, Test and Production Environments",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.31",
+          "Objetive_Name": "Separation of Development, Test and Production Environments",
+          "Check_Summary": "Development, testing and production environments should be separated and secured."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.8.32",
+      "Description": "Changes to information processing facilities and information systems should be subject to change management procedures.",
+      "Name": "Change Management",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.32",
+          "Objetive_Name": "Change Management",
+          "Check_Summary": "Changes to information processing facilities and information systems should be subject to change management procedures."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.8.33",
+      "Description": "Test information should be appropriately selected, protected and managed.",
+      "Name": "Test Information",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.33",
+          "Objetive_Name": "Test Information",
+          "Check_Summary": "Test information should be appropriately selected, protected and managed."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.8.34",
+      "Description": "Audit tests and other assurance activities involving assessment of operational systems should be planned and agreed between the tester and appropriate management.",
+      "Name": "Protection of Information Systems During Audit Testing",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.34",
+          "Objetive_Name": "Protection of Information Systems During Audit Testing",
+          "Check_Summary": "Audit tests and other assurance activities involving assessment of operational systems should be planned and agreed between the tester and appropriate management."
+        }
+      ],
+      "Checks": []
+    }
+  ]
+}
