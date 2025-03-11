@@ -2,6 +2,7 @@ from unittest.mock import patch
 
 from prowler.providers.microsoft365.models import Microsoft365IdentityInfo
 from prowler.providers.microsoft365.services.entra.entra_service import (
+    AdminConsentPolicy,
     ApplicationsConditions,
     AuthorizationPolicy,
     ConditionalAccessGrantControl,
@@ -78,6 +79,15 @@ async def mock_entra_get_conditional_access_policies(_):
     }
 
 
+async def mock_entra_get_admin_consent_policy(_):
+    return AdminConsentPolicy(
+        admin_consent_enabled=True,
+        notify_reviewers=True,
+        email_reminders_to_reviewers=False,
+        duration_in_days=30,
+    )
+
+
 class Test_Entra_Service:
     def test_get_client(self):
         admincenter_client = Entra(
@@ -149,3 +159,14 @@ class Test_Entra_Service:
                 state=ConditionalAccessPolicyState.ENABLED_FOR_REPORTING,
             )
         }
+
+    @patch(
+        "prowler.providers.microsoft365.services.entra.entra_service.Entra._get_admin_consent_policy",
+        new=mock_entra_get_admin_consent_policy,
+    )
+    def test_get_admin_consent_policy(self):
+        entra_client = Entra(set_mocked_microsoft365_provider())
+        assert entra_client.admin_consent_policy.admin_consent_enabled
+        assert entra_client.admin_consent_policy.notify_reviewers
+        assert entra_client.admin_consent_policy.email_reminders_to_reviewers is False
+        assert entra_client.admin_consent_policy.duration_in_days == 30
