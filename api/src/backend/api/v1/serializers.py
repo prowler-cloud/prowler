@@ -2094,6 +2094,18 @@ class IntegrationSerializer(RLSSerializer):
         "providers": "api.v1.serializers.ProviderIncludeSerializer",
     }
 
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        allowed_providers = self.context.get("allowed_providers")
+        if allowed_providers:
+            allowed_provider_ids = {str(provider.id) for provider in allowed_providers}
+            representation["providers"] = [
+                provider
+                for provider in representation["providers"]
+                if provider["id"] in allowed_provider_ids
+            ]
+        return representation
+
 
 class IntegrationCreateSerializer(BaseWriteIntegrationSerializer):
     credentials = IntegrationCredentialField(write_only=True)

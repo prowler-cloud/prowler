@@ -2482,6 +2482,7 @@ class IntegrationViewSet(BaseRLSViewSet):
     ordering = ["integration_type", "-inserted_at"]
     # RBAC required permissions
     required_permissions = [Permissions.MANAGE_INTEGRATIONS]
+    allowed_providers = None
 
     def get_queryset(self):
         user_roles = get_role(self.request.user)
@@ -2490,9 +2491,9 @@ class IntegrationViewSet(BaseRLSViewSet):
             queryset = Integration.objects.filter(tenant_id=self.request.tenant_id)
         else:
             # User lacks permission, filter providers based on provider groups associated with the role
-            queryset = Integration.objects.filter(
-                providers__in=get_providers(user_roles)
-            )
+            allowed_providers = get_providers(user_roles)
+            queryset = Integration.objects.filter(providers__in=allowed_providers)
+            self.allowed_providers = allowed_providers
         return queryset
 
     def get_serializer_class(self):
@@ -2501,3 +2502,8 @@ class IntegrationViewSet(BaseRLSViewSet):
         elif self.action == "partial_update":
             return IntegrationUpdateSerializer
         return super().get_serializer_class()
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context["allowed_providers"] = self.allowed_providers
+        return context
