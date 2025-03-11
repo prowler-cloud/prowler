@@ -62,22 +62,26 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
             className="h-10 w-10 min-w-10 rounded-md border-1 border-gray-300 bg-white object-contain p-1"
           />
           <div className="flex w-full flex-col">
-            <h4 className="text-md font-bold leading-5 3xl:text-lg">
+            <h4 className="mb-1 text-small font-bold leading-5">
               {formatTitle(title)}
               {version ? ` - ${version}` : ""}
             </h4>
             <Progress
-              label="Your Rating:"
+              label="Score:"
               size="sm"
-              aria-label="Your Rating"
+              aria-label="Compliance score"
               value={ratingPercentage}
               showValueLabel={true}
-              className="mt-2 font-semibold"
+              classNames={{
+                track: "drop-shadow-sm border border-default",
+                label: "tracking-wider font-medium text-default-600 text-xs",
+                value: "text-foreground/60 -mb-2",
+              }}
               color={getRatingColor(ratingPercentage)}
             />
             <div className="mt-2 flex justify-between">
               <small>
-                <span className="mr-1 font-semibold">
+                <span className="mr-1 text-xs font-semibold">
                   {passingRequirements} / {totalRequirements}
                 </span>
                 Passing Requirements

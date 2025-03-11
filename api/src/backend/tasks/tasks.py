@@ -91,7 +91,9 @@ def perform_scan_task(
 
     chain(
         perform_scan_summary_task.si(tenant_id, scan_id),
-        generate_outputs.si(scan_id, provider_id, tenant_id=tenant_id),
+        generate_outputs.si(
+            scan_id=scan_id, provider_id=provider_id, tenant_id=tenant_id
+        ),
     ).apply_async()
 
     return result
@@ -158,7 +160,9 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
 
     chain(
         perform_scan_summary_task.si(tenant_id, scan_instance.id),
-        generate_outputs.si(str(scan_instance.id), provider_id, tenant_id=tenant_id),
+        generate_outputs.si(
+            scan_id=str(scan_instance.id), provider_id=provider_id, tenant_id=tenant_id
+        ),
     ).apply_async()
 
     return result
@@ -272,8 +276,4 @@ def generate_outputs(scan_id: str, provider_id: str, tenant_id: str):
 
     logger.info(f"Scan output files generated, output location: {output_directory}")
 
-    return {
-        "upload": uploaded,
-        "scan_id": scan_id,
-        "provider_id": provider_id,
-    }
+    return {"upload": uploaded}

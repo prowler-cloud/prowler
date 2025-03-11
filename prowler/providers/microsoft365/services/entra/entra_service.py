@@ -13,16 +13,18 @@ class Entra(Microsoft365Service):
         super().__init__(provider)
 
         loop = get_event_loop()
-
+        self.tenant_domain = provider.identity.tenant_domain
         attributes = loop.run_until_complete(
             gather(
                 self._get_authorization_policy(),
                 self._get_groups(),
+                self._get_admin_consent_policy(),
             )
         )
 
         self.authorization_policy = attributes[0]
         self.groups = attributes[1]
+        self.admin_consent_policy = attributes[2]
 
     async def _get_authorization_policy(self):
         logger.info("Entra - Getting authorization policy...")
@@ -105,6 +107,24 @@ class Entra(Microsoft365Service):
             )
         return groups
 
+    async def _get_admin_consent_policy(self):
+        logger.info("Entra - Getting group settings...")
+        admin_consent_policy = None
+        try:
+            policy = await self.client.policies.admin_consent_request_policy.get()
+            admin_consent_policy = AdminConsentPolicy(
+                admin_consent_enabled=policy.is_enabled,
+                notify_reviewers=policy.notify_reviewers,
+                email_reminders_to_reviewers=policy.reminders_enabled,
+                duration_in_days=policy.request_duration_in_days,
+            )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+        return admin_consent_policy
+
 
 class DefaultUserRolePermissions(BaseModel):
     allowed_to_create_apps: Optional[bool]
@@ -128,3 +148,10 @@ class Group(BaseModel):
     name: str
     groupTypes: List[str]
     membershipRule: Optional[str]
+
+
+class AdminConsentPolicy(BaseModel):
+    admin_consent_enabled: bool
+    notify_reviewers: bool
+    email_reminders_to_reviewers: bool
+    duration_in_days: int

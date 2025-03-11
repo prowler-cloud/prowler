@@ -2932,7 +2932,7 @@
       ]
     },
     {
-      "Id": "op.pl.2.aws.warch.1",
+      "Id": "op.pl.2.r1.aws.warch.1",
       "Description": "Sistema de gestión",
       "Attributes": [
         {
@@ -2956,7 +2956,7 @@
       "Checks": []
     },
     {
-      "Id": "op.pl.2.aws.warch.1",
+      "Id": "op.pl.2.r2.aws.warch.1",
       "Description": "Sistema de gestión de la seguridad con mejora continua",
       "Attributes": [
         {
@@ -2980,7 +2980,7 @@
       "Checks": []
     },
     {
-      "Id": "op.pl.2.aws.warch.1",
+      "Id": "op.pl.2.r3.aws.warch.1",
       "Description": "Validación de datos",
       "Attributes": [
         {
@@ -4303,32 +4303,6 @@
         }
       ],
       "Checks": []
-    },
-    {
-      "Id": "op.mon.3.aws.cwl.1",
-      "Description": "Vigilancia",
-      "Attributes": [
-        {
-          "IdGrupoControl": "op.mon.3",
-          "Marco": "operacional",
-          "Categoria": "monitorización del sistema",
-          "DescripcionControl": "Deberá asegurarse que todos los servicios que se utilicen en la arquitectura de la aplicación desplegada en AWS estén generando logs",
-          "Nivel": "alto",
-          "Tipo": "requisito",
-          "Dimensiones": [
-            "confidencialidad",
-            "integridad",
-            "trazabilidad",
-            "autenticidad",
-            "disponibilidad"
-          ],
-          "ModoEjecucion": "automatico",
-          "Dependencias": []
-        }
-      ],
-      "Checks": [
-        "cloudtrail_cloudwatch_logging_enabled"
-      ]
     },
     {
       "Id": "mp.com.2.aws.vpn.1",
