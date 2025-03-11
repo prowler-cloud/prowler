@@ -17,7 +17,7 @@
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://docs.prowler.com/checks/aws/networking-policies/networking_5#cli-command",
+      "Other": "https://docs.prowler.com/checks/aws/networking-policies/networking_5",
       "Terraform": ""
     },
     "Recommendation": {

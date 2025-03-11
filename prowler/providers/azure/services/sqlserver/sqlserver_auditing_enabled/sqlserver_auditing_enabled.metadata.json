@@ -13,9 +13,9 @@
   "RelatedUrl": "https://docs.microsoft.com/en-us/azure/sql-database/sql-database-auditing",
   "Remediation": {
     "Code": {
-      "CLI": "Set-AzureRmSqlServerAuditingPolicy -ResourceGroupName <resource group name> -ServerName <server name> -AuditType <audit type> -StorageAccountName <storage account name>",
+      "CLI": "Set-AzureRmSqlServerAuditingPolicy -ResourceGroupName <RESOURCE_GROUP_NAME> -ServerName <SERVER_NAME> -AuditType <AUDIT_TYPE> -StorageAccountName <STORAGE_ACCOUNT_NAME>",
       "NativeIaC": "",
-      "Other": "https://docs.prowler.com/checks/azure/azure-logging-policies/bc_azr_logging_2#cli-command",
+      "Other": "https://docs.prowler.com/checks/azure/azure-logging-policies/bc_azr_logging_2",
       "Terraform": "https://docs.prowler.com/checks/azure/azure-logging-policies/bc_azr_logging_2#terraform"
     },
     "Recommendation": {

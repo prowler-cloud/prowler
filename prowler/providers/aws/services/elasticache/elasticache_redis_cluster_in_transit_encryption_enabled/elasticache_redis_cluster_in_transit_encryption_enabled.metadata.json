@@ -14,9 +14,9 @@
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "https://docs.prowler.com/checks/aws/general-policies/general_10/",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/general-policies/general_10#cloudformation",
       "Other": "https://docs.prowler.com/checks/aws/general-policies/general_10/",
-      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/general_10/"
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/general_10#terraform"
     },
     "Recommendation": {
       "Text": "Ensure your Elasticache Redis cache clusters have in transit encryption enabled.",

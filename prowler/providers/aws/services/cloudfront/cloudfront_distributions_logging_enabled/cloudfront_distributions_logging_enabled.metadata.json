@@ -13,9 +13,9 @@
   "RelatedUrl": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/AccessLogs.html",
   "Remediation": {
     "Code": {
-      "CLI": "aws cloudfront update-distribution --id ID000000000000 --distribution-config logging.json --if-match ETAGID001",
+      "CLI": "aws cloudfront update-distribution --id <DISTRIBUTION_ID> --distribution-config logging.json --if-match <ETAG>",
       "NativeIaC": "https://docs.prowler.com/checks/aws/logging-policies/logging_20#cloudformation",
-      "Other": "https://docs.prowler.com/checks/aws/logging-policies/logging_20/#cli-command",
+      "Other": "https://docs.prowler.com/checks/aws/logging-policies/logging_20",
       "Terraform": "https://docs.prowler.com/checks/aws/logging-policies/logging_20#terraform"
     },
     "Recommendation": {

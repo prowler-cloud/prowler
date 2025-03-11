@@ -17,7 +17,7 @@
     "Code": {
       "CLI": "",
       "NativeIaC": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_27#cloudformation",
-      "Other": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_27#cloudfront-console",
+      "Other": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_27",
       "Terraform": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_27#terraform"
     },
     "Recommendation": {

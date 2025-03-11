@@ -15,7 +15,7 @@
   "RelatedUrl": "https://aws.amazon.com/blogs/mt/aws-config-best-practices/",
   "Remediation": {
     "Code": {
-      "CLI": "aws configservice subscribe --s3-bucket <my-config-bucket> --sns-topic <TOPIC_ARN>--iam-role <ROLE_ARN> ",
+      "CLI": "aws configservice subscribe --s3-bucket <S3_BUCKET> --sns-topic <TOPIC_ARN>--iam-role <ROLE_ARN> ",
       "NativeIaC": "",
       "Other": "https://docs.prowler.com/checks/aws/logging-policies/logging_5-enable-aws-config-regions",
       "Terraform": "https://docs.prowler.com/checks/aws/logging-policies/logging_5-enable-aws-config-regions#terraform"

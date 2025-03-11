@@ -17,8 +17,8 @@
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "aws es update-elasticsearch-domain-config --domain-name <value> --encryption-at-rest-options Enabled=true,KmsKeyId=<value>",
-      "NativeIaC": "https://docs.prowler.com/checks/aws/elasticsearch-policies/elasticsearch_3-enable-encryptionatrest#fix---builtime",
+      "CLI": "aws es update-elasticsearch-domain-config --domain-name <DOMAIN_NAME> --encryption-at-rest-options Enabled=true,KmsKeyId=<KMS_KEY_ID>",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/elasticsearch-policies/elasticsearch_3-enable-encryptionatrest#cloudformation",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Elasticsearch/encryption-at-rest.html",
       "Terraform": ""
     },

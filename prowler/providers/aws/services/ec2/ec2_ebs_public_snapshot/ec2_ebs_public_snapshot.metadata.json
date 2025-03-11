@@ -15,9 +15,9 @@
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "aws ec2 modify-snapshot-attribute --region us-east-1 --snapshot-id snap-1234567890abcdef0 --attribute createVolumePermission --operation remove --user-ids all",
-      "NativeIaC": "https://docs.prowler.com/checks/aws/public-policies/public_7#aws-console",
-      "Other": "https://docs.prowler.com/checks/aws/public-policies/public_7#cli-command",
+      "CLI": "aws ec2 modify-snapshot-attribute --region <REGION> --snapshot-id <EC2_SNAPSHOT_ID> --attribute createVolumePermission --operation remove --user-ids all",
+      "NativeIaC": "",
+      "Other": "https://docs.prowler.com/checks/aws/public-policies/public_7",
       "Terraform": ""
     },
     "Recommendation": {

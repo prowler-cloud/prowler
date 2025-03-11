@@ -15,7 +15,7 @@
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://docs.prowler.com/checks/gcp/google-cloud-public-policies/bc_gcp_public_1#cli-command",
+      "Other": "https://docs.prowler.com/checks/gcp/google-cloud-public-policies/bc_gcp_public_1",
       "Terraform": "https://docs.prowler.com/checks/gcp/google-cloud-public-policies/bc_gcp_public_1#terraform"
     },
     "Recommendation": {

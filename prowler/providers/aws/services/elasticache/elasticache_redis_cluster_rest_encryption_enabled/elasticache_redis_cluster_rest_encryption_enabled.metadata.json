@@ -14,9 +14,9 @@
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "https://docs.prowler.com/checks/aws/general-policies/general_9/",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/general-policies/general_9#cloudformation",
       "Other": "https://docs.prowler.com/checks/aws/general-policies/general_9/",
-      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/general_9/"
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/general_9#terraform"
     },
     "Recommendation": {
       "Text": "Ensure your Elasticache Redis cache clusters have at rest encryption enabled.",

@@ -17,7 +17,7 @@
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_6#procedure",
+      "Other": "https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_6",
       "Terraform": "https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_6#fix---buildtime"
     },
     "Recommendation": {

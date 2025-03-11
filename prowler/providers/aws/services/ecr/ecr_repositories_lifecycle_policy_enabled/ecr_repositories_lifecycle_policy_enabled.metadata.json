@@ -16,7 +16,7 @@
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "aws ecr put-lifecycle-policy --repository-name <value> --lifecycle-policy-text <value> [--registry-id <value>]",
+      "CLI": "aws ecr put-lifecycle-policy --repository-name <REPOSITORY_NAME> --lifecycle-policy-text <LIFECYCLE_POLICY> [--registry-id <REGISTRY_ID>]",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ECR/lifecycle-policy-in-use.html",
       "Terraform": ""

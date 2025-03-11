@@ -15,9 +15,9 @@
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "aws s3api put-bucket-logging --bucket bucket_name --bucket-logging-status file://logging.json",
-      "NativeIaC": "https://docs.prowler.com/checks/aws/s3-policies/s3_13-enable-logging#aws-console",
-      "Other": "https://docs.prowler.com/checks/aws/s3-policies/s3_13-enable-logging#cli-command",
+      "CLI": "aws s3api put-bucket-logging --bucket <BUCKET_NAME> --bucket-logging-status <LOGGING_FILE_JSON>",
+      "NativeIaC": "",
+      "Other": "https://docs.prowler.com/checks/aws/s3-policies/s3_13-enable-logging",
       "Terraform": "https://docs.prowler.com/checks/aws/s3-policies/s3_13-enable-logging#terraform"
     },
     "Recommendation": {

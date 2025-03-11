@@ -15,7 +15,7 @@
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://docs.prowler.com/checks/gcp/cloud-sql-policies/bc_gcp_sql_11#cli-command",
+      "Other": "https://docs.prowler.com/checks/gcp/cloud-sql-policies/bc_gcp_sql_11",
       "Terraform": "https://docs.prowler.com/checks/gcp/google-cloud-general-policies/ensure-gcp-big-query-tables-are-encrypted-with-customer-supplied-encryption-keys-csek-1#terraform"
     },
     "Recommendation": {

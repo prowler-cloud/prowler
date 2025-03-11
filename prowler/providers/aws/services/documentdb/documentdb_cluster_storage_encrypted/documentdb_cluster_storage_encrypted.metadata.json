@@ -15,10 +15,10 @@
   "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/documentdb-controls.html#documentdb-1",
   "Remediation": {
     "Code": {
-      "CLI": "aws docdb create-db-cluster --db-cluster-identifier sample-cluster --port 27017 --engine docdb --master-username yourMasterUsername --master-user-password yourMasterPassword --storage-encrypted",
-      "NativeIaC": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DocumentDB/encryption-enabled.html#",
+      "CLI": "aws docdb create-db-cluster --db-cluster-identifier <DB_CLUSTER_ID> --port <PORT> --engine docdb --master-username <MASTER_USERNAME> --master-user-password <MASTER_PASSWORD> --storage-encrypted",
+      "NativeIaC": "",
       "Other": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_28/",
-      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_28/"
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_28#fix-buildtime"
     },
     "Recommendation": {
       "Text": "Enable Encryption. Use a CMK where possible. It will provide additional management and privacy benefits.",

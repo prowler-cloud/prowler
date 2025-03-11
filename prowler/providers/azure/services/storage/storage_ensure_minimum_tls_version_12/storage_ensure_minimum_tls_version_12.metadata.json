@@ -15,7 +15,7 @@
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://docs.prowler.com/checks/azure/azure-storage-policies/bc_azr_storage_2#cli-command",
+      "Other": "https://docs.prowler.com/checks/azure/azure-storage-policies/bc_azr_storage_2",
       "Terraform": "https://docs.prowler.com/checks/azure/azure-storage-policies/bc_azr_storage_2#terraform"
     },
     "Recommendation": {

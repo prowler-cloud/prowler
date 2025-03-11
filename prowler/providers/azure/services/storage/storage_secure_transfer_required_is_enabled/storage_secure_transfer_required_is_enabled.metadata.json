@@ -13,7 +13,7 @@
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "az storage account update --name <storageAccountName> --https-only true",
+      "CLI": "az storage account update --name <STORAGE_ACCOUNT_NAME> --https-only true",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/StorageAccounts/secure-transfer-required.html",
       "Terraform": "https://docs.prowler.com/checks/azure/azure-networking-policies/ensure-that-storage-account-enables-secure-transfer"
