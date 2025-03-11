@@ -70,26 +70,10 @@ class Test_admincenter_users_between_two_and_four_global_admins:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert result[0].status_extended == "There are 2 global administrators."
-            assert result[0].resource == {
-                "id": id,
-                "name": "Global Administrator",
-                "members": [
-                    {
-                        "id": id_user1,
-                        "name": "User1",
-                        "directory_roles": [],
-                        "license": None,
-                        "user_type": None,
-                    },
-                    {
-                        "id": id_user2,
-                        "name": "User2",
-                        "directory_roles": [],
-                        "license": None,
-                        "user_type": None,
-                    },
-                ],
-            }
+            assert (
+                result[0].resource
+                == admincenter_client.directory_roles["Global Administrator"].dict()
+            )
             assert result[0].resource_name == "Global Administrator"
             assert result[0].resource_id == id
             assert result[0].location == "global"
@@ -145,54 +129,10 @@ class Test_admincenter_users_between_two_and_four_global_admins:
                 result[0].status_extended
                 == "There are 6 global administrators. It should be more than one and less than five."
             )
-            assert result[0].resource == {
-                "id": id,
-                "name": "Global Administrator",
-                "members": [
-                    {
-                        "id": id_user1,
-                        "name": "User1",
-                        "directory_roles": [],
-                        "license": None,
-                        "user_type": None,
-                    },
-                    {
-                        "id": id_user2,
-                        "name": "User2",
-                        "directory_roles": [],
-                        "license": None,
-                        "user_type": None,
-                    },
-                    {
-                        "id": id_user3,
-                        "name": "User3",
-                        "directory_roles": [],
-                        "license": None,
-                        "user_type": None,
-                    },
-                    {
-                        "id": id_user4,
-                        "name": "User4",
-                        "directory_roles": [],
-                        "license": None,
-                        "user_type": None,
-                    },
-                    {
-                        "id": id_user5,
-                        "name": "User5",
-                        "directory_roles": [],
-                        "license": None,
-                        "user_type": None,
-                    },
-                    {
-                        "id": id_user6,
-                        "name": "User6",
-                        "directory_roles": [],
-                        "license": None,
-                        "user_type": None,
-                    },
-                ],
-            }
+            assert (
+                result[0].resource
+                == admincenter_client.directory_roles["Global Administrator"].dict()
+            )
             assert result[0].resource_name == "Global Administrator"
             assert result[0].resource_id == id
             assert result[0].location == "global"
@@ -238,19 +178,10 @@ class Test_admincenter_users_between_two_and_four_global_admins:
                 result[0].status_extended
                 == "There are 1 global administrators. It should be more than one and less than five."
             )
-            assert result[0].resource == {
-                "id": id,
-                "name": "Global Administrator",
-                "members": [
-                    {
-                        "id": id_user1,
-                        "name": "User1",
-                        "directory_roles": [],
-                        "license": None,
-                        "user_type": None,
-                    },
-                ],
-            }
+            assert (
+                result[0].resource
+                == admincenter_client.directory_roles["Global Administrator"].dict()
+            )
             assert result[0].resource_name == "Global Administrator"
             assert result[0].resource_id == id
             assert result[0].location == "global"
