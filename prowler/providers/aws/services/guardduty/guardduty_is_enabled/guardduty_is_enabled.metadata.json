@@ -13,7 +13,7 @@
   "RelatedUrl": "https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_settingup.html",
   "Remediation": {
     "Code": {
-      "CLI": "aws guardduty create-sample-findings --detector-id <DETECTOR_ID>",
+      "CLI": "aws guardduty create-detector --region <REGION> --enable",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/GuardDuty/guardduty-enabled.html",
       "Terraform": "https://docs.prowler.com/checks/aws/general-policies/ensure-guardduty-is-enabled-to-specific-orgregion#fix---buildtime"

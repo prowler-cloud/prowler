@@ -15,7 +15,7 @@
   "RelatedUrl": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/AWS_Logs.html",
   "Remediation": {
     "Code": {
-      "CLI": "aws logs put-retention-policy --log-group-name <LOG_NAME> --retention-in-days <DAYS>",
+      "CLI": "aws logs put-retention-policy --log-group-name <LOG_GROUP_NAME> --retention-in-days <DAYS>",
       "NativeIaC": "https://docs.prowler.com/checks/aws/logging-policies/logging_13#cloudformation",
       "Other": "https://docs.prowler.com/checks/aws/logging-policies/logging_13",
       "Terraform": "https://docs.prowler.com/checks/aws/logging-policies/logging_13#terraform"
