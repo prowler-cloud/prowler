@@ -245,7 +245,8 @@ class Test_entra_admin_portals_role_limited_access:
                         ),
                     ),
                     grant_controls=GrantControls(
-                        built_in_controls=[ConditionalAccessGrantControl.BLOCK]
+                        built_in_controls=[ConditionalAccessGrantControl.BLOCK],
+                        operator=GrantControlOperator.AND,
                     ),
                     session_controls=SessionControls(
                         persistent_browser=PersistentBrowser(
