@@ -32,10 +32,7 @@ class entra_identity_protection_user_risk_enabled(Check):
         report.status_extended = "No Conditional Access Policy is an user risk based Identity Protection Policy."
 
         for policy in entra_client.conditional_access_policies.values():
-            if policy.state not in {
-                ConditionalAccessPolicyState.ENABLED,
-                ConditionalAccessPolicyState.ENABLED_FOR_REPORTING,
-            }:
+            if policy.state == ConditionalAccessPolicyState.DISABLED:
                 continue
 
             if "All" not in policy.conditions.user_conditions.included_users:
@@ -66,6 +63,9 @@ class entra_identity_protection_user_risk_enabled(Check):
                 if RiskLevel.HIGH not in policy.conditions.user_risk_levels:
                     report.status = "FAIL"
                     report.status_extended = f"Conditional Access Policy '{policy.display_name}' is an user risk based Identity Protection Policy but does not protect against high risk potential account compromises."
+                elif policy.state == ConditionalAccessPolicyState.ENABLED_FOR_REPORTING:
+                    report.status = "FAIL"
+                    report.status_extended = f"Conditional Access Policy '{policy.display_name}' is an user risk based Identity Protection Policy and reports high risk potential account compromises, but does not protect against them."
                 else:
                     report.status = "PASS"
                     report.status_extended = f"Conditional Access Policy '{policy.display_name}' is an user risk based Identity Protection Policy and does protect against high risk potential account compromises."
