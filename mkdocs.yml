@@ -52,23 +52,24 @@ nav:
       - Prowler App:
         - Getting Started: tutorials/prowler-app.md
         - Role-Based Access Control: tutorials/prowler-app-rbac.md
-      - Miscellaneous: tutorials/misc.md
-      - Reporting: tutorials/reporting.md
-      - Compliance: tutorials/compliance.md
-      - Dashboard: tutorials/dashboard.md
-      - Fixer (remediations): tutorials/fixer.md
-      - Quick Inventory: tutorials/quick-inventory.md
-      - Slack Integration: tutorials/integrations.md
-      - Configuration File: tutorials/configuration_file.md
-      - Logging: tutorials/logging.md
-      - Mutelist: tutorials/mutelist.md
-      - Check Aliases: tutorials/check-aliases.md
-      - Custom Metadata: tutorials/custom-checks-metadata.md
-      - Scan Unused Services: tutorials/scan-unused-services.md
-      - Pentesting: tutorials/pentesting.md
-      - Parallel Execution: tutorials/parallel-execution.md
-      - Developer Guide: developer-guide/introduction.md
-      - Prowler Check Kreator: tutorials/prowler-check-kreator.md
+      - CLI:
+        - Miscellaneous: tutorials/misc.md
+        - Reporting: tutorials/reporting.md
+        - Compliance: tutorials/compliance.md
+        - Dashboard: tutorials/dashboard.md
+        - Fixer (remediations): tutorials/fixer.md
+        - Quick Inventory: tutorials/quick-inventory.md
+        - Slack Integration: tutorials/integrations.md
+        - Configuration File: tutorials/configuration_file.md
+        - Logging: tutorials/logging.md
+        - Mutelist: tutorials/mutelist.md
+        - Check Aliases: tutorials/check-aliases.md
+        - Custom Metadata: tutorials/custom-checks-metadata.md
+        - Scan Unused Services: tutorials/scan-unused-services.md
+        - Pentesting: tutorials/pentesting.md
+        - Parallel Execution: tutorials/parallel-execution.md
+        - Developer Guide: developer-guide/introduction.md
+        - Prowler Check Kreator: tutorials/prowler-check-kreator.md
       - AWS:
           - Authentication: tutorials/aws/authentication.md
           - Assume Role: tutorials/aws/role-assumption.md
