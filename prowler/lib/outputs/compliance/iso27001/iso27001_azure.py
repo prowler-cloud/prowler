@@ -1,12 +1,12 @@
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.outputs.compliance.compliance_output import ComplianceOutput
-from prowler.lib.outputs.compliance.iso27001.models import AWSISO27001Model
+from prowler.lib.outputs.compliance.iso27001.models import AzureISO27001Model
 from prowler.lib.outputs.finding import Finding
 
 
-class AWSISO27001(ComplianceOutput):
+class AzureISO27001(ComplianceOutput):
     """
-    This class represents the AWS ISO 27001 compliance output.
+    This class represents the Azure ISO 27001 compliance output.
 
     Attributes:
         - _data (list): A list to store transformed data from findings.
@@ -23,7 +23,7 @@ class AWSISO27001(ComplianceOutput):
         compliance_name: str,
     ) -> None:
         """
-        Transforms a list of findings into AWS ENS compliance format.
+        Transforms a list of findings into Azure ENS compliance format.
 
         Parameters:
             - findings (list): A list of findings.
@@ -39,15 +39,15 @@ class AWSISO27001(ComplianceOutput):
             for requirement in compliance.Requirements:
                 if requirement.Id in finding_requirements:
                     for attribute in requirement.Attributes:
-                        compliance_row = AWSISO27001Model(
+                        compliance_row = AzureISO27001Model(
                             Provider=finding.provider,
                             Description=compliance.Description,
-                            AccountId=finding.account_uid,
-                            Region=finding.region,
+                            SubscriptionId=finding.account_uid,
+                            Location=finding.region,
                             AssessmentDate=str(finding.timestamp),
                             Requirements_Id=requirement.Id,
-                            Requirements_Name=requirement.Name,
                             Requirements_Description=requirement.Description,
+                            Requirements_Name=requirement.Name,
                             Requirements_Attributes_Category=attribute.Category,
                             Requirements_Attributes_Objetive_ID=attribute.Objetive_ID,
                             Requirements_Attributes_Objetive_Name=attribute.Objetive_Name,
@@ -64,15 +64,15 @@ class AWSISO27001(ComplianceOutput):
         for requirement in compliance.Requirements:
             if not requirement.Checks:
                 for attribute in requirement.Attributes:
-                    compliance_row = AWSISO27001Model(
+                    compliance_row = AzureISO27001Model(
                         Provider=compliance.Provider.lower(),
                         Description=compliance.Description,
-                        AccountId="",
-                        Region="",
+                        SubscriptionId="",
+                        Location="",
                         AssessmentDate=str(finding.timestamp),
                         Requirements_Id=requirement.Id,
-                        Requirements_Name=requirement.Name,
                         Requirements_Description=requirement.Description,
+                        Requirements_Name=requirement.Name,
                         Requirements_Attributes_Category=attribute.Category,
                         Requirements_Attributes_Objetive_ID=attribute.Objetive_ID,
                         Requirements_Attributes_Objetive_Name=attribute.Objetive_Name,

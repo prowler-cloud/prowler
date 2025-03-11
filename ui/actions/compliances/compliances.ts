@@ -7,9 +7,11 @@ import { parseStringify } from "@/lib";
 export const getCompliancesOverview = async ({
   scanId,
   region,
+  query,
 }: {
   scanId: string;
   region?: string | string[];
+  query?: string;
 }) => {
   const session = await auth();
 
@@ -17,6 +19,7 @@ export const getCompliancesOverview = async ({
   const url = new URL(`${keyServer}/compliance-overviews`);
 
   if (scanId) url.searchParams.append("filter[scan_id]", scanId);
+  if (query) url.searchParams.append("filter[search]", query);
 
   if (region) {
     const regionValue = Array.isArray(region) ? region.join(",") : region;

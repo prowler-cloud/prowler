@@ -194,42 +194,10 @@ class Test_entra_admin_portals_role_limited_access:
                 result[0].status_extended
                 == f"Conditional Access Policy '{display_name}' limits Entra Admin Center access to administrative roles."
             )
-            assert result[0].resource == {
-                id: ConditionalAccessPolicy(
-                    id=id,
-                    display_name=display_name,
-                    conditions=Conditions(
-                        application_conditions=ApplicationsConditions(
-                            included_applications=["MicrosoftAdminPortals"],
-                            excluded_applications=[],
-                        ),
-                        user_conditions=UsersConditions(
-                            included_groups=[],
-                            excluded_groups=[],
-                            included_users=["All"],
-                            excluded_users=[],
-                            included_roles=[],
-                            excluded_roles=["9b895d92-2cd3-44c7-9d02-a6ac2d5ea5c3"],
-                        ),
-                    ),
-                    grant_controls=GrantControls(
-                        built_in_controls=[ConditionalAccessGrantControl.BLOCK],
-                        operator=GrantControlOperator.AND,
-                    ),
-                    session_controls=SessionControls(
-                        persistent_browser=PersistentBrowser(
-                            is_enabled=False, mode="always"
-                        ),
-                        sign_in_frequency=SignInFrequency(
-                            is_enabled=False,
-                            frequency=None,
-                            type=None,
-                            interval=SignInFrequencyInterval.EVERY_TIME,
-                        ),
-                    ),
-                    state=ConditionalAccessPolicyState.ENABLED_FOR_REPORTING,
-                )
-            }
+            assert (
+                result[0].resource
+                == entra_client.conditional_access_policies[id].dict()
+            )
             assert result[0].resource_name == display_name
             assert result[0].resource_id == id
             assert result[0].location == "global"
