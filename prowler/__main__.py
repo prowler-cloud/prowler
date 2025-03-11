@@ -78,6 +78,7 @@ from prowler.providers.common.provider import Provider
 from prowler.providers.common.quick_inventory import run_provider_quick_inventory
 from prowler.providers.gcp.models import GCPOutputOptions
 from prowler.providers.kubernetes.models import KubernetesOutputOptions
+from prowler.providers.ionos.models import IonosOutputOptions
 
 
 def prowler():
@@ -257,6 +258,10 @@ def prowler():
         )
     elif provider == "kubernetes":
         output_options = KubernetesOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "ionos":
+        output_options = IonosOutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
 
