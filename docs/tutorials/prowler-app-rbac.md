@@ -1,8 +1,8 @@
 # Managing Users and Roles
 
-Prowler APP supports multiple users on a single account, which enables sharing the insights you get from Prowler with your peers.
+The **Prowler App** supports multiple users within a single tenant, enabling seamless collaboration by allowing team members to easily share insights and manage security findings.
 
-You can use [Roles](#roles) to limit what a user can see or do in Prowler APP. By default one role is created for your account: **admin**. This role has all the permissions and is immutable, so that a user cannot be left without access to the APP, this role will always be present in the accounts.
+[Roles](#roles) help you control user permissions, determining what actions each user can perform and the data they can access within Prowler. By default, each account includes an immutable **admin** role, ensuring that your account always retains administrative access.
 
 ## Membership
 
@@ -19,12 +19,12 @@ To get to User-Invitation Management we will focus on the Membership section.
 
 Follow these steps to edit a user of your account:
 
-1. Go to [http://localhost:3000/users](http://localhost:3000/users) from the side menu.
+1. Navigate to **Users** from the side menu.
 2. Click on the edit button of the user you want to modify.
 
     <img src="../img/rbac/user_edit.png" alt="Edit User" width="700"/>
 
-3. Change the user parameters you need and save the changes.
+3. Edit the user fields you need and save your changes.
 
     <img src="../img/rbac/user_edit_details.png" alt="Edit User Details" width="700"/>
 
@@ -32,8 +32,9 @@ Follow these steps to edit a user of your account:
 
 Follow these steps to remove a user of your account:
 
-1. Go to [http://localhost:3000/users](http://localhost:3000/users) from the side menu.
-2. Click on the delete button of your current user. **Note: Each user will be able to delete himself and not others, regardless of his permissions.**
+1. Navigate to **Users** from the side menu.
+2. Click on the delete button of your current user.
+> **Note: Each user will be able to delete himself and not others, regardless of his permissions.**
 
     <img src="../img/rbac/user_remove.png" alt="Remove User" width="700"/>
 
@@ -46,7 +47,7 @@ Follow these steps to remove a user of your account:
 
 Follow these steps to invite a user to your account:
 
-1. Go to [http://localhost:3000/invitations](http://localhost:3000/invitations) from the side menu.
+1. Navigate to **Users** from the side menu.
 2. Click on the **Invite User** button on the top right-hand corner of the screen.
 
     <img src="../img/rbac/invite.png" alt="Invite User" width="700"/>
@@ -73,7 +74,7 @@ Follow these steps to invite a user to your account:
 
 Follow these steps to edit an invitation:
 
-1. Go to [http://localhost:3000/invitations](http://localhost:3000/invitations) from the side menu.
+1. Navigate to **Invitations** from the side menu.
 2. Click on the edit button of the invitation and modify the email, the role or both. **Note: Editing an invitation will not reset its expiration time.**
 
     <img src="../img/rbac/invitation_edit.png" alt="Invitation edit" width="700"/>
@@ -83,7 +84,7 @@ Follow these steps to edit an invitation:
 
 Follow these steps to cancel an invitation:
 
-1. Go to [http://localhost:3000/invitations](http://localhost:3000/invitations) from the side menu.
+1. Navigate to **Invitations** from the side menu.
 2. Click on the revoke button of the invitation.
 
     <img src="../img/rbac/invitation_revoke.png" alt="Invitation revoke" width="700"/>
@@ -94,24 +95,24 @@ To resend the invitation to the user it is necessary to explicitly **delete the 
 
 ## Managing Groups and Roles
 
-The Roles interface in Prowler is designed to facilitate the assignment of custom user privileges. This interface allows administrators to define roles with specific permissions for Prowler administrative tasks and Account visibility.
+The Roles section in Prowler is designed to facilitate the assignment of custom user privileges. This section allows administrators to define roles with specific permissions for Prowler administrative tasks and Account visibility.
 
 ???+ note
     **Only users that have the _Manage Account_ or _admin_ permission can access this section.**
 
 ### Provider Groups
 
-When creating a new role in Prowler, you can assign specific groups to define the Cloud Account visibility for the role. This ensures that users with the created role have access only to the cloud accounts that are relevant to their responsibilities.
+Provider Groups control visibility across specific providers. When creating a new role, you can assign specific groups to define their Cloud Provider visibility. This ensures that users with that role have access only to the Cloud Providers that are required.
 
-By default, a new user role does not have visibility into any cloud groups.
+By default, a new user role does not have visibility into any group.
 
-Alternatively, to grant the role unlimited visibility across all cloud accounts, check the Grant Unlimited Visibility checkbox.
+Alternatively, to grant the role unlimited visibility across all providers, check the Grant Unlimited Visibility checkbox.
 
 #### Creating a Provider Group
 
 Follow these steps to create a provider group in your account:
 
-1. Go to [http://localhost:3000/manage-groups](http://localhost:3000/manage-groups) from the side menu.
+1. 1. Navigate to **Provider Groups** from the side menu..
 2. In this view you can select the provider groups you want to assign to one or more roles.
 3. Click on the **Create Group** button on the center of the screen.
 
@@ -121,7 +122,7 @@ Follow these steps to create a provider group in your account:
 
 Follow these steps to edit a provider group on your account:
 
-1. Go to [http://localhost:3000/manage-groups](http://localhost:3000/manage-groups) from the side menu.
+1. 1. Navigate to **Provider Groups** from the side menu..
 2. Click on the edit button of the provider group you want to modify.
 
     <img src="../img/rbac/provider_group_edit.png" alt="Edit Provider Group" width="700"/>
@@ -134,26 +135,24 @@ Follow these steps to edit a provider group on your account:
 
 Follow these steps to remove a provider group of your account:
 
-1. Go to [http://localhost:3000/manage-groups](http://localhost:3000/manage-groups) from the side menu.
+1. 1. Navigate to **Provider Groups** from the side menu..
 2. Click on the delete button of the provider group you want to remove.
 
     <img src="../img/rbac/provider_group_remove.png" alt="Remove Provider Group" width="700"/>
 
 ### Roles
 
-The Roles interface in Prowler APP is designed to facilitate the assignment of custom user privileges. This interface allows administrators to define roles with specific permissions for Prowler administrative tasks and Cloud Account visibility.
-
 #### Creating a Role
 
 Follow these steps to create a role for your account:
 
-1. Go to [http://localhost:3000/roles](http://localhost:3000/roles) from the side menu.
+1. Navigate to **Roles** from the side menu.
 2. Click on the **Add Role** button on the top right-hand corner of the screen.
 
     <img src="../img/rbac/role_create.png" alt="Create Role" width="700"/>
 
 3. In the Add Role screen, enter the role name, the administration permissions and the groups of providers to which the Role will have access to.
-4. In the Groups and Account Visibility section, you will see a list of available cloud groups with checkboxes next to them. To assign a group to the user role, simply click the checkbox next to the group name. If you need to assign multiple groups, repeat the process for each group you wish to add.
+4. In the Groups and Account Visibility section, you will see a list of available groups with checkboxes next to them. To assign a group to the user role, simply click the checkbox next to the group name. If you need to assign multiple groups, repeat the process for each group you wish to add.
 
     <img src="../img/rbac/role_create_1.png" alt="Role parameters" width="700"/>
 
@@ -161,7 +160,7 @@ Follow these steps to create a role for your account:
 
 Follow these steps to edit a role on your account:
 
-1. Go to [http://localhost:3000/roles](http://localhost:3000/roles) from the side menu.
+1. Navigate to **Roles** from the side menu.
 2. Click on the edit button of the role you want to modify.
 
     <img src="../img/rbac/role_edit.png" alt="Edit Role" width="700"/>
@@ -174,7 +173,7 @@ Follow these steps to edit a role on your account:
 
 Follow these steps to remove a role of your account:
 
-1. Go to [http://localhost:3000/roles](http://localhost:3000/roles) from the side menu.
+1. Navigate to **Roles** from the side menu.
 2. Click on the delete button of the role you want to remove.
 
     <img src="../img/rbac/role_remove.png" alt="Remove Role" width="700"/>
