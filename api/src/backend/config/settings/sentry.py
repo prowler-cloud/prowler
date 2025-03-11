@@ -2,6 +2,8 @@ import sentry_sdk
 from config.env import env
 
 IGNORED_EXCEPTIONS = [
+    # Provider is not connected due to credentials errors
+    "is not connected",
     # Authentication Errors from AWS
     "InvalidToken",
     "AccessDeniedException",
