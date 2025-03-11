@@ -13,9 +13,9 @@
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "https://docs.prowler.com/checks/gcp/google-cloud-public-policies/bc_gcp_public_2#cli-command",
+      "CLI": "",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/Compute/instances-with-public-ip-addresses.html",
+      "Other": "https://docs.prowler.com/checks/gcp/google-cloud-public-policies/bc_gcp_public_2",
       "Terraform": "https://docs.prowler.com/checks/gcp/google-cloud-public-policies/bc_gcp_public_2#terraform"
     },
     "Recommendation": {
