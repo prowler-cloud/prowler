@@ -29,6 +29,8 @@ IGNORED_EXCEPTIONS = [
     "InvalidParameterValueException",
     "InvalidInputException",
     "ValidationException",
+    "AWSSecretAccessKeyInvalidError",
+    "InvalidAction",
     "Pool is closed",  # The following comes from urllib3: eu-west-1 -- HTTPClientError[126]: An HTTP Client raised an unhandled exception: AWSHTTPSConnectionPool(host='hostname.s3.eu-west-1.amazonaws.com', port=443): Pool is closed.
     # Authentication Errors from GCP
     "ClientAuthenticationError",
