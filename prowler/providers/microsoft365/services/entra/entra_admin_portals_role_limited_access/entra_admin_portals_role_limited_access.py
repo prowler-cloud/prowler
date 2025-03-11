@@ -57,7 +57,7 @@ class entra_admin_portals_role_limited_access(Check):
             ):
                 report = CheckReportMicrosoft365(
                     metadata=self.metadata(),
-                    resource=entra_client.conditional_access_policies,
+                    resource=policy,
                     resource_name=policy.display_name,
                     resource_id=policy.id,
                 )
