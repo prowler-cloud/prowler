@@ -2481,10 +2481,19 @@ class IntegrationViewSet(BaseRLSViewSet):
     filterset_class = IntegrationFilter
     ordering = ["integration_type", "-inserted_at"]
     # RBAC required permissions
-    required_permissions = [Permissions.MANAGE_PROVIDERS]
+    required_permissions = [Permissions.MANAGE_INTEGRATIONS]
 
     def get_queryset(self):
-        return Integration.objects.filter(tenant_id=self.request.tenant_id)
+        user_roles = get_role(self.request.user)
+        if user_roles.unlimited_visibility:
+            # User has unlimited visibility, return all integrations
+            queryset = Integration.objects.filter(tenant_id=self.request.tenant_id)
+        else:
+            # User lacks permission, filter providers based on provider groups associated with the role
+            queryset = Integration.objects.filter(
+                providers__in=get_providers(user_roles)
+            )
+        return queryset
 
     def get_serializer_class(self):
         if self.action == "create":
