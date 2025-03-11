@@ -484,7 +484,23 @@
           "Check_Summary": "The organisation should assess information security events and decide if they are to be categorised as information security incidents."
         }
       ],
-      "Checks": []
+      "Checks": [
+        "defender_container_images_resolved_vulnerabilities",
+        "defender_container_images_scan_enabled",
+        "defender_ensure_defender_for_app_services_is_on",
+        "defender_ensure_defender_for_arm_is_on",
+        "defender_ensure_defender_for_azure_sql_databases_is_on",
+        "defender_ensure_defender_for_containers_is_on",
+        "defender_ensure_defender_for_cosmosdb_is_on",
+        "defender_ensure_defender_for_databases_is_on",
+        "defender_ensure_defender_for_dns_is_on",
+        "defender_ensure_defender_for_keyvault_is_on",
+        "defender_ensure_defender_for_os_relational_databases_is_on",
+        "defender_ensure_defender_for_server_is_on",
+        "defender_ensure_defender_for_sql_servers_is_on",
+        "defender_ensure_defender_for_storage_is_on",
+        "defender_ensure_iot_hub_defender_is_on"
+      ]
     },
     {
       "Id": "A.5.26",
