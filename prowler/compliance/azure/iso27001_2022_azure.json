@@ -484,7 +484,23 @@
           "Check_Summary": "The organisation should assess information security events and decide if they are to be categorised as information security incidents."
         }
       ],
-      "Checks": []
+      "Checks": [
+        "defender_container_images_resolved_vulnerabilities",
+        "defender_container_images_scan_enabled",
+        "defender_ensure_defender_for_app_services_is_on",
+        "defender_ensure_defender_for_arm_is_on",
+        "defender_ensure_defender_for_azure_sql_databases_is_on",
+        "defender_ensure_defender_for_containers_is_on",
+        "defender_ensure_defender_for_cosmosdb_is_on",
+        "defender_ensure_defender_for_databases_is_on",
+        "defender_ensure_defender_for_dns_is_on",
+        "defender_ensure_defender_for_keyvault_is_on",
+        "defender_ensure_defender_for_os_relational_databases_is_on",
+        "defender_ensure_defender_for_server_is_on",
+        "defender_ensure_defender_for_sql_servers_is_on",
+        "defender_ensure_defender_for_storage_is_on",
+        "defender_ensure_iot_hub_defender_is_on"
+      ]
     },
     {
       "Id": "A.5.26",
@@ -1052,7 +1068,10 @@
         }
       ],
       "Checks": [
-        "app_function_access_keys_configured entra_policy_guest_users_access_restrictions postgresql_flexible_server_allow_access_services_disabled storage_ensure_azure_services_are_trusted_to_access_is_enabled"
+        "app_function_access_keys_configured",
+        "entra_policy_guest_users_access_restrictions",
+        "postgresql_flexible_server_allow_access_services_disabled",
+        "storage_ensure_azure_services_are_trusted_to_access_is_enabled"
       ]
     },
     {
@@ -1082,7 +1101,13 @@
         }
       ],
       "Checks": [
-        "entra_conditional_access_policy_require_mfa_for_management_api entra_non_privileged_user_has_mfa entra_privileged_user_has_mfa entra_user_with_vm_access_has_mfa app_minimum_tls_version_12 sqlserver_tde_encryption_enabled storage_ensure_encryption_with_customer_managed_keys storage_infrastructure_encryption_is_enabled"
+        "entra_conditional_access_policy_require_mfa_for_management_app",
+        "entra_non_privileged_user_has_mfa entra_privileged_user_has_mfa",
+        "entra_user_with_vm_access_has_mfa",
+        "app_minimum_tls_version_12",
+        "sqlserver_tde_encryption_enabled",
+        "storage_ensure_encryption_with_customer_managed_keys",
+        "storage_infrastructure_encryption_is_enabled"
       ]
     },
     {
@@ -1222,7 +1247,10 @@
         }
       ],
       "Checks": [
-        "app_minimum_tls_version_12 sqlserver_tde_encrypted_with_cmk sqlserver_tde_encryption_enabled storage_secure_transfer_required_is_enabled"
+        "app_minimum_tls_version_12",
+        "sqlserver_tde_encrypted_with_cmk",
+        "sqlserver_tde_encryption_enabled",
+        "storage_secure_transfer_required_is_enabled"
       ]
     },
     {
