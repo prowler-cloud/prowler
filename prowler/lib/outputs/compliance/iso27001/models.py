@@ -49,3 +49,28 @@ class AzureISO27001Model(BaseModel):
     CheckId: str
     Muted: bool
     ResourceName: str
+
+
+class GCPISO27001Model(BaseModel):
+    """
+    GCPISO27001Model generates a finding's output in CSV GCP ISO27001 format.
+    """
+
+    Provider: str
+    Description: str
+    ProjectId: str
+    Location: str
+    AssessmentDate: str
+    Requirements_Id: str
+    Requirements_Name: str
+    Requirements_Description: str
+    Requirements_Attributes_Category: str
+    Requirements_Attributes_Objetive_ID: str
+    Requirements_Attributes_Objetive_Name: str
+    Requirements_Attributes_Check_Summary: str
+    Status: str
+    StatusExtended: str
+    ResourceId: str
+    CheckId: str
+    Muted: bool
+    ResourceName: str
