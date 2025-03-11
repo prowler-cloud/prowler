@@ -162,6 +162,7 @@ export const addCredentialsRoleFormSchema = (providerType: string) =>
 
 export const testConnectionFormSchema = z.object({
   providerId: z.string(),
+  runOnce: z.boolean().default(false),
 });
 
 export const launchScanFormSchema = () =>
