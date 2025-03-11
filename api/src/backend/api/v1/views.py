@@ -1280,7 +1280,13 @@ class ScanViewSet(BaseRLSViewSet):
             filename = os.path.basename(output_location.split("/")[-1])
         else:
             zip_files = glob.glob(output_location)
-            file_path = zip_files[0]
+            try:
+                file_path = zip_files[0]
+            except IndexError:
+                return Response(
+                    {"detail": "The scan has no reports."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
             with open(file_path, "rb") as f:
                 file_content = f.read()
             filename = os.path.basename(file_path)
