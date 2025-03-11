@@ -69,10 +69,7 @@ class Test_admincenter_settings_password_never_expire:
                 result[0].status_extended
                 == f"Domain {id_domain} does not have a Password never expires policy."
             )
-            assert result[0].resource == {
-                "id": id_domain,
-                "password_validity_period": 5,
-            }
+            assert result[0].resource == admincenter_client.domains[id_domain].dict()
             assert result[0].resource_name == id_domain
             assert result[0].resource_id == id_domain
             assert result[0].location == "global"
@@ -113,10 +110,7 @@ class Test_admincenter_settings_password_never_expire:
                 result[0].status_extended
                 == f"Domain {id_domain} Password policy is set to never expire."
             )
-            assert result[0].resource == {
-                "id": id_domain,
-                "password_validity_period": 2147483647,
-            }
+            assert result[0].resource == admincenter_client.domains[id_domain].dict()
             assert result[0].resource_name == id_domain
             assert result[0].resource_id == id_domain
             assert result[0].location == "global"
