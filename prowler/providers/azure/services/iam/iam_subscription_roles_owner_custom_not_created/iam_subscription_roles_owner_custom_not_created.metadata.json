@@ -13,9 +13,9 @@
   "RelatedUrl": "https://learn.microsoft.com/en-us/azure/role-based-access-control/custom-roles",
   "Remediation": {
     "Code": {
-      "CLI": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/AccessControl/remove-custom-owner-roles.html",
+      "CLI": "",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/AccessControl/remove-custom-owner-roles.html",
       "Terraform": ""
     },
     "Recommendation": {
