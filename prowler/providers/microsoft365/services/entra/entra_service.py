@@ -224,7 +224,7 @@ class Entra(Microsoft365Service):
                                 )
                                 if policy.session_controls
                                 and policy.session_controls.sign_in_frequency
-                                else SignInFrequencyInterval.EVERY_TIME
+                                else None
                             ),
                         ),
                     ),
@@ -300,7 +300,7 @@ class SignInFrequency(BaseModel):
     is_enabled: bool
     frequency: Optional[int]
     type: Optional[SignInFrequencyType]
-    interval: SignInFrequencyInterval
+    interval: Optional[SignInFrequencyInterval]
 
 
 class SessionControls(BaseModel):

@@ -39,6 +39,7 @@ class Test_entra_admin_users_sign_in_frequency_enabled:
             )
 
             entra_client.conditional_access_policies = {}
+            entra_client.audit_config = {"sign_in_frequency": 4}
 
             check = entra_admin_users_sign_in_frequency_enabled()
             result = check.execute()
@@ -58,6 +59,7 @@ class Test_entra_admin_users_sign_in_frequency_enabled:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.audit_config = {"sign_in_frequency": 4}
 
         with (
             mock.patch(
@@ -122,7 +124,7 @@ class Test_entra_admin_users_sign_in_frequency_enabled:
             assert result[0].resource_id == "conditionalAccessPolicies"
             assert result[0].location == "global"
 
-    def test_entra_sign_in_frequency_enabled_no_frequency(self):
+    def test_entra_sign_in_frequency_enabled_every_time(self):
         id = str(uuid4())
         freq = None
         display_name = "Test"
@@ -200,10 +202,10 @@ class Test_entra_admin_users_sign_in_frequency_enabled:
             check = entra_admin_users_sign_in_frequency_enabled()
             result = check.execute()
             assert len(result) == 1
-            assert result[0].status == "FAIL"
+            assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Conditional Access Policy {display_name} enforces sign-in frequency for admin users but it is set to 'Every Time'."
+                == f"Conditional Access Policy '{display_name}' enforces sign-in frequency 'Every Time' for admin users."
             )
             assert (
                 result[0].resource
@@ -297,7 +299,7 @@ class Test_entra_admin_users_sign_in_frequency_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Conditional Access Policy '{display_name}' enforces sign-in frequency to be {freq} hours for admin users, which is greater than the recommended {recommended_sign_in_frequency} hours."
+                == f"Conditional Access Policy '{display_name}' enforces sign-in frequency at {freq} hours for admin users, exceeding the recommended {recommended_sign_in_frequency} hours."
             )
             assert (
                 result[0].resource
@@ -388,7 +390,7 @@ class Test_entra_admin_users_sign_in_frequency_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Conditional Access Policy '{display_name}' enforces sign-in frequency to be {freq} hours for admin users. Finding status remains FAIL because the policy is still set to 'Report-only' instead of 'On'."
+                == f"Conditional Access Policy '{display_name}' only reports when sign-in frequency is {freq} hours for admin users but does not enforce it."
             )
             assert (
                 result[0].resource
@@ -479,7 +481,7 @@ class Test_entra_admin_users_sign_in_frequency_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Conditional Access Policy '{display_name}' enforces sign-in frequency to be {freq} hours for admin users."
+                == f"Conditional Access Policy '{display_name}' enforces sign-in frequency at {freq} hours for admin users."
             )
             assert (
                 result[0].resource
@@ -573,7 +575,7 @@ class Test_entra_admin_users_sign_in_frequency_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Conditional Access Policy '{display_name}' enforces sign-in frequency to be {recommended_sign_in_frequency} hours for admin users."
+                == f"Conditional Access Policy '{display_name}' enforces sign-in frequency at {recommended_sign_in_frequency} hours for admin users."
             )
             assert (
                 result[0].resource
