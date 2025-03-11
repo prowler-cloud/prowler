@@ -20,16 +20,17 @@ class Entra(Microsoft365Service):
                 self._get_authorization_policy(),
                 self._get_conditional_access_policies(),
                 self._get_admin_consent_policy(),
+                self._get_groups(),
             )
         )
 
         self.authorization_policy = attributes[0]
         self.conditional_access_policies = attributes[1]
         self.admin_consent_policy = attributes[2]
+        self.groups = attributes[3]
 
     async def _get_authorization_policy(self):
         logger.info("Entra - Getting authorization policy...")
-
         authorization_policy = None
         try:
             auth_policy = await self.client.policies.authorization_policy.get()
@@ -89,7 +90,6 @@ class Entra(Microsoft365Service):
 
     async def _get_conditional_access_policies(self):
         logger.info("Entra - Getting conditional access policies...")
-
         conditional_access_policies = {}
         try:
             conditional_access_policies_list = (
@@ -255,6 +255,26 @@ class Entra(Microsoft365Service):
             )
         return admin_consent_policy
 
+    async def _get_groups(self):
+        logger.info("Entra - Getting groups...")
+        groups = []
+        try:
+            groups_data = await self.client.groups.get()
+            for group in groups_data.value:
+                groups.append(
+                    Group(
+                        id=group.id,
+                        name=group.display_name,
+                        groupTypes=group.group_types,
+                        membershipRule=group.membership_rule,
+                    )
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return groups
+
 
 class ConditionalAccessPolicyState(Enum):
     ENABLED = "enabled"
@@ -341,6 +361,13 @@ class AuthorizationPolicy(BaseModel):
     name: str
     description: str
     default_user_role_permissions: Optional[DefaultUserRolePermissions]
+
+
+class Group(BaseModel):
+    id: str
+    name: str
+    groupTypes: List[str]
+    membershipRule: Optional[str]
 
 
 class AdminConsentPolicy(BaseModel):
