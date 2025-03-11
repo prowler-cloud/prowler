@@ -168,6 +168,18 @@ class Entra(Microsoft365Service):
                             ],
                         ),
                     ),
+                    grant_controls=GrantControls(
+                        built_in_controls=(
+                            [
+                                ConditionalAccessGrantControl(control.value)
+                                for control in getattr(
+                                    policy.grant_controls, "built_in_controls", {}
+                                )
+                            ]
+                            if policy.grant_controls
+                            else []
+                        )
+                    ),
                     session_controls=SessionControls(
                         persistent_browser=PersistentBrowser(
                             is_enabled=(
@@ -278,11 +290,21 @@ class SessionControls(BaseModel):
     sign_in_frequency: SignInFrequency
 
 
+class ConditionalAccessGrantControl(Enum):
+    MFA = "mfa"
+    BLOCK = "block"
+
+
+class GrantControls(BaseModel):
+    built_in_controls: List[ConditionalAccessGrantControl]
+
+
 class ConditionalAccessPolicy(BaseModel):
     id: str
     display_name: str
     conditions: Conditions
     session_controls: SessionControls
+    grant_controls: GrantControls
     state: ConditionalAccessPolicyState
 
 
