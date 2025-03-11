@@ -28,6 +28,22 @@ async def mock_entra_get_authorization_policy(_):
     )
 
 
+async def mock_entra_get_groups(_):
+    group1 = {
+        "id": "id-1",
+        "name": "group1",
+        "groupTypes": ["DynamicMembership"],
+        "membershipRule": 'user.userType -eq "Guest"',
+    }
+    group2 = {
+        "id": "id-2",
+        "name": "group2",
+        "groupTypes": ["Assigned"],
+        "membershipRule": "",
+    }
+    return [group1, group2]
+
+
 async def mock_entra_get_admin_consent_policy(_):
     return AdminConsentPolicy(
         admin_consent_enabled=True,
@@ -65,6 +81,22 @@ class Test_Entra_Service:
                 allowed_to_read_other_users=True,
             )
         )
+
+    @patch(
+        "prowler.providers.microsoft365.services.entra.entra_service.Entra._get_groups",
+        new=mock_entra_get_groups,
+    )
+    def test_get_groups(self):
+        entra_client = Entra(set_mocked_microsoft365_provider())
+        assert len(entra_client.groups) == 2
+        assert entra_client.groups[0]["id"] == "id-1"
+        assert entra_client.groups[0]["name"] == "group1"
+        assert entra_client.groups[0]["groupTypes"] == ["DynamicMembership"]
+        assert entra_client.groups[0]["membershipRule"] == 'user.userType -eq "Guest"'
+        assert entra_client.groups[1]["id"] == "id-2"
+        assert entra_client.groups[1]["name"] == "group2"
+        assert entra_client.groups[1]["groupTypes"] == ["Assigned"]
+        assert entra_client.groups[1]["membershipRule"] == ""
 
     @patch(
         "prowler.providers.microsoft365.services.entra.entra_service.Entra._get_admin_consent_policy",

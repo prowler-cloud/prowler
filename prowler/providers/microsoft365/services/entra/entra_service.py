@@ -17,12 +17,14 @@ class Entra(Microsoft365Service):
         attributes = loop.run_until_complete(
             gather(
                 self._get_authorization_policy(),
+                self._get_groups(),
                 self._get_admin_consent_policy(),
             )
         )
 
         self.authorization_policy = attributes[0]
-        self.admin_consent_policy = attributes[1]
+        self.groups = attributes[1]
+        self.admin_consent_policy = attributes[2]
 
     async def _get_authorization_policy(self):
         logger.info("Entra - Getting authorization policy...")
@@ -85,6 +87,26 @@ class Entra(Microsoft365Service):
 
         return authorization_policy
 
+    async def _get_groups(self):
+        logger.info("Entra - Getting groups...")
+        groups = []
+        try:
+            groups_data = await self.client.groups.get()
+            for group in groups_data.value:
+                groups.append(
+                    Group(
+                        id=group.id,
+                        name=group.display_name,
+                        groupTypes=group.group_types,
+                        membershipRule=group.membership_rule,
+                    )
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return groups
+
     async def _get_admin_consent_policy(self):
         logger.info("Entra - Getting group settings...")
         admin_consent_policy = None
@@ -119,6 +141,13 @@ class AuthorizationPolicy(BaseModel):
     name: str
     description: str
     default_user_role_permissions: Optional[DefaultUserRolePermissions]
+
+
+class Group(BaseModel):
+    id: str
+    name: str
+    groupTypes: List[str]
+    membershipRule: Optional[str]
 
 
 class AdminConsentPolicy(BaseModel):
