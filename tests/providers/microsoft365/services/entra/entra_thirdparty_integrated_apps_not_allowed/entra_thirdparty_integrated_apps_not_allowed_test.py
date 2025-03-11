@@ -74,12 +74,7 @@ class Test_entra_thirdparty_integrated_apps_not_allowed:
                 result[0].status_extended
                 == "App creation is disabled for non-admin users."
             )
-            assert result[0].resource == {
-                "id": id,
-                "name": "Test",
-                "description": "Test",
-                "default_user_role_permissions": role_permissions,
-            }
+            assert result[0].resource == entra_client.authorization_policy.dict()
             assert result[0].resource_name == "Test"
             assert result[0].resource_id == id
             assert result[0].location == "global"
@@ -123,12 +118,7 @@ class Test_entra_thirdparty_integrated_apps_not_allowed:
                 result[0].status_extended
                 == "App creation is not disabled for non-admin users."
             )
-            assert result[0].resource == {
-                "id": id,
-                "name": "Test",
-                "description": "Test",
-                "default_user_role_permissions": role_permissions,
-            }
+            assert result[0].resource == entra_client.authorization_policy.dict()
             assert result[0].resource_name == "Test"
             assert result[0].resource_id == id
             assert result[0].location == "global"
