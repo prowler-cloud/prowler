@@ -19,7 +19,7 @@ To get to User-Invitation Management we will focus on the Membership section.
 
 Follow these steps to edit a user of your account:
 
-1. Click on the [http://localhost:3000/users](http://localhost:3000/users) item in the side menu.
+1. Go to [http://localhost:3000/users](http://localhost:3000/users) from the side menu.
 2. Click on the edit button of the user you want to modify.
 
     <img src="../img/rbac/user_edit.png" alt="Edit User" width="700"/>
@@ -32,7 +32,7 @@ Follow these steps to edit a user of your account:
 
 Follow these steps to remove a user of your account:
 
-1. Click on the [http://localhost:3000/users](http://localhost:3000/users) item in the side menu.
+1. Go to [http://localhost:3000/users](http://localhost:3000/users) from the side menu.
 2. Click on the delete button of your current user. **Note: Each user will be able to delete himself and not others, regardless of his permissions.**
 
     <img src="../img/rbac/user_remove.png" alt="Remove User" width="700"/>
@@ -46,7 +46,7 @@ Follow these steps to remove a user of your account:
 
 Follow these steps to invite a user to your account:
 
-1. Click on the [http://localhost:3000/invitations](http://localhost:3000/invitations) item in the side menu.
+1. Go to [http://localhost:3000/invitations](http://localhost:3000/invitations) from the side menu.
 2. Click on the **Invite User** button on the top right-hand corner of the screen.
 
     <img src="../img/rbac/invite.png" alt="Invite User" width="700"/>
@@ -73,7 +73,7 @@ Follow these steps to invite a user to your account:
 
 Follow these steps to edit an invitation:
 
-1. Click on the [http://localhost:3000/invitations](http://localhost:3000/invitations) item in the side menu.
+1. Go to [http://localhost:3000/invitations](http://localhost:3000/invitations) from the side menu.
 2. Click on the edit button of the invitation and modify the email, the role or both. **Note: Editing an invitation will not reset its expiration time.**
 
     <img src="../img/rbac/invitation_edit.png" alt="Invitation edit" width="700"/>
@@ -83,7 +83,7 @@ Follow these steps to edit an invitation:
 
 Follow these steps to cancel an invitation:
 
-1. Click on the [http://localhost:3000/invitations](http://localhost:3000/invitations) item in the side menu.
+1. Go to [http://localhost:3000/invitations](http://localhost:3000/invitations) from the side menu.
 2. Click on the revoke button of the invitation.
 
     <img src="../img/rbac/invitation_revoke.png" alt="Invitation revoke" width="700"/>
@@ -111,7 +111,7 @@ Alternatively, to grant the role unlimited visibility across all cloud accounts,
 
 Follow these steps to create a provider group in your account:
 
-1. Click on the [http://localhost:3000/manage-groups](http://localhost:3000/manage-groups) item in the side menu.
+1. Go to [http://localhost:3000/manage-groups](http://localhost:3000/manage-groups) from the side menu.
 2. In this view you can select the provider groups you want to assign to one or more roles.
 3. Click on the **Create Group** button on the center of the screen.
 
@@ -121,7 +121,7 @@ Follow these steps to create a provider group in your account:
 
 Follow these steps to edit a provider group on your account:
 
-1. Click on the [http://localhost:3000/manage-groups](http://localhost:3000/manage-groups) item in the side menu.
+1. Go to [http://localhost:3000/manage-groups](http://localhost:3000/manage-groups) from the side menu.
 2. Click on the edit button of the provider group you want to modify.
 
     <img src="../img/rbac/provider_group_edit.png" alt="Edit Provider Group" width="700"/>
@@ -134,7 +134,7 @@ Follow these steps to edit a provider group on your account:
 
 Follow these steps to remove a provider group of your account:
 
-1. Click on the [http://localhost:3000/manage-groups](http://localhost:3000/manage-groups) item in the side menu.
+1. Go to [http://localhost:3000/manage-groups](http://localhost:3000/manage-groups) from the side menu.
 2. Click on the delete button of the provider group you want to remove.
 
     <img src="../img/rbac/provider_group_remove.png" alt="Remove Provider Group" width="700"/>
@@ -147,7 +147,7 @@ The Roles interface in Prowler APP is designed to facilitate the assignment of c
 
 Follow these steps to create a role for your account:
 
-1. Click on the [http://localhost:3000/roles](http://localhost:3000/roles) item in the side menu.
+1. Go to [http://localhost:3000/roles](http://localhost:3000/roles) from the side menu.
 2. Click on the **Add Role** button on the top right-hand corner of the screen.
 
     <img src="../img/rbac/role_create.png" alt="Create Role" width="700"/>
@@ -161,7 +161,7 @@ Follow these steps to create a role for your account:
 
 Follow these steps to edit a role on your account:
 
-1. Click on the [http://localhost:3000/roles](http://localhost:3000/roles) item in the side menu.
+1. Go to [http://localhost:3000/roles](http://localhost:3000/roles) from the side menu.
 2. Click on the edit button of the role you want to modify.
 
     <img src="../img/rbac/role_edit.png" alt="Edit Role" width="700"/>
@@ -174,7 +174,7 @@ Follow these steps to edit a role on your account:
 
 Follow these steps to remove a role of your account:
 
-1. Click on the [http://localhost:3000/roles](http://localhost:3000/roles) item in the side menu.
+1. Go to [http://localhost:3000/roles](http://localhost:3000/roles) from the side menu.
 2. Click on the delete button of the role you want to remove.
 
     <img src="../img/rbac/role_remove.png" alt="Remove Role" width="700"/>
@@ -183,9 +183,10 @@ Follow these steps to remove a role of your account:
 
 Assign administrative permissions by selecting from the following options:
 
-**Invite and Manage Users:** Allow the user to invite new users and manage user accounts.<br>
-**Manage Account:** Allow the user to configure the Prowler account settings. Includes the ability to delete the user Prowler user.<br>
-**Manage Scans:** Allows the user to run scans as well as review scan results.<br>
-**Manage Cloud Providers:** Grant the user authority to add or modify connected cloud providers.
+**Invite and Manage Users:** Invite new users and manage existing ones.<br>
+**Manage Account:** Adjust account settings and delete users.<br>
+**Manage Scans:** Run and review scans.<br>
+**Manage Cloud Providers:** Add or modify connected cloud providers.<br>
+**Manage Integrations:** Add or modify the Prowler Integrations.
 
-To grant administrative permissions, click the Grant all admin permissions checkbox.
+To grant all administrative permissions, select the **Grant all admin permissions** option.
