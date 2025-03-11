@@ -375,7 +375,9 @@ class Test_entra_admin_users_sign_in_frequency_enabled:
                             excluded_roles=[],
                         ),
                     ),
-                    grant_controls=GrantControls(built_in_controls=[]),
+                    grant_controls=GrantControls(
+                        built_in_controls=[], operator=GrantControlOperator.AND
+                    ),
                     session_controls=SessionControls(
                         persistent_browser=PersistentBrowser(
                             is_enabled=True, mode="never"
