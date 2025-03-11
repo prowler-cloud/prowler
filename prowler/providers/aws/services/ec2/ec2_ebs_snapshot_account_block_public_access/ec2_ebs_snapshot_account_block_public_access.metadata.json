@@ -9,7 +9,7 @@
   "SubServiceName": "snapshot",
   "ResourceIdTemplate": "arn:partition:service:region:account-id",
   "Severity": "high",
-  "ResourceType": "Other",
+  "ResourceType": "AwsAccount",
   "Description": "EBS snapshots can be shared with other AWS accounts or made public. By default, EBS snapshots are private and only the AWS account that created the snapshot can access it. If an EBS snapshot is shared with another AWS account or made public, the data in the snapshot can be accessed by the other account or by anyone on the internet. Ensure that public access to EBS snapshots is disabled.",
   "Risk": "If public access to EBS snapshots is enabled, the data in the snapshot can be accessed by anyone on the internet.",
   "RelatedUrl": "https://docs.aws.amazon.com/ebs/latest/userguide/block-public-access-snapshots-work.html#block-public-access-snapshots-enable",
