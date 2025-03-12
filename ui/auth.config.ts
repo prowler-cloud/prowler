@@ -99,13 +99,51 @@ export const authConfig = {
         };
       },
     }),
+    Credentials({
+      id: "google-oauth",
+      name: "google-oauth",
+      credentials: {
+        accessToken: { label: "Access Token", type: "text" },
+        refreshToken: { label: "Refresh Token", type: "text" },
+      },
+      async authorize(credentials) {
+        console.log("Raw credentials received:", credentials);
+
+        const accessToken = credentials?.accessToken;
+
+        if (!accessToken) {
+          console.error("No access token in credentials");
+          return null;
+        }
+
+        try {
+          const userMeResponse = await getUserByMe(accessToken as string);
+          console.log("User response:", userMeResponse);
+
+          const user = {
+            name: userMeResponse.name,
+            email: userMeResponse.email,
+            company: userMeResponse?.company,
+            dateJoined: userMeResponse.dateJoined,
+          };
+
+          return {
+            ...user,
+            accessToken: credentials.accessToken,
+            refreshToken: credentials.refreshToken,
+          };
+        } catch (error) {
+          console.error("Error in authorize:", error);
+          return null;
+        }
+      },
+    }),
   ],
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
       const isOnDashboard = nextUrl.pathname.startsWith("/");
       const isSignUpPage = nextUrl.pathname === "/sign-up";
-      //CLOUD API CHANGES
 
       // Allow access to sign-up page
       if (isSignUpPage) return true;

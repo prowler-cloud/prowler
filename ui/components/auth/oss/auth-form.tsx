@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Checkbox, Link } from "@nextui-org/react";
+import { Button, Checkbox, Divider, Link } from "@nextui-org/react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -18,6 +18,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { ApiError, authFormSchema } from "@/types";
+import { Icon } from "@iconify/react";
+import { signIn } from "next-auth/react";
+import { getGoogleAuthUrl } from "@/lib/helper";
 
 export const AuthForm = ({
   type,
@@ -285,7 +288,7 @@ export const AuthForm = ({
             </form>
           </Form>
 
-          {/* {type === "sign-in" && (
+          {type === "sign-in" && (
             <>
               <div className="flex items-center gap-4 py-2">
                 <Divider className="flex-1" />
@@ -298,6 +301,8 @@ export const AuthForm = ({
                     <Icon icon="flat-color-icons:google" width={24} />
                   }
                   variant="bordered"
+                  as="a"
+                  href={getGoogleAuthUrl()}
                 >
                   Continue with Google
                 </Button>
@@ -315,7 +320,7 @@ export const AuthForm = ({
                 </Button>
               </div>
             </>
-          )} */}
+          )}
           {type === "sign-in" ? (
             <p className="text-center text-small">
               Need to create an account?&nbsp;

@@ -1,6 +1,24 @@
 import { getTask } from "@/actions/task";
 import { MetaDataProps, PermissionInfo } from "@/types";
 
+export const getGoogleAuthUrl = () => {
+  const url = new URL("https://accounts.google.com/o/oauth2/v2/auth");
+  const params = {
+    redirect_uri: process.env.NEXT_PUBLIC_GOOGLE_CALLBACK_URI,
+    prompt: "consent",
+    response_type: "code",
+    client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+    scope: "openid email profile",
+    access_type: "offline",
+  };
+
+  Object.entries(params).forEach(([key, value]) => {
+    url.searchParams.set(key, value || "");
+  });
+
+  return url.toString();
+};
+
 export async function checkTaskStatus(
   taskId: string,
 ): Promise<{ completed: boolean; error?: string }> {
