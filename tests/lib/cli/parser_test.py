@@ -16,13 +16,11 @@ prowler_command = "prowler"
 
 # capsys
 # https://docs.pytest.org/en/7.1.x/how-to/capture-stdout-stderr.html
-prowler_default_usage_error = (
-    "usage: prowler [-h] [--version] {aws,azure,gcp,kubernetes,dashboard} ..."
-)
+prowler_default_usage_error = "usage: prowler [-h] [--version] {aws,azure,gcp,kubernetes,microsoft365,dashboard} ..."
 
 
 def mock_get_available_providers():
-    return ["aws", "azure", "gcp", "kubernetes"]
+    return ["aws", "azure", "gcp", "kubernetes", "microsoft365"]
 
 
 @pytest.mark.arg_parser
@@ -654,7 +652,7 @@ class Test_Parser:
 
     def test_checks_parser_wrong_compliance(self):
         argument = "--compliance"
-        framework = "ens_rd2022_azure"
+        framework = "ens_rd2022_kubernetes"
         command = [prowler_command, argument, framework]
         with pytest.raises(SystemExit) as wrapped_exit:
             _ = self.parser.parse(command)

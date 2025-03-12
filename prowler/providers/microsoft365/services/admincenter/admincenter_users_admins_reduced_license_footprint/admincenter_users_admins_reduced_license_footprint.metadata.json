@@ -1,0 +1,30 @@
+{
+  "Provider": "microsoft365",
+  "CheckID": "admincenter_users_admins_reduced_license_footprint",
+  "CheckTitle": "Ensure administrative accounts use licenses with a reduced application footprint",
+  "CheckType": [],
+  "ServiceName": "admincenter",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Active users",
+  "Description": "Administrative accounts must use licenses with a reduced application footprint, such as Microsoft Entra ID P1 or P2, or avoid licenses entirely when possible. This minimizes the attack surface associated with privileged identities.",
+  "Risk": "Licensing administrative accounts with applications like email or collaborative tools increases their exposure to social engineering attacks and malicious content, putting privileged accounts at risk.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/microsoft-365/enterprise/protect-your-global-administrator-accounts?view=o365-worldwide",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to Microsoft 365 admin center https://admin.microsoft.com. 2. Click to expand Users select Active users. 3. Click Add a user. 4. Fill out the appropriate fields for Name, user, etc. 5. When prompted to assign licenses select as needed Microsoft Entra ID P1 or Microsoft Entra ID P2, then click Next. 6. Under the Option settings screen you may choose from several types of privileged roles. Choose Admin center access followed by the appropriate role then click Next. 7. Select Finish adding.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Assign Microsoft Entra ID P1 or P2 licenses to administrative accounts to participate in essential security services without enabling access to vulnerable applications.",
+      "Url": "https://learn.microsoft.com/en-us/microsoft-365/admin/add-users/add-users?view=o365-worldwide"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

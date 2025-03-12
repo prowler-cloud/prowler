@@ -30,6 +30,9 @@ class Test_directconnect_connection_redundancy:
         dx_client.audited_account_arn = (
             f"arn:aws:directconnect:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}"
         )
+        dx_client._get_connection_arn_template = (
+            lambda x: f"arn:aws:directconnect:{x}:{AWS_ACCOUNT_NUMBER}:connection"
+        )
         dx_client.region = AWS_REGION_EU_WEST_1
         dx_client.connections = {}
         dx_client.connections = {
@@ -40,9 +43,15 @@ class Test_directconnect_connection_redundancy:
                 region="eu-west-1",
             )
         }
-        with mock.patch(
-            "prowler.providers.aws.services.directconnect.directconnect_service.DirectConnect",
-            new=dx_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.directconnect.directconnect_service.DirectConnect",
+                new=dx_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.directconnect.directconnect_service.DirectConnect._get_connection_arn_template",
+                return_value=f"arn:aws:directconnect:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:connection",
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.directconnect.directconnect_connection_redundancy.directconnect_connection_redundancy import (
@@ -58,10 +67,10 @@ class Test_directconnect_connection_redundancy:
                 result[0].status_extended
                 == "There is only one Direct Connect connection."
             )
-            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert result[0].resource_id == "unknown"
             assert (
                 result[0].resource_arn
-                == f"arn:aws:directconnect:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}"
+                == f"arn:aws:directconnect:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:connection"
             )
             assert result[0].region == AWS_REGION_EU_WEST_1
 
@@ -70,6 +79,9 @@ class Test_directconnect_connection_redundancy:
         dx_client.audited_account = AWS_ACCOUNT_NUMBER
         dx_client.audited_account_arn = (
             f"arn:aws:directconnect:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}"
+        )
+        dx_client._get_connection_arn_template = (
+            lambda x: f"arn:aws:directconnect:{x}:{AWS_ACCOUNT_NUMBER}:connection"
         )
         dx_client.region = AWS_REGION_EU_WEST_1
         dx_client.connections = {}
@@ -87,9 +99,15 @@ class Test_directconnect_connection_redundancy:
                 region="eu-west-1",
             ),
         }
-        with mock.patch(
-            "prowler.providers.aws.services.directconnect.directconnect_service.DirectConnect",
-            new=dx_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.directconnect.directconnect_service.DirectConnect",
+                new=dx_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.directconnect.directconnect_service.DirectConnect._get_connection_arn_template",
+                return_value=f"arn:aws:directconnect:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:connection",
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.directconnect.directconnect_connection_redundancy.directconnect_connection_redundancy import (
@@ -105,10 +123,10 @@ class Test_directconnect_connection_redundancy:
                 result[0].status_extended
                 == "There is only one location Ashburn used by all the Direct Connect connections."
             )
-            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert result[0].resource_id == "unknown"
             assert (
                 result[0].resource_arn
-                == f"arn:aws:directconnect:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}"
+                == f"arn:aws:directconnect:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:connection"
             )
             assert result[0].region == AWS_REGION_EU_WEST_1
 
@@ -117,6 +135,9 @@ class Test_directconnect_connection_redundancy:
         dx_client.audited_account = AWS_ACCOUNT_NUMBER
         dx_client.audited_account_arn = (
             f"arn:aws:directconnect:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}"
+        )
+        dx_client._get_connection_arn_template = (
+            lambda x: f"arn:aws:directconnect:{x}:{AWS_ACCOUNT_NUMBER}:connection"
         )
         dx_client.region = AWS_REGION_EU_WEST_1
         dx_client.connections = {}
@@ -134,9 +155,15 @@ class Test_directconnect_connection_redundancy:
                 region="eu-west-1",
             ),
         }
-        with mock.patch(
-            "prowler.providers.aws.services.directconnect.directconnect_service.DirectConnect",
-            new=dx_client,
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.directconnect.directconnect_service.DirectConnect",
+                new=dx_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.directconnect.directconnect_service.DirectConnect._get_connection_arn_template",
+                return_value=f"arn:aws:directconnect:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:connection",
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.directconnect.directconnect_connection_redundancy.directconnect_connection_redundancy import (
@@ -152,9 +179,9 @@ class Test_directconnect_connection_redundancy:
                 result[0].status_extended
                 == "There are 2 Direct Connect connections across 2 locations."
             )
-            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert result[0].resource_id == "unknown"
             assert (
                 result[0].resource_arn
-                == f"arn:aws:directconnect:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}"
+                == f"arn:aws:directconnect:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:connection"
             )
             assert result[0].region == AWS_REGION_EU_WEST_1

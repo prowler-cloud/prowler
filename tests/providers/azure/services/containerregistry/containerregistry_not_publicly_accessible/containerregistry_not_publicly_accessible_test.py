@@ -2,8 +2,6 @@ from unittest import mock
 from unittest.mock import MagicMock
 from uuid import uuid4
 
-from azure.mgmt.containerregistry.models import NetworkRuleSet
-
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
     set_mocked_azure_provider,
@@ -15,12 +13,15 @@ class Test_containerregistry_not_publicly_accessible:
         containerregistry_client = MagicMock()
         containerregistry_client.registries = {}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.containerregistry.containerregistry_not_publicly_accessible.containerregistry_not_publicly_accessible.containerregistry_client",
-            new=containerregistry_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.containerregistry.containerregistry_not_publicly_accessible.containerregistry_not_publicly_accessible.containerregistry_client",
+                new=containerregistry_client,
+            ),
         ):
             from prowler.providers.azure.services.containerregistry.containerregistry_not_publicly_accessible.containerregistry_not_publicly_accessible import (
                 containerregistry_not_publicly_accessible,
@@ -34,12 +35,15 @@ class Test_containerregistry_not_publicly_accessible:
         containerregistry_client = MagicMock()
         registry_id = str(uuid4())
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.containerregistry.containerregistry_not_publicly_accessible.containerregistry_not_publicly_accessible.containerregistry_client",
-            new=containerregistry_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.containerregistry.containerregistry_not_publicly_accessible.containerregistry_not_publicly_accessible.containerregistry_client",
+                new=containerregistry_client,
+            ),
         ):
             from prowler.providers.azure.services.containerregistry.containerregistry_not_publicly_accessible.containerregistry_not_publicly_accessible import (
                 containerregistry_not_publicly_accessible,
@@ -57,9 +61,8 @@ class Test_containerregistry_not_publicly_accessible:
                         resource_group="mock_resource_group",
                         sku="Basic",
                         login_server="mock_login_server.azurecr.io",
-                        public_network_access="Enabled",
+                        public_network_access=True,
                         admin_user_enabled=True,
-                        network_rule_set=NetworkRuleSet(default_action="Allow"),
                         private_endpoint_connections=[],
                         monitor_diagnostic_settings=[
                             {
@@ -106,12 +109,15 @@ class Test_containerregistry_not_publicly_accessible:
         containerregistry_client = mock.MagicMock()
         containerregistry_client.registries = {}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.containerregistry.containerregistry_not_publicly_accessible.containerregistry_not_publicly_accessible.containerregistry_client",
-            new=containerregistry_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.containerregistry.containerregistry_not_publicly_accessible.containerregistry_not_publicly_accessible.containerregistry_client",
+                new=containerregistry_client,
+            ),
         ):
             from prowler.providers.azure.services.containerregistry.containerregistry_not_publicly_accessible.containerregistry_not_publicly_accessible import (
                 containerregistry_not_publicly_accessible,
@@ -131,9 +137,8 @@ class Test_containerregistry_not_publicly_accessible:
                         resource_group="mock_resource_group",
                         sku="Basic",
                         login_server="mock_login_server.azurecr.io",
-                        public_network_access="Enabled",
+                        public_network_access=False,
                         admin_user_enabled=False,
-                        network_rule_set=NetworkRuleSet(default_action="Deny"),
                         private_endpoint_connections=[],
                         monitor_diagnostic_settings=[
                             {

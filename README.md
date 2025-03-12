@@ -3,20 +3,20 @@
   <img align="center" src="https://github.com/prowler-cloud/prowler/blob/master/docs/img/prowler-logo-white.png#gh-dark-mode-only" width="50%" height="50%">
 </p>
 <p align="center">
-  <b><i>Prowler SaaS </b> and <b>Prowler Open Source</b> are as dynamic and adaptable as the environment they’re meant to protect. Trusted by the leaders in security.
+  <b><i>Prowler Open Source</b> is as dynamic and adaptable as the environment they’re meant to protect. Trusted by the leaders in security.
 </p>
 <p align="center">
 <b>Learn more at <a href="https://prowler.com">prowler.com</i></b>
 </p>
 
 <p align="center">
-<a href="https://join.slack.com/t/prowler-workspace/shared_invite/zt-1hix76xsl-2uq222JIXrC7Q8It~9ZNog"><img width="30" height="30" alt="Prowler community on Slack" src="https://github.com/prowler-cloud/prowler/assets/38561120/3c8b4ec5-6849-41a5-b5e1-52bbb94af73a"></a>
+<a href="https://goto.prowler.com/slack"><img width="30" height="30" alt="Prowler community on Slack" src="https://github.com/prowler-cloud/prowler/assets/38561120/3c8b4ec5-6849-41a5-b5e1-52bbb94af73a"></a>
   <br>
-  <a href="https://join.slack.com/t/prowler-workspace/shared_invite/zt-2oinmgmw6-cl7gOrljSEqo_aoripVPFA">Join our Prowler community!</a>
+  <a href="https://goto.prowler.com/slack">Join our Prowler community!</a>
 </p>
 <hr>
 <p align="center">
-  <a href="https://join.slack.com/t/prowler-workspace/shared_invite/zt-1hix76xsl-2uq222JIXrC7Q8It~9ZNog"><img alt="Slack Shield" src="https://img.shields.io/badge/slack-prowler-brightgreen.svg?logo=slack"></a>
+  <a href="https://goto.prowler.com/slack"><img alt="Slack Shield" src="https://img.shields.io/badge/slack-prowler-brightgreen.svg?logo=slack"></a>
   <a href="https://pypi.org/project/prowler/"><img alt="Python Version" src="https://img.shields.io/pypi/v/prowler.svg"></a>
   <a href="https://pypi.python.org/pypi/prowler/"><img alt="Python Version" src="https://img.shields.io/pypi/pyversions/prowler.svg"></a>
   <a href="https://pypistats.org/packages/prowler"><img alt="PyPI Prowler Downloads" src="https://img.shields.io/pypi/dw/prowler.svg?label=prowler%20downloads"></a>
@@ -29,7 +29,7 @@
 <p align="center">
   <a href="https://github.com/prowler-cloud/prowler"><img alt="Repo size" src="https://img.shields.io/github/repo-size/prowler-cloud/prowler"></a>
   <a href="https://github.com/prowler-cloud/prowler/issues"><img alt="Issues" src="https://img.shields.io/github/issues/prowler-cloud/prowler"></a>
-  <a href="https://github.com/prowler-cloud/prowler/releases"><img alt="Version" src="https://img.shields.io/github/v/release/prowler-cloud/prowler?include_prereleases"></a>
+  <a href="https://github.com/prowler-cloud/prowler/releases"><img alt="Version" src="https://img.shields.io/github/v/release/prowler-cloud/prowler"></a>
   <a href="https://github.com/prowler-cloud/prowler/releases"><img alt="Version" src="https://img.shields.io/github/release-date/prowler-cloud/prowler"></a>
   <a href="https://github.com/prowler-cloud/prowler"><img alt="Contributors" src="https://img.shields.io/github/contributors-anon/prowler-cloud/prowler"></a>
   <a href="https://github.com/prowler-cloud/prowler"><img alt="License" src="https://img.shields.io/github/license/prowler-cloud/prowler"></a>
@@ -43,7 +43,15 @@
 
 # Description
 
-**Prowler** is an Open Source security tool to perform AWS, Azure, Google Cloud and Kubernetes security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness, and also remediations! We have Prowler CLI (Command Line Interface) that we call Prowler Open Source and a service on top of it that we call <a href="https://prowler.com">Prowler SaaS</a>.
+**Prowler** is an Open Source security tool to perform AWS, Azure, Google Cloud and Kubernetes security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness, and also remediations! We have Prowler CLI (Command Line Interface) that we call Prowler Open Source and a service on top of it that we call <a href="https://prowler.com">Prowler Cloud</a>.
+
+## Prowler App
+
+Prowler App is a web application that allows you to run Prowler in your cloud provider accounts and visualize the results in a user-friendly interface.
+
+![Prowler App](docs/img/overview.png)
+
+>More details at [Prowler App Documentation](https://docs.prowler.com/projects/prowler-open-source/en/latest/#prowler-app-installation)
 
 ## Prowler CLI
 
@@ -63,51 +71,168 @@ It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, Fe
 
 | Provider | Checks | Services | [Compliance Frameworks](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/compliance/) | [Categories](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/misc/#categories) |
 |---|---|---|---|---|
-| AWS | 553 | 77 -> `prowler aws --list-services` | 30 -> `prowler aws --list-compliance` | 9 -> `prowler aws --list-categories` |
-| GCP | 77 | 13 -> `prowler gcp --list-services` | 2 -> `prowler gcp --list-compliance` | 2 -> `prowler gcp --list-categories`|
-| Azure | 138 | 17 -> `prowler azure --list-services` | 3 -> `prowler azure --list-compliance` | 2 -> `prowler azure --list-categories` |
-| Kubernetes | 83 | 7 -> `prowler kubernetes --list-services` | 1 -> `prowler kubernetes --list-compliance` | 7 -> `prowler kubernetes --list-categories` |
+| AWS | 564 | 82 | 33 | 10 |
+| GCP | 77 | 13 | 6 | 3 |
+| Azure | 140 | 18 | 7 | 3 |
+| Kubernetes | 83 | 7 | 4 | 7 |
+| Microsoft365 | 5 | 2 | 1 | 0 |
+
+> You can list the checks, services, compliance frameworks and categories with `prowler <provider> --list-checks`, `prowler <provider> --list-services`, `prowler <provider> --list-compliance` and `prowler <provider> --list-categories`.
 
 # 💻 Installation
 
-## Pip package
-Prowler is available as a project in [PyPI](https://pypi.org/project/prowler-cloud/), thus can be installed using pip with Python >= 3.9, < 3.13:
+## Prowler App
+
+Prowler App can be installed in different ways, depending on your environment:
+
+> See how to use Prowler App in the [Prowler App Usage Guide](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app/).
+
+### Docker Compose
+
+**Requirements**
+
+* `Docker Compose` installed: https://docs.docker.com/compose/install/.
+
+**Commands**
+
+``` console
+curl -LO https://raw.githubusercontent.com/prowler-cloud/prowler/refs/heads/master/docker-compose.yml
+curl -LO https://raw.githubusercontent.com/prowler-cloud/prowler/refs/heads/master/.env
+docker compose up -d
+```
+
+> Containers are built for `linux/amd64`. If your workstation's architecture is different, please set `DOCKER_DEFAULT_PLATFORM=linux/amd64` in your environment or use the `--platform linux/amd64` flag in the docker command.
+> Enjoy Prowler App at http://localhost:3000 by signing up with your email and password.
+
+### From GitHub
+
+**Requirements**
+
+* `git` installed.
+* `poetry` v2 installed: [poetry installation](https://python-poetry.org/docs/#installation).
+* `npm` installed: [npm installation](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm).
+* `Docker Compose` installed: https://docs.docker.com/compose/install/.
+
+**Commands to run the API**
+
+``` console
+git clone https://github.com/prowler-cloud/prowler
+cd prowler/api
+poetry install
+eval $(poetry env activate)
+set -a
+source .env
+docker compose up postgres valkey -d
+cd src/backend
+python manage.py migrate --database admin
+gunicorn -c config/guniconf.py config.wsgi:application
+```
+> [!IMPORTANT]
+> Starting from Poetry v2.0.0, `poetry shell` has been deprecated in favor of `poetry env activate`.
+>
+> If your poetry version is below 2.0.0 you must keep using `poetry shell` to activate your environment.
+> In case you have any doubts, consult the Poetry environment activation guide: https://python-poetry.org/docs/managing-environments/#activating-the-environment
+
+> Now, you can access the API documentation at http://localhost:8080/api/v1/docs.
+
+**Commands to run the API Worker**
+
+``` console
+git clone https://github.com/prowler-cloud/prowler
+cd prowler/api
+poetry install
+eval $(poetry env activate)
+set -a
+source .env
+cd src/backend
+python -m celery -A config.celery worker -l info -E
+```
+
+**Commands to run the API Scheduler**
+
+``` console
+git clone https://github.com/prowler-cloud/prowler
+cd prowler/api
+poetry install
+eval $(poetry env activate)
+set -a
+source .env
+cd src/backend
+python -m celery -A config.celery beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+```
+
+**Commands to run the UI**
+
+``` console
+git clone https://github.com/prowler-cloud/prowler
+cd prowler/ui
+npm install
+npm run build
+npm start
+```
+
+> Enjoy Prowler App at http://localhost:3000 by signing up with your email and password.
+
+## Prowler CLI
+### Pip package
+Prowler CLI is available as a project in [PyPI](https://pypi.org/project/prowler-cloud/), thus can be installed using pip with Python > 3.9.1, < 3.13:
 
 ```console
 pip install prowler
 prowler -v
 ```
->More details at [https://docs.prowler.com](https://docs.prowler.com/projects/prowler-open-source/en/latest/)
+>More details at [https://docs.prowler.com](https://docs.prowler.com/projects/prowler-open-source/en/latest/#prowler-cli-installation)
 
-## Containers
+### Containers
 
-The available versions of Prowler are the following:
+The available versions of Prowler CLI are the following:
 
 - `latest`: in sync with `master` branch (bear in mind that it is not a stable version)
+- `v4-latest`: in sync with `v4` branch (bear in mind that it is not a stable version)
 - `v3-latest`: in sync with `v3` branch (bear in mind that it is not a stable version)
 - `<x.y.z>` (release): you can find the releases [here](https://github.com/prowler-cloud/prowler/releases), those are stable releases.
 - `stable`: this tag always point to the latest release.
+- `v4-stable`: this tag always point to the latest release for v4.
 - `v3-stable`: this tag always point to the latest release for v3.
 
 The container images are available here:
+- Prowler CLI:
+    - [DockerHub](https://hub.docker.com/r/toniblyx/prowler/tags)
+    - [AWS Public ECR](https://gallery.ecr.aws/prowler-cloud/prowler)
+- Prowler App:
+    - [DockerHub - Prowler UI](https://hub.docker.com/r/prowlercloud/prowler-ui/tags)
+    - [DockerHub - Prowler API](https://hub.docker.com/r/prowlercloud/prowler-api/tags)
 
-- [DockerHub](https://hub.docker.com/r/toniblyx/prowler/tags)
-- [AWS Public ECR](https://gallery.ecr.aws/prowler-cloud/prowler)
+### From GitHub
 
-## From GitHub
+Python > 3.9.1, < 3.13 is required with pip and poetry:
 
-Python >= 3.9, < 3.13 is required with pip and poetry:
-
-```
+``` console
 git clone https://github.com/prowler-cloud/prowler
 cd prowler
-poetry shell
+eval $(poetry env activate)
 poetry install
 python prowler.py -v
 ```
+> [!IMPORTANT]
+> Starting from Poetry v2.0.0, `poetry shell` has been deprecated in favor of `poetry env activate`.
+>
+> If your poetry version is below 2.0.0 you must keep using `poetry shell` to activate your environment.
+> In case you have any doubts, consult the Poetry environment activation guide: https://python-poetry.org/docs/managing-environments/#activating-the-environment
+
 > If you want to clone Prowler from Windows, use `git config core.longpaths true` to allow long file paths.
 # 📐✏️ High level architecture
 
+## Prowler App
+The **Prowler App** consists of three main components:
+
+- **Prowler UI**: A user-friendly web interface for running Prowler and viewing results, powered by Next.js.
+- **Prowler API**: The backend API that executes Prowler scans and stores the results, built with Django REST Framework.
+- **Prowler SDK**: A Python SDK that integrates with the Prowler CLI for advanced functionality.
+
+![Prowler App Architecture](docs/img/prowler-app-architecture.png)
+
+## Prowler CLI
 You can run Prowler from your workstation, a Kubernetes Job, a Google Compute Engine, an Azure VM, an EC2 instance, Fargate or any other container, CloudShell and many more.
 
 ![Architecture](docs/img/architecture.png)

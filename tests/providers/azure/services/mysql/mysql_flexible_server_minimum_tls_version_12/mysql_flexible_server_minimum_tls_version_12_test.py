@@ -16,12 +16,15 @@ class Test_mysql_flexible_server_minimum_tls_version_12:
         mysql_client = mock.MagicMock
         mysql_client.flexible_servers = {}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12.mysql_client",
-            new=mysql_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12.mysql_client",
+                new=mysql_client,
+            ),
         ):
             from prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12 import (
                 mysql_flexible_server_minimum_tls_version_12,
@@ -35,12 +38,15 @@ class Test_mysql_flexible_server_minimum_tls_version_12:
         mysql_client = mock.MagicMock
         mysql_client.flexible_servers = {AZURE_SUBSCRIPTION_ID: {}}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12.mysql_client",
-            new=mysql_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12.mysql_client",
+                new=mysql_client,
+            ),
         ):
             from prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12 import (
                 mysql_flexible_server_minimum_tls_version_12,
@@ -55,20 +61,24 @@ class Test_mysql_flexible_server_minimum_tls_version_12:
         mysql_client = mock.MagicMock
         mysql_client.flexible_servers = {
             AZURE_SUBSCRIPTION_ID: {
-                server_name: FlexibleServer(
+                "/subscriptions/resource_id": FlexibleServer(
                     resource_id="/subscriptions/resource_id",
+                    name=server_name,
                     location="location",
                     version="version",
                     configurations={},
                 )
             }
         }
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12.mysql_client",
-            new=mysql_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12.mysql_client",
+                new=mysql_client,
+            ),
         ):
             from prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12 import (
                 mysql_flexible_server_minimum_tls_version_12,
@@ -80,7 +90,7 @@ class Test_mysql_flexible_server_minimum_tls_version_12:
             assert result[0].status == "FAIL"
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == server_name
-            assert result[0].resource_id == server_name
+            assert result[0].resource_id == "/subscriptions/resource_id"
             assert result[0].location == "location"
             assert (
                 result[0].status_extended
@@ -92,8 +102,9 @@ class Test_mysql_flexible_server_minimum_tls_version_12:
         mysql_client = mock.MagicMock
         mysql_client.flexible_servers = {
             AZURE_SUBSCRIPTION_ID: {
-                server_name: FlexibleServer(
+                "/subscriptions/resource_id": FlexibleServer(
                     resource_id="/subscriptions/resource_id",
+                    name=server_name,
                     location="location",
                     version="version",
                     configurations={
@@ -106,12 +117,15 @@ class Test_mysql_flexible_server_minimum_tls_version_12:
                 )
             }
         }
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12.mysql_client",
-            new=mysql_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12.mysql_client",
+                new=mysql_client,
+            ),
         ):
             from prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12 import (
                 mysql_flexible_server_minimum_tls_version_12,
@@ -138,8 +152,9 @@ class Test_mysql_flexible_server_minimum_tls_version_12:
         mysql_client = mock.MagicMock
         mysql_client.flexible_servers = {
             AZURE_SUBSCRIPTION_ID: {
-                server_name: FlexibleServer(
+                "/subscriptions/resource_id": FlexibleServer(
                     resource_id="/subscriptions/resource_id",
+                    name=server_name,
                     location="location",
                     version="version",
                     configurations={
@@ -152,12 +167,15 @@ class Test_mysql_flexible_server_minimum_tls_version_12:
                 )
             }
         }
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12.mysql_client",
-            new=mysql_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12.mysql_client",
+                new=mysql_client,
+            ),
         ):
             from prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12 import (
                 mysql_flexible_server_minimum_tls_version_12,
@@ -184,8 +202,9 @@ class Test_mysql_flexible_server_minimum_tls_version_12:
         mysql_client = mock.MagicMock
         mysql_client.flexible_servers = {
             AZURE_SUBSCRIPTION_ID: {
-                server_name: FlexibleServer(
+                "/subscriptions/resource_id": FlexibleServer(
                     resource_id="/subscriptions/resource_id",
+                    name=server_name,
                     location="location",
                     version="version",
                     configurations={
@@ -198,12 +217,15 @@ class Test_mysql_flexible_server_minimum_tls_version_12:
                 )
             }
         }
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12.mysql_client",
-            new=mysql_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12.mysql_client",
+                new=mysql_client,
+            ),
         ):
             from prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12 import (
                 mysql_flexible_server_minimum_tls_version_12,
@@ -230,8 +252,9 @@ class Test_mysql_flexible_server_minimum_tls_version_12:
         mysql_client = mock.MagicMock
         mysql_client.flexible_servers = {
             AZURE_SUBSCRIPTION_ID: {
-                server_name: FlexibleServer(
+                "/subscriptions/resource_id": FlexibleServer(
                     resource_id="/subscriptions/resource_id",
+                    name=server_name,
                     location="location",
                     version="version",
                     configurations={
@@ -244,12 +267,15 @@ class Test_mysql_flexible_server_minimum_tls_version_12:
                 )
             }
         }
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12.mysql_client",
-            new=mysql_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12.mysql_client",
+                new=mysql_client,
+            ),
         ):
             from prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12 import (
                 mysql_flexible_server_minimum_tls_version_12,

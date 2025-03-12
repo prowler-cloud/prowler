@@ -6,15 +6,18 @@ from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, set_mocked_gcp_prov
 
 class Test_compute_firewall_rdp_access_from_the_internet_allowed:
     def test_compute_no_instances(self):
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         compute_client.firewalls = []
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_firewall_rdp_access_from_the_internet_allowed.compute_firewall_rdp_access_from_the_internet_allowed.compute_client",
-            new=compute_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.compute.compute_firewall_rdp_access_from_the_internet_allowed.compute_firewall_rdp_access_from_the_internet_allowed.compute_client",
+                new=compute_client,
+            ),
         ):
             from prowler.providers.gcp.services.compute.compute_firewall_rdp_access_from_the_internet_allowed.compute_firewall_rdp_access_from_the_internet_allowed import (
                 compute_firewall_rdp_access_from_the_internet_allowed,
@@ -36,17 +39,20 @@ class Test_compute_firewall_rdp_access_from_the_internet_allowed:
             project_id=GCP_PROJECT_ID,
         )
 
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.firewalls = [firewall]
         compute_client.region = "global"
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_firewall_rdp_access_from_the_internet_allowed.compute_firewall_rdp_access_from_the_internet_allowed.compute_client",
-            new=compute_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.compute.compute_firewall_rdp_access_from_the_internet_allowed.compute_firewall_rdp_access_from_the_internet_allowed.compute_client",
+                new=compute_client,
+            ),
         ):
             from prowler.providers.gcp.services.compute.compute_firewall_rdp_access_from_the_internet_allowed.compute_firewall_rdp_access_from_the_internet_allowed import (
                 compute_firewall_rdp_access_from_the_internet_allowed,
@@ -75,17 +81,20 @@ class Test_compute_firewall_rdp_access_from_the_internet_allowed:
             project_id=GCP_PROJECT_ID,
         )
 
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.firewalls = [firewall]
         compute_client.region = "global"
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_firewall_rdp_access_from_the_internet_allowed.compute_firewall_rdp_access_from_the_internet_allowed.compute_client",
-            new=compute_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.compute.compute_firewall_rdp_access_from_the_internet_allowed.compute_firewall_rdp_access_from_the_internet_allowed.compute_client",
+                new=compute_client,
+            ),
         ):
             from prowler.providers.gcp.services.compute.compute_firewall_rdp_access_from_the_internet_allowed.compute_firewall_rdp_access_from_the_internet_allowed import (
                 compute_firewall_rdp_access_from_the_internet_allowed,
@@ -114,17 +123,20 @@ class Test_compute_firewall_rdp_access_from_the_internet_allowed:
             project_id=GCP_PROJECT_ID,
         )
 
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.firewalls = [firewall]
         compute_client.region = "global"
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_firewall_rdp_access_from_the_internet_allowed.compute_firewall_rdp_access_from_the_internet_allowed.compute_client",
-            new=compute_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.compute.compute_firewall_rdp_access_from_the_internet_allowed.compute_firewall_rdp_access_from_the_internet_allowed.compute_client",
+                new=compute_client,
+            ),
         ):
             from prowler.providers.gcp.services.compute.compute_firewall_rdp_access_from_the_internet_allowed.compute_firewall_rdp_access_from_the_internet_allowed import (
                 compute_firewall_rdp_access_from_the_internet_allowed,
@@ -153,17 +165,20 @@ class Test_compute_firewall_rdp_access_from_the_internet_allowed:
             project_id=GCP_PROJECT_ID,
         )
 
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.firewalls = [firewall]
         compute_client.region = "global"
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_firewall_rdp_access_from_the_internet_allowed.compute_firewall_rdp_access_from_the_internet_allowed.compute_client",
-            new=compute_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.compute.compute_firewall_rdp_access_from_the_internet_allowed.compute_firewall_rdp_access_from_the_internet_allowed.compute_client",
+                new=compute_client,
+            ),
         ):
             from prowler.providers.gcp.services.compute.compute_firewall_rdp_access_from_the_internet_allowed.compute_firewall_rdp_access_from_the_internet_allowed import (
                 compute_firewall_rdp_access_from_the_internet_allowed,
@@ -192,17 +207,20 @@ class Test_compute_firewall_rdp_access_from_the_internet_allowed:
             project_id=GCP_PROJECT_ID,
         )
 
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.firewalls = [firewall]
         compute_client.region = "global"
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_firewall_rdp_access_from_the_internet_allowed.compute_firewall_rdp_access_from_the_internet_allowed.compute_client",
-            new=compute_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.compute.compute_firewall_rdp_access_from_the_internet_allowed.compute_firewall_rdp_access_from_the_internet_allowed.compute_client",
+                new=compute_client,
+            ),
         ):
             from prowler.providers.gcp.services.compute.compute_firewall_rdp_access_from_the_internet_allowed.compute_firewall_rdp_access_from_the_internet_allowed import (
                 compute_firewall_rdp_access_from_the_internet_allowed,
@@ -231,17 +249,20 @@ class Test_compute_firewall_rdp_access_from_the_internet_allowed:
             project_id=GCP_PROJECT_ID,
         )
 
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.firewalls = [firewall]
         compute_client.region = "global"
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_firewall_rdp_access_from_the_internet_allowed.compute_firewall_rdp_access_from_the_internet_allowed.compute_client",
-            new=compute_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.compute.compute_firewall_rdp_access_from_the_internet_allowed.compute_firewall_rdp_access_from_the_internet_allowed.compute_client",
+                new=compute_client,
+            ),
         ):
             from prowler.providers.gcp.services.compute.compute_firewall_rdp_access_from_the_internet_allowed.compute_firewall_rdp_access_from_the_internet_allowed import (
                 compute_firewall_rdp_access_from_the_internet_allowed,
@@ -270,17 +291,20 @@ class Test_compute_firewall_rdp_access_from_the_internet_allowed:
             project_id=GCP_PROJECT_ID,
         )
 
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.firewalls = [firewall]
         compute_client.region = "global"
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_firewall_rdp_access_from_the_internet_allowed.compute_firewall_rdp_access_from_the_internet_allowed.compute_client",
-            new=compute_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.compute.compute_firewall_rdp_access_from_the_internet_allowed.compute_firewall_rdp_access_from_the_internet_allowed.compute_client",
+                new=compute_client,
+            ),
         ):
             from prowler.providers.gcp.services.compute.compute_firewall_rdp_access_from_the_internet_allowed.compute_firewall_rdp_access_from_the_internet_allowed import (
                 compute_firewall_rdp_access_from_the_internet_allowed,
@@ -309,17 +333,20 @@ class Test_compute_firewall_rdp_access_from_the_internet_allowed:
             project_id=GCP_PROJECT_ID,
         )
 
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.firewalls = [firewall]
         compute_client.region = "global"
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_firewall_rdp_access_from_the_internet_allowed.compute_firewall_rdp_access_from_the_internet_allowed.compute_client",
-            new=compute_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.compute.compute_firewall_rdp_access_from_the_internet_allowed.compute_firewall_rdp_access_from_the_internet_allowed.compute_client",
+                new=compute_client,
+            ),
         ):
             from prowler.providers.gcp.services.compute.compute_firewall_rdp_access_from_the_internet_allowed.compute_firewall_rdp_access_from_the_internet_allowed import (
                 compute_firewall_rdp_access_from_the_internet_allowed,
@@ -348,17 +375,20 @@ class Test_compute_firewall_rdp_access_from_the_internet_allowed:
             project_id=GCP_PROJECT_ID,
         )
 
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.firewalls = [firewall]
         compute_client.region = "global"
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_firewall_rdp_access_from_the_internet_allowed.compute_firewall_rdp_access_from_the_internet_allowed.compute_client",
-            new=compute_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.compute.compute_firewall_rdp_access_from_the_internet_allowed.compute_firewall_rdp_access_from_the_internet_allowed.compute_client",
+                new=compute_client,
+            ),
         ):
             from prowler.providers.gcp.services.compute.compute_firewall_rdp_access_from_the_internet_allowed.compute_firewall_rdp_access_from_the_internet_allowed import (
                 compute_firewall_rdp_access_from_the_internet_allowed,
@@ -390,17 +420,20 @@ class Test_compute_firewall_rdp_access_from_the_internet_allowed:
             project_id=GCP_PROJECT_ID,
         )
 
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.firewalls = [firewall]
         compute_client.region = "global"
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_firewall_rdp_access_from_the_internet_allowed.compute_firewall_rdp_access_from_the_internet_allowed.compute_client",
-            new=compute_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.compute.compute_firewall_rdp_access_from_the_internet_allowed.compute_firewall_rdp_access_from_the_internet_allowed.compute_client",
+                new=compute_client,
+            ),
         ):
             from prowler.providers.gcp.services.compute.compute_firewall_rdp_access_from_the_internet_allowed.compute_firewall_rdp_access_from_the_internet_allowed import (
                 compute_firewall_rdp_access_from_the_internet_allowed,
@@ -433,17 +466,20 @@ class Test_compute_firewall_rdp_access_from_the_internet_allowed:
             project_id=GCP_PROJECT_ID,
         )
 
-        compute_client = mock.MagicMock
+        compute_client = mock.MagicMock()
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.firewalls = [firewall]
         compute_client.region = "global"
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_firewall_rdp_access_from_the_internet_allowed.compute_firewall_rdp_access_from_the_internet_allowed.compute_client",
-            new=compute_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.compute.compute_firewall_rdp_access_from_the_internet_allowed.compute_firewall_rdp_access_from_the_internet_allowed.compute_client",
+                new=compute_client,
+            ),
         ):
             from prowler.providers.gcp.services.compute.compute_firewall_rdp_access_from_the_internet_allowed.compute_firewall_rdp_access_from_the_internet_allowed import (
                 compute_firewall_rdp_access_from_the_internet_allowed,

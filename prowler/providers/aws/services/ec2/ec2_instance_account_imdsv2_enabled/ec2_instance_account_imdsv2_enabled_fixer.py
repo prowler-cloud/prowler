@@ -5,7 +5,8 @@ from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 def fixer(region):
     """
     Enable IMDSv2 for EC2 instances in the specified region.
-    Requires the ec2:ModifyInstanceMetadataDefaults permission:
+    Requires the ec2:ModifyInstanceMetadataDefaults permission.
+    Permissions:
     {
         "Version": "2012-10-17",
         "Statement": [

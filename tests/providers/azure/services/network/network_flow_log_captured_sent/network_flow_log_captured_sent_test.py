@@ -1,7 +1,7 @@
 from unittest import mock
 from uuid import uuid4
 
-from azure.mgmt.network.models._models import FlowLog, RetentionPolicyParameters
+from azure.mgmt.network.models import FlowLog, RetentionPolicyParameters
 
 from prowler.providers.azure.services.network.network_service import NetworkWatcher
 from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION_ID
@@ -12,12 +12,15 @@ class Test_network_flow_log_captured_sent:
         network_client = mock.MagicMock
         network_client.network_watchers = {}
 
-        with mock.patch(
-            "prowler.providers.azure.services.network.network_service.Network",
-            new=network_client,
-        ) as service_client, mock.patch(
-            "prowler.providers.azure.services.network.network_client.network_client",
-            new=service_client,
+        with (
+            mock.patch(
+                "prowler.providers.azure.services.network.network_service.Network",
+                new=network_client,
+            ) as service_client,
+            mock.patch(
+                "prowler.providers.azure.services.network.network_client.network_client",
+                new=service_client,
+            ),
         ):
             from prowler.providers.azure.services.network.network_flow_log_captured_sent.network_flow_log_captured_sent import (
                 network_flow_log_captured_sent,
@@ -43,12 +46,15 @@ class Test_network_flow_log_captured_sent:
             ]
         }
 
-        with mock.patch(
-            "prowler.providers.azure.services.network.network_service.Network",
-            new=network_client,
-        ) as service_client, mock.patch(
-            "prowler.providers.azure.services.network.network_client.network_client",
-            new=service_client,
+        with (
+            mock.patch(
+                "prowler.providers.azure.services.network.network_service.Network",
+                new=network_client,
+            ) as service_client,
+            mock.patch(
+                "prowler.providers.azure.services.network.network_client.network_client",
+                new=service_client,
+            ),
         ):
             from prowler.providers.azure.services.network.network_flow_log_captured_sent.network_flow_log_captured_sent import (
                 network_flow_log_captured_sent,
@@ -88,12 +94,15 @@ class Test_network_flow_log_captured_sent:
             ]
         }
 
-        with mock.patch(
-            "prowler.providers.azure.services.network.network_service.Network",
-            new=network_client,
-        ) as service_client, mock.patch(
-            "prowler.providers.azure.services.network.network_client.network_client",
-            new=service_client,
+        with (
+            mock.patch(
+                "prowler.providers.azure.services.network.network_service.Network",
+                new=network_client,
+            ) as service_client,
+            mock.patch(
+                "prowler.providers.azure.services.network.network_client.network_client",
+                new=service_client,
+            ),
         ):
             from prowler.providers.azure.services.network.network_flow_log_captured_sent.network_flow_log_captured_sent import (
                 network_flow_log_captured_sent,
@@ -133,12 +142,15 @@ class Test_network_flow_log_captured_sent:
             ]
         }
 
-        with mock.patch(
-            "prowler.providers.azure.services.network.network_service.Network",
-            new=network_client,
-        ) as service_client, mock.patch(
-            "prowler.providers.azure.services.network.network_client.network_client",
-            new=service_client,
+        with (
+            mock.patch(
+                "prowler.providers.azure.services.network.network_service.Network",
+                new=network_client,
+            ) as service_client,
+            mock.patch(
+                "prowler.providers.azure.services.network.network_client.network_client",
+                new=service_client,
+            ),
         ):
             from prowler.providers.azure.services.network.network_flow_log_captured_sent.network_flow_log_captured_sent import (
                 network_flow_log_captured_sent,

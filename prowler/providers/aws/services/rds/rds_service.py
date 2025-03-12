@@ -9,7 +9,6 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################## RDS
 class RDS(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
@@ -122,14 +121,19 @@ class RDS(AWSService):
             for instance in self.db_instances.values():
                 if instance.region == regional_client.region:
                     for parameter_group in instance.parameter_groups:
-                        describe_db_parameters_paginator = (
-                            regional_client.get_paginator("describe_db_parameters")
-                        )
-                        for page in describe_db_parameters_paginator.paginate(
-                            DBParameterGroupName=parameter_group
-                        ):
-                            for parameter in page["Parameters"]:
-                                instance.parameters.append(parameter)
+                        try:
+                            describe_db_parameters_paginator = (
+                                regional_client.get_paginator("describe_db_parameters")
+                            )
+                            for page in describe_db_parameters_paginator.paginate(
+                                DBParameterGroupName=parameter_group
+                            ):
+                                for parameter in page["Parameters"]:
+                                    instance.parameters.append(parameter)
+                        except Exception as error:
+                            logger.error(
+                                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                            )
 
         except Exception as error:
             logger.error(
@@ -446,7 +450,7 @@ class RDS(AWSService):
                                     arn=arn,
                                     sns_topic_arn=event["SnsTopicArn"],
                                     status=event["Status"],
-                                    source_type=event["SourceType"],
+                                    source_type=event.get("SourceType", ""),
                                     source_id=event.get("SourceIdsList", []),
                                     event_list=event.get("EventCategoriesList", []),
                                     enabled=event["Enabled"],

@@ -6,15 +6,18 @@ from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, set_mocked_gcp_prov
 
 class Test_gke_cluster_no_default_service_account:
     def test_gke_no_clusters(self):
-        gke_client = mock.MagicMock
+        gke_client = mock.MagicMock()
         gke_client.clusters = {}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.gke.gke_cluster_no_default_service_account.gke_cluster_no_default_service_account.gke_client",
-            new=gke_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.gke.gke_cluster_no_default_service_account.gke_cluster_no_default_service_account.gke_client",
+                new=gke_client,
+            ),
         ):
             from prowler.providers.gcp.services.gke.gke_cluster_no_default_service_account.gke_cluster_no_default_service_account import (
                 gke_cluster_no_default_service_account,
@@ -31,23 +34,26 @@ class Test_gke_cluster_no_default_service_account:
                 name="test",
                 id="123",
                 location="eu-west-1",
+                region="eu-west-1",
                 service_account="default",
                 node_pools=[],
                 project_id=GCP_PROJECT_ID,
             )
         }
 
-        gke_client = mock.MagicMock
+        gke_client = mock.MagicMock()
         gke_client.project_ids = [GCP_PROJECT_ID]
         gke_client.clusters = clusters
-        gke_client.region = "global"
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.gke.gke_cluster_no_default_service_account.gke_cluster_no_default_service_account.gke_client",
-            new=gke_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.gke.gke_cluster_no_default_service_account.gke_cluster_no_default_service_account.gke_client",
+                new=gke_client,
+            ),
         ):
             from prowler.providers.gcp.services.gke.gke_cluster_no_default_service_account.gke_cluster_no_default_service_account import (
                 gke_cluster_no_default_service_account,
@@ -65,7 +71,7 @@ class Test_gke_cluster_no_default_service_account:
             assert result[0].project_id == clusters["123"].project_id
             assert result[0].resource_id == clusters["123"].id
             assert result[0].resource_name == clusters["123"].name
-            assert result[0].location == clusters["123"].location
+            assert result[0].location == "eu-west-1"
 
     def test_one_cluster_without_node_pool_without_default_sa(self):
 
@@ -74,23 +80,26 @@ class Test_gke_cluster_no_default_service_account:
                 name="test",
                 id="123",
                 location="eu-west-1",
+                region="eu-west-1",
                 service_account="1231231231",
                 node_pools=[],
                 project_id=GCP_PROJECT_ID,
             )
         }
 
-        gke_client = mock.MagicMock
+        gke_client = mock.MagicMock()
         gke_client.project_ids = [GCP_PROJECT_ID]
         gke_client.clusters = clusters
-        gke_client.region = "global"
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.gke.gke_cluster_no_default_service_account.gke_cluster_no_default_service_account.gke_client",
-            new=gke_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.gke.gke_cluster_no_default_service_account.gke_cluster_no_default_service_account.gke_client",
+                new=gke_client,
+            ),
         ):
             from prowler.providers.gcp.services.gke.gke_cluster_no_default_service_account.gke_cluster_no_default_service_account import (
                 gke_cluster_no_default_service_account,
@@ -108,7 +117,7 @@ class Test_gke_cluster_no_default_service_account:
             assert result[0].project_id == clusters["123"].project_id
             assert result[0].resource_id == clusters["123"].id
             assert result[0].resource_name == clusters["123"].name
-            assert result[0].location == clusters["123"].location
+            assert result[0].location == "eu-west-1"
 
     def test_one_cluster_with_node_pool_with_default_sa(self):
 
@@ -117,6 +126,7 @@ class Test_gke_cluster_no_default_service_account:
                 name="test",
                 id="123",
                 location="eu-west-1",
+                region="eu-west-1",
                 service_account="default",
                 node_pools=[
                     NodePool(
@@ -130,17 +140,19 @@ class Test_gke_cluster_no_default_service_account:
             )
         }
 
-        gke_client = mock.MagicMock
+        gke_client = mock.MagicMock()
         gke_client.project_ids = [GCP_PROJECT_ID]
         gke_client.clusters = clusters
-        gke_client.region = "global"
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.gke.gke_cluster_no_default_service_account.gke_cluster_no_default_service_account.gke_client",
-            new=gke_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.gke.gke_cluster_no_default_service_account.gke_cluster_no_default_service_account.gke_client",
+                new=gke_client,
+            ),
         ):
             from prowler.providers.gcp.services.gke.gke_cluster_no_default_service_account.gke_cluster_no_default_service_account import (
                 gke_cluster_no_default_service_account,
@@ -158,7 +170,7 @@ class Test_gke_cluster_no_default_service_account:
             assert result[0].project_id == clusters["123"].project_id
             assert result[0].resource_id == clusters["123"].id
             assert result[0].resource_name == clusters["123"].name
-            assert result[0].location == clusters["123"].location
+            assert result[0].location == "eu-west-1"
 
     def test_one_cluster_with_node_pool_with_non_default_sa(self):
 
@@ -167,6 +179,7 @@ class Test_gke_cluster_no_default_service_account:
                 name="test",
                 id="123",
                 location="eu-west-1",
+                region="eu-west-1",
                 service_account="default",
                 node_pools=[
                     NodePool(
@@ -180,17 +193,19 @@ class Test_gke_cluster_no_default_service_account:
             )
         }
 
-        gke_client = mock.MagicMock
+        gke_client = mock.MagicMock()
         gke_client.project_ids = [GCP_PROJECT_ID]
         gke_client.clusters = clusters
-        gke_client.region = "global"
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.gke.gke_cluster_no_default_service_account.gke_cluster_no_default_service_account.gke_client",
-            new=gke_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.gke.gke_cluster_no_default_service_account.gke_cluster_no_default_service_account.gke_client",
+                new=gke_client,
+            ),
         ):
             from prowler.providers.gcp.services.gke.gke_cluster_no_default_service_account.gke_cluster_no_default_service_account import (
                 gke_cluster_no_default_service_account,
@@ -208,4 +223,4 @@ class Test_gke_cluster_no_default_service_account:
             assert result[0].project_id == clusters["123"].project_id
             assert result[0].resource_id == clusters["123"].id
             assert result[0].resource_name == clusters["123"].name
-            assert result[0].location == clusters["123"].location
+            assert result[0].location == "eu-west-1"

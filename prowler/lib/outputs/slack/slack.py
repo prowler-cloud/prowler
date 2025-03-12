@@ -185,7 +185,7 @@ class Slack:
                     "accessory": {
                         "type": "button",
                         "text": {"type": "plain_text", "text": "Prowler :slack:"},
-                        "url": "https://join.slack.com/t/prowler-workspace/shared_invite/zt-1hix76xsl-2uq222JIXrC7Q8It~9ZNog",
+                        "url": "https://goto.prowler.com/slack",
                     },
                 },
                 {

@@ -1,0 +1,120 @@
+name: SDK - Pull Request
+
+on:
+  push:
+    branches:
+      - "master"
+      - "v3"
+      - "v4.*"
+      - "v5.*"
+  pull_request:
+    branches:
+      - "master"
+      - "v3"
+      - "v4.*"
+      - "v5.*"
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Test if changes are in not ignored paths
+        id: are-non-ignored-files-changed
+        uses: tj-actions/changed-files@v45
+        with:
+          files: ./**
+          files_ignore: |
+            .github/**
+            docs/**
+            permissions/**
+            api/**
+            ui/**
+            README.md
+            mkdocs.yml
+            .backportrc.json
+            .env
+            docker-compose*
+            examples/**
+            .gitignore
+
+      - name: Install poetry
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        run: |
+          python -m pip install --upgrade pip
+          pipx install poetry==2.1.1
+
+      - name: Set up Python ${{ matrix.python-version }}
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "poetry"
+
+      - name: Install dependencies
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        run: |
+          poetry install --no-root
+          poetry run pip list
+          VERSION=$(curl --silent "https://api.github.com/repos/hadolint/hadolint/releases/latest" | \
+            grep '"tag_name":' | \
+            sed -E 's/.*"v([^"]+)".*/\1/' \
+            ) && curl -L -o /tmp/hadolint "https://github.com/hadolint/hadolint/releases/download/v${VERSION}/hadolint-Linux-x86_64" \
+            && chmod +x /tmp/hadolint
+
+      - name: Poetry check
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        run: |
+          poetry check --lock
+
+      - name: Lint with flake8
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        run: |
+          poetry run flake8 . --ignore=E266,W503,E203,E501,W605,E128 --exclude contrib,ui,api
+
+      - name: Checking format with black
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        run: |
+          poetry run black --exclude api ui --check .
+
+      - name: Lint with pylint
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        run: |
+          poetry run pylint --disable=W,C,R,E -j 0 -rn -sn prowler/
+
+      - name: Bandit
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        run: |
+          poetry run bandit -q -lll -x '*_test.py,./contrib/,./api/,./ui' -r .
+
+      - name: Safety
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        run: |
+          poetry run safety check --ignore 70612 -r pyproject.toml
+
+      - name: Vulture
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        run: |
+          poetry run vulture --exclude "contrib,api,ui" --min-confidence 100 .
+
+      - name: Hadolint
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        run: |
+          /tmp/hadolint Dockerfile --ignore=DL3013
+
+      - name: Test with pytest
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        run: |
+          poetry run pytest -n auto --cov=./prowler --cov-report=xml tests
+
+      - name: Upload coverage reports to Codecov
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        uses: codecov/codecov-action@v5
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          flags: prowler

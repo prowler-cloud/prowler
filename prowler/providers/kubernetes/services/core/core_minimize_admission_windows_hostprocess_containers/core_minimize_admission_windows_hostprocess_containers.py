@@ -6,18 +6,15 @@ class core_minimize_admission_windows_hostprocess_containers(Check):
     def execute(self) -> Check_Report_Kubernetes:
         findings = []
         for pod in core_client.pods.values():
-            report = Check_Report_Kubernetes(self.metadata())
-            report.namespace = pod.namespace
-            report.resource_name = pod.name
-            report.resource_id = pod.uid
+            report = Check_Report_Kubernetes(metadata=self.metadata(), resource=pod)
             report.status = "PASS"
             report.status_extended = f"Pod {pod.name} does not have the ability to run a Windows HostProcess."
 
             for container in pod.containers.values():
                 if (
                     container.security_context
-                    and container.security_context.windows_options
-                    and container.security_context.windows_options.host_process
+                    and container.security_context["windows_options"]
+                    and container.security_context["windows_options"]["host_process"]
                 ):
                     report.status = "FAIL"
                     report.status_extended = f"Pod {pod.name} has the ability to run a Windows HostProcess in container {container.name}."

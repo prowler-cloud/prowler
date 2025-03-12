@@ -36,7 +36,6 @@ class Scan:
     _service_checks_to_execute: dict[str, set[str]]
     _service_checks_completed: dict[str, set[str]]
     _progress: float = 0.0
-    _findings: list = []
     _duration: int = 0
     _status: list[str] = None
 
@@ -216,10 +215,6 @@ class Scan:
     def duration(self) -> int:
         return self._duration
 
-    @property
-    def findings(self) -> list:
-        return self._findings
-
     def scan(
         self,
         custom_checks_metadata: dict = None,
@@ -296,9 +291,6 @@ class Scan:
                             if finding.status not in self._status:
                                 check_findings.remove(finding)
 
-                    # Store findings
-                    self._findings.extend(check_findings)
-
                     # Remove the executed check
                     self._service_checks_to_execute[service].remove(check_name)
                     if len(self._service_checks_to_execute[service]) == 0:
@@ -318,12 +310,16 @@ class Scan:
                         self.get_completed_checks(),
                     )
 
-                    findings = [
-                        Finding.generate_output(
-                            self._provider, finding, output_options=output_options
-                        )
-                        for finding in check_findings
-                    ]
+                    findings = []
+                    for finding in check_findings:
+                        try:
+                            findings.append(
+                                Finding.generate_output(
+                                    self._provider, finding, output_options=None
+                                )
+                            )
+                        except Exception:
+                            continue
 
                     yield self.progress, findings
                 # If check does not exists in the provider or is from another provider

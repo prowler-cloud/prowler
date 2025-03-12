@@ -1,14 +1,13 @@
 from dataclasses import dataclass
+from typing import List
 
 from azure.mgmt.monitor import MonitorManagementClient
-from azure.mgmt.monitor.models import AlertRuleAllOfCondition, LogSettings
 
 from prowler.lib.logger import logger
 from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.azure.lib.service.service import AzureService
 
 
-########################## Monitor
 class Monitor(AzureService):
     def __init__(self, provider: AzureProvider):
         super().__init__(MonitorManagementClient, provider)
@@ -48,7 +47,14 @@ class Monitor(AzureService):
                             if getattr(setting, "storage_account_id", None)
                             else None
                         ),
-                        logs=setting.logs,
+                        logs=[
+                            LogSettings(
+                                category=log_settings.category,
+                                category_group=log_settings.category_group,
+                                enabled=log_settings.enabled,
+                            )
+                            for log_settings in getattr(setting, "logs", [])
+                        ],
                         storage_account_id=setting.storage_account_id,
                     )
                 )
@@ -70,7 +76,17 @@ class Monitor(AzureService):
                         AlertRule(
                             id=rule.id,
                             name=rule.name,
-                            condition=rule.condition,
+                            condition=AlertRuleAllOfCondition(
+                                all_of=[
+                                    AlertRuleAnyOfOrLeafCondition(
+                                        field=condition.field,
+                                        equals=condition.equals,
+                                    )
+                                    for condition in getattr(
+                                        getattr(rule, "condition", None), "all_of", []
+                                    )
+                                ]
+                            ),
                             enabled=rule.enabled,
                             description=rule.description,
                         )
@@ -83,12 +99,30 @@ class Monitor(AzureService):
 
 
 @dataclass
+class LogSettings:
+    category: str
+    category_group: str
+    enabled: bool
+
+
+@dataclass
 class DiagnosticSetting:
     id: str
     storage_account_id: str
     storage_account_name: str
-    logs: LogSettings
+    logs: List[LogSettings]
     name: str
+
+
+@dataclass
+class AlertRuleAnyOfOrLeafCondition:
+    field: str
+    equals: str
+
+
+@dataclass
+class AlertRuleAllOfCondition:
+    all_of: List[AlertRuleAnyOfOrLeafCondition]
 
 
 @dataclass

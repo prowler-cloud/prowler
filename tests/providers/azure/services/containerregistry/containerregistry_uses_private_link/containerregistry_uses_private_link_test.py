@@ -19,12 +19,15 @@ class Test_containerregistry_uses_private_link:
         containerregistry_client = MagicMock()
         containerregistry_client.registries = {}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.containerregistry.containerregistry_uses_private_link.containerregistry_uses_private_link.containerregistry_client",
-            new=containerregistry_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.containerregistry.containerregistry_uses_private_link.containerregistry_uses_private_link.containerregistry_client",
+                new=containerregistry_client,
+            ),
         ):
             from prowler.providers.azure.services.containerregistry.containerregistry_uses_private_link.containerregistry_uses_private_link import (
                 containerregistry_uses_private_link,
@@ -38,12 +41,15 @@ class Test_containerregistry_uses_private_link:
         containerregistry_client = MagicMock()
         registry_id = str(uuid4())
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.containerregistry.containerregistry_uses_private_link.containerregistry_uses_private_link.containerregistry_client",
-            new=containerregistry_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.containerregistry.containerregistry_uses_private_link.containerregistry_uses_private_link.containerregistry_client",
+                new=containerregistry_client,
+            ),
         ):
             from prowler.providers.azure.services.containerregistry.containerregistry_service import (
                 ContainerRegistryInfo,
@@ -64,7 +70,6 @@ class Test_containerregistry_uses_private_link:
                         public_network_access="Enabled",
                         admin_user_enabled=True,
                         monitor_diagnostic_settings=[],
-                        network_rule_set=[],
                         private_endpoint_connections=[],
                     )
                 }
@@ -93,12 +98,15 @@ class Test_containerregistry_uses_private_link:
         containerregistry_client = mock.MagicMock()
         containerregistry_client.registries = {}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.containerregistry.containerregistry_uses_private_link.containerregistry_uses_private_link.containerregistry_client",
-            new=containerregistry_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.containerregistry.containerregistry_uses_private_link.containerregistry_uses_private_link.containerregistry_client",
+                new=containerregistry_client,
+            ),
         ):
             from prowler.providers.azure.services.containerregistry.containerregistry_service import (
                 ContainerRegistryInfo,
@@ -121,7 +129,6 @@ class Test_containerregistry_uses_private_link:
                         public_network_access="Enabled",
                         admin_user_enabled=False,
                         monitor_diagnostic_settings=[],
-                        network_rule_set=[],
                         private_endpoint_connections=[
                             PrivateEndpointConnection(
                                 id="/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/mock_resource_group/providers/Microsoft.ContainerRegistry/registries/mock_registry/privateEndpointConnections/myConnection",

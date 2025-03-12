@@ -11,6 +11,7 @@ theme:
   name: material
   favicon: favicon.ico
   features:
+    - content.code.copy
     - navigation.tabs
     - navigation.tabs.sticky
     - navigation.sections
@@ -33,7 +34,6 @@ theme:
         icon: material/weather-sunny
         name: Switch to light mode
 
-
 plugins:
   - search
   - git-revision-date-localized:
@@ -49,22 +49,27 @@ nav:
       - Overview: index.md
       - Requirements: getting-started/requirements.md
   - Tutorials:
-      - Miscellaneous: tutorials/misc.md
-      - Reporting: tutorials/reporting.md
-      - Compliance: tutorials/compliance.md
-      - Dashboard: tutorials/dashboard.md
-      - Fixer (remediations): tutorials/fixer.md
-      - Quick Inventory: tutorials/quick-inventory.md
-      - Slack Integration: tutorials/integrations.md
-      - Configuration File: tutorials/configuration_file.md
-      - Logging: tutorials/logging.md
-      - Mutelist: tutorials/mutelist.md
-      - Check Aliases: tutorials/check-aliases.md
-      - Custom Metadata: tutorials/custom-checks-metadata.md
-      - Scan Unused Services: tutorials/scan-unused-services.md
-      - Pentesting: tutorials/pentesting.md
-      - Parallel Execution: tutorials/parallel-execution.md
-      - Developer Guide: developer-guide/introduction.md
+      - Prowler App:
+        - Getting Started: tutorials/prowler-app.md
+        - Role-Based Access Control: tutorials/prowler-app-rbac.md
+      - CLI:
+        - Miscellaneous: tutorials/misc.md
+        - Reporting: tutorials/reporting.md
+        - Compliance: tutorials/compliance.md
+        - Dashboard: tutorials/dashboard.md
+        - Fixer (remediations): tutorials/fixer.md
+        - Quick Inventory: tutorials/quick-inventory.md
+        - Slack Integration: tutorials/integrations.md
+        - Configuration File: tutorials/configuration_file.md
+        - Logging: tutorials/logging.md
+        - Mutelist: tutorials/mutelist.md
+        - Check Aliases: tutorials/check-aliases.md
+        - Custom Metadata: tutorials/custom-checks-metadata.md
+        - Scan Unused Services: tutorials/scan-unused-services.md
+        - Pentesting: tutorials/pentesting.md
+        - Parallel Execution: tutorials/parallel-execution.md
+        - Developer Guide: developer-guide/introduction.md
+        - Prowler Check Kreator: tutorials/prowler-check-kreator.md
       - AWS:
           - Authentication: tutorials/aws/authentication.md
           - Assume Role: tutorials/aws/role-assumption.md
@@ -92,6 +97,9 @@ nav:
           - In-Cluster Execution: tutorials/kubernetes/in-cluster.md
           - Non In-Cluster Execution: tutorials/kubernetes/outside-cluster.md
           - Miscellaneous: tutorials/kubernetes/misc.md
+      - Microsoft 365:
+          - Authentication: tutorials/microsoft365/authentication.md
+          - Create Prowler Service Principal: tutorials/microsoft365/create-prowler-service-principal.md
   - Developer Guide:
       - Introduction: developer-guide/introduction.md
       - Provider: developer-guide/provider.md
@@ -109,7 +117,7 @@ nav:
   - Contact Us: contact.md
   - Troubleshooting: troubleshooting.md
   - About: about.md
-  - Prowler SaaS: https://prowler.com
+  - Prowler Cloud: https://prowler.com
 
 # Customization
 extra:
@@ -122,7 +130,7 @@ extra:
       make our documentation better.
   analytics:
     provider: google
-    property: G-H5TFH6WJRQ
+    property: G-KBKV70W5Y2
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/prowler-cloud

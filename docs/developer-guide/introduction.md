@@ -19,8 +19,13 @@ For isolation and to avoid conflicts with other environments, we recommend using
 Then install all dependencies including the ones for developers:
 ```
 poetry install --with dev
-poetry shell
+eval $(poetry env activate) \
 ```
+> [!IMPORTANT]
+> Starting from Poetry v2.0.0, `poetry shell` has been deprecated in favor of `poetry env activate`.
+>
+> If your poetry version is below 2.0.0 you must keep using `poetry shell` to activate your environment.
+> In case you have any doubts, consult the Poetry environment activation guide: https://python-poetry.org/docs/managing-environments/#activating-the-environment
 
 ## Contributing with your code or fixes to Prowler
 
@@ -67,4 +72,4 @@ If you create or review a PR in https://github.com/prowler-cloud/prowler please 
 
 ## Want some swag as appreciation for your contribution?
 
-If you are like us and you love swag, we are happy to thank you for your contribution with some laptop stickers or whatever other swag we may have at that time. Please, tell us more details and your pull request link in our [Slack workspace here](https://join.slack.com/t/prowler-workspace/shared_invite/zt-1hix76xsl-2uq222JIXrC7Q8It~9ZNog). You can also reach out to Toni de la Fuente on Twitter [here](https://twitter.com/ToniBlyx), his DMs are open.
+If you are like us and you love swag, we are happy to thank you for your contribution with some laptop stickers or whatever other swag we may have at that time. Please, tell us more details and your pull request link in our [Slack workspace here](https://goto.prowler.com/slack). You can also reach out to Toni de la Fuente on Twitter [here](https://twitter.com/ToniBlyx), his DMs are open.

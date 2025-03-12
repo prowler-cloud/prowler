@@ -160,14 +160,20 @@ else:
 All the checks MUST fill the `report.resource_id` and `report.resource_arn` with the following criteria:
 
 - AWS
-    - Resource ID -- `report.resource_id`
-        - AWS Account --> Account Number `123456789012`
-        - AWS Resource --> Resource ID / Name
-        - Root resource --> `<root_account>`
-    - Resource ARN -- `report.resource_arn`
-        - AWS Account --> Root ARN `arn:aws:iam::123456789012:root`
-        - AWS Resource --> Resource ARN
-        - Root resource --> Resource Type ARN `f"arn:{service_client.audited_partition}:<service_name>:{service_client.region}:{service_client.audited_account}:<resource_type>"`
+    - Resouce ID and resource ARN:
+        - If the resource audited is the AWS account:
+            - `resource_id` -> AWS Account Number
+            - `resource_arn` -> AWS Account Root ARN
+        - If we can’t get the ARN from the resource audited, we create a valid ARN with the `resource_id` part as the resource audited. Examples:
+            - Bedrock -> `arn:<partition>:bedrock:<region>:<account-id>:model-invocation-logging`
+            - DirectConnect -> `arn:<partition>:directconnect:<region>:<account-id>:dxcon`
+        - If there is no real resource to audit we do the following:
+            - resource_id -> `resource_type/unknown`
+            - resource_arn -> `arn:<partition>:<service>:<region>:<account-id>:<resource_type>/unknown`
+            - Examples:
+                - AWS Security Hub -> `arn:<partition>:security-hub:<region>:<account-id>:hub/unknown`
+                - Access Analyzer -> `arn:<partition>:access-analyzer:<region>:<account-id>:analyzer/unknown`
+                - GuardDuty -> `arn:<partition>:guardduty:<region>:<account-id>:detector/unknown`
 - GCP
     - Resource ID -- `report.resource_id`
         - GCP Resource --> Resource ID
@@ -273,6 +279,9 @@ Each Prowler check has metadata associated which is stored at the same level of 
   "Severity": "critical",
   # ResourceType only for AWS, holds the type from here
   # https://docs.aws.amazon.com/securityhub/latest/userguide/asff-resources.html
+  # In case of not existing, use CloudFormation type but removing the "::" and using capital letters only at the beginning of each word. Example: "AWS::EC2::Instance" -> "AwsEc2Instance"
+  # CloudFormation type reference: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-template-resource-type-ref.html
+  # If the resource type does not exist in the CloudFormation types, use "Other".
   "ResourceType": "Other",
   # Description holds the title of the check, for now is the same as CheckTitle
   "Description": "Ensure there are no EC2 AMIs set as Public.",
@@ -285,7 +294,7 @@ Each Prowler check has metadata associated which is stored at the same level of 
     # Code holds different methods to remediate the FAIL finding
     "Code": {
       # CLI holds the command in the provider native CLI to remediate it
-      "CLI": "https://docs.prowler.com/checks/public_8#cli-command",
+      "CLI": "aws ec2 modify-image-attribute --region <REGION> --image-id <EC2_AMI_ID> --launch-permission {\"Remove\":[{\"Group\":\"all\"}]}",
       # NativeIaC holds the native IaC code to remediate it, use "https://docs.bridgecrew.io/docs"
       "NativeIaC": "",
       # Other holds the other commands, scripts or code to remediate it, use "https://www.trendmicro.com/cloudoneconformity"

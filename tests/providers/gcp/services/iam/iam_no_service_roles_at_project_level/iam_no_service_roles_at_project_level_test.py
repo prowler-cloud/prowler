@@ -1,25 +1,39 @@
 from re import search
 from unittest import mock
 
+from prowler.providers.gcp.models import GCPProject
 from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, set_mocked_gcp_provider
 
 
 class Test_iam_no_service_roles_at_project_level:
     def test_iam_no_bindings(self):
-        cloudresourcemanager_client = mock.MagicMock
+        cloudresourcemanager_client = mock.MagicMock()
         cloudresourcemanager_client.bindings = []
         cloudresourcemanager_client.project_ids = [GCP_PROJECT_ID]
         cloudresourcemanager_client.region = "global"
+        cloudresourcemanager_client.projects = {
+            GCP_PROJECT_ID: GCPProject(
+                id=GCP_PROJECT_ID,
+                number="123456789012",
+                name="test",
+                labels={},
+                lifecycle_state="ACTIVE",
+            )
+        }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_service.CloudResourceManager",
-            new=cloudresourcemanager_client,
-        ), mock.patch(
-            "prowler.providers.gcp.services.iam.iam_no_service_roles_at_project_level.iam_no_service_roles_at_project_level.cloudresourcemanager_client",
-            new=cloudresourcemanager_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_service.CloudResourceManager",
+                new=cloudresourcemanager_client,
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.iam.iam_no_service_roles_at_project_level.iam_no_service_roles_at_project_level.cloudresourcemanager_client",
+                new=cloudresourcemanager_client,
+            ),
         ):
             from prowler.providers.gcp.services.iam.iam_no_service_roles_at_project_level.iam_no_service_roles_at_project_level import (
                 iam_no_service_roles_at_project_level,
@@ -56,20 +70,33 @@ class Test_iam_no_service_roles_at_project_level:
             project_id=GCP_PROJECT_ID,
         )
 
-        cloudresourcemanager_client = mock.MagicMock
+        cloudresourcemanager_client = mock.MagicMock()
         cloudresourcemanager_client.project_ids = [GCP_PROJECT_ID]
         cloudresourcemanager_client.bindings = [binding1, binding2, binding3]
         cloudresourcemanager_client.region = "global"
+        cloudresourcemanager_client.projects = {
+            GCP_PROJECT_ID: GCPProject(
+                id=GCP_PROJECT_ID,
+                number="123456789012",
+                name="test",
+                labels={},
+                lifecycle_state="ACTIVE",
+            )
+        }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_service.CloudResourceManager",
-            new=cloudresourcemanager_client,
-        ), mock.patch(
-            "prowler.providers.gcp.services.iam.iam_no_service_roles_at_project_level.iam_no_service_roles_at_project_level.cloudresourcemanager_client",
-            new=cloudresourcemanager_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_service.CloudResourceManager",
+                new=cloudresourcemanager_client,
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.iam.iam_no_service_roles_at_project_level.iam_no_service_roles_at_project_level.cloudresourcemanager_client",
+                new=cloudresourcemanager_client,
+            ),
         ):
             from prowler.providers.gcp.services.iam.iam_no_service_roles_at_project_level.iam_no_service_roles_at_project_level import (
                 iam_no_service_roles_at_project_level,
@@ -101,20 +128,24 @@ class Test_iam_no_service_roles_at_project_level:
             project_id=GCP_PROJECT_ID,
         )
 
-        cloudresourcemanager_client = mock.MagicMock
+        cloudresourcemanager_client = mock.MagicMock()
         cloudresourcemanager_client.project_ids = [GCP_PROJECT_ID]
         cloudresourcemanager_client.bindings = [binding]
         cloudresourcemanager_client.region = "global"
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_service.CloudResourceManager",
-            new=cloudresourcemanager_client,
-        ), mock.patch(
-            "prowler.providers.gcp.services.iam.iam_no_service_roles_at_project_level.iam_no_service_roles_at_project_level.cloudresourcemanager_client",
-            new=cloudresourcemanager_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_service.CloudResourceManager",
+                new=cloudresourcemanager_client,
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.iam.iam_no_service_roles_at_project_level.iam_no_service_roles_at_project_level.cloudresourcemanager_client",
+                new=cloudresourcemanager_client,
+            ),
         ):
             from prowler.providers.gcp.services.iam.iam_no_service_roles_at_project_level.iam_no_service_roles_at_project_level import (
                 iam_no_service_roles_at_project_level,
@@ -145,20 +176,24 @@ class Test_iam_no_service_roles_at_project_level:
             project_id=GCP_PROJECT_ID,
         )
 
-        cloudresourcemanager_client = mock.MagicMock
+        cloudresourcemanager_client = mock.MagicMock()
         cloudresourcemanager_client.project_ids = [GCP_PROJECT_ID]
         cloudresourcemanager_client.bindings = [binding]
         cloudresourcemanager_client.region = "global"
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_service.CloudResourceManager",
-            new=cloudresourcemanager_client,
-        ), mock.patch(
-            "prowler.providers.gcp.services.iam.iam_no_service_roles_at_project_level.iam_no_service_roles_at_project_level.cloudresourcemanager_client",
-            new=cloudresourcemanager_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_service.CloudResourceManager",
+                new=cloudresourcemanager_client,
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.iam.iam_no_service_roles_at_project_level.iam_no_service_roles_at_project_level.cloudresourcemanager_client",
+                new=cloudresourcemanager_client,
+            ),
         ):
             from prowler.providers.gcp.services.iam.iam_no_service_roles_at_project_level.iam_no_service_roles_at_project_level import (
                 iam_no_service_roles_at_project_level,

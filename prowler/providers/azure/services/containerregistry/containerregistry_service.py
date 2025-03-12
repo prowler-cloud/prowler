@@ -1,10 +1,6 @@
 from dataclasses import dataclass
 
 from azure.mgmt.containerregistry import ContainerRegistryManagementClient
-from azure.mgmt.containerregistry.models import (
-    NetworkRuleSet,
-    PrivateEndpointConnection,
-)
 
 from prowler.lib.logger import logger
 from prowler.providers.azure.azure_provider import AzureProvider
@@ -37,8 +33,15 @@ class ContainerRegistry(AzureService):
                                 resource_group=resource_group,
                                 sku=getattr(registry.sku, "name", ""),
                                 login_server=getattr(registry, "login_server", ""),
-                                public_network_access=getattr(
-                                    registry, "public_network_access", ""
+                                public_network_access=(
+                                    False
+                                    if getattr(
+                                        registry,
+                                        "public_network_access_enabled",
+                                        "Enabled",
+                                    )
+                                    == "Disabled"
+                                    else True
                                 ),
                                 admin_user_enabled=getattr(
                                     registry, "admin_user_enabled", False
@@ -49,9 +52,16 @@ class ContainerRegistry(AzureService):
                                 monitor_diagnostic_settings=self._get_registry_monitor_settings(
                                     registry.name, resource_group, subscription
                                 ),
-                                private_endpoint_connections=getattr(
-                                    registry, "private_endpoint_connections", []
-                                ),
+                                private_endpoint_connections=[
+                                    PrivateEndpointConnection(
+                                        id=pec.id,
+                                        name=pec.name,
+                                        type=pec.type,
+                                    )
+                                    for pec in getattr(
+                                        registry, "private_endpoint_connections", []
+                                    )
+                                ],
                             )
                         },
                     )
@@ -86,6 +96,13 @@ class ContainerRegistry(AzureService):
 
 
 @dataclass
+class PrivateEndpointConnection:
+    id: str
+    name: str
+    type: str
+
+
+@dataclass
 class ContainerRegistryInfo:
     id: str
     name: str
@@ -93,8 +110,7 @@ class ContainerRegistryInfo:
     resource_group: str
     sku: str
     login_server: str
-    public_network_access: str
+    public_network_access: bool
     admin_user_enabled: bool
-    network_rule_set: NetworkRuleSet
     monitor_diagnostic_settings: list[DiagnosticSetting]
     private_endpoint_connections: list[PrivateEndpointConnection]

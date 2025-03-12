@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "appsync_graphql_api_no_api_key_authentication",
+  "CheckTitle": "AWS AppSync GraphQL APIs should not be authenticated with API keys",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "appsync",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:appsync:{region}:{account-id}:apis/{api-id}",
+  "Severity": "high",
+  "ResourceType": "AwsAppSyncGraphQLApi",
+  "Description": "This control checks whether your application uses an API key to interact with an AWS AppSync GraphQL API. The control fails if an AWS AppSync GraphQL API is authenticated with an API key.",
+  "Risk": "API keys in AppSync can expose applications to unauthorized access if compromised. Avoiding API keys helps reduce the risk of unintended access.",
+  "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/appsync-authorization-check.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws appsync update-graphql-api --api-id <api-id> --authentication-type <authentication-type>",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/appsync-controls.html#appsync-5",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Use authentication methods other than API keys for AWS AppSync GraphQL APIs, such as AWS_IAM or Amazon Cognito.",
+      "Url": "https://docs.aws.amazon.com/appsync/latest/devguide/security-authz.html"
+    }
+  },
+  "Categories": [
+    "trustboundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

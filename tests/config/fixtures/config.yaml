@@ -42,7 +42,7 @@ aws:
         "amazon-elb"
     ]
   # aws.ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports
-  ec2_sg_high_risk_ports:
+  ec2_high_risk_ports:
     [
         25,
         110,
@@ -72,31 +72,6 @@ aws:
   # AWS Cloudwatch Configuration
   # aws.cloudwatch_log_group_retention_policy_specific_days_enabled --> by default is 365 days
   log_group_retention_days: 365
-  # aws.cloudwatch_log_group_no_critical_pii_in_logs --> see all available entities in https://microsoft.github.io/presidio/supported_entities/
-  critical_pii_entities : [
-      "CREDIT_CARD",         # Credit card numbers are highly sensitive financial information.
-      "CRYPTO",              # Crypto wallet numbers (e.g., Bitcoin addresses) can give access to cryptocurrency.
-      "IBAN_CODE",           # International Bank Account Numbers are critical financial information.
-      "US_BANK_NUMBER",      # US bank account numbers are sensitive and should be protected.
-      "US_SSN",              # US Social Security Numbers are critical PII used for identity verification.
-      "US_PASSPORT",         # US passport numbers can be used for identity theft.
-      "US_ITIN",             # US Individual Taxpayer Identification Numbers are sensitive personal identifiers.
-      #"UK_NHS",              # UK NHS numbers can be used to access medical records and other private information.
-      #"ES_NIF",              # Spanish NIF (Personal tax ID) is critical for identification and tax purposes.
-      #"ES_NIE",              # Spanish NIE (Foreigners ID card) is a critical identifier for foreign residents.
-      #"IT_FISCAL_CODE",      # Italian personal identification code is sensitive PII for tax and legal purposes.
-      #"IT_PASSPORT",         # Italian passport numbers are critical PII.
-      #"IT_IDENTITY_CARD",    # Italian identity card numbers are critical for personal identification.
-      #"PL_PESEL",            # Polish PESEL numbers are sensitive personal identifiers.
-      #"SG_NRIC_FIN",         # Singapore National Registration Identification Card is critical PII.
-      #"AU_ABN",              # Australian Business Numbers are critical for business identification.
-      #"AU_TFN",              # Australian Tax File Numbers are sensitive and used for taxation purposes.
-      #"AU_MEDICARE",         # Australian Medicare numbers are sensitive medical identifiers.
-      #"IN_PAN",              # Indian Permanent Account Numbers are critical for tax purposes and identity.
-      #"IN_AADHAAR",          # Indian Aadhaar numbers are highly sensitive and serve as a universal identity number.
-      #"FI_PERSONAL_IDENTITY_CODE"  # Finnish Personal Identity Code is sensitive PII for personal identification.
-  ]
-  pii_language: "en" # Language for recognizing PII entities
 
   # AWS AppStream Session Configuration
   # aws.appstream_fleet_session_idle_disconnect_timeout
@@ -337,10 +312,12 @@ aws:
   # AWS ACM Configuration
   # aws.acm_certificates_expiration_check
   days_to_expire_threshold: 7
-  # aws.acm_certificates_rsa_key_length
+  # aws.acm_certificates_with_secure_key_algorithms
   insecure_key_algorithms:
     [
       "RSA-1024",
+      "P-192",
+      "SHA-1",
     ]
 
   # AWS EKS Configuration
@@ -376,6 +353,11 @@ aws:
   # Minimum number of Availability Zones that an ELBv2 must be in
   elbv2_min_azs: 2
 
+  # AWS Elasticache Configuration
+  # aws.elasticache_redis_cluster_backup_enabled
+  # Minimum number of days that a Redis cluster must have backups retention period
+  minimum_snapshot_retention_period: 7
+
   # AWS Secrets Configuration
   # Patterns to ignore in the secrets checks
   secrets_ignore_patterns: []
@@ -403,6 +385,14 @@ azure:
   python_latest_version: "3.12"
   # azure.app_ensure_java_version_is_latest
   java_latest_version: "17"
+
+  # Azure SQL Server
+  # azure.sqlserver_minimal_tls_version
+  recommended_minimal_tls_versions:
+    [
+      "1.2",
+      "1.3"
+    ]
 
 # GCP Configuration
 gcp:
@@ -439,3 +429,9 @@ kubernetes:
       "TLS_RSA_WITH_AES_256_GCM_SHA384",
       "TLS_RSA_WITH_AES_128_GCM_SHA256",
     ]
+
+# Microsoft365 Configuration
+microsoft365:
+  # Conditional Access Policy
+  # policy.session_controls.sign_in_frequency.frequency in hours
+  sign_in_frequency: 4

@@ -109,4 +109,5 @@ class Test_MQ_Service:
         assert mq.brokers[broker_arn].engine_type == EngineType.ACTIVEMQ
         assert mq.brokers[broker_arn].deployment_mode == DeploymentMode.SINGLE_INSTANCE
         assert mq.brokers[broker_arn].auto_minor_version_upgrade
+        assert mq.brokers[broker_arn].publicly_accessible
         assert mq.brokers[broker_arn].tags == [{"key": "value"}]

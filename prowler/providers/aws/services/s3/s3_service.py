@@ -60,11 +60,13 @@ class S3(AWSService):
                         if provider.identity.audited_regions:
                             if bucket_region in provider.identity.audited_regions:
                                 self.buckets[arn] = Bucket(
+                                    arn=arn,
                                     name=bucket["Name"],
                                     region=bucket_region,
                                 )
                         else:
                             self.buckets[arn] = Bucket(
+                                arn=arn,
                                 name=bucket["Name"],
                                 region=bucket_region,
                             )
@@ -494,6 +496,7 @@ class S3(AWSService):
                 )
                 return False
             else:
+                # Bucket exists but we don't have access to it
                 logger.error(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
@@ -673,12 +676,13 @@ class ReplicationRule(BaseModel):
 
 
 class Bucket(BaseModel):
+    arn: str
     name: str
     versioning: bool = False
     logging: bool = False
     public_access_block: Optional[PublicAccessBlock]
     acl_grantees: List[ACL_Grantee] = Field(default_factory=list)
-    policy: Dict = Field(default_factory=dict)
+    policy: Optional[dict]
     encryption: Optional[str]
     region: str
     logging_target_bucket: Optional[str]

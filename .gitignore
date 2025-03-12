@@ -12,6 +12,7 @@ build/
 /dist/
 *.egg-info/
 */__pycache__/*.pyc
+.idea/
 
 # Session
 Session.vim
@@ -30,7 +31,7 @@ tags
 *.DS_Store
 
 # Prowler output
-output/
+/output
 
 # Prowler found secrets
 secrets-*/
@@ -44,9 +45,11 @@ junit-reports/
 # Terraform
 .terraform*
 *.tfstate
+*.tfstate.*
 
 # .env
-.env*
+ui/.env*
+api/.env*
 
 # Coverage
 .coverage*
@@ -55,3 +58,6 @@ coverage*
 
 # Node
 node_modules
+
+# Persistent data
+_data/

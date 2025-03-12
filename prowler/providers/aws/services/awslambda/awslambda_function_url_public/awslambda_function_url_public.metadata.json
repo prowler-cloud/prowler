@@ -3,7 +3,7 @@
   "CheckID": "awslambda_function_url_public",
   "CheckTitle": "Check Public Lambda Function URL.",
   "CheckType": [],
-  "ServiceName": "lambda",
+  "ServiceName": "awslambda",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:lambda:region:account-id:function/function-name",
   "Severity": "high",

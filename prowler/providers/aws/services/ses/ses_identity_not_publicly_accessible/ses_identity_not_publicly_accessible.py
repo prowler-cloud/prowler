@@ -7,11 +7,9 @@ class ses_identity_not_publicly_accessible(Check):
     def execute(self):
         findings = []
         for identity in ses_client.email_identities.values():
-            report = Check_Report_AWS(self.metadata())
-            report.region = identity.region
-            report.resource_id = identity.name
-            report.resource_arn = identity.arn
-            report.resource_tags = identity.tags
+            if identity.policy is None:
+                continue
+            report = Check_Report_AWS(metadata=self.metadata(), resource=identity)
             report.status = "PASS"
             report.status_extended = (
                 f"SES identity {identity.name} is not publicly accessible."

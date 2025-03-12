@@ -13,9 +13,9 @@
   "RelatedUrl": "https://docs.aws.amazon.com/redshift/latest/mgmt/db-auditing.html",
   "Remediation": {
     "Code": {
-      "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Redshift/redshift-cluster-audit-logging-enabled.html",
+      "CLI": "",
       "NativeIaC": "https://docs.prowler.com/checks/aws/logging-policies/bc_aws_logging_12#cloudformation",
-      "Other": "https://docs.prowler.com/checks/aws/logging-policies/bc_aws_logging_12#aws-console",
+      "Other": "https://docs.prowler.com/checks/aws/logging-policies/bc_aws_logging_12",
       "Terraform": "https://docs.prowler.com/checks/aws/logging-policies/bc_aws_logging_12#terraform"
     },
     "Recommendation": {
@@ -24,7 +24,8 @@
     }
   },
   "Categories": [
-    "forensics-ready"
+    "forensics-ready",
+    "logging"
   ],
   "DependsOn": [],
   "RelatedTo": [],

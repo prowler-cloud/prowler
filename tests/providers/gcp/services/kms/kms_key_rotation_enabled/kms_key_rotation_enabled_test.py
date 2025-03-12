@@ -1,3 +1,4 @@
+import datetime
 from unittest import mock
 
 from tests.providers.gcp.gcp_fixtures import (
@@ -9,14 +10,17 @@ from tests.providers.gcp.gcp_fixtures import (
 
 class Test_kms_key_rotation_enabled:
     def test_kms_no_key(self):
-        kms_client = mock.MagicMock
+        kms_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.kms.kms_key_rotation_enabled.kms_key_rotation_enabled.kms_client",
-            new=kms_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.kms.kms_key_rotation_enabled.kms_key_rotation_enabled.kms_client",
+                new=kms_client,
+            ),
         ):
             from prowler.providers.gcp.services.kms.kms_key_rotation_enabled.kms_key_rotation_enabled import (
                 kms_key_rotation_enabled,
@@ -31,14 +35,17 @@ class Test_kms_key_rotation_enabled:
             assert len(result) == 0
 
     def test_kms_key_no_next_rotation_time_and_no_rotation_period(self):
-        kms_client = mock.MagicMock
+        kms_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.kms.kms_key_rotation_enabled.kms_key_rotation_enabled.kms_client",
-            new=kms_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.kms.kms_key_rotation_enabled.kms_key_rotation_enabled.kms_client",
+                new=kms_client,
+            ),
         ):
             from prowler.providers.gcp.services.kms.kms_key_rotation_enabled.kms_key_rotation_enabled import (
                 kms_key_rotation_enabled,
@@ -87,14 +94,17 @@ class Test_kms_key_rotation_enabled:
             assert result[0].project_id == kms_client.crypto_keys[0].project_id
 
     def test_kms_key_no_next_rotation_time_and_big_rotation_period(self):
-        kms_client = mock.MagicMock
+        kms_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.kms.kms_key_rotation_enabled.kms_key_rotation_enabled.kms_client",
-            new=kms_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.kms.kms_key_rotation_enabled.kms_key_rotation_enabled.kms_client",
+                new=kms_client,
+            ),
         ):
             from prowler.providers.gcp.services.kms.kms_key_rotation_enabled.kms_key_rotation_enabled import (
                 kms_key_rotation_enabled,
@@ -144,14 +154,17 @@ class Test_kms_key_rotation_enabled:
             assert result[0].project_id == kms_client.crypto_keys[0].project_id
 
     def test_kms_key_no_next_rotation_time_and_appropriate_rotation_period(self):
-        kms_client = mock.MagicMock
+        kms_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.kms.kms_key_rotation_enabled.kms_key_rotation_enabled.kms_client",
-            new=kms_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.kms.kms_key_rotation_enabled.kms_key_rotation_enabled.kms_client",
+                new=kms_client,
+            ),
         ):
             from prowler.providers.gcp.services.kms.kms_key_rotation_enabled.kms_key_rotation_enabled import (
                 kms_key_rotation_enabled,
@@ -201,14 +214,17 @@ class Test_kms_key_rotation_enabled:
             assert result[0].project_id == kms_client.crypto_keys[0].project_id
 
     def test_kms_key_no_rotation_period_and_big_next_rotation_time(self):
-        kms_client = mock.MagicMock
+        kms_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.kms.kms_key_rotation_enabled.kms_key_rotation_enabled.kms_client",
-            new=kms_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.kms.kms_key_rotation_enabled.kms_key_rotation_enabled.kms_client",
+                new=kms_client,
+            ),
         ):
             from prowler.providers.gcp.services.kms.kms_key_rotation_enabled.kms_key_rotation_enabled import (
                 kms_key_rotation_enabled,
@@ -239,7 +255,10 @@ class Test_kms_key_rotation_enabled:
                     project_id=GCP_PROJECT_ID,
                     key_ring=keyring.name,
                     location=keylocation.name,
-                    next_rotation_time="2025-09-01T00:00:00Z",
+                    # Next rotation time of now + 100 days
+                    next_rotation_time=(
+                        datetime.datetime.now() - datetime.timedelta(days=+100)
+                    ).strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
                     members=["user:jane@example.com"],
                 )
             ]
@@ -258,14 +277,17 @@ class Test_kms_key_rotation_enabled:
             assert result[0].project_id == kms_client.crypto_keys[0].project_id
 
     def test_kms_key_no_rotation_period_and_appropriate_next_rotation_time(self):
-        kms_client = mock.MagicMock
+        kms_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.kms.kms_key_rotation_enabled.kms_key_rotation_enabled.kms_client",
-            new=kms_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.kms.kms_key_rotation_enabled.kms_key_rotation_enabled.kms_client",
+                new=kms_client,
+            ),
         ):
             from prowler.providers.gcp.services.kms.kms_key_rotation_enabled.kms_key_rotation_enabled import (
                 kms_key_rotation_enabled,
@@ -296,7 +318,10 @@ class Test_kms_key_rotation_enabled:
                     project_id=GCP_PROJECT_ID,
                     key_ring=keyring.name,
                     location=keylocation.name,
-                    next_rotation_time="2024-09-01T00:00:00Z",
+                    # Next rotation time of now + 30 days
+                    next_rotation_time=(
+                        datetime.datetime.now() - datetime.timedelta(days=+30)
+                    ).strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
                     members=["user:jane@example.com"],
                 )
             ]
@@ -315,14 +340,17 @@ class Test_kms_key_rotation_enabled:
             assert result[0].project_id == kms_client.crypto_keys[0].project_id
 
     def test_kms_key_rotation_period_greater_90_days_and_big_next_rotation_time(self):
-        kms_client = mock.MagicMock
+        kms_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.kms.kms_key_rotation_enabled.kms_key_rotation_enabled.kms_client",
-            new=kms_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.kms.kms_key_rotation_enabled.kms_key_rotation_enabled.kms_client",
+                new=kms_client,
+            ),
         ):
             from prowler.providers.gcp.services.kms.kms_key_rotation_enabled.kms_key_rotation_enabled import (
                 kms_key_rotation_enabled,
@@ -352,7 +380,10 @@ class Test_kms_key_rotation_enabled:
                     id="projects/123/locations/us-central1/keyRings/keyring1/cryptoKeys/key1",
                     project_id=GCP_PROJECT_ID,
                     rotation_period="8776000s",
-                    next_rotation_time="2025-09-01T00:00:00Z",
+                    # Next rotation time of now + 100 days
+                    next_rotation_time=(
+                        datetime.datetime.now() - datetime.timedelta(days=+100)
+                    ).strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
                     key_ring=keyring.name,
                     location=keylocation.name,
                     members=["user:jane@example.com"],
@@ -375,14 +406,17 @@ class Test_kms_key_rotation_enabled:
     def test_kms_key_rotation_period_greater_90_days_and_appropriate_next_rotation_time(
         self,
     ):
-        kms_client = mock.MagicMock
+        kms_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.kms.kms_key_rotation_enabled.kms_key_rotation_enabled.kms_client",
-            new=kms_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.kms.kms_key_rotation_enabled.kms_key_rotation_enabled.kms_client",
+                new=kms_client,
+            ),
         ):
             from prowler.providers.gcp.services.kms.kms_key_rotation_enabled.kms_key_rotation_enabled import (
                 kms_key_rotation_enabled,
@@ -412,7 +446,10 @@ class Test_kms_key_rotation_enabled:
                     id="projects/123/locations/us-central1/keyRings/keyring1/cryptoKeys/key1",
                     project_id=GCP_PROJECT_ID,
                     rotation_period="8776000s",
-                    next_rotation_time="2024-09-01T00:00:00Z",
+                    # Next rotation time of now + 30 days
+                    next_rotation_time=(
+                        datetime.datetime.now() - datetime.timedelta(days=+30)
+                    ).strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
                     key_ring=keyring.name,
                     location=keylocation.name,
                     members=["user:jane@example.com"],
@@ -433,14 +470,17 @@ class Test_kms_key_rotation_enabled:
             assert result[0].project_id == kms_client.crypto_keys[0].project_id
 
     def test_kms_key_rotation_period_less_90_days_and_big_next_rotation_time(self):
-        kms_client = mock.MagicMock
+        kms_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.kms.kms_key_rotation_enabled.kms_key_rotation_enabled.kms_client",
-            new=kms_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.kms.kms_key_rotation_enabled.kms_key_rotation_enabled.kms_client",
+                new=kms_client,
+            ),
         ):
             from prowler.providers.gcp.services.kms.kms_key_rotation_enabled.kms_key_rotation_enabled import (
                 kms_key_rotation_enabled,
@@ -470,7 +510,10 @@ class Test_kms_key_rotation_enabled:
                     id="projects/123/locations/us-central1/keyRings/keyring1/cryptoKeys/key1",
                     project_id=GCP_PROJECT_ID,
                     rotation_period="7776000s",
-                    next_rotation_time="2025-09-01T00:00:00Z",
+                    # Next rotation time of now + 100 days
+                    next_rotation_time=(
+                        datetime.datetime.now() - datetime.timedelta(days=+100)
+                    ).strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
                     key_ring=keyring.name,
                     location=keylocation.name,
                     members=["user:jane@example.com"],
@@ -493,14 +536,17 @@ class Test_kms_key_rotation_enabled:
     def test_kms_key_rotation_period_less_90_days_and_appropriate_next_rotation_time(
         self,
     ):
-        kms_client = mock.MagicMock
+        kms_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.kms.kms_key_rotation_enabled.kms_key_rotation_enabled.kms_client",
-            new=kms_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.kms.kms_key_rotation_enabled.kms_key_rotation_enabled.kms_client",
+                new=kms_client,
+            ),
         ):
             from prowler.providers.gcp.services.kms.kms_key_rotation_enabled.kms_key_rotation_enabled import (
                 kms_key_rotation_enabled,
@@ -530,7 +576,10 @@ class Test_kms_key_rotation_enabled:
                     id="projects/123/locations/us-central1/keyRings/keyring1/cryptoKeys/key1",
                     project_id=GCP_PROJECT_ID,
                     rotation_period="7776000s",
-                    next_rotation_time="2024-09-01T00:00:00Z",
+                    # Next rotation time of now + 30 days
+                    next_rotation_time=(
+                        datetime.datetime.now() - datetime.timedelta(days=+30)
+                    ).strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
                     key_ring=keyring.name,
                     location=keylocation.name,
                     members=["user:jane@example.com"],
@@ -551,14 +600,17 @@ class Test_kms_key_rotation_enabled:
             assert result[0].project_id == kms_client.crypto_keys[0].project_id
 
     def test_kms_key_rotation_with_fractional_seconds(self):
-        kms_client = mock.MagicMock
+        kms_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.kms.kms_key_rotation_enabled.kms_key_rotation_enabled.kms_client",
-            new=kms_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.kms.kms_key_rotation_enabled.kms_key_rotation_enabled.kms_client",
+                new=kms_client,
+            ),
         ):
             from prowler.providers.gcp.services.kms.kms_key_rotation_enabled.kms_key_rotation_enabled import (
                 kms_key_rotation_enabled,
@@ -588,7 +640,10 @@ class Test_kms_key_rotation_enabled:
                     id="projects/123/locations/us-central1/keyRings/keyring1/cryptoKeys/key1",
                     project_id=GCP_PROJECT_ID,
                     rotation_period="7776000s",
-                    next_rotation_time="2025-07-06T22:00:00.561275Z",
+                    # Next rotation time of now + 100 days
+                    next_rotation_time=(
+                        datetime.datetime.now() - datetime.timedelta(days=+100)
+                    ).strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
                     key_ring=keyring.name,
                     location=keylocation.name,
                     members=["user:jane@example.com"],

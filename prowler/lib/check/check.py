@@ -358,6 +358,15 @@ def run_fixer(check_findings: list) -> int:
                                     print(f"\t{Fore.GREEN}DONE{Style.RESET_ALL}")
                                 else:
                                     print(f"\t{Fore.RED}ERROR{Style.RESET_ALL}")
+                            elif "resource_arn" in fixer.__code__.co_varnames:
+                                print(
+                                    f"\t{orange_color}FIXING{Style.RESET_ALL} Resource {finding.resource_arn}... "
+                                )
+                                if fixer(resource_arn=finding.resource_arn):
+                                    fixed_findings += 1
+                                    print(f"\t{Fore.GREEN}DONE{Style.RESET_ALL}")
+                                else:
+                                    print(f"\t{Fore.RED}ERROR{Style.RESET_ALL}")
                             else:
                                 print(
                                     f"\t{orange_color}FIXING{Style.RESET_ALL} Resource {finding.resource_id}... "
@@ -555,19 +564,6 @@ def execute_checks(
                     )
                 bar()
             bar.title = f"-> {Fore.GREEN}Scan completed!{Style.RESET_ALL}"
-
-    # Custom report interface
-    if os.environ.get("PROWLER_REPORT_LIB_PATH"):
-        try:
-            logger.info("Using custom report interface ...")
-            lib = os.environ["PROWLER_REPORT_LIB_PATH"]
-            outputs_module = importlib.import_module(lib)
-            custom_report_interface = getattr(outputs_module, "report")
-
-            # TODO: review this call and see if we can remove the global_provider.output_options since it is contained in the global_provider
-            custom_report_interface(check_findings, output_options, global_provider)
-        except Exception:
-            sys.exit(1)
 
     return all_findings
 

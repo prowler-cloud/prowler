@@ -56,7 +56,6 @@ from prowler.providers.<provider>.lib.service.service import ServiceParentClass
 
 
 # Create a class for the Service
-################## <Service>
 class <Service>(ServiceParentClass):
     def __init__(self, provider):
         # Call Service Parent Class __init__
@@ -238,3 +237,4 @@ It is really important to check if the current Prowler's permissions for each pr
 - AWS: https://docs.prowler.cloud/en/latest/getting-started/requirements/#aws-authentication
 - Azure: https://docs.prowler.cloud/en/latest/getting-started/requirements/#permissions
 - GCP: https://docs.prowler.cloud/en/latest/getting-started/requirements/#gcp-authentication
+- Microsoft365: https://docs.prowler.cloud/en/latest/getting-started/requirements/#microsoft365-authentication

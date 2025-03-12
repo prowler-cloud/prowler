@@ -175,6 +175,7 @@ Due to the complexity and differences of each provider use the rest of the provi
 - [GCP](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/gcp/gcp_provider.py)
 - [Azure](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/azure/azure_provider.py)
 - [Kubernetes](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/kubernetes/kubernetes_provider.py)
+- [Microsoft365](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/microsoft365/microsoft365_provider.py)
 
 To facilitate understanding here is a pseudocode of how the most basic provider could be with examples.
 
@@ -198,8 +199,8 @@ from prowler.providers.<new_provider_name>.models import (
 class NewProvider(Provider):
     # All properties from the class, some of this are properties in the base class
     _type: str = "<provider_name>"
-    _session: <ProvierSessionModel>
-    _identity: <ProvierIdentityModel>
+    _session: <ProviderSessionModel>
+    _identity: <ProviderIdentityModel>
     _audit_config: dict
     _output_options: ProviderOutputOptionsModel
     _mutelist: dict
@@ -212,13 +213,13 @@ class NewProvider(Provider):
             arguments (dict): A dictionary containing configuration arguments.
         """
         logger.info("Setting <NewProviderName> provider ...")
-        # First get from arguments the necesary from the cloud acount (subscriptions or projects or whatever the provider use for storing services)
+        # First get from arguments the necessary from the cloud account (subscriptions or projects or whatever the provider use for storing services)
 
         # Set the session with the method enforced by parent class
         self._session = self.setup_session(credentials_file)
 
         # Set the Identity class normaly the provider class give by Python provider library
-        self._identity = <ProvierIdentityModel>()
+        self._identity = <ProviderIdentityModel>()
 
         # Set the provider configuration
         self._audit_config = load_and_validate_config_file(
@@ -254,7 +255,7 @@ class NewProvider(Provider):
             <all_needed_for_auth> Can include all necessary arguments to setup the session
 
         Returns:
-            Credentials necesary to communicate with the provider.
+            Credentials necessary to communicate with the provider.
         """
         pass
 

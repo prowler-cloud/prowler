@@ -16,10 +16,10 @@
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "https://docs.prowler.com/checks/aws/elasticsearch-policies/elasticsearch_7#cli-command",
+      "CLI": "aws logs put-resource-policy --policy-name <POLICY_NAME> --policy-document <POLICY_DOC_JSON>",
       "NativeIaC": "https://docs.prowler.com/checks/aws/elasticsearch-policies/elasticsearch_7#cloudformation",
-      "Other": "https://docs.prowler.com/checks/aws/elasticsearch-policies/elasticsearch_7#fix---runtime",
-      "Terraform": "https://docs.prowler.com/checks/aws/elasticsearch-policies/elasticsearch_7#fix---buildtime"
+      "Other": "https://docs.prowler.com/checks/aws/elasticsearch-policies/elasticsearch_7",
+      "Terraform": "https://docs.prowler.com/checks/aws/elasticsearch-policies/elasticsearch_7#terraform"
     },
     "Recommendation": {
       "Text": "Enable Elasticsearch/Opensearch log. Create use cases for them. Using audit logs check for access denied events.",
@@ -27,7 +27,8 @@
     }
   },
   "Categories": [
-    "forensics-ready"
+    "forensics-ready",
+    "logging"
   ],
   "DependsOn": [],
   "RelatedTo": [],

@@ -25,11 +25,9 @@ class vpc_endpoint_connections_trust_boundaries(Check):
                         break
                     if "*" == statement["Principal"]:
                         access_from_trusted_accounts = False
-                        report = Check_Report_AWS(self.metadata())
-                        report.region = endpoint.region
-                        report.resource_id = endpoint.id
-                        report.resource_arn = endpoint.arn
-                        report.resource_tags = endpoint.tags
+                        report = Check_Report_AWS(
+                            metadata=self.metadata(), resource=endpoint
+                        )
 
                         if "Condition" in statement:
                             for account_id in trusted_account_ids:
@@ -62,11 +60,9 @@ class vpc_endpoint_connections_trust_boundaries(Check):
                             # If the principal is not an AWS principal, we don't need to check it since it could be a service or a federated principal
                             principals = []
                         for principal_arn in principals:
-                            report = Check_Report_AWS(self.metadata())
-                            report.region = endpoint.region
-                            report.resource_id = endpoint.id
-                            report.resource_arn = endpoint.arn
-                            report.resource_tags = endpoint.tags
+                            report = Check_Report_AWS(
+                                metadata=self.metadata(), resource=endpoint
+                            )
 
                             if principal_arn == "*":
                                 access_from_trusted_accounts = False

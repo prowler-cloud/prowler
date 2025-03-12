@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "mq_broker_not_publicly_accessible",
+  "CheckTitle": "MQ brokers should not be publicly accessible.",
+  "CheckType": [
+    "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53 Controls"
+  ],
+  "ServiceName": "mq",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:mq:region:account-id:broker:broker-id",
+  "Severity": "medium",
+  "ResourceType": "AwsAmazonMQBroker",
+  "Description": "Brokers created without public accessibility can't be accessed from outside of your VPC. This greatly reduces your broker's susceptibility to Distributed Denial of Service (DDoS) attacks from the public internet.",
+  "Risk": "Public Amazon MQ brokers can be accessed directly, outside of a Virtual Private Cloud (VPC), therefore every machine on the Internet can reach your brokers through their public endpoints and this can increase the opportunity for malicious activity such as cross-site scripting (XSS) and clickjacking attacks. ",
+  "RelatedUrl": "https://docs.aws.amazon.com/amazon-mq/latest/developer-guide/using-amazon-mq-securely.html#prefer-brokers-without-public-accessibility",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/MQ/publicly-accessible.html#",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure that the Amazon MQ brokers provisioned in your AWS account are not publicly accessible from the Internet in order to avoid exposing sensitive data and minimize security risks.",
+      "Url": "https://docs.aws.amazon.com/amazon-mq/latest/developer-guide/using-amazon-mq-securely.html#prefer-brokers-without-public-accessibility"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

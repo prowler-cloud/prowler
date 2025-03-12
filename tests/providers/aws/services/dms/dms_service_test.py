@@ -1,9 +1,12 @@
 import botocore
+from boto3 import client
 from mock import patch
+from moto import mock_aws
 
 from prowler.providers.aws.services.dms.dms_service import DMS
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
     set_mocked_aws_provider,
 )
@@ -44,6 +47,9 @@ def mock_make_api_call(self, operation_name, kwargs):
                     "EndpointIdentifier": DMS_ENDPOINT_NAME,
                     "EndpointArn": DMS_ENDPOINT_ARN,
                     "SslMode": "require",
+                    "RedisSettings": {
+                        "SslSecurityProtocol": "ssl-encryption",
+                    },
                     "MongoDbSettings": {
                         "AuthType": "password",
                     },
@@ -128,6 +134,7 @@ class Test_DMS_Service:
         assert len(dms.endpoints) == 1
         assert dms.endpoints[DMS_ENDPOINT_ARN].id == DMS_ENDPOINT_NAME
         assert dms.endpoints[DMS_ENDPOINT_ARN].ssl_mode == "require"
+        assert dms.endpoints[DMS_ENDPOINT_ARN].redis_ssl_protocol == "ssl-encryption"
         assert dms.endpoints[DMS_ENDPOINT_ARN].mongodb_auth_type == "password"
         assert dms.endpoints[DMS_ENDPOINT_ARN].neptune_iam_auth_enabled
         assert dms.endpoints[DMS_ENDPOINT_ARN].engine_name == "neptune"
@@ -144,3 +151,61 @@ class Test_DMS_Service:
             {"Key": "Name", "Value": "dms-endpoint"},
             {"Key": "Owner", "Value": "admin"},
         ]
+
+    @mock_aws
+    def test_describe_replication_tags(self):
+        dms_client = client("dms", region_name=AWS_REGION_US_EAST_1)
+
+        dms_client.create_replication_task(
+            ReplicationTaskIdentifier="rep-task",
+            SourceEndpointArn=DMS_ENDPOINT_ARN,
+            TargetEndpointArn=DMS_ENDPOINT_ARN,
+            MigrationType="full-load",
+            ReplicationTaskSettings="""
+                {
+                    "Logging": {
+                        "EnableLogging": true,
+                        "LogComponents": [
+                            {
+                                "Id": "SOURCE_CAPTURE",
+                                "Severity": "LOGGER_SEVERITY_DEFAULT"
+                            },
+                            {
+                                "Id": "SOURCE_UNLOAD",
+                                "Severity": "LOGGER_SEVERITY_DEFAULT"
+                            }
+                        ]
+                    }
+                }
+            """,
+            TableMappings="",
+            ReplicationInstanceArn=DMS_INSTANCE_ARN,
+        )
+
+        dms_replication_task_arn = dms_client.describe_replication_tasks()[
+            "ReplicationTasks"
+        ][0]["ReplicationTaskArn"]
+
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
+        dms = DMS(aws_provider)
+
+        assert dms.replication_tasks[dms_replication_task_arn].id == "rep-task"
+        assert (
+            dms.replication_tasks[dms_replication_task_arn].region
+            == AWS_REGION_US_EAST_1
+        )
+        assert dms.replication_tasks[dms_replication_task_arn].logging_enabled
+        assert dms.replication_tasks[dms_replication_task_arn].log_components == [
+            {"Id": "SOURCE_CAPTURE", "Severity": "LOGGER_SEVERITY_DEFAULT"},
+            {"Id": "SOURCE_UNLOAD", "Severity": "LOGGER_SEVERITY_DEFAULT"},
+        ]
+        assert (
+            dms.replication_tasks[dms_replication_task_arn].source_endpoint_arn
+            == DMS_ENDPOINT_ARN
+        )
+        assert (
+            dms.replication_tasks[dms_replication_task_arn].target_endpoint_arn
+            == DMS_ENDPOINT_ARN
+        )

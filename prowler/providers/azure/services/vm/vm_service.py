@@ -1,14 +1,13 @@
 from dataclasses import dataclass
+from typing import List, Optional
 
 from azure.mgmt.compute import ComputeManagementClient
-from azure.mgmt.compute.models import StorageProfile
 
 from prowler.lib.logger import logger
 from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.azure.lib.service.service import AzureService
 
 
-########################## VirtualMachines
 class VirtualMachines(AzureService):
     def __init__(self, provider: AzureProvider):
         super().__init__(ComputeManagementClient, provider)
@@ -27,12 +26,35 @@ class VirtualMachines(AzureService):
                 for vm in virtual_machines_list:
                     virtual_machines[subscription_name].update(
                         {
-                            vm.vm_id: VirtualMachine(
+                            vm.id: VirtualMachine(
                                 resource_id=vm.id,
                                 resource_name=vm.name,
-                                storage_profile=getattr(vm, "storage_profile", None),
+                                storage_profile=(
+                                    StorageProfile(
+                                        os_disk=OSDisk(
+                                            name=vm.storage_profile.os_disk.name,
+                                            managed_disk=vm.storage_profile.os_disk.managed_disk,
+                                        ),
+                                        data_disks=[
+                                            DataDisk(
+                                                lun=data_disk.lun,
+                                                name=data_disk.name,
+                                                managed_disk=data_disk.managed_disk,
+                                            )
+                                            for data_disk in getattr(
+                                                vm.storage_profile, "data_disks", []
+                                            )
+                                        ],
+                                    )
+                                    if getattr(vm, "storage_profile", None)
+                                    else None
+                                ),
                                 location=vm.location,
                                 security_profile=vm.security_profile,
+                                extensions=[
+                                    VirtualMachineExtension(id=extension.id)
+                                    for extension in getattr(vm, "resources", [])
+                                ],
                             )
                         }
                     )
@@ -92,12 +114,37 @@ class SecurityProfile:
 
 
 @dataclass
+class OSDisk:
+    name: str
+    managed_disk: bool
+
+
+@dataclass
+class DataDisk:
+    lun: int
+    name: str
+    managed_disk: bool
+
+
+@dataclass
+class StorageProfile:
+    os_disk: OSDisk
+    data_disks: List[DataDisk]
+
+
+@dataclass
+class VirtualMachineExtension:
+    id: str
+
+
+@dataclass
 class VirtualMachine:
     resource_id: str
     resource_name: str
-    storage_profile: StorageProfile
     location: str
     security_profile: SecurityProfile
+    extensions: list[VirtualMachineExtension]
+    storage_profile: Optional[StorageProfile] = None
 
 
 @dataclass

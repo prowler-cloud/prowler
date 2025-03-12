@@ -11,7 +11,9 @@ class vpc_different_regions(Check):
                 if not vpc.default:
                     vpc_regions.add(vpc.region)
 
-            report = Check_Report_AWS(self.metadata())
+            report = Check_Report_AWS(
+                metadata=self.metadata(), resource=vpc_client.vpcs
+            )
             report.region = vpc_client.region
             report.resource_id = vpc_client.audited_account
             report.resource_arn = vpc_client.vpc_arn_template

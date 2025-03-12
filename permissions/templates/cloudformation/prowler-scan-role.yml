@@ -1,0 +1,127 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+# You can invoke CloudFormation and pass the principal ARN from a command line like this:
+# aws cloudformation create-stack \
+#  --capabilities CAPABILITY_IAM --capabilities CAPABILITY_NAMED_IAM \
+#  --template-body "file://prowler-pro-saas-scan-role.yaml" \
+#  --stack-name "ProwlerProSaaSScanRole" \
+#  --parameters "ParameterKey=ExternalId,ParameterValue=ProvidedExternalID"
+
+Description: |
+  This template creates the ProwlerScan IAM Role in this account with
+  all read-only permissions to scan your account for security issues.
+  Contains two AWS managed policies (SecurityAudit and ViewOnlyAccess) and an inline policy.
+  It sets the trust policy on that IAM Role to permit Prowler to assume that role.
+Parameters:
+  ExternalId:
+    Description: |
+      This is the External ID that Prowler will use to assume the role ProwlerScan IAM Role.
+    Type: String
+    MinLength: 1
+    AllowedPattern: ".+"
+    ConstraintDescription: "ExternalId must not be empty."
+  AccountId:
+    Description: |
+      AWS Account ID that will assume the role created, if you are deploying this template to be used in Prowler Cloud please do not edit this.
+    Type: String
+    Default: "232136659152"
+    MinLength: 12
+    MaxLength: 12
+    AllowedPattern: "[0-9]{12}"
+    ConstraintDescription: "AccountId must be a valid AWS Account ID."
+  IAMPrincipal:
+    Description: |
+      The IAM principal type and name that will be allowed to assume the role created, leave an * for all the IAM principals in your AWS account. If you are deploying this template to be used in Prowler Cloud please do not edit this.
+    Type: String
+    Default: role/prowler*
+
+Resources:
+  ProwlerScan:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: ProwlerScan
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub "arn:${AWS::Partition}:iam::${AccountId}:root"
+            Action: "sts:AssumeRole"
+            Condition:
+              StringEquals:
+                "sts:ExternalId": !Sub ${ExternalId}
+              StringLike:
+                "aws:PrincipalArn": !Sub "arn:${AWS::Partition}:iam::${AccountId}:${IAMPrincipal}"
+      MaxSessionDuration: 3600
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/SecurityAudit"
+        - "arn:aws:iam::aws:policy/job-function/ViewOnlyAccess"
+      Policies:
+        - PolicyName: ProwlerScan
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: AllowMoreReadOnly
+                Effect: Allow
+                Action:
+                  - "account:Get*"
+                  - "appstream:Describe*"
+                  - "appstream:List*"
+                  - "backup:List*"
+                  - "bedrock:List*"
+                  - "bedrock:Get*"
+                  - "cloudtrail:GetInsightSelectors"
+                  - "codeartifact:List*"
+                  - "codebuild:BatchGet*"
+                  - "codebuild:ListReportGroups"
+                  - "cognito-idp:GetUserPoolMfaConfig"
+                  - "dlm:Get*"
+                  - "drs:Describe*"
+                  - "ds:Get*"
+                  - "ds:Describe*"
+                  - "ds:List*"
+                  - "dynamodb:GetResourcePolicy"
+                  - "ec2:GetEbsEncryptionByDefault"
+                  - "ec2:GetSnapshotBlockPublicAccessState"
+                  - "ec2:GetInstanceMetadataDefaults"
+                  - "ecr:Describe*"
+                  - "ecr:GetRegistryScanningConfiguration"
+                  - "elasticfilesystem:DescribeBackupPolicy"
+                  - "glue:GetConnections"
+                  - "glue:GetSecurityConfiguration*"
+                  - "glue:SearchTables"
+                  - "lambda:GetFunction*"
+                  - "logs:FilterLogEvents"
+                  - "lightsail:GetRelationalDatabases"
+                  - "macie2:GetMacieSession"
+                  - "macie2:GetAutomatedDiscoveryConfiguration"
+                  - "s3:GetAccountPublicAccessBlock"
+                  - "shield:DescribeProtection"
+                  - "shield:GetSubscriptionState"
+                  - "securityhub:BatchImportFindings"
+                  - "securityhub:GetFindings"
+                  - "servicecatalog:Describe*"
+                  - "servicecatalog:List*"
+                  - "ssm:GetDocument"
+                  - "ssm-incidents:List*"
+                  - "states:ListTagsForResource"
+                  - "support:Describe*"
+                  - "tag:GetTagKeys"
+                  - "wellarchitected:List*"
+                Resource: "*"
+              - Sid: AllowAPIGatewayReadOnly
+                Effect: Allow
+                Action:
+                  - "apigateway:GET"
+                Resource:
+                  - "arn:*:apigateway:*::/restapis/*"
+                  - "arn:*:apigateway:*::/apis/*"
+      Tags:
+        - Key: "Service"
+          Value: "https://prowler.com"
+        - Key: "Support"
+          Value: "support@prowler.com"
+        - Key: "CloudFormation"
+          Value: "true"
+        - Key: "Name"
+          Value: "ProwlerScan"
