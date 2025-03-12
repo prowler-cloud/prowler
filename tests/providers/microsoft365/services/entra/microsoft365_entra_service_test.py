@@ -11,6 +11,7 @@ from prowler.providers.microsoft365.services.entra.entra_service import (
     Conditions,
     DefaultUserRolePermissions,
     Entra,
+    GrantControlOperator,
     GrantControls,
     Organization,
     PersistentBrowser,
@@ -71,7 +72,8 @@ async def mock_entra_get_conditional_access_policies(_):
                 ),
             ),
             grant_controls=GrantControls(
-                built_in_controls=[ConditionalAccessGrantControl.BLOCK]
+                built_in_controls=[ConditionalAccessGrantControl.BLOCK],
+                operator=GrantControlOperator.OR,
             ),
             session_controls=SessionControls(
                 persistent_browser=PersistentBrowser(
@@ -169,7 +171,8 @@ class Test_Entra_Service:
                     ),
                 ),
                 grant_controls=GrantControls(
-                    built_in_controls=[ConditionalAccessGrantControl.BLOCK]
+                    built_in_controls=[ConditionalAccessGrantControl.BLOCK],
+                    operator=GrantControlOperator.OR,
                 ),
                 session_controls=SessionControls(
                     persistent_browser=PersistentBrowser(
