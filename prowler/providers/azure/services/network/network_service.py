@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List
+from typing import List, Optional
 
 from azure.mgmt.network import NetworkManagementClient
 
@@ -33,15 +33,10 @@ class Network(AzureService):
                                 SecurityRule(
                                     id=rule.id,
                                     name=rule.name,
-                                    destination_port_range=getattr(
-                                        rule, "destination_port_range", ""
-                                    ),
-                                    protocol=getattr(rule, "protocol", ""),
-                                    source_address_prefix=getattr(
-                                        rule, "source_address_prefix", ""
-                                    ),
-                                    access=getattr(rule, "access", "Allow"),
-                                    direction=getattr(rule, "direction", "Inbound"),
+                                    destination_port_range=rule.destination_port_range,
+                                    protocol=rule.protocol,
+                                    access=rule.access,
+                                    direction=rule.direction,
                                 )
                                 for rule in getattr(
                                     security_group, "security_rules", []
@@ -168,11 +163,11 @@ class NetworkWatcher:
 class SecurityRule:
     id: str
     name: str
-    destination_port_range: str
-    protocol: str
-    source_address_prefix: str
-    access: str
-    direction: str
+    destination_port_range: Optional[str]
+    protocol: Optional[str]
+    source_address_prefix: Optional[str]
+    access: Optional[str]
+    direction: Optional[str]
 
 
 @dataclass
