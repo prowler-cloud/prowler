@@ -14,6 +14,16 @@ DATABASES = {
         "HOST": env("POSTGRES_HOST", default="postgres-db"),
         "PORT": env("POSTGRES_PORT", default="5432"),
     },
+    "prowler_user_read": {
+        "ENGINE": "psqlextra.backend",
+        "NAME": env("POSTGRES_DB", default="prowler_db"),
+        "USER": env("POSTGRES_USER", default="prowler_user"),
+        "PASSWORD": env("POSTGRES_PASSWORD", default="prowler"),
+        "HOST": env(
+            "POSTGRES_HOST_READ_ONLY", env("POSTGRES_HOST", default="postgres-db")
+        ),
+        "PORT": env("POSTGRES_PORT_READ_ONLY", env("POSTGRES_PORT", default="5432")),
+    },
     "admin": {
         "ENGINE": "psqlextra.backend",
         "NAME": env("POSTGRES_DB", default="prowler_db"),
@@ -21,6 +31,16 @@ DATABASES = {
         "PASSWORD": env("POSTGRES_ADMIN_PASSWORD", default="S3cret"),
         "HOST": env("POSTGRES_HOST", default="postgres-db"),
         "PORT": env("POSTGRES_PORT", default="5432"),
+    },
+    "admin_read": {
+        "ENGINE": "psqlextra.backend",
+        "NAME": env("POSTGRES_DB", default="prowler_db"),
+        "USER": env("POSTGRES_ADMIN_USER", default="prowler"),
+        "PASSWORD": env("POSTGRES_ADMIN_PASSWORD", default="S3cret"),
+        "HOST": env(
+            "POSTGRES_HOST_READ_ONLY", env("POSTGRES_HOST", default="postgres-db")
+        ),
+        "PORT": env("POSTGRES_PORT_READ_ONLY", env("POSTGRES_PORT", default="5432")),
     },
 }
 DATABASES["default"] = DATABASES["prowler_user"]
