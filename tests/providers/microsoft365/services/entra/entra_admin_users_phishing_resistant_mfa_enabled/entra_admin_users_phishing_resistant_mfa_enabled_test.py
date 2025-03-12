@@ -3,6 +3,7 @@ from uuid import uuid4
 
 from prowler.providers.microsoft365.services.entra.entra_service import (
     ApplicationsConditions,
+    AuthenticationStrength,
     ConditionalAccessGrantControl,
     ConditionalAccessPolicyState,
     Conditions,
@@ -47,15 +48,16 @@ class Test_entra_admin_users_phishing_resistant_mfa_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "No Conditional Access Policy limits Entra Admin Center access to administrative roles."
+                == "No Conditional Access Policy requires Phishing-resistant MFA strength for admin users."
             )
             assert result[0].resource == {}
             assert result[0].resource_name == "Conditional Access Policies"
             assert result[0].resource_id == "conditionalAccessPolicies"
             assert result[0].location == "global"
 
-    def test_entra_admin_center_limited_access_disabled(self):
+    def test_entra_phishing_resistant_mfa_strength_disabled(self):
         id = str(uuid4())
+        display_name = "Test"
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
@@ -80,22 +82,41 @@ class Test_entra_admin_users_phishing_resistant_mfa_enabled:
             entra_client.conditional_access_policies = {
                 id: ConditionalAccessPolicy(
                     id=id,
-                    display_name="Test",
+                    display_name=display_name,
                     conditions=Conditions(
                         application_conditions=ApplicationsConditions(
-                            included_applications=[], excluded_applications=[]
+                            included_applications=["All"],
+                            excluded_applications=[],
                         ),
                         user_conditions=UsersConditions(
                             included_groups=[],
                             excluded_groups=[],
-                            included_users=[],
+                            included_users=["All"],
                             excluded_users=[],
-                            included_roles=[],
+                            included_roles=[
+                                "9b895d92-2cd3-44c7-9d02-a6ac2d5ea5c3",
+                                "c4e39bd9-1100-46d3-8c65-fb160da0071f",
+                                "b0f54661-2d74-4c50-afa3-1ec803f12efe",
+                                "158c047a-c907-4556-b7ef-446551a6b5f7",
+                                "b1be1c3e-b65d-4f19-8427-f6fa0d97feb9",
+                                "29232cdf-9323-42fd-ade2-1d097af3e4de",
+                                "62e90394-69f5-4237-9190-012177145e10",
+                                "f2ef992c-3afb-46b9-b7cf-a126ee74c451",
+                                "729827e3-9c14-49f7-bb1b-9608f156bbb8",
+                                "966707d0-3269-4727-9be2-8c3a10f19b9d",
+                                "7be44c8a-adaf-4e2a-84d6-ab2649e08a13",
+                                "e8611ab8-c189-46e8-94e1-60213ab1f814",
+                                "194ae4cb-b126-40b2-bd5b-6091b380977d",
+                                "f28a1f50-f6e7-4571-818b-6a12f2af6b6c",
+                                "fe930be7-5e62-47db-91af-98c3a49a38b1",
+                            ],
                             excluded_roles=[],
                         ),
                     ),
                     grant_controls=GrantControls(
-                        built_in_controls=[], operator=GrantControlOperator.AND
+                        built_in_controls=[ConditionalAccessGrantControl.BLOCK],
+                        operator=GrantControlOperator.AND,
+                        authentication_strength=AuthenticationStrength.PHISHING_RESISTANT_MFA,
                     ),
                     session_controls=SessionControls(
                         persistent_browser=PersistentBrowser(
@@ -118,14 +139,14 @@ class Test_entra_admin_users_phishing_resistant_mfa_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "No Conditional Access Policy limits Entra Admin Center access to administrative roles."
+                == "No Conditional Access Policy requires Phishing-resistant MFA strength for admin users."
             )
             assert result[0].resource == {}
             assert result[0].resource_name == "Conditional Access Policies"
             assert result[0].resource_id == "conditionalAccessPolicies"
             assert result[0].location == "global"
 
-    def test_entra_admin_center_limited_access_enabled_for_reporting(self):
+    def test_entra_phishing_resistant_mfa_strength_enabled_for_reporting(self):
         id = str(uuid4())
         display_name = "Test"
         entra_client = mock.MagicMock
@@ -155,7 +176,7 @@ class Test_entra_admin_users_phishing_resistant_mfa_enabled:
                     display_name=display_name,
                     conditions=Conditions(
                         application_conditions=ApplicationsConditions(
-                            included_applications=["MicrosoftAdminPortals"],
+                            included_applications=["All"],
                             excluded_applications=[],
                         ),
                         user_conditions=UsersConditions(
@@ -163,13 +184,30 @@ class Test_entra_admin_users_phishing_resistant_mfa_enabled:
                             excluded_groups=[],
                             included_users=["All"],
                             excluded_users=[],
-                            included_roles=[],
-                            excluded_roles=["9b895d92-2cd3-44c7-9d02-a6ac2d5ea5c3"],
+                            included_roles=[
+                                "9b895d92-2cd3-44c7-9d02-a6ac2d5ea5c3",
+                                "c4e39bd9-1100-46d3-8c65-fb160da0071f",
+                                "b0f54661-2d74-4c50-afa3-1ec803f12efe",
+                                "158c047a-c907-4556-b7ef-446551a6b5f7",
+                                "b1be1c3e-b65d-4f19-8427-f6fa0d97feb9",
+                                "29232cdf-9323-42fd-ade2-1d097af3e4de",
+                                "62e90394-69f5-4237-9190-012177145e10",
+                                "f2ef992c-3afb-46b9-b7cf-a126ee74c451",
+                                "729827e3-9c14-49f7-bb1b-9608f156bbb8",
+                                "966707d0-3269-4727-9be2-8c3a10f19b9d",
+                                "7be44c8a-adaf-4e2a-84d6-ab2649e08a13",
+                                "e8611ab8-c189-46e8-94e1-60213ab1f814",
+                                "194ae4cb-b126-40b2-bd5b-6091b380977d",
+                                "f28a1f50-f6e7-4571-818b-6a12f2af6b6c",
+                                "fe930be7-5e62-47db-91af-98c3a49a38b1",
+                            ],
+                            excluded_roles=[],
                         ),
                     ),
                     grant_controls=GrantControls(
                         built_in_controls=[ConditionalAccessGrantControl.BLOCK],
                         operator=GrantControlOperator.AND,
+                        authentication_strength=AuthenticationStrength.PHISHING_RESISTANT_MFA,
                     ),
                     session_controls=SessionControls(
                         persistent_browser=PersistentBrowser(
@@ -192,7 +230,7 @@ class Test_entra_admin_users_phishing_resistant_mfa_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Conditional Access Policy '{display_name}' reports Entra Admin Center access to administrative roles but does not limit it."
+                == f"Conditional Access Policy '{display_name}' reports Phishing-resistant MFA strength for admin users but does not require it."
             )
             assert (
                 result[0].resource
@@ -202,7 +240,7 @@ class Test_entra_admin_users_phishing_resistant_mfa_enabled:
             assert result[0].resource_id == id
             assert result[0].location == "global"
 
-    def test_entra_admin_center_limited_access_enabled(self):
+    def test_entra_phishing_resistant_mfa_strength_enabled(self):
         id = str(uuid4())
         display_name = "Test"
         entra_client = mock.MagicMock
@@ -232,7 +270,7 @@ class Test_entra_admin_users_phishing_resistant_mfa_enabled:
                     display_name=display_name,
                     conditions=Conditions(
                         application_conditions=ApplicationsConditions(
-                            included_applications=["MicrosoftAdminPortals"],
+                            included_applications=["All"],
                             excluded_applications=[],
                         ),
                         user_conditions=UsersConditions(
@@ -240,13 +278,30 @@ class Test_entra_admin_users_phishing_resistant_mfa_enabled:
                             excluded_groups=[],
                             included_users=["All"],
                             excluded_users=[],
-                            included_roles=[],
-                            excluded_roles=["9b895d92-2cd3-44c7-9d02-a6ac2d5ea5c3"],
+                            included_roles=[
+                                "9b895d92-2cd3-44c7-9d02-a6ac2d5ea5c3",
+                                "c4e39bd9-1100-46d3-8c65-fb160da0071f",
+                                "b0f54661-2d74-4c50-afa3-1ec803f12efe",
+                                "158c047a-c907-4556-b7ef-446551a6b5f7",
+                                "b1be1c3e-b65d-4f19-8427-f6fa0d97feb9",
+                                "29232cdf-9323-42fd-ade2-1d097af3e4de",
+                                "62e90394-69f5-4237-9190-012177145e10",
+                                "f2ef992c-3afb-46b9-b7cf-a126ee74c451",
+                                "729827e3-9c14-49f7-bb1b-9608f156bbb8",
+                                "966707d0-3269-4727-9be2-8c3a10f19b9d",
+                                "7be44c8a-adaf-4e2a-84d6-ab2649e08a13",
+                                "e8611ab8-c189-46e8-94e1-60213ab1f814",
+                                "194ae4cb-b126-40b2-bd5b-6091b380977d",
+                                "f28a1f50-f6e7-4571-818b-6a12f2af6b6c",
+                                "fe930be7-5e62-47db-91af-98c3a49a38b1",
+                            ],
+                            excluded_roles=[],
                         ),
                     ),
                     grant_controls=GrantControls(
                         built_in_controls=[ConditionalAccessGrantControl.BLOCK],
                         operator=GrantControlOperator.AND,
+                        authentication_strength=AuthenticationStrength.PHISHING_RESISTANT_MFA,
                     ),
                     session_controls=SessionControls(
                         persistent_browser=PersistentBrowser(
@@ -269,7 +324,7 @@ class Test_entra_admin_users_phishing_resistant_mfa_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Conditional Access Policy '{display_name}' limits Entra Admin Center access to administrative roles."
+                == f"Conditional Access Policy '{display_name}' requires Phishing-resistant MFA strength for admin users."
             )
             assert (
                 result[0].resource
