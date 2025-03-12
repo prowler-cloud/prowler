@@ -9,6 +9,10 @@ All notable changes to the **Prowler API** are documented in this file.
 ### Fixed
 - Fixed a race condition when deleting export files after the S3 upload [(#7172)](https://github.com/prowler-cloud/prowler/pull/7172).
 
+### Added
+
+- Support for developing new integrations [(#7167)](https://github.com/prowler-cloud/prowler/pull/7167).
+
 ---
 
 ## [v1.5.0] (Prowler v5.4.0)
@@ -29,6 +33,6 @@ All notable changes to the **Prowler API** are documented in this file.
 - Daily scheduled scan instances are now created beforehand with `SCHEDULED` state [(#6700)](https://github.com/prowler-cloud/prowler/pull/6700).
 - Findings endpoints now require at least one date filter [(#6800)](https://github.com/prowler-cloud/prowler/pull/6800).
 - Findings metadata endpoint received a performance improvement [(#6863)](https://github.com/prowler-cloud/prowler/pull/6863).
-- Increase the allowed length of the provider UID for Kubernetes providers [(#6869)](https://github.com/prowler-cloud/prowler/pull/6869).
+- Increased the allowed length of the provider UID for Kubernetes providers [(#6869)](https://github.com/prowler-cloud/prowler/pull/6869).
 
 ---
