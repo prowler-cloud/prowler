@@ -64,7 +64,7 @@ class entra_managed_device_required_for_mfa_registration(Check):
                     report.status_extended = f"Conditional Access Policy '{policy.display_name}' reports the requirement of a managed device for MFA registration but does not enforce it."
                 else:
                     report.status = "PASS"
-                    report.status_extended = f"Conditional Access Policy '{policy.display_name}' does require a managed device for for MFA registration."
+                    report.status_extended = f"Conditional Access Policy '{policy.display_name}' does require a managed device for MFA registration."
                     break
 
         findings.append(report)

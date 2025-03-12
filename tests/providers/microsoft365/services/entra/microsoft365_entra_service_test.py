@@ -18,6 +18,7 @@ from prowler.providers.microsoft365.services.entra.entra_service import (
     SignInFrequency,
     SignInFrequencyInterval,
     SignInFrequencyType,
+    UserAction,
     UsersConditions,
 )
 from tests.providers.microsoft365.microsoft365_fixtures import (
@@ -50,6 +51,7 @@ async def mock_entra_get_conditional_access_policies(_):
                 application_conditions=ApplicationsConditions(
                     included_applications=["app-1", "app-2"],
                     excluded_applications=["app-3", "app-4"],
+                    included_user_actions=[UserAction.REGISTER_SECURITY_INFO],
                 ),
                 user_conditions=UsersConditions(
                     included_groups=["group-1", "group-2"],
@@ -149,6 +151,7 @@ class Test_Entra_Service:
                     application_conditions=ApplicationsConditions(
                         included_applications=["app-1", "app-2"],
                         excluded_applications=["app-3", "app-4"],
+                        included_user_actions=[UserAction.REGISTER_SECURITY_INFO],
                     ),
                     user_conditions=UsersConditions(
                         included_groups=["group-1", "group-2"],
