@@ -84,7 +84,9 @@ class Test_entra_identity_protection_user_risk_enabled:
                     display_name="Test",
                     conditions=Conditions(
                         application_conditions=ApplicationsConditions(
-                            included_applications=[], excluded_applications=[]
+                            included_applications=[],
+                            excluded_applications=[],
+                            included_user_actions=[],
                         ),
                         user_conditions=UsersConditions(
                             included_groups=[],
@@ -159,6 +161,7 @@ class Test_entra_identity_protection_user_risk_enabled:
                         application_conditions=ApplicationsConditions(
                             included_applications=["All"],
                             excluded_applications=[],
+                            included_user_actions=[],
                         ),
                         user_conditions=UsersConditions(
                             included_groups=[],
@@ -240,6 +243,7 @@ class Test_entra_identity_protection_user_risk_enabled:
                         application_conditions=ApplicationsConditions(
                             included_applications=["All"],
                             excluded_applications=[],
+                            included_user_actions=[],
                         ),
                         user_conditions=UsersConditions(
                             included_groups=[],
@@ -321,6 +325,7 @@ class Test_entra_identity_protection_user_risk_enabled:
                         application_conditions=ApplicationsConditions(
                             included_applications=["All"],
                             excluded_applications=[],
+                            included_user_actions=[],
                         ),
                         user_conditions=UsersConditions(
                             included_groups=[],
