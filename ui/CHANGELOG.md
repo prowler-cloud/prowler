@@ -6,6 +6,11 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### [v1.5.0] (Prowler v5.5.0 - UNRELEASED)
 
+#### 🚀 Added
+
+- Added `one-time scan` feature: Adds support for single scan execution. [(#7188)](https://github.com/prowler-cloud/prowler/pull/7188)
+- Accepted invitations can no longer be edited. [(#7198)](https://github.com/prowler-cloud/prowler/pull/7198)
+
 #### 🔄 Changed
 
 - Tweak styles for compliance cards. [(#7148)](https://github.com/prowler-cloud/prowler/pull/7148).

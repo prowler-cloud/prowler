@@ -26,7 +26,6 @@ export const LaunchScanWorkflow = ({
 }: {
   providers: ProviderInfo[];
 }) => {
-  console.log("providers from launch scan workflow", providers);
   const formSchema = onDemandScanFormSchema();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),

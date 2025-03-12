@@ -13,6 +13,7 @@ from prowler.providers.microsoft365.services.entra.entra_service import (
     Entra,
     GrantControlOperator,
     GrantControls,
+    Organization,
     PersistentBrowser,
     SessionControls,
     SignInFrequency,
@@ -39,6 +40,16 @@ async def mock_entra_get_authorization_policy(_):
             allowed_to_read_other_users=True,
         ),
     )
+
+
+async def mock_entra_get_organization(_):
+    return [
+        Organization(
+            id="org1",
+            name="Organization 1",
+            on_premises_sync_enabled=True,
+        )
+    ]
 
 
 async def mock_entra_get_conditional_access_policies(_):
@@ -205,3 +216,14 @@ class Test_Entra_Service:
         assert entra_client.admin_consent_policy.notify_reviewers
         assert entra_client.admin_consent_policy.email_reminders_to_reviewers is False
         assert entra_client.admin_consent_policy.duration_in_days == 30
+
+    @patch(
+        "prowler.providers.microsoft365.services.entra.entra_service.Entra._get_organization",
+        new=mock_entra_get_organization,
+    )
+    def test_get_organization(self):
+        entra_client = Entra(set_mocked_microsoft365_provider())
+        assert len(entra_client.organizations) == 1
+        assert entra_client.organizations[0].id == "org1"
+        assert entra_client.organizations[0].name == "Organization 1"
+        assert entra_client.organizations[0].on_premises_sync_enabled
