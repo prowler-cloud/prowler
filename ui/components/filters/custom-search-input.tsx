@@ -43,6 +43,9 @@ export const CustomSearchInput: React.FC = () => {
   return (
     <Input
       variant="flat"
+      classNames={{
+        label: "tracking-tight font-light !text-default-600 text-sm !z-0 pb-1",
+      }}
       aria-label="Search"
       label="Search"
       placeholder="Search..."
