@@ -18,6 +18,7 @@ WORKDIR /home/prowler
 COPY prowler/  /home/prowler/prowler/
 COPY dashboard/ /home/prowler/dashboard/
 COPY pyproject.toml /home/prowler
+COPY README.md /home/prowler/
 
 # Install Python dependencies
 ENV HOME='/home/prowler'
