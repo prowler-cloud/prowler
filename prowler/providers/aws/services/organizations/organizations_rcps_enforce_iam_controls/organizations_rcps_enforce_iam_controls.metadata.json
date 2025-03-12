@@ -1,0 +1,38 @@
+{
+  "Provider": "aws",
+  "CheckID": "organizations_rcps_enforce_iam_controls",
+  "CheckTitle": "Check if Resource Control Policies enforce IAM security controls",
+  "CheckType": [
+    "Identity and Access Management"
+  ],
+  "ServiceName": "organizations",
+  "SubServiceName": "rcp",
+  "ResourceIdTemplate": "arn:partition:service::account-id:organization/organization-id",
+  "Severity": "high",
+  "ResourceType": "Other",
+  "Description": "Check if AWS Organization is using Resource Control Policies to enforce IAM security controls in alignment with NIST 800-53 AC-2, AC-3, AC-6, and IA-2 controls.",
+  "Risk": "Without enforced IAM security controls, organizations risk privilege escalation, excessive permissions, and inadequate access control. NIST 800-53 requires proper account management, access enforcement, least privilege implementation, and identification and authentication mechanisms.",
+  "RelatedUrl": "https://csrc.nist.gov/publications/detail/sp/800-53/rev-5/final",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws organizations create-policy --name 'IAMSecurityRCP' --description 'Resource Control Policy to enforce IAM security controls' --type RESOURCE_CONTROL_POLICY --content file://iamSecurityRCP.json",
+      "NativeIaC": "",
+      "Other": "Example RCP content:\n{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Sid\": \"RequireMFAForIAMUsers\",\n      \"Effect\": \"Deny\",\n      \"Action\": [\n        \"iam:CreateLoginProfile\",\n        \"iam:CreateAccessKey\"\n      ],\n      \"Resource\": \"*\",\n      \"Condition\": {\n        \"Bool\": {\n          \"aws:MultiFactorAuthPresent\": \"false\"\n        }\n      }\n    },\n    {\n      \"Sid\": \"PreventPermissionEscalation\",\n      \"Effect\": \"Deny\",\n      \"Action\": [\n        \"iam:AttachRolePolicy\",\n        \"iam:PutRolePolicy\"\n      ],\n      \"Resource\": \"*\",\n      \"Condition\": {\n        \"ArnNotLike\": {\n          \"aws:PrincipalArn\": \"arn:aws:iam::*:role/ApprovedAdminRole\"\n        }\n      }\n    }\n  ]\n}",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Create Resource Control Policies that enforce IAM security controls such as requiring MFA, preventing privilege escalation, enforcing password policies, and implementing least privilege. This aligns with NIST 800-53 controls AC-2 (Account Management), AC-3 (Access Enforcement), AC-6 (Least Privilege), and IA-2 (Identification and Authentication).",
+      "Url": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_rcps_examples.html"
+    }
+  },
+  "Categories": [
+    "governance",
+    "compliance",
+    "iam"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "organizations_resource_control_policies_enabled"
+  ],
+  "Notes": "This check specifically looks for RCPs that enforce IAM security controls in alignment with NIST 800-53 AC-2, AC-3, AC-6, and IA-2 controls."
+}

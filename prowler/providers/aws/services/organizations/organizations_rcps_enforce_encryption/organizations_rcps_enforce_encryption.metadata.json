@@ -1,0 +1,39 @@
+{
+  "Provider": "aws",
+  "CheckID": "organizations_rcps_enforce_encryption",
+  "CheckTitle": "Check if Resource Control Policies enforce encryption for AWS resources",
+  "CheckType": [
+    "Data Protection",
+    "Encryption"
+  ],
+  "ServiceName": "organizations",
+  "SubServiceName": "rcp",
+  "ResourceIdTemplate": "arn:partition:service::account-id:organization/organization-id",
+  "Severity": "high",
+  "ResourceType": "Other",
+  "Description": "Check if AWS Organization is using Resource Control Policies to enforce encryption requirements across various AWS services in alignment with NIST 800-53 SC-13 and SC-28 controls.",
+  "Risk": "Without enforced encryption requirements at the resource level, sensitive data may be stored unencrypted, leading to potential data breaches and compliance violations including NIST 800-53, which requires protection of information at rest and in transit.",
+  "RelatedUrl": "https://csrc.nist.gov/publications/detail/sp/800-53/rev-5/final",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws organizations create-policy --name 'EncryptionRCP' --description 'Resource Control Policy to enforce encryption across resources' --type RESOURCE_CONTROL_POLICY --content file://encryptionRCP.json",
+      "NativeIaC": "",
+      "Other": "Example RCP content:\n{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Sid\": \"RequireS3Encryption\",\n      \"Effect\": \"Deny\",\n      \"Action\": [\n        \"s3:PutObject\"\n      ],\n      \"Resource\": \"*\",\n      \"Condition\": {\n        \"Null\": {\n          \"s3:x-amz-server-side-encryption\": \"true\"\n        }\n      }\n    },\n    {\n      \"Sid\": \"RequireEBSEncryption\",\n      \"Effect\": \"Deny\",\n      \"Action\": [\n        \"ec2:CreateVolume\"\n      ],\n      \"Resource\": \"*\",\n      \"Condition\": {\n        \"Bool\": {\n          \"ec2:Encrypted\": \"false\"\n        }\n      }\n    }\n  ]\n}",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Create Resource Control Policies that enforce encryption requirements for data at rest and in transit across critical AWS services. This aligns with NIST 800-53 controls SC-13 (Cryptographic Protection) and SC-28 (Protection of Information at Rest).",
+      "Url": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_rcps_examples.html"
+    }
+  },
+  "Categories": [
+    "encryption",
+    "governance",
+    "compliance"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "organizations_resource_control_policies_enabled"
+  ],
+  "Notes": "This check specifically looks for RCPs that enforce encryption requirements in alignment with NIST 800-53 controls SC-13 and SC-28."
+}

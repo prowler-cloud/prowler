@@ -1,0 +1,38 @@
+{
+  "Provider": "aws",
+  "CheckID": "organizations_rcps_enforce_logging_monitoring",
+  "CheckTitle": "Check if Resource Control Policies enforce logging and monitoring",
+  "CheckType": [
+    "Logging and Monitoring"
+  ],
+  "ServiceName": "organizations",
+  "SubServiceName": "rcp",
+  "ResourceIdTemplate": "arn:partition:service::account-id:organization/organization-id",
+  "Severity": "medium",
+  "ResourceType": "Other",
+  "Description": "Check if AWS Organization is using Resource Control Policies to enforce logging and monitoring controls in alignment with NIST 800-53 AU-2, AU-3, AU-8, and AU-9 controls.",
+  "Risk": "Without enforced logging and monitoring controls, organizations risk inability to detect and respond to security incidents, unauthorized activities, and compliance violations. NIST 800-53 requires proper audit event selection, content, time stamps, and protection.",
+  "RelatedUrl": "https://csrc.nist.gov/publications/detail/sp/800-53/rev-5/final",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws organizations create-policy --name 'LoggingMonitoringRCP' --description 'Resource Control Policy to enforce logging and monitoring controls' --type RESOURCE_CONTROL_POLICY --content file://loggingMonitoringRCP.json",
+      "NativeIaC": "",
+      "Other": "Example RCP content:\n{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Sid\": \"RequireCloudTrailLogging\",\n      \"Effect\": \"Deny\",\n      \"Action\": [\n        \"cloudtrail:StopLogging\",\n        \"cloudtrail:DeleteTrail\",\n        \"cloudtrail:UpdateTrail\"\n      ],\n      \"Resource\": \"*\",\n      \"Condition\": {\n        \"StringEquals\": {\n          \"aws:ResourceTag/Compliance\": \"Required\"\n        }\n      }\n    },\n    {\n      \"Sid\": \"RequireS3BucketLogging\",\n      \"Effect\": \"Deny\",\n      \"Action\": [\n        \"s3:PutBucketLogging\"\n      ],\n      \"Resource\": \"*\",\n      \"Condition\": {\n        \"Null\": {\n          \"s3:LoggingEnabled\": \"true\"\n        }\n      }\n    }\n  ]\n}",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Create Resource Control Policies that enforce logging and monitoring controls such as preventing disablement of CloudTrail, requiring server access logging for S3 buckets, and requiring CloudWatch log groups. This aligns with NIST 800-53 controls AU-2 (Audit Events), AU-3 (Content of Audit Records), AU-8 (Time Stamps), and AU-9 (Protection of Audit Information).",
+      "Url": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_rcps_examples.html"
+    }
+  },
+  "Categories": [
+    "governance",
+    "compliance",
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "organizations_resource_control_policies_enabled"
+  ],
+  "Notes": "This check specifically looks for RCPs that enforce logging and monitoring controls in alignment with NIST 800-53 AU-2, AU-3, AU-8, and AU-9 controls."
+}
