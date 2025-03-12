@@ -8,7 +8,7 @@ from prowler.providers.microsoft365.services.entra.entra_service import (
 
 
 class entra_managed_device_required_for_authentication(Check):
-    """Check if Conditional Access policies deny access to the Microsoft 365
+    """Check if Conditional Access policies enforce managed device requirement for authentication.
 
     This check ensures that Conditional Access policies are in place to enforce managed device requirement for authentication.
     """
