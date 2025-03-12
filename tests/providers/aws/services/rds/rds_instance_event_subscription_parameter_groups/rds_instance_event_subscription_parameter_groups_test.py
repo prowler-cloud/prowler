@@ -47,6 +47,7 @@ class Test_rds_instance__no_event_subscriptions:
                 assert result[0].resource_id == AWS_ACCOUNT_NUMBER
                 assert result[0].resource_arn == RDS_ACCOUNT_ARN
                 assert result[0].resource_tags == []
+                assert result[0].resource == {}
 
     @mock_aws
     def test_rds_no_events_ignoring(self):
@@ -247,3 +248,4 @@ class Test_rds_instance__no_event_subscriptions:
                 assert result[0].resource_id == AWS_ACCOUNT_NUMBER
                 assert result[0].resource_arn == RDS_ACCOUNT_ARN
                 assert result[0].resource_tags == []
+                assert result[0].resource == {}
