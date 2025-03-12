@@ -24,15 +24,19 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_54
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_client",
-            new=EC2(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.vpc_client",
-            new=VPC(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_client",
+                new=EC2(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.vpc_client",
+                new=VPC(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432 import (
@@ -80,15 +84,19 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_54
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_client",
-            new=EC2(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.vpc_client",
-            new=VPC(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_client",
+                new=EC2(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.vpc_client",
+                new=VPC(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432 import (
@@ -147,15 +155,19 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_54
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_client",
-            new=EC2(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.vpc_client",
-            new=VPC(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_client",
+                new=EC2(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.vpc_client",
+                new=VPC(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432 import (
@@ -219,15 +231,19 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_54
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_client",
-            new=EC2(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.vpc_client",
-            new=VPC(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_client",
+                new=EC2(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.vpc_client",
+                new=VPC(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432 import (
@@ -271,15 +287,19 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_54
             scan_unused_services=False,
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_client",
-            new=EC2(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.vpc_client",
-            new=VPC(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_client",
+                new=EC2(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.vpc_client",
+                new=VPC(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432 import (
@@ -314,15 +334,19 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_54
             scan_unused_services=False,
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_client",
-            new=EC2(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.vpc_client",
-            new=VPC(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_client",
+                new=EC2(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.vpc_client",
+                new=VPC(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432 import (
@@ -373,16 +397,20 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_54
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_all_ports.ec2_securitygroup_allow_ingress_from_internet_to_all_ports.ec2_client",
-            new=EC2(aws_provider),
-        ) as ec2_client_instance, mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_all_ports.ec2_securitygroup_allow_ingress_from_internet_to_all_ports.vpc_client",
-            new=VPC(aws_provider),
-        ) as vpc_client_instance:
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_all_ports.ec2_securitygroup_allow_ingress_from_internet_to_all_ports.ec2_client",
+                new=EC2(aws_provider),
+            ) as ec2_client_instance,
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_all_ports.ec2_securitygroup_allow_ingress_from_internet_to_all_ports.vpc_client",
+                new=VPC(aws_provider),
+            ) as vpc_client_instance,
+        ):
             # Run check for all ports
             from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_all_ports.ec2_securitygroup_allow_ingress_from_internet_to_all_ports import (
                 ec2_securitygroup_allow_ingress_from_internet_to_all_ports,
@@ -400,12 +428,15 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_54
             )
 
             # use the same mock objects for the specific port check
-            with mock.patch(
-                "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_client",
-                new=ec2_client_instance,
-            ), mock.patch(
-                "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.vpc_client",
-                new=vpc_client_instance,
+            with (
+                mock.patch(
+                    "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_client",
+                    new=ec2_client_instance,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.vpc_client",
+                    new=vpc_client_instance,
+                ),
             ):
                 # Now run the specific port check
                 from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432 import (

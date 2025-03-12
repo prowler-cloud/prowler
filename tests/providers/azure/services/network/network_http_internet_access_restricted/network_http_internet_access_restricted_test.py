@@ -15,15 +15,19 @@ class Test_network_http_internet_access_restricted:
         network_client = mock.MagicMock
         network_client.security_groups = {}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.network.network_service.Network",
-            new=network_client,
-        ) as service_client, mock.patch(
-            "prowler.providers.azure.services.network.network_client.network_client",
-            new=service_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.network.network_service.Network",
+                new=network_client,
+            ) as service_client,
+            mock.patch(
+                "prowler.providers.azure.services.network.network_client.network_client",
+                new=service_client,
+            ),
         ):
             from prowler.providers.azure.services.network.network_http_internet_access_restricted.network_http_internet_access_restricted import (
                 network_http_internet_access_restricted,
@@ -57,15 +61,19 @@ class Test_network_http_internet_access_restricted:
             ]
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.network.network_service.Network",
-            new=network_client,
-        ) as service_client, mock.patch(
-            "prowler.providers.azure.services.network.network_client.network_client",
-            new=service_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.network.network_service.Network",
+                new=network_client,
+            ) as service_client,
+            mock.patch(
+                "prowler.providers.azure.services.network.network_client.network_client",
+                new=service_client,
+            ),
         ):
             from prowler.providers.azure.services.network.network_http_internet_access_restricted.network_http_internet_access_restricted import (
                 network_http_internet_access_restricted,
@@ -108,15 +116,19 @@ class Test_network_http_internet_access_restricted:
             ]
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.network.network_service.Network",
-            new=network_client,
-        ) as service_client, mock.patch(
-            "prowler.providers.azure.services.network.network_client.network_client",
-            new=service_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.network.network_service.Network",
+                new=network_client,
+            ) as service_client,
+            mock.patch(
+                "prowler.providers.azure.services.network.network_client.network_client",
+                new=service_client,
+            ),
         ):
             from prowler.providers.azure.services.network.network_http_internet_access_restricted.network_http_internet_access_restricted import (
                 network_http_internet_access_restricted,
@@ -159,15 +171,19 @@ class Test_network_http_internet_access_restricted:
             ]
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.network.network_service.Network",
-            new=network_client,
-        ) as service_client, mock.patch(
-            "prowler.providers.azure.services.network.network_client.network_client",
-            new=service_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.network.network_service.Network",
+                new=network_client,
+            ) as service_client,
+            mock.patch(
+                "prowler.providers.azure.services.network.network_client.network_client",
+                new=service_client,
+            ),
         ):
             from prowler.providers.azure.services.network.network_http_internet_access_restricted.network_http_internet_access_restricted import (
                 network_http_internet_access_restricted,
@@ -210,15 +226,19 @@ class Test_network_http_internet_access_restricted:
             ]
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.network.network_service.Network",
-            new=network_client,
-        ) as service_client, mock.patch(
-            "prowler.providers.azure.services.network.network_client.network_client",
-            new=service_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.network.network_service.Network",
+                new=network_client,
+            ) as service_client,
+            mock.patch(
+                "prowler.providers.azure.services.network.network_client.network_client",
+                new=service_client,
+            ),
         ):
             from prowler.providers.azure.services.network.network_http_internet_access_restricted.network_http_internet_access_restricted import (
                 network_http_internet_access_restricted,

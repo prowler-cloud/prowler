@@ -11,12 +11,15 @@ class Test_cloudsql_instance_automated_backups:
     def test_no_cloudsql_instances(self):
         cloudsql_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.cloudsql.cloudsql_instance_automated_backups.cloudsql_instance_automated_backups.cloudsql_client",
-            new=cloudsql_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.cloudsql.cloudsql_instance_automated_backups.cloudsql_instance_automated_backups.cloudsql_client",
+                new=cloudsql_client,
+            ),
         ):
             from prowler.providers.gcp.services.cloudsql.cloudsql_instance_automated_backups.cloudsql_instance_automated_backups import (
                 cloudsql_instance_automated_backups,
@@ -31,12 +34,15 @@ class Test_cloudsql_instance_automated_backups:
     def test_cloudsql_instance_with_automated_backups(self):
         cloudsql_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.cloudsql.cloudsql_instance_automated_backups.cloudsql_instance_automated_backups.cloudsql_client",
-            new=cloudsql_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.cloudsql.cloudsql_instance_automated_backups.cloudsql_instance_automated_backups.cloudsql_client",
+                new=cloudsql_client,
+            ),
         ):
             from prowler.providers.gcp.services.cloudsql.cloudsql_instance_automated_backups.cloudsql_instance_automated_backups import (
                 cloudsql_instance_automated_backups,
@@ -77,12 +83,15 @@ class Test_cloudsql_instance_automated_backups:
     def test_cloudsql_instance_without_automated_backups(self):
         cloudsql_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.cloudsql.cloudsql_instance_automated_backups.cloudsql_instance_automated_backups.cloudsql_client",
-            new=cloudsql_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.cloudsql.cloudsql_instance_automated_backups.cloudsql_instance_automated_backups.cloudsql_client",
+                new=cloudsql_client,
+            ),
         ):
             from prowler.providers.gcp.services.cloudsql.cloudsql_instance_automated_backups.cloudsql_instance_automated_backups import (
                 cloudsql_instance_automated_backups,
