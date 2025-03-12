@@ -53,14 +53,7 @@ class Test_sharepoint_external_sharing_managed:
             assert result[0].resource_id == DOMAIN
             assert result[0].location == "global"
             assert result[0].resource_name == "SharePoint Settings"
-            assert result[0].resource == {
-                "sharingCapability": "ExternalUserSharingOnly",
-                "sharingAllowedDomainList": ["allowed-domain.com"],
-                "sharingBlockedDomainList": ["blocked-domain.com"],
-                "sharingDomainRestrictionMode": "none",
-                "resharingEnabled": False,
-                "legacyAuth": True,
-            }
+            assert result[0].resource == sharepoint_client.settings.dict()
 
     def test_allow_list_empty(self):
         """
@@ -105,14 +98,7 @@ class Test_sharepoint_external_sharing_managed:
             assert result[0].resource_id == DOMAIN
             assert result[0].location == "global"
             assert result[0].resource_name == "SharePoint Settings"
-            assert result[0].resource == {
-                "sharingCapability": "ExternalUserSharingOnly",
-                "sharingAllowedDomainList": [],
-                "sharingBlockedDomainList": ["blocked-domain.com"],
-                "sharingDomainRestrictionMode": "allowList",
-                "resharingEnabled": False,
-                "legacyAuth": True,
-            }
+            assert result[0].resource == sharepoint_client.settings.dict()
 
     def test_block_list_empty(self):
         """
@@ -157,14 +143,7 @@ class Test_sharepoint_external_sharing_managed:
             assert result[0].resource_id == DOMAIN
             assert result[0].location == "global"
             assert result[0].resource_name == "SharePoint Settings"
-            assert result[0].resource == {
-                "sharingCapability": "ExternalUserSharingOnly",
-                "sharingAllowedDomainList": ["allowed-domain.com"],
-                "sharingBlockedDomainList": [],
-                "sharingDomainRestrictionMode": "blockList",
-                "resharingEnabled": False,
-                "legacyAuth": True,
-            }
+            assert result[0].resource == sharepoint_client.settings.dict()
 
     def test_allow_list_non_empty(self):
         """
@@ -209,14 +188,7 @@ class Test_sharepoint_external_sharing_managed:
             assert result[0].resource_id == DOMAIN
             assert result[0].location == "global"
             assert result[0].resource_name == "SharePoint Settings"
-            assert result[0].resource == {
-                "sharingCapability": "ExternalUserSharingOnly",
-                "sharingAllowedDomainList": ["allowed-domain.com"],
-                "sharingBlockedDomainList": ["blocked-domain.com"],
-                "sharingDomainRestrictionMode": "allowList",
-                "resharingEnabled": False,
-                "legacyAuth": True,
-            }
+            assert result[0].resource == sharepoint_client.settings.dict()
 
     def test_block_list_non_empty(self):
         """
@@ -261,14 +233,7 @@ class Test_sharepoint_external_sharing_managed:
             assert result[0].resource_id == DOMAIN
             assert result[0].location == "global"
             assert result[0].resource_name == "SharePoint Settings"
-            assert result[0].resource == {
-                "sharingCapability": "ExternalUserSharingOnly",
-                "sharingAllowedDomainList": ["allowed-domain.com"],
-                "sharingBlockedDomainList": ["blocked-domain.com"],
-                "sharingDomainRestrictionMode": "blockList",
-                "resharingEnabled": False,
-                "legacyAuth": True,
-            }
+            assert result[0].resource == sharepoint_client.settings.dict()
 
     def test_empty_settings(self):
         """

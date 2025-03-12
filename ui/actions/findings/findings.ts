@@ -82,17 +82,15 @@ export const getMetadataInfo = async ({
     });
 
     if (!response.ok) {
-      throw new Error(
-        `Failed to fetch services regions: ${response.statusText}`,
-      );
+      throw new Error(`Failed to fetch metadata info: ${response.statusText}`);
     }
 
-    const data = await response.json();
-    const parsedData = parseStringify(data);
+    const parsedData = parseStringify(await response.json());
+
     return parsedData;
   } catch (error) {
     // eslint-disable-next-line no-console
-    console.error("Error fetching services regions:", error);
+    console.error("Error fetching metadata info:", error);
     return undefined;
   }
 };

@@ -31,10 +31,7 @@ class entra_admin_portals_role_limited_access(Check):
         report.status_extended = "No Conditional Access Policy limits Entra Admin Center access to administrative roles."
 
         for policy in entra_client.conditional_access_policies.values():
-            if policy.state not in {
-                ConditionalAccessPolicyState.ENABLED,
-                ConditionalAccessPolicyState.ENABLED_FOR_REPORTING,
-            }:
+            if policy.state == ConditionalAccessPolicyState.DISABLED:
                 continue
 
             if not (
@@ -57,13 +54,17 @@ class entra_admin_portals_role_limited_access(Check):
             ):
                 report = CheckReportMicrosoft365(
                     metadata=self.metadata(),
-                    resource=entra_client.conditional_access_policies,
+                    resource=policy,
                     resource_name=policy.display_name,
                     resource_id=policy.id,
                 )
-                report.status = "PASS"
-                report.status_extended = f"Conditional Access Policy '{policy.display_name}' limits Entra Admin Center access to administrative roles."
-                break
+                if policy.state == ConditionalAccessPolicyState.ENABLED_FOR_REPORTING:
+                    report.status = "FAIL"
+                    report.status_extended = f"Conditional Access Policy '{policy.display_name}' reports Entra Admin Center access to administrative roles but does not limit it."
+                else:
+                    report.status = "PASS"
+                    report.status_extended = f"Conditional Access Policy '{policy.display_name}' limits Entra Admin Center access to administrative roles."
+                    break
 
         findings.append(report)
 
