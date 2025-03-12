@@ -22,7 +22,7 @@ from tests.providers.microsoft365.microsoft365_fixtures import (
 
 class Test_entra_admin_mfa_enabled_for_administrative_roles:
     def test_no_conditional_access_policies(self):
-        """No hay políticas configuradas: se espera FAIL."""
+        """No conditional access policies configured: expected FAIL."""
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
@@ -57,7 +57,7 @@ class Test_entra_admin_mfa_enabled_for_administrative_roles:
             assert result[0].resource_id == "conditionalAccessPolicies"
 
     def test_policy_disabled(self):
-        """Política en estado DISABLED: se espera que se omita y se retorne FAIL."""
+        """Policy in DISABLED state: expected to be ignored and return FAIL."""
         policy_id = str(uuid4())
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
@@ -127,9 +127,9 @@ class Test_entra_admin_mfa_enabled_for_administrative_roles:
 
     def test_policy_missing_admin_roles(self):
         """
-        Política habilitada pero que no aplica a roles administrativos:
-        No incluye 'All' en included_users ni los roles administrativos en included_roles.
-        Se espera FAIL.
+        Enabled policy that does not apply to administrative roles:
+        Does not include 'All' in included_users nor administrative roles in included_roles.
+        Expected FAIL.
         """
         policy_id = str(uuid4())
         entra_client = mock.MagicMock
@@ -200,9 +200,9 @@ class Test_entra_admin_mfa_enabled_for_administrative_roles:
 
     def test_policy_missing_application_all(self):
         """
-        Política habilitada que incluye a usuarios administrativos (por 'All')
-        pero no tiene "All" en included_applications.
-        Se espera FAIL.
+        Enabled policy that includes administrative users (via 'All')
+        but does not have "All" in included_applications.
+        Expected FAIL.
         """
         policy_id = str(uuid4())
         entra_client = mock.MagicMock
@@ -274,13 +274,13 @@ class Test_entra_admin_mfa_enabled_for_administrative_roles:
 
     def test_policy_valid(self):
         """
-        Política válida:
-         - Estado habilitado (ENABLED o ENABLED_FOR_REPORTING)
-         - Aplica a roles administrativos mediante 'All' en included_users
-         - Application conditions incluye "All"
-         - MFA está configurado en grant_controls
+        Valid policy:
+         - State enabled for reporting only
+         - Applies to administrative roles via 'All' in included_users
+         - Application conditions include "All"
+         - MFA is configured in grant_controls
 
-         Se espera PASS.
+         Expected FAIL due to is only for reporting.
         """
         policy_id = str(uuid4())
         display_name = "Valid MFA Policy"
@@ -341,8 +341,8 @@ class Test_entra_admin_mfa_enabled_for_administrative_roles:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].status == "PASS"
-            expected_status_extended = f"Conditional Access Policy '{display_name}' requires MFA for administrative roles."
+            assert result[0].status == "FAIL"
+            expected_status_extended = f"Conditional Access Policy '{display_name}' requires MFA for administrative roles. (Enabled for reporting, change to enabled so the policy is enforced)."
             assert result[0].status_extended == expected_status_extended
             assert result[0].resource == entra_client.conditional_access_policies
             assert result[0].resource_name == display_name
@@ -350,13 +350,13 @@ class Test_entra_admin_mfa_enabled_for_administrative_roles:
 
     def test_policy_valid_through_roles(self):
         """
-        Política válida:
-         - Estado habilitado (ENABLED o ENABLED_FOR_REPORTING)
-         - Aplica a roles administrativos mediante 'All' en included_users
-         - Application conditions incluye "All"
-         - MFA está configurado en grant_controls
+        Valid policy:
+         - State enabled (ENABLED)
+         - Applies to administrative roles
+         - Application conditions include "All"
+         - MFA is configured in grant_controls
 
-         Se espera PASS.
+         Expected PASS.
         """
         policy_id = str(uuid4())
         display_name = "Valid MFA Policy"
@@ -425,7 +425,7 @@ class Test_entra_admin_mfa_enabled_for_administrative_roles:
                             interval=SignInFrequencyInterval.EVERY_TIME,
                         ),
                     ),
-                    state=ConditionalAccessPolicyState.ENABLED_FOR_REPORTING,
+                    state=ConditionalAccessPolicyState.ENABLED,
                 )
             }
 
@@ -442,13 +442,13 @@ class Test_entra_admin_mfa_enabled_for_administrative_roles:
 
     def test_policy_valid_one_missing_role(self):
         """
-        Política válida:
-         - Estado habilitado (ENABLED o ENABLED_FOR_REPORTING)
-         - Aplica a roles administrativos mediante 'All' en included_users
-         - Application conditions incluye "All"
-         - MFA está configurado en grant_controls
+        Valid policy:
+         - State enabled (ENABLED or ENABLED_FOR_REPORTING)
+         - Applies to administrative roles except one
+         - Application conditions include "All"
+         - MFA is configured in grant_controls
 
-         Se espera PASS.
+         Expected FAIL.
         """
         policy_id = str(uuid4())
         display_name = "Valid MFA Policy"

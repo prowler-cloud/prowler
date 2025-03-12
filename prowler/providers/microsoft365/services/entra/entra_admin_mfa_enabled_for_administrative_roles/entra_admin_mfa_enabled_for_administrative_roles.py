@@ -43,10 +43,7 @@ class entra_admin_mfa_enabled_for_administrative_roles(Check):
         report.status_extended = "No Conditional Access Policy requiring MFA for administrative roles was found."
 
         for policy in entra_client.conditional_access_policies.values():
-            if policy.state not in {
-                ConditionalAccessPolicyState.ENABLED,
-                ConditionalAccessPolicyState.ENABLED_FOR_REPORTING,
-            }:
+            if policy.state == ConditionalAccessPolicyState.DISABLED:
                 continue
 
             if not ({admin_role.value for admin_role in AdminRoles}).issubset(
@@ -73,6 +70,7 @@ class entra_admin_mfa_enabled_for_administrative_roles(Check):
                 )
                 report.status = "PASS"
                 report.status_extended = f"Conditional Access Policy '{policy.display_name}' requires MFA for administrative roles."
+
                 if policy.state == ConditionalAccessPolicyState.ENABLED_FOR_REPORTING:
                     report.status = "FAIL"
                     report.status_extended += " (Enabled for reporting, change to enabled so the policy is enforced)."
