@@ -372,20 +372,21 @@ typing-extensions = ">=4.0.1"
 
 [[package]]
 name = "azure-mgmt-applicationinsights"
-version = "4.0.0"
+version = "4.1.0"
 description = "Microsoft Azure Application Insights Management Client Library for Python"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "azure-mgmt-applicationinsights-4.0.0.zip", hash = "sha256:50c3db05573e0cc2d56314a0556fb346ef05ec489ac000f4d720d92c6b647e06"},
-    {file = "azure_mgmt_applicationinsights-4.0.0-py3-none-any.whl", hash = "sha256:2b1ffd9a0114974455795c73a3a5d17c849e32b961d707d2db393b99254b576f"},
+    {file = "azure_mgmt_applicationinsights-4.1.0-py3-none-any.whl", hash = "sha256:9e71f29b01e505a773501451d12fd6a10482cf4b13e9ac2bff72f5380496d979"},
+    {file = "azure_mgmt_applicationinsights-4.1.0.tar.gz", hash = "sha256:15531390f12ce3d767cd3f1949af36aa39077c145c952fec4d80303c86ec7b6c"},
 ]
 
 [package.dependencies]
-azure-common = ">=1.1,<2.0"
-azure-mgmt-core = ">=1.3.2,<2.0.0"
-isodate = ">=0.6.1,<1.0.0"
+azure-common = ">=1.1"
+azure-mgmt-core = ">=1.3.2"
+isodate = ">=0.6.1"
+typing-extensions = ">=4.6.0"
 
 [[package]]
 name = "azure-mgmt-authorization"
@@ -5340,4 +5341,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">3.9.1,<3.13"
-content-hash = "0bcd0c736f7e94914fd98530742dd6b7e3fa60bc547cd4badad48e72bcf5509e"
+content-hash = "19b79a7f4513b3fad8b231150f5e4af141f05fbb9fce18afc1d19a1eaf850555"
