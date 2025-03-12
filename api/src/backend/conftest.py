@@ -890,6 +890,7 @@ def pytest_configure(config):
     # Apply the mock before the test session starts. This is necessary to avoid admin error when running the
     # 0004_rbac_missing_admin_roles migration
     patch("api.db_router.MainRouter.admin_db", new="default").start()
+    patch("api.db_router.MainRouter.admin_read", new="default").start()
 
 
 def pytest_unconfigure(config):
