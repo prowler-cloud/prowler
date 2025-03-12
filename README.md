@@ -109,7 +109,7 @@ docker compose up -d
 **Requirements**
 
 * `git` installed.
-* `poetry` installed: [poetry installation](https://python-poetry.org/docs/#installation).
+* `poetry` v2 installed: [poetry installation](https://python-poetry.org/docs/#installation).
 * `npm` installed: [npm installation](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm).
 * `Docker Compose` installed: https://docs.docker.com/compose/install/.
 

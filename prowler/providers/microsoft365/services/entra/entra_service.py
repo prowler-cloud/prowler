@@ -21,6 +21,7 @@ class Entra(Microsoft365Service):
                 self._get_conditional_access_policies(),
                 self._get_admin_consent_policy(),
                 self._get_groups(),
+                self._get_organization(),
             )
         )
 
@@ -28,6 +29,7 @@ class Entra(Microsoft365Service):
         self.conditional_access_policies = attributes[1]
         self.admin_consent_policy = attributes[2]
         self.groups = attributes[3]
+        self.organizations = attributes[4]
 
     async def _get_authorization_policy(self):
         logger.info("Entra - Getting authorization policy...")
@@ -168,6 +170,14 @@ class Entra(Microsoft365Service):
                                 )
                             ],
                         ),
+                        user_risk_levels=[
+                            RiskLevel(risk_level)
+                            for risk_level in getattr(
+                                policy.conditions,
+                                "user_risk_levels",
+                                [],
+                            )
+                        ],
                     ),
                     grant_controls=GrantControls(
                         built_in_controls=(
@@ -179,7 +189,12 @@ class Entra(Microsoft365Service):
                             ]
                             if policy.grant_controls
                             else []
-                        )
+                        ),
+                        operator=(
+                            GrantControlOperator(
+                                getattr(policy.grant_controls, "operator", "AND")
+                            )
+                        ),
                     ),
                     session_controls=SessionControls(
                         persistent_browser=PersistentBrowser(
@@ -237,6 +252,31 @@ class Entra(Microsoft365Service):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return conditional_access_policies
+
+    async def _get_organization(self):
+        logger.info("Entra - Getting organizations...")
+        organizations = []
+        try:
+            org_data = await self.client.organization.get()
+            for org in org_data.value:
+                sync_enabled = (
+                    org.on_premises_sync_enabled
+                    if org.on_premises_sync_enabled is not None
+                    else False
+                )
+
+                organization = Organization(
+                    id=org.id,
+                    name=org.display_name,
+                    on_premises_sync_enabled=sync_enabled,
+                )
+                organizations.append(organization)
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+        return organizations
 
     async def _get_admin_consent_policy(self):
         logger.info("Entra - Getting group settings...")
@@ -296,9 +336,17 @@ class UsersConditions(BaseModel):
     excluded_roles: List[str]
 
 
+class RiskLevel(Enum):
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    NO_RISK = "none"
+
+
 class Conditions(BaseModel):
     application_conditions: Optional[ApplicationsConditions]
     user_conditions: Optional[UsersConditions]
+    user_risk_levels: List[RiskLevel] = []
 
 
 class PersistentBrowser(BaseModel):
@@ -331,10 +379,18 @@ class SessionControls(BaseModel):
 class ConditionalAccessGrantControl(Enum):
     MFA = "mfa"
     BLOCK = "block"
+    DOMAIN_JOINED_DEVICE = "domainJoinedDevice"
+    PASSWORD_CHANGE = "passwordChange"
+
+
+class GrantControlOperator(Enum):
+    AND = "AND"
+    OR = "OR"
 
 
 class GrantControls(BaseModel):
     built_in_controls: List[ConditionalAccessGrantControl]
+    operator: GrantControlOperator
 
 
 class ConditionalAccessPolicy(BaseModel):
@@ -361,6 +417,12 @@ class AuthorizationPolicy(BaseModel):
     name: str
     description: str
     default_user_role_permissions: Optional[DefaultUserRolePermissions]
+
+
+class Organization(BaseModel):
+    id: str
+    name: str
+    on_premises_sync_enabled: bool
 
 
 class Group(BaseModel):

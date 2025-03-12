@@ -18,12 +18,15 @@ class Test_guardduty_eks_runtime_monitoring_enabled:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.guardduty.guardduty_eks_runtime_monitoring_enabled.guardduty_eks_runtime_monitoring_enabled.guardduty_client",
-            new=GuardDuty(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.guardduty.guardduty_eks_runtime_monitoring_enabled.guardduty_eks_runtime_monitoring_enabled.guardduty_client",
+                new=GuardDuty(aws_provider),
+            ),
         ):
 
             from prowler.providers.aws.services.guardduty.guardduty_eks_runtime_monitoring_enabled.guardduty_eks_runtime_monitoring_enabled import (
@@ -49,12 +52,15 @@ class Test_guardduty_eks_runtime_monitoring_enabled:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.guardduty.guardduty_eks_runtime_monitoring_enabled.guardduty_eks_runtime_monitoring_enabled.guardduty_client",
-            new=GuardDuty(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.guardduty.guardduty_eks_runtime_monitoring_enabled.guardduty_eks_runtime_monitoring_enabled.guardduty_client",
+                new=GuardDuty(aws_provider),
+            ),
         ):
 
             from prowler.providers.aws.services.guardduty.guardduty_eks_runtime_monitoring_enabled.guardduty_eks_runtime_monitoring_enabled import (
@@ -80,12 +86,15 @@ class Test_guardduty_eks_runtime_monitoring_enabled:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.guardduty.guardduty_eks_runtime_monitoring_enabled.guardduty_eks_runtime_monitoring_enabled.guardduty_client",
-            new=GuardDuty(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.guardduty.guardduty_eks_runtime_monitoring_enabled.guardduty_eks_runtime_monitoring_enabled.guardduty_client",
+                new=GuardDuty(aws_provider),
+            ),
         ):
 
             from prowler.providers.aws.services.guardduty.guardduty_eks_runtime_monitoring_enabled.guardduty_eks_runtime_monitoring_enabled import (
@@ -123,12 +132,15 @@ class Test_guardduty_eks_runtime_monitoring_enabled:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.guardduty.guardduty_eks_runtime_monitoring_enabled.guardduty_eks_runtime_monitoring_enabled.guardduty_client",
-            new=GuardDuty(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.guardduty.guardduty_eks_runtime_monitoring_enabled.guardduty_eks_runtime_monitoring_enabled.guardduty_client",
+                new=GuardDuty(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.guardduty.guardduty_eks_runtime_monitoring_enabled.guardduty_eks_runtime_monitoring_enabled import (
                 guardduty_eks_runtime_monitoring_enabled,

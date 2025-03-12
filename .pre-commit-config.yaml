@@ -59,7 +59,7 @@ repos:
         args: ["--ignore=E266,W503,E203,E501,W605"]
 
   - repo: https://github.com/python-poetry/poetry
-    rev: 1.8.0
+    rev: 2.1.1
     hooks:
       - id: poetry-check
         name: API - poetry-check
@@ -68,7 +68,7 @@ repos:
 
       - id: poetry-lock
         name: API - poetry-lock
-        args: ["--no-update", "--directory=./api"]
+        args: ["--directory=./api"]
         pass_filenames: false
 
       - id: poetry-check
@@ -78,7 +78,7 @@ repos:
 
       - id: poetry-lock
         name: SDK - poetry-lock
-        args: ["--no-update", "--directory=./"]
+        args: ["--directory=./"]
         pass_filenames: false
 
 

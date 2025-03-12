@@ -32,12 +32,15 @@ class Test_guardduty_no_high_severity_findings:
 
         from prowler.providers.aws.services.guardduty.guardduty_service import GuardDuty
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), patch(
-            "prowler.providers.aws.services.guardduty.guardduty_no_high_severity_findings.guardduty_no_high_severity_findings.guardduty_client",
-            new=GuardDuty(aws_provider),
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            patch(
+                "prowler.providers.aws.services.guardduty.guardduty_no_high_severity_findings.guardduty_no_high_severity_findings.guardduty_client",
+                new=GuardDuty(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.guardduty.guardduty_no_high_severity_findings.guardduty_no_high_severity_findings import (
                 guardduty_no_high_severity_findings,
@@ -57,12 +60,15 @@ class Test_guardduty_no_high_severity_findings:
 
         from prowler.providers.aws.services.guardduty.guardduty_service import GuardDuty
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), patch(
-            "prowler.providers.aws.services.guardduty.guardduty_no_high_severity_findings.guardduty_no_high_severity_findings.guardduty_client",
-            new=GuardDuty(aws_provider),
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            patch(
+                "prowler.providers.aws.services.guardduty.guardduty_no_high_severity_findings.guardduty_no_high_severity_findings.guardduty_client",
+                new=GuardDuty(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.guardduty.guardduty_no_high_severity_findings.guardduty_no_high_severity_findings import (
                 guardduty_no_high_severity_findings,
@@ -95,12 +101,15 @@ class Test_guardduty_no_high_severity_findings:
 
         from prowler.providers.aws.services.guardduty.guardduty_service import GuardDuty
 
-        with patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), patch(
-            "prowler.providers.aws.services.guardduty.guardduty_no_high_severity_findings.guardduty_no_high_severity_findings.guardduty_client",
-            new=GuardDuty(aws_provider),
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            patch(
+                "prowler.providers.aws.services.guardduty.guardduty_no_high_severity_findings.guardduty_no_high_severity_findings.guardduty_client",
+                new=GuardDuty(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.guardduty.guardduty_no_high_severity_findings.guardduty_no_high_severity_findings import (
                 guardduty_no_high_severity_findings,

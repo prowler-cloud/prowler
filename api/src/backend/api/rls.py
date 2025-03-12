@@ -2,8 +2,7 @@ from typing import Any
 from uuid import uuid4
 
 from django.core.exceptions import ValidationError
-from django.db import DEFAULT_DB_ALIAS
-from django.db import models
+from django.db import DEFAULT_DB_ALIAS, models
 from django.db.backends.ddl_references import Statement, Table
 
 from api.db_utils import DB_USER, POSTGRES_TENANT_VAR
@@ -88,9 +87,7 @@ class RowLevelSecurityConstraint(models.BaseConstraint):
                 f"{grant_queries}{self.grant_sql_query.format(statement=statement)}"
             )
 
-        full_create_sql_query = (
-            f"{self.rls_sql_query}" f"{policy_queries}" f"{grant_queries}"
-        )
+        full_create_sql_query = f"{self.rls_sql_query}{policy_queries}{grant_queries}"
 
         table_name = model._meta.db_table
         if self.partition_name:
