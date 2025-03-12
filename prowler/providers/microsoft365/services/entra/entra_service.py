@@ -180,16 +180,67 @@ class Entra(Microsoft365Service):
                                 )
                             ],
                         ),
-                        grant_controls=GrantControls(
-                            built_in_controls=(
-                                [
-                                    ConditionalAccessGrantControl(control.value)
-                                    for control in getattr(
-                                        policy.grant_controls, "built_in_controls", {}
-                                    )
-                                ]
-                                if policy.grant_controls
-                                else []
+                        user_risk_levels=[
+                            RiskLevel(risk_level)
+                            for risk_level in getattr(
+                                policy.conditions,
+                                "user_risk_levels",
+                                [],
+                            )
+                        ],
+                        sign_in_risk_levels=[
+                            RiskLevel(risk_level)
+                            for risk_level in getattr(
+                                policy.conditions,
+                                "sign_in_risk_levels",
+                                [],
+                            )
+                        ],
+                    ),
+                    grant_controls=GrantControls(
+                        built_in_controls=(
+                            [
+                                ConditionalAccessGrantControl(control.value)
+                                for control in getattr(
+                                    policy.grant_controls, "built_in_controls", {}
+                                )
+                            ]
+                            if policy.grant_controls
+                            else []
+                        ),
+                        operator=(
+                            GrantControlOperator(
+                                getattr(policy.grant_controls, "operator", "AND")
+                            )
+                        ),
+                    ),
+                    session_controls=SessionControls(
+                        persistent_browser=PersistentBrowser(
+                            is_enabled=(
+                                policy.session_controls.persistent_browser.is_enabled
+                                if policy.session_controls
+                                and policy.session_controls.persistent_browser
+                                else False
+                            ),
+                            mode=(
+                                policy.session_controls.persistent_browser.mode
+                                if policy.session_controls
+                                and policy.session_controls.persistent_browser
+                                else "always"
+                            ),
+                        ),
+                        sign_in_frequency=SignInFrequency(
+                            is_enabled=(
+                                policy.session_controls.sign_in_frequency.is_enabled
+                                if policy.session_controls
+                                and policy.session_controls.sign_in_frequency
+                                else False
+                            ),
+                            frequency=(
+                                policy.session_controls.sign_in_frequency.value
+                                if policy.session_controls
+                                and policy.session_controls.sign_in_frequency
+                                else None
                             ),
                             operator=(
                                 GrantControlOperator(
@@ -357,6 +408,7 @@ class Conditions(BaseModel):
     application_conditions: Optional[ApplicationsConditions]
     user_conditions: Optional[UsersConditions]
     user_risk_levels: List[RiskLevel] = []
+    sign_in_risk_levels: List[RiskLevel] = []
 
 
 class PersistentBrowser(BaseModel):
