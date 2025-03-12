@@ -19,15 +19,12 @@ class Test_containerregistry_uses_private_link:
         containerregistry_client = MagicMock()
         containerregistry_client.registries = {}
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.azure.services.containerregistry.containerregistry_uses_private_link.containerregistry_uses_private_link.containerregistry_client",
-                new=containerregistry_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
+            "prowler.providers.azure.services.containerregistry.containerregistry_uses_private_link.containerregistry_uses_private_link.containerregistry_client",
+            new=containerregistry_client,
         ):
             from prowler.providers.azure.services.containerregistry.containerregistry_uses_private_link.containerregistry_uses_private_link import (
                 containerregistry_uses_private_link,
@@ -41,15 +38,12 @@ class Test_containerregistry_uses_private_link:
         containerregistry_client = MagicMock()
         registry_id = str(uuid4())
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.azure.services.containerregistry.containerregistry_uses_private_link.containerregistry_uses_private_link.containerregistry_client",
-                new=containerregistry_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
+            "prowler.providers.azure.services.containerregistry.containerregistry_uses_private_link.containerregistry_uses_private_link.containerregistry_client",
+            new=containerregistry_client,
         ):
             from prowler.providers.azure.services.containerregistry.containerregistry_service import (
                 ContainerRegistryInfo,
@@ -98,15 +92,12 @@ class Test_containerregistry_uses_private_link:
         containerregistry_client = mock.MagicMock()
         containerregistry_client.registries = {}
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.azure.services.containerregistry.containerregistry_uses_private_link.containerregistry_uses_private_link.containerregistry_client",
-                new=containerregistry_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
+            "prowler.providers.azure.services.containerregistry.containerregistry_uses_private_link.containerregistry_uses_private_link.containerregistry_client",
+            new=containerregistry_client,
         ):
             from prowler.providers.azure.services.containerregistry.containerregistry_service import (
                 ContainerRegistryInfo,

@@ -11,15 +11,12 @@ class Test_codebuild_project_no_secrets_in_variables:
 
         codebuild_client.audit_config = {"excluded_sensitive_environment_variables": []}
 
-        with (
-            mock.patch(
-                "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
-                codebuild_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.codebuild.codebuild_project_no_secrets_in_variables.codebuild_project_no_secrets_in_variables.codebuild_client",
-                codebuild_client,
-            ),
+        with mock.patch(
+            "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
+            codebuild_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.codebuild.codebuild_project_no_secrets_in_variables.codebuild_project_no_secrets_in_variables.codebuild_client",
+            codebuild_client,
         ):
             from prowler.providers.aws.services.codebuild.codebuild_project_no_secrets_in_variables.codebuild_project_no_secrets_in_variables import (
                 codebuild_project_no_secrets_in_variables,
@@ -50,15 +47,12 @@ class Test_codebuild_project_no_secrets_in_variables:
 
         codebuild_client.audit_config = {"excluded_sensitive_environment_variables": []}
 
-        with (
-            mock.patch(
-                "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
-                codebuild_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.codebuild.codebuild_project_no_secrets_in_variables.codebuild_project_no_secrets_in_variables.codebuild_client",
-                codebuild_client,
-            ),
+        with mock.patch(
+            "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
+            codebuild_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.codebuild.codebuild_project_no_secrets_in_variables.codebuild_project_no_secrets_in_variables.codebuild_client",
+            codebuild_client,
         ):
             from prowler.providers.aws.services.codebuild.codebuild_project_no_secrets_in_variables.codebuild_project_no_secrets_in_variables import (
                 codebuild_project_no_secrets_in_variables,
@@ -104,15 +98,12 @@ class Test_codebuild_project_no_secrets_in_variables:
 
         codebuild_client.audit_config = {"excluded_sensitive_environment_variables": []}
 
-        with (
-            mock.patch(
-                "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
-                codebuild_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.codebuild.codebuild_project_no_secrets_in_variables.codebuild_project_no_secrets_in_variables.codebuild_client",
-                codebuild_client,
-            ),
+        with mock.patch(
+            "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
+            codebuild_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.codebuild.codebuild_project_no_secrets_in_variables.codebuild_project_no_secrets_in_variables.codebuild_client",
+            codebuild_client,
         ):
             from prowler.providers.aws.services.codebuild.codebuild_project_no_secrets_in_variables.codebuild_project_no_secrets_in_variables import (
                 codebuild_project_no_secrets_in_variables,
@@ -158,15 +149,12 @@ class Test_codebuild_project_no_secrets_in_variables:
 
         codebuild_client.audit_config = {"excluded_sensitive_environment_variables": []}
 
-        with (
-            mock.patch(
-                "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
-                codebuild_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.codebuild.codebuild_project_no_secrets_in_variables.codebuild_project_no_secrets_in_variables.codebuild_client",
-                codebuild_client,
-            ),
+        with mock.patch(
+            "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
+            codebuild_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.codebuild.codebuild_project_no_secrets_in_variables.codebuild_project_no_secrets_in_variables.codebuild_client",
+            codebuild_client,
         ):
             from prowler.providers.aws.services.codebuild.codebuild_project_no_secrets_in_variables.codebuild_project_no_secrets_in_variables import (
                 codebuild_project_no_secrets_in_variables,
@@ -212,15 +200,12 @@ class Test_codebuild_project_no_secrets_in_variables:
 
         codebuild_client.audit_config = {"excluded_sensitive_environment_variables": []}
 
-        with (
-            mock.patch(
-                "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
-                codebuild_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.codebuild.codebuild_project_no_secrets_in_variables.codebuild_project_no_secrets_in_variables.codebuild_client",
-                codebuild_client,
-            ),
+        with mock.patch(
+            "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
+            codebuild_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.codebuild.codebuild_project_no_secrets_in_variables.codebuild_project_no_secrets_in_variables.codebuild_client",
+            codebuild_client,
         ):
             from prowler.providers.aws.services.codebuild.codebuild_project_no_secrets_in_variables.codebuild_project_no_secrets_in_variables import (
                 codebuild_project_no_secrets_in_variables,
@@ -268,15 +253,12 @@ class Test_codebuild_project_no_secrets_in_variables:
             "excluded_sensitive_environment_variables": ["AWS_DUMB_ACCESS_KEY"]
         }
 
-        with (
-            mock.patch(
-                "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
-                codebuild_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.codebuild.codebuild_project_no_secrets_in_variables.codebuild_project_no_secrets_in_variables.codebuild_client",
-                codebuild_client,
-            ),
+        with mock.patch(
+            "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
+            codebuild_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.codebuild.codebuild_project_no_secrets_in_variables.codebuild_project_no_secrets_in_variables.codebuild_client",
+            codebuild_client,
         ):
             from prowler.providers.aws.services.codebuild.codebuild_project_no_secrets_in_variables.codebuild_project_no_secrets_in_variables import (
                 codebuild_project_no_secrets_in_variables,
@@ -329,15 +311,12 @@ class Test_codebuild_project_no_secrets_in_variables:
             "excluded_sensitive_environment_variables": ["AWS_DUMB_ACCESS_KEY"]
         }
 
-        with (
-            mock.patch(
-                "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
-                codebuild_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.codebuild.codebuild_project_no_secrets_in_variables.codebuild_project_no_secrets_in_variables.codebuild_client",
-                codebuild_client,
-            ),
+        with mock.patch(
+            "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
+            codebuild_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.codebuild.codebuild_project_no_secrets_in_variables.codebuild_project_no_secrets_in_variables.codebuild_client",
+            codebuild_client,
         ):
             from prowler.providers.aws.services.codebuild.codebuild_project_no_secrets_in_variables.codebuild_project_no_secrets_in_variables import (
                 codebuild_project_no_secrets_in_variables,
@@ -390,15 +369,12 @@ class Test_codebuild_project_no_secrets_in_variables:
             "excluded_sensitive_environment_variables": ["AWS_DUMB_ACCESS_KEY"]
         }
 
-        with (
-            mock.patch(
-                "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
-                codebuild_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.codebuild.codebuild_project_no_secrets_in_variables.codebuild_project_no_secrets_in_variables.codebuild_client",
-                codebuild_client,
-            ),
+        with mock.patch(
+            "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
+            codebuild_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.codebuild.codebuild_project_no_secrets_in_variables.codebuild_project_no_secrets_in_variables.codebuild_client",
+            codebuild_client,
         ):
             from prowler.providers.aws.services.codebuild.codebuild_project_no_secrets_in_variables.codebuild_project_no_secrets_in_variables import (
                 codebuild_project_no_secrets_in_variables,
@@ -449,15 +425,12 @@ class Test_codebuild_project_no_secrets_in_variables:
 
         codebuild_client.audit_config = {"excluded_sensitive_environment_variables": []}
 
-        with (
-            mock.patch(
-                "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
-                codebuild_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.codebuild.codebuild_project_no_secrets_in_variables.codebuild_project_no_secrets_in_variables.codebuild_client",
-                codebuild_client,
-            ),
+        with mock.patch(
+            "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
+            codebuild_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.codebuild.codebuild_project_no_secrets_in_variables.codebuild_project_no_secrets_in_variables.codebuild_client",
+            codebuild_client,
         ):
             from prowler.providers.aws.services.codebuild.codebuild_project_no_secrets_in_variables.codebuild_project_no_secrets_in_variables import (
                 codebuild_project_no_secrets_in_variables,

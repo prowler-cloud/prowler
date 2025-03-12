@@ -21,15 +21,12 @@ class Test_awslambda_function_url_cors_policy:
         lambda_client = mock.MagicMock
         lambda_client.functions = {}
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.awslambda.awslambda_function_url_cors_policy.awslambda_function_url_cors_policy.awslambda_client",
-                new=lambda_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_aws_provider(),
+        ), mock.patch(
+            "prowler.providers.aws.services.awslambda.awslambda_function_url_cors_policy.awslambda_function_url_cors_policy.awslambda_client",
+            new=lambda_client,
         ):
             # Test Check
             from prowler.providers.aws.services.awslambda.awslambda_function_url_cors_policy.awslambda_function_url_cors_policy import (
@@ -61,15 +58,12 @@ class Test_awslambda_function_url_cors_policy:
             )
         }
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.awslambda.awslambda_function_url_cors_policy.awslambda_function_url_cors_policy.awslambda_client",
-                new=lambda_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_aws_provider(),
+        ), mock.patch(
+            "prowler.providers.aws.services.awslambda.awslambda_function_url_cors_policy.awslambda_function_url_cors_policy.awslambda_client",
+            new=lambda_client,
         ):
             # Test Check
             from prowler.providers.aws.services.awslambda.awslambda_function_url_cors_policy.awslambda_function_url_cors_policy import (
@@ -110,15 +104,12 @@ class Test_awslambda_function_url_cors_policy:
             )
         }
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.awslambda.awslambda_function_url_cors_policy.awslambda_function_url_cors_policy.awslambda_client",
-                new=lambda_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_aws_provider(),
+        ), mock.patch(
+            "prowler.providers.aws.services.awslambda.awslambda_function_url_cors_policy.awslambda_function_url_cors_policy.awslambda_client",
+            new=lambda_client,
         ):
             # Test Check
             from prowler.providers.aws.services.awslambda.awslambda_function_url_cors_policy.awslambda_function_url_cors_policy import (
@@ -161,15 +152,12 @@ class Test_awslambda_function_url_cors_policy:
             )
         }
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.awslambda.awslambda_function_url_cors_policy.awslambda_function_url_cors_policy.awslambda_client",
-                new=lambda_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_aws_provider(),
+        ), mock.patch(
+            "prowler.providers.aws.services.awslambda.awslambda_function_url_cors_policy.awslambda_function_url_cors_policy.awslambda_client",
+            new=lambda_client,
         ):
             # Test Check
             from prowler.providers.aws.services.awslambda.awslambda_function_url_cors_policy.awslambda_function_url_cors_policy import (

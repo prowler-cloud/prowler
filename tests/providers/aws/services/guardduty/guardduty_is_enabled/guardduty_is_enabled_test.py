@@ -17,16 +17,13 @@ class Test_guardduty_is_enabled:
 
         from prowler.providers.aws.services.guardduty.guardduty_service import GuardDuty
 
-        with (
-            patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            patch(
-                "prowler.providers.aws.services.guardduty.guardduty_is_enabled.guardduty_is_enabled.guardduty_client",
-                new=GuardDuty(aws_provider),
-            ) as guardduty_client,
-        ):
+        with patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), patch(
+            "prowler.providers.aws.services.guardduty.guardduty_is_enabled.guardduty_is_enabled.guardduty_client",
+            new=GuardDuty(aws_provider),
+        ) as guardduty_client:
             from prowler.providers.aws.services.guardduty.guardduty_is_enabled.guardduty_is_enabled import (
                 guardduty_is_enabled,
             )
@@ -47,15 +44,12 @@ class Test_guardduty_is_enabled:
 
         from prowler.providers.aws.services.guardduty.guardduty_service import GuardDuty
 
-        with (
-            patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            patch(
-                "prowler.providers.aws.services.guardduty.guardduty_is_enabled.guardduty_is_enabled.guardduty_client",
-                new=GuardDuty(aws_provider),
-            ),
+        with patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), patch(
+            "prowler.providers.aws.services.guardduty.guardduty_is_enabled.guardduty_is_enabled.guardduty_client",
+            new=GuardDuty(aws_provider),
         ):
             from prowler.providers.aws.services.guardduty.guardduty_is_enabled.guardduty_is_enabled import (
                 guardduty_is_enabled,
@@ -88,16 +82,13 @@ class Test_guardduty_is_enabled:
 
         from prowler.providers.aws.services.guardduty.guardduty_service import GuardDuty
 
-        with (
-            patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            patch(
-                "prowler.providers.aws.services.guardduty.guardduty_is_enabled.guardduty_is_enabled.guardduty_client",
-                new=GuardDuty(aws_provider),
-            ) as mock_guardduty_client,
-        ):
+        with patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), patch(
+            "prowler.providers.aws.services.guardduty.guardduty_is_enabled.guardduty_is_enabled.guardduty_client",
+            new=GuardDuty(aws_provider),
+        ) as mock_guardduty_client:
             from prowler.providers.aws.services.guardduty.guardduty_is_enabled.guardduty_is_enabled import (
                 guardduty_is_enabled,
             )
@@ -133,16 +124,13 @@ class Test_guardduty_is_enabled:
 
         from prowler.providers.aws.services.guardduty.guardduty_service import GuardDuty
 
-        with (
-            patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            patch(
-                "prowler.providers.aws.services.guardduty.guardduty_is_enabled.guardduty_is_enabled.guardduty_client",
-                new=GuardDuty(aws_provider),
-            ) as mock_guardduty_client,
-        ):
+        with patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), patch(
+            "prowler.providers.aws.services.guardduty.guardduty_is_enabled.guardduty_is_enabled.guardduty_client",
+            new=GuardDuty(aws_provider),
+        ) as mock_guardduty_client:
             from prowler.providers.aws.services.guardduty.guardduty_is_enabled.guardduty_is_enabled import (
                 guardduty_is_enabled,
             )
@@ -178,16 +166,13 @@ class Test_guardduty_is_enabled:
 
         from prowler.providers.aws.services.guardduty.guardduty_service import GuardDuty
 
-        with (
-            patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            patch(
-                "prowler.providers.aws.services.guardduty.guardduty_is_enabled.guardduty_is_enabled.guardduty_client",
-                new=GuardDuty(aws_provider),
-            ) as mock_guardduty_client,
-        ):
+        with patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), patch(
+            "prowler.providers.aws.services.guardduty.guardduty_is_enabled.guardduty_is_enabled.guardduty_client",
+            new=GuardDuty(aws_provider),
+        ) as mock_guardduty_client:
             from prowler.providers.aws.services.guardduty.guardduty_is_enabled.guardduty_is_enabled import (
                 guardduty_is_enabled,
             )

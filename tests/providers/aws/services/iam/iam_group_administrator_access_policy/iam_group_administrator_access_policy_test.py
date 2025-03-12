@@ -13,15 +13,12 @@ class Test_iam_group_administrator_access_policy:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.iam.iam_group_administrator_access_policy.iam_group_administrator_access_policy.iam_client",
-                new=IAM(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.iam.iam_group_administrator_access_policy.iam_group_administrator_access_policy.iam_client",
+            new=IAM(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.iam.iam_group_administrator_access_policy.iam_group_administrator_access_policy import (
@@ -42,15 +39,12 @@ class Test_iam_group_administrator_access_policy:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.iam.iam_group_administrator_access_policy.iam_group_administrator_access_policy.iam_client",
-                new=IAM(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.iam.iam_group_administrator_access_policy.iam_group_administrator_access_policy.iam_client",
+            new=IAM(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.iam.iam_group_administrator_access_policy.iam_group_administrator_access_policy import (
@@ -96,15 +90,12 @@ class Test_iam_group_administrator_access_policy:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.iam.iam_group_administrator_access_policy.iam_group_administrator_access_policy.iam_client",
-                new=IAM(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.iam.iam_group_administrator_access_policy.iam_group_administrator_access_policy.iam_client",
+            new=IAM(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.iam.iam_group_administrator_access_policy.iam_group_administrator_access_policy import (

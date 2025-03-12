@@ -49,15 +49,12 @@ class Test_accessanalyzer_enabled:
                 region=AWS_REGION_1,
             )
         ]
-        with (
-            mock.patch(
-                "prowler.providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer",
-                accessanalyzer_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer.get_unknown_arn",
-                return_value="arn:aws:accessanalyzer:eu-west-1:123456789012:unknown",
-            ),
+        with mock.patch(
+            "prowler.providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer",
+            accessanalyzer_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer.get_unknown_arn",
+            return_value="arn:aws:accessanalyzer:eu-west-1:123456789012:unknown",
         ):
             from prowler.providers.aws.services.accessanalyzer.accessanalyzer_enabled.accessanalyzer_enabled import (
                 accessanalyzer_enabled,
@@ -97,15 +94,12 @@ class Test_accessanalyzer_enabled:
                 region=AWS_REGION_1,
             )
         ]
-        with (
-            mock.patch(
-                "prowler.providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer",
-                accessanalyzer_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer.get_unknown_arn",
-                return_value="arn:aws:accessanalyzer:eu-west-1:123456789012:unknown",
-            ),
+        with mock.patch(
+            "prowler.providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer",
+            accessanalyzer_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer.get_unknown_arn",
+            return_value="arn:aws:accessanalyzer:eu-west-1:123456789012:unknown",
         ):
             from prowler.providers.aws.services.accessanalyzer.accessanalyzer_enabled.accessanalyzer_enabled import (
                 accessanalyzer_enabled,
@@ -154,15 +148,12 @@ class Test_accessanalyzer_enabled:
         ]
 
         # Patch AccessAnalyzer Client
-        with (
-            mock.patch(
-                "prowler.providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer",
-                new=accessanalyzer_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer.get_unknown_arn",
-                return_value="arn:aws:accessanalyzer:eu-west-1:123456789012:analyzer/unknown",
-            ),
+        with mock.patch(
+            "prowler.providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer",
+            new=accessanalyzer_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer.get_unknown_arn",
+            return_value="arn:aws:accessanalyzer:eu-west-1:123456789012:analyzer/unknown",
         ):
             # Test Check
             from prowler.providers.aws.services.accessanalyzer.accessanalyzer_enabled.accessanalyzer_enabled import (

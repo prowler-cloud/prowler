@@ -27,23 +27,18 @@ class Test_dlm_ebs_snapshot_lifecycle_policy_exists:
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        with (
-            mock.patch(
-                "prowler.providers.aws.services.dlm.dlm_service.DLM",
-                new=dlm_client,
-            ),
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.ec2.ec2_service.EC2",
-                return_value=EC2(aws_provider),
-            ) as ec2_client,
-            mock.patch(
-                "prowler.providers.aws.services.ec2.ec2_client.ec2_client",
-                new=ec2_client,
-            ),
+        with mock.patch(
+            "prowler.providers.aws.services.dlm.dlm_service.DLM",
+            new=dlm_client,
+        ), mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_service.EC2",
+            return_value=EC2(aws_provider),
+        ) as ec2_client, mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_client.ec2_client",
+            new=ec2_client,
         ):
             from prowler.providers.aws.services.dlm.dlm_ebs_snapshot_lifecycle_policy_exists.dlm_ebs_snapshot_lifecycle_policy_exists import (
                 dlm_ebs_snapshot_lifecycle_policy_exists,
@@ -100,19 +95,15 @@ class Test_dlm_ebs_snapshot_lifecycle_policy_exists:
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.dlm.dlm_ebs_snapshot_lifecycle_policy_exists.dlm_ebs_snapshot_lifecycle_policy_exists.ec2_client",
-                new=EC2(aws_provider),
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.dlm.dlm_ebs_snapshot_lifecycle_policy_exists.dlm_ebs_snapshot_lifecycle_policy_exists.dlm_client",
-                new=dlm_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.dlm.dlm_ebs_snapshot_lifecycle_policy_exists.dlm_ebs_snapshot_lifecycle_policy_exists.ec2_client",
+            new=EC2(aws_provider),
+        ), mock.patch(
+            "prowler.providers.aws.services.dlm.dlm_ebs_snapshot_lifecycle_policy_exists.dlm_ebs_snapshot_lifecycle_policy_exists.dlm_client",
+            new=dlm_client,
         ):
             from prowler.providers.aws.services.dlm.dlm_ebs_snapshot_lifecycle_policy_exists.dlm_ebs_snapshot_lifecycle_policy_exists import (
                 dlm_ebs_snapshot_lifecycle_policy_exists,
@@ -165,19 +156,15 @@ class Test_dlm_ebs_snapshot_lifecycle_policy_exists:
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.dlm.dlm_ebs_snapshot_lifecycle_policy_exists.dlm_ebs_snapshot_lifecycle_policy_exists.ec2_client",
-                new=EC2(aws_provider),
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.dlm.dlm_ebs_snapshot_lifecycle_policy_exists.dlm_ebs_snapshot_lifecycle_policy_exists.dlm_client",
-                new=dlm_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.dlm.dlm_ebs_snapshot_lifecycle_policy_exists.dlm_ebs_snapshot_lifecycle_policy_exists.ec2_client",
+            new=EC2(aws_provider),
+        ), mock.patch(
+            "prowler.providers.aws.services.dlm.dlm_ebs_snapshot_lifecycle_policy_exists.dlm_ebs_snapshot_lifecycle_policy_exists.dlm_client",
+            new=dlm_client,
         ):
             from prowler.providers.aws.services.dlm.dlm_ebs_snapshot_lifecycle_policy_exists.dlm_ebs_snapshot_lifecycle_policy_exists import (
                 dlm_ebs_snapshot_lifecycle_policy_exists,
@@ -210,19 +197,15 @@ class Test_dlm_ebs_snapshot_lifecycle_policy_exists:
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.dlm.dlm_ebs_snapshot_lifecycle_policy_exists.dlm_ebs_snapshot_lifecycle_policy_exists.ec2_client",
-                new=EC2(aws_provider),
-            ) as ec2_client,
-            mock.patch(
-                "prowler.providers.aws.services.dlm.dlm_ebs_snapshot_lifecycle_policy_exists.dlm_ebs_snapshot_lifecycle_policy_exists.dlm_client",
-                new=dlm_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.dlm.dlm_ebs_snapshot_lifecycle_policy_exists.dlm_ebs_snapshot_lifecycle_policy_exists.ec2_client",
+            new=EC2(aws_provider),
+        ) as ec2_client, mock.patch(
+            "prowler.providers.aws.services.dlm.dlm_ebs_snapshot_lifecycle_policy_exists.dlm_ebs_snapshot_lifecycle_policy_exists.dlm_client",
+            new=dlm_client,
         ):
             # Remove all snapshots
             ec2_client.regions_with_snapshots = {}

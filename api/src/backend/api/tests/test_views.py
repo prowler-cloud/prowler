@@ -2201,12 +2201,9 @@ class TestScanViewSet:
         dummy_task.id = "dummy-task-id"
         dummy_task_data = {"id": dummy_task.id, "state": StateChoices.EXECUTING}
 
-        with (
-            patch("api.v1.views.Task.objects.get", return_value=dummy_task),
-            patch(
-                "api.v1.views.TaskSerializer",
-                return_value=type("DummySerializer", (), {"data": dummy_task_data}),
-            ),
+        with patch("api.v1.views.Task.objects.get", return_value=dummy_task), patch(
+            "api.v1.views.TaskSerializer",
+            return_value=type("DummySerializer", (), {"data": dummy_task_data}),
         ):
             url = reverse("scan-report", kwargs={"pk": scan.id})
             response = authenticated_client.get(url)

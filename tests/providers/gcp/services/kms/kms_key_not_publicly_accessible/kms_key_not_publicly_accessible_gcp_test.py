@@ -11,15 +11,12 @@ class Test_kms_key_not_publicly_accessible_gcp:
     def test_kms_no_key(self):
         kms_client = mock.MagicMock()
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_gcp_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.gcp.services.kms.kms_key_not_publicly_accessible.kms_key_not_publicly_accessible.kms_client",
-                new=kms_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), mock.patch(
+            "prowler.providers.gcp.services.kms.kms_key_not_publicly_accessible.kms_key_not_publicly_accessible.kms_client",
+            new=kms_client,
         ):
             from prowler.providers.gcp.services.kms.kms_key_not_publicly_accessible.kms_key_not_publicly_accessible import (
                 kms_key_not_publicly_accessible,
@@ -36,15 +33,12 @@ class Test_kms_key_not_publicly_accessible_gcp:
     def test_kms_key_public(self):
         kms_client = mock.MagicMock()
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_gcp_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.gcp.services.kms.kms_key_not_publicly_accessible.kms_key_not_publicly_accessible.kms_client",
-                new=kms_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), mock.patch(
+            "prowler.providers.gcp.services.kms.kms_key_not_publicly_accessible.kms_key_not_publicly_accessible.kms_client",
+            new=kms_client,
         ):
             from prowler.providers.gcp.services.kms.kms_key_not_publicly_accessible.kms_key_not_publicly_accessible import (
                 kms_key_not_publicly_accessible,
@@ -97,15 +91,12 @@ class Test_kms_key_not_publicly_accessible_gcp:
     def test_kms_key_private(self):
         kms_client = mock.MagicMock()
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_gcp_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.gcp.services.kms.kms_key_not_publicly_accessible.kms_key_not_publicly_accessible.kms_client",
-                new=kms_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), mock.patch(
+            "prowler.providers.gcp.services.kms.kms_key_not_publicly_accessible.kms_key_not_publicly_accessible.kms_client",
+            new=kms_client,
         ):
             from prowler.providers.gcp.services.kms.kms_key_not_publicly_accessible.kms_key_not_publicly_accessible import (
                 kms_key_not_publicly_accessible,
@@ -158,15 +149,12 @@ class Test_kms_key_not_publicly_accessible_gcp:
     def test_kms_key_no_member(self):
         kms_client = mock.MagicMock()
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_gcp_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.gcp.services.kms.kms_key_not_publicly_accessible.kms_key_not_publicly_accessible.kms_client",
-                new=kms_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), mock.patch(
+            "prowler.providers.gcp.services.kms.kms_key_not_publicly_accessible.kms_key_not_publicly_accessible.kms_client",
+            new=kms_client,
         ):
             from prowler.providers.gcp.services.kms.kms_key_not_publicly_accessible.kms_key_not_publicly_accessible import (
                 kms_key_not_publicly_accessible,

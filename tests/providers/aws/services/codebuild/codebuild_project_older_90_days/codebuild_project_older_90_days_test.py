@@ -23,15 +23,12 @@ class Test_codebuild_project_older_90_days:
             )
         }
 
-        with (
-            mock.patch(
-                "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
-                codebuild_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.codebuild.codebuild_project_older_90_days.codebuild_project_older_90_days.codebuild_client",
-                codebuild_client,
-            ),
+        with mock.patch(
+            "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
+            codebuild_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.codebuild.codebuild_project_older_90_days.codebuild_project_older_90_days.codebuild_client",
+            codebuild_client,
         ):
             from prowler.providers.aws.services.codebuild.codebuild_project_older_90_days.codebuild_project_older_90_days import (
                 codebuild_project_older_90_days,
@@ -66,15 +63,12 @@ class Test_codebuild_project_older_90_days:
             )
         }
 
-        with (
-            mock.patch(
-                "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
-                codebuild_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.codebuild.codebuild_project_older_90_days.codebuild_project_older_90_days.codebuild_client",
-                codebuild_client,
-            ),
+        with mock.patch(
+            "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
+            codebuild_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.codebuild.codebuild_project_older_90_days.codebuild_project_older_90_days.codebuild_client",
+            codebuild_client,
         ):
             from prowler.providers.aws.services.codebuild.codebuild_project_older_90_days.codebuild_project_older_90_days import (
                 codebuild_project_older_90_days,
@@ -109,15 +103,12 @@ class Test_codebuild_project_older_90_days:
             )
         }
 
-        with (
-            mock.patch(
-                "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
-                codebuild_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.codebuild.codebuild_project_older_90_days.codebuild_project_older_90_days.codebuild_client",
-                codebuild_client,
-            ),
+        with mock.patch(
+            "prowler.providers.aws.services.codebuild.codebuild_service.Codebuild",
+            codebuild_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.codebuild.codebuild_project_older_90_days.codebuild_project_older_90_days.codebuild_client",
+            codebuild_client,
         ):
             from prowler.providers.aws.services.codebuild.codebuild_project_older_90_days.codebuild_project_older_90_days import (
                 codebuild_project_older_90_days,

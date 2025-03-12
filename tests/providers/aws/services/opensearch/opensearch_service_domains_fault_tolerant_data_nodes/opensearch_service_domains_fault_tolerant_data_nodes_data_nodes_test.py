@@ -21,15 +21,12 @@ class Test_opensearch_service_domains_fault_tolerant_data_nodes:
 
         mocked_aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=mocked_aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.opensearch.opensearch_service_domains_fault_tolerant_data_nodes.opensearch_service_domains_fault_tolerant_data_nodes.opensearch_client",
-                new=OpenSearchService(mocked_aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=mocked_aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.opensearch.opensearch_service_domains_fault_tolerant_data_nodes.opensearch_service_domains_fault_tolerant_data_nodes.opensearch_client",
+            new=OpenSearchService(mocked_aws_provider),
         ):
             from prowler.providers.aws.services.opensearch.opensearch_service_domains_fault_tolerant_data_nodes.opensearch_service_domains_fault_tolerant_data_nodes import (
                 opensearch_service_domains_fault_tolerant_data_nodes,
@@ -53,15 +50,12 @@ class Test_opensearch_service_domains_fault_tolerant_data_nodes:
 
         mocked_aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=mocked_aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.opensearch.opensearch_service_domains_fault_tolerant_data_nodes.opensearch_service_domains_fault_tolerant_data_nodes.opensearch_client",
-                new=OpenSearchService(mocked_aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=mocked_aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.opensearch.opensearch_service_domains_fault_tolerant_data_nodes.opensearch_service_domains_fault_tolerant_data_nodes.opensearch_client",
+            new=OpenSearchService(mocked_aws_provider),
         ):
             from prowler.providers.aws.services.opensearch.opensearch_service_domains_fault_tolerant_data_nodes.opensearch_service_domains_fault_tolerant_data_nodes import (
                 opensearch_service_domains_fault_tolerant_data_nodes,
@@ -95,15 +89,12 @@ class Test_opensearch_service_domains_fault_tolerant_data_nodes:
 
         mocked_aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=mocked_aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.opensearch.opensearch_service_domains_fault_tolerant_data_nodes.opensearch_service_domains_fault_tolerant_data_nodes.opensearch_client",
-                new=OpenSearchService(mocked_aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=mocked_aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.opensearch.opensearch_service_domains_fault_tolerant_data_nodes.opensearch_service_domains_fault_tolerant_data_nodes.opensearch_client",
+            new=OpenSearchService(mocked_aws_provider),
         ):
             from prowler.providers.aws.services.opensearch.opensearch_service_domains_fault_tolerant_data_nodes.opensearch_service_domains_fault_tolerant_data_nodes import (
                 opensearch_service_domains_fault_tolerant_data_nodes,
@@ -137,15 +128,12 @@ class Test_opensearch_service_domains_fault_tolerant_data_nodes:
 
         mocked_aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=mocked_aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.opensearch.opensearch_service_domains_fault_tolerant_data_nodes.opensearch_service_domains_fault_tolerant_data_nodes.opensearch_client",
-                new=OpenSearchService(mocked_aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=mocked_aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.opensearch.opensearch_service_domains_fault_tolerant_data_nodes.opensearch_service_domains_fault_tolerant_data_nodes.opensearch_client",
+            new=OpenSearchService(mocked_aws_provider),
         ):
             from prowler.providers.aws.services.opensearch.opensearch_service_domains_fault_tolerant_data_nodes.opensearch_service_domains_fault_tolerant_data_nodes import (
                 opensearch_service_domains_fault_tolerant_data_nodes,
@@ -179,15 +167,12 @@ class Test_opensearch_service_domains_fault_tolerant_data_nodes:
 
         mocked_aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=mocked_aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.opensearch.opensearch_service_domains_fault_tolerant_data_nodes.opensearch_service_domains_fault_tolerant_data_nodes.opensearch_client",
-                new=OpenSearchService(mocked_aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=mocked_aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.opensearch.opensearch_service_domains_fault_tolerant_data_nodes.opensearch_service_domains_fault_tolerant_data_nodes.opensearch_client",
+            new=OpenSearchService(mocked_aws_provider),
         ):
             from prowler.providers.aws.services.opensearch.opensearch_service_domains_fault_tolerant_data_nodes.opensearch_service_domains_fault_tolerant_data_nodes import (
                 opensearch_service_domains_fault_tolerant_data_nodes,

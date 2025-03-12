@@ -37,18 +37,15 @@ class TestKubernetesProvider:
                 "cluster": "test-cluster",
             },
         }
-        with (
-            patch(
-                "prowler.providers.kubernetes.kubernetes_provider.KubernetesProvider.setup_session",
-                return_value=KubernetesSession(
-                    api_client=client.ApiClient,
-                    context=context,
-                ),
+        with patch(
+            "prowler.providers.kubernetes.kubernetes_provider.KubernetesProvider.setup_session",
+            return_value=KubernetesSession(
+                api_client=client.ApiClient,
+                context=context,
             ),
-            patch(
-                "prowler.providers.kubernetes.kubernetes_provider.KubernetesProvider.get_all_namespaces",
-                return_value=["namespace-1"],
-            ),
+        ), patch(
+            "prowler.providers.kubernetes.kubernetes_provider.KubernetesProvider.get_all_namespaces",
+            return_value=["namespace-1"],
         ):
             arguments = Namespace()
             arguments.kubeconfig_file = "dummy_path"

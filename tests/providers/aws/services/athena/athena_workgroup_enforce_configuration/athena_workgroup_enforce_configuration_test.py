@@ -21,15 +21,12 @@ class Test_athena_workgroup_enforce_configuration:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.athena.athena_workgroup_enforce_configuration.athena_workgroup_enforce_configuration.athena_client",
-                new=Athena(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.athena.athena_workgroup_enforce_configuration.athena_workgroup_enforce_configuration.athena_client",
+            new=Athena(aws_provider),
         ):
             from prowler.providers.aws.services.athena.athena_workgroup_enforce_configuration.athena_workgroup_enforce_configuration import (
                 athena_workgroup_enforce_configuration,
@@ -56,15 +53,12 @@ class Test_athena_workgroup_enforce_configuration:
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         aws_provider._scan_unused_services = False
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.athena.athena_workgroup_enforce_configuration.athena_workgroup_enforce_configuration.athena_client",
-                new=Athena(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.athena.athena_workgroup_enforce_configuration.athena_workgroup_enforce_configuration.athena_client",
+            new=Athena(aws_provider),
         ):
             from prowler.providers.aws.services.athena.athena_workgroup_enforce_configuration.athena_workgroup_enforce_configuration import (
                 athena_workgroup_enforce_configuration,
@@ -83,15 +77,12 @@ class Test_athena_workgroup_enforce_configuration:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.athena.athena_workgroup_enforce_configuration.athena_workgroup_enforce_configuration.athena_client",
-                new=Athena(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.athena.athena_workgroup_enforce_configuration.athena_workgroup_enforce_configuration.athena_client",
+            new=Athena(aws_provider),
         ):
             from prowler.providers.aws.services.athena.athena_workgroup_enforce_configuration.athena_workgroup_enforce_configuration import (
                 athena_workgroup_enforce_configuration,

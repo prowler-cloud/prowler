@@ -11,15 +11,12 @@ class Test_cloudsql_instance_public_access:
     def test_no_cloudsql_instances(self):
         cloudsql_client = mock.MagicMock()
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_gcp_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.gcp.services.cloudsql.cloudsql_instance_public_access.cloudsql_instance_public_access.cloudsql_client",
-                new=cloudsql_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), mock.patch(
+            "prowler.providers.gcp.services.cloudsql.cloudsql_instance_public_access.cloudsql_instance_public_access.cloudsql_client",
+            new=cloudsql_client,
         ):
             from prowler.providers.gcp.services.cloudsql.cloudsql_instance_public_access.cloudsql_instance_public_access import (
                 cloudsql_instance_public_access,
@@ -34,15 +31,12 @@ class Test_cloudsql_instance_public_access:
     def test_cloudsql_instance_no_public_access(self):
         cloudsql_client = mock.MagicMock()
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_gcp_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.gcp.services.cloudsql.cloudsql_instance_public_access.cloudsql_instance_public_access.cloudsql_client",
-                new=cloudsql_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), mock.patch(
+            "prowler.providers.gcp.services.cloudsql.cloudsql_instance_public_access.cloudsql_instance_public_access.cloudsql_client",
+            new=cloudsql_client,
         ):
             from prowler.providers.gcp.services.cloudsql.cloudsql_instance_public_access.cloudsql_instance_public_access import (
                 cloudsql_instance_public_access,
@@ -83,15 +77,12 @@ class Test_cloudsql_instance_public_access:
     def test_cloudsql_instance_public_access(self):
         cloudsql_client = mock.MagicMock()
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_gcp_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.gcp.services.cloudsql.cloudsql_instance_public_access.cloudsql_instance_public_access.cloudsql_client",
-                new=cloudsql_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), mock.patch(
+            "prowler.providers.gcp.services.cloudsql.cloudsql_instance_public_access.cloudsql_instance_public_access.cloudsql_client",
+            new=cloudsql_client,
         ):
             from prowler.providers.gcp.services.cloudsql.cloudsql_instance_public_access.cloudsql_instance_public_access import (
                 cloudsql_instance_public_access,

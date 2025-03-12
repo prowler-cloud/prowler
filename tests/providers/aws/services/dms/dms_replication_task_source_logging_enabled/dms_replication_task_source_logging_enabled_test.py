@@ -27,15 +27,12 @@ class Test_dms_replication_task_source_logging_enabled:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.dms.dms_replication_task_source_logging_enabled.dms_replication_task_source_logging_enabled.dms_client",
-                new=DMS(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.dms.dms_replication_task_source_logging_enabled.dms_replication_task_source_logging_enabled.dms_client",
+            new=DMS(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.dms.dms_replication_task_source_logging_enabled.dms_replication_task_source_logging_enabled import (
@@ -80,15 +77,12 @@ class Test_dms_replication_task_source_logging_enabled:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.dms.dms_replication_task_source_logging_enabled.dms_replication_task_source_logging_enabled.dms_client",
-                new=DMS(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.dms.dms_replication_task_source_logging_enabled.dms_replication_task_source_logging_enabled.dms_client",
+            new=DMS(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.dms.dms_replication_task_source_logging_enabled.dms_replication_task_source_logging_enabled import (
@@ -141,15 +135,12 @@ class Test_dms_replication_task_source_logging_enabled:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.dms.dms_replication_task_source_logging_enabled.dms_replication_task_source_logging_enabled.dms_client",
-                new=DMS(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.dms.dms_replication_task_source_logging_enabled.dms_replication_task_source_logging_enabled.dms_client",
+            new=DMS(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.dms.dms_replication_task_source_logging_enabled.dms_replication_task_source_logging_enabled import (
@@ -202,15 +193,12 @@ class Test_dms_replication_task_source_logging_enabled:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.dms.dms_replication_task_source_logging_enabled.dms_replication_task_source_logging_enabled.dms_client",
-                new=DMS(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.dms.dms_replication_task_source_logging_enabled.dms_replication_task_source_logging_enabled.dms_client",
+            new=DMS(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.dms.dms_replication_task_source_logging_enabled.dms_replication_task_source_logging_enabled import (
@@ -269,15 +257,12 @@ class Test_dms_replication_task_source_logging_enabled:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.dms.dms_replication_task_source_logging_enabled.dms_replication_task_source_logging_enabled.dms_client",
-                new=DMS(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.dms.dms_replication_task_source_logging_enabled.dms_replication_task_source_logging_enabled.dms_client",
+            new=DMS(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.dms.dms_replication_task_source_logging_enabled.dms_replication_task_source_logging_enabled import (
@@ -336,15 +321,12 @@ class Test_dms_replication_task_source_logging_enabled:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.dms.dms_replication_task_source_logging_enabled.dms_replication_task_source_logging_enabled.dms_client",
-                new=DMS(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.dms.dms_replication_task_source_logging_enabled.dms_replication_task_source_logging_enabled.dms_client",
+            new=DMS(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.dms.dms_replication_task_source_logging_enabled.dms_replication_task_source_logging_enabled import (
@@ -403,15 +385,12 @@ class Test_dms_replication_task_source_logging_enabled:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.dms.dms_replication_task_source_logging_enabled.dms_replication_task_source_logging_enabled.dms_client",
-                new=DMS(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.dms.dms_replication_task_source_logging_enabled.dms_replication_task_source_logging_enabled.dms_client",
+            new=DMS(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.dms.dms_replication_task_source_logging_enabled.dms_replication_task_source_logging_enabled import (
@@ -470,15 +449,12 @@ class Test_dms_replication_task_source_logging_enabled:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.dms.dms_replication_task_source_logging_enabled.dms_replication_task_source_logging_enabled.dms_client",
-                new=DMS(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.dms.dms_replication_task_source_logging_enabled.dms_replication_task_source_logging_enabled.dms_client",
+            new=DMS(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.dms.dms_replication_task_source_logging_enabled.dms_replication_task_source_logging_enabled import (

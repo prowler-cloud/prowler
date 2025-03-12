@@ -16,19 +16,15 @@ class Test_network_watcher_enabled:
         network_client.security_groups = {}
         network_client.network_watchers = {}
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.azure.services.network.network_service.Network",
-                new=network_client,
-            ) as service_client,
-            mock.patch(
-                "prowler.providers.azure.services.network.network_client.network_client",
-                new=service_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
+            "prowler.providers.azure.services.network.network_service.Network",
+            new=network_client,
+        ) as service_client, mock.patch(
+            "prowler.providers.azure.services.network.network_client.network_client",
+            new=service_client,
         ):
             from prowler.providers.azure.services.network.network_watcher_enabled.network_watcher_enabled import (
                 network_watcher_enabled,
@@ -57,19 +53,15 @@ class Test_network_watcher_enabled:
             ]
         }
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.azure.services.network.network_service.Network",
-                new=network_client,
-            ) as service_client,
-            mock.patch(
-                "prowler.providers.azure.services.network.network_client.network_client",
-                new=service_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
+            "prowler.providers.azure.services.network.network_service.Network",
+            new=network_client,
+        ) as service_client, mock.patch(
+            "prowler.providers.azure.services.network.network_client.network_client",
+            new=service_client,
         ):
             from prowler.providers.azure.services.network.network_watcher_enabled.network_watcher_enabled import (
                 network_watcher_enabled,
@@ -107,19 +99,15 @@ class Test_network_watcher_enabled:
             ]
         }
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.azure.services.network.network_service.Network",
-                new=network_client,
-            ) as service_client,
-            mock.patch(
-                "prowler.providers.azure.services.network.network_client.network_client",
-                new=service_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
+            "prowler.providers.azure.services.network.network_service.Network",
+            new=network_client,
+        ) as service_client, mock.patch(
+            "prowler.providers.azure.services.network.network_client.network_client",
+            new=service_client,
         ):
             from prowler.providers.azure.services.network.network_watcher_enabled.network_watcher_enabled import (
                 network_watcher_enabled,

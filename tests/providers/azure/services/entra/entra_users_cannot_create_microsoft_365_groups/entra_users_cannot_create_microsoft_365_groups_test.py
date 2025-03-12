@@ -8,15 +8,12 @@ class Test_entra_users_cannot_create_microsoft_365_groups:
     def test_entra_no_tenant(self):
         entra_client = mock.MagicMock
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.azure.services.entra.entra_users_cannot_create_microsoft_365_groups.entra_users_cannot_create_microsoft_365_groups.entra_client",
-                new=entra_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
+            "prowler.providers.azure.services.entra.entra_users_cannot_create_microsoft_365_groups.entra_users_cannot_create_microsoft_365_groups.entra_client",
+            new=entra_client,
         ):
             from prowler.providers.azure.services.entra.entra_users_cannot_create_microsoft_365_groups.entra_users_cannot_create_microsoft_365_groups import (
                 entra_users_cannot_create_microsoft_365_groups,
@@ -31,15 +28,12 @@ class Test_entra_users_cannot_create_microsoft_365_groups:
     def test_entra_tenant_empty(self):
         entra_client = mock.MagicMock
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.azure.services.entra.entra_users_cannot_create_microsoft_365_groups.entra_users_cannot_create_microsoft_365_groups.entra_client",
-                new=entra_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
+            "prowler.providers.azure.services.entra.entra_users_cannot_create_microsoft_365_groups.entra_users_cannot_create_microsoft_365_groups.entra_client",
+            new=entra_client,
         ):
             from prowler.providers.azure.services.entra.entra_users_cannot_create_microsoft_365_groups.entra_users_cannot_create_microsoft_365_groups import (
                 entra_users_cannot_create_microsoft_365_groups,
@@ -59,15 +53,12 @@ class Test_entra_users_cannot_create_microsoft_365_groups:
     def test_entra_users_cannot_create_microsoft_365_groups(self):
         entra_client = mock.MagicMock
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.azure.services.entra.entra_users_cannot_create_microsoft_365_groups.entra_users_cannot_create_microsoft_365_groups.entra_client",
-                new=entra_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
+            "prowler.providers.azure.services.entra.entra_users_cannot_create_microsoft_365_groups.entra_users_cannot_create_microsoft_365_groups.entra_client",
+            new=entra_client,
         ):
             from prowler.providers.azure.services.entra.entra_service import (
                 GroupSetting,
@@ -106,15 +97,12 @@ class Test_entra_users_cannot_create_microsoft_365_groups:
     def test_entra_users_can_create_microsoft_365_groups(self):
         entra_client = mock.MagicMock
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.azure.services.entra.entra_users_cannot_create_microsoft_365_groups.entra_users_cannot_create_microsoft_365_groups.entra_client",
-                new=entra_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
+            "prowler.providers.azure.services.entra.entra_users_cannot_create_microsoft_365_groups.entra_users_cannot_create_microsoft_365_groups.entra_client",
+            new=entra_client,
         ):
             from prowler.providers.azure.services.entra.entra_service import (
                 GroupSetting,
@@ -151,15 +139,12 @@ class Test_entra_users_cannot_create_microsoft_365_groups:
     def test_entra_users_can_create_microsoft_365_groups_no_setting(self):
         entra_client = mock.MagicMock
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.azure.services.entra.entra_users_cannot_create_microsoft_365_groups.entra_users_cannot_create_microsoft_365_groups.entra_client",
-                new=entra_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
+            "prowler.providers.azure.services.entra.entra_users_cannot_create_microsoft_365_groups.entra_users_cannot_create_microsoft_365_groups.entra_client",
+            new=entra_client,
         ):
             from prowler.providers.azure.services.entra.entra_service import (
                 GroupSetting,

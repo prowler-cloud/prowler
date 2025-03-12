@@ -14,15 +14,12 @@ class Test_accessanalyzer_enabled_fixer:
         regional_client.create_analyzer.return_value = None
         accessanalyzer_client.regional_clients = {AWS_REGION_EU_WEST_1: regional_client}
 
-        with (
-            mock.patch(
-                "prowler.providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer",
-                new=accessanalyzer_client,
-            ) as accessanalyzer_client,
-            mock.patch(
-                "prowler.providers.aws.services.accessanalyzer.accessanalyzer_client.accessanalyzer_client",
-                new=accessanalyzer_client,
-            ),
+        with mock.patch(
+            "prowler.providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer",
+            new=accessanalyzer_client,
+        ) as accessanalyzer_client, mock.patch(
+            "prowler.providers.aws.services.accessanalyzer.accessanalyzer_client.accessanalyzer_client",
+            new=accessanalyzer_client,
         ):
             # Test Check
             from prowler.providers.aws.services.accessanalyzer.accessanalyzer_enabled.accessanalyzer_enabled_fixer import (

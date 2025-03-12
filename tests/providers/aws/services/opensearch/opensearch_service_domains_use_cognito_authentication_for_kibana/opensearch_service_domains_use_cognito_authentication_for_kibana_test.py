@@ -21,15 +21,12 @@ class Test_opensearch_service_domains_use_cognito_authentication_for_kibana:
 
         mocked_aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=mocked_aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.opensearch.opensearch_service_domains_use_cognito_authentication_for_kibana.opensearch_service_domains_use_cognito_authentication_for_kibana.opensearch_client",
-                new=OpenSearchService(mocked_aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=mocked_aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.opensearch.opensearch_service_domains_use_cognito_authentication_for_kibana.opensearch_service_domains_use_cognito_authentication_for_kibana.opensearch_client",
+            new=OpenSearchService(mocked_aws_provider),
         ):
             from prowler.providers.aws.services.opensearch.opensearch_service_domains_use_cognito_authentication_for_kibana.opensearch_service_domains_use_cognito_authentication_for_kibana import (
                 opensearch_service_domains_use_cognito_authentication_for_kibana,
@@ -51,15 +48,12 @@ class Test_opensearch_service_domains_use_cognito_authentication_for_kibana:
 
         mocked_aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=mocked_aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.opensearch.opensearch_service_domains_use_cognito_authentication_for_kibana.opensearch_service_domains_use_cognito_authentication_for_kibana.opensearch_client",
-                new=OpenSearchService(mocked_aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=mocked_aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.opensearch.opensearch_service_domains_use_cognito_authentication_for_kibana.opensearch_service_domains_use_cognito_authentication_for_kibana.opensearch_client",
+            new=OpenSearchService(mocked_aws_provider),
         ):
             from prowler.providers.aws.services.opensearch.opensearch_service_domains_use_cognito_authentication_for_kibana.opensearch_service_domains_use_cognito_authentication_for_kibana import (
                 opensearch_service_domains_use_cognito_authentication_for_kibana,
@@ -92,15 +86,12 @@ class Test_opensearch_service_domains_use_cognito_authentication_for_kibana:
 
         mocked_aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=mocked_aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.opensearch.opensearch_service_domains_use_cognito_authentication_for_kibana.opensearch_service_domains_use_cognito_authentication_for_kibana.opensearch_client",
-                new=OpenSearchService(mocked_aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=mocked_aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.opensearch.opensearch_service_domains_use_cognito_authentication_for_kibana.opensearch_service_domains_use_cognito_authentication_for_kibana.opensearch_client",
+            new=OpenSearchService(mocked_aws_provider),
         ):
             from prowler.providers.aws.services.opensearch.opensearch_service_domains_use_cognito_authentication_for_kibana.opensearch_service_domains_use_cognito_authentication_for_kibana import (
                 opensearch_service_domains_use_cognito_authentication_for_kibana,
@@ -133,15 +124,12 @@ class Test_opensearch_service_domains_use_cognito_authentication_for_kibana:
 
         mocked_aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=mocked_aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.opensearch.opensearch_service_domains_use_cognito_authentication_for_kibana.opensearch_service_domains_use_cognito_authentication_for_kibana.opensearch_client",
-                new=OpenSearchService(mocked_aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=mocked_aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.opensearch.opensearch_service_domains_use_cognito_authentication_for_kibana.opensearch_service_domains_use_cognito_authentication_for_kibana.opensearch_client",
+            new=OpenSearchService(mocked_aws_provider),
         ):
             from prowler.providers.aws.services.opensearch.opensearch_service_domains_use_cognito_authentication_for_kibana.opensearch_service_domains_use_cognito_authentication_for_kibana import (
                 opensearch_service_domains_use_cognito_authentication_for_kibana,

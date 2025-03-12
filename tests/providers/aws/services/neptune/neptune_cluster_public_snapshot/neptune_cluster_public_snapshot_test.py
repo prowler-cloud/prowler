@@ -18,15 +18,12 @@ class Test_neptune_cluster_public_snapshot:
         neptune_client.clusters = {}
         neptune_client.db_cluster_snapshots = []
 
-        with (
-            mock.patch(
-                "prowler.providers.aws.services.neptune.neptune_service.Neptune",
-                new=neptune_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.neptune.neptune_cluster_public_snapshot.neptune_cluster_public_snapshot.neptune_client",
-                new=neptune_client,
-            ),
+        with mock.patch(
+            "prowler.providers.aws.services.neptune.neptune_service.Neptune",
+            new=neptune_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.neptune.neptune_cluster_public_snapshot.neptune_cluster_public_snapshot.neptune_client",
+            new=neptune_client,
         ):
             from prowler.providers.aws.services.neptune.neptune_cluster_public_snapshot.neptune_cluster_public_snapshot import (
                 neptune_cluster_public_snapshot,
@@ -64,15 +61,12 @@ class Test_neptune_cluster_public_snapshot:
             )
         ]
 
-        with (
-            mock.patch(
-                "prowler.providers.aws.services.neptune.neptune_service.Neptune",
-                new=neptune_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.neptune.neptune_cluster_public_snapshot.neptune_cluster_public_snapshot.neptune_client",
-                new=neptune_client,
-            ),
+        with mock.patch(
+            "prowler.providers.aws.services.neptune.neptune_service.Neptune",
+            new=neptune_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.neptune.neptune_cluster_public_snapshot.neptune_cluster_public_snapshot.neptune_client",
+            new=neptune_client,
         ):
             from prowler.providers.aws.services.neptune.neptune_cluster_public_snapshot.neptune_cluster_public_snapshot import (
                 neptune_cluster_public_snapshot,
@@ -123,15 +117,12 @@ class Test_neptune_cluster_public_snapshot:
             )
         ]
 
-        with (
-            mock.patch(
-                "prowler.providers.aws.services.neptune.neptune_service.Neptune",
-                new=neptune_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.neptune.neptune_cluster_public_snapshot.neptune_cluster_public_snapshot.neptune_client",
-                new=neptune_client,
-            ),
+        with mock.patch(
+            "prowler.providers.aws.services.neptune.neptune_service.Neptune",
+            new=neptune_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.neptune.neptune_cluster_public_snapshot.neptune_cluster_public_snapshot.neptune_client",
+            new=neptune_client,
         ):
             from prowler.providers.aws.services.neptune.neptune_cluster_public_snapshot.neptune_cluster_public_snapshot import (
                 neptune_cluster_public_snapshot,

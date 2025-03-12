@@ -13,15 +13,12 @@ class Test_admincenter_groups_not_public_visibility:
         admincenter_client.audited_tenant = "audited_tenant"
         admincenter_client.audited_domain = DOMAIN
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_microsoft365_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.microsoft365.services.admincenter.admincenter_groups_not_public_visibility.admincenter_groups_not_public_visibility.admincenter_client",
-                new=admincenter_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_microsoft365_provider(),
+        ), mock.patch(
+            "prowler.providers.microsoft365.services.admincenter.admincenter_groups_not_public_visibility.admincenter_groups_not_public_visibility.admincenter_client",
+            new=admincenter_client,
         ):
             from prowler.providers.microsoft365.services.admincenter.admincenter_groups_not_public_visibility.admincenter_groups_not_public_visibility import (
                 admincenter_groups_not_public_visibility,
@@ -38,15 +35,12 @@ class Test_admincenter_groups_not_public_visibility:
         admincenter_client.audited_tenant = "audited_tenant"
         admincenter_client.audited_domain = DOMAIN
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_microsoft365_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.microsoft365.services.admincenter.admincenter_groups_not_public_visibility.admincenter_groups_not_public_visibility.admincenter_client",
-                new=admincenter_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_microsoft365_provider(),
+        ), mock.patch(
+            "prowler.providers.microsoft365.services.admincenter.admincenter_groups_not_public_visibility.admincenter_groups_not_public_visibility.admincenter_client",
+            new=admincenter_client,
         ):
             from prowler.providers.microsoft365.services.admincenter.admincenter_groups_not_public_visibility.admincenter_groups_not_public_visibility import (
                 admincenter_groups_not_public_visibility,
@@ -76,15 +70,12 @@ class Test_admincenter_groups_not_public_visibility:
         admincenter_client.audited_tenant = "audited_tenant"
         admincenter_client.audited_domain = DOMAIN
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_microsoft365_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.microsoft365.services.admincenter.admincenter_groups_not_public_visibility.admincenter_groups_not_public_visibility.admincenter_client",
-                new=admincenter_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_microsoft365_provider(),
+        ), mock.patch(
+            "prowler.providers.microsoft365.services.admincenter.admincenter_groups_not_public_visibility.admincenter_groups_not_public_visibility.admincenter_client",
+            new=admincenter_client,
         ):
             from prowler.providers.microsoft365.services.admincenter.admincenter_groups_not_public_visibility.admincenter_groups_not_public_visibility import (
                 admincenter_groups_not_public_visibility,

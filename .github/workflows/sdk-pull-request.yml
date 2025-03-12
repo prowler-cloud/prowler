@@ -46,7 +46,7 @@ jobs:
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
           python -m pip install --upgrade pip
-          pipx install poetry==2.1.1
+          pipx install poetry==1.8.5
 
       - name: Set up Python ${{ matrix.python-version }}
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
@@ -58,7 +58,7 @@ jobs:
       - name: Install dependencies
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
-          poetry install --no-root
+          poetry install
           poetry run pip list
           VERSION=$(curl --silent "https://api.github.com/repos/hadolint/hadolint/releases/latest" | \
             grep '"tag_name":' | \

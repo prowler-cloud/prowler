@@ -11,15 +11,12 @@ from tests.providers.gcp.gcp_fixtures import (
 
 class TestComputeService:
     def test_service(self):
-        with (
-            patch(
-                "prowler.providers.gcp.lib.service.service.GCPService.__is_api_active__",
-                new=mock_is_api_active,
-            ),
-            patch(
-                "prowler.providers.gcp.lib.service.service.GCPService.__generate_client__",
-                new=mock_api_client,
-            ),
+        with patch(
+            "prowler.providers.gcp.lib.service.service.GCPService.__is_api_active__",
+            new=mock_is_api_active,
+        ), patch(
+            "prowler.providers.gcp.lib.service.service.GCPService.__generate_client__",
+            new=mock_api_client,
         ):
             compute_client = Compute(set_mocked_gcp_provider([GCP_PROJECT_ID]))
             assert compute_client.service == "compute"

@@ -42,15 +42,12 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
         ecr_client.registries = {}
         ecr_client.audit_config = {}
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_client",
-                ecr_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_aws_provider(),
+        ), mock.patch(
+            "prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_client",
+            ecr_client,
         ):
             from prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image import (
                 ecr_repositories_scan_vulnerabilities_in_latest_image,
@@ -73,15 +70,12 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
         )
         ecr_client.audit_config = {}
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_client",
-                ecr_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_aws_provider(),
+        ), mock.patch(
+            "prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_client",
+            ecr_client,
         ):
             from prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image import (
                 ecr_repositories_scan_vulnerabilities_in_latest_image,
@@ -114,15 +108,12 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
         )
         ecr_client.audit_config = {}
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_client",
-                ecr_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_aws_provider(),
+        ), mock.patch(
+            "prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_client",
+            ecr_client,
         ):
             from prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image import (
                 ecr_repositories_scan_vulnerabilities_in_latest_image,
@@ -167,15 +158,12 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
         )
         ecr_client.audit_config = {}
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_client",
-                ecr_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_aws_provider(),
+        ), mock.patch(
+            "prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_client",
+            ecr_client,
         ):
             from prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image import (
                 ecr_repositories_scan_vulnerabilities_in_latest_image,
@@ -229,15 +217,12 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
         )
         ecr_client.audit_config = {}
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_client",
-                ecr_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_aws_provider(),
+        ), mock.patch(
+            "prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_client",
+            ecr_client,
         ):
             from prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image import (
                 ecr_repositories_scan_vulnerabilities_in_latest_image,
@@ -295,15 +280,12 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
             "ecr_repository_vulnerability_minimum_severity": "MEDIUM"
         }
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_client",
-                ecr_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_aws_provider(),
+        ), mock.patch(
+            "prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_client",
+            ecr_client,
         ):
             from prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image import (
                 ecr_repositories_scan_vulnerabilities_in_latest_image,
@@ -361,15 +343,12 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
             "ecr_repository_vulnerability_minimum_severity": "HIGH"
         }
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_client",
-                ecr_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_aws_provider(),
+        ), mock.patch(
+            "prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_client",
+            ecr_client,
         ):
             from prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image import (
                 ecr_repositories_scan_vulnerabilities_in_latest_image,
@@ -427,15 +406,12 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
             "ecr_repository_vulnerability_minimum_severity": "CRITICAL"
         }
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_client",
-                ecr_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_aws_provider(),
+        ), mock.patch(
+            "prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_client",
+            ecr_client,
         ):
             from prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image import (
                 ecr_repositories_scan_vulnerabilities_in_latest_image,
@@ -493,15 +469,12 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
             "ecr_repository_vulnerability_minimum_severity": "CRITICAL"
         }
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_client",
-                ecr_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_aws_provider(),
+        ), mock.patch(
+            "prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_client",
+            ecr_client,
         ):
             from prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image import (
                 ecr_repositories_scan_vulnerabilities_in_latest_image,
@@ -559,15 +532,12 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
             "ecr_repository_vulnerability_minimum_severity": "HIGH"
         }
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_client",
-                ecr_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_aws_provider(),
+        ), mock.patch(
+            "prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_client",
+            ecr_client,
         ):
             from prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image import (
                 ecr_repositories_scan_vulnerabilities_in_latest_image,
@@ -621,15 +591,12 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
         )
         ecr_client.audit_config = {}
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_client",
-                ecr_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_aws_provider(),
+        ), mock.patch(
+            "prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_client",
+            ecr_client,
         ):
             from prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image import (
                 ecr_repositories_scan_vulnerabilities_in_latest_image,
@@ -683,15 +650,12 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
         )
         ecr_client.audit_config = {}
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_client",
-                ecr_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_aws_provider(),
+        ), mock.patch(
+            "prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_client",
+            ecr_client,
         ):
             from prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image import (
                 ecr_repositories_scan_vulnerabilities_in_latest_image,

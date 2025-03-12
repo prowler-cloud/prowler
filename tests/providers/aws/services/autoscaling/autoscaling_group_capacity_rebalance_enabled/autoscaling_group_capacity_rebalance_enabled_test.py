@@ -18,15 +18,12 @@ class Test_autoscaling_group_capacity_rebalance_enabled:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.autoscaling.autoscaling_group_capacity_rebalance_enabled.autoscaling_group_capacity_rebalance_enabled.autoscaling_client",
-                new=AutoScaling(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.autoscaling.autoscaling_group_capacity_rebalance_enabled.autoscaling_group_capacity_rebalance_enabled.autoscaling_client",
+            new=AutoScaling(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.autoscaling.autoscaling_group_capacity_rebalance_enabled.autoscaling_group_capacity_rebalance_enabled import (
@@ -92,15 +89,12 @@ class Test_autoscaling_group_capacity_rebalance_enabled:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.autoscaling.autoscaling_group_capacity_rebalance_enabled.autoscaling_group_capacity_rebalance_enabled.autoscaling_client",
-                new=AutoScaling(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.autoscaling.autoscaling_group_capacity_rebalance_enabled.autoscaling_group_capacity_rebalance_enabled.autoscaling_client",
+            new=AutoScaling(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.autoscaling.autoscaling_group_capacity_rebalance_enabled.autoscaling_group_capacity_rebalance_enabled import (
@@ -174,15 +168,12 @@ class Test_autoscaling_group_capacity_rebalance_enabled:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.autoscaling.autoscaling_group_capacity_rebalance_enabled.autoscaling_group_capacity_rebalance_enabled.autoscaling_client",
-                new=AutoScaling(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.autoscaling.autoscaling_group_capacity_rebalance_enabled.autoscaling_group_capacity_rebalance_enabled.autoscaling_client",
+            new=AutoScaling(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.autoscaling.autoscaling_group_capacity_rebalance_enabled.autoscaling_group_capacity_rebalance_enabled import (

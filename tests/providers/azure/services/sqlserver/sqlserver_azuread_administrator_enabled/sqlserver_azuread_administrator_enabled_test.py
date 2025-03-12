@@ -15,15 +15,12 @@ class Test_sqlserver_azuread_administrator_enabled:
         sqlserver_client = mock.MagicMock
         sqlserver_client.sql_servers = {}
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.azure.services.sqlserver.sqlserver_azuread_administrator_enabled.sqlserver_azuread_administrator_enabled.sqlserver_client",
-                new=sqlserver_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
+            "prowler.providers.azure.services.sqlserver.sqlserver_azuread_administrator_enabled.sqlserver_azuread_administrator_enabled.sqlserver_client",
+            new=sqlserver_client,
         ):
             from prowler.providers.azure.services.sqlserver.sqlserver_azuread_administrator_enabled.sqlserver_azuread_administrator_enabled import (
                 sqlserver_azuread_administrator_enabled,
@@ -52,15 +49,12 @@ class Test_sqlserver_azuread_administrator_enabled:
             ]
         }
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.azure.services.sqlserver.sqlserver_azuread_administrator_enabled.sqlserver_azuread_administrator_enabled.sqlserver_client",
-                new=sqlserver_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
+            "prowler.providers.azure.services.sqlserver.sqlserver_azuread_administrator_enabled.sqlserver_azuread_administrator_enabled.sqlserver_client",
+            new=sqlserver_client,
         ):
             from prowler.providers.azure.services.sqlserver.sqlserver_azuread_administrator_enabled.sqlserver_azuread_administrator_enabled import (
                 sqlserver_azuread_administrator_enabled,
@@ -100,15 +94,12 @@ class Test_sqlserver_azuread_administrator_enabled:
             ]
         }
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.azure.services.sqlserver.sqlserver_azuread_administrator_enabled.sqlserver_azuread_administrator_enabled.sqlserver_client",
-                new=sqlserver_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
+            "prowler.providers.azure.services.sqlserver.sqlserver_azuread_administrator_enabled.sqlserver_azuread_administrator_enabled.sqlserver_client",
+            new=sqlserver_client,
         ):
             from prowler.providers.azure.services.sqlserver.sqlserver_azuread_administrator_enabled.sqlserver_azuread_administrator_enabled import (
                 sqlserver_azuread_administrator_enabled,
@@ -148,15 +139,12 @@ class Test_sqlserver_azuread_administrator_enabled:
             ]
         }
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.azure.services.sqlserver.sqlserver_azuread_administrator_enabled.sqlserver_azuread_administrator_enabled.sqlserver_client",
-                new=sqlserver_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
+            "prowler.providers.azure.services.sqlserver.sqlserver_azuread_administrator_enabled.sqlserver_azuread_administrator_enabled.sqlserver_client",
+            new=sqlserver_client,
         ):
             from prowler.providers.azure.services.sqlserver.sqlserver_azuread_administrator_enabled.sqlserver_azuread_administrator_enabled import (
                 sqlserver_azuread_administrator_enabled,

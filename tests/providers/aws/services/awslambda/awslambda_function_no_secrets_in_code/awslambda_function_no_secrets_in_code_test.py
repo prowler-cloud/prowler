@@ -76,15 +76,12 @@ class Test_awslambda_function_no_secrets_in_code:
         lambda_client = mock.MagicMock
         lambda_client.functions = {}
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.awslambda.awslambda_function_no_secrets_in_code.awslambda_function_no_secrets_in_code.awslambda_client",
-                new=lambda_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_aws_provider(),
+        ), mock.patch(
+            "prowler.providers.aws.services.awslambda.awslambda_function_no_secrets_in_code.awslambda_function_no_secrets_in_code.awslambda_client",
+            new=lambda_client,
         ):
             # Test Check
             from prowler.providers.aws.services.awslambda.awslambda_function_no_secrets_in_code.awslambda_function_no_secrets_in_code import (
@@ -101,15 +98,12 @@ class Test_awslambda_function_no_secrets_in_code:
         lambda_client.functions = {LAMBDA_FUNCTION_ARN: create_lambda_function()}
         lambda_client._get_function_code = mock_get_function_codewith_secrets
         lambda_client.audit_config = {"secrets_ignore_patterns": []}
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.awslambda.awslambda_function_no_secrets_in_code.awslambda_function_no_secrets_in_code.awslambda_client",
-                new=lambda_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_aws_provider(),
+        ), mock.patch(
+            "prowler.providers.aws.services.awslambda.awslambda_function_no_secrets_in_code.awslambda_function_no_secrets_in_code.awslambda_client",
+            new=lambda_client,
         ):
             # Test Check
             from prowler.providers.aws.services.awslambda.awslambda_function_no_secrets_in_code.awslambda_function_no_secrets_in_code import (
@@ -137,15 +131,12 @@ class Test_awslambda_function_no_secrets_in_code:
         lambda_client._get_function_code = mock_get_function_codewithout_secrets
         lambda_client.audit_config = {"secrets_ignore_patterns": []}
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.awslambda.awslambda_function_no_secrets_in_code.awslambda_function_no_secrets_in_code.awslambda_client",
-                new=lambda_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_aws_provider(),
+        ), mock.patch(
+            "prowler.providers.aws.services.awslambda.awslambda_function_no_secrets_in_code.awslambda_function_no_secrets_in_code.awslambda_client",
+            new=lambda_client,
         ):
             # Test Check
             from prowler.providers.aws.services.awslambda.awslambda_function_no_secrets_in_code.awslambda_function_no_secrets_in_code import (
@@ -173,15 +164,12 @@ class Test_awslambda_function_no_secrets_in_code:
         lambda_client._get_function_code = mock_get_function_codewith_metadata_api
         lambda_client.audit_config = {"secrets_ignore_patterns": []}
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.awslambda.awslambda_function_no_secrets_in_code.awslambda_function_no_secrets_in_code.awslambda_client",
-                new=lambda_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_aws_provider(),
+        ), mock.patch(
+            "prowler.providers.aws.services.awslambda.awslambda_function_no_secrets_in_code.awslambda_function_no_secrets_in_code.awslambda_client",
+            new=lambda_client,
         ):
             # Test Check
             from prowler.providers.aws.services.awslambda.awslambda_function_no_secrets_in_code.awslambda_function_no_secrets_in_code import (

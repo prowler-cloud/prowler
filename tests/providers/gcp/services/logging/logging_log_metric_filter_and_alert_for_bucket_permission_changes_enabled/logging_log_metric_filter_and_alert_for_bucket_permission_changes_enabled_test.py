@@ -13,19 +13,15 @@ class Test_logging_log_metric_filter_and_alert_for_bucket_permission_changes_ena
         logging_client = MagicMock()
         monitoring_client = MagicMock()
 
-        with (
-            patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_gcp_provider(),
-            ),
-            patch(
-                "prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.logging_client",
-                new=logging_client,
-            ),
-            patch(
-                "prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.monitoring_client",
-                new=monitoring_client,
-            ),
+        with patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), patch(
+            "prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.logging_client",
+            new=logging_client,
+        ), patch(
+            "prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.monitoring_client",
+            new=monitoring_client,
         ):
             from prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled import (
                 logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled,
@@ -45,19 +41,15 @@ class Test_logging_log_metric_filter_and_alert_for_bucket_permission_changes_ena
         logging_client = MagicMock()
         monitoring_client = MagicMock()
 
-        with (
-            patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_gcp_provider(),
-            ),
-            patch(
-                "prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.logging_client",
-                new=logging_client,
-            ),
-            patch(
-                "prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.monitoring_client",
-                new=monitoring_client,
-            ),
+        with patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), patch(
+            "prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.logging_client",
+            new=logging_client,
+        ), patch(
+            "prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.monitoring_client",
+            new=monitoring_client,
         ):
             from prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled import (
                 logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled,
@@ -97,19 +89,15 @@ class Test_logging_log_metric_filter_and_alert_for_bucket_permission_changes_ena
         logging_client = MagicMock()
         monitoring_client = MagicMock()
 
-        with (
-            patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_gcp_provider(),
-            ),
-            patch(
-                "prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.logging_client",
-                new=logging_client,
-            ),
-            patch(
-                "prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.monitoring_client",
-                new=monitoring_client,
-            ),
+        with patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), patch(
+            "prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.logging_client",
+            new=logging_client,
+        ), patch(
+            "prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.monitoring_client",
+            new=monitoring_client,
         ):
             from prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled import (
                 logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled,
@@ -148,19 +136,15 @@ class Test_logging_log_metric_filter_and_alert_for_bucket_permission_changes_ena
         logging_client = MagicMock()
         monitoring_client = MagicMock()
 
-        with (
-            patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_gcp_provider(),
-            ),
-            patch(
-                "prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.logging_client",
-                new=logging_client,
-            ),
-            patch(
-                "prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.monitoring_client",
-                new=monitoring_client,
-            ),
+        with patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), patch(
+            "prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.logging_client",
+            new=logging_client,
+        ), patch(
+            "prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.monitoring_client",
+            new=monitoring_client,
         ):
             from prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled import (
                 logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled,

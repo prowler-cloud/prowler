@@ -13,15 +13,12 @@ class Test_memorydb_cluster_auto_minor_version_upgrades:
         memorydb_client = mock.MagicMock
         memorydb_client.clusters = {}
 
-        with (
-            mock.patch(
-                "prowler.providers.aws.services.memorydb.memorydb_service.MemoryDB",
-                new=memorydb_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.memorydb.memorydb_cluster_auto_minor_version_upgrades.memorydb_cluster_auto_minor_version_upgrades.memorydb_client",
-                new=memorydb_client,
-            ),
+        with mock.patch(
+            "prowler.providers.aws.services.memorydb.memorydb_service.MemoryDB",
+            new=memorydb_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.memorydb.memorydb_cluster_auto_minor_version_upgrades.memorydb_cluster_auto_minor_version_upgrades.memorydb_client",
+            new=memorydb_client,
         ):
             from prowler.providers.aws.services.memorydb.memorydb_cluster_auto_minor_version_upgrades.memorydb_cluster_auto_minor_version_upgrades import (
                 memorydb_cluster_auto_minor_version_upgrades,
@@ -55,15 +52,12 @@ class Test_memorydb_cluster_auto_minor_version_upgrades:
             )
         }
 
-        with (
-            mock.patch(
-                "prowler.providers.aws.services.memorydb.memorydb_service.MemoryDB",
-                new=memorydb_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.memorydb.memorydb_cluster_auto_minor_version_upgrades.memorydb_cluster_auto_minor_version_upgrades.memorydb_client",
-                new=memorydb_client,
-            ),
+        with mock.patch(
+            "prowler.providers.aws.services.memorydb.memorydb_service.MemoryDB",
+            new=memorydb_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.memorydb.memorydb_cluster_auto_minor_version_upgrades.memorydb_cluster_auto_minor_version_upgrades.memorydb_client",
+            new=memorydb_client,
         ):
             from prowler.providers.aws.services.memorydb.memorydb_cluster_auto_minor_version_upgrades.memorydb_cluster_auto_minor_version_upgrades import (
                 memorydb_cluster_auto_minor_version_upgrades,
@@ -109,15 +103,12 @@ class Test_memorydb_cluster_auto_minor_version_upgrades:
             )
         }
 
-        with (
-            mock.patch(
-                "prowler.providers.aws.services.memorydb.memorydb_service.MemoryDB",
-                new=memorydb_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.memorydb.memorydb_cluster_auto_minor_version_upgrades.memorydb_cluster_auto_minor_version_upgrades.memorydb_client",
-                new=memorydb_client,
-            ),
+        with mock.patch(
+            "prowler.providers.aws.services.memorydb.memorydb_service.MemoryDB",
+            new=memorydb_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.memorydb.memorydb_cluster_auto_minor_version_upgrades.memorydb_cluster_auto_minor_version_upgrades.memorydb_client",
+            new=memorydb_client,
         ):
             from prowler.providers.aws.services.memorydb.memorydb_cluster_auto_minor_version_upgrades.memorydb_cluster_auto_minor_version_upgrades import (
                 memorydb_cluster_auto_minor_version_upgrades,

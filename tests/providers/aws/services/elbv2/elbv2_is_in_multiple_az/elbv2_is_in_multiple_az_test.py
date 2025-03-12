@@ -18,15 +18,12 @@ class Test_elbv2_is_in_multiple_az:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.elbv2.elbv2_is_in_multiple_az.elbv2_is_in_multiple_az.elbv2_client",
-                new=ELBv2(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.elbv2.elbv2_is_in_multiple_az.elbv2_is_in_multiple_az.elbv2_client",
+            new=ELBv2(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.elbv2.elbv2_is_in_multiple_az.elbv2_is_in_multiple_az import (
@@ -67,15 +64,12 @@ class Test_elbv2_is_in_multiple_az:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.elbv2.elbv2_is_in_multiple_az.elbv2_is_in_multiple_az.elbv2_client",
-                new=ELBv2(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.elbv2.elbv2_is_in_multiple_az.elbv2_is_in_multiple_az.elbv2_client",
+            new=ELBv2(aws_provider),
         ):
             from prowler.providers.aws.services.elbv2.elbv2_is_in_multiple_az.elbv2_is_in_multiple_az import (
                 elbv2_is_in_multiple_az,
@@ -130,15 +124,12 @@ class Test_elbv2_is_in_multiple_az:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.elbv2.elbv2_is_in_multiple_az.elbv2_is_in_multiple_az.elbv2_client",
-                new=ELBv2(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.elbv2.elbv2_is_in_multiple_az.elbv2_is_in_multiple_az.elbv2_client",
+            new=ELBv2(aws_provider),
         ):
             from prowler.providers.aws.services.elbv2.elbv2_is_in_multiple_az.elbv2_is_in_multiple_az import (
                 elbv2_is_in_multiple_az,

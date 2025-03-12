@@ -10,15 +10,12 @@ class Test_entra_password_hash_sync_enabled:
     def test_password_hash_sync_enabled(self):
         entra_client = mock.MagicMock()
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_microsoft365_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_password_hash_sync_enabled.entra_password_hash_sync_enabled.entra_client",
-                new=entra_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_microsoft365_provider(),
+        ), mock.patch(
+            "prowler.providers.microsoft365.services.entra.entra_password_hash_sync_enabled.entra_password_hash_sync_enabled.entra_client",
+            new=entra_client,
         ):
             from prowler.providers.microsoft365.services.entra.entra_password_hash_sync_enabled.entra_password_hash_sync_enabled import (
                 entra_password_hash_sync_enabled,
@@ -48,15 +45,12 @@ class Test_entra_password_hash_sync_enabled:
     def test_password_hash_sync_disabled(self):
         entra_client = mock.MagicMock()
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_microsoft365_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_password_hash_sync_enabled.entra_password_hash_sync_enabled.entra_client",
-                new=entra_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_microsoft365_provider(),
+        ), mock.patch(
+            "prowler.providers.microsoft365.services.entra.entra_password_hash_sync_enabled.entra_password_hash_sync_enabled.entra_client",
+            new=entra_client,
         ):
             from prowler.providers.microsoft365.services.entra.entra_password_hash_sync_enabled.entra_password_hash_sync_enabled import (
                 entra_password_hash_sync_enabled,
@@ -100,15 +94,12 @@ class Test_entra_password_hash_sync_enabled:
     def test_password_hash_sync_disabled_two_org(self):
         entra_client = mock.MagicMock()
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_microsoft365_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_password_hash_sync_enabled.entra_password_hash_sync_enabled.entra_client",
-                new=entra_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_microsoft365_provider(),
+        ), mock.patch(
+            "prowler.providers.microsoft365.services.entra.entra_password_hash_sync_enabled.entra_password_hash_sync_enabled.entra_client",
+            new=entra_client,
         ):
             from prowler.providers.microsoft365.services.entra.entra_password_hash_sync_enabled.entra_password_hash_sync_enabled import (
                 entra_password_hash_sync_enabled,
@@ -139,15 +130,12 @@ class Test_entra_password_hash_sync_enabled:
         entra_client = mock.MagicMock()
         entra_client.organization = []
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_microsoft365_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_password_hash_sync_enabled.entra_password_hash_sync_enabled.entra_client",
-                new=entra_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_microsoft365_provider(),
+        ), mock.patch(
+            "prowler.providers.microsoft365.services.entra.entra_password_hash_sync_enabled.entra_password_hash_sync_enabled.entra_client",
+            new=entra_client,
         ):
             from prowler.providers.microsoft365.services.entra.entra_password_hash_sync_enabled.entra_password_hash_sync_enabled import (
                 entra_password_hash_sync_enabled,

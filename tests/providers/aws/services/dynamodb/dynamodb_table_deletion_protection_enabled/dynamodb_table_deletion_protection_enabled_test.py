@@ -19,15 +19,12 @@ class Test_dynamodb_table_deletion_protection_enabled:
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.dynamodb.dynamodb_table_deletion_protection_enabled.dynamodb_table_deletion_protection_enabled.dynamodb_client",
-                new=DynamoDB(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.dynamodb.dynamodb_table_deletion_protection_enabled.dynamodb_table_deletion_protection_enabled.dynamodb_client",
+            new=DynamoDB(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.dynamodb.dynamodb_table_deletion_protection_enabled.dynamodb_table_deletion_protection_enabled import (
@@ -62,15 +59,12 @@ class Test_dynamodb_table_deletion_protection_enabled:
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.dynamodb.dynamodb_table_deletion_protection_enabled.dynamodb_table_deletion_protection_enabled.dynamodb_client",
-                new=DynamoDB(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.dynamodb.dynamodb_table_deletion_protection_enabled.dynamodb_table_deletion_protection_enabled.dynamodb_client",
+            new=DynamoDB(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.dynamodb.dynamodb_table_deletion_protection_enabled.dynamodb_table_deletion_protection_enabled import (
@@ -113,15 +107,12 @@ class Test_dynamodb_table_deletion_protection_enabled:
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.dynamodb.dynamodb_table_deletion_protection_enabled.dynamodb_table_deletion_protection_enabled.dynamodb_client",
-                new=DynamoDB(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.dynamodb.dynamodb_table_deletion_protection_enabled.dynamodb_table_deletion_protection_enabled.dynamodb_client",
+            new=DynamoDB(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.dynamodb.dynamodb_table_deletion_protection_enabled.dynamodb_table_deletion_protection_enabled import (

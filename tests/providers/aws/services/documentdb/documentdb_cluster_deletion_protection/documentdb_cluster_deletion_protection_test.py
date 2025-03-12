@@ -17,15 +17,12 @@ class Test_documentdb_cluster_deletion_protection:
         documentdb_client = mock.MagicMock
         documentdb_client.db_clusters = {}
 
-        with (
-            mock.patch(
-                "prowler.providers.aws.services.documentdb.documentdb_service.DocumentDB",
-                new=documentdb_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.documentdb.documentdb_client.documentdb_client",
-                new=documentdb_client,
-            ),
+        with mock.patch(
+            "prowler.providers.aws.services.documentdb.documentdb_service.DocumentDB",
+            new=documentdb_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.documentdb.documentdb_client.documentdb_client",
+            new=documentdb_client,
         ):
             from prowler.providers.aws.services.documentdb.documentdb_cluster_deletion_protection.documentdb_cluster_deletion_protection import (
                 documentdb_cluster_deletion_protection,
@@ -54,15 +51,12 @@ class Test_documentdb_cluster_deletion_protection:
             )
         }
 
-        with (
-            mock.patch(
-                "prowler.providers.aws.services.documentdb.documentdb_service.DocumentDB",
-                new=documentdb_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.documentdb.documentdb_client.documentdb_client",
-                new=documentdb_client,
-            ),
+        with mock.patch(
+            "prowler.providers.aws.services.documentdb.documentdb_service.DocumentDB",
+            new=documentdb_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.documentdb.documentdb_client.documentdb_client",
+            new=documentdb_client,
         ):
             from prowler.providers.aws.services.documentdb.documentdb_cluster_deletion_protection.documentdb_cluster_deletion_protection import (
                 documentdb_cluster_deletion_protection,
@@ -99,15 +93,12 @@ class Test_documentdb_cluster_deletion_protection:
                 tags=[],
             )
         }
-        with (
-            mock.patch(
-                "prowler.providers.aws.services.documentdb.documentdb_service.DocumentDB",
-                new=documentdb_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.documentdb.documentdb_client.documentdb_client",
-                new=documentdb_client,
-            ),
+        with mock.patch(
+            "prowler.providers.aws.services.documentdb.documentdb_service.DocumentDB",
+            new=documentdb_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.documentdb.documentdb_client.documentdb_client",
+            new=documentdb_client,
         ):
             from prowler.providers.aws.services.documentdb.documentdb_cluster_deletion_protection.documentdb_cluster_deletion_protection import (
                 documentdb_cluster_deletion_protection,

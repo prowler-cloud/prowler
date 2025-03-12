@@ -12,15 +12,12 @@ class Test_monitor_alert_delete_sqlserver_fr:
     def test_monitor_alert_delete_sqlserver_fr_no_subscriptions(self):
         monitor_client = mock.MagicMock()
         monitor_client.alert_rules = {}
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.azure.services.monitor.monitor_alert_delete_sqlserver_fr.monitor_alert_delete_sqlserver_fr.monitor_client",
-                new=monitor_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
+            "prowler.providers.azure.services.monitor.monitor_alert_delete_sqlserver_fr.monitor_alert_delete_sqlserver_fr.monitor_client",
+            new=monitor_client,
         ):
             from prowler.providers.azure.services.monitor.monitor_alert_delete_sqlserver_fr.monitor_alert_delete_sqlserver_fr import (
                 monitor_alert_delete_sqlserver_fr,
@@ -33,15 +30,12 @@ class Test_monitor_alert_delete_sqlserver_fr:
     def test_no_alert_rules(self):
         monitor_client = mock.MagicMock()
         monitor_client.alert_rules = {AZURE_SUBSCRIPTION_ID: []}
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.azure.services.monitor.monitor_alert_delete_sqlserver_fr.monitor_alert_delete_sqlserver_fr.monitor_client",
-                new=monitor_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
+            "prowler.providers.azure.services.monitor.monitor_alert_delete_sqlserver_fr.monitor_alert_delete_sqlserver_fr.monitor_client",
+            new=monitor_client,
         ):
             from prowler.providers.azure.services.monitor.monitor_alert_delete_sqlserver_fr.monitor_alert_delete_sqlserver_fr import (
                 monitor_alert_delete_sqlserver_fr,
@@ -62,15 +56,12 @@ class Test_monitor_alert_delete_sqlserver_fr:
     def test_alert_rules_configured(self):
         monitor_client = mock.MagicMock
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.azure.services.monitor.monitor_alert_delete_sqlserver_fr.monitor_alert_delete_sqlserver_fr.monitor_client",
-                new=monitor_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
+            "prowler.providers.azure.services.monitor.monitor_alert_delete_sqlserver_fr.monitor_alert_delete_sqlserver_fr.monitor_client",
+            new=monitor_client,
         ):
             from prowler.providers.azure.services.monitor.monitor_alert_delete_sqlserver_fr.monitor_alert_delete_sqlserver_fr import (
                 monitor_alert_delete_sqlserver_fr,

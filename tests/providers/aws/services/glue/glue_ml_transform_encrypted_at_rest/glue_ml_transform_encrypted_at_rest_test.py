@@ -8,15 +8,12 @@ class Test_glue_ml_transform_encrypted_at_rest:
         glue_client = MagicMock
         glue_client.ml_transforms = {}
 
-        with (
-            patch(
-                "prowler.providers.aws.services.glue.glue_service.Glue",
-                new=glue_client,
-            ),
-            patch(
-                "prowler.providers.aws.services.glue.glue_client.glue_client",
-                new=glue_client,
-            ),
+        with patch(
+            "prowler.providers.aws.services.glue.glue_service.Glue",
+            new=glue_client,
+        ), patch(
+            "prowler.providers.aws.services.glue.glue_client.glue_client",
+            new=glue_client,
         ):
             from prowler.providers.aws.services.glue.glue_ml_transform_encrypted_at_rest.glue_ml_transform_encrypted_at_rest import (
                 glue_ml_transform_encrypted_at_rest,
@@ -45,15 +42,12 @@ class Test_glue_ml_transform_encrypted_at_rest:
             )
         }
 
-        with (
-            patch(
-                "prowler.providers.aws.services.glue.glue_service.Glue",
-                new=glue_client,
-            ),
-            patch(
-                "prowler.providers.aws.services.glue.glue_client.glue_client",
-                new=glue_client,
-            ),
+        with patch(
+            "prowler.providers.aws.services.glue.glue_service.Glue",
+            new=glue_client,
+        ), patch(
+            "prowler.providers.aws.services.glue.glue_client.glue_client",
+            new=glue_client,
         ):
             from prowler.providers.aws.services.glue.glue_ml_transform_encrypted_at_rest.glue_ml_transform_encrypted_at_rest import (
                 glue_ml_transform_encrypted_at_rest,
@@ -90,15 +84,12 @@ class Test_glue_ml_transform_encrypted_at_rest:
             )
         }
 
-        with (
-            patch(
-                "prowler.providers.aws.services.glue.glue_service.Glue",
-                new=glue_client,
-            ),
-            patch(
-                "prowler.providers.aws.services.glue.glue_client.glue_client",
-                new=glue_client,
-            ),
+        with patch(
+            "prowler.providers.aws.services.glue.glue_service.Glue",
+            new=glue_client,
+        ), patch(
+            "prowler.providers.aws.services.glue.glue_client.glue_client",
+            new=glue_client,
         ):
             from prowler.providers.aws.services.glue.glue_ml_transform_encrypted_at_rest.glue_ml_transform_encrypted_at_rest import (
                 glue_ml_transform_encrypted_at_rest,

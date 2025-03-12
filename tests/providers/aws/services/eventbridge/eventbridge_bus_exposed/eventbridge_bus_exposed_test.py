@@ -23,15 +23,12 @@ class Test_eventbridge_bus_exposed:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.eventbridge.eventbridge_bus_exposed.eventbridge_bus_exposed.eventbridge_client",
-                new=EventBridge(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.eventbridge.eventbridge_bus_exposed.eventbridge_bus_exposed.eventbridge_client",
+            new=EventBridge(aws_provider),
         ):
             from prowler.providers.aws.services.eventbridge.eventbridge_bus_exposed.eventbridge_bus_exposed import (
                 eventbridge_bus_exposed,
@@ -66,15 +63,12 @@ class Test_eventbridge_bus_exposed:
             Principal=AWS_ACCOUNT_NUMBER,
             StatementId="test-statement",
         )
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.eventbridge.eventbridge_bus_exposed.eventbridge_bus_exposed.eventbridge_client",
-                new=EventBridge(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.eventbridge.eventbridge_bus_exposed.eventbridge_bus_exposed.eventbridge_client",
+            new=EventBridge(aws_provider),
         ):
             from prowler.providers.aws.services.eventbridge.eventbridge_bus_exposed.eventbridge_bus_exposed import (
                 eventbridge_bus_exposed,
@@ -109,15 +103,12 @@ class Test_eventbridge_bus_exposed:
             Principal="111122223333",
             StatementId="test-statement",
         )
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.eventbridge.eventbridge_bus_exposed.eventbridge_bus_exposed.eventbridge_client",
-                new=EventBridge(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.eventbridge.eventbridge_bus_exposed.eventbridge_bus_exposed.eventbridge_client",
+            new=EventBridge(aws_provider),
         ):
             from prowler.providers.aws.services.eventbridge.eventbridge_bus_exposed.eventbridge_bus_exposed import (
                 eventbridge_bus_exposed,
@@ -152,15 +143,12 @@ class Test_eventbridge_bus_exposed:
             Principal="*",
             StatementId="test-statement",
         )
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.eventbridge.eventbridge_bus_exposed.eventbridge_bus_exposed.eventbridge_client",
-                new=EventBridge(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.eventbridge.eventbridge_bus_exposed.eventbridge_bus_exposed.eventbridge_client",
+            new=EventBridge(aws_provider),
         ):
             from prowler.providers.aws.services.eventbridge.eventbridge_bus_exposed.eventbridge_bus_exposed import (
                 eventbridge_bus_exposed,

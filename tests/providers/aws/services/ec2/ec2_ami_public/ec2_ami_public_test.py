@@ -21,15 +21,12 @@ class Test_ec2_ami_public:
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.ec2.ec2_ami_public.ec2_ami_public.ec2_client",
-                new=EC2(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_ami_public.ec2_ami_public.ec2_client",
+            new=EC2(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_ami_public.ec2_ami_public import (
@@ -59,15 +56,12 @@ class Test_ec2_ami_public:
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.ec2.ec2_ami_public.ec2_ami_public.ec2_client",
-                new=EC2(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_ami_public.ec2_ami_public.ec2_client",
+            new=EC2(aws_provider),
         ):
             from prowler.providers.aws.services.ec2.ec2_ami_public.ec2_ami_public import (
                 ec2_ami_public,
@@ -114,15 +108,12 @@ class Test_ec2_ami_public:
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.ec2.ec2_ami_public.ec2_ami_public.ec2_client",
-                new=EC2(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_ami_public.ec2_ami_public.ec2_client",
+            new=EC2(aws_provider),
         ):
             from prowler.providers.aws.services.ec2.ec2_ami_public.ec2_ami_public import (
                 ec2_ami_public,

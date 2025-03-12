@@ -44,15 +44,12 @@ class Test_glacier_vaults_policy_public_access_fixer:
 
             aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-            with (
-                mock.patch(
-                    "prowler.providers.common.provider.Provider.get_global_provider",
-                    return_value=aws_provider,
-                ),
-                mock.patch(
-                    "prowler.providers.aws.services.glacier.glacier_vaults_policy_public_access.glacier_vaults_policy_public_access_fixer.glacier_client",
-                    new=Glacier(aws_provider),
-                ),
+            with mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ), mock.patch(
+                "prowler.providers.aws.services.glacier.glacier_vaults_policy_public_access.glacier_vaults_policy_public_access_fixer.glacier_client",
+                new=Glacier(aws_provider),
             ):
                 from prowler.providers.aws.services.glacier.glacier_vaults_policy_public_access.glacier_vaults_policy_public_access_fixer import (
                     fixer,
@@ -70,15 +67,12 @@ class Test_glacier_vaults_policy_public_access_fixer:
 
             aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-            with (
-                mock.patch(
-                    "prowler.providers.common.provider.Provider.get_global_provider",
-                    return_value=aws_provider,
-                ),
-                mock.patch(
-                    "prowler.providers.aws.services.glacier.glacier_vaults_policy_public_access.glacier_vaults_policy_public_access_fixer.glacier_client",
-                    new=Glacier(aws_provider),
-                ),
+            with mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ), mock.patch(
+                "prowler.providers.aws.services.glacier.glacier_vaults_policy_public_access.glacier_vaults_policy_public_access_fixer.glacier_client",
+                new=Glacier(aws_provider),
             ):
                 from prowler.providers.aws.services.glacier.glacier_vaults_policy_public_access.glacier_vaults_policy_public_access_fixer import (
                     fixer,

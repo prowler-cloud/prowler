@@ -820,12 +820,9 @@ class TestCheck:
         check.CheckID = "test-check"
         check.execute = Mock(return_value=findings)
 
-        with (
-            patch("prowler.lib.check.check.execute", return_value=findings),
-            patch(
-                "prowler.providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer",
-                accessanalyzer_client,
-            ),
+        with patch("prowler.lib.check.check.execute", return_value=findings), patch(
+            "prowler.providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer",
+            accessanalyzer_client,
         ):
             findings = execute(
                 check=check,

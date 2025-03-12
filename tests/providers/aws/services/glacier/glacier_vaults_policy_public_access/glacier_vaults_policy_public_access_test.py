@@ -8,15 +8,12 @@ class Test_glacier_vaults_policy_public_access:
     def test_no_vaults(self):
         glacier_client = mock.MagicMock
         glacier_client.vaults = {}
-        with (
-            mock.patch(
-                "prowler.providers.aws.services.glacier.glacier_service.Glacier",
-                new=glacier_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.glacier.glacier_client.glacier_client",
-                new=glacier_client,
-            ),
+        with mock.patch(
+            "prowler.providers.aws.services.glacier.glacier_service.Glacier",
+            new=glacier_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.glacier.glacier_client.glacier_client",
+            new=glacier_client,
         ):
             # Test Check
             from prowler.providers.aws.services.glacier.glacier_vaults_policy_public_access.glacier_vaults_policy_public_access import (
@@ -40,15 +37,12 @@ class Test_glacier_vaults_policy_public_access:
                 region=AWS_REGION_EU_WEST_1,
             )
         }
-        with (
-            mock.patch(
-                "prowler.providers.aws.services.glacier.glacier_service.Glacier",
-                new=glacier_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.glacier.glacier_client.glacier_client",
-                new=glacier_client,
-            ),
+        with mock.patch(
+            "prowler.providers.aws.services.glacier.glacier_service.Glacier",
+            new=glacier_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.glacier.glacier_client.glacier_client",
+            new=glacier_client,
         ):
             # Test Check
             from prowler.providers.aws.services.glacier.glacier_vaults_policy_public_access.glacier_vaults_policy_public_access import (
@@ -98,15 +92,12 @@ class Test_glacier_vaults_policy_public_access:
                 region=AWS_REGION_EU_WEST_1,
             )
         }
-        with (
-            mock.patch(
-                "prowler.providers.aws.services.glacier.glacier_service.Glacier",
-                new=glacier_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.glacier.glacier_client.glacier_client",
-                new=glacier_client,
-            ),
+        with mock.patch(
+            "prowler.providers.aws.services.glacier.glacier_service.Glacier",
+            new=glacier_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.glacier.glacier_client.glacier_client",
+            new=glacier_client,
         ):
             # Test Check
             from prowler.providers.aws.services.glacier.glacier_vaults_policy_public_access.glacier_vaults_policy_public_access import (
@@ -156,15 +147,12 @@ class Test_glacier_vaults_policy_public_access:
                 region=AWS_REGION_EU_WEST_1,
             )
         }
-        with (
-            mock.patch(
-                "prowler.providers.aws.services.glacier.glacier_service.Glacier",
-                new=glacier_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.glacier.glacier_client.glacier_client",
-                new=glacier_client,
-            ),
+        with mock.patch(
+            "prowler.providers.aws.services.glacier.glacier_service.Glacier",
+            new=glacier_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.glacier.glacier_client.glacier_client",
+            new=glacier_client,
         ):
             # Test Check
             from prowler.providers.aws.services.glacier.glacier_vaults_policy_public_access.glacier_vaults_policy_public_access import (
@@ -214,15 +202,12 @@ class Test_glacier_vaults_policy_public_access:
                 region=AWS_REGION_EU_WEST_1,
             )
         }
-        with (
-            mock.patch(
-                "prowler.providers.aws.services.glacier.glacier_service.Glacier",
-                new=glacier_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.glacier.glacier_client.glacier_client",
-                new=glacier_client,
-            ),
+        with mock.patch(
+            "prowler.providers.aws.services.glacier.glacier_service.Glacier",
+            new=glacier_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.glacier.glacier_client.glacier_client",
+            new=glacier_client,
         ):
             # Test Check
             from prowler.providers.aws.services.glacier.glacier_vaults_policy_public_access.glacier_vaults_policy_public_access import (
@@ -276,15 +261,12 @@ class Test_glacier_vaults_policy_public_access:
                 region=AWS_REGION_EU_WEST_1,
             )
         }
-        with (
-            mock.patch(
-                "prowler.providers.aws.services.glacier.glacier_service.Glacier",
-                new=glacier_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.glacier.glacier_client.glacier_client",
-                new=glacier_client,
-            ),
+        with mock.patch(
+            "prowler.providers.aws.services.glacier.glacier_service.Glacier",
+            new=glacier_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.glacier.glacier_client.glacier_client",
+            new=glacier_client,
         ):
             # Test Check
             from prowler.providers.aws.services.glacier.glacier_vaults_policy_public_access.glacier_vaults_policy_public_access import (

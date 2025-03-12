@@ -8,15 +8,12 @@ class Test_entra_security_defaults_enabled:
     def test_entra_no_tenants(self):
         entra_client = mock.MagicMock
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.azure.services.entra.entra_security_defaults_enabled.entra_security_defaults_enabled.entra_client",
-                new=entra_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
+            "prowler.providers.azure.services.entra.entra_security_defaults_enabled.entra_security_defaults_enabled.entra_client",
+            new=entra_client,
         ):
             from prowler.providers.azure.services.entra.entra_security_defaults_enabled.entra_security_defaults_enabled import (
                 entra_security_defaults_enabled,
@@ -31,15 +28,12 @@ class Test_entra_security_defaults_enabled:
     def test_entra_tenant_empty(self):
         entra_client = mock.MagicMock
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.azure.services.entra.entra_security_defaults_enabled.entra_security_defaults_enabled.entra_client",
-                new=entra_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
+            "prowler.providers.azure.services.entra.entra_security_defaults_enabled.entra_security_defaults_enabled.entra_client",
+            new=entra_client,
         ):
             from prowler.providers.azure.services.entra.entra_security_defaults_enabled.entra_security_defaults_enabled import (
                 entra_security_defaults_enabled,
@@ -59,15 +53,12 @@ class Test_entra_security_defaults_enabled:
     def test_entra_security_default_enabled(self):
         entra_client = mock.MagicMock
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.azure.services.entra.entra_security_defaults_enabled.entra_security_defaults_enabled.entra_client",
-                new=entra_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
+            "prowler.providers.azure.services.entra.entra_security_defaults_enabled.entra_security_defaults_enabled.entra_client",
+            new=entra_client,
         ):
             from prowler.providers.azure.services.entra.entra_security_defaults_enabled.entra_security_defaults_enabled import (
                 entra_security_defaults_enabled,
@@ -94,15 +85,12 @@ class Test_entra_security_defaults_enabled:
     def test_entra_security_default_disabled(self):
         entra_client = mock.MagicMock
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.azure.services.entra.entra_security_defaults_enabled.entra_security_defaults_enabled.entra_client",
-                new=entra_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
+            "prowler.providers.azure.services.entra.entra_security_defaults_enabled.entra_security_defaults_enabled.entra_client",
+            new=entra_client,
         ):
             from prowler.providers.azure.services.entra.entra_security_defaults_enabled.entra_security_defaults_enabled import (
                 entra_security_defaults_enabled,

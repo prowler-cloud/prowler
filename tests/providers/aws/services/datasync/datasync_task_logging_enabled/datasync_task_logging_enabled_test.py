@@ -17,15 +17,12 @@ class Test_datasync_task_logging_enabled:
         datasync_client = DataSync(mocked_aws_provider)
         datasync_client.tasks = {}
 
-        with (
-            patch(
-                "prowler.providers.aws.services.datasync.datasync_task_logging_enabled.datasync_task_logging_enabled.datasync_client",
-                new=datasync_client,
-            ),
-            patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=mocked_aws_provider,
-            ),
+        with patch(
+            "prowler.providers.aws.services.datasync.datasync_task_logging_enabled.datasync_task_logging_enabled.datasync_client",
+            new=datasync_client,
+        ), patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=mocked_aws_provider,
         ):
             from prowler.providers.aws.services.datasync.datasync_task_logging_enabled.datasync_task_logging_enabled import (
                 datasync_task_logging_enabled,
@@ -58,15 +55,12 @@ class Test_datasync_task_logging_enabled:
         datasync_client = DataSync(mocked_aws_provider)
         datasync_client.tasks[TASK_ARN] = task
 
-        with (
-            patch(
-                "prowler.providers.aws.services.datasync.datasync_task_logging_enabled.datasync_task_logging_enabled.datasync_client",
-                new=datasync_client,
-            ),
-            patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=mocked_aws_provider,
-            ),
+        with patch(
+            "prowler.providers.aws.services.datasync.datasync_task_logging_enabled.datasync_task_logging_enabled.datasync_client",
+            new=datasync_client,
+        ), patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=mocked_aws_provider,
         ):
             from prowler.providers.aws.services.datasync.datasync_task_logging_enabled.datasync_task_logging_enabled import (
                 datasync_task_logging_enabled,
@@ -108,15 +102,12 @@ class Test_datasync_task_logging_enabled:
         datasync_client = DataSync(mocked_aws_provider)
         datasync_client.tasks[TASK_ARN] = task
 
-        with (
-            patch(
-                "prowler.providers.aws.services.datasync.datasync_task_logging_enabled.datasync_task_logging_enabled.datasync_client",
-                new=datasync_client,
-            ),
-            patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=mocked_aws_provider,
-            ),
+        with patch(
+            "prowler.providers.aws.services.datasync.datasync_task_logging_enabled.datasync_task_logging_enabled.datasync_client",
+            new=datasync_client,
+        ), patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=mocked_aws_provider,
         ):
             from prowler.providers.aws.services.datasync.datasync_task_logging_enabled.datasync_task_logging_enabled import (
                 datasync_task_logging_enabled,

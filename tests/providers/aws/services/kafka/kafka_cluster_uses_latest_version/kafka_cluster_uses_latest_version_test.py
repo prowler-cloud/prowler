@@ -13,15 +13,12 @@ class Test_kafka_cluster_latest_version:
         kafka_client = MagicMock
         kafka_client.clusters = {}
 
-        with (
-            patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
-            ),
-            patch(
-                "prowler.providers.aws.services.kafka.kafka_service.Kafka",
-                new=kafka_client,
-            ),
+        with patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
+        ), patch(
+            "prowler.providers.aws.services.kafka.kafka_service.Kafka",
+            new=kafka_client,
         ):
             from prowler.providers.aws.services.kafka.kafka_cluster_uses_latest_version.kafka_cluster_uses_latest_version import (
                 kafka_cluster_uses_latest_version,
@@ -60,15 +57,12 @@ class Test_kafka_cluster_latest_version:
             KafkaVersion(version="2.8.0", status="ACTIVE"),
         ]
 
-        with (
-            patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
-            ),
-            patch(
-                "prowler.providers.aws.services.kafka.kafka_service.Kafka",
-                new=kafka_client,
-            ),
+        with patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
+        ), patch(
+            "prowler.providers.aws.services.kafka.kafka_service.Kafka",
+            new=kafka_client,
         ):
             from prowler.providers.aws.services.kafka.kafka_cluster_uses_latest_version.kafka_cluster_uses_latest_version import (
                 kafka_cluster_uses_latest_version,
@@ -119,15 +113,12 @@ class Test_kafka_cluster_latest_version:
             KafkaVersion(version="2.8.0", status="ACTIVE"),
         ]
 
-        with (
-            patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
-            ),
-            patch(
-                "prowler.providers.aws.services.kafka.kafka_service.Kafka",
-                new=kafka_client,
-            ),
+        with patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
+        ), patch(
+            "prowler.providers.aws.services.kafka.kafka_service.Kafka",
+            new=kafka_client,
         ):
             from prowler.providers.aws.services.kafka.kafka_cluster_uses_latest_version.kafka_cluster_uses_latest_version import (
                 kafka_cluster_uses_latest_version,

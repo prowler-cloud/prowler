@@ -61,15 +61,12 @@ class Test_awslambda_function_not_publicly_accessible_fixer:
 
         from prowler.providers.aws.services.awslambda.awslambda_service import Lambda
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.awslambda.awslambda_function_not_publicly_accessible.awslambda_function_not_publicly_accessible_fixer.awslambda_client",
-                new=Lambda(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.awslambda.awslambda_function_not_publicly_accessible.awslambda_function_not_publicly_accessible_fixer.awslambda_client",
+            new=Lambda(aws_provider),
         ):
             # Test Fixer
             from prowler.providers.aws.services.awslambda.awslambda_function_not_publicly_accessible.awslambda_function_not_publicly_accessible_fixer import (
@@ -129,15 +126,12 @@ class Test_awslambda_function_not_publicly_accessible_fixer:
 
         from prowler.providers.aws.services.awslambda.awslambda_service import Lambda
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.awslambda.awslambda_function_not_publicly_accessible.awslambda_function_not_publicly_accessible_fixer.awslambda_client",
-                new=Lambda(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.awslambda.awslambda_function_not_publicly_accessible.awslambda_function_not_publicly_accessible_fixer.awslambda_client",
+            new=Lambda(aws_provider),
         ):
             # Test Fixer
             from prowler.providers.aws.services.awslambda.awslambda_function_not_publicly_accessible.awslambda_function_not_publicly_accessible_fixer import (
@@ -196,15 +190,12 @@ class Test_awslambda_function_not_publicly_accessible_fixer:
 
         from prowler.providers.aws.services.awslambda.awslambda_service import Lambda
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.awslambda.awslambda_function_not_publicly_accessible.awslambda_function_not_publicly_accessible_fixer.awslambda_client",
-                new=Lambda(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.awslambda.awslambda_function_not_publicly_accessible.awslambda_function_not_publicly_accessible_fixer.awslambda_client",
+            new=Lambda(aws_provider),
         ):
             # Test Fixer
             from prowler.providers.aws.services.awslambda.awslambda_function_not_publicly_accessible.awslambda_function_not_publicly_accessible_fixer import (
@@ -262,15 +253,12 @@ class Test_awslambda_function_not_publicly_accessible_fixer:
 
         from prowler.providers.aws.services.awslambda.awslambda_service import Lambda
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.awslambda.awslambda_function_not_publicly_accessible.awslambda_function_not_publicly_accessible_fixer.awslambda_client",
-                new=Lambda(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.awslambda.awslambda_function_not_publicly_accessible.awslambda_function_not_publicly_accessible_fixer.awslambda_client",
+            new=Lambda(aws_provider),
         ):
             # Test Fixer
             from prowler.providers.aws.services.awslambda.awslambda_function_not_publicly_accessible.awslambda_function_not_publicly_accessible_fixer import (

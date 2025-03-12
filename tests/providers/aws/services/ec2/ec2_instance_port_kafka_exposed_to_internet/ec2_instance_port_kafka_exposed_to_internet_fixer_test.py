@@ -73,15 +73,12 @@ class Test_ec2_instance_port_kafka_exposed_to_internet_fixer:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.ec2.ec2_instance_port_kafka_exposed_to_internet.ec2_instance_port_kafka_exposed_to_internet_fixer.ec2_client",
-                new=EC2(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_instance_port_kafka_exposed_to_internet.ec2_instance_port_kafka_exposed_to_internet_fixer.ec2_client",
+            new=EC2(aws_provider),
         ):
             # Test Fixer
             from prowler.providers.aws.services.ec2.ec2_instance_port_kafka_exposed_to_internet.ec2_instance_port_kafka_exposed_to_internet_fixer import (
@@ -143,15 +140,12 @@ class Test_ec2_instance_port_kafka_exposed_to_internet_fixer:
 
             aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-            with (
-                mock.patch(
-                    "prowler.providers.common.provider.Provider.get_global_provider",
-                    return_value=aws_provider,
-                ),
-                mock.patch(
-                    "prowler.providers.aws.services.ec2.ec2_instance_port_kafka_exposed_to_internet.ec2_instance_port_kafka_exposed_to_internet_fixer.ec2_client",
-                    new=EC2(aws_provider),
-                ),
+            with mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ), mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_instance_port_kafka_exposed_to_internet.ec2_instance_port_kafka_exposed_to_internet_fixer.ec2_client",
+                new=EC2(aws_provider),
             ):
                 # Test Fixer
                 from prowler.providers.aws.services.ec2.ec2_instance_port_kafka_exposed_to_internet.ec2_instance_port_kafka_exposed_to_internet_fixer import (
@@ -200,15 +194,12 @@ class Test_ec2_instance_port_kafka_exposed_to_internet_fixer:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.ec2.ec2_instance_port_kafka_exposed_to_internet.ec2_instance_port_kafka_exposed_to_internet_fixer.ec2_client",
-                new=EC2(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_instance_port_kafka_exposed_to_internet.ec2_instance_port_kafka_exposed_to_internet_fixer.ec2_client",
+            new=EC2(aws_provider),
         ):
             # Test Fixer
             from prowler.providers.aws.services.ec2.ec2_instance_port_kafka_exposed_to_internet.ec2_instance_port_kafka_exposed_to_internet_fixer import (
@@ -257,15 +248,12 @@ class Test_ec2_instance_port_kafka_exposed_to_internet_fixer:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.ec2.ec2_instance_port_kafka_exposed_to_internet.ec2_instance_port_kafka_exposed_to_internet_fixer.ec2_client",
-                new=EC2(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_instance_port_kafka_exposed_to_internet.ec2_instance_port_kafka_exposed_to_internet_fixer.ec2_client",
+            new=EC2(aws_provider),
         ):
             # Test Fixer
             from prowler.providers.aws.services.ec2.ec2_instance_port_kafka_exposed_to_internet.ec2_instance_port_kafka_exposed_to_internet_fixer import (
@@ -320,15 +308,12 @@ class Test_ec2_instance_port_kafka_exposed_to_internet_fixer:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.ec2.ec2_instance_port_kafka_exposed_to_internet.ec2_instance_port_kafka_exposed_to_internet_fixer.ec2_client",
-                new=EC2(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_instance_port_kafka_exposed_to_internet.ec2_instance_port_kafka_exposed_to_internet_fixer.ec2_client",
+            new=EC2(aws_provider),
         ):
             # Test Fixer
             from prowler.providers.aws.services.ec2.ec2_instance_port_kafka_exposed_to_internet.ec2_instance_port_kafka_exposed_to_internet_fixer import (

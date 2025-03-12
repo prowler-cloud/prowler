@@ -14,15 +14,12 @@ class Test_fsx_file_system_copy_tags_to_backups_enabled:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.fsx.fsx_file_system_copy_tags_to_backups_enabled.fsx_file_system_copy_tags_to_backups_enabled.fsx_client",
-                new=FSx(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.fsx.fsx_file_system_copy_tags_to_backups_enabled.fsx_file_system_copy_tags_to_backups_enabled.fsx_client",
+            new=FSx(aws_provider),
         ):
             from prowler.providers.aws.services.fsx.fsx_file_system_copy_tags_to_backups_enabled.fsx_file_system_copy_tags_to_backups_enabled import (
                 fsx_file_system_copy_tags_to_backups_enabled,
@@ -44,15 +41,12 @@ class Test_fsx_file_system_copy_tags_to_backups_enabled:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.fsx.fsx_file_system_copy_tags_to_backups_enabled.fsx_file_system_copy_tags_to_backups_enabled.fsx_client",
-                new=FSx(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.fsx.fsx_file_system_copy_tags_to_backups_enabled.fsx_file_system_copy_tags_to_backups_enabled.fsx_client",
+            new=FSx(aws_provider),
         ):
             from prowler.providers.aws.services.fsx.fsx_file_system_copy_tags_to_backups_enabled.fsx_file_system_copy_tags_to_backups_enabled import (
                 fsx_file_system_copy_tags_to_backups_enabled,
@@ -79,15 +73,12 @@ class Test_fsx_file_system_copy_tags_to_backups_enabled:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.fsx.fsx_file_system_copy_tags_to_backups_enabled.fsx_file_system_copy_tags_to_backups_enabled.fsx_client",
-                new=FSx(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.fsx.fsx_file_system_copy_tags_to_backups_enabled.fsx_file_system_copy_tags_to_backups_enabled.fsx_client",
+            new=FSx(aws_provider),
         ):
             from prowler.providers.aws.services.fsx.fsx_file_system_copy_tags_to_backups_enabled.fsx_file_system_copy_tags_to_backups_enabled import (
                 fsx_file_system_copy_tags_to_backups_enabled,
@@ -125,15 +116,12 @@ class Test_fsx_file_system_copy_tags_to_backups_enabled:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.fsx.fsx_file_system_copy_tags_to_backups_enabled.fsx_file_system_copy_tags_to_backups_enabled.fsx_client",
-                new=FSx(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.fsx.fsx_file_system_copy_tags_to_backups_enabled.fsx_file_system_copy_tags_to_backups_enabled.fsx_client",
+            new=FSx(aws_provider),
         ):
             from prowler.providers.aws.services.fsx.fsx_file_system_copy_tags_to_backups_enabled.fsx_file_system_copy_tags_to_backups_enabled import (
                 fsx_file_system_copy_tags_to_backups_enabled,
@@ -167,15 +155,12 @@ class Test_fsx_file_system_copy_tags_to_backups_enabled:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.fsx.fsx_file_system_copy_tags_to_backups_enabled.fsx_file_system_copy_tags_to_backups_enabled.fsx_client",
-                new=FSx(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.fsx.fsx_file_system_copy_tags_to_backups_enabled.fsx_file_system_copy_tags_to_backups_enabled.fsx_client",
+            new=FSx(aws_provider),
         ):
             from prowler.providers.aws.services.fsx.fsx_file_system_copy_tags_to_backups_enabled.fsx_file_system_copy_tags_to_backups_enabled import (
                 fsx_file_system_copy_tags_to_backups_enabled,
@@ -209,15 +194,12 @@ class Test_fsx_file_system_copy_tags_to_backups_enabled:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.fsx.fsx_file_system_copy_tags_to_backups_enabled.fsx_file_system_copy_tags_to_backups_enabled.fsx_client",
-                new=FSx(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.fsx.fsx_file_system_copy_tags_to_backups_enabled.fsx_file_system_copy_tags_to_backups_enabled.fsx_client",
+            new=FSx(aws_provider),
         ):
             from prowler.providers.aws.services.fsx.fsx_file_system_copy_tags_to_backups_enabled.fsx_file_system_copy_tags_to_backups_enabled import (
                 fsx_file_system_copy_tags_to_backups_enabled,
@@ -254,15 +236,12 @@ class Test_fsx_file_system_copy_tags_to_backups_enabled:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.fsx.fsx_file_system_copy_tags_to_backups_enabled.fsx_file_system_copy_tags_to_backups_enabled.fsx_client",
-                new=FSx(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.fsx.fsx_file_system_copy_tags_to_backups_enabled.fsx_file_system_copy_tags_to_backups_enabled.fsx_client",
+            new=FSx(aws_provider),
         ):
             from prowler.providers.aws.services.fsx.fsx_file_system_copy_tags_to_backups_enabled.fsx_file_system_copy_tags_to_backups_enabled import (
                 fsx_file_system_copy_tags_to_backups_enabled,
@@ -299,15 +278,12 @@ class Test_fsx_file_system_copy_tags_to_backups_enabled:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.fsx.fsx_file_system_copy_tags_to_backups_enabled.fsx_file_system_copy_tags_to_backups_enabled.fsx_client",
-                new=FSx(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.fsx.fsx_file_system_copy_tags_to_backups_enabled.fsx_file_system_copy_tags_to_backups_enabled.fsx_client",
+            new=FSx(aws_provider),
         ):
             from prowler.providers.aws.services.fsx.fsx_file_system_copy_tags_to_backups_enabled.fsx_file_system_copy_tags_to_backups_enabled import (
                 fsx_file_system_copy_tags_to_backups_enabled,

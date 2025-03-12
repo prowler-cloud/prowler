@@ -175,15 +175,12 @@ class Test_neptune_cluster_integration_cloudwatch_logs:
             )
         }
 
-        with (
-            mock.patch(
-                "prowler.providers.aws.services.neptune.neptune_service.Neptune",
-                new=neptune_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.neptune.neptune_cluster_integration_cloudwatch_logs.neptune_cluster_integration_cloudwatch_logs.neptune_client",
-                new=neptune_client,
-            ),
+        with mock.patch(
+            "prowler.providers.aws.services.neptune.neptune_service.Neptune",
+            new=neptune_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.neptune.neptune_cluster_integration_cloudwatch_logs.neptune_cluster_integration_cloudwatch_logs.neptune_client",
+            new=neptune_client,
         ):
             # Test Check
             from prowler.providers.aws.services.neptune.neptune_cluster_integration_cloudwatch_logs.neptune_cluster_integration_cloudwatch_logs import (

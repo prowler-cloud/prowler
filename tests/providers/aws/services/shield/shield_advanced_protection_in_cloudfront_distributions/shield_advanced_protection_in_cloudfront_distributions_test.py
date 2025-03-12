@@ -12,15 +12,12 @@ class Test_shield_advanced_protection_in_cloudfront_distributions:
         shield_client.enabled = False
         # CloudFront Client
         cloudfront_client = mock.MagicMock
-        with (
-            mock.patch(
-                "prowler.providers.aws.services.shield.shield_service.Shield",
-                new=shield_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.cloudfront.cloudfront_service.CloudFront",
-                new=cloudfront_client,
-            ),
+        with mock.patch(
+            "prowler.providers.aws.services.shield.shield_service.Shield",
+            new=shield_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.cloudfront.cloudfront_service.CloudFront",
+            new=cloudfront_client,
         ):
             # Test Check
             from prowler.providers.aws.services.shield.shield_advanced_protection_in_cloudfront_distributions.shield_advanced_protection_in_cloudfront_distributions import (
@@ -63,15 +60,12 @@ class Test_shield_advanced_protection_in_cloudfront_distributions:
             )
         }
 
-        with (
-            mock.patch(
-                "prowler.providers.aws.services.shield.shield_service.Shield",
-                new=shield_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.cloudfront.cloudfront_service.CloudFront",
-                new=cloudfront_client,
-            ),
+        with mock.patch(
+            "prowler.providers.aws.services.shield.shield_service.Shield",
+            new=shield_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.cloudfront.cloudfront_service.CloudFront",
+            new=cloudfront_client,
         ):
             # Test Check
             from prowler.providers.aws.services.shield.shield_advanced_protection_in_cloudfront_distributions.shield_advanced_protection_in_cloudfront_distributions import (
@@ -113,15 +107,12 @@ class Test_shield_advanced_protection_in_cloudfront_distributions:
         shield_client.region = AWS_REGION_EU_WEST_1
         shield_client.protections = {}
 
-        with (
-            mock.patch(
-                "prowler.providers.aws.services.shield.shield_service.Shield",
-                new=shield_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.cloudfront.cloudfront_service.CloudFront",
-                new=cloudfront_client,
-            ),
+        with mock.patch(
+            "prowler.providers.aws.services.shield.shield_service.Shield",
+            new=shield_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.cloudfront.cloudfront_service.CloudFront",
+            new=cloudfront_client,
         ):
             # Test Check
             from prowler.providers.aws.services.shield.shield_advanced_protection_in_cloudfront_distributions.shield_advanced_protection_in_cloudfront_distributions import (
@@ -163,15 +154,12 @@ class Test_shield_advanced_protection_in_cloudfront_distributions:
         shield_client.region = AWS_REGION_EU_WEST_1
         shield_client.protections = {}
 
-        with (
-            mock.patch(
-                "prowler.providers.aws.services.shield.shield_service.Shield",
-                new=shield_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.cloudfront.cloudfront_service.CloudFront",
-                new=cloudfront_client,
-            ),
+        with mock.patch(
+            "prowler.providers.aws.services.shield.shield_service.Shield",
+            new=shield_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.cloudfront.cloudfront_service.CloudFront",
+            new=cloudfront_client,
         ):
             # Test Check
             from prowler.providers.aws.services.shield.shield_advanced_protection_in_cloudfront_distributions.shield_advanced_protection_in_cloudfront_distributions import (

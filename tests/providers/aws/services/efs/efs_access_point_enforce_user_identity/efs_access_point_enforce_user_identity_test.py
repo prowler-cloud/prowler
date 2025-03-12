@@ -19,15 +19,12 @@ class Test_efs_access_point_enforce_user_identity:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.efs.efs_access_point_enforce_user_identity.efs_access_point_enforce_user_identity.efs_client",
-                new=EFS(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.efs.efs_access_point_enforce_user_identity.efs_access_point_enforce_user_identity.efs_client",
+            new=EFS(aws_provider),
         ):
             from prowler.providers.aws.services.efs.efs_access_point_enforce_user_identity.efs_access_point_enforce_user_identity import (
                 efs_access_point_enforce_user_identity,
@@ -45,15 +42,12 @@ class Test_efs_access_point_enforce_user_identity:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.efs.efs_access_point_enforce_user_identity.efs_access_point_enforce_user_identity.efs_client",
-                new=EFS(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.efs.efs_access_point_enforce_user_identity.efs_access_point_enforce_user_identity.efs_client",
+            new=EFS(aws_provider),
         ):
             from prowler.providers.aws.services.efs.efs_access_point_enforce_user_identity.efs_access_point_enforce_user_identity import (
                 efs_access_point_enforce_user_identity,
@@ -77,15 +71,12 @@ class Test_efs_access_point_enforce_user_identity:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.efs.efs_access_point_enforce_user_identity.efs_access_point_enforce_user_identity.efs_client",
-                new=EFS(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.efs.efs_access_point_enforce_user_identity.efs_access_point_enforce_user_identity.efs_client",
+            new=EFS(aws_provider),
         ):
             from prowler.providers.aws.services.efs.efs_access_point_enforce_user_identity.efs_access_point_enforce_user_identity import (
                 efs_access_point_enforce_user_identity,
@@ -120,15 +111,12 @@ class Test_efs_access_point_enforce_user_identity:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.efs.efs_access_point_enforce_user_identity.efs_access_point_enforce_user_identity.efs_client",
-                new=EFS(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.efs.efs_access_point_enforce_user_identity.efs_access_point_enforce_user_identity.efs_client",
+            new=EFS(aws_provider),
         ):
             from prowler.providers.aws.services.efs.efs_access_point_enforce_user_identity.efs_access_point_enforce_user_identity import (
                 efs_access_point_enforce_user_identity,

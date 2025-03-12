@@ -12,15 +12,12 @@ class Test_kafka_cluster_enhanced_monitoring_enabled:
         kafka_client = MagicMock
         kafka_client.clusters = {}
 
-        with (
-            patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
-            ),
-            patch(
-                "prowler.providers.aws.services.kafka.kafka_service.Kafka",
-                new=kafka_client,
-            ),
+        with patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
+        ), patch(
+            "prowler.providers.aws.services.kafka.kafka_service.Kafka",
+            new=kafka_client,
         ):
             from prowler.providers.aws.services.kafka.kafka_cluster_enhanced_monitoring_enabled.kafka_cluster_enhanced_monitoring_enabled import (
                 kafka_cluster_enhanced_monitoring_enabled,
@@ -54,15 +51,12 @@ class Test_kafka_cluster_enhanced_monitoring_enabled:
             )
         }
 
-        with (
-            patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
-            ),
-            patch(
-                "prowler.providers.aws.services.kafka.kafka_service.Kafka",
-                new=kafka_client,
-            ),
+        with patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
+        ), patch(
+            "prowler.providers.aws.services.kafka.kafka_service.Kafka",
+            new=kafka_client,
         ):
             from prowler.providers.aws.services.kafka.kafka_cluster_enhanced_monitoring_enabled.kafka_cluster_enhanced_monitoring_enabled import (
                 kafka_cluster_enhanced_monitoring_enabled,
@@ -108,15 +102,12 @@ class Test_kafka_cluster_enhanced_monitoring_enabled:
             )
         }
 
-        with (
-            patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
-            ),
-            patch(
-                "prowler.providers.aws.services.kafka.kafka_service.Kafka",
-                new=kafka_client,
-            ),
+        with patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
+        ), patch(
+            "prowler.providers.aws.services.kafka.kafka_service.Kafka",
+            new=kafka_client,
         ):
             from prowler.providers.aws.services.kafka.kafka_cluster_enhanced_monitoring_enabled.kafka_cluster_enhanced_monitoring_enabled import (
                 kafka_cluster_enhanced_monitoring_enabled,

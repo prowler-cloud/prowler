@@ -9,15 +9,12 @@ class Test_guardduty_rds_protection_enabled:
         guardduty_client = mock.MagicMock()
         guardduty_client.detectors = []
 
-        with (
-            mock.patch(
-                "prowler.providers.aws.services.guardduty.guardduty_service.GuardDuty",
-                new=guardduty_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.guardduty.guardduty_rds_protection_enabled.guardduty_rds_protection_enabled.guardduty_client",
-                new=guardduty_client,
-            ),
+        with mock.patch(
+            "prowler.providers.aws.services.guardduty.guardduty_service.GuardDuty",
+            new=guardduty_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.guardduty.guardduty_rds_protection_enabled.guardduty_rds_protection_enabled.guardduty_client",
+            new=guardduty_client,
         ):
 
             from prowler.providers.aws.services.guardduty.guardduty_rds_protection_enabled.guardduty_rds_protection_enabled import (
@@ -43,15 +40,12 @@ class Test_guardduty_rds_protection_enabled:
             )
         ]
 
-        with (
-            mock.patch(
-                "prowler.providers.aws.services.guardduty.guardduty_service.GuardDuty",
-                new=guardduty_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.guardduty.guardduty_rds_protection_enabled.guardduty_rds_protection_enabled.guardduty_client",
-                new=guardduty_client,
-            ),
+        with mock.patch(
+            "prowler.providers.aws.services.guardduty.guardduty_service.GuardDuty",
+            new=guardduty_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.guardduty.guardduty_rds_protection_enabled.guardduty_rds_protection_enabled.guardduty_client",
+            new=guardduty_client,
         ):
 
             from prowler.providers.aws.services.guardduty.guardduty_rds_protection_enabled.guardduty_rds_protection_enabled import (
@@ -78,15 +72,12 @@ class Test_guardduty_rds_protection_enabled:
             )
         ]
 
-        with (
-            mock.patch(
-                "prowler.providers.aws.services.guardduty.guardduty_service.GuardDuty",
-                new=guardduty_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.guardduty.guardduty_rds_protection_enabled.guardduty_rds_protection_enabled.guardduty_client",
-                new=guardduty_client,
-            ),
+        with mock.patch(
+            "prowler.providers.aws.services.guardduty.guardduty_service.GuardDuty",
+            new=guardduty_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.guardduty.guardduty_rds_protection_enabled.guardduty_rds_protection_enabled.guardduty_client",
+            new=guardduty_client,
         ):
 
             from prowler.providers.aws.services.guardduty.guardduty_rds_protection_enabled.guardduty_rds_protection_enabled import (
@@ -122,15 +113,12 @@ class Test_guardduty_rds_protection_enabled:
             )
         ]
 
-        with (
-            mock.patch(
-                "prowler.providers.aws.services.guardduty.guardduty_service.GuardDuty",
-                new=guardduty_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.guardduty.guardduty_rds_protection_enabled.guardduty_rds_protection_enabled.guardduty_client",
-                new=guardduty_client,
-            ),
+        with mock.patch(
+            "prowler.providers.aws.services.guardduty.guardduty_service.GuardDuty",
+            new=guardduty_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.guardduty.guardduty_rds_protection_enabled.guardduty_rds_protection_enabled.guardduty_client",
+            new=guardduty_client,
         ):
             from prowler.providers.aws.services.guardduty.guardduty_rds_protection_enabled.guardduty_rds_protection_enabled import (
                 guardduty_rds_protection_enabled,

@@ -11,15 +11,12 @@ class Test_cloudsql_instance_postgres_log_error_verbosity_flag:
     def test_no_cloudsql_instances(self):
         cloudsql_client = mock.MagicMock()
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_gcp_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.gcp.services.cloudsql.cloudsql_instance_postgres_log_error_verbosity_flag.cloudsql_instance_postgres_log_error_verbosity_flag.cloudsql_client",
-                new=cloudsql_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), mock.patch(
+            "prowler.providers.gcp.services.cloudsql.cloudsql_instance_postgres_log_error_verbosity_flag.cloudsql_instance_postgres_log_error_verbosity_flag.cloudsql_client",
+            new=cloudsql_client,
         ):
             from prowler.providers.gcp.services.cloudsql.cloudsql_instance_postgres_log_error_verbosity_flag.cloudsql_instance_postgres_log_error_verbosity_flag import (
                 cloudsql_instance_postgres_log_error_verbosity_flag,
@@ -34,15 +31,12 @@ class Test_cloudsql_instance_postgres_log_error_verbosity_flag:
     def test_cloudsql_mysql_instance(self):
         cloudsql_client = mock.MagicMock()
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_gcp_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.gcp.services.cloudsql.cloudsql_instance_postgres_log_error_verbosity_flag.cloudsql_instance_postgres_log_error_verbosity_flag.cloudsql_client",
-                new=cloudsql_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), mock.patch(
+            "prowler.providers.gcp.services.cloudsql.cloudsql_instance_postgres_log_error_verbosity_flag.cloudsql_instance_postgres_log_error_verbosity_flag.cloudsql_client",
+            new=cloudsql_client,
         ):
             from prowler.providers.gcp.services.cloudsql.cloudsql_instance_postgres_log_error_verbosity_flag.cloudsql_instance_postgres_log_error_verbosity_flag import (
                 cloudsql_instance_postgres_log_error_verbosity_flag,
@@ -74,15 +68,12 @@ class Test_cloudsql_instance_postgres_log_error_verbosity_flag:
     def test_cloudsql_instance_no_flags(self):
         cloudsql_client = mock.MagicMock()
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_gcp_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.gcp.services.cloudsql.cloudsql_instance_postgres_log_error_verbosity_flag.cloudsql_instance_postgres_log_error_verbosity_flag.cloudsql_client",
-                new=cloudsql_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), mock.patch(
+            "prowler.providers.gcp.services.cloudsql.cloudsql_instance_postgres_log_error_verbosity_flag.cloudsql_instance_postgres_log_error_verbosity_flag.cloudsql_client",
+            new=cloudsql_client,
         ):
             from prowler.providers.gcp.services.cloudsql.cloudsql_instance_postgres_log_error_verbosity_flag.cloudsql_instance_postgres_log_error_verbosity_flag import (
                 cloudsql_instance_postgres_log_error_verbosity_flag,
@@ -123,15 +114,12 @@ class Test_cloudsql_instance_postgres_log_error_verbosity_flag:
     def test_cloudsql_instance_log_error_verbosity_flag_off(self):
         cloudsql_client = mock.MagicMock()
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_gcp_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.gcp.services.cloudsql.cloudsql_instance_postgres_log_error_verbosity_flag.cloudsql_instance_postgres_log_error_verbosity_flag.cloudsql_client",
-                new=cloudsql_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), mock.patch(
+            "prowler.providers.gcp.services.cloudsql.cloudsql_instance_postgres_log_error_verbosity_flag.cloudsql_instance_postgres_log_error_verbosity_flag.cloudsql_client",
+            new=cloudsql_client,
         ):
             from prowler.providers.gcp.services.cloudsql.cloudsql_instance_postgres_log_error_verbosity_flag.cloudsql_instance_postgres_log_error_verbosity_flag import (
                 cloudsql_instance_postgres_log_error_verbosity_flag,
@@ -172,15 +160,12 @@ class Test_cloudsql_instance_postgres_log_error_verbosity_flag:
     def test_cloudsql_instance_log_error_verbosity_flag_on(self):
         cloudsql_client = mock.MagicMock()
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_gcp_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.gcp.services.cloudsql.cloudsql_instance_postgres_log_error_verbosity_flag.cloudsql_instance_postgres_log_error_verbosity_flag.cloudsql_client",
-                new=cloudsql_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), mock.patch(
+            "prowler.providers.gcp.services.cloudsql.cloudsql_instance_postgres_log_error_verbosity_flag.cloudsql_instance_postgres_log_error_verbosity_flag.cloudsql_client",
+            new=cloudsql_client,
         ):
             from prowler.providers.gcp.services.cloudsql.cloudsql_instance_postgres_log_error_verbosity_flag.cloudsql_instance_postgres_log_error_verbosity_flag import (
                 cloudsql_instance_postgres_log_error_verbosity_flag,

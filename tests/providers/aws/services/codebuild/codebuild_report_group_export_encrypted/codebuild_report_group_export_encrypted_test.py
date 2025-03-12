@@ -83,15 +83,12 @@ class Test_codebuild_report_group_export_encrypted:
 
         from prowler.providers.aws.services.codebuild.codebuild_service import Codebuild
 
-        with (
-            patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            patch(
-                "prowler.providers.aws.services.codebuild.codebuild_report_group_export_encrypted.codebuild_report_group_export_encrypted.codebuild_client",
-                new=Codebuild(aws_provider),
-            ),
+        with patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), patch(
+            "prowler.providers.aws.services.codebuild.codebuild_report_group_export_encrypted.codebuild_report_group_export_encrypted.codebuild_client",
+            new=Codebuild(aws_provider),
         ):
             from prowler.providers.aws.services.codebuild.codebuild_report_group_export_encrypted.codebuild_report_group_export_encrypted import (
                 codebuild_report_group_export_encrypted,
@@ -111,15 +108,12 @@ class Test_codebuild_report_group_export_encrypted:
 
         from prowler.providers.aws.services.codebuild.codebuild_service import Codebuild
 
-        with (
-            patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            patch(
-                "prowler.providers.aws.services.codebuild.codebuild_report_group_export_encrypted.codebuild_report_group_export_encrypted.codebuild_client",
-                new=Codebuild(aws_provider),
-            ),
+        with patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), patch(
+            "prowler.providers.aws.services.codebuild.codebuild_report_group_export_encrypted.codebuild_report_group_export_encrypted.codebuild_client",
+            new=Codebuild(aws_provider),
         ):
             from prowler.providers.aws.services.codebuild.codebuild_report_group_export_encrypted.codebuild_report_group_export_encrypted import (
                 codebuild_report_group_export_encrypted,
@@ -154,15 +148,12 @@ class Test_codebuild_report_group_export_encrypted:
 
         from prowler.providers.aws.services.codebuild.codebuild_service import Codebuild
 
-        with (
-            patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            patch(
-                "prowler.providers.aws.services.codebuild.codebuild_report_group_export_encrypted.codebuild_report_group_export_encrypted.codebuild_client",
-                new=Codebuild(aws_provider),
-            ),
+        with patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), patch(
+            "prowler.providers.aws.services.codebuild.codebuild_report_group_export_encrypted.codebuild_report_group_export_encrypted.codebuild_client",
+            new=Codebuild(aws_provider),
         ):
             from prowler.providers.aws.services.codebuild.codebuild_report_group_export_encrypted.codebuild_report_group_export_encrypted import (
                 codebuild_report_group_export_encrypted,

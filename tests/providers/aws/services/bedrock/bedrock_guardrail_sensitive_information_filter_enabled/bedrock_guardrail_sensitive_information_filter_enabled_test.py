@@ -76,15 +76,12 @@ class Test_bedrock_guardrail_sensitive_information_filter_enabled:
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.bedrock.bedrock_guardrail_sensitive_information_filter_enabled.bedrock_guardrail_sensitive_information_filter_enabled.bedrock_client",
-                new=Bedrock(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.bedrock.bedrock_guardrail_sensitive_information_filter_enabled.bedrock_guardrail_sensitive_information_filter_enabled.bedrock_client",
+            new=Bedrock(aws_provider),
         ):
             from prowler.providers.aws.services.bedrock.bedrock_guardrail_sensitive_information_filter_enabled.bedrock_guardrail_sensitive_information_filter_enabled import (
                 bedrock_guardrail_sensitive_information_filter_enabled,
@@ -104,15 +101,12 @@ class Test_bedrock_guardrail_sensitive_information_filter_enabled:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.bedrock.bedrock_guardrail_sensitive_information_filter_enabled.bedrock_guardrail_sensitive_information_filter_enabled.bedrock_client",
-                new=Bedrock(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.bedrock.bedrock_guardrail_sensitive_information_filter_enabled.bedrock_guardrail_sensitive_information_filter_enabled.bedrock_client",
+            new=Bedrock(aws_provider),
         ):
             from prowler.providers.aws.services.bedrock.bedrock_guardrail_sensitive_information_filter_enabled.bedrock_guardrail_sensitive_information_filter_enabled import (
                 bedrock_guardrail_sensitive_information_filter_enabled,
@@ -141,15 +135,12 @@ class Test_bedrock_guardrail_sensitive_information_filter_enabled:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.bedrock.bedrock_guardrail_sensitive_information_filter_enabled.bedrock_guardrail_sensitive_information_filter_enabled.bedrock_client",
-                new=Bedrock(aws_provider),
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.bedrock.bedrock_guardrail_sensitive_information_filter_enabled.bedrock_guardrail_sensitive_information_filter_enabled.bedrock_client",
+            new=Bedrock(aws_provider),
         ):
             from prowler.providers.aws.services.bedrock.bedrock_guardrail_sensitive_information_filter_enabled.bedrock_guardrail_sensitive_information_filter_enabled import (
                 bedrock_guardrail_sensitive_information_filter_enabled,

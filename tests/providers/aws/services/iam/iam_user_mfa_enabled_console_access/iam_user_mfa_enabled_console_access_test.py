@@ -21,16 +21,13 @@ class Test_iam_user_mfa_enabled_console_access_test:
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.iam.iam_user_mfa_enabled_console_access.iam_user_mfa_enabled_console_access.iam_client",
-                new=IAM(aws_provider),
-            ) as service_client,
-        ):
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.iam.iam_user_mfa_enabled_console_access.iam_user_mfa_enabled_console_access.iam_client",
+            new=IAM(aws_provider),
+        ) as service_client:
             from prowler.providers.aws.services.iam.iam_user_mfa_enabled_console_access.iam_user_mfa_enabled_console_access import (
                 iam_user_mfa_enabled_console_access,
             )
@@ -78,16 +75,13 @@ class Test_iam_user_mfa_enabled_console_access_test:
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.iam.iam_user_mfa_enabled_console_access.iam_user_mfa_enabled_console_access.iam_client",
-                new=IAM(aws_provider),
-            ) as service_client,
-        ):
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.iam.iam_user_mfa_enabled_console_access.iam_user_mfa_enabled_console_access.iam_client",
+            new=IAM(aws_provider),
+        ) as service_client:
             from prowler.providers.aws.services.iam.iam_user_mfa_enabled_console_access.iam_user_mfa_enabled_console_access import (
                 iam_user_mfa_enabled_console_access,
             )
@@ -117,16 +111,13 @@ class Test_iam_user_mfa_enabled_console_access_test:
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.iam.iam_user_mfa_enabled_console_access.iam_user_mfa_enabled_console_access.iam_client",
-                new=IAM(aws_provider),
-            ) as service_client,
-        ):
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.iam.iam_user_mfa_enabled_console_access.iam_user_mfa_enabled_console_access.iam_client",
+            new=IAM(aws_provider),
+        ) as service_client:
             from prowler.providers.aws.services.iam.iam_user_mfa_enabled_console_access.iam_user_mfa_enabled_console_access import (
                 iam_user_mfa_enabled_console_access,
             )
@@ -157,16 +148,13 @@ class Test_iam_user_mfa_enabled_console_access_test:
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.iam.iam_user_mfa_enabled_console_access.iam_user_mfa_enabled_console_access.iam_client",
-                new=IAM(aws_provider),
-            ) as service_client,
-        ):
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.iam.iam_user_mfa_enabled_console_access.iam_user_mfa_enabled_console_access.iam_client",
+            new=IAM(aws_provider),
+        ) as service_client:
             from prowler.providers.aws.services.iam.iam_user_mfa_enabled_console_access.iam_user_mfa_enabled_console_access import (
                 iam_user_mfa_enabled_console_access,
             )

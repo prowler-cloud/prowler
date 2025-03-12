@@ -12,15 +12,12 @@ class Test_logging_sink_created:
     def test_no_projects(self):
         logging_client = MagicMock()
 
-        with (
-            patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_gcp_provider(),
-            ),
-            patch(
-                "prowler.providers.gcp.services.logging.logging_sink_created.logging_sink_created.logging_client",
-                new=logging_client,
-            ),
+        with patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), patch(
+            "prowler.providers.gcp.services.logging.logging_sink_created.logging_sink_created.logging_client",
+            new=logging_client,
         ):
             from prowler.providers.gcp.services.logging.logging_sink_created.logging_sink_created import (
                 logging_sink_created,
@@ -36,15 +33,12 @@ class Test_logging_sink_created:
     def test_no_sinks(self):
         logging_client = MagicMock()
 
-        with (
-            patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_gcp_provider(),
-            ),
-            patch(
-                "prowler.providers.gcp.services.logging.logging_sink_created.logging_sink_created.logging_client",
-                new=logging_client,
-            ),
+        with patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), patch(
+            "prowler.providers.gcp.services.logging.logging_sink_created.logging_sink_created.logging_client",
+            new=logging_client,
         ):
             from prowler.providers.gcp.services.logging.logging_sink_created.logging_sink_created import (
                 logging_sink_created,
@@ -79,15 +73,12 @@ class Test_logging_sink_created:
     def test_sink_all(self):
         logging_client = MagicMock()
 
-        with (
-            patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_gcp_provider(),
-            ),
-            patch(
-                "prowler.providers.gcp.services.logging.logging_sink_created.logging_sink_created.logging_client",
-                new=logging_client,
-            ),
+        with patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), patch(
+            "prowler.providers.gcp.services.logging.logging_sink_created.logging_sink_created.logging_client",
+            new=logging_client,
         ):
             from prowler.providers.gcp.services.logging.logging_service import Sink
             from prowler.providers.gcp.services.logging.logging_sink_created.logging_sink_created import (
@@ -121,15 +112,12 @@ class Test_logging_sink_created:
     def test_sink_not_all(self):
         logging_client = MagicMock()
 
-        with (
-            patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_gcp_provider(),
-            ),
-            patch(
-                "prowler.providers.gcp.services.logging.logging_sink_created.logging_sink_created.logging_client",
-                new=logging_client,
-            ),
+        with patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), patch(
+            "prowler.providers.gcp.services.logging.logging_sink_created.logging_sink_created.logging_client",
+            new=logging_client,
         ):
             from prowler.providers.gcp.services.logging.logging_service import Sink
             from prowler.providers.gcp.services.logging.logging_sink_created.logging_sink_created import (

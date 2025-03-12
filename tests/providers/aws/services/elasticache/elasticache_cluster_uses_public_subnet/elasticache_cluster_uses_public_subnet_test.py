@@ -39,23 +39,18 @@ class Test_elasticache_cluster_uses_public_subnet:
         elasticache_service = MagicMock
         elasticache_service.clusters = {}
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
-                new=elasticache_service,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.vpc.vpc_service.VPC",
-                new=vpc_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.vpc.vpc_client.vpc_client",
-                new=vpc_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
+        ), mock.patch(
+            "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
+            new=elasticache_service,
+        ), mock.patch(
+            "prowler.providers.aws.services.vpc.vpc_service.VPC",
+            new=vpc_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.vpc.vpc_client.vpc_client",
+            new=vpc_client,
         ):
             from prowler.providers.aws.services.elasticache.elasticache_cluster_uses_public_subnet.elasticache_cluster_uses_public_subnet import (
                 elasticache_cluster_uses_public_subnet,
@@ -84,23 +79,18 @@ class Test_elasticache_cluster_uses_public_subnet:
         vpc_client = MagicMock
         vpc_client.vpc_subnets = {}
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
-                new=elasticache_service,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.vpc.vpc_service.VPC",
-                new=vpc_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.vpc.vpc_client.vpc_client",
-                new=vpc_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
+        ), mock.patch(
+            "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
+            new=elasticache_service,
+        ), mock.patch(
+            "prowler.providers.aws.services.vpc.vpc_service.VPC",
+            new=vpc_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.vpc.vpc_client.vpc_client",
+            new=vpc_client,
         ):
             from prowler.providers.aws.services.elasticache.elasticache_cluster_uses_public_subnet.elasticache_cluster_uses_public_subnet import (
                 elasticache_cluster_uses_public_subnet,
@@ -167,23 +157,18 @@ class Test_elasticache_cluster_uses_public_subnet:
             mapPublicIpOnLaunch=False,
         )
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
-                new=elasticache_service,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.vpc.vpc_service.VPC",
-                new=vpc_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.vpc.vpc_client.vpc_client",
-                new=vpc_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
+        ), mock.patch(
+            "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
+            new=elasticache_service,
+        ), mock.patch(
+            "prowler.providers.aws.services.vpc.vpc_service.VPC",
+            new=vpc_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.vpc.vpc_client.vpc_client",
+            new=vpc_client,
         ):
             from prowler.providers.aws.services.elasticache.elasticache_cluster_uses_public_subnet.elasticache_cluster_uses_public_subnet import (
                 elasticache_cluster_uses_public_subnet,
@@ -250,23 +235,18 @@ class Test_elasticache_cluster_uses_public_subnet:
             mapPublicIpOnLaunch=False,
         )
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
-                new=elasticache_service,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.vpc.vpc_service.VPC",
-                new=vpc_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.vpc.vpc_client.vpc_client",
-                new=vpc_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
+        ), mock.patch(
+            "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
+            new=elasticache_service,
+        ), mock.patch(
+            "prowler.providers.aws.services.vpc.vpc_service.VPC",
+            new=vpc_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.vpc.vpc_client.vpc_client",
+            new=vpc_client,
         ):
             from prowler.providers.aws.services.elasticache.elasticache_cluster_uses_public_subnet.elasticache_cluster_uses_public_subnet import (
                 elasticache_cluster_uses_public_subnet,
@@ -333,23 +313,18 @@ class Test_elasticache_cluster_uses_public_subnet:
             mapPublicIpOnLaunch=False,
         )
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
-                new=elasticache_service,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.vpc.vpc_service.VPC",
-                new=vpc_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.vpc.vpc_client.vpc_client",
-                new=vpc_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
+        ), mock.patch(
+            "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
+            new=elasticache_service,
+        ), mock.patch(
+            "prowler.providers.aws.services.vpc.vpc_service.VPC",
+            new=vpc_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.vpc.vpc_client.vpc_client",
+            new=vpc_client,
         ):
             from prowler.providers.aws.services.elasticache.elasticache_cluster_uses_public_subnet.elasticache_cluster_uses_public_subnet import (
                 elasticache_cluster_uses_public_subnet,
@@ -416,23 +391,18 @@ class Test_elasticache_cluster_uses_public_subnet:
             mapPublicIpOnLaunch=False,
         )
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
-                new=elasticache_service,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.vpc.vpc_service.VPC",
-                new=vpc_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.vpc.vpc_client.vpc_client",
-                new=vpc_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
+        ), mock.patch(
+            "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
+            new=elasticache_service,
+        ), mock.patch(
+            "prowler.providers.aws.services.vpc.vpc_service.VPC",
+            new=vpc_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.vpc.vpc_client.vpc_client",
+            new=vpc_client,
         ):
             from prowler.providers.aws.services.elasticache.elasticache_cluster_uses_public_subnet.elasticache_cluster_uses_public_subnet import (
                 elasticache_cluster_uses_public_subnet,

@@ -15,15 +15,12 @@ class Test_entra_dynamic_group_for_guests_created:
         entra_client = mock.MagicMock()
         entra_client.groups = []
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_microsoft365_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_dynamic_group_for_guests_created.entra_dynamic_group_for_guests_created.entra_client",
-                new=entra_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_microsoft365_provider(),
+        ), mock.patch(
+            "prowler.providers.microsoft365.services.entra.entra_dynamic_group_for_guests_created.entra_dynamic_group_for_guests_created.entra_client",
+            new=entra_client,
         ):
             from prowler.providers.microsoft365.services.entra.entra_dynamic_group_for_guests_created.entra_dynamic_group_for_guests_created import (
                 entra_dynamic_group_for_guests_created,
@@ -40,15 +37,12 @@ class Test_entra_dynamic_group_for_guests_created:
         """
         entra_client = mock.MagicMock()
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_microsoft365_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_dynamic_group_for_guests_created.entra_dynamic_group_for_guests_created.entra_client",
-                new=entra_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_microsoft365_provider(),
+        ), mock.patch(
+            "prowler.providers.microsoft365.services.entra.entra_dynamic_group_for_guests_created.entra_dynamic_group_for_guests_created.entra_client",
+            new=entra_client,
         ):
             entra_client.groups = [
                 Group(
@@ -82,15 +76,12 @@ class Test_entra_dynamic_group_for_guests_created:
         """
         entra_client = mock.MagicMock()
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_microsoft365_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_dynamic_group_for_guests_created.entra_dynamic_group_for_guests_created.entra_client",
-                new=entra_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_microsoft365_provider(),
+        ), mock.patch(
+            "prowler.providers.microsoft365.services.entra.entra_dynamic_group_for_guests_created.entra_dynamic_group_for_guests_created.entra_client",
+            new=entra_client,
         ):
             entra_client.groups = [
                 Group(

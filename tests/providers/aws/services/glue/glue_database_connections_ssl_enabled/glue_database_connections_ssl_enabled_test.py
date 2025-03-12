@@ -9,15 +9,12 @@ class Test_glue_database_connections_ssl_enabled:
         glue_client = MagicMock
         glue_client.connections = []
 
-        with (
-            patch(
-                "prowler.providers.aws.services.glue.glue_service.Glue",
-                new=glue_client,
-            ),
-            patch(
-                "prowler.providers.aws.services.glue.glue_client.glue_client",
-                new=glue_client,
-            ),
+        with patch(
+            "prowler.providers.aws.services.glue.glue_service.Glue",
+            new=glue_client,
+        ), patch(
+            "prowler.providers.aws.services.glue.glue_client.glue_client",
+            new=glue_client,
         ):
             # Test Check
             from prowler.providers.aws.services.glue.glue_database_connections_ssl_enabled.glue_database_connections_ssl_enabled import (
@@ -47,15 +44,12 @@ class Test_glue_database_connections_ssl_enabled:
             )
         ]
 
-        with (
-            patch(
-                "prowler.providers.aws.services.glue.glue_service.Glue",
-                new=glue_client,
-            ),
-            patch(
-                "prowler.providers.aws.services.glue.glue_client.glue_client",
-                new=glue_client,
-            ),
+        with patch(
+            "prowler.providers.aws.services.glue.glue_service.Glue",
+            new=glue_client,
+        ), patch(
+            "prowler.providers.aws.services.glue.glue_client.glue_client",
+            new=glue_client,
         ):
             # Test Check
             from prowler.providers.aws.services.glue.glue_database_connections_ssl_enabled.glue_database_connections_ssl_enabled import (
@@ -94,15 +88,12 @@ class Test_glue_database_connections_ssl_enabled:
             )
         ]
 
-        with (
-            patch(
-                "prowler.providers.aws.services.glue.glue_service.Glue",
-                new=glue_client,
-            ),
-            patch(
-                "prowler.providers.aws.services.glue.glue_client.glue_client",
-                new=glue_client,
-            ),
+        with patch(
+            "prowler.providers.aws.services.glue.glue_service.Glue",
+            new=glue_client,
+        ), patch(
+            "prowler.providers.aws.services.glue.glue_client.glue_client",
+            new=glue_client,
         ):
             # Test Check
             from prowler.providers.aws.services.glue.glue_database_connections_ssl_enabled.glue_database_connections_ssl_enabled import (

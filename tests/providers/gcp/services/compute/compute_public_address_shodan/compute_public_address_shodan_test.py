@@ -9,15 +9,12 @@ class Test_compute_public_address_shodan:
         compute_client = mock.MagicMock()
         compute_client.addresses = {}
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_gcp_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.gcp.services.compute.compute_public_address_shodan.compute_public_address_shodan.compute_client",
-                new=compute_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), mock.patch(
+            "prowler.providers.gcp.services.compute.compute_public_address_shodan.compute_public_address_shodan.compute_client",
+            new=compute_client,
         ):
             from prowler.providers.gcp.services.compute.compute_public_address_shodan.compute_public_address_shodan import (
                 compute_public_address_shodan,
@@ -52,19 +49,15 @@ class Test_compute_public_address_shodan:
             )
         ]
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_gcp_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.gcp.services.compute.compute_public_address_shodan.compute_public_address_shodan.compute_client",
-                new=compute_client,
-            ),
-            mock.patch(
-                "prowler.providers.gcp.services.compute.compute_public_address_shodan.compute_public_address_shodan.shodan.Shodan.host",
-                return_value=shodan_info,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), mock.patch(
+            "prowler.providers.gcp.services.compute.compute_public_address_shodan.compute_public_address_shodan.compute_client",
+            new=compute_client,
+        ), mock.patch(
+            "prowler.providers.gcp.services.compute.compute_public_address_shodan.compute_public_address_shodan.shodan.Shodan.host",
+            return_value=shodan_info,
         ):
             from prowler.providers.gcp.services.compute.compute_public_address_shodan.compute_public_address_shodan import (
                 compute_public_address_shodan,

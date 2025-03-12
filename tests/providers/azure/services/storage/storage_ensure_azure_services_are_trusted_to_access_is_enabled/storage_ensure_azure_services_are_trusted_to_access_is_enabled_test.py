@@ -15,15 +15,12 @@ class Test_storage_ensure_azure_services_are_trusted_to_access_is_enabled:
         storage_client = mock.MagicMock
         storage_client.storage_accounts = {}
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.azure.services.storage.storage_ensure_azure_services_are_trusted_to_access_is_enabled.storage_ensure_azure_services_are_trusted_to_access_is_enabled.storage_client",
-                new=storage_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
+            "prowler.providers.azure.services.storage.storage_ensure_azure_services_are_trusted_to_access_is_enabled.storage_ensure_azure_services_are_trusted_to_access_is_enabled.storage_client",
+            new=storage_client,
         ):
             from prowler.providers.azure.services.storage.storage_ensure_azure_services_are_trusted_to_access_is_enabled.storage_ensure_azure_services_are_trusted_to_access_is_enabled import (
                 storage_ensure_azure_services_are_trusted_to_access_is_enabled,
@@ -56,15 +53,12 @@ class Test_storage_ensure_azure_services_are_trusted_to_access_is_enabled:
             ]
         }
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.azure.services.storage.storage_ensure_azure_services_are_trusted_to_access_is_enabled.storage_ensure_azure_services_are_trusted_to_access_is_enabled.storage_client",
-                new=storage_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
+            "prowler.providers.azure.services.storage.storage_ensure_azure_services_are_trusted_to_access_is_enabled.storage_ensure_azure_services_are_trusted_to_access_is_enabled.storage_client",
+            new=storage_client,
         ):
             from prowler.providers.azure.services.storage.storage_ensure_azure_services_are_trusted_to_access_is_enabled.storage_ensure_azure_services_are_trusted_to_access_is_enabled import (
                 storage_ensure_azure_services_are_trusted_to_access_is_enabled,
@@ -106,15 +100,12 @@ class Test_storage_ensure_azure_services_are_trusted_to_access_is_enabled:
             ]
         }
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.azure.services.storage.storage_ensure_azure_services_are_trusted_to_access_is_enabled.storage_ensure_azure_services_are_trusted_to_access_is_enabled.storage_client",
-                new=storage_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
+            "prowler.providers.azure.services.storage.storage_ensure_azure_services_are_trusted_to_access_is_enabled.storage_ensure_azure_services_are_trusted_to_access_is_enabled.storage_client",
+            new=storage_client,
         ):
             from prowler.providers.azure.services.storage.storage_ensure_azure_services_are_trusted_to_access_is_enabled.storage_ensure_azure_services_are_trusted_to_access_is_enabled import (
                 storage_ensure_azure_services_are_trusted_to_access_is_enabled,

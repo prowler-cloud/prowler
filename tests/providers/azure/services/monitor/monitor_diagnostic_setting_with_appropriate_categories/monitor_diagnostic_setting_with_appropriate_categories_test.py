@@ -13,15 +13,12 @@ class Test_monitor_diagnostic_setting_with_appropriate_categories:
         monitor_client = mock.MagicMock
         monitor_client.diagnostics_settings = {}
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.azure.services.monitor.monitor_diagnostic_setting_with_appropriate_categories.monitor_diagnostic_setting_with_appropriate_categories.monitor_client",
-                new=monitor_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
+            "prowler.providers.azure.services.monitor.monitor_diagnostic_setting_with_appropriate_categories.monitor_diagnostic_setting_with_appropriate_categories.monitor_client",
+            new=monitor_client,
         ):
 
             from prowler.providers.azure.services.monitor.monitor_diagnostic_setting_with_appropriate_categories.monitor_diagnostic_setting_with_appropriate_categories import (
@@ -35,15 +32,12 @@ class Test_monitor_diagnostic_setting_with_appropriate_categories:
     def test_no_diagnostic_settings(self):
         monitor_client = mock.MagicMock
         monitor_client.diagnostics_settings = {AZURE_SUBSCRIPTION_ID: []}
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.azure.services.monitor.monitor_diagnostic_setting_with_appropriate_categories.monitor_diagnostic_setting_with_appropriate_categories.monitor_client",
-                new=monitor_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
+            "prowler.providers.azure.services.monitor.monitor_diagnostic_setting_with_appropriate_categories.monitor_diagnostic_setting_with_appropriate_categories.monitor_client",
+            new=monitor_client,
         ):
             from prowler.providers.azure.services.monitor.monitor_diagnostic_setting_with_appropriate_categories.monitor_diagnostic_setting_with_appropriate_categories import (
                 monitor_diagnostic_setting_with_appropriate_categories,
@@ -64,15 +58,12 @@ class Test_monitor_diagnostic_setting_with_appropriate_categories:
     def test_diagnostic_settings_configured(self):
         monitor_client = mock.MagicMock
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.azure.services.monitor.monitor_diagnostic_setting_with_appropriate_categories.monitor_diagnostic_setting_with_appropriate_categories.monitor_client",
-                new=monitor_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
+            "prowler.providers.azure.services.monitor.monitor_diagnostic_setting_with_appropriate_categories.monitor_diagnostic_setting_with_appropriate_categories.monitor_client",
+            new=monitor_client,
         ):
             from prowler.providers.azure.services.monitor.monitor_diagnostic_setting_with_appropriate_categories.monitor_diagnostic_setting_with_appropriate_categories import (
                 monitor_diagnostic_setting_with_appropriate_categories,

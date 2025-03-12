@@ -13,15 +13,12 @@ class Test_wellarchitected_workload_no_high_or_medium_risks:
     def test_no_wellarchitected(self):
         wellarchitected_client = mock.MagicMock
         wellarchitected_client.workloads = []
-        with (
-            mock.patch(
-                "prowler.providers.aws.services.wellarchitected.wellarchitected_service.WellArchitected",
-                wellarchitected_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.wellarchitected.wellarchitected_client.wellarchitected_client",
-                wellarchitected_client,
-            ),
+        with mock.patch(
+            "prowler.providers.aws.services.wellarchitected.wellarchitected_service.WellArchitected",
+            wellarchitected_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.wellarchitected.wellarchitected_client.wellarchitected_client",
+            wellarchitected_client,
         ):
             from prowler.providers.aws.services.wellarchitected.wellarchitected_workload_no_high_or_medium_risks.wellarchitected_workload_no_high_or_medium_risks import (
                 wellarchitected_workload_no_high_or_medium_risks,
@@ -45,15 +42,12 @@ class Test_wellarchitected_workload_no_high_or_medium_risks:
                 region=AWS_REGION_EU_WEST_1,
             )
         )
-        with (
-            mock.patch(
-                "prowler.providers.aws.services.wellarchitected.wellarchitected_service.WellArchitected",
-                wellarchitected_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.wellarchitected.wellarchitected_client.wellarchitected_client",
-                wellarchitected_client,
-            ),
+        with mock.patch(
+            "prowler.providers.aws.services.wellarchitected.wellarchitected_service.WellArchitected",
+            wellarchitected_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.wellarchitected.wellarchitected_client.wellarchitected_client",
+            wellarchitected_client,
         ):
             from prowler.providers.aws.services.wellarchitected.wellarchitected_workload_no_high_or_medium_risks.wellarchitected_workload_no_high_or_medium_risks import (
                 wellarchitected_workload_no_high_or_medium_risks,
@@ -90,15 +84,12 @@ class Test_wellarchitected_workload_no_high_or_medium_risks:
                 region=AWS_REGION_EU_WEST_1,
             )
         )
-        with (
-            mock.patch(
-                "prowler.providers.aws.services.wellarchitected.wellarchitected_service.WellArchitected",
-                wellarchitected_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.wellarchitected.wellarchitected_client.wellarchitected_client",
-                wellarchitected_client,
-            ),
+        with mock.patch(
+            "prowler.providers.aws.services.wellarchitected.wellarchitected_service.WellArchitected",
+            wellarchitected_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.wellarchitected.wellarchitected_client.wellarchitected_client",
+            wellarchitected_client,
         ):
             from prowler.providers.aws.services.wellarchitected.wellarchitected_workload_no_high_or_medium_risks.wellarchitected_workload_no_high_or_medium_risks import (
                 wellarchitected_workload_no_high_or_medium_risks,
@@ -137,15 +128,12 @@ class Test_wellarchitected_workload_no_high_or_medium_risks:
                 region=AWS_REGION_EU_WEST_1,
             )
         )
-        with (
-            mock.patch(
-                "prowler.providers.aws.services.wellarchitected.wellarchitected_service.WellArchitected",
-                wellarchitected_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.wellarchitected.wellarchitected_client.wellarchitected_client",
-                wellarchitected_client,
-            ),
+        with mock.patch(
+            "prowler.providers.aws.services.wellarchitected.wellarchitected_service.WellArchitected",
+            wellarchitected_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.wellarchitected.wellarchitected_client.wellarchitected_client",
+            wellarchitected_client,
         ):
             from prowler.providers.aws.services.wellarchitected.wellarchitected_workload_no_high_or_medium_risks.wellarchitected_workload_no_high_or_medium_risks import (
                 wellarchitected_workload_no_high_or_medium_risks,

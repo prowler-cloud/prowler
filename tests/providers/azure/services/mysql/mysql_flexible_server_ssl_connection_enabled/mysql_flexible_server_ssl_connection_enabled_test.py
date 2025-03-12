@@ -16,15 +16,12 @@ class Test_mysql_flexible_server_ssl_connection_enabled:
         mysql_client = mock.MagicMock
         mysql_client.flexible_servers = {}
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.azure.services.mysql.mysql_flexible_server_ssl_connection_enabled.mysql_flexible_server_ssl_connection_enabled.mysql_client",
-                new=mysql_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
+            "prowler.providers.azure.services.mysql.mysql_flexible_server_ssl_connection_enabled.mysql_flexible_server_ssl_connection_enabled.mysql_client",
+            new=mysql_client,
         ):
             from prowler.providers.azure.services.mysql.mysql_flexible_server_ssl_connection_enabled.mysql_flexible_server_ssl_connection_enabled import (
                 mysql_flexible_server_ssl_connection_enabled,
@@ -38,15 +35,12 @@ class Test_mysql_flexible_server_ssl_connection_enabled:
         mysql_client = mock.MagicMock
         mysql_client.flexible_servers = {AZURE_SUBSCRIPTION_ID: {}}
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.azure.services.mysql.mysql_flexible_server_ssl_connection_enabled.mysql_flexible_server_ssl_connection_enabled.mysql_client",
-                new=mysql_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
+            "prowler.providers.azure.services.mysql.mysql_flexible_server_ssl_connection_enabled.mysql_flexible_server_ssl_connection_enabled.mysql_client",
+            new=mysql_client,
         ):
             from prowler.providers.azure.services.mysql.mysql_flexible_server_ssl_connection_enabled.mysql_flexible_server_ssl_connection_enabled import (
                 mysql_flexible_server_ssl_connection_enabled,
@@ -77,15 +71,12 @@ class Test_mysql_flexible_server_ssl_connection_enabled:
             }
         }
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.azure.services.mysql.mysql_flexible_server_ssl_connection_enabled.mysql_flexible_server_ssl_connection_enabled.mysql_client",
-                new=mysql_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
+            "prowler.providers.azure.services.mysql.mysql_flexible_server_ssl_connection_enabled.mysql_flexible_server_ssl_connection_enabled.mysql_client",
+            new=mysql_client,
         ):
             from prowler.providers.azure.services.mysql.mysql_flexible_server_ssl_connection_enabled.mysql_flexible_server_ssl_connection_enabled import (
                 mysql_flexible_server_ssl_connection_enabled,
@@ -128,15 +119,12 @@ class Test_mysql_flexible_server_ssl_connection_enabled:
             }
         }
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.azure.services.mysql.mysql_flexible_server_ssl_connection_enabled.mysql_flexible_server_ssl_connection_enabled.mysql_client",
-                new=mysql_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
+            "prowler.providers.azure.services.mysql.mysql_flexible_server_ssl_connection_enabled.mysql_flexible_server_ssl_connection_enabled.mysql_client",
+            new=mysql_client,
         ):
             from prowler.providers.azure.services.mysql.mysql_flexible_server_ssl_connection_enabled.mysql_flexible_server_ssl_connection_enabled import (
                 mysql_flexible_server_ssl_connection_enabled,
@@ -173,15 +161,12 @@ class Test_mysql_flexible_server_ssl_connection_enabled:
             }
         }
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.azure.services.mysql.mysql_flexible_server_ssl_connection_enabled.mysql_flexible_server_ssl_connection_enabled.mysql_client",
-                new=mysql_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
+            "prowler.providers.azure.services.mysql.mysql_flexible_server_ssl_connection_enabled.mysql_flexible_server_ssl_connection_enabled.mysql_client",
+            new=mysql_client,
         ):
             from prowler.providers.azure.services.mysql.mysql_flexible_server_ssl_connection_enabled.mysql_flexible_server_ssl_connection_enabled import (
                 mysql_flexible_server_ssl_connection_enabled,
@@ -235,15 +220,12 @@ class Test_mysql_flexible_server_ssl_connection_enabled:
             }
         }
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.azure.services.mysql.mysql_flexible_server_ssl_connection_enabled.mysql_flexible_server_ssl_connection_enabled.mysql_client",
-                new=mysql_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
+            "prowler.providers.azure.services.mysql.mysql_flexible_server_ssl_connection_enabled.mysql_flexible_server_ssl_connection_enabled.mysql_client",
+            new=mysql_client,
         ):
             from prowler.providers.azure.services.mysql.mysql_flexible_server_ssl_connection_enabled.mysql_flexible_server_ssl_connection_enabled import (
                 mysql_flexible_server_ssl_connection_enabled,

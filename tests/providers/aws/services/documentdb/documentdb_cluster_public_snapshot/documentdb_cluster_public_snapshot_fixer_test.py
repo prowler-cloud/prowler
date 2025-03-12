@@ -52,15 +52,12 @@ class Test_documentdb_cluster_public_snapshot_fixer:
 
             aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-            with (
-                mock.patch(
-                    "prowler.providers.common.provider.Provider.get_global_provider",
-                    return_value=aws_provider,
-                ),
-                mock.patch(
-                    "prowler.providers.aws.services.documentdb.documentdb_cluster_public_snapshot.documentdb_cluster_public_snapshot_fixer.documentdb_client",
-                    new=DocumentDB(aws_provider),
-                ),
+            with mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ), mock.patch(
+                "prowler.providers.aws.services.documentdb.documentdb_cluster_public_snapshot.documentdb_cluster_public_snapshot_fixer.documentdb_client",
+                new=DocumentDB(aws_provider),
             ):
                 from prowler.providers.aws.services.documentdb.documentdb_cluster_public_snapshot.documentdb_cluster_public_snapshot_fixer import (
                     fixer,
@@ -80,15 +77,12 @@ class Test_documentdb_cluster_public_snapshot_fixer:
 
             aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-            with (
-                mock.patch(
-                    "prowler.providers.common.provider.Provider.get_global_provider",
-                    return_value=aws_provider,
-                ),
-                mock.patch(
-                    "prowler.providers.aws.services.documentdb.documentdb_cluster_public_snapshot.documentdb_cluster_public_snapshot_fixer.documentdb_client",
-                    new=DocumentDB(aws_provider),
-                ),
+            with mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ), mock.patch(
+                "prowler.providers.aws.services.documentdb.documentdb_cluster_public_snapshot.documentdb_cluster_public_snapshot_fixer.documentdb_client",
+                new=DocumentDB(aws_provider),
             ):
                 from prowler.providers.aws.services.documentdb.documentdb_cluster_public_snapshot.documentdb_cluster_public_snapshot_fixer import (
                     fixer,

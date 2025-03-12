@@ -11,15 +11,12 @@ from tests.providers.gcp.gcp_fixtures import (
 
 class TestGKEService:
     def test_service(self):
-        with (
-            patch(
-                "prowler.providers.gcp.lib.service.service.GCPService.__is_api_active__",
-                new=mock_is_api_active,
-            ),
-            patch(
-                "prowler.providers.gcp.lib.service.service.GCPService.__generate_client__",
-                new=mock_api_client,
-            ),
+        with patch(
+            "prowler.providers.gcp.lib.service.service.GCPService.__is_api_active__",
+            new=mock_is_api_active,
+        ), patch(
+            "prowler.providers.gcp.lib.service.service.GCPService.__generate_client__",
+            new=mock_api_client,
         ):
             gke_client = GKE(set_mocked_gcp_provider(project_ids=[GCP_PROJECT_ID]))
             assert gke_client.service == "container"

@@ -22,15 +22,12 @@ class Test_dynamodb_table_protected_by_backup_plan:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
-            with (
-                mock.patch(
-                    "prowler.providers.aws.services.dynamodb.dynamodb_table_protected_by_backup_plan.dynamodb_table_protected_by_backup_plan.dynamodb_client",
-                    new=DynamoDB(aws_provider),
-                ),
-                mock.patch(
-                    "prowler.providers.aws.services.dynamodb.dynamodb_table_protected_by_backup_plan.dynamodb_table_protected_by_backup_plan.backup_client",
-                    new=Backup(aws_provider),
-                ),
+            with mock.patch(
+                "prowler.providers.aws.services.dynamodb.dynamodb_table_protected_by_backup_plan.dynamodb_table_protected_by_backup_plan.dynamodb_client",
+                new=DynamoDB(aws_provider),
+            ), mock.patch(
+                "prowler.providers.aws.services.dynamodb.dynamodb_table_protected_by_backup_plan.dynamodb_table_protected_by_backup_plan.backup_client",
+                new=Backup(aws_provider),
             ):
                 # Test Check
                 from prowler.providers.aws.services.dynamodb.dynamodb_table_protected_by_backup_plan.dynamodb_table_protected_by_backup_plan import (
@@ -68,15 +65,12 @@ class Test_dynamodb_table_protected_by_backup_plan:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
-            with (
-                mock.patch(
-                    "prowler.providers.aws.services.dynamodb.dynamodb_table_protected_by_backup_plan.dynamodb_table_protected_by_backup_plan.dynamodb_client",
-                    new=DynamoDB(aws_provider),
-                ),
-                mock.patch(
-                    "prowler.providers.aws.services.dynamodb.dynamodb_table_protected_by_backup_plan.dynamodb_table_protected_by_backup_plan.backup_client",
-                    new=Backup(aws_provider),
-                ),
+            with mock.patch(
+                "prowler.providers.aws.services.dynamodb.dynamodb_table_protected_by_backup_plan.dynamodb_table_protected_by_backup_plan.dynamodb_client",
+                new=DynamoDB(aws_provider),
+            ), mock.patch(
+                "prowler.providers.aws.services.dynamodb.dynamodb_table_protected_by_backup_plan.dynamodb_table_protected_by_backup_plan.backup_client",
+                new=Backup(aws_provider),
             ):
                 # Test Check
                 from prowler.providers.aws.services.dynamodb.dynamodb_table_protected_by_backup_plan.dynamodb_table_protected_by_backup_plan import (
@@ -141,15 +135,12 @@ class Test_dynamodb_table_protected_by_backup_plan:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
-            with (
-                mock.patch(
-                    "prowler.providers.aws.services.dynamodb.dynamodb_table_protected_by_backup_plan.dynamodb_table_protected_by_backup_plan.dynamodb_client",
-                    new=DynamoDB(aws_provider),
-                ),
-                mock.patch(
-                    "prowler.providers.aws.services.dynamodb.dynamodb_table_protected_by_backup_plan.dynamodb_table_protected_by_backup_plan.backup_client",
-                    new=Backup(aws_provider),
-                ),
+            with mock.patch(
+                "prowler.providers.aws.services.dynamodb.dynamodb_table_protected_by_backup_plan.dynamodb_table_protected_by_backup_plan.dynamodb_client",
+                new=DynamoDB(aws_provider),
+            ), mock.patch(
+                "prowler.providers.aws.services.dynamodb.dynamodb_table_protected_by_backup_plan.dynamodb_table_protected_by_backup_plan.backup_client",
+                new=Backup(aws_provider),
             ):
                 # Test Check
                 from prowler.providers.aws.services.dynamodb.dynamodb_table_protected_by_backup_plan.dynamodb_table_protected_by_backup_plan import (
@@ -193,23 +184,18 @@ class Test_dynamodb_table_protected_by_backup_plan:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
-            with (
-                mock.patch(
-                    "prowler.providers.aws.services.dynamodb.dynamodb_table_protected_by_backup_plan.dynamodb_table_protected_by_backup_plan.dynamodb_client",
-                    new=dynamodb_client,
-                ),
-                mock.patch(
-                    "prowler.providers.aws.services.dynamodb.dynamodb_client.dynamodb_client",
-                    new=dynamodb_client,
-                ),
-                mock.patch(
-                    "prowler.providers.aws.services.dynamodb.dynamodb_table_protected_by_backup_plan.dynamodb_table_protected_by_backup_plan.backup_client",
-                    new=backup,
-                ),
-                mock.patch(
-                    "prowler.providers.aws.services.backup.backup_client.backup_client",
-                    new=backup,
-                ),
+            with mock.patch(
+                "prowler.providers.aws.services.dynamodb.dynamodb_table_protected_by_backup_plan.dynamodb_table_protected_by_backup_plan.dynamodb_client",
+                new=dynamodb_client,
+            ), mock.patch(
+                "prowler.providers.aws.services.dynamodb.dynamodb_client.dynamodb_client",
+                new=dynamodb_client,
+            ), mock.patch(
+                "prowler.providers.aws.services.dynamodb.dynamodb_table_protected_by_backup_plan.dynamodb_table_protected_by_backup_plan.backup_client",
+                new=backup,
+            ), mock.patch(
+                "prowler.providers.aws.services.backup.backup_client.backup_client",
+                new=backup,
             ):
                 # Test Check
                 from prowler.providers.aws.services.dynamodb.dynamodb_table_protected_by_backup_plan.dynamodb_table_protected_by_backup_plan import (
@@ -255,23 +241,18 @@ class Test_dynamodb_table_protected_by_backup_plan:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
-            with (
-                mock.patch(
-                    "prowler.providers.aws.services.dynamodb.dynamodb_table_protected_by_backup_plan.dynamodb_table_protected_by_backup_plan.dynamodb_client",
-                    new=dynamodb_client,
-                ),
-                mock.patch(
-                    "prowler.providers.aws.services.dynamodb.dynamodb_client.dynamodb_client",
-                    new=dynamodb_client,
-                ),
-                mock.patch(
-                    "prowler.providers.aws.services.dynamodb.dynamodb_table_protected_by_backup_plan.dynamodb_table_protected_by_backup_plan.backup_client",
-                    new=backup,
-                ),
-                mock.patch(
-                    "prowler.providers.aws.services.backup.backup_client.backup_client",
-                    new=backup,
-                ),
+            with mock.patch(
+                "prowler.providers.aws.services.dynamodb.dynamodb_table_protected_by_backup_plan.dynamodb_table_protected_by_backup_plan.dynamodb_client",
+                new=dynamodb_client,
+            ), mock.patch(
+                "prowler.providers.aws.services.dynamodb.dynamodb_client.dynamodb_client",
+                new=dynamodb_client,
+            ), mock.patch(
+                "prowler.providers.aws.services.dynamodb.dynamodb_table_protected_by_backup_plan.dynamodb_table_protected_by_backup_plan.backup_client",
+                new=backup,
+            ), mock.patch(
+                "prowler.providers.aws.services.backup.backup_client.backup_client",
+                new=backup,
             ):
                 # Test Check
                 from prowler.providers.aws.services.dynamodb.dynamodb_table_protected_by_backup_plan.dynamodb_table_protected_by_backup_plan import (
@@ -316,23 +297,18 @@ class Test_dynamodb_table_protected_by_backup_plan:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
-            with (
-                mock.patch(
-                    "prowler.providers.aws.services.dynamodb.dynamodb_table_protected_by_backup_plan.dynamodb_table_protected_by_backup_plan.dynamodb_client",
-                    new=dynamodb_client,
-                ),
-                mock.patch(
-                    "prowler.providers.aws.services.dynamodb.dynamodb_client.dynamodb_client",
-                    new=dynamodb_client,
-                ),
-                mock.patch(
-                    "prowler.providers.aws.services.dynamodb.dynamodb_table_protected_by_backup_plan.dynamodb_table_protected_by_backup_plan.backup_client",
-                    new=backup,
-                ),
-                mock.patch(
-                    "prowler.providers.aws.services.backup.backup_client.backup_client",
-                    new=backup,
-                ),
+            with mock.patch(
+                "prowler.providers.aws.services.dynamodb.dynamodb_table_protected_by_backup_plan.dynamodb_table_protected_by_backup_plan.dynamodb_client",
+                new=dynamodb_client,
+            ), mock.patch(
+                "prowler.providers.aws.services.dynamodb.dynamodb_client.dynamodb_client",
+                new=dynamodb_client,
+            ), mock.patch(
+                "prowler.providers.aws.services.dynamodb.dynamodb_table_protected_by_backup_plan.dynamodb_table_protected_by_backup_plan.backup_client",
+                new=backup,
+            ), mock.patch(
+                "prowler.providers.aws.services.backup.backup_client.backup_client",
+                new=backup,
             ):
                 # Test Check
                 from prowler.providers.aws.services.dynamodb.dynamodb_table_protected_by_backup_plan.dynamodb_table_protected_by_backup_plan import (

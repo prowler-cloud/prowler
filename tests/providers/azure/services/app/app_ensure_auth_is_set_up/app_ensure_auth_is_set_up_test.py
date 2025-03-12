@@ -12,15 +12,12 @@ class Test_app_ensure_auth_is_set_up:
         app_client = mock.MagicMock
         app_client.apps = {}
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.azure.services.app.app_ensure_auth_is_set_up.app_ensure_auth_is_set_up.app_client",
-                new=app_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
+            "prowler.providers.azure.services.app.app_ensure_auth_is_set_up.app_ensure_auth_is_set_up.app_client",
+            new=app_client,
         ):
             from prowler.providers.azure.services.app.app_ensure_auth_is_set_up.app_ensure_auth_is_set_up import (
                 app_ensure_auth_is_set_up,
@@ -34,15 +31,12 @@ class Test_app_ensure_auth_is_set_up:
         app_client = mock.MagicMock
         app_client.apps = {AZURE_SUBSCRIPTION_ID: {}}
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.azure.services.app.app_ensure_auth_is_set_up.app_ensure_auth_is_set_up.app_client",
-                new=app_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
+            "prowler.providers.azure.services.app.app_ensure_auth_is_set_up.app_ensure_auth_is_set_up.app_client",
+            new=app_client,
         ):
             from prowler.providers.azure.services.app.app_ensure_auth_is_set_up.app_ensure_auth_is_set_up import (
                 app_ensure_auth_is_set_up,
@@ -56,15 +50,12 @@ class Test_app_ensure_auth_is_set_up:
         resource_id = f"/subscriptions/{uuid4()}"
         app_client = mock.MagicMock
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.azure.services.app.app_ensure_auth_is_set_up.app_ensure_auth_is_set_up.app_client",
-                new=app_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
+            "prowler.providers.azure.services.app.app_ensure_auth_is_set_up.app_ensure_auth_is_set_up.app_client",
+            new=app_client,
         ):
             from prowler.providers.azure.services.app.app_ensure_auth_is_set_up.app_ensure_auth_is_set_up import (
                 app_ensure_auth_is_set_up,
@@ -102,15 +93,12 @@ class Test_app_ensure_auth_is_set_up:
         resource_id = f"/subscriptions/{uuid4()}"
         app_client = mock.MagicMock
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.azure.services.app.app_ensure_auth_is_set_up.app_ensure_auth_is_set_up.app_client",
-                new=app_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
+            "prowler.providers.azure.services.app.app_ensure_auth_is_set_up.app_ensure_auth_is_set_up.app_client",
+            new=app_client,
         ):
             from prowler.providers.azure.services.app.app_ensure_auth_is_set_up.app_ensure_auth_is_set_up import (
                 app_ensure_auth_is_set_up,

@@ -14,15 +14,12 @@ class Test_shield_advanced_protection_in_global_accelerators:
         shield_client.enabled = False
         # GlobalAccelerator Client
         globalaccelerator_client = mock.MagicMock
-        with (
-            mock.patch(
-                "prowler.providers.aws.services.shield.shield_service.Shield",
-                new=shield_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.globalaccelerator.globalaccelerator_service.GlobalAccelerator",
-                new=globalaccelerator_client,
-            ),
+        with mock.patch(
+            "prowler.providers.aws.services.shield.shield_service.Shield",
+            new=shield_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.globalaccelerator.globalaccelerator_service.GlobalAccelerator",
+            new=globalaccelerator_client,
         ):
             # Test Check
             from prowler.providers.aws.services.shield.shield_advanced_protection_in_global_accelerators.shield_advanced_protection_in_global_accelerators import (
@@ -65,15 +62,12 @@ class Test_shield_advanced_protection_in_global_accelerators:
             )
         }
 
-        with (
-            mock.patch(
-                "prowler.providers.aws.services.shield.shield_service.Shield",
-                new=shield_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.globalaccelerator.globalaccelerator_service.GlobalAccelerator",
-                new=globalaccelerator_client,
-            ),
+        with mock.patch(
+            "prowler.providers.aws.services.shield.shield_service.Shield",
+            new=shield_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.globalaccelerator.globalaccelerator_service.GlobalAccelerator",
+            new=globalaccelerator_client,
         ):
             # Test Check
             from prowler.providers.aws.services.shield.shield_advanced_protection_in_global_accelerators.shield_advanced_protection_in_global_accelerators import (
@@ -118,15 +112,12 @@ class Test_shield_advanced_protection_in_global_accelerators:
         shield_client.region = AWS_REGION_EU_WEST_1
         shield_client.protections = {}
 
-        with (
-            mock.patch(
-                "prowler.providers.aws.services.shield.shield_service.Shield",
-                new=shield_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.globalaccelerator.globalaccelerator_service.GlobalAccelerator",
-                new=globalaccelerator_client,
-            ),
+        with mock.patch(
+            "prowler.providers.aws.services.shield.shield_service.Shield",
+            new=shield_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.globalaccelerator.globalaccelerator_service.GlobalAccelerator",
+            new=globalaccelerator_client,
         ):
             # Test Check
             from prowler.providers.aws.services.shield.shield_advanced_protection_in_global_accelerators.shield_advanced_protection_in_global_accelerators import (
@@ -170,15 +161,12 @@ class Test_shield_advanced_protection_in_global_accelerators:
         shield_client.region = AWS_REGION_EU_WEST_1
         shield_client.protections = {}
 
-        with (
-            mock.patch(
-                "prowler.providers.aws.services.shield.shield_service.Shield",
-                new=shield_client,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.globalaccelerator.globalaccelerator_service.GlobalAccelerator",
-                new=globalaccelerator_client,
-            ),
+        with mock.patch(
+            "prowler.providers.aws.services.shield.shield_service.Shield",
+            new=shield_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.globalaccelerator.globalaccelerator_service.GlobalAccelerator",
+            new=globalaccelerator_client,
         ):
             # Test Check
             from prowler.providers.aws.services.shield.shield_advanced_protection_in_global_accelerators.shield_advanced_protection_in_global_accelerators import (

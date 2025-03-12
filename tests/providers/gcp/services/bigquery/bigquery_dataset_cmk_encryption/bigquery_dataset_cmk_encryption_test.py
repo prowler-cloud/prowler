@@ -8,15 +8,12 @@ class Test_bigquery_dataset_cmk_encryption:
         bigquery_client = mock.MagicMock()
         bigquery_client.datasets = []
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_gcp_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.gcp.services.bigquery.bigquery_dataset_cmk_encryption.bigquery_dataset_cmk_encryption.bigquery_client",
-                new=bigquery_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), mock.patch(
+            "prowler.providers.gcp.services.bigquery.bigquery_dataset_cmk_encryption.bigquery_dataset_cmk_encryption.bigquery_client",
+            new=bigquery_client,
         ):
             from prowler.providers.gcp.services.bigquery.bigquery_dataset_cmk_encryption.bigquery_dataset_cmk_encryption import (
                 bigquery_dataset_cmk_encryption,
@@ -29,15 +26,12 @@ class Test_bigquery_dataset_cmk_encryption:
     def test_one_compliant_dataset(self):
         bigquery_client = mock.MagicMock()
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_gcp_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.gcp.services.bigquery.bigquery_dataset_cmk_encryption.bigquery_dataset_cmk_encryption.bigquery_client",
-                new=bigquery_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), mock.patch(
+            "prowler.providers.gcp.services.bigquery.bigquery_dataset_cmk_encryption.bigquery_dataset_cmk_encryption.bigquery_client",
+            new=bigquery_client,
         ):
             from prowler.providers.gcp.services.bigquery.bigquery_dataset_cmk_encryption.bigquery_dataset_cmk_encryption import (
                 bigquery_dataset_cmk_encryption,
@@ -72,15 +66,12 @@ class Test_bigquery_dataset_cmk_encryption:
     def test_one_non_compliant_dataset(self):
         bigquery_client = mock.MagicMock()
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_gcp_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.gcp.services.bigquery.bigquery_dataset_cmk_encryption.bigquery_dataset_cmk_encryption.bigquery_client",
-                new=bigquery_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), mock.patch(
+            "prowler.providers.gcp.services.bigquery.bigquery_dataset_cmk_encryption.bigquery_dataset_cmk_encryption.bigquery_client",
+            new=bigquery_client,
         ):
             from prowler.providers.gcp.services.bigquery.bigquery_dataset_cmk_encryption.bigquery_dataset_cmk_encryption import (
                 bigquery_dataset_cmk_encryption,

@@ -13,19 +13,15 @@ class Test_keyvault_logging_enabled:
         keyvault_client = mock.MagicMock
         keyvault_client.key_vaults = {}
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.azure.services.monitor.monitor_service.Monitor",
-                new=mock.MagicMock(),
-            ),
-            mock.patch(
-                "prowler.providers.azure.services.keyvault.keyvault_logging_enabled.keyvault_logging_enabled.keyvault_client",
-                new=keyvault_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
+            "prowler.providers.azure.services.monitor.monitor_service.Monitor",
+            new=mock.MagicMock(),
+        ), mock.patch(
+            "prowler.providers.azure.services.keyvault.keyvault_logging_enabled.keyvault_logging_enabled.keyvault_client",
+            new=keyvault_client,
         ):
 
             from prowler.providers.azure.services.keyvault.keyvault_logging_enabled.keyvault_logging_enabled import (
@@ -39,19 +35,15 @@ class Test_keyvault_logging_enabled:
     def test_no_diagnostic_settings(self):
         keyvault_client = mock.MagicMock
         keyvault_client.key_vaults = {AZURE_SUBSCRIPTION_ID: []}
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.azure.services.monitor.monitor_service.Monitor",
-                new=mock.MagicMock(),
-            ),
-            mock.patch(
-                "prowler.providers.azure.services.keyvault.keyvault_logging_enabled.keyvault_logging_enabled.keyvault_client",
-                new=keyvault_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
+            "prowler.providers.azure.services.monitor.monitor_service.Monitor",
+            new=mock.MagicMock(),
+        ), mock.patch(
+            "prowler.providers.azure.services.keyvault.keyvault_logging_enabled.keyvault_logging_enabled.keyvault_client",
+            new=keyvault_client,
         ):
             from prowler.providers.azure.services.keyvault.keyvault_logging_enabled.keyvault_logging_enabled import (
                 keyvault_logging_enabled,
@@ -64,19 +56,15 @@ class Test_keyvault_logging_enabled:
     def test_diagnostic_settings_configured(self):
         keyvault_client = mock.MagicMock
 
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.azure.services.monitor.monitor_service.Monitor",
-                new=mock.MagicMock(),
-            ),
-            mock.patch(
-                "prowler.providers.azure.services.keyvault.keyvault_logging_enabled.keyvault_logging_enabled.keyvault_client",
-                new=keyvault_client,
-            ),
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
+            "prowler.providers.azure.services.monitor.monitor_service.Monitor",
+            new=mock.MagicMock(),
+        ), mock.patch(
+            "prowler.providers.azure.services.keyvault.keyvault_logging_enabled.keyvault_logging_enabled.keyvault_client",
+            new=keyvault_client,
         ):
             from prowler.providers.azure.services.keyvault.keyvault_logging_enabled.keyvault_logging_enabled import (
                 keyvault_logging_enabled,
