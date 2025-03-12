@@ -8,14 +8,14 @@ class MainRouter:
     admin_read = "admin_read"
 
     def db_for_read(self, model, **hints):  # noqa: F841
-        table = model._meta.db_table
-        if any(table.startswith(f"{app}_") for app in ALLOWED_APPS):
+        model_table_name = model._meta.db_table
+        if any(model_table_name.startswith(f"{app}_") for app in ALLOWED_APPS):
             return self.admin_read
         return self.user_read
 
     def db_for_write(self, model, **hints):  # noqa: F841
-        table = model._meta.db_table
-        if any(table.startswith(f"{app}_") for app in ALLOWED_APPS):
+        model_table_name = model._meta.db_table
+        if any(model_table_name.startswith(f"{app}_") for app in ALLOWED_APPS):
             return self.admin_db
         return self.default_db
 
