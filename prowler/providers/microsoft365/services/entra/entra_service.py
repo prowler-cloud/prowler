@@ -204,16 +204,12 @@ class Entra(Microsoft365Service):
                             )
                         ),
                         authentication_strength=(
-                            (
-                                AuthenticationStrength(
-                                    getattr(
-                                        policy.grant_controls,
-                                        "authentication_strength",
-                                        "MFA",
-                                    )
-                                )
+                            AuthenticationStrength(
+                                policy.grant_controls.authentication_strength.display_name
                             )
-                            if policy.grant_controls.authentication_strength
+                            if policy.grant_controls is not None
+                            and policy.grant_controls.authentication_strength
+                            is not None
                             else None
                         ),
                     ),
