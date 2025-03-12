@@ -73,7 +73,7 @@ It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, Fe
 |---|---|---|---|---|
 | AWS | 564 | 82 | 33 | 10 |
 | GCP | 77 | 13 | 5 | 3 |
-| Azure | 140 | 18 | 6 | 3 |
+| Azure | 140 | 18 | 7 | 3 |
 | Kubernetes | 83 | 7 | 2 | 7 |
 | Microsoft365 | 5 | 2 | 1 | 0 |
 
@@ -109,7 +109,7 @@ docker compose up -d
 **Requirements**
 
 * `git` installed.
-* `poetry` installed: [poetry installation](https://python-poetry.org/docs/#installation).
+* `poetry` v2 installed: [poetry installation](https://python-poetry.org/docs/#installation).
 * `npm` installed: [npm installation](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm).
 * `Docker Compose` installed: https://docs.docker.com/compose/install/.
 

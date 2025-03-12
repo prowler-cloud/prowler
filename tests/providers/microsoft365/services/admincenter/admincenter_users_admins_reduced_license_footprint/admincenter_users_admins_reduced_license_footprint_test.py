@@ -111,13 +111,7 @@ class Test_admincenter_users_admins_reduced_license_footprint:
                 result[0].status_extended
                 == "User User1 has administrative roles Global Administrator and a valid license: AAD_PREMIUM."
             )
-            assert result[0].resource == {
-                "id": id_user1,
-                "name": "User1",
-                "directory_roles": ["Global Administrator"],
-                "license": "AAD_PREMIUM",
-                "user_type": None,
-            }
+            assert result[0].resource == admincenter_client.users[id_user1].dict()
             assert result[0].resource_name == "User1"
             assert result[0].resource_id == id_user1
             assert result[0].location == "global"
@@ -163,13 +157,7 @@ class Test_admincenter_users_admins_reduced_license_footprint:
                 result[0].status_extended
                 == "User User1 has administrative roles Global Administrator and an invalid license: O365 BUSINESS."
             )
-            assert result[0].resource == {
-                "id": id_user1,
-                "name": "User1",
-                "directory_roles": ["Global Administrator"],
-                "license": "O365 BUSINESS",
-                "user_type": None,
-            }
+            assert result[0].resource == admincenter_client.users[id_user1].dict()
             assert result[0].resource_name == "User1"
             assert result[0].resource_id == id_user1
             assert result[0].location == "global"
@@ -215,13 +203,7 @@ class Test_admincenter_users_admins_reduced_license_footprint:
                 result[0].status_extended
                 == "User User1 has administrative roles Global Administrator and does not have a license."
             )
-            assert result[0].resource == {
-                "id": id_user1,
-                "name": "User1",
-                "directory_roles": ["Global Administrator"],
-                "license": None,
-                "user_type": None,
-            }
+            assert result[0].resource == admincenter_client.users[id_user1].dict()
             assert result[0].resource_name == "User1"
             assert result[0].resource_id == id_user1
             assert result[0].location == "global"

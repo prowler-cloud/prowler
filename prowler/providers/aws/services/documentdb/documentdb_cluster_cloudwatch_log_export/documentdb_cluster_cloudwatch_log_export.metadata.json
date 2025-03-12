@@ -13,9 +13,9 @@
   "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/documentdb-controls.html#documentdb-4",
   "Remediation": {
     "Code": {
-      "CLI": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DocumentDB/enable-profiler.html",
+      "CLI": "aws docdb modify-db-cluster --region <REGION> --db-cluster-identifier <DB_CLUSTER_ID> --db-cluster-parameter-group-name <DB_CLUSTER_PARAMETER_GROUP_NAME> --cloudwatch-logs-export-configuration '{EnableLogTypes:[profiler]}' --apply-immediately",
       "NativeIaC": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DocumentDB/enable-profiler.html",
-      "Other": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DocumentDB/enable-profiler.html",
       "Terraform": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DocumentDB/enable-profiler.html"
     },
     "Recommendation": {
