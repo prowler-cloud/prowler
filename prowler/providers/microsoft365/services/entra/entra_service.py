@@ -18,10 +18,10 @@ class Entra(Microsoft365Service):
         attributes = loop.run_until_complete(
             gather(
                 self._get_authorization_policy(),
-                self._get_organization(),
                 self._get_conditional_access_policies(),
                 self._get_admin_consent_policy(),
                 self._get_groups(),
+                self._get_organization(),
             )
         )
 
