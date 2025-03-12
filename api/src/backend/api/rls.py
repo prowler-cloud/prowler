@@ -87,9 +87,7 @@ class RowLevelSecurityConstraint(models.BaseConstraint):
                 f"{grant_queries}{self.grant_sql_query.format(statement=statement)}"
             )
 
-        full_create_sql_query = (
-            f"{self.rls_sql_query}" f"{policy_queries}" f"{grant_queries}"
-        )
+        full_create_sql_query = f"{self.rls_sql_query}{policy_queries}{grant_queries}"
 
         table_name = model._meta.db_table
         if self.partition_name:
@@ -130,9 +128,7 @@ class RowLevelSecurityConstraint(models.BaseConstraint):
         path, _, kwargs = super().deconstruct()
         return (path, (self.target_field,), kwargs)
 
-    def validate(
-        self, model, instance, exclude=None, using=DEFAULT_DB_ALIAS
-    ):  # noqa: F841
+    def validate(self, model, instance, exclude=None, using=DEFAULT_DB_ALIAS):  # noqa: F841
         if not hasattr(instance, "tenant_id"):
             raise ValidationError(f"{model.__name__} does not have a tenant_id field.")
 
