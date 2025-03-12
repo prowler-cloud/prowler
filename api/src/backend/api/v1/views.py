@@ -1836,7 +1836,7 @@ class InvitationAcceptViewSet(BaseRLSViewSet):
         )
 
         # Proceed with accepting the invitation
-        user = User.objects.using(MainRouter.admin_db).get(email=user_email)
+        user = User.objects.using(MainRouter.admin_read).get(email=user_email)
         membership = Membership.objects.using(MainRouter.admin_db).create(
             user=user,
             tenant=invitation.tenant,

@@ -175,7 +175,7 @@ def validate_invitation(
     try:
         # Admin DB connector is used to bypass RLS protection since the invitation belongs to a tenant the user
         # is not a member of yet
-        invitation = Invitation.objects.using(MainRouter.admin_db).get(
+        invitation = Invitation.objects.using(MainRouter.admin_read).get(
             token=invitation_token, email=email
         )
     except Invitation.DoesNotExist:
