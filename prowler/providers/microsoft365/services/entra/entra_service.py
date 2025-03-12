@@ -98,84 +98,74 @@ class Entra(Microsoft365Service):
                 await self.client.identity.conditional_access.policies.get()
             )
             for policy in conditional_access_policies_list.value:
-                if "Phishing" in policy.display_name:
-                    conditional_access_policies[policy.id] = ConditionalAccessPolicy(
-                        id=policy.id,
-                        display_name=policy.display_name,
-                        conditions=Conditions(
-                            application_conditions=ApplicationsConditions(
-                                included_applications=[
-                                    application
-                                    for application in getattr(
-                                        policy.conditions.applications,
-                                        "include_applications",
-                                        [],
-                                    )
-                                ],
-                                excluded_applications=[
-                                    application
-                                    for application in getattr(
-                                        policy.conditions.applications,
-                                        "exclude_applications",
-                                        [],
-                                    )
-                                ],
-                            ),
-                            user_conditions=UsersConditions(
-                                included_groups=[
-                                    group
-                                    for group in getattr(
-                                        policy.conditions.users,
-                                        "include_groups",
-                                        [],
-                                    )
-                                ],
-                                excluded_groups=[
-                                    group
-                                    for group in getattr(
-                                        policy.conditions.users,
-                                        "exclude_groups",
-                                        [],
-                                    )
-                                ],
-                                included_users=[
-                                    user
-                                    for user in getattr(
-                                        policy.conditions.users,
-                                        "include_users",
-                                        [],
-                                    )
-                                ],
-                                excluded_users=[
-                                    user
-                                    for user in getattr(
-                                        policy.conditions.users,
-                                        "exclude_users",
-                                        [],
-                                    )
-                                ],
-                                included_roles=[
-                                    role
-                                    for role in getattr(
-                                        policy.conditions.users,
-                                        "include_roles",
-                                        [],
-                                    )
-                                ],
-                                excluded_roles=[
-                                    role
-                                    for role in getattr(
-                                        policy.conditions.users,
-                                        "exclude_roles",
-                                        [],
-                                    )
-                                ],
-                            ),
-                            user_risk_levels=[
-                                RiskLevel(risk_level)
-                                for risk_level in getattr(
-                                    policy.conditions,
-                                    "user_risk_levels",
+                conditional_access_policies[policy.id] = ConditionalAccessPolicy(
+                    id=policy.id,
+                    display_name=policy.display_name,
+                    conditions=Conditions(
+                        application_conditions=ApplicationsConditions(
+                            included_applications=[
+                                application
+                                for application in getattr(
+                                    policy.conditions.applications,
+                                    "include_applications",
+                                    [],
+                                )
+                            ],
+                            excluded_applications=[
+                                application
+                                for application in getattr(
+                                    policy.conditions.applications,
+                                    "exclude_applications",
+                                    [],
+                                )
+                            ],
+                        ),
+                        user_conditions=UsersConditions(
+                            included_groups=[
+                                group
+                                for group in getattr(
+                                    policy.conditions.users,
+                                    "include_groups",
+                                    [],
+                                )
+                            ],
+                            excluded_groups=[
+                                group
+                                for group in getattr(
+                                    policy.conditions.users,
+                                    "exclude_groups",
+                                    [],
+                                )
+                            ],
+                            included_users=[
+                                user
+                                for user in getattr(
+                                    policy.conditions.users,
+                                    "include_users",
+                                    [],
+                                )
+                            ],
+                            excluded_users=[
+                                user
+                                for user in getattr(
+                                    policy.conditions.users,
+                                    "exclude_users",
+                                    [],
+                                )
+                            ],
+                            included_roles=[
+                                role
+                                for role in getattr(
+                                    policy.conditions.users,
+                                    "include_roles",
+                                    [],
+                                )
+                            ],
+                            excluded_roles=[
+                                role
+                                for role in getattr(
+                                    policy.conditions.users,
+                                    "exclude_roles",
                                     [],
                                 )
                             ],
@@ -213,6 +203,19 @@ class Entra(Microsoft365Service):
                                 getattr(policy.grant_controls, "operator", "AND")
                             )
                         ),
+                        authentication_strength=(
+                            (
+                                AuthenticationStrength(
+                                    getattr(
+                                        policy.grant_controls,
+                                        "authentication_strength",
+                                        "MFA",
+                                    )
+                                )
+                            )
+                            if policy.grant_controls.authentication_strength
+                            else None
+                        ),
                     ),
                     session_controls=SessionControls(
                         persistent_browser=PersistentBrowser(
@@ -242,72 +245,29 @@ class Entra(Microsoft365Service):
                                 and policy.session_controls.sign_in_frequency
                                 else None
                             ),
-                            operator=(
-                                GrantControlOperator(
-                                    getattr(policy.grant_controls, "operator", "AND")
+                            type=(
+                                SignInFrequencyType(
+                                    policy.session_controls.sign_in_frequency.type
                                 )
+                                if policy.session_controls
+                                and policy.session_controls.sign_in_frequency
+                                and policy.session_controls.sign_in_frequency.type
+                                else None
                             ),
-                            authentication_strength=(
-                                AuthenticationStrength(
-                                    policy.grant_controls.authentication_strength.display_name
+                            interval=(
+                                SignInFrequencyInterval(
+                                    policy.session_controls.sign_in_frequency.frequency_interval
                                 )
-                                if policy.grant_controls is not None
-                                and policy.grant_controls.authentication_strength
-                                is not None
+                                if policy.session_controls
+                                and policy.session_controls.sign_in_frequency
                                 else None
                             ),
                         ),
-                        session_controls=SessionControls(
-                            persistent_browser=PersistentBrowser(
-                                is_enabled=(
-                                    policy.session_controls.persistent_browser.is_enabled
-                                    if policy.session_controls
-                                    and policy.session_controls.persistent_browser
-                                    else False
-                                ),
-                                mode=(
-                                    policy.session_controls.persistent_browser.mode
-                                    if policy.session_controls
-                                    and policy.session_controls.persistent_browser
-                                    else "always"
-                                ),
-                            ),
-                            sign_in_frequency=SignInFrequency(
-                                is_enabled=(
-                                    policy.session_controls.sign_in_frequency.is_enabled
-                                    if policy.session_controls
-                                    and policy.session_controls.sign_in_frequency
-                                    else False
-                                ),
-                                frequency=(
-                                    policy.session_controls.sign_in_frequency.value
-                                    if policy.session_controls
-                                    and policy.session_controls.sign_in_frequency
-                                    else None
-                                ),
-                                type=(
-                                    SignInFrequencyType(
-                                        policy.session_controls.sign_in_frequency.type
-                                    )
-                                    if policy.session_controls
-                                    and policy.session_controls.sign_in_frequency
-                                    and policy.session_controls.sign_in_frequency.type
-                                    else None
-                                ),
-                                interval=(
-                                    SignInFrequencyInterval(
-                                        policy.session_controls.sign_in_frequency.frequency_interval
-                                    )
-                                    if policy.session_controls
-                                    and policy.session_controls.sign_in_frequency
-                                    else None
-                                ),
-                            ),
-                        ),
-                        state=ConditionalAccessPolicyState(
-                            getattr(policy, "state", "disabled")
-                        ),
-                    )
+                    ),
+                    state=ConditionalAccessPolicyState(
+                        getattr(policy, "state", "disabled")
+                    ),
+                )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
