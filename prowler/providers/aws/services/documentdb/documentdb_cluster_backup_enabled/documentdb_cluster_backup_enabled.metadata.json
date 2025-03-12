@@ -13,9 +13,9 @@
   "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/documentdb-controls.html#documentdb-2",
   "Remediation": {
     "Code": {
-      "CLI": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DocumentDB/sufficient-backup-retention-period.html#",
+      "CLI": "aws docdb modify-db-cluster --region <REGION> --db-cluster-identifier <DB_CLUSTER_ID> --backup-retention-period 7 --apply-immediately",
       "NativeIaC": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DocumentDB/sufficient-backup-retention-period.html#",
-      "Other": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DocumentDB/sufficient-backup-retention-period.html#",
       "Terraform": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DocumentDB/sufficient-backup-retention-period.html#"
     },
     "Recommendation": {
