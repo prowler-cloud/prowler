@@ -17,12 +17,15 @@ class Test_entra_admin_consent_workflow_enabled:
         """
         entra_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_microsoft365_provider(),
-        ), mock.patch(
-            "prowler.providers.microsoft365.services.entra.entra_admin_consent_workflow_enabled.entra_admin_consent_workflow_enabled.entra_client",
-            new=entra_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_microsoft365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.microsoft365.services.entra.entra_admin_consent_workflow_enabled.entra_admin_consent_workflow_enabled.entra_client",
+                new=entra_client,
+            ),
         ):
             from prowler.providers.microsoft365.services.entra.entra_admin_consent_workflow_enabled.entra_admin_consent_workflow_enabled import (
                 entra_admin_consent_workflow_enabled,
@@ -56,12 +59,15 @@ class Test_entra_admin_consent_workflow_enabled:
         """
         entra_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_microsoft365_provider(),
-        ), mock.patch(
-            "prowler.providers.microsoft365.services.entra.entra_admin_consent_workflow_enabled.entra_admin_consent_workflow_enabled.entra_client",
-            new=entra_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_microsoft365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.microsoft365.services.entra.entra_admin_consent_workflow_enabled.entra_admin_consent_workflow_enabled.entra_client",
+                new=entra_client,
+            ),
         ):
             from prowler.providers.microsoft365.services.entra.entra_admin_consent_workflow_enabled.entra_admin_consent_workflow_enabled import (
                 entra_admin_consent_workflow_enabled,
@@ -95,12 +101,15 @@ class Test_entra_admin_consent_workflow_enabled:
         """
         entra_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_microsoft365_provider(),
-        ), mock.patch(
-            "prowler.providers.microsoft365.services.entra.entra_admin_consent_workflow_enabled.entra_admin_consent_workflow_enabled.entra_client",
-            new=entra_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_microsoft365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.microsoft365.services.entra.entra_admin_consent_workflow_enabled.entra_admin_consent_workflow_enabled.entra_client",
+                new=entra_client,
+            ),
         ):
             from prowler.providers.microsoft365.services.entra.entra_admin_consent_workflow_enabled.entra_admin_consent_workflow_enabled import (
                 entra_admin_consent_workflow_enabled,
@@ -136,12 +145,15 @@ class Test_entra_admin_consent_workflow_enabled:
         entra_client.admin_consent_policy = None
         entra_client.tenant_domain = DOMAIN
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_microsoft365_provider(),
-        ), mock.patch(
-            "prowler.providers.microsoft365.services.entra.entra_admin_consent_workflow_enabled.entra_admin_consent_workflow_enabled.entra_client",
-            new=entra_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_microsoft365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.microsoft365.services.entra.entra_admin_consent_workflow_enabled.entra_admin_consent_workflow_enabled.entra_client",
+                new=entra_client,
+            ),
         ):
             from prowler.providers.microsoft365.services.entra.entra_admin_consent_workflow_enabled.entra_admin_consent_workflow_enabled import (
                 entra_admin_consent_workflow_enabled,

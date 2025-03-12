@@ -26,18 +26,23 @@ class Test_ec2_instance_managed_by_ssm_test:
         ssm_client = mock.MagicMock
         ssm_client.managed_instances = {}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.ssm.ssm_service.SSM",
-            new=ssm_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.ssm.ssm_client.ssm_client",
-            new=ssm_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_instance_managed_by_ssm.ec2_instance_managed_by_ssm.ec2_client",
-            new=EC2(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ssm.ssm_service.SSM",
+                new=ssm_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ssm.ssm_client.ssm_client",
+                new=ssm_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_instance_managed_by_ssm.ec2_instance_managed_by_ssm.ec2_client",
+                new=EC2(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_instance_managed_by_ssm.ec2_instance_managed_by_ssm import (
@@ -71,18 +76,23 @@ class Test_ec2_instance_managed_by_ssm_test:
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.ssm.ssm_service.SSM",
-            new=ssm_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.ssm.ssm_client.ssm_client",
-            new=ssm_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_instance_managed_by_ssm.ec2_instance_managed_by_ssm.ec2_client",
-            new=EC2(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ssm.ssm_service.SSM",
+                new=ssm_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ssm.ssm_client.ssm_client",
+                new=ssm_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_instance_managed_by_ssm.ec2_instance_managed_by_ssm.ec2_client",
+                new=EC2(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_instance_managed_by_ssm.ec2_instance_managed_by_ssm import (
@@ -127,18 +137,23 @@ class Test_ec2_instance_managed_by_ssm_test:
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.ssm.ssm_service.SSM",
-            new=ssm_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.ssm.ssm_client.ssm_client",
-            new=ssm_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_instance_managed_by_ssm.ec2_instance_managed_by_ssm.ec2_client",
-            new=EC2(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ssm.ssm_service.SSM",
+                new=ssm_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ssm.ssm_client.ssm_client",
+                new=ssm_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_instance_managed_by_ssm.ec2_instance_managed_by_ssm.ec2_client",
+                new=EC2(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_instance_managed_by_ssm.ec2_instance_managed_by_ssm import (
@@ -187,18 +202,23 @@ class Test_ec2_instance_managed_by_ssm_test:
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.ssm.ssm_service.SSM",
-            new=ssm_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.ssm.ssm_client.ssm_client",
-            new=ssm_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_instance_managed_by_ssm.ec2_instance_managed_by_ssm.ec2_client",
-            new=EC2(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ssm.ssm_service.SSM",
+                new=ssm_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ssm.ssm_client.ssm_client",
+                new=ssm_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_instance_managed_by_ssm.ec2_instance_managed_by_ssm.ec2_client",
+                new=EC2(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_instance_managed_by_ssm.ec2_instance_managed_by_ssm import (
@@ -250,18 +270,23 @@ class Test_ec2_instance_managed_by_ssm_test:
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.ssm.ssm_service.SSM",
-            new=ssm_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.ssm.ssm_client.ssm_client",
-            new=ssm_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_instance_managed_by_ssm.ec2_instance_managed_by_ssm.ec2_client",
-            new=EC2(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ssm.ssm_service.SSM",
+                new=ssm_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ssm.ssm_client.ssm_client",
+                new=ssm_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_instance_managed_by_ssm.ec2_instance_managed_by_ssm.ec2_client",
+                new=EC2(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_instance_managed_by_ssm.ec2_instance_managed_by_ssm import (
@@ -302,18 +327,23 @@ class Test_ec2_instance_managed_by_ssm_test:
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.ssm.ssm_service.SSM",
-            new=ssm_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.ssm.ssm_client.ssm_client",
-            new=ssm_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_instance_managed_by_ssm.ec2_instance_managed_by_ssm.ec2_client",
-            new=EC2(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ssm.ssm_service.SSM",
+                new=ssm_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ssm.ssm_client.ssm_client",
+                new=ssm_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_instance_managed_by_ssm.ec2_instance_managed_by_ssm.ec2_client",
+                new=EC2(aws_provider),
+            ),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_instance_managed_by_ssm.ec2_instance_managed_by_ssm import (

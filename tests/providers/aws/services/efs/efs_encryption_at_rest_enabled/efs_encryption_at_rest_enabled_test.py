@@ -26,12 +26,15 @@ class Test_efs_encryption_at_rest_enabled:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.efs.efs_encryption_at_rest_enabled.efs_encryption_at_rest_enabled.efs_client",
-            new=EFS(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.efs.efs_encryption_at_rest_enabled.efs_encryption_at_rest_enabled.efs_client",
+                new=EFS(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.efs.efs_encryption_at_rest_enabled.efs_encryption_at_rest_enabled import (
                 efs_encryption_at_rest_enabled,
@@ -62,12 +65,15 @@ class Test_efs_encryption_at_rest_enabled:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ), mock.patch(
-            "prowler.providers.aws.services.efs.efs_encryption_at_rest_enabled.efs_encryption_at_rest_enabled.efs_client",
-            new=EFS(aws_provider),
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.efs.efs_encryption_at_rest_enabled.efs_encryption_at_rest_enabled.efs_client",
+                new=EFS(aws_provider),
+            ),
         ):
             from prowler.providers.aws.services.efs.efs_encryption_at_rest_enabled.efs_encryption_at_rest_enabled import (
                 efs_encryption_at_rest_enabled,

@@ -11,12 +11,15 @@ class Test_cloudsql_instance_ssl_connections:
     def test_no_cloudsql_instances(self):
         cloudsql_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.cloudsql.cloudsql_instance_ssl_connections.cloudsql_instance_ssl_connections.cloudsql_client",
-            new=cloudsql_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.cloudsql.cloudsql_instance_ssl_connections.cloudsql_instance_ssl_connections.cloudsql_client",
+                new=cloudsql_client,
+            ),
         ):
             from prowler.providers.gcp.services.cloudsql.cloudsql_instance_ssl_connections.cloudsql_instance_ssl_connections import (
                 cloudsql_instance_ssl_connections,
@@ -31,12 +34,15 @@ class Test_cloudsql_instance_ssl_connections:
     def test_cloudsql_instance_ssl_connections_enabled_and_ssl_mode_encrypted(self):
         cloudsql_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.cloudsql.cloudsql_instance_ssl_connections.cloudsql_instance_ssl_connections.cloudsql_client",
-            new=cloudsql_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.cloudsql.cloudsql_instance_ssl_connections.cloudsql_instance_ssl_connections.cloudsql_client",
+                new=cloudsql_client,
+            ),
         ):
             from prowler.providers.gcp.services.cloudsql.cloudsql_instance_ssl_connections.cloudsql_instance_ssl_connections import (
                 cloudsql_instance_ssl_connections,
@@ -77,12 +83,15 @@ class Test_cloudsql_instance_ssl_connections:
     def test_cloudsql_instance_ssl_connections_disabled_and_ssl_mode_encrypted(self):
         cloudsql_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.cloudsql.cloudsql_instance_ssl_connections.cloudsql_instance_ssl_connections.cloudsql_client",
-            new=cloudsql_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.cloudsql.cloudsql_instance_ssl_connections.cloudsql_instance_ssl_connections.cloudsql_client",
+                new=cloudsql_client,
+            ),
         ):
             from prowler.providers.gcp.services.cloudsql.cloudsql_instance_ssl_connections.cloudsql_instance_ssl_connections import (
                 cloudsql_instance_ssl_connections,
@@ -123,12 +132,15 @@ class Test_cloudsql_instance_ssl_connections:
     def test_cloudsql_instance_ssl_connections_enabled_and_ssl_mode_not_encrypted(self):
         cloudsql_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.cloudsql.cloudsql_instance_ssl_connections.cloudsql_instance_ssl_connections.cloudsql_client",
-            new=cloudsql_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.cloudsql.cloudsql_instance_ssl_connections.cloudsql_instance_ssl_connections.cloudsql_client",
+                new=cloudsql_client,
+            ),
         ):
             from prowler.providers.gcp.services.cloudsql.cloudsql_instance_ssl_connections.cloudsql_instance_ssl_connections import (
                 cloudsql_instance_ssl_connections,
@@ -171,12 +183,15 @@ class Test_cloudsql_instance_ssl_connections:
     ):
         cloudsql_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.cloudsql.cloudsql_instance_ssl_connections.cloudsql_instance_ssl_connections.cloudsql_client",
-            new=cloudsql_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.cloudsql.cloudsql_instance_ssl_connections.cloudsql_instance_ssl_connections.cloudsql_client",
+                new=cloudsql_client,
+            ),
         ):
             from prowler.providers.gcp.services.cloudsql.cloudsql_instance_ssl_connections.cloudsql_instance_ssl_connections import (
                 cloudsql_instance_ssl_connections,
@@ -219,12 +234,15 @@ class Test_cloudsql_instance_ssl_connections:
     ):
         cloudsql_client = mock.MagicMock()
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.cloudsql.cloudsql_instance_ssl_connections.cloudsql_instance_ssl_connections.cloudsql_client",
-            new=cloudsql_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.cloudsql.cloudsql_instance_ssl_connections.cloudsql_instance_ssl_connections.cloudsql_client",
+                new=cloudsql_client,
+            ),
         ):
             from prowler.providers.gcp.services.cloudsql.cloudsql_instance_ssl_connections.cloudsql_instance_ssl_connections import (
                 cloudsql_instance_ssl_connections,

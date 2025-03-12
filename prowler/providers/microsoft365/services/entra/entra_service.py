@@ -21,6 +21,7 @@ class Entra(Microsoft365Service):
                 self._get_conditional_access_policies(),
                 self._get_admin_consent_policy(),
                 self._get_groups(),
+                self._get_organization(),
             )
         )
 
@@ -28,6 +29,7 @@ class Entra(Microsoft365Service):
         self.conditional_access_policies = attributes[1]
         self.admin_consent_policy = attributes[2]
         self.groups = attributes[3]
+        self.organizations = attributes[4]
 
     async def _get_authorization_policy(self):
         logger.info("Entra - Getting authorization policy...")
@@ -259,6 +261,31 @@ class Entra(Microsoft365Service):
             )
         return conditional_access_policies
 
+    async def _get_organization(self):
+        logger.info("Entra - Getting organizations...")
+        organizations = []
+        try:
+            org_data = await self.client.organization.get()
+            for org in org_data.value:
+                sync_enabled = (
+                    org.on_premises_sync_enabled
+                    if org.on_premises_sync_enabled is not None
+                    else False
+                )
+
+                organization = Organization(
+                    id=org.id,
+                    name=org.display_name,
+                    on_premises_sync_enabled=sync_enabled,
+                )
+                organizations.append(organization)
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+        return organizations
+
     async def _get_admin_consent_policy(self):
         logger.info("Entra - Getting group settings...")
         admin_consent_policy = None
@@ -399,6 +426,12 @@ class AuthorizationPolicy(BaseModel):
     name: str
     description: str
     default_user_role_permissions: Optional[DefaultUserRolePermissions]
+
+
+class Organization(BaseModel):
+    id: str
+    name: str
+    on_premises_sync_enabled: bool
 
 
 class Group(BaseModel):

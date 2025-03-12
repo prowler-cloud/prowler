@@ -13,12 +13,15 @@ class Test_monitor_storage_account_with_activity_logs_cmk_encrypted:
         monitor_client = mock.MagicMock
         monitor_client.diagnostics_settings = {}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.monitor.monitor_storage_account_with_activity_logs_cmk_encrypted.monitor_storage_account_with_activity_logs_cmk_encrypted.monitor_client",
-            new=monitor_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.monitor.monitor_storage_account_with_activity_logs_cmk_encrypted.monitor_storage_account_with_activity_logs_cmk_encrypted.monitor_client",
+                new=monitor_client,
+            ),
         ):
             from prowler.providers.azure.services.monitor.monitor_storage_account_with_activity_logs_cmk_encrypted.monitor_storage_account_with_activity_logs_cmk_encrypted import (
                 monitor_storage_account_with_activity_logs_cmk_encrypted,
@@ -31,12 +34,15 @@ class Test_monitor_storage_account_with_activity_logs_cmk_encrypted:
     def test_no_diagnostic_settings(self):
         monitor_client = mock.MagicMock
         monitor_client.diagnostics_settings = {AZURE_SUBSCRIPTION_ID: []}
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.monitor.monitor_storage_account_with_activity_logs_cmk_encrypted.monitor_storage_account_with_activity_logs_cmk_encrypted.monitor_client",
-            new=monitor_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.monitor.monitor_storage_account_with_activity_logs_cmk_encrypted.monitor_storage_account_with_activity_logs_cmk_encrypted.monitor_client",
+                new=monitor_client,
+            ),
         ):
             from prowler.providers.azure.services.monitor.monitor_storage_account_with_activity_logs_cmk_encrypted.monitor_storage_account_with_activity_logs_cmk_encrypted import (
                 monitor_storage_account_with_activity_logs_cmk_encrypted,
@@ -50,12 +56,15 @@ class Test_monitor_storage_account_with_activity_logs_cmk_encrypted:
         monitor_client = mock.MagicMock
         storage_client = mock.MagicMock
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.monitor.monitor_storage_account_with_activity_logs_cmk_encrypted.monitor_storage_account_with_activity_logs_cmk_encrypted.monitor_client",
-            new=monitor_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.monitor.monitor_storage_account_with_activity_logs_cmk_encrypted.monitor_storage_account_with_activity_logs_cmk_encrypted.monitor_client",
+                new=monitor_client,
+            ),
         ):
             with mock.patch(
                 "prowler.providers.azure.services.monitor.monitor_storage_account_with_activity_logs_cmk_encrypted.monitor_storage_account_with_activity_logs_cmk_encrypted.storage_client",
