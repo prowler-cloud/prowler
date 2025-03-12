@@ -1,4 +1,4 @@
-name: Prowler Cloud - Automatic Pull Request
+name: Prowler - Merged Pull Request
 
 on:
   pull_request_target:
@@ -7,7 +7,7 @@ on:
 
 jobs:
   trigger-cloud-pull-request:
-    name: Trigger Cloud PR
+    name: Trigger Cloud Pull Request
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
