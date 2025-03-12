@@ -2518,21 +2518,21 @@ opentelemetry-sdk = ">=1.27.0"
 
 [[package]]
 name = "microsoft-kiota-http"
-version = "1.3.4"
-description = "Kiota http request adapter implementation for httpx library"
+version = "1.9.2"
+description = "Core abstractions for kiota generated libraries in Python"
 optional = false
-python-versions = "*"
+python-versions = "<4.0,>=3.9"
 groups = ["main"]
 files = [
-    {file = "microsoft_kiota_http-1.3.4-py2.py3-none-any.whl", hash = "sha256:fb7eb9222550b671aa5279fd8701c968b41de2133a6367bd213495f6aae9fbf1"},
-    {file = "microsoft_kiota_http-1.3.4.tar.gz", hash = "sha256:0ba94a5e982575f5a349b71a87aae2e01ff1722cfc0902247b7ef0a9072c1580"},
+    {file = "microsoft_kiota_http-1.9.2-py3-none-any.whl", hash = "sha256:3a2d930a70d0184d9f4848473f929ee892462cae1acfaf33b2d193f1828c76c2"},
+    {file = "microsoft_kiota_http-1.9.2.tar.gz", hash = "sha256:2ba3d04a3d1d5d600736eebc1e33533d54d87799ac4fbb92c9cce4a97809af61"},
 ]
 
 [package.dependencies]
-httpx = {version = ">=0.23.0", extras = ["http2"]}
-microsoft-kiota_abstractions = ">=1.0.0,<2.0.0"
-opentelemetry-api = ">=1.20.0"
-opentelemetry-sdk = ">=1.20.0"
+httpx = {version = ">=0.25,<1.0.0", extras = ["http2"]}
+microsoft-kiota-abstractions = ">=1.9.2,<1.10.0"
+opentelemetry-api = ">=1.27.0"
+opentelemetry-sdk = ">=1.27.0"
 
 [[package]]
 name = "microsoft-kiota-serialization-form"
@@ -2837,47 +2837,44 @@ portalocker = ">=1.4,<3"
 
 [[package]]
 name = "msgraph-core"
-version = "1.2.0"
+version = "1.3.2"
 description = "Core component of the Microsoft Graph Python SDK"
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "msgraph_core-1.2.0-py3-none-any.whl", hash = "sha256:4ce14bbe743c0f2dd8b53c7fcd338fc14081e0df6b14021f0d0e4bb63cd5a840"},
-    {file = "msgraph_core-1.2.0.tar.gz", hash = "sha256:a4e42f692e664c60d63359e610bbf990f57b42d8080417261ff7042bbd59c98b"},
+    {file = "msgraph_core-1.3.2-py3-none-any.whl", hash = "sha256:96d3d1ad1d2bc3d1d5eb76599e18cb699ccc78781b3492702b2f23ec8f22ae6e"},
+    {file = "msgraph_core-1.3.2.tar.gz", hash = "sha256:d23964bfb20f636874ef875a984f5ab9e48fc4854f1530c6e4a617b84d59777d"},
 ]
 
 [package.dependencies]
 httpx = {version = ">=0.23.0", extras = ["http2"]}
-microsoft-kiota-abstractions = ">=1.0.0,<2.0.0"
-microsoft-kiota-authentication-azure = ">=1.0.0,<2.0.0"
-microsoft-kiota-http = ">=1.0.0,<2.0.0"
+microsoft-kiota-abstractions = ">=1.8.0,<2.0.0"
+microsoft-kiota-authentication-azure = ">=1.8.0,<2.0.0"
+microsoft-kiota-http = ">=1.8.0,<2.0.0"
 
 [package.extras]
 dev = ["bumpver", "isort", "mypy", "pylint", "pytest", "yapf"]
 
 [[package]]
 name = "msgraph-sdk"
-version = "1.18.0"
+version = "1.24.0"
 description = "The Microsoft Graph Python SDK"
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "msgraph_sdk-1.18.0-py3-none-any.whl", hash = "sha256:f09b015bb9d7690bc6f30c9a28f9a414107aaf06be4952c27b3653dcdf33f2a3"},
-    {file = "msgraph_sdk-1.18.0.tar.gz", hash = "sha256:ef49166ada7b459b5a843ceb3d253c1ab99d8987ebf3112147eb6cbcaa101793"},
+    {file = "msgraph_sdk-1.24.0-py3-none-any.whl", hash = "sha256:7cd2dd95c3e2b4d565fe11b019d26102723d252022b53dc854697378dc983538"},
+    {file = "msgraph_sdk-1.24.0.tar.gz", hash = "sha256:d401160cfdab239867faf3b7e6984632dd11524d893a0c816db2d5a64adda650"},
 ]
 
 [package.dependencies]
 azure-identity = ">=1.12.0"
-microsoft-kiota-abstractions = ">=1.3.0,<2.0.0"
-microsoft-kiota-authentication-azure = ">=1.0.0,<2.0.0"
-microsoft-kiota-http = ">=1.0.0,<2.0.0"
-microsoft-kiota-serialization-form = ">=0.1.0"
-microsoft-kiota-serialization-json = ">=1.3.0,<2.0.0"
-microsoft-kiota-serialization-multipart = ">=0.1.0"
-microsoft-kiota-serialization-text = ">=1.0.0,<2.0.0"
-msgraph_core = ">=1.0.0"
+microsoft-kiota-serialization-form = ">=1.8.0,<2.0.0"
+microsoft-kiota-serialization-json = ">=1.8.0,<2.0.0"
+microsoft-kiota-serialization-multipart = ">=1.8.0,<2.0.0"
+microsoft-kiota-serialization-text = ">=1.8.0,<2.0.0"
+msgraph_core = ">=1.3.1"
 
 [package.extras]
 dev = ["bumpver", "isort", "mypy", "pylint", "pytest", "yapf"]
@@ -5340,4 +5337,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">3.9.1,<3.13"
-content-hash = "0bcd0c736f7e94914fd98530742dd6b7e3fa60bc547cd4badad48e72bcf5509e"
+content-hash = "412fc497245bdd6bd8d3ff6701b99be1aa7317efa3d61c0da903d97a9a08efd4"
