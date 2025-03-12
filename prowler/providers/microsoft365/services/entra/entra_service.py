@@ -117,6 +117,14 @@ class Entra(Microsoft365Service):
                                     [],
                                 )
                             ],
+                            included_user_actions=[
+                                UserAction(user_action)
+                                for user_action in getattr(
+                                    policy.conditions.applications,
+                                    "include_user_actions",
+                                    [],
+                                )
+                            ],
                         ),
                         user_conditions=UsersConditions(
                             included_groups=[
@@ -303,9 +311,14 @@ class ConditionalAccessPolicyState(Enum):
     ENABLED_FOR_REPORTING = "enabledForReportingButNotEnforced"
 
 
+class UserAction(Enum):
+    REGISTER_SECURITY_INFO = "urn:user:registersecurityinfo"
+
+
 class ApplicationsConditions(BaseModel):
     included_applications: List[str]
     excluded_applications: List[str]
+    included_user_actions: List[UserAction]
 
 
 class UsersConditions(BaseModel):
