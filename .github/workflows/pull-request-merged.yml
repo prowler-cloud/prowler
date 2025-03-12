@@ -1,0 +1,32 @@
+name: Prowler Cloud - Automatic Pull Request
+
+on:
+  pull_request_target:
+    branches: ['master']
+    types: ['closed']
+
+jobs:
+  trigger-cloud-pull-request:
+    name: Trigger Cloud PR
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set short git commit SHA
+        id: vars
+        run: |
+          shortSha=$(git rev-parse --short ${{ github.sha }})
+          echo "SHORT_SHA=${shortSha}" >> $GITHUB_ENV
+
+      - name: Trigger pull request
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
+          repository: ${{ secrets.CLOUD_DISPATCH }}
+          event-type: prowler-pull-request-merged
+          client-payload: '{
+            "PROWLER_COMMIT_SHA": "${{ github.sha }}",
+            "PROWLER_COMMIT_SHORT_SHA": "${{ env.SHORT_SHA }}",
+            "PROWLER_COMMIT_MESSAGE": "${{ github.event.head_commit.message }}",
+            "PROWLER_PR_TITLE": "${{ github.event.pull_request.title }}",
+            "PROWLER_PR_BODY": "${{ github.event.pull_request.body }}"
+          }'
