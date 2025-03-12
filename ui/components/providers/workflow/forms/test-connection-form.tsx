@@ -231,7 +231,7 @@ export const TestConnectionForm = ({
           </div>
           <p className="py-2 text-small text-default-500">
             {!isUpdated
-              ? "A successful connection will start a scheduled scan every 24 hours. To run it just once, mark the checkbox below."
+              ? "After a successful connection, a scan will automatically run every 24 hours. To run a single scan instead, select the checkbox below."
               : "A successful connection will redirect you to the providers page."}
           </p>
         </div>
@@ -280,7 +280,7 @@ export const TestConnectionForm = ({
               wrapper: "checkbox-update",
             }}
           >
-            Run a one-time scan (no daily schedule).
+            Run a one-time scan (disable daily schedule).
           </Checkbox>
         )}
 
@@ -312,7 +312,7 @@ export const TestConnectionForm = ({
               className="w-1/2"
               variant="solid"
               color="warning"
-              size="lg"
+              size="md"
               isLoading={isResettingCredentials}
               startContent={!isResettingCredentials && <CheckIcon size={24} />}
               isDisabled={isResettingCredentials}
@@ -331,10 +331,10 @@ export const TestConnectionForm = ({
                 isUpdated && connectionStatus?.connected ? "button" : "submit"
               }
               ariaLabel={"Save"}
-              className="w-1/2"
+              className="w-1/3"
               variant="solid"
               color="action"
-              size="lg"
+              size="md"
               isLoading={isLoading}
               endContent={!isLoading && !isUpdated && <RocketIcon size={24} />}
             >

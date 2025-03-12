@@ -50,8 +50,11 @@ export default async function Scans({
 
   // Get scans data to check for executing scans
   const scansData = await getScansByState();
+
   const hasExecutingScan = scansData?.data?.some(
-    (scan: ScanProps) => scan.attributes.state === "executing",
+    (scan: ScanProps) =>
+      scan.attributes.state === "executing" ||
+      scan.attributes.state === "available",
   );
 
   return (

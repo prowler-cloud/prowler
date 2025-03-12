@@ -40,7 +40,7 @@ dependencies = [
   "dash==2.18.2",
   "dash-bootstrap-components==1.6.0",
   "detect-secrets==1.5.0",
-  "google-api-python-client==2.162.0",
+  "google-api-python-client==2.163.0",
   "google-auth-httplib2>=0.1,<0.3",
   "jsonschema==4.23.0",
   "kubernetes==32.0.1",
