@@ -58,6 +58,8 @@ from prowler.lib.outputs.compliance.ens.ens_azure import AzureENS
 from prowler.lib.outputs.compliance.ens.ens_gcp import GCPENS
 from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
 from prowler.lib.outputs.compliance.iso27001.iso27001_aws import AWSISO27001
+from prowler.lib.outputs.compliance.iso27001.iso27001_azure import AzureISO27001
+from prowler.lib.outputs.compliance.iso27001.iso27001_gcp import GCPISO27001
 from prowler.lib.outputs.compliance.kisa_ismsp.kisa_ismsp_aws import AWSKISAISMSP
 from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_aws import AWSMitreAttack
 from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_azure import (
@@ -305,8 +307,20 @@ def prowler():
             print(f"{Style.BRIGHT}{Fore.GREEN}\nNo findings to fix!{Style.RESET_ALL}\n")
         sys.exit()
 
+    # Outputs
+    # TODO: this part is needed since the checks generates a Check_Report_XXX and the output uses Finding
+    # This will be refactored for the outputs generate directly the Finding
+    finding_outputs = []
+    for finding in findings:
+        try:
+            finding_outputs.append(
+                Finding.generate_output(global_provider, finding, output_options)
+            )
+        except Exception:
+            continue
+
     # Extract findings stats
-    stats = extract_findings_statistics(findings)
+    stats = extract_findings_statistics(finding_outputs)
 
     if args.slack:
         # TODO: this should be also in a config file
@@ -328,18 +342,6 @@ def prowler():
                 "Slack integration needs SLACK_API_TOKEN and SLACK_CHANNEL_NAME environment variables (see more in https://docs.prowler.cloud/en/latest/tutorials/integrations/#slack)."
             )
             sys.exit(1)
-
-    # Outputs
-    # TODO: this part is needed since the checks generates a Check_Report_XXX and the output uses Finding
-    # This will be refactored for the outputs generate directly the Finding
-    finding_outputs = []
-    for finding in findings:
-        try:
-            finding_outputs.append(
-                Finding.generate_output(global_provider, finding, output_options)
-            )
-        except Exception:
-            continue
 
     generated_outputs = {"regular": [], "compliance": []}
 
@@ -521,6 +523,19 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(ens)
                 ens.batch_write_data_to_file()
+            elif compliance_name.startswith("iso27001_"):
+                # Generate ISO27001 Finding Object
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                iso27001 = AzureISO27001(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(iso27001)
+                iso27001.batch_write_data_to_file()
             else:
                 filename = (
                     f"{output_options.output_directory}/compliance/"
@@ -575,6 +590,19 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(ens)
                 ens.batch_write_data_to_file()
+            elif compliance_name.startswith("iso27001_"):
+                # Generate ISO27001 Finding Object
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                iso27001 = GCPISO27001(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(iso27001)
+                iso27001.batch_write_data_to_file()
             else:
                 filename = (
                     f"{output_options.output_directory}/compliance/"

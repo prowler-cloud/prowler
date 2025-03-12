@@ -4,91 +4,108 @@ import { Spacer } from "@nextui-org/react";
 import { Suspense } from "react";
 
 import { getCompliancesOverview } from "@/actions/compliances";
+import { getMetadataInfo } from "@/actions/findings";
+import { getProvider } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
 import {
   ComplianceCard,
   ComplianceSkeletonGrid,
+  NoScansAvailable,
 } from "@/components/compliance";
 import { DataCompliance } from "@/components/compliance/data-compliance";
-import { Header } from "@/components/ui";
-import { ComplianceOverviewData, SearchParamsProps } from "@/types";
+import { FilterControls } from "@/components/filters";
+import { ContentLayout } from "@/components/ui";
+import { DataTableFilterCustom } from "@/components/ui/table/data-table-filter-custom";
+import { ComplianceOverviewData, ScanProps, SearchParamsProps } from "@/types";
 
 export default async function Compliance({
   searchParams,
 }: {
   searchParams: SearchParamsProps;
 }) {
-  let scansData;
-  let scanList: {
-    id: string;
-    name: string;
-    state: string;
-    progress: number;
-  }[] = [];
+  const searchParamsKey = JSON.stringify(searchParams || {});
 
-  try {
-    scansData = await getScans({});
-    scanList =
-      scansData?.data
-        ?.filter(
-          (scan: any) =>
-            scan.attributes.state === "completed" &&
-            scan.attributes.progress === 100,
-        )
-        .map((scan: any) => ({
-          id: scan.id,
-          name: scan.attributes.name || "Unnamed Scan",
-          state: scan.attributes.state,
-          progress: scan.attributes.progress,
-        })) || [];
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error("Error fetching scans data:", error);
+  const filters = Object.fromEntries(
+    Object.entries(searchParams).filter(([key]) => key.startsWith("filter[")),
+  );
+
+  const scansData = await getScans({
+    filters: {
+      "filter[state]": "completed",
+    },
+  });
+
+  if (!scansData?.data) {
+    return <NoScansAvailable />;
   }
 
-  const selectedScanId = searchParams.scanId || scanList[0]?.id || null;
+  // Expand scans with provider information
+  const expandedScansData = await Promise.all(
+    scansData.data.map(async (scan: ScanProps) => {
+      const providerId = scan.relationships?.provider?.data?.id;
 
-  // If there are no scans available, return a message
-  if (!selectedScanId) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <div className="text-default-500">No scans available to select.</div>
-      </div>
-    );
-  }
+      if (!providerId) {
+        return { ...scan, providerInfo: null };
+      }
 
-  // Fetch compliance data for regions
-  let compliancesData;
-  let regions: string[] = [];
-  try {
-    compliancesData = await getCompliancesOverview({
-      scanId: selectedScanId as string,
-    });
-    regions = compliancesData?.data
-      ? Array.from(
-          new Set(
-            compliancesData.data.map(
-              (compliance: ComplianceOverviewData) =>
-                compliance.attributes.region as string,
-            ),
-          ),
-        )
-      : [];
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error("Error fetching compliance data:", error);
-  }
+      const formData = new FormData();
+      formData.append("id", providerId);
+
+      const providerData = await getProvider(formData);
+
+      return {
+        ...scan,
+        providerInfo: providerData?.data
+          ? {
+              provider: providerData.data.attributes.provider,
+              uid: providerData.data.attributes.uid,
+              alias: providerData.data.attributes.alias,
+            }
+          : null,
+      };
+    }),
+  );
+
+  const selectedScanId =
+    searchParams.scanId || expandedScansData[0]?.id || null;
+  const query = (filters["filter[search]"] as string) || "";
+
+  const metadataInfoData = await getMetadataInfo({
+    query,
+    filters: {
+      "filter[scan]": selectedScanId,
+    },
+  });
+
+  const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
 
   return (
-    <>
-      <Header title="Compliance" icon="fluent-mdl2:compliance-audit" />
-      <Spacer y={4} />
-      <DataCompliance scans={scanList} regions={regions} />
-      <Spacer y={12} />
-      <Suspense fallback={<ComplianceSkeletonGrid />}>
-        <SSRComplianceGrid searchParams={searchParams} />
-      </Suspense>
-    </>
+    <ContentLayout title="Compliance" icon="fluent-mdl2:compliance-audit">
+      {selectedScanId ? (
+        <>
+          <FilterControls search />
+          <Spacer y={8} />
+          <DataCompliance scans={expandedScansData} />
+          <Spacer y={8} />
+          <DataTableFilterCustom
+            filters={[
+              {
+                key: "region__in",
+                labelCheckboxGroup: "Regions",
+                values: uniqueRegions,
+              },
+            ]}
+            defaultOpen={true}
+          />
+          <Spacer y={12} />
+          <Suspense key={searchParamsKey} fallback={<ComplianceSkeletonGrid />}>
+            <SSRComplianceGrid searchParams={searchParams} />
+          </Suspense>
+        </>
+      ) : (
+        <NoScansAvailable />
+      )}
+    </ContentLayout>
   );
 }
 
@@ -100,30 +117,25 @@ const SSRComplianceGrid = async ({
   const scanId = searchParams.scanId?.toString() || "";
   const regionFilter = searchParams["filter[region__in]"]?.toString() || "";
 
-  // Fetch compliance data
-  let compliancesData;
-  try {
-    compliancesData = await getCompliancesOverview({
-      scanId,
-      region: regionFilter,
-    });
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error("Error fetching compliances overview:", error);
-    return (
-      <div className="flex h-full items-center justify-center">
-        <div className="text-default-500">
-          Failed to load compliance data. Please try again later.
-        </div>
-      </div>
-    );
-  }
+  // Extract all filter parameters
+  const filters = Object.fromEntries(
+    Object.entries(searchParams).filter(([key]) => key.startsWith("filter[")),
+  );
+
+  // Extract query from filters
+  const query = (filters["filter[search]"] as string) || "";
+
+  const compliancesData = await getCompliancesOverview({
+    scanId,
+    region: regionFilter,
+    query,
+  });
 
   // Check if the response contains no data
   if (!compliancesData || compliancesData?.data?.length === 0) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <div className="text-default-500">
+      <div className="flex h-full items-center">
+        <div className="text-sm text-default-500">
           No compliance data available for the selected scan.
         </div>
       </div>
@@ -133,8 +145,8 @@ const SSRComplianceGrid = async ({
   // Handle errors returned by the API
   if (compliancesData?.errors?.length > 0) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <div className="text-default-500">Provide a valid scan ID.</div>
+      <div className="flex h-full items-center">
+        <div className="text-sm text-default-500">Provide a valid scan ID.</div>
       </div>
     );
   }
