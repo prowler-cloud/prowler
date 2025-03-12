@@ -69,11 +69,11 @@ class entra_admin_mfa_enabled_for_administrative_roles(Check):
                     resource_id=policy.id,
                 )
                 report.status = "PASS"
-                report.status_extended = f"Conditional Access Policy '{policy.display_name}' requires MFA for administrative roles."
+                report.status_extended = f"Conditional Access Policy '{policy.display_name}' enforces MFA for administrative roles."
 
                 if policy.state == ConditionalAccessPolicyState.ENABLED_FOR_REPORTING:
                     report.status = "FAIL"
-                    report.status_extended += " (Enabled for reporting, change to enabled so the policy is enforced)."
+                    report.status_extended = f"Conditional Access Policy '{policy.display_name}' only reports MFA for administrative roles but does not enforce it."
                 break
 
         findings.append(report)

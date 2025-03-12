@@ -8,6 +8,7 @@ from prowler.providers.microsoft365.services.entra.entra_service import (
     ConditionalAccessPolicyState,
     Conditions,
     GrantControls,
+    GrantControlOperator,
     PersistentBrowser,
     SessionControls,
     SignInFrequency,
@@ -95,7 +96,8 @@ class Test_entra_admin_mfa_enabled_for_administrative_roles:
                         ),
                     ),
                     grant_controls=GrantControls(
-                        built_in_controls=[ConditionalAccessGrantControl.MFA]
+                        built_in_controls=[ConditionalAccessGrantControl.MFA],
+                        operator=GrantControlOperator.AND,
                     ),
                     session_controls=SessionControls(
                         persistent_browser=PersistentBrowser(
@@ -168,7 +170,8 @@ class Test_entra_admin_mfa_enabled_for_administrative_roles:
                         ),
                     ),
                     grant_controls=GrantControls(
-                        built_in_controls=[ConditionalAccessGrantControl.MFA]
+                        built_in_controls=[ConditionalAccessGrantControl.MFA],
+                        operator=GrantControlOperator.AND,
                     ),
                     session_controls=SessionControls(
                         persistent_browser=PersistentBrowser(
@@ -242,7 +245,8 @@ class Test_entra_admin_mfa_enabled_for_administrative_roles:
                         ),
                     ),
                     grant_controls=GrantControls(
-                        built_in_controls=[ConditionalAccessGrantControl.MFA]
+                        built_in_controls=[ConditionalAccessGrantControl.MFA],
+                        operator=GrantControlOperator.AND,
                     ),
                     session_controls=SessionControls(
                         persistent_browser=PersistentBrowser(
@@ -320,7 +324,8 @@ class Test_entra_admin_mfa_enabled_for_administrative_roles:
                         ),
                     ),
                     grant_controls=GrantControls(
-                        built_in_controls=[ConditionalAccessGrantControl.MFA]
+                        built_in_controls=[ConditionalAccessGrantControl.MFA],
+                        operator=GrantControlOperator.AND,
                     ),
                     session_controls=SessionControls(
                         persistent_browser=PersistentBrowser(
@@ -342,7 +347,7 @@ class Test_entra_admin_mfa_enabled_for_administrative_roles:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            expected_status_extended = f"Conditional Access Policy '{display_name}' requires MFA for administrative roles. (Enabled for reporting, change to enabled so the policy is enforced)."
+            expected_status_extended = f"Conditional Access Policy '{display_name}' only reports MFA for administrative roles but does not enforce it."
             assert result[0].status_extended == expected_status_extended
             assert result[0].resource == entra_client.conditional_access_policies
             assert result[0].resource_name == display_name
@@ -412,7 +417,8 @@ class Test_entra_admin_mfa_enabled_for_administrative_roles:
                         ),
                     ),
                     grant_controls=GrantControls(
-                        built_in_controls=[ConditionalAccessGrantControl.MFA]
+                        built_in_controls=[ConditionalAccessGrantControl.MFA],
+                        operator=GrantControlOperator.AND,
                     ),
                     session_controls=SessionControls(
                         persistent_browser=PersistentBrowser(
@@ -434,7 +440,7 @@ class Test_entra_admin_mfa_enabled_for_administrative_roles:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
-            expected_status_extended = f"Conditional Access Policy '{display_name}' requires MFA for administrative roles."
+            expected_status_extended = f"Conditional Access Policy '{display_name}' enforces MFA for administrative roles."
             assert result[0].status_extended == expected_status_extended
             assert result[0].resource == entra_client.conditional_access_policies
             assert result[0].resource_name == display_name
@@ -503,7 +509,8 @@ class Test_entra_admin_mfa_enabled_for_administrative_roles:
                         ),
                     ),
                     grant_controls=GrantControls(
-                        built_in_controls=[ConditionalAccessGrantControl.MFA]
+                        built_in_controls=[ConditionalAccessGrantControl.MFA],
+                        operator=GrantControlOperator.AND,
                     ),
                     session_controls=SessionControls(
                         persistent_browser=PersistentBrowser(
