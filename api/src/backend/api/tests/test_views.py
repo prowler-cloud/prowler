@@ -14,6 +14,7 @@ from django.urls import reverse
 from rest_framework import status
 
 from api.models import (
+    Integration,
     Invitation,
     Membership,
     Provider,
@@ -4590,3 +4591,415 @@ class TestScheduleViewSet:
             reverse("schedule-daily"), data=json_payload, format="json"
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
+
+
+@pytest.mark.django_db
+class TestIntegrationViewSet:
+    def test_integrations_list(self, authenticated_client, integrations_fixture):
+        response = authenticated_client.get(reverse("integration-list"))
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == len(integrations_fixture)
+
+    def test_integrations_retrieve(self, authenticated_client, integrations_fixture):
+        integration1, *_ = integrations_fixture
+        response = authenticated_client.get(
+            reverse("integration-detail", kwargs={"pk": integration1.id}),
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["data"]["id"] == str(integration1.id)
+        assert (
+            response.json()["data"]["attributes"]["configuration"]
+            == integration1.configuration
+        )
+
+    def test_integrations_invalid_retrieve(self, authenticated_client):
+        response = authenticated_client.get(
+            reverse(
+                "integration-detail",
+                kwargs={"pk": "f498b103-c760-4785-9a3e-e23fafbb7b02"},
+            )
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    @pytest.mark.parametrize(
+        "include_values, expected_resources",
+        [
+            ("providers", ["providers"]),
+        ],
+    )
+    def test_integrations_list_include(
+        self,
+        include_values,
+        expected_resources,
+        authenticated_client,
+        integrations_fixture,
+    ):
+        response = authenticated_client.get(
+            reverse("integration-list"), {"include": include_values}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == len(integrations_fixture)
+        assert "included" in response.json()
+
+        included_data = response.json()["included"]
+        for expected_type in expected_resources:
+            assert any(
+                d.get("type") == expected_type for d in included_data
+            ), f"Expected type '{expected_type}' not found in included data"
+
+    @pytest.mark.parametrize(
+        "integration_type, configuration, credentials",
+        [
+            # Amazon S3 - AWS credentials
+            (
+                Integration.IntegrationChoices.S3,
+                {
+                    "bucket_name": "bucket-name",
+                    "output_directory": "output-directory",
+                },
+                {
+                    "role_arn": "arn:aws",
+                    "external_id": "external-id",
+                },
+            ),
+            # Amazon S3 - No credentials (AWS self-hosted)
+            (
+                Integration.IntegrationChoices.S3,
+                {
+                    "bucket_name": "bucket-name",
+                    "output_directory": "output-directory",
+                },
+                {},
+            ),
+        ],
+    )
+    def test_integrations_create_valid(
+        self,
+        authenticated_client,
+        providers_fixture,
+        integration_type,
+        configuration,
+        credentials,
+    ):
+        provider = Provider.objects.first()
+
+        data = {
+            "data": {
+                "type": "integrations",
+                "attributes": {
+                    "integration_type": integration_type,
+                    "configuration": configuration,
+                    "credentials": credentials,
+                },
+                "relationships": {
+                    "providers": {
+                        "data": [{"type": "providers", "id": str(provider.id)}]
+                    }
+                },
+            }
+        }
+        response = authenticated_client.post(
+            reverse("integration-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        assert Integration.objects.count() == 1
+        integration = Integration.objects.first()
+        assert integration.configuration == data["data"]["attributes"]["configuration"]
+        assert (
+            integration.integration_type
+            == data["data"]["attributes"]["integration_type"]
+        )
+        assert "credentials" not in response.json()["data"]["attributes"]
+        assert (
+            str(provider.id)
+            == data["data"]["relationships"]["providers"]["data"][0]["id"]
+        )
+
+    def test_integrations_create_valid_relationships(
+        self,
+        authenticated_client,
+        providers_fixture,
+    ):
+        provider1, provider2, *_ = providers_fixture
+
+        data = {
+            "data": {
+                "type": "integrations",
+                "attributes": {
+                    "integration_type": Integration.IntegrationChoices.S3,
+                    "configuration": {
+                        "bucket_name": "bucket-name",
+                        "output_directory": "output-directory",
+                    },
+                    "credentials": {
+                        "role_arn": "arn:aws",
+                        "external_id": "external-id",
+                    },
+                },
+                "relationships": {
+                    "providers": {
+                        "data": [
+                            {"type": "providers", "id": str(provider1.id)},
+                            {"type": "providers", "id": str(provider2.id)},
+                        ]
+                    }
+                },
+            }
+        }
+        response = authenticated_client.post(
+            reverse("integration-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        assert Integration.objects.first().providers.count() == 2
+
+    @pytest.mark.parametrize(
+        "attributes, error_code, error_pointer",
+        (
+            [
+                (
+                    {
+                        "integration_type": "whatever",
+                        "configuration": {
+                            "bucket_name": "bucket-name",
+                            "output_directory": "output-directory",
+                        },
+                        "credentials": {
+                            "role_arn": "arn:aws",
+                            "external_id": "external-id",
+                        },
+                    },
+                    "invalid_choice",
+                    "integration_type",
+                ),
+                (
+                    {
+                        "integration_type": "amazon_s3",
+                        "configuration": {},
+                        "credentials": {
+                            "role_arn": "arn:aws",
+                            "external_id": "external-id",
+                        },
+                    },
+                    "required",
+                    "bucket_name",
+                ),
+                (
+                    {
+                        "integration_type": "amazon_s3",
+                        "configuration": {
+                            "bucket_name": "bucket_name",
+                            "output_directory": "output_directory",
+                            "invalid_key": "invalid_value",
+                        },
+                        "credentials": {
+                            "role_arn": "arn:aws",
+                            "external_id": "external-id",
+                        },
+                    },
+                    "invalid",
+                    None,
+                ),
+                (
+                    {
+                        "integration_type": "amazon_s3",
+                        "configuration": {
+                            "bucket_name": "bucket_name",
+                            "output_directory": "output_directory",
+                        },
+                        "credentials": {"invalid_key": "invalid_key"},
+                    },
+                    "invalid",
+                    None,
+                ),
+            ]
+        ),
+    )
+    def test_integrations_invalid_create(
+        self,
+        authenticated_client,
+        attributes,
+        error_code,
+        error_pointer,
+    ):
+        data = {
+            "data": {
+                "type": "integrations",
+                "attributes": attributes,
+            }
+        }
+        response = authenticated_client.post(
+            reverse("integration-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["errors"][0]["code"] == error_code
+        assert (
+            response.json()["errors"][0]["source"]["pointer"]
+            == f"/data/attributes/{error_pointer}"
+            if error_pointer
+            else "/data"
+        )
+
+    def test_integrations_partial_update(
+        self, authenticated_client, integrations_fixture
+    ):
+        integration, *_ = integrations_fixture
+        data = {
+            "data": {
+                "type": "integrations",
+                "id": str(integration.id),
+                "attributes": {
+                    "credentials": {
+                        "aws_access_key_id": "new_value",
+                    },
+                    # integration_type is `amazon_s3`
+                    "configuration": {
+                        "bucket_name": "new_bucket_name",
+                        "output_directory": "new_output_directory",
+                    },
+                },
+            }
+        }
+        response = authenticated_client.patch(
+            reverse("integration-detail", kwargs={"pk": integration.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_200_OK
+        integration.refresh_from_db()
+        assert integration.credentials["aws_access_key_id"] == "new_value"
+        assert integration.configuration["bucket_name"] == "new_bucket_name"
+        assert integration.configuration["output_directory"] == "new_output_directory"
+
+    def test_integrations_partial_update_relationships(
+        self, authenticated_client, integrations_fixture
+    ):
+        integration, *_ = integrations_fixture
+        data = {
+            "data": {
+                "type": "integrations",
+                "id": str(integration.id),
+                "attributes": {
+                    "credentials": {
+                        "aws_access_key_id": "new_value",
+                    },
+                    # integration_type is `amazon_s3`
+                    "configuration": {
+                        "bucket_name": "new_bucket_name",
+                        "output_directory": "new_output_directory",
+                    },
+                },
+                "relationships": {"providers": {"data": []}},
+            }
+        }
+
+        assert integration.providers.count() > 0
+        response = authenticated_client.patch(
+            reverse("integration-detail", kwargs={"pk": integration.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_200_OK
+        integration.refresh_from_db()
+        assert integration.providers.count() == 0
+
+    def test_integrations_partial_update_invalid_content_type(
+        self, authenticated_client, integrations_fixture
+    ):
+        integration, *_ = integrations_fixture
+        response = authenticated_client.patch(
+            reverse("integration-detail", kwargs={"pk": integration.id}),
+            data={},
+        )
+        assert response.status_code == status.HTTP_415_UNSUPPORTED_MEDIA_TYPE
+
+    def test_integrations_partial_update_invalid_content(
+        self, authenticated_client, integrations_fixture
+    ):
+        integration, *_ = integrations_fixture
+        data = {
+            "data": {
+                "type": "integrations",
+                "id": str(integration.id),
+                "attributes": {"invalid_config": "value"},
+            }
+        }
+        response = authenticated_client.patch(
+            reverse("integration-detail", kwargs={"pk": integration.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_integrations_delete(
+        self,
+        authenticated_client,
+        integrations_fixture,
+    ):
+        integration, *_ = integrations_fixture
+        response = authenticated_client.delete(
+            reverse("integration-detail", kwargs={"pk": integration.id})
+        )
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+
+    def test_integrations_delete_invalid(self, authenticated_client):
+        response = authenticated_client.delete(
+            reverse(
+                "integration-detail",
+                kwargs={"pk": "e67d0283-440f-48d1-b5f8-38d0763474f4"},
+            )
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    @pytest.mark.parametrize(
+        "filter_name, filter_value, expected_count",
+        (
+            [
+                ("inserted_at", TODAY, 2),
+                ("inserted_at.gte", "2024-01-01", 2),
+                ("inserted_at.lte", "2024-01-01", 0),
+                ("integration_type", Integration.IntegrationChoices.S3, 2),
+                ("integration_type", Integration.IntegrationChoices.SLACK, 0),
+                (
+                    "integration_type__in",
+                    f"{Integration.IntegrationChoices.S3},{Integration.IntegrationChoices.SLACK}",
+                    2,
+                ),
+            ]
+        ),
+    )
+    def test_integrations_filters(
+        self,
+        authenticated_client,
+        integrations_fixture,
+        filter_name,
+        filter_value,
+        expected_count,
+    ):
+        response = authenticated_client.get(
+            reverse("integration-list"),
+            {f"filter[{filter_name}]": filter_value},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == expected_count
+
+    @pytest.mark.parametrize(
+        "filter_name",
+        (
+            [
+                "invalid",
+            ]
+        ),
+    )
+    def test_integrations_filters_invalid(self, authenticated_client, filter_name):
+        response = authenticated_client.get(
+            reverse("integration-list"),
+            {f"filter[{filter_name}]": "whatever"},
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
