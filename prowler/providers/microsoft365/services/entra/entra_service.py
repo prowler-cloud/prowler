@@ -98,155 +98,165 @@ class Entra(Microsoft365Service):
                 await self.client.identity.conditional_access.policies.get()
             )
             for policy in conditional_access_policies_list.value:
-                conditional_access_policies[policy.id] = ConditionalAccessPolicy(
-                    id=policy.id,
-                    display_name=policy.display_name,
-                    conditions=Conditions(
-                        application_conditions=ApplicationsConditions(
-                            included_applications=[
-                                application
-                                for application in getattr(
-                                    policy.conditions.applications,
-                                    "include_applications",
-                                    [],
-                                )
-                            ],
-                            excluded_applications=[
-                                application
-                                for application in getattr(
-                                    policy.conditions.applications,
-                                    "exclude_applications",
+                if "Phishing" in policy.display_name:
+                    conditional_access_policies[policy.id] = ConditionalAccessPolicy(
+                        id=policy.id,
+                        display_name=policy.display_name,
+                        conditions=Conditions(
+                            application_conditions=ApplicationsConditions(
+                                included_applications=[
+                                    application
+                                    for application in getattr(
+                                        policy.conditions.applications,
+                                        "include_applications",
+                                        [],
+                                    )
+                                ],
+                                excluded_applications=[
+                                    application
+                                    for application in getattr(
+                                        policy.conditions.applications,
+                                        "exclude_applications",
+                                        [],
+                                    )
+                                ],
+                            ),
+                            user_conditions=UsersConditions(
+                                included_groups=[
+                                    group
+                                    for group in getattr(
+                                        policy.conditions.users,
+                                        "include_groups",
+                                        [],
+                                    )
+                                ],
+                                excluded_groups=[
+                                    group
+                                    for group in getattr(
+                                        policy.conditions.users,
+                                        "exclude_groups",
+                                        [],
+                                    )
+                                ],
+                                included_users=[
+                                    user
+                                    for user in getattr(
+                                        policy.conditions.users,
+                                        "include_users",
+                                        [],
+                                    )
+                                ],
+                                excluded_users=[
+                                    user
+                                    for user in getattr(
+                                        policy.conditions.users,
+                                        "exclude_users",
+                                        [],
+                                    )
+                                ],
+                                included_roles=[
+                                    role
+                                    for role in getattr(
+                                        policy.conditions.users,
+                                        "include_roles",
+                                        [],
+                                    )
+                                ],
+                                excluded_roles=[
+                                    role
+                                    for role in getattr(
+                                        policy.conditions.users,
+                                        "exclude_roles",
+                                        [],
+                                    )
+                                ],
+                            ),
+                            user_risk_levels=[
+                                RiskLevel(risk_level)
+                                for risk_level in getattr(
+                                    policy.conditions,
+                                    "user_risk_levels",
                                     [],
                                 )
                             ],
                         ),
-                        user_conditions=UsersConditions(
-                            included_groups=[
-                                group
-                                for group in getattr(
-                                    policy.conditions.users,
-                                    "include_groups",
-                                    [],
-                                )
-                            ],
-                            excluded_groups=[
-                                group
-                                for group in getattr(
-                                    policy.conditions.users,
-                                    "exclude_groups",
-                                    [],
-                                )
-                            ],
-                            included_users=[
-                                user
-                                for user in getattr(
-                                    policy.conditions.users,
-                                    "include_users",
-                                    [],
-                                )
-                            ],
-                            excluded_users=[
-                                user
-                                for user in getattr(
-                                    policy.conditions.users,
-                                    "exclude_users",
-                                    [],
-                                )
-                            ],
-                            included_roles=[
-                                role
-                                for role in getattr(
-                                    policy.conditions.users,
-                                    "include_roles",
-                                    [],
-                                )
-                            ],
-                            excluded_roles=[
-                                role
-                                for role in getattr(
-                                    policy.conditions.users,
-                                    "exclude_roles",
-                                    [],
-                                )
-                            ],
-                        ),
-                        user_risk_levels=[
-                            RiskLevel(risk_level)
-                            for risk_level in getattr(
-                                policy.conditions,
-                                "user_risk_levels",
-                                [],
-                            )
-                        ],
-                    ),
-                    grant_controls=GrantControls(
-                        built_in_controls=(
-                            [
-                                ConditionalAccessGrantControl(control.value)
-                                for control in getattr(
-                                    policy.grant_controls, "built_in_controls", {}
-                                )
-                            ]
-                            if policy.grant_controls
-                            else []
-                        ),
-                        operator=(
-                            GrantControlOperator(
-                                getattr(policy.grant_controls, "operator", "AND")
-                            )
-                        ),
-                    ),
-                    session_controls=SessionControls(
-                        persistent_browser=PersistentBrowser(
-                            is_enabled=(
-                                policy.session_controls.persistent_browser.is_enabled
-                                if policy.session_controls
-                                and policy.session_controls.persistent_browser
-                                else False
+                        grant_controls=GrantControls(
+                            built_in_controls=(
+                                [
+                                    ConditionalAccessGrantControl(control.value)
+                                    for control in getattr(
+                                        policy.grant_controls, "built_in_controls", {}
+                                    )
+                                ]
+                                if policy.grant_controls
+                                else []
                             ),
-                            mode=(
-                                policy.session_controls.persistent_browser.mode
-                                if policy.session_controls
-                                and policy.session_controls.persistent_browser
-                                else "always"
-                            ),
-                        ),
-                        sign_in_frequency=SignInFrequency(
-                            is_enabled=(
-                                policy.session_controls.sign_in_frequency.is_enabled
-                                if policy.session_controls
-                                and policy.session_controls.sign_in_frequency
-                                else False
-                            ),
-                            frequency=(
-                                policy.session_controls.sign_in_frequency.value
-                                if policy.session_controls
-                                and policy.session_controls.sign_in_frequency
-                                else None
-                            ),
-                            type=(
-                                SignInFrequencyType(
-                                    policy.session_controls.sign_in_frequency.type
+                            operator=(
+                                GrantControlOperator(
+                                    getattr(policy.grant_controls, "operator", "AND")
                                 )
-                                if policy.session_controls
-                                and policy.session_controls.sign_in_frequency
-                                and policy.session_controls.sign_in_frequency.type
-                                else None
                             ),
-                            interval=(
-                                SignInFrequencyInterval(
-                                    policy.session_controls.sign_in_frequency.frequency_interval
+                            authentication_strength=(
+                                AuthenticationStrength(
+                                    policy.grant_controls.authentication_strength.display_name
                                 )
-                                if policy.session_controls
-                                and policy.session_controls.sign_in_frequency
+                                if policy.grant_controls is not None
+                                and policy.grant_controls.authentication_strength
+                                is not None
                                 else None
                             ),
                         ),
-                    ),
-                    state=ConditionalAccessPolicyState(
-                        getattr(policy, "state", "disabled")
-                    ),
-                )
+                        session_controls=SessionControls(
+                            persistent_browser=PersistentBrowser(
+                                is_enabled=(
+                                    policy.session_controls.persistent_browser.is_enabled
+                                    if policy.session_controls
+                                    and policy.session_controls.persistent_browser
+                                    else False
+                                ),
+                                mode=(
+                                    policy.session_controls.persistent_browser.mode
+                                    if policy.session_controls
+                                    and policy.session_controls.persistent_browser
+                                    else "always"
+                                ),
+                            ),
+                            sign_in_frequency=SignInFrequency(
+                                is_enabled=(
+                                    policy.session_controls.sign_in_frequency.is_enabled
+                                    if policy.session_controls
+                                    and policy.session_controls.sign_in_frequency
+                                    else False
+                                ),
+                                frequency=(
+                                    policy.session_controls.sign_in_frequency.value
+                                    if policy.session_controls
+                                    and policy.session_controls.sign_in_frequency
+                                    else None
+                                ),
+                                type=(
+                                    SignInFrequencyType(
+                                        policy.session_controls.sign_in_frequency.type
+                                    )
+                                    if policy.session_controls
+                                    and policy.session_controls.sign_in_frequency
+                                    and policy.session_controls.sign_in_frequency.type
+                                    else None
+                                ),
+                                interval=(
+                                    SignInFrequencyInterval(
+                                        policy.session_controls.sign_in_frequency.frequency_interval
+                                    )
+                                    if policy.session_controls
+                                    and policy.session_controls.sign_in_frequency
+                                    else None
+                                ),
+                            ),
+                        ),
+                        state=ConditionalAccessPolicyState(
+                            getattr(policy, "state", "disabled")
+                        ),
+                    )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -388,9 +398,16 @@ class GrantControlOperator(Enum):
     OR = "OR"
 
 
+class AuthenticationStrength(Enum):
+    MFA = "Multifactor authentication"
+    PASSWORDLESS_MFA = "Passwordless MFA"
+    PHISHING_RESISTANT_MFA = "Phishing-resistant MFA"
+
+
 class GrantControls(BaseModel):
     built_in_controls: List[ConditionalAccessGrantControl]
     operator: GrantControlOperator
+    authentication_strength: Optional[AuthenticationStrength]
 
 
 class ConditionalAccessPolicy(BaseModel):
