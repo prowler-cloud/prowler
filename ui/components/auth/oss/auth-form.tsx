@@ -287,7 +287,7 @@ export const AuthForm = ({
             </form>
           </Form>
 
-          {type === "sign-in" && (
+          {!invitationToken && (
             <>
               <div className="flex items-center gap-4 py-2">
                 <Divider className="flex-1" />
