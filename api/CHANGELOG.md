@@ -4,6 +4,24 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ---
 
+<<<<<<< HEAD
+=======
+## [v1.6.0] (Prowler UNRELEASED)
+
+### Added
+
+- Support for developing new integrations [(#7167)](https://github.com/prowler-cloud/prowler/pull/7167).
+
+---
+
+## [v1.5.1] (Prowler v5.4.1)
+
+### Fixed
+- Fixed a race condition when deleting export files after the S3 upload [(#7172)](https://github.com/prowler-cloud/prowler/pull/7172).
+
+---
+
+>>>>>>> 07419fd5e (fix(exports): change the way to remove the local export files after s3 upload (#7172))
 ## [v1.5.0] (Prowler v5.4.0)
 
 ### Added
