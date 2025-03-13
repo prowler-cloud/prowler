@@ -9,7 +9,7 @@ from tests.providers.microsoft365.microsoft365_fixtures import (
 )
 
 
-class Test_entra_enterprise_app_admin_consent_workflow_enabled:
+class Test_entra_enterpriseapp_admin_consent_workflow_enabled:
     def test_admin_consent_enabled(self):
         """
         Test when admin_consent_enabled is True:
@@ -23,12 +23,12 @@ class Test_entra_enterprise_app_admin_consent_workflow_enabled:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_enterprise_app_admin_consent_workflow_enabled.entra_enterprise_app_admin_consent_workflow_enabled.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_enterpriseapp_admin_consent_workflow_enabled.entra_enterpriseapp_admin_consent_workflow_enabled.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_enterprise_app_admin_consent_workflow_enabled.entra_enterprise_app_admin_consent_workflow_enabled import (
-                entra_enterprise_app_admin_consent_workflow_enabled,
+            from prowler.providers.microsoft365.services.entra.entra_enterpriseapp_admin_consent_workflow_enabled.entra_enterpriseapp_admin_consent_workflow_enabled import (
+                entra_enterpriseapp_admin_consent_workflow_enabled,
             )
 
             entra_client.admin_consent_policy = AdminConsentPolicy(
@@ -39,7 +39,7 @@ class Test_entra_enterprise_app_admin_consent_workflow_enabled:
             )
             entra_client.tenant_domain = DOMAIN
 
-            check = entra_enterprise_app_admin_consent_workflow_enabled()
+            check = entra_enterpriseapp_admin_consent_workflow_enabled()
             result = check.execute()
 
             assert len(result) == 1
@@ -65,12 +65,12 @@ class Test_entra_enterprise_app_admin_consent_workflow_enabled:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_enterprise_app_admin_consent_workflow_enabled.entra_enterprise_app_admin_consent_workflow_enabled.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_enterpriseapp_admin_consent_workflow_enabled.entra_enterpriseapp_admin_consent_workflow_enabled.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_enterprise_app_admin_consent_workflow_enabled.entra_enterprise_app_admin_consent_workflow_enabled import (
-                entra_enterprise_app_admin_consent_workflow_enabled,
+            from prowler.providers.microsoft365.services.entra.entra_enterpriseapp_admin_consent_workflow_enabled.entra_enterpriseapp_admin_consent_workflow_enabled import (
+                entra_enterpriseapp_admin_consent_workflow_enabled,
             )
 
             entra_client.admin_consent_policy = AdminConsentPolicy(
@@ -81,7 +81,7 @@ class Test_entra_enterprise_app_admin_consent_workflow_enabled:
             )
             entra_client.tenant_domain = DOMAIN
 
-            check = entra_enterprise_app_admin_consent_workflow_enabled()
+            check = entra_enterpriseapp_admin_consent_workflow_enabled()
             result = check.execute()
 
             assert len(result) == 1
@@ -107,12 +107,12 @@ class Test_entra_enterprise_app_admin_consent_workflow_enabled:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_enterprise_app_admin_consent_workflow_enabled.entra_enterprise_app_admin_consent_workflow_enabled.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_enterpriseapp_admin_consent_workflow_enabled.entra_enterpriseapp_admin_consent_workflow_enabled.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_enterprise_app_admin_consent_workflow_enabled.entra_enterprise_app_admin_consent_workflow_enabled import (
-                entra_enterprise_app_admin_consent_workflow_enabled,
+            from prowler.providers.microsoft365.services.entra.entra_enterpriseapp_admin_consent_workflow_enabled.entra_enterpriseapp_admin_consent_workflow_enabled import (
+                entra_enterpriseapp_admin_consent_workflow_enabled,
             )
 
             entra_client.admin_consent_policy = AdminConsentPolicy(
@@ -123,7 +123,7 @@ class Test_entra_enterprise_app_admin_consent_workflow_enabled:
             )
             entra_client.tenant_domain = DOMAIN
 
-            check = entra_enterprise_app_admin_consent_workflow_enabled()
+            check = entra_enterpriseapp_admin_consent_workflow_enabled()
             result = check.execute()
 
             assert len(result) == 1
@@ -151,15 +151,15 @@ class Test_entra_enterprise_app_admin_consent_workflow_enabled:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_enterprise_app_admin_consent_workflow_enabled.entra_enterprise_app_admin_consent_workflow_enabled.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_enterpriseapp_admin_consent_workflow_enabled.entra_enterpriseapp_admin_consent_workflow_enabled.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_enterprise_app_admin_consent_workflow_enabled.entra_enterprise_app_admin_consent_workflow_enabled import (
-                entra_enterprise_app_admin_consent_workflow_enabled,
+            from prowler.providers.microsoft365.services.entra.entra_enterpriseapp_admin_consent_workflow_enabled.entra_enterpriseapp_admin_consent_workflow_enabled import (
+                entra_enterpriseapp_admin_consent_workflow_enabled,
             )
 
-            check = entra_enterprise_app_admin_consent_workflow_enabled()
+            check = entra_enterpriseapp_admin_consent_workflow_enabled()
             result = check.execute()
 
             assert len(result) == 0
