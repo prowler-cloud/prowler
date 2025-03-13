@@ -4,7 +4,7 @@ from prowler.lib.check.models import Check, CheckReportMicrosoft365
 from prowler.providers.microsoft365.services.entra.entra_client import entra_client
 
 
-class entra_dynamic_group_for_guests_created(Check):
+class entra_dynamicgroup_for_guests_created(Check):
     """
     Check if a dynamic group for guest users is created in Microsoft Entra.
 

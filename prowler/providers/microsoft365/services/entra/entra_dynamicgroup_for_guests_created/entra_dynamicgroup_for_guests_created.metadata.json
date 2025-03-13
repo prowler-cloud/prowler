@@ -1,6 +1,6 @@
 {
   "Provider": "microsoft365",
-  "CheckID": "entra_dynamic_group_for_guests_created",
+  "CheckID": "entra_dynamicgroup_for_guests_created",
   "CheckTitle": "Ensure a dynamic group for guest users is created.",
   "CheckType": [],
   "ServiceName": "entra",

@@ -6,7 +6,7 @@ from tests.providers.microsoft365.microsoft365_fixtures import (
 )
 
 
-class Test_entra_dynamic_group_for_guests_created:
+class Test_entra_dynamicgroup_for_guests_created:
     def test_no_groups(self):
         """
         Test when no groups exist:
@@ -21,15 +21,15 @@ class Test_entra_dynamic_group_for_guests_created:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_dynamic_group_for_guests_created.entra_dynamic_group_for_guests_created.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_dynamicgroup_for_guests_created.entra_dynamicgroup_for_guests_created.entra_client",
                 new=entra_client,
             ),
         ):
-            from prowler.providers.microsoft365.services.entra.entra_dynamic_group_for_guests_created.entra_dynamic_group_for_guests_created import (
-                entra_dynamic_group_for_guests_created,
+            from prowler.providers.microsoft365.services.entra.entra_dynamicgroup_for_guests_created.entra_dynamicgroup_for_guests_created import (
+                entra_dynamicgroup_for_guests_created,
             )
 
-            check = entra_dynamic_group_for_guests_created()
+            check = entra_dynamicgroup_for_guests_created()
             result = check.execute()
             assert len(result) == 0
 
@@ -46,7 +46,7 @@ class Test_entra_dynamic_group_for_guests_created:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_dynamic_group_for_guests_created.entra_dynamic_group_for_guests_created.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_dynamicgroup_for_guests_created.entra_dynamicgroup_for_guests_created.entra_client",
                 new=entra_client,
             ),
         ):
@@ -59,11 +59,11 @@ class Test_entra_dynamic_group_for_guests_created:
                 )
             ]
 
-            from prowler.providers.microsoft365.services.entra.entra_dynamic_group_for_guests_created.entra_dynamic_group_for_guests_created import (
-                entra_dynamic_group_for_guests_created,
+            from prowler.providers.microsoft365.services.entra.entra_dynamicgroup_for_guests_created.entra_dynamicgroup_for_guests_created import (
+                entra_dynamicgroup_for_guests_created,
             )
 
-            check = entra_dynamic_group_for_guests_created()
+            check = entra_dynamicgroup_for_guests_created()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -88,7 +88,7 @@ class Test_entra_dynamic_group_for_guests_created:
                 return_value=set_mocked_microsoft365_provider(),
             ),
             mock.patch(
-                "prowler.providers.microsoft365.services.entra.entra_dynamic_group_for_guests_created.entra_dynamic_group_for_guests_created.entra_client",
+                "prowler.providers.microsoft365.services.entra.entra_dynamicgroup_for_guests_created.entra_dynamicgroup_for_guests_created.entra_client",
                 new=entra_client,
             ),
         ):
@@ -101,11 +101,11 @@ class Test_entra_dynamic_group_for_guests_created:
                 )
             ]
 
-            from prowler.providers.microsoft365.services.entra.entra_dynamic_group_for_guests_created.entra_dynamic_group_for_guests_created import (
-                entra_dynamic_group_for_guests_created,
+            from prowler.providers.microsoft365.services.entra.entra_dynamicgroup_for_guests_created.entra_dynamicgroup_for_guests_created import (
+                entra_dynamicgroup_for_guests_created,
             )
 
-            check = entra_dynamic_group_for_guests_created()
+            check = entra_dynamicgroup_for_guests_created()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
