@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Icon } from "@iconify/react";
 import { Button, Checkbox, Divider, Link } from "@nextui-org/react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -17,10 +18,8 @@ import {
   FormField,
   FormMessage,
 } from "@/components/ui/form";
-import { ApiError, authFormSchema } from "@/types";
-import { Icon } from "@iconify/react";
-import { signIn } from "next-auth/react";
 import { getGoogleAuthUrl } from "@/lib/helper";
+import { ApiError, authFormSchema } from "@/types";
 
 export const AuthForm = ({
   type,

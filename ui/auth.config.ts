@@ -107,18 +107,14 @@ export const authConfig = {
         refreshToken: { label: "Refresh Token", type: "text" },
       },
       async authorize(credentials) {
-        console.log("Raw credentials received:", credentials);
-
         const accessToken = credentials?.accessToken;
 
         if (!accessToken) {
-          console.error("No access token in credentials");
           return null;
         }
 
         try {
           const userMeResponse = await getUserByMe(accessToken as string);
-          console.log("User response:", userMeResponse);
 
           const user = {
             name: userMeResponse.name,
@@ -133,6 +129,7 @@ export const authConfig = {
             refreshToken: credentials.refreshToken,
           };
         } catch (error) {
+          // eslint-disable-next-line no-console
           console.error("Error in authorize:", error);
           return null;
         }

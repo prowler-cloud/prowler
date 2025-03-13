@@ -1,7 +1,8 @@
 "use server";
 
-import { signIn } from "@/auth.config";
 import { NextResponse } from "next/server";
+
+import { signIn } from "@/auth.config";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -50,12 +51,14 @@ export async function GET(req: Request) {
 
       return NextResponse.redirect(new URL("/", req.url));
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error("SignIn error:", error);
       return NextResponse.redirect(
         new URL("/sign-in?error=AuthenticationFailed", req.url),
       );
     }
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error("Error in Google callback:", error);
     return NextResponse.json(
       { error: (error as Error).message },
