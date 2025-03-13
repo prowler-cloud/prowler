@@ -4,7 +4,7 @@ from prowler.lib.check.models import Check, CheckReportMicrosoft365
 from prowler.providers.microsoft365.services.entra.entra_client import entra_client
 
 
-class entra_organization_admin_consent_workflow_enabled(Check):
+class entra_enterprise_app_admin_consent_workflow_enabled(Check):
     """
     Ensure the admin consent workflow is enabled in Microsoft Entra.
 
