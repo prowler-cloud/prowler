@@ -8,7 +8,7 @@ from prowler.providers.microsoft365.services.entra.entra_service import (
 )
 
 
-class entra_identity_protection_sign_in_risk_enabled(Check):
+class entra_ca_policy_identity_protection_sign_in_risk_enabled(Check):
     """Check if at least one Conditional Access policy is a Identity Protection sign-in risk policy.
 
     This check ensures that at least one Conditional Access policy is a Identity Protection sign-in risk policy.
