@@ -21,12 +21,15 @@ class Test_apikeys_key_exists:
             )
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.apikeys.apikeys_key_exists.apikeys_key_exists.apikeys_client",
-            new=apikeys_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.apikeys.apikeys_key_exists.apikeys_key_exists.apikeys_client",
+                new=apikeys_client,
+            ),
         ):
             from prowler.providers.gcp.services.apikeys.apikeys_key_exists.apikeys_key_exists import (
                 apikeys_key_exists,
@@ -67,12 +70,15 @@ class Test_apikeys_key_exists:
             )
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
-        ), mock.patch(
-            "prowler.providers.gcp.services.apikeys.apikeys_key_exists.apikeys_key_exists.apikeys_client",
-            new=apikeys_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.apikeys.apikeys_key_exists.apikeys_key_exists.apikeys_client",
+                new=apikeys_client,
+            ),
         ):
             from prowler.providers.gcp.services.apikeys.apikeys_key_exists.apikeys_key_exists import (
                 apikeys_key_exists,

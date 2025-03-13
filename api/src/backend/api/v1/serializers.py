@@ -16,6 +16,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from api.models import (
     ComplianceOverview,
     Finding,
+    Integration,
+    IntegrationProviderRelationship,
     Invitation,
     InvitationRoleRelationship,
     Membership,
@@ -34,6 +36,12 @@ from api.models import (
     UserRoleRelationship,
 )
 from api.rls import Tenant
+from api.v1.serializer_utils.integrations import (
+    AWSCredentialSerializer,
+    IntegrationConfigField,
+    IntegrationCredentialField,
+    S3ConfigSerializer,
+)
 
 # Tokens
 
@@ -1606,8 +1614,8 @@ class RoleSerializer(RLSSerializer, BaseWriteSerializer):
             "manage_account",
             # Disable for the first release
             # "manage_billing",
-            # "manage_integrations",
             # /Disable for the first release
+            "manage_integrations",
             "manage_providers",
             "manage_scans",
             "permission_state",
@@ -2013,3 +2021,201 @@ class ScheduleDailyCreateSerializer(serializers.Serializer):
             if unknown_keys:
                 raise ValidationError(f"Invalid fields: {unknown_keys}")
         return data
+
+
+# Integrations
+
+
+class BaseWriteIntegrationSerializer(BaseWriteSerializer):
+    @staticmethod
+    def validate_integration_data(
+        integration_type: str,
+        providers: list[Provider],  # noqa
+        configuration: dict,
+        credentials: dict,
+    ):
+        if integration_type == Integration.IntegrationChoices.S3:
+            config_serializer = S3ConfigSerializer
+            credentials_serializers = [AWSCredentialSerializer]
+            # TODO: This will be required for AWS Security Hub
+            # if providers and not all(
+            #     provider.provider == Provider.ProviderChoices.AWS
+            #     for provider in providers
+            # ):
+            #     raise serializers.ValidationError(
+            #         {"providers": "All providers must be AWS for the S3 integration."}
+            #     )
+        else:
+            raise serializers.ValidationError(
+                {
+                    "integration_type": f"Integration type not supported yet: {integration_type}"
+                }
+            )
+
+        config_serializer(data=configuration).is_valid(raise_exception=True)
+
+        for cred_serializer in credentials_serializers:
+            try:
+                cred_serializer(data=credentials).is_valid(raise_exception=True)
+                break
+            except ValidationError:
+                continue
+        else:
+            raise ValidationError(
+                {"credentials": "Invalid credentials for the integration type."}
+            )
+
+
+class IntegrationSerializer(RLSSerializer):
+    """
+    Serializer for the Integration model.
+    """
+
+    providers = serializers.ResourceRelatedField(
+        queryset=Provider.objects.all(), many=True
+    )
+
+    class Meta:
+        model = Integration
+        fields = [
+            "id",
+            "inserted_at",
+            "updated_at",
+            "enabled",
+            "connected",
+            "connection_last_checked_at",
+            "integration_type",
+            "configuration",
+            "providers",
+            "url",
+        ]
+
+    included_serializers = {
+        "providers": "api.v1.serializers.ProviderIncludeSerializer",
+    }
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        allowed_providers = self.context.get("allowed_providers")
+        if allowed_providers:
+            allowed_provider_ids = {str(provider.id) for provider in allowed_providers}
+            representation["providers"] = [
+                provider
+                for provider in representation["providers"]
+                if provider["id"] in allowed_provider_ids
+            ]
+        return representation
+
+
+class IntegrationCreateSerializer(BaseWriteIntegrationSerializer):
+    credentials = IntegrationCredentialField(write_only=True)
+    configuration = IntegrationConfigField()
+    providers = serializers.ResourceRelatedField(
+        queryset=Provider.objects.all(), many=True, required=False
+    )
+
+    class Meta:
+        model = Integration
+        fields = [
+            "inserted_at",
+            "updated_at",
+            "enabled",
+            "connected",
+            "connection_last_checked_at",
+            "integration_type",
+            "configuration",
+            "credentials",
+            "providers",
+        ]
+        extra_kwargs = {
+            "inserted_at": {"read_only": True},
+            "updated_at": {"read_only": True},
+            "connected": {"read_only": True},
+            "enabled": {"read_only": True},
+            "connection_last_checked_at": {"read_only": True},
+        }
+
+    def validate(self, attrs):
+        integration_type = attrs.get("integration_type")
+        providers = attrs.get("providers")
+        configuration = attrs.get("configuration")
+        credentials = attrs.get("credentials")
+
+        validated_attrs = super().validate(attrs)
+        self.validate_integration_data(
+            integration_type, providers, configuration, credentials
+        )
+        return validated_attrs
+
+    def create(self, validated_data):
+        tenant_id = self.context.get("tenant_id")
+
+        providers = validated_data.pop("providers", [])
+        integration = Integration.objects.create(tenant_id=tenant_id, **validated_data)
+
+        through_model_instances = [
+            IntegrationProviderRelationship(
+                integration=integration,
+                provider=provider,
+                tenant_id=tenant_id,
+            )
+            for provider in providers
+        ]
+        IntegrationProviderRelationship.objects.bulk_create(through_model_instances)
+
+        return integration
+
+
+class IntegrationUpdateSerializer(BaseWriteIntegrationSerializer):
+    credentials = IntegrationCredentialField(write_only=True, required=False)
+    configuration = IntegrationConfigField(required=False)
+    providers = serializers.ResourceRelatedField(
+        queryset=Provider.objects.all(), many=True, required=False
+    )
+
+    class Meta:
+        model = Integration
+        fields = [
+            "inserted_at",
+            "updated_at",
+            "enabled",
+            "connected",
+            "connection_last_checked_at",
+            "integration_type",
+            "configuration",
+            "credentials",
+            "providers",
+        ]
+        extra_kwargs = {
+            "inserted_at": {"read_only": True},
+            "updated_at": {"read_only": True},
+            "connected": {"read_only": True},
+            "connection_last_checked_at": {"read_only": True},
+            "integration_type": {"read_only": True},
+        }
+
+    def validate(self, attrs):
+        integration_type = self.instance.integration_type
+        providers = attrs.get("providers")
+        configuration = attrs.get("configuration") or self.instance.configuration
+        credentials = attrs.get("credentials") or self.instance.credentials
+
+        validated_attrs = super().validate(attrs)
+        self.validate_integration_data(
+            integration_type, providers, configuration, credentials
+        )
+        return validated_attrs
+
+    def update(self, instance, validated_data):
+        tenant_id = self.context.get("tenant_id")
+        if validated_data.get("providers") is not None:
+            instance.providers.clear()
+            new_relationships = [
+                IntegrationProviderRelationship(
+                    integration=instance, provider=provider, tenant_id=tenant_id
+                )
+                for provider in validated_data["providers"]
+            ]
+            IntegrationProviderRelationship.objects.bulk_create(new_relationships)
+
+        return super().update(instance, validated_data)

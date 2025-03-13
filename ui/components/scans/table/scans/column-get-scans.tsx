@@ -153,7 +153,11 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
   {
     accessorKey: "trigger",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={"Type"} param="trigger" />
+      <DataTableColumnHeader
+        column={column}
+        title={"Trigger"}
+        param="trigger"
+      />
     ),
     cell: ({ row }) => {
       const {

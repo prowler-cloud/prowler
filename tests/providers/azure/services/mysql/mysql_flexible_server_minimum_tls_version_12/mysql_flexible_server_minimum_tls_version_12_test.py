@@ -16,12 +16,15 @@ class Test_mysql_flexible_server_minimum_tls_version_12:
         mysql_client = mock.MagicMock
         mysql_client.flexible_servers = {}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12.mysql_client",
-            new=mysql_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12.mysql_client",
+                new=mysql_client,
+            ),
         ):
             from prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12 import (
                 mysql_flexible_server_minimum_tls_version_12,
@@ -35,12 +38,15 @@ class Test_mysql_flexible_server_minimum_tls_version_12:
         mysql_client = mock.MagicMock
         mysql_client.flexible_servers = {AZURE_SUBSCRIPTION_ID: {}}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12.mysql_client",
-            new=mysql_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12.mysql_client",
+                new=mysql_client,
+            ),
         ):
             from prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12 import (
                 mysql_flexible_server_minimum_tls_version_12,
@@ -64,12 +70,15 @@ class Test_mysql_flexible_server_minimum_tls_version_12:
                 )
             }
         }
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12.mysql_client",
-            new=mysql_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12.mysql_client",
+                new=mysql_client,
+            ),
         ):
             from prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12 import (
                 mysql_flexible_server_minimum_tls_version_12,
@@ -108,12 +117,15 @@ class Test_mysql_flexible_server_minimum_tls_version_12:
                 )
             }
         }
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12.mysql_client",
-            new=mysql_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12.mysql_client",
+                new=mysql_client,
+            ),
         ):
             from prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12 import (
                 mysql_flexible_server_minimum_tls_version_12,
@@ -155,12 +167,15 @@ class Test_mysql_flexible_server_minimum_tls_version_12:
                 )
             }
         }
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12.mysql_client",
-            new=mysql_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12.mysql_client",
+                new=mysql_client,
+            ),
         ):
             from prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12 import (
                 mysql_flexible_server_minimum_tls_version_12,
@@ -202,12 +217,15 @@ class Test_mysql_flexible_server_minimum_tls_version_12:
                 )
             }
         }
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12.mysql_client",
-            new=mysql_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12.mysql_client",
+                new=mysql_client,
+            ),
         ):
             from prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12 import (
                 mysql_flexible_server_minimum_tls_version_12,
@@ -249,12 +267,15 @@ class Test_mysql_flexible_server_minimum_tls_version_12:
                 )
             }
         }
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12.mysql_client",
-            new=mysql_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12.mysql_client",
+                new=mysql_client,
+            ),
         ):
             from prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12 import (
                 mysql_flexible_server_minimum_tls_version_12,

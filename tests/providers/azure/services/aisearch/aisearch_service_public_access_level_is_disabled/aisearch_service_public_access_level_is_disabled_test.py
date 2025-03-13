@@ -13,12 +13,15 @@ class Test_AISearch_service_not_publicly_accessible:
         aisearch_client = mock.MagicMock
         aisearch_client.aisearch_services = {}
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.aisearch.aisearch_service_not_publicly_accessible.aisearch_service_not_publicly_accessible.aisearch_client",
-            new=aisearch_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.aisearch.aisearch_service_not_publicly_accessible.aisearch_service_not_publicly_accessible.aisearch_client",
+                new=aisearch_client,
+            ),
         ):
             from prowler.providers.azure.services.aisearch.aisearch_service_not_publicly_accessible.aisearch_service_not_publicly_accessible import (
                 aisearch_service_not_publicly_accessible,
@@ -43,12 +46,15 @@ class Test_AISearch_service_not_publicly_accessible:
             }
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.aisearch.aisearch_service_not_publicly_accessible.aisearch_service_not_publicly_accessible.aisearch_client",
-            new=aisearch_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.aisearch.aisearch_service_not_publicly_accessible.aisearch_service_not_publicly_accessible.aisearch_client",
+                new=aisearch_client,
+            ),
         ):
             from prowler.providers.azure.services.aisearch.aisearch_service_not_publicly_accessible.aisearch_service_not_publicly_accessible import (
                 aisearch_service_not_publicly_accessible,
@@ -82,12 +88,15 @@ class Test_AISearch_service_not_publicly_accessible:
             }
         }
 
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_azure_provider(),
-        ), mock.patch(
-            "prowler.providers.azure.services.aisearch.aisearch_service_not_publicly_accessible.aisearch_service_not_publicly_accessible.aisearch_client",
-            new=aisearch_client,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.aisearch.aisearch_service_not_publicly_accessible.aisearch_service_not_publicly_accessible.aisearch_client",
+                new=aisearch_client,
+            ),
         ):
             from prowler.providers.azure.services.aisearch.aisearch_service_not_publicly_accessible.aisearch_service_not_publicly_accessible import (
                 aisearch_service_not_publicly_accessible,
