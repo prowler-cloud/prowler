@@ -235,6 +235,9 @@ class Jira:
 
         Returns:
             - None
+
+        Raises:
+            - JiraBasicAuthError: Failed to authenticate using basic auth
         """
         try:
             user_string = f"{self._client_mail}:{self._api_token}"
