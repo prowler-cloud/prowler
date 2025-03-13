@@ -8,7 +8,7 @@ from prowler.providers.microsoft365.services.entra.entra_service import (
 )
 
 
-class entra_admin_users_sign_in_frequency_enabled(Check):
+class entra_capolicy_admin_users_sign_in_frequency_enabled(Check):
     """Check if Conditional Access policies enforce sign-in frequency for admin users."""
 
     def execute(self) -> list[CheckReportMicrosoft365]:
