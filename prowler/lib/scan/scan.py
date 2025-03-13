@@ -249,7 +249,7 @@ class Scan:
             Exception: If any other error occurs during the execution of a check.
         """
         try:
-            # Using SimpleNamespace to create an object with the status, as it is the only argument needed
+            # Using SimpleNamespace to create a mocked object
             arguments = SimpleNamespace()
 
             output_options = ProviderOutputOptions(
