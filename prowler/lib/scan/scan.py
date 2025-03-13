@@ -249,13 +249,8 @@ class Scan:
             Exception: If any other error occurs during the execution of a check.
         """
         try:
-            if self.status:
-                arguments_status = self.status
-            else:
-                arguments_status = ["PASS", "FAIL", "MANUAL", "MUTED"]
-
             # Using SimpleNamespace to create an object with the status, as it is the only argument needed
-            arguments = SimpleNamespace(status=arguments_status)
+            arguments = SimpleNamespace()
 
             output_options = ProviderOutputOptions(
                 arguments=arguments,
@@ -296,7 +291,7 @@ class Scan:
                         check,
                         self.provider,
                         custom_checks_metadata,
-                        output_options=output_options,
+                        output_options=None,
                     )
 
                     # Filter the findings by the status
