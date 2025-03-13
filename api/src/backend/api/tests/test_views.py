@@ -2288,6 +2288,25 @@ class TestScanViewSet:
         assert f'filename="{expected_filename}"' in content_disposition
         assert response.content == b"s3 zip content"
 
+    def test_report_s3_success_no_local_files(
+        self, authenticated_client, scans_fixture, monkeypatch
+    ):
+        """
+        When output_location is a local path and glob.glob returns an empty list,
+        the view should return HTTP 404 with detail "The scan has no reports."
+        """
+        scan = scans_fixture[0]
+        scan.output_location = "/tmp/nonexistent_report_pattern.zip"
+        scan.state = StateChoices.COMPLETED
+        scan.save()
+        monkeypatch.setattr("api.v1.views.glob.glob", lambda pattern: [])
+
+        url = reverse("scan-report", kwargs={"pk": scan.id})
+        response = authenticated_client.get(url)
+
+        assert response.status_code == 404
+        assert response.json()["errors"]["detail"] == "The scan has no reports."
+
     def test_report_local_file(
         self, authenticated_client, scans_fixture, tmp_path, monkeypatch
     ):
