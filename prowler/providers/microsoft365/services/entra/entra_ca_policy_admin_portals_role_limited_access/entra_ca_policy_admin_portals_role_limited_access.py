@@ -7,7 +7,7 @@ from prowler.providers.microsoft365.services.entra.entra_service import (
 )
 
 
-class entra_admin_portals_role_limited_access(Check):
+class entra_ca_policy_admin_portals_role_limited_access(Check):
     """Check if Conditional Access policies deny access to the Microsoft 365 admin center for users with limited access roles.
 
     This check ensures that Conditional Access policies are in place to deny access to the Microsoft 365 admin center for users with limited access roles.

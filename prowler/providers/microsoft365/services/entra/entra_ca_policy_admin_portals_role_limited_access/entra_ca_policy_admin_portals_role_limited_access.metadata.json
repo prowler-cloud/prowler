@@ -1,6 +1,6 @@
 {
   "Provider": "microsoft365",
-  "CheckID": "entra_admin_portals_role_limited_access",
+  "CheckID": "entra_ca_policy_admin_portals_role_limited_access",
   "CheckTitle": "Ensure that only administrative roles have access to Microsoft Admin Portals",
   "CheckType": [],
   "ServiceName": "entra",
